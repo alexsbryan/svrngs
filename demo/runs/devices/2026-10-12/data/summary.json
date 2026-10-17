@@ -1,0 +1,285 @@
+{
+ "apps": {
+  "jellyfin": {
+   "version": "12.0.0",
+   "users_before": [
+    "sam"
+   ]
+  },
+  "navidrome": {
+   "version": "0.64.2 (source_archive)",
+   "users_before": [
+    "sam"
+   ]
+  }
+ },
+ "sam_shares": [
+  {
+   "who": "sam",
+   "args": [
+    "share",
+    "8096",
+    "--sign-in",
+    "8097"
+   ],
+   "exit": 0,
+   "said": "Lent jellyfin (port 8096) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 8096 --limit <number>`.\nEach person is signed in to it as themselves by what answers on port 8097, with nothing typed.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare jellyfin` stops lending it.",
+   "ms": 21
+  },
+  {
+   "who": "sam",
+   "args": [
+    "share",
+    "4533"
+   ],
+   "exit": 0,
+   "said": "Lent navidrome (port 4533) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 4533 --limit <number>`.\nnavidrome signs each person in as themselves, with nothing typed, once it takes them from svrngs: in navidrome, ND_EXTAUTH_USERHEADER=X-Svrngs-User and ND_EXTAUTH_TRUSTEDSOURCES=127.0.0.1/32 in its environment, then start it again.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare navidrome` stops lending it.",
+   "ms": 11
+  },
+  {
+   "who": "sam",
+   "args": [
+    "share",
+    "60499",
+    "--name",
+    "shelf",
+    "--kind",
+    "shelf",
+    "--limit",
+    "1"
+   ],
+   "exit": 0,
+   "said": "Lent shelf (port 60499) to everyone in your groups, up to 1 person at once.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare shelf` stops lending it.\nIf shelf takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none):",
+   "ms": 10
+  }
+ ],
+ "ana_join": {
+  "who": "ana",
+  "args": [
+   "join",
+   "http://localhost:60387/#<the token>",
+   "--as",
+   "Ana",
+   "--no-run"
+  ],
+  "exit": 0,
+  "said": "You're in devices, as Ana.\ndevices's folder is /tmp/devices-run/ana/svrngs/devices: what anyone in devices puts there reaches this computer, and what you put there reaches theirs.",
+  "ms": 2213
+ },
+ "ana_device_link_said": "A link that adds another computer or phone of yours to devices: open it there, and it joins as you, Ana, asked no name. Send it to nobody else: whoever opens it joins as you. Any link you sent before stops letting anyone new in; everyone it let in stays.\nA computer or phone already in devices on its own stays as it joined.\nIt works for a day, while this computer is on:\n\n  svrngs://join/<the token>\n\nor, to open it in a browser:\n\n  http://localhost:60387/#<the token>\n\nOn a phone, each app opens at an address of its own under localhost:60387, which can see which app is opened.\n\nLeave this running; Ctrl-C stops it.",
+ "laptop_join": {
+  "said": "You're in devices, as Ana.",
+  "ms": 1015,
+  "user": "analaptop",
+  "as_given": null
+ },
+ "phone_join": {
+  "ms": 5184,
+  "asked": false,
+  "status": "You’re in devices, as Ana",
+  "said": [
+   "Opening…",
+   "Opening your link…",
+   "Adding this phone to devices as Ana’s…",
+   "Reaching devices…",
+   "You’re in devices, as Ana"
+  ],
+  "lent": [
+   "Sam’s jellyfin",
+   "Sam’s navidrome",
+   "Sam’s shelf"
+  ]
+ },
+ "people_after_joins": [
+  [
+   "Ana",
+   "289aba36199a039f31976f27ff866f06649437131a4485c31de3cef2efe93d7f",
+   "289aba36199a039f31976f27ff866f06649437131a4485c31de3cef2efe93d7f"
+  ],
+  [
+   "Ana",
+   "32cbdb0bd7176a8cde0b6cd7e75bc402b4e990761e60a05c4db27808d6b2cdd4",
+   "289aba36199a039f31976f27ff866f06649437131a4485c31de3cef2efe93d7f"
+  ],
+  [
+   "Ana",
+   "6845c0969107e3cee95c6ff264baabe5a183f12d2c2da3aa85ca4a0c6a082663",
+   "289aba36199a039f31976f27ff866f06649437131a4485c31de3cef2efe93d7f"
+  ],
+  [
+   "Bo",
+   "67d86e89f27d0e47987d7083afcb105885c9d15e0a6a1e2395d78031b7ae0d4e",
+   "67d86e89f27d0e47987d7083afcb105885c9d15e0a6a1e2395d78031b7ae0d4e"
+  ],
+  [
+   "Sam",
+   "28ad5fa5160675022ef122762ef093c7c8c8dc4ba70428fde8ebd9852ca4544c",
+   "28ad5fa5160675022ef122762ef093c7c8c8dc4ba70428fde8ebd9852ca4544c"
+  ]
+ ],
+ "shelf": {
+  "ana": {
+   "status": 200,
+   "refused": null,
+   "body": {
+    "x-svrngs-key": "289aba36199a039f31976f27ff866f06649437131a4485c31de3cef2efe93d7f",
+    "x-svrngs-user": "Ana-289aba36199a039f",
+    "x-svrngs-person": "Ana"
+   }
+  },
+  "laptop": {
+   "status": 200,
+   "refused": null,
+   "body": {
+    "x-svrngs-key": "289aba36199a039f31976f27ff866f06649437131a4485c31de3cef2efe93d7f",
+    "x-svrngs-user": "Ana-289aba36199a039f",
+    "x-svrngs-person": "Ana"
+   }
+  },
+  "phone": {
+   "ms": 2568,
+   "origin": "http://gc0z9lk0a34tfn1ufl5c76fw29fpu1cnx6ccu9sk7sp2mngfmuhapz4mq1z8fx.localhost:60387",
+   "text": "{\"x-svrngs-key\": \"289aba36199a039f31976f27ff866f06649437131a4485c31de3cef2efe93d7f\", \"x-svrngs-user\": \"Ana-289aba36199a039f\", \"x-svrngs-person\": \"Ana\"}"
+  },
+  "bo": {
+   "status": 200,
+   "refused": null,
+   "body": {
+    "x-svrngs-key": "67d86e89f27d0e47987d7083afcb105885c9d15e0a6a1e2395d78031b7ae0d4e",
+    "x-svrngs-user": "Bo-67d86e89f27d0e47",
+    "x-svrngs-person": "Bo"
+   }
+  },
+  "s_from_first_to_bo": 2.6,
+  "door": [
+   "2026-10-12T19:47:20.289730Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person=\"Ana\" lend=shelf addr=Some(192.168.1.4)",
+   "2026-10-12T19:47:20.296456Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person=\"Ana\" lend=shelf addr=Some(192.168.1.4)",
+   "2026-10-12T19:47:22.680370Z  INFO door: door: let in, and told their share of the declared upload person=\"Ana\" lend=shelf people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(86) sent=Some(2884) received=Some(4501)",
+   "2026-10-12T19:47:22.876034Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person=\"Bo\" lend=shelf addr=Some(192.168.1.4)"
+  ]
+ },
+ "jellyfin": {
+  "ana": {
+   "status": 200,
+   "refused": null,
+   "body": {
+    "LocalAddress": "http://127.0.0.1:8096",
+    "ServerName": "Alexs-MacBook-Pro-4",
+    "Version": "12.0.0",
+    "ProductName": "Jellyfin Server",
+    "OperatingSystem": "",
+    "Id": "b32ec9a4b2544ea4be2d0e3116ba38eb",
+    "StartupWizardCompleted": true
+   }
+  },
+  "laptop": {
+   "status": 200,
+   "refused": null,
+   "body": {
+    "LocalAddress": "http://127.0.0.1:8096",
+    "ServerName": "Alexs-MacBook-Pro-4",
+    "Version": "12.0.0",
+    "ProductName": "Jellyfin Server",
+    "OperatingSystem": "",
+    "Id": "b32ec9a4b2544ea4be2d0e3116ba38eb",
+    "StartupWizardCompleted": true
+   }
+  },
+  "phone": {
+   "ms": 6157,
+   "origin": "http://gc0z9lk0a34tfn1ufl5c76fw29fpu1cnx6ccu9sk7sp2mngfmuhabbq3n1prdr.localhost:60387",
+   "text": "\n\n\n"
+  }
+ },
+ "navidrome": {
+  "ana": {
+   "status": 200,
+   "refused": null,
+   "body": "<!DOCTYPE html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"utf-8\" />\n    <meta\n            name=\"description\"\n        "
+  },
+  "laptop": {
+   "status": 200,
+   "refused": null,
+   "body": "<!DOCTYPE html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"utf-8\" />\n    <meta\n            name=\"description\"\n        "
+  },
+  "phone": {
+   "ms": 4139,
+   "origin": "http://gc0z9lk0a34tfn1ufl5c76fw29fpu1cnx6ccu9sk7sp2mngfmuha0r4j328lfk.localhost:60387",
+   "text": ""
+  }
+ },
+ "accounts": {
+  "jellyfin": [
+   "Ana-289aba36199a039f",
+   "sam"
+  ],
+  "navidrome": [
+   "Ana-289aba36199a039f",
+   "sam"
+  ],
+  "sign_in_asks": [
+   "289aba36199a039f31976f27ff866f06649437131a4485c31de3cef2efe93d7f"
+  ]
+ },
+ "remove": {
+  "who": "sam",
+  "args": [
+   "remove",
+   "Ana",
+   "--group",
+   "devices"
+  ],
+  "exit": 0,
+  "said": "Ana is no longer in devices. What Ana already has stays with them; nothing new reaches them.",
+  "ms": 21
+ },
+ "removed": {
+  "ana": {
+   "answer": {
+    "status": 403,
+    "refused": "removed",
+    "body": {
+     "error": "You are no longer in this group, so nothing of it is open to you.",
+     "kind": "removed"
+    }
+   },
+   "s": 0.03
+  },
+  "laptop": {
+   "answer": {
+    "status": 403,
+    "refused": "removed",
+    "body": {
+     "error": "You are no longer in this group, so nothing of it is open to you.",
+     "kind": "removed"
+    }
+   },
+   "s": 0.04
+  },
+  "phone": {
+   "ms": 1188,
+   "asked": false,
+   "status": "You are no longer in devices.",
+   "said": [
+    "Opening…",
+    "Reaching devices…",
+    "You are no longer in devices."
+   ],
+   "lent": [],
+   "s": 1.23
+  }
+ },
+ "people_after_remove": [
+  [
+   "Bo",
+   "67d86e89f27d0e47987d7083afcb105885c9d15e0a6a1e2395d78031b7ae0d4e",
+   "67d86e89f27d0e47987d7083afcb105885c9d15e0a6a1e2395d78031b7ae0d4e"
+  ],
+  [
+   "Sam",
+   "28ad5fa5160675022ef122762ef093c7c8c8dc4ba70428fde8ebd9852ca4544c",
+   "28ad5fa5160675022ef122762ef093c7c8c8dc4ba70428fde8ebd9852ca4544c"
+  ]
+ ],
+ "end_load": 9.2
+}

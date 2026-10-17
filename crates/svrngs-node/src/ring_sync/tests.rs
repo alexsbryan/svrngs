@@ -174,6 +174,7 @@ pub(super) fn ring_router(rail: Arc<RingRail>) -> axum::Router {
     router(RingInbound {
         rail,
         live: Default::default(),
+        wake: Default::default(),
     })
 }
 
@@ -218,8 +219,8 @@ async fn a_journal_past_the_one_exchange_ceiling_converges_onto_a_fresh_peer() {
     let (rail, journal) = node(sender_dir.path(), &key, N);
     let (peer_rail, peer_journal) = node(peer_dir.path(), &key, 0);
 
-    let (url, _served) = serve(peer_rail, &key).await;
-    let out = exchange(&reqwest::Client::new(), &url, rail.as_ref(), NS).await;
+    let (_, served) = serve(peer_rail, &key).await;
+    let out = exchange(served.to(), rail.as_ref(), NS).await;
 
     assert!(out.stop.is_none(), "the exchange failed: {:?}", out.stop);
     assert_eq!(out.pushed, N, "every op landed on the peer");
@@ -236,30 +237,51 @@ async fn a_journal_past_the_one_exchange_ceiling_converges_onto_a_fresh_peer() {
     );
 }
 
-/// **A peer's seal shortens THIS node's disk, in the round it arrives.** The
-/// assertion is on what is on disk afterwards: a prune that silently did
-/// nothing would leave every count identical.
+/// **A seal another member signs retires nothing here, and every act under
+/// it still counts** (arch-seal (c); svrn-docs A_RECORD_FOR_YEARS §6 q2).
+/// Bo, a member, writes three records and then a seal, as an older build's
+/// app route wrote one; Ana's computer pulls the seal and keeps all four
+/// lines, the seal held as an act that does nothing. The failing input:
+/// copies honour a seal, as at the row's start, and Ana's disk is pruned to
+/// the seal alone.
 #[tokio::test]
-async fn a_peers_seal_prunes_this_nodes_disk_in_the_round_it_arrives() {
-    let key = SigningKey::from_bytes(&[1u8; 32]);
+async fn a_seal_another_member_signs_retires_nothing_here() {
+    let (ana, bo) = (
+        SigningKey::from_bytes(&[1u8; 32]),
+        SigningKey::from_bytes(&[2u8; 32]),
+    );
+    let mut seed = solo_roster(&ana);
+    seed.members
+        .insert(Person::parse("bo").unwrap(), vec![actor_of(&bo)]);
     let (mine, theirs) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let (rail, journal) = node(mine.path(), &key, 3);
-    let (peer_rail, peer_journal) = node(theirs.path(), &key, 3);
+    let duo = |dir: &std::path::Path, key: &SigningKey| {
+        let rail = Arc::new(RingRail::new(dir, Arc::new(key.clone())));
+        rail.set_seed(NS, &seed).unwrap();
+        assert_eq!(rail.ingest_all(NS, &ops_in(NS, &bo, 3)).unwrap(), 3);
+        (rail.clone(), Journal(rail))
+    };
+    let (rail, journal) = duo(mine.path(), &ana);
+    let (peer_rail, peer_journal) = duo(theirs.path(), &bo);
     peer_journal
-        .ingest(&next_in(&peer_journal, &key, RailAct::Seal))
+        .ingest(&next_in(&peer_journal, &bo, RailAct::Seal))
         .unwrap();
-    assert_eq!(journal.read().unwrap().0.len(), 3, "control: we hold three");
 
-    let (url, _served) = serve(peer_rail, &key).await;
-    let out = exchange(&reqwest::Client::new(), &url, rail.as_ref(), NS).await;
+    let (_, served) = serve(peer_rail, &ana).await;
+    let out = exchange(served.to(), rail.as_ref(), NS).await;
 
     assert!(out.stop.is_none(), "the exchange failed: {:?}", out.stop);
     assert_eq!(out.pulled, 1, "one op came over, and it was the seal");
     let held = journal.read().unwrap().0;
-    assert_eq!(held.len(), 1, "the retired prefix left our disk: {held:?}");
-    assert!(matches!(held[0].kind.act, RailAct::Seal));
-    let admitted = journal.admit(&solo_roster(&key), &Ed25519Verifier).unwrap();
+    assert_eq!(held.len(), 4, "the seal retired nothing: {held:?}");
+    let admitted = journal.admit(&seed, &Ed25519Verifier).unwrap();
     assert!(admitted.is_complete(), "gaps: {:?}", admitted.gaps());
+    let ops = svrngs_core::tests_support::wire_ops(&admitted);
+    assert_eq!(ops.len(), 4, "the seal is held as an act: {ops:?}");
+    assert_eq!(
+        ops.iter().filter(|o| o.applies()).count(),
+        3,
+        "every record under it still counts"
+    );
     assert_eq!(
         journal.digest(&crate::Ed25519Verifier).unwrap(),
         peer_journal.digest(&crate::Ed25519Verifier).unwrap(),
@@ -267,8 +289,8 @@ async fn a_peers_seal_prunes_this_nodes_disk_in_the_round_it_arrives() {
     );
 }
 
-/// The control for the seal tests: the identical exchange with an ordinary
-/// act pulls the same one op and deletes NOTHING.
+/// The control for the seal test above: the identical exchange with an
+/// ordinary act pulls the same one op and deletes nothing.
 #[tokio::test]
 async fn an_ordinary_op_arriving_prunes_nothing() {
     let key = SigningKey::from_bytes(&[1u8; 32]);
@@ -285,8 +307,8 @@ async fn an_ordinary_op_arriving_prunes_nothing() {
         ))
         .unwrap();
 
-    let (url, _served) = serve(peer_rail, &key).await;
-    let out = exchange(&reqwest::Client::new(), &url, rail.as_ref(), NS).await;
+    let (_, served) = serve(peer_rail, &key).await;
+    let out = exchange(served.to(), rail.as_ref(), NS).await;
     assert_eq!(out.pulled, 1);
     assert_eq!(journal.read().unwrap().0.len(), 4, "nothing was retired");
 }
@@ -303,7 +325,7 @@ async fn ten_thousand_ops_do_not_fit_one_chunk() {
     let (chunk, more) = journal
         .ops_missing_from_within(
             &crate::Ed25519Verifier,
-            &Digest::new(),
+            &Digest::default(),
             RING_SYNC_OPS_BUDGET_BYTES,
         )
         .unwrap();
@@ -318,7 +340,7 @@ async fn ten_thousand_ops_do_not_fit_one_chunk() {
         "a chunk must fit the limit it was budgeted against"
     );
     let all = journal
-        .ops_missing_from(&crate::Ed25519Verifier, &Digest::new())
+        .ops_missing_from(&crate::Ed25519Verifier, &Digest::default())
         .unwrap();
     let per_op = serde_json::to_vec(&all).unwrap().len() / all.len();
     assert!(
@@ -342,7 +364,7 @@ async fn the_budgeted_chunk_is_served_where_the_whole_journal_is_refused() {
             namespace: NS.to_string(),
             digest: journal.digest(&crate::Ed25519Verifier).unwrap(),
             ops: journal
-                .ops_missing_from(&crate::Ed25519Verifier, &Digest::new())
+                .ops_missing_from(&crate::Ed25519Verifier, &Digest::default())
                 .unwrap(),
         };
         let (url, _served) = serve(peer, &key).await;
@@ -355,7 +377,7 @@ async fn the_budgeted_chunk_is_served_where_the_whole_journal_is_refused() {
     let (ops, more) = journal
         .ops_missing_from_within(
             &crate::Ed25519Verifier,
-            &Digest::new(),
+            &Digest::default(),
             RING_SYNC_OPS_BUDGET_BYTES,
         )
         .unwrap();
@@ -420,90 +442,11 @@ async fn the_pull_direction_is_budgeted_and_converges_by_repeating() {
     );
 }
 
-/// A seal is an op, not a delete: the exchange shortens only once the
-/// retired lines are gone from disk, and the compacted suffix bootstraps a
-/// fresh peer in one chunk, complete.
-#[tokio::test]
-async fn a_seal_shortens_the_exchange_only_once_the_retired_lines_are_deleted() {
-    const RETIRED: u64 = 10_000;
-    const KEPT: u64 = 500;
-    let key = SigningKey::from_bytes(&[1u8; 32]);
-    let dir = tempfile::tempdir().unwrap();
-    let (rail, journal) = node(dir.path(), &key, RETIRED as usize);
-    let payload = body_of_size(FIXTURE_BODY_BYTES);
-    let mut tail = vec![next_in(&journal, &key, RailAct::Seal)];
-    for _ in 0..KEPT {
-        let act = RailAct::Record {
-            payload: payload.clone(),
-        };
-        let next = after(&key, tail.last().unwrap(), act);
-        tail.push(next);
-    }
-    assert_eq!(journal.ingest_all(&tail).unwrap(), tail.len());
-
-    /// Bootstrap a fresh peer from `rail`: what it pushed, the peer's
-    /// journal, and the dir that holds it.
-    async fn bootstrap(rail: &RingRail, key: &SigningKey) -> (usize, Journal, tempfile::TempDir) {
-        let p = tempfile::tempdir().unwrap();
-        let (peer, peer_journal) = node(p.path(), key, 0);
-        let (url, _served) = serve(peer, key).await;
-        let out = exchange(&reqwest::Client::new(), &url, rail, NS).await;
-        assert!(out.stop.is_none(), "{:?}", out.stop);
-        (out.pushed, peer_journal, p)
-    }
-    let (sealed_pushed, _, _p1) = bootstrap(&rail, &key).await;
-    assert_eq!(
-        sealed_pushed,
-        (RETIRED + KEPT + 1) as usize,
-        "a seal is an op, not a delete: everything still goes out"
-    );
-
-    let path = journal.0.group_dir(NS).unwrap().join("ring_oplog.jsonl");
-    let kept: String = std::fs::read_to_string(&path)
-        .unwrap()
-        .lines()
-        .filter(|l| {
-            serde_json::from_str::<Op<SignedOp>>(l)
-                .map(|o| o.kind.seq >= RETIRED)
-                .unwrap_or(true)
-        })
-        .map(|l| format!("{l}\n"))
-        .collect();
-    std::fs::write(&path, kept).unwrap();
-    assert_eq!(journal.read().unwrap().0.len(), (KEPT + 1) as usize);
-
-    let (ops, more) = journal
-        .ops_missing_from_within(
-            &crate::Ed25519Verifier,
-            &Digest::new(),
-            RING_SYNC_OPS_BUDGET_BYTES,
-        )
-        .unwrap();
-    assert!(!more, "the compacted suffix fits one chunk");
-    assert_eq!(ops.len(), (KEPT + 1) as usize);
-    let (compacted_pushed, peer_journal, _p2) = bootstrap(&rail, &key).await;
-    assert_eq!(compacted_pushed, (KEPT + 1) as usize, "the suffix lands");
-    let admitted = peer_journal
-        .admit(&solo_roster(&key), &Ed25519Verifier)
-        .unwrap();
-    assert!(admitted.is_complete(), "gaps: {:?}", admitted.gaps());
-    assert_eq!(
-        svrngs_core::tests_support::wire_ops(&admitted)
-            .iter()
-            .filter(|o| o.applies())
-            .count(),
-        KEPT as usize
-    );
-    assert_eq!(
-        peer_journal.digest(&crate::Ed25519Verifier).unwrap(),
-        journal.digest(&crate::Ed25519Verifier).unwrap()
-    );
-}
-
-/// A route answering `body` to every exchange, served; its URL.
+/// A route answering `body` to every exchange, served on the stream to
+/// any dialer.
 async fn stand_in(
     answer: impl Fn(RingSyncRequest) -> axum::response::Response + Clone + Send + Sync + 'static,
-) -> String {
+) -> crate::iroh::tests::OnStream {
     let app = axum::Router::new().route(
         "/internal/ring/sync",
         axum::routing::post(move |body: axum::body::Bytes| {
@@ -511,7 +454,8 @@ async fn stand_in(
             async move { answer(serde_json::from_slice(&body).unwrap()) }
         }),
     );
-    format!("http://{}/internal/ring/sync", serve_at(app).await)
+    let any = crate::iroh::SecretKey::from_bytes(&[1; 32]);
+    crate::iroh::tests::serve_on_stream(app, any).await.1
 }
 
 /// A real pull is not discarded by a later failure: call 1's ops are on
@@ -519,13 +463,13 @@ async fn stand_in(
 #[tokio::test]
 async fn a_second_call_that_fails_still_reports_what_the_first_call_pulled() {
     let gift = ops_in(NS, &SigningKey::from_bytes(&[9u8; 32]), 5);
-    let url = stand_in(move |req| {
+    let stood = stand_in(move |req| {
         if !req.ops.is_empty() {
             return axum::http::StatusCode::PAYLOAD_TOO_LARGE.into_response();
         }
         axum::Json(RingSyncResponse {
             namespace: req.namespace,
-            digest: Digest::new(),
+            digest: Digest::default(),
             ops: gift.clone(),
             ingested: 0,
         })
@@ -535,7 +479,7 @@ async fn a_second_call_that_fails_still_reports_what_the_first_call_pulled() {
     let dir = tempfile::tempdir().unwrap();
     let (rail, journal) = node(dir.path(), &SigningKey::from_bytes(&[1u8; 32]), 3);
 
-    let out = exchange(&reqwest::Client::new(), &url, rail.as_ref(), NS).await;
+    let out = exchange(stood.to(), rail.as_ref(), NS).await;
     assert!(
         matches!(out.stop, Some(ExchangeStop::Refused { .. })),
         "a 413 is a refusal: {:?}",
@@ -551,13 +495,13 @@ async fn a_peer_that_answers_403_or_413_is_refused_rather_than_unreachable() {
     let dir = tempfile::tempdir().unwrap();
     let (rail, _journal) = node(dir.path(), &SigningKey::from_bytes(&[1u8; 32]), 3);
     for code in [403u16, 413] {
-        let url = stand_in(move |_| {
+        let stood = stand_in(move |_| {
             axum::http::StatusCode::from_u16(code)
                 .unwrap()
                 .into_response()
         })
         .await;
-        let out = exchange(&reqwest::Client::new(), &url, rail.as_ref(), NS).await;
+        let out = exchange(stood.to(), rail.as_ref(), NS).await;
         match out.stop {
             Some(ExchangeStop::Refused { sent_bytes, status }) => {
                 assert_eq!(status, code, "the status picks the sentence");
@@ -569,13 +513,14 @@ async fn a_peer_that_answers_403_or_413_is_refused_rather_than_unreachable() {
             other => panic!("{code}: expected Refused, got {other:?}"),
         }
     }
-    let out = exchange(
-        &reqwest::Client::new(),
-        "http://127.0.0.1:1/internal/ring/sync",
-        rail.as_ref(),
-        NS,
-    )
-    .await;
+    let nobody =
+        crate::iroh::IrohTransport::new(crate::iroh::tests::hermetic_endpoint(9, vec![]).await);
+    let dead = crate::iroh::Contact {
+        key: crate::iroh::SecretKey::from_bytes(&[8; 32]).public(),
+        relay_url: None,
+        iroh_direct_addrs: vec!["127.0.0.1:1".parse().unwrap()],
+    };
+    let out = exchange((&nobody, &dead), rail.as_ref(), NS).await;
     assert!(
         matches!(out.stop, Some(ExchangeStop::Failed(_))),
         "an unreachable address is not a refusal: {:?}",
@@ -589,11 +534,11 @@ async fn a_peer_that_answers_403_or_413_is_refused_rather_than_unreachable() {
 async fn a_peer_whose_digest_never_moves_stops_the_loop_instead_of_spinning() {
     let hits = Arc::new(std::sync::atomic::AtomicUsize::new(0));
     let counter = hits.clone();
-    let url = stand_in(move |req| {
+    let stood = stand_in(move |req| {
         counter.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         axum::Json(RingSyncResponse {
             namespace: req.namespace,
-            digest: Digest::new(),
+            digest: Digest::default(),
             ops: Vec::new(),
             ingested: 0,
         })
@@ -603,7 +548,7 @@ async fn a_peer_whose_digest_never_moves_stops_the_loop_instead_of_spinning() {
     let dir = tempfile::tempdir().unwrap();
     let (rail, _journal) = node(dir.path(), &SigningKey::from_bytes(&[1u8; 32]), 3);
 
-    let out = exchange(&reqwest::Client::new(), &url, rail.as_ref(), NS).await;
+    let out = exchange(stood.to(), rail.as_ref(), NS).await;
     assert!(out.stop.is_none());
     assert_eq!((out.pulled, out.pushed), (0, 0));
     let calls = hits.load(std::sync::atomic::Ordering::SeqCst);
@@ -611,5 +556,64 @@ async fn a_peer_whose_digest_never_moves_stops_the_loop_instead_of_spinning() {
         calls <= 4,
         "the stall check must stop after the second chunk, not run all \
          {MAX_CHUNKS_PER_EXCHANGE} — {calls} calls"
+    );
+}
+
+/// **The answer from the kept digest is the whole log's, byte for byte**
+/// (ceiling-2). This node answers, through `answer` as the route does, a
+/// peer two acts ahead and then a peer in step, and each response, with its
+/// `more`, is set beside the one built from the journal file read whole —
+/// what `answer` sent when the digest and the offer were folded from the
+/// whole log (svrngs-core `digest`, `ops_missing_from_within`). Two of the
+/// four are answered unread, the peer's digest ours.
+#[test]
+fn the_answer_from_the_kept_digest_is_the_whole_logs_byte_for_byte() {
+    let key = SigningKey::from_bytes(&[1u8; 32]);
+    let dirs: Vec<_> = (0..3).map(|_| tempfile::tempdir().unwrap()).collect();
+    let (us, journal) = node(dirs[0].path(), &key, 40);
+    let (ahead, _) = node(dirs[1].path(), &key, 40);
+    let (in_step, _) = node(dirs[2].path(), &key, 40);
+    let two = ops_in(NS, &key, 42).split_off(40);
+    assert_eq!(ahead.ingest_all(NS, &two).unwrap(), 2);
+    us.digest(NS).unwrap(); // caught up, as the last round left it
+
+    let mut answers = Vec::new();
+    let mut ask = |peer: &RingRail, ops: Vec<Op<SignedOp>>| {
+        let req = RingSyncRequest {
+            namespace: NS.to_string(),
+            digest: peer.digest(NS).unwrap(),
+            ops,
+        };
+        let (kept, more) = answer(&us, &req).unwrap();
+        let held = journal.read().unwrap().0;
+        let (sent, whole_more) = svrngs_core::ops_missing_from_within(
+            &held,
+            NS,
+            &Ed25519Verifier,
+            &req.digest,
+            RING_SYNC_OPS_BUDGET_BYTES,
+        );
+        let whole = RingSyncResponse {
+            namespace: NS.to_string(),
+            digest: svrngs_core::digest(&held, NS, &Ed25519Verifier),
+            ops: sent,
+            ingested: kept.ingested,
+        };
+        let bytes = |r: &RingSyncResponse| serde_json::to_string(r).unwrap();
+        assert_eq!((bytes(&kept), more), (bytes(&whole), whole_more));
+        answers.push((kept.digest == req.digest, kept.ops.len(), kept.ingested));
+        kept
+    };
+    ask(&ahead, Vec::new());
+    ask(&ahead, two.clone());
+    let behind = ask(&in_step, Vec::new());
+    in_step.ingest_all(NS, &behind.ops).unwrap();
+    ask(&in_step, Vec::new());
+    assert_eq!(
+        answers,
+        [(false, 40, 0), (true, 0, 2), (false, 2, 0), (true, 0, 0)],
+        "(digests equal, ops sent, ops ingested): ahead, whose window [0, 41] \
+         folds differently here and so travels whole (svrngs-core sync.rs); \
+         ahead with its two; behind once we hold them; and in step"
     );
 }

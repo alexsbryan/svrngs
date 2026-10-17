@@ -1,0 +1,17 @@
+{"t": 1791679304.151, "phase": "setup", "event": "load", "uptime": "17:41  up 1 day,  6:24, 5 users, load averages: 11.59 15.05 18.98", "cores": "12", "swap": "vm.swapusage: total = 7168.00M  used = 5998.56M  free = 1169.44M  (encrypted)", "df": "/dev/disk3s1s1       926   12       116    10%  484019 1221495400    0%   /", "head": "2254580"}
+{"t": 1791679305.16, "phase": "setup", "event": "up", "who": "ana", "plant": "", "args": ["new", "Shared", "--as", "Ana"]}
+{"t": 1791679305.878, "phase": "setup", "event": "up", "who": "ben", "plant": "", "args": ["join", "<the link>", "--as", "Ben"]}
+{"t": 1791679306.85, "phase": "setup", "event": "up", "who": "cy", "plant": "", "args": ["join", "<the link>", "--as", "Cy"]}
+{"t": 1791679307.327, "phase": "setup", "event": "keys", "keys": {"ben": "a44afe2ddac401b8b5001d4443c3db0cd6420395ff6ca9beab41218da64c8727", "ana": "82980105d92eada17f7cb34155f7c14f58ddf3555a2df5a5e3583a9a0413881e", "cy": "249febe2d71d125c78897c0352b70d9608208342688d0bcb48a29377ece7eff2"}, "group": "db742e3eea7ba07ffb5921d3a2415f2be086c820dd26a70bc99591b5523bbf6c"}
+{"t": 1791679307.328, "phase": "M2", "event": "phase"}
+{"t": 1791679307.35, "phase": "M2", "event": "synced", "who": "ana", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791679307.361, "phase": "M2", "event": "synced", "who": "ben", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791679307.371, "phase": "M2", "event": "synced", "who": "cy", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791679308.048, "phase": "M2", "event": "wrote", "who": "ana", "path": "big.bin", "size": 104857600, "blake3": "6a9378a42edb4260c4beede2d6d38136e3036acc2fcb51704ebbd854f958d62f"}
+{"t": 1791679317.423, "phase": "M2", "event": "wrote", "who": "ana", "path": "big.bin", "size": 104857600, "blake3": "c9f7d799682ac46496f8352b4bf7f0accd336126d42de9b364bfd141d999462d"}
+{"t": 1791679326.78, "phase": "M2", "event": "measured", "first_s": 9.14, "edit_s": 8.37, "dropped_s": 0.89, "stores": {"ana": {"first": 0, "edit": 104857600}, "ben": {"first": 0, "edit": 104857600}, "cy": {"first": 0, "edit": 104857600}}, "v1": "6a9378a42edb4260c4beede2d6d38136e3036acc2fcb51704ebbd854f958d62f", "v2": "c9f7d799682ac46496f8352b4bf7f0accd336126d42de9b364bfd141d999462d"}
+{"t": 1791679326.78, "phase": "M2", "event": "bar", "bar": "M2-store", "stores": {"ana": {"first": 0, "edit": 104857600}, "ben": {"first": 0, "edit": 104857600}, "cy": {"first": 0, "edit": 104857600}}, "dropped_s": 0.89, "verdict": "passed"}
+{"t": 1791679326.825, "phase": "M2", "event": "load", "uptime": "17:42  up 1 day,  6:24, 5 users, load averages: 10.22 14.50 18.69", "cores": "12", "swap": "vm.swapusage: total = 7168.00M  used = 5998.56M  free = 1169.44M  (encrypted)", "df": "/dev/disk3s1s1       926   12       115    10%  484019 1214364200    0%   /", "head": "2254580"}
+{"t": 1791679326.827, "phase": "M2", "event": "down", "who": "ana", "sig": "SIGTERM"}
+{"t": 1791679326.829, "phase": "M2", "event": "down", "who": "ben", "sig": "SIGTERM"}
+{"t": 1791679326.83, "phase": "M2", "event": "down", "who": "cy", "sig": "SIGTERM"}

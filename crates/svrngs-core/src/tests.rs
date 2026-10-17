@@ -212,16 +212,16 @@ fn one_actors_acts_inside_one_second_fold_in_seq_order() {
     // The precondition that makes this a gate rather than a coincidence: the
     // ids do NOT already sort in seq order, so the old comparator produced a
     // different answer.
-    let by_id: Vec<&str> = {
+    let by_id: Vec<String> = {
         let mut v: Vec<_> = ops.iter().collect();
         v.sort_by(|a, b| a.id.cmp(&b.id));
         v.iter()
             .map(|o| match &o.kind.act {
-                RailAct::Record { payload } => payload
-                    .as_value()
-                    .get("what")
-                    .and_then(|w| w.as_str())
-                    .expect("what"),
+                RailAct::Record { payload } => serde_json::to_value(payload).expect("a payload")
+                    ["what"]
+                    .as_str()
+                    .expect("what")
+                    .to_string(),
                 _ => unreachable!(),
             })
             .collect()
@@ -342,13 +342,13 @@ fn a_dangling_correction_is_named_beside_a_complete_answer() {
 
 /// **Every gap kind has a named verdict.** One classification table (ARCH
 /// §10.6), split by coverage: can this gap hide acts that belong in the
-/// fold? A refused or forked act CAN — it may be real data the fold turned
-/// away (the pinned "an unverifiable op makes this a subset"). A tampered id
-/// cannot ("this changes no outcome" — the act folds under its derived id),
-/// and a dangling citation cannot (it is the ask, not a hole). The A2
-/// pre-registration's parenthetical grouped fork and tamper with dangling;
-/// fork stays Absence here because dropping both branches loses the seq's
-/// real content — the coverage question is the one `is_complete` answers.
+/// fold? A refused act CAN — it may be real data the fold turned away (the
+/// pinned "an unverifiable op makes this a subset"). A tampered id cannot
+/// ("this changes no outcome" — the act folds under its derived id), a
+/// dangling citation cannot (it is the ask, not a hole), and since U7 a fork
+/// cannot: both branches fold, so nothing at the seq is lost. The A2
+/// pre-registration's parenthetical grouped fork and tamper with dangling,
+/// which is where fork now sits.
 #[test]
 fn every_gap_class_is_classified() {
     let actor = actor_of(&key(1));
@@ -376,14 +376,10 @@ fn every_gap_class_is_classified() {
             actor: actor.clone(),
             seq: 1,
         },
-        RailGap::SequenceFork {
-            actor: actor.clone(),
-            seq: 3,
-            ids: vec![id.clone()],
-        },
         RailGap::SequenceHole {
             actor: actor.clone(),
-            missing: 4,
+            from: 4,
+            to: 4,
         },
     ];
     for gap in &absences {
@@ -401,6 +397,11 @@ fn every_gap_class_is_classified() {
         RailGap::DanglingCorrection {
             by: id.clone(),
             missing: id.clone(),
+        },
+        RailGap::SequenceFork {
+            actor: actor.clone(),
+            seq: 3,
+            ids: vec![id.clone()],
         },
     ];
     for gap in &contradictions {
@@ -440,7 +441,7 @@ fn a_replacement_key_leaves_every_past_act_admitted() {
         1,
         RailAct::Remove {
             key: actor_of(&key(4)),
-            through_seq: 1,
+            through: vec![old.id.clone(), past.id.clone()],
         },
     );
     let new_writes = signed(&key(5), 104, 0, record("new-key-writes"));
@@ -520,7 +521,8 @@ fn a_gap_renders_multi_byte_names_without_panicking() {
         },
         RailGap::SequenceHole {
             actor: wide_actor.to_string(),
-            missing: 4,
+            from: 4,
+            to: 4,
         },
         RailGap::SequenceFork {
             actor: wide_actor.to_string(),
@@ -705,10 +707,33 @@ fn an_act_whose_previous_act_is_not_its_authors_at_seq_minus_one_is_a_gap() {
         f.gaps(),
         vec![RailGap::SequenceHole {
             actor: alex,
-            missing: 0
+            from: 0,
+            to: 0,
         }]
     );
     assert_eq!(applied(&f), vec!["b"]);
+}
+
+/// **An act far past its signer's chain costs what is held, not the seq it
+/// claims** (#187). A parent not held is not judged (above), so a bound
+/// signer's act at a seq a million past its seq 0 is admitted, and the
+/// missing seqs between are one hole: one gap, from 1 to the seq below it.
+/// And so at `u64::MAX`, where a gap a missing seq never returned. Red at
+/// 71be570f (#187): 999,999 gaps for the first, in 0.17 s.
+#[test]
+fn an_act_far_past_its_chain_is_one_hole() {
+    let first = signed(&key(1), 100, 0, record("first"));
+    for seq in [1_000_000, u64::MAX] {
+        let far = signed(&key(1), 101, seq, record("far"));
+        let f = admitted(&[first.clone(), far]);
+        let hole = RailGap::SequenceHole {
+            actor: actor_of(&key(1)),
+            from: 1,
+            to: seq - 1,
+        };
+        assert_eq!(f.gaps(), [hole]);
+        assert_eq!(applied(&f), vec!["first", "far"]);
+    }
 }
 
 /// **The one thing that distinguishes "nothing happened" from "it never
@@ -724,7 +749,8 @@ fn a_hole_in_an_actors_sequence_is_reported() {
         f.gaps(),
         vec![RailGap::SequenceHole {
             actor: actor_of(&key(1)),
-            missing: 1
+            from: 1,
+            to: 1,
         }]
     );
     assert_eq!(
@@ -735,14 +761,18 @@ fn a_hole_in_an_actors_sequence_is_reported() {
 }
 
 /// One actor, one sequence number, two different ops: either equivocation or
-/// a counter lost across a restart. Both are excluded — choosing one would be
-/// inventing an answer.
+/// a counter lost across a restart. Choosing one would be inventing an
+/// answer, and since U7 neither is excluded: forks void nothing (DESIGN §6),
+/// so both count and the fork is named beside a complete answer. The name
+/// is the rule before U7, kept so u7-removal's check follows every test by
+/// name.
 #[test]
 fn one_sequence_number_used_twice_excludes_both_ops() {
     let a = signed(&key(1), 100, 0, record("a"));
     let b = signed(&key(1), 101, 0, record("b"));
     let f = admitted(&[a.clone(), b.clone()]);
-    assert!(f.ops().is_empty(), "{:?}", f.ops());
+    assert_eq!(applied(&f), vec!["a", "b"]);
+    assert!(f.is_complete());
     let mut ids = vec![a.id, b.id];
     ids.sort();
     assert_eq!(
@@ -903,7 +933,8 @@ fn every_gap_renders_as_a_sentence() {
         },
         RailGap::SequenceHole {
             actor: actor.clone(),
-            missing: 2,
+            from: 2,
+            to: 2,
         },
         RailGap::WrongPrevious {
             id: id.clone(),
@@ -959,4 +990,50 @@ fn a_person_is_made_only_from_a_name() {
     for raw in ["\"\"", "\" bo\"", "\"\\u001b[2J\""] {
         assert!(serde_json::from_str::<Person>(raw).is_err(), "{raw}");
     }
+}
+
+// ── the roster's bytes ───────────────────────────────────────
+
+/// **A roster reads as it always did, with or without upstream's `vouches`.**
+/// svrngs never wrote that field (it was `skip_serializing_if` empty) and it
+/// went with `introduce.rs` in core-0; a file that carried it must still
+/// parse to the same members, and a roster serializes to exactly the bytes a
+/// deployed `roster.json` holds. Watched failing first with
+/// `#[serde(deny_unknown_fields)]` on [`Roster`]: the second parse refused.
+/// (Moved from upstream's `tests_introduce.rs`, its warrant half deleted with
+/// the warrant.)
+#[test]
+fn a_roster_written_with_or_without_vouches_reads_as_its_members() {
+    let before = r#"{
+  "members": {
+    "alex": [
+      "aaaa",
+      "bbbb"
+    ],
+    "bo": [
+      "cccc"
+    ]
+  }
+}"#;
+    let with_vouches = r#"{
+  "members": { "alex": ["aaaa", "bbbb"], "bo": ["cccc"] },
+  "vouches": { "bbbb": { "op": "ring-0123456789abcdef", "by": "aaaa", "at": 200 } }
+}"#;
+    let roster: Roster = serde_json::from_str(before).expect("a deployed roster.json must parse");
+    assert_eq!(roster.members.len(), 2);
+    assert_eq!(roster.members[&p("alex")], vec!["aaaa", "bbbb"]);
+    let vouched: Roster =
+        serde_json::from_str(with_vouches).expect("a roster with upstream's vouches must parse");
+    assert_eq!(vouched, roster, "and to the same members");
+    assert_eq!(serde_json::to_string_pretty(&roster).unwrap(), before);
+    assert_eq!(serde_json::to_string_pretty(&vouched).unwrap(), before);
+}
+
+/// The one rendering every surface that shows an op id to a person uses.
+/// (Upstream's `tests_introduce.rs` held it with `short_stamp`'s, which went
+/// with the warrant, core-0.)
+#[test]
+fn an_op_id_reads_short_enough_to_say() {
+    assert_eq!(short_id("ring-0123456789abcdef"), "ring-0123456…");
+    assert_eq!(short_id("short"), "short");
 }

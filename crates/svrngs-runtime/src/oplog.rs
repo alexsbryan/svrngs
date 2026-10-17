@@ -88,14 +88,9 @@
 //! introducing a fourth (ARCH §19).
 
 use std::fs::{self, OpenOptions};
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader, Read, Seek, SeekFrom, Write};
 use std::marker::PhantomData;
 use std::path::PathBuf;
-
-// Only the tests derive with these; upstream carries the unused import as a
-// warning its lint ratchet counts, and svrngs denies warnings.
-#[cfg(test)]
-use serde::{Deserialize, Serialize};
 
 pub use svrngs_core::{Journaled, Op, SkippedLine};
 
@@ -147,16 +142,18 @@ impl<K: Journaled> Oplog<K> {
         }
     }
 
-    #[cfg(test)]
-    pub fn path(&self) -> &std::path::Path {
-        &self.path
-    }
-
-    #[cfg(test)]
-    /// Append one op: [`Self::append_all`] of one, so a test writes a line
-    /// as the journal does.
-    pub fn append(&self, op: &Op<K>) -> Result<()> {
-        self.append_all(std::slice::from_ref(op))
+    /// `ops` as the log's lines, each ending in a newline.
+    fn lines(ops: &[Op<K>]) -> Result<String> {
+        let mut buf = String::new();
+        for op in ops {
+            let line = serde_json::to_string(op).map_err(|e| OplogError::Serialise {
+                log: K::LABEL,
+                source: e,
+            })?;
+            buf.push_str(&line);
+            buf.push('\n');
+        }
+        Ok(buf)
     }
 
     /// Append several ops in one open. Creates the parent directory on
@@ -170,17 +167,22 @@ impl<K: Journaled> Oplog<K> {
         }
         let mut f = OpenOptions::new()
             .create(true)
+            .read(true)
             .append(true)
             .open(&self.path)
             .map_err(OplogError::Io)?;
-        let mut buf = String::new();
-        for op in ops {
-            let line = serde_json::to_string(op).map_err(|e| OplogError::Serialise {
-                log: K::LABEL,
-                source: e,
-            })?;
-            buf.push_str(&line);
-            buf.push('\n');
+        let mut buf = Self::lines(ops)?;
+        // A torn last line — power lost mid-write, a full disk — is ended
+        // first, so this batch starts a line of its own and is read whole;
+        // the fragment stays the malformed line it is (#191). An empty
+        // file's last byte would be before its start, which `seek` refuses.
+        let mut last = [b'\n'];
+        if f.seek(SeekFrom::End(-1)).is_ok() {
+            f.read_exact(&mut last).map_err(OplogError::Io)?;
+        }
+        if last[0] != b'\n' {
+            tracing::warn!(log = K::LABEL, path = %self.path.display(), "oplog: the last line is torn; ended before this append");
+            buf.insert(0, '\n');
         }
         // ONE write for the whole batch, so `O_APPEND`'s atomicity covers it.
         // Two calls (the body, then the newline) left a window in which a
@@ -197,107 +199,6 @@ impl<K: Journaled> Oplog<K> {
             "oplog: append_all"
         );
         Ok(())
-    }
-
-    /// Replace the whole log with exactly `ops`, atomically.
-    ///
-    /// **The only shrinking operation this journal has**, and the reason it
-    /// exists is retention: an append-only file that can never lose a line
-    /// grows without bound, and "delete the old prefix" is not expressible as
-    /// an append. Every other method here adds; this one is how a tenant that
-    /// has *earned* the right to forget actually forgets. What earns it is the
-    /// tenant's business — the ring rail requires a signed seal
-    /// (`commonwealth_rail::RingJournal::compact`) — and this method takes no
-    /// opinion beyond writing the lines it was handed.
-    ///
-    /// # Atomic, because a half-written journal is worse than a long one
-    ///
-    /// The lines go to a sibling temp file, are fsynced, and are then renamed
-    /// over the log. `rename(2)` within a directory is atomic, so a reader
-    /// concurrent with this sees either the whole old log or the whole new
-    /// one, and a crash at any point leaves one of the two on disk rather than
-    /// a truncated file. The directory is fsynced afterwards so the rename
-    /// itself survives a power cut — without that the data is durable and the
-    /// name pointing at it is not, which on some filesystems leaves the log
-    /// missing entirely.
-    ///
-    /// The temp file is `<FILE>.compacting` in the same directory rather than
-    /// in a temp dir: `rename(2)` cannot cross a filesystem, and a data
-    /// directory on its own volume is the normal deployment here.
-    ///
-    /// # This does NOT serialise against [`Self::append`]
-    ///
-    /// `O_APPEND` makes concurrent appends safe against each other; it does
-    /// nothing for an append racing a rename, which would land the appended
-    /// line in the file that is about to be replaced and lose it. The caller
-    /// holds the writer lock for the read-decide-replace sequence — see
-    /// `RingJournal::compact`, which does exactly that.
-    pub fn replace_all(&self, ops: &[Op<K>]) -> Result<()> {
-        if let Some(parent) = self.path.parent() {
-            fs::create_dir_all(parent).map_err(OplogError::Io)?;
-        }
-        let mut buf = String::new();
-        for op in ops {
-            let line = serde_json::to_string(op).map_err(|e| OplogError::Serialise {
-                log: K::LABEL,
-                source: e,
-            })?;
-            buf.push_str(&line);
-            buf.push('\n');
-        }
-        let tmp = self.path.with_extension("compacting");
-        {
-            let mut f = OpenOptions::new()
-                .create(true)
-                .write(true)
-                .truncate(true)
-                .open(&tmp)
-                .map_err(OplogError::Io)?;
-            f.write_all(buf.as_bytes()).map_err(OplogError::Io)?;
-            f.sync_data().map_err(OplogError::Io)?;
-        }
-        fs::rename(&tmp, &self.path).map_err(OplogError::Io)?;
-        // The rename is a directory change, and a directory change is not
-        // covered by the file's own fsync above.
-        if let Some(parent) = self.path.parent() {
-            // Not worth FAILING a compaction over: the replacement lines are
-            // already fsynced, so a lost rename leaves the pre-compaction log
-            // in place — long, and correct. But not worth swallowing either
-            // (ARCH §18.3): a host where this always fails is one where every
-            // compaction is provisional, and the only way anyone learns that
-            // is if it says so.
-            let flushed = fs::File::open(parent).and_then(|dir| dir.sync_all());
-            if let Err(e) = flushed {
-                tracing::warn!(
-                    log = K::LABEL,
-                    dir = %parent.display(),
-                    error = %e,
-                    "oplog: replaced, but the directory was not flushed — the \
-                     rename may not survive a power cut, in which case the \
-                     pre-compaction log comes back"
-                );
-            }
-        }
-        tracing::info!(
-            log = K::LABEL,
-            ops = ops.len(),
-            path = %self.path.display(),
-            "oplog: replaced"
-        );
-        Ok(())
-    }
-
-    #[cfg(test)]
-    /// Every op in append order. A missing file is an empty log, not an error.
-    ///
-    /// Drops the skip list from [`Self::read_all_with_skips`]. That is the
-    /// right call for a tenant deriving a *summary* it can restate later
-    /// (governance, reconciliation, the meta-atlas bridge all re-run from the
-    /// whole log). It is the WRONG call for a tenant whose answer is a number
-    /// a person acts on — see the ring ledger, which reads the skips and
-    /// reports them as gaps rather than confidently totalling a subset.
-    pub fn read_all(&self) -> Result<Vec<Op<K>>> {
-        self.read_all_with_skips().map(|(ops, _)| ops)
     }
 
     /// Every op in append order, **plus the lines this build could not use**.
@@ -340,12 +241,12 @@ impl<K: Journaled> Oplog<K> {
     /// whole read per write (the ring journal's next-seq and held-id index).
     /// Reads from the cursor's byte offset to the end of the last whole line,
     /// so a line another process is still writing is left for the next call.
-    /// When the file is not the one the cursor was taken on (a
-    /// [`Self::replace_all`] renamed a new one over it) or is shorter than the
+    /// When the file is not the one the cursor was taken on (another file
+    /// renamed over it, as a restore would) or is shorter than the
     /// offset, the read starts again from the top and the returned
     /// [`Tail::restarted`] says the caller's fold is void. Lines are judged by
     /// the same rules as [`Self::read_all_with_skips`]; skipped ones are warned
-    /// and counted, with line numbers counted from where this read began.
+    /// and counted in its trace, with line numbers counted from where this read began.
     pub fn read_since(&self, cursor: Cursor) -> Result<Tail<K>> {
         use std::io::{Read, Seek, SeekFrom};
         let mut file = match fs::File::open(&self.path) {
@@ -353,7 +254,6 @@ impl<K: Journaled> Oplog<K> {
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
                 return Ok(Tail {
                     ops: Vec::new(),
-                    skipped: 0,
                     cursor: Cursor::default(),
                     restarted: cursor != Cursor::default(),
                 });
@@ -393,7 +293,6 @@ impl<K: Journaled> Oplog<K> {
         );
         Ok(Tail {
             ops,
-            skipped,
             cursor: Cursor {
                 file: file_id,
                 end: start + whole as u64,
@@ -456,12 +355,6 @@ pub struct Cursor {
 pub struct Tail<K> {
     /// The ops past the cursor, in append order.
     pub ops: Vec<Op<K>>,
-    /// Lines past the cursor this build could not use (already warned).
-    #[cfg_attr(
-        not(test),
-        expect(dead_code, reason = "the cursor tests read it; the write index needs only the ops")
-    )]
-    pub skipped: usize,
     /// Where the next read starts.
     pub cursor: Cursor,
     /// The read began at the top of the file, not at the cursor: whatever the
@@ -484,287 +377,5 @@ fn file_identity(_meta: &fs::Metadata) -> Option<(u64, u64)> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-    #[serde(tag = "op", rename_all = "snake_case")]
-    enum Probe {
-        Touch { what: String },
-    }
-
-    impl Journaled for Probe {
-        const FILE: &'static str = "probe_oplog.jsonl";
-        const ID_PREFIX: &'static str = "probe";
-        const LABEL: &'static str = "probe_oplog";
-    }
-
-    fn touch(what: &str) -> Probe {
-        Probe::Touch { what: what.into() }
-    }
-
-    #[test]
-    fn id_is_derived_from_the_act_not_from_position() {
-        let a = Op::new(touch("x"), 100, "human:alex");
-        let b = Op::new(touch("x"), 100, "human:alex");
-        let c = Op::new(touch("y"), 100, "human:alex");
-        assert_eq!(a.id, b.id, "same act, same second, same actor => same id");
-        assert_ne!(a.id, c.id, "a different act must not reuse the id");
-        // svrngs (U2): the whole hash, 64 hex, where upstream wore the
-        // prefix and kept 64 bits.
-        assert_eq!(a.id.to_string().len(), 64);
-    }
-
-    /// THE WIRE TEST. `OpId` is content-addressed and **gossiped** — a peer
-    /// reads ids minted by a build it does not have, and a `Revert` targets one
-    /// by value. So the derivation is a wire format, and this pins it to a
-    /// literal rather than to a re-computation, which would agree with any
-    /// change it was asked to check.
-    ///
-    /// If this fails, you changed the id derivation. That is a mesh-wide
-    /// breaking change and it needs a `Journaled::VERSION` bump and a fleet
-    /// rollout, not a new expected value here. (svrngs, U2: re-pinned when
-    /// `OpId` became the whole hash, before any journal outside tests
-    /// existed.)
-    #[test]
-    fn the_id_derivation_is_pinned_to_the_wire() {
-        let op = Op::new(touch("x"), 100, "human:alex");
-        assert_eq!(
-            op.id.to_string(),
-            "97c56dfd0781629dd3907ff711e43ba356dd2ea3efa1bcd5b308902c85826c9f",
-            "the id derivation is <prefix>|<ts>|<actor>|<body-json> hashed with \
-             ContentHash, whole — see the note on this test before touching any \
-             of those five"
-        );
-    }
-
-    #[test]
-    fn the_prefix_is_hashed_so_two_tenants_cannot_collide() {
-        // Same ts, same actor, same JSON body, different tenant prefix.
-        #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-        #[serde(tag = "op", rename_all = "snake_case")]
-        enum Other {
-            Touch { what: String },
-        }
-        impl Journaled for Other {
-            const FILE: &'static str = "other_oplog.jsonl";
-            const ID_PREFIX: &'static str = "other";
-            const LABEL: &'static str = "other_oplog";
-        }
-        let a = Op::new(touch("x"), 100, "ingest");
-        let b = Op::new(Other::Touch { what: "x".to_string() }, 100, "ingest");
-        assert_ne!(
-            a.id, b.id,
-            "the hashed input must include the prefix, not only the body"
-        );
-    }
-
-    /// **The one shrinking operation, and it leaves nothing behind.** The
-    /// temp file is a sibling of the log, so a compaction that returned
-    /// without cleaning up would leave a `.compacting` file in every ring
-    /// directory — harmless, and exactly the kind of litter that later reads
-    /// as a crashed run.
-    #[test]
-    fn replace_all_swaps_the_whole_log_and_leaves_no_temp_file() {
-        let dir = tempfile::tempdir().unwrap();
-        let log: Oplog<Probe> = Oplog::new(dir.path());
-        let ops: Vec<Op<Probe>> = ["a", "b", "c"]
-            .iter()
-            .map(|w| Op::new(touch(w), 7, "human:alex"))
-            .collect();
-        log.append_all(&ops).unwrap();
-
-        log.replace_all(&ops[2..]).unwrap();
-        assert_eq!(log.read_all().unwrap(), ops[2..].to_vec());
-        assert!(
-            !dir.path().join("probe_oplog.compacting").exists(),
-            "the temp file outlived the rename"
-        );
-
-        // Replacing with nothing is an EMPTY log, not a missing one: a
-        // namespace whose every line was retired still exists.
-        log.replace_all(&[]).unwrap();
-        assert!(log.path().exists(), "the file was unlinked, not emptied");
-        assert!(log.read_all().unwrap().is_empty());
-
-        // And it is still a journal afterwards — append picks up from the
-        // replaced file rather than from whatever was there before.
-        let next = Op::new(touch("d"), 8, "human:alex");
-        log.append(&next).unwrap();
-        assert_eq!(log.read_all().unwrap(), vec![next]);
-    }
-
-    #[test]
-    fn round_trips_through_the_file() {
-        let dir = tempfile::tempdir().unwrap();
-        let log: Oplog<Probe> = Oplog::new(dir.path().join("atlas"));
-        let op = Op::new(touch("x"), 7, "human:alex");
-        log.append(&op).unwrap();
-        let back = log.read_all().unwrap();
-        assert_eq!(back, vec![op]);
-        assert!(log.path().ends_with("probe_oplog.jsonl"));
-    }
-
-    #[test]
-    fn the_line_is_one_flat_object_with_the_kind_inlined() {
-        let dir = tempfile::tempdir().unwrap();
-        let log: Oplog<Probe> = Oplog::new(dir.path());
-        log.append(&Op::new(touch("x"), 7, "ingest")).unwrap();
-        let raw = fs::read_to_string(log.path()).unwrap();
-        let v: serde_json::Value = serde_json::from_str(raw.trim()).unwrap();
-        for key in ["id", "v", "ts_unix", "actor", "op", "what"] {
-            assert!(v.get(key).is_some(), "line is missing {key}: {raw}");
-        }
-    }
-
-    #[test]
-    fn a_missing_log_reads_as_empty_not_as_an_error() {
-        let dir = tempfile::tempdir().unwrap();
-        let log: Oplog<Probe> = Oplog::new(dir.path().join("nope"));
-        assert!(log.read_all().unwrap().is_empty());
-    }
-
-    /// The §18.3 property: a reader that skipped lines can SAY so. Before
-    /// `read_all_with_skips` a corrupt log and a clean one were indistinguishable
-    /// from the return value.
-    #[test]
-    fn the_skipped_lines_are_returned_not_only_logged() {
-        let dir = tempfile::tempdir().unwrap();
-        let log: Oplog<Probe> = Oplog::new(dir.path());
-        let mut future = Op::new(touch("x"), 7, "ingest");
-        future.v = Probe::VERSION + 1;
-        log.append(&future).unwrap();
-        log.append(&Op::new(touch("y"), 8, "ingest")).unwrap();
-        fs::write(
-            log.path(),
-            format!("{}\nnot json at all\n", fs::read_to_string(log.path()).unwrap().trim()),
-        )
-        .unwrap();
-
-        let (ops, skipped) = log.read_all_with_skips().unwrap();
-        assert_eq!(ops.len(), 1);
-        assert_eq!(skipped.len(), 2, "both classes of skip must be reported");
-        assert!(matches!(
-            skipped[0],
-            SkippedLine::NewerVersion { line: 1, v } if v == Probe::VERSION + 1
-        ));
-        assert!(matches!(skipped[1], SkippedLine::Malformed { line: 3, .. }));
-        // A clean log reports nothing, so a non-empty list is real signal.
-        let clean: Oplog<Probe> = Oplog::new(dir.path().join("clean"));
-        clean.append(&Op::new(touch("z"), 9, "ingest")).unwrap();
-        assert!(clean.read_all_with_skips().unwrap().1.is_empty());
-    }
-
-    /// `O_APPEND` guarantees one `write(2)` lands whole. Two calls per logical
-    /// line did not have that guarantee, so a concurrent writer could split a
-    /// line across another's. Pinning the shape, not the race: every byte of a
-    /// line — newline included — comes from one buffer.
-    #[test]
-    fn a_logical_line_including_its_newline_is_written_once() {
-        let dir = tempfile::tempdir().unwrap();
-        let log: Oplog<Probe> = Oplog::new(dir.path());
-        log.append_all(&[Op::new(touch("a"), 1, "ingest"), Op::new(touch("b"), 2, "ingest")])
-            .unwrap();
-        let raw = fs::read_to_string(log.path()).unwrap();
-        assert!(raw.ends_with('\n'), "every line is newline-terminated");
-        assert_eq!(raw.lines().count(), 2);
-        assert_eq!(log.read_all().unwrap().len(), 2);
-    }
-
-    /// Leg 5 of `ra-membership-is-order-free`, at the envelope level: a line
-    /// declaring a version this build does not understand is skipped BEFORE
-    /// its body is parsed — never as `MalformedLine`, never as an admitted
-    /// op. A parse-first gate gets this exactly backwards for the lines that
-    /// matter most: an act whose KIND a build has never seen fails serde and
-    /// reads as Malformed, when the version bump exists to name it.
-    #[test]
-    fn a_newer_version_line_is_skipped_before_its_body_is_parsed() {
-        let dir = tempfile::tempdir().unwrap();
-        let log: Oplog<Probe> = Oplog::new(dir.path());
-        fs::write(
-            log.path(),
-            format!(
-                r#"{{"id":"probe-0000000000000000","v":{},"ts_unix":7,"actor":"ingest","kind":{{"op":"an_act_this_build_has_never_seen"}}}}"#,
-                Probe::VERSION + 1
-            ),
-        )
-        .unwrap();
-        let (ops, skipped) = log.read_all_with_skips().unwrap();
-        assert!(ops.is_empty(), "nothing admitted");
-        assert!(
-            matches!(skipped.as_slice(), [SkippedLine::NewerVersion { v, .. }] if *v == Probe::VERSION + 1),
-            "the version gate names it — never a Malformed misread of the unknown kind: {skipped:?}"
-        );
-    }
-
-    #[test]
-    fn a_line_from_a_newer_format_is_skipped_not_misread() {
-        let dir = tempfile::tempdir().unwrap();
-        let log: Oplog<Probe> = Oplog::new(dir.path());
-        let mut future = Op::new(touch("x"), 7, "ingest");
-        future.v = Probe::VERSION + 1;
-        log.append(&future).unwrap();
-        log.append(&Op::new(touch("y"), 8, "ingest")).unwrap();
-        let back = log.read_all().unwrap();
-        assert_eq!(back.len(), 1, "the future-version line must not be read");
-        assert_eq!(back[0].ts_unix, 8);
-    }
-
-    #[test]
-    fn a_malformed_line_is_skipped_and_the_rest_survive() {
-        let dir = tempfile::tempdir().unwrap();
-        let log: Oplog<Probe> = Oplog::new(dir.path());
-        log.append(&Op::new(touch("x"), 7, "ingest")).unwrap();
-        fs::write(
-            log.path(),
-            format!("{}\nnot json at all\n", fs::read_to_string(log.path()).unwrap().trim()),
-        )
-        .unwrap();
-        assert_eq!(log.read_all().unwrap().len(), 1);
-    }
-
-    #[test]
-    fn append_all_writes_every_op_in_order() {
-        let dir = tempfile::tempdir().unwrap();
-        let log: Oplog<Probe> = Oplog::new(dir.path());
-        let ops = vec![Op::new(touch("a"), 1, "ingest"), Op::new(touch("b"), 2, "ingest")];
-        log.append_all(&ops).unwrap();
-        assert_eq!(log.read_all().unwrap(), ops);
-        // Empty batch must not create the file.
-        let empty: Oplog<Probe> = Oplog::new(dir.path().join("empty"));
-        empty.append_all(&[]).unwrap();
-        assert!(!empty.path().exists());
-    }
-
-    /// A cursor reads only what was appended after it, leaves a half-written
-    /// line for the next read, and starts over when a replace renames a new
-    /// file over the log.
-    #[test]
-    fn read_since_reads_the_tail_and_restarts_on_a_replace() {
-        let dir = tempfile::tempdir().unwrap();
-        let log: Oplog<Probe> = Oplog::new(dir.path());
-        let first = log.read_since(Cursor::default()).unwrap();
-        assert!(first.ops.is_empty() && !first.restarted);
-
-        let a = Op::new(touch("a"), 1, "ingest");
-        let b = Op::new(touch("b"), 2, "ingest");
-        log.append_all(&[a.clone(), b.clone()]).unwrap();
-        let both = log.read_since(first.cursor).unwrap();
-        assert_eq!(both.ops, vec![a.clone(), b.clone()]);
-        assert!(both.restarted, "the file did not exist at the first cursor");
-
-        let c = Op::new(touch("c"), 3, "ingest");
-        log.append(&c).unwrap();
-        let mut f = OpenOptions::new().append(true).open(log.path()).unwrap();
-        f.write_all(b"{\"id\":\"half").unwrap();
-        let tail = log.read_since(both.cursor).unwrap();
-        assert_eq!(tail.ops, vec![c.clone()], "only the line after the cursor");
-        assert!(!tail.restarted);
-        assert_eq!(tail.skipped, 0, "a half-written line is not judged yet");
-
-        log.replace_all(&[c.clone()]).unwrap();
-        let again = log.read_since(tail.cursor).unwrap();
-        assert!(again.restarted, "a replaced file voids the cursor");
-        assert_eq!(again.ops, vec![c]);
-    }
-}
+#[path = "oplog_tests.rs"]
+mod tests;

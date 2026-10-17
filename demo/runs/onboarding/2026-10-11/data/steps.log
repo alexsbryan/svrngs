@@ -1,0 +1,9 @@
+05:08:16 build-release, 15 s: 95c4219f1ed8b3a01a313a2ab2b3ed394ff1a90ab49cf95a0fb58e194e86e3d9  svrngs-linux-x86_64.tar.gz
+05:08:16 the page host: http://localhost:59132/
+05:08:19 sam: Made Trip, with you as Sam.; {"name":"Trip"}; beach.jpg 78817 bytes
+05:08:22 the group's page shows, on a computer: curl -fsSL http://localhost:59132/install.sh | sh -s -- 'http://localhost:59132/#<the token>'
+05:08:22 pasted
+05:08:26 the line exited 0 after 4642 ms: Your home page: http://svrngs.localhost:59236/
+05:08:28 home page: {"mode":"home","url":"http://svrngs.localhost:59236/","listed_ms":6029,"shown":"Trip\n\nPeople: Sam, alexsbryan\n\nTrip’s folder is on this computer at /tmp/onb-f-run/newcomer/svrngs/Trip\n\nNobody lends anything here yet.\nWhat apps use"}
+05:08:28 Sam's beach.jpg in the newcomer's /tmp/onb-f-run/newcomer/svrngs/Trip: 6489 ms after the paste
+05:08:29 booted out sh.svrnme.svrngs

@@ -1,0 +1,100 @@
+{
+ "n0": {
+  "https://usw1-1.relay.n0.iroh.link/": true,
+  "https://use1-1.relay.n0.iroh.link/": true,
+  "https://euc1-1.relay.n0.iroh.link/": true,
+  "https://aps1-1.relay.n0.iroh.link/": true
+ },
+ "paths": {
+  "loopback": {
+   "relay": [
+    "LAYER parse: ok — relay http://127.0.0.1:64477/"
+   ],
+   "joined_ms": 1218,
+   "warm": {
+    "in": 20,
+    "of": 20,
+    "dial_ms": {
+     "min": 9,
+     "median": 15.5,
+     "max": 24
+    },
+    "open_ms": {
+     "min": 318,
+     "median": 325.5,
+     "max": 340
+    }
+   },
+   "cold": {
+    "in": 5,
+    "of": 5,
+    "dial_ms": {
+     "min": 3047,
+     "median": 3054,
+     "max": 3057
+    },
+    "open_ms": {
+     "min": 3353,
+     "median": 3362,
+     "max": 3370
+    }
+   },
+   "asleep": {
+    "in": 0,
+    "of": 2,
+    "dial_ms": null,
+    "open_ms": {
+     "min": 30575,
+     "median": 30612.0,
+     "max": 30649
+    }
+   }
+  },
+  "n0": {
+   "relay": [
+    "LAYER parse: ok — relay https://usw1-1.relay.n0.iroh.link/"
+   ],
+   "joined_ms": 2884,
+   "warm": {
+    "in": 20,
+    "of": 20,
+    "dial_ms": {
+     "min": 79,
+     "median": 84.0,
+     "max": 184
+    },
+    "open_ms": {
+     "min": 826,
+     "median": 841.0,
+     "max": 1342
+    }
+   },
+   "cold": {
+    "in": 5,
+    "of": 5,
+    "dial_ms": {
+     "min": 73,
+     "median": 88,
+     "max": 187
+    },
+    "open_ms": {
+     "min": 841,
+     "median": 857,
+     "max": 1356
+    }
+   },
+   "asleep": {
+    "in": 0,
+    "of": 2,
+    "dial_ms": null,
+    "open_ms": {
+     "min": 30571,
+     "median": 31319.0,
+     "max": 32067
+    }
+   }
+  }
+ },
+ "slowest_working_dial_ms": 3057,
+ "end_load": 16.4
+}

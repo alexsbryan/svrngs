@@ -1,0 +1,64 @@
+{
+ "rows": [
+  {
+   "title": "Arrival",
+   "year": 2016,
+   "ids": {
+    "tmdb": "329865",
+    "imdb": "tt2543164"
+   },
+   "rating": 5,
+   "at": "2026-09-12T21:04:00Z",
+   "marker": "su-diary-1-0e1f612228b3cf74"
+  },
+  {
+   "title": "Arrival",
+   "year": 2016,
+   "ids": {
+    "tmdb": "329865",
+    "imdb": "tt2543164"
+   },
+   "rating": 5,
+   "at": "2026-10-01T20:40:00Z",
+   "marker": "su-diary-2-9ff61d04a5eb6b29"
+  },
+  {
+   "title": "Brazil",
+   "year": 1985,
+   "ids": {
+    "tmdb": "68",
+    "imdb": "tt0088846"
+   },
+   "rating": 4,
+   "at": "2026-08-30T22:15:00Z",
+   "marker": "su-diary-3-d5e71540dee15b26"
+  },
+  {
+   "title": "Blade Runner",
+   "year": 1982,
+   "ids": {
+    "tmdb": "78",
+    "imdb": "tt0083658"
+   },
+   "rating": 2,
+   "at": "2026-07-19T21:30:00Z",
+   "marker": "su-diary-4-d98185c1a88f0ebc"
+  },
+  {
+   "title": "Solaris",
+   "year": 1972,
+   "ids": {
+    "tmdb": "593"
+   },
+   "rating": 5,
+   "at": "2026-06-02T23:10:00Z",
+   "marker": "su-diary-5-9e10eeec26340c7a"
+  }
+ ],
+ "expected": [
+  "Arrival",
+  "Brazil",
+  "Blade Runner",
+  "Alien"
+ ]
+}

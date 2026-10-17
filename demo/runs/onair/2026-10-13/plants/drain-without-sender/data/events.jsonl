@@ -1,0 +1,7 @@
+{"t": 1791960946.264, "event": "start", "commit": "6440fc3", "load": 5.6}
+{"t": 1791960962.538, "event": "command", "who": "ana", "args": ["remove", "Dee", "--group", "onair"], "exit": 0, "said": "Dee is no longer in onair. What Dee already has stays with them; nothing new reaches them."}
+{"t": 1791960962.9, "event": "group", "group": "5ba66e5f928a8be6abe644d8e3971779eb106c6fd85fe38fe84b2abad4b5de57", "people": {"Cy": {"key": "016ff0fa8c9edcb30eb997142334f2b0a8d2c6806ddd4bd9027da80ecf63a500", "person_key": "016ff0fa8c9edcb30eb997142334f2b0a8d2c6806ddd4bd9027da80ecf63a500"}, "Bo": {"key": "387e14078b724e7b44322723c86486d13544e4b74dc43fd20772c2655633a449", "person_key": "387e14078b724e7b44322723c86486d13544e4b74dc43fd20772c2655633a449"}, "Ana": {"key": "79a315cf0a6de3c493182cf8511ca92b19b91f9c070177babd68c23d1e2bddb0", "person_key": "79a315cf0a6de3c493182cf8511ca92b19b91f9c070177babd68c23d1e2bddb0"}}}
+{"t": 1791960964.229, "event": "bo note", "status": 200, "said": "{\"bytes\":27,\"delivered\":2,\"peers\":[{\"delivered\":true,\"name\":\"Cy\",\"node\":\"016ff0fa8c9edcb30eb997142334f2b0a8d2c6806ddd4bd9027da80ecf63a500\"},{\"delivered\":true,\"name\":\"Ana\",\"node\":\"79a315cf0a6de3c493182cf8511ca92b19b91f9c070177babd68c23d1e2bddb0\"}]}", "ms": 167, "length": 247}
+{"t": 1791961004.356, "event": "station", "exit": 0, "stderr": "", "s": 40.1}
+{"t": 1791961024.629, "event": "lapse wait", "s": 45.3}
+{"t": 1791961080.752, "event": "end", "load": 12.1}

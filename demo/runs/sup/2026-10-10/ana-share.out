@@ -1,0 +1,5 @@
+Lent taste (port 8696) to everyone in your groups, up to 8 people at once.
+They cannot open /diary.
+An app uses it only once the person it acts for says yes to: "the app receives ranked film suggestions; your viewing history stays where it is stored".
+svrngs is running here already, so they can open it now.
+`svrngs unshare taste` stops lending it.

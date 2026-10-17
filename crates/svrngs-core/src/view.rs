@@ -4,8 +4,10 @@
 //!
 //! One primitive, three mountings (ARCH §10.6): the sync digest's per-actor
 //! entry (so two replicas that diverged at one seq can SEE it and exchange),
-//! an act's `view` field (so an equivocation or a cut is weighable from the
-//! act itself — `RING_APP_LIBRARY.md` §19 step 0), and the checkpoint
+//! an act's `view` field (upstream's, so an equivocation or a cut is
+//! weighable from the act itself — `RING_APP_LIBRARY.md` §19 step 0; svrngs
+//! stamps none since arch-view, and reads the ones acts already carry), and
+//! the checkpoint
 //! document's completeness claim (it carries the digest). The definition
 //! below is the wire contract: the golden vectors in the tests are frozen
 //! from this implementation and a reimplementation must reproduce them
@@ -29,12 +31,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::SignedOp;
 
-/// Domain separation and definition version for the fold. A second
-/// definition gets a second label; old heads stay meaningful.
-const VIEW_DOMAIN: &[u8] = b"cwth/view/1";
-
 /// One actor's commitment: the contiguous run `[from, mark]` being claimed
-/// (`from` is the sealed floor, `mark` the contiguous high-water — the same
+/// (`from` is zero from this build, an older build's sealed floor from one
+/// that sealed, arch-seal; `mark` the contiguous high-water — the same
 /// run the mark alone describes) and `head`, the fold of everything held in
 /// it. Equal heads over an equal `(from, mark)` mean equal held sets; the
 /// preimage resistance of the hash is the whole argument.
@@ -80,7 +79,7 @@ impl View {
                 by_seq.entry(*seq).or_default().insert(id.clone());
             }
         }
-        let mut h = ContentHash::of(&[VIEW_DOMAIN, b"\0", actor.as_bytes()].concat());
+        let mut h = ContentHash::of(&[crate::sig::VIEW_DOMAIN, b"\0", actor.as_bytes()].concat());
         for (seq, ids) in &by_seq {
             for id in ids {
                 let mut step = Vec::with_capacity(32 + 8 + 2 + id.len());
@@ -113,40 +112,8 @@ pub struct Digest(BTreeMap<String, View>);
 pub const DIGEST_V: u32 = 2;
 
 impl Digest {
-    pub fn new() -> Self {
-        Self(BTreeMap::new())
-    }
-
-    pub fn insert(&mut self, actor: String, view: View) {
-        self.0.insert(actor, view);
-    }
-
     pub fn get(&self, actor: &str) -> Option<&View> {
         self.0.get(actor)
-    }
-
-    pub fn contains_key(&self, actor: &str) -> bool {
-        self.0.contains_key(actor)
-    }
-
-    pub fn keys(&self) -> impl Iterator<Item = &String> {
-        self.0.keys()
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = (&String, &View)> {
-        self.0.iter()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
-    }
-
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
-
-    pub fn entries(&self) -> &BTreeMap<String, View> {
-        &self.0
     }
 }
 

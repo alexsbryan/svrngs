@@ -84,17 +84,15 @@ extern crate alloc;
 mod act_set;
 mod admit;
 pub mod alpn;
-mod attest;
+pub mod app;
 mod command;
 mod hash;
-mod introduce;
 pub mod joining;
 pub mod link;
 mod membership;
 mod op;
 pub mod pass;
 mod payload;
-mod process;
 mod project;
 mod record;
 mod register;
@@ -102,6 +100,7 @@ pub mod relay;
 pub mod seed;
 mod sig;
 mod sync;
+mod synced;
 mod view;
 
 use alloc::collections::BTreeMap;
@@ -110,26 +109,30 @@ use alloc::string::String;
 use alloc::string::ToString;
 use alloc::vec::Vec;
 
-/// The signing key the shipped [`RingSigner`] implementation is written for.
+/// The key an act is signed with ([`sign_act`]): the one signer. It was a
+/// `RingSigner` trait with this as its one shipped implementation until
+/// arch-core; the trait let the rail hold a signer without the key, and the
+/// rail holds the key all the same.
 pub use ed25519_dalek::SigningKey;
 use serde::{Deserialize, Serialize};
 
 pub use act_set::ActSet;
 pub use admit::{admit, body_json, Admission, AdmittedOp, GapClass, RailGap};
-pub use attest::{AttestRefusal, GuestAttestation};
 pub use command::{commit, Author, Authored, Command, Reads, Recorded, Refused, Store, Tip};
-pub use introduce::{trace, trace_op, Introduce, Vouch, VouchStatus};
-pub use membership::{membership, InviteFault, Invited, Membership};
+pub use membership::{membership, standing_reads, Cut, InviteFault, Invited, Joined, Membership};
 pub use payload::{Payload, PayloadError, MAX_PAYLOAD_BYTES};
-pub use process::{Compact, Due, ProcessManager, Retire, Uncaused};
-pub use project::{Invites, Projection, Wire};
-pub use record::{Append, AppendRefusal, Seal};
-pub use register::{MintInvite, Redeem, RedeemRefusal};
+pub use project::{Invites, Wire};
+pub use record::{Append, AppendRefusal};
+pub use register::{
+    HandOnRefusal, HandOnTo, Leave, MintInvite, Redeem, RedeemRefusal, RelayAt, Removal,
+    RemovalRefusal,
+};
 pub use sig::{
     act_id, actor_of, derive_id, field, redemption_message, ring_op_message, sign_act,
     sign_message, sign_ring_op, verify_hex,
 };
-pub use sync::{digest, ops_missing_from, ops_missing_from_within, Compaction, Floors, NO_BUDGET};
+pub use sync::{digest, ops_missing_from_within, DigestFold, NO_BUDGET};
+pub use synced::{Change, Entry, Files, NotASyncPath, Placed, Runs, SyncFolder, SyncPath};
 pub use view::{Digest, View, DIGEST_V};
 
 /// The journal envelope, re-exported so a consumer of the rail names ONE
@@ -140,42 +143,37 @@ pub use view::{Digest, View, DIGEST_V};
 pub use hash::ContentHash;
 pub use op::{Journaled, Op, OpId, SkippedLine};
 
-// A consumer cannot use this crate without both of these, and until 2026-09-04
-// neither was exported — so the only shipped `RingSigner` impl was for a type
-// the crate refused to hand you, and the only `Payload` constructor took a type
-// it never named. Both forced the caller to add the dependency themselves and
-// match our version by hand; a mismatch makes `impl RingSigner for SigningKey`
-// silently not apply to their key, which is a trait-resolution error a long way
-// from its cause. Found by physically lifting the package (cw-lift), not by a
-// gate — nothing in the repo can see an export that is missing.
-/// The JSON value [`Payload::new`] takes.
-pub use serde_json::Value;
-
-// ── Local-only namespaces ────────────────────────────────────
-
-/// Namespaces a node may journal but never OFFERS to a peer: the list a
-/// returning node advertises and every ring-sync answer skip them
-/// (`commonwealth-rail`'s `RingRail::namespaces` and
-/// `RingJournal::ops_missing_from_within`). The why per entry is
-/// `commonwealth_state::peer_preferences::GOSSIP_EXCLUDED_APP_IDS`, which is
-/// this list plus the namespaces that left the KV gossip FOR the ring
-/// (five-programs-37).
-pub const LOCAL_ONLY_NAMESPACES: &[&str] = &[
-    "peer_preferences",
-    "work-atlas-private",
-    "notes-private",
-    "activity-private",
-    "portfolio-private",
-    "wikipedia-newsworthy-status",
-    "wikipedia-newsworthy-portal",
-];
-
-/// The one predicate over [`LOCAL_ONLY_NAMESPACES`].
-pub fn is_local_only(namespace: &str) -> bool {
-    LOCAL_ONLY_NAMESPACES.contains(&namespace)
-}
+// Until 2026-09-04 neither `SigningKey` (above) nor serde_json's `Value` was
+// exported — so the only signer was a type the crate refused to hand you, and
+// the only `Payload` constructor took a type it never named. A mismatch makes
+// another ed25519-dalek's key not the one `sign_act` takes, a type error a
+// long way from its cause. Found by
+// physically lifting the package (cw-lift). `Value`'s re-export went in lean-3:
+// svrngs's crates take serde_json from the workspace's one pin, and only a test
+// read it here.
 
 // ── People ───────────────────────────────────────────────────
+
+/// A name kept as text, read as it: `as_str`, and `Display` writing those
+/// bytes — each name's own, where every one wrote the two alike. For a
+/// newtype whose field is `String` or another of these; never for a secret,
+/// which no `Display` may print.
+#[macro_export]
+macro_rules! text_newtype {
+    ($($name:ty),+) => {$(
+        impl $name {
+            pub fn as_str(&self) -> &str {
+                self.0.as_str()
+            }
+        }
+        impl core::fmt::Display for $name {
+            fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+                f.write_str(self.as_str())
+            }
+        }
+    )+};
+}
+crate::text_newtype!(Name, Person);
 
 /// A name a person reads: a group's, or a person's. Trimmed, 1..=64 bytes,
 /// no control characters: it is printed in a terminal, carried in a group's
@@ -227,16 +225,6 @@ impl Name {
         }
         Ok(name)
     }
-
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
-}
-
-impl core::fmt::Display for Name {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(&self.0)
-    }
 }
 
 /// A member of the ring, by the name the house calls them.
@@ -258,8 +246,8 @@ impl Person {
         Name::parse(raw).map(Self)
     }
 
-    pub fn as_str(&self) -> &str {
-        self.0.as_str()
+    pub fn name(&self) -> &Name {
+        &self.0
     }
 }
 
@@ -282,12 +270,6 @@ impl<'de> Deserialize<'de> for Person {
     }
 }
 
-impl core::fmt::Display for Person {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        self.0.fmt(f)
-    }
-}
-
 /// Who is in this ring, and which keys they sign with.
 ///
 /// A parameter of [`admit`], never part of the admitted state. It decides
@@ -299,78 +281,21 @@ impl core::fmt::Display for Person {
 /// housemate moves in, and the reference app has a test pinning that it does
 /// not.
 ///
-/// A row may also carry WHY it is here — the introduction the key was
-/// admitted on. That is provenance and not derivation: see [`Vouch`] and
-/// [`Introduce`] for the distinction, which is the same one this paragraph is
-/// about.
+/// (svrngs: upstream's row could also carry the introduction a key was
+/// admitted on, `vouches`; svrngs never wrote one, and it went with
+/// `introduce.rs` in core-0. A roster written with `vouches` still parses,
+/// since unknown fields are ignored, and one without serializes to the bytes
+/// it always did.)
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Roster {
     /// Person → the hex node public keys that person signs with. Two laptops
     /// is two keys in one row.
     pub members: BTreeMap<Person, Vec<String>>,
-    /// Key → the introduction it was admitted on, for the keys that have one.
-    ///
-    /// Keyed by KEY and not by person because that is the grain of the
-    /// question: two laptops can join a ring on two different evenings, on
-    /// two different people's word.
-    ///
-    /// **`default` and `skip_serializing_if` are both load-bearing.** Every
-    /// `roster.json` on every deployed ring was written without this field,
-    /// and a shape that turned those into a parse error would be an outage
-    /// rather than a migration — they read as [`VouchStatus::Unknown`]. And a
-    /// roster with no vouches serializes to exactly the bytes it did before,
-    /// so adding the field moves no file that has nothing to say.
-    ///
-    /// A vouch here is a claim, never a conclusion: resolve it with
-    /// [`trace`] against an [`Admission`], which is the only thing that knows
-    /// whether the op exists and verifies.
-    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-    pub vouches: BTreeMap<String, Vouch>,
 }
 
 impl Roster {
     pub fn new(members: BTreeMap<Person, Vec<String>>) -> Self {
-        Self {
-            members,
-            vouches: BTreeMap::new(),
-        }
-    }
-
-    /// Bind a key to a person, with the introduction it was admitted on.
-    ///
-    /// The ONE writer of both maps, so a vouch naming a key no row carries is
-    /// unrepresentable rather than checked (ARCH §7.1). `false` when the
-    /// person already signs with that key, and nothing is touched — a caller
-    /// re-running an add must not silently rewrite the warrant on a key that
-    /// is already in the ring.
-    pub fn bind_key(&mut self, person: Person, key: String, vouch: Option<Vouch>) -> bool {
-        let keys = self.members.entry(person).or_default();
-        if keys.iter().any(|k| k == &key) {
-            return false;
-        }
-        keys.push(key.clone());
-        if let Some(v) = vouch {
-            self.vouches.insert(key, v);
-        }
-        true
-    }
-
-    /// The introduction this key was admitted on, if the row carries one.
-    pub fn vouch_for(&self, key: &str) -> Option<&Vouch> {
-        self.vouches.get(key)
-    }
-
-    /// Who signed with this key, if anyone in the ring did.
-    pub fn person_for(&self, actor: &str) -> Option<&Person> {
-        self.members
-            .iter()
-            .find(|(_, keys)| keys.iter().any(|k| k == actor))
-            .map(|(p, _)| p)
-    }
-
-    /// Whether this name is one the ring knows.
-    pub fn knows(&self, person: &Person) -> bool {
-        self.members.contains_key(person)
+        Self { members }
     }
 }
 
@@ -402,23 +327,12 @@ pub enum RailAct {
         corrects: OpId,
         replacement: Option<Payload>,
     },
-    /// Everything this key wrote **before this op** is retired. The rail stops
-    /// asking for it, stops sending it, and stops calling its absence a hole.
-    ///
-    /// A seal carries no `actor` and no range, and both omissions are the
-    /// design (ARCH §7.1 — unrepresentable rather than checked):
-    ///
-    /// - **No actor**, so sealing someone else's history cannot be written.
-    ///   The floor a seal raises is the floor of whoever signed it, and the
-    ///   signature is the only field on the line a writer cannot forge for
-    ///   somebody else (ARCH §18.1).
-    /// - **No range**, so the floor is the seal's own `seq`. A seal cannot
-    ///   claim past what its author has actually reached, and a node that
-    ///   holds the seal necessarily holds the floor — which is what keeps the
-    ///   contiguous run in [`digest`] non-empty for a compacted actor.
-    ///
-    /// It carries no payload, so an app's reducer never sees it
-    /// ([`AdmittedOp::applies`] is false); it is delivery, not meaning.
+    /// An older build's seal: it retired everything its signer wrote before
+    /// it, on every copy it reached. Here it does nothing (arch-seal; svrn-docs
+    /// `rings/current/A_RECORD_FOR_YEARS.md` §2, §6 q2): a line on disk is read
+    /// and held as an act, [`admit`] says so at debug, and it retires, voids
+    /// and carries nothing. No command writes one: an app's is refused as
+    /// `NotAnAppAct`. The variant stays so an older journal still parses.
     Seal,
     /// A member says: this person and this key are in the ring. One of the
     /// two membership acts (`RING_APPLICATIONS.md` "Amendment 2026-09-18");
@@ -427,10 +341,9 @@ pub enum RailAct {
     ///
     /// The binding rides IN the record — the reason a `roster.json` edit
     /// cannot retroactively flip a member's past: acts admitted through an
-    /// `Admit` resolve through the record, not through the file. Undo is the
-    /// [`Self::Correct`] that exists: voiding an `Admit` drops that key and
-    /// every key it transitively admitted, because their admissions were
-    /// signed by a key that no longer holds.
+    /// `Admit` resolve through the record, not through the file. Nothing
+    /// undoes it but the keeper's [`Self::Remove`] (U7): a `Correct` of an
+    /// act that moves membership voids nothing.
     ///
     /// Carries no [`Payload`] and never reaches an app reducer — an app that
     /// read membership would re-divide every past expense the day someone
@@ -449,33 +362,69 @@ pub enum RailAct {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         invite: Option<Redemption>,
     },
-    /// A member says: this key is out. The cut is by the removed key's own
-    /// signed seq (`through_seq`) and never by a position in the order —
-    /// `(ts_unix, actor, seq, id)` starts with the author's own timestamp, so
-    /// a positional cutoff could be dodged by backdating, while a seq cutoff
-    /// cannot (admit already refuses a fork on seq). Two cuts compose by
-    /// minimum with no shared order (the OpenSSH KRL shape).
+    /// A member says: this key is out (svrngs, U7; DESIGN §6 "Removal has one
+    /// decider"). Anyone standing may sign one: from the group's keeper it is
+    /// the cut, from anyone else it is an ask the keeper may sequence, and
+    /// it cuts nobody. A removed key's own `Remove` counts nowhere.
     ///
-    /// The cut is PROSPECTIVE at its position in the rail's order: past acts
-    /// by the key stay admitted. PKISN's rule falls out of that position
-    /// scoping — a removed key's later `Remove`s do not count, so a cut party
-    /// cannot cut back. Undo is [`Self::Correct`]: voiding the `Remove`
-    /// restores the member and admits what they wrote while removed.
+    /// The cut names the removed key's acts by hash, never by position or
+    /// time: `through` is that key's newest acts the remover held, by id,
+    /// and the cut covers them and every act they descend from by `prev`.
+    /// Every other act of the key counts nowhere, wherever its timestamp puts
+    /// it — a backdated act, or one beside an act the remover saw. Empty when
+    /// the remover held none. Nothing undoes a cut: a [`Self::Correct`] of
+    /// an act that moves membership voids nothing.
     Remove {
         key: String,
-        /// The last seq of the removed key's own chain that this cut covers.
-        through_seq: u64,
+        /// The removed key's newest acts the remover held: each act of the
+        /// key that no other held act of the key names as its previous act.
+        through: Vec<OpId>,
     },
+    /// The keeper says: this standing key is the group's keeper now (svrngs,
+    /// U7; DESIGN §6). The keeper at the seed is the maker's key; only the
+    /// keeper's own `HandOn` moves it, so the keeper is one key at every
+    /// place in the order. Carries no [`Payload`].
+    HandOn { key: String },
     /// A member says: whoever holds this link's key may join, until `until`
     /// (svrngs, U2; DESIGN §6 "A link admits each person once"). `key` is
     /// the link's public key as actor hex; the secret half travels in the
     /// link and never in the record. Each use is an [`Self::Admit`] naming
-    /// this act's id, signed by this act's signer; a [`Self::Correct`]
-    /// closes the link. Carries no [`Payload`] and grants nothing itself.
+    /// this act's id, signed by this act's signer; the issuer's next
+    /// `Invite` closes the link. Carries no [`Payload`] and grants nothing
+    /// itself.
     Invite {
         key: String,
         /// Unix seconds; a redeeming `Admit` counts only when timed before it.
         until: i64,
+        /// A device link's (bash-devices; DESIGN §6): the person whose
+        /// device it adds, by their first key. It counts only when its
+        /// signer stands as that person, and a key it admits is that
+        /// person's. Skipped when absent, so any other link keeps its
+        /// bytes, its id and its meaning.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        device_of: Option<String>,
+    },
+    /// A member says: these files of my folder `folder`, synced both ways,
+    /// changed, each naming the entry it replaces (sy-1, [`synced`]).
+    /// Carries no [`Payload`] and never reaches an app reducer.
+    Synced {
+        folder: String,
+        changes: Vec<Change>,
+    },
+    /// A person says: the app `app` the group carries runs as me at these
+    /// files (canon-pin; DESIGN §3), a version a folder act placed, by its
+    /// files' hashes. Until a person says one, the app runs as them as it
+    /// was brought ([`Runs`]). Carries no [`Payload`].
+    Runs { app: String, files: Files },
+    /// A computer says: reach me through this relay, or, with none, through
+    /// no relay the record names (relay-in-record; DESIGN §6). Signed by
+    /// the key it speaks for, so nobody says where another is reached; its
+    /// newest counting one wins, and the register carries it beside the
+    /// key ([`Membership::relay`]). As written: the fold reads it, dotless
+    /// ([`relay::parse`]). Carries no [`Payload`].
+    Relay {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        url: Option<String>,
     },
 }
 
@@ -605,20 +554,6 @@ impl RailAct {
             RailError::Rejected(if cleaned.is_empty() { raw } else { cleaned })
         })
     }
-
-    /// Every payload this act carries — one, or none.
-    ///
-    /// Public since the split (2026-09-04): the append door in
-    /// `commonwealth-rail` asserts on it, and a second walk of the two
-    /// variants there would be a second answer to "what does this act carry"
-    /// (ARCH §10.6).
-    pub fn payloads(&self) -> Option<&Payload> {
-        match self {
-            Self::Record { payload } => Some(payload),
-            Self::Correct { replacement, .. } => replacement.as_ref(),
-            Self::Seal | Self::Admit { .. } | Self::Remove { .. } | Self::Invite { .. } => None,
-        }
-    }
 }
 
 /// The journal line's body: the act, plus the two fields that make it
@@ -671,22 +606,18 @@ pub struct SignedOp {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub on_behalf_of: Option<String>,
     /// The author's view of the ring at the moment of writing: every actor's
-    /// [`View`] over what this writer held (the sync digest's entries). It is
-    /// the act citing its context — the DAG heads of
-    /// `RING_APP_LIBRARY.md` §19 step 0 — so an equivocation carries two
-    /// claimed histories in its own two lines, and a future cut
-    /// (`Remove{key, through_seq}`) is weighable against what its remover
-    /// claimed to have seen.
+    /// [`View`] over what this writer held (the sync digest's entries),
+    /// inside the signature. Every commit stamped one until arch-view; none
+    /// does now ([`commit`] signs no view), since nothing but the signature
+    /// over it ever read it: a cut names what its remover saw of the removed
+    /// key in its own body ([`RailAct::Remove`]'s `through`), and a fork is
+    /// named by the chain (`SequenceFork`).
     ///
-    /// **Self-asserted and unforgable-by-others, like the name above it:** a
-    /// writer claims their own view; nobody can rewrite it in flight because
-    /// it is inside the signature. The journal stamps it at the signing door
-    /// — a caller-supplied `view` is as meaningless as a caller-supplied
-    /// `on_behalf_of`. Absent today for every hand-built fixture and every
-    /// op written before the field existed, and they verify unchanged.
-    ///
-    /// LAST and skipped when absent, for the byte-compatibility reason this
-    /// struct now owes twice (the `on_behalf_of` comment above).
+    /// Kept so every act a computer already holds with one is read, derives
+    /// the same id and verifies (`acts_signed_with_a_view_still_verify`).
+    /// LAST and skipped when absent, so an act without one signs the bytes
+    /// it would have before the field existed (the `on_behalf_of` comment
+    /// above).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub view: Option<crate::Digest>,
 }
@@ -710,13 +641,43 @@ pub const LINK_LINE_VERSION: u32 = 3;
 /// `NewerVersionLine` instead.
 pub const BROWSER_LINE_VERSION: u32 = 4;
 
+/// The line format version a synced folder's change ships at (sy-1). 5
+/// was a one-way shared folder's (gf-1), dropped by syp-1 before any record
+/// outside a run's scratch held one: no build reads it.
+pub const SYNCED_LINE_VERSION: u32 = 6;
+
+/// The line format version removal ships at (U7): a [`RailAct::Remove`]
+/// naming the acts it covers by id, and a [`RailAct::HandOn`]. A build at
+/// [`SYNCED_LINE_VERSION`] read `Remove` by a seq it no longer carries; at
+/// this version it names the line `NewerVersionLine` instead.
+pub const REMOVAL_LINE_VERSION: u32 = 7;
+
+/// The line format version a device link ships at (bash-devices): an
+/// [`RailAct::Invite`] naming the person it adds a device of. A build at
+/// [`REMOVAL_LINE_VERSION`] would drop the field, read it as any link and
+/// derive another id; at this version it names the line `NewerVersionLine`
+/// instead, so it holds no device link and counts no `Admit` under one.
+pub const DEVICE_LINE_VERSION: u32 = 8;
+
+/// The line format version a computer's relay ships at (relay-in-record):
+/// a [`RailAct::Relay`]. A build at [`DEVICE_LINE_VERSION`] names it
+/// `NewerVersionLine`, so it dials that computer as it did before.
+pub const RELAY_LINE_VERSION: u32 = 9;
+
+/// The line format version a person's yes to a carried app's version ships
+/// at (canon-pin): a [`RailAct::Runs`]. A build at [`RELAY_LINE_VERSION`]
+/// names it `NewerVersionLine`, so it serves the app as it was brought.
+pub const RUNS_LINE_VERSION: u32 = 10;
+
 impl Journaled for SignedOp {
     const FILE: &'static str = "ring_oplog.jsonl";
     const ID_PREFIX: &'static str = "ring";
     const LABEL: &'static str = "ring_rail";
-    /// This build reads the membership cohort's, the link's and a
-    /// browser's redemption's lines too (see [`Self::line_version`]).
-    const UNDERSTANDS: u32 = BROWSER_LINE_VERSION;
+    /// This build reads the membership cohort's, the link's, a browser's
+    /// redemption's, a folder's, removal's, a device link's, a relay's and
+    /// a yes to a carried app's version's lines too (see
+    /// [`Self::line_version`]).
+    const UNDERSTANDS: u32 = RUNS_LINE_VERSION;
     /// The membership acts — [`RailAct::Admit`] and [`RailAct::Remove`] —
     /// ship at the bumped line version and the original three keep the bytes
     /// they always had, so an un-upgraded node names exactly the acts it
@@ -733,11 +694,18 @@ impl Journaled for SignedOp {
                     }),
                 ..
             } => BROWSER_LINE_VERSION,
+            RailAct::Invite {
+                device_of: Some(_), ..
+            } => DEVICE_LINE_VERSION,
             RailAct::Invite { .. }
             | RailAct::Admit {
                 invite: Some(_), ..
             } => LINK_LINE_VERSION,
-            RailAct::Admit { .. } | RailAct::Remove { .. } => MEMBERSHIP_LINE_VERSION,
+            RailAct::Admit { .. } => MEMBERSHIP_LINE_VERSION,
+            RailAct::Remove { .. } | RailAct::HandOn { .. } => REMOVAL_LINE_VERSION,
+            RailAct::Synced { .. } => SYNCED_LINE_VERSION,
+            RailAct::Relay { .. } => RELAY_LINE_VERSION,
+            RailAct::Runs { .. } => RUNS_LINE_VERSION,
             _ => Self::VERSION,
         }
     }
@@ -763,6 +731,10 @@ pub enum RailError {
     Clock,
     #[error("ring rail io: {0}")]
     Io(String),
+    /// The keeper's cuts in this group do not settle to one answer (#124),
+    /// so who stands in it is not judged: never read as anyone standing.
+    #[error("who is in `{0}` cannot be judged: its removals do not come to one answer")]
+    Unsettled(String),
     /// The door refused to author this act. The string is a sentence, because
     /// it is the 422 body an app shows a person.
     #[error("refused: {0}")]
@@ -784,11 +756,6 @@ pub enum RailError {
         actor_prefix(.actor)
     )]
     NotInRoster { actor: String, namespace: String },
-    /// A guest attestation the journal's writer would not honour. Typed so
-    /// the refusal's name crosses a dial intact (`AttestRefusal::name`) and
-    /// the door can hand it to the caller verbatim.
-    #[error("the guest attestation was refused: {0}")]
-    AttestRefused(AttestRefusal),
 }
 
 /// Enough of an actor key to recognise, short enough to read in a sentence.
@@ -796,13 +763,13 @@ fn actor_prefix(actor: &str) -> String {
     actor.chars().take(12).collect()
 }
 
-// ── Rendering the two fields every reader shortens ───────────
+// ── Rendering an op id to a person ───────────────────────────
 //
-// An op id is 40-odd characters and a timestamp is an integer, and every
-// surface that shows either to a person cuts them the same way. These were
-// `short_id` and `short_stamp` in `svrn ring`'s own module until the roster
-// warrant needed the same two — and a sentence the rail composes must not
-// spell a date differently from the log line printed above it (ARCH §10.6).
+// An op id is 40-odd characters, and every surface that shows one to a
+// person cuts it the same way: a refusal's sentence must not spell an id
+// differently from the log line printed above it (ARCH §10.6). (svrngs:
+// `short_stamp`, its date-shaped twin, went with the roster warrant that
+// alone used it, core-0.)
 
 /// Enough of an op id to recognise, short enough to read in a sentence.
 pub fn short_id(id: &str) -> String {
@@ -813,68 +780,10 @@ pub fn short_id(id: &str) -> String {
     }
 }
 
-/// `YYYY-MM-DD HH:MM` in UTC. Enough to order a conversation about the
-/// journal, without a date library.
-pub fn short_stamp(ts: i64) -> String {
-    let days = ts.div_euclid(86_400);
-    let secs = ts.rem_euclid(86_400);
-    // Civil-from-days (Howard Hinnant's algorithm), shifted to the 0000-03-01
-    // era so leap years fall at the end of the cycle.
-    let z = days + 719_468;
-    let era = z.div_euclid(146_097);
-    let doe = z.rem_euclid(146_097);
-    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
-    let y = yoe + era * 400;
-    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
-    let mp = (5 * doy + 2) / 153;
-    let d = doy - (153 * mp + 2) / 5 + 1;
-    let m = if mp < 10 { mp + 3 } else { mp - 9 };
-    let y = if m <= 2 { y + 1 } else { y };
-    format!(
-        "{y:04}-{m:02}-{d:02} {:02}:{:02}",
-        secs / 3600,
-        (secs % 3600) / 60
-    )
-}
-
-// ── Signing without holding key material ─────────────────────
-
-/// How the rail gets a signature, without ever seeing a private key.
-///
-/// The daemon owns the node's `SigningKey`; `AppState` installs one of these
-/// and so never holds raw key material, and `commonwealth-api` needs no
-/// crypto dependency. That is not a new seam — it is exactly the shape
-/// `AppState::self_dial_signer` already uses for the gossip self-stamp, and
-/// reusing it means there is one answer to "who may sign as this node"
-/// (ARCH §10.6) rather than two.
-pub trait RingSigner: Send + Sync {
-    /// The hex public key this signer signs as. Becomes the op's `actor`, and
-    /// is what the roster is looked up by.
-    fn actor(&self) -> String;
-    /// Hex Ed25519 signature over [`sig::ring_op_message`] of `id` — the id
-    /// [`act_id`] derived from everything the act says (svrngs, U2).
-    fn sign(&self, id: &OpId) -> String;
-}
-
-/// The direct implementation, for a caller that legitimately holds the key —
-/// the daemon at startup, and the tests.
-impl RingSigner for SigningKey {
-    fn actor(&self) -> String {
-        sig::actor_of(self)
-    }
-    fn sign(&self, id: &OpId) -> String {
-        sig::sign_ring_op(self, id)
-    }
-}
-
-/// The other half of [`RingSigner`], and it was missing.
-///
-/// Signing was a trait and verifying was a call to a free function. Both
-/// halves worked, which is exactly why the asymmetry was invisible: they are
-/// one scheme, and only one of them could be replaced. A node that installs a
-/// different `RingSigner` writes ops that admission — wired to ed25519 and
-/// nothing else — reports as `BadSignature` forever, and nothing in the type
-/// system says so. One question, one seam (ARCH §10.6).
+/// How admission asks whether a key signed an act's id. (It was the other
+/// half of a `RingSigner` trait, which went in arch-core: a signer is a
+/// [`SigningKey`], and this seam stays for the tests that pin what admission
+/// does with a refusal, `tests_sealing.rs`.)
 ///
 /// **Refusal is the only safe answer.** An implementation that cannot judge a
 /// signature returns `false`; [`admit`] turns that into a
@@ -895,8 +804,7 @@ pub trait RingVerifier: Send + Sync {
     fn verify(&self, actor: &str, id: &OpId, sig_hex: &str) -> bool;
 }
 
-/// The shipped verifier: Ed25519 over the exact bytes [`RingSigner`]'s own
-/// implementation signs. The one production answer, and the reason
+/// The shipped verifier: Ed25519 over the exact bytes [`sign_act`] signs. The one production answer, and the reason
 /// `sig::verify_ring_op` is no longer reachable from outside this crate —
 /// leaving it public would leave the hardcode next to the seam, which is how
 /// the asymmetry comes back (ARCH §7).
@@ -916,10 +824,6 @@ mod tests;
 
 #[cfg(test)]
 mod tests_sealing;
-// The roster-provenance half, split out when the two together passed the
-// 1200-line ceiling (ARCH §3.2). Named for its subject, not numbered.
-#[cfg(test)]
-mod tests_introduce;
 
 /// The rail's ONE set of op fixtures.
 ///

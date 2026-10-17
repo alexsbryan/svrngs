@@ -1,0 +1,2 @@
+thread 'sign_in::a_stopped_lend_behind_its_sign_in_is_said_as_not_answering_by_its_lender_on_a_page' (49679154) panicked at crates/svrngs-node/tests/door/sign_in.rs:434:5:
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 34 filtered out; finished in 0.15s

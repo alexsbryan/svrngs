@@ -1,0 +1,156 @@
+{
+ "1": {
+  "verdict": "passed",
+  "ms": 391,
+  "after": [
+   "You left Trip. Rejoining needs a new invitation, and this computer can’t rejoin yet.",
+   "Groups you left",
+   "Trip (Sam’s, since 16 Oct): what you have of it stays on this computer, its folder at /tmp/groups-run/ana/svrngs/Trip, and nothing new of it reaches you."
+  ]
+ },
+ "2": {
+  "verdict": "passed",
+  "ms": {
+   "sam": 393,
+   "bo": 395
+  },
+  "out": {
+   "sam": true,
+   "bo": true
+  }
+ },
+ "3": {
+  "verdict": "passed",
+  "before": {
+   "notes": 200,
+   "photos": 200,
+   "list": 200
+  },
+  "after": {
+   "notes": [
+    404,
+    "unlent",
+    {
+     "error": "nothing is lent here",
+     "kind": "unlent"
+    }
+   ],
+   "photos": [
+    404,
+    "unlent",
+    {
+     "error": "nothing is lent here",
+     "kind": "unlent"
+    }
+   ],
+   "list": [
+    404,
+    "unlent",
+    {
+     "error": "nothing is lent here",
+     "kind": "unlent"
+    }
+   ]
+  }
+ },
+ "4": {
+  "verdict": "passed",
+  "asked": {
+   "notes": [
+    403,
+    "removed",
+    {
+     "error": "You are no longer in this group, so nothing of it is open to you.",
+     "kind": "removed"
+    }
+   ],
+   "photos": [
+    403,
+    "removed",
+    {
+     "error": "You are no longer in this group, so nothing of it is open to you.",
+     "kind": "removed"
+    }
+   ]
+  },
+  "left": true,
+  "left_ms": 484
+ },
+ "5": {
+  "verdict": "passed",
+  "acts": [
+   8,
+   9
+  ],
+  "folder": true,
+  "before_txt": true,
+  "after_txt": {
+   "bo": true,
+   "bo_ms": 537,
+   "ana": false
+  }
+ },
+ "6": {
+  "verdict": "passed",
+  "said": {
+   "sam": [
+    "Ana left on Oct 16, 2026, 10:08 AM"
+   ],
+   "bo": [
+    "Ana left on Oct 16, 2026, 10:08 AM"
+   ],
+   "cy": [
+    "Ana left on Oct 16, 2026 at 10:08 AM"
+   ]
+  },
+  "bo_ms": 395,
+  "cy_ms": 22349
+ },
+ "7": {
+  "verdict": "passed",
+  "left_after_press": false,
+  "command": [
+   1,
+   "svrngs: You decide who is removed from Trip, so you cannot leave it yet: hand that to someone else first, with `svrngs handover <name> --group Trip`, then leave."
+  ],
+  "bo": {
+   "sam_left": true,
+   "ms": 346,
+   "keeps": true,
+   "sam_left_flag": true
+  }
+ },
+ "8": {
+  "verdict": "failed",
+  "page": [
+   "The computer that sent this link cannot be reached. It may be off: try again later."
+  ],
+  "command": [
+   null,
+   "(still running after 90 s, stopped) You're in Trip already, on this computer.\nTrip's folder is not at /tmp/groups-run/ana/svrngs/Trip: this computer does not stand in the group 3b9c5cc66d02bf672f03e1d1b97c057b3a3ff415b7ff19962031474412e429dc. `svrngs share --folder <dir> --group Trip` keeps it where you choose.\n\nLeave this running; Ctrl-C stops it."
+  ],
+  "anas_at_sam": []
+ },
+ "9": {
+  "verdict": "passed",
+  "status": "You’re in Trip (Sam’s, since 16 Oct), as Ana",
+  "ms": 2924,
+  "anas_at_sam": [
+   [
+    "Ana",
+    "077352ddd4ee228c8d28372c6d5a13517b444e786de45bb9090800c92c531481",
+    "browser"
+   ]
+  ]
+ },
+ "10": {
+  "verdict": "passed",
+  "read": 193,
+  "hits": []
+ },
+ "11": {
+  "verdict": "could-not-judge",
+  "people": "never-ran",
+  "why": "one host, programs for people (AGENTS.md 7)"
+ }
+}

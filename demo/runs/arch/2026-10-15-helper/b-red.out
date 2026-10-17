@@ -1,0 +1,18 @@
+# the plant: share.rs `signs_in` answering false, the rule asked nowhere, as at 2ab2522
+# cargo test -q -p svrngs --test share share_refuses_a_port
+thread 'share_refuses_a_port_that_signs_people_in_to_a_lend' (49649954) panicked at crates/svrngs/tests/share.rs:854:9:
+assertion `left == right` failed: share 8097: []
+  left: (Some(1), ["svrngs: nothing answers on port 8097 on this computer: start it, then share it"], false)
+ right: (Some(1), ["svrngs: port 8097 signs people in to something you lend, and only svrngs on this computer asks it: lend what it signs them in to instead"], false)
+# cargo test -q -p svrngs-node --test browser the_home_page_never_offers
+thread 'the_home_page_never_offers_a_sign_in_helper::webkit' (49618683) panicked at crates/svrngs-node/tests/browser/main.rs:3423:5:
+assertion `left == right` failed: the helper offered, or not said once why:
+      "Something at http://localhost:8097. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+  left: (1, 0)
+ right: (0, 1)
+thread 'the_home_page_never_offers_a_sign_in_helper::chromium' (49618682) panicked at crates/svrngs-node/tests/browser/main.rs:3423:5:
+assertion `left == right` failed: the helper offered, or not said once why:
+      "Something at http://localhost:8097. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+  left: (1, 0)
+ right: (0, 1)
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 92 filtered out; finished in 8.15s

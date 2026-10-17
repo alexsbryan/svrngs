@@ -16,7 +16,21 @@
 
 use alloc::string::String;
 
-use url::{Host, Url};
+use url::Host;
+pub use url::{ParseError, Url};
+
+/// A relay as written — a link's, one the record names
+/// ([`crate::RailAct::Relay`]), one a person or a peer tells a computer —
+/// read dotless; its [`ParseError`], said, when it is no URL. The one
+/// reading of a relay a person or a peer wrote: svrngs-node's
+/// `relay::parse` wraps it as iroh's `RelayUrl` (#131).
+pub fn parse(raw: &str) -> Result<Url, ParseError> {
+    let parsed = raw.parse::<Url>().map(dotless);
+    if let Err(e) = &parsed {
+        tracing::debug!(target: "relay", raw, error = %e, "relay: refused — not a URL");
+    }
+    parsed
+}
 
 /// `url` with its host's trailing dot dropped, else `url` unchanged: a
 /// host that is an address, or a domain written without one.

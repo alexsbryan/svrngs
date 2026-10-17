@@ -1,0 +1,14 @@
+Made devices, with you as Sam.
+Send this link to the people you want in it. It works for a day, while this computer is on:
+
+  svrngs://join/<the token>
+
+or, to open it in a browser:
+
+  http://localhost:60387/#<the token>
+
+On a phone, each app opens at an address of its own under localhost:60387, which can see which app is opened.
+
+devices's folder is /tmp/devices-run/sam/svrngs/devices: what anyone in devices puts there reaches this computer, and what you put there reaches theirs.
+
+Leave this running; Ctrl-C stops it.

@@ -1,0 +1,217 @@
+{
+ "engine": "webkit",
+ "origin": "http://localhost:50485/",
+ "link_ms": 1003,
+ "link": "http://localhost:50485/#AlRl3mSe7szy2SuQLTmUdfPs_P9y6iOUzBHrV8LFPnhChOfNpTDV8LzCs-S7LOVif2h0dHBzOi8vdXN3MS0xLnJlbGF5Lm4wLmlyb2gubGluay8",
+ "carried": "https://usw1-1.relay.n0.iroh.link/",
+ "page_ms": 5608,
+ "page_exit": 0,
+ "svrngs_exit": 0,
+ "page": {
+  "first": {
+   "asked": true,
+   "why": null,
+   "status": "You\u2019re in house, as Bo",
+   "lent": [],
+   "answer": "Nobody in house lends anything yet.",
+   "said": [
+    "Opening\u2026",
+    "Opening your link\u2026",
+    "Join house",
+    "Joining house\u2026",
+    "Reaching house\u2026",
+    "You\u2019re in house, as Bo"
+   ],
+   "lines": [
+    "PAGE: no line offered: not a computer, or not a token",
+    "LAYER parse: ok \u2014 issuer 5465de649eeeccf2d92b902d399475f3ecfcff72ea2394cc11eb57c2c53e7842",
+    "LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "LAYER key: ok \u2014 the key 25641e02fdd09dba43744df695cea28671af69bb34b1b796d98ede10a0aebddb",
+    "LAYER parse: ok \u2014 relay https://usw1-1.relay.n0.iroh.link/",
+    "LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only)\u2026",
+    "LAYER wasm-bindgen/iroh-endpoint: ok \u2014 local endpoint 25641e02fdd09dba43744df695cea28671af69bb34b1b796d98ede10a0aebddb bound",
+    "LAYER relay-connect: waiting for the relay handshake (endpoint.online())\u2026",
+    "LAYER relay-connect: ok \u2014 endpoint reports online (relay handshake done)",
+    "LAYER parse: the group names no relay for 5465de649eeeccf2d92b902d399475f3ecfcff72ea2394cc11eb57c2c53e7842, so it is dialled through the link's",
+    "LAYER tls/alpn+relay-hop: dialing 5465de649eeeccf2d92b902d399475f3ecfcff72ea2394cc11eb57c2c53e7842 on the Redeem protocol through a relay\u2026",
+    "LAYER tls/alpn+relay-hop: ok \u2014 QUIC connection established to 5465de649eeeccf2d92b902d399475f3ecfcff72ea2394cc11eb57c2c53e7842 on the Redeem protocol",
+    "LAYER tls/alpn: negotiated ALPN = \"svrngs/redeem/0\"",
+    "JOIN: asking the issuer what the link is for, as 25641e02fdd09dba43744df695cea28671af69bb34b1b796d98ede10a0aebddb",
+    "HTTP: POST /ask \u2014 a bi-stream opened",
+    "HTTP: POST /ask answered 200",
+    "HTTP: the response has ended; finishing the request's send half",
+    "HTTP: POST /ask \u2014 the stream is done",
+    "JOIN: the answer is believed \u2014 the group 0e68cbafa8675590a178ebb7e3bfe37750ffd07c21f91d42ea6b55b07a902060, a device link of None",
+    "PAGE: asking the person's name to join house",
+    "JOIN: redeeming the link as \"Bo\", 25641e02fdd09dba43744df695cea28671af69bb34b1b796d98ede10a0aebddb, a browser's key",
+    "LAYER parse: ok \u2014 issuer 5465de649eeeccf2d92b902d399475f3ecfcff72ea2394cc11eb57c2c53e7842",
+    "LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "LAYER key: ok \u2014 the key 25641e02fdd09dba43744df695cea28671af69bb34b1b796d98ede10a0aebddb",
+    "LAYER parse: ok \u2014 relay https://usw1-1.relay.n0.iroh.link/",
+    "LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only)\u2026",
+    "LAYER wasm-bindgen/iroh-endpoint: ok \u2014 local endpoint 25641e02fdd09dba43744df695cea28671af69bb34b1b796d98ede10a0aebddb bound",
+    "LAYER relay-connect: waiting for the relay handshake (endpoint.online())\u2026",
+    "LAYER relay-connect: ok \u2014 endpoint reports online (relay handshake done)",
+    "LAYER parse: the group names no relay for 5465de649eeeccf2d92b902d399475f3ecfcff72ea2394cc11eb57c2c53e7842, so it is dialled through the link's",
+    "LAYER tls/alpn+relay-hop: dialing 5465de649eeeccf2d92b902d399475f3ecfcff72ea2394cc11eb57c2c53e7842 on the Redeem protocol through a relay\u2026",
+    "LAYER tls/alpn+relay-hop: ok \u2014 QUIC connection established to 5465de649eeeccf2d92b902d399475f3ecfcff72ea2394cc11eb57c2c53e7842 on the Redeem protocol",
+    "LAYER tls/alpn: negotiated ALPN = \"svrngs/redeem/0\"",
+    "HTTP: POST /redeem \u2014 a bi-stream opened",
+    "HTTP: POST /redeem answered 200",
+    "HTTP: the response has ended; finishing the request's send half",
+    "HTTP: POST /redeem \u2014 the stream is done",
+    "STORE: the sealing key absent: making one",
+    "PAGE: joined 0e68cbafa8675590a178ebb7e3bfe37750ffd07c21f91d42ea6b55b07a902060 as Bo; the key is kept sealed",
+    "STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "LAYER parse: ok \u2014 issuer 5465de649eeeccf2d92b902d399475f3ecfcff72ea2394cc11eb57c2c53e7842",
+    "LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "LAYER key: ok \u2014 the key 25641e02fdd09dba43744df695cea28671af69bb34b1b796d98ede10a0aebddb",
+    "LAYER parse: ok \u2014 relay https://usw1-1.relay.n0.iroh.link/",
+    "LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only)\u2026",
+    "LAYER wasm-bindgen/iroh-endpoint: ok \u2014 local endpoint 25641e02fdd09dba43744df695cea28671af69bb34b1b796d98ede10a0aebddb bound",
+    "LAYER relay-connect: waiting for the relay handshake (endpoint.online())\u2026",
+    "LAYER relay-connect: ok \u2014 endpoint reports online (relay handshake done)",
+    "LAYER parse: the group names no relay for 5465de649eeeccf2d92b902d399475f3ecfcff72ea2394cc11eb57c2c53e7842, so it is dialled through the link's",
+    "LAYER tls/alpn+relay-hop: dialing 5465de649eeeccf2d92b902d399475f3ecfcff72ea2394cc11eb57c2c53e7842 on the Member protocol through a relay\u2026",
+    "LAYER tls/alpn+relay-hop: ok \u2014 QUIC connection established to 5465de649eeeccf2d92b902d399475f3ecfcff72ea2394cc11eb57c2c53e7842 on the Member protocol",
+    "LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "HTTP: GET /people/lends \u2014 a bi-stream opened",
+    "HTTP: GET /people/lends answered 200",
+    "HTTP: the response has ended; finishing the request's send half",
+    "HTTP: GET /people/lends \u2014 the stream is done"
+   ]
+  },
+  "again": {
+   "asked": false,
+   "why": null,
+   "status": "You\u2019re in house, as Bo",
+   "lent": [],
+   "answer": "Nobody in house lends anything yet.",
+   "said": [
+    "Opening\u2026",
+    "Reaching house\u2026",
+    "You\u2019re in house, as Bo"
+   ],
+   "lines": [
+    "PAGE: no line offered: not a computer, or not a token",
+    "STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "LAYER parse: ok \u2014 issuer 5465de649eeeccf2d92b902d399475f3ecfcff72ea2394cc11eb57c2c53e7842",
+    "LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "LAYER key: ok \u2014 the key 25641e02fdd09dba43744df695cea28671af69bb34b1b796d98ede10a0aebddb",
+    "LAYER parse: ok \u2014 relay https://usw1-1.relay.n0.iroh.link/",
+    "LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only)\u2026",
+    "LAYER wasm-bindgen/iroh-endpoint: ok \u2014 local endpoint 25641e02fdd09dba43744df695cea28671af69bb34b1b796d98ede10a0aebddb bound",
+    "LAYER relay-connect: waiting for the relay handshake (endpoint.online())\u2026",
+    "LAYER relay-connect: ok \u2014 endpoint reports online (relay handshake done)",
+    "LAYER parse: the group names no relay for 5465de649eeeccf2d92b902d399475f3ecfcff72ea2394cc11eb57c2c53e7842, so it is dialled through the link's",
+    "LAYER tls/alpn+relay-hop: dialing 5465de649eeeccf2d92b902d399475f3ecfcff72ea2394cc11eb57c2c53e7842 on the Member protocol through a relay\u2026",
+    "LAYER tls/alpn+relay-hop: ok \u2014 QUIC connection established to 5465de649eeeccf2d92b902d399475f3ecfcff72ea2394cc11eb57c2c53e7842 on the Member protocol",
+    "LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "HTTP: GET /people/lends \u2014 a bi-stream opened",
+    "HTTP: GET /people/lends answered 200",
+    "HTTP: the response has ended; finishing the request's send half",
+    "HTTP: GET /people/lends \u2014 the stream is done"
+   ]
+  },
+  "alone": {
+   "asked": false,
+   "why": null,
+   "status": "You\u2019re in house, as Bo",
+   "lent": [],
+   "answer": "Nobody in house lends anything yet.",
+   "said": [
+    "Opening\u2026",
+    "Reaching house\u2026",
+    "You\u2019re in house, as Bo"
+   ],
+   "lines": [
+    "STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "LAYER parse: ok \u2014 issuer 5465de649eeeccf2d92b902d399475f3ecfcff72ea2394cc11eb57c2c53e7842",
+    "LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "LAYER key: ok \u2014 the key 25641e02fdd09dba43744df695cea28671af69bb34b1b796d98ede10a0aebddb",
+    "LAYER parse: ok \u2014 relay https://usw1-1.relay.n0.iroh.link/",
+    "LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only)\u2026",
+    "LAYER wasm-bindgen/iroh-endpoint: ok \u2014 local endpoint 25641e02fdd09dba43744df695cea28671af69bb34b1b796d98ede10a0aebddb bound",
+    "LAYER relay-connect: waiting for the relay handshake (endpoint.online())\u2026",
+    "LAYER relay-connect: ok \u2014 endpoint reports online (relay handshake done)",
+    "LAYER parse: the group names no relay for 5465de649eeeccf2d92b902d399475f3ecfcff72ea2394cc11eb57c2c53e7842, so it is dialled through the link's",
+    "LAYER tls/alpn+relay-hop: dialing 5465de649eeeccf2d92b902d399475f3ecfcff72ea2394cc11eb57c2c53e7842 on the Member protocol through a relay\u2026",
+    "LAYER tls/alpn+relay-hop: ok \u2014 QUIC connection established to 5465de649eeeccf2d92b902d399475f3ecfcff72ea2394cc11eb57c2c53e7842 on the Member protocol",
+    "LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "HTTP: GET /people/lends \u2014 a bi-stream opened",
+    "HTTP: GET /people/lends answered 200",
+    "HTTP: the response has ended; finishing the request's send half",
+    "HTTP: GET /people/lends \u2014 the stream is done"
+   ]
+  },
+  "lines": [
+   "STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+   "LAYER parse: ok \u2014 issuer 5465de649eeeccf2d92b902d399475f3ecfcff72ea2394cc11eb57c2c53e7842",
+   "LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+   "LAYER key: ok \u2014 the key 25641e02fdd09dba43744df695cea28671af69bb34b1b796d98ede10a0aebddb",
+   "LAYER parse: ok \u2014 relay https://usw1-1.relay.n0.iroh.link/",
+   "LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only)\u2026",
+   "LAYER wasm-bindgen/iroh-endpoint: ok \u2014 local endpoint 25641e02fdd09dba43744df695cea28671af69bb34b1b796d98ede10a0aebddb bound",
+   "LAYER relay-connect: waiting for the relay handshake (endpoint.online())\u2026",
+   "LAYER relay-connect: ok \u2014 endpoint reports online (relay handshake done)",
+   "LAYER parse: the group names no relay for 5465de649eeeccf2d92b902d399475f3ecfcff72ea2394cc11eb57c2c53e7842, so it is dialled through the link's",
+   "LAYER tls/alpn+relay-hop: dialing 5465de649eeeccf2d92b902d399475f3ecfcff72ea2394cc11eb57c2c53e7842 on the Member protocol through a relay\u2026",
+   "LAYER tls/alpn+relay-hop: ok \u2014 QUIC connection established to 5465de649eeeccf2d92b902d399475f3ecfcff72ea2394cc11eb57c2c53e7842 on the Member protocol",
+   "LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+   "HTTP: GET /people/lends \u2014 a bi-stream opened",
+   "HTTP: GET /people/lends answered 200",
+   "HTTP: the response has ended; finishing the request's send half",
+   "HTTP: GET /people/lends \u2014 the stream is done"
+  ]
+ },
+ "page_err": "",
+ "samples": [
+  {
+   "t": 1791902100.059547,
+   "remote": [
+    "49.13.207.244:443",
+    "5.78.69.43:443"
+   ]
+  },
+  {
+   "t": 1791902101.20068,
+   "remote": [
+    "49.13.207.244:443",
+    "5.78.69.43:443"
+   ]
+  },
+  {
+   "t": 1791902102.336329,
+   "remote": [
+    "49.13.207.244:443",
+    "5.78.69.43:443"
+   ]
+  },
+  {
+   "t": 1791902103.49176,
+   "remote": [
+    "49.13.207.244:443",
+    "5.78.69.43:443"
+   ]
+  },
+  {
+   "t": 1791902104.6241589,
+   "remote": [
+    "49.13.207.244:443",
+    "5.78.69.43:443"
+   ]
+  }
+ ],
+ "relays": [
+  "https://aps1-1.relay.n0.iroh.link/",
+  "https://euc1-1.relay.n0.iroh.link/",
+  "https://use1-1.relay.n0.iroh.link/",
+  "https://usw1-1.relay.n0.iroh.link/"
+ ],
+ "link_trace": [
+  "2026-10-13T14:34:59.506125Z DEBUG cli: cli: the link carries this computer's relay relay=https://usw1-1.relay.n0.iroh.link/ n0=true"
+ ],
+ "reach_trace": [
+  "2026-10-13T14:34:58.982555Z DEBUG cli: cli: the relays this computer meets its groups at at=N0 unkept=false relay_urls=[\"https://aps1-1.relay.n0.iroh.link/\", \"https://euc1-1.relay.n0.iroh.link/\", \"https://use1-1.relay.n0.iroh.link/\", \"https://usw1-1.relay.n0.iroh.link/\"]"
+ ]
+}

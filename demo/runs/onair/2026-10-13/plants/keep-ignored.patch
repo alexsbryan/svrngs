@@ -1,0 +1,13 @@
+diff --git a/crates/svrngs-node/src/blob.rs b/crates/svrngs-node/src/blob.rs
+index f7eff5a..ecc0935 100644
+--- a/crates/svrngs-node/src/blob.rs
++++ b/crates/svrngs-node/src/blob.rs
+@@ -171,7 +171,7 @@ pub(super) async fn put(
+     if let Err(refusal) = f.standing_in(&q.group) {
+         return refusal;
+     }
+-    let until = |k| Instant::now().checked_add(Duration::from_secs(k));
++    let until = |_k| Instant::now().checked_add(Duration::from_secs(86_400)); // PLANT: keep ignored, a day
+     let Some((keep, Some(until))) = q.keep.map(|k| (k, until(k))) else {
+         let why = "how long the bytes are kept must be named, in seconds this computer's clock counts: &keep=<seconds>";
+         return err(StatusCode::BAD_REQUEST, why);

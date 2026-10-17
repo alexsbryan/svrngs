@@ -31,7 +31,27 @@ use svrngs_node::SigningKey;
 const SECRET: &str = r#"MediaBrowser Token="sams-own-1234""#;
 
 fn no_relay() -> RelayConfig {
-    RelayConfig::from_parts(Vec::new(), Some("none")).unwrap()
+    RelayConfig {
+        relay_urls: Vec::new(),
+        n0_services: false,
+        loopback_only: false,
+    }
+}
+
+/// What `svrngs share <port> --kind <kind>` asks of the service at
+/// `origin`, nothing else said.
+fn share_of(origin: SocketAddr, kind: &str) -> Share {
+    Share {
+        port: std::num::NonZeroU16::new(origin.port()).unwrap(),
+        name: None,
+        kind: Some(Kind::parse(kind).unwrap()),
+        limit: None,
+        refused: Vec::new(),
+        upload: None,
+        reads: Vec::new(),
+        sign_in: None,
+        asks: None,
+    }
 }
 
 fn name(s: &str) -> Name {
@@ -141,9 +161,16 @@ fn plain(said: &[String]) {
 #[tokio::test(flavor = "multi_thread")]
 async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
     let sam = computer(1).await;
-    let (seed, printed) = cli::new_group(&sam.node, name("house"), name("Sam"), None, &no_relay())
-        .await
-        .expect("Sam makes house");
+    let (seed, printed) = cli::new_group(
+        &sam.node,
+        name("house"),
+        name("Sam"),
+        None,
+        None,
+        &no_relay(),
+    )
+    .await
+    .expect("Sam makes house");
     let alex = computer(2).await;
     knows(&alex, &sam.node);
     let link = Link::parse(&printed.client).unwrap();
@@ -153,19 +180,12 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
 
     // ── Sam shares the service on its port, as `svrngs share <port> --kind pad`.
     let (origin, heads) = service().await;
-    let asked = Share {
-        port: std::num::NonZeroU16::new(origin.port()).unwrap(),
-        name: None,
-        kind: Some(Kind::parse("pad").unwrap()),
-        limit: None,
-        refused: Vec::new(),
-        upload: None,
-        reads: Vec::new(),
-    };
+    let asked = share_of(origin, "pad");
     let lend = share::lend_of(
         &asked,
-        share::listens(asked.port),
+        share::listens,
         share::well_known_kind(asked.port),
+        &[],
     )
     .expect("something listens there, and its kind is given");
     cli::share_lend(sam.dir.path(), &lend, Some(SECRET)).unwrap();
@@ -257,6 +277,141 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
     alex.node.endpoint().close().await;
 }
 
+/// **A friend's llama-server, lent by its kind alone** (start-llama (a)):
+/// Sam types `--kind llama-server` and no path, and Alex's request to each
+/// route start-measure (b) found shows one person's chats to the others or
+/// changes the server for everyone (`demo/runs/start/2026-10-13/README.md`
+/// §3 (b) 6 and §4) is refused in svrngs's words, never reaching it; every
+/// other route a chat page or a program asks reaches it. The routes are
+/// written here from the run, not read from the table, so a table that
+/// drops one fails. Red at start-llama's base: nothing kept back, `GET
+/// /slots` answered 200.
+#[tokio::test(flavor = "multi_thread")]
+async fn llama_server_lent_by_its_kind_keeps_back_what_shows_one_person_s_chats() {
+    let sam = computer(3).await;
+    let (_, printed) = cli::new_group(&sam.node, name("Lab"), name("Sam"), None, None, &no_relay())
+        .await
+        .expect("Sam makes Lab");
+    let alex = computer(4).await;
+    knows(&alex, &sam.node);
+    let link = Link::parse(&printed.client).unwrap();
+    cli::join_group(&alex.node, &alex.key, &link, &name("Alex"))
+        .await
+        .expect("Alex is let in");
+
+    let (origin, heads) = service().await;
+    let asked = share_of(origin, "llama-server");
+    let lend = share::lend_of(
+        &asked,
+        share::listens,
+        share::well_known_kind(asked.port),
+        &[],
+    )
+    .expect("something listens there, and its kind is given");
+    cli::share_lend(sam.dir.path(), &lend, None).unwrap();
+    let shared = Said::Shared {
+        lend: lend.clone(),
+        secret: false,
+        accounts: None,
+        running: true,
+    }
+    .to_string();
+
+    let running = cli::running(alex.dir.path(), &alex.node).await.to_string();
+    let address = running
+        .lines()
+        .find(|l| l.starts_with("Sam's llama-server"))
+        .and_then(address_in)
+        .unwrap_or_else(|| panic!("Alex is not told of Sam's llama-server: {running:?}"));
+    let host = address
+        .strip_prefix("http://")
+        .and_then(|a| a.split_once(':'))
+        .map(|(h, _)| h.to_string())
+        .unwrap();
+    let http = reqwest::Client::builder()
+        .no_proxy()
+        .resolve(&host, alex.node.api_addr())
+        .build()
+        .unwrap();
+    let ask = |method: &str, path: &str| {
+        let method = reqwest::Method::from_bytes(method.as_bytes()).unwrap();
+        http.request(method, format!("{}{}", address.trim_end_matches('/'), path))
+            .send()
+    };
+
+    let kept = [
+        ("GET", "/slots", "/slots"),
+        ("POST", "/slots/0?action=save", "/slots"),
+        ("GET", "/v1/stream?conv_id=cy-conv-1", "/v1/stream"),
+        ("DELETE", "/v1/stream?conv_id=cy-conv-2", "/v1/stream"),
+        ("POST", "/v1/streams/lookup", "/v1/streams"),
+        (
+            "POST",
+            "/v1/chat/completions/control",
+            "/v1/chat/completions/control",
+        ),
+        ("GET", "/lora-adapters", "/lora-adapters"),
+        ("POST", "/lora-adapters", "/lora-adapters"),
+        ("GET", "/metrics", "/metrics"),
+        ("GET", "/tools", "/tools"),
+        ("POST", "/tools", "/tools"),
+        ("GET", "/cors-proxy?url=http://example.com/", "/cors-proxy"),
+        ("POST", "/models/load", "/models"),
+        ("POST", "/models/unload", "/models"),
+        ("GET", "/models/sse", "/models"),
+    ];
+    for (method, path, under) in kept {
+        let answer = ask(method, path).await.unwrap();
+        let (status, why) = (
+            answer.status(),
+            answer.headers().get("x-svrngs-refused").cloned(),
+        );
+        let body = answer.text().await.unwrap();
+        assert_eq!(
+            (status.as_u16(), why.as_ref().and_then(|v| v.to_str().ok())),
+            (403, Some("path")),
+            "{method} {path} was not kept back: {body}"
+        );
+        assert!(
+            body.contains(&format!("llama-server is lent without {under}")),
+            "{method} {path}: {body}"
+        );
+    }
+    assert!(
+        heads.lock().unwrap().is_empty(),
+        "a route kept back reached llama-server"
+    );
+
+    let answered = [
+        ("GET", "/"),
+        ("GET", "/props"),
+        ("GET", "/health"),
+        ("GET", "/v1/models"),
+        ("POST", "/v1/chat/completions"),
+        ("POST", "/chat/completions"),
+        ("POST", "/completion"),
+        ("POST", "/v1/completions"),
+        ("POST", "/v1/chat/completions/input_tokens"),
+        ("POST", "/v1/responses"),
+        ("POST", "/v1/embeddings"),
+        ("POST", "/tokenize"),
+        ("POST", "/apply-template"),
+    ];
+    for (method, path) in answered {
+        let answer = ask(method, path).await.unwrap();
+        assert_eq!(answer.status(), 200, "{method} {path} was refused");
+        assert_eq!(answer.text().await.unwrap(), "ok", "{method} {path}");
+    }
+    assert_eq!(heads.lock().unwrap().len(), answered.len());
+    assert!(
+        shared.contains("They cannot open /slots, "),
+        "Sam is not told what is kept back: {shared}"
+    );
+    plain(&[shared, running]);
+    sam.node.endpoint().close().await;
+    alex.node.endpoint().close().await;
+}
+
 /// The password has no flag: `share` refuses one, whatever it is called.
 #[test]
 fn share_takes_no_password_on_the_command_line() {
@@ -302,6 +457,60 @@ fn share_takes_no_password_on_the_command_line() {
     assert_eq!(reads, ["films", "music"]);
     assert!(cli::parse(argv(&["share", "8096", "--reads", "a/b"])).is_err());
     assert!(cli::parse(argv(&["new", "x", "--reads", "films"])).is_err());
+    // Its sign-in's port (mwp-1), a port as the lend's is.
+    let Ok(Verb::Share(asked)) = cli::parse(argv(&["share", "8096", "--sign-in", "9000"])) else {
+        panic!("share parses a sign-in");
+    };
+    assert_eq!(asked.sign_in.map(|p| p.get()), Some(9000));
+    assert!(cli::parse(argv(&["share", "8096", "--sign-in", "0"])).is_err());
+    assert!(cli::parse(argv(&["room", "x", "--sign-in", "9000"])).is_err());
+}
+
+/// **A lend that asks** (sup-2 (a)): `share --ask "<words>"` keeps its
+/// lender's words in the declaration, read back whole, and says them;
+/// words that are none, or a control character, are refused, and `--ask`
+/// is `share`'s alone. `unshare` takes it back. Planted, watched failing:
+/// the declaration not writing `asks`.
+#[test]
+fn a_lend_that_asks_keeps_its_lender_s_words() {
+    let argv = |rest: &[&str]| {
+        std::iter::once("svrngs".to_string())
+            .chain(rest.iter().map(|s| s.to_string()))
+            .collect::<Vec<_>>()
+    };
+    let words = "the app receives ranked suggestions; your history stays where it is";
+    let Ok(Verb::Share(asked)) = cli::parse(argv(&["share", "8096", "--ask", words])) else {
+        panic!("share parses what it asks");
+    };
+    assert_eq!(asked.asks.as_deref(), Some(words));
+    for bad in ["", "  ", "a\nb"] {
+        assert!(
+            cli::parse(argv(&["share", "8096", "--ask", bad])).is_err(),
+            "{bad:?}"
+        );
+    }
+    assert!(cli::parse(argv(&["link", "x", "--ask", words])).is_err());
+    let dir = tempfile::tempdir().unwrap();
+    let lend = share::lend_of(&asked, |_| true, Some(Kind::parse("taste").unwrap()), &[]).unwrap();
+    cli::share_lend(dir.path(), &lend, None).unwrap();
+    let name = LendName::parse("taste").unwrap();
+    let read = svrngs_node::lend::read(dir.path(), &name).unwrap().unwrap();
+    assert_eq!(
+        read.asks.as_deref(),
+        Some(words),
+        "the words come back whole"
+    );
+    let said = Said::Shared {
+        lend: read,
+        secret: false,
+        accounts: None,
+        running: false,
+    };
+    assert!(said.to_string().contains(words), "{said}");
+    cli::unshare(dir.path(), &name).unwrap();
+    assert!(svrngs_node::lend::read(dir.path(), &name)
+        .unwrap()
+        .is_none());
 }
 
 /// The program, its output read line by line as it comes.
@@ -423,7 +632,9 @@ fn share_runs_when_svrngs_does_not_and_leaves_when_it_does() {
     );
     running.until("Leave this running");
     assert!(
-        running.seen.iter().any(|l| l.starts_with("Lent pad (port")),
+        running.seen.iter().any(
+            |l| l.starts_with("You lend pad (port") && l.contains("as many at once as want it")
+        ),
         "{:?}",
         running.seen
     );
@@ -443,7 +654,8 @@ fn share_runs_when_svrngs_does_not_and_leaves_when_it_does() {
         "{said:?}"
     );
     assert!(
-        said.iter().any(|l| l.starts_with("Lent box (port")),
+        said.iter()
+            .any(|l| l.starts_with("You lend box (port") && l.ends_with("up to 2 people at once.")),
         "{said:?}"
     );
     assert!(
@@ -554,4 +766,171 @@ fn a_service_with_its_own_accounts_is_lent_with_no_password() {
     );
     plain(&seen);
     drop(stand_in);
+}
+
+/// **Navidrome by its port alone** (bash-person (d); Demo C's dry run,
+/// finding 2): `share 4533`, a stand-in listening there, lends it as
+/// navidrome, asks no password and keeps none though one is typed, and
+/// prints both settings its lender sets in it so it takes each person
+/// from the header svrngs sets. Red at bash-person's base: refused, "say
+/// what is on port 4533". It binds port 4533, so a Navidrome running on
+/// this computer fails it by name rather than passing unjudged.
+#[cfg(unix)]
+#[test]
+fn share_4533_alone_lends_navidrome_asking_nothing_and_says_what_to_set() {
+    let dir = tempfile::tempdir().unwrap();
+    let logs = tempfile::tempdir().unwrap();
+    let stand_in = std::net::TcpListener::bind("127.0.0.1:4533")
+        .expect("port 4533 is free on this computer: something listening there cannot be judged");
+    let log = logs.path().join("share");
+    let mut running = Program::start(dir.path(), &log, &["share", "4533"], &format!("{SECRET}\n"));
+    running.until("Leave this running");
+    let _ = running.child.kill();
+    let (_, seen) = running.ends();
+
+    assert!(
+        seen.iter()
+            .any(|l| l.starts_with("You lend navidrome (port 4533)")),
+        "{seen:?}"
+    );
+    let set = seen
+        .iter()
+        .find(|l| l.contains("ND_EXTAUTH_USERHEADER=X-Svrngs-User"))
+        .unwrap_or_else(|| panic!("the lender is not told what to set: {seen:?}"));
+    assert!(
+        set.contains("ND_EXTAUTH_TRUSTEDSOURCES=127.0.0.1/32"),
+        "{set}"
+    );
+    assert!(
+        !seen.iter().any(|l| l.contains("Its password stays")),
+        "{seen:?}"
+    );
+    assert!(dir.path().join("lends/navidrome.json").exists());
+    assert!(!dir.path().join("secrets/lends/navidrome").exists());
+    let log = std::fs::read_to_string(&log).unwrap();
+    assert!(
+        !log.contains("takes a password"),
+        "a password was asked: {log}"
+    );
+    plain(&seen);
+    drop(stand_in);
+}
+
+/// **A sign-in is never lent by the command** (arch-helper (b);
+/// REVIEW_FINDINGS #174): `share 8097`, the port the table
+/// names jellyfin's helper at, and `share <port>` of a port a lend here
+/// names its sign-in, are each refused, saying why, declaring nothing, and
+/// traced. Red at 2ab2522, the plant: 8097 refused only as not answering,
+/// and the other lent. Nothing listens at 8097
+/// here: the table refuses it whether or not its helper runs, and the
+/// tests beside this one lend jellyfin with nothing there.
+#[cfg(unix)]
+#[test]
+fn share_refuses_a_port_that_signs_people_in_to_a_lend() {
+    let (dir, logs) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let signer = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = signer.local_addr().unwrap().port();
+    let lends = dir.path().join("lends");
+    std::fs::create_dir_all(&lends).unwrap();
+    let shelf = serde_json::json!({ "port": 1, "kind": "k", "sign_in": port });
+    std::fs::write(lends.join("shelf.json"), shelf.to_string()).unwrap();
+    for asked in [8097, port] {
+        let log = logs.path().join(asked.to_string());
+        let args = ["share", &asked.to_string(), "--kind", "helper"];
+        let mut running = Program::start(dir.path(), &log, &args, "\n");
+        let deadline = std::time::Instant::now() + Duration::from_secs(30);
+        let code = loop {
+            match running.child.try_wait().unwrap() {
+                Some(status) => break status.code(),
+                None if std::time::Instant::now() > deadline => {
+                    let _ = running.child.kill();
+                    break None;
+                }
+                None => std::thread::sleep(Duration::from_millis(100)),
+            }
+        };
+        let log = std::fs::read_to_string(&log).unwrap();
+        let said: Vec<&str> = log.lines().filter(|l| l.starts_with("svrngs: ")).collect();
+        let why = format!("svrngs: port {asked} signs people in to something you lend, and only svrngs on this computer asks it: lend what it signs them in to instead");
+        assert_eq!(
+            (code, said, lends.join("helper.json").exists()),
+            (Some(1), vec![why.as_str()], false),
+            "share {asked}: {:?}",
+            running.seen
+        );
+        assert!(
+            log.contains("share: whether the port signs people in to a lend"),
+            "traced: {log}"
+        );
+    }
+}
+
+/// **A folder is synced by asking svrngs running here, in one group**
+/// (gf-1, sy-1, syp-4): `share --folder <dir> --group <group>` takes the
+/// folder's absolute path and the group as typed, and only `share` takes
+/// `--folder`, never without `--group` (a folder is one group's); with no
+/// svrngs running here the ask is refused as a precondition absent, never
+/// answered empty; with one running, a group it does not hold is refused by
+/// name and one it holds is answered. Planted: the ask posted where the
+/// node does not answer (every ask refused); `--folder` taken alone.
+#[tokio::test]
+async fn a_folder_is_synced_by_asking_svrngs_running_here() {
+    let argv = |rest: &[&str]| {
+        std::iter::once("svrngs".to_string())
+            .chain(rest.iter().map(|s| s.to_string()))
+            .collect::<Vec<_>>()
+    };
+    let cwd = std::env::current_dir().unwrap();
+    assert_eq!(
+        cli::parse(argv(&["share", "--folder", "films", "--group", "house"])),
+        Ok(Verb::Folder {
+            dir: cwd.join("films"),
+            group: "house".into()
+        })
+    );
+    assert!(cli::parse(argv(&["share", "--folder", "films"])).is_err());
+    assert!(cli::parse(argv(&["share", "--folder", "films", "--both-ways"])).is_err());
+    assert!(cli::parse(argv(&["share", "--group", "house"])).is_err());
+    assert!(cli::parse(argv(&["unshare", "--folder", "films"])).is_err());
+    assert!(cli::parse(argv(&["link", "x", "--folder", "films"])).is_err());
+
+    let dir = tempfile::tempdir().unwrap();
+    let relay = no_relay();
+    let films = tempfile::tempdir().unwrap();
+    let ask = |group: &str| {
+        let (dir, films) = (dir.path().to_path_buf(), films.path().to_path_buf());
+        let group = group.to_string();
+        cli::run(Verb::Folder { dir: films, group }, dir, &relay)
+    };
+
+    let key = SigningKey::from_bytes(&[5; 32]);
+    let node = Node::start(
+        dir.path().to_path_buf(),
+        key,
+        &no_relay(),
+        group::seed_text,
+        cli::API,
+    )
+    .await
+    .unwrap();
+    cli::new_group(&node, name("house"), name("Sam"), None, None, &no_relay())
+        .await
+        .unwrap();
+    let nope = ask("nope").await;
+    assert!(
+        matches!(&nope, Err(Refusal::NoGroup(g)) if g == "nope"),
+        "{nope:?}"
+    );
+    let synced = ask("house").await;
+    assert!(synced.is_ok(), "{synced:?}");
+    node.endpoint().close().await;
+
+    std::fs::write(
+        dir.path().join(svrngs_node::api::API_FILE),
+        "http://127.0.0.1:9",
+    )
+    .unwrap();
+    let refused = ask("house").await;
+    assert!(matches!(refused, Err(Refusal::NotRunning)), "{refused:?}");
+    assert_eq!(refused.unwrap_err().exit_code(), 3);
 }

@@ -112,8 +112,16 @@ fi
 # for good (demo/u4.md).
 # sha256sum is GNU coreutils; stock macOS has only shasum. Either works.
 if command -v sha256sum >/dev/null; then SHA_CMD="sha256sum"; else SHA_CMD="shasum -a 256"; fi
+# The home page's files (crates/svrngs-node/src/home/) given to the group's
+# page too: question.js, svrngs's question and what apps use, so both ask in
+# one wording (#110), and look.css, svrngs's one look, so both look one way.
+SHARED=(crates/svrngs-node/src/home/question.js crates/svrngs-node/src/home/look.css)
 PAGE=(index.html app.js store.js sw.js open.html open.js lend.js shim.js)
-VERSION="$(cat "$OUT/wasm/svrngs_web_bg.wasm" "$OUT/wasm/svrngs_web.js" "${PAGE[@]/#/$APP/}" | $SHA_CMD | cut -c1-12)"
+VERSION="$(cat "$OUT/wasm/svrngs_web_bg.wasm" "$OUT/wasm/svrngs_web.js" "${PAGE[@]/#/$APP/}" "${SHARED[@]}" | $SHA_CMD | cut -c1-12)"
+cp "${SHARED[@]}" "$OUT/"
+# install.sh, the line a computer pastes, served at the page's address with
+# what scripts/build-release.sh puts under get/ (DESIGN §7).
+cp "$APP/install.sh" "$OUT/"
 for f in "${PAGE[@]}"; do
   cp "$APP/$f" "$OUT/"
   sed -i.bak "s/__VERSION__/${VERSION}/g" "$OUT/$f"

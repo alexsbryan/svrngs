@@ -1,0 +1,13 @@
+A link that adds another computer or phone of yours to two: open it there, and it joins as you, Ana, asked no name. Send it to nobody else: whoever opens it joins as you. Any link you sent before stops letting anyone new in; everyone it let in stays.
+A computer or phone already in two on its own stays as it joined.
+It works for a day, while this computer is on:
+
+  svrngs://join/<the token>
+
+or, to open it in a browser:
+
+  http://localhost:50196/#<the token>
+
+On a phone, each app opens at an address of its own under localhost:50196, which can see which app is opened.
+
+Leave this running; Ctrl-C stops it.

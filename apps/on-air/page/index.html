@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>On air</title>
+<script type="importmap">
+{ "imports": {
+  "@noble/curves/": "./vendor/noble-curves/",
+  "@noble/hashes/": "./vendor/noble-hashes/"
+} }
+</script>
+<style>
+  body { font: 18px/1.5 system-ui, sans-serif; max-width: 34em; margin: 3em auto; padding: 0 1em; color: #222; }
+  #status { font-size: 1.6em; margin: 0.5em 0; }
+  #log { font: 13px/1.4 ui-monospace, monospace; color: #555; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<p id="status">Tuning in…</p>
+<audio id="audio" controls></audio>
+<p>Each piece plays only once its line checks under the station's key, and its bytes are the hash the line names.</p>
+<div id="log"></div>
+<script type="module" src="./page.js"></script>
+</body>
+</html>

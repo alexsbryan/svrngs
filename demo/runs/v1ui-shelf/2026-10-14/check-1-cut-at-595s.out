@@ -1,0 +1,14 @@
+note       open files: 1048576, raised to 10240
+passed     principles pinned
+passed     lean and RUST_ARCH
+passed     app nouns gate
+passed     app nouns
+passed     rustfmt
+passed     clippy
+passed     tests
+passed     canaries
+passed     ceiling canary
+           CEILING idle round at 25 x 10,000: 0.0315 s of processor, the median of [0.19875899999999902, 0.03145800000000065, 0.021680999999993844], against 0.1 s; the last round's account {"acts_moved":0,"asleep":0,"cpu_s":0.021680999999993844,"dialled":24,"folds":{"digest":{"kept":96,"rebuilt":0},"offer":{"kept":48,"rebuilt":0},"register":{"kept":27,"rebuilt":0},"write_index":{"kept":123,"rebuilt":0}},"reached":24,"refused":0,"wall_s":0.00303275}
+passed     web rustfmt and clippy
+passed     browser
+passed     joining in a browser

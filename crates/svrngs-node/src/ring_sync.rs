@@ -32,7 +32,9 @@
 //! starts a round when the append door signs onto a journal or a member comes
 //! back Online, so the sixty seconds
 //! is a ceiling on idleness rather than on a write. (svrngs: the record
-//! API's append door nudges, [`append`]; nothing else does yet.)
+//! API's append door nudges, [`append`]; the redeem route once it writes
+//! an `Admit`; and the member door when a pass's signer is unknown to it,
+//! [`AskRound`], waiting on the round it starts.)
 //!
 //! # The exchange
 //!
@@ -87,8 +89,9 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use crate::peer_wire::{RingSyncRequest, RingSyncResponse, RING_SYNC_OPS_BUDGET_BYTES};
-use crate::{Ed25519Verifier, RailError, RingRail};
-use tokio::sync::Notify;
+use crate::{RailError, RingRail};
+use n0_future::task::AbortOnDropHandle;
+use tokio::sync::{watch, Notify};
 use tracing::{debug, info, warn};
 
 mod journal;
@@ -97,6 +100,7 @@ pub use journal::RoundMembers;
 
 use crate::iroh::key_actor;
 use crate::node::Host;
+use axum::http::StatusCode;
 
 /// Money does not need ten-second convergence, and the bandwidth argument in
 /// the module docs says it must not have it.
@@ -123,13 +127,7 @@ pub const MAX_CHUNKS_PER_EXCHANGE: usize = 16;
 /// the daemon's `GossipHandle` so the daemon tears both
 /// down the same way.
 pub struct RingSyncHandle {
-    _task: tokio::task::JoinHandle<()>,
-}
-
-impl Drop for RingSyncHandle {
-    fn drop(&mut self) {
-        self._task.abort();
-    }
+    _task: AbortOnDropHandle<()>,
 }
 
 /// What one round moved. Returned rather than only logged so a test can
@@ -156,6 +154,60 @@ pub struct RoundOutcome {
     pub ops_pushed: usize,
 }
 
+/// How many rounds have begun and how many have ended, and how many of
+/// their exchanges a member has answered, written by the loop alone: rounds
+/// run one at a time, so the last ended is the `ended`th.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct Progress {
+    pub begun: u64,
+    pub ended: u64,
+    pub answered: u64,
+}
+
+/// The loop's [`Progress`], for a door to wait on.
+pub type Rounds = watch::Sender<Progress>;
+
+/// A round asked for now and waited on (mnp-1): what a door holds to ask
+/// the group's ring once before it answers a signer it does not know.
+/// Asks while a round runs share the next round, as nudges do.
+#[derive(Clone)]
+pub struct AskRound {
+    nudge: Arc<Notify>,
+    rounds: watch::Receiver<Progress>,
+}
+
+impl AskRound {
+    pub fn new(nudge: Arc<Notify>, rounds: &Rounds) -> Self {
+        let rounds = rounds.subscribe();
+        Self { nudge, rounds }
+    }
+
+    /// Wake the round now, waiting on nothing: a write that must reach the
+    /// group before the next interval (U7, a removal and a hand-on).
+    pub fn wake(&self) {
+        self.nudge.notify_one();
+    }
+
+    /// Wake the round now and wait, at most `within`, until `known` holds,
+    /// asked again as each member answers, or a round begun after this ask
+    /// ends: whether either came in time. A member that answers ends the
+    /// wait; one asleep holds only its own dial (asleep-1-none-held).
+    pub async fn until(&self, within: Duration, known: impl Fn() -> bool) -> bool {
+        let mut rounds = self.rounds.clone();
+        let after = rounds.borrow_and_update().begun + 1;
+        self.nudge.notify_one();
+        let waited = tokio::time::timeout(within, async {
+            while !known() && rounds.borrow_and_update().ended < after {
+                if rounds.changed().await.is_err() {
+                    return false;
+                }
+            }
+            true
+        });
+        waited.await.unwrap_or(false)
+    }
+}
+
 /// Spawn the periodic ring-sync task. Call once per daemon start.
 ///
 /// Runs one round **immediately** before entering the interval, because the
@@ -172,24 +224,30 @@ pub struct RoundOutcome {
 /// be the same number: the nudge starts a round now, and the round is the same
 /// round. **Nothing about the sender census changes** — the pump does not talk
 /// to a peer, it asks this loop to. (svrngs: of those writers, the record
-/// API's append door alone exists, [`append`].)
+/// API's append door, [`append`]; beside it the member door asks one,
+/// [`AskRound`], and `rounds` counts them begun and ended for it.)
 pub fn spawn_ring_sync_loop(
     host: Arc<Host>,
     interval: Duration,
     nudge: Arc<Notify>,
+    rounds: Rounds,
 ) -> RingSyncHandle {
     let task = tokio::spawn(async move {
         info!(
             interval_secs = interval.as_secs(),
             "ring sync: loop started"
         );
+        let mut told = Told::new();
         loop {
             #[expect(
                 clippy::disallowed_methods,
                 reason = "times a round for its trace; no decision reads it"
             )]
             let started = Instant::now();
-            let outcome = run_one_round(host.as_ref()).await;
+            rounds.send_modify(|p| p.begun += 1);
+            let answered = || rounds.send_modify(|p| p.answered += 1);
+            let outcome = run_one_round(host.as_ref(), &answered, &mut told).await;
+            rounds.send_modify(|p| p.ended = p.begun);
             if outcome.namespaces > 0 {
                 debug!(
                     namespaces = outcome.namespaces,
@@ -213,14 +271,28 @@ pub fn spawn_ring_sync_loop(
             }
         }
     });
-    RingSyncHandle { _task: task }
+    RingSyncHandle {
+        _task: AbortOnDropHandle::new(task),
+    }
 }
 
 /// One anti-entropy pass over every namespace this node holds, against every
-/// online peer **standing in its register** (svrngs: upstream, its roster).
-pub async fn run_one_round(host: &Host) -> RoundOutcome {
+/// online peer **standing in its register** (svrngs: upstream, its roster),
+/// every pair dialled at once and `answered` told as each member answers.
+///
+/// (svrngs, asleep-1-none-held: upstream dialled one pair after another, so
+/// an asleep member held every exchange after it to its dial's ten-second
+/// timeout, and a door waiting on the round refused a newcomer another
+/// member had already let in, `demo/runs/mnp/2026-10-09/README.md`, "What
+/// no prediction named" 1. Each exchange is idempotent and keyed on the op
+/// id, so two at once with one journal duplicate nothing.)
+pub async fn run_one_round(
+    host: &Host,
+    answered: &(impl Fn() + Sync),
+    told: &mut Told,
+) -> RoundOutcome {
     let mut outcome = RoundOutcome::default();
-    let rail = host.rail();
+    let rail = &host.rail;
     let namespaces = match rail.namespaces() {
         Ok(n) => n,
         Err(e) => {
@@ -231,38 +303,34 @@ pub async fn run_one_round(host: &Host) -> RoundOutcome {
     if namespaces.is_empty() {
         return outcome;
     }
-    let http = match host.http() {
-        Ok(c) => c,
-        Err(e) => {
-            warn!(error = %e, "ring sync: no http client");
-            return outcome;
-        }
-    };
+    // Where this computer is reached, said before it dials, so a move goes
+    // out in this round (relay-in-record).
+    host.say_relay();
 
-    let Some(RoundMembers {
+    // With no members, no group is offered, and a group this computer left
+    // is still read below, for its leave (#190).
+    let members = host.members().await;
+    if members.is_none() {
+        debug!("ring sync: this node has no membership to round with");
+    }
+    let RoundMembers {
         peers,
         exchanged_with,
         skipped_offline,
-    }) = host.members().await
-    else {
-        debug!("ring sync: this node has no membership to round with");
-        return outcome;
-    };
+    } = members.unwrap_or_else(|| RoundMembers::of(Vec::new()));
     // GLASSBOX: which members this round carried and which it passed over. A
     // round that skips the only peer looks exactly like a round that had
     // nothing to send, and room run 2 (2026-09-20) cost 85 s to a difference
-    // that was invisible in the log. Logged BEFORE the empty-peer return, so
+    // that was invisible in the log. Logged before any group is offered, so
     // the skipped-everyone round is the one that says so.
     info!(
         exchanged_with = ?exchanged_with,
         skipped_offline = ?skipped_offline,
         "ring sync: round membership"
     );
-    if peers.is_empty() {
-        return outcome;
-    }
-    let transport = host.transport();
+    let transport = &host.transport;
 
+    let (mut dials, mut leaves) = (Vec::new(), Vec::new());
     for namespace in &namespaces {
         outcome.namespaces += 1;
         // ── A ring is OFFERED to its register, and to nobody else.
@@ -275,9 +343,12 @@ pub async fn run_one_round(host: &Host) -> RoundOutcome {
         // roster — its seed, or one derived from the mesh — DESIGN §8, U1.)
         //
         // A ring with no seed, or an UNREADABLE register, offers nothing for
-        // this namespace. Under-share, never over-share — the same posture
-        // `prune_what_the_peer_retired` takes when it cannot read a roster.
-        let standing = match rail.standing(namespace, &Ed25519Verifier) {
+        // this namespace. Under-share, never over-share.
+        let standing = match rail.standing(namespace) {
+            Ok(crate::register::Standing::Left(stands)) => {
+                leaves.extend(leave_told(host, namespace, stands, told));
+                continue;
+            }
             Ok(s) => s,
             Err(e) => {
                 warn!(
@@ -312,62 +383,110 @@ pub async fn run_one_round(host: &Host) -> RoundOutcome {
         );
 
         for OnlinePeer { contact, .. } in offered_to {
-            // Upstream's transport answered a list of candidate addresses;
-            // `base_url` answers at most one, and the loop below keeps its shape.
-            let endpoints: Vec<String> = transport.base_url(contact).await.into_iter().collect();
-            let mut reached = false;
-            let mut refused = false;
-            for base_url in &endpoints {
-                let url = format!("{base_url}/internal/ring/sync");
-                let ex = exchange(http, &url, rail, namespace).await;
-                // Counted BEFORE the verdict is read. `ingest_all` has already
-                // written these lines to disk, so they are progress whether or
-                // not a later call in the same exchange failed — the old shape
-                // returned `Err` and threw the pulled count away, which made
-                // `ops_pulled` undercount exactly in the failure case.
-                outcome.ops_pulled += ex.pulled;
-                outcome.ops_pushed += ex.pushed;
-                match ex.stop {
-                    None => {
-                        reached = true;
-                        break; // one working address is enough
-                    }
-                    Some(ExchangeStop::Refused { sent_bytes, status }) => {
-                        refused = true;
-                        warn!(
-                            peer = %contact.key,
-                            url = %url,
-                            sent_bytes,
-                            status,
-                            budget_bytes = RING_SYNC_OPS_BUDGET_BYTES,
-                            "ring sync: peer REFUSED — it answered, so this is \
-                             not an unreachable peer. 413: its body limit is \
-                             below this build's exchange budget. 403: it does \
-                             not serve this ring to us — we hold no standing \
-                             in its register there, or it holds no such ring"
-                        );
-                    }
-                    Some(ExchangeStop::Failed(detail)) => {
-                        debug!(
-                            peer = %contact.key,
-                            url = %url,
-                            detail,
-                            "ring sync: exchange failed, trying next address"
-                        );
-                    }
+            dials.push(async move {
+                let ended = exchange_with((transport, contact), rail, namespace).await;
+                if matches!(ended.2, Reach::Reached) {
+                    answered();
                 }
-            }
-            if reached {
-                outcome.peers_reached += 1;
-            } else if refused {
-                outcome.peers_refused += 1;
-            } else {
-                outcome.peers_unreachable += 1;
-            }
+                ended
+            });
+        }
+    }
+    let (answered_leaves, ended) =
+        tokio::join!(n0_future::join_all(leaves), n0_future::join_all(dials));
+    told.extend(answered_leaves.into_iter().flatten());
+    for (pulled, pushed, reach) in ended {
+        // Counted BEFORE the verdict is read: see `exchange_with`.
+        outcome.ops_pulled += pulled;
+        outcome.ops_pushed += pushed;
+        match reach {
+            Reach::Reached => outcome.peers_reached += 1,
+            Reach::Refused => outcome.peers_refused += 1,
+            Reach::Unreachable => outcome.peers_unreachable += 1,
         }
     }
     outcome
 }
+
+/// Each group this computer left and each computer told its leave there
+/// that answered: the round's loop owns it, so a computer is told again
+/// only until it answers, and once more after a restart (#190).
+pub type Told = std::collections::BTreeSet<(String, String)>;
+
+/// A group this computer left stands for nobody here, so no exchange
+/// carries its leave: told, each round, from the standing the round read,
+/// to each computer the copy says stands and has not answered (#190), at
+/// once with the round's dials; `None` with nobody, or nothing, to tell.
+fn leave_told<'a>(
+    host: &'a Host,
+    ns: &'a str,
+    stands: std::collections::BTreeMap<String, crate::register::Member>,
+    told: &Told,
+) -> Option<impl std::future::Future<Output = Vec<(String, String)>> + 'a> {
+    let computers: Vec<_> = (stands.into_iter())
+        .filter(|(k, m)| {
+            m.device == crate::Device::Computer && !told.contains(&(ns.to_string(), k.clone()))
+        })
+        .map(|(k, m)| (k, m.relay))
+        .collect();
+    let lines = host.rail.own_removes(ns).unwrap_or_else(|e| {
+        warn!(namespace = ns, error = %e, "ring sync: a group left, whose leave cannot be read, so it is not told");
+        Vec::new()
+    });
+    debug!(namespace = ns, untold = computers.len(), lines = lines.len(), "ring sync: a group this computer left — its leave told to each computer standing that has not answered; none when it was removed");
+    let due = !computers.is_empty() && !lines.is_empty();
+    due.then_some(async move {
+        let answered = crate::removal::tell(host, ns, computers, &lines).await;
+        answered
+            .into_iter()
+            .map(|actor| (ns.to_string(), actor))
+            .collect()
+    })
+}
+
+/// How a round's exchange with one member ended: it answered, it answered
+/// and refused, or no address of it answered.
+enum Reach {
+    Reached,
+    Refused,
+    Unreachable,
+}
+
+/// One round's exchange of `namespace` with the member at `to`: the ops
+/// pulled and pushed, and how it ended. (svrngs, arch-peer (c): upstream
+/// tried each address its transport answered until one worked; a member is
+/// asked by its key now, so there is one.)
+async fn exchange_with(to: To<'_>, rail: &RingRail, namespace: &str) -> (usize, usize, Reach) {
+    let ex = exchange(to, rail, namespace).await;
+    // `ex.pulled` is progress whether or not a later call in the same
+    // exchange failed: `ingest_all` has already written those lines to disk.
+    let reach = match ex.stop {
+        None => Reach::Reached,
+        Some(ExchangeStop::Refused { sent_bytes, status }) => {
+            warn!(
+                peer = %to.1.key,
+                sent_bytes,
+                status,
+                budget_bytes = RING_SYNC_OPS_BUDGET_BYTES,
+                "ring sync: peer REFUSED — it answered, so this is \
+                 not an unreachable peer. 413: its body limit is \
+                 below this build's exchange budget. 403: it does \
+                 not serve this ring to us — we hold no standing \
+                 in its register there, or it holds no such ring"
+            );
+            Reach::Refused
+        }
+        Some(ExchangeStop::Failed(detail)) => {
+            debug!(peer = %to.1.key, detail, "ring sync: exchange failed, so the member is unreachable this round");
+            Reach::Unreachable
+        }
+    };
+    (ex.pulled, ex.pushed, reach)
+}
+
+/// Where an exchange goes: a member, by its contact, through the
+/// transport that dials it.
+pub type To<'a> = (&'a crate::iroh::IrohTransport, &'a crate::iroh::Contact);
 
 /// Why an exchange with one peer address stopped.
 #[derive(Debug)]
@@ -421,57 +540,7 @@ impl ExchangeOutcome {
     }
 }
 
-/// Delete what a peer's seal just retired, on THIS node's disk.
-///
-/// **The half that actually bounds storage.** The author's own node prunes
-/// when it seals (`routes_rail::append`), but that bounds the writer's disk and
-/// nobody else's — every housemate would still keep a full copy of everyone's
-/// history forever, which is the growth this exists to stop. A seal is a signed
-/// statement in the one total order, so it binds whoever admits it, and
-/// `RingJournal::compact` is already author-blind.
-///
-/// **Only when a seal actually arrived**, and that gate is not frugality for
-/// its own sake: compaction re-admits, which is one Ed25519 verify per op
-/// (2a measured the fold at 38.4 µs/op, 94% of it that verify), and a floor
-/// cannot move without a seal. Running it every round would pay the journal's
-/// whole read cost every sixty seconds to discover nothing changed.
-///
-/// It sits INSIDE the chunk loop rather than after it, deliberately. The
-/// trigger is the seal and not the chunk, so a bootstrap pulling sixteen
-/// chunks pays this once per seal it actually meets — and compaction keeps
-/// that number at roughly one, since every seal but the highest is itself
-/// below the floor and goes. Hoisting it out would be cheaper only in a case
-/// the mechanism prevents, and would skip the prune entirely on every path
-/// where a later chunk fails after the seal has already landed.
-///
-/// **Fails closed, everywhere it can fail.** The floor comes from
-/// `Admission::floors`, so a seal this node cannot authenticate against the
-/// roster it holds retires nothing — a stale or partial roster under-prunes
-/// rather than over-prunes. (svrngs: the roster is the group's seed, its
-/// `roster.json`, from which admission folds the register, so a seal by a
-/// member the founder admitted authorises its prune; upstream read it through
-/// `RingRail::roster`, which could answer a roster derived from the mesh.)
-/// A refusal is logged and the exchange
-/// carries on: the ops are ingested and durable, and a journal that stayed
-/// long is a worse outcome than a stalled round, not a reason to make one.
-fn prune_what_the_peer_retired(rail: &RingRail, namespace: &str) {
-    match rail.compact(namespace) {
-        Ok(done) if done.removed > 0 => {
-            info!(
-                namespace,
-                removed = done.removed,
-                kept = done.kept,
-                "ring sync: a peer's seal retired lines on this node"
-            );
-        }
-        Ok(_) => {}
-        Err(e) => {
-            warn!(namespace, error = %e, "ring sync: the prune a peer's seal authorises was refused")
-        }
-    }
-}
-
-/// The chunked exchange with one peer address: two calls per chunk, repeated
+/// The chunked exchange with one member: two calls per chunk, repeated
 /// until neither side moves or [`MAX_CHUNKS_PER_EXCHANGE`] is spent.
 ///
 /// See the module docs for why repeating terminates. The two stopping
@@ -479,12 +548,8 @@ fn prune_what_the_peer_retired(rail: &RingRail, namespace: &str) {
 /// (nothing came, nothing left to send) returns quietly, and *stalled*
 /// (something outstanding, nothing moved anywhere) warns — repeating that
 /// would repeat verbatim.
-pub async fn exchange(
-    http: &reqwest::Client,
-    url: &str,
-    rail: &RingRail,
-    namespace: &str,
-) -> ExchangeOutcome {
+pub async fn exchange(to: To<'_>, rail: &RingRail, namespace: &str) -> ExchangeOutcome {
+    let peer = to.1.key;
     let mut out = ExchangeOutcome::default();
     let mut last_peer_digest: Option<crate::Digest> = None;
 
@@ -495,8 +560,7 @@ pub async fn exchange(
             Err(e) => return out.stopped(ExchangeStop::Failed(format!("local journal: {e}"))),
         };
         let first = match post(
-            http,
-            url,
+            to,
             &RingSyncRequest {
                 namespace: namespace.to_string(),
                 digest: mine,
@@ -513,14 +577,6 @@ pub async fn exchange(
             Err(e) => return out.stopped(ExchangeStop::Failed(format!("local journal: {e}"))),
         };
         out.pulled += pulled;
-        if pulled > 0
-            && first
-                .ops
-                .iter()
-                .any(|o| matches!(o.kind.act, crate::RailAct::Seal))
-        {
-            prune_what_the_peer_retired(rail, namespace);
-        }
 
         // The peer's OWN report of what it holds — the one progress signal
         // that cannot be faked by a count an older build did not send.
@@ -546,8 +602,7 @@ pub async fn exchange(
                 Err(e) => return out.stopped(ExchangeStop::Failed(format!("local journal: {e}"))),
             };
             match post(
-                http,
-                url,
+                to,
                 &RingSyncRequest {
                     namespace: namespace.to_string(),
                     digest: refreshed,
@@ -565,7 +620,7 @@ pub async fn exchange(
 
         debug!(
             namespace,
-            url,
+            %peer,
             chunk,
             pulled,
             pushed,
@@ -581,7 +636,7 @@ pub async fn exchange(
         if pulled == 0 && pushed == 0 && !peer_digest_moved {
             warn!(
                 namespace,
-                url,
+                %peer,
                 chunk,
                 offered,
                 "ring sync: exchange stalled — the peer's digest did not move \
@@ -593,7 +648,7 @@ pub async fn exchange(
     }
     warn!(
         namespace,
-        url,
+        %peer,
         chunks = MAX_CHUNKS_PER_EXCHANGE,
         pulled = out.pulled,
         pushed = out.pushed,
@@ -603,9 +658,8 @@ pub async fn exchange(
     out
 }
 
-async fn post(
-    http: &reqwest::Client,
-    url: &str,
+pub(crate) async fn post(
+    to: To<'_>,
     body: &RingSyncRequest,
 ) -> Result<RingSyncResponse, ExchangeStop> {
     // Serialised here rather than handed to `.json(body)` so the byte count
@@ -615,17 +669,14 @@ async fn post(
         Err(e) => return Err(ExchangeStop::Failed(format!("local encode: {e}"))),
     };
     let sent_bytes = payload.len();
-    let request = http
-        .post(url)
-        .header(reqwest::header::CONTENT_TYPE, "application/json")
-        .body(payload);
-    let resp = request
-        .send()
-        .await
-        .map_err(|e| ExchangeStop::Failed(e.to_string()))?;
+    let request = axum::http::Request::post(SYNC_ROUTE)
+        .header(axum::http::header::CONTENT_TYPE, "application/json")
+        .body(axum::body::Body::from(payload))
+        .expect("a fixed route and header");
+    let resp = to.0.fetch(to.1, request).await;
+    let resp = resp.map_err(|e| ExchangeStop::Failed(e.to_string()))?;
     let status = resp.status();
-    if status == reqwest::StatusCode::PAYLOAD_TOO_LARGE || status == reqwest::StatusCode::FORBIDDEN
-    {
+    if status == StatusCode::PAYLOAD_TOO_LARGE || status == StatusCode::FORBIDDEN {
         return Err(ExchangeStop::Refused {
             sent_bytes,
             status: status.as_u16(),
@@ -634,10 +685,11 @@ async fn post(
     if !status.is_success() {
         return Err(ExchangeStop::Failed(format!("HTTP {status}")));
     }
-    resp.json::<RingSyncResponse>()
-        .await
-        .map_err(|e| ExchangeStop::Failed(e.to_string()))
+    serde_json::from_slice(resp.body()).map_err(|e| ExchangeStop::Failed(e.to_string()))
 }
+
+/// Where a member's exchange is asked, and served (`ring_routes.rs`).
+pub const SYNC_ROUTE: &str = "/internal/ring/sync";
 
 /// The responder's half of one exchange: ingest what the caller offered,
 /// then answer with this node's digest and one budget of what the caller's
@@ -667,25 +719,6 @@ pub fn answer(
     ))
 }
 
-/// cw-rails' peer client for the round: the same ten-second bound its gossip
-/// round dials with, built once. The build is deterministic, so caching a
-/// failure is correct rather than a lost retry. (svrngs: `pub`, for the node
-/// that hosts the round; upstream's one caller, `RailsDaemon`, did not come
-/// over.)
-pub fn peer_client() -> Result<&'static reqwest::Client, &'static str> {
-    static CLIENT: std::sync::OnceLock<Result<reqwest::Client, String>> =
-        std::sync::OnceLock::new();
-    CLIENT
-        .get_or_init(|| {
-            reqwest::Client::builder()
-                .timeout(Duration::from_secs(10))
-                .build()
-                .map_err(|e| e.to_string())
-        })
-        .as_ref()
-        .map_err(String::as_str)
-}
-
 /// `POST /v1/rail/append`, then wake the round: an act this node just signed
 /// is the one that most needs to go, and sixty seconds is the cadence for
 /// anti-entropy, not for a write (the daemon's `ring_write_nudge`, here).
@@ -698,7 +731,9 @@ pub async fn append(
     body: axum::Json<serde_json::Value>,
 ) -> axum::response::Response {
     let nudge = api.nudge.clone();
-    let answer = crate::rail::append(axum::extract::State(api), query, body).await;
+    let answer = crate::rail::append(axum::extract::State(api), query, body)
+        .await
+        .unwrap_or_else(|refused| refused);
     if answer.status().is_success() {
         nudge.notify_one();
         info!(target: "rails", "ring sync: an append woke the round");

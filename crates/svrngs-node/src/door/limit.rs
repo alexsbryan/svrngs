@@ -10,7 +10,8 @@
 //! budget divided evenly among the active, and a newcomer granted or shed.
 //! Here the budget is the lender's declared upload and the active are
 //! people, not slots or requests: a person with three requests in flight is
-//! one person, so seeking costs nobody else a share. Nothing queues — a
+//! one person, so seeking costs nobody else a share. A lend whose lender
+//! names no limit lets in everyone. Nothing queues — a
 //! person past the limit is refused with how many are using it, and an app
 //! turns that into a choice (DESIGN §8, "Too many at once").
 //!
@@ -27,7 +28,7 @@
 
 use std::collections::BTreeMap;
 use std::net::IpAddr;
-use std::num::NonZeroU32;
+use std::num::{NonZeroU16, NonZeroU32};
 use std::time::{Duration, Instant};
 
 use crate::lend::{Lend, LendName, Upload};
@@ -76,9 +77,9 @@ pub enum Verdict {
     },
     /// Let in uncounted: guessed in the lender's home.
     Home,
-    /// Refused: the lend's limit is reached by `using` people, none of them
-    /// this one.
-    Full { using: u32 },
+    /// Refused: the lend's `limit` is reached by `using` people, none of
+    /// them this one.
+    Full { using: u32, limit: NonZeroU16 },
 }
 
 /// One person's use of one lend.
@@ -125,10 +126,13 @@ impl Counts {
         let viewers = self.0.entry(lend.name.clone()).or_default();
         viewers.retain(|_, v| v.counted(now));
         let known = viewers.contains_key(actor);
-        let limit = usize::from(lend.limit.get());
-        if !known && viewers.len() >= limit {
+        if let Some(limit) = lend
+            .limit
+            .filter(|l| !known && viewers.len() >= usize::from(l.get()))
+        {
             return Verdict::Full {
                 using: u32::try_from(viewers.len()).unwrap_or(u32::MAX),
+                limit,
             };
         }
         let viewer = viewers.entry(actor.to_string()).or_insert(Viewer {

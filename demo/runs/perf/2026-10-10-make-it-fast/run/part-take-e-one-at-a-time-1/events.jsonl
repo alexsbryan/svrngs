@@ -1,0 +1,10 @@
+{"t": 1791688047.397, "phase": "setup", "event": "start", "pass_": "part", "host": {"load": [10.4, 14.37, 13.5], "cores": 12, "swap_used_mb": 8679.5, "free_gb": 112.5}, "head": "773f732", "df": "Filesystem   1024-blocks      Used Available Capacity iused      ifree %iused  Mounted on\n/dev/disk3s5   971350180 825241692 109819664    89% 6620482 1098196640    1%   /System/Volumes/Data\n"}
+{"t": 1791688047.397, "phase": "setup", "event": "built", "bin": "/tmp/perf2-bin-one-at-a-time"}
+{"t": 1791688047.397, "phase": "part-take", "event": "phase"}
+{"t": 1791688047.397, "phase": "f100000", "event": "phase"}
+{"t": 1791688059.868, "phase": "f100000", "event": "up", "group": "f100000", "who": 0, "path": "loopback"}
+{"t": 1791688089.928, "phase": "f100000", "event": "converged", "group": "f100000", "s": 0.001}
+{"t": 1791688091.129, "phase": "f100000", "event": "shared", "group": "f100000", "who": 0, "answer": {"name": "Shared"}}
+{"t": 1791688129.612, "phase": "f100000", "event": "number", "name": "f100000-taken", "value": 34609.2, "target": null, "verdict": "reported", "start": {"load": [12.68, 14.75, 13.64], "cores": 12, "swap_used_mb": 8679.5, "free_gb": 112.0}, "end": {"load": [6.73, 12.48, 12.88], "cores": 12, "swap_used_mb": 8679.5, "free_gb": 111.7}, "unit": "ms", "path": "loopback", "steps": {"read_ms": 118.0, "walk_ms": 619.0, "take_ms": 273.0, "write_ms": 0.0, "apply_ms": 67.0, "kept_ms": 59.0, "ms": 1111.0, "steps": 3}, "first_step": {"folder": "Shared", "files": "100000", "sent": "100000", "read_ms": "0", "walk_ms": "940", "take_ms": "32698", "write_ms": "533", "apply_ms": "261", "kept_ms": "124", "ms": "34557"}}
+{"t": 1791688129.854, "phase": "f100000", "event": "scratch", "group": "f100000", "kib": 632272}
+{"t": 1791688136.094, "phase": "f100000", "event": "end", "host": {"load": [10.2, 13.1, 13.09], "cores": 12, "swap_used_mb": 8679.5, "free_gb": 112.4}, "df": "Filesystem   1024-blocks      Used Available Capacity iused      ifree %iused  Mounted on\n/dev/disk3s5   971350180 825298560 109762796    89% 6620565 1097627960    1%   /System/Volumes/Data\n"}

@@ -1,0 +1,31 @@
+00:48:44 sam's jellyfin up at 8296: {"LocalAddress":"http://127.0.0.1:8296","ServerName":"Alexs-MacBook-Pro-4","Version":"12.0.0","ProductName":"Jellyfin Server","OperatingSystem":"","Id":"395c5d7976294a42a8564b48bde24538","StartupWizardCompleted":false}
+00:48:48 sam's films: [["Alien", 1979, {"Imdb": "tt0078748", "Tmdb": "348"}], ["Blade Runner", 1982, {"Imdb": "tt0083658", "Tmdb": "78"}], ["Brazil", 1985, {"Imdb": "tt0088846", "Tmdb": "68"}]]
+00:48:48 sam's middleware: listening on port 8297, signing people in to Jellyfin at 127.0.0.1:8296
+00:48:56 dee's jellyfin up at 8396: {"LocalAddress":"http://127.0.0.1:8396","ServerName":"Alexs-MacBook-Pro-4","Version":"12.0.0","ProductName":"Jellyfin Server","OperatingSystem":"","Id":"aab1ef95a16b418f949d4a90fc033ba3","StartupWizardCompleted":false}
+00:49:01 dee's films: [["Arrival", 2016, {"Imdb": "tt2543164", "Tmdb": "329865"}], ["Blade Runner", 1982, {"Imdb": "tt0083658", "Tmdb": "78"}]]
+00:49:01 dee's middleware: listening on port 8397, signing people in to Jellyfin at 127.0.0.1:8396
+00:49:22 the page: http://localhost:56375/
+00:49:26 dee: You're in House, as Dee.
+00:49:27 cy: You're in House, as Cy.
+00:49:28 alex: You're in House, as Alex.
+00:49:28 sam: Lent jellyfin (port 8296) to everyone in your groups, up to 8 people at once.
+00:49:28 dee: Lent jellyfin (port 8396) to everyone in your groups, up to 8 people at once.
+00:49:29 cy: Lent jellyfin (port 8496) to everyone in your groups, up to 8 people at once.
+00:49:29 sam: Lent movie-night (port 8596) to everyone in your groups, up to 8 people at once.
+00:49:29 sam is told: Each person is signed in to it as themselves by what answers on port 8297, with nothing typed. svrngs is running here already, so they can open it now. `svrngs unshare jellyfin` stops lending it. It can open the jellyfin your groups lend, as whoever opens it. svrngs is running here already, so they can open it now. `svrngs unshare movie-night` stops lending it. 
+00:50:25 dee: round membership exchanged_with=["Sam/2c07642e", "Cy/4f5c8af1", "Alex/bf4de880"] skipped_offline=[]
+00:50:35 alex's computer: 3 lends listed; Cy asleep
+00:50:36 ana: You're in House, as Ana.
+00:50:36 ana's taste: owned by her computer's key d5ff0a61245cd979115b12c4faa9d43f557866064d5abdc3914a52cd937aebfe
+00:50:37 taste: up
+00:50:37 taste lent (kept), no choice kept: Lent taste (port 8696) to everyone in your groups, up to 8 people at once.
+00:50:38 sam: Lent tonights-picks (port 8697) to everyone in your groups, up to 8 people at once. Lent other (port 8698) to everyone in your groups, up to 8 people at once. 
+00:51:36 ana: round membership exchanged_with=["Dee/038878ea", "Sam/2c07642e", "Cy/4f5c8af1", "Alex/bf4de880"] skipped_offline=[]
+00:51:38 alex: round membership exchanged_with=["Dee/038878ea", "Sam/2c07642e", "Cy/4f5c8af1", "Ana/d5ff0a61"] skipped_offline=[]
+00:51:38 home pages: ANA_HOME=http://svrngs.localhost:56702/ ALEX_HOME=http://svrngs.localhost:56650/ 
+00:51:39 taste: up
+00:51:39 taste lent (kept), no choice kept: Lent taste (port 8696) to everyone in your groups, up to 8 people at once.
+00:54:25 computer-chromium: computer-chromium; ana-computer-chromium: None None stopped: other from the list: locator.click: Timeout 30000ms exceeded.; the page says: House People: Dee, Sam, Cy, Alex, Ana Ana’s taste Dee’s jellyfin Sam’s jellyfin Sam’s movie-night Sam’s other Sam’s tonights-picks (movie-night) Cy's computer did not answer, so what they lend is no; alex-computer-chromium: None None stopped: tonights-picks from the list: locator.click: Timeout 30000ms exceeded.; the page says: House People: Dee, Sam, Cy, Alex, Ana Ana’s taste Dee’s jellyfin Sam’s jellyfin Sam’s movie-night Sam’s other Sam’s tonights-picks (movie-night) Cy's computer did not answer, so what they lend is no; stopped: Error: page.evaluate: TypeError: Cannot read properties of null (reading 'dataset')
+00:54:27 taste: up
+00:54:27 taste lent (kept), no choice kept: Lent taste (port 8696) to everyone in your groups, up to 8 people at once.
+00:57:14 computer-webkit: computer-webkit; ana-computer-webkit: None None stopped: other from the list: locator.click: Timeout 30000ms exceeded.; the page says: House People: Dee, Sam, Cy, Alex, Ana Ana’s taste Dee’s jellyfin Sam’s jellyfin Sam’s movie-night Sam’s other Sam’s tonights-picks (movie-night) Cy's computer did not answer, so what they lend is no; alex-computer-webkit: None None stopped: tonights-picks from the list: locator.click: Timeout 30000ms exceeded.; the page says: House People: Dee, Sam, Cy, Alex, Ana Ana’s taste Dee’s jellyfin Sam’s jellyfin Sam’s movie-night Sam’s other Sam’s tonights-picks (movie-night) Cy's computer did not answer, so what they lend is no; stopped: Error: page.evaluate: TypeError: null is not an object (evaluating 'o.dataset')

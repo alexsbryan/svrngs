@@ -1,0 +1,33 @@
+2026-10-12T15:15:14.373716Z DEBUG cli: cli: data dir from $SVRNGS_DIR dir="/tmp/fm-w/alex/.svrngs"
+2026-10-12T15:15:14.374459Z DEBUG cli: cli: data dir claimed lock=/tmp/fm-w/alex/.svrngs/lock
+2026-10-12T15:15:14.382506Z  INFO svrngs::identity: node_key: generated + persisted identity key (first boot) node_pubkey=c5eb6ab8bcbb948cbdf65ffea852fda079cfa107070ed2463da60638215df932
+2026-10-12T15:15:14.441098Z  INFO folder: folder: the store is open untagged=0
+2026-10-12T15:15:14.442240Z  INFO rails: api: serving the record to this computer's apps addr=127.0.0.1:56293
+2026-10-12T15:15:14.442916Z  INFO node: node: endpoint bound with the signing key actor="c5eb6ab8bcbb948cbdf65ffea852fda079cfa107070ed2463da60638215df932" data_dir=/tmp/fm-w/alex/.svrngs dial=Some("c5eb6ab8bcbb948cbdf65ffea852fda079cfa107070ed2463da60638215df932@192.168.1.4:52950") api=127.0.0.1:56293
+2026-10-12T15:15:14.444386Z DEBUG redeem: redeem: dialling the issuer by key url="http://127.0.0.1:56296/ask"
+2026-10-12T15:15:14.444443Z  INFO svrngs_node::ring_sync: ring sync: loop started interval_secs=60
+2026-10-12T15:15:14.798033Z  INFO endpoint{id=c5eb6ab8bc}:relay-actor: iroh::socket::transports::relay::actor: home is now relay https://usw1-1.relay.n0.iroh.link/, was None
+2026-10-12T15:15:14.961982Z DEBUG redeem: redeem: the issuer answered route="/ask" status=200
+2026-10-12T15:15:14.962471Z DEBUG redeem: redeem: dialling the issuer by key url="http://127.0.0.1:56312/redeem"
+2026-10-12T15:15:14.981462Z DEBUG redeem: redeem: the issuer answered route="/redeem" status=200
+2026-10-12T15:15:14.981584Z DEBUG cli: cli: join — let in group=5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6 redeemed=Admitted(OpId(ContentHash(d414e0b74c721520)))
+2026-10-12T15:15:14.983007Z DEBUG cli: cli: join — a client's link, so no origin is kept group=5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6
+2026-10-12T15:15:14.983177Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=22012 peer=c7267fbad17ac8de4741ee6a480e23b6a114dcb685821c31be5bfefe0983c03d error=Address already in use (os error 48)
+2026-10-12T15:15:14.986160Z DEBUG node: node: admitted — the dialer stands in a group held here actor="c7267fbad17ac8de4741ee6a480e23b6a114dcb685821c31be5bfefe0983c03d" namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6"
+2026-10-12T15:15:14.997202Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" url="http://127.0.0.1:56314/internal/ring/sync" chunk=1 pulled=3 pushed=0 peer_sent=3 offered=0 more_for_peer=false
+2026-10-12T15:15:14.998431Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" url="http://127.0.0.1:56314/internal/ring/sync" chunk=2 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-12T15:15:14.998454Z DEBUG node: node: sync_with — one exchange with the peer namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" pulled=3 pushed=0 stop=None
+2026-10-12T15:15:14.998469Z DEBUG cli: cli: join — synced once from the issuer group=5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6 pulled=3
+2026-10-12T15:15:14.999626Z  INFO folder: synced: the directory kept in step with the group's folder namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" folder="trip" dir=/tmp/fm-w/alex/svrngs/trip
+2026-10-12T15:15:14.999753Z DEBUG cli: cli: svrngs running here answered route="/v1/folders" ok=true
+2026-10-12T15:15:14.999780Z DEBUG cli: cli: join — the group's folder placed, or why not group=5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6 dir=/tmp/fm-w/alex/svrngs/trip placed=Ok(())
+2026-10-12T15:15:15.004804Z DEBUG node: node: a member stands in the group, to dial namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" member=ana/c20f8f85
+2026-10-12T15:15:15.004829Z DEBUG node: node: a member stands in the group, to dial namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" member=Sam/c7267fba
+2026-10-12T15:15:15.004993Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=20370 peer=c20f8f85ad796bd3af9c6c9a5a1955ef33855003fe8bb0c8bf8e1b83b275663a error=Address already in use (os error 48)
+2026-10-12T15:15:15.005917Z DEBUG node: node: lends — the computer answered actor="c7267fbad17ac8de4741ee6a480e23b6a114dcb685821c31be5bfefe0983c03d" lends=1
+2026-10-12T15:15:15.409077Z DEBUG node: node: lends — the computer answered actor="c20f8f85ad796bd3af9c6c9a5a1955ef33855003fe8bb0c8bf8e1b83b275663a" lends=1
+2026-10-12T15:15:15.409252Z DEBUG node: node: lends — asked every computer of the groups lent=2 unanswered=0
+2026-10-12T15:15:15.409432Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" lent=2 unanswered=0
+2026-10-12T15:15:15.411050Z DEBUG node: node: asked to stop by SIGTERM
+2026-10-12T15:15:15.411087Z DEBUG cli: cli: stopping
+2026-10-12T15:15:16.527183Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort

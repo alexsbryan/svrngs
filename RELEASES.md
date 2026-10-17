@@ -1,0 +1,181 @@
+# svrngs releases
+
+## V1, 16 October 2026
+
+svrngs keeps what your group shares on your own computers: the money you
+split, the nights you plan, the films and music you own, a friend's model.
+Everyone in the group opens it from a link in the chat you already use.
+Nobody makes an account, and nothing asks for a password.
+
+A group is the people you already talk to: a house, a team, the friends you
+plan with, about twenty-five people. svrngs runs on each person's computer
+and connects them directly. Your phone joins through the computers of the
+people in your group.
+
+V1 is early. Every scene below was run end to end on one computer, with a
+program playing each person. Nobody has used it with real people yet.
+
+### Start a group
+
+One person makes the group. On a Mac or a Linux computer, open Terminal,
+paste this line and press Enter:
+
+```
+curl -fsSL https://group.svrnme.sh/install.sh | sh -s -- 'https://group.svrnme.sh/'
+```
+
+It installs svrngs in your own folder and checks the download against the
+release's list. It starts svrngs now and whenever you log in, then opens your
+home page in the browser. It needs no password and changes none of your
+computer's settings. On the home page:
+
+1. Type a name for the group and your own name.
+2. Press **Make a group**, then **Make a link**.
+3. Send the link to your chat.
+
+Someone who opens that link on a computer sees the same one line, with
+your group already in it. On a phone, they type their name and press
+**Join**. Either way, they're in within seconds, as themselves.
+
+[`demo/start.md`](demo/start.md) walks through it, with every line and
+button and what each one says.
+
+### What you can do
+
+**See who's around, and what's in the group.**
+- Your home page shows each group's people by name, lit while their
+  computer is on.
+- Below them is one table of everything the group has: what it is, whose it
+  is, and how it opens.
+- A computer that doesn't answer is named as not answering. It is never
+  shown as on, and never left out.
+
+**Lend what's already running, from the page.**
+- Whatever runs on your computer can be lent to your group: Jellyfin or
+  Navidrome for the library, Immich for photos, Actual for money,
+  llama-server for a model.
+- Your home page lists what's running here. One press lends it, and
+  everyone in the group can open it.
+- For Jellyfin, if its sign-in helper runs beside it, everyone gets in as
+  themselves with no account to make.
+
+**Split a bill, plan a night.**
+- Money and Events come with svrngs. Tick them on your home page to bring
+  them to a group.
+- They live in the group's folder on every computer that holds it, so they
+  keep working when the computer that brought them is off.
+- In the recorded run, five newcomers each settled a gas bill and played a
+  film within 37 seconds of opening the link.
+
+**Your phone reaches whoever's awake.**
+- A phone dials the computer that sent its link and every other lender at
+  once. It goes through the first that answers and tells you whose: "through
+  Cy's computer".
+- When the link's computer was asleep, the phone opened Money in under 4
+  seconds. It used to wait 14.
+- Open the group in a second tab and it says the group is open in another
+  tab, with **Open it here**.
+
+**Join another group, or leave one.**
+- To join a second group, paste its link on your home page. You don't need
+  a terminal.
+- **Leave this group** leaves it. Your other computers find out, and the
+  others see "Ana left on 16 Oct".
+- If you keep the order of removals in a group, the page asks you to hand
+  that on first.
+
+**Ask across groups, through people you both know.** The grapevine is a
+reference app for developers. Here is how a tile saw finds its way from one
+group to another:
+1. Sam asks for a tile saw in the building's group.
+2. Jo is in that group and in the block's group too, and carries the ask
+   there with one tap.
+3. Kim offers a saw, and Sam says yes. Only then do the two see each other's
+   names.
+
+The replies are sealed: Jo's computer passes them on and can't read them.
+The scene runs end to end in 20 seconds, with three computers run on one
+machine. It's in [`apps/grapevine/`](apps/grapevine/), and
+[`demo/grapevine.md`](demo/grapevine.md) walks through it.
+
+### If you build apps
+
+Anything you can run on localhost, you can share with your group. Your app
+gets three things and needs nothing else:
+- the person asking, verified, in request headers;
+- a record the whole group keeps, which outlives the computer your app runs
+  on;
+- reach to every member's computer.
+
+There's no login, no SDK and no bundle to make. [`docs/DESIGN.md`](docs/DESIGN.md)
+§3 is the whole surface.
+
+The record keeps which computer wrote each entry beside the person it
+speaks for, so your app can show "Bo, through Cy's computer" wherever it
+shows who did what. Money, Events and the grapevine already do.
+
+A grapevine kind is one file and one line. The third kind, rooms, is 24
+lines. A kind's file imports nothing, so it can't touch routing, sealing or
+who carried what. [`apps/grapevine/kinds/README.md`](apps/grapevine/kinds/README.md)
+shows how.
+
+### Where your things go
+
+Your group's money, plans, files and messages stay on the computers of the
+people in the group. Nobody else holds a copy, and that includes us. We
+host the page a link opens and the downloads the install line fetches.
+Both are static files, and none of your group's things pass through them.
+
+Computers reach each other directly when they can. When they can't, the
+traffic goes through n0's public relays, encrypted end to end. Traffic from
+a phone's browser always goes through a relay. A relay sees that two
+computers are talking and how much, but never what they say.
+
+Inside the group, people see what's lent to them and what the group's apps
+show. On the grapevine, everyone in a group that a sealed reply crosses can
+see that a reply passed, with its size and its time. They can't see its
+words. The grapevine's page says so on every thread.
+
+If you installed svrngs before 16 October, run the install line again; it
+updates in place. Earlier builds let any program on your computer reach
+your friends' lent apps as you. This release closes that.
+
+### What V1 doesn't do yet
+
+**Leaving is final from that computer.** You can't rejoin a group you left
+from the same computer. You can rejoin from your phone, which keeps a key
+for each group.
+
+**An app can't prove who wrote an entry.** A program on a member's computer
+can write in another member's name. V1 shows which computer wrote the entry
+rather than refusing it. The fix after V1 is for a phone to sign its own
+writes.
+
+**It runs on n0's relays.** svrngs has a relay of its own, which anyone can
+run. It's built, and switched off until it's hosted for production.
+
+**Computers: Mac and Linux.** The install line has builds for macOS and
+Linux, on Intel and on ARM. Phones join from the browser. There's no
+Windows build.
+
+### What changed underneath
+
+An architectural audit this week found code kept for history and two paths
+doing one job. Cutting them closed a security hole along the way, the one
+the install note above describes. V1 is smaller than the code before the
+audit, even with leaving and the grapevine added:
+
+| | Before the audit | V1 |
+|---|---:|---:|
+| Lines of code in svrngs | 16,963 | 16,350 |
+| Lines in its core | 3,149 | 2,992 |
+| Writing an entry in a group of 25 holding 10,000 | 0.79 s | 0.064 s |
+
+- **The record.** It no longer signs a digest of everything held into every
+  entry. In a group of 25, that digest was 88% of each line.
+- **Apps.** They can no longer erase their own earlier entries on every copy.
+- **Connections.** A computer reaches another directly over its encrypted
+  connection, with no local port in between.
+
+V1 is the build at `group.svrnme.sh`, from commit `de8923f7`. svrngs is open
+software under the AGPL, version 3 or later.

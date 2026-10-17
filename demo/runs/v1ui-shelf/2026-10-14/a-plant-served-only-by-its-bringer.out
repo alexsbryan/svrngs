@@ -1,0 +1,30 @@
+
+running 3 tests
+. 1/3
+an_app_one_computer_carried_opens_and_writes_on_another_with_it_stopped --- FAILED
+.
+failures:
+
+---- an_app_one_computer_carried_opens_and_writes_on_another_with_it_stopped stdout ----
+
+thread 'an_app_one_computer_carried_opens_and_writes_on_another_with_it_stopped' (45904559) panicked at crates/svrngs-node/tests/carried.rs:248:5:
+assertion `left == right` failed: one Money, never one per computer:
+{
+  "lent": [],
+  "namespace": "a378339579ebbe135397c9edbeb17b3bb90b718a8148d1bd998233c6de6abd45",
+  "refused": [],
+  "unanswered": [
+    "ana"
+  ],
+  "unheard": []
+}
+  left: 0
+ right: 1
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    an_app_one_computer_carried_opens_and_writes_on_another_with_it_stopped
+
+test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.56s
+

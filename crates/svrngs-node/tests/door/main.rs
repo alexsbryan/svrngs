@@ -14,15 +14,18 @@
 //! byte B receives is scanned for A's secret ([`clean`]).
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
+mod choices;
 #[path = "../common/mod.rs"]
 mod common;
 mod limit;
+mod newcomer;
 mod origins;
+mod sign_in;
 
 use std::net::SocketAddr;
 use std::time::Duration;
 
-use common::loopback_sockets;
+use common::{bridge_as, loopback_sockets};
 use sha2::{Digest, Sha256};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
@@ -51,9 +54,11 @@ async fn start(seed: u8, dir: &std::path::Path) -> Node {
     Node::start(
         dir.to_path_buf(),
         signing(seed),
-        &RelayConfig::from_parts(Vec::new(), Some("none"))
-            .unwrap()
-            .on_loopback_only(),
+        &RelayConfig {
+            relay_urls: Vec::new(),
+            n0_services: false,
+            loopback_only: true,
+        },
         no_seed,
         "127.0.0.1:0".parse().unwrap(),
     )
@@ -93,7 +98,7 @@ impl Pair {
         a.rail().commit(NS, &fixture).unwrap().unwrap();
         let base = b
             .transport()
-            .base_url(&Contact {
+            .spliced(&Contact {
                 key: a.endpoint().id(),
                 relay_url: None,
                 iroh_direct_addrs: loopback_sockets(a.endpoint()),
@@ -234,6 +239,121 @@ async fn a_forged_identity_header_is_replaced_by_the_verified_one() {
     pair.close().await;
 }
 
+/// Two keys of one name, told apart (bash-person; the charter's "The
+/// name"): a second computer admitted as `bo` asks the same lend as B, and
+/// each request carries an `x-svrngs-user` of its own, so an app that makes
+/// an account from it makes two. Red at bash-person's base: no
+/// `x-svrngs-user`, and both told `x-svrngs-person: bo`, the one header an
+/// app could key an account on (`demo/runs/c/dry-2026-10-12/data/name.json`).
+#[tokio::test]
+async fn two_keys_of_one_name_are_two_accounts_to_a_lend() {
+    use svrngs_core::alpn::Alpn;
+    let (pair, heads) = lending_heads().await;
+    let (second, _dir) = beside(&pair, NS, 3, "bo").await;
+    let ask = "GET /lend/shelf/whoami HTTP/1.1\r\nHost: local\r\nConnection: close\r\n\r\n";
+    let mut users = Vec::new();
+    for bridge in [
+        pair.bridge,
+        bridge_as(&signing(3), &pair.a, Alpn::Member)
+            .await
+            .local_addr(),
+    ] {
+        let reply = raw_to(bridge, ask.into()).await;
+        assert_eq!(reply.status, 200, "{}", reply.text);
+        let head = last(&heads);
+        assert_eq!(header_values(&head, "x-svrngs-person"), vec!["bo"]);
+        users.push(header_values(&head, "x-svrngs-user").join(","));
+    }
+    assert!(
+        users.iter().all(|u| !u.is_empty()) && users[0] != users[1],
+        "each key its own account: {users:?}"
+    );
+    second.endpoint().close().await;
+    pair.close().await;
+}
+
+/// A lending as ada, and bo's two devices — keys 2 and 6, one row of the
+/// seed, so one person to the fold before device links and after — each a
+/// bridge dialling A on the members' protocol (bash-devices).
+struct Bos {
+    a: Node,
+    dir: tempfile::TempDir,
+    devices: [common::Bridge; 2],
+}
+
+impl Bos {
+    async fn new() -> Self {
+        use svrngs_core::alpn::Alpn;
+        let dir = tempfile::tempdir().unwrap();
+        let a = start(1, dir.path()).await;
+        let seed = Roster::new(
+            [
+                (Person::parse("ada").unwrap(), vec![actor_of(&signing(1))]),
+                (
+                    Person::parse("bo").unwrap(),
+                    vec![actor_of(&signing(2)), actor_of(&signing(6))],
+                ),
+            ]
+            .into_iter()
+            .collect(),
+        );
+        a.rail().set_seed(NS, &seed).unwrap();
+        let devices = [
+            bridge_as(&signing(2), &a, Alpn::Member).await,
+            bridge_as(&signing(6), &a, Alpn::Member).await,
+        ];
+        Bos { a, dir, devices }
+    }
+
+    /// A lends `name` as `body` says.
+    fn lend(&self, name: &str, body: serde_json::Value) {
+        let dir = lend::lends_dir(self.dir.path());
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join(format!("{name}.json")), body.to_string()).unwrap();
+    }
+
+    /// Bo's device `i` asks `path` through A's door, `headers` added.
+    async fn get(&self, i: usize, path: &str, headers: &str) -> Reply {
+        let ask =
+            format!("GET {path} HTTP/1.1\r\nHost: local\r\n{headers}Connection: close\r\n\r\n");
+        raw_to(self.devices[i].local_addr(), ask).await
+    }
+}
+
+/// **One person's two devices are one account to a lend** (bash-devices
+/// (c)): bo asks from each, and the service is told one `x-svrngs-key`,
+/// bo's first, and one `x-svrngs-user` both times, so an app keyed on
+/// either gives bo one account; and each device's own key in
+/// `x-svrngs-device`, so an app tells bo's devices apart (bash-two-at-once
+/// (b)). Red at bash-devices' base: each device told its own key and its
+/// own account name (door.rs, `PersonKey::resolved` is the key itself);
+/// red at bash-two-at-once's: no device told.
+#[tokio::test]
+async fn one_persons_two_devices_are_one_account_to_a_lend() {
+    let bos = Bos::new().await;
+    let (origin, heads) = origins::head_origin().await;
+    bos.lend(
+        "shelf",
+        serde_json::json!({ "port": origin.port(), "kind": "k" }),
+    );
+    let (mut told, mut devices) = (Vec::new(), Vec::new());
+    for i in 0..2 {
+        let reply = bos.get(i, "/lend/shelf/whoami", "").await;
+        assert_eq!(reply.status, 200, "{}", reply.text);
+        let head = last(&heads);
+        told.push((
+            header_values(&head, "x-svrngs-key").join(","),
+            header_values(&head, "x-svrngs-user").join(","),
+        ));
+        devices.push(header_values(&head, "x-svrngs-device").join(","));
+    }
+    assert_eq!(told[0].0, actor_of(&signing(2)), "bo's first key");
+    assert_eq!(told[0], told[1], "(key, account) from each device");
+    let each = [actor_of(&signing(2)), actor_of(&signing(6))];
+    assert_eq!(devices, each, "each device by its own key");
+    bos.a.endpoint().close().await;
+}
+
 /// :601 and :689 — the request line and every header the door does not set
 /// pass byte for byte: `Range` is a seek, `If-Range` its condition, and a
 /// cookie is the client's business. Planted: `Range` dropped.
@@ -366,6 +486,48 @@ async fn a_refused_path_is_refused() {
         reply.status, 200,
         "control: a path beside the refused one is lent"
     );
+    pair.close().await;
+}
+
+/// svrngs's word told from the lend's (mnp-1; `demo/runs/mn/2026-10-08/`
+/// README §9, 2): each answer the door makes in a lend's place carries
+/// `x-svrngs-refused`, naming which — a lend not declared, a path the lend
+/// refuses, a service not answering — and a 403 the lend's own service
+/// answers carries none, the one it forged dropped, its body its own; nor
+/// does an answer let through. Planted: the header off.
+#[tokio::test]
+async fn svrngs_s_refusals_are_marked_its_own_and_a_lend_s_are_not() {
+    let (pair, _heads) = lending_heads().await;
+    pair.lend("strict", origins::refusing_origin().await.port(), &[]);
+    let gone = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    pair.lend("gone", gone.local_addr().unwrap().port(), &[]);
+    drop(gone);
+    for (path, status, refused) in [
+        ("/lend/nothing/x", 404, Some("unlent")),
+        ("/lend/shelf/Auth/Keys", 403, Some("path")),
+        ("/lend/shelf/../x", 400, Some("path")),
+        ("/lend/gone/x", 502, Some("away")),
+        ("/lend/strict/x", 403, None),
+        ("/lend/shelf/x", 200, None),
+    ] {
+        let reply = pair.get(path, "").await;
+        assert_eq!(reply.status, status, "{path}: {}", reply.text);
+        let (head, body) = reply.text.split_once("\r\n\r\n").unwrap();
+        assert_eq!(
+            header_values(head, "x-svrngs-refused").first().copied(),
+            refused,
+            "{path}: {}",
+            reply.text
+        );
+        if let Some(kind) = refused {
+            assert!(
+                body.contains(&format!(r#""kind":"{kind}""#)),
+                "{path}: {body}"
+            );
+        }
+    }
+    let strict = pair.get("/lend/strict/x", "").await;
+    assert!(strict.text.contains("the app's own no"), "{}", strict.text);
     pair.close().await;
 }
 
@@ -629,11 +791,14 @@ async fn a_member_s_computer_lists_what_is_lent_with_where_to_reach_it() {
     for a in &a_addrs {
         addr = addr.with_ip_addr(*a);
     }
-    let synced = pair.b.sync_with(NS, &addr).await;
+    let synced = pair.b.host().sync_with(NS, &addr).await;
     assert!(synced.stop.is_none(), "{synced:?}");
 
     let lends = pair.b.lends().await;
-    assert_eq!(lends.unanswered, vec![Person::parse("cy").unwrap()]);
+    assert_eq!(
+        lends.unlisted.unanswered,
+        vec![Person::parse("cy").unwrap()]
+    );
     assert_eq!(lends.lent.len(), 1, "{lends:?}");
     let shelf = &lends.lent[0];
     assert_eq!(shelf.person, Person::parse("ada").unwrap());
@@ -711,8 +876,10 @@ async fn beside(pair: &Pair, ns: &str, seed: u8, person: &str) -> (Node, tempfil
 /// key, and cy's pad, asked of cy's computer now, with cy's key — so the
 /// asker dials each lender itself — and dan, whose computer is nowhere, as
 /// not answering. Eve stands with ada in another group bo is not in, and
-/// what eve lends is not bo's to see. Planted: A's own lends left out; the
-/// groups the asker does not stand in asked too.
+/// what eve lends is not bo's to see. Each lend carries the relay its
+/// group names for its lender (relay-in-record), `null` for none. Planted:
+/// A's own lends left out; the groups the asker does not stand in asked
+/// too; no relay given.
 #[tokio::test]
 async fn a_member_asks_what_the_group_s_people_lend_each_with_its_lender_s_key() {
     let (pair, _heads) = lending_heads().await;
@@ -729,6 +896,12 @@ async fn a_member_asks_what_the_group_s_people_lend_each_with_its_lender_s_key()
         on_behalf_of: None,
     };
     pair.a.rail().commit(NS, &ghost).unwrap().unwrap();
+    // Ada's relay in the record, with the root's dot (relay-in-record).
+    let at = svrngs_core::RelayAt {
+        key: actor_of(&signing(1)),
+        url: svrngs_core::relay::parse("https://relay.example./").ok(),
+    };
+    pair.a.rail().commit(NS, &at).unwrap().unwrap();
 
     let reply = pair.get(svrngs_node::node::PEOPLE_LENDS_ROUTE, "").await;
     assert_eq!(reply.status, 200, "{}", reply.text);
@@ -756,9 +929,77 @@ async fn a_member_asks_what_the_group_s_people_lend_each_with_its_lender_s_key()
         "{doc:#}"
     );
     assert_eq!(doc["unanswered"], serde_json::json!(["dan"]), "{doc:#}");
+    // Each lend with the relay its group names for its lender, dotless;
+    // `null`, said, for cy's, whose computer names none.
+    let relays: Vec<&serde_json::Value> = doc["lent"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|l| &l["relay"])
+        .collect();
+    let want = [
+        serde_json::json!("https://relay.example/"),
+        serde_json::Value::Null,
+    ];
+    assert_eq!(relays, want.iter().collect::<Vec<_>>(), "{doc:#}");
     for node in [cy, eve] {
         node.endpoint().close().await;
     }
+    pair.close().await;
+}
+
+/// **A key held in two groups is dialled and told by one relay** (#127):
+/// cy stands in house, which names no relay for cy, and in work, which
+/// names one, and bo stands in both. A dials cy through work's relay for a
+/// folder's fetch and a lend's origin, for the round and the lend asks,
+/// and tells bo that relay beside cy's pad. Planted: house's member taken,
+/// the first group naming the key, which names no relay.
+#[tokio::test]
+async fn a_key_in_two_groups_that_disagree_is_dialled_and_told_by_one_relay() {
+    let (pair, _heads) = lending_heads().await;
+    let (cy, cy_dir) = beside(&pair, NS, 3, "cy").await;
+    lends_on(cy_dir.path(), "pad", 1);
+    let roster = Roster::new(
+        [(Person::parse("ada").unwrap(), vec![actor_of(&signing(1))])]
+            .into_iter()
+            .collect(),
+    );
+    pair.a.rail().set_seed("work", &roster).unwrap();
+    for (person, me) in [("bo", 2), ("cy", 3)] {
+        let admit = svrngs_core::tests_support::Fixture {
+            act: RailAct::Admit {
+                person: Person::parse(person).unwrap(),
+                key: actor_of(&signing(me)),
+                invite: None,
+            },
+            on_behalf_of: None,
+        };
+        pair.a.rail().commit("work", &admit).unwrap().unwrap();
+    }
+    let relay = "https://relay.work.example/";
+    let said = RailAct::Relay {
+        url: Some(relay.into()),
+    };
+    // After cy's `Admit`, in order, as cy's own computer would say it.
+    let said = svrngs_core::tests_support::signed_in("work", &signing(3), unix_now() + 5, 0, said);
+    pair.a.rail().ingest_all("work", &[said]).unwrap();
+
+    let cy_key = actor_of(&signing(3));
+    let want = Some(relay.to_string());
+    let reply = pair.get(svrngs_node::node::PEOPLE_LENDS_ROUTE, "").await;
+    assert_eq!(reply.status, 200, "{}", reply.text);
+    let body = reply.text.split("\r\n\r\n").nth(1).unwrap();
+    let doc: serde_json::Value = serde_json::from_str(body).unwrap();
+    let told = (doc["lent"].as_array().unwrap().iter())
+        .find(|l| l["key"] == cy_key.as_str())
+        .unwrap_or_else(|| panic!("cy's pad not told: {doc:#}"));
+    assert_eq!(told["relay"], serde_json::json!(relay), "{doc:#}");
+    assert_eq!(
+        pair.a.relays_dialled(&cy_key),
+        [want.clone(), want],
+        "bo is told {relay}; a folder's fetch and the origin, then the round and the lend asks"
+    );
+    cy.endpoint().close().await;
     pair.close().await;
 }
 
@@ -776,7 +1017,7 @@ async fn declarations_that_cannot_be_read_are_refused_on_both_routes_never_lent_
         assert!(
             reply
                 .text
-                .contains("what this computer lends cannot be read on it"),
+                .contains("the computer you reached cannot read what it lends"),
             "{route}: {}",
             reply.text
         );
@@ -872,9 +1113,6 @@ fn unix_now() -> i64 {
 async fn a_pass_opens_only_the_lend_it_names_to_the_key_holding_it() {
     use svrngs_core::alpn::Alpn;
     use svrngs_core::pass::{Label, Pass};
-    use svrngs_node::iroh::{
-        ring_crypto_provider, EndpointAddr, EndpointBuilder, HttpBridge, SecretKey,
-    };
 
     let (pair, heads) = lending_heads().await;
     let (other, other_heads) = origins::head_origin().await;
@@ -882,19 +1120,7 @@ async fn a_pass_opens_only_the_lend_it_names_to_the_key_holding_it() {
     let a = *pair.a.endpoint().id().as_bytes();
     let (shelf, elsewhere) = (Label::of(&a, "shelf"), Label::of(&a, "other"));
     let holder = signing(9);
-    let dialling = EndpointBuilder::empty()
-        .crypto_provider(ring_crypto_provider())
-        .secret_key(SecretKey::from_bytes(&holder.to_bytes()))
-        .bind()
-        .await
-        .unwrap();
-    let mut target = EndpointAddr::new(pair.a.endpoint().id());
-    for sock in loopback_sockets(pair.a.endpoint()) {
-        target = target.with_ip_addr(sock);
-    }
-    let bridge = HttpBridge::spawn_preferring(dialling, target, Alpn::Lend.bytes(), None)
-        .await
-        .unwrap();
+    let bridge = bridge_as(&holder, &pair.a, Alpn::Lend).await;
     let ask = |path: String, pass: Option<&Pass>| {
         let pass = pass.map_or(String::new(), |p| {
             format!("x-svrngs-pass: {}\r\n", p.encode())
@@ -905,7 +1131,12 @@ async fn a_pass_opens_only_the_lend_it_names_to_the_key_holding_it() {
         )
     };
     let until = unix_now() + 3600;
-    let bos = Pass::sign(&signing(2), &actor_of(&holder), vec![shelf.clone()], until);
+    let bos = Pass::sign(
+        &signing(2),
+        &actor_of(&holder),
+        (shelf.clone(), vec![]),
+        until,
+    );
 
     let opened = ask(format!("/lend/{shelf}/whoami"), Some(&bos)).await;
     assert_eq!(opened.status, 200, "{}", opened.text);
@@ -931,14 +1162,19 @@ async fn a_pass_opens_only_the_lend_it_names_to_the_key_holding_it() {
     let lapsed = Pass::sign(
         &signing(2),
         &actor_of(&holder),
-        vec![shelf.clone()],
+        (shelf.clone(), vec![]),
         unix_now() - 1,
     );
-    let nobodys = Pass::sign(&signing(5), &actor_of(&holder), vec![shelf.clone()], until);
+    let nobodys = Pass::sign(
+        &signing(5),
+        &actor_of(&holder),
+        (shelf.clone(), vec![]),
+        until,
+    );
     let anothers = Pass::sign(
         &signing(2),
         &actor_of(&signing(8)),
-        vec![shelf.clone()],
+        (shelf.clone(), vec![]),
         until,
     );
     for (why, path, pass) in [
@@ -985,6 +1221,118 @@ async fn a_pass_opens_only_the_lend_it_names_to_the_key_holding_it() {
     pair.close().await;
 }
 
+/// The app a pass's holder asks for (su-1, `demo/runs/su/2026-10-09/`
+/// §5; sup-1): the service is told `x-svrngs-app`, the pass's `app` — the
+/// lend the person's page opened — whichever lend is asked, and the
+/// client's own is stripped; a key of the group's, asking with no pass, is
+/// told no app, its own stripped too. A pass from before the app had a
+/// field of its own, `lends` and no `app`, is refused `pass`, so the
+/// lend's worker asks the page for another. A key of the group's
+/// presenting its own pass, as a computer's origin signs one for its page
+/// (sup-1), is told that pass's app; its pass naming another lend, or
+/// signed by another key, is refused `pass`. Planted: the door naming the
+/// pass's first read, the lend asked here; the client's header let
+/// through; a member's pass read whoever signed it.
+#[tokio::test]
+async fn a_pass_s_app_is_told_and_a_client_s_own_stripped() {
+    use svrngs_core::alpn::Alpn;
+    use svrngs_core::pass::{Label, Pass};
+
+    let (pair, heads) = lending_heads().await;
+    let a = *pair.a.endpoint().id().as_bytes();
+    let (shelf, app) = (Label::of(&a, "shelf"), Label::of(&a, "picks"));
+    let holder = signing(9);
+    let bridge = bridge_as(&holder, &pair.a, Alpn::Lend).await;
+    let pass = Pass::sign(
+        &signing(2),
+        &actor_of(&holder),
+        (app.clone(), vec![shelf.clone()]),
+        unix_now() + 3600,
+    );
+    let opened = raw_to(
+        bridge.local_addr(),
+        format!(
+            "GET /lend/{shelf}/whoami HTTP/1.1\r\nHost: local\r\nx-svrngs-pass: {}\r\nX-Svrngs-App: forged\r\nConnection: close\r\n\r\n",
+            pass.encode()
+        ),
+    )
+    .await;
+    assert_eq!(opened.status, 200, "{}", opened.text);
+    let head = last(&heads);
+    assert_eq!(
+        header_values(&head, "x-svrngs-app"),
+        vec![app.as_str()],
+        "{head}"
+    );
+    assert_eq!(
+        header_values(&head, "x-svrngs-person"),
+        vec!["bo"],
+        "{head}"
+    );
+
+    let mut before = serde_json::to_value(&pass).unwrap();
+    let fields = before.as_object_mut().unwrap();
+    fields.remove("app");
+    let lends = fields.remove("reads").unwrap();
+    fields.insert("lends".into(), serde_json::json!([app.as_str(), lends[0]]));
+    use base64::Engine as _;
+    let before = base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .encode(serde_json::to_vec(&before).unwrap());
+    let refused = raw_to(
+        bridge.local_addr(),
+        format!("GET /lend/{shelf}/whoami HTTP/1.1\r\nHost: local\r\nx-svrngs-pass: {before}\r\nConnection: close\r\n\r\n"),
+    )
+    .await;
+    assert_eq!(refused.status, 403, "{}", refused.text);
+    assert!(
+        refused.text.contains(r#""kind":"pass""#),
+        "{}",
+        refused.text
+    );
+
+    let member = pair
+        .get("/lend/shelf/whoami", "X-Svrngs-App: forged\r\n")
+        .await;
+    assert_eq!(member.status, 200, "{}", member.text);
+    let head = last(&heads);
+    assert!(header_values(&head, "x-svrngs-app").is_empty(), "{head}");
+
+    let bo = actor_of(&signing(2));
+    let own = |by: u8, reads: Vec<Label>| {
+        let pass = Pass::sign(&signing(by), &bo, (app.clone(), reads), unix_now() + 300);
+        format!("x-svrngs-pass: {}\r\n", pass.encode())
+    };
+    let member = pair
+        .get("/lend/shelf/whoami", &own(2, vec![shelf.clone()]))
+        .await;
+    assert_eq!(member.status, 200, "{}", member.text);
+    let head = last(&heads);
+    assert_eq!(
+        header_values(&head, "x-svrngs-app"),
+        vec![app.as_str()],
+        "a member's own pass names its page's app: {head}"
+    );
+    let asked = heads.lock().unwrap().len();
+    for (row, pass) in [
+        ("naming another lend", own(2, vec![])),
+        ("signed by another key", own(5, vec![shelf.clone()])),
+    ] {
+        let refused = pair.get("/lend/shelf/whoami", &pass).await;
+        assert_eq!(refused.status, 403, "{row}: {}", refused.text);
+        assert!(
+            refused.text.contains(r#""kind":"pass""#),
+            "{row}: {}",
+            refused.text
+        );
+    }
+    assert_eq!(
+        heads.lock().unwrap().len(),
+        asked,
+        "no refused pass reached shelf"
+    );
+    pair.close().await;
+}
+
 /// The service is asked as on its own computer (u5-2): the door names it
 /// `localhost:<its port>` in `Host`, whatever address the member's browser
 /// used, so an app that refuses a host it does not know answers; and a
@@ -1003,5 +1351,75 @@ async fn the_service_is_asked_on_its_own_address_and_its_redirect_comes_back_a_p
         "{}",
         reply.text
     );
+    pair.close().await;
+}
+
+/// **A removed person is refused as removed, by pass and by dial** (U7
+/// (e); DESIGN §6; demo/c.md, "Removed"). Ada keeps the group and removes
+/// bo. A pass bo signed for `shelf`, presented by its holder, and bo's own
+/// computer dialling on the members' protocol are each answered 403 with
+/// svrngs's refusal `removed` and its words; neither reaches the service.
+/// Planted, watched failing: the pass's removed check out (refused `pass`,
+/// after the ring was asked) and a removed dialer closed like a stranger
+/// (no reply). Ada's acceptor traces that it tells bo his cut, not only
+/// that he stands in no group (#183): red at 1eab7c0e, node.rs's `gone`
+/// arm untraced.
+#[tokio::test]
+async fn a_removed_person_is_refused_as_removed_by_pass_and_by_dial() {
+    use svrngs_core::alpn::Alpn;
+    use svrngs_core::pass::{Label, Pass};
+
+    let (said, _heard) = common::heard("node=debug");
+    let (pair, heads) = lending_heads().await;
+    let shelf = Label::of(pair.a.endpoint().id().as_bytes(), "shelf");
+    let bo = svrngs_node::Removal {
+        person: Person::parse("bo").unwrap(),
+        joined: None,
+    };
+    pair.a.rail().commit(NS, &bo).unwrap().unwrap();
+    let holder = signing(9);
+    let pass = Pass::sign(
+        &signing(2),
+        &actor_of(&holder),
+        (shelf.clone(), vec![]),
+        unix_now() + 3600,
+    );
+    let (as_holder, as_bo) = (
+        bridge_as(&holder, &pair.a, Alpn::Lend).await,
+        bridge_as(&signing(2), &pair.a, Alpn::Member).await,
+    );
+    let by_pass = raw_to(
+        as_holder.local_addr(),
+        format!(
+            "GET /lend/{shelf}/x HTTP/1.1\r\nHost: local\r\nx-svrngs-pass: {}\r\nConnection: close\r\n\r\n",
+            pass.encode()
+        ),
+    )
+    .await;
+    let by_dial = raw_to(
+        as_bo.local_addr(),
+        "GET /lend/shelf/x HTTP/1.1\r\nHost: local\r\nConnection: close\r\n\r\n".into(),
+    )
+    .await;
+    for (how, reply) in [("by pass", by_pass), ("by dial", by_dial)] {
+        assert_eq!(reply.status, 403, "{how}: {}", reply.text);
+        assert!(
+            reply.text.contains("x-svrngs-refused: removed"),
+            "{how}: {}",
+            reply.text
+        );
+        assert!(
+            reply.text.contains("You are no longer in this group"),
+            "{how}: {}",
+            reply.text
+        );
+    }
+    assert!(
+        heads.lock().unwrap().is_empty(),
+        "the service was never asked"
+    );
+    let said = String::from_utf8(said.0.lock().unwrap().clone()).unwrap();
+    let told = "node: the dialer was cut here, so it is told its cut";
+    assert!(said.contains(told), "{told}: {said}");
     pair.close().await;
 }

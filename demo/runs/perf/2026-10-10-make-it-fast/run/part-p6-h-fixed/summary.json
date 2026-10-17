@@ -1,0 +1,128 @@
+{
+ "P6-loopback-rate": {
+  "value": 81.9,
+  "target": "100 MB/s over P6",
+  "verdict": "failed",
+  "start": {
+   "load": [
+    4.43,
+    5.01,
+    4.71
+   ],
+   "cores": 12,
+   "swap_used_mb": 8468.31,
+   "free_gb": 109.5
+  },
+  "end": {
+   "load": [
+    4.43,
+    5.01,
+    4.71
+   ],
+   "cores": 12,
+   "swap_used_mb": 8468.31,
+   "free_gb": 109.2
+  },
+  "unit": "MB/s",
+  "path": "loopback",
+  "end_to_end_ms": 1857.0,
+  "per_member_mb_s": [
+   81.9,
+   82.2
+  ],
+  "phases": {
+   "median_ms": {
+    "P1_found": 71.0,
+    "P2_stored": 107.6,
+    "P3_act": 7.4,
+    "P4_carried": 14.3,
+    "P5_apply": 1.6,
+    "P6_fetch": 1278.0,
+    "P7_write": 1.5
+   },
+   "share": {
+    "P1_found": 0.048,
+    "P2_stored": 0.073,
+    "P3_act": 0.005,
+    "P4_carried": 0.01,
+    "P5_apply": 0.001,
+    "P6_fetch": 0.863,
+    "P7_write": 0.001
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:50403)"
+   ],
+   "dial_ms": 0.6,
+   "first_ms": 4.6,
+   "last_ms": 1278.2,
+   "gets_ms": 1278.2,
+   "changes": 2
+  },
+  "holder": {
+   "gets": 2,
+   "median_ms": 3.2,
+   "sum_ms": 6.3
+  }
+ },
+ "P6-loopback-edit": {
+  "value": 104857600,
+  "target": "at most 2 MiB moved",
+  "verdict": "failed",
+  "start": {
+   "load": [
+    4.31,
+    4.97,
+    4.7
+   ],
+   "cores": 12,
+   "swap_used_mb": 8468.31,
+   "free_gb": 109.2
+  },
+  "end": {
+   "load": [
+    4.31,
+    4.97,
+    4.7
+   ],
+   "cores": 12,
+   "swap_used_mb": 8468.31,
+   "free_gb": 108.9
+  },
+  "unit": "bytes",
+  "path": "loopback",
+  "edit_bytes": 1048576,
+  "per_member": [
+   104857600,
+   104857600
+  ],
+  "end_to_end_ms": 1974.0,
+  "phases": {
+   "median_ms": {
+    "P1_found": 84.1,
+    "P2_stored": 188.9,
+    "P3_act": 9.4,
+    "P4_carried": 12.8,
+    "P5_apply": 2.7,
+    "P6_fetch": 1266.5,
+    "P7_write": 151.5
+   },
+   "share": {
+    "P1_found": 0.049,
+    "P2_stored": 0.11,
+    "P3_act": 0.005,
+    "P4_carried": 0.007,
+    "P5_apply": 0.002,
+    "P6_fetch": 0.738,
+    "P7_write": 0.088
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:50403)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 0.6,
+   "last_ms": 1266.3,
+   "gets_ms": 1266.3,
+   "changes": 2
+  }
+ }
+}

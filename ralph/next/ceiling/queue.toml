@@ -1,0 +1,22 @@
+# svrngs ceiling — an idle round under the bar, held by a canary (docs/DESIGN.md §8 "Then" :1085, the ceiling row :1069-1083). Launch, from anywhere:
+#
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py supervise --workdir ~/dev/svrngs \
+#     --queue ceiling --install-launchd -- python3 ~/dev/commonwealth-ai/scripts/ralph.py \
+#     run --workdir ~/dev/svrngs --queue ceiling --max-stall 3
+#
+# Survey of record: svrn-docs rings/current/THE_CEILING.md — fixes prototyped
+# behind switches in a scratch clone at 15a9de7, 73 s → 10 ms at 25 members
+# and 10,000 acts; predictions timestamped before their runs. Dialling at
+# once stays §9's row (:1079); the view each act carries goes with U7.
+# U7 stays reserved for removal (§8 "Then" :1089). This queue is not u7.
+label = "svrngs-ceiling"
+session_timeout = 5400
+audit_every = 4
+worker_bin = "/Users/alexsbryan/dev/commonwealth-ai/scripts/ralph-claude-shim.sh"
+settings = "ralph/claude-settings.json"
+
+[models]
+worker = "claude-opus-5-5"
+review = "claude-opus-5-5"
+resolve = "claude-opus-5-5"
+variant = "high"

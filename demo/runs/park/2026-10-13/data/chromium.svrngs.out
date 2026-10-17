@@ -1,0 +1,14 @@
+Made house, with you as Sam.
+Send this link to the people you want in it. It works for a day, while this computer is on:
+
+  svrngs://join/AjPHbsFooVGHZuzpbQ6LJhOlAx-gDEoLdngFbGIgM_SHzeahnmVJS-ZLDV7abpTzs2h0dHBzOi8vdXN3MS0xLnJlbGF5Lm4wLmlyb2gubGluay8
+
+or, to open it in a browser:
+
+  http://localhost:50360/#AjPHbsFooVGHZuzpbQ6LJhOlAx-gDEoLdngFbGIgM_SHzeahnmVJS-ZLDV7abpTzs2h0dHBzOi8vdXN3MS0xLnJlbGF5Lm4wLmlyb2gubGluay8
+
+On a phone, each app opens at an address of its own under localhost:50360, which can see which app is opened.
+
+house's folder is /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/park-chromium-inmrzq33/home/svrngs/house: what anyone in house puts there reaches this computer, and what you put there reaches theirs.
+
+Leave this running; Ctrl-C stops it.

@@ -100,17 +100,18 @@ pub enum RailGap {
     /// the derived id, so this changes no outcome — it is reported because a
     /// peer writing lines whose id has been rewritten is a fact worth seeing.
     TamperedId { claimed: OpId, derived: OpId },
-    /// This actor's ops jump over a sequence number. Something they wrote has
-    /// not reached us — the one condition that distinguishes "nothing
-    /// happened" from "it never arrived."
-    ///
-    /// Counted from that actor's sealed floor, so what a
-    /// [`Seal`](crate::RailAct::Seal) retired is absent by agreement rather
-    /// than missing.
-    SequenceHole { actor: String, missing: u64 },
+    /// This actor's ops jump over sequence numbers, `from` to `to` (both
+    /// missing). Something they wrote has not reached us — the one condition
+    /// that distinguishes "nothing happened" from "it never arrived."
+    /// Counted from zero: a [`Seal`](crate::RailAct::Seal) retires nothing
+    /// (arch-seal). One gap a run, not a seq: a seq is what a line claims,
+    /// and a gap each let one line far past its chain cost every copy that
+    /// many (#187).
+    SequenceHole { actor: String, from: u64, to: u64 },
     /// One actor used one sequence number for two different ops. Equivocation
-    /// or a lost counter after a restart; either way both ops are excluded,
-    /// because picking one would be picking an answer out of the air.
+    /// or a lost counter after a restart. Both count, each weighed as itself:
+    /// forks void nothing (svrngs, U7; DESIGN §6), since excluding both let an
+    /// author take back their own act on every copy by signing a second.
     SequenceFork {
         actor: String,
         seq: u64,
@@ -126,12 +127,19 @@ pub enum RailGap {
     /// forever (ROOT_CAUSE_FIXES A2).
     DanglingCorrection { by: OpId, missing: OpId },
     /// The signer is bound in the record but held no standing at this act's
-    /// position — written while removed, or before their own
-    /// [`Admit`](crate::RailAct::Admit) in the order. The act counts for
-    /// nothing and is named rather than dropped: it may be real data (voiding
-    /// the [`Remove`](crate::RailAct::Remove) admits it back — leg 3 of
-    /// `ra-membership-is-order-free`).
+    /// position — before their own [`Admit`](crate::RailAct::Admit) in the
+    /// order (an act of a key the keeper cut is [`Self::Removed`]). The act
+    /// counts for nothing and is named rather than dropped: it may be real
+    /// data under an `Admit` this copy does not hold yet.
     NotAMember { id: OpId, actor: String },
+    /// The signer was cut by the group's keeper, and the cut does not cover
+    /// this act (svrngs, U7; DESIGN §6): written after the removal, or
+    /// beside or above the acts the removal names. Nothing undoes a cut, so
+    /// the act is refused for good.
+    Removed { id: OpId, actor: String },
+    /// A counting cut names an act of the removed key this copy does not
+    /// hold, so the acts it covers cannot all be told yet (U7).
+    UnheldCut { by: OpId, missing: OpId },
     /// The act's `prev` is not the id of its author's act at `seq − 1`: it
     /// names a parent at seq 0, names none above it, or names one other than
     /// the act this copy holds there (svrngs, U2; DESIGN §6). The act is not
@@ -149,6 +157,9 @@ pub enum RailGap {
         actor: String,
         fault: crate::membership::InviteFault,
     },
+    /// The keeper's cuts did not settle to one answer (#124): who stands,
+    /// and so which acts count, cannot be judged on this copy.
+    Unsettled,
 }
 
 /// What a gap means for the fold's answer — the one classification (ARCH
@@ -159,22 +170,22 @@ pub enum RailGap {
 /// absence (ARCH §18.3), and an absence is never silence — but "the fold is
 /// missing data" and "the record contradicts itself" are different facts and
 /// one typo'd [`Correct`](crate::RailAct::Correct) used to masquerade as the
-/// former forever. The split is by coverage, not by scariness: a forged or
-/// forked act is Absence precisely because it may be REAL data the fold
-/// refused (the acts are real but they are a subset), while a tampered id or
-/// a dangling citation is Contradiction because every act that could be
+/// former forever. The split is by coverage, not by scariness: a forged act
+/// is Absence precisely because it may be REAL data the fold refused (the
+/// acts are real but they are a subset), while a tampered id, a dangling
+/// citation or a fork is Contradiction because every act that could be
 /// folded is folded — the gap is a fact about a claim the record makes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GapClass {
     /// The fold may lack acts that belong in it — an unreadable line, a
-    /// refused or unattributable act (which may be real), a forked-out seq,
-    /// a seq that never arrived. [`Admission::is_complete`] is false exactly
+    /// refused or unattributable act (which may be real), a seq that never
+    /// arrived. [`Admission::is_complete`] is false exactly
     /// on these.
     Absence,
     /// Every act that could be folded is folded: the gap is a claim the
     /// record makes that nothing here can stand behind — an id its content
-    /// does not derive, or a correction citing an op nobody holds. Named
-    /// beside a complete answer.
+    /// does not derive, a correction citing an op nobody holds, or two acts
+    /// at one seq, both folded (U7). Named beside a complete answer.
     Contradiction,
 }
 
@@ -190,11 +201,15 @@ impl RailGap {
             | Self::BadSignature { .. }
             | Self::UnknownSigner { .. }
             | Self::NotAMember { .. }
+            | Self::UnheldCut { .. }
             | Self::WrongPrevious { .. }
             | Self::RefusedRedemption { .. }
-            | Self::SequenceFork { .. }
+            | Self::Unsettled
             | Self::SequenceHole { .. } => GapClass::Absence,
-            Self::TamperedId { .. } | Self::DanglingCorrection { .. } => GapClass::Contradiction,
+            Self::TamperedId { .. }
+            | Self::DanglingCorrection { .. }
+            | Self::SequenceFork { .. }
+            | Self::Removed { .. } => GapClass::Contradiction,
         }
     }
 }
@@ -226,6 +241,16 @@ impl core::fmt::Display for RailGap {
                 f,
                 "an op by actor {actor} was written while they held no standing in the ring"
             ),
+            Self::Removed { actor, .. } => write!(
+                f,
+                "an act by {}… after they were removed from the group does not count",
+                crate::actor_prefix(actor)
+            ),
+            Self::UnheldCut { missing, .. } => write!(
+                f,
+                "a removal names an act ({}) this node does not hold yet",
+                crate::short_id(&missing.to_string())
+            ),
             Self::UnknownSigner { actor, .. } => write!(
                 f,
                 "an op signed by {}… — nobody in the roster claims that key",
@@ -236,9 +261,14 @@ impl core::fmt::Display for RailGap {
                 "a journal line whose id ({}) does not match its content",
                 crate::short_id(&claimed.to_string())
             ),
-            Self::SequenceHole { actor, missing } => write!(
+            Self::SequenceHole { actor, from, to } if from == to => write!(
                 f,
-                "an op from {}… has not reached this node yet (#{missing})",
+                "an op from {}… has not reached this node yet (#{from})",
+                crate::actor_prefix(actor)
+            ),
+            Self::SequenceHole { actor, from, to } => write!(
+                f,
+                "ops from {}… have not reached this node yet (#{from} to #{to})",
                 crate::actor_prefix(actor)
             ),
             Self::WrongPrevious { actor, seq, .. } => write!(
@@ -253,7 +283,7 @@ impl core::fmt::Display for RailGap {
             ),
             Self::SequenceFork { actor, seq, .. } => write!(
                 f,
-                "{}… used one sequence number twice (#{seq}) — both ops are excluded",
+                "{}… used one sequence number twice (#{seq}) — both acts count",
                 crate::actor_prefix(actor)
             ),
             Self::DanglingCorrection { missing, .. } => write!(
@@ -261,6 +291,9 @@ impl core::fmt::Display for RailGap {
                 "a correction of {}, which this node does not hold",
                 crate::short_id(&missing.to_string())
             ),
+            Self::Unsettled => {
+                f.write_str("the removals do not come to one answer, so who is in cannot be told")
+            }
         }
     }
 }
@@ -337,9 +370,12 @@ pub struct Admission {
     ops: Vec<AdmittedOp>,
     gaps: Vec<RailGap>,
     held: usize,
-    floors: crate::sync::Floors,
-    seals: Vec<OpId>,
     membership: crate::membership::Membership,
+    /// Every synced folder's change, in admission's order (sy-1).
+    pub(crate) synced: crate::synced::Written,
+    /// Each actor's newest acts held: chained, and named as `prev` by no
+    /// other act of theirs. What a removal names (U7).
+    tips: BTreeMap<String, Vec<OpId>>,
 }
 
 impl Admission {
@@ -359,19 +395,20 @@ impl Admission {
         self.held
     }
 
-    /// Where each actor's history starts, per the seals admission authenticated.
-    pub(crate) fn floors(&self) -> &crate::sync::Floors {
-        &self.floors
-    }
-
-    /// The seals that set a floor: the acts a compaction is due from.
-    pub(crate) fn seals(&self) -> &[OpId] {
-        &self.seals
-    }
-
     /// Who is in: the one membership walk admission made.
-    pub(crate) fn membership(&self) -> &crate::membership::Membership {
+    ///
+    /// ```
+    /// fn standing(a: &svrngs_core::Admission) -> usize {
+    ///     a.membership().standing.len()
+    /// }
+    /// ```
+    pub fn membership(&self) -> &crate::membership::Membership {
         &self.membership
+    }
+
+    /// `actor`'s newest acts this copy holds, by id (U7).
+    pub(crate) fn tips(&self, actor: &str) -> &[OpId] {
+        self.tips.get(actor).map_or(&[], Vec::as_slice)
     }
 }
 
@@ -470,7 +507,7 @@ pub fn admit(
     // function of the set like everything else here. A parent not held is
     // not judged: its absence is the `SequenceHole` below. Two acts held at
     // `seq − 1` are a fork, and an act naming either follows a parent this
-    // copy holds (what a fork voids is U7's).
+    // copy holds (forks void nothing, U7: the audit below names one).
     let mut at: BTreeMap<(&str, u64), BTreeSet<&OpId>> = BTreeMap::new();
     for (id, op) in &authentic {
         at.entry((op.actor.as_str(), op.kind.seq))
@@ -508,6 +545,16 @@ pub fn admit(
     for id in &broken {
         authentic.remove(id);
     }
+    let parents: BTreeSet<(&str, &OpId)> = authentic
+        .values()
+        .filter_map(|op| Some((op.actor.as_str(), op.kind.prev.as_ref()?)))
+        .collect();
+    let mut tips: BTreeMap<String, Vec<OpId>> = BTreeMap::new();
+    for (id, op) in &authentic {
+        if !parents.contains(&(op.actor.as_str(), id)) {
+            tips.entry(op.actor.clone()).or_default().push(id.clone());
+        }
+    }
 
     // ── membership: the seed plus two act kinds, one function ─────────
     //
@@ -521,9 +568,35 @@ pub fn admit(
         namespace,
     );
 
+    if m.unsettled {
+        gaps.push(RailGap::Unsettled);
+    }
+    for cut in m.cut.values() {
+        gaps.extend(cut.unheld.iter().map(|missing| RailGap::UnheldCut {
+            by: cut.by.clone(),
+            missing: missing.clone(),
+        }));
+    }
+    // ── per-actor sequence audit, over every act of a bound signer ───
+    //
+    // Counted, refused or removed alike: an act refused inside its author's
+    // chain is held, so it is reported as what it is and never also as a
+    // hole (U7; DESIGN §6). Before, the audit counted admitted acts only.
+    let mut seqs: BTreeMap<&str, BTreeMap<u64, Vec<OpId>>> = BTreeMap::new();
+    for (id, op) in authentic
+        .iter()
+        .filter(|(_, op)| m.person_of(&op.actor).is_some())
+    {
+        let op: &Op<SignedOp> = op;
+        seqs.entry(op.actor.as_str())
+            .or_default()
+            .entry(op.kind.seq)
+            .or_default()
+            .push(id.clone());
+    }
     let mut admitted: BTreeMap<OpId, Candidate<'_>> = BTreeMap::new();
     for (id, op) in authentic {
-        let Some(person) = m.person_for(&op.actor) else {
+        let Some((_, person)) = m.person_of(&op.actor) else {
             gaps.push(RailGap::UnknownSigner {
                 id,
                 actor: op.actor.clone(),
@@ -539,9 +612,10 @@ pub fn admit(
             continue;
         }
         if !m.counted.contains(&id) && !m.voided.contains(&id) {
-            gaps.push(RailGap::NotAMember {
-                id,
-                actor: op.actor.clone(),
+            let actor = op.actor.clone();
+            gaps.push(match m.cut.contains_key(&actor) {
+                true => RailGap::Removed { id, actor },
+                false => RailGap::NotAMember { id, actor },
             });
             continue;
         }
@@ -555,31 +629,24 @@ pub fn admit(
         );
     }
 
-    // ── per-actor sequence audit ─────────────────────────────
-    let mut seqs: BTreeMap<&str, BTreeMap<u64, Vec<OpId>>> = BTreeMap::new();
-    for a in admitted.values() {
-        seqs.entry(a.op.actor.as_str())
-            .or_default()
-            .entry(a.op.kind.seq)
-            .or_default()
-            .push(a.id.clone());
-    }
-    let mut forked: BTreeSet<OpId> = BTreeSet::new();
+    // Forks void nothing (svrngs, U7; DESIGN §6): both branches are held and
+    // each act is weighed as itself, so no second act at a seq takes back the
+    // first. The fork is named beside a complete answer.
     for (actor, by_seq) in &seqs {
         for (seq, ids) in by_seq {
             if ids.len() > 1 {
                 let mut ids = ids.clone();
                 ids.sort();
+                tracing::debug!(target: "rail:admit", actor, seq, ?ids,
+                    "admit: a fork — every branch counts");
                 gaps.push(RailGap::SequenceFork {
                     actor: (*actor).to_string(),
                     seq: *seq,
-                    ids: ids.clone(),
+                    ids,
                 });
-                forked.extend(ids);
             }
         }
     }
-    admitted.retain(|id, _| !forked.contains(id));
 
     // ── the void set: commutative, and it never resurrects ───
     //
@@ -603,41 +670,28 @@ pub fn admit(
         }
     }
 
-    // Holes are audited from each actor's SEALED FLOOR, not from zero, or a
-    // node that has retired what a seal covers reports one hole per retired
-    // op — permanently, to every housemate, while being in perfect health.
-    // That report is what made compaction indistinguishable from breakage.
-    //
-    // The floors come from ops that survived BOTH the signature/roster checks
-    // above and the fork exclusion just now, minus what the void set just
-    // retired: a seal the rail refused, one it cannot choose between, or one
-    // the log itself corrected retires nothing. Suppressing a hole is a claim
-    // of completeness, and a claim of completeness may only rest on an act the
-    // rail could actually authenticate (ARCH §18.3).
-    let floors = crate::sync::sealed_floors(admitted.values().map(|c| (&c.id, c.op)), &voided);
-    let seals: Vec<OpId> = admitted
+    // Holes are audited from zero. A seal is held as an act that does
+    // nothing (arch-seal; svrn-docs A_RECORD_FOR_YEARS §6 q2): an older
+    // build's seal set a floor that hid the holes below it, and here it
+    // hides none, so a copy an older build pruned says what it is missing.
+    let seals = admitted
         .values()
-        .filter(|c| {
-            matches!(c.op.kind.act, RailAct::Seal)
-                && !voided.contains(&c.id)
-                && floors.get(&c.op.actor) == Some(&c.op.kind.seq)
-        })
-        .map(|c| c.id.clone())
-        .collect();
+        .filter(|c| matches!(c.op.kind.act, RailAct::Seal));
+    for c in seals {
+        tracing::debug!(namespace, id = %c.id, actor = %crate::actor_prefix(&c.op.actor), seq = c.op.kind.seq,
+            "ring rail: a seal is held and retires nothing — an older build's act, read as one that does nothing");
+    }
     for (actor, by_seq) in &seqs {
-        let floor = floors.get(*actor).copied().unwrap_or(0);
-        let highest = by_seq
-            .keys()
-            .copied()
-            .next_back()
-            .expect("seqs only holds actors that wrote");
-        for n in floor..=highest {
-            if !by_seq.contains_key(&n) {
+        let mut next = 0u64;
+        for &seq in by_seq.keys() {
+            if seq > next {
                 gaps.push(RailGap::SequenceHole {
                     actor: (*actor).to_string(),
-                    missing: n,
+                    from: next,
+                    to: seq - 1,
                 });
             }
+            next = seq.saturating_add(1);
         }
     }
 
@@ -670,6 +724,7 @@ pub fn admit(
         ))
     });
 
+    let synced = crate::synced::written(order.iter().map(|a| (&a.person, a.op)));
     let out: Vec<AdmittedOp> = order
         .into_iter()
         .map(|a| {
@@ -679,14 +734,18 @@ pub fn admit(
                     corrects,
                     replacement,
                 } => (Some(corrects.clone()), replacement.clone()),
-                // A seal is delivery, not meaning: it voids nothing and
+                // A seal does nothing (arch-seal): it voids nothing and
                 // carries nothing, so `applies()` is false and no reducer
                 // sees it. Admit/Remove carry meaning to the MEMBERSHIP
                 // function and never to an app (no-re-division).
                 RailAct::Seal
                 | RailAct::Admit { .. }
                 | RailAct::Remove { .. }
-                | RailAct::Invite { .. } => (None, None),
+                | RailAct::HandOn { .. }
+                | RailAct::Invite { .. }
+                | RailAct::Synced { .. }
+                | RailAct::Runs { .. }
+                | RailAct::Relay { .. } => (None, None),
             };
             AdmittedOp {
                 id: a.id.clone(),
@@ -710,10 +769,6 @@ pub fn admit(
         namespace,
         verifier = verifier.name(),
         held = acts.len(),
-        // The one input that stops a gap being REPORTED, so it belongs on the
-        // event a reader already looks at when asking why a node claims
-        // completeness (ARCH §9.1). `{}` when nothing is sealed.
-        sealed = ?floors,
         admitted = out.len(),
         applied,
         voided = voided.len(),
@@ -736,9 +791,9 @@ pub fn admit(
         ops: out,
         gaps,
         held: acts.len(),
-        floors,
-        seals,
         membership: m,
+        synced,
+        tips,
     }
 }
 

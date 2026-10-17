@@ -1,0 +1,18 @@
+webkit: the relay over the second visit, [false, true] stopped, listed in 3362 ms as "You’re in house, as bo": 25564 bytes, 39 packets, 5 dropped
+chromium: the relay over the second visit, [false, true] stopped, listed in 3339 ms as "You’re in house, as bo": 23877 bytes, 37 packets, 4 dropped
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 90 filtered out; finished in 11.32s
+chromium: the relay over the second visit, [false, false] stopped, listed in 822 ms as "You’re in house, as bo": 38571 bytes, 67 packets, 0 dropped
+webkit: the relay over the second visit, [false, false] stopped, listed in 341 ms as "You’re in house, as bo": 35243 bytes, 62 packets, 0 dropped
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 91 filtered out; finished in 17.52s
+chromium: the relay over the second visit, [false, true] stopped, listed in 3342 ms as "You’re in house, as bo": 23909 bytes, 38 packets, 4 dropped
+webkit: the relay over the second visit, [false, true] stopped, listed in 3367 ms as "You’re in house, as bo": 25169 bytes, 41 packets, 5 dropped
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 90 filtered out; finished in 11.17s
+chromium: the relay over the second visit, [false, false] stopped, listed in 818 ms as "You’re in house, as bo": 38500 bytes, 64 packets, 0 dropped
+webkit: the relay over the second visit, [false, false] stopped, listed in 325 ms as "You’re in house, as bo": 35246 bytes, 62 packets, 0 dropped
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 91 filtered out; finished in 17.50s
+webkit: the relay over the second visit, [false, true] stopped, listed in 3359 ms as "You’re in house, as bo": 25042 bytes, 37 packets, 5 dropped
+chromium: the relay over the second visit, [false, true] stopped, listed in 3334 ms as "You’re in house, as bo": 23883 bytes, 37 packets, 4 dropped
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 90 filtered out; finished in 11.23s
+chromium: the relay over the second visit, [false, false] stopped, listed in 820 ms as "You’re in house, as bo": 38590 bytes, 67 packets, 0 dropped
+webkit: the relay over the second visit, [false, false] stopped, listed in 340 ms as "You’re in house, as bo": 34177 bytes, 65 packets, 0 dropped
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 91 filtered out; finished in 17.23s

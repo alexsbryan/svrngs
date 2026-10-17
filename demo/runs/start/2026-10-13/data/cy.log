@@ -1,0 +1,73 @@
+2026-10-13T16:46:16.782801Z  INFO svrngs::identity: node_key: generated + persisted identity key (first boot) node_pubkey=c39747c9775787df0824e4e7f2365ce435e20b64c1eb2100d447331839841c4b
+2026-10-13T16:46:16.838879Z  INFO folder: folder: the store is open untagged=0
+2026-10-13T16:46:16.839502Z  INFO rails: api: serving the record to this computer's apps addr=127.0.0.1:64552
+2026-10-13T16:46:16.840075Z  INFO node: node: endpoint bound with the signing key actor="c39747c9775787df0824e4e7f2365ce435e20b64c1eb2100d447331839841c4b" data_dir=/tmp/sm-w/cy/.svrngs dial=Some("c39747c9775787df0824e4e7f2365ce435e20b64c1eb2100d447331839841c4b@192.168.1.4:60744") api=127.0.0.1:64552
+2026-10-13T16:46:16.840262Z  INFO svrngs_node::ring_sync: ring sync: loop started interval_secs=60
+2026-10-13T16:46:17.168639Z  INFO endpoint{id=c39747c977}:relay-actor: iroh::socket::transports::relay::actor: home is now relay https://usw1-1.relay.n0.iroh.link/, was None
+2026-10-13T16:46:17.534558Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=24589 peer=ff504fd4b5edcb7b3e404a5d35a8636e74219ea53794d160508c1ba48d00f459 error=Address already in use (os error 48)
+2026-10-13T16:46:17.578052Z  INFO folder: synced: the directory kept in step with the group's folder namespace="1c5199f5df21257589438a075113a99c9c23458074655b8155d0d3ab8b260e9b" folder="Lab" dir=/tmp/sm-w/cy/svrngs/Lab
+2026-10-13T16:46:17.961140Z DEBUG door: door: lends — answered what this computer lends actor="ba8f59d173ea14d26021941e529184676e2a4c980bec3baeaaadf3b139d2f247" lends=1
+2026-10-13T16:46:18.013392Z DEBUG door: door: lends — answered what this computer lends actor="ba8f59d173ea14d26021941e529184676e2a4c980bec3baeaaadf3b139d2f247" lends=1
+2026-10-13T16:46:18.924200Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:19.938845Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:20.584921Z DEBUG door: door: lends — answered what this computer lends actor="ba8f59d173ea14d26021941e529184676e2a4c980bec3baeaaadf3b139d2f247" lends=1
+2026-10-13T16:46:20.593710Z DEBUG door: door: the person the key is key="ba8f59d173ea14d26021941e529184676e2a4c980bec3baeaaadf3b139d2f247" person_key="ba8f59d173ea14d26021941e529184676e2a4c980bec3baeaaadf3b139d2f247"
+2026-10-13T16:46:20.593803Z DEBUG door: door: a lend named by its label label="2rnxsvn1m8d78cbf6ww9fqv66t48fc5f2jzvcahxk63utrpfdugtq9s0vcjzzq" found=Some("taste")
+2026-10-13T16:46:20.957404Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:21.997358Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:23.021212Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:24.074559Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:25.114380Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:26.126654Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:27.129652Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:27.515024Z DEBUG door: door: lends — answered what this computer lends actor="ba8f59d173ea14d26021941e529184676e2a4c980bec3baeaaadf3b139d2f247" lends=1
+2026-10-13T16:46:27.527199Z DEBUG door: door: the person the key is key="ba8f59d173ea14d26021941e529184676e2a4c980bec3baeaaadf3b139d2f247" person_key="ba8f59d173ea14d26021941e529184676e2a4c980bec3baeaaadf3b139d2f247"
+2026-10-13T16:46:27.527299Z DEBUG door: door: a lend named by its label label="2rnxsvn1m8d78cbf6ww9fqv66t48fc5f2jzvcahxk63utrpfdugtq9s0vcjzzq" found=Some("taste")
+2026-10-13T16:46:28.199959Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:29.238775Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:30.254272Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:31.260437Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:31.774512Z DEBUG door: door: lends — answered what this computer lends actor="ff504fd4b5edcb7b3e404a5d35a8636e74219ea53794d160508c1ba48d00f459" lends=1
+2026-10-13T16:46:31.790883Z DEBUG door: door: the person the key is key="ff504fd4b5edcb7b3e404a5d35a8636e74219ea53794d160508c1ba48d00f459" person_key="ff504fd4b5edcb7b3e404a5d35a8636e74219ea53794d160508c1ba48d00f459"
+2026-10-13T16:46:31.790983Z DEBUG door: door: a lend named by its label label="2rnxsvn1m8d78cbf6ww9fqv66t48fc5f2jzvcahxk63utrpfdugtq9s0vcjzzq" found=Some("taste")
+2026-10-13T16:46:32.281416Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:33.316049Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:33.863201Z DEBUG door: door: lends — answered what this computer lends actor="ff504fd4b5edcb7b3e404a5d35a8636e74219ea53794d160508c1ba48d00f459" lends=1
+2026-10-13T16:46:33.870326Z DEBUG door: door: the person the key is key="ff504fd4b5edcb7b3e404a5d35a8636e74219ea53794d160508c1ba48d00f459" person_key="ff504fd4b5edcb7b3e404a5d35a8636e74219ea53794d160508c1ba48d00f459"
+2026-10-13T16:46:33.870414Z DEBUG door: door: a lend named by its label label="2rnxsvn1m8d78cbf6ww9fqv66t48fc5f2jzvcahxk63utrpfdugtq9s0vcjzzq" found=Some("taste")
+2026-10-13T16:46:34.318456Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:34.975620Z DEBUG door: door: lends — answered what this computer lends actor="ba8f59d173ea14d26021941e529184676e2a4c980bec3baeaaadf3b139d2f247" lends=1
+2026-10-13T16:46:34.977874Z DEBUG door: door: lends — answered what this computer lends actor="ba8f59d173ea14d26021941e529184676e2a4c980bec3baeaaadf3b139d2f247" lends=1
+2026-10-13T16:46:35.366591Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:35.531488Z DEBUG door: door: lends — answered what this computer lends actor="ba8f59d173ea14d26021941e529184676e2a4c980bec3baeaaadf3b139d2f247" lends=1
+2026-10-13T16:46:36.414221Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:36.661597Z DEBUG door: door: the person the key is key="ba8f59d173ea14d26021941e529184676e2a4c980bec3baeaaadf3b139d2f247" person_key="ba8f59d173ea14d26021941e529184676e2a4c980bec3baeaaadf3b139d2f247"
+2026-10-13T16:46:36.661873Z DEBUG door: door: a lend named by its label label="2rnxsvn1m8d78cbf6ww9fqv66t48fc5f2jzvcahxk63utrpfdugtq9s0vcjzzq" found=Some("taste")
+2026-10-13T16:46:36.662913Z  INFO door: door: a choice kept lend=taste person=ba8f59d173ea14d26021941e529184676e2a4c980bec3baeaaadf3b139d2f247 app=97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8upt6rj3w3v50b choice=Choice { said: Yes, at: 1791909996 }
+2026-10-13T16:46:37.419854Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:38.449394Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:39.174704Z DEBUG door: door: lends — answered what this computer lends actor="ba8f59d173ea14d26021941e529184676e2a4c980bec3baeaaadf3b139d2f247" lends=1
+2026-10-13T16:46:39.463944Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:40.290100Z DEBUG door: door: the person the key is key="ba8f59d173ea14d26021941e529184676e2a4c980bec3baeaaadf3b139d2f247" person_key="ba8f59d173ea14d26021941e529184676e2a4c980bec3baeaaadf3b139d2f247"
+2026-10-13T16:46:40.290359Z DEBUG door: door: a lend named by its label label="2rnxsvn1m8d78cbf6ww9fqv66t48fc5f2jzvcahxk63utrpfdugtq9s0vcjzzq" found=Some("taste")
+2026-10-13T16:46:40.291397Z  INFO door: door: a choice kept lend=taste person=ba8f59d173ea14d26021941e529184676e2a4c980bec3baeaaadf3b139d2f247 app=97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8upt6rj3w3v50b choice=Choice { said: Yes, at: 1791910000 }
+2026-10-13T16:46:40.490467Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:41.566332Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:41.919888Z DEBUG door: door: lends — answered what this computer lends actor="ba8f59d173ea14d26021941e529184676e2a4c980bec3baeaaadf3b139d2f247" lends=1
+2026-10-13T16:46:41.926940Z DEBUG door: door: the person the key is key="ba8f59d173ea14d26021941e529184676e2a4c980bec3baeaaadf3b139d2f247" person_key="ba8f59d173ea14d26021941e529184676e2a4c980bec3baeaaadf3b139d2f247"
+2026-10-13T16:46:41.927037Z DEBUG door: door: a lend named by its label label="2rnxsvn1m8d78cbf6ww9fqv66t48fc5f2jzvcahxk63utrpfdugtq9s0vcjzzq" found=Some("taste")
+2026-10-13T16:46:42.570746Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:43.632780Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:44.108693Z DEBUG door: door: lends — answered what this computer lends actor="ba8f59d173ea14d26021941e529184676e2a4c980bec3baeaaadf3b139d2f247" lends=1
+2026-10-13T16:46:44.115259Z DEBUG door: door: the person the key is key="ba8f59d173ea14d26021941e529184676e2a4c980bec3baeaaadf3b139d2f247" person_key="ba8f59d173ea14d26021941e529184676e2a4c980bec3baeaaadf3b139d2f247"
+2026-10-13T16:46:44.115377Z DEBUG door: door: a lend named by its label label="2rnxsvn1m8d78cbf6ww9fqv66t48fc5f2jzvcahxk63utrpfdugtq9s0vcjzzq" found=Some("taste")
+2026-10-13T16:46:44.659426Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:45.397749Z DEBUG surface: surface: groups — a group held namespace="1c5199f5df21257589438a075113a99c9c23458074655b8155d0d3ab8b260e9b" name=Some("Lab") person=Some(Person(Name("Cy"))) removed=Some(false) removals=Some(0) folders=Some(["/tmp/sm-w/cy/svrngs/Lab"])
+2026-10-13T16:46:45.399534Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=22371 peer=ba8f59d173ea14d26021941e529184676e2a4c980bec3baeaaadf3b139d2f247 error=Address already in use (os error 48)
+2026-10-13T16:46:45.404478Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="1c5199f5df21257589438a075113a99c9c23458074655b8155d0d3ab8b260e9b" lent=3 unlisted=Unlisted { unanswered: [], unheard: [], refused: [] }
+2026-10-13T16:46:45.406258Z DEBUG origin: origin: no Sec-Fetch-*, a program on this computer, so the lend's own host=97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8
+2026-10-13T16:46:45.406981Z DEBUG origin: origin: another computer's lend, through the dial to its door, the app in this computer's own pass label=97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8 app=97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8 lender="ff504fd4b5edcb7b3e404a5d35a8636e74219ea53794d160508c1ba48d00f459" bridge=127.0.0.1:64590
+2026-10-13T16:46:45.676883Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:46.705583Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T16:46:47.368388Z DEBUG origin: origin: no Sec-Fetch-*, a program on this computer, so the lend's own host=97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8
+2026-10-13T16:46:47.369271Z DEBUG origin: origin: another computer's lend, through the dial to its door, the app in this computer's own pass label=97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8 app=97kf9zgz71g10svallrwnmddq34cdjzgh8mqc2ctutq4ldka8uptra1jd432f8 lender="ff504fd4b5edcb7b3e404a5d35a8636e74219ea53794d160508c1ba48d00f459" bridge=127.0.0.1:64590

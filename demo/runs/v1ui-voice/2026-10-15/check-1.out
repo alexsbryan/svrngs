@@ -1,0 +1,31 @@
+# scripts/check.sh at 9438495, started by the loop's ralph-result await; exited 1 after 9m20s
+# step verdicts, as the script printed them (log: ralph/next/v1ui/ctl/log/sessions/v1ui-voice-4.await.log, gitignored)
+note       open files: 256, raised to 10240
+passed     principles pinned
+passed     lean and RUST_ARCH
+passed     app nouns gate
+passed     app nouns
+passed     rustfmt
+passed     clippy
+failed     tests
+passed     canaries
+passed     ceiling canary
+passed     web rustfmt and clippy
+failed     browser
+passed     joining in a browser
+passed     conformance canary
+rate       WebKit seeks back to back (u5-11): way, lend; through the lend and straight at the canary, the ms the last took to play again and its verdict
+passed     app laws
+
+# both failed steps failed on one test, the same bar, nothing else:
+           carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::chromium --- FAILED
+           test result: FAILED. 87 passed; 1 failed; 1 ignored; 0 measured; 0 filtered out; finished in 109.29s
+           carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::chromium --- FAILED
+           test result: FAILED. 87 passed; 1 failed; 1 ignored; 0 measured; 0 filtered out; finished in 147.58s
+           thread 'carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::chromium' (46974488) panicked at crates/svrngs-node/tests/browser/carried.rs:198:21:
+           Money opened and wrote in 15347 ms, past the bar's 15000, at 2026-10-15T15:05:28Z 8:05 up 5 days, 20:48, 6 users, load averages: 11.14 11.80 21.40:
+           thread 'carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::chromium' (46998387) panicked at crates/svrngs-node/tests/browser/carried.rs:198:21:
+           Money opened and wrote in 15705 ms, past the bar's 15000, at 2026-10-15T15:08:09Z 8:08 up 5 days, 20:50, 6 users, load averages: 31.21 18.84 22.60:
+
+# the same test alone at 9438495, twice, after the run (load 10-12 on 12 cores): both engines ok
+# chromium: opened 14643 ms; webkit: opened 14751 ms (cargo test -p svrngs-node --test browser -- carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s --nocapture)

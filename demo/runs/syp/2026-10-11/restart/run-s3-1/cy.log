@@ -1,0 +1,82 @@
+2026-10-11T07:28:14.679974Z  INFO folder: folder: the store is open untagged=0
+2026-10-11T07:28:14.681485Z  INFO node: node: endpoint bound with the signing key actor="c143972f2003f11d2bc7957bc035d938ae8ed71f88560a38937b32700ab3f076" data_dir=/tmp/syp6-run/data/cy dial=Some("c143972f2003f11d2bc7957bc035d938ae8ed71f88560a38937b32700ab3f076@192.168.1.4:60638") api=127.0.0.1:59323
+2026-10-11T07:28:15.163787Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=21332 peer=4fb1bfbedcc504b407c3f9c554d08a30619c0859d3f60033b58bbaf72640483a error=Address already in use (os error 48)
+2026-10-11T07:28:15.176588Z DEBUG node: node: sync_with — one exchange with the peer namespace="94a38a398e259aee9406088780f3a61480c803f0030791495be923588dcbfad9" pulled=3 pushed=0 stop=None
+2026-10-11T07:28:15.823166Z DEBUG folder: folder: what the store keeps changed, so it drops every other version kept=0
+2026-10-11T07:28:16.180980Z DEBUG node: node: asked to stop by SIGTERM
+2026-10-11T07:28:17.464260Z  INFO folder: folder: the store is open untagged=0
+2026-10-11T07:28:17.466150Z  INFO node: node: endpoint bound with the signing key actor="c143972f2003f11d2bc7957bc035d938ae8ed71f88560a38937b32700ab3f076" data_dir=/tmp/syp6-run/data/cy dial=Some("c143972f2003f11d2bc7957bc035d938ae8ed71f88560a38937b32700ab3f076@192.168.1.4:56776") api=127.0.0.1:59390
+2026-10-11T07:28:17.469000Z DEBUG node: node: a member stands in the group, to dial namespace="94a38a398e259aee9406088780f3a61480c803f0030791495be923588dcbfad9" member=Ana/4fb1bfbe
+2026-10-11T07:28:17.469099Z DEBUG node: node: a member stands in the group, to dial namespace="94a38a398e259aee9406088780f3a61480c803f0030791495be923588dcbfad9" member=Ben/cfe08ee3
+2026-10-11T07:28:17.469136Z DEBUG node: node: a member stands in the group, to dial namespace="94a38a398e259aee9406088780f3a61480c803f0030791495be923588dcbfad9" member=Ana/4fb1bfbe
+2026-10-11T07:28:17.469175Z DEBUG node: node: a member stands in the group, to dial namespace="94a38a398e259aee9406088780f3a61480c803f0030791495be923588dcbfad9" member=Ben/cfe08ee3
+2026-10-11T07:28:17.469369Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=21332 peer=4fb1bfbedcc504b407c3f9c554d08a30619c0859d3f60033b58bbaf72640483a error=Address already in use (os error 48)
+2026-10-11T07:28:17.470052Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=26177 peer=cfe08ee3b208d38287260c176b668c8d28033e72571023180c9af873010529ba error=Address already in use (os error 48)
+2026-10-11T07:28:17.602417Z  INFO folder: synced: the directory kept in step with the group's folder namespace="94a38a398e259aee9406088780f3a61480c803f0030791495be923588dcbfad9" folder="Shared" dir=/tmp/syp6-run/disk/cy/Shared
+2026-10-11T07:28:17.605191Z DEBUG folder: synced: the OS's file events watched, the directory walked whole each 600s namespace="94a38a398e259aee9406088780f3a61480c803f0030791495be923588dcbfad9" folder="Shared"
+2026-10-11T07:28:17.607644Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=0 replaced=0 placed=0 conflicts=0
+2026-10-11T07:28:17.607748Z DEBUG folder: folder: the layout read again, the record having moved namespace="94a38a398e259aee9406088780f3a61480c803f0030791495be923588dcbfad9" placed=0
+2026-10-11T07:28:17.607805Z DEBUG folder: synced: the layout read folder="Shared" placed=0 holders=3 ms=2
+2026-10-11T07:28:17.610159Z DEBUG folder: synced: the layout to write folder="Shared" placed=0
+2026-10-11T07:28:17.610261Z DEBUG folder: synced: a step folder="Shared" files=0 sent=0 unwritten=0 read_ms=4 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=4
+2026-10-11T07:28:17.926711Z DEBUG folder: synced: the step woken, the group's record having taken an act namespace="94a38a398e259aee9406088780f3a61480c803f0030791495be923588dcbfad9" folder="Shared"
+2026-10-11T07:28:17.929244Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=1 replaced=0 placed=1 conflicts=0
+2026-10-11T07:28:17.929340Z DEBUG folder: folder: the layout read again, the record having moved namespace="94a38a398e259aee9406088780f3a61480c803f0030791495be923588dcbfad9" placed=1
+2026-10-11T07:28:17.929382Z DEBUG folder: synced: the layout read folder="Shared" placed=1 holders=3 ms=2
+2026-10-11T07:28:17.929502Z DEBUG folder: synced: the layout to write folder="Shared" placed=1
+2026-10-11T07:28:17.929581Z DEBUG folder: synced: to fetch, the layout placing it here folder="Shared" path=s3.txt hash=c23fddead5d762f252f52b6f9b3297f1120acc76074e55cca4ea4e4792c21862 size=14 from="4fb1bfbedcc504b407c3f9c554d08a30619c0859d3f60033b58bbaf72640483a" seq=3
+2026-10-11T07:28:17.930039Z DEBUG folder: folder: dialled by key, iroh holding these addresses for it holder=4fb1bfbedcc504b407c3f9c554d08a30619c0859d3f60033b58bbaf72640483a known=[]
+2026-10-11T07:28:17.946848Z DEBUG node: node: lends — the computer answered actor="cfe08ee3b208d38287260c176b668c8d28033e72571023180c9af873010529ba" lends=0
+2026-10-11T07:28:18.247046Z DEBUG node: node: admitted — the dialer stands in a group held here actor="4fb1bfbedcc504b407c3f9c554d08a30619c0859d3f60033b58bbaf72640483a" namespace="94a38a398e259aee9406088780f3a61480c803f0030791495be923588dcbfad9"
+2026-10-11T07:28:18.247100Z DEBUG node: node: admitted — the dialer stands in a group held here actor="4fb1bfbedcc504b407c3f9c554d08a30619c0859d3f60033b58bbaf72640483a" namespace="94a38a398e259aee9406088780f3a61480c803f0030791495be923588dcbfad9"
+2026-10-11T07:28:18.442985Z DEBUG folder: folder: the fetch's phases, and the path iroh selected holder=4fb1bfbedcc504b407c3f9c554d08a30619c0859d3f60033b58bbaf72640483a dial_ms=399.882 first_ms=512.731 last_ms=513.002 relayed=None ok=true
+2026-10-11T07:28:18.443080Z  INFO folder: folder: fetched, verified hash=c23fddead5d762f252f52b6f9b3297f1120acc76074e55cca4ea4e4792c21862 holder=4fb1bfbedcc504b407c3f9c554d08a30619c0859d3f60033b58bbaf72640483a payload=14 other=8 ms=513
+2026-10-11T07:28:18.444043Z  INFO folder: synced: written into the directory folder="Shared" path=s3.txt hash=c23fddead5d762f252f52b6f9b3297f1120acc76074e55cca4ea4e4792c21862 from="4fb1bfbedcc504b407c3f9c554d08a30619c0859d3f60033b58bbaf72640483a" seq=3 beside=false fetch_ms=513 export_ms=0
+2026-10-11T07:28:18.449118Z DEBUG node: node: lends — the computer answered actor="4fb1bfbedcc504b407c3f9c554d08a30619c0859d3f60033b58bbaf72640483a" lends=0
+2026-10-11T07:28:18.449258Z DEBUG node: node: lends — asked every computer of the groups lent=0 unanswered=0
+2026-10-11T07:28:18.449344Z DEBUG folder: synced: what the step took or fetched made durable folder="Shared" held=1
+2026-10-11T07:28:18.450073Z DEBUG folder: synced: a step folder="Shared" files=0 sent=0 unwritten=0 read_ms=2 walk_ms=0 take_ms=0 write_ms=0 apply_ms=514 kept_ms=5 ms=523
+2026-10-11T07:28:18.507564Z DEBUG folder: synced: the step woken, the OS saying files changed namespace="94a38a398e259aee9406088780f3a61480c803f0030791495be923588dcbfad9" folder="Shared" paths=1
+2026-10-11T07:28:18.508214Z DEBUG folder: synced: the layout read folder="Shared" placed=1 holders=3 ms=0
+2026-10-11T07:28:18.508413Z DEBUG folder: synced: the layout to write folder="Shared" placed=1
+2026-10-11T07:28:18.508487Z DEBUG folder: synced: a step folder="Shared" files=1 sent=0 unwritten=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=0
+2026-10-11T07:28:18.579222Z DEBUG folder: folder: what the store keeps changed, so it drops every other version kept=1
+2026-10-11T07:28:19.698283Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T07:28:20.764011Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T07:28:20.938120Z DEBUG folder: synced: the step woken, the group's record having taken an act namespace="94a38a398e259aee9406088780f3a61480c803f0030791495be923588dcbfad9" folder="Shared"
+2026-10-11T07:28:20.940907Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=2 replaced=1 placed=1 conflicts=0
+2026-10-11T07:28:20.940991Z DEBUG folder: folder: the layout read again, the record having moved namespace="94a38a398e259aee9406088780f3a61480c803f0030791495be923588dcbfad9" placed=1
+2026-10-11T07:28:20.941028Z DEBUG folder: synced: the layout read folder="Shared" placed=1 holders=3 ms=2
+2026-10-11T07:28:20.941134Z DEBUG folder: synced: the layout to write folder="Shared" placed=1
+2026-10-11T07:28:20.941204Z DEBUG folder: synced: to fetch, the layout placing it here folder="Shared" path=s3.txt hash=36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd size=46 from="4fb1bfbedcc504b407c3f9c554d08a30619c0859d3f60033b58bbaf72640483a" seq=4
+2026-10-11T07:28:20.943076Z DEBUG folder: folder: the fetch's phases, and the path iroh selected holder=4fb1bfbedcc504b407c3f9c554d08a30619c0859d3f60033b58bbaf72640483a dial_ms=0.005 first_ms=1.413 last_ms=1.569 relayed=Some(false) addr="Ip(192.168.1.4:61629)" rtt_ms=0.291 ok=true
+2026-10-11T07:28:20.943131Z  INFO folder: folder: fetched, verified hash=36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd holder=4fb1bfbedcc504b407c3f9c554d08a30619c0859d3f60033b58bbaf72640483a payload=46 other=8 ms=1
+2026-10-11T07:28:20.943575Z  INFO folder: synced: written into the directory folder="Shared" path=s3.txt hash=36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd from="4fb1bfbedcc504b407c3f9c554d08a30619c0859d3f60033b58bbaf72640483a" seq=4 beside=false fetch_ms=1 export_ms=0
+2026-10-11T07:28:20.948538Z DEBUG folder: synced: what the step took or fetched made durable folder="Shared" held=1
+2026-10-11T07:28:20.949304Z DEBUG folder: synced: a step folder="Shared" files=0 sent=0 unwritten=0 read_ms=2 walk_ms=0 take_ms=0 write_ms=0 apply_ms=2 kept_ms=5 ms=11
+2026-10-11T07:28:21.000368Z DEBUG folder: synced: the step woken, the OS saying files changed namespace="94a38a398e259aee9406088780f3a61480c803f0030791495be923588dcbfad9" folder="Shared" paths=1
+2026-10-11T07:28:21.000834Z DEBUG folder: synced: the layout read folder="Shared" placed=1 holders=3 ms=0
+2026-10-11T07:28:21.000993Z DEBUG folder: synced: the layout to write folder="Shared" placed=1
+2026-10-11T07:28:21.001068Z DEBUG folder: synced: a step folder="Shared" files=1 sent=0 unwritten=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=0
+2026-10-11T07:28:21.568432Z DEBUG node: node: admitted — the dialer stands in a group held here actor="cfe08ee3b208d38287260c176b668c8d28033e72571023180c9af873010529ba" namespace="94a38a398e259aee9406088780f3a61480c803f0030791495be923588dcbfad9"
+2026-10-11T07:28:21.568554Z DEBUG node: node: admitted — the dialer stands in a group held here actor="cfe08ee3b208d38287260c176b668c8d28033e72571023180c9af873010529ba" namespace="94a38a398e259aee9406088780f3a61480c803f0030791495be923588dcbfad9"
+2026-10-11T07:28:21.647200Z DEBUG folder: synced: the step woken, the group's record having taken an act namespace="94a38a398e259aee9406088780f3a61480c803f0030791495be923588dcbfad9" folder="Shared"
+2026-10-11T07:28:21.658223Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=3 replaced=1 placed=2 conflicts=1
+2026-10-11T07:28:21.658322Z DEBUG folder: folder: the layout read again, the record having moved namespace="94a38a398e259aee9406088780f3a61480c803f0030791495be923588dcbfad9" placed=2
+2026-10-11T07:28:21.658371Z DEBUG folder: synced: the layout read folder="Shared" placed=2 holders=3 ms=7
+2026-10-11T07:28:21.658517Z DEBUG folder: synced: the layout to write folder="Shared" placed=2
+2026-10-11T07:28:21.658619Z DEBUG folder: synced: to fetch, the layout placing it here folder="Shared" path=s3 (conflict Ben).txt hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b size=44 from="cfe08ee3b208d38287260c176b668c8d28033e72571023180c9af873010529ba" seq=0
+2026-10-11T07:28:21.659996Z DEBUG folder: folder: dialled by key, iroh holding these addresses for it holder=cfe08ee3b208d38287260c176b668c8d28033e72571023180c9af873010529ba known=["Ip(192.168.1.4:61650) Active", "Relay(https://usw1-1.relay.n0.iroh.link/) Active", "Ip(69.181.167.209:61650) Inactive", "Ip(192.168.1.4:56598) Active"]
+2026-10-11T07:28:21.665166Z DEBUG folder: folder: the fetch's phases, and the path iroh selected holder=cfe08ee3b208d38287260c176b668c8d28033e72571023180c9af873010529ba dial_ms=2.073 first_ms=4.834 last_ms=5.249 relayed=Some(false) addr="Ip(192.168.1.4:56598)" rtt_ms=0.628 ok=true
+2026-10-11T07:28:21.665207Z  INFO folder: folder: fetched, verified hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b holder=cfe08ee3b208d38287260c176b668c8d28033e72571023180c9af873010529ba payload=44 other=8 ms=5
+2026-10-11T07:28:21.665720Z  INFO folder: synced: written into the directory folder="Shared" path=s3 (conflict Ben).txt hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b from="cfe08ee3b208d38287260c176b668c8d28033e72571023180c9af873010529ba" seq=0 beside=true fetch_ms=5 export_ms=0
+2026-10-11T07:28:21.674588Z DEBUG folder: synced: what the step took or fetched made durable folder="Shared" held=1
+2026-10-11T07:28:21.675808Z DEBUG folder: synced: a step folder="Shared" files=0 sent=0 unwritten=0 read_ms=7 walk_ms=0 take_ms=0 write_ms=0 apply_ms=7 kept_ms=10 ms=24
+2026-10-11T07:28:21.729898Z DEBUG folder: synced: the step woken, the OS saying files changed namespace="94a38a398e259aee9406088780f3a61480c803f0030791495be923588dcbfad9" folder="Shared" paths=1
+2026-10-11T07:28:21.730221Z DEBUG folder: synced: the layout read folder="Shared" placed=2 holders=3 ms=0
+2026-10-11T07:28:21.730330Z DEBUG folder: synced: the layout to write folder="Shared" placed=2
+2026-10-11T07:28:21.730380Z DEBUG folder: synced: a step folder="Shared" files=1 sent=0 unwritten=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=0
+2026-10-11T07:28:21.784933Z DEBUG folder: folder: what the store keeps changed, so it drops every other version kept=2
+2026-10-11T07:28:22.897003Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T07:28:23.966570Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T07:28:24.819848Z DEBUG node: node: asked to stop by SIGTERM

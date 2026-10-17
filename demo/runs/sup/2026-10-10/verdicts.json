@@ -1,0 +1,577 @@
+{
+ "computer-chromium": {
+  "bar 1": {
+   "verdict": "passed",
+   "why": "asked once, in svrngs's words around the lender's, on the page no app runs at; the list in the plant's order after the yes; opened again, no question",
+   "question": "Let Sam's tonights-picks use Ana's taste?\nthe app receives ranked film suggestions; your viewing history stays where it is stored\nYesNot now",
+   "question_at": "http://svrngs.localhost:53380/ask?lend=mna30m55cqm6b647d0u901gj9pjk7cv9jq82xn47915v89f2fnkaq9s0vcjzzq&app=9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdralqccgh449n&back=%2F",
+   "invite_to_question_ms": 3515,
+   "yes_to_list_ms": 3320,
+   "first_open_tries": [
+    [
+     "refused-unread",
+     [
+      "answered",
+      "answered",
+      "unanswered"
+     ]
+    ]
+   ],
+   "again_ms": 3200,
+   "again_asks": false
+  },
+  "bar 2": {
+   "verdict": "passed",
+   "why": "another person said yes on their own page, and the taste refused them by its owner check, the films unranked",
+   "who": "Alex",
+   "question": "Let Sam's tonights-picks use Ana's taste?\nthe app receives ranked film suggestions; your viewing history stays where it is stored\nYesNot now",
+   "reads": "Ana\u2019s taste is someone else\u2019s. These films are not ranked.",
+   "taste_refused": [
+    "2026-10-10T02:09:06.607Z refused not-yours: {\"person\":\"Alex\",\"key\":\"e0570c421f305333871c8693ea55240328c3de70c9f9d6cdaf74830904b7df43\"}"
+   ]
+  },
+  "bar 3": {
+   "verdict": "passed",
+   "why": "the door refuses /diary and the taste logs no ask for it; on a computer the page cannot read svrngs's refusal",
+   "answer": {
+    "status": null,
+    "body": "unread: TypeError: Failed to fetch",
+    "at": "2026-10-10T02:09:09.651Z"
+   },
+   "door": [
+    "2026-10-10T02:09:09.649028Z DEBUG door: door: refused \u2014 the lend refuses this path actor=\"52c19b2b7b1355c0f35d1da3fb5ca7fb0e8e8a5f3b7d8a2f5dfdf72f7c9822d0\" lend=taste path=\"/diary\" refused=\"/diary\""
+   ],
+   "taste_logged_diary": []
+  },
+  "bar 4": {
+   "verdict": "passed",
+   "why": "the other app's ask refused `unasked` at the door: Ana's yes names Tonight's Picks; the taste saw none of it",
+   "ask": {
+    "state": "rank null",
+    "refused": null,
+    "yes": null,
+    "reached": null,
+    "text": "unread: TypeError: Failed to fetch"
+   },
+   "door": [
+    "2026-10-10T02:09:16.030570Z DEBUG door: door: the person's choice for the app, judged lend=taste person=52c19b2b7b1355c0f35d1da3fb5ca7fb0e8e8a5f3b7d8a2f5dfdf72f7c9822d0 app=Some(\"9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdrafdhjzwr7az\") asks=true choice=None judged=Err(Unasked)",
+    "2026-10-10T02:09:16.086198Z DEBUG door: door: the person's choice for the app, judged lend=taste person=52c19b2b7b1355c0f35d1da3fb5ca7fb0e8e8a5f3b7d8a2f5dfdf72f7c9822d0 app=Some(\"9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdrafdhjzwr7az\") asks=true choice=None judged=Err(Unasked)"
+   ]
+  },
+  "the unasked yes": {
+   "verdict": "passed",
+   "why": "the other app's own yes refused by svrngs \u2014 at the home page on a computer, at the door on a phone \u2014 and its next ask refused `unasked`",
+   "yes": {
+    "how": "the home page",
+    "status": "opaque"
+   },
+   "home_page": [
+    "2026-10-10T02:09:16.074490Z DEBUG home: home: answered only from itself, a typed address or, to read, a navigation path=/choices method=POST at_own=true site=Some(\"cross-site\") mode=Some(\"no-cors\") origin=Some(\"http://9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdrafdhjzwr7az.localhost:53380\") answers=false"
+   ],
+   "then": {
+    "state": "unasked null",
+    "refused": null,
+    "yes": {
+     "how": "the home page",
+     "status": "opaque"
+    },
+    "reached": null,
+    "text": "unread: TypeError: Failed to fetch"
+   }
+  },
+  "bar 5": {
+   "verdict": "passed",
+   "why": "after a stop, the next ask refused at the door, said honestly \u2014 the app's Stop, and the home page's",
+   "at_stop": "Stopped. From now on Ana\u2019s taste refuses Tonight\u2019s Picks. The list ranked before you stopped stays on this screen until you leave it.",
+   "stop_to_refused_ms": 3221,
+   "again": {
+    "state": "refused-unread",
+    "text": "Tonight\u2019s Picks could not read whether Ana\u2019s taste lets it rank. These films are not ranked."
+   },
+   "door": [
+    "2026-10-10T02:09:25.764404Z DEBUG door: door: the person's choice for the app, judged lend=taste person=52c19b2b7b1355c0f35d1da3fb5ca7fb0e8e8a5f3b7d8a2f5dfdf72f7c9822d0 app=Some(\"9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdralqccgh449n\") asks=true choice=Some(Choice { said: Stop, at: 1791598162 }) judged=Err(Stopped)",
+    "2026-10-10T02:09:35.124880Z DEBUG door: door: the person's choice for the app, judged lend=taste person=52c19b2b7b1355c0f35d1da3fb5ca7fb0e8e8a5f3b7d8a2f5dfdf72f7c9822d0 app=Some(\"9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdralqccgh449n\") asks=true choice=Some(Choice { said: Stop, at: 1791598162 }) judged=Err(Stopped)"
+   ],
+   "uses_after_app_stop": "What apps use\n\nSam's tonights-picks was stopped using Ana's taste.",
+   "home_stop_uses_before": "What apps use\n\nSam's tonights-picks uses Ana's taste. Stop",
+   "home_stop_uses_after": "What apps use\n\nSam's tonights-picks was stopped using Ana's taste.",
+   "home_stop_to_refused_ms": 6327,
+   "home_stop_again": {
+    "state": "refused-unread",
+    "text": "Tonight\u2019s Picks could not read whether Ana\u2019s taste lets it rank. These films are not ranked."
+   },
+   "home_stop_door": [
+    "2026-10-10T02:09:51.183894Z DEBUG door: door: the person's choice for the app, judged lend=taste person=52c19b2b7b1355c0f35d1da3fb5ca7fb0e8e8a5f3b7d8a2f5dfdf72f7c9822d0 app=Some(\"9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdralqccgh449n\") asks=true choice=Some(Choice { said: Stop, at: 1791598184 }) judged=Err(Stopped)"
+   ],
+   "yes_again_question": "Let Sam's tonights-picks use Ana's taste?\nthe app receives ranked film suggestions; your viewing history stays where it is stored\nYesNot now"
+  },
+  "bar 6": {
+   "verdict": "passed",
+   "why": "each refusal said as itself, the films shown unranked",
+   "another person": {
+    "state": "refused-not-yours",
+    "text": "Ana\u2019s taste is someone else\u2019s. These films are not ranked."
+   },
+   "stopped": {
+    "state": "refused-unread",
+    "text": "Tonight\u2019s Picks could not read whether Ana\u2019s taste lets it rank. These films are not ranked."
+   }
+  }
+ },
+ "computer-webkit": {
+  "bar 1": {
+   "verdict": "passed",
+   "why": "asked once, in svrngs's words around the lender's, on the page no app runs at; the list in the plant's order after the yes; opened again, no question",
+   "question": "Let Sam's tonights-picks use Ana's taste?\n\nthe app receives ranked film suggestions; your viewing history stays where it is stored\nYesNot now",
+   "question_at": "http://svrngs.localhost:53380/ask?lend=mna30m55cqm6b647d0u901gj9pjk7cv9jq82xn47915v89f2fnkaq9s0vcjzzq&app=9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdralqccgh449n&back=%2F",
+   "invite_to_question_ms": 6988,
+   "yes_to_list_ms": 3239,
+   "first_open_tries": [
+    [
+     "refused-unread",
+     [
+      "answered",
+      "answered",
+      "unanswered"
+     ]
+    ]
+   ],
+   "again_ms": 3290,
+   "again_asks": false
+  },
+  "bar 2": {
+   "verdict": "passed",
+   "why": "another person said yes on their own page, and the taste refused them by its owner check, the films unranked",
+   "who": "Alex",
+   "question": "Let Sam's tonights-picks use Ana's taste?\n\nthe app receives ranked film suggestions; your viewing history stays where it is stored\nYesNot now",
+   "reads": "Ana\u2019s taste is someone else\u2019s. These films are not ranked.",
+   "taste_refused": [
+    "2026-10-10T02:10:34.309Z refused not-yours: {\"person\":\"Alex\",\"key\":\"e0570c421f305333871c8693ea55240328c3de70c9f9d6cdaf74830904b7df43\"}"
+   ]
+  },
+  "bar 3": {
+   "verdict": "passed",
+   "why": "the door refuses /diary and the taste logs no ask for it; on a computer the page cannot read svrngs's refusal",
+   "answer": {
+    "status": null,
+    "body": "unread: TypeError: Load failed",
+    "at": "2026-10-10T02:10:37.396Z"
+   },
+   "door": [
+    "2026-10-10T02:10:37.392740Z DEBUG door: door: refused \u2014 the lend refuses this path actor=\"52c19b2b7b1355c0f35d1da3fb5ca7fb0e8e8a5f3b7d8a2f5dfdf72f7c9822d0\" lend=taste path=\"/diary\" refused=\"/diary\""
+   ],
+   "taste_logged_diary": []
+  },
+  "bar 4": {
+   "verdict": "passed",
+   "why": "the other app's ask refused `unasked` at the door: Ana's yes names Tonight's Picks; the taste saw none of it",
+   "ask": {
+    "state": "rank null",
+    "refused": null,
+    "yes": null,
+    "reached": null,
+    "text": "unread: TypeError: Load failed"
+   },
+   "door": [
+    "2026-10-10T02:10:43.624085Z DEBUG door: door: the person's choice for the app, judged lend=taste person=52c19b2b7b1355c0f35d1da3fb5ca7fb0e8e8a5f3b7d8a2f5dfdf72f7c9822d0 app=Some(\"9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdrafdhjzwr7az\") asks=true choice=None judged=Err(Unasked)",
+    "2026-10-10T02:10:43.689741Z DEBUG door: door: the person's choice for the app, judged lend=taste person=52c19b2b7b1355c0f35d1da3fb5ca7fb0e8e8a5f3b7d8a2f5dfdf72f7c9822d0 app=Some(\"9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdrafdhjzwr7az\") asks=true choice=None judged=Err(Unasked)"
+   ]
+  },
+  "the unasked yes": {
+   "verdict": "passed",
+   "why": "the other app's own yes refused by svrngs \u2014 at the home page on a computer, at the door on a phone \u2014 and its next ask refused `unasked`",
+   "yes": {
+    "how": "the home page",
+    "status": "opaque"
+   },
+   "home_page": [
+    "2026-10-10T02:10:43.683258Z DEBUG home: home: answered only from itself, a typed address or, to read, a navigation path=/choices method=POST at_own=true site=Some(\"cross-site\") mode=Some(\"no-cors\") origin=Some(\"http://9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdrafdhjzwr7az.localhost:53380\") answers=false"
+   ],
+   "then": {
+    "state": "unasked null",
+    "refused": null,
+    "yes": {
+     "how": "the home page",
+     "status": "opaque"
+    },
+    "reached": null,
+    "text": "unread: TypeError: Load failed"
+   }
+  },
+  "bar 5": {
+   "verdict": "passed",
+   "why": "after a stop, the next ask refused at the door, said honestly \u2014 the app's Stop, and the home page's",
+   "at_stop": "Stopped. From now on Ana\u2019s taste refuses Tonight\u2019s Picks. The list ranked before you stopped stays on this screen until you leave it.",
+   "stop_to_refused_ms": 3190,
+   "again": {
+    "state": "refused-unread",
+    "text": "Tonight\u2019s Picks could not read whether Ana\u2019s taste lets it rank. These films are not ranked."
+   },
+   "door": [
+    "2026-10-10T02:10:53.216951Z DEBUG door: door: the person's choice for the app, judged lend=taste person=52c19b2b7b1355c0f35d1da3fb5ca7fb0e8e8a5f3b7d8a2f5dfdf72f7c9822d0 app=Some(\"9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdralqccgh449n\") asks=true choice=Some(Choice { said: Stop, at: 1791598250 }) judged=Err(Stopped)",
+    "2026-10-10T02:11:02.596654Z DEBUG door: door: the person's choice for the app, judged lend=taste person=52c19b2b7b1355c0f35d1da3fb5ca7fb0e8e8a5f3b7d8a2f5dfdf72f7c9822d0 app=Some(\"9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdralqccgh449n\") asks=true choice=Some(Choice { said: Stop, at: 1791598250 }) judged=Err(Stopped)"
+   ],
+   "uses_after_app_stop": "What apps use\n\nSam's tonights-picks was stopped using Ana's taste.",
+   "home_stop_uses_before": "What apps use\n\nSam's tonights-picks uses Ana's taste. Stop",
+   "home_stop_uses_after": "What apps use\n\nSam's tonights-picks was stopped using Ana's taste.",
+   "home_stop_to_refused_ms": 6401,
+   "home_stop_again": {
+    "state": "refused-unread",
+    "text": "Tonight\u2019s Picks could not read whether Ana\u2019s taste lets it rank. These films are not ranked."
+   },
+   "home_stop_door": [
+    "2026-10-10T02:11:18.835386Z DEBUG door: door: the person's choice for the app, judged lend=taste person=52c19b2b7b1355c0f35d1da3fb5ca7fb0e8e8a5f3b7d8a2f5dfdf72f7c9822d0 app=Some(\"9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdralqccgh449n\") asks=true choice=Some(Choice { said: Stop, at: 1791598272 }) judged=Err(Stopped)"
+   ],
+   "yes_again_question": "Let Sam's tonights-picks use Ana's taste?\n\nthe app receives ranked film suggestions; your viewing history stays where it is stored\nYesNot now"
+  },
+  "bar 6": {
+   "verdict": "passed",
+   "why": "each refusal said as itself, the films shown unranked",
+   "another person": {
+    "state": "refused-not-yours",
+    "text": "Ana\u2019s taste is someone else\u2019s. These films are not ranked."
+   },
+   "stopped": {
+    "state": "refused-unread",
+    "text": "Tonight\u2019s Picks could not read whether Ana\u2019s taste lets it rank. These films are not ranked."
+   }
+  }
+ },
+ "phone-chromium": {
+  "bar 1": {
+   "verdict": "passed",
+   "why": "asked once, in svrngs's words around the lender's, on the page no app runs at; the list in the plant's order after the yes; opened again, no question \u2014 once on each phone, each its own key",
+   "question": "Let Sam\u2019s tonights-picks (movie-night) use Ana\u2019s taste?\nthe app receives ranked film suggestions; your viewing history stays where it is stored",
+   "question_at": "http://localhost:52939/#ask=mna30m55cqm6b647d0u901gj9pjk7cv9jq82xn47915v89f2fnkaq9s0vcjzzq&app=9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdralqccgh449n&at=%2F",
+   "invite_to_question_ms": 4987,
+   "yes_to_list_ms": 3406,
+   "first_open_tries": [
+    [
+     "refused-unasked",
+     [
+      "answered",
+      "answered",
+      "unanswered"
+     ]
+    ]
+   ],
+   "again_ms": 2400,
+   "again_asks": false,
+   "other_phone_question": "Let Sam\u2019s tonights-picks (movie-night) use Ana\u2019s taste?\nthe app receives ranked film suggestions; your viewing history stays where it is stored",
+   "other_phone_yes_to_list_ms": 3352,
+   "other_phone_reopened_ms": 2225
+  },
+  "bar 2": {
+   "verdict": "passed",
+   "why": "another person said yes on their own page, and the taste refused them by its owner check, the films unranked",
+   "who": "Bo",
+   "question": "Let Sam\u2019s tonights-picks (movie-night) use Ana\u2019s taste?\nthe app receives ranked film suggestions; your viewing history stays where it is stored",
+   "reads": "Ana\u2019s taste is someone else\u2019s. These films are not ranked.",
+   "taste_refused": [
+    "2026-10-10T02:13:00.569Z refused not-yours: {\"person\":\"Bo\",\"key\":\"7cdecef9459296042bf418e26a6a642d3986579ec8e1b0e99da71c63c229a06e\"}"
+   ]
+  },
+  "bar 3": {
+   "verdict": "passed",
+   "why": "the door refuses /diary and the taste logs no ask for it; on a computer the page cannot read svrngs's refusal",
+   "answer": {
+    "status": 403,
+    "refused": "path",
+    "body": "{\"error\":\"taste is lent without /diary\",\"kind\":\"path\"}",
+    "at": "2026-10-10T02:13:00.842Z"
+   },
+   "door": [
+    "2026-10-10T02:13:00.800902Z DEBUG door: door: refused \u2014 the lend refuses this path actor=\"20e007697df444254d6a83330fd12b33b28816ba43d0a55dc8cb0453ee7f06e8\" lend=taste path=\"/diary\" refused=\"/diary\""
+   ],
+   "taste_logged_diary": []
+  },
+  "bar 4": {
+   "verdict": "passed",
+   "why": "the other app's ask refused `unasked` at the door: Ana's yes names Tonight's Picks; the taste saw none of it",
+   "ask": {
+    "state": "rank 403",
+    "refused": "unasked",
+    "yes": null,
+    "reached": null,
+    "text": "{\"error\":\"only an app you said yes to uses taste\",\"kind\":\"unasked\"}"
+   },
+   "door": [
+    "2026-10-10T02:13:07.908888Z DEBUG door: door: the person's choice for the app, judged lend=taste person=20e007697df444254d6a83330fd12b33b28816ba43d0a55dc8cb0453ee7f06e8 app=Some(\"9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdrafdhjzwr7az\") asks=true choice=None judged=Err(Unasked)",
+    "2026-10-10T02:13:38.159719Z DEBUG door: door: the person's choice for the app, judged lend=taste person=20e007697df444254d6a83330fd12b33b28816ba43d0a55dc8cb0453ee7f06e8 app=Some(\"9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdrafdhjzwr7az\") asks=true choice=None judged=Err(Unasked)"
+   ]
+  },
+  "the unasked yes": {
+   "verdict": "could-not-judge",
+   "why": "the other app's own yes refused by svrngs \u2014 at the home page on a computer, at the door on a phone \u2014 and its next ask refused `unasked`",
+   "yes": {
+    "how": "failed",
+    "body": "Error: the holder's endpoint did not come online within 30 s"
+   },
+   "home_page": [],
+   "then": {
+    "state": "unasked 403",
+    "refused": "unasked",
+    "yes": {
+     "how": "failed",
+     "body": "Error: the holder's endpoint did not come online within 30 s"
+    },
+    "reached": "kept runtime",
+    "text": "{\"error\":\"only an app you said yes to uses taste\",\"kind\":\"unasked\"}"
+   }
+  },
+  "bar 5": {
+   "verdict": "passed",
+   "why": "after a stop, the next ask refused at the door, said honestly \u2014 on the phone that stopped; the other phone's own yes is its own key's",
+   "at_stop": "Stopped. From now on Ana\u2019s taste refuses Tonight\u2019s Picks. The list ranked before you stopped stays on this screen until you leave it.",
+   "stop_to_refused_ms": 531,
+   "again": {
+    "state": "refused-stopped",
+    "text": "You stopped Tonight\u2019s Picks using Ana\u2019s taste. These films are not ranked."
+   },
+   "door": [
+    "2026-10-10T02:13:38.688522Z DEBUG door: door: the person's choice for the app, judged lend=taste person=a1a9bb1584a05fe26c24207df4312370e1c4b028d87d8f62322b87d222157c7d app=Some(\"9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdralqccgh449n\") asks=true choice=Some(Choice { said: Stop, at: 1791598418 }) judged=Err(Stopped)"
+   ],
+   "other_phone_after_stop": {
+    "state": "ranked",
+    "text": "Ranked by your taste."
+   }
+  },
+  "bar 6": {
+   "verdict": "passed",
+   "why": "each refusal said as itself, the films shown unranked",
+   "another person": {
+    "state": "refused-not-yours",
+    "text": "Ana\u2019s taste is someone else\u2019s. These films are not ranked."
+   },
+   "stopped": {
+    "state": "refused-stopped",
+    "text": "You stopped Tonight\u2019s Picks using Ana\u2019s taste. These films are not ranked."
+   }
+  }
+ },
+ "phone-webkit": {
+  "bar 1": {
+   "verdict": "passed",
+   "why": "asked once, in svrngs's words around the lender's, on the page no app runs at; the list in the plant's order after the yes; opened again, no question \u2014 once on each phone, each its own key",
+   "question": "Let Sam\u2019s tonights-picks (movie-night) use Ana\u2019s taste?\nthe app receives ranked film suggestions; your viewing history stays where it is stored",
+   "question_at": "http://localhost:52939/#ask=mna30m55cqm6b647d0u901gj9pjk7cv9jq82xn47915v89f2fnkaq9s0vcjzzq&app=9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdralqccgh449n&at=%2F",
+   "invite_to_question_ms": 5053,
+   "yes_to_list_ms": 4964,
+   "first_open_tries": [
+    [
+     "refused-unasked",
+     [
+      "answered",
+      "answered",
+      "unanswered"
+     ]
+    ]
+   ],
+   "again_ms": 2836,
+   "again_asks": false,
+   "other_phone_question": "Let Sam\u2019s tonights-picks (movie-night) use Ana\u2019s taste?\nthe app receives ranked film suggestions; your viewing history stays where it is stored",
+   "other_phone_yes_to_list_ms": 4488,
+   "other_phone_reopened_ms": 2919
+  },
+  "bar 2": {
+   "verdict": "passed",
+   "why": "another person said yes on their own page, and the taste refused them by its owner check, the films unranked",
+   "who": "Bo",
+   "question": "Let Sam\u2019s tonights-picks (movie-night) use Ana\u2019s taste?\nthe app receives ranked film suggestions; your viewing history stays where it is stored",
+   "reads": "Ana\u2019s taste is someone else\u2019s. These films are not ranked.",
+   "taste_refused": [
+    "2026-10-10T02:15:23.190Z refused not-yours: {\"person\":\"Bo\",\"key\":\"bfae5d3810143c01c118b4181c634bebe3cf83adeb7e3f2ccfe352efa7cb600e\"}"
+   ]
+  },
+  "bar 3": {
+   "verdict": "passed",
+   "why": "the door refuses /diary and the taste logs no ask for it; on a computer the page cannot read svrngs's refusal",
+   "answer": {
+    "status": 403,
+    "refused": "path",
+    "body": "{\"error\":\"taste is lent without /diary\",\"kind\":\"path\"}",
+    "at": "2026-10-10T02:15:23.423Z"
+   },
+   "door": [
+    "2026-10-10T02:15:23.387086Z DEBUG door: door: refused \u2014 the lend refuses this path actor=\"a208bc4146654ff11b18998d966b0f3e212603d9d5e22b2d4201fa4ca3522031\" lend=taste path=\"/diary\" refused=\"/diary\""
+   ],
+   "taste_logged_diary": []
+  },
+  "bar 4": {
+   "verdict": "passed",
+   "why": "the other app's ask refused `unasked` at the door: Ana's yes names Tonight's Picks; the taste saw none of it",
+   "ask": {
+    "state": "rank 403",
+    "refused": "unasked",
+    "yes": null,
+    "reached": null,
+    "text": "{\"error\":\"only an app you said yes to uses taste\",\"kind\":\"unasked\"}"
+   },
+   "door": [
+    "2026-10-10T02:15:32.629837Z DEBUG door: door: the person's choice for the app, judged lend=taste person=a208bc4146654ff11b18998d966b0f3e212603d9d5e22b2d4201fa4ca3522031 app=Some(\"9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdrafdhjzwr7az\") asks=true choice=None judged=Err(Unasked)",
+    "2026-10-10T02:16:02.901980Z DEBUG door: door: the person's choice for the app, judged lend=taste person=a208bc4146654ff11b18998d966b0f3e212603d9d5e22b2d4201fa4ca3522031 app=Some(\"9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdrafdhjzwr7az\") asks=true choice=None judged=Err(Unasked)"
+   ]
+  },
+  "the unasked yes": {
+   "verdict": "could-not-judge",
+   "why": "the other app's own yes refused by svrngs \u2014 at the home page on a computer, at the door on a phone \u2014 and its next ask refused `unasked`",
+   "yes": {
+    "how": "failed",
+    "body": "Error: the holder's endpoint did not come online within 30 s"
+   },
+   "home_page": [],
+   "then": {
+    "state": "unasked 403",
+    "refused": "unasked",
+    "yes": {
+     "how": "failed",
+     "body": "Error: the holder's endpoint did not come online within 30 s"
+    },
+    "reached": "kept runtime",
+    "text": "{\"error\":\"only an app you said yes to uses taste\",\"kind\":\"unasked\"}"
+   }
+  },
+  "bar 5": {
+   "verdict": "passed",
+   "why": "after a stop, the next ask refused at the door, said honestly \u2014 on the phone that stopped; the other phone's own yes is its own key's",
+   "at_stop": "Stopped. From now on Ana\u2019s taste refuses Tonight\u2019s Picks. The list ranked before you stopped stays on this screen until you leave it.",
+   "stop_to_refused_ms": 773,
+   "again": {
+    "state": "refused-stopped",
+    "text": "You stopped Tonight\u2019s Picks using Ana\u2019s taste. These films are not ranked."
+   },
+   "door": [
+    "2026-10-10T02:16:03.539697Z DEBUG door: door: the person's choice for the app, judged lend=taste person=6a6d6b5e0645652b85416fc6e5dabea2b2ec97553f0d5754223ab5fcb62573d1 app=Some(\"9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdralqccgh449n\") asks=true choice=Some(Choice { said: Stop, at: 1791598563 }) judged=Err(Stopped)"
+   ],
+   "other_phone_after_stop": {
+    "state": "ranked",
+    "text": "Ranked by your taste."
+   }
+  },
+  "bar 6": {
+   "verdict": "passed",
+   "why": "each refusal said as itself, the films shown unranked",
+   "another person": {
+    "state": "refused-not-yours",
+    "text": "Ana\u2019s taste is someone else\u2019s. These films are not ranked."
+   },
+   "stopped": {
+    "state": "refused-stopped",
+    "text": "You stopped Tonight\u2019s Picks using Ana\u2019s taste. These films are not ranked."
+   }
+  }
+ },
+ "asleep": {
+  "verdict": "passed",
+  "why": "bar 6: Ana's computer asleep, said not to have answered, the films unranked",
+  "taste": {
+   "state": "away",
+   "text": "Ana\u2019s taste did not answer: its computer may be asleep. These films are not ranked."
+  },
+  "settled_ms": 32628,
+  "films": [
+   "Alien",
+   "Blade Runner",
+   "Brazil",
+   "Arrival"
+  ],
+  "yes": {
+   "state": "ranked",
+   "text": "Ranked by your taste."
+  }
+ },
+ "bar 3 scan": {
+  "verdict": "passed",
+  "why": "no planted row's marker in any byte any browser received, the plants' runs apart",
+  "markers": 5,
+  "browsers": [
+   "asleep/ana-chromium",
+   "computer-chromium/alex-computer-chromium",
+   "computer-chromium/ana-computer-chromium",
+   "computer-webkit/alex-computer-webkit",
+   "computer-webkit/ana-computer-webkit",
+   "phone-chromium/ana-chromium",
+   "phone-chromium/ana-webkit",
+   "phone-chromium/bo",
+   "phone-webkit/ana-chromium",
+   "phone-webkit/ana-webkit",
+   "phone-webkit/bo"
+  ],
+  "found": {
+   "plant-history/ana-computer-chromium": [
+    "diary_row_1",
+    "diary_row_2",
+    "diary_row_3",
+    "diary_row_4",
+    "diary_row_5"
+   ]
+  }
+ },
+ "plants (each should be failed)": {
+  "bo": {
+   "verdict": "failed",
+   "why": "Alex ranked by Ana's taste with its owner check out",
+   "alex": {
+    "state": "ranked",
+    "text": "Ranked by your taste."
+   }
+  },
+  "history": {
+   "verdict": "failed",
+   "why": "the history answered, lent without --refuse",
+   "answer": {
+    "status": 200,
+    "refused": null,
+    "body": "{\"rows\":[{\"title\":\"Arrival\",\"year\":2016,\"ids\":{\"tmdb\":\"329865\",\"imdb\":\"tt2543164\"},\"rating\":5,\"at\":\"2026-09-12T21:04:00Z\",\"marker\":\"su-diary-1-ef99643c6ab1bbbb\"},{\"title\":\"Arrival\",\"year\":2016,\"ids\":{\"tmdb\":\"329865\",\"imdb\":\"tt2543164\"},\"rating\":5,\"at\":\"2026-10-01T20:40:00Z\",\"marker\":\"su-diary-2-3fa836ed75c792da\"},{\"title\":\"Brazil\",\"year\":1985,\"ids\":{\"tmdb\":\"68\",\"imdb\":\"tt0088846\"},\"rating\":4,\"at\":",
+    "at": "2026-10-10T02:04:00.965Z"
+   }
+  },
+  "other-app": {
+   "verdict": "failed",
+   "why": "the other app answered, the taste lent without --ask",
+   "ask": "rank 200"
+  },
+  "after-stop": {
+   "verdict": "failed",
+   "why": "an ask after the stop answered, the stop's record put back to the yes",
+   "planted": "{\n  \"52c19b2b7b1355c0f35d1da3fb5ca7fb0e8e8a5f3b7d8a2f5dfdf72f7c9822d0\": {\n    \"9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdralqccgh449n\": {\n      \"said\": \"yes\",\n      \"at\": 1791598100\n    }\n  }\n}",
+   "again": {
+    "state": "ranked",
+    "text": "Ranked by your taste."
+   }
+  },
+  "empty": {
+   "verdict": "failed",
+   "why": "a refusal shown as an empty ranking",
+   "alex": {
+    "state": "ranked",
+    "text": "No picks for you tonight."
+   },
+   "films": []
+  }
+ },
+ "the count": {
+  "pieces": {
+   "enforce owner": 3,
+   "enforce refuse": 8,
+   "own consent": 37,
+   "own diary": 2,
+   "own picks": 83,
+   "own rank": 22,
+   "own serve": 28,
+   "plant bo": 1,
+   "plant empty": 1,
+   "plant switch": 1,
+   "plumbing find": 2,
+   "plumbing refusal": 14
+  },
+  "sides": {
+   "enforce": 11,
+   "own": 172,
+   "plant": 3,
+   "plumbing": 16
+  },
+  "unmarked": 0,
+  "awk": "3 enforce owner\n8 enforce refuse\n37 own consent\n2 own diary\n83 own picks\n22 own rank\n28 own serve\n1 plant bo\n1 plant empty\n1 plant switch\n2 plumbing find\n14 plumbing refusal\n"
+ }
+}

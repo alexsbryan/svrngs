@@ -1,0 +1,244 @@
+{
+ "secrets_searched": [
+  "admin_token",
+  "ana_pw",
+  "ben_pw",
+  "mw_key",
+  "sam_pw"
+ ],
+ "lend_kept": [],
+ "pairs": {
+  "mw-computer-chromium": {
+   "ana": {
+    "scanned": {
+     "responses": 198,
+     "bodies": 176,
+     "bytes": 17640422,
+     "frames": 4
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ben": {
+    "scanned": {
+     "responses": 206,
+     "bodies": 197,
+     "bytes": 14407543,
+     "frames": 4
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "mw-computer-chromium-plant-lender-key": {
+   "ana": {
+    "scanned": {
+     "responses": 193,
+     "bodies": 176,
+     "bytes": 17640351,
+     "frames": 4
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {
+     "mw_key": 1
+    },
+    "others_secrets_in": {
+     "mw_key": [
+      "/web/"
+     ]
+    },
+    "holds_none_of_anothers": false
+   },
+   "ben": {
+    "scanned": {
+     "responses": 210,
+     "bodies": 201,
+     "bytes": 20174717,
+     "frames": 4
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {
+     "mw_key": 1
+    },
+    "others_secrets_in": {
+     "mw_key": [
+      "/web/"
+     ]
+    },
+    "holds_none_of_anothers": false
+   }
+  },
+  "mw-computer-chromium-plant-no-sign-in": {
+   "ana": {
+    "scanned": {
+     "responses": 120,
+     "bodies": 119,
+     "bytes": 5690905,
+     "frames": 2
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ben": {
+    "scanned": {
+     "responses": 120,
+     "bodies": 119,
+     "bytes": 5690905,
+     "frames": 2
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "mw-computer-chromium-plant-one-device": {
+   "ana": {
+    "scanned": {
+     "responses": 194,
+     "bodies": 176,
+     "bytes": 17640381,
+     "frames": 3
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ben": {
+    "scanned": {
+     "responses": 214,
+     "bodies": 204,
+     "bytes": 20457889,
+     "frames": 5
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "mw-computer-webkit": {
+   "ana": {
+    "scanned": {
+     "responses": 215,
+     "bodies": 201,
+     "bytes": 54191583,
+     "frames": 4
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ben": {
+    "scanned": {
+     "responses": 230,
+     "bodies": 222,
+     "bytes": 21394460,
+     "frames": 4
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "mw-phone-chromium": {
+   "ana": {
+    "scanned": {
+     "responses": 295,
+     "bodies": 274,
+     "bytes": 66377595,
+     "frames": 119
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ben": {
+    "scanned": {
+     "responses": 269,
+     "bodies": 259,
+     "bytes": 20583737,
+     "frames": 129
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  },
+  "mw-phone-webkit": {
+   "ana": {
+    "scanned": {
+     "responses": 255,
+     "bodies": 213,
+     "bytes": 60319631,
+     "frames": 114
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   },
+   "ben": {
+    "scanned": {
+     "responses": 283,
+     "bodies": 252,
+     "bytes": 18765578,
+     "frames": 102
+    },
+    "own_token": 0,
+    "own_token_in": [],
+    "others_secrets": {},
+    "others_secrets_in": {},
+    "holds_none_of_anothers": true
+   }
+  }
+ },
+ "logs": {
+  "alex/join.log": {},
+  "alex/join.out": {},
+  "alex/run.log": {},
+  "alex/run.out": {},
+  "bo/join.log": {},
+  "bo/join.out": {},
+  "bo/run.log": {},
+  "bo/run.out": {},
+  "mw-mw-computer-chromium-plant-lender-key.log": {},
+  "mw-mw-computer-chromium-plant-no-sign-in.log": {},
+  "mw-mw-computer-chromium-plant-one-device.log": {},
+  "mw-mw-computer-chromium.log": {},
+  "mw-mw-computer-webkit.log": {},
+  "mw-mw-phone-chromium.log": {},
+  "mw-mw-phone-webkit.log": {},
+  "mw.log": {},
+  "mw.out": {},
+  "sam/new.out": {},
+  "sam/run.log": {},
+  "sam/share-mw.out": {},
+  "sam/share.log": {},
+  "sam/share.out": {}
+ }
+}

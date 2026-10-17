@@ -1,0 +1,44 @@
+{"Protocol":1,"Id":"2d1ed735bf3f368ef6b8ff95c4515e5f","Path":"http://127.0.0.1:18733/951e8ddcfec4af7db27ab993efe449900a62c19f44be1168f2a9788c7cd04354/exp.mkv?type=video%2Fx-matroska","EncoderPath":null,"EncoderProtocol":null,"Type":0,"Container":"mkv","Size":120,"Name":"ExpMkv (2026)","IsRemote":true,"ETag":"c294da6ee2a09f92ba58d0bd642ab1b6","RunTimeTicks":1200210000,"ReadAtNativeFramerate":false,"IgnoreDts":false,"IgnoreIndex":false,"GenPtsInput":false,"SupportsTranscoding":true,"SupportsDirectStream":true,"SupportsDirectPlay":true,"IsInfiniteStream":false,"UseMostCompatibleTranscodingProfile":false,"RequiresOpening":false,"OpenToken":null,"RequiresClosing":false,"LiveStreamId":null,"BufferMs":null,"RequiresLooping":false,"SupportsProbing":true,"VideoType":0,"IsoType":null,"Video3DFormat":null,"MediaStreams":[{"Codec":"h264","CodecTag":null,"Language":null,"ColorRange":null,"ColorSpace":null,"ColorTransfer":null,"ColorPrimaries":null,"DvVersionMajor":null,"DvVersionMinor":null,"DvProfile":null,"DvLevel":null,"RpuPresentFlag":null,"ElPresentFlag":null,"BlPresentFlag":null,"DvBlSignalCompatibilityId":null,"Rotation":null,"Comment":null,"TimeBase":"1/1000","CodecTimeBase":null,"Title":null,"Hdr10PlusPresentFlag":null,"VideoRange":1,"VideoRangeType":1,"VideoDoViTitle":null,"AudioSpatialFormat":0,"LocalizedUndefined":null,"LocalizedDefault":null,"LocalizedForced":null,"LocalizedExternal":null,"LocalizedHearingImpaired":null,"LocalizedLanguage":null,"LocalizedOriginal":null,"DisplayTitle":"720p H264 SDR","NalLengthSize":"4","IsInterlaced":false,"IsAVC":true,"ChannelLayout":null,"BitRate":2944137,"BitDepth":8,"RefFrames":null,"PacketLength":null,"Channels":null,"SampleRate":null,"IsDefault":true,"IsForced":false,"IsHearingImpaired":false,"IsOriginal":false,"Height":720,"Width":1280,"AverageFrameRate":30,"RealFrameRate":30,"ReferenceFrameRate":30,"Profile":"High","Type":1,"AspectRatio":"16:9","Index":0,"Score":null,"IsExternal":false,"DeliveryMethod":null,"DeliveryUrl":null,"IsExternalUrl":null,"IsTextSubtitleStream":false,"SupportsExternalStream":false,"Path":null,"PixelFormat":"yuv420p","Level":40,"IsAnamorphic":false},{"Codec":"aac","CodecTag":null,"Language":null,"ColorRange":null,"ColorSpace":null,"ColorTransfer":null,"ColorPrimaries":null,"DvVersionMajor":null,"DvVersionMinor":null,"DvProfile":null,"DvLevel":null,"RpuPresentFlag":null,"ElPresentFlag":null,"BlPresentFlag":null,"DvBlSignalCompatibilityId":null,"Rotation":null,"Comment":null,"TimeBase":"1/1000","CodecTimeBase":null,"Title":null,"Hdr10PlusPresentFlag":null,"VideoRange":0,"VideoRangeType":0,"VideoDoViTitle":null,"AudioSpatialFormat":0,"LocalizedUndefined":null,"LocalizedDefault":"Default","LocalizedForced":null,"LocalizedExternal":"External","LocalizedHearingImpaired":null,"LocalizedLanguage":null,"LocalizedOriginal":"Original","DisplayTitle":"AAC - Stereo - Default","NalLengthSize":null,"IsInterlaced":false,"IsAVC":null,"ChannelLayout":"stereo","BitRate":192000,"BitDepth":null,"RefFrames":null,"PacketLength":null,"Channels":2,"SampleRate":48000,"IsDefault":true,"IsForced":false,"IsHearingImpaired":false,"IsOriginal":false,"Height":null,"Width":null,"AverageFrameRate":null,"RealFrameRate":null,"ReferenceFrameRate":null,"Profile":"LC","Type":0,"AspectRatio":null,"Index":1,"Score":null,"IsExternal":false,"DeliveryMethod":null,"DeliveryUrl":null,"IsExternalUrl":null,"IsTextSubtitleStream":false,"SupportsExternalStream":false,"Path":null,"PixelFormat":null,"Level":null,"IsAnamorphic":null}],"MediaAttachments":[],"Formats":[],"Bitrate":3136137,"FallbackMaxStreamingBitrate":null,"Timestamp":null,"RequiredHttpHeaders":{},"TranscodingUrl":null,"TranscodingSubProtocol":0,"TranscodingContainer":null,"AnalyzeDurationMs":null,"DefaultAudioStreamIndex":null,"DefaultSubtitleStreamIndex":null,"HasSegments":false}
+
+/Applications/Jellyfin.app/Contents/MacOS/ffmpeg -analyzeduration 200M -probesize 1G -ss 00:01:55.021 -fflags +genpts  -i "http://127.0.0.1:18733/951e8ddcfec4af7db27ab993efe449900a62c19f44be1168f2a9788c7cd04354/exp.mkv?type=video%2Fx-matroska" -map_metadata -1 -map_chapters -1 -threads 0 -map 0:0 -map 0:1 -map -0:s -codec:v:0 copy -bsf:v h264_mp4toannexb -start_at_zero -codec:a:0 copy -copyts -avoid_negative_ts disabled -max_muxing_queue_size 2048 -f hls -max_delay 5000000 -hls_time 6 -hls_segment_type fmp4 -hls_fmp4_init_filename "1da58dbd660d22fd71704c70fb34032c-1.mp4" -start_number 20 -hls_segment_filename "/tmp/gf-run/jf/cache/transcodes/1da58dbd660d22fd71704c70fb34032c%d.mp4" -hls_playlist_type vod -hls_list_size 0 -hls_segment_options movflags=+frag_discont+skip_sidx -y "/tmp/gf-run/jf/cache/transcodes/1da58dbd660d22fd71704c70fb34032c.m3u8"
+
+
+ffmpeg version 8.1.2-Jellyfin Copyright (c) 2000-2026 the FFmpeg developers
+  built with Apple clang version 21.0.0 (clang-2100.1.1.101)
+  configuration: --prefix=/ffbuild/prefix --disable-shared --enable-static --pkg-config-flags=--static --enable-pthreads --cc=clang --host-cflags='-I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include -I/opt/ffbuild/prefix/include' --host-ldflags='-L/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib -L/opt/ffbuild/prefix/lib' --extra-version=Jellyfin --extra-cflags=-I/opt/ffbuild/prefix/include --extra-cxxflags= --extra-ldflags=-L/opt/ffbuild/prefix/lib --extra-ldexeflags= --extra-libs= --enable-gpl --enable-version3 --disable-unstable --disable-ffplay --disable-debug --disable-doc --disable-sdl2 --enable-lto=thin --disable-unstable --disable-libjack --disable-indev=jack --disable-libxcb --disable-xlib --enable-neon --enable-runtime-cpudetect --enable-audiotoolbox --enable-videotoolbox --enable-iconv --enable-zlib --enable-libfreetype --enable-libfribidi --enable-gmp --enable-libxml2 --enable-openssl --enable-lzma --enable-fontconfig --enable-libharfbuzz --enable-libvorbis --enable-opencl --enable-chromaprint --enable-libdav1d --disable-libfdk-aac --enable-libass --enable-libbluray --enable-libmp3lame --enable-libopus --disable-libplacebo --enable-libtheora --enable-libvpx --enable-libwebp --enable-libopenmpt --enable-libsrt --enable-libsvtav1 --enable-libx264 --enable-libx265 --enable-libzimg --enable-libzvbi
+  libavutil      60. 26.102 / 60. 26.102
+  libavcodec     62. 28.102 / 62. 28.102
+  libavformat    62. 12.102 / 62. 12.102
+  libavdevice    62.  3.102 / 62.  3.102
+  libavfilter    11. 14.102 / 11. 14.102
+  libswscale      9.  5.102 /  9.  5.102
+  libswresample   6.  3.102 /  6.  3.102
+Input #0, matroska,webm, from 'http://127.0.0.1:18733/951e8ddcfec4af7db27ab993efe449900a62c19f44be1168f2a9788c7cd04354/exp.mkv?type=video%2Fx-matroska':
+  Metadata:
+    COMPATIBLE_BRANDS: isomiso2avc1mp41
+    MAJOR_BRAND     : isom
+    MINOR_VERSION   : 512
+    ENCODER         : Lavf62.12.102
+  Duration: 00:02:00.02, start: 0.000000, bitrate: 3136 kb/s
+  Stream #0:0: Video: h264 (High), yuv420p(progressive), 1280x720 [SAR 1:1 DAR 16:9], 30 fps, 30 tbr, 1k tbn, start 0.021000 (default)
+    Metadata:
+      HANDLER_NAME    : VideoHandler
+      ENCODER         : Lavc62.28.102 libx264
+      DURATION        : 00:02:00.021000000
+  Stream #0:1: Audio: aac (LC), 48000 Hz, stereo, fltp (default)
+    Metadata:
+      HANDLER_NAME    : SoundHandler
+      DURATION        : 00:02:00.021000000
+Stream mapping:
+  Stream #0:0 -> #0:0 (copy)
+  Stream #0:1 -> #0:1 (copy)
+[hls @ 0x784e804280] Opening '/tmp/gf-run/jf/cache/transcodes/1da58dbd660d22fd71704c70fb34032c-1.mp4' for writing
+Output #0, hls, to '/tmp/gf-run/jf/cache/transcodes/1da58dbd660d22fd71704c70fb34032c.m3u8':
+  Metadata:
+    encoder         : Lavf62.12.102
+  Stream #0:0: Video: h264 (High), yuv420p(progressive), 1280x720 [SAR 1:1 DAR 16:9], q=2-31, 30 fps, 30 tbr, 16k tbn (default)
+  Stream #0:1: Audio: aac (LC), 48000 Hz, stereo, fltp (default)
+Press [q] to stop, [?] for help
+[hls @ 0x784e804280] Opening '/tmp/gf-run/jf/cache/transcodes/1da58dbd660d22fd71704c70fb34032c20.mp4' for writing
+[out#0/hls @ 0x784ed0c000] video:2175KiB audio:95KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: unknown
+frame=  180 fps=0.0 q=-1.0 Lsize=N/A time=00:00:00.00 bitrate=N/A speed=   0x elapsed=0:00:00.00    

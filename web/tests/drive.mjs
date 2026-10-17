@@ -5,31 +5,43 @@
 // computer.
 //
 //   node web/tests/drive.mjs '{"engine": "chromium"|"webkit", "site": "<dir>",
-//     "key": "<64 hex>", "token": "<token>"}'
+//     "key": "<64 hex>", "token": "<token>", "older"?: true | "<person>"}'
 //
 // First it leaves the page while it loads, and opens it again.
 //
 // With `"http": {...}` in the args, once the page is in it also speaks HTTP
-// over the dial to the lends named there ([`httpChecks`], u4-4), and holds
-// its upload's tail until a line `go` arrives on stdin: the Rust half sends
-// it when the service has the upload's first byte.
+// over the dial to the lends named there ([`httpChecks`], u4-4), as the key
+// `http.key` when it names one, and holds its upload's tail until a line
+// `go` arrives on stdin: the Rust half sends it when the service has the
+// upload's first byte.
+//
+// Every address off this computer is refused it, and listed as `away`
+// (relay-default (b)): n0 unreachable, as a phone's page must not need it.
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent — the browser step fails then, never skips; 1 on
 // anything else.
-import { hold, launch, serve } from './page.mjs';
+import { hold, launch, offline, serve } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 
 // In the page: HTTP over the dial through the node's door, by the page's own
-// `connect` and `fetch` (web/src/lib.rs), imported as app.js imports them.
+// `endpoint`, `dial_link` and `fetch` (web/src/lib.rs), imported and dialled
+// as app.js `reachGroup` dials the link's computer (#172).
 // Each answer is read as a page reads one, chunk by chunk.
 async function httpChecks(a) {
+  // Every line the page traces from here on, stamped with its time since the
+  // checks began, so a run shows where each step stopped (arch-stream (a)).
+  const began = performance.now();
+  const traced = [];
+  const trace = window.__trace;
+  window.__trace = (l) => (traced.push(`+${Math.round(performance.now() - began)} ms ${l}`), trace?.(l));
   const app = document.querySelector('script[type=module]').src;
   const m = await import(new URL(`./wasm/svrngs_web.js${new URL(app).search}`, app).href);
   await m.default();
   const key = Uint8Array.from(a.key.match(/../g), (h) => parseInt(h, 16));
-  const d = await m.connect(key, a.token);
+  const ep = await m.endpoint(key, a.token);
+  const d = await ep.dial_link();
   const hex = (b) => [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join('');
   // A body to its end: how many chunks, the largest, the bytes, the SHA-256.
   async function drain(res) {
@@ -47,12 +59,13 @@ async function httpChecks(a) {
     ...(await drain(res)),
   });
   // Each step's answer, or why it failed or hung: one step's failure never
-  // keeps the next from being judged.
-  const step = (run) =>
+  // keeps the next from being judged. Each with its time, `ms`, so a run
+  // shows how near its 60 s it came (v1ui-lend-ask (b)).
+  const step = (run, t = performance.now()) =>
     Promise.race([
       run(),
       new Promise((_, no) => setTimeout(() => no(new Error('no answer within 60 s')), 60_000)),
-    ]).catch((e) => ({ error: String(e) }));
+    ]).catch((e) => ({ error: String(e) })).then((r) => ({ ...r, ms: Math.round(performance.now() - t) }));
   const out = {};
   out.range = await step(async () => answer(await d.fetch('GET', a.range.path, [['range', a.range.header]], null)));
   out.past = await step(async () => answer(await d.fetch('GET', a.past.path, [['range', a.past.header]], null)));
@@ -79,20 +92,23 @@ async function httpChecks(a) {
   const released = new Promise((go) => {
     window.__release = go;
   });
+  // Cleared once the computer has the first byte, so a later failure is
+  // said in its own words, never the stall's (arch-stream (a), README 4).
   let stall = null;
+  let timer;
   const stalled = () =>
-    new Promise((_, no) =>
-      setTimeout(() => {
+    new Promise((_, no) => {
+      timer = setTimeout(() => {
         stall = `the computer had no byte of the upload while the page held ${made} bytes of it`;
         no(new Error(stall));
-      }, 30_000),
-    );
+      }, 30_000);
+    });
   const body = new ReadableStream(
     {
       async pull(c) {
         if (made >= size) return c.close();
         if (made >= ahead && held === null) {
-          await Promise.race([released, stalled()]);
+          await Promise.race([released, stalled()]).finally(() => clearTimeout(timer));
           held = made;
         }
         const n = Math.min(chunk, size - made);
@@ -114,12 +130,35 @@ async function httpChecks(a) {
     return { status: posted.status, text: await posted.text(), held };
   });
   await d.close();
+  await ep.close();
+  out.lines = traced;
   return out;
 }
 
 const server = await serve(args.site);
 const origin = `http://127.0.0.1:${server.address().port}/`;
 const { context, close } = await launch(args.engine);
+const away = await offline(context);
+// With `older` true, the computer the page reaches answers as one running
+// an older svrngs (arch-version): its people's lends with no `version`.
+// With a person's name, that computer names theirs as one running an
+// older svrngs, and lists none of their lends, as the node does
+// (`node.rs` `answered`). Planted where the page reads the answer, as the
+// dial's Response is the page's own.
+if (args.older) {
+  await context.addInitScript((older) => {
+    const json = Response.prototype.json;
+    Response.prototype.json = async function () {
+      const body = await json.call(this);
+      if (body?.lent && body.unanswered && older === true) delete body.version;
+      if (body?.lent && body.unanswered && typeof older === 'string') {
+        body.older = [older];
+        body.lent = body.lent.filter((l) => l.person !== older);
+      }
+      return body;
+    };
+  }, args.older);
+}
 const logs = [];
 try {
   const page = await context.newPage();
@@ -137,7 +176,7 @@ try {
   } catch (e) {
     throw new Error(`the page, left while it loaded, did not open again: ${e}`);
   }
-  await page.evaluate(hold, { hex: args.key, token: args.token });
+  await page.evaluate(hold, { hex: args.key, token: args.token, person: args.person, maker: args.maker, since: args.since });
   await page.goto('about:blank');
   await page.goto(`${origin}#${args.token}`);
   await page.waitForSelector('#status.good, #status.bad', { timeout: 90_000 });
@@ -145,6 +184,14 @@ try {
     status: document.getElementById('status').textContent,
     answer: document.getElementById('response').textContent,
     lent: [...document.querySelectorAll('#lent button')].map((b) => b.textContent),
+    removals: [...document.querySelectorAll('#removals li')].map((l) => l.textContent),
+    // The door, each cell's class and words, and the index's rows, each
+    // cell's words (v1ui-door (d)).
+    drawn: [...document.querySelectorAll('.door li')].map((e) => [e.className, e.textContent]),
+    door: document.getElementById('door').textContent,
+    index: [...document.querySelectorAll('#lent tr')].map((r) => [...r.cells].map((c) => c.textContent)),
+    // Everything the page says, so a test counts how often it says a thing.
+    text: document.body.innerText,
     lines: window.__lines,
   }));
   if (args.http) {
@@ -154,9 +201,9 @@ try {
     result.http = await page.evaluate(httpChecks, { key: args.key, token: args.token, ...args.http });
     result.lines = await page.evaluate(() => window.__lines);
   }
-  console.log(JSON.stringify({ ...result, logs }));
+  console.log(JSON.stringify({ ...result, away, logs }));
 } catch (e) {
-  console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);
+  console.error(`the page did not finish: ${e}\naway: ${away.join(' ')}\n${logs.join('\n')}`);
   process.exitCode = 1;
 } finally {
   await close();

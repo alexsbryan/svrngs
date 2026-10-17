@@ -1,0 +1,11 @@
+test guest::tests::the_egress_posture_is_one_info_line_naming_no_proxy ... FAILED
+
+failures:
+--
+thread 'guest::tests::the_egress_posture_is_one_info_line_naming_no_proxy' (50019208) panicked at crates/svrngs-node/src/guest/tests.rs:91:9:
+relays=[]: 2026-10-15T21:11:15.246423Z  INFO transport: iroh egress posture (n0_services=false severs all n0 contact; proxy honored for relay TCP:443, Basic auth only) n0_services=false loopback_only=true relays=none (direct-addr only) proxy="none"
+
+--
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 95 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p svrngs-node --lib`

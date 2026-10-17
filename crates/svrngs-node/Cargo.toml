@@ -13,6 +13,10 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
+# A link's token, drawn and keyed where the command drew it (invite.rs,
+# moved from svrngs's issuer.rs, start-home): the crates the lock already holds.
+ed25519-dalek = { workspace = true }
+getrandom = "0.3"
 # The dialling half (U1): upstream's requirements at e1a43bcd2. iroh is pinned
 # where upstream's Cargo.lock held it (a bare "1.0" resolves 1.3.0), and the
 # lock holds iroh's tree, rustls 0.23.42, tokio 1.52.3 and rand 0.9.4 at
@@ -22,7 +26,12 @@ iroh = "=1.0.2"
 # The stream an address lookup answers with, as iroh names it (src/relay.rs):
 # iroh's own, at the version the lock already holds.
 n0-future = "0.3"
-tokio = { version = "1", features = ["net", "rt", "sync", "time", "io-util", "macros"] }
+# A synced directory's changes as the OS reports them (FSEvents, inotify),
+# so a step looks only at what changed (perf-2 f; the operator's yes,
+# 2026-10-10, ralph/next/syp/CHARTER.md).
+notify = "=8.2.0"
+# `signal`: a node stopped by SIGTERM closes its endpoint (syp-6 b).
+tokio = { version = "1", features = ["net", "rt", "sync", "time", "io-util", "macros", "signal"] }
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
 hex = { workspace = true }
 rand = "0.9"
@@ -37,14 +46,33 @@ http-body-util = "0.1"
 tower = { version = "0.5", features = ["util"] }
 # The member door (U3) is hyper's HTTP/1 client to a lend's service, one
 # connection per request, so nothing between member and service is pooled,
-# retried or rewritten but what the door names ("client").
-# Ring sync (U1): the round posts each exchange with reqwest through the
-# loopback bridge; "json" reads the answer, as upstream's workspace enabled it.
-reqwest = { version = "0.12", default-features = false, features = ["json"] }
+# retried or rewritten but what the door names ("client"); and to a member,
+# a request on a bi-stream of the iroh connection (arch-peer).
+# A group's folders (gf-1, sy-1): the store, its provider and verified range
+# fetch, without the rpc default, over the lock's iroh 1.0.2.
+iroh-blobs = { version = "=0.103.0", default-features = false, features = ["fs-store"] }
+# The day a computer's person left a group, said by its old lend addresses
+# in this computer's time as the command says one (origin.rs `cut_from`,
+# #182), and read back by the home page's browser test (home.rs `WHEN`):
+# the chrono and clock the command's already takes from the lock.
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+
+[features]
+# What only a test asks of a node (src/node/tests_support.rs): its routes as a
+# caller no socket can be, its transport, a round now.
+test-support = []
 
 [dev-dependencies]
 svrngs-core = { workspace = true, features = ["test-support"] }
+# This crate's integration tests (tests/) link it as any caller does, so they
+# turn its test support on here.
+svrngs-node = { path = ".", features = ["test-support"] }
 tempfile = "3"
+# The tests' own HTTP client, to a node's record API and through a splice
+# (src/node/tests_support.rs); the product asks on the stream (arch-peer).
+reqwest = { version = "0.12", default-features = false, features = ["json"] }
+# The folders' tests (tests/folders.rs) hash and fill files with BLAKE3.
+blake3 = { workspace = true }
 tokio = { version = "1", features = ["full"] }
 # The door's tests check a file's bytes through it sha-exact.
 sha2 = "0.10"
@@ -58,6 +86,8 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # The scale instrument (tests/scale.rs) reads its own processor time with
 # `getrusage`, which std does not offer; libc is already in the lock.
 libc = "0.2"
+# A door test writes a pass of the shape before sup-1 as a page then would.
+base64 = "0.22"
 
 [lints.clippy]
 empty_line_after_doc_comments = "allow"

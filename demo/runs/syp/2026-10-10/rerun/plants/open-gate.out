@@ -1,0 +1,23 @@
+at 57f6e82, open-gate planted in crates/svrngs-node/src/node.rs: exit 101
+
+running 1 test
+test a_synced_file_is_served_by_a_member_who_did_not_write_it_and_to_no_one_outside ... FAILED
+
+failures:
+
+---- a_synced_file_is_served_by_a_member_who_did_not_write_it_and_to_no_one_outside stdout ----
+
+thread 'a_synced_file_is_served_by_a_member_who_did_not_write_it_and_to_no_one_outside' (12913392) panicked at crates/svrngs-node/tests/folders.rs:327:5:
+Dee, in no group, is closed at the accept: Err("io: stream reset by peer: error 1\nCaused by:\n    stream reset by peer: error 1")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    a_synced_file_is_served_by_a_member_who_did_not_write_it_and_to_no_one_outside
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 17 filtered out; finished in 1.41s
+
+   Compiling svrngs-node v0.1.0 (/Users/alexsbryan/dev/svrngs-folders/crates/svrngs-node)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 14.53s
+     Running tests/folders.rs (target/debug/deps/folders-8bed5be87a6bb528)
+error: test failed, to rerun pass `-p svrngs-node --test folders`

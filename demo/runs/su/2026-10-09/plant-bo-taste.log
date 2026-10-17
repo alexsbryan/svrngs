@@ -1,0 +1,10 @@
+2026-10-09T06:09:41.195Z taste: listening on 127.0.0.1:8696, /tmp/su/taste
+2026-10-09T06:09:41.374Z GET / {"person":null,"key":null,"app":null}
+2026-10-09T06:10:42.517Z POST /rank {"person":"Ana","key":"89fc13643558b0a92fdebbe22ca55dc9285ab27b8e89f78065c75277f7771bdf","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n"}
+2026-10-09T06:10:42.518Z refused not-asked: {"person":"Ana","key":"89fc13643558b0a92fdebbe22ca55dc9285ab27b8e89f78065c75277f7771bdf","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n"}
+2026-10-09T06:10:42.807Z POST /yes {"person":"Ana","key":"89fc13643558b0a92fdebbe22ca55dc9285ab27b8e89f78065c75277f7771bdf","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n"}
+2026-10-09T06:10:42.808Z yes kept for aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n
+2026-10-09T06:10:42.879Z POST /rank {"person":"Ana","key":"89fc13643558b0a92fdebbe22ca55dc9285ab27b8e89f78065c75277f7771bdf","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n"}
+2026-10-09T06:10:42.880Z ranked 4 films for aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n
+2026-10-09T06:10:46.011Z POST /rank {"person":"Bo","key":"dde3cfdcf85cc132e06e22f2c37448f2f1113b4661bdff56a93facc0b3447aed","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n"}
+2026-10-09T06:10:46.011Z ranked 4 films for aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n

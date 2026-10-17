@@ -1,0 +1,732 @@
+{
+ "sound": {
+  "made_by": "ffmpeg aevalsrc, 40 s, mono, 128 kbit/s: generated here, nobody's rights",
+  "bytes": 640731
+ },
+ "group": "92358d510a3a698d3d7662491a07646dc97cd6f0b5a907eb86128a42fa751eb9",
+ "people_joined": {
+  "Cy": {
+   "key": "17f480e09e5ef79f9cc189e101b10713cb17fbfc05870406500e5e8f44f6625d",
+   "person_key": "17f480e09e5ef79f9cc189e101b10713cb17fbfc05870406500e5e8f44f6625d"
+  },
+  "Dee": {
+   "key": "4fbf2d9fda0125f71dca7a7c0e91f392b3fedbdb5f7789e70e62b5ffa3aa6c5b",
+   "person_key": "4fbf2d9fda0125f71dca7a7c0e91f392b3fedbdb5f7789e70e62b5ffa3aa6c5b"
+  },
+  "Bo": {
+   "key": "61a033d46541b3531f679be3dac9671691374e4337c1d3fe37a03b6bd83ea8bd",
+   "person_key": "61a033d46541b3531f679be3dac9671691374e4337c1d3fe37a03b6bd83ea8bd"
+  },
+  "Ana": {
+   "key": "d8b34eed680fc3b7cdd5d51998390d6fb944853d3f79a05d48c4529fb46dffdd",
+   "person_key": "d8b34eed680fc3b7cdd5d51998390d6fb944853d3f79a05d48c4529fb46dffdd"
+  }
+ },
+ "remove_dee": {
+  "who": "ana",
+  "args": [
+   "remove",
+   "Dee",
+   "--group",
+   "onair"
+  ],
+  "exit": 0,
+  "said": "Dee is no longer in onair. What Dee already has stays with them; nothing new reaches them."
+ },
+ "people": {
+  "Cy": {
+   "key": "17f480e09e5ef79f9cc189e101b10713cb17fbfc05870406500e5e8f44f6625d",
+   "person_key": "17f480e09e5ef79f9cc189e101b10713cb17fbfc05870406500e5e8f44f6625d"
+  },
+  "Bo": {
+   "key": "61a033d46541b3531f679be3dac9671691374e4337c1d3fe37a03b6bd83ea8bd",
+   "person_key": "61a033d46541b3531f679be3dac9671691374e4337c1d3fe37a03b6bd83ea8bd"
+  },
+  "Ana": {
+   "key": "d8b34eed680fc3b7cdd5d51998390d6fb944853d3f79a05d48c4529fb46dffdd",
+   "person_key": "d8b34eed680fc3b7cdd5d51998390d6fb944853d3f79a05d48c4529fb46dffdd"
+  }
+ },
+ "removal_seen": {
+  "bo": true,
+  "cy": true
+ },
+ "bo_note": {
+  "status": 200,
+  "said": "{\"bytes\":27,\"delivered\":2,\"peers\":[{\"delivered\":true,\"name\":\"Cy\",\"node\":\"17f480e09e5ef79f9cc189e101b10713cb17fbfc05870406500e5e8f44f6625d\"},{\"delivered\":true,\"name\":\"Ana\",\"node\":\"d8b34eed680fc3b7cdd5d51998390d6fb944853d3f79a05d48c4529fb46dffdd\"}]}",
+  "ms": 247,
+  "length": 247
+ },
+ "station": {
+  "exit": 0,
+  "stderr": "",
+  "s": 40.2
+ },
+ "bo_listen_exit": 0,
+ "cy_listen_exit": 0,
+ "page": {
+  "exit": 0,
+  "tabs": [
+   {
+    "link": "http://127.0.0.1:61978/page/#key=d8b34eed680fc3b7cdd5d51998390d6fb944853d3f79a05d48c4529fb46dffdd&show=evening",
+    "opened": 1791955018258,
+    "stopped": "ended",
+    "said_at": 1791955057923,
+    "air": {
+     "key": "d8b34eed680fc3b7cdd5d51998390d6fb944853d3f79a05d48c4529fb46dffdd",
+     "show": "evening",
+     "status": "ended",
+     "played": [
+      {
+       "n": 0,
+       "hash": "7f1b8fb285064a1ba425e3d9e062942e88c7b248cf79f266507daba0e36529a9",
+       "at": 1791955018420
+      },
+      {
+       "n": 1,
+       "hash": "c225526d54ffddb89b45096ba6a14b86a747a43e693a25b88c9fb88c5d494aee",
+       "at": 1791955022260
+      },
+      {
+       "n": 2,
+       "hash": "43e3307d1f5bebff444501f3407fee6d30771fc10e1868607de5a252a2a58740",
+       "at": 1791955026104
+      },
+      {
+       "n": 3,
+       "hash": "f3b72ae551f6b845528acd5f248a3f3d4e9d157747c3f63833c780ee862fbf38",
+       "at": 1791955029838
+      },
+      {
+       "n": 4,
+       "hash": "331d859f20cdcd7f302ad5493e2ab0a05215a58a7d2b419b163800784ed716e8",
+       "at": 1791955034049
+      },
+      {
+       "n": 5,
+       "hash": "6a638506ce8f63990f2e9dd876b7b5f425556f05edcfcd755a72c9e5b3ca6cab",
+       "at": 1791955038154
+      },
+      {
+       "n": 6,
+       "hash": "f9c74a3a0ea2b045eca52e6614f9158a55880c370bb60aad0b755d37c8ab9afb",
+       "at": 1791955042273
+      },
+      {
+       "n": 7,
+       "hash": "b220f944274e724e1cfab60fbbbc21f250409df688288ca3a284a64d4565b272",
+       "at": 1791955046404
+      },
+      {
+       "n": 8,
+       "hash": "d3b5beac33062bc7481caafaec81455fed0922820a9e2e0c2a1ceb8801fdab17",
+       "at": 1791955050174
+      },
+      {
+       "n": 9,
+       "hash": "04025ab3f30e14c0ca292f805bf16ee1b5bd04f9f17b75da9572b7f630226d1d",
+       "at": 1791955054312
+      }
+     ],
+     "refused": [],
+     "log": [
+      {
+       "t": 1791955018420,
+       "n": 0,
+       "event": "plays"
+      },
+      {
+       "t": 1791955018421,
+       "event": "on air"
+      },
+      {
+       "t": 1791955018615,
+       "event": "playing"
+      },
+      {
+       "t": 1791955022260,
+       "n": 1,
+       "event": "plays"
+      },
+      {
+       "t": 1791955026104,
+       "n": 2,
+       "event": "plays"
+      },
+      {
+       "t": 1791955029838,
+       "n": 3,
+       "event": "plays"
+      },
+      {
+       "t": 1791955034049,
+       "n": 4,
+       "event": "plays"
+      },
+      {
+       "t": 1791955038154,
+       "n": 5,
+       "event": "plays"
+      },
+      {
+       "t": 1791955042273,
+       "n": 6,
+       "event": "plays"
+      },
+      {
+       "t": 1791955046405,
+       "n": 7,
+       "event": "plays"
+      },
+      {
+       "t": 1791955050174,
+       "n": 8,
+       "event": "plays"
+      },
+      {
+       "t": 1791955054312,
+       "n": 9,
+       "event": "plays"
+      },
+      {
+       "t": 1791955057909,
+       "event": "ended",
+       "why": "after 10 pieces"
+      }
+     ],
+     "why": "after 10 pieces",
+     "currentTime": 39.214542
+    },
+    "errors": [],
+    "waited_404s": 75
+   }
+  ],
+  "stderr": ""
+ },
+ "carried": {
+  "hash_Y": "f7a9ebdbb5019d1e54d21bb5a3f12f5d1891b0c8ca61b2c73e84c037e34572d1",
+  "put_Y": {
+   "status": 404,
+   "said": "",
+   "ms": 1,
+   "length": 0
+  },
+  "put_Z": {
+   "status": 404,
+   "said": "",
+   "ms": 0,
+   "length": 0
+  },
+  "bo_get_Y": {
+   "status": 404,
+   "said": "",
+   "ms": 0,
+   "length": 0
+  },
+  "hash_Z": "6074540e12a3da55b65bf5515f20714271641820c2ebf56447e4d6be1828a33b",
+  "ana_stopped": 0,
+  "cy_get_Y": {
+   "status": 404,
+   "said": "",
+   "ms": 1,
+   "length": 0
+  },
+  "cy_got_Y_bytes": false,
+  "cy_get_Z": {
+   "status": 404,
+   "said": "",
+   "ms": 0,
+   "length": 0
+  },
+  "s": 0.0
+ },
+ "plants": {
+  "no-ended": {
+   "exit": 0,
+   "stderr": "",
+   "lines": [
+    {
+     "status": 200,
+     "said": "{\"key\":\"d8b34eed680fc3b7cdd5d51998390d6fb944853d3f79a05d48c4529fb46dffdd\",\"sig\":\"81ade13b776450a74ae97621b6cad17b3e07c80305dccda0f0de03325982a6f1ad20c60c1f591e5ccf0857db52fde9e4ad2450917f17d8380c2e7a3b6adb5d0d\"}",
+     "ms": 3,
+     "signed": true
+    },
+    {
+     "status": 200,
+     "said": "{\"key\":\"d8b34eed680fc3b7cdd5d51998390d6fb944853d3f79a05d48c4529fb46dffdd\",\"sig\":\"c37b72af8a68b3054e2043c1470de6d2cfc094d8a034e96e0e1daa1d937fc1297a2c0e102c52f1961b04f0d694219e496c879c522488039976739db1f792770b\"}",
+     "ms": 4,
+     "signed": true
+    }
+   ]
+  },
+  "bo-signed": {
+   "exit": 0,
+   "stderr": "",
+   "lines": [
+    {
+     "status": 200,
+     "said": "{\"key\":\"61a033d46541b3531f679be3dac9671691374e4337c1d3fe37a03b6bd83ea8bd\",\"sig\":\"01aee7710d27b48caee04a754becf90d17703f9324d7b8532d5b91eb8eba323284154a8d0ef0365f188bfd37d4e05f4f60f6d5a4af6f443fe85a7833598ec20b\"}",
+     "ms": 2,
+     "signed": true
+    },
+    {
+     "status": 200,
+     "said": "{\"key\":\"61a033d46541b3531f679be3dac9671691374e4337c1d3fe37a03b6bd83ea8bd\",\"sig\":\"b89cbb7ddf56a58db54d56878e9c6add0f06f13267a17f7e2d2124047362adc144aedcfe2cf520e80c6f3e54791b70f74b535266a25a9adb8d838ebbb0ebdb00\"}",
+     "ms": 2,
+     "signed": true
+    },
+    {
+     "status": 200,
+     "said": "{\"key\":\"61a033d46541b3531f679be3dac9671691374e4337c1d3fe37a03b6bd83ea8bd\",\"sig\":\"1087ca3fff00adbea5e9d30e93f7cface6b93756d20ba6fe2248a8416f9cbe8dd7bd463223d22d75f9fd39b764082ec04588d071ead43c2c05fab7fcc0ed6304\"}",
+     "ms": 4,
+     "signed": true
+    }
+   ]
+  },
+  "flipped": {
+   "piece": 1,
+   "hash": "c225526d54ffddb89b45096ba6a14b86a747a43e693a25b88c9fb88c5d494aee",
+   "byte": 1000
+  },
+  "act-sig": {
+   "act": "e8da6260ac5223b9940d70e077771b6b7d6b5422c382de41f2a370d83637bfb5",
+   "seq": 0,
+   "from": "ana/.svrngs/rings/92358d510a3a698d3d7662491a07646dc97cd6f0b5a907eb86128a42fa751eb9/ring_oplog.jsonl",
+   "lines": [
+    0,
+    1
+   ],
+   "log_op_fields": [
+    "actor",
+    "id",
+    "person",
+    "seq",
+    "ts_unix",
+    "voided"
+   ]
+  }
+ },
+ "plant_pages": {
+  "exit": 0,
+  "tabs": [
+   {
+    "link": "http://127.0.0.1:61978/page/#key=d8b34eed680fc3b7cdd5d51998390d6fb944853d3f79a05d48c4529fb46dffdd&show=act-sig",
+    "opened": 1791955059239,
+    "stopped": "ended",
+    "said_at": 1791955059598,
+    "air": {
+     "key": "d8b34eed680fc3b7cdd5d51998390d6fb944853d3f79a05d48c4529fb46dffdd",
+     "show": "act-sig",
+     "status": "ended",
+     "played": [
+      {
+       "n": 2,
+       "hash": "43e3307d1f5bebff444501f3407fee6d30771fc10e1868607de5a252a2a58740",
+       "at": 1791955059378
+      },
+      {
+       "n": 3,
+       "hash": "f3b72ae551f6b845528acd5f248a3f3d4e9d157747c3f63833c780ee862fbf38",
+       "at": 1791955059421
+      },
+      {
+       "n": 4,
+       "hash": "331d859f20cdcd7f302ad5493e2ab0a05215a58a7d2b419b163800784ed716e8",
+       "at": 1791955059464
+      },
+      {
+       "n": 5,
+       "hash": "6a638506ce8f63990f2e9dd876b7b5f425556f05edcfcd755a72c9e5b3ca6cab",
+       "at": 1791955059475
+      },
+      {
+       "n": 6,
+       "hash": "f9c74a3a0ea2b045eca52e6614f9158a55880c370bb60aad0b755d37c8ab9afb",
+       "at": 1791955059484
+      },
+      {
+       "n": 7,
+       "hash": "b220f944274e724e1cfab60fbbbc21f250409df688288ca3a284a64d4565b272",
+       "at": 1791955059497
+      },
+      {
+       "n": 8,
+       "hash": "d3b5beac33062bc7481caafaec81455fed0922820a9e2e0c2a1ceb8801fdab17",
+       "at": 1791955059509
+      },
+      {
+       "n": 9,
+       "hash": "04025ab3f30e14c0ca292f805bf16ee1b5bd04f9f17b75da9572b7f630226d1d",
+       "at": 1791955059544
+      }
+     ],
+     "refused": [
+      {
+       "n": 0,
+       "why": "its signature does not check under the station's key d8b34eed…"
+      },
+      {
+       "n": 1,
+       "why": "its signature does not check under the station's key d8b34eed…"
+      }
+     ],
+     "log": [
+      {
+       "t": 1791955059353,
+       "n": 0,
+       "event": "refused",
+       "why": "its signature does not check under the station's key d8b34eed…"
+      },
+      {
+       "t": 1791955059358,
+       "n": 1,
+       "event": "refused",
+       "why": "its signature does not check under the station's key d8b34eed…"
+      },
+      {
+       "t": 1791955059378,
+       "n": 2,
+       "event": "plays"
+      },
+      {
+       "t": 1791955059379,
+       "event": "on air"
+      },
+      {
+       "t": 1791955059421,
+       "n": 3,
+       "event": "plays"
+      },
+      {
+       "t": 1791955059464,
+       "n": 4,
+       "event": "plays"
+      },
+      {
+       "t": 1791955059475,
+       "n": 5,
+       "event": "plays"
+      },
+      {
+       "t": 1791955059484,
+       "n": 6,
+       "event": "plays"
+      },
+      {
+       "t": 1791955059497,
+       "n": 7,
+       "event": "plays"
+      },
+      {
+       "t": 1791955059509,
+       "n": 8,
+       "event": "plays"
+      },
+      {
+       "t": 1791955059544,
+       "n": 9,
+       "event": "plays"
+      },
+      {
+       "t": 1791955059562,
+       "event": "ended",
+       "why": "after 10 pieces"
+      }
+     ],
+     "why": "after 10 pieces",
+     "currentTime": 0
+    },
+    "errors": [],
+    "waited_404s": 0
+   },
+   {
+    "link": "http://127.0.0.1:61978/page/#key=d8b34eed680fc3b7cdd5d51998390d6fb944853d3f79a05d48c4529fb46dffdd&show=flipped",
+    "opened": 1791955059240,
+    "stopped": "ended",
+    "said_at": 1791955059616,
+    "air": {
+     "key": "d8b34eed680fc3b7cdd5d51998390d6fb944853d3f79a05d48c4529fb46dffdd",
+     "show": "flipped",
+     "status": "ended",
+     "played": [
+      {
+       "n": 0,
+       "hash": "7f1b8fb285064a1ba425e3d9e062942e88c7b248cf79f266507daba0e36529a9",
+       "at": 1791955059369
+      },
+      {
+       "n": 2,
+       "hash": "43e3307d1f5bebff444501f3407fee6d30771fc10e1868607de5a252a2a58740",
+       "at": 1791955059459
+      },
+      {
+       "n": 3,
+       "hash": "f3b72ae551f6b845528acd5f248a3f3d4e9d157747c3f63833c780ee862fbf38",
+       "at": 1791955059474
+      },
+      {
+       "n": 4,
+       "hash": "331d859f20cdcd7f302ad5493e2ab0a05215a58a7d2b419b163800784ed716e8",
+       "at": 1791955059481
+      },
+      {
+       "n": 5,
+       "hash": "6a638506ce8f63990f2e9dd876b7b5f425556f05edcfcd755a72c9e5b3ca6cab",
+       "at": 1791955059495
+      },
+      {
+       "n": 6,
+       "hash": "f9c74a3a0ea2b045eca52e6614f9158a55880c370bb60aad0b755d37c8ab9afb",
+       "at": 1791955059509
+      },
+      {
+       "n": 7,
+       "hash": "b220f944274e724e1cfab60fbbbc21f250409df688288ca3a284a64d4565b272",
+       "at": 1791955059551
+      },
+      {
+       "n": 8,
+       "hash": "d3b5beac33062bc7481caafaec81455fed0922820a9e2e0c2a1ceb8801fdab17",
+       "at": 1791955059570
+      },
+      {
+       "n": 9,
+       "hash": "04025ab3f30e14c0ca292f805bf16ee1b5bd04f9f17b75da9572b7f630226d1d",
+       "at": 1791955059578
+      }
+     ],
+     "refused": [
+      {
+       "n": 1,
+       "why": "its BLAKE3 is afdedf6b6058…, not the line's c225526d54ff…"
+      }
+     ],
+     "log": [
+      {
+       "t": 1791955059369,
+       "n": 0,
+       "event": "plays"
+      },
+      {
+       "t": 1791955059369,
+       "event": "on air"
+      },
+      {
+       "t": 1791955059423,
+       "n": 1,
+       "event": "refused",
+       "why": "its BLAKE3 is afdedf6b6058…, not the line's c225526d54ff…"
+      },
+      {
+       "t": 1791955059459,
+       "n": 2,
+       "event": "plays"
+      },
+      {
+       "t": 1791955059474,
+       "n": 3,
+       "event": "plays"
+      },
+      {
+       "t": 1791955059481,
+       "n": 4,
+       "event": "plays"
+      },
+      {
+       "t": 1791955059495,
+       "n": 5,
+       "event": "plays"
+      },
+      {
+       "t": 1791955059509,
+       "n": 6,
+       "event": "plays"
+      },
+      {
+       "t": 1791955059551,
+       "n": 7,
+       "event": "plays"
+      },
+      {
+       "t": 1791955059570,
+       "n": 8,
+       "event": "plays"
+      },
+      {
+       "t": 1791955059578,
+       "n": 9,
+       "event": "plays"
+      },
+      {
+       "t": 1791955059581,
+       "event": "ended",
+       "why": "after 10 pieces"
+      }
+     ],
+     "why": "after 10 pieces",
+     "currentTime": 0
+    },
+    "errors": [],
+    "waited_404s": 0
+   },
+   {
+    "link": "http://127.0.0.1:61978/page/#key=d8b34eed680fc3b7cdd5d51998390d6fb944853d3f79a05d48c4529fb46dffdd&show=no-ended",
+    "opened": 1791955059228,
+    "stopped": "cannot reach",
+    "said_at": 1791955071407,
+    "air": {
+     "key": "d8b34eed680fc3b7cdd5d51998390d6fb944853d3f79a05d48c4529fb46dffdd",
+     "show": "no-ended",
+     "status": "cannot reach",
+     "played": [
+      {
+       "n": 0,
+       "hash": "7f1b8fb285064a1ba425e3d9e062942e88c7b248cf79f266507daba0e36529a9",
+       "at": 1791955059351
+      },
+      {
+       "n": 1,
+       "hash": "c225526d54ffddb89b45096ba6a14b86a747a43e693a25b88c9fb88c5d494aee",
+       "at": 1791955059365
+      }
+     ],
+     "refused": [],
+     "log": [
+      {
+       "t": 1791955059351,
+       "n": 0,
+       "event": "plays"
+      },
+      {
+       "t": 1791955059351,
+       "event": "on air"
+      },
+      {
+       "t": 1791955059365,
+       "n": 1,
+       "event": "plays"
+      },
+      {
+       "t": 1791955059625,
+       "event": "playing"
+      },
+      {
+       "t": 1791955071404,
+       "event": "cannot reach",
+       "why": "no line 2 in 12 s"
+      }
+     ],
+     "why": "no line 2 in 12 s",
+     "currentTime": 7.940379
+    },
+    "errors": [],
+    "waited_404s": 24
+   },
+   {
+    "link": "http://127.0.0.1:61978/page/#key=d8b34eed680fc3b7cdd5d51998390d6fb944853d3f79a05d48c4529fb46dffdd&show=bo-signed",
+    "opened": 1791955059242,
+    "stopped": "cannot reach",
+    "said_at": 1791955072179,
+    "air": {
+     "key": "d8b34eed680fc3b7cdd5d51998390d6fb944853d3f79a05d48c4529fb46dffdd",
+     "show": "bo-signed",
+     "status": "cannot reach",
+     "played": [],
+     "refused": [
+      {
+       "n": 0,
+       "why": "its signature does not check under the station's key d8b34eed…; it names 61a033d4…"
+      },
+      {
+       "n": 1,
+       "why": "its signature does not check under the station's key d8b34eed…; it names 61a033d4…"
+      },
+      {
+       "n": 2,
+       "why": "its signature does not check under the station's key d8b34eed…; it names 61a033d4…"
+      }
+     ],
+     "log": [
+      {
+       "t": 1791955059374,
+       "n": 0,
+       "event": "refused",
+       "why": "its signature does not check under the station's key d8b34eed…; it names 61a033d4…"
+      },
+      {
+       "t": 1791955059402,
+       "n": 1,
+       "event": "refused",
+       "why": "its signature does not check under the station's key d8b34eed…; it names 61a033d4…"
+      },
+      {
+       "t": 1791955059414,
+       "n": 2,
+       "event": "refused",
+       "why": "its signature does not check under the station's key d8b34eed…; it names 61a033d4…"
+      },
+      {
+       "t": 1791955071920,
+       "event": "cannot reach",
+       "why": "no line 3 in 12 s"
+      }
+     ],
+     "why": "no line 3 in 12 s",
+     "currentTime": 0
+    },
+    "errors": [],
+    "waited_404s": 25
+   }
+  ],
+  "stderr": ""
+ },
+ "scoped": {
+  "dee_get_Y": {
+   "status": 404,
+   "said": "",
+   "ms": 1,
+   "length": 0
+  }
+ },
+ "lapses": {
+  "s_after_last_put": 65.1,
+  "never_held": "80320486b10b215a131c010c8f47638aee9c43989422c5a6b5ce6d2638d40645",
+  "piece0": "7f1b8fb285064a1ba425e3d9e062942e88c7b248cf79f266507daba0e36529a9",
+  "bo_piece0": {
+   "status": 404,
+   "said": "",
+   "ms": 1,
+   "length": 0
+  },
+  "bo_Y": {
+   "status": 404,
+   "said": "",
+   "ms": 1,
+   "length": 0
+  },
+  "bo_never": {
+   "status": 404,
+   "said": "",
+   "ms": 1,
+   "length": 0
+  },
+  "cy_piece0": {
+   "status": 404,
+   "said": "",
+   "ms": 1,
+   "length": 0
+  },
+  "cy_Y": {
+   "status": 404,
+   "said": "",
+   "ms": 1,
+   "length": 0
+  },
+  "cy_never": {
+   "status": 404,
+   "said": "",
+   "ms": 1,
+   "length": 0
+  }
+ }
+}

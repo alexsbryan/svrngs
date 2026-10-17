@@ -1,0 +1,20 @@
+# svrngs v1 — Demo C's units: removal (U7) first, then onboarding and the two homes as the operator queues them (docs/DESIGN.md §8 "Then", "Demo C"; demo/c.md; operator, 2026-10-10). Launch, from anywhere:
+#
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py supervise --workdir ~/dev/svrngs \
+#     --queue v1 --install-launchd -- python3 ~/dev/commonwealth-ai/scripts/ralph.py \
+#     run --workdir ~/dev/svrngs --queue v1 --max-stall 3
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py start --workdir ~/dev/svrngs --queue v1
+#
+# The plist the first command writes carries no CARGO_INCREMENTAL=0; add it
+# under EnvironmentVariables after any reinstall (the host's disk is shared).
+label = "svrngs-v1"
+session_timeout = 5400
+audit_every = 4
+worker_bin = "/Users/alexsbryan/dev/commonwealth-ai/scripts/ralph-claude-shim.sh"
+settings = "ralph/claude-settings.json"
+
+[models]
+worker = "claude-opus-5-5"
+review = "claude-opus-5-5"
+resolve = "claude-opus-5-5"
+variant = "high"

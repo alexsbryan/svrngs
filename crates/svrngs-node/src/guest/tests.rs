@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // ported from commonwealth-ai mesh-reach/src/guest/tests.rs@e1a43bcd2
 //! Unit tests of the guest dialer's private helpers, moved with them from
-//! commonwealth-transport iroh.rs, and the proof of pb-reach-guest: a
-//! non-member's dial, and one bridge.
+//! commonwealth-transport iroh.rs, and one bridge. (pb-reach-guest's proof,
+//! a non-member's dial, went with upstream's `GuestTunnel`, lean-3.)
 
 use super::*;
 use crate::alpn::ALPN;
-use crate::iroh::tests::{hermetic_endpoint, loopback_sockets};
+use crate::iroh::tests::Said;
 
 #[test]
 fn parse_relay_mode_empty_is_default() {
@@ -45,19 +45,41 @@ fn parse_relay_mode_skips_bad_keeps_good() {
     );
 }
 
+/// **The egress posture, one info line** (arch-peer (d), upstream's proxy
+/// and egress logging cut): building an endpoint says at info, once, its n0
+/// posture, whether it listens on loopback alone, and its relays — and
+/// nothing of a proxy, which nobody running svrngs sets. Planted:
+/// upstream's `log_egress_posture`, which read four environment variables
+/// for a proxy to say (`proxy="none"`).
 #[test]
-fn redact_userinfo_hides_credentials() {
-    assert_eq!(
-        redact_userinfo("https://user:secret@proxy.corp:443"),
-        "https://***@proxy.corp:443"
-    );
-    // No userinfo → unchanged.
-    assert_eq!(
-        redact_userinfo("https://proxy.corp:443"),
-        "https://proxy.corp:443"
-    );
-    // Non-URL → unchanged (don't mangle).
-    assert_eq!(redact_userinfo("proxy.corp:443"), "proxy.corp:443");
+fn the_egress_posture_is_one_info_line_naming_no_proxy() {
+    let said = Said::default();
+    let writer = said.clone();
+    let kept = tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::new("transport=info"))
+        .with_writer(move || writer.clone())
+        .with_ansi(false)
+        .finish();
+    let cfg = RelayConfig {
+        relay_urls: vec![],
+        n0_services: false,
+        loopback_only: true,
+    };
+    let key = SecretKey::from_bytes(&[5; 32]);
+    let built = tracing::subscriber::with_default(kept, || {
+        relayed_endpoint_builder(key, vec![], &cfg).is_ok()
+    });
+    let traced = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
+    let posture: Vec<&str> = traced
+        .lines()
+        .filter(|l| l.contains("egress posture"))
+        .collect();
+    assert!(built, "{traced}");
+    assert_eq!(posture.len(), 1, "{traced}");
+    for field in ["n0_services=false", "loopback_only=true", "relays=[]"] {
+        assert!(posture[0].contains(field), "{field}: {traced}");
+    }
+    assert!(!posture[0].contains("proxy="), "{traced}");
 }
 
 #[tokio::test]
@@ -92,9 +114,11 @@ async fn a_loopback_only_endpoint_binds_loopback_alone() {
     let ep = build_relayed_endpoint(
         SecretKey::from_bytes(&[79u8; 32]),
         vec![ALPN.to_vec()],
-        &RelayConfig::from_parts(Vec::new(), Some("none"))
-            .unwrap()
-            .on_loopback_only(),
+        &RelayConfig {
+            relay_urls: Vec::new(),
+            n0_services: false,
+            loopback_only: true,
+        },
     )
     .await
     .expect("a loopback-only endpoint binds");
@@ -106,76 +130,13 @@ async fn a_loopback_only_endpoint_binds_loopback_alone() {
     );
 }
 
-/// A lender: an iroh endpoint on `ALPN` whose streams splice, through
-/// the one [`pump`], into a loopback HTTP origin. Returns its dial string.
-async fn spawn_lender() -> String {
-    let origin = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let origin_addr = origin.local_addr().unwrap();
-    let app = axum::Router::new().route(
-        "/v1/models",
-        axum::routing::get(|| async { "lender-origin" }),
-    );
-    tokio::spawn(async move { axum::serve(origin, app).await });
-
-    let endpoint = hermetic_endpoint(41, vec![ALPN.to_vec()]).await;
-    // iroh binds the wildcard; loopback is what dials in-process.
-    let targets: Vec<String> = loopback_sockets(&endpoint)
-        .iter()
-        .map(ToString::to_string)
-        .collect();
-    let dial = format!(
-        "{}@{}",
-        hex::encode(endpoint.addr().id.as_bytes()),
-        targets.join(",")
-    );
-    tokio::spawn(async move {
-        while let Some(incoming) = endpoint.accept().await {
-            tokio::spawn(async move {
-                let Ok(conn) = incoming.await else { return };
-                while let Ok((send, recv)) = conn.accept_bi().await {
-                    let tcp = tokio::net::TcpStream::connect(origin_addr).await.unwrap();
-                    tokio::spawn(pump(
-                        tcp,
-                        send,
-                        recv,
-                        PumpSide::Acceptor,
-                        "guest".to_string(),
-                        ALPN,
-                    ));
-                }
-            });
-        }
-    });
-    dial
-}
-
-/// THE proof of pb-reach-guest: a NON-member (an ephemeral key, no roster)
-/// dials a lender by dial string through this leaf's dialer alone, and a
-/// request answers.
-#[tokio::test]
-async fn a_non_member_dials_a_lenders_alpn_and_a_request_answers() {
-    let dial = spawn_lender().await;
-    let tunnel = GuestTunnel::open(&dial, Vec::new(), Some("none"))
-        .await
-        .expect("the guest tunnel opens");
-    let body = reqwest::Client::new()
-        .get(format!("{}/v1/models", tunnel.base_url()))
-        .timeout(std::time::Duration::from_secs(15))
-        .send()
-        .await
-        .expect("the request reaches the lender through the tunnel")
-        .text()
-        .await
-        .unwrap();
-    assert_eq!(body, "lender-origin");
-}
-
-/// There is ONE iroh HTTP bridge: `HttpBridge`'s accept loop is the only
-/// place in this leaf that opens a stream to a peer, and `pump` is defined
-/// once, so `GuestTunnel` rides the bridge instead of keeping a loop of its
-/// own. The needles are split so this file does not match itself.
+/// One place in the product opens a stream to a peer: a request on the
+/// stream, `iroh.rs` `on_stream` (arch-peer (d); upstream's was the
+/// bridge's accept loop, gone with it). Beside it the tests' splice,
+/// `node/tests_support.rs`, behind `test-support`. The needle is split so
+/// this file does not match itself.
 #[test]
-fn there_is_one_bridge_loop_and_one_pump() {
+fn one_place_opens_a_stream_to_a_peer() {
     fn rs_files(dir: &std::path::Path, out: &mut Vec<std::path::PathBuf>) {
         for entry in std::fs::read_dir(dir).unwrap() {
             let path = entry.unwrap().path();
@@ -205,9 +166,15 @@ fn there_is_one_bridge_loop_and_one_pump() {
             })
             .collect()
     };
-    let bridges = sites(concat!("open_bi", "()"));
-    assert_eq!(bridges.len(), 1, "one bridge loop, found {bridges:?}");
-    assert!(bridges[0].contains("guest.rs"), "{bridges:?}");
-    let pumps = sites(concat!("fn ", "pump("));
-    assert_eq!(pumps.len(), 1, "one pump, found {pumps:?}");
+    let opened = sites(concat!("open_bi", "()"));
+    assert_eq!(
+        opened.len(),
+        2,
+        "the request on the stream and the tests' splice: {opened:?}"
+    );
+    assert!(opened.iter().any(|b| b.contains("iroh.rs")), "{opened:?}");
+    assert!(
+        opened.iter().any(|b| b.contains("tests_support.rs")),
+        "{opened:?}"
+    );
 }

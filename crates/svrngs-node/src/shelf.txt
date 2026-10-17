@@ -1,0 +1,13 @@
+# The shelf (V1_UI_BUILD §3.4; v1ui-shelf (c)): svrngs's own reference apps,
+# which ship with it and nothing else, each brought into a group's folder from
+# the home page or a phone (crates/svrngs-node/src/carried.rs, `bring`). Kept as
+# data, as well_known.txt is, so svrngs's code names no app (scripts/
+# vocab_check.py): build.rs embeds each line's files. One app a line, its
+# fields apart by a tab: its name in a group, its folder under apps/, its
+# files beside index.html and index.js, apart by a space, and what it is, in
+# the words the pages say after its name, a `-` in its name said as a space
+# (home/question.js `spoken`). Each is brought as index.html, index.js, those
+# files and svrngs's look.css.
+Money	expenses	expenses.js	who paid for what, and who owes whom.
+Events	events	events.js	post a get-together, and see who’s coming.
+House-rules	canon	house.js vendor/canon.js vendor/call.mjs vendor/LICENSE	the rules your house agrees, and how you agree them.

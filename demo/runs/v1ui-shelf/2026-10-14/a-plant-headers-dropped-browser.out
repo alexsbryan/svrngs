@@ -1,0 +1,13 @@
+
+running 2 tests
+carried::a_carried_page_reaches_no_other_host::chromium --- FAILED
+carried::a_carried_page_reaches_no_other_host::webkit --- FAILED
+
+failures:
+
+failures:
+    carried::a_carried_page_reaches_no_other_host::chromium
+    carried::a_carried_page_reaches_no_other_host::webkit
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 76 filtered out; finished in 4.32s
+

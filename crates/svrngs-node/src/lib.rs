@@ -32,17 +32,16 @@
 
 pub use svrngs_runtime::*;
 
-// The v1 checkpoint document's one composer (moved from sovereign-mesh,
-// phase-b pb-rails-parity).
-pub mod ring_checkpoint;
-
 // The dialling half of sync, forked in U1 (docs/DESIGN.md §8, U1's
 // inventory): the sync bodies (`sovereign-peer-wire`), the one ALPN, the
-// relayed endpoint and the loopback bridge (`mesh-reach::guest`), and the
+// relayed endpoint (`mesh-reach::guest`; its loopback bridge cut, arch-peer), and the
 // client side of the dial-by-key transport (`commonwealth-transport::iroh`).
 // The ALPNs are svrngs-core's since u4-2, so a browser's page spells each as
 // the node does; re-exported, so `crate::alpn` reads as before.
 pub use svrngs_core::alpn;
+// How long a dial to a lend's computer waits (events-asleep); the page
+// compiles it too.
+pub mod dial;
 pub mod guest;
 pub mod iroh;
 pub mod peer_wire;
@@ -75,10 +74,14 @@ pub mod rail;
 pub mod surface;
 // Every lend at an origin of its own on this computer's loopback, u5-2's
 // (docs/DESIGN.md §3, "Lent apps", call 1), on the same listener.
+/// The home page at `svrngs.localhost` (sup-2).
+pub mod home;
 pub mod origin;
 // The room door, u6-1's (docs/DESIGN.md §3, "The room"): the lends a
 // person names, served to this computer's network while the command runs.
 pub mod room;
+// What a lend is decided from: the probe, the well-known table (v1ui-lend (a)).
+pub mod share;
 
 // The member door, U3's (docs/DESIGN.md §8, U3's inventory): the route that
 // carries a member's request to a lend's service, the lend's declaration,
@@ -90,4 +93,15 @@ pub mod lend;
 
 // The node, U1's (docs/DESIGN.md §8): the rail, the endpoint, the accept loop
 // serving the sync route and the round, in place of upstream's `RailsDaemon`.
+pub mod folder;
+// A group's seed kept on this computer, and the group kept (start-group).
+pub mod group;
+pub mod invite;
+// Joining a group by its link (arch-command (a)).
+pub mod join;
 pub mod node;
+// Removal as this computer's person asks it (U7, DESIGN §6).
+pub mod removal;
+// This build's version, which every answer a page reads carries, and the
+// one check made of it (arch-version); the page compiles it too.
+pub mod version;

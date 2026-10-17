@@ -1,0 +1,139 @@
+2026-10-12T13:35:58.249192Z  INFO folder: folder: the store is open untagged=0
+2026-10-12T13:35:58.249228Z  INFO folder: synced: the directory kept in step with the group's folder namespace="41b29f090d85ce9a4b7ba55ab9203fe3f2fde02d805bc4daaba0290761d0be4b" folder="lake-trip" dir=/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/6e09329f-0b30-4ff7-a272-bbdfce91c9c7/scratchpad/c-dry/alex/svrngs/lake-trip
+2026-10-12T13:35:58.250424Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/06e6ba82", "ana/259c8b03"] skipped_offline=[]
+2026-10-12T13:35:58.250487Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=31015 peer=06e6ba82b57dc114471f4cbc098309f46d6a966cb4ae8c3ec7304fb257f17704 error=Address already in use (os error 48)
+2026-10-12T13:36:03.956988Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=6d6a59d16a609ee28396759ded6315682f73c3a329ddcfaecbb892b5c7942c49
+2026-10-12T13:36:03.992463Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=6d6a59d16a609ee28396759ded6315682f73c3a329ddcfaecbb892b5c7942c49
+2026-10-12T13:36:04.892560Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=6d6a59d16a609ee28396759ded6315682f73c3a329ddcfaecbb892b5c7942c49
+2026-10-12T13:36:09.907294Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=6d6a59d16a609ee28396759ded6315682f73c3a329ddcfaecbb892b5c7942c49
+2026-10-12T13:36:14.912088Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=6d6a59d16a609ee28396759ded6315682f73c3a329ddcfaecbb892b5c7942c49
+2026-10-12T13:36:20.006645Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=6d6a59d16a609ee28396759ded6315682f73c3a329ddcfaecbb892b5c7942c49
+2026-10-12T13:36:24.936316Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=6d6a59d16a609ee28396759ded6315682f73c3a329ddcfaecbb892b5c7942c49
+2026-10-12T13:36:30.031881Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=6d6a59d16a609ee28396759ded6315682f73c3a329ddcfaecbb892b5c7942c49
+2026-10-12T13:36:34.992271Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=6d6a59d16a609ee28396759ded6315682f73c3a329ddcfaecbb892b5c7942c49
+2026-10-12T13:36:39.997890Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=6d6a59d16a609ee28396759ded6315682f73c3a329ddcfaecbb892b5c7942c49
+2026-10-12T13:36:44.982466Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=6d6a59d16a609ee28396759ded6315682f73c3a329ddcfaecbb892b5c7942c49
+2026-10-12T13:36:50.010921Z DEBUG door: door: lends — answered what this computer lends actor="6d6a59d16a609ee28396759ded6315682f73c3a329ddcfaecbb892b5c7942c49" lends=0
+2026-10-12T13:36:54.654717Z DEBUG door: door: lends — answered what this computer lends actor="6d6a59d16a609ee28396759ded6315682f73c3a329ddcfaecbb892b5c7942c49" lends=0
+2026-10-12T13:36:58.667295Z DEBUG door: door: lends — answered what this computer lends actor="6d6a59d16a609ee28396759ded6315682f73c3a329ddcfaecbb892b5c7942c49" lends=0
+2026-10-12T13:36:58.761055Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/06e6ba82", "ana/259c8b03", "bo/6d6a59d1"] skipped_offline=[]
+2026-10-12T13:36:58.761281Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=22195 peer=6d6a59d16a609ee28396759ded6315682f73c3a329ddcfaecbb892b5c7942c49 error=Address already in use (os error 48)
+2026-10-12T13:37:03.264774Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=b34b1dab1d899be2cb33401059ce280bf0666cf8569071fa332b4a3f936e2984
+2026-10-12T13:37:03.269484Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=b34b1dab1d899be2cb33401059ce280bf0666cf8569071fa332b4a3f936e2984
+2026-10-12T13:37:04.295799Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=b34b1dab1d899be2cb33401059ce280bf0666cf8569071fa332b4a3f936e2984
+2026-10-12T13:37:09.353567Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=b34b1dab1d899be2cb33401059ce280bf0666cf8569071fa332b4a3f936e2984
+2026-10-12T13:37:14.281495Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=b34b1dab1d899be2cb33401059ce280bf0666cf8569071fa332b4a3f936e2984
+2026-10-12T13:37:19.310537Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=b34b1dab1d899be2cb33401059ce280bf0666cf8569071fa332b4a3f936e2984
+2026-10-12T13:37:24.293485Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=b34b1dab1d899be2cb33401059ce280bf0666cf8569071fa332b4a3f936e2984
+2026-10-12T13:37:29.309938Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=b34b1dab1d899be2cb33401059ce280bf0666cf8569071fa332b4a3f936e2984
+2026-10-12T13:37:34.321026Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=b34b1dab1d899be2cb33401059ce280bf0666cf8569071fa332b4a3f936e2984
+2026-10-12T13:37:39.334703Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=b34b1dab1d899be2cb33401059ce280bf0666cf8569071fa332b4a3f936e2984
+2026-10-12T13:37:44.424482Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=b34b1dab1d899be2cb33401059ce280bf0666cf8569071fa332b4a3f936e2984
+2026-10-12T13:37:49.367263Z DEBUG door: door: lends — answered what this computer lends actor="b34b1dab1d899be2cb33401059ce280bf0666cf8569071fa332b4a3f936e2984" lends=0
+2026-10-12T13:37:54.058452Z DEBUG door: door: lends — answered what this computer lends actor="b34b1dab1d899be2cb33401059ce280bf0666cf8569071fa332b4a3f936e2984" lends=0
+2026-10-12T13:37:58.275370Z DEBUG door: door: lends — answered what this computer lends actor="b34b1dab1d899be2cb33401059ce280bf0666cf8569071fa332b4a3f936e2984" lends=0
+2026-10-12T13:37:58.766441Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/06e6ba82", "ana/259c8b03", "bo/6d6a59d1", "dee/b34b1dab"] skipped_offline=[]
+2026-10-12T13:37:58.766708Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=22806 peer=b34b1dab1d899be2cb33401059ce280bf0666cf8569071fa332b4a3f936e2984 error=Address already in use (os error 48)
+2026-10-12T13:38:04.335635Z DEBUG door: door: lends — answered what this computer lends actor="06e6ba82b57dc114471f4cbc098309f46d6a966cb4ae8c3ec7304fb257f17704" lends=0
+2026-10-12T13:38:28.562514Z DEBUG door: door: lends — answered what this computer lends actor="06e6ba82b57dc114471f4cbc098309f46d6a966cb4ae8c3ec7304fb257f17704" lends=0
+2026-10-12T13:38:37.628582Z DEBUG door: door: lends — answered what this computer lends actor="6d6a59d16a609ee28396759ded6315682f73c3a329ddcfaecbb892b5c7942c49" lends=0
+2026-10-12T13:38:58.771619Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/06e6ba82", "ana/259c8b03", "dee/b34b1dab"] skipped_offline=[]
+2026-10-12T13:39:38.517412Z  INFO folder: folder: fetched, verified hash=d7dcf839644e5d7f2015b6c470541a7d135edae1a6963c3f61029e1ab38f8e09 holder=06e6ba82b57dc114471f4cbc098309f46d6a966cb4ae8c3ec7304fb257f17704 payload=4821352 other=18824 ms=309
+2026-10-12T13:39:38.518821Z  INFO folder: synced: written into the directory folder="lake-trip" path=after.jpg hash=d7dcf839644e5d7f2015b6c470541a7d135edae1a6963c3f61029e1ab38f8e09 from="06e6ba82b57dc114471f4cbc098309f46d6a966cb4ae8c3ec7304fb257f17704" seq=7 beside=false fetch_ms=309 export_ms=1
+2026-10-12T13:39:58.778052Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/06e6ba82", "ana/259c8b03", "dee/b34b1dab"] skipped_offline=[]
+2026-10-12T13:40:48.404018Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2
+2026-10-12T13:40:48.404054Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2
+2026-10-12T13:40:49.306052Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2
+2026-10-12T13:40:58.781933Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/06e6ba82", "ana/259c8b03", "dee/b34b1dab"] skipped_offline=[]
+2026-10-12T13:40:58.789320Z  WARN svrngs_core::admit: ring rail: this answer covers a subset — the rail could not account for every op namespace="41b29f090d85ce9a4b7ba55ab9203fe3f2fde02d805bc4daaba0290761d0be4b" gaps=1 first=Some(SequenceHole { actor: "06e6ba82b57dc114471f4cbc098309f46d6a966cb4ae8c3ec7304fb257f17704", missing: 7 })
+2026-10-12T13:41:01.259551Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:41:01.296662Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:41:06.344622Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:41:11.369096Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:41:13.663832Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=LastOpenPath
+2026-10-12T13:41:16.393754Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:41:16.922917Z  WARN noq_proto::connection: failed closing path err=LastOpenPath
+2026-10-12T13:41:21.419786Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:41:26.454452Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:41:31.489453Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:41:36.517024Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:41:41.544720Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:41:46.571215Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:41:51.600340Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:41:56.632872Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:42:01.664442Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:42:06.694783Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:42:08.786282Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/06e6ba82", "ana/259c8b03", "eve/5ce58834", "dee/b34b1dab"] skipped_offline=[]
+2026-10-12T13:42:08.786644Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=28797 peer=5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2 error=Address already in use (os error 48)
+2026-10-12T13:42:11.714735Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:42:16.740641Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:42:21.767745Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:42:23.789270Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:42:26.794633Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:42:31.814050Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:42:36.838689Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:42:38.789071Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=timed out
+2026-10-12T13:42:41.859016Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:42:46.887145Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:42:51.912817Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:42:56.935812Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:43:01.960434Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:43:18.789669Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/06e6ba82", "ana/259c8b03", "eve/5ce58834", "dee/b34b1dab"] skipped_offline=[]
+2026-10-12T13:43:20.578619Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:43:25.433578Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:43:30.455577Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:43:33.792642Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:43:35.478559Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:43:35.577845Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=timed out
+2026-10-12T13:43:40.434204Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=timed out
+2026-10-12T13:43:40.500238Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:43:45.456093Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=timed out
+2026-10-12T13:43:45.527136Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:43:48.792526Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=timed out
+2026-10-12T13:43:50.478949Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=timed out
+2026-10-12T13:43:50.544979Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:43:55.500939Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=timed out
+2026-10-12T13:43:55.566980Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:44:00.527018Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=timed out
+2026-10-12T13:44:00.595077Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:44:05.544649Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=timed out
+2026-10-12T13:44:05.625718Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:44:10.565874Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=timed out
+2026-10-12T13:44:10.651571Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:44:15.595201Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=timed out
+2026-10-12T13:44:15.683232Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:44:20.625876Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=timed out
+2026-10-12T13:44:20.710907Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:44:25.652378Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=timed out
+2026-10-12T13:44:25.742488Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:44:28.794442Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Sam/06e6ba82", "ana/259c8b03", "eve/5ce58834", "dee/b34b1dab"] skipped_offline=[]
+2026-10-12T13:44:30.683402Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=timed out
+2026-10-12T13:44:30.767454Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:44:35.711098Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=timed out
+2026-10-12T13:44:35.789783Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:44:40.742819Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=timed out
+2026-10-12T13:44:40.821393Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:44:43.796686Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:44:45.766132Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=timed out
+2026-10-12T13:44:45.844593Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:44:50.792075Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=timed out
+2026-10-12T13:44:50.873534Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:44:55.820135Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=timed out
+2026-10-12T13:44:55.895163Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:44:58.796537Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=timed out
+2026-10-12T13:45:00.845556Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=timed out
+2026-10-12T13:45:00.923635Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:45:05.873154Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=timed out
+2026-10-12T13:45:05.953276Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:45:10.894739Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=timed out
+2026-10-12T13:45:10.970748Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:45:12.094553Z DEBUG door: door: lends — answered what this computer lends actor="b34b1dab1d899be2cb33401059ce280bf0666cf8569071fa332b4a3f936e2984" lends=0
+2026-10-12T13:45:15.114469Z DEBUG door: door: lends — answered what this computer lends actor="5ce58834058372ded9cf521dda23ddec1319afa1028292340a8bbb41b95381f2" lends=0
+2026-10-12T13:45:15.923973Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=timed out
+2026-10-12T13:45:15.996001Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:45:19.122618Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 request_bytes=59
+2026-10-12T13:45:19.157501Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 request_bytes=59
+2026-10-12T13:45:21.025172Z  WARN connect{me=427b3ad9f6 alpn=cwth/http/0 remote=259c8b03f8}: noq_proto::connection: failed closing path err=MultipathNotNegotiated
+2026-10-12T13:45:21.139093Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 request_bytes=59
+2026-10-12T13:45:22.134299Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=aborted by peer: the server refused to accept a new connection
+2026-10-12T13:45:24.135696Z  WARN transport: iroh bridge: dial failed peer=259c8b03f849749cd754a013c70b3baa2f6de13a9d8c3035d8aea47499d942bd alpn=cwth/http/0 error=aborted by peer: the server refused to accept a new connection

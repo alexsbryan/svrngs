@@ -1,0 +1,569 @@
+{
+ "verdicts": [
+  {
+   "bar": "alex plays through the window",
+   "verdict": "passed",
+   "why": "played 596.5 s of 600; stills of 5 s or more outside their own seeks []; events outside their own seeks {'emptied': 0, 'loadstart': 0, 'element': 0, 'waiting': 4, 'stalled': 0, 'error': 0, 'ended': 0}; signed in after as Alex-6df0191cc56d133f"
+  },
+  {
+   "bar": "alex seeks",
+   "verdict": "passed",
+   "why": "10 seeks, 0 missed 5000 ms: [1169, 941, 835, 1778, 595, 531, 453, 453, 944, 451]"
+  },
+  {
+   "bar": "bo plays through the window",
+   "verdict": "passed",
+   "why": "played 565.1 s of 600; stills of 5 s or more outside their own seeks []; events outside their own seeks {'emptied': 0, 'loadstart': 0, 'element': 0, 'waiting': 0, 'stalled': 5, 'error': 0, 'ended': 0}; signed in after as Bo-1e424b00582c07cd"
+  },
+  {
+   "bar": "bo seeks",
+   "verdict": "failed",
+   "why": "10 seeks, 3 missed 5000 ms: [16534, 5349, 1706, 2849, 10242, 571, 450, 474, 454, 617]"
+  },
+  {
+   "bar": "cy plays through the window",
+   "verdict": "passed",
+   "why": "played 589.5 s of 600; stills of 5 s or more outside their own seeks []; events outside their own seeks {'emptied': 0, 'loadstart': 0, 'element': 0, 'waiting': 3, 'stalled': 0, 'error': 0, 'ended': 0}; signed in after as Cy-9eecfe26e7c6d0b5"
+  },
+  {
+   "bar": "cy seeks",
+   "verdict": "passed",
+   "why": "10 seeks, 0 missed 5000 ms: [3668, 2106, 1752, 1800, 1521, 963, 632, 799, 948, 810]"
+  }
+ ],
+ "seeks": {
+  "every": [
+   {
+    "user": "alex",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 5,
+    "ms": 1169,
+    "at": 60.78,
+    "target": 60,
+    "at_s": 55,
+    "load1": 54.72
+   },
+   {
+    "user": "alex",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 42,
+    "ms": 941,
+    "at": 504.36,
+    "target": 504,
+    "at_s": 109,
+    "load1": 67.4
+   },
+   {
+    "user": "alex",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 79,
+    "ms": 835,
+    "at": 948.32,
+    "target": 948,
+    "at_s": 164,
+    "load1": 66.41
+   },
+   {
+    "user": "alex",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 35,
+    "ms": 1778,
+    "at": 420.32,
+    "target": 420,
+    "at_s": 218,
+    "load1": 78.82
+   },
+   {
+    "user": "alex",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 72,
+    "ms": 595,
+    "at": 864.3,
+    "target": 864,
+    "at_s": 273,
+    "load1": 74.54
+   },
+   {
+    "user": "alex",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 28,
+    "ms": 531,
+    "at": 336.32,
+    "target": 336,
+    "at_s": 327,
+    "load1": 45.42
+   },
+   {
+    "user": "alex",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 65,
+    "ms": 453,
+    "at": 780.34,
+    "target": 780,
+    "at_s": 382,
+    "load1": 26.84
+   },
+   {
+    "user": "alex",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 21,
+    "ms": 453,
+    "at": 252.32,
+    "target": 252,
+    "at_s": 436,
+    "load1": 15
+   },
+   {
+    "user": "alex",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 58,
+    "ms": 944,
+    "at": 696.31,
+    "target": 696,
+    "at_s": 491,
+    "load1": 11.9
+   },
+   {
+    "user": "alex",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 14,
+    "ms": 451,
+    "at": 168.32,
+    "target": 168,
+    "at_s": 545,
+    "load1": 11.59
+   },
+   {
+    "user": "bo",
+    "way": "computer",
+    "engine": "webkit",
+    "pct": 18,
+    "ms": 16534,
+    "at": 216.31,
+    "target": 216,
+    "at_s": 55,
+    "load1": 54.72
+   },
+   {
+    "user": "bo",
+    "way": "computer",
+    "engine": "webkit",
+    "pct": 55,
+    "ms": 5349,
+    "at": 660.3,
+    "target": 660,
+    "at_s": 109,
+    "load1": 67.4
+   },
+   {
+    "user": "bo",
+    "way": "computer",
+    "engine": "webkit",
+    "pct": 11,
+    "ms": 1706,
+    "at": 132.32,
+    "target": 132,
+    "at_s": 164,
+    "load1": 66.41
+   },
+   {
+    "user": "bo",
+    "way": "computer",
+    "engine": "webkit",
+    "pct": 48,
+    "ms": 2849,
+    "at": 576.32,
+    "target": 576,
+    "at_s": 218,
+    "load1": 78.82
+   },
+   {
+    "user": "bo",
+    "way": "computer",
+    "engine": "webkit",
+    "pct": 85,
+    "ms": 10242,
+    "at": 1020.32,
+    "target": 1020,
+    "at_s": 273,
+    "load1": 74.54
+   },
+   {
+    "user": "bo",
+    "way": "computer",
+    "engine": "webkit",
+    "pct": 41,
+    "ms": 571,
+    "at": 492.31,
+    "target": 492,
+    "at_s": 327,
+    "load1": 45.42
+   },
+   {
+    "user": "bo",
+    "way": "computer",
+    "engine": "webkit",
+    "pct": 78,
+    "ms": 450,
+    "at": 936.33,
+    "target": 936,
+    "at_s": 382,
+    "load1": 26.84
+   },
+   {
+    "user": "bo",
+    "way": "computer",
+    "engine": "webkit",
+    "pct": 34,
+    "ms": 474,
+    "at": 408.31,
+    "target": 408,
+    "at_s": 436,
+    "load1": 15
+   },
+   {
+    "user": "bo",
+    "way": "computer",
+    "engine": "webkit",
+    "pct": 71,
+    "ms": 454,
+    "at": 852.32,
+    "target": 852,
+    "at_s": 491,
+    "load1": 11.9
+   },
+   {
+    "user": "bo",
+    "way": "computer",
+    "engine": "webkit",
+    "pct": 27,
+    "ms": 617,
+    "at": 324.32,
+    "target": 324,
+    "at_s": 545,
+    "load1": 11.59
+   },
+   {
+    "user": "cy",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 31,
+    "ms": 3668,
+    "at": 372.32,
+    "target": 372.01,
+    "at_s": 55,
+    "load1": 54.72
+   },
+   {
+    "user": "cy",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 68,
+    "ms": 2106,
+    "at": 816.37,
+    "target": 816.01,
+    "at_s": 109,
+    "load1": 67.4
+   },
+   {
+    "user": "cy",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 24,
+    "ms": 1752,
+    "at": 288.35,
+    "target": 288.01,
+    "at_s": 164,
+    "load1": 66.41
+   },
+   {
+    "user": "cy",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 61,
+    "ms": 1800,
+    "at": 732.33,
+    "target": 732.01,
+    "at_s": 218,
+    "load1": 78.82
+   },
+   {
+    "user": "cy",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 17,
+    "ms": 1521,
+    "at": 204.3,
+    "target": 204,
+    "at_s": 273,
+    "load1": 74.54
+   },
+   {
+    "user": "cy",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 54,
+    "ms": 963,
+    "at": 648.34,
+    "target": 648.01,
+    "at_s": 327,
+    "load1": 45.42
+   },
+   {
+    "user": "cy",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 10,
+    "ms": 632,
+    "at": 120.31,
+    "target": 120,
+    "at_s": 382,
+    "load1": 26.84
+   },
+   {
+    "user": "cy",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 47,
+    "ms": 799,
+    "at": 564.32,
+    "target": 564.01,
+    "at_s": 436,
+    "load1": 15
+   },
+   {
+    "user": "cy",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 84,
+    "ms": 948,
+    "at": 1008.32,
+    "target": 1008.02,
+    "at_s": 491,
+    "load1": 11.9
+   },
+   {
+    "user": "cy",
+    "way": "computer",
+    "engine": "chromium",
+    "pct": 40,
+    "ms": 810,
+    "at": 480.33,
+    "target": 480.01,
+    "at_s": 545,
+    "load1": 11.59
+   }
+  ],
+  "count": 30,
+  "missed_5s": 3,
+  "spread_ms": {
+   "n": 30,
+   "min": 450,
+   "median": 942.5,
+   "max": 16534
+  }
+ },
+ "per_person": {
+  "alex": {
+   "way": "computer",
+   "engine": "chromium",
+   "seeks": 10,
+   "missed_5s": 0,
+   "spread_ms": {
+    "n": 10,
+    "min": 451,
+    "median": 715.0,
+    "max": 1778
+   }
+  },
+  "bo": {
+   "way": "computer",
+   "engine": "webkit",
+   "seeks": 10,
+   "missed_5s": 3,
+   "spread_ms": {
+    "n": 10,
+    "min": 450,
+    "median": 1161.5,
+    "max": 16534
+   }
+  },
+  "cy": {
+   "way": "computer",
+   "engine": "chromium",
+   "seeks": 10,
+   "missed_5s": 0,
+   "spread_ms": {
+    "n": 10,
+    "min": 632,
+    "median": 1242.0,
+    "max": 3668
+   }
+  }
+ },
+ "door": {
+  "Alex": {
+   "let_in": 0,
+   "home": 255
+  },
+  "Cy": {
+   "let_in": 4,
+   "home": 259,
+   "people": {
+    "n": 4,
+    "min": 1,
+    "median": 1.0,
+    "max": 1
+   },
+   "share_bps": {
+    "n": 4,
+    "min": 37000000,
+    "median": 37000000.0,
+    "max": 37000000
+   },
+   "declared_bps": 37000000,
+   "relayed": {
+    "Some(false)": 4
+   },
+   "rtt_ms": {
+    "n": 4,
+    "min": 7,
+    "median": 37.5,
+    "max": 169
+   }
+  },
+  "Bo": {
+   "let_in": 3,
+   "home": 1629,
+   "people": {
+    "n": 3,
+    "min": 1,
+    "median": 2,
+    "max": 2
+   },
+   "share_bps": {
+    "n": 3,
+    "min": 18500000,
+    "median": 18500000,
+    "max": 37000000
+   },
+   "declared_bps": 37000000,
+   "relayed": {
+    "Some(false)": 2,
+    "None": 1
+   },
+   "rtt_ms": {
+    "n": 2,
+    "min": 32,
+    "median": 82.0,
+    "max": 132
+   }
+  }
+ },
+ "streams_mid": [
+  {
+   "user": "Alex-6df0191cc56d133f",
+   "device": "svrngs-6df0191cc56d133f",
+   "item": "Test Pattern One",
+   "method": "DirectPlay",
+   "bitrate": null,
+   "video": null,
+   "direct": null,
+   "reasons": null,
+   "paused": false
+  },
+  {
+   "user": "Bo-1e424b00582c07cd",
+   "device": "svrngs-1e424b00582c07cd",
+   "item": "Test Pattern Two",
+   "method": "Transcode",
+   "bitrate": 3730555,
+   "video": "h264",
+   "direct": {
+    "video": false,
+    "audio": false
+   },
+   "reasons": [
+    "ContainerNotSupported",
+    "VideoCodecNotSupported",
+    "AudioCodecNotSupported"
+   ],
+   "paused": false
+  },
+  {
+   "user": "Cy-9eecfe26e7c6d0b5",
+   "device": "svrngs-9eecfe26e7c6d0b5",
+   "item": "Test Pattern Three",
+   "method": "DirectPlay",
+   "bitrate": null,
+   "video": null,
+   "direct": null,
+   "reasons": null,
+   "paused": false
+  }
+ ],
+ "streams_end": [
+  {
+   "user": "Alex-6df0191cc56d133f",
+   "device": "svrngs-6df0191cc56d133f",
+   "item": "Test Pattern One",
+   "method": "DirectPlay",
+   "bitrate": null,
+   "video": null,
+   "direct": null,
+   "reasons": null,
+   "paused": false
+  },
+  {
+   "user": "Bo-1e424b00582c07cd",
+   "device": "svrngs-1e424b00582c07cd",
+   "item": "Test Pattern Two",
+   "method": "Transcode",
+   "bitrate": 3730555,
+   "video": "h264",
+   "direct": {
+    "video": false,
+    "audio": false
+   },
+   "reasons": [
+    "ContainerNotSupported",
+    "VideoCodecNotSupported",
+    "AudioCodecNotSupported"
+   ],
+   "paused": false
+  },
+  {
+   "user": "Cy-9eecfe26e7c6d0b5",
+   "device": "svrngs-9eecfe26e7c6d0b5",
+   "item": "Test Pattern Three",
+   "method": "DirectPlay",
+   "bitrate": null,
+   "video": null,
+   "direct": null,
+   "reasons": null,
+   "paused": false
+  }
+ ],
+ "load": {
+  "start": 40.91,
+  "end": 9.79,
+  "at_seeks": {
+   "n": 30,
+   "min": 11.59,
+   "median": 50.07,
+   "max": 78.82
+  }
+ },
+ "door_lines_from": "2026-10-12T04:26:07.695Z",
+ "door_lines_until": "2026-10-12T04:36:29.821Z"
+}

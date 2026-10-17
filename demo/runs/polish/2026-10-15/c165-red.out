@@ -1,0 +1,9 @@
+thread 'an_app_reads_only_its_own_acts_and_writes_only_as_the_person' (48581469) panicked at crates/svrngs-node/tests/carried.rs:312:5:
+assertion `left == right` failed: {corrects} alone is no act
+  left: 200
+ right: 422
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+--
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2 filtered out; finished in 1.32s
+
+error: test failed, to rerun pass `-p svrngs-node --test carried`

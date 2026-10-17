@@ -1,0 +1,31 @@
+{
+ "sam": {
+  "acts": [
+   "82d1844b",
+   "dfd7b544",
+   "49eb1a43",
+   "56a6c52b"
+  ],
+  "folder": []
+ },
+ "ana": {
+  "acts": [
+   "82d1844b",
+   "dfd7b544",
+   "0d06693d",
+   "75e68e7a"
+  ],
+  "folder": [
+   "trip-1.jpg",
+   "trip-2.jpg"
+  ]
+ },
+ "alex": {
+  "acts": [
+   "82d1844b",
+   "dfd7b544",
+   "49eb1a43"
+  ],
+  "folder": []
+ }
+}

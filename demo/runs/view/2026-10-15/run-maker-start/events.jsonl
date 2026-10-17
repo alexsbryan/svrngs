@@ -1,0 +1,13 @@
+{"t": 1792118434.0, "event": "begin", "head": "8ab83940", "start": "/tmp/arch-view-bins/svrngs-start-c276c34f", "close": "/tmp/arch-view-bins/svrngs-close-8ab83940", "maker": "start", "load": [3.044921875, 3.81494140625, 5.65087890625]}
+{"t": 1792118434.002, "event": "svrngs", "who": "ana", "build": "start", "args": ["new", "Lab", "--as", "Ana"]}
+{"t": 1792118437.236, "event": "svrngs", "who": "bo", "build": "close", "args": ["join", "<link>", "--as", "Bo"]}
+{"t": 1792118441.088, "event": "running", "who": "ana", "api": "http://127.0.0.1:60218"}
+{"t": 1792118441.088, "event": "running", "who": "bo", "api": "http://127.0.0.1:60245"}
+{"t": 1792118441.136, "event": "append", "who": "ana", "act": {"op": "record", "payload": {"kind": "note", "what": "a1"}}, "status": 200}
+{"t": 1792118441.143, "event": "append", "who": "ana", "act": {"op": "record", "payload": {"kind": "note", "what": "a2"}}, "status": 200}
+{"t": 1792118441.153, "event": "append", "who": "ana", "act": {"op": "record", "payload": {"kind": "note", "what": "a3"}}, "status": 200}
+{"t": 1792118441.16, "event": "append", "who": "bo", "act": {"op": "record", "payload": {"kind": "note", "what": "b1"}}, "status": 200}
+{"t": 1792118441.17, "event": "append", "who": "bo", "act": {"op": "record", "payload": {"kind": "note", "what": "b2"}}, "status": 200}
+{"t": 1792118441.182, "event": "append", "who": "bo", "act": {"op": "record", "payload": {"kind": "note", "what": "b3"}}, "status": 200}
+{"t": 1792118441.85, "event": "in step", "seconds": 0.67}
+{"t": 1792118452.0, "event": "summary", "head": "8ab83940", "maker": "start", "start_bin": "/tmp/arch-view-bins/svrngs-start-c276c34f", "close_bin": "/tmp/arch-view-bins/svrngs-close-8ab83940", "held": {"ana": 10, "bo": 10, "both": 10}, "only_ana": [], "only_bo": [], "both_hold_differently": [], "records_counted": {"ana": ["a1", "a2", "a3", "b1", "b2", "b3"], "bo": ["a1", "a2", "a3", "b1", "b2", "b3"]}, "complete": {"ana": true, "bo": true}, "gaps": {"ana": [], "bo": []}, "records_by_build": {"close": [{"what": "b3", "view": false, "v": 1}, {"what": "b1", "view": false, "v": 1}, {"what": "b2", "view": false, "v": 1}], "start": [{"what": "a2", "view": true, "v": 1}, {"what": "a3", "view": true, "v": 1}, {"what": "a1", "view": true, "v": 1}]}, "lines_with_a_view": {"ana": 6, "bo": 6}}

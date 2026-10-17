@@ -1,0 +1,8 @@
+thread 'a_folder_under_apps_no_lend_can_be_named_by_is_traced_as_left_out' (48654784) panicked at crates/svrngs-node/tests/carried.rs:547:5:
+2026-10-15T18:27:30.477934Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path=apps/no kind!/index.html size=78 mtime=Some(SystemTime { tv_sec: 1792088850, tv_nsec: 420999086 }) was=None
+2026-10-15T18:27:30.477955Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path=apps/no kind!/app.js size=21 mtime=Some(SystemTime { tv_sec: 1792088850, tv_nsec: 421115753 }) was=None
+2026-10-15T18:27:30.479770Z DEBUG folder: synced: taken into the store folder="Shared" path=apps/no kind!/index.html hash=89d394527f945ddc2338c0634fce38f01b2e84b2454e0d388f7c7ac3f489d649 ms=1
+2026-10-15T18:27:30.479780Z DEBUG folder: synced: taken into the store folder="Shared" path=apps/no kind!/app.js hash=f9d6c77c47e9331f00d5676b07e0ec49d33d70af3b429824657b14e79d0bdc60 ms=1
+2026-10-15T18:27:30.641781Z  INFO folder: synced: a change sent folder="Shared" path=apps/no kind!/index.html now=Some((ContentHash(89d394527f945ddc), 78)) base=None
+2026-10-15T18:27:30.641793Z  INFO folder: synced: a change sent folder="Shared" path=apps/no kind!/app.js now=Some((ContentHash(f9d6c77c47e9331f), 21)) base=None
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 5 filtered out; finished in 1.30s

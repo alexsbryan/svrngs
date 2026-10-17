@@ -1,0 +1,13 @@
+diff --git a/crates/svrngs-node/src/folder.rs b/crates/svrngs-node/src/folder.rs
+index 74cad14..7b01e7f 100644
+--- a/crates/svrngs-node/src/folder.rs
++++ b/crates/svrngs-node/src/folder.rs
+@@ -459,7 +459,7 @@ impl Folders {
+     /// record cannot be read places nothing it serves, said by its name.
+     fn serves(&self, hash: Hash, dialer: &str, now: Instant) -> bool {
+         let groups = self.host.standings().unwrap_or_default();
+-        for (ns, _) in groups.iter().filter(|(_, m)| m.contains_key(dialer)) {
++        for (ns, _) in groups.iter() { // PLANT: the provider's group check out
+             if matches!(self.held(hash, ns, now), blob::Holds::For { .. }) {
+                 tracing::debug!(target: "folder", namespace = ns, dialer, "folder: the dialer stands in a group an app placed the hash in, not lapsed");
+                 return true;

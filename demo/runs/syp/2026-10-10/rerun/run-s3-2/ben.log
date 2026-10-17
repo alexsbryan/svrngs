@@ -1,0 +1,439 @@
+2026-10-11T06:29:54.855056Z  INFO transport: iroh egress posture (n0_services=false severs all n0 contact; proxy honored for relay TCP:443, Basic auth only) n0_services=true loopback_only=false relays=n0-default proxy="none"
+2026-10-11T06:29:54.857792Z DEBUG endpoint{id=14a1118862}: iroh::socket::transports::ip: binding addr=0.0.0.0:0
+2026-10-11T06:29:54.857974Z DEBUG endpoint{id=14a1118862}: iroh::socket::transports::ip: successfully bound addr=0.0.0.0:0 local_addr=0.0.0.0:50498
+2026-10-11T06:29:54.858011Z DEBUG endpoint{id=14a1118862}: iroh::socket::transports::ip: binding addr=[::]:0
+2026-10-11T06:29:54.858107Z DEBUG endpoint{id=14a1118862}: iroh::socket::transports::ip: successfully bound addr=[::]:0 local_addr=[::]:59930
+2026-10-11T06:29:54.872966Z DEBUG endpoint{id=14a1118862}: iroh::socket: scheduling periodic_stun to run immediately and in 22s
+2026-10-11T06:29:54.873026Z DEBUG endpoint{id=14a1118862}: iroh::_events::direct_addrs: addrs={DirectAddr { addr: 192.168.1.4:50498, typ: Local }}
+2026-10-11T06:29:54.873075Z DEBUG endpoint{id=14a1118862}: iroh::endpoint: iroh endpoint bound id=14a1118862eeb2f5c20c2a3fcbb2737861539bf36c8c79e98eb4f12e18aa665a iroh_version=1.0.2
+2026-10-11T06:29:54.873092Z DEBUG endpoint{id=14a1118862}: iroh::address_lookup::pkarr: creating pkarr publisher that publishes to https://dns.iroh.link/pkarr
+2026-10-11T06:29:54.873155Z DEBUG endpoint{id=14a1118862}:pkarr_publish: iroh::address_lookup::pkarr: Publishing endpoint info to pkarr data=EndpointData { addrs: [], user_data: None } pkarr_relay=https://dns.iroh.link/pkarr
+2026-10-11T06:29:54.873612Z DEBUG iroh_blobs::store::fs::meta: creating or opening meta database at /tmp/syp5-run/data/ben/blobs/blobs.db
+2026-10-11T06:29:54.874814Z DEBUG endpoint{id=14a1118862}:actor: iroh::socket: starting direct addr update (Periodic)
+2026-10-11T06:29:54.878240Z DEBUG endpoint{id=14a1118862}:actor: iroh::net_report: net_report starting do_full=true
+2026-10-11T06:29:54.902675Z DEBUG iroh_blobs::store::gc: gc enabled with interval 1s
+2026-10-11T06:29:54.902863Z  INFO folder: folder: the store is open untagged=0
+2026-10-11T06:29:54.905693Z DEBUG connect{me=14a1118862 alpn=svrngs/redeem/0 remote=2fb927ff94}: iroh::_events::conn::connecting: remote_id=2fb927ff94 alpn=svrngs/redeem/0
+2026-10-11T06:29:54.905729Z DEBUG connect{me=14a1118862 alpn=svrngs/redeem/0 remote=2fb927ff94}: iroh::endpoint: connecting relay_url=None ip_addresses=[]
+2026-10-11T06:29:55.061459Z DEBUG endpoint{id=14a1118862}:actor:QADv4: iroh::net_report: probe report r=QadProbeReport { relay: RelayUrl("https://usw1-1.relay.n0.iroh.link/"), latency: 37.733416ms, addr: 69.181.167.209:50498 }
+2026-10-11T06:29:55.143221Z DEBUG endpoint{id=14a1118862}:actor:QADv4: iroh::net_report: probe report r=QadProbeReport { relay: RelayUrl("https://use1-1.relay.n0.iroh.link/"), latency: 88.793166ms, addr: 69.181.167.209:50498 }
+2026-10-11T06:29:55.168732Z DEBUG endpoint{id=14a1118862}:actor:reportgen-actor:captive-portal: iroh::net_report::reportgen: check_captive_portal failed: error sending request for url (http://usw1-1.relay.n0.iroh.link/generate_204)
+2026-10-11T06:29:55.262094Z DEBUG endpoint{id=14a1118862}:actor:reportgen-actor:run-probe{proto=Https delay=200ms relay=https://usw1-1.relay.n0.iroh.link/}: iroh::net_report::reportgen: probe finished report=Ok(Https(HttpsProbeReport { relay: RelayUrl("https://usw1-1.relay.n0.iroh.link/"), latency: 151.342916ms }))
+2026-10-11T06:29:55.322458Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_message{msg=ResolveRemote(..)}:DnsAddressLookup{lookup_id=2fb927ff94 origin_domain=dns.iroh.link.}: iroh::address_lookup::dns: DNS lookup success info=EndpointInfo { endpoint_id: PublicKey(2fb927ff94333b516673c3c799907dd4ccc8a08365628c92075c609ad470cf2f), data: EndpointData { addrs: [Relay(https://usw1-1.relay.n0.iroh.link/)], user_data: None } }
+2026-10-11T06:29:55.322559Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}: transport: relay: a lookup's answer, its relays read dotless peer=2fb927ff94 relays=["https://usw1-1.relay.n0.iroh.link/"]
+2026-10-11T06:29:55.323305Z DEBUG endpoint{id=14a1118862}:relay-actor: iroh::socket::transports::relay::actor: Adding relay connection url=RelayUrl("https://usw1-1.relay.n0.iroh.link/")
+2026-10-11T06:29:55.323393Z DEBUG endpoint{id=14a1118862}:relay-actor: iroh::socket::transports::relay::actor: 0 active relay conns
+2026-10-11T06:29:55.323421Z DEBUG endpoint{id=14a1118862}:relay-actor: iroh::socket::transports::relay::actor: 1 active relay conns: relay-https://usw1-1.relay.n0.iroh.link/
+2026-10-11T06:29:55.323491Z DEBUG endpoint{id=14a1118862}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}:dialing: iroh_relay::client: Dialing relay by websocket dial_url=wss://usw1-1.relay.n0.iroh.link/relay
+2026-10-11T06:29:55.330382Z DEBUG endpoint{id=14a1118862}:actor:QADv4: iroh::net_report: probe report r=QadProbeReport { relay: RelayUrl("https://euc1-1.relay.n0.iroh.link/"), latency: 178.968458ms, addr: 69.181.167.209:50498 }
+2026-10-11T06:29:55.330481Z DEBUG endpoint{id=14a1118862}:actor: iroh::net_report: enough probes: 3
+2026-10-11T06:29:55.330529Z DEBUG endpoint{id=14a1118862}:actor: iroh::net_report: net_report generated report=Report { udp_v4: true, udp_v6: false, mapping_varies_by_dest_ipv4: Some(false), mapping_varies_by_dest_ipv6: None, preferred_relay: Some(RelayUrl("https://usw1-1.relay.n0.iroh.link/")), relay_latency: RelayLatencies { ipv4: {RelayUrl("https://euc1-1.relay.n0.iroh.link/"): 178.968458ms, RelayUrl("https://use1-1.relay.n0.iroh.link/"): 88.793166ms, RelayUrl("https://usw1-1.relay.n0.iroh.link/"): 37.733416ms}, ipv6: {}, https: {} }, global_v4: Some(69.181.167.209:50498), global_v6: None, captive_portal: None } duration=452.288209ms
+2026-10-11T06:29:55.330575Z DEBUG endpoint{id=14a1118862}:actor: iroh::socket: direct addr update done (Periodic)
+2026-10-11T06:29:55.330693Z DEBUG endpoint{id=14a1118862}:actor: iroh::_events::direct_addrs: addrs={DirectAddr { addr: 69.181.167.209:50498, typ: Qad }, DirectAddr { addr: 192.168.1.4:50498, typ: Local }}
+2026-10-11T06:29:55.330733Z DEBUG endpoint{id=14a1118862}:actor: iroh::socket: scheduling periodic_stun to run in 20s
+2026-10-11T06:29:55.330948Z  INFO endpoint{id=14a1118862}:relay-actor: iroh::socket::transports::relay::actor: home is now relay https://usw1-1.relay.n0.iroh.link/, was None
+2026-10-11T06:29:55.331048Z DEBUG endpoint{id=14a1118862}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}:dialing: iroh::_events::relay::home_changed: url=https://usw1-1.relay.n0.iroh.link/ home_relay=true
+2026-10-11T06:29:55.348839Z DEBUG endpoint{id=14a1118862}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}:dialing: iroh_relay::client::tls: TCP stream connected server_addr=Ok(5.78.69.43:443) local_addr=192.168.1.4:57252
+2026-10-11T06:29:55.473476Z DEBUG endpoint{id=14a1118862}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}:dialing: iroh_relay::client: Using TLS key export for relay client authentication
+2026-10-11T06:29:55.507660Z DEBUG endpoint{id=14a1118862}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}:connected: iroh::_events::relay::connected: url=https://usw1-1.relay.n0.iroh.link/ home_relay=true
+2026-10-11T06:29:55.507867Z DEBUG endpoint{id=14a1118862}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}:connected: iroh_relay::ping_tracker: Sending ping to relay server. data=[143, 215, 79, 124, 76, 145, 127, 48]
+2026-10-11T06:29:55.547481Z DEBUG endpoint{id=14a1118862}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}:connected: iroh_relay::ping_tracker: Pong received from relay server data=[143, 215, 79, 124, 76, 145, 127, 48] rtt=39.609041ms
+2026-10-11T06:29:55.587006Z DEBUG iroh::_events::conn::connected: conn_id=503027734960 side=Client remote_id=2fb927ff94 alpn=svrngs/redeem/0
+2026-10-11T06:29:55.587183Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_message{msg=AddConnection(503027734960)}: iroh::_events::path::open: remote=2fb927ff94 conn_id=503027734960 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94)
+2026-10-11T06:29:55.587262Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_message{msg=AddConnection(503027734960)}: iroh::_events::path::set_status: remote=2fb927ff94 conn_id=503027734960 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94) status=Backup prev_status=Available
+2026-10-11T06:29:55.587304Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_message{msg=AddConnection(503027734960)}:do_holepunching: iroh::_events::qnt::init: remote=2fb927ff94 local_candidates={69.181.167.209:50498, 192.168.1.4:50498} remote_candidates={}
+2026-10-11T06:29:55.587350Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_message{msg=AddConnection(503027734960)}:select_path: iroh::_events::path::selected: remote=2fb927ff94 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94) prev_network_path=None
+2026-10-11T06:29:55.587375Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_message{msg=AddConnection(503027734960)}:select_path: iroh::_events::path::set_status: remote=2fb927ff94 conn_id=503027734960 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94) status=Available prev_status=Backup
+2026-10-11T06:29:55.587422Z DEBUG iroh::endpoint: Connection established. me=14a1118862 remote=2fb927ff94 alpn=svrngs/redeem/0
+2026-10-11T06:29:55.667833Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:do_holepunching: iroh::_events::qnt::init: remote=2fb927ff94 local_candidates={69.181.167.209:50498, 192.168.1.4:50498} remote_candidates={69.181.167.209:54363, 192.168.1.4:54363}
+2026-10-11T06:29:55.668478Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(503027734960) event=Ok(Established { id: PathId(1) })}: iroh::_events::path::open: remote=2fb927ff94 conn_id=503027734960 path_id=1 network_path=Ip(192.168.1.4->192.168.1.4:54363)
+2026-10-11T06:29:55.668532Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(503027734960) event=Ok(Established { id: PathId(1) })}:select_path: iroh::_events::path::selected: remote=2fb927ff94 network_path=Ip(192.168.1.4->192.168.1.4:54363) prev_network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94)
+2026-10-11T06:29:55.668557Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(503027734960) event=Ok(Established { id: PathId(1) })}:select_path: iroh::_events::path::set_status: remote=2fb927ff94 conn_id=503027734960 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94) status=Backup prev_status=Available
+2026-10-11T06:29:55.668579Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(503027734960) event=Ok(Established { id: PathId(1) })}:select_path: iroh::_events::path::set_status: remote=2fb927ff94 conn_id=503027734960 path_id=1 network_path=Ip(192.168.1.4->192.168.1.4:54363) status=Available prev_status=Backup
+2026-10-11T06:29:55.676634Z DEBUG endpoint{id=14a1118862}:pkarr_publish: iroh::address_lookup::pkarr: Publish endpoint info to pkarr (info changed)
+2026-10-11T06:29:55.676691Z DEBUG endpoint{id=14a1118862}:pkarr_publish: iroh::address_lookup::pkarr: Publishing endpoint info to pkarr data=EndpointData { addrs: [Relay(https://usw1-1.relay.n0.iroh.link/)], user_data: None } pkarr_relay=https://dns.iroh.link/pkarr
+2026-10-11T06:29:55.687463Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(503027734960) event=Ok(Established { id: PathId(2) })}: iroh::_events::path::open: remote=2fb927ff94 conn_id=503027734960 path_id=2 network_path=Ip(192.168.1.4->69.181.167.209:54363)
+2026-10-11T06:29:55.687616Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(503027734960) event=Ok(Abandoned { id: PathId(2), reason: ApplicationClosed { error_code: 62 } })}: iroh::_events::path::abandoned: remote=2fb927ff94 conn_id=503027734960 path_id=2 network_path=Ip(192.168.1.4->69.181.167.209:54363) reason=ApplicationClosed { error_code: 62 }
+2026-10-11T06:29:55.705722Z DEBUG transport: iroh bridge: dropped — its local port stops answering now addr=127.0.0.1:57231
+2026-10-11T06:29:55.706365Z DEBUG connect{me=14a1118862 alpn=svrngs/redeem/0 remote=2fb927ff94}: iroh::_events::conn::connecting: remote_id=2fb927ff94 alpn=svrngs/redeem/0
+2026-10-11T06:29:55.706407Z DEBUG connect{me=14a1118862 alpn=svrngs/redeem/0 remote=2fb927ff94}: iroh::endpoint: connecting relay_url=None ip_addresses=[]
+2026-10-11T06:29:55.707585Z DEBUG iroh::_events::conn::connected: conn_id=503027734128 side=Client remote_id=2fb927ff94 alpn=svrngs/redeem/0
+2026-10-11T06:29:55.707735Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_message{msg=AddConnection(503027734128)}: iroh::_events::path::open: remote=2fb927ff94 conn_id=503027734128 path_id=0 network_path=Ip(192.168.1.4->192.168.1.4:54363)
+2026-10-11T06:29:55.707809Z DEBUG iroh::endpoint: Connection established. me=14a1118862 remote=2fb927ff94 alpn=svrngs/redeem/0
+2026-10-11T06:29:55.716323Z DEBUG transport: iroh bridge: dropped — its local port stops answering now addr=127.0.0.1:57254
+2026-10-11T06:29:55.717162Z DEBUG transport: iroh: a bare key — dialled through the endpoint's address lookup when it has one transport="iroh" peer=2fb927ff lookup=true
+2026-10-11T06:29:55.717253Z DEBUG transport: transport: resolved transport="iroh" peer=2fb927ff first=iroh:127.0.0.1:26812→2fb927ff
+2026-10-11T06:29:55.717541Z DEBUG connect{me=14a1118862 alpn=cwth/http/0 remote=2fb927ff94}: iroh::_events::conn::connecting: remote_id=2fb927ff94 alpn=cwth/http/0
+2026-10-11T06:29:55.717564Z DEBUG connect{me=14a1118862 alpn=cwth/http/0 remote=2fb927ff94}: iroh::endpoint: connecting relay_url=None ip_addresses=[]
+2026-10-11T06:29:55.718623Z DEBUG iroh::_events::conn::connected: conn_id=503027733936 side=Client remote_id=2fb927ff94 alpn=cwth/http/0
+2026-10-11T06:29:55.718908Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_message{msg=AddConnection(503027733936)}: iroh::_events::path::open: remote=2fb927ff94 conn_id=503027733936 path_id=0 network_path=Ip(192.168.1.4->192.168.1.4:54363)
+2026-10-11T06:29:55.718983Z DEBUG iroh::endpoint: Connection established. me=14a1118862 remote=2fb927ff94 alpn=cwth/http/0
+2026-10-11T06:29:55.995018Z DEBUG folder: folder: what the store keeps changed, so it drops every other version kept=0
+2026-10-11T06:29:55.995293Z DEBUG iroh_blobs::store::gc: gc: start externally_protected=0
+2026-10-11T06:29:55.999370Z DEBUG iroh_blobs::store::gc: traversing tags
+2026-10-11T06:29:55.999484Z DEBUG iroh_blobs::store::gc: traversing temp roots
+2026-10-11T06:29:55.999543Z DEBUG iroh_blobs::store::gc: gc mark done. found 0 live blobs
+2026-10-11T06:29:55.999567Z DEBUG iroh_blobs::store::gc: gc: sweep total_protected=0
+2026-10-11T06:29:55.999760Z DEBUG iroh_blobs::store::gc: deleted 0 blobs
+2026-10-11T06:29:55.999786Z DEBUG iroh_blobs::store::gc: gc: done
+2026-10-11T06:29:56.154285Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(503027734128) event=Ok(Established { id: PathId(1) })}: iroh::_events::path::open: remote=2fb927ff94 conn_id=503027734128 path_id=1 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94)
+2026-10-11T06:29:56.154409Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(503027733936) event=Ok(Established { id: PathId(1) })}: iroh::_events::path::open: remote=2fb927ff94 conn_id=503027733936 path_id=1 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94)
+2026-10-11T06:29:56.866585Z  INFO transport: iroh egress posture (n0_services=false severs all n0 contact; proxy honored for relay TCP:443, Basic auth only) n0_services=true loopback_only=false relays=n0-default proxy="none"
+2026-10-11T06:29:56.867906Z DEBUG endpoint{id=14a1118862}: iroh::socket::transports::ip: binding addr=0.0.0.0:0
+2026-10-11T06:29:56.867958Z DEBUG endpoint{id=14a1118862}: iroh::socket::transports::ip: successfully bound addr=0.0.0.0:0 local_addr=0.0.0.0:49907
+2026-10-11T06:29:56.867983Z DEBUG endpoint{id=14a1118862}: iroh::socket::transports::ip: binding addr=[::]:0
+2026-10-11T06:29:56.868013Z DEBUG endpoint{id=14a1118862}: iroh::socket::transports::ip: successfully bound addr=[::]:0 local_addr=[::]:61663
+2026-10-11T06:29:56.877416Z DEBUG endpoint{id=14a1118862}: iroh::socket: scheduling periodic_stun to run immediately and in 22s
+2026-10-11T06:29:56.877459Z DEBUG endpoint{id=14a1118862}: iroh::_events::direct_addrs: addrs={DirectAddr { addr: 192.168.1.4:49907, typ: Local }}
+2026-10-11T06:29:56.877501Z DEBUG endpoint{id=14a1118862}: iroh::endpoint: iroh endpoint bound id=14a1118862eeb2f5c20c2a3fcbb2737861539bf36c8c79e98eb4f12e18aa665a iroh_version=1.0.2
+2026-10-11T06:29:56.877516Z DEBUG endpoint{id=14a1118862}: iroh::address_lookup::pkarr: creating pkarr publisher that publishes to https://dns.iroh.link/pkarr
+2026-10-11T06:29:56.877568Z DEBUG endpoint{id=14a1118862}:pkarr_publish: iroh::address_lookup::pkarr: Publish endpoint info to pkarr (info changed)
+2026-10-11T06:29:56.877584Z DEBUG endpoint{id=14a1118862}:pkarr_publish: iroh::address_lookup::pkarr: Publishing endpoint info to pkarr data=EndpointData { addrs: [], user_data: None } pkarr_relay=https://dns.iroh.link/pkarr
+2026-10-11T06:29:56.877876Z DEBUG iroh_blobs::store::fs::meta: creating or opening meta database at /tmp/syp5-run/data/ben/blobs/blobs.db
+2026-10-11T06:29:56.879219Z DEBUG endpoint{id=14a1118862}:actor: iroh::socket: starting direct addr update (Periodic)
+2026-10-11T06:29:56.882176Z DEBUG endpoint{id=14a1118862}:actor: iroh::net_report: net_report starting do_full=true
+2026-10-11T06:29:56.902191Z DEBUG iroh_blobs::store::gc: gc enabled with interval 1s
+2026-10-11T06:29:56.902405Z  INFO folder: folder: the store is open untagged=0
+2026-10-11T06:29:56.903866Z DEBUG transport: iroh: a bare key — dialled through the endpoint's address lookup when it has one transport="iroh" peer=2fb927ff lookup=true
+2026-10-11T06:29:56.903906Z DEBUG transport: transport: resolved transport="iroh" peer=2fb927ff first=iroh:127.0.0.1:26812→2fb927ff
+2026-10-11T06:29:56.904002Z DEBUG transport: transport: resolved transport="iroh" peer=2fb927ff first=iroh:127.0.0.1:26812→2fb927ff
+2026-10-11T06:29:56.904142Z DEBUG connect{me=14a1118862 alpn=cwth/http/0 remote=2fb927ff94}: iroh::_events::conn::connecting: remote_id=2fb927ff94 alpn=cwth/http/0
+2026-10-11T06:29:56.904154Z DEBUG connect{me=14a1118862 alpn=cwth/http/0 remote=2fb927ff94}: iroh::endpoint: connecting relay_url=None ip_addresses=[]
+2026-10-11T06:29:56.904221Z DEBUG connect{me=14a1118862 alpn=cwth/http/0 remote=2fb927ff94}: iroh::_events::conn::connecting: remote_id=2fb927ff94 alpn=cwth/http/0
+2026-10-11T06:29:56.904232Z DEBUG connect{me=14a1118862 alpn=cwth/http/0 remote=2fb927ff94}: iroh::endpoint: connecting relay_url=None ip_addresses=[]
+2026-10-11T06:29:57.055762Z DEBUG endpoint{id=14a1118862}:actor:QADv4: iroh::net_report: probe report r=QadProbeReport { relay: RelayUrl("https://usw1-1.relay.n0.iroh.link/"), latency: 39.926167ms, addr: 69.181.167.209:49907 }
+2026-10-11T06:29:57.061100Z  INFO folder: synced: the directory kept in step with the group's folder namespace="23e59269ba7469a7731d627db3a55e2b0c5468f083be472d3b11b0c1aa60664d" folder="Shared" dir=/tmp/syp5-run/disk/ben/Shared
+2026-10-11T06:29:57.063641Z DEBUG folder: synced: the OS's file events watched, the directory walked whole each 600s namespace="23e59269ba7469a7731d627db3a55e2b0c5468f083be472d3b11b0c1aa60664d" folder="Shared"
+2026-10-11T06:29:57.064346Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=0 replaced=0 placed=0 conflicts=0
+2026-10-11T06:29:57.064367Z DEBUG folder: folder: the layout read again, the record having moved namespace="23e59269ba7469a7731d627db3a55e2b0c5468f083be472d3b11b0c1aa60664d" placed=0
+2026-10-11T06:29:57.064382Z DEBUG folder: synced: the layout read folder="Shared" placed=0 holders=2 ms=0
+2026-10-11T06:29:57.064453Z DEBUG folder: synced: the layout to write folder="Shared" placed=0
+2026-10-11T06:29:57.064493Z DEBUG folder: synced: a step folder="Shared" files=0 sent=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=0
+2026-10-11T06:29:57.095721Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_message{msg=ResolveRemote(..)}:DnsAddressLookup{lookup_id=2fb927ff94 origin_domain=dns.iroh.link.}: iroh::address_lookup::dns: DNS lookup success info=EndpointInfo { endpoint_id: PublicKey(2fb927ff94333b516673c3c799907dd4ccc8a08365628c92075c609ad470cf2f), data: EndpointData { addrs: [Relay(https://usw1-1.relay.n0.iroh.link/)], user_data: None } }
+2026-10-11T06:29:57.098325Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}: transport: relay: a lookup's answer, its relays read dotless peer=2fb927ff94 relays=["https://usw1-1.relay.n0.iroh.link/"]
+2026-10-11T06:29:57.098475Z DEBUG endpoint{id=14a1118862}:relay-actor: iroh::socket::transports::relay::actor: Adding relay connection url=RelayUrl("https://usw1-1.relay.n0.iroh.link/")
+2026-10-11T06:29:57.098505Z DEBUG endpoint{id=14a1118862}:relay-actor: iroh::socket::transports::relay::actor: 0 active relay conns
+2026-10-11T06:29:57.098514Z DEBUG endpoint{id=14a1118862}:relay-actor: iroh::socket::transports::relay::actor: 1 active relay conns: relay-https://usw1-1.relay.n0.iroh.link/
+2026-10-11T06:29:57.098540Z DEBUG endpoint{id=14a1118862}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}:dialing: iroh_relay::client: Dialing relay by websocket dial_url=wss://usw1-1.relay.n0.iroh.link/relay
+2026-10-11T06:29:57.125249Z DEBUG endpoint{id=14a1118862}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}:dialing: iroh_relay::client::tls: TCP stream connected server_addr=Ok(5.78.69.43:443) local_addr=192.168.1.4:57321
+2026-10-11T06:29:57.127083Z DEBUG endpoint{id=14a1118862}:actor:QADv4: iroh::net_report: probe report r=QadProbeReport { relay: RelayUrl("https://use1-1.relay.n0.iroh.link/"), latency: 140.902958ms, addr: 69.181.167.209:49907 }
+2026-10-11T06:29:57.169405Z DEBUG endpoint{id=14a1118862}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}:dialing: iroh_relay::client: Using TLS key export for relay client authentication
+2026-10-11T06:29:57.207769Z DEBUG endpoint{id=14a1118862}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}:connected: iroh::_events::relay::connected: url=https://usw1-1.relay.n0.iroh.link/ home_relay=false
+2026-10-11T06:29:57.209194Z DEBUG endpoint{id=14a1118862}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}:connected: iroh_relay::ping_tracker: Sending ping to relay server. data=[97, 50, 158, 215, 42, 71, 35, 91]
+2026-10-11T06:29:57.252692Z DEBUG endpoint{id=14a1118862}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}:connected: iroh_relay::ping_tracker: Pong received from relay server data=[97, 50, 158, 215, 42, 71, 35, 91] rtt=43.496292ms
+2026-10-11T06:29:57.259337Z DEBUG endpoint{id=14a1118862}:actor:reportgen-actor:run-probe{proto=Https delay=200ms relay=https://usw1-1.relay.n0.iroh.link/}: iroh::net_report::reportgen: probe finished report=Ok(Https(HttpsProbeReport { relay: RelayUrl("https://usw1-1.relay.n0.iroh.link/"), latency: 148.2295ms }))
+2026-10-11T06:29:57.273088Z DEBUG endpoint{id=14a1118862}:actor:QADv4: iroh::net_report: probe report r=QadProbeReport { relay: RelayUrl("https://euc1-1.relay.n0.iroh.link/"), latency: 182.541542ms, addr: 69.181.167.209:49907 }
+2026-10-11T06:29:57.273166Z DEBUG endpoint{id=14a1118862}:actor: iroh::net_report: enough probes: 3
+2026-10-11T06:29:57.273208Z DEBUG endpoint{id=14a1118862}:actor: iroh::net_report: net_report generated report=Report { udp_v4: true, udp_v6: false, mapping_varies_by_dest_ipv4: Some(false), mapping_varies_by_dest_ipv6: None, preferred_relay: Some(RelayUrl("https://usw1-1.relay.n0.iroh.link/")), relay_latency: RelayLatencies { ipv4: {RelayUrl("https://euc1-1.relay.n0.iroh.link/"): 182.541542ms, RelayUrl("https://use1-1.relay.n0.iroh.link/"): 140.902958ms, RelayUrl("https://usw1-1.relay.n0.iroh.link/"): 39.926167ms}, ipv6: {}, https: {} }, global_v4: Some(69.181.167.209:49907), global_v6: None, captive_portal: None } duration=391.032042ms
+2026-10-11T06:29:57.273280Z DEBUG endpoint{id=14a1118862}:actor: iroh::socket: direct addr update done (Periodic)
+2026-10-11T06:29:57.273569Z DEBUG endpoint{id=14a1118862}:actor: iroh::_events::direct_addrs: addrs={DirectAddr { addr: 69.181.167.209:49907, typ: Qad }, DirectAddr { addr: 192.168.1.4:49907, typ: Local }}
+2026-10-11T06:29:57.273621Z DEBUG endpoint{id=14a1118862}:actor: iroh::socket: scheduling periodic_stun to run in 22s
+2026-10-11T06:29:57.273718Z  INFO endpoint{id=14a1118862}:relay-actor: iroh::socket::transports::relay::actor: home is now relay https://usw1-1.relay.n0.iroh.link/, was None
+2026-10-11T06:29:57.273778Z DEBUG endpoint{id=14a1118862}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}:connected: iroh::_events::relay::home_changed: url=https://usw1-1.relay.n0.iroh.link/ home_relay=true
+2026-10-11T06:29:57.285026Z DEBUG iroh::_events::conn::connected: conn_id=514701641008 side=Client remote_id=2fb927ff94 alpn=cwth/http/0
+2026-10-11T06:29:57.285026Z DEBUG iroh::_events::conn::connected: conn_id=514701641072 side=Client remote_id=2fb927ff94 alpn=cwth/http/0
+2026-10-11T06:29:57.285162Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_message{msg=AddConnection(514701641008)}: iroh::_events::path::open: remote=2fb927ff94 conn_id=514701641008 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94)
+2026-10-11T06:29:57.285203Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_message{msg=AddConnection(514701641008)}: iroh::_events::path::set_status: remote=2fb927ff94 conn_id=514701641008 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94) status=Backup prev_status=Available
+2026-10-11T06:29:57.285237Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_message{msg=AddConnection(514701641008)}:do_holepunching: iroh::_events::qnt::init: remote=2fb927ff94 local_candidates={69.181.167.209:49907, 192.168.1.4:49907} remote_candidates={}
+2026-10-11T06:29:57.285279Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_message{msg=AddConnection(514701641008)}:select_path: iroh::_events::path::selected: remote=2fb927ff94 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94) prev_network_path=None
+2026-10-11T06:29:57.285302Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_message{msg=AddConnection(514701641008)}:select_path: iroh::_events::path::set_status: remote=2fb927ff94 conn_id=514701641008 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94) status=Available prev_status=Backup
+2026-10-11T06:29:57.285340Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_message{msg=AddConnection(514701641072)}: iroh::_events::path::open: remote=2fb927ff94 conn_id=514701641072 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94)
+2026-10-11T06:29:57.285356Z DEBUG iroh::endpoint: Connection established. me=14a1118862 remote=2fb927ff94 alpn=cwth/http/0
+2026-10-11T06:29:57.285388Z DEBUG iroh::endpoint: Connection established. me=14a1118862 remote=2fb927ff94 alpn=cwth/http/0
+2026-10-11T06:29:57.390084Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:do_holepunching: iroh::_events::qnt::init: remote=2fb927ff94 local_candidates={69.181.167.209:49907, 192.168.1.4:49907} remote_candidates={69.181.167.209:60129, 192.168.1.4:60129}
+2026-10-11T06:29:57.390943Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(514701641008) event=Ok(Established { id: PathId(1) })}: iroh::_events::path::open: remote=2fb927ff94 conn_id=514701641008 path_id=1 network_path=Ip(192.168.1.4->192.168.1.4:60129)
+2026-10-11T06:29:57.391004Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(514701641008) event=Ok(Established { id: PathId(1) })}:select_path: iroh::_events::path::selected: remote=2fb927ff94 network_path=Ip(192.168.1.4->192.168.1.4:60129) prev_network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94)
+2026-10-11T06:29:57.391058Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(514701641008) event=Ok(Established { id: PathId(1) })}:select_path: iroh::_events::path::set_status: remote=2fb927ff94 conn_id=514701641072 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94) status=Backup prev_status=Available
+2026-10-11T06:29:57.391086Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(514701641008) event=Ok(Established { id: PathId(1) })}:select_path: iroh::_events::path::set_status: remote=2fb927ff94 conn_id=514701641008 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94) status=Backup prev_status=Available
+2026-10-11T06:29:57.391109Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(514701641008) event=Ok(Established { id: PathId(1) })}:select_path: iroh::_events::path::set_status: remote=2fb927ff94 conn_id=514701641008 path_id=1 network_path=Ip(192.168.1.4->192.168.1.4:60129) status=Available prev_status=Backup
+2026-10-11T06:29:57.392291Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(514701641072) event=Ok(Established { id: PathId(1) })}: iroh::_events::path::open: remote=2fb927ff94 conn_id=514701641072 path_id=1 network_path=Ip(192.168.1.4->192.168.1.4:60129)
+2026-10-11T06:29:57.399570Z DEBUG folder: synced: the step woken, the group's record having taken an act namespace="23e59269ba7469a7731d627db3a55e2b0c5468f083be472d3b11b0c1aa60664d" folder="Shared"
+2026-10-11T06:29:57.402779Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=1 replaced=0 placed=1 conflicts=0
+2026-10-11T06:29:57.402846Z DEBUG folder: folder: the layout read again, the record having moved namespace="23e59269ba7469a7731d627db3a55e2b0c5468f083be472d3b11b0c1aa60664d" placed=1
+2026-10-11T06:29:57.402892Z DEBUG folder: synced: the layout read folder="Shared" placed=1 holders=3 ms=3
+2026-10-11T06:29:57.402977Z DEBUG folder: synced: the layout to write folder="Shared" placed=1
+2026-10-11T06:29:57.403047Z DEBUG folder: synced: to fetch, the layout placing it here folder="Shared" path=s3.txt hash=c23fddead5d762f252f52b6f9b3297f1120acc76074e55cca4ea4e4792c21862 size=14 from="2fb927ff94333b516673c3c799907dd4ccc8a08365628c92075c609ad470cf2f" seq=3
+2026-10-11T06:29:57.403476Z DEBUG connect{me=14a1118862 alpn=/iroh-bytes/4 remote=2fb927ff94}: iroh::_events::conn::connecting: remote_id=2fb927ff94 alpn=/iroh-bytes/4
+2026-10-11T06:29:57.403510Z DEBUG connect{me=14a1118862 alpn=/iroh-bytes/4 remote=2fb927ff94}: iroh::endpoint: connecting relay_url=None ip_addresses=[]
+2026-10-11T06:29:57.404740Z DEBUG iroh::_events::conn::connected: conn_id=514701641424 side=Client remote_id=2fb927ff94 alpn=/iroh-bytes/4
+2026-10-11T06:29:57.404856Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_message{msg=AddConnection(514701641424)}: iroh::_events::path::open: remote=2fb927ff94 conn_id=514701641424 path_id=0 network_path=Ip(192.168.1.4->192.168.1.4:60129)
+2026-10-11T06:29:57.404930Z DEBUG iroh::endpoint: Connection established. me=14a1118862 remote=2fb927ff94 alpn=/iroh-bytes/4
+2026-10-11T06:29:57.405092Z DEBUG iroh_blobs::get::fsm: sending request
+2026-10-11T06:29:57.407012Z DEBUG folder: folder: the fetch's phases, and the path iroh selected holder=2fb927ff94333b516673c3c799907dd4ccc8a08365628c92075c609ad470cf2f dial_ms=1.535 first_ms=3.421 last_ms=3.589 relayed=Some(false) addr="Ip(192.168.1.4:60129)" rtt_ms=0.643 ok=true
+2026-10-11T06:29:57.407061Z  INFO folder: folder: fetched, verified hash=c23fddead5d762f252f52b6f9b3297f1120acc76074e55cca4ea4e4792c21862 holder=2fb927ff94333b516673c3c799907dd4ccc8a08365628c92075c609ad470cf2f payload=14 other=8 ms=3
+2026-10-11T06:29:57.407610Z  INFO folder: synced: written into the directory folder="Shared" path=s3.txt hash=c23fddead5d762f252f52b6f9b3297f1120acc76074e55cca4ea4e4792c21862 from="2fb927ff94333b516673c3c799907dd4ccc8a08365628c92075c609ad470cf2f" seq=3 beside=false fetch_ms=3 export_ms=0
+2026-10-11T06:29:57.412185Z DEBUG folder: synced: what the step took or fetched made durable folder="Shared" held=1
+2026-10-11T06:29:57.412745Z DEBUG folder: synced: a step folder="Shared" files=0 sent=0 read_ms=3 walk_ms=0 take_ms=0 write_ms=0 apply_ms=4 kept_ms=5 ms=13
+2026-10-11T06:29:57.415323Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(514701641008) event=Ok(Established { id: PathId(2) })}: iroh::_events::path::open: remote=2fb927ff94 conn_id=514701641008 path_id=2 network_path=Ip(192.168.1.4->69.181.167.209:60129)
+2026-10-11T06:29:57.415473Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(514701641008) event=Ok(Abandoned { id: PathId(2), reason: ApplicationClosed { error_code: 62 } })}: iroh::_events::path::abandoned: remote=2fb927ff94 conn_id=514701641008 path_id=2 network_path=Ip(192.168.1.4->69.181.167.209:60129) reason=ApplicationClosed { error_code: 62 }
+2026-10-11T06:29:57.463496Z DEBUG folder: synced: the step woken, the OS saying files changed namespace="23e59269ba7469a7731d627db3a55e2b0c5468f083be472d3b11b0c1aa60664d" folder="Shared" paths=1
+2026-10-11T06:29:57.463843Z DEBUG folder: synced: the layout read folder="Shared" placed=1 holders=3 ms=0
+2026-10-11T06:29:57.463964Z DEBUG folder: synced: the layout to write folder="Shared" placed=1
+2026-10-11T06:29:57.464024Z DEBUG folder: synced: a step folder="Shared" files=1 sent=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=0
+2026-10-11T06:29:57.564022Z DEBUG iroh::_events::conn::incoming: remote_addr=Relay { url: RelayUrl("https://usw1-1.relay.n0.iroh.link/"), endpoint_id: PublicKey(403dce50ffaf065b5d9d4e7c3f234cf975604467103cb8c965a2e04e56f5b480) }
+2026-10-11T06:29:57.564123Z DEBUG iroh::_events::conn::incoming: remote_addr=Relay { url: RelayUrl("https://usw1-1.relay.n0.iroh.link/"), endpoint_id: PublicKey(403dce50ffaf065b5d9d4e7c3f234cf975604467103cb8c965a2e04e56f5b480) }
+2026-10-11T06:29:57.603128Z DEBUG endpoint{id=14a1118862}:pkarr_publish: iroh::address_lookup::pkarr: Publish endpoint info to pkarr (info changed)
+2026-10-11T06:29:57.603188Z DEBUG endpoint{id=14a1118862}:pkarr_publish: iroh::address_lookup::pkarr: Publishing endpoint info to pkarr data=EndpointData { addrs: [Relay(https://usw1-1.relay.n0.iroh.link/)], user_data: None } pkarr_relay=https://dns.iroh.link/pkarr
+2026-10-11T06:29:57.643285Z DEBUG iroh::_events::conn::connected: conn_id=514701641296 side=Server remote_id=403dce50ff alpn=cwth/http/0
+2026-10-11T06:29:57.643291Z DEBUG iroh::_events::conn::connected: conn_id=514701640432 side=Server remote_id=403dce50ff alpn=cwth/http/0
+2026-10-11T06:29:57.643404Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_message{msg=AddConnection(514701641296)}: iroh::_events::path::open: remote=403dce50ff conn_id=514701641296 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 403dce50ff)
+2026-10-11T06:29:57.643434Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_message{msg=AddConnection(514701641296)}: iroh::_events::path::set_status: remote=403dce50ff conn_id=514701641296 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 403dce50ff) status=Backup prev_status=Available
+2026-10-11T06:29:57.643469Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_message{msg=AddConnection(514701641296)}:select_path: iroh::_events::path::selected: remote=403dce50ff network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 403dce50ff) prev_network_path=None
+2026-10-11T06:29:57.643490Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_message{msg=AddConnection(514701641296)}:select_path: iroh::_events::path::set_status: remote=403dce50ff conn_id=514701641296 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 403dce50ff) status=Available prev_status=Backup
+2026-10-11T06:29:57.643548Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_message{msg=AddConnection(514701640432)}: iroh::_events::path::open: remote=403dce50ff conn_id=514701640432 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 403dce50ff)
+2026-10-11T06:29:57.643812Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=403dce50ffaf065b5d9d4e7c3f234cf975604467103cb8c965a2e04e56f5b480
+2026-10-11T06:29:57.643854Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=403dce50ffaf065b5d9d4e7c3f234cf975604467103cb8c965a2e04e56f5b480
+2026-10-11T06:29:57.644870Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}: iroh::socket::remote_map::remote_state: connections are not good enough, triggering holepunching
+2026-10-11T06:29:57.689139Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_path_event{conn_id=ConnId(514701641296) event=Ok(Established { id: PathId(1) })}: iroh::_events::path::open: remote=403dce50ff conn_id=514701641296 path_id=1 network_path=Ip(192.168.1.4->192.168.1.4:53648)
+2026-10-11T06:29:57.689177Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_path_event{conn_id=ConnId(514701641296) event=Ok(Established { id: PathId(1) })}: iroh::_events::path::set_status: remote=403dce50ff conn_id=514701641296 path_id=1 network_path=Ip(192.168.1.4->192.168.1.4:53648) status=Backup prev_status=Available
+2026-10-11T06:29:57.689210Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_path_event{conn_id=ConnId(514701641296) event=Ok(Established { id: PathId(1) })}:select_path: iroh::_events::path::selected: remote=403dce50ff network_path=Ip(192.168.1.4->192.168.1.4:53648) prev_network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 403dce50ff)
+2026-10-11T06:29:57.689234Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_path_event{conn_id=ConnId(514701641296) event=Ok(Established { id: PathId(1) })}:select_path: iroh::_events::path::set_status: remote=403dce50ff conn_id=514701641296 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 403dce50ff) status=Backup prev_status=Available
+2026-10-11T06:29:57.689257Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_path_event{conn_id=ConnId(514701641296) event=Ok(Established { id: PathId(1) })}:select_path: iroh::_events::path::set_status: remote=403dce50ff conn_id=514701641296 path_id=1 network_path=Ip(192.168.1.4->192.168.1.4:53648) status=Available prev_status=Backup
+2026-10-11T06:29:57.689330Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_path_event{conn_id=ConnId(514701641296) event=Ok(Established { id: PathId(1) })}:select_path: iroh::_events::path::set_status: remote=403dce50ff conn_id=514701640432 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 403dce50ff) status=Backup prev_status=Available
+2026-10-11T06:29:57.689617Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_path_event{conn_id=ConnId(514701640432) event=Ok(Established { id: PathId(1) })}: iroh::_events::path::open: remote=403dce50ff conn_id=514701640432 path_id=1 network_path=Ip(192.168.1.4->192.168.1.4:53648)
+2026-10-11T06:29:57.706179Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_path_event{conn_id=ConnId(514701641296) event=Ok(Abandoned { id: PathId(2), reason: RemoteAbandoned { error_code: 62 } })}: iroh::socket::remote_map::remote_state: path not in path_id_map id=2
+2026-10-11T06:29:57.719412Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_path_event{conn_id=ConnId(514701640432) event=Ok(Abandoned { id: PathId(2), reason: RemoteAbandoned { error_code: 62 } })}: iroh::socket::remote_map::remote_state: path not in path_id_map id=2
+2026-10-11T06:29:57.814058Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(514701641424) event=Ok(Established { id: PathId(1) })}: iroh::_events::path::open: remote=2fb927ff94 conn_id=514701641424 path_id=1 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94)
+2026-10-11T06:29:57.830409Z DEBUG iroh::_events::conn::incoming: remote_addr=Ip(192.168.1.4:60129)
+2026-10-11T06:29:57.830536Z DEBUG iroh::_events::conn::incoming: remote_addr=Ip(192.168.1.4:60129)
+2026-10-11T06:29:57.832085Z DEBUG iroh::_events::conn::connected: conn_id=514701643952 side=Server remote_id=2fb927ff94 alpn=cwth/http/0
+2026-10-11T06:29:57.832329Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_message{msg=AddConnection(514701643952)}: iroh::_events::path::open: remote=2fb927ff94 conn_id=514701643952 path_id=0 network_path=Ip(192.168.1.4->192.168.1.4:60129)
+2026-10-11T06:29:57.832586Z DEBUG iroh::_events::conn::connected: conn_id=514701643920 side=Server remote_id=2fb927ff94 alpn=cwth/http/0
+2026-10-11T06:29:57.832672Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=2fb927ff94333b516673c3c799907dd4ccc8a08365628c92075c609ad470cf2f
+2026-10-11T06:29:57.832841Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_message{msg=AddConnection(514701643920)}: iroh::_events::path::open: remote=2fb927ff94 conn_id=514701643920 path_id=0 network_path=Ip(192.168.1.4->192.168.1.4:60129)
+2026-10-11T06:29:57.833115Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=2fb927ff94333b516673c3c799907dd4ccc8a08365628c92075c609ad470cf2f
+2026-10-11T06:29:57.848386Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(514701643920) event=Ok(Abandoned { id: PathId(1), reason: RemoteAbandoned { error_code: 62 } })}: iroh::socket::remote_map::remote_state: path not in path_id_map id=1
+2026-10-11T06:29:57.850964Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(514701643952) event=Ok(Abandoned { id: PathId(1), reason: RemoteAbandoned { error_code: 62 } })}: iroh::socket::remote_map::remote_state: path not in path_id_map id=1
+2026-10-11T06:29:58.052785Z DEBUG folder: folder: what the store keeps changed, so it drops every other version kept=1
+2026-10-11T06:29:58.052881Z DEBUG iroh_blobs::store::gc: gc: start externally_protected=1
+2026-10-11T06:29:58.053064Z DEBUG iroh_blobs::store::gc: traversing tags
+2026-10-11T06:29:58.053128Z DEBUG iroh_blobs::store::gc: traversing temp roots
+2026-10-11T06:29:58.053169Z DEBUG iroh_blobs::store::gc: gc mark done. found 1 live blobs
+2026-10-11T06:29:58.053188Z DEBUG iroh_blobs::store::gc: gc: sweep total_protected=1
+2026-10-11T06:29:58.053368Z DEBUG iroh_blobs::store::gc: deleted 0 blobs
+2026-10-11T06:29:58.053389Z DEBUG iroh_blobs::store::gc: gc: done
+2026-10-11T06:29:58.283184Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(514701643952) event=Ok(Established { id: PathId(2) })}: iroh::_events::path::open: remote=2fb927ff94 conn_id=514701643952 path_id=2 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94)
+2026-10-11T06:29:58.283252Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(514701643952) event=Ok(Established { id: PathId(2) })}: iroh::_events::path::set_status: remote=2fb927ff94 conn_id=514701643952 path_id=2 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94) status=Backup prev_status=Available
+2026-10-11T06:29:58.283311Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(514701643920) event=Ok(Established { id: PathId(2) })}: iroh::_events::path::open: remote=2fb927ff94 conn_id=514701643920 path_id=2 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94)
+2026-10-11T06:29:58.283335Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(514701643920) event=Ok(Established { id: PathId(2) })}: iroh::_events::path::set_status: remote=2fb927ff94 conn_id=514701643920 path_id=2 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94) status=Backup prev_status=Available
+2026-10-11T06:29:59.200771Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:29:59.200855Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-11T06:30:00.288622Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:30:00.288697Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-11T06:30:00.802792Z  INFO transport: iroh egress posture (n0_services=false severs all n0 contact; proxy honored for relay TCP:443, Basic auth only) n0_services=true loopback_only=false relays=n0-default proxy="none"
+2026-10-11T06:30:00.805771Z DEBUG endpoint{id=14a1118862}: iroh::socket::transports::ip: binding addr=0.0.0.0:0
+2026-10-11T06:30:00.805958Z DEBUG endpoint{id=14a1118862}: iroh::socket::transports::ip: successfully bound addr=0.0.0.0:0 local_addr=0.0.0.0:59318
+2026-10-11T06:30:00.805994Z DEBUG endpoint{id=14a1118862}: iroh::socket::transports::ip: binding addr=[::]:0
+2026-10-11T06:30:00.806076Z DEBUG endpoint{id=14a1118862}: iroh::socket::transports::ip: successfully bound addr=[::]:0 local_addr=[::]:59278
+2026-10-11T06:30:00.824175Z DEBUG endpoint{id=14a1118862}: iroh::socket: scheduling periodic_stun to run immediately and in 20s
+2026-10-11T06:30:00.824244Z DEBUG endpoint{id=14a1118862}: iroh::_events::direct_addrs: addrs={DirectAddr { addr: 192.168.1.4:59318, typ: Local }}
+2026-10-11T06:30:00.824292Z DEBUG endpoint{id=14a1118862}: iroh::endpoint: iroh endpoint bound id=14a1118862eeb2f5c20c2a3fcbb2737861539bf36c8c79e98eb4f12e18aa665a iroh_version=1.0.2
+2026-10-11T06:30:00.824313Z DEBUG endpoint{id=14a1118862}: iroh::address_lookup::pkarr: creating pkarr publisher that publishes to https://dns.iroh.link/pkarr
+2026-10-11T06:30:00.824361Z DEBUG endpoint{id=14a1118862}:pkarr_publish: iroh::address_lookup::pkarr: Publishing endpoint info to pkarr data=EndpointData { addrs: [], user_data: None } pkarr_relay=https://dns.iroh.link/pkarr
+2026-10-11T06:30:00.824704Z DEBUG endpoint{id=14a1118862}:actor: iroh::socket: starting direct addr update (Periodic)
+2026-10-11T06:30:00.824742Z DEBUG endpoint{id=14a1118862}:actor: iroh::net_report: net_report starting do_full=true
+2026-10-11T06:30:00.824728Z DEBUG iroh_blobs::store::fs::meta: creating or opening meta database at /tmp/syp5-run/data/ben/blobs/blobs.db
+2026-10-11T06:30:00.855402Z DEBUG iroh_blobs::store::gc: gc enabled with interval 1s
+2026-10-11T06:30:00.855766Z  INFO folder: folder: the store is open untagged=0
+2026-10-11T06:30:00.855831Z  INFO folder: synced: the directory kept in step with the group's folder namespace="23e59269ba7469a7731d627db3a55e2b0c5468f083be472d3b11b0c1aa60664d" folder="Shared" dir=/tmp/syp5-run/disk/ben/Shared
+2026-10-11T06:30:00.858110Z DEBUG folder: synced: the OS's file events watched, the directory walked whole each 600s namespace="23e59269ba7469a7731d627db3a55e2b0c5468f083be472d3b11b0c1aa60664d" folder="Shared"
+2026-10-11T06:30:00.860178Z DEBUG transport: iroh: a bare key — dialled through the endpoint's address lookup when it has one transport="iroh" peer=2fb927ff lookup=true
+2026-10-11T06:30:00.860330Z DEBUG transport: transport: resolved transport="iroh" peer=2fb927ff first=iroh:127.0.0.1:26812→2fb927ff
+2026-10-11T06:30:00.860553Z DEBUG transport: iroh: a bare key — dialled through the endpoint's address lookup when it has one transport="iroh" peer=403dce50 lookup=true
+2026-10-11T06:30:00.860626Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=23309 peer=403dce50ffaf065b5d9d4e7c3f234cf975604467103cb8c965a2e04e56f5b480 error=Address already in use (os error 48)
+2026-10-11T06:30:00.860681Z DEBUG transport: transport: resolved transport="iroh" peer=403dce50 first=iroh:127.0.0.1:57366→403dce50
+2026-10-11T06:30:00.860711Z DEBUG connect{me=14a1118862 alpn=cwth/http/0 remote=2fb927ff94}: iroh::_events::conn::connecting: remote_id=2fb927ff94 alpn=cwth/http/0
+2026-10-11T06:30:00.860745Z DEBUG connect{me=14a1118862 alpn=cwth/http/0 remote=2fb927ff94}: iroh::endpoint: connecting relay_url=None ip_addresses=[]
+2026-10-11T06:30:00.860808Z DEBUG transport: transport: resolved transport="iroh" peer=2fb927ff first=iroh:127.0.0.1:26812→2fb927ff
+2026-10-11T06:30:00.860993Z DEBUG transport: transport: resolved transport="iroh" peer=403dce50 first=iroh:127.0.0.1:57366→403dce50
+2026-10-11T06:30:00.861176Z DEBUG connect{me=14a1118862 alpn=cwth/http/0 remote=2fb927ff94}: iroh::_events::conn::connecting: remote_id=2fb927ff94 alpn=cwth/http/0
+2026-10-11T06:30:00.861202Z DEBUG connect{me=14a1118862 alpn=cwth/http/0 remote=2fb927ff94}: iroh::endpoint: connecting relay_url=None ip_addresses=[]
+2026-10-11T06:30:00.861300Z DEBUG connect{me=14a1118862 alpn=cwth/http/0 remote=403dce50ff}: iroh::_events::conn::connecting: remote_id=403dce50ff alpn=cwth/http/0
+2026-10-11T06:30:00.861310Z DEBUG connect{me=14a1118862 alpn=cwth/http/0 remote=403dce50ff}: iroh::_events::conn::connecting: remote_id=403dce50ff alpn=cwth/http/0
+2026-10-11T06:30:00.861318Z DEBUG connect{me=14a1118862 alpn=cwth/http/0 remote=403dce50ff}: iroh::endpoint: connecting relay_url=None ip_addresses=[]
+2026-10-11T06:30:00.861334Z DEBUG connect{me=14a1118862 alpn=cwth/http/0 remote=403dce50ff}: iroh::endpoint: connecting relay_url=None ip_addresses=[]
+2026-10-11T06:30:00.862221Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=1 replaced=0 placed=1 conflicts=0
+2026-10-11T06:30:00.862266Z DEBUG folder: folder: the layout read again, the record having moved namespace="23e59269ba7469a7731d627db3a55e2b0c5468f083be472d3b11b0c1aa60664d" placed=1
+2026-10-11T06:30:00.862296Z DEBUG folder: synced: the layout read folder="Shared" placed=1 holders=3 ms=4
+2026-10-11T06:30:00.862545Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path=s3.txt size=44 mtime=Some(SystemTime { tv_sec: 1791700200, tv_nsec: 550660287 }) was=Some((14, SystemTime { tv_sec: 1791700197, tv_nsec: 407495230 }))
+2026-10-11T06:30:00.863040Z DEBUG folder: synced: taken into the store folder="Shared" path=s3.txt hash=eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b ms=0
+2026-10-11T06:30:00.871652Z  INFO folder: folder: written to the record namespace="23e59269ba7469a7731d627db3a55e2b0c5468f083be472d3b11b0c1aa60664d" folder="Shared" files=1
+2026-10-11T06:30:00.871699Z  INFO folder: synced: a change sent folder="Shared" path=s3.txt now=Some((ContentHash(eb066e59e8b25697), 44)) base=Some(Entry { key: "2fb927ff94333b516673c3c799907dd4ccc8a08365628c92075c609ad470cf2f", seq: 3, path: SyncPath("s3.txt") })
+2026-10-11T06:30:00.873910Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=2 replaced=1 placed=1 conflicts=0
+2026-10-11T06:30:00.873953Z DEBUG folder: folder: the layout read again, the record having moved namespace="23e59269ba7469a7731d627db3a55e2b0c5468f083be472d3b11b0c1aa60664d" placed=1
+2026-10-11T06:30:00.873986Z DEBUG folder: synced: the layout to write folder="Shared" placed=1
+2026-10-11T06:30:00.878339Z DEBUG folder: synced: what the step took or fetched made durable folder="Shared" held=1
+2026-10-11T06:30:00.878923Z DEBUG folder: synced: a step folder="Shared" files=1 sent=1 read_ms=4 walk_ms=0 take_ms=0 write_ms=8 apply_ms=2 kept_ms=4 ms=20
+2026-10-11T06:30:00.878972Z DEBUG folder: synced: the step woken, the group's record having taken an act namespace="23e59269ba7469a7731d627db3a55e2b0c5468f083be472d3b11b0c1aa60664d" folder="Shared"
+2026-10-11T06:30:00.879220Z DEBUG folder: synced: the layout read folder="Shared" placed=1 holders=3 ms=0
+2026-10-11T06:30:00.879301Z DEBUG folder: synced: the layout to write folder="Shared" placed=1
+2026-10-11T06:30:00.879341Z DEBUG folder: synced: a step folder="Shared" files=0 sent=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=0
+2026-10-11T06:30:00.924263Z DEBUG endpoint{id=14a1118862}:actor:QADv4: iroh::net_report: probe report r=QadProbeReport { relay: RelayUrl("https://usw1-1.relay.n0.iroh.link/"), latency: 31.06275ms, addr: 69.181.167.209:59318 }
+2026-10-11T06:30:01.007356Z DEBUG endpoint{id=14a1118862}:actor:QADv4: iroh::net_report: probe report r=QadProbeReport { relay: RelayUrl("https://use1-1.relay.n0.iroh.link/"), latency: 78.224791ms, addr: 69.181.167.209:59318 }
+2026-10-11T06:30:01.040691Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_message{msg=ResolveRemote(..)}:DnsAddressLookup{lookup_id=2fb927ff94 origin_domain=dns.iroh.link.}: iroh::address_lookup::dns: DNS lookup success info=EndpointInfo { endpoint_id: PublicKey(2fb927ff94333b516673c3c799907dd4ccc8a08365628c92075c609ad470cf2f), data: EndpointData { addrs: [Relay(https://usw1-1.relay.n0.iroh.link/)], user_data: None } }
+2026-10-11T06:30:01.040799Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}: transport: relay: a lookup's answer, its relays read dotless peer=2fb927ff94 relays=["https://usw1-1.relay.n0.iroh.link/"]
+2026-10-11T06:30:01.041113Z DEBUG endpoint{id=14a1118862}:relay-actor: iroh::socket::transports::relay::actor: Adding relay connection url=RelayUrl("https://usw1-1.relay.n0.iroh.link/")
+2026-10-11T06:30:01.041191Z DEBUG endpoint{id=14a1118862}:relay-actor: iroh::socket::transports::relay::actor: 0 active relay conns
+2026-10-11T06:30:01.041215Z DEBUG endpoint{id=14a1118862}:relay-actor: iroh::socket::transports::relay::actor: 1 active relay conns: relay-https://usw1-1.relay.n0.iroh.link/
+2026-10-11T06:30:01.041231Z DEBUG folder: synced: kept in step already, as asked namespace="23e59269ba7469a7731d627db3a55e2b0c5468f083be472d3b11b0c1aa60664d" folder="Shared"
+2026-10-11T06:30:01.041277Z DEBUG endpoint{id=14a1118862}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}:dialing: iroh_relay::client: Dialing relay by websocket dial_url=wss://usw1-1.relay.n0.iroh.link/relay
+2026-10-11T06:30:01.041917Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_message{msg=ResolveRemote(..)}:DnsAddressLookup{lookup_id=403dce50ff origin_domain=dns.iroh.link.}: iroh::address_lookup::dns: DNS lookup success info=EndpointInfo { endpoint_id: PublicKey(403dce50ffaf065b5d9d4e7c3f234cf975604467103cb8c965a2e04e56f5b480), data: EndpointData { addrs: [Relay(https://usw1-1.relay.n0.iroh.link/)], user_data: None } }
+2026-10-11T06:30:01.041985Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}: transport: relay: a lookup's answer, its relays read dotless peer=403dce50ff relays=["https://usw1-1.relay.n0.iroh.link/"]
+2026-10-11T06:30:01.070170Z DEBUG endpoint{id=14a1118862}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}:dialing: iroh_relay::client::tls: TCP stream connected server_addr=Ok(5.78.69.43:443) local_addr=192.168.1.4:57373
+2026-10-11T06:30:01.113234Z DEBUG endpoint{id=14a1118862}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}:dialing: iroh_relay::client: Using TLS key export for relay client authentication
+2026-10-11T06:30:01.237486Z DEBUG endpoint{id=14a1118862}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}:connected: iroh::_events::relay::connected: url=https://usw1-1.relay.n0.iroh.link/ home_relay=false
+2026-10-11T06:30:01.240997Z DEBUG endpoint{id=14a1118862}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}:connected: iroh_relay::ping_tracker: Sending ping to relay server. data=[191, 27, 126, 210, 178, 74, 242, 105]
+2026-10-11T06:30:01.238090Z DEBUG endpoint{id=14a1118862}:actor:reportgen-actor:captive-portal: iroh::net_report::reportgen: check_captive_portal failed: error sending request for url (http://euc1-1.relay.n0.iroh.link/generate_204)
+2026-10-11T06:30:01.243038Z DEBUG endpoint{id=14a1118862}:actor:QADv4: iroh::net_report: probe report r=QadProbeReport { relay: RelayUrl("https://euc1-1.relay.n0.iroh.link/"), latency: 176.272083ms, addr: 69.181.167.209:59318 }
+2026-10-11T06:30:01.243112Z DEBUG endpoint{id=14a1118862}:actor: iroh::net_report: enough probes: 3
+2026-10-11T06:30:01.243176Z DEBUG endpoint{id=14a1118862}:actor: iroh::net_report: net_report generated report=Report { udp_v4: true, udp_v6: false, mapping_varies_by_dest_ipv4: Some(false), mapping_varies_by_dest_ipv6: None, preferred_relay: Some(RelayUrl("https://usw1-1.relay.n0.iroh.link/")), relay_latency: RelayLatencies { ipv4: {RelayUrl("https://euc1-1.relay.n0.iroh.link/"): 176.272083ms, RelayUrl("https://use1-1.relay.n0.iroh.link/"): 78.224791ms, RelayUrl("https://usw1-1.relay.n0.iroh.link/"): 31.06275ms}, ipv6: {}, https: {} }, global_v4: Some(69.181.167.209:59318), global_v6: None, captive_portal: None } duration=418.433917ms
+2026-10-11T06:30:01.243244Z DEBUG endpoint{id=14a1118862}:actor: iroh::socket: direct addr update done (Periodic)
+2026-10-11T06:30:01.243596Z DEBUG endpoint{id=14a1118862}:actor: iroh::_events::direct_addrs: addrs={DirectAddr { addr: 69.181.167.209:59318, typ: Qad }, DirectAddr { addr: 192.168.1.4:59318, typ: Local }}
+2026-10-11T06:30:01.243660Z DEBUG endpoint{id=14a1118862}:actor: iroh::socket: scheduling periodic_stun to run in 24s
+2026-10-11T06:30:01.243812Z  INFO endpoint{id=14a1118862}:relay-actor: iroh::socket::transports::relay::actor: home is now relay https://usw1-1.relay.n0.iroh.link/, was None
+2026-10-11T06:30:01.243885Z DEBUG endpoint{id=14a1118862}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}:connected: iroh::_events::relay::home_changed: url=https://usw1-1.relay.n0.iroh.link/ home_relay=true
+2026-10-11T06:30:01.274297Z DEBUG endpoint{id=14a1118862}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}:connected: iroh_relay::ping_tracker: Pong received from relay server data=[191, 27, 126, 210, 178, 74, 242, 105] rtt=33.298833ms
+2026-10-11T06:30:01.310345Z DEBUG iroh::_events::conn::connected: conn_id=512490083568 side=Client remote_id=403dce50ff alpn=cwth/http/0
+2026-10-11T06:30:01.310361Z DEBUG iroh::_events::conn::connected: conn_id=512490083408 side=Client remote_id=2fb927ff94 alpn=cwth/http/0
+2026-10-11T06:30:01.310392Z DEBUG iroh::_events::conn::connected: conn_id=512490083504 side=Client remote_id=403dce50ff alpn=cwth/http/0
+2026-10-11T06:30:01.310525Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_message{msg=AddConnection(512490083568)}: iroh::_events::path::open: remote=403dce50ff conn_id=512490083568 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 403dce50ff)
+2026-10-11T06:30:01.310595Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_message{msg=AddConnection(512490083408)}: iroh::_events::path::open: remote=2fb927ff94 conn_id=512490083408 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94)
+2026-10-11T06:30:01.310599Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_message{msg=AddConnection(512490083568)}: iroh::_events::path::set_status: remote=403dce50ff conn_id=512490083568 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 403dce50ff) status=Backup prev_status=Available
+2026-10-11T06:30:01.310627Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_message{msg=AddConnection(512490083408)}: iroh::_events::path::set_status: remote=2fb927ff94 conn_id=512490083408 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94) status=Backup prev_status=Available
+2026-10-11T06:30:01.310671Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_message{msg=AddConnection(512490083568)}:do_holepunching: iroh::_events::qnt::init: remote=403dce50ff local_candidates={69.181.167.209:59318, 192.168.1.4:59318} remote_candidates={}
+2026-10-11T06:30:01.310678Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_message{msg=AddConnection(512490083408)}:do_holepunching: iroh::_events::qnt::init: remote=2fb927ff94 local_candidates={69.181.167.209:59318, 192.168.1.4:59318} remote_candidates={}
+2026-10-11T06:30:01.310721Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_message{msg=AddConnection(512490083408)}:select_path: iroh::_events::path::selected: remote=2fb927ff94 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94) prev_network_path=None
+2026-10-11T06:30:01.310721Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_message{msg=AddConnection(512490083568)}:select_path: iroh::_events::path::selected: remote=403dce50ff network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 403dce50ff) prev_network_path=None
+2026-10-11T06:30:01.310768Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_message{msg=AddConnection(512490083408)}:select_path: iroh::_events::path::set_status: remote=2fb927ff94 conn_id=512490083408 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94) status=Available prev_status=Backup
+2026-10-11T06:30:01.310776Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_message{msg=AddConnection(512490083568)}:select_path: iroh::_events::path::set_status: remote=403dce50ff conn_id=512490083568 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 403dce50ff) status=Available prev_status=Backup
+2026-10-11T06:30:01.310811Z DEBUG iroh::endpoint: Connection established. me=14a1118862 remote=2fb927ff94 alpn=cwth/http/0
+2026-10-11T06:30:01.310825Z DEBUG iroh::endpoint: Connection established. me=14a1118862 remote=403dce50ff alpn=cwth/http/0
+2026-10-11T06:30:01.310831Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_message{msg=AddConnection(512490083504)}: iroh::_events::path::open: remote=403dce50ff conn_id=512490083504 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 403dce50ff)
+2026-10-11T06:30:01.310892Z DEBUG iroh::endpoint: Connection established. me=14a1118862 remote=403dce50ff alpn=cwth/http/0
+2026-10-11T06:30:01.314191Z DEBUG iroh::_events::conn::connected: conn_id=512490083344 side=Client remote_id=2fb927ff94 alpn=cwth/http/0
+2026-10-11T06:30:01.314553Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_message{msg=AddConnection(512490083344)}: iroh::_events::path::open: remote=2fb927ff94 conn_id=512490083344 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94)
+2026-10-11T06:30:01.314642Z DEBUG iroh::endpoint: Connection established. me=14a1118862 remote=2fb927ff94 alpn=cwth/http/0
+2026-10-11T06:30:01.401714Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:do_holepunching: iroh::_events::qnt::init: remote=403dce50ff local_candidates={69.181.167.209:59318, 192.168.1.4:59318} remote_candidates={69.181.167.209:53648, 192.168.1.4:53648}
+2026-10-11T06:30:01.402741Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_path_event{conn_id=ConnId(512490083504) event=Ok(Established { id: PathId(1) })}: iroh::_events::path::open: remote=403dce50ff conn_id=512490083504 path_id=1 network_path=Ip(192.168.1.4->192.168.1.4:53648)
+2026-10-11T06:30:01.402810Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_path_event{conn_id=ConnId(512490083504) event=Ok(Established { id: PathId(1) })}:select_path: iroh::_events::path::selected: remote=403dce50ff network_path=Ip(192.168.1.4->192.168.1.4:53648) prev_network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 403dce50ff)
+2026-10-11T06:30:01.402840Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_path_event{conn_id=ConnId(512490083504) event=Ok(Established { id: PathId(1) })}:select_path: iroh::_events::path::set_status: remote=403dce50ff conn_id=512490083504 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 403dce50ff) status=Backup prev_status=Available
+2026-10-11T06:30:01.402864Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_path_event{conn_id=ConnId(512490083504) event=Ok(Established { id: PathId(1) })}:select_path: iroh::_events::path::set_status: remote=403dce50ff conn_id=512490083504 path_id=1 network_path=Ip(192.168.1.4->192.168.1.4:53648) status=Available prev_status=Backup
+2026-10-11T06:30:01.402891Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_path_event{conn_id=ConnId(512490083504) event=Ok(Established { id: PathId(1) })}:select_path: iroh::_events::path::set_status: remote=403dce50ff conn_id=512490083568 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 403dce50ff) status=Backup prev_status=Available
+2026-10-11T06:30:01.402947Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_path_event{conn_id=ConnId(512490083568) event=Ok(Established { id: PathId(1) })}: iroh::_events::path::open: remote=403dce50ff conn_id=512490083568 path_id=1 network_path=Ip(192.168.1.4->192.168.1.4:53648)
+2026-10-11T06:30:01.402971Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_path_event{conn_id=ConnId(512490083568) event=Ok(Established { id: PathId(1) })}: iroh::_events::path::set_status: remote=403dce50ff conn_id=512490083568 path_id=1 network_path=Ip(192.168.1.4->192.168.1.4:53648) status=Available prev_status=Backup
+2026-10-11T06:30:01.407013Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:do_holepunching: iroh::_events::qnt::init: remote=2fb927ff94 local_candidates={69.181.167.209:59318, 192.168.1.4:59318} remote_candidates={69.181.167.209:60129, 192.168.1.4:60129}
+2026-10-11T06:30:01.407807Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(512490083344) event=Ok(Established { id: PathId(1) })}: iroh::_events::path::open: remote=2fb927ff94 conn_id=512490083344 path_id=1 network_path=Ip(192.168.1.4->192.168.1.4:60129)
+2026-10-11T06:30:01.407897Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(512490083344) event=Ok(Established { id: PathId(1) })}:select_path: iroh::_events::path::selected: remote=2fb927ff94 network_path=Ip(192.168.1.4->192.168.1.4:60129) prev_network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94)
+2026-10-11T06:30:01.407931Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(512490083344) event=Ok(Established { id: PathId(1) })}:select_path: iroh::_events::path::set_status: remote=2fb927ff94 conn_id=512490083344 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94) status=Backup prev_status=Available
+2026-10-11T06:30:01.407954Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(512490083344) event=Ok(Established { id: PathId(1) })}:select_path: iroh::_events::path::set_status: remote=2fb927ff94 conn_id=512490083344 path_id=1 network_path=Ip(192.168.1.4->192.168.1.4:60129) status=Available prev_status=Backup
+2026-10-11T06:30:01.407983Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(512490083344) event=Ok(Established { id: PathId(1) })}:select_path: iroh::_events::path::set_status: remote=2fb927ff94 conn_id=512490083408 path_id=0 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94) status=Backup prev_status=Available
+2026-10-11T06:30:01.430895Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_path_event{conn_id=ConnId(512490083504) event=Ok(Established { id: PathId(2) })}: iroh::_events::path::open: remote=403dce50ff conn_id=512490083504 path_id=2 network_path=Ip(192.168.1.4->69.181.167.209:53648)
+2026-10-11T06:30:01.431079Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_path_event{conn_id=ConnId(512490083504) event=Ok(Abandoned { id: PathId(2), reason: ApplicationClosed { error_code: 62 } })}: iroh::_events::path::abandoned: remote=403dce50ff conn_id=512490083504 path_id=2 network_path=Ip(192.168.1.4->69.181.167.209:53648) reason=ApplicationClosed { error_code: 62 }
+2026-10-11T06:30:01.434707Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(512490083344) event=Ok(Established { id: PathId(2) })}: iroh::_events::path::open: remote=2fb927ff94 conn_id=512490083344 path_id=2 network_path=Ip(192.168.1.4->69.181.167.209:60129)
+2026-10-11T06:30:01.434884Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(512490083344) event=Ok(Abandoned { id: PathId(2), reason: ApplicationClosed { error_code: 62 } })}: iroh::_events::path::abandoned: remote=2fb927ff94 conn_id=512490083344 path_id=2 network_path=Ip(192.168.1.4->69.181.167.209:60129) reason=ApplicationClosed { error_code: 62 }
+2026-10-11T06:30:01.435191Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(512490083408) event=Ok(Established { id: PathId(1) })}: iroh::_events::path::open: remote=2fb927ff94 conn_id=512490083408 path_id=1 network_path=Ip(192.168.1.4->192.168.1.4:60129)
+2026-10-11T06:30:01.449417Z DEBUG folder: synced: the step woken, the group's record having taken an act namespace="23e59269ba7469a7731d627db3a55e2b0c5468f083be472d3b11b0c1aa60664d" folder="Shared"
+2026-10-11T06:30:01.452361Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=3 replaced=1 placed=2 conflicts=1
+2026-10-11T06:30:01.454346Z DEBUG folder: folder: the layout read again, the record having moved namespace="23e59269ba7469a7731d627db3a55e2b0c5468f083be472d3b11b0c1aa60664d" placed=2
+2026-10-11T06:30:01.454407Z DEBUG folder: synced: the layout read folder="Shared" placed=2 holders=3 ms=4
+2026-10-11T06:30:01.454515Z DEBUG folder: synced: the layout to write folder="Shared" placed=2
+2026-10-11T06:30:01.454614Z DEBUG folder: synced: to fetch, the layout placing it here folder="Shared" path=s3 (conflict Ana).txt hash=36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd size=46 from="2fb927ff94333b516673c3c799907dd4ccc8a08365628c92075c609ad470cf2f" seq=4
+2026-10-11T06:30:01.455103Z DEBUG connect{me=14a1118862 alpn=/iroh-bytes/4 remote=2fb927ff94}: iroh::_events::conn::connecting: remote_id=2fb927ff94 alpn=/iroh-bytes/4
+2026-10-11T06:30:01.455148Z DEBUG connect{me=14a1118862 alpn=/iroh-bytes/4 remote=2fb927ff94}: iroh::endpoint: connecting relay_url=None ip_addresses=[]
+2026-10-11T06:30:01.456503Z DEBUG iroh::_events::conn::connected: conn_id=512490087216 side=Client remote_id=2fb927ff94 alpn=/iroh-bytes/4
+2026-10-11T06:30:01.456695Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_message{msg=AddConnection(512490087216)}: iroh::_events::path::open: remote=2fb927ff94 conn_id=512490087216 path_id=0 network_path=Ip(192.168.1.4->192.168.1.4:60129)
+2026-10-11T06:30:01.456765Z DEBUG iroh::endpoint: Connection established. me=14a1118862 remote=2fb927ff94 alpn=/iroh-bytes/4
+2026-10-11T06:30:01.456833Z DEBUG iroh_blobs::get::fsm: sending request
+2026-10-11T06:30:01.458565Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(512490083408) event=Ok(Established { id: PathId(2) })}: iroh::_events::path::open: remote=2fb927ff94 conn_id=512490083408 path_id=2 network_path=Ip(192.168.1.4->69.181.167.209:60129)
+2026-10-11T06:30:01.458647Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_path_event{conn_id=ConnId(512490083568) event=Ok(Established { id: PathId(2) })}: iroh::_events::path::open: remote=403dce50ff conn_id=512490083568 path_id=2 network_path=Ip(192.168.1.4->69.181.167.209:53648)
+2026-10-11T06:30:01.462841Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_path_event{conn_id=ConnId(512490083568) event=Ok(Abandoned { id: PathId(2), reason: ApplicationClosed { error_code: 62 } })}: iroh::_events::path::abandoned: remote=403dce50ff conn_id=512490083568 path_id=2 network_path=Ip(192.168.1.4->69.181.167.209:53648) reason=ApplicationClosed { error_code: 62 }
+2026-10-11T06:30:01.463081Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(512490083408) event=Ok(Abandoned { id: PathId(2), reason: ApplicationClosed { error_code: 62 } })}: iroh::_events::path::abandoned: remote=2fb927ff94 conn_id=512490083408 path_id=2 network_path=Ip(192.168.1.4->69.181.167.209:60129) reason=ApplicationClosed { error_code: 62 }
+2026-10-11T06:30:01.471718Z DEBUG folder: folder: the fetch's phases, and the path iroh selected holder=2fb927ff94333b516673c3c799907dd4ccc8a08365628c92075c609ad470cf2f dial_ms=1.734 first_ms=16.461 last_ms=16.661 relayed=Some(false) addr="Ip(192.168.1.4:60129)" rtt_ms=0.653 ok=true
+2026-10-11T06:30:01.471763Z  INFO folder: folder: fetched, verified hash=36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd holder=2fb927ff94333b516673c3c799907dd4ccc8a08365628c92075c609ad470cf2f payload=46 other=8 ms=16
+2026-10-11T06:30:01.472140Z  INFO folder: synced: written into the directory folder="Shared" path=s3 (conflict Ana).txt hash=36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd from="2fb927ff94333b516673c3c799907dd4ccc8a08365628c92075c609ad470cf2f" seq=4 beside=true fetch_ms=16 export_ms=0
+2026-10-11T06:30:01.476289Z DEBUG folder: synced: what the step took or fetched made durable folder="Shared" held=1
+2026-10-11T06:30:01.476995Z DEBUG folder: synced: a step folder="Shared" files=0 sent=0 read_ms=4 walk_ms=0 take_ms=0 write_ms=0 apply_ms=17 kept_ms=4 ms=27
+2026-10-11T06:30:01.523575Z DEBUG transport: transport: resolved transport="iroh" peer=2fb927ff first=iroh:127.0.0.1:26812→2fb927ff
+2026-10-11T06:30:01.523776Z DEBUG transport: transport: resolved transport="iroh" peer=403dce50 first=iroh:127.0.0.1:57366→403dce50
+2026-10-11T06:30:01.529063Z DEBUG folder: synced: the step woken, the OS saying files changed namespace="23e59269ba7469a7731d627db3a55e2b0c5468f083be472d3b11b0c1aa60664d" folder="Shared" paths=1
+2026-10-11T06:30:01.529424Z DEBUG folder: synced: the layout read folder="Shared" placed=2 holders=3 ms=0
+2026-10-11T06:30:01.529701Z DEBUG folder: synced: the layout to write folder="Shared" placed=2
+2026-10-11T06:30:01.529782Z DEBUG folder: synced: a step folder="Shared" files=1 sent=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=0
+2026-10-11T06:30:01.598881Z DEBUG endpoint{id=14a1118862}:pkarr_publish: iroh::address_lookup::pkarr: Publish endpoint info to pkarr (info changed)
+2026-10-11T06:30:01.598951Z DEBUG endpoint{id=14a1118862}:pkarr_publish: iroh::address_lookup::pkarr: Publishing endpoint info to pkarr data=EndpointData { addrs: [Relay(https://usw1-1.relay.n0.iroh.link/)], user_data: None } pkarr_relay=https://dns.iroh.link/pkarr
+2026-10-11T06:30:01.855892Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(512490087216) event=Ok(Established { id: PathId(1) })}: iroh::_events::path::open: remote=2fb927ff94 conn_id=512490087216 path_id=1 network_path=Relay(https://usw1-1.relay.n0.iroh.link/, 2fb927ff94)
+2026-10-11T06:30:01.991793Z DEBUG folder: folder: what the store keeps changed, so it drops every other version kept=2
+2026-10-11T06:30:01.991892Z DEBUG iroh_blobs::store::gc: gc: start externally_protected=2
+2026-10-11T06:30:01.992044Z DEBUG iroh_blobs::store::gc: traversing tags
+2026-10-11T06:30:01.992098Z DEBUG iroh_blobs::store::gc: traversing temp roots
+2026-10-11T06:30:01.992134Z DEBUG iroh_blobs::store::gc: gc mark done. found 2 live blobs
+2026-10-11T06:30:01.992152Z DEBUG iroh_blobs::store::gc: gc: sweep total_protected=2
+2026-10-11T06:30:01.997441Z DEBUG iroh_blobs::store::gc: deleted 1 blobs
+2026-10-11T06:30:01.997492Z DEBUG iroh_blobs::store::gc: gc: done
+2026-10-11T06:30:03.057638Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:30:03.057720Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-11T06:30:04.160892Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:30:04.160971Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-11T06:30:05.254099Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:30:05.254182Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-11T06:30:06.350432Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:30:06.350533Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-11T06:30:06.404659Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:do_holepunching: iroh::_events::qnt::init: remote=403dce50ff local_candidates={69.181.167.209:59318, 192.168.1.4:59318} remote_candidates={69.181.167.209:53648, 192.168.1.4:53648}
+2026-10-11T06:30:06.409059Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:do_holepunching: iroh::_events::qnt::init: remote=2fb927ff94 local_candidates={69.181.167.209:59318, 192.168.1.4:59318} remote_candidates={69.181.167.209:60129, 192.168.1.4:60129}
+2026-10-11T06:30:06.500603Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_path_event{conn_id=ConnId(512490083504) event=Ok(Established { id: PathId(3) })}: iroh::_events::path::open: remote=403dce50ff conn_id=512490083504 path_id=3 network_path=Ip(192.168.1.4->69.181.167.209:53648)
+2026-10-11T06:30:06.500715Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(512490083344) event=Ok(Established { id: PathId(3) })}: iroh::_events::path::open: remote=2fb927ff94 conn_id=512490083344 path_id=3 network_path=Ip(192.168.1.4->69.181.167.209:60129)
+2026-10-11T06:30:06.500852Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=403dce50ff}:handle_path_event{conn_id=ConnId(512490083504) event=Ok(Abandoned { id: PathId(3), reason: ApplicationClosed { error_code: 62 } })}: iroh::_events::path::abandoned: remote=403dce50ff conn_id=512490083504 path_id=3 network_path=Ip(192.168.1.4->69.181.167.209:53648) reason=ApplicationClosed { error_code: 62 }
+2026-10-11T06:30:06.500857Z DEBUG endpoint{id=14a1118862}:RemoteStateActor{remote=2fb927ff94}:handle_path_event{conn_id=ConnId(512490083344) event=Ok(Abandoned { id: PathId(3), reason: ApplicationClosed { error_code: 62 } })}: iroh::_events::path::abandoned: remote=2fb927ff94 conn_id=512490083344 path_id=3 network_path=Ip(192.168.1.4->69.181.167.209:60129) reason=ApplicationClosed { error_code: 62 }
+2026-10-11T06:30:07.424201Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:30:07.424304Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-11T06:30:08.520525Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:30:08.520601Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-11T06:30:09.613088Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:30:09.613163Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-11T06:30:10.694417Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:30:10.694488Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-11T06:30:11.778560Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:30:11.778645Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-11T06:30:12.841599Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:30:12.841673Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-11T06:30:13.953407Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:30:13.953483Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-11T06:30:15.087991Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:30:15.088148Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-11T06:30:16.183283Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:30:16.183574Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-11T06:30:17.291801Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:30:17.291958Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-11T06:30:18.371366Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:30:18.371444Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-11T06:30:19.466502Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:30:19.466573Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-11T06:30:20.543274Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:30:20.543338Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-11T06:30:21.685942Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:30:21.686132Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-11T06:30:22.786553Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:30:22.786637Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-11T06:30:23.846316Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:30:23.846397Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-11T06:30:24.951625Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:30:24.951704Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-11T06:30:25.410934Z DEBUG endpoint{id=14a1118862}:actor: iroh::socket: starting direct addr update (Periodic)
+2026-10-11T06:30:25.411059Z DEBUG endpoint{id=14a1118862}:actor: iroh::net_report: net_report starting do_full=false
+2026-10-11T06:30:25.484064Z DEBUG endpoint{id=14a1118862}:actor:QADv4: iroh::net_report: probe report r=QadProbeReport { relay: RelayUrl("https://usw1-1.relay.n0.iroh.link/"), latency: 28.577541ms, addr: 69.181.167.209:59318 }
+2026-10-11T06:30:25.568956Z DEBUG endpoint{id=14a1118862}:actor:QADv4: iroh::net_report: probe report r=QadProbeReport { relay: RelayUrl("https://use1-1.relay.n0.iroh.link/"), latency: 76.71075ms, addr: 69.181.167.209:59318 }
+2026-10-11T06:30:25.764905Z DEBUG endpoint{id=14a1118862}:actor:QADv4: iroh::net_report: probe report r=QadProbeReport { relay: RelayUrl("https://euc1-1.relay.n0.iroh.link/"), latency: 172.319542ms, addr: 69.181.167.209:59318 }
+2026-10-11T06:30:25.764997Z DEBUG endpoint{id=14a1118862}:actor: iroh::net_report: enough probes: 3
+2026-10-11T06:30:25.765046Z DEBUG endpoint{id=14a1118862}:actor: iroh::net_report: net_report generated report=Report { udp_v4: true, udp_v6: false, mapping_varies_by_dest_ipv4: Some(false), mapping_varies_by_dest_ipv6: None, preferred_relay: Some(RelayUrl("https://usw1-1.relay.n0.iroh.link/")), relay_latency: RelayLatencies { ipv4: {RelayUrl("https://euc1-1.relay.n0.iroh.link/"): 172.319542ms, RelayUrl("https://use1-1.relay.n0.iroh.link/"): 76.71075ms, RelayUrl("https://usw1-1.relay.n0.iroh.link/"): 28.577541ms}, ipv6: {}, https: {} }, global_v4: Some(69.181.167.209:59318), global_v6: None, captive_portal: None } duration=353.985708ms
+2026-10-11T06:30:25.765098Z DEBUG endpoint{id=14a1118862}:actor: iroh::socket: direct addr update done (Periodic)
+2026-10-11T06:30:25.765203Z DEBUG endpoint{id=14a1118862}:actor: iroh::socket: scheduling periodic_stun to run in 20s
+2026-10-11T06:30:26.041918Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:30:26.042004Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-11T06:30:27.107890Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:30:27.107988Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-11T06:30:28.179997Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:30:28.180076Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-11T06:30:29.323731Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:30:29.323832Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-11T06:30:30.396601Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T06:30:30.396690Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort

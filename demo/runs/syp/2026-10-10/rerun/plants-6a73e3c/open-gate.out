@@ -1,0 +1,10 @@
+at 6a73e3c, open-gate planted in crates/svrngs-node/src/node.rs: exit 0
+
+running 1 test
+test a_synced_file_is_served_by_a_member_who_did_not_write_it_and_to_no_one_outside ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 17 filtered out; finished in 1.41s
+
+   Compiling svrngs-node v0.1.0 (/Users/alexsbryan/dev/svrngs-folders/crates/svrngs-node)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 14.58s
+     Running tests/folders.rs (target/debug/deps/folders-8bed5be87a6bb528)

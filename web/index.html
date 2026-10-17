@@ -3,8 +3,10 @@
 <!--
   The page a group's link opens on a phone: `<origin>#<token>` (DESIGN §3,
   "Joining"). It asks a newcomer's name once, then lists what the group's
-  people lend (app.js). Static files any origin can serve — no server, no certificate,
-  no data. The FRAGMENT carries the link's token, and a browser never sends
+  people lend (app.js); it asks the person's yes when an app sends them
+  here, and lists what apps use (sup-3), and who was removed from the
+  group or asked to be (v1-keeper-office (b)). Static files any origin
+  can serve — no server, no certificate, no data. The FRAGMENT carries the link's token, and a browser never sends
   the fragment to the origin, so the page loads from public static hosting
   while the link stays on the phone; `no-referrer` keeps it out of every
   Referer too.
@@ -14,45 +16,63 @@
   by key over a relay (web/src/lib.rs).
 
   The CSP is deliberately strict: no inline script (app.js is external), no
-  remote code. `wasm-unsafe-eval` is required to instantiate WebAssembly;
+  inline style (its look is svrngs's one look.css, the home page's file,
+  which scripts/build-web.sh puts beside it), no remote code. It is never framed: `frame-ancestors` cannot ride a
+  `<meta>`, so the page host sends it (vercel.json). `wasm-unsafe-eval` is required to instantiate WebAssembly;
   `connect-src` must allow the relay's WebSocket (wss://*.relay.n0.iroh.link
   by default, plus any self-hosted relay a link carries), and iroh's latency
-  probe, an HTTP GET of the relay's `/ping`. A relay on this computer, plain
-  HTTP on 127.0.0.1, is allowed too: the browser tests run one, so they
-  reach nothing on the internet, and loopback is no third party. Nothing
-  here is allowed to phone a third party. Every word a person reads here is DESIGN
+  probe, an HTTP GET of the relay's `/ping`. Nothing on this computer is
+  allowed: the browser tests run their relay there, plain HTTP on
+  127.0.0.1, and add `ws://127.0.0.1:* http://127.0.0.1:*` where they serve
+  the page (web/tests/page.mjs), never in what scripts/build-web.sh writes
+  (crates/svrngs-node/tests/browser/main.rs checks it). Nothing here is
+  allowed to phone a third party. Every word a person reads here is DESIGN
   §1's: the group, people's names, computer, phone.
+
+  A chat previews the link from this file alone, its title and description
+  (DESIGN §3, "A chat's door is the group's link"): a preview never sees
+  the `#` part, so they name no group and carry no token. On a computer
+  the page offers the line that gets svrngs (DESIGN §7), composed by
+  app.js from the `#` part, beside joining here as a phone does.
 -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' wss: https: ws://127.0.0.1:* http://127.0.0.1:*; img-src 'none'; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'">
-<title>Your group</title>
-<style>
-  :root { color-scheme: light dark; }
-  body { font: 16px/1.5 system-ui, sans-serif; margin: 1.5rem auto; max-width: 46rem; padding: 0 1rem; }
-  h1 { font-size: 1.2rem; }
-  #status { font-weight: 600; }
-  pre { background: #8881; padding: .75rem; border-radius: .5rem; overflow-x: auto; white-space: pre-wrap; word-break: break-word; }
-  .bad { color: #c22; }
-  form { display: grid; gap: .5rem; }
-  input, button { font: inherit; padding: .5rem .75rem; }
-  #lent { list-style: none; padding: 0; display: grid; gap: .5rem; }
-  #lent button { width: 100%; text-align: left; }
-  .good { color: #2a2; }
-</style>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' wss: https:; img-src 'none'; style-src 'self'; base-uri 'none'; form-action 'none'">
+<title>You’re invited to a group</title>
+<meta name="description" content="Open the link to join: on a phone right here, on a computer by one line pasted in a terminal. What the group shares stays on its people’s own computers.">
+<meta property="og:title" content="You’re invited to a group">
+<meta property="og:description" content="Open the link to join: on a phone right here, on a computer by one line pasted in a terminal. What the group shares stays on its people’s own computers.">
+<meta property="og:type" content="website">
+<link rel="stylesheet" href="./look.css?v=__VERSION__">
 </head>
 <body>
 <h1 id="status">Opening…</h1>
+<section id="computer" hidden>
+  <p id="joins" hidden>On this computer, paste this line in a terminal: it gets svrngs, joins you, and opens your home page, with the group’s folder on your disk. If svrngs is on this computer already, paste the link you opened on your home page instead, under “Join a group from a link”.</p>
+  <p id="founds" hidden>To make your group, paste this line in a terminal on your computer: it gets svrngs and opens your home page, where you make your group and invite people to it.</p>
+  <p id="opens" hidden>Copy this link, open your svrngs home page, and paste it under “Open a link from your group”: it opens there. If svrngs is not on this computer, open the link on your phone.</p>
+  <pre id="line"></pre>
+  <button id="copy">Copy</button>
+</section>
 <form id="join" hidden>
   <label for="name">What’s your name? Everyone in <span id="group"></span> sees it.</label>
   <input id="name" name="name" autocomplete="name" maxlength="64" required>
   <p id="why" class="bad"></p>
   <button>Join</button>
 </form>
-<ul id="lent"></ul>
+<form id="ask" hidden>
+  <blockquote id="words"></blockquote>
+  <button>Yes</button>
+  <button type="button" id="not">Not now</button>
+</form>
+<div id="door"></div>
+<table class="index"><tbody id="lent"></tbody></table>
+<div id="shelf"></div>
+<ul id="removals"></ul>
+<details id="uses" hidden><summary>What apps use</summary><ul id="used"></ul></details>
 <pre id="response"></pre>
 <script type="module" src="./app.js?v=__VERSION__"></script>
 </body>

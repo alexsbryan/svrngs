@@ -9,7 +9,12 @@
 //            token it was joined by, when it was last opened, and the
 //            person's key — 32 bytes — sealed: `iv` and `sealed`,
 //            with the group's id as the seal's additional data, so a sealed
-//            key opens only as the key of the group it was kept for.
+//            key opens only as the key of the group it was kept for; and
+//            once opened, `computers`, whose each lending computer of the
+//            last answer is, its key and relay, which the page reaches the
+//            group through when its link's does not answer (v1ui-reach (c));
+//            and since v1ui-door (d), `maker`, who made the group, and
+//            `since`, when this phone joined it, absent on one kept before.
 //
 // A lend's origin keeps a store of its own, `svrngs-lend` (below): what its
 // worker dials with, never the person's key, which no lend's origin holds
@@ -84,11 +89,13 @@ async function sealingKey(make) {
 
 const bound = (id, iv) => ({ name: 'AES-GCM', iv, additionalData: new TextEncoder().encode(id) });
 
-// Keep a group joined: `key` is the person's 32 bytes, kept sealed alone.
-export async function keep({ id, name, person, token, key }) {
+// Keep a group joined: `key` is the person's 32 bytes, kept sealed alone;
+// `maker`, who made the group, and `since`, when this phone joined it, in
+// seconds, so two of one name are told apart (v1ui-door (d)).
+export async function keep({ id, name, person, token, key, maker, since }) {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const sealed = new Uint8Array(await crypto.subtle.encrypt(bound(id, iv), await sealingKey(true), key));
-  await run('groups', 'readwrite', (s) => s.put({ id, name, person, token, iv, sealed, opened: Date.now() }));
+  await run('groups', 'readwrite', (s) => s.put({ id, name, person, token, iv, sealed, opened: Date.now(), maker, since }));
 }
 
 // Every group kept, the last opened first. Their keys stay sealed.
@@ -97,8 +104,8 @@ export async function groups() {
   return all.sort((a, b) => b.opened - a.opened);
 }
 
-// The group was opened now: it is the one the page opens without a link.
-// Answers the group as kept.
+// The group was opened now, as `group` says it: it is the one the page
+// opens without a link. Answers the group as kept.
 export async function opened(group) {
   const now = { ...group, opened: Date.now() };
   await run('groups', 'readwrite', (s) => s.put(now));
@@ -161,6 +168,12 @@ export const lendKeep = (name, value) => run('kept', 'readwrite', (s) => s.put(v
 // with the version, and one entry in the version's cache, which whoever
 // asks first fills — the page, on a cold join — and the worker reads.
 // __VERSION__ is stamped at build time, as in sw.js.
+// A lend's address on a phone, `<label>.<the page's host>` (#49): built by
+// the page for a lend and by a lend's worker for another, read back by its
+// first name — here alone in the page's files.
+export const lendOrigin = (protocol, label, pageHost) => `${protocol}//${label}.${pageHost}`;
+export const labelOf = (hostname) => hostname.split('.')[0];
+
 export const CACHE = 'svrngs-web-__VERSION__';
 const RUNTIME = new URL('./wasm/svrngs_web_bg.wasm?v=__VERSION__', import.meta.url);
 

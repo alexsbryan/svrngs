@@ -1,0 +1,15 @@
+# On air's nouns. The infra may not use them (scripts/vocab_check.py).
+# Not `show`: svrngs uses it as a verb in words it prints (cli.rs:125, :1238;
+# register.rs:316), so the gate cannot tell the two. The app's field `show`
+# stays in apps/on-air/.
+station
+stations
+radio
+radios
+broadcast
+broadcasts
+broadcasting
+airing
+on-air
+piece
+pieces

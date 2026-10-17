@@ -1,0 +1,119 @@
+{
+ "4.1": {
+  "verdict": "passed",
+  "why": "Bo held 10 of 10 pieces, 0 past 4000 ms",
+  "bound_ms": 4000,
+  "held_ms": {
+   "0": 55,
+   "1": 52,
+   "2": 26,
+   "3": 120,
+   "4": 27,
+   "5": 78,
+   "6": 38,
+   "7": 28,
+   "8": 73,
+   "9": 35
+  },
+  "station_puts": [
+   "200"
+  ],
+  "bo_refusals": []
+ },
+ "4.1, carried": {
+  "verdict": "passed",
+  "why": "Cy's get of Y with Ana stopped: 200 (4112 bytes), Bo named in Cy's trace: True; the plant Z: 502 '{\"asked\":{\"689f64a3a27b28ebfa4b03a2a4541a33fe7f188885a302f8456b5246108d668d\":\"did not answer within 3s\",\"b172f921f8f3ad2a06efd40491bc955d743d8fc3fadbbcded69f03d4a298677f\":{\"held\":\"never_held\"}},\"error\":\"7c82c6ffcf32379142384a512fbbf4aecbbf0ced762c5072805cb05ece0a3156: no holder answered\",\"kind\":\"una'",
+  "ana_put_Y": 200,
+  "bo_get_Y": 200,
+  "cy_trace": [
+   "2026-10-14T06:24:47.920743Z DEBUG blob: blob: a computer of the group asked what it holds hash=88fdb13f4a5d7f3979d757f7bd574ce899c9b091142bc673e5c03f44d2bf24c7 group=\"7047149403c44a5f30c7b411fc8c376ab9e5761975a85ea901aa7bbaee31eb5e\" holder=\"b172f921f8f3ad2a06efd40491bc955d743d8fc3fadbbcded69f03d4a298677f\" said=Ok(For { left_ms: 44008 })",
+   "2026-10-14T06:24:47.926497Z  INFO folder: folder: fetched, verified hash=88fdb13f4a5d7f3979d757f7bd574ce899c9b091142bc673e5c03f44d2bf24c7 holder=b172f921f8f3ad2a06efd40491bc955d743d8fc3fadbbcded69f03d4a298677f payload=4112 other=8 ms=5",
+   "2026-10-14T06:24:47.926534Z  INFO blob: blob: held from a computer of the group, carried until it lapses there hash=88fdb13f4a5d7f3979d757f7bd574ce899c9b091142bc673e5c03f44d2bf24c7 group=\"7047149403c44a5f30c7b411fc8c376ab9e5761975a85ea901aa7bbaee31eb5e\" holder=\"b172f921f8f3ad2a06efd40491bc955d743d8fc3fadbbcded69f03d4a298677f\" left_ms=44008"
+  ]
+ },
+ "4.1, lapses": {
+  "verdict": "passed",
+  "why": "65.1 s after the last put: still held []; said lapsed ['bo_piece0', 'bo_Y', 'cy_piece0', 'cy_Y']; lapsed told apart from never held: True",
+  "answers": {
+   "bo_piece0": [
+    410,
+    "{\"asked\":{},\"error\":\"7f1b8fb285064a1ba425e3d9e062942e88c7b248cf79f266507daba0e36529a9: it lapsed\",\"kind\":\"lapsed\"}"
+   ],
+   "bo_Y": [
+    410,
+    "{\"asked\":{},\"error\":\"88fdb13f4a5d7f3979d757f7bd574ce899c9b091142bc673e5c03f44d2bf24c7: it lapsed\",\"kind\":\"lapsed\"}"
+   ],
+   "bo_never": [
+    502,
+    "{\"asked\":{\"1b6032cf80ceec70c8e7ca5c95ef1e7ddfe00462c4ae717079bda4f94a14bb37\":{\"held\":\"never_held\"},\"689f64a3a27b28ebfa4b03a2a4541a33fe7f188885a302f8456b5246108d668d\":\"did not answer within 3s\"},\"error\":\"0f312eb1c497115d9255c8947e1fafbc1204ee7bde44d6577583c2944cb034b9: no holder answered\",\"kind\":\"una"
+   ],
+   "cy_piece0": [
+    410,
+    "{\"asked\":{},\"error\":\"7f1b8fb285064a1ba425e3d9e062942e88c7b248cf79f266507daba0e36529a9: it lapsed\",\"kind\":\"lapsed\"}"
+   ],
+   "cy_Y": [
+    410,
+    "{\"asked\":{},\"error\":\"88fdb13f4a5d7f3979d757f7bd574ce899c9b091142bc673e5c03f44d2bf24c7: it lapsed\",\"kind\":\"lapsed\"}"
+   ],
+   "cy_never": [
+    502,
+    "{\"asked\":{\"689f64a3a27b28ebfa4b03a2a4541a33fe7f188885a302f8456b5246108d668d\":\"did not answer within 3s\",\"b172f921f8f3ad2a06efd40491bc955d743d8fc3fadbbcded69f03d4a298677f\":{\"held\":\"never_held\"}},\"error\":\"0f312eb1c497115d9255c8947e1fafbc1204ee7bde44d6577583c2944cb034b9: no holder answered\",\"kind\":\"una"
+   ]
+  }
+ },
+ "4.1, scoped": {
+  "verdict": "passed",
+  "why": "Dee's get of Y: 403 '{\"error\":\"this computer does not stand in 7047149403c44a5f30c7b411fc8c376ab9e5761975a85ea901aa7bbaee31eb5e\"}'; a refusal of Dee in Bo's trace: False, in Dee's own: True",
+  "provider_refusals": [],
+  "own_refusals": [
+   "2026-10-14T06:24:50.936073Z DEBUG blob: blob: refused — this computer does not stand in the group group=\"7047149403c44a5f30c7b411fc8c376ab9e5761975a85ea901aa7bbaee31eb5e\""
+  ]
+ },
+ "4.2": {
+  "verdict": "passed",
+  "why": "the page on evening played 10 of 10; plants played {'flipped': [0, 2, 3, 4, 5, 6, 7, 8, 9], 'act-sig': [2, 3, 4, 5, 6, 7, 8, 9], 'bo-signed': [], 'no-ended': [0, 1]}",
+  "signs": [
+   "200"
+  ],
+  "page_refused": [],
+  "page_said": [
+   "ended",
+   "after 10 pieces"
+  ],
+  "plant_refusals": {
+   "flipped": [
+    "its BLAKE3 is afdedf6b6058…, not the line's c225526d54ff…"
+   ],
+   "act-sig": [
+    "its signature does not check under the station's key 689f64a3…"
+   ],
+   "bo-signed": [
+    "its signature does not check under the station's key 689f64a3…; it names b172f921…"
+   ],
+   "no-ended": []
+  }
+ },
+ "4.3": {
+  "verdict": "passed",
+  "why": "Bo drained 11, Cy 12; senders named: ['{\"key\": \"689f64a3a27b28ebfa4b03a2a4541a33fe7f188885a302f8456b5246108d668d\", \"person_key\": \"689f64a3a27b28ebfa4b03a2a4541a33fe7f188885a302f8456b5246108d668d\"}', '{\"key\": \"b172f921f8f3ad2a06efd40491bc955d743d8fc3fadbbcded69f03d4a298677f\", \"person_key\": \"b172f921f8f3ad2a06efd40491bc955d743d8fc3fadbbcded69f03d4a298677f\"}']; Bo's note in Cy's drain: {'key': 'b172f921f8f3ad2a06efd40491bc955d743d8fc3fadbbcded69f03d4a298677f', 'person_key': 'b172f921f8f3ad2a06efd40491bc955d743d8fc3fadbbcded69f03d4a298677f'}",
+  "live_delivered": [
+   "2"
+  ],
+  "bo_note": {
+   "status": 200,
+   "said": "{\"bytes\":27,\"delivered\":2,\"peers\":[{\"delivered\":true,\"name\":\"Cy\",\"node\":\"1b6032cf80ceec70c8e7ca5c95ef1e7ddfe00462c4ae717079bda4f94a14bb37\"},{\"delivered\":true,\"name\":\"Ana\",\"node\":\"689f64a3a27b28ebfa4b03a2a4541a33fe7f188885a302f8456b5246108d668d\"}]}",
+   "ms": 146,
+   "length": 247
+  }
+ },
+ "off air": {
+  "verdict": "passed",
+  "why": "ended said within 4 s: Bo True, Cy True, page True (it said 'ended'); the plant no-ended: 'cannot reach'",
+  "listeners_stopped": {
+   "bo": null,
+   "cy": null
+  },
+  "page_why": "after 10 pieces",
+  "plant_why": "no line 2 in 12 s"
+ }
+}

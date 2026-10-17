@@ -1,0 +1,11 @@
+test guest::tests::parse_relay_mode_empty_is_default ... ok
+test guest::tests::parse_relay_mode_all_invalid_falls_back_to_default ... ok
+test guest::tests::parse_relay_mode_skips_bad_keeps_good ... ok
+test guest::tests::parse_relay_mode_valid_urls_build_custom ... ok
+test guest::tests::the_egress_posture_is_one_info_line_naming_no_proxy ... ok
+test guest::tests::there_is_one_bridge_loop_and_one_pump ... ok
+test guest::tests::a_loopback_only_endpoint_binds_loopback_alone ... ok
+test guest::tests::build_relayed_endpoint_with_custom_relay_binds ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 88 filtered out; finished in 0.06s
+

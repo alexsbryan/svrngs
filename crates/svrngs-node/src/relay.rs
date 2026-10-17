@@ -9,14 +9,15 @@
 //! svrngs-core's token. This computer's own relay is one of n0's or the
 //! operator's, so the address it advertises is dotless too. The page
 //! compiles this same file (`web/src/lib.rs`, by `#[path]`), so a phone
-//! reads n0's relays and a lookup's answers as this computer does; it uses
-//! only iroh, n0-future and svrngs-core, which both builds have.
+//! reads a relay as this computer does, and asks n0 for none
+//! (relay-default); it uses only iroh, n0-future and svrngs-core, which
+//! both builds have.
 
 use iroh::address_lookup::{
     AddressLookup, AddressLookupBuilder, AddressLookupBuilderError, EndpointData, EndpointInfo,
     Error, Item,
 };
-use iroh::{Endpoint, EndpointId, RelayMap, RelayUrl, RelayUrlParseError};
+use iroh::{Endpoint, EndpointId, RelayMap, RelayUrl};
 use n0_future::boxed::BoxStream;
 use n0_future::StreamExt as _;
 
@@ -25,9 +26,10 @@ pub fn dotless(url: RelayUrl) -> RelayUrl {
     RelayUrl::from(svrngs_core::relay::dotless(url.into()))
 }
 
-/// A relay's URL as written, read dotless.
-pub fn parse(raw: &str) -> Result<RelayUrl, RelayUrlParseError> {
-    raw.parse().map(dotless)
+/// A relay's URL as written, read dotless: svrngs-core's one reading
+/// ([`svrngs_core::relay::parse`], which says a refusal), as iroh's URL.
+pub fn parse(raw: &str) -> Result<RelayUrl, svrngs_core::relay::ParseError> {
+    svrngs_core::relay::parse(raw).map(RelayUrl::from)
 }
 
 /// n0's relays, each as iroh configures it, dotless: the relays a computer

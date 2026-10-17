@@ -1,0 +1,14 @@
+{"run":"A","browser":"chromium","file":"mp4","rep":1,"phase":"start","t":1791587787.482,"ua":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/147.0.7727.15 Safari/537.36"}
+{"run":"A","browser":"chromium","file":"mp4","rep":1,"phase":"end","t":1791587810.58}
+{"run":"A","browser":"webkit","file":"mp4","rep":1,"phase":"start","t":1791587812.064,"ua":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Safari/605.1.15"}
+{"run":"A","browser":"webkit","file":"mp4","rep":1,"phase":"end","t":1791587834.657}
+{"run":"A","browser":"webkit","file":"mkv","rep":1,"phase":"start","t":1791587836.099,"ua":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Safari/605.1.15"}
+{"run":"A","browser":"webkit","file":"mkv","rep":1,"phase":"end","t":1791587859.415}
+{"run":"B-plant","browser":"chromium","file":"mp4","rep":1,"phase":"start","t":1791587861.407,"ua":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/147.0.7727.15 Safari/537.36"}
+{"run":"B-plant","browser":"chromium","file":"mp4","rep":1,"phase":"end","t":1791587944.217}
+{"run":"B","browser":"chromium","file":"mp4","rep":1,"phase":"start","t":1791587947.579,"ua":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/147.0.7727.15 Safari/537.36"}
+{"run":"B","browser":"chromium","file":"mp4","rep":1,"phase":"end","t":1791587973.585}
+{"run":"D-plant","browser":"chromium","file":"mp4","rep":1,"phase":"start","t":1791587976.68,"ua":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/147.0.7727.15 Safari/537.36"}
+{"run":"D-plant","browser":"chromium","file":"mp4","rep":1,"phase":"end","t":1791587998.992}
+{"run":"D","browser":"chromium","file":"mp4","rep":1,"phase":"start","t":1791588001.475,"ua":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/147.0.7727.15 Safari/537.36"}
+{"run":"D","browser":"chromium","file":"mp4","rep":1,"phase":"end","t":1791588054.813}

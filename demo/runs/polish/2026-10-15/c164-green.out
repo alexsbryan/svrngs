@@ -1,0 +1,6 @@
+test bringing_from_the_shelf_traces_why_it_could_not_write ... ok
+test a_file_the_store_cannot_read_is_said_so_never_as_not_held_yet ... ok
+test a_carried_app_is_its_own_group_s_alone ... ok
+test an_app_reads_only_its_own_acts_and_writes_only_as_the_person ... ok
+test an_app_one_computer_carried_opens_and_writes_on_another_with_it_stopped ... ok
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.50s

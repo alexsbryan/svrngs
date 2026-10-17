@@ -1,0 +1,8 @@
+2x1000 load-before: { 2.82 3.69 5.53 }
+2x1000 load-after: { 3.98 3.85 5.52 }
+5x1000 load-before: { 3.98 3.85 5.52 }
+5x1000 load-after: { 3.98 3.85 5.52 }
+25x1000 load-before: { 3.98 3.85 5.52 }
+25x1000 load-after: { 7.10 4.50 5.74 }
+25x10000 load-before: { 7.10 4.50 5.74 }
+25x10000 load-after: { 9.34 5.01 5.91 }

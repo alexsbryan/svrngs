@@ -13,11 +13,11 @@ use common::loopback_sockets;
 use std::time::Duration;
 
 use svrngs_node::iroh::{Contact, PublicKey, RelayConfig};
-use svrngs_node::node::Node;
+use svrngs_node::node::{Node, Unlisted};
 use svrngs_node::register::Standing;
 use svrngs_node::{
-    actor_of, Device, Digest, Ed25519Verifier, Op, Payload, Person, RailAct, Redemption, Roster,
-    SignedOp, SigningKey,
+    actor_of, Device, Digest, Op, Payload, Person, RailAct, Redemption, Roster, SignedOp,
+    SigningKey,
 };
 
 const NS: &str = "house";
@@ -33,7 +33,11 @@ fn key(seed: u8) -> PublicKey {
 
 /// No relay and no address lookup: peers are reached by seeded addresses.
 fn no_relay() -> RelayConfig {
-    RelayConfig::from_parts(Vec::new(), Some("none")).unwrap()
+    RelayConfig {
+        relay_urls: Vec::new(),
+        n0_services: false,
+        loopback_only: false,
+    }
 }
 
 async fn start(seed: u8, dir: &tempfile::TempDir) -> Node {
@@ -103,11 +107,11 @@ fn digest(node: &Node, ns: &str) -> Digest {
     node.rail().digest(ns).unwrap()
 }
 
-/// `dialer`'s base URL for `served`, through its bridge.
+/// `dialer`'s base URL for `served`, through a splice ([`svrngs_node::node::splice`]).
 async fn base_url(dialer: &Node, served: &Node) -> String {
     dialer
         .transport()
-        .base_url(&Contact {
+        .spliced(&Contact {
             key: served.endpoint().id(),
             relay_url: None,
             iroh_direct_addrs: loopback_sockets(served.endpoint()),
@@ -205,6 +209,7 @@ async fn a_round_dials_a_computer_and_never_a_browser() {
         RailAct::Invite {
             key: actor_of(&link),
             until: i64::MAX,
+            device_of: None,
         },
     );
     let pia = Person::parse("pia").unwrap();
@@ -223,7 +228,7 @@ async fn a_round_dials_a_computer_and_never_a_browser() {
             key: actor_of(&signing(3)),
         },
     );
-    let Standing::Members(standing) = a.rail().standing(NS, &Ed25519Verifier).unwrap() else {
+    let Standing::Members(standing) = a.rail().standing(NS).unwrap() else {
         panic!("A holds the group, seeded")
     };
     let devices: Vec<_> = [2, 3]
@@ -246,7 +251,11 @@ async fn a_round_dials_a_computer_and_never_a_browser() {
     let lends = tokio::time::timeout(Duration::from_secs(30), a.lends())
         .await
         .expect("the ask finishes");
-    assert_eq!(lends.unanswered, Vec::<Person>::new(), "A asks B alone");
+    assert_eq!(
+        lends.unlisted.unanswered,
+        Vec::<Person>::new(),
+        "A asks B alone"
+    );
 
     p.transport()
         .add_known_peer(key(1), loopback_sockets(a.endpoint()));
@@ -257,6 +266,60 @@ async fn a_round_dials_a_computer_and_never_a_browser() {
         "A's acceptor and sync route serve P: {round_p:?}"
     );
     assert_eq!(digest(&a, NS), digest(&p, NS), "P converged onto A");
+}
+
+/// A computer that answered is never said not to have answered
+/// (bash-first-minute (c); Demo C's dry run, finding 6). A founds the
+/// group and admits Bo's, Cy's and Dee's computers. Bo's holds no group, so
+/// it has not heard A is in one, and closes A's connection as not admitted;
+/// Cy's holds the group and cannot read what it lends, and answers so;
+/// Dee's has no address A can reach. A's list names each by how: Dee's did
+/// not answer, Bo's has not heard of A, Cy's refused — and A's own ask
+/// carries no stranger's answer: Bo's acceptor still closes A with no HTTP
+/// answer. Watched failing with every one of the three named unanswered.
+#[tokio::test]
+async fn a_computer_that_refuses_is_said_apart_from_one_that_does_not_answer() {
+    let dirs = [(); 3].map(|_| tempfile::tempdir().unwrap());
+    let (a, bo, cy) = (
+        start(1, &dirs[0]).await,
+        start(2, &dirs[1]).await,
+        start(3, &dirs[2]).await,
+    );
+    for node in [&a, &cy] {
+        hold(node, NS, 1);
+    }
+    for (person, k) in [("bo", 2), ("cy", 3), ("dee", 4)] {
+        append(&a, NS, admit(person, k));
+    }
+    // Cy's lends cannot be read: where its declarations go is a file.
+    std::fs::write(
+        svrngs_node::lend::lends_dir(dirs[2].path()),
+        "not a directory",
+    )
+    .unwrap();
+    for (k, node) in [(2, &bo), (3, &cy)] {
+        a.transport()
+            .add_known_peer(key(k), loopback_sockets(node.endpoint()));
+    }
+    let lends = tokio::time::timeout(Duration::from_secs(30), a.lends())
+        .await
+        .expect("the ask finishes");
+    let names = |n: &[&str]| {
+        n.iter()
+            .map(|p| Person::parse(p).unwrap())
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(
+        lends.unlisted,
+        Unlisted {
+            unanswered: names(&["dee"]),
+            unheard: names(&["bo"]),
+            refused: names(&["cy"]),
+            older: vec![],
+        },
+        "each computer named by how it did not say what it lends"
+    );
+    assert!(lends.lent.is_empty(), "{lends:?}");
 }
 
 /// C, admitted to nothing, has its connection closed by A's acceptor with no

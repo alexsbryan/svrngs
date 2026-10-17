@@ -24,7 +24,9 @@ console.log(JSON.stringify({ origin }));
 const input = createInterface({ input: process.stdin });
 const told = await new Promise((done) => input.once('line', done));
 input.close();
-const { link, name } = JSON.parse(told);
+// `taken`, when told, is typed first: a name someone in the group goes by,
+// which the page refuses and asks again, saying why (bash-person).
+const { link, name, taken } = JSON.parse(told);
 
 // In the page: the person's key as the page's store unseals it, and where
 // else its 32 bytes appear — raw, hex, base64 or as a list of numbers — in
@@ -89,6 +91,15 @@ async function scan() {
 const { context, close } = await launch(args.engine);
 const logs = [];
 try {
+  // Every heading the page shows, in order, so a step said and gone — a
+  // device link's "Adding this phone…" (bash-devices) — is read too.
+  await context.addInitScript(() => {
+    window.__said = [];
+    new MutationObserver(() => {
+      const s = document.getElementById('status')?.textContent;
+      if (s && window.__said.at(-1) !== s) window.__said.push(s);
+    }).observe(document, { subtree: true, childList: true, characterData: true });
+  });
   const page = await context.newPage();
   page.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
   page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
@@ -106,18 +117,31 @@ try {
       );
     await settled();
     const asked = await page.evaluate(() => !document.getElementById('join').hidden);
+    let why = null;
+    if (asked && taken) {
+      await page.fill('#name', taken);
+      await page.click('#join button');
+      await page.waitForFunction(
+        () => !document.getElementById('join').hidden && document.getElementById('why').textContent,
+        null,
+        { timeout: 90_000 },
+      );
+      why = await page.evaluate(() => document.getElementById('why').textContent);
+    }
     if (asked) {
       await page.fill('#name', name);
       await page.click('#join button');
       await page.waitForSelector('#status.good, #status.bad', { timeout: 90_000 });
     }
-    return page.evaluate((asked) => ({
+    return page.evaluate(([asked, why]) => ({
       asked,
+      why,
       status: document.getElementById('status').textContent,
       lent: [...document.querySelectorAll('#lent button')].map((b) => b.textContent),
       answer: document.getElementById('response').textContent,
+      said: window.__said,
       lines: window.__lines,
-    }), asked);
+    }), [asked, why]);
   };
 
   const first = await opening(link);

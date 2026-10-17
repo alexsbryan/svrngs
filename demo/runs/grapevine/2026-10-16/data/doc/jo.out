@@ -1,0 +1,12 @@
+You're in 1400 Page, as Jo.
+1400 Page's folder is /tmp/grapevine/jo/svrngs/1400 Page: what anyone in 1400 Page puts there reaches this computer, and what you put there reaches theirs.
+
+Made Waller block, with you as Jo.
+Send this link to the people you want in it. It works for a day, while this computer is on:
+
+  svrngs://join/<the token>
+
+Waller block's folder is /tmp/grapevine/jo/svrngs/Waller block: what anyone in Waller block puts there reaches this computer, and what you put there reaches theirs.
+
+Leave this running; Ctrl-C stops it.
+{"port":64290,"at":"http://127.0.0.1:64290/","store":"record"}

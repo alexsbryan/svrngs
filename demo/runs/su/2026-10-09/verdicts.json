@@ -1,0 +1,357 @@
+{
+ "bar 1": {
+  "chromium": {
+   "verdict": "passed",
+   "why": "asked once, on the first phone; the list in the plant's order after the yes, and opened again on each phone with no question",
+   "question": "Make these suggestions more your thing? Tonight's Picks can use your movie preferences. Your detailed viewing history stays where it is stored; the app receives ranked film suggestions.\n\nUse my preferences Keep browsing",
+   "yes_to_list_ms": 243,
+   "first_open_tries": 1,
+   "again_ms": 2572,
+   "other_phone_ms": 3623,
+   "other_phone_tries": 1,
+   "first_tries": [
+    [
+     "asked",
+     [
+      "answered",
+      "answered"
+     ]
+    ]
+   ],
+   "orders": [
+    [
+     "Arrival",
+     "Brazil",
+     "Blade Runner",
+     "Alien"
+    ],
+    [
+     "Arrival",
+     "Brazil",
+     "Blade Runner",
+     "Alien"
+    ],
+    [
+     "Arrival",
+     "Brazil",
+     "Blade Runner",
+     "Alien"
+    ]
+   ]
+  },
+  "webkit": {
+   "verdict": "passed",
+   "why": "asked once, on the first phone; the list in the plant's order after the yes, and opened again on each phone with no question",
+   "question": "Make these suggestions more your thing? Tonight's Picks can use your movie preferences. Your detailed viewing history stays where it is stored; the app receives ranked film suggestions.\n\nUse my preferences Keep browsing",
+   "yes_to_list_ms": 229,
+   "first_open_tries": 1,
+   "again_ms": 2114,
+   "other_phone_ms": 3102,
+   "other_phone_tries": 1,
+   "first_tries": [
+    [
+     "asked",
+     [
+      "answered",
+      "answered"
+     ]
+    ]
+   ],
+   "orders": [
+    [
+     "Arrival",
+     "Brazil",
+     "Blade Runner",
+     "Alien"
+    ],
+    [
+     "Arrival",
+     "Brazil",
+     "Blade Runner",
+     "Alien"
+    ],
+    [
+     "Arrival",
+     "Brazil",
+     "Blade Runner",
+     "Alien"
+    ]
+   ]
+  }
+ },
+ "bar 2": {
+  "chromium": {
+   "verdict": "passed",
+   "why": "Bo's ask refused by the taste's owner check, his films unranked; the door let him in",
+   "bo_reads": "The taste at 93868136 is someone else\u2019s. These films are not ranked.",
+   "bo_films": [
+    "Alien",
+    "Blade Runner",
+    "Brazil",
+    "Arrival"
+   ],
+   "taste_refused": [
+    "2026-10-09T06:17:08.331Z refused not-yours: {\"person\":\"Bo\",\"key\":\"28d2d5bf40727f3f1682534fb978fe5cd40608af05b9253bad7444966b13add3\",\"app\":\"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n\"}"
+   ],
+   "door_let_bo_in": [
+    "2026-10-09T06:17:08.330826Z DEBUG door: door: a pass opens this lend, so its holder asks as the person who signed it holder=\"d494b1fe1fee896ea394ba6f5321a176a948ecc63bbb2d5c8b68d85bb2a8f3c3\" person=\"Bo\" lend=taste until=1791569825"
+   ],
+   "tries": 1
+  },
+  "webkit": {
+   "verdict": "passed",
+   "why": "Bo's ask refused by the taste's owner check, his films unranked; the door let him in",
+   "bo_reads": "The taste at 93868136 is someone else\u2019s. These films are not ranked.",
+   "bo_films": [
+    "Alien",
+    "Blade Runner",
+    "Brazil",
+    "Arrival"
+   ],
+   "taste_refused": [
+    "2026-10-09T06:19:00.960Z refused not-yours: {\"person\":\"Bo\",\"key\":\"b062ffe7720d748907ca3bec0c86f9ae3fbeedfd5fb616741abf9e6d719a3723\",\"app\":\"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n\"}"
+   ],
+   "door_let_bo_in": [
+    "2026-10-09T06:19:00.958803Z DEBUG door: door: a pass opens this lend, so its holder asks as the person who signed it holder=\"3c56cd24983e18f387ac9b4222514342508f4a1313ae42630fdbdc6b83a7167c\" person=\"Bo\" lend=taste until=1791569938"
+   ],
+   "tries": 1
+  }
+ },
+ "bar 3": {
+  "chromium": {
+   "verdict": "passed",
+   "why": "the door refuses /diary 403 and the taste logs no ask for it",
+   "answer": {
+    "status": 403,
+    "body": "{\"error\":\"taste is lent without /diary\"}"
+   },
+   "taste_logged_diary": [],
+   "door": [
+    "2026-10-09T06:17:08.602889Z DEBUG door: door: refused \u2014 the lend refuses this path actor=\"8127e850f923990cc9214742ddc1df308c9f9535fcce4df1f9fc34f5d7665fa9\" lend=taste path=\"/diary\" refused=\"/diary\""
+   ]
+  },
+  "webkit": {
+   "verdict": "passed",
+   "why": "the door refuses /diary 403 and the taste logs no ask for it",
+   "answer": {
+    "status": 403,
+    "body": "{\"error\":\"taste is lent without /diary\"}"
+   },
+   "taste_logged_diary": [],
+   "door": [
+    "2026-10-09T06:19:01.263233Z DEBUG door: door: refused \u2014 the lend refuses this path actor=\"08d3f2cb73e4f35c932609a49f0d7d95bdea4d1ba5da81bc53ba91d1587f5f14\" lend=taste path=\"/diary\" refused=\"/diary\""
+   ]
+  },
+  "scan": {
+   "verdict": "passed",
+   "why": "no planted row's marker in any byte any browser received, the plants' runs apart",
+   "markers": 5,
+   "browsers": [
+    "asleep/ana-chromium",
+    "night-chromium/ana-chromium",
+    "night-chromium/ana-webkit",
+    "night-chromium/bo",
+    "night-webkit/ana-chromium",
+    "night-webkit/ana-webkit",
+    "night-webkit/bo"
+   ],
+   "found": {
+    "plant-history/ana-chromium": [
+     "diary_row_1",
+     "diary_row_2",
+     "diary_row_3",
+     "diary_row_4",
+     "diary_row_5"
+    ]
+   }
+  }
+ },
+ "bar 4": {
+  "chromium": {
+   "verdict": "passed",
+   "why": "the other app's ask refused: Ana's yes names Tonight's Picks",
+   "ask": {
+    "state": "rank 403",
+    "yes": null,
+    "text": "{\"refused\":\"not-asked\",\"error\":\"You have not said this app may use your taste.\"}"
+   },
+   "taste": [
+    "2026-10-09T06:16:33.784Z refused not-asked: {\"person\":\"Ana\",\"key\":\"8127e850f923990cc9214742ddc1df308c9f9535fcce4df1f9fc34f5d7665fa9\",\"app\":\"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n\"}",
+    "2026-10-09T06:17:22.352Z refused not-asked: {\"person\":\"Ana\",\"key\":\"8127e850f923990cc9214742ddc1df308c9f9535fcce4df1f9fc34f5d7665fa9\",\"app\":\"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btfdhjzwr7az\"}"
+   ]
+  },
+  "webkit": {
+   "verdict": "passed",
+   "why": "the other app's ask refused: Ana's yes names Tonight's Picks",
+   "ask": {
+    "state": "rank 403",
+    "yes": null,
+    "text": "{\"refused\":\"not-asked\",\"error\":\"You have not said this app may use your taste.\"}"
+   },
+   "taste": [
+    "2026-10-09T06:18:40.972Z refused not-asked: {\"person\":\"Ana\",\"key\":\"08d3f2cb73e4f35c932609a49f0d7d95bdea4d1ba5da81bc53ba91d1587f5f14\",\"app\":\"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n\"}",
+    "2026-10-09T06:19:16.033Z refused not-asked: {\"person\":\"Ana\",\"key\":\"08d3f2cb73e4f35c932609a49f0d7d95bdea4d1ba5da81bc53ba91d1587f5f14\",\"app\":\"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btfdhjzwr7az\"}"
+   ]
+  }
+ },
+ "the unasked yes": {
+  "chromium": {
+   "measured": "the other app's yes, sent unasked",
+   "yes_status": "200",
+   "then": {
+    "state": "unasked 200",
+    "yes": "200",
+    "text": "{\"films\":[{\"title\":\"Arrival\",\"year\":2016,\"ids\":{}},{\"title\":\"Alien\",\"year\":1979,\"ids\":{}}]}"
+   },
+   "answered": true
+  },
+  "webkit": {
+   "measured": "the other app's yes, sent unasked",
+   "yes_status": "200",
+   "then": {
+    "state": "unasked 200",
+    "yes": "200",
+    "text": "{\"films\":[{\"title\":\"Arrival\",\"year\":2016,\"ids\":{}},{\"title\":\"Alien\",\"year\":1979,\"ids\":{}}]}"
+   },
+   "answered": true
+  }
+ },
+ "bar 5": {
+  "chromium": {
+   "verdict": "passed",
+   "why": "after the stop, the next ask on either phone refused by the taste; what Ana reads at the stop",
+   "at_stop": "Stopped. From now on the taste at 93868136 refuses Tonight\u2019s Picks. The list ranked before you stopped stays on this screen until you leave it.",
+   "stop_to_refused_ms": 397,
+   "other_phone": {
+    "state": "refused-stopped",
+    "text": "You stopped Tonight\u2019s Picks using your taste. These films are not ranked."
+   },
+   "taste": [
+    "2026-10-09T06:17:22.919Z refused stopped: {\"person\":\"Ana\",\"key\":\"c80c83babace71a5700fc695c4e3e36458ed2c21875f7fe830fe62a8e43f8870\",\"app\":\"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n\"}",
+    "2026-10-09T06:17:36.642Z refused stopped: {\"person\":\"Ana\",\"key\":\"8127e850f923990cc9214742ddc1df308c9f9535fcce4df1f9fc34f5d7665fa9\",\"app\":\"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n\"}"
+   ]
+  },
+  "webkit": {
+   "verdict": "passed",
+   "why": "after the stop, the next ask on either phone refused by the taste; what Ana reads at the stop",
+   "at_stop": "Stopped. From now on the taste at 93868136 refuses Tonight\u2019s Picks. The list ranked before you stopped stays on this screen until you leave it.",
+   "stop_to_refused_ms": 422,
+   "other_phone": {
+    "state": "refused-stopped",
+    "text": "You stopped Tonight\u2019s Picks using your taste. These films are not ranked."
+   },
+   "taste": [
+    "2026-10-09T06:19:16.666Z refused stopped: {\"person\":\"Ana\",\"key\":\"f180e9c549a9a817f59f78965208d9ceb9883465236ac72443e0539b26d42e8c\",\"app\":\"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n\"}",
+    "2026-10-09T06:19:31.378Z refused stopped: {\"person\":\"Ana\",\"key\":\"08d3f2cb73e4f35c932609a49f0d7d95bdea4d1ba5da81bc53ba91d1587f5f14\",\"app\":\"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n\"}"
+   ]
+  }
+ },
+ "bar 6": {
+  "chromium": {
+   "verdict": "passed",
+   "why": "each refusal said as itself, the films shown unranked",
+   "bo": {
+    "state": "refused-not-yours",
+    "text": "The taste at 93868136 is someone else\u2019s. These films are not ranked."
+   },
+   "stopped": {
+    "state": "refused-stopped",
+    "text": "You stopped Tonight\u2019s Picks using your taste. These films are not ranked."
+   }
+  },
+  "webkit": {
+   "verdict": "passed",
+   "why": "each refusal said as itself, the films shown unranked",
+   "bo": {
+    "state": "refused-not-yours",
+    "text": "The taste at 93868136 is someone else\u2019s. These films are not ranked."
+   },
+   "stopped": {
+    "state": "refused-stopped",
+    "text": "You stopped Tonight\u2019s Picks using your taste. These films are not ranked."
+   }
+  },
+  "asleep": {
+   "verdict": "passed",
+   "why": "Ana's computer asleep: said it did not answer, the films unranked",
+   "taste": {
+    "state": "away",
+    "text": "The taste at 93868136 did not answer: its computer may be asleep. These films are not ranked."
+   },
+   "settled_ms": 32384,
+   "films": [
+    "Alien",
+    "Blade Runner",
+    "Brazil",
+    "Arrival"
+   ],
+   "yes": {
+    "state": "ranked",
+    "text": "Ranked by your taste."
+   }
+  }
+ },
+ "plants (each should be failed)": {
+  "bo": {
+   "verdict": "failed",
+   "why": "Bo's ask answered with the owner check out",
+   "bo": "ranked"
+  },
+  "history": {
+   "verdict": "failed",
+   "why": "the history answered, lent without --refuse",
+   "answer": {
+    "status": 200,
+    "body": "{\"rows\":[{\"title\":\"Arrival\",\"year\":2016,\"ids\":{\"tmdb\":\"329865\",\"imdb\":\"tt2543164\"},\"rating\":5,\"at\":\"2026-09-12T21:04:00Z\",\"marker\":\"su-diary-1-507c64875bc9ba64\"},{\"title\":\"Arrival\",\"year\":2016,\"ids\":{\"tmdb\":\"329865\",\"imdb\":\"tt2543164\"},\"rating\":5,\"at\":\"2026-10-01T20:40:00Z\",\"marker\":\"su-diary-2-de65eac1c1b7f5f1\"},{\"title\":\"Brazil\",\"year\":1985,\"ids\":{\"tmdb\":\"68\",\"imdb\":\"tt0088846\"},\"rating\":4,\"at\":"
+   }
+  },
+  "other-app": {
+   "verdict": "failed",
+   "why": "the other app answered with the app check out",
+   "ask": "rank 200"
+  },
+  "after-stop": {
+   "verdict": "failed",
+   "why": "an ask after the stop answered with the stop check out",
+   "again": "ranked"
+  },
+  "empty": {
+   "verdict": "failed",
+   "why": "a refusal shown as an empty ranking",
+   "bo": {
+    "state": "ranked",
+    "text": "No picks for you tonight."
+   },
+   "films": []
+  }
+ },
+ "the count": {
+  "pieces": {
+   "enforce app": 9,
+   "enforce owner": 3,
+   "enforce refuse": 9,
+   "enforce stop": 9,
+   "enforce yes": 16,
+   "own consent": 48,
+   "own diary": 2,
+   "own picks": 86,
+   "own rank": 22,
+   "own serve": 28,
+   "plant after-stop": 1,
+   "plant bo": 1,
+   "plant empty": 1,
+   "plant other-app": 1,
+   "plant switch": 1,
+   "plumbing find": 26,
+   "plumbing refusal": 13
+  },
+  "sides": {
+   "enforce": 46,
+   "own": 186,
+   "plant": 5,
+   "plumbing": 39
+  },
+  "unmarked": 0,
+  "awk": "9 enforce app\n3 enforce owner\n9 enforce refuse\n9 enforce stop\n16 enforce yes\n48 own consent\n2 own diary\n86 own picks\n22 own rank\n28 own serve\n1 plant after-stop\n1 plant bo\n1 plant empty\n1 plant other-app\n1 plant switch\n26 plumbing find\n13 plumbing refusal\n"
+ }
+}

@@ -1,0 +1,10 @@
+
+running 5 tests
+test record::tests::an_app_cannot_write_the_registers_acts_or_a_seal ... ok
+test record::tests::on_behalf_of_someone_outside_the_group_writes_nothing ... ok
+test record::tests::an_app_record_is_written_and_stamped_with_whom_it_speaks_for ... ok
+test record::tests::acts_signed_with_a_view_still_verify ... ok
+test record::tests::a_commit_signs_no_view ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 168 filtered out; finished in 0.00s
+

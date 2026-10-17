@@ -74,9 +74,9 @@ pub trait Journaled: Serialize + DeserializeOwned {
 /// than an act with a second spelling of identity.
 ///
 /// A ring act's id is minted by [`crate::act_id`]; [`Op::new`] is the
-/// generic envelope's, for the journal's own tests. `from_hex` reads an id
-/// back off a line or an argument, and is named so a reader sees no hashing
-/// happened here.
+/// generic envelope's, for the journal's own tests. An id is read back off a
+/// line by its serde form, `ContentHash`'s 64-hex parse
+/// ([`ContentHash::from_hex`]): no hashing happens there.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct OpId(ContentHash);
@@ -84,10 +84,6 @@ pub struct OpId(ContentHash);
 impl OpId {
     pub(crate) fn from_hash(h: ContentHash) -> Self {
         Self(h)
-    }
-    /// `None` on anything that is not exactly 64 hex characters.
-    pub fn from_hex(s: &str) -> Option<Self> {
-        ContentHash::from_hex(s).map(Self)
     }
     pub fn as_bytes(&self) -> &[u8; 32] {
         self.0.as_bytes()
@@ -120,40 +116,6 @@ pub struct Op<K> {
     pub actor: String,
     #[serde(flatten)]
     pub kind: K,
-}
-
-impl<K: Journaled> Op<K> {
-    /// Build an op, deriving its content-addressed [`OpId`] from the
-    /// (prefix, ts, actor, body) tuple.
-    ///
-    /// svrngs: test-only, so no production path can build a ring act whose id
-    /// hashes the line, signature included — a ring act's id is
-    /// [`crate::act_id`]'s (U2). The journal's own tests build envelopes of
-    /// other kinds with it.
-    ///
-    /// Two byte-identical acts at the same second by the same actor collide by
-    /// design — callers append in real time, so this does not arise in
-    /// practice (the same birthday-bound caveat the atom content-hash ids
-    /// carry).
-    #[cfg(any(test, feature = "test-support"))]
-    pub fn new(kind: K, ts_unix: i64, actor: impl Into<String>) -> Self {
-        let actor = actor.into();
-        // serde_json writes fields in declaration order, so the body string —
-        // and therefore the id — is deterministic across runs and builds. A
-        // kind failing to serialise is unreachable; silent `""` would derive
-        // an id over empty bytes (ROOT_CAUSE_FIXES C4).
-        let body = serde_json::to_string(&kind)
-            .expect("a kind serialises — an id over empty bytes is the named catastrophe");
-        let input = alloc::format!("{}|{ts_unix}|{actor}|{body}", K::ID_PREFIX);
-        let v = kind.line_version();
-        Self {
-            id: OpId(ContentHash::of_str(&input)),
-            v,
-            ts_unix,
-            actor,
-            kind,
-        }
-    }
 }
 
 /// A line present in the journal that this build did not turn into an [`Op`].

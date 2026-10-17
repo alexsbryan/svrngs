@@ -1,0 +1,10 @@
+# #169, a move: svrngs lib (the table test), svrngs share, node home, door a_sign_in_helper, browser the_home_page_ (both engines); tests unchanged
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.10s
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.65s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 34 filtered out; finished in 1.09s
+thread 'the_home_page_lends_what_runs_here::chromium' (49692259) panicked at crates/svrngs-node/tests/browser/main.rs:236:5:
+test result: FAILED. 41 passed; 1 failed; 0 ignored; 0 measured; 52 filtered out; finished in 54.64s
+# the browser group again, at load 5-8 (the first run's Chromium failure was the browser half exiting non-zero, main.rs:236, its stderr not kept; the test alone then passed both engines):
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 92 filtered out; finished in 16.18s
+test result: ok. 42 passed; 0 failed; 0 ignored; 0 measured; 52 filtered out; finished in 24.74s

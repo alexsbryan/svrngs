@@ -1,0 +1,7 @@
+2026-10-09T06:19:33.055Z GET / {"person":null,"key":null,"app":null}
+2026-10-09T06:20:19.828Z POST /rank {"person":"Ana","key":"42c11e88d0703ae10b355821fe3f68dc754139dccde77080308a312b415c3186","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n"}
+2026-10-09T06:20:19.829Z refused not-asked: {"person":"Ana","key":"42c11e88d0703ae10b355821fe3f68dc754139dccde77080308a312b415c3186","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n"}
+2026-10-09T06:20:19.980Z POST /yes {"person":"Ana","key":"42c11e88d0703ae10b355821fe3f68dc754139dccde77080308a312b415c3186","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n"}
+2026-10-09T06:20:19.981Z yes kept for aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n
+2026-10-09T06:20:20.068Z POST /rank {"person":"Ana","key":"42c11e88d0703ae10b355821fe3f68dc754139dccde77080308a312b415c3186","app":"aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n"}
+2026-10-09T06:20:20.070Z ranked 4 films for aqb1gxdaakb27qn7rkq1vpnb22rlz0f4xm4ghmnt5kx5h0flx6btlqccgh449n

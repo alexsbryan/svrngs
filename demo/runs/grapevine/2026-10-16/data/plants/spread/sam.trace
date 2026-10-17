@@ -1,0 +1,11 @@
+{"at":"2026-10-16T21:41:55.382Z","what":"me","group":"57624ae1bbc9bf3c2c93025a2e26ec3a10aee43ffc3418b991f545ff2ecc36ce","standing":true}
+{"at":"2026-10-16T21:41:55.393Z","what":"folded","person":"me","groups":1,"asks":0,"can":0,"threads":0,"relay":0,"gaps":[]}
+{"at":"2026-10-16T21:41:55.394Z","what":"a page","person":"me","groups":1,"asks":0,"threads":0,"gaps":0}
+{"at":"2026-10-16T21:41:55.820Z","what":"me","group":"57624ae1bbc9bf3c2c93025a2e26ec3a10aee43ffc3418b991f545ff2ecc36ce","standing":true}
+{"at":"2026-10-16T21:41:55.822Z","what":"folded","person":"me","groups":1,"asks":0,"can":0,"threads":0,"relay":0,"gaps":[]}
+{"at":"2026-10-16T21:41:55.833Z","what":"asking","person":"me","kind":"tool","group":"57624ae1bbc9bf3c2c93025a2e26ec3a10aee43ffc3418b991f545ff2ecc36ce","hops":1}
+{"at":"2026-10-16T21:41:55.858Z","what":"written","person":"me","doing":"ask","group":"57624ae1bbc9bf3c2c93025a2e26ec3a10aee43ffc3418b991f545ff2ecc36ce","id":"c121fc0c7cbbc8eb79a67194e46a60d954dd7a1e83a451c98f3008fe6b32fc8b"}
+{"at":"2026-10-16T21:41:55.871Z","what":"answered","person":"me","route":"ask","status":200}
+{"at":"2026-10-16T21:41:55.888Z","what":"me","group":"57624ae1bbc9bf3c2c93025a2e26ec3a10aee43ffc3418b991f545ff2ecc36ce","standing":true}
+{"at":"2026-10-16T21:41:55.890Z","what":"folded","person":"me","groups":1,"asks":1,"can":0,"threads":0,"relay":0,"gaps":[]}
+{"at":"2026-10-16T21:41:55.901Z","what":"a page","person":"me","groups":1,"asks":1,"threads":0,"gaps":0}

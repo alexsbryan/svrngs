@@ -1,0 +1,23 @@
+at 57f6e82, later-wins planted in crates/svrngs-node/src/folder.rs: exit 101
+
+running 1 test
+test both_sides_of_a_conflict_are_kept ... FAILED
+
+failures:
+
+---- both_sides_of_a_conflict_are_kept stdout ----
+
+thread 'both_sides_of_a_conflict_are_kept' (12910851) panicked at crates/svrngs-node/tests/folders.rs:689:5:
+both edits in both directories: Ana's ["c.bin"], Ben's ["c.bin"]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    both_sides_of_a_conflict_are_kept
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 17 filtered out; finished in 31.57s
+
+   Compiling svrngs-node v0.1.0 (/Users/alexsbryan/dev/svrngs-folders/crates/svrngs-node)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 14.97s
+     Running tests/folders.rs (target/debug/deps/folders-8bed5be87a6bb528)
+error: test failed, to rerun pass `-p svrngs-node --test folders`

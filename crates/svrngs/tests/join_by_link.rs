@@ -18,17 +18,21 @@ use std::time::{Duration, Instant};
 
 use svrngs::cli::{self, Printed, Refusal, Said, Verb};
 use svrngs::group::{self, Name, Seed};
-use svrngs::issuer;
 use svrngs_node::iroh::{Contact, EndpointAddr, MemoryLookup, RelayConfig, RelayUrl};
+use svrngs_node::join as issuer;
 use svrngs_node::link::{client_link, https_link, Link, Origin, Token, KEPT_WORDS};
 use svrngs_node::node::Node;
 use svrngs_node::redeem::{
     ask, redeem, AskRequest, Asked, RedeemError, RedeemRequest, Redeemed, REFUSAL,
 };
 use svrngs_node::{
-    actor_of, derive_id, redemption_message, sign_message, Device, Ed25519Verifier, Membership,
-    OpId, Person, RailAct, SigningKey, BROWSER_LINE_VERSION, LINK_LINE_VERSION,
+    actor_of, derive_id, redemption_message, sign_message, Device, OpId, Person, RailAct,
+    SigningKey, BROWSER_LINE_VERSION, LINK_LINE_VERSION,
 };
+
+#[path = "../../svrngs-node/tests/common/mod.rs"]
+mod node_common;
+use node_common::heard;
 
 /// The lines a group's journal holds on disk, as written.
 fn lines(node: &Node, group: &str) -> Vec<svrngs_node::Op<svrngs_node::SignedOp>> {
@@ -46,7 +50,11 @@ fn lines(node: &Node, group: &str) -> Vec<svrngs_node::Op<svrngs_node::SignedOp>
 }
 
 fn no_relay() -> RelayConfig {
-    RelayConfig::from_parts(Vec::new(), Some("none")).unwrap()
+    RelayConfig {
+        relay_urls: Vec::new(),
+        n0_services: false,
+        loopback_only: false,
+    }
 }
 
 fn name(s: &str) -> Name {
@@ -81,6 +89,21 @@ async fn computer_on(seed: u8, relay: &RelayConfig) -> Computer {
         key,
         _dir: dir,
     }
+}
+
+/// Sam's computer makes the group house, as Sam: no page, no `--relay`,
+/// and no relay reached ([`no_relay`]).
+async fn sams_house(sam: &Computer) -> (Seed, Printed) {
+    cli::new_group(
+        &sam.node,
+        name("house"),
+        name("Sam"),
+        None,
+        None,
+        &no_relay(),
+    )
+    .await
+    .expect("Sam makes house")
 }
 
 /// iroh binds the wildcard; a dial in one process needs loopback.
@@ -148,10 +171,7 @@ fn admitted(node: &Node, group: &str) -> Vec<String> {
 }
 
 fn stands(node: &Node, group: &str, key: &SigningKey) -> bool {
-    node.rail()
-        .standing(group, &Ed25519Verifier)
-        .unwrap()
-        .names(&actor_of(key))
+    node.rail().standing(group).unwrap().names(&actor_of(key))
 }
 
 /// The issuer's answer to `link` presented by `who` on the wire, under
@@ -231,13 +251,12 @@ fn now() -> i64 {
 #[tokio::test(flavor = "multi_thread")]
 async fn three_people_open_one_link_and_each_is_let_in_once() {
     let sam = computer(1).await;
-    let (seed, printed) = cli::new_group(&sam.node, name("house"), name("Sam"), None, &no_relay())
-        .await
-        .expect("Sam makes house");
+    let (seed, printed) = sams_house(&sam).await;
     let group = seed.id();
     let mut said = vec![Said::Made {
         seed: seed.clone(),
         link: printed.clone(),
+        beside: Vec::new(),
     }
     .to_string()];
     let link = parsed(&printed, &sam.node);
@@ -288,7 +307,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
             "{who}'s own copy of the register lets {who} in"
         );
         let dir = friend.node.rail().group_dir(&group).unwrap();
-        let kept = group::read_origin(&dir).unwrap();
+        let kept = svrngs_node::invite::kept_page(&dir).unwrap();
         assert_eq!(
             kept, opened.origin,
             "{who} keeps the origin of an https link, and none from another"
@@ -312,13 +331,14 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
     assert_eq!(admitted(&sam.node, &group), three, "no second Admit");
 
     // ── Sam sends a new link: Dee, with the old one, is refused.
-    let (linked, printed2) = cli::new_link(&sam.node, "house", None, &no_relay())
+    let (linked, printed2, _) = cli::link_to(&sam.node, "house", None, &no_relay(), false)
         .await
         .unwrap();
     said.push(
         Said::Linked {
             seed: linked,
             link: printed2.clone(),
+            device: None,
         }
         .to_string(),
     );
@@ -391,6 +411,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
     let mint = svrngs_node::MintInvite {
         key: actor_of(&lapsed_link.token.key()),
         until: now() - 1,
+        device_of: None,
     };
     let lapsed = sam
         .node
@@ -436,7 +457,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
     // ── A stranger on the members' protocol: closed, no answer.
     let transport = dee.node.transport();
     let base = transport
-        .base_url(&Contact {
+        .spliced(&Contact {
             key: sam.node.endpoint().id(),
             relay_url: None,
             iroh_direct_addrs: loopback(&sam.node),
@@ -507,9 +528,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
 #[tokio::test(flavor = "multi_thread")]
 async fn a_name_that_is_not_one_is_refused_and_nothing_is_written() {
     let sam = computer(1).await;
-    let (seed, printed) = cli::new_group(&sam.node, name("house"), name("Sam"), None, &no_relay())
-        .await
-        .expect("Sam makes house");
+    let (seed, printed) = sams_house(&sam).await;
     let group = seed.id();
     let link = parsed(&printed, &sam.node);
     let invite = invite_of(&sam.node, &group, &link);
@@ -571,6 +590,89 @@ async fn a_name_that_is_not_one_is_refused_and_nothing_is_written() {
     }
 }
 
+/// **A name binds once where a stranger gives one** (bash-person; the
+/// charter's "The name"). Sam founds house; a second computer joining Sam's
+/// link as `sam` is refused, told who goes by it and how to join under
+/// another name, exit 1, and Sam's record is byte for byte what it was; the
+/// same computer joining as `Hal` is let in.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_name_someone_in_the_group_goes_by_is_refused_with_how_to_join() {
+    let sam = computer(1).await;
+    let (seed, printed) = sams_house(&sam).await;
+    let group = seed.id();
+    let link = parsed(&printed, &sam.node);
+    let file = sam
+        .node
+        .rail()
+        .group_dir(&group)
+        .unwrap()
+        .join("ring_oplog.jsonl");
+    let before = std::fs::read_to_string(&file).unwrap();
+    let hal = computer(9).await;
+    knows(&hal, &sam.node);
+    let refused = cli::join_group(&hal.node, &hal.key, &link, &name("sam"))
+        .await
+        .expect_err("a second sam is refused");
+    let words = refused.to_string();
+    assert!(
+        matches!(&refused, Refusal::NameTaken { holder, .. } if *holder == name("Sam")),
+        "{refused:?}"
+    );
+    // How to add this computer as Sam, if it is Sam's (bash-devices (d)).
+    assert!(
+        words.contains("already goes by Sam")
+            && words.contains("`svrngs link house --device`")
+            && words.contains("--as <your name>"),
+        "{words}"
+    );
+    assert_eq!(refused.exit_code(), 1);
+    assert_eq!(std::fs::read_to_string(&file).unwrap(), before);
+    assert!(!stands(&sam.node, &group, &hal.key));
+    cli::join_group(&hal.node, &hal.key, &link, &name("Hal"))
+        .await
+        .expect("Hal is let in");
+    assert!(stands(&sam.node, &group, &hal.key));
+    for c in [&sam, &hal] {
+        c.node.endpoint().close().await;
+    }
+}
+
+/// **Another computer of Sam's joins as Sam, by a link Sam's computer makes
+/// for Sam's devices** (bash-devices (d); `svrngs link house --device`):
+/// asked no name — the name the command would give, `whoever`, is not the
+/// one it joins as — it is let in as Sam, prints so, and stands in Sam's
+/// register as Sam's own person.
+#[tokio::test]
+async fn another_computer_of_sams_joins_as_sam_by_a_link_for_sams_devices() {
+    let sam = computer(1).await;
+    let (seed, _) = sams_house(&sam).await;
+    let (_, printed, device) = cli::link_to(&sam.node, "house", None, &no_relay(), true)
+        .await
+        .expect("Sam's computer makes a link for Sam's devices");
+    assert_eq!(device.map(|p| p.to_string()), Some("Sam".to_string()));
+    let link = parsed(&printed, &sam.node);
+    let second = computer(4).await;
+    knows(&second, &sam.node);
+    let joined = cli::join_group(&second.node, &second.key, &link, &name("whoever"))
+        .await
+        .expect("Sam's second computer is let in");
+    assert_eq!(joined.to_string(), "You're in house, as Sam.\n");
+    let group = seed.id();
+    let standing = sam.node.rail().standing(&group).unwrap();
+    let svrngs_node::register::Standing::Members(members) = standing else {
+        panic!("house is held at Sam's")
+    };
+    let m = &members[&actor_of(&second.key)];
+    assert_eq!(
+        (m.person.as_str(), m.person_key.as_str()),
+        ("Sam", actor_of(&sam.key).as_str()),
+        "Sam's second computer is Sam, by Sam's first key"
+    );
+    for c in [&sam, &second] {
+        c.node.endpoint().close().await;
+    }
+}
+
 /// The redeem route writes what the request names (u4-1; DESIGN §3
 /// "Joining", call 2): Pia's request names a browser, and Sam's record holds
 /// one `Admit` of Pia's key naming a browser, at line version 4, and Sam's
@@ -581,9 +683,7 @@ async fn a_name_that_is_not_one_is_refused_and_nothing_is_written() {
 #[tokio::test(flavor = "multi_thread")]
 async fn the_redeem_route_writes_the_device_the_request_names() {
     let sam = computer(1).await;
-    let (seed, printed) = cli::new_group(&sam.node, name("house"), name("Sam"), None, &no_relay())
-        .await
-        .expect("Sam makes house");
+    let (seed, printed) = sams_house(&sam).await;
     let group = seed.id();
     let link = parsed(&printed, &sam.node);
     let invite = invite_of(&sam.node, &group, &link);
@@ -620,7 +720,8 @@ async fn the_redeem_route_writes_the_device_the_request_names() {
             .rail()
             .admission(&group)
             .unwrap()
-            .project::<Membership>();
+            .membership()
+            .clone();
         assert_eq!(
             register.device(&actor_of(&joiner.key)),
             Some(device),
@@ -629,6 +730,64 @@ async fn the_redeem_route_writes_the_device_the_request_names() {
         joiner.node.endpoint().close().await;
     }
     sam.node.endpoint().close().await;
+}
+
+/// How soon a newcomer's computer lists what the group's other computers
+/// lend once let in (bash-first-minute (b)). The split
+/// (`demo/runs/first-minute/2026-10-12/README.md`): the join took 0.7 s,
+/// listing took under 0.1 s once Ana's computer held the `Admit`, and the
+/// rest, 56 s, was waiting for Sam's round at its 60 s period. A round's
+/// exchange on loopback took 14 ms there; five seconds holds one ask cut at
+/// `ANSWER_WITHIN`, 3 s, and a loaded host, and is far inside the 51-56 s
+/// Demo C's dry run measured.
+const HEARD_WITHIN: Duration = Duration::from_secs(5);
+
+/// A newcomer is heard by the group at once (bash-first-minute (b); Demo
+/// C's dry run, finding 8): Ana is in Sam's group and lends one thing;
+/// Alex is let in by Sam's computer, and Alex's computer lists Ana's lend,
+/// asked of Ana's computer, within [`HEARD_WITHIN`] — every round's period
+/// left at its 60 s. Watched failing with the redeem route waking no round.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_newcomer_lists_what_every_computer_lends_within_seconds() {
+    let sam = computer(1).await;
+    let (_, printed) = sams_house(&sam).await;
+    let link = parsed(&printed, &sam.node);
+    let ana = computer(2).await;
+    knows(&ana, &sam.node);
+    cli::join_group(&ana.node, &ana.key, &link, &name("ana"))
+        .await
+        .expect("Ana is let in");
+    let lends = svrngs_node::lend::lends_dir(ana._dir.path());
+    std::fs::create_dir_all(&lends).unwrap();
+    let music = serde_json::json!({ "port": 4533, "kind": "navidrome", "limit": 3 });
+    std::fs::write(lends.join("music.json"), music.to_string()).unwrap();
+    knows(&sam, &ana.node);
+    let alex = computer(3).await;
+    knows(&alex, &sam.node);
+    knows(&alex, &ana.node);
+    cli::join_group(&alex.node, &alex.key, &link, &name("alex"))
+        .await
+        .expect("Alex is let in");
+    let started = Instant::now();
+    loop {
+        let lends = alex.node.lends().await;
+        if lends.lent.iter().any(|l| l.person.as_str() == "ana") {
+            eprintln!(
+                "Alex lists Ana's lend {:?} after being let in",
+                started.elapsed()
+            );
+            break;
+        }
+        assert!(
+            started.elapsed() < HEARD_WITHIN,
+            "Alex's computer lists no lend of Ana's {:?} after being let in: {lends:?}",
+            started.elapsed()
+        );
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    for c in [&sam, &ana, &alex] {
+        c.node.endpoint().close().await;
+    }
 }
 
 /// A member's later link opens the page the founder's did (u2-7): Sam
@@ -640,9 +799,16 @@ async fn the_redeem_route_writes_the_device_the_request_names() {
 async fn a_member_prints_links_on_the_page_the_founders_opened() {
     let sam = computer(1).await;
     let x = Origin::parse("https://x.example/").unwrap();
-    let (_, printed) = cli::new_group(&sam.node, name("house"), name("Sam"), Some(&x), &no_relay())
-        .await
-        .expect("Sam makes house on x.example");
+    let (_, printed) = cli::new_group(
+        &sam.node,
+        name("house"),
+        name("Sam"),
+        Some(&x),
+        None,
+        &no_relay(),
+    )
+    .await
+    .expect("Sam makes house on x.example");
     let https = printed.https.clone().expect("an https link on x.example");
     let alex = computer(2).await;
     let cy = computer(4).await;
@@ -652,12 +818,12 @@ async fn a_member_prints_links_on_the_page_the_founders_opened() {
             .await
             .unwrap_or_else(|e| panic!("{n} is let in: {e}"));
     }
-    let (_, theirs) = cli::new_link(&alex.node, "house", None, &no_relay())
+    let (_, theirs, _) = cli::link_to(&alex.node, "house", None, &no_relay(), false)
         .await
         .expect("Alex, in house, prints a link");
     let on = theirs.https.unwrap_or_default();
     assert!(on.starts_with("https://x.example/#"), "{on}");
-    let (_, cys) = cli::new_link(&cy.node, "house", None, &no_relay())
+    let (_, cys, _) = cli::link_to(&cy.node, "house", None, &no_relay(), false)
         .await
         .expect("Cy, in house, prints a link");
     assert_eq!(cys.https, None, "{cys}");
@@ -673,10 +839,14 @@ async fn a_member_prints_links_on_the_page_the_founders_opened() {
 #[tokio::test(flavor = "multi_thread")]
 async fn a_link_from_a_computer_without_lookup_carries_its_relay() {
     let relay: RelayUrl = "https://relay.example./".parse().unwrap();
-    let ours = RelayConfig::from_parts(vec![relay.to_string()], Some("none")).unwrap();
+    let ours = RelayConfig {
+        relay_urls: vec![relay.to_string()],
+        n0_services: false,
+        loopback_only: false,
+    };
     assert!(!ours.n0_services, "lookup off");
     let sam = computer_on(1, &ours).await;
-    let (seed, printed) = cli::new_group(&sam.node, name("house"), name("Sam"), None, &ours)
+    let (seed, printed) = cli::new_group(&sam.node, name("house"), name("Sam"), None, None, &ours)
         .await
         .expect("Sam makes house");
     eprintln!(
@@ -747,6 +917,7 @@ fn join_parses_its_link() {
                     origin,
                 }),
                 person: Some(name("Alex")),
+                run: true,
             },
             "{raw}"
         );
@@ -754,6 +925,65 @@ fn join_parses_its_link() {
         assert!(cli::parse(argv(&["join", cut])).is_err(), "{cut}");
     }
     let url = client_link(&token);
+    assert!(matches!(
+        cli::parse(argv(&["join", &url, "--no-run"])),
+        Ok(Verb::Join { run: false, .. })
+    ));
+    assert!(cli::parse(argv(&["new", "x", "--no-run"])).is_err());
     assert!(cli::parse(argv(&["join"])).is_err());
     assert!(cli::parse(argv(&["join", &url, "--origin", "https://x.example/"])).is_err());
+}
+
+/// **A computer the group cut is told so by the issuer, never that its
+/// link was refused** (groups-leave-others (d), #181). Hal joins house and
+/// Sam's computer cuts him. Hal's key, on a computer whose copy of house
+/// cannot be read (a roster that is no JSON), opens Sam's next link: the
+/// join traces that whether it was cut cannot be read here, Sam's computer
+/// traces its refusal as the cut, and Hal is told he is no longer in house
+/// on this computer, never that the link was refused. Red at f53e06f6: the
+/// link refused, and neither trace.
+#[tokio::test]
+async fn a_computer_the_group_cut_is_told_so_by_the_issuer() {
+    let (said, _heard) = heard("join=debug,redeem=debug");
+    let sam = computer(1).await;
+    let (seed, printed) = sams_house(&sam).await;
+    let group = seed.id();
+    let hal = computer(9).await;
+    knows(&hal, &sam.node);
+    let link = parsed(&printed, &sam.node);
+    cli::join_group(&hal.node, &hal.key, &link, &name("Hal"))
+        .await
+        .expect("Hal is let in");
+    let cut = svrngs_node::Removal {
+        person: Person::parse("Hal").unwrap(),
+        joined: None,
+    };
+    let cut = sam.node.rail().commit(&group, &cut).unwrap();
+    assert!(cut.is_ok(), "control: Sam's computer cuts Hal: {cut:?}");
+    hal.node.endpoint().close().await;
+
+    let again = computer(9).await;
+    knows(&again, &sam.node);
+    let dir = again.node.rail().group_dir(&group).unwrap();
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(dir.join("roster.json"), "no roster").unwrap();
+    let (_, printed, _) = cli::link_to(&sam.node, "house", None, &no_relay(), false)
+        .await
+        .expect("Sam's computer makes its next link");
+    let link = parsed(&printed, &sam.node);
+    let refused = cli::join_group(&again.node, &again.key, &link, &name("Hal")).await;
+    assert!(
+        matches!(&refused, Err(Refusal::Left(g)) if *g == name("house")),
+        "{refused:?}"
+    );
+    let said = String::from_utf8(said.0.lock().unwrap().clone()).unwrap();
+    for trace in [
+        "join: whether this computer was cut in the group cannot be read here",
+        "redeem: refused — the group cut this key",
+    ] {
+        assert!(said.contains(trace), "{trace}: {said}");
+    }
+    for c in [&sam, &again] {
+        c.node.endpoint().close().await;
+    }
 }

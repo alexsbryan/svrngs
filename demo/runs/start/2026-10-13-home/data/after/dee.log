@@ -1,0 +1,32 @@
+2026-10-13T20:52:26.130109Z DEBUG cli: cli: data dir from $SVRNGS_DIR dir="/tmp/sh-w-after/dee/.svrngs"
+2026-10-13T20:52:26.131196Z DEBUG cli: cli: the relays this computer meets its groups at at=N0 unkept=false relay_urls=["https://aps1-1.relay.n0.iroh.link/", "https://euc1-1.relay.n0.iroh.link/", "https://use1-1.relay.n0.iroh.link/", "https://usw1-1.relay.n0.iroh.link/"]
+2026-10-13T20:52:26.131579Z DEBUG cli: cli: data dir claimed lock=/tmp/sh-w-after/dee/.svrngs/lock
+2026-10-13T20:52:26.146924Z  INFO svrngs::identity: node_key: generated + persisted identity key (first boot) node_pubkey=90a8c0061b88aae6910565d674de08dd638b7d9a375b2f78c006a09b405ab77a
+2026-10-13T20:52:26.212378Z  INFO folder: folder: the store is open untagged=0
+2026-10-13T20:52:26.213498Z  INFO rails: api: serving the record to this computer's apps addr=127.0.0.1:52067
+2026-10-13T20:52:26.214104Z  INFO node: node: endpoint bound with the signing key actor="90a8c0061b88aae6910565d674de08dd638b7d9a375b2f78c006a09b405ab77a" data_dir=/tmp/sh-w-after/dee/.svrngs dial=Some("90a8c0061b88aae6910565d674de08dd638b7d9a375b2f78c006a09b405ab77a@192.168.1.4:59938") api=127.0.0.1:52067
+2026-10-13T20:52:26.214506Z  INFO svrngs_node::ring_sync: ring sync: loop started interval_secs=60
+2026-10-13T20:52:26.584250Z  INFO endpoint{id=90a8c0061b}:relay-actor: iroh::socket::transports::relay::actor: home is now relay https://usw1-1.relay.n0.iroh.link/, was None
+2026-10-13T20:52:27.269576Z DEBUG home: home: answered only from itself, a typed address or, to read, a navigation path=/ method=GET at_own=true site=Some("none") mode=Some("navigate") origin=None answers=true
+2026-10-13T20:52:27.283774Z DEBUG home: home: answered only from itself, a typed address or, to read, a navigation path=/home.css method=GET at_own=true site=Some("same-origin") mode=Some("no-cors") origin=None answers=true
+2026-10-13T20:52:27.288198Z DEBUG home: home: answered only from itself, a typed address or, to read, a navigation path=/home.js method=GET at_own=true site=Some("same-origin") mode=Some("cors") origin=Some("http://svrngs.localhost:52067") answers=true
+2026-10-13T20:52:27.365130Z DEBUG home: home: answered only from itself, a typed address or, to read, a navigation path=/question.js method=GET at_own=true site=Some("same-origin") mode=Some("cors") origin=Some("http://svrngs.localhost:52067") answers=true
+2026-10-13T20:52:27.381891Z DEBUG home: home: answered only from itself, a typed address or, to read, a navigation path=/v1/groups method=GET at_own=true site=Some("same-origin") mode=Some("cors") origin=None answers=true
+2026-10-13T20:52:27.406450Z DEBUG home: home: answered only from itself, a typed address or, to read, a navigation path=/lent method=GET at_own=true site=Some("same-origin") mode=Some("cors") origin=None answers=true
+2026-10-13T20:52:28.298460Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T20:52:29.319129Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T20:52:30.343743Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T20:52:30.438389Z DEBUG home: home: answered only from itself, a typed address or, to read, a navigation path=/ method=GET at_own=true site=Some("none") mode=Some("navigate") origin=None answers=true
+2026-10-13T20:52:30.451783Z DEBUG home: home: answered only from itself, a typed address or, to read, a navigation path=/home.css method=GET at_own=true site=Some("same-origin") mode=Some("no-cors") origin=None answers=true
+2026-10-13T20:52:30.453597Z DEBUG home: home: answered only from itself, a typed address or, to read, a navigation path=/home.js method=GET at_own=true site=Some("same-origin") mode=Some("cors") origin=Some("http://svrngs.localhost:52067") answers=true
+2026-10-13T20:52:30.464733Z DEBUG home: home: answered only from itself, a typed address or, to read, a navigation path=/question.js method=GET at_own=true site=Some("same-origin") mode=Some("cors") origin=Some("http://svrngs.localhost:52067") answers=true
+2026-10-13T20:52:30.469516Z DEBUG home: home: answered only from itself, a typed address or, to read, a navigation path=/v1/groups method=GET at_own=true site=Some("same-origin") mode=Some("cors") origin=None answers=true
+2026-10-13T20:52:30.471944Z DEBUG home: home: answered only from itself, a typed address or, to read, a navigation path=/lent method=GET at_own=true site=Some("same-origin") mode=Some("cors") origin=None answers=true
+2026-10-13T20:52:31.378160Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T20:52:32.388730Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T20:52:33.413899Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T20:52:34.435914Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T20:52:35.462972Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T20:52:36.465890Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T20:52:37.504191Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-13T20:52:37.824107Z DEBUG cli: cli: stopping

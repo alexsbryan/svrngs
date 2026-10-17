@@ -1,0 +1,15 @@
+svrnmesh: bridged 1 legacy SOVEREIGN_* env var(s) to SVRNMESH_* (the SOVEREIGN_* prefix is deprecated — update your scripts)
+dry_report: loaded 466 distinct code symbols (of 1873) in 0.3s
+dry_report: exact tier found 4 clone group(s) from source (SCIP, un-deduped)
+dry_report: near pass starting — O(n²) over 466 reps on 12 threads; minutes-scale, longer under CPU load
+dry_report: near pass 46/466 rows (0s elapsed)
+dry_report: near pass 92/466 rows (0s elapsed)
+dry_report: near pass 138/466 rows (0s elapsed)
+dry_report: near pass 184/466 rows (0s elapsed)
+dry_report: near pass 230/466 rows (0s elapsed)
+dry_report: near pass 276/466 rows (0s elapsed)
+dry_report: near pass 322/466 rows (0s elapsed)
+dry_report: near pass 368/466 rows (0s elapsed)
+dry_report: near pass 414/466 rows (0s elapsed)
+dry_report: near pass 460/466 rows (0s elapsed)
+dry_report: near pass over 466 reps → 0 edges in 0.1s (12 threads)

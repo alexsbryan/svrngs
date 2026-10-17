@@ -4,15 +4,18 @@
 //! declaration file the member door reads on every request, so a running
 //! node sees a lend declared or withdrawn with no restart. `svrngs share`
 //! writes it through [`declare`], and `svrngs unshare` takes it back
-//! through [`withdraw`], whether or not svrngs is running (u3-5).
+//! through [`withdraw`], whether or not svrngs is running (u3-5). Or an
+//! app's folder the group carries, found where the group's folder places it
+//! and never declared ([`Source::Carried`], v1ui-shelf (a)).
 //!
 //! ```text
 //!   <data dir>/lends/<lend>.json                       what the door may do
+//!   <data dir>/choices/<lend>.json                     each person's yes and stop
 //!   <data dir>/secrets/lends/<lend>/<header>   0600    the lender's secret
 //! ```
 //!
 //! The declaration holds the port, the kind, how many people may use it at
-//! once, the paths the door refuses and, when its lender states one, the
+//! once if its lender names a number, the paths the door refuses and, when its lender states one, the
 //! upload it may use (u3-6); the secret is apart, in
 //! [`crate::declared`]'s store, so the file a person may show someone
 //! carries none of it. Neither enters the record: what a computer lends is
@@ -34,42 +37,6 @@ use serde::{Deserialize, Serialize};
 #[serde(try_from = "String", into = "String")]
 pub struct LendName(String);
 
-impl TryFrom<String> for LendName {
-    type Error = LendError;
-    fn try_from(raw: String) -> Result<Self, LendError> {
-        Self::parse(&raw)
-    }
-}
-
-impl From<LendName> for String {
-    fn from(name: LendName) -> String {
-        name.0
-    }
-}
-
-impl LendName {
-    pub fn parse(raw: &str) -> Result<Self, LendError> {
-        // A declared header's rule, the same bytes and bound: both names
-        // become a file name under the data dir and a token on the wire.
-        if crate::declared::valid_header_name(raw) {
-            Ok(Self(raw.to_string()))
-        } else {
-            tracing::debug!(target: "lend", raw, "lend: not a lend's name");
-            Err(LendError::NotAName(raw.to_string()))
-        }
-    }
-
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
-}
-
-impl std::fmt::Display for LendName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.0)
-    }
-}
-
 /// What a lend is, for the apps that read the list of what members lend
 /// (DESIGN §3, "an opaque kind the app interprets"): a name of the same
 /// rule as [`LendName`]'s, which svrngs carries and never reads.
@@ -77,44 +44,41 @@ impl std::fmt::Display for LendName {
 #[serde(try_from = "String", into = "String")]
 pub struct Kind(String);
 
-impl Kind {
-    pub fn parse(raw: &str) -> Result<Self, LendError> {
-        if crate::declared::valid_header_name(raw) {
-            Ok(Self(raw.to_string()))
-        } else {
-            tracing::debug!(target: "lend", raw, "lend: not a kind");
-            Err(LendError::NotAKind(raw.to_string()))
+/// A name of a declared header's rule, the same bytes and bound — both
+/// become a file name under the data dir and a token on the wire — parsed
+/// once for [`LendName`] and [`Kind`], each refused by its own name.
+macro_rules! header_named {
+    ($($name:ident: $refused:ident, $not:literal);+) => {$(
+        impl $name {
+            pub fn parse(raw: &str) -> Result<Self, LendError> {
+                if crate::declared::valid_header_name(raw) {
+                    Ok(Self(raw.to_string()))
+                } else {
+                    tracing::debug!(target: "lend", raw, $not);
+                    Err(LendError::$refused(raw.to_string()))
+                }
+            }
         }
-    }
-
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
+        impl TryFrom<String> for $name {
+            type Error = LendError;
+            fn try_from(raw: String) -> Result<Self, LendError> {
+                Self::parse(&raw)
+            }
+        }
+        impl From<$name> for String {
+            fn from(name: $name) -> String {
+                name.0
+            }
+        }
+        svrngs_core::text_newtype!($name);
+    )+};
 }
-
-impl TryFrom<String> for Kind {
-    type Error = LendError;
-    fn try_from(raw: String) -> Result<Self, LendError> {
-        Self::parse(&raw)
-    }
-}
-
-impl From<Kind> for String {
-    fn from(kind: Kind) -> String {
-        kind.0
-    }
-}
-
-impl std::fmt::Display for Kind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.0)
-    }
-}
+header_named!(LendName: NotAName, "lend: not a lend's name"; Kind: NotAKind, "lend: not a kind");
 
 /// A path the door refuses for one lend, and every path under it at a
 /// segment boundary. Kept as the lender wrote it, compared as
 /// [`Self::covers`] says.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct RefusedPath(String);
 
 impl RefusedPath {
@@ -190,10 +154,6 @@ fn comparable(path: &str) -> String {
 pub struct Upload(NonZeroU64);
 
 impl Upload {
-    pub fn new(bps: NonZeroU64) -> Self {
-        Self(bps)
-    }
-
     /// `mbit` megabits a second, as a speed test states an upload.
     pub fn from_mbit(mbit: NonZeroU32) -> Self {
         Self(NonZeroU64::from(mbit).saturating_mul(NonZeroU64::new(1_000_000).expect("not 0")))
@@ -213,17 +173,33 @@ impl std::fmt::Display for Upload {
     }
 }
 
-/// A lend as its declaration says: where the service listens on this
-/// computer, what it is, how many people may use it at once, what the
-/// door refuses of it, and the upload its lender declares, if any.
+/// Where a lend's answers come from (v1ui-shelf (a); COMMUNITY_APPS §3,
+/// "Port or folder"): a program on this computer, which goes with its
+/// lender, or an app's folder the group carries, which stays with the
+/// group.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Source {
+    /// The service's port on 127.0.0.1.
+    Port(NonZeroU16),
+    /// `apps/<kind>/` in a synced folder of the group whose id this is,
+    /// served by each computer holding it, from its store
+    /// ([`crate::folder::Folders::carried`]): lent to that group alone.
+    Carried(String),
+}
+
+/// A lend as its declaration says, or as its group's folder carries it:
+/// where it is answered from, what it is, how many people may use it at
+/// once, what the door refuses of it, and the upload its lender declares,
+/// if any.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Lend {
     pub name: LendName,
-    /// The service's port on 127.0.0.1.
-    pub port: NonZeroU16,
+    pub source: Source,
     pub kind: Kind,
-    /// How many people may use it at once (DESIGN §8, "Too many at once").
-    pub limit: NonZeroU16,
+    /// How many people may use it at once (DESIGN §8, "Too many at once"):
+    /// none when its lender names no number, and then everyone in its groups
+    /// (bash-limit; the operator, 2026-10-12).
+    pub limit: Option<NonZeroU16>,
     pub refused: Vec<RefusedPath>,
     /// None when its lender declares none: then no request through the
     /// door is told a share, rather than one of a figure nobody stated.
@@ -232,9 +208,42 @@ pub struct Lend {
     /// a phone's page passes whoever opens it to the group's lends of each
     /// kind too, as that person (DESIGN §3, "Lent apps", call 6).
     pub reads: Vec<Kind>,
+    /// The port on 127.0.0.1 of the lender's program that signs each person
+    /// in (mwp-1, `svrngs share --sign-in`; `crate::door::sign_in`): a lend
+    /// declares it or a secret, never both.
+    pub sign_in: Option<NonZeroU16>,
+    /// What an app receives of it, in its lender's words (sup-2, `svrngs
+    /// share --ask`): a lend that asks lets an app in only on its person's
+    /// yes ([`crate::door::choices`]). svrngs carries the words to every
+    /// list and never reads them.
+    pub asks: Option<String>,
 }
 
 impl Lend {
+    /// The app `kind` carried in `group`: its name the kind's and the
+    /// group id's first 16 letters, so a computer in two groups carrying an
+    /// app of one name gives each a label of its own (COMMUNITY_APPS §7,
+    /// found 2); `None` for a folder's name that is not a kind's, traced
+    /// as left out (#167).
+    pub fn carried(kind: &str, group: &str) -> Option<Self> {
+        let name = format!("{kind}-{}", group.get(..16).unwrap_or(group));
+        let (Ok(name), Ok(parsed)) = (LendName::parse(&name), Kind::parse(kind)) else {
+            tracing::debug!(target: "folder", kind, group, "carried: left out, a folder under apps/ whose name no app can have");
+            return None;
+        };
+        Some(Self {
+            name,
+            source: Source::Carried(group.into()),
+            kind: parsed,
+            limit: None,
+            refused: Vec::new(),
+            upload: None,
+            reads: Vec::new(),
+            sign_in: None,
+            asks: None,
+        })
+    }
+
     /// The refused path covering `path`, if one does.
     pub fn refusing(&self, path: &str) -> Option<&RefusedPath> {
         self.refused.iter().find(|r| r.covers(path))
@@ -243,14 +252,16 @@ impl Lend {
 
 /// The declaration's form on disk. A field it does not know is refused, not
 /// ignored: a misspelt `refused` read as no refusals would open what the
-/// lender closed (ARCH 6). A kind or limit absent is refused too, never
-/// taken as a default nobody declared. An upload absent is none declared.
+/// lender closed (ARCH 6). A kind absent is refused too, never taken as a
+/// default nobody declared. A limit absent is none — everyone at once,
+/// never a number nobody chose — and an upload absent is none declared.
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct LendFile {
     port: NonZeroU16,
     kind: Kind,
-    limit: NonZeroU16,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    limit: Option<NonZeroU16>,
     #[serde(default)]
     refused: Vec<String>,
     #[serde(
@@ -261,6 +272,10 @@ struct LendFile {
     upload: Option<Upload>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     reads: Vec<Kind>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    sign_in: Option<NonZeroU16>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    asks: Option<String>,
 }
 
 /// A lend as its lender's computer answers a member who asks what it
@@ -271,7 +286,10 @@ struct LendFile {
 pub struct Offered {
     pub name: LendName,
     pub kind: Kind,
-    pub limit: NonZeroU16,
+    /// None when its lender names no number: everyone at once. On the wire
+    /// `null` then, and required on read, as `upload_bps` is.
+    #[serde(deserialize_with = "Option::deserialize")]
+    pub limit: Option<NonZeroU16>,
     /// The people the door counts on it now (`door::limit`): a request in
     /// flight, or one within its window.
     pub using: u32,
@@ -281,9 +299,40 @@ pub struct Offered {
     /// an answer that leaves it out is not one, never read as none.
     #[serde(rename = "upload_bps", deserialize_with = "Option::deserialize")]
     pub upload: Option<Upload>,
-    /// The kinds of lend it reads (u5-2): none from a computer before u5-2.
-    #[serde(default)]
+    /// The kinds of lend it reads (u5-2).
     pub reads: Vec<Kind>,
+    /// Its lender's words for what an app receives, when it asks (sup-2):
+    /// absent when it asks nobody.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub asks: Option<String>,
+    /// Whether its lender's program signs each person in, once (mwp-1,
+    /// `sign_in`): the pages say so of how it opens (v1ui-door (c)). A
+    /// computer that does not say runs an older svrngs, and its lends are
+    /// not read at all ([`crate::version`]).
+    pub signs_in: bool,
+    /// The group that carries it, when its group's folder does (v1ui-shelf
+    /// (a)): lent to that group alone, and one copy of it shown, whichever
+    /// computer answers. Absent for a port's.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub group: Option<String>,
+}
+
+impl Offered {
+    /// Whether this lend's pages read `other`: the one decider of what a
+    /// page reaches on a computer ([`crate::origin`]) and what
+    /// `/svrngs-reads` tells it ([`crate::surface::reads`]).
+    pub(crate) fn reads_one(&self, other: &Offered) -> bool {
+        self.reads.contains(&other.kind)
+    }
+
+    /// Whether this lend is listed to an asker in the groups `stands`
+    /// answers yes to: a carried app only in its own group (COMMUNITY_APPS
+    /// §7, found 3), any other everywhere. The one rule the door's `/lends`
+    /// and a computer's own list ask, each by its own `stands` (#166);
+    /// `Folders::open` is the gate it shadows.
+    pub(crate) fn listed(&self, stands: impl Fn(&String) -> bool) -> bool {
+        self.group.as_ref().is_none_or(stands)
+    }
 }
 
 /// Why a lend could not be read.
@@ -305,6 +354,10 @@ pub enum LendError {
         path: PathBuf,
         source: serde_json::Error,
     },
+    #[error("{0} declares a secret and a sign-in: a lend declares one or the other")]
+    SecretAndSignIn(LendName),
+    #[error("{0} is carried in its group's folder, never declared")]
+    Carried(LendName),
     #[error("{path} cannot be written: {source}")]
     Unwritable {
         path: PathBuf,
@@ -315,6 +368,12 @@ pub enum LendError {
 /// Where a computer keeps its lends' declarations.
 pub fn lends_dir(data_dir: &Path) -> PathBuf {
     data_dir.join("lends")
+}
+
+/// Where the lend `name`'s door keeps each person's choices
+/// ([`crate::door::choices`]), beside its declaration.
+pub fn choices_path(data_dir: &Path, name: &LendName) -> PathBuf {
+    data_dir.join("choices").join(format!("{name}.json"))
 }
 
 /// Where the lend `name` keeps its secret: [`crate::declared`]'s store, one
@@ -344,12 +403,14 @@ pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError>
         .collect::<Result<_, _>>()?;
     Ok(Some(Lend {
         name: name.clone(),
-        port: file.port,
+        source: Source::Port(file.port),
         kind: file.kind,
         limit: file.limit,
         refused,
         upload: file.upload,
         reads: file.reads,
+        sign_in: file.sign_in,
+        asks: file.asks,
     }))
 }
 
@@ -384,12 +445,16 @@ pub fn all(data_dir: &Path) -> Result<Vec<Result<Lend, LendError>>, LendError> {
 /// then the declaration, through a file renamed into place, so the door
 /// never reads half of one, nor a new one before its secret. A lend
 /// declared again replaces the last, its secret too: none given removes
-/// the one kept.
+/// the one kept. A secret beside a sign-in is refused, nothing written.
 pub fn declare(
     data_dir: &Path,
     lend: &Lend,
     secret: Option<(&str, &str)>,
 ) -> Result<(), LendError> {
+    if secret.is_some() && lend.sign_in.is_some() {
+        tracing::debug!(target: "lend", lend = %lend.name, "lend: refused — a secret and a sign-in both");
+        return Err(LendError::SecretAndSignIn(lend.name.clone()));
+    }
     let secrets = secret_dir(data_dir, &lend.name);
     let unwritable = |path: &Path| {
         let path = path.to_path_buf();
@@ -402,29 +467,58 @@ pub fn declare(
         crate::declared::write_declared_in(&secrets, header, value)
             .map_err(unwritable(&secrets))?;
     }
+    write(data_dir, lend)?;
+    tracing::debug!(target: "lend", lend = %lend.name, source = ?lend.source, kind = %lend.kind,
+        limit = ?lend.limit, refused = lend.refused.len(), upload = ?lend.upload.map(Upload::bps),
+        secret = secret.is_some(), sign_in = ?lend.sign_in, asks = lend.asks.is_some(),
+        "lend: declared");
+    Ok(())
+}
+
+/// Let in `limit` people at once to the lend `name`, none for everyone in
+/// its groups (bash-limit; the home page's `/lent`): its declaration
+/// rewritten whole, its secret and choices kept, so the door takes it at
+/// its next request. `false` when this computer lends nothing by that name.
+pub fn limit(
+    data_dir: &Path,
+    name: &LendName,
+    limit: Option<NonZeroU16>,
+) -> Result<bool, LendError> {
+    let Some(mut lend) = read(data_dir, name)? else {
+        return Ok(false);
+    };
+    tracing::debug!(target: "lend", lend = %name, was = ?lend.limit, now = ?limit, "lend: its limit changed");
+    lend.limit = limit;
+    write(data_dir, &lend).map(|()| true)
+}
+
+/// `lend`'s declaration, through a file renamed into place.
+fn write(data_dir: &Path, lend: &Lend) -> Result<(), LendError> {
+    let Source::Port(port) = lend.source else {
+        return Err(LendError::Carried(lend.name.clone()));
+    };
     let dir = lends_dir(data_dir);
-    std::fs::create_dir_all(&dir).map_err(unwritable(&dir))?;
+    std::fs::create_dir_all(&dir).map_err(|source| LendError::Unwritable {
+        path: dir.clone(),
+        source,
+    })?;
     let file = LendFile {
-        port: lend.port,
+        port,
         kind: lend.kind.clone(),
         limit: lend.limit,
         refused: lend.refused.iter().map(|r| r.0.clone()).collect(),
         upload: lend.upload,
         reads: lend.reads.clone(),
+        sign_in: lend.sign_in,
+        asks: lend.asks.clone(),
     };
     let text = serde_json::to_string_pretty(&file).expect("a declaration always serializes");
-    let path = dir.join(format!("{}.json", lend.name));
-    let partial = dir.join(format!(".{}.json.partial", lend.name));
-    std::fs::write(&partial, text).map_err(unwritable(&partial))?;
-    std::fs::rename(&partial, &path).map_err(unwritable(&path))?;
-    tracing::debug!(target: "lend", lend = %lend.name, port = lend.port, kind = %lend.kind,
-        limit = lend.limit, refused = lend.refused.len(), upload = ?lend.upload.map(Upload::bps),
-        secret = secret.is_some(),
-        "lend: declared");
-    Ok(())
+    crate::declared::write_whole(&dir.join(format!("{}.json", lend.name)), text.as_bytes())
+        .map_err(|(path, source)| LendError::Unwritable { path, source })
 }
 
-/// Take back the lend `name`: its declaration, then its secret. `false`
+/// Take back the lend `name`: its declaration, then its choices, then its
+/// secret, so a lend shared again asks again. `false`
 /// when this computer lends nothing by that name.
 pub fn withdraw(data_dir: &Path, name: &LendName) -> Result<bool, LendError> {
     let path = lends_dir(data_dir).join(format!("{name}.json"));
@@ -433,6 +527,16 @@ pub fn withdraw(data_dir: &Path, name: &LendName) -> Result<bool, LendError> {
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => false,
         Err(source) => return Err(LendError::Unwritable { path, source }),
     };
+    let choices = choices_path(data_dir, name);
+    match std::fs::remove_file(&choices) {
+        Err(e) if e.kind() != std::io::ErrorKind::NotFound => {
+            return Err(LendError::Unwritable {
+                path: choices,
+                source: e,
+            })
+        }
+        _ => {}
+    }
     let secrets = secret_dir(data_dir, name);
     match std::fs::remove_dir_all(&secrets) {
         Ok(()) => {}

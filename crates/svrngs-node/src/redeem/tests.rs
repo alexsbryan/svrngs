@@ -21,6 +21,7 @@ fn invite(issuer: &SigningKey, seq: u64, link: &SigningKey) -> Op<SignedOp> {
     let act = RailAct::Invite {
         key: actor_of(link),
         until: i64::MAX,
+        device_of: None,
     };
     sign_act(
         issuer,

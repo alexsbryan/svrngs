@@ -1,0 +1,5 @@
+# Movie Night's nouns: what knows its films and their ids lives in apps/movie-night/ (demo/runs/mn/2026-10-08/README.md). The infra may not use them (scripts/vocab_check.py).
+movie-night
+tmdb
+imdb
+providerids

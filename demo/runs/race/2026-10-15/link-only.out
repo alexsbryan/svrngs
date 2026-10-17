@@ -1,0 +1,9 @@
+# web/app.js reachGroup with `const others = [];` (the link's computer alone,
+# dialled from the shared endpoint by Endpoint::dial_link), two takes of
+# cargo test -p svrngs-node --test browser -- the_phone_goes_through --nocapture
+chromium: the relay over the second visit, [false, true] stopped, listed in 3342 ms as "You’re in house, as bo": 25077 bytes, 37 packets, 5 dropped
+webkit: the relay over the second visit, [false, true] stopped, listed in 3384 ms as "You’re in house, as bo": 25126 bytes, 39 packets, 5 dropped
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 90 filtered out; finished in 11.31s
+webkit: the relay over the second visit, [false, true] stopped, listed in 3375 ms as "You’re in house, as bo": 25118 bytes, 39 packets, 5 dropped
+chromium: the relay over the second visit, [false, true] stopped, listed in 3338 ms as "You’re in house, as bo": 23975 bytes, 40 packets, 4 dropped
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 90 filtered out; finished in 11.38s

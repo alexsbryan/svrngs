@@ -1,0 +1,58 @@
+{
+ "1": {
+  "verdict": "passed",
+  "why": "svrngs answered {'sam': {'1400 Page': 'Sam'}, 'jo': {'1400 Page': 'Jo', 'Waller block': 'Jo'}, 'kim': {'Waller block': 'Kim'}}; the pages showed {'sam': ['1400 Page'], 'jo': ['1400 Page', 'Waller block'], 'kim': ['Waller block']}"
+ },
+ "2": {
+  "verdict": "failed",
+  "why": "not landed: ['Jo carries it']; [('Jo carries it', 'a carry saying more than this version reads (id, asked, in, carriers, live, show, notice), so not counted')]"
+ },
+ "3": {
+  "verdict": "passed",
+  "why": "Jo's page showed Carry to Waller block 0.569 s after Sam's press (1 reloads); Sam's pages' carry buttons: []"
+ },
+ "4": {
+  "verdict": "could-not-judge",
+  "why": "Jo's carry never landed"
+ },
+ "5": {
+  "verdict": "could-not-judge",
+  "why": "Kim's offer never landed"
+ },
+ "6": {
+  "verdict": "could-not-judge",
+  "why": "Sam's yes never landed"
+ },
+ "7": {
+  "verdict": "could-not-judge",
+  "why": "Sam's take-back never landed"
+ },
+ "8": {
+  "verdict": "could-not-judge",
+  "why": "the scene never reached its end"
+ },
+ "9": {
+  "verdict": "could-not-judge",
+  "why": "no ask or carry in the records"
+ },
+ "10": {
+  "verdict": "passed",
+  "why": "43 files, 3,216,474 bytes searched; sealed words in {}; secret keys outside a state file in []; sealed words in the records kept: []; `tile saw` found in jo: 2, kim: 1, sam: 1 files"
+ },
+ "11": {
+  "verdict": "could-not-judge",
+  "why": "Jo's carry never landed"
+ },
+ "12": {
+  "verdict": "could-not-judge",
+  "why": "7 pages read: words to look up []; 0 conversations shown, without the shortcut []"
+ },
+ "13": {
+  "verdict": "never-ran",
+  "why": "judged across takes: README.md, against each plant's verdicts.json"
+ },
+ "14": {
+  "verdict": "never-ran",
+  "why": "bar 6 (two carriers), GRAPEVINE §7 bars 4 and 7, its product bars and kill bar (the operator's, with real neighbours), a second host and a phone"
+ }
+}

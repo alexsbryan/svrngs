@@ -1,0 +1,28 @@
+2026-10-12T21:24:04.263971Z  INFO folder: folder: the store is open untagged=0
+2026-10-12T21:24:04.264013Z  INFO folder: synced: the directory kept in step with the group's folder namespace="f04e0cf0817e477d65dad74b4046b114c12a5d3b0abe2c05a2ef617706b4570b" folder="lake-trip" dir=/tmp/c-rerun/dee/svrngs/lake-trip
+2026-10-12T21:24:04.265725Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["alex/6b954c89", "bo/ae3d6397", "ana/af037033", "Sam/b4bb938e"] skipped_offline=[]
+2026-10-12T21:24:04.265737Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=23118 peer=6b954c8924e2ad87b790b0c8a3a4ba185d95c0ba49c53dcd8bf53811b51ab4ac error=Address already in use (os error 48)
+2026-10-12T21:24:04.265905Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=28278 peer=ae3d6397c2f1296e5ef74fc0a790304bc49c67d124b86953bdbb9c11be09a171 error=Address already in use (os error 48)
+2026-10-12T21:24:04.265982Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=26643 peer=af0370337e7b3a0532ae9a731f31a8c7247e12e493e33f58428637582072290e error=Address already in use (os error 48)
+2026-10-12T21:24:04.266053Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=24387 peer=b4bb938eeebddcf7bcd362c5d28835fb529a4d5a78eb52ed31df896bf6e61342 error=Address already in use (os error 48)
+2026-10-12T21:24:10.741131Z DEBUG door: door: lends — answered what this computer lends actor="b4bb938eeebddcf7bcd362c5d28835fb529a4d5a78eb52ed31df896bf6e61342" lends=0
+2026-10-12T21:24:32.369713Z DEBUG door: door: lends — answered what this computer lends actor="b4bb938eeebddcf7bcd362c5d28835fb529a4d5a78eb52ed31df896bf6e61342" lends=0
+2026-10-12T21:24:40.559013Z DEBUG door: door: lends — answered what this computer lends actor="ae3d6397c2f1296e5ef74fc0a790304bc49c67d124b86953bdbb9c11be09a171" lends=0
+2026-10-12T21:25:04.772728Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["alex/6b954c89", "ana/af037033", "Sam/b4bb938e"] skipped_offline=[]
+2026-10-12T21:25:41.297474Z  INFO folder: folder: fetched, verified hash=dee495eb4c87729013a3fd52bac691a32d9f900f162fb88746b4aa9c6d112487 holder=b4bb938eeebddcf7bcd362c5d28835fb529a4d5a78eb52ed31df896bf6e61342 payload=4893247 other=19080 ms=234
+2026-10-12T21:25:41.305872Z  INFO folder: synced: written into the directory folder="lake-trip" path=after.jpg hash=dee495eb4c87729013a3fd52bac691a32d9f900f162fb88746b4aa9c6d112487 from="b4bb938eeebddcf7bcd362c5d28835fb529a4d5a78eb52ed31df896bf6e61342" seq=7 beside=false fetch_ms=235 export_ms=8
+2026-10-12T21:26:04.778720Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["alex/6b954c89", "ana/af037033", "Sam/b4bb938e"] skipped_offline=[]
+2026-10-12T21:26:48.443057Z  WARN svrngs_core::admit: ring rail: this answer covers a subset — the rail could not account for every op namespace="f04e0cf0817e477d65dad74b4046b114c12a5d3b0abe2c05a2ef617706b4570b" gaps=1 first=Some(SequenceHole { actor: "b4bb938eeebddcf7bcd362c5d28835fb529a4d5a78eb52ed31df896bf6e61342", missing: 7 })
+2026-10-12T21:26:51.894301Z DEBUG door: door: lends — answered what this computer lends actor="0e6a6d8bba8ea77ebc33d19fcc85170af69ce9028fe53f671fdcf4a1e035a9c9" lends=0
+2026-10-12T21:26:52.417103Z DEBUG door: door: lends — answered what this computer lends actor="0e6a6d8bba8ea77ebc33d19fcc85170af69ce9028fe53f671fdcf4a1e035a9c9" lends=0
+2026-10-12T21:27:04.784166Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["eve/0e6a6d8b", "alex/6b954c89", "ana/af037033", "Sam/b4bb938e"] skipped_offline=[]
+2026-10-12T21:27:04.784422Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=23671 peer=0e6a6d8bba8ea77ebc33d19fcc85170af69ce9028fe53f671fdcf4a1e035a9c9 error=Address already in use (os error 48)
+2026-10-12T21:27:05.437362Z DEBUG door: door: lends — answered what this computer lends actor="0e6a6d8bba8ea77ebc33d19fcc85170af69ce9028fe53f671fdcf4a1e035a9c9" lends=0
+2026-10-12T21:27:05.772038Z DEBUG door: door: lends — answered what this computer lends actor="0e6a6d8bba8ea77ebc33d19fcc85170af69ce9028fe53f671fdcf4a1e035a9c9" lends=0
+2026-10-12T21:27:09.928903Z DEBUG door: door: lends — answered what this computer lends actor="6b954c8924e2ad87b790b0c8a3a4ba185d95c0ba49c53dcd8bf53811b51ab4ac" lends=0
+2026-10-12T21:27:13.068342Z DEBUG door: door: lends — answered what this computer lends actor="6b954c8924e2ad87b790b0c8a3a4ba185d95c0ba49c53dcd8bf53811b51ab4ac" lends=0
+2026-10-12T21:27:16.403238Z  WARN noq_proto::connection: failed closing path err=LastOpenPath
+2026-10-12T21:27:16.734709Z  WARN connect{me=b24ca0d4ca alpn=cwth/http/0 remote=af0370337e}: noq_proto::connection: failed closing path err=LastOpenPath
+2026-10-12T21:27:19.109227Z DEBUG door: door: lends — answered what this computer lends actor="0e6a6d8bba8ea77ebc33d19fcc85170af69ce9028fe53f671fdcf4a1e035a9c9" lends=0
+2026-10-12T21:27:20.748742Z  WARN connect{me=b24ca0d4ca alpn=cwth/http/0 remote=af0370337e}: noq_proto::connection: failed closing path err=LastOpenPath
+2026-10-12T21:27:25.828927Z  WARN transport: iroh bridge: dial failed peer=af0370337e7b3a0532ae9a731f31a8c7247e12e493e33f58428637582072290e alpn=cwth/http/0 error=closed

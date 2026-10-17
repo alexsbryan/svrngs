@@ -45,11 +45,15 @@ pub fn ask(key: Vec<u8>, token: String) -> Result<String, JsError> {
     Ok(serde_json::to_string(&req).expect("an ask serializes"))
 }
 
-/// A group the issuer answered, believed: its id and its name.
+/// A group the issuer answered, believed: its id and its name, a device
+/// link's person, whom the phone joins as (bash-devices), and who made it,
+/// so two of one name are told apart (v1ui-door (d)).
 #[wasm_bindgen]
 pub struct Group {
     id: String,
     name: String,
+    person: Option<String>,
+    maker: String,
 }
 
 #[wasm_bindgen]
@@ -63,6 +67,16 @@ impl Group {
     pub fn name(&self) -> String {
         self.name.clone()
     }
+
+    #[wasm_bindgen(getter)]
+    pub fn person(&self) -> Option<String> {
+        self.person.clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn maker(&self) -> String {
+        self.maker.clone()
+    }
 }
 
 /// The issuer's answer to an ask, believed only when its seed hashes to
@@ -74,10 +88,15 @@ pub fn believe(asked: String) -> Result<Group, JsError> {
     let Some(seed) = answered(&asked.group, &asked.seed) else {
         return Err(refuse("the answer's seed does not hash to the group it names"));
     };
-    emit(&format!("JOIN: the answer is believed — the group {}", asked.group));
+    emit(&format!(
+        "JOIN: the answer is believed — the group {}, a device link of {:?}",
+        asked.group, asked.person
+    ));
     Ok(Group {
         id: asked.group,
         name: seed.name().to_string(),
+        person: asked.person.map(|p| p.to_string()),
+        maker: seed.founder().to_string(),
     })
 }
 

@@ -1,0 +1,22 @@
+crates/svrngs-core/src/command.rs:40: type `Reads` is more private than the item `Command::READS`
+crates/svrngs-core/src/lib.rs:130: unused import: `command::Reads`
+crates/svrngs-core/src/lib.rs:143: unused import: `payload::PayloadError`
+crates/svrngs-core/src/lib.rs:158: unused import: `sig::act_id`
+crates/svrngs-core/src/lib.rs:162: unused import: `sig::redemption_message`
+crates/svrngs-core/src/lib.rs:163: unused import: `sig::ring_op_message`
+crates/svrngs-core/src/lib.rs:166: unused import: `sig::sign_ring_op`
+crates/svrngs-core/src/lib.rs:171: unused import: `sync::NO_BUDGET`
+crates/svrngs-core/src/lib.rs:174: unused import: `synced::NotASyncPath`
+crates/svrngs-core/src/lib.rs:180: unused import: `view::DIGEST_V`
+crates/svrngs-core/src/lib.rs:366: type `Payload` is more private than the item `RailAct::Record::payload`
+crates/svrngs-core/src/lib.rs:375: type `Payload` is more private than the item `RailAct::Correct::replacement`
+crates/svrngs-core/src/lib.rs:410: type `Redemption` is more private than the item `RailAct::Admit::invite`
+crates/svrngs-core/src/record.rs:28: type `Reads` is more private than the item `<Append as Command>::READS`
+crates/svrngs-core/src/register.rs:130: type `Reads` is more private than the item `<MintInvite as Command>::READS`
+crates/svrngs-core/src/register.rs:173: type `Reads` is more private than the item `<Removal as Command>::READS`
+crates/svrngs-core/src/register.rs:213: type `Reads` is more private than the item `<Leave as Command>::READS`
+crates/svrngs-core/src/register.rs:278: type `Reads` is more private than the item `<HandOnTo as Command>::READS`
+crates/svrngs-core/src/register.rs:305: type `Reads` is more private than the item `<RelayAt as Command>::READS`
+crates/svrngs-core/src/register.rs:56: type `Reads` is more private than the item `<Redeem as Command>::READS`
+crates/svrngs-core/src/synced.rs:131: type `Reads` is more private than the item `<SyncFolder as Command>::READS`
+build-finished success: True

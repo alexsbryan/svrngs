@@ -9,7 +9,10 @@
 // bar is judged from this as a rate (u5-9's row): every seek's time to
 // play again is kept, with the host's 1-minute load at that moment.
 //
-//   node trio.mjs '{"server": "<Jellyfin's id>", "window_s": 600,
+// With `mw` (check.sh trio, MW=1), through Jellyfin's middleware: nothing
+// typed, each person signed in by the page it wrote (person.mjs).
+//
+//   node trio.mjs '{"server": "<Jellyfin's id>", "window_s": 600, "mw"?: true,
 //     "people": [{"name", "user", "way", "engine", "at", "film", "seeks": <how many>}, ...]}'
 //   env: SECRETS, JF, ADMIN, DUMP, as drive.mjs's
 //
@@ -22,7 +25,7 @@ const args = JSON.parse(process.argv[2]);
 const { SECRETS, JF, ADMIN, DUMP } = process.env;
 const T0 = Date.now();
 const jf = lender(JF, ADMIN);
-const out = { window_s: args.window_s, from: new Date(T0).toISOString(), people: {} };
+const out = { window_s: args.window_s, mw: !!args.mw, from: new Date(T0).toISOString(), people: {} };
 const load = () => +os.loadavg()[0].toFixed(2);
 
 // Where each seek goes, in percent of the film: n points between 5 and
@@ -129,7 +132,7 @@ async function streams() {
 const people = [];
 try {
   const entered = await Promise.all(args.people.map((p, k) => enter(p, {
-    args: { way: p.way, engine: p.engine, at: p.at, server: args.server }, SECRETS, DUMP, T0,
+    args: { way: p.way, engine: p.engine, at: p.at, server: args.server, mw: args.mw }, SECRETS, DUMP, T0,
   }).then((person) => Object.assign(person, { way: p.way, engine: p.engine, own: [], pcts: where(p.seeks, k) }))));
   people.push(...entered);
   for (const p of people) if (p.page) media(p);

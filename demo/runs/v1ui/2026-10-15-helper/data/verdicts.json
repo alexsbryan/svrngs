@@ -1,0 +1,625 @@
+{
+ "1": {
+  "verdict": "passed",
+  "read": {
+   "Ann": {
+    "ms": 45,
+    "line": "curl -fsSL http://localhost:63524/instal"
+   },
+   "Bo": {
+    "ms": 37,
+    "line": "curl -fsSL http://localhost:63524/instal"
+   },
+   "Cy": {
+    "ms": 48,
+    "line": "curl -fsSL http://localhost:63524/instal"
+   },
+   "Di": {
+    "ms": 38,
+    "line": "curl -fsSL http://localhost:63524/instal"
+   }
+  }
+ },
+ "2": {
+  "verdict": "passed",
+  "read": {
+   "Ann": {
+    "exit": 0,
+    "ms": 5847,
+    "open_asked": "http://svrngs.localhost:63510/"
+   },
+   "Bo": {
+    "exit": 0,
+    "ms": 5751,
+    "open_asked": "http://svrngs.localhost:64041/"
+   },
+   "Cy": {
+    "exit": 0,
+    "ms": 5859,
+    "open_asked": "http://svrngs.localhost:64556/"
+   },
+   "Di": {
+    "exit": 0,
+    "ms": 8163,
+    "open_asked": "http://svrngs.localhost:65052/"
+   }
+  }
+ },
+ "3": {
+  "verdict": "passed",
+  "read": {
+   "Ann": {
+    "after_line_ms": 57,
+    "door": {
+     "Sam": [
+      "on",
+      "on now"
+     ],
+     "Priya": [
+      "on",
+      "on now"
+     ],
+     "Ann": [
+      "on",
+      "on now"
+     ]
+    }
+   },
+   "Bo": {
+    "after_line_ms": 59,
+    "door": {
+     "Bo": [
+      "on",
+      "on now"
+     ],
+     "Sam": [
+      "on",
+      "on now"
+     ],
+     "Priya": [
+      "on",
+      "on now"
+     ],
+     "Ann": [
+      "on",
+      "on now"
+     ]
+    }
+   },
+   "Cy": {
+    "after_line_ms": 62,
+    "door": {
+     "Cy": [
+      "on",
+      "on now"
+     ],
+     "Bo": [
+      "on",
+      "on now"
+     ],
+     "Sam": [
+      "on",
+      "on now"
+     ],
+     "Priya": [
+      "on",
+      "on now"
+     ],
+     "Ann": [
+      "on",
+      "on now"
+     ]
+    }
+   },
+   "Di": {
+    "after_line_ms": 8310,
+    "door": {
+     "Cy": [
+      "on",
+      "on now"
+     ],
+     "Bo": [
+      "on",
+      "on now"
+     ],
+     "Eve": [
+      "phone",
+      "in from a phone"
+     ],
+     "Sam": [
+      "off",
+      "did not answer"
+     ],
+     "Priya": [
+      "on",
+      "on now"
+     ],
+     "Di": [
+      "on",
+      "on now"
+     ],
+     "Ann": [
+      "on",
+      "on now"
+     ]
+    }
+   }
+  }
+ },
+ "4": {
+  "verdict": "passed",
+  "read": {
+   "Ann": {
+    "open_ms": 76,
+    "square_ms": 83,
+    "presses": [
+     "Say you were in on it",
+     "Say you paid Priya $30.00"
+    ],
+    "acts": [
+     "Money/share",
+     "Money/settle"
+    ]
+   },
+   "Bo": {
+    "open_ms": 93,
+    "square_ms": 183,
+    "presses": [
+     "Say you were in on it",
+     "Say you paid Ann $10.00",
+     "Say you paid Priya $10.00"
+    ],
+    "acts": [
+     "Money/share",
+     "Money/settle",
+     "Money/settle"
+    ]
+   },
+   "Cy": {
+    "open_ms": 85,
+    "square_ms": 258,
+    "presses": [
+     "Say you were in on it",
+     "Say you paid Ann $5.00",
+     "Say you paid Bo $5.00",
+     "Say you paid Priya $5.00"
+    ],
+    "acts": [
+     "Money/share",
+     "Money/settle",
+     "Money/settle",
+     "Money/settle"
+    ]
+   },
+   "Di": {
+    "open_ms": 76,
+    "square_ms": 282,
+    "presses": [
+     "Say you were in on it",
+     "Say you paid Ann $3.00",
+     "Say you paid Bo $3.00",
+     "Say you paid Cy $3.00",
+     "Say you paid Priya $3.00"
+    ],
+    "acts": [
+     "Money/share",
+     "Money/settle",
+     "Money/settle",
+     "Money/settle",
+     "Money/settle"
+    ]
+   },
+   "Eve": {
+    "open_ms": 1508,
+    "square_ms": 1612,
+    "presses": [
+     "Say you were in on it",
+     "Say you paid Ann $2.00",
+     "Say you paid Bo $2.00",
+     "Say you paid Cy $2.00",
+     "Say you paid Di $2.00",
+     "Say you paid Priya $2.00"
+    ],
+    "acts": [
+     "Money/share",
+     "Money/settle",
+     "Money/settle",
+     "Money/settle",
+     "Money/settle",
+     "Money/settle"
+    ]
+   }
+  }
+ },
+ "5": {
+  "verdict": "passed",
+  "read": {
+   "Ann": {
+    "open_ms": 2623,
+    "card_to_playing_ms": 1428,
+    "clicked": "title",
+    "stopped": null,
+    "video": {
+     "ct": 0.52,
+     "paused": false,
+     "w": 1280,
+     "h": 720
+    }
+   },
+   "Bo": {
+    "open_ms": 2591,
+    "card_to_playing_ms": 1234,
+    "clicked": "title",
+    "stopped": null,
+    "video": {
+     "ct": 0.51,
+     "paused": false,
+     "w": 1280,
+     "h": 720
+    }
+   },
+   "Cy": {
+    "open_ms": 2580,
+    "card_to_playing_ms": 1198,
+    "clicked": "title",
+    "stopped": null,
+    "video": {
+     "ct": 0.51,
+     "paused": false,
+     "w": 1280,
+     "h": 720
+    }
+   },
+   "Di": {
+    "open_ms": 2701,
+    "card_to_playing_ms": 1226,
+    "clicked": "title",
+    "stopped": null,
+    "video": {
+     "ct": 0.51,
+     "paused": false,
+     "w": 1280,
+     "h": 720
+    }
+   },
+   "Eve": {
+    "open_ms": 6542,
+    "card_to_playing_ms": 6379,
+    "clicked": "title",
+    "stopped": null,
+    "video": {
+     "ct": 0.51,
+     "paused": false,
+     "w": 1280,
+     "h": 720
+    }
+   }
+  }
+ },
+ "6": {
+  "verdict": "passed",
+  "read": {
+   "asked_ms": 1485,
+   "joined_ms": 1836,
+   "status": "You’re in Elm Street (Sam’s, since 15 Oct), as Eve"
+  }
+ },
+ "7": {
+  "verdict": "passed",
+  "read": {
+   "ms": 3886,
+   "status": "You’re in Elm Street (Sam’s, since 15 Oct), as Eve, through Ann’s computer",
+   "sam": [
+    "off",
+    "did not answer"
+   ],
+   "again": "You’re in Elm Street (Sam’s, since 15 Oct), as Eve, through Bo’s computer"
+  }
+ },
+ "8": {
+  "verdict": "passed",
+  "read": {
+   "money_ms": 3120,
+   "library_ms": 12921
+  }
+ },
+ "9": {
+  "verdict": "passed",
+  "read": {
+   "door": {
+    "Cy": [
+     "on",
+     "on now"
+    ],
+    "Bo": [
+     "on",
+     "on now"
+    ],
+    "Eve": [
+     "phone",
+     "in from a phone"
+    ],
+    "Sam": [
+     "off",
+     "did not answer"
+    ],
+    "Priya": [
+     "on",
+     "on now"
+    ],
+    "Di": [
+     "on",
+     "on now"
+    ],
+    "Ann": [
+     "on",
+     "on now"
+    ]
+   },
+   "issuer_stopped_before_di_home": true
+  }
+ },
+ "10": {
+  "verdict": "passed",
+  "read": {
+   "done_ms": {
+    "Ann": 10261,
+    "Bo": 10071,
+    "Cy": 10172,
+    "Di": 20918,
+    "Eve": 35844
+   }
+  }
+ },
+ "11": {
+  "verdict": "passed",
+  "read": {
+   "prompts_shown": {
+    "Ann": 0,
+    "Bo": 0,
+    "Cy": 0,
+    "Di": 0,
+    "Eve": 0
+   },
+   "jellyfin_users": [
+    "Ann-c8019018006e5d01",
+    "Bo-166279b0fc1f2d81",
+    "Cy-0957d51c61b47519",
+    "Di-908cdcf41c84513e",
+    "Eve-2cf3675cd6afc038",
+    "priya"
+   ]
+  }
+ },
+ "12": {
+  "verdict": "passed",
+  "read": {
+   "doors": {
+    "Priya": {
+     "Cy": [
+      "on",
+      "on now"
+     ],
+     "Bo": [
+      "on",
+      "on now"
+     ],
+     "Eve": [
+      "phone",
+      "in from a phone"
+     ],
+     "Sam": [
+      "off",
+      "did not answer"
+     ],
+     "Priya": [
+      "on",
+      "on now"
+     ],
+     "Di": [
+      "on",
+      "on now"
+     ],
+     "Ann": [
+      "on",
+      "on now"
+     ]
+    },
+    "Ann": {
+     "Cy": [
+      "on",
+      "on now"
+     ],
+     "Bo": [
+      "on",
+      "on now"
+     ],
+     "Eve": [
+      "phone",
+      "in from a phone"
+     ],
+     "Sam": [
+      "off",
+      "did not answer"
+     ],
+     "Priya": [
+      "on",
+      "on now"
+     ],
+     "Di": [
+      "on",
+      "on now"
+     ],
+     "Ann": [
+      "on",
+      "on now"
+     ]
+    },
+    "Bo": {
+     "Cy": [
+      "on",
+      "on now"
+     ],
+     "Bo": [
+      "on",
+      "on now"
+     ],
+     "Eve": [
+      "phone",
+      "in from a phone"
+     ],
+     "Sam": [
+      "off",
+      "did not answer"
+     ],
+     "Priya": [
+      "on",
+      "on now"
+     ],
+     "Di": [
+      "on",
+      "on now"
+     ],
+     "Ann": [
+      "on",
+      "on now"
+     ]
+    },
+    "Cy": {
+     "Cy": [
+      "on",
+      "on now"
+     ],
+     "Bo": [
+      "on",
+      "on now"
+     ],
+     "Eve": [
+      "phone",
+      "in from a phone"
+     ],
+     "Sam": [
+      "off",
+      "did not answer"
+     ],
+     "Priya": [
+      "on",
+      "on now"
+     ],
+     "Di": [
+      "on",
+      "on now"
+     ],
+     "Ann": [
+      "on",
+      "on now"
+     ]
+    },
+    "Di": {
+     "Cy": [
+      "on",
+      "on now"
+     ],
+     "Bo": [
+      "on",
+      "on now"
+     ],
+     "Eve": [
+      "phone",
+      "in from a phone"
+     ],
+     "Sam": [
+      "off",
+      "did not answer"
+     ],
+     "Priya": [
+      "on",
+      "on now"
+     ],
+     "Di": [
+      "on",
+      "on now"
+     ],
+     "Ann": [
+      "on",
+      "on now"
+     ]
+    }
+   }
+  }
+ },
+ "13": {
+  "verdict": "passed",
+  "read": {
+   "square_on": {
+    "Priya": true,
+    "Ann": true,
+    "Bo": true,
+    "Cy": true,
+    "Di": true
+   },
+   "money_acts_each_copy": {
+    "Priya": 21,
+    "Ann": 21,
+    "Bo": 21,
+    "Cy": 21,
+    "Di": 21
+   },
+   "presses_and_gas_bill": 21
+  }
+ },
+ "14": {
+  "verdict": "passed",
+  "read": {
+   "found": {
+    "Ann": [],
+    "Bo": [],
+    "Cy": [],
+    "Di": [],
+    "Eve": []
+   },
+   "pages": {
+    "Ann": 6,
+    "Bo": 7,
+    "Cy": 8,
+    "Di": 9,
+    "Eve": 12
+   }
+  }
+ },
+ "15": {
+  "verdict": "passed",
+  "read": {
+   "planted": {
+    "1": "passed",
+    "2": "passed",
+    "3": "failed",
+    "4": "passed",
+    "5": "failed",
+    "6": "passed",
+    "7": "passed",
+    "8": "failed",
+    "9": "failed",
+    "10": "failed",
+    "11": "failed",
+    "12": "passed",
+    "13": "passed",
+    "14": "passed",
+    "15": "never-ran",
+    "17": "passed",
+    "16": "could-not-judge"
+   }
+  }
+ },
+ "17": {
+  "verdict": "passed",
+  "read": {
+   "before": "jellyfin, at http://localhost:8096. Its helper is running on this computer, so everyone is let in as themselves, with no account to make. Lend jellyfin to everyone in your groups",
+   "sign_in": 8097
+  }
+ },
+ "16": {
+  "verdict": "could-not-judge",
+  "read": "real people, a phone on cellular, a second host: not run; the people bar never-ran"
+ }
+}

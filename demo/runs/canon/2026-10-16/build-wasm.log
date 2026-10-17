@@ -1,0 +1,25 @@
+$ (cd apps/canon/build && cargo build --release --target wasm32-unknown-unknown), first run
+   Compiling version_check v0.9.5
+   Compiling proc-macro2 v1.0.107
+   Compiling quote v1.0.47
+   Compiling typenum v1.20.1
+   Compiling unicode-ident v1.0.24
+   Compiling serde_core v1.0.229
+   Compiling zmij v1.0.23
+   Compiling serde v1.0.229
+   Compiling serde_json v1.0.151
+   Compiling cfg-if v1.0.4
+   Compiling itoa v1.0.18
+   Compiling memchr v2.8.3
+   Compiling ed25519-compact v2.6.0
+   Compiling generic-array v0.14.7
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling digest v0.10.7
+   Compiling syn v3.0.3
+   Compiling sha2 v0.10.9
+   Compiling serde_derive v1.0.229
+   Compiling canon-core v0.3.0 (/Users/alexsbryan/dev/svrngs/target/canon/src/crates/canon-core)
+   Compiling canon-page v0.1.0 (/Users/alexsbryan/dev/svrngs/apps/canon/build)
+    Finished `release` profile [optimized] target(s) in 10.26s
+CARGO_TARGET_DIR=../../../target/canon/cargo cargo build --release --target   13.49s user 1.86s system 148% cpu 10.310 total

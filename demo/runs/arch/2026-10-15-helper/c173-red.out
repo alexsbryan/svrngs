@@ -1,0 +1,4 @@
+thread 'a_stopped_lend_is_said_by_its_lender_as_a_page_to_a_tab_and_json_to_a_program' (49670237) panicked at crates/svrngs-node/tests/lend_origin.rs:756:5:
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.18s
+thread 'the_page_lends_a_kind_beside_its_helper_signed_in_by_it' (49670495) panicked at crates/svrngs-node/tests/home.rs:938:5:
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.11s

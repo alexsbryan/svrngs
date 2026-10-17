@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 use super::*;
+use crate::iroh::tests::Said;
 use iroh::address_lookup::MemoryLookup;
 use iroh::{EndpointAddr, SecretKey, TransportAddr};
 
@@ -144,4 +145,36 @@ fn a_relay_this_computer_is_told_is_read_dotless() {
     assert_eq!(parse(N0_DOTTED[0]).unwrap().to_string(), N0_DOTLESS[0]);
     assert_eq!(parse(N0_DOTLESS[0]).unwrap().to_string(), N0_DOTLESS[0]);
     assert!(parse("not a url").is_err());
+}
+
+/// **One reading of a relay as written** (ralph/REVIEW_FINDINGS.md #131):
+/// this computer's [`parse`] is svrngs-core's, so a relay that is no URL
+/// is refused with the core's trace and its error, and one that is gives
+/// the core's URL. Planted: a second reading beside the core's, as
+/// before, which refused untraced.
+#[test]
+fn one_reading_of_a_relay_as_written() {
+    let said = Said::default();
+    let writer = said.clone();
+    let kept = tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::new("relay=debug"))
+        .with_writer(move || writer.clone())
+        .with_ansi(false)
+        .finish();
+    let refused = tracing::subscriber::with_default(kept, || parse("not a url"));
+    let traced = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
+    assert!(
+        traced.contains("relay: refused — not a URL") && traced.contains("raw=\"not a url\""),
+        "this computer's reading refused untraced: {refused:?}; traced: {traced}"
+    );
+    assert_eq!(
+        refused.map_err(|e| e.to_string()),
+        Err(svrngs_core::relay::parse("not a url")
+            .unwrap_err()
+            .to_string())
+    );
+    for raw in [N0_DOTTED[0], "http://127.0.0.1:1/"] {
+        let core = svrngs_core::relay::parse(raw).map(RelayUrl::from);
+        assert_eq!(parse(raw).ok(), core.ok(), "{raw}");
+    }
 }

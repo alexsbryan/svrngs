@@ -1,0 +1,2157 @@
+{
+ "bo_join": {
+  "exit": 0,
+  "said": "You're in Lab, as Bo.\nLab's folder is /tmp/sh-w-after/bo/svrngs/Lab: what anyone in Lab puts there reaches this computer, and what you put there reaches theirs."
+ },
+ "shares": {
+  "llama-server": {
+   "exit": 0,
+   "said": "Lent llama-server (port 18089) to everyone in your groups, up to 4 people at once.\nThey cannot open /slots, /v1/stream, /v1/streams, /v1/chat/completions/control, /lora-adapters, /metrics, /tools, /cors-proxy, /models: svrngs keeps these back whenever a llama-server is lent, since they show one person's use of it to the others or change it for everyone.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare llama-server` stops lending it.\nIf llama-server takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none):"
+  },
+  "night": {
+   "exit": 0,
+   "said": "Lent night (port 18091) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 18091 --limit <number>`.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare night` stops lending it.\nIf night takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none):"
+  },
+  "taste": {
+   "exit": 0,
+   "said": "Lent taste (port 18092) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 18092 --limit <number>`.\nAn app uses it only once the person it acts for says yes to: \"the films you have marked\".\nsvrngs is running here already, so they can open it now.\n`svrngs unshare taste` stops lending it.\nIf taste takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none):"
+  }
+ },
+ "walk": {
+  "lends-bo": {
+   "chromium": {
+    "which": "chromium",
+    "url": "http://svrngs.localhost:61188/",
+    "opened": {
+     "status": 200,
+     "ms": 604,
+     "people_ms": 120
+    },
+    "at": "http://svrngs.localhost:61188/",
+    "title": "Your groups",
+    "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/bo/svrngs/Lab\n\nOpen this folder\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nOpen Cy\u2019s taste Copy its address for a program\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\n\nLeaving a group is not possible yet: nothing in svrngs does it.",
+    "headings": [
+     "Your groups",
+     "Lab",
+     "What this computer lends",
+     "Done in a terminal"
+    ],
+    "buttons": [
+     "Open this folder",
+     "Make a link to invite someone to Lab",
+     "Make a link to add your phone or another computer of yours",
+     "Copy its address for a program",
+     "Copy its address for a program",
+     "Copy its address for a program"
+    ],
+    "links": [
+     {
+      "text": "Open Cy\u2019s taste",
+      "href": "http://ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s llama-server",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s night",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+      "target": "_blank"
+     }
+    ],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lend": 2,
+     "lends": 3,
+     "lent": 2,
+     "share": 2,
+     "app": 1,
+     "svrngs": 10,
+     "localhost": 2,
+     "terminal": 3,
+     "link": 5,
+     "invite": 2,
+     "phone": 2,
+     "computer": 10,
+     "group": 6,
+     "folder": 3,
+     "program": 6
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13-home/data/after/shots/lends-bo-chromium.png",
+    "errors": [],
+    "clicked": "Open Sam\u2019s llama-server",
+    "after": {
+     "at": "http://svrngs.localhost:61188/",
+     "title": "Your groups",
+     "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/bo/svrngs/Lab\n\nOpen this folder\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nOpen Cy\u2019s taste Copy its address for a program\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\n\nLeaving a group is not possible yet: nothing in svrngs does it.",
+     "headings": [
+      "Your groups",
+      "Lab",
+      "What this computer lends",
+      "Done in a terminal"
+     ],
+     "buttons": [
+      "Open this folder",
+      "Make a link to invite someone to Lab",
+      "Make a link to add your phone or another computer of yours",
+      "Copy its address for a program",
+      "Copy its address for a program",
+      "Copy its address for a program"
+     ],
+     "links": [
+      {
+       "text": "Open Cy\u2019s taste",
+       "href": "http://ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq.localhost:61188/",
+       "target": "_blank"
+      },
+      {
+       "text": "Open Sam\u2019s llama-server",
+       "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+       "target": "_blank"
+      },
+      {
+       "text": "Open Sam\u2019s night",
+       "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+       "target": "_blank"
+      }
+     ],
+     "boxes": [],
+     "fence": {},
+     "watch": {
+      "lend": 2,
+      "lends": 3,
+      "lent": 2,
+      "share": 2,
+      "app": 1,
+      "svrngs": 10,
+      "localhost": 2,
+      "terminal": 3,
+      "link": 5,
+      "invite": 2,
+      "phone": 2,
+      "computer": 10,
+      "group": 6,
+      "folder": 3,
+      "program": 6
+     }
+    },
+    "tab": {
+     "at": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+     "title": "llama-ui",
+     "text": "Hello there\n\nType a message or upload files to get started\n\nOpen prompt picker\nOpen resource picker\nAdd files, prompts, tools or MCP Servers\nQwen/Qwen2.5\n0.5B\nInstruct\nSend",
+     "headings": [
+      "Hello there"
+     ],
+     "buttons": [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "Open prompt picker",
+      "Open resource picker",
+      "Add files, prompts, tools or MCP Servers",
+      "Qwen/Qwen2.5\n0.5B\nInstruct",
+      "Send"
+     ],
+     "links": [],
+     "boxes": [
+      {
+       "type": "file",
+       "label": null,
+       "value": "",
+       "labelled": null
+      }
+     ],
+     "fence": {},
+     "watch": {}
+    },
+    "clipboard": ""
+   },
+   "webkit": {
+    "which": "webkit",
+    "url": "http://svrngs.localhost:61188/",
+    "opened": {
+     "status": 200,
+     "ms": 722,
+     "people_ms": 229
+    },
+    "at": "http://svrngs.localhost:61188/",
+    "title": "Your groups",
+    "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/bo/svrngs/Lab\n\nOpen this folder\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nOpen Cy\u2019s taste Copy its address for a program\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\nLeaving a group is not possible yet: nothing in svrngs does it.",
+    "headings": [
+     "Your groups",
+     "Lab",
+     "What this computer lends",
+     "Done in a terminal"
+    ],
+    "buttons": [
+     "Open this folder",
+     "Make a link to invite someone to Lab",
+     "Make a link to add your phone or another computer of yours",
+     "Copy its address for a program",
+     "Copy its address for a program",
+     "Copy its address for a program"
+    ],
+    "links": [
+     {
+      "text": "Open Cy\u2019s taste",
+      "href": "http://ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s llama-server",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s night",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+      "target": "_blank"
+     }
+    ],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lend": 2,
+     "lends": 3,
+     "lent": 2,
+     "share": 2,
+     "app": 1,
+     "svrngs": 10,
+     "localhost": 2,
+     "terminal": 3,
+     "link": 5,
+     "invite": 2,
+     "phone": 2,
+     "computer": 10,
+     "group": 6,
+     "folder": 3,
+     "program": 6
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13-home/data/after/shots/lends-bo-webkit.png",
+    "errors": [],
+    "clicked": "Open Sam\u2019s llama-server",
+    "after": {
+     "at": "http://svrngs.localhost:61188/",
+     "title": "Your groups",
+     "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/bo/svrngs/Lab\n\nOpen this folder\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nOpen Cy\u2019s taste Copy its address for a program\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\nLeaving a group is not possible yet: nothing in svrngs does it.",
+     "headings": [
+      "Your groups",
+      "Lab",
+      "What this computer lends",
+      "Done in a terminal"
+     ],
+     "buttons": [
+      "Open this folder",
+      "Make a link to invite someone to Lab",
+      "Make a link to add your phone or another computer of yours",
+      "Copy its address for a program",
+      "Copy its address for a program",
+      "Copy its address for a program"
+     ],
+     "links": [
+      {
+       "text": "Open Cy\u2019s taste",
+       "href": "http://ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq.localhost:61188/",
+       "target": "_blank"
+      },
+      {
+       "text": "Open Sam\u2019s llama-server",
+       "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+       "target": "_blank"
+      },
+      {
+       "text": "Open Sam\u2019s night",
+       "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+       "target": "_blank"
+      }
+     ],
+     "boxes": [],
+     "fence": {},
+     "watch": {
+      "lend": 2,
+      "lends": 3,
+      "lent": 2,
+      "share": 2,
+      "app": 1,
+      "svrngs": 10,
+      "localhost": 2,
+      "terminal": 3,
+      "link": 5,
+      "invite": 2,
+      "phone": 2,
+      "computer": 10,
+      "group": 6,
+      "folder": 3,
+      "program": 6
+     }
+    },
+    "tab": {
+     "at": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+     "title": "llama-ui",
+     "text": "\n\n\n\n\nHello there\nType a message or upload files to get started\nOpen prompt pickerOpen resource picker\n\nAdd files, prompts, tools or MCP Servers\n\nQwen/Qwen2.5\n0.5B\nInstruct\nSend\n",
+     "headings": [
+      "Hello there"
+     ],
+     "buttons": [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "Open prompt picker",
+      "Open resource picker",
+      "Add files, prompts, tools or MCP Servers",
+      "Qwen/Qwen2.5\n0.5B\nInstruct\n",
+      "Send"
+     ],
+     "links": [],
+     "boxes": [
+      {
+       "type": "file",
+       "label": null,
+       "value": "",
+       "labelled": null
+      }
+     ],
+     "fence": {},
+     "watch": {}
+    }
+   }
+  },
+  "invite-bo": {
+   "chromium": {
+    "which": "chromium",
+    "url": "http://svrngs.localhost:61188/",
+    "opened": {
+     "status": 200,
+     "ms": 568,
+     "people_ms": 61
+    },
+    "at": "http://svrngs.localhost:61188/",
+    "title": "Your groups",
+    "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/bo/svrngs/Lab\n\nOpen this folder\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nOpen Cy\u2019s taste Copy its address for a program\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\n\nLeaving a group is not possible yet: nothing in svrngs does it.",
+    "headings": [
+     "Your groups",
+     "Lab",
+     "What this computer lends",
+     "Done in a terminal"
+    ],
+    "buttons": [
+     "Open this folder",
+     "Make a link to invite someone to Lab",
+     "Make a link to add your phone or another computer of yours",
+     "Copy its address for a program",
+     "Copy its address for a program",
+     "Copy its address for a program"
+    ],
+    "links": [
+     {
+      "text": "Open Cy\u2019s taste",
+      "href": "http://ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s llama-server",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s night",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+      "target": "_blank"
+     }
+    ],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lend": 2,
+     "lends": 3,
+     "lent": 2,
+     "share": 2,
+     "app": 1,
+     "svrngs": 10,
+     "localhost": 2,
+     "terminal": 3,
+     "link": 5,
+     "invite": 2,
+     "phone": 2,
+     "computer": 10,
+     "group": 6,
+     "folder": 3,
+     "program": 6
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13-home/data/after/shots/invite-bo-chromium.png",
+    "errors": [],
+    "clicked": "Make a link to invite someone to Lab",
+    "after": {
+     "at": "http://svrngs.localhost:61188/",
+     "title": "Your groups",
+     "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/bo/svrngs/Lab\n\nOpen this folder\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nSend this link to the person you are inviting: svrngs://join/AvZxY1wP-TLzmxqG8u3cgsVXNEbEDbLKEDds4cj1fLmT7NdTq0Dy8PEbv0V1UgNZDWh0dHBzOi8vdXN3MS0xLnJlbGF5Lm4wLmlyb2gubGluay8 They join with svrngs join and this link. It works for a day, while this computer is on.\n\nOpen Cy\u2019s taste Copy its address for a program\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\n\nLeaving a group is not possible yet: nothing in svrngs does it.",
+     "headings": [
+      "Your groups",
+      "Lab",
+      "What this computer lends",
+      "Done in a terminal"
+     ],
+     "buttons": [
+      "Open this folder",
+      "Make a link to invite someone to Lab",
+      "Make a link to add your phone or another computer of yours",
+      "Copy its address for a program",
+      "Copy its address for a program",
+      "Copy its address for a program"
+     ],
+     "links": [
+      {
+       "text": "Open Cy\u2019s taste",
+       "href": "http://ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq.localhost:61188/",
+       "target": "_blank"
+      },
+      {
+       "text": "Open Sam\u2019s llama-server",
+       "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+       "target": "_blank"
+      },
+      {
+       "text": "Open Sam\u2019s night",
+       "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+       "target": "_blank"
+      }
+     ],
+     "boxes": [],
+     "fence": {},
+     "watch": {
+      "lend": 2,
+      "lends": 3,
+      "lent": 2,
+      "share": 2,
+      "app": 1,
+      "svrngs": 12,
+      "localhost": 2,
+      "terminal": 3,
+      "link": 7,
+      "invite": 2,
+      "phone": 2,
+      "computer": 11,
+      "group": 6,
+      "folder": 3,
+      "program": 6
+     }
+    },
+    "clipboard": ""
+   },
+   "webkit": {
+    "which": "webkit",
+    "url": "http://svrngs.localhost:61188/",
+    "opened": {
+     "status": 200,
+     "ms": 568,
+     "people_ms": 93
+    },
+    "at": "http://svrngs.localhost:61188/",
+    "title": "Your groups",
+    "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/bo/svrngs/Lab\n\nOpen this folder\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nOpen Cy\u2019s taste Copy its address for a program\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\nLeaving a group is not possible yet: nothing in svrngs does it.",
+    "headings": [
+     "Your groups",
+     "Lab",
+     "What this computer lends",
+     "Done in a terminal"
+    ],
+    "buttons": [
+     "Open this folder",
+     "Make a link to invite someone to Lab",
+     "Make a link to add your phone or another computer of yours",
+     "Copy its address for a program",
+     "Copy its address for a program",
+     "Copy its address for a program"
+    ],
+    "links": [
+     {
+      "text": "Open Cy\u2019s taste",
+      "href": "http://ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s llama-server",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s night",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+      "target": "_blank"
+     }
+    ],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lend": 2,
+     "lends": 3,
+     "lent": 2,
+     "share": 2,
+     "app": 1,
+     "svrngs": 10,
+     "localhost": 2,
+     "terminal": 3,
+     "link": 5,
+     "invite": 2,
+     "phone": 2,
+     "computer": 10,
+     "group": 6,
+     "folder": 3,
+     "program": 6
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13-home/data/after/shots/invite-bo-webkit.png",
+    "errors": [],
+    "clicked": "Make a link to invite someone to Lab",
+    "after": {
+     "at": "http://svrngs.localhost:61188/",
+     "title": "Your groups",
+     "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/bo/svrngs/Lab\n\nOpen this folder\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nSend this link to the person you are inviting: svrngs://join/AvZxY1wP-TLzmxqG8u3cgsVXNEbEDbLKEDds4cj1fLmTMca4fzaBa_VTGug5hkU1pmh0dHBzOi8vdXN3MS0xLnJlbGF5Lm4wLmlyb2gubGluay8 They join with svrngs join and this link. It works for a day, while this computer is on.\n\nOpen Cy\u2019s taste Copy its address for a program\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\nLeaving a group is not possible yet: nothing in svrngs does it.",
+     "headings": [
+      "Your groups",
+      "Lab",
+      "What this computer lends",
+      "Done in a terminal"
+     ],
+     "buttons": [
+      "Open this folder",
+      "Make a link to invite someone to Lab",
+      "Make a link to add your phone or another computer of yours",
+      "Copy its address for a program",
+      "Copy its address for a program",
+      "Copy its address for a program"
+     ],
+     "links": [
+      {
+       "text": "Open Cy\u2019s taste",
+       "href": "http://ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq.localhost:61188/",
+       "target": "_blank"
+      },
+      {
+       "text": "Open Sam\u2019s llama-server",
+       "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+       "target": "_blank"
+      },
+      {
+       "text": "Open Sam\u2019s night",
+       "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+       "target": "_blank"
+      }
+     ],
+     "boxes": [],
+     "fence": {},
+     "watch": {
+      "lend": 2,
+      "lends": 3,
+      "lent": 2,
+      "share": 2,
+      "app": 1,
+      "svrngs": 12,
+      "localhost": 2,
+      "terminal": 3,
+      "link": 7,
+      "invite": 2,
+      "phone": 2,
+      "computer": 11,
+      "group": 6,
+      "folder": 3,
+      "program": 6
+     }
+    }
+   }
+  },
+  "device-bo": {
+   "chromium": {
+    "which": "chromium",
+    "url": "http://svrngs.localhost:61188/",
+    "opened": {
+     "status": 200,
+     "ms": 3613,
+     "people_ms": 125
+    },
+    "at": "http://svrngs.localhost:61188/",
+    "title": "Your groups",
+    "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Eve, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/bo/svrngs/Lab\n\nOpen this folder\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nOpen Cy\u2019s taste Copy its address for a program\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nEve's computer did not answer, so what they lend is not listed.\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\n\nLeaving a group is not possible yet: nothing in svrngs does it.",
+    "headings": [
+     "Your groups",
+     "Lab",
+     "What this computer lends",
+     "Done in a terminal"
+    ],
+    "buttons": [
+     "Open this folder",
+     "Make a link to invite someone to Lab",
+     "Make a link to add your phone or another computer of yours",
+     "Copy its address for a program",
+     "Copy its address for a program",
+     "Copy its address for a program"
+    ],
+    "links": [
+     {
+      "text": "Open Cy\u2019s taste",
+      "href": "http://ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s llama-server",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s night",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+      "target": "_blank"
+     }
+    ],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lend": 3,
+     "lends": 3,
+     "lent": 2,
+     "share": 2,
+     "app": 1,
+     "svrngs": 10,
+     "localhost": 2,
+     "terminal": 3,
+     "link": 5,
+     "invite": 2,
+     "phone": 2,
+     "computer": 11,
+     "group": 6,
+     "folder": 3,
+     "program": 6
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13-home/data/after/shots/device-bo-chromium.png",
+    "errors": [],
+    "clicked": "Make a link to add your phone or another computer of yours",
+    "after": {
+     "at": "http://svrngs.localhost:61188/",
+     "title": "Your groups",
+     "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Eve, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/bo/svrngs/Lab\n\nOpen this folder\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nOpen this link on your other computer or phone; it joins as you, so send it to nobody else: svrngs://join/AvZxY1wP-TLzmxqG8u3cgsVXNEbEDbLKEDds4cj1fLmTDXJN_xWGDsfJd6QK3o7d2mh0dHBzOi8vdXN3MS0xLnJlbGF5Lm4wLmlyb2gubGluay8 They join with svrngs join and this link. It works for a day, while this computer is on.\n\nOpen Cy\u2019s taste Copy its address for a program\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nEve's computer did not answer, so what they lend is not listed.\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\n\nLeaving a group is not possible yet: nothing in svrngs does it.",
+     "headings": [
+      "Your groups",
+      "Lab",
+      "What this computer lends",
+      "Done in a terminal"
+     ],
+     "buttons": [
+      "Open this folder",
+      "Make a link to invite someone to Lab",
+      "Make a link to add your phone or another computer of yours",
+      "Copy its address for a program",
+      "Copy its address for a program",
+      "Copy its address for a program"
+     ],
+     "links": [
+      {
+       "text": "Open Cy\u2019s taste",
+       "href": "http://ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq.localhost:61188/",
+       "target": "_blank"
+      },
+      {
+       "text": "Open Sam\u2019s llama-server",
+       "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+       "target": "_blank"
+      },
+      {
+       "text": "Open Sam\u2019s night",
+       "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+       "target": "_blank"
+      }
+     ],
+     "boxes": [],
+     "fence": {},
+     "watch": {
+      "lend": 3,
+      "lends": 3,
+      "lent": 2,
+      "share": 2,
+      "app": 1,
+      "svrngs": 12,
+      "localhost": 2,
+      "terminal": 3,
+      "link": 7,
+      "invite": 2,
+      "phone": 3,
+      "computer": 13,
+      "group": 6,
+      "folder": 3,
+      "program": 6
+     }
+    },
+    "clipboard": ""
+   },
+   "webkit": {
+    "which": "webkit",
+    "url": "http://svrngs.localhost:61188/",
+    "opened": {
+     "status": 200,
+     "ms": 3575,
+     "people_ms": 72
+    },
+    "at": "http://svrngs.localhost:61188/",
+    "title": "Your groups",
+    "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Eve, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/bo/svrngs/Lab\n\nOpen this folder\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nOpen Cy\u2019s taste Copy its address for a program\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nEve's computer did not answer, so what they lend is not listed.\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\nLeaving a group is not possible yet: nothing in svrngs does it.",
+    "headings": [
+     "Your groups",
+     "Lab",
+     "What this computer lends",
+     "Done in a terminal"
+    ],
+    "buttons": [
+     "Open this folder",
+     "Make a link to invite someone to Lab",
+     "Make a link to add your phone or another computer of yours",
+     "Copy its address for a program",
+     "Copy its address for a program",
+     "Copy its address for a program"
+    ],
+    "links": [
+     {
+      "text": "Open Cy\u2019s taste",
+      "href": "http://ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s llama-server",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s night",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+      "target": "_blank"
+     }
+    ],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lend": 3,
+     "lends": 3,
+     "lent": 2,
+     "share": 2,
+     "app": 1,
+     "svrngs": 10,
+     "localhost": 2,
+     "terminal": 3,
+     "link": 5,
+     "invite": 2,
+     "phone": 2,
+     "computer": 11,
+     "group": 6,
+     "folder": 3,
+     "program": 6
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13-home/data/after/shots/device-bo-webkit.png",
+    "errors": [],
+    "clicked": "Make a link to add your phone or another computer of yours",
+    "after": {
+     "at": "http://svrngs.localhost:61188/",
+     "title": "Your groups",
+     "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Eve, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/bo/svrngs/Lab\n\nOpen this folder\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nOpen this link on your other computer or phone; it joins as you, so send it to nobody else: svrngs://join/AvZxY1wP-TLzmxqG8u3cgsVXNEbEDbLKEDds4cj1fLmTBdtWwmF1XGEdX-O9ISr4xmh0dHBzOi8vdXN3MS0xLnJlbGF5Lm4wLmlyb2gubGluay8 They join with svrngs join and this link. It works for a day, while this computer is on.\n\nOpen Cy\u2019s taste Copy its address for a program\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nEve's computer did not answer, so what they lend is not listed.\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\nLeaving a group is not possible yet: nothing in svrngs does it.",
+     "headings": [
+      "Your groups",
+      "Lab",
+      "What this computer lends",
+      "Done in a terminal"
+     ],
+     "buttons": [
+      "Open this folder",
+      "Make a link to invite someone to Lab",
+      "Make a link to add your phone or another computer of yours",
+      "Copy its address for a program",
+      "Copy its address for a program",
+      "Copy its address for a program"
+     ],
+     "links": [
+      {
+       "text": "Open Cy\u2019s taste",
+       "href": "http://ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq.localhost:61188/",
+       "target": "_blank"
+      },
+      {
+       "text": "Open Sam\u2019s llama-server",
+       "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+       "target": "_blank"
+      },
+      {
+       "text": "Open Sam\u2019s night",
+       "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+       "target": "_blank"
+      }
+     ],
+     "boxes": [],
+     "fence": {},
+     "watch": {
+      "lend": 3,
+      "lends": 3,
+      "lent": 2,
+      "share": 2,
+      "app": 1,
+      "svrngs": 12,
+      "localhost": 2,
+      "terminal": 3,
+      "link": 7,
+      "invite": 2,
+      "phone": 3,
+      "computer": 13,
+      "group": 6,
+      "folder": 3,
+      "program": 6
+     }
+    }
+   }
+  },
+  "folder-bo": {
+   "chromium": {
+    "which": "chromium",
+    "url": "http://svrngs.localhost:61188/",
+    "opened": {
+     "status": 200,
+     "ms": 3704,
+     "people_ms": 252
+    },
+    "at": "http://svrngs.localhost:61188/",
+    "title": "Your groups",
+    "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Eve, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/bo/svrngs/Lab\n\nOpen this folder\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nOpen Cy\u2019s taste Copy its address for a program\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nEve's computer did not answer, so what they lend is not listed.\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\n\nLeaving a group is not possible yet: nothing in svrngs does it.",
+    "headings": [
+     "Your groups",
+     "Lab",
+     "What this computer lends",
+     "Done in a terminal"
+    ],
+    "buttons": [
+     "Open this folder",
+     "Make a link to invite someone to Lab",
+     "Make a link to add your phone or another computer of yours",
+     "Copy its address for a program",
+     "Copy its address for a program",
+     "Copy its address for a program"
+    ],
+    "links": [
+     {
+      "text": "Open Cy\u2019s taste",
+      "href": "http://ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s llama-server",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s night",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+      "target": "_blank"
+     }
+    ],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lend": 3,
+     "lends": 3,
+     "lent": 2,
+     "share": 2,
+     "app": 1,
+     "svrngs": 10,
+     "localhost": 2,
+     "terminal": 3,
+     "link": 5,
+     "invite": 2,
+     "phone": 2,
+     "computer": 11,
+     "group": 6,
+     "folder": 3,
+     "program": 6
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13-home/data/after/shots/folder-bo-chromium.png",
+    "errors": [],
+    "clicked": "Open this folder",
+    "after": {
+     "at": "http://svrngs.localhost:61188/",
+     "title": "Your groups",
+     "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Eve, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/bo/svrngs/Lab\n\nOpen this folder Opened, in a window of its own.\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nOpen Cy\u2019s taste Copy its address for a program\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nEve's computer did not answer, so what they lend is not listed.\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\n\nLeaving a group is not possible yet: nothing in svrngs does it.",
+     "headings": [
+      "Your groups",
+      "Lab",
+      "What this computer lends",
+      "Done in a terminal"
+     ],
+     "buttons": [
+      "Open this folder",
+      "Make a link to invite someone to Lab",
+      "Make a link to add your phone or another computer of yours",
+      "Copy its address for a program",
+      "Copy its address for a program",
+      "Copy its address for a program"
+     ],
+     "links": [
+      {
+       "text": "Open Cy\u2019s taste",
+       "href": "http://ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq.localhost:61188/",
+       "target": "_blank"
+      },
+      {
+       "text": "Open Sam\u2019s llama-server",
+       "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+       "target": "_blank"
+      },
+      {
+       "text": "Open Sam\u2019s night",
+       "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+       "target": "_blank"
+      }
+     ],
+     "boxes": [],
+     "fence": {},
+     "watch": {
+      "lend": 3,
+      "lends": 3,
+      "lent": 2,
+      "share": 2,
+      "app": 1,
+      "svrngs": 10,
+      "localhost": 2,
+      "terminal": 3,
+      "link": 5,
+      "invite": 2,
+      "phone": 2,
+      "computer": 11,
+      "group": 6,
+      "folder": 3,
+      "program": 6
+     }
+    },
+    "clipboard": ""
+   },
+   "webkit": {
+    "which": "webkit",
+    "url": "http://svrngs.localhost:61188/",
+    "opened": {
+     "status": 200,
+     "ms": 3594,
+     "people_ms": 108
+    },
+    "at": "http://svrngs.localhost:61188/",
+    "title": "Your groups",
+    "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Eve, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/bo/svrngs/Lab\n\nOpen this folder\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nOpen Cy\u2019s taste Copy its address for a program\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nEve's computer did not answer, so what they lend is not listed.\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\nLeaving a group is not possible yet: nothing in svrngs does it.",
+    "headings": [
+     "Your groups",
+     "Lab",
+     "What this computer lends",
+     "Done in a terminal"
+    ],
+    "buttons": [
+     "Open this folder",
+     "Make a link to invite someone to Lab",
+     "Make a link to add your phone or another computer of yours",
+     "Copy its address for a program",
+     "Copy its address for a program",
+     "Copy its address for a program"
+    ],
+    "links": [
+     {
+      "text": "Open Cy\u2019s taste",
+      "href": "http://ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s llama-server",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s night",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+      "target": "_blank"
+     }
+    ],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lend": 3,
+     "lends": 3,
+     "lent": 2,
+     "share": 2,
+     "app": 1,
+     "svrngs": 10,
+     "localhost": 2,
+     "terminal": 3,
+     "link": 5,
+     "invite": 2,
+     "phone": 2,
+     "computer": 11,
+     "group": 6,
+     "folder": 3,
+     "program": 6
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13-home/data/after/shots/folder-bo-webkit.png",
+    "errors": [],
+    "clicked": "Open this folder",
+    "after": {
+     "at": "http://svrngs.localhost:61188/",
+     "title": "Your groups",
+     "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Eve, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/bo/svrngs/Lab\n\nOpen this folder Opened, in a window of its own.\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nOpen Cy\u2019s taste Copy its address for a program\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nEve's computer did not answer, so what they lend is not listed.\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\nLeaving a group is not possible yet: nothing in svrngs does it.",
+     "headings": [
+      "Your groups",
+      "Lab",
+      "What this computer lends",
+      "Done in a terminal"
+     ],
+     "buttons": [
+      "Open this folder",
+      "Make a link to invite someone to Lab",
+      "Make a link to add your phone or another computer of yours",
+      "Copy its address for a program",
+      "Copy its address for a program",
+      "Copy its address for a program"
+     ],
+     "links": [
+      {
+       "text": "Open Cy\u2019s taste",
+       "href": "http://ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq.localhost:61188/",
+       "target": "_blank"
+      },
+      {
+       "text": "Open Sam\u2019s llama-server",
+       "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+       "target": "_blank"
+      },
+      {
+       "text": "Open Sam\u2019s night",
+       "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+       "target": "_blank"
+      }
+     ],
+     "boxes": [],
+     "fence": {},
+     "watch": {
+      "lend": 3,
+      "lends": 3,
+      "lent": 2,
+      "share": 2,
+      "app": 1,
+      "svrngs": 10,
+      "localhost": 2,
+      "terminal": 3,
+      "link": 5,
+      "invite": 2,
+      "phone": 2,
+      "computer": 11,
+      "group": 6,
+      "folder": 3,
+      "program": 6
+     }
+    }
+   }
+  },
+  "copy-bo": {
+   "chromium": {
+    "which": "chromium",
+    "url": "http://svrngs.localhost:61188/",
+    "opened": {
+     "status": 200,
+     "ms": 3874,
+     "people_ms": 563
+    },
+    "at": "http://svrngs.localhost:61188/",
+    "title": "Your groups",
+    "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Eve, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/bo/svrngs/Lab\n\nOpen this folder\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nOpen Cy\u2019s taste Copy its address for a program\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nEve's computer did not answer, so what they lend is not listed.\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\n\nLeaving a group is not possible yet: nothing in svrngs does it.",
+    "headings": [
+     "Your groups",
+     "Lab",
+     "What this computer lends",
+     "Done in a terminal"
+    ],
+    "buttons": [
+     "Open this folder",
+     "Make a link to invite someone to Lab",
+     "Make a link to add your phone or another computer of yours",
+     "Copy its address for a program",
+     "Copy its address for a program",
+     "Copy its address for a program"
+    ],
+    "links": [
+     {
+      "text": "Open Cy\u2019s taste",
+      "href": "http://ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s llama-server",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s night",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+      "target": "_blank"
+     }
+    ],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lend": 3,
+     "lends": 3,
+     "lent": 2,
+     "share": 2,
+     "app": 1,
+     "svrngs": 10,
+     "localhost": 2,
+     "terminal": 3,
+     "link": 5,
+     "invite": 2,
+     "phone": 2,
+     "computer": 11,
+     "group": 6,
+     "folder": 3,
+     "program": 6
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13-home/data/after/shots/copy-bo-chromium.png",
+    "errors": [],
+    "clicked": "Copy its address for a program",
+    "after": {
+     "at": "http://svrngs.localhost:61188/",
+     "title": "Your groups",
+     "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Eve, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/bo/svrngs/Lab\n\nOpen this folder\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nOpen Cy\u2019s taste Copy its address for a program Copied: http://ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq.localhost:61188/\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nEve's computer did not answer, so what they lend is not listed.\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\n\nLeaving a group is not possible yet: nothing in svrngs does it.",
+     "headings": [
+      "Your groups",
+      "Lab",
+      "What this computer lends",
+      "Done in a terminal"
+     ],
+     "buttons": [
+      "Open this folder",
+      "Make a link to invite someone to Lab",
+      "Make a link to add your phone or another computer of yours",
+      "Copy its address for a program",
+      "Copy its address for a program",
+      "Copy its address for a program"
+     ],
+     "links": [
+      {
+       "text": "Open Cy\u2019s taste",
+       "href": "http://ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq.localhost:61188/",
+       "target": "_blank"
+      },
+      {
+       "text": "Open Sam\u2019s llama-server",
+       "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+       "target": "_blank"
+      },
+      {
+       "text": "Open Sam\u2019s night",
+       "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+       "target": "_blank"
+      }
+     ],
+     "boxes": [],
+     "fence": {},
+     "watch": {
+      "lend": 3,
+      "lends": 3,
+      "lent": 2,
+      "share": 2,
+      "app": 1,
+      "svrngs": 10,
+      "localhost": 3,
+      "terminal": 3,
+      "link": 5,
+      "invite": 2,
+      "phone": 2,
+      "computer": 11,
+      "group": 6,
+      "folder": 3,
+      "program": 6
+     }
+    },
+    "clipboard": "http://ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq.localhost:61188/"
+   },
+   "webkit": {
+    "which": "webkit",
+    "url": "http://svrngs.localhost:61188/",
+    "opened": {
+     "status": 200,
+     "ms": 4760,
+     "people_ms": 73
+    },
+    "at": "http://svrngs.localhost:61188/",
+    "title": "Your groups",
+    "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Eve, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/bo/svrngs/Lab\n\nOpen this folder\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nOpen Cy\u2019s taste Copy its address for a program\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nEve's computer did not answer, so what they lend is not listed.\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\nLeaving a group is not possible yet: nothing in svrngs does it.",
+    "headings": [
+     "Your groups",
+     "Lab",
+     "What this computer lends",
+     "Done in a terminal"
+    ],
+    "buttons": [
+     "Open this folder",
+     "Make a link to invite someone to Lab",
+     "Make a link to add your phone or another computer of yours",
+     "Copy its address for a program",
+     "Copy its address for a program",
+     "Copy its address for a program"
+    ],
+    "links": [
+     {
+      "text": "Open Cy\u2019s taste",
+      "href": "http://ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s llama-server",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s night",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+      "target": "_blank"
+     }
+    ],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lend": 3,
+     "lends": 3,
+     "lent": 2,
+     "share": 2,
+     "app": 1,
+     "svrngs": 10,
+     "localhost": 2,
+     "terminal": 3,
+     "link": 5,
+     "invite": 2,
+     "phone": 2,
+     "computer": 11,
+     "group": 6,
+     "folder": 3,
+     "program": 6
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13-home/data/after/shots/copy-bo-webkit.png",
+    "errors": [],
+    "clicked": "Copy its address for a program",
+    "after": {
+     "at": "http://svrngs.localhost:61188/",
+     "title": "Your groups",
+     "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Eve, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/bo/svrngs/Lab\n\nOpen this folder\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nOpen Cy\u2019s taste Copy its address for a program Copied: http://ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq.localhost:61188/\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nEve's computer did not answer, so what they lend is not listed.\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\nLeaving a group is not possible yet: nothing in svrngs does it.",
+     "headings": [
+      "Your groups",
+      "Lab",
+      "What this computer lends",
+      "Done in a terminal"
+     ],
+     "buttons": [
+      "Open this folder",
+      "Make a link to invite someone to Lab",
+      "Make a link to add your phone or another computer of yours",
+      "Copy its address for a program",
+      "Copy its address for a program",
+      "Copy its address for a program"
+     ],
+     "links": [
+      {
+       "text": "Open Cy\u2019s taste",
+       "href": "http://ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq.localhost:61188/",
+       "target": "_blank"
+      },
+      {
+       "text": "Open Sam\u2019s llama-server",
+       "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+       "target": "_blank"
+      },
+      {
+       "text": "Open Sam\u2019s night",
+       "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+       "target": "_blank"
+      }
+     ],
+     "boxes": [],
+     "fence": {},
+     "watch": {
+      "lend": 3,
+      "lends": 3,
+      "lent": 2,
+      "share": 2,
+      "app": 1,
+      "svrngs": 10,
+      "localhost": 3,
+      "terminal": 3,
+      "link": 5,
+      "invite": 2,
+      "phone": 2,
+      "computer": 11,
+      "group": 6,
+      "folder": 3,
+      "program": 6
+     }
+    }
+   }
+  },
+  "lends-sam": {
+   "chromium": {
+    "which": "chromium",
+    "url": "http://svrngs.localhost:61133/",
+    "opened": {
+     "status": 200,
+     "ms": 3615,
+     "people_ms": 159
+    },
+    "at": "http://svrngs.localhost:61133/",
+    "title": "Your groups",
+    "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Eve, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/sam/svrngs/Lab\n\nOpen this folder\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nOpen Cy\u2019s taste Copy its address for a program\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nEve's computer did not answer, so what they lend is not listed.\nWhat this computer lends\nllama-server: up to 4 people at once, 0 using it now. How many people at once: Let in this manyLet everyone inStop lending\nnight: everyone in your groups at once, 0 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61133/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\n\nLeaving a group is not possible yet: nothing in svrngs does it.",
+    "headings": [
+     "Your groups",
+     "Lab",
+     "What this computer lends",
+     "Done in a terminal"
+    ],
+    "buttons": [
+     "Open this folder",
+     "Make a link to invite someone to Lab",
+     "Make a link to add your phone or another computer of yours",
+     "Copy its address for a program",
+     "Copy its address for a program",
+     "Copy its address for a program",
+     "Let in this many",
+     "Let everyone in",
+     "Stop lending",
+     "Let in this many",
+     "Stop lending"
+    ],
+    "links": [
+     {
+      "text": "Open Cy\u2019s taste",
+      "href": "http://ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq.localhost:61133/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s llama-server",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61133/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s night",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61133/",
+      "target": "_blank"
+     }
+    ],
+    "boxes": [
+     {
+      "type": "number",
+      "label": null,
+      "value": "4",
+      "labelled": "How many people at once: "
+     },
+     {
+      "type": "number",
+      "label": null,
+      "value": "",
+      "labelled": "How many people at once: "
+     }
+    ],
+    "fence": {},
+    "watch": {
+     "lend": 3,
+     "lends": 2,
+     "lent": 2,
+     "lending": 2,
+     "share": 2,
+     "app": 1,
+     "svrngs": 10,
+     "localhost": 2,
+     "terminal": 3,
+     "link": 5,
+     "invite": 2,
+     "phone": 2,
+     "computer": 10,
+     "group": 6,
+     "folder": 3,
+     "program": 6
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13-home/data/after/shots/lends-sam-chromium.png",
+    "errors": []
+   },
+   "webkit": {
+    "which": "webkit",
+    "url": "http://svrngs.localhost:61133/",
+    "opened": {
+     "status": 200,
+     "ms": 3590,
+     "people_ms": 69
+    },
+    "at": "http://svrngs.localhost:61133/",
+    "title": "Your groups",
+    "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Eve, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/sam/svrngs/Lab\n\nOpen this folder\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nOpen Cy\u2019s taste Copy its address for a program\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nEve's computer did not answer, so what they lend is not listed.\nWhat this computer lends\n\nllama-server: up to 4 people at once, 0 using it now. How many people at once: Let in this manyLet everyone inStop lending\nnight: everyone in your groups at once, 0 using it now. How many people at once: Let in this manyStop lending\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61133/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\nLeaving a group is not possible yet: nothing in svrngs does it.",
+    "headings": [
+     "Your groups",
+     "Lab",
+     "What this computer lends",
+     "Done in a terminal"
+    ],
+    "buttons": [
+     "Open this folder",
+     "Make a link to invite someone to Lab",
+     "Make a link to add your phone or another computer of yours",
+     "Copy its address for a program",
+     "Copy its address for a program",
+     "Copy its address for a program",
+     "Let in this many",
+     "Let everyone in",
+     "Stop lending",
+     "Let in this many",
+     "Stop lending"
+    ],
+    "links": [
+     {
+      "text": "Open Cy\u2019s taste",
+      "href": "http://ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq.localhost:61133/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s llama-server",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61133/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s night",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61133/",
+      "target": "_blank"
+     }
+    ],
+    "boxes": [
+     {
+      "type": "number",
+      "label": null,
+      "value": "4",
+      "labelled": "How many people at once: "
+     },
+     {
+      "type": "number",
+      "label": null,
+      "value": "",
+      "labelled": "How many people at once: "
+     }
+    ],
+    "fence": {},
+    "watch": {
+     "lend": 3,
+     "lends": 2,
+     "lent": 2,
+     "lending": 2,
+     "share": 2,
+     "app": 1,
+     "svrngs": 10,
+     "localhost": 2,
+     "terminal": 3,
+     "link": 5,
+     "invite": 2,
+     "phone": 2,
+     "computer": 10,
+     "group": 6,
+     "folder": 3,
+     "program": 6
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13-home/data/after/shots/lends-sam-webkit.png",
+    "errors": []
+   }
+  },
+  "asking-bo": {
+   "chromium": {
+    "which": "chromium",
+    "url": "http://svrngs.localhost:61188/ask?lend=ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq&app=av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b&back=/",
+    "opened": {
+     "status": 200,
+     "ms": 3607,
+     "people_ms": null
+    },
+    "at": "http://svrngs.localhost:61188/ask?lend=ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq&app=av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b&back=/",
+    "title": "Your groups",
+    "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLet Sam\u2019s night use Cy\u2019s taste?\nthe films you have marked\nYesNot now\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\n\nLeaving a group is not possible yet: nothing in svrngs does it.",
+    "headings": [
+     "Your groups",
+     "Let Sam\u2019s night use Cy\u2019s taste?",
+     "Done in a terminal"
+    ],
+    "buttons": [
+     "Yes",
+     "Not now"
+    ],
+    "links": [],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lend": 2,
+     "lends": 1,
+     "lent": 2,
+     "share": 2,
+     "app": 1,
+     "svrngs": 7,
+     "localhost": 1,
+     "terminal": 3,
+     "link": 3,
+     "invite": 1,
+     "phone": 1,
+     "computer": 6,
+     "group": 6,
+     "folder": 1,
+     "program": 3
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13-home/data/after/shots/asking-bo-chromium.png",
+    "errors": [],
+    "clicked": "Yes",
+    "after": {
+     "at": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+     "title": "night",
+     "text": "night",
+     "headings": [
+      "night"
+     ],
+     "buttons": [],
+     "links": [],
+     "boxes": [],
+     "fence": {},
+     "watch": {}
+    },
+    "clipboard": ""
+   },
+   "webkit": {
+    "which": "webkit",
+    "url": "http://svrngs.localhost:61188/ask?lend=ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq&app=av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b&back=/",
+    "opened": {
+     "status": 200,
+     "ms": 3564,
+     "people_ms": null
+    },
+    "at": "http://svrngs.localhost:61188/ask?lend=ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq&app=av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b&back=/",
+    "title": "Your groups",
+    "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLet Sam\u2019s night use Cy\u2019s taste?\n\nthe films you have marked\nYesNot now\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\nLeaving a group is not possible yet: nothing in svrngs does it.",
+    "headings": [
+     "Your groups",
+     "Let Sam\u2019s night use Cy\u2019s taste?",
+     "Done in a terminal"
+    ],
+    "buttons": [
+     "Yes",
+     "Not now"
+    ],
+    "links": [],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lend": 2,
+     "lends": 1,
+     "lent": 2,
+     "share": 2,
+     "app": 1,
+     "svrngs": 7,
+     "localhost": 1,
+     "terminal": 3,
+     "link": 3,
+     "invite": 1,
+     "phone": 1,
+     "computer": 6,
+     "group": 6,
+     "folder": 1,
+     "program": 3
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13-home/data/after/shots/asking-bo-webkit.png",
+    "errors": [],
+    "clicked": "Yes",
+    "after": {
+     "at": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+     "title": "night",
+     "text": "night",
+     "headings": [
+      "night"
+     ],
+     "buttons": [],
+     "links": [],
+     "boxes": [],
+     "fence": {},
+     "watch": {}
+    }
+   }
+  },
+  "after-yes-bo": {
+   "chromium": {
+    "which": "chromium",
+    "url": "http://svrngs.localhost:61188/",
+    "opened": {
+     "status": 200,
+     "ms": 3829,
+     "people_ms": 372
+    },
+    "at": "http://svrngs.localhost:61188/",
+    "title": "Your groups",
+    "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Eve, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/bo/svrngs/Lab\n\nOpen this folder\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nOpen Cy\u2019s taste Copy its address for a program\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nEve's computer did not answer, so what they lend is not listed.\nWhat this computer lends\n\nThis computer lends nothing.\n\nWhat apps use\n\nSam\u2019s night uses Cy\u2019s taste. Stop\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\n\nLeaving a group is not possible yet: nothing in svrngs does it.",
+    "headings": [
+     "Your groups",
+     "Lab",
+     "What this computer lends",
+     "What apps use",
+     "Done in a terminal"
+    ],
+    "buttons": [
+     "Open this folder",
+     "Make a link to invite someone to Lab",
+     "Make a link to add your phone or another computer of yours",
+     "Copy its address for a program",
+     "Copy its address for a program",
+     "Copy its address for a program",
+     "Stop"
+    ],
+    "links": [
+     {
+      "text": "Open Cy\u2019s taste",
+      "href": "http://ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s llama-server",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s night",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+      "target": "_blank"
+     }
+    ],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lend": 3,
+     "lends": 3,
+     "lent": 2,
+     "share": 2,
+     "app": 1,
+     "apps": 1,
+     "svrngs": 10,
+     "localhost": 2,
+     "terminal": 3,
+     "link": 5,
+     "invite": 2,
+     "phone": 2,
+     "computer": 11,
+     "group": 6,
+     "folder": 3,
+     "program": 6
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13-home/data/after/shots/after-yes-bo-chromium.png",
+    "errors": []
+   },
+   "webkit": {
+    "which": "webkit",
+    "url": "http://svrngs.localhost:61188/",
+    "opened": {
+     "status": 200,
+     "ms": 3588,
+     "people_ms": 103
+    },
+    "at": "http://svrngs.localhost:61188/",
+    "title": "Your groups",
+    "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Eve, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/bo/svrngs/Lab\n\nOpen this folder\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nOpen Cy\u2019s taste Copy its address for a program\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nEve's computer did not answer, so what they lend is not listed.\nWhat this computer lends\n\nThis computer lends nothing.\n\nWhat apps use\n\nSam\u2019s night uses Cy\u2019s taste. Stop\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\nLeaving a group is not possible yet: nothing in svrngs does it.",
+    "headings": [
+     "Your groups",
+     "Lab",
+     "What this computer lends",
+     "What apps use",
+     "Done in a terminal"
+    ],
+    "buttons": [
+     "Open this folder",
+     "Make a link to invite someone to Lab",
+     "Make a link to add your phone or another computer of yours",
+     "Copy its address for a program",
+     "Copy its address for a program",
+     "Copy its address for a program",
+     "Stop"
+    ],
+    "links": [
+     {
+      "text": "Open Cy\u2019s taste",
+      "href": "http://ctn9x09j3rbxmqs2n4cxug0qrx5m6cm1t8d7l5rbr6l06nr0m5ptq9s0vcjzzq.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s llama-server",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s night",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+      "target": "_blank"
+     }
+    ],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lend": 3,
+     "lends": 3,
+     "lent": 2,
+     "share": 2,
+     "app": 1,
+     "apps": 1,
+     "svrngs": 10,
+     "localhost": 2,
+     "terminal": 3,
+     "link": 5,
+     "invite": 2,
+     "phone": 2,
+     "computer": 11,
+     "group": 6,
+     "folder": 3,
+     "program": 6
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13-home/data/after/shots/after-yes-bo-webkit.png",
+    "errors": []
+   }
+  },
+  "asleep-bo": {
+   "chromium": {
+    "which": "chromium",
+    "url": "http://svrngs.localhost:61188/",
+    "opened": {
+     "status": 200,
+     "ms": 3610,
+     "people_ms": 170
+    },
+    "at": "http://svrngs.localhost:61188/",
+    "title": "Your groups",
+    "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Eve, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/bo/svrngs/Lab\n\nOpen this folder\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nCy's computer did not answer, so what they lend is not listed.\nEve's computer did not answer, so what they lend is not listed.\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\n\nLeaving a group is not possible yet: nothing in svrngs does it.",
+    "headings": [
+     "Your groups",
+     "Lab",
+     "What this computer lends",
+     "Done in a terminal"
+    ],
+    "buttons": [
+     "Open this folder",
+     "Make a link to invite someone to Lab",
+     "Make a link to add your phone or another computer of yours",
+     "Copy its address for a program",
+     "Copy its address for a program"
+    ],
+    "links": [
+     {
+      "text": "Open Sam\u2019s llama-server",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s night",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+      "target": "_blank"
+     }
+    ],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lend": 4,
+     "lends": 3,
+     "lent": 2,
+     "share": 2,
+     "app": 1,
+     "svrngs": 10,
+     "localhost": 2,
+     "terminal": 3,
+     "link": 5,
+     "invite": 2,
+     "phone": 2,
+     "computer": 12,
+     "group": 6,
+     "folder": 3,
+     "program": 5
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13-home/data/after/shots/asleep-bo-chromium.png",
+    "errors": []
+   },
+   "webkit": {
+    "which": "webkit",
+    "url": "http://svrngs.localhost:61188/",
+    "opened": {
+     "status": 200,
+     "ms": 3596,
+     "people_ms": 175
+    },
+    "at": "http://svrngs.localhost:61188/",
+    "title": "Your groups",
+    "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Eve, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/bo/svrngs/Lab\n\nOpen this folder\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nCy's computer did not answer, so what they lend is not listed.\nEve's computer did not answer, so what they lend is not listed.\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\nLeaving a group is not possible yet: nothing in svrngs does it.",
+    "headings": [
+     "Your groups",
+     "Lab",
+     "What this computer lends",
+     "Done in a terminal"
+    ],
+    "buttons": [
+     "Open this folder",
+     "Make a link to invite someone to Lab",
+     "Make a link to add your phone or another computer of yours",
+     "Copy its address for a program",
+     "Copy its address for a program"
+    ],
+    "links": [
+     {
+      "text": "Open Sam\u2019s llama-server",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s night",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+      "target": "_blank"
+     }
+    ],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lend": 4,
+     "lends": 3,
+     "lent": 2,
+     "share": 2,
+     "app": 1,
+     "svrngs": 10,
+     "localhost": 2,
+     "terminal": 3,
+     "link": 5,
+     "invite": 2,
+     "phone": 2,
+     "computer": 12,
+     "group": 6,
+     "folder": 3,
+     "program": 5
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13-home/data/after/shots/asleep-bo-webkit.png",
+    "errors": []
+   }
+  },
+  "restart-bo": {
+   "chromium": {
+    "which": "chromium",
+    "url": "http://svrngs.localhost:61188/",
+    "opened": {
+     "status": 200,
+     "ms": 3618,
+     "people_ms": 132
+    },
+    "at": "http://svrngs.localhost:61188/",
+    "title": "Your groups",
+    "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Eve, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/bo/svrngs/Lab\n\nOpen this folder\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nCy's computer did not answer, so what they lend is not listed.\nEve's computer did not answer, so what they lend is not listed.\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\n\nLeaving a group is not possible yet: nothing in svrngs does it.",
+    "headings": [
+     "Your groups",
+     "Lab",
+     "What this computer lends",
+     "Done in a terminal"
+    ],
+    "buttons": [
+     "Open this folder",
+     "Make a link to invite someone to Lab",
+     "Make a link to add your phone or another computer of yours",
+     "Copy its address for a program",
+     "Copy its address for a program"
+    ],
+    "links": [
+     {
+      "text": "Open Sam\u2019s llama-server",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s night",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+      "target": "_blank"
+     }
+    ],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lend": 4,
+     "lends": 3,
+     "lent": 2,
+     "share": 2,
+     "app": 1,
+     "svrngs": 10,
+     "localhost": 2,
+     "terminal": 3,
+     "link": 5,
+     "invite": 2,
+     "phone": 2,
+     "computer": 12,
+     "group": 6,
+     "folder": 3,
+     "program": 5
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13-home/data/after/shots/restart-bo-chromium.png",
+    "errors": []
+   },
+   "webkit": {
+    "which": "webkit",
+    "url": "http://svrngs.localhost:61188/",
+    "opened": {
+     "status": 200,
+     "ms": 4607,
+     "people_ms": 1132
+    },
+    "at": "http://svrngs.localhost:61188/",
+    "title": "Your groups",
+    "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nPeople: Sam, Cy, Eve, Bo\n\nLab\u2019s folder is on this computer at /tmp/sh-w-after/bo/svrngs/Lab\n\nOpen this folder\n\nMake a link to invite someone to LabMake a link to add your phone or another computer of yours\n\nOpen Sam\u2019s llama-server Copy its address for a program\nOpen Sam\u2019s night Copy its address for a program\nCy's computer did not answer, so what they lend is not listed.\nEve's computer did not answer, so what they lend is not listed.\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\nLeaving a group is not possible yet: nothing in svrngs does it.",
+    "headings": [
+     "Your groups",
+     "Lab",
+     "What this computer lends",
+     "Done in a terminal"
+    ],
+    "buttons": [
+     "Open this folder",
+     "Make a link to invite someone to Lab",
+     "Make a link to add your phone or another computer of yours",
+     "Copy its address for a program",
+     "Copy its address for a program"
+    ],
+    "links": [
+     {
+      "text": "Open Sam\u2019s llama-server",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgtl0v0j15kh4.localhost:61188/",
+      "target": "_blank"
+     },
+     {
+      "text": "Open Sam\u2019s night",
+      "href": "http://av2jnbxrduzbp70twjc04csrxu8n4939dcp7vfx8z50xd43q7kgt6rj3w3v50b.localhost:61188/",
+      "target": "_blank"
+     }
+    ],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lend": 4,
+     "lends": 3,
+     "lent": 2,
+     "share": 2,
+     "app": 1,
+     "svrngs": 10,
+     "localhost": 2,
+     "terminal": 3,
+     "link": 5,
+     "invite": 2,
+     "phone": 2,
+     "computer": 12,
+     "group": 6,
+     "folder": 3,
+     "program": 5
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13-home/data/after/shots/restart-bo-webkit.png",
+    "errors": []
+   }
+  },
+  "removed-bo": {
+   "chromium": {
+    "which": "chromium",
+    "url": "http://svrngs.localhost:61188/",
+    "opened": {
+     "status": 200,
+     "ms": 703,
+     "people_ms": 233
+    },
+    "at": "http://svrngs.localhost:61188/",
+    "title": "Your groups",
+    "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nYou are no longer in Lab. What you already have stays on this computer; nothing new reaches it.\n\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\n\nLeaving a group is not possible yet: nothing in svrngs does it.",
+    "headings": [
+     "Your groups",
+     "Lab",
+     "What this computer lends",
+     "Done in a terminal"
+    ],
+    "buttons": [],
+    "links": [],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lend": 2,
+     "lends": 3,
+     "lent": 2,
+     "share": 2,
+     "app": 1,
+     "svrngs": 9,
+     "localhost": 2,
+     "terminal": 3,
+     "link": 3,
+     "invite": 1,
+     "phone": 1,
+     "computer": 9,
+     "group": 6,
+     "folder": 1,
+     "program": 3
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13-home/data/after/shots/removed-bo-chromium.png",
+    "errors": []
+   },
+   "webkit": {
+    "which": "webkit",
+    "url": "http://svrngs.localhost:61188/",
+    "opened": {
+     "status": 200,
+     "ms": 575,
+     "people_ms": 79
+    },
+    "at": "http://svrngs.localhost:61188/",
+    "title": "Your groups",
+    "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nLab\n\nYou are no longer in Lab. What you already have stays on this computer; nothing new reaches it.\n\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:61188/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\nLeaving a group is not possible yet: nothing in svrngs does it.",
+    "headings": [
+     "Your groups",
+     "Lab",
+     "What this computer lends",
+     "Done in a terminal"
+    ],
+    "buttons": [],
+    "links": [],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lend": 2,
+     "lends": 3,
+     "lent": 2,
+     "share": 2,
+     "app": 1,
+     "svrngs": 9,
+     "localhost": 2,
+     "terminal": 3,
+     "link": 3,
+     "invite": 1,
+     "phone": 1,
+     "computer": 9,
+     "group": 6,
+     "folder": 1,
+     "program": 3
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13-home/data/after/shots/removed-bo-webkit.png",
+    "errors": []
+   }
+  },
+  "no-group-dee": {
+   "chromium": {
+    "which": "chromium",
+    "url": "http://svrngs.localhost:52067/",
+    "opened": {
+     "status": 200,
+     "ms": 670,
+     "people_ms": 196
+    },
+    "at": "http://svrngs.localhost:52067/",
+    "title": "Your groups",
+    "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nThis computer is in no group yet. Where svrngs runs in a terminal, stop it with Ctrl-C, then type svrngs new <a name for your group> to make one, or svrngs join <the link you were sent> to join one.\n\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:52067/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\n\nLeaving a group is not possible yet: nothing in svrngs does it.",
+    "headings": [
+     "Your groups",
+     "What this computer lends",
+     "Done in a terminal"
+    ],
+    "buttons": [],
+    "links": [],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lend": 2,
+     "lends": 3,
+     "lent": 2,
+     "share": 2,
+     "app": 1,
+     "svrngs": 12,
+     "localhost": 2,
+     "terminal": 4,
+     "link": 4,
+     "invite": 1,
+     "phone": 1,
+     "computer": 9,
+     "group": 8,
+     "folder": 1,
+     "program": 3
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13-home/data/after/shots/no-group-dee-chromium.png",
+    "errors": []
+   },
+   "webkit": {
+    "which": "webkit",
+    "url": "http://svrngs.localhost:52067/",
+    "opened": {
+     "status": 200,
+     "ms": 571,
+     "people_ms": 88
+    },
+    "at": "http://svrngs.localhost:52067/",
+    "title": "Your groups",
+    "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group\u2019s folder, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend\u2019s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nThis computer is in no group yet. Where svrngs runs in a terminal, stop it with Ctrl-C, then type svrngs new <a name for your group> to make one, or svrngs join <the link you were sent> to join one.\n\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:52067/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <\u2026>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group\u2019s name>\nMake another group: svrngs new <a name for it>. It asks that svrngs be stopped first: where it runs in a terminal, with Ctrl-C.\nLeaving a group is not possible yet: nothing in svrngs does it.",
+    "headings": [
+     "Your groups",
+     "What this computer lends",
+     "Done in a terminal"
+    ],
+    "buttons": [],
+    "links": [],
+    "boxes": [],
+    "fence": {},
+    "watch": {
+     "lend": 2,
+     "lends": 3,
+     "lent": 2,
+     "share": 2,
+     "app": 1,
+     "svrngs": 12,
+     "localhost": 2,
+     "terminal": 4,
+     "link": 4,
+     "invite": 1,
+     "phone": 1,
+     "computer": 9,
+     "group": 8,
+     "folder": 1,
+     "program": 3
+    },
+    "shot": "/Users/alexsbryan/dev/svrngs/demo/runs/start/2026-10-13-home/data/after/shots/no-group-dee-webkit.png",
+    "errors": []
+   }
+  }
+ },
+ "eve_join": {
+  "exit": 0,
+  "said": "You're in Lab, as Eve.\nLab's folder is /tmp/sh-w-after/eve/svrngs/Lab: what anyone in Lab puts there reaches this computer, and what you put there reaches theirs."
+ },
+ "opened": "open /tmp/sh-w-after/bo/svrngs/Lab\nopen /tmp/sh-w-after/bo/svrngs/Lab\n",
+ "terminal": {
+  "link": {
+   "exit": 1,
+   "said": "svrngs: svrngs is already running on this computer (/tmp/sh-w-after/bo/.svrngs/lock is held); stop it, then run this again"
+  },
+  "link --device": {
+   "exit": 1,
+   "said": "svrngs: svrngs is already running on this computer (/tmp/sh-w-after/bo/.svrngs/lock is held); stop it, then run this again"
+  },
+  "new": {
+   "exit": 1,
+   "said": "svrngs: svrngs is already running on this computer (/tmp/sh-w-after/bo/.svrngs/lock is held); stop it, then run this again"
+  }
+ },
+ "restart": {
+  "before": "http://svrngs.localhost:61188/",
+  "after": "http://svrngs.localhost:61188/"
+ },
+ "remove": {
+  "exit": 0,
+  "said": "Bo is no longer in Lab. What Bo already has stays with them; nothing new reaches them."
+ },
+ "end": {
+  "load": [
+   33.021484375,
+   34.8955078125,
+   38.09130859375
+  ],
+  "cores": 12
+ }
+}

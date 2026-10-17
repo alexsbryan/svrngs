@@ -1,0 +1,81 @@
+{
+ "T1-loopback-median": {
+  "value": 290.0,
+  "target": "300 ms",
+  "verdict": "passed",
+  "start": {
+   "load": [
+    16.14,
+    15.16,
+    12.37
+   ],
+   "cores": 12,
+   "swap_used_mb": 8703.5,
+   "free_gb": 112.6
+  },
+  "end": {
+   "load": [
+    12.94,
+    14.49,
+    12.19
+   ],
+   "cores": 12,
+   "swap_used_mb": 8703.5,
+   "free_gb": 112.5
+  },
+  "unit": "ms",
+  "each_s": [
+   0.612,
+   0.309,
+   0.275,
+   0.305,
+   0.136,
+   0.337,
+   0.165,
+   0.168,
+   0.313,
+   0.161
+  ],
+  "path": "loopback",
+  "phases": {
+   "median_ms": {
+    "P1_found": 151.8,
+    "P2_stored": 0.5,
+    "P3_act": 10.2,
+    "P4_carried": 18.5,
+    "P5_apply": 3.8,
+    "P6_fetch": 1.0,
+    "P7_write": 0.0
+   },
+   "share": {
+    "P1_found": 0.817,
+    "P2_stored": 0.003,
+    "P3_act": 0.055,
+    "P4_carried": 0.1,
+    "P5_apply": 0.02,
+    "P6_fetch": 0.005,
+    "P7_write": null
+   },
+   "paths": [
+    "direct Ip(127.0.0.1:58991)"
+   ],
+   "dial_ms": 0.0,
+   "first_ms": 1.0,
+   "last_ms": 1.1,
+   "gets_ms": 1.1,
+   "changes": 20
+  },
+  "record_bytes": [
+   739,
+   739,
+   739,
+   739,
+   739,
+   739,
+   739,
+   739,
+   740,
+   741
+  ]
+ }
+}

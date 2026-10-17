@@ -1,0 +1,4 @@
+Lent jellyfin (port 8396) to everyone in your groups, up to 8 people at once.
+Each person is signed in to it as themselves by what answers on port 8397, with nothing typed.
+svrngs is running here already, so they can open it now.
+`svrngs unshare jellyfin` stops lending it.

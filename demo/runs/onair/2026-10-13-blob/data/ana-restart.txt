@@ -1,0 +1,8 @@
+$ ls /tmp/onair-blob-w/ana/.svrngs/blobs/data | wc -l   # after the run, Ana stopped at the carried step
+      10
+$ HOME=… SVRNGS_DIR=/tmp/onair-blob-w/ana/.svrngs RUST_LOG=folder=debug timeout 10 target/debug/svrngs
+2026-10-14T06:26:57.961597Z  INFO folder: folder: the store is open untagged=0
+2026-10-14T06:26:57.961703Z  INFO folder: synced: the directory kept in step with the group's folder namespace="7047149403c44a5f30c7b411fc8c376ab9e5761975a85ea901aa7bbaee31eb5e" folder="onair" dir=/private/tmp/onair-blob-w/ana/svrngs/onair
+2026-10-14T06:26:57.963410Z DEBUG folder: synced: the OS's file events watched, the directory walked whole each 600s namespace="7047149403c44a5f30c7b411fc8c376ab9e5761975a85ea901aa7bbaee31eb5e" folder="onair"
+$ ls /tmp/onair-blob-w/ana/.svrngs/blobs/data | wc -l
+       0

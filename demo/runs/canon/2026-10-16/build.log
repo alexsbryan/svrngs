@@ -1,0 +1,52 @@
+canon at 49eaf31b1e2c6d2f2ca31bee6d220da79e264bda, from /Users/alexsbryan/dev/canon
+the wrapper, for wasm32-unknown-unknown (release), held to rustfmt and clippy…
+through wasm-opt's lowerings and wasm2js -O…
+canon-cli at the same commit, and canon's own governance bar there…
+
+running 3 tests
+..
+Ostrom's eight design principles, over two institutions
+#   principle                              strength      house   code
+1   clearly defined boundaries             mechanism         4      3
+2   congruence with local conditions       affordance        1      1
+3   collective-choice arrangements         mechanism         9      1
+4   monitors accountable to appropriators  mechanism         5      3
+5   graduated sanctions                    mechanism         4      3
+6   rapid low-cost conflict resolution     mechanism         3      3
+7   rights to organize not undermined      affordance        1      1
+8   nested enterprises                     mechanism         2      2
+
+6 of 8 are mechanisms, 2 are affordances — the tool permits them and gets out of the way.
+.
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s
+
+the proof: every fixture replayed by canon-cli, the wasm and the JavaScript…
+passed           cpr/alanya-fishery/scenario.jsonl: 32 steps, as expected; wasm equal; js equal
+passed           cpr/commonwealth-mesh/scenario.jsonl: 32 steps, as expected; wasm equal; js equal
+passed           cpr/crosswalk-coliving/scenario.jsonl: 33 steps, as expected; wasm equal; js equal
+passed           cpr/crosswalk-upstream-capture/scenario.jsonl: 33 steps, as expected; wasm equal; js equal
+passed           cpr/harbourside-makerspace/scenario.jsonl: 32 steps, as expected; wasm equal; js equal
+passed           cpr/harbourside-no-boundary/scenario.jsonl: 32 steps, as expected; wasm equal; js equal
+passed           cpr/meridian-imposed-rules/scenario.jsonl: 32 steps, as expected; wasm equal; js equal
+passed           cpr/meridian-monorepo/scenario.jsonl: 33 steps, as expected; wasm equal; js equal
+passed           cpr/northgate-buildfarm/scenario.jsonl: 32 steps, as expected; wasm equal; js equal
+passed           cpr/northgate-unwatched/scenario.jsonl: 32 steps, as expected; wasm equal; js equal
+passed           cpr/parkside-allotments/scenario.jsonl: 32 steps, as expected; wasm equal; js equal
+passed           cpr/tidepool-forum/scenario.jsonl: 33 steps, as expected; wasm equal; js equal
+passed           cpr/torbel-alpine/scenario.jsonl: 32 steps, as expected; wasm equal; js equal
+passed           cpr/valencia-huerta/scenario.jsonl: 32 steps, as expected; wasm equal; js equal
+passed           eleven-principles/scenario.jsonl: 26 steps, as expected; wasm equal; js equal
+passed           fernwood-commons/scenario.jsonl: 44 steps, as expected; wasm equal; js equal
+passed           maple-house/accepted/scenario.jsonl: 0 steps, no expected file; wasm equal; js equal
+passed           fernwood-commons/kitchen.jsonl: 19 steps, as expected; wasm equal; js equal
+18 of 18 replays judged; all equal
+wasm                884288 bytes, gzip -9   226685
+JavaScript         5499606 bytes, gzip -9   579922
+wasm, no replay     765084 bytes, gzip -9   194186
+JS, no replay      4654949 bytes, gzip -9   503188
+house: 300 acts, 12 people; commitments {"active":37,"proposed":0,"refused":8,"superseded":10,"retracted":7}
+derive, the wasm and the JavaScript equal
+derive median of 20: wasm 3.59 ms, JavaScript 9.94 ms
+answer: 42958 bytes, {"ok":{"ancestry":null,"bootstrap":[["can-b8a597698a46","no 
+derive median of 20: native 2.14 ms
+apps/canon/build.sh --measure  37.96s user 1.57s system 164% cpu 24.020 total

@@ -1,0 +1,202 @@
+note       open files: 1048576, raised to 10240
+passed     principles pinned
+passed     lean and RUST_ARCH
+passed     app nouns gate
+passed     app nouns
+passed     rustfmt
+passed     clippy
+failed     tests
+           
+           running 13 tests
+           .............
+           test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+           
+           
+           running 0 tests
+           
+           test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.65s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.21s
+           
+           
+           running 1 test
+           .
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 5 tests
+           .....
+           test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.65s
+           
+           
+           running 8 tests
+           ......Running for trip.
+           Apps on this computer reach your groups at http://127.0.0.1:55352.
+           Your home page, the same address each time svrngs starts: http://svrngs.localhost:55352/
+           
+           Leave this running; Ctrl-C stops it.
+           ..
+           test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 15.67s
+           
+           
+           running 11 tests
+           ...........
+           test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.32s
+           
+           
+           running 4 tests
+           ....
+           test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 30.06s
+           
+           
+           running 1 test
+           .
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 5 tests
+           .....
+           test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 27.46s
+           
+           
+           running 3 tests
+           iii
+           test result: ok. 0 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 1 test
+           .
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.40s
+           
+           
+           running 14 tests
+           ..............
+           test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.22s
+           
+           
+           running 1 test
+           .
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.08s
+           
+           
+           running 1 test
+           i
+           test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           test: sam_through_a_relay_on_this_computer, ignore_message: U4's dry run, run by demo/runs/u4/2026-10-05/dry.sh
+           
+           
+           running 5 tests
+           .....
+           test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.09s
+           
+           
+           running 5 tests
+           .....
+           test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.44s
+           
+           
+           running 9 tests
+           .........
+           test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.38s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.08s
+           
+           
+           running 178 tests
+           ...............i....................................................................... 87/178
+           .........................................................................i....i........ 174/178
+           ....
+           test result: ok. 175 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 1.89s
+           
+           
+           running 97 tests
+           ....................................................................................... 87/97
+           ..........
+           test result: ok. 97 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 15.08s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+           
+           
+           running 98 tests
+           i..........................i........................................................... 87/98
+           .........test tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::chromium has been running for over 60 seconds
+           test tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit has been running for over 60 seconds
+           ..
+           test result: ok. 96 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 114.20s
+           
+           
+           running 2 tests
+           events --- FAILED
+           .
+           failures:
+           
+           ---- events stdout ----
+           the Events canary failed: both copies of house agree, but not with what the acts say ({"host":"sam","what":"dinner","when":"Friday 7","where":"the house","coming":{"alex":[],"bo":["Maya"]},"came":["bo"],"guests_came":{"bo":["Maya"]}}; Alex's change of Bo's answer not counted; Cy's 39b5ac3e4a42aad54ef2f27cc74460d85b9f88c087e56d4ed32528a10f1b1039 voiding hers on both):
+             Sam's computer: {"host":"sam","what":"dinner","when":"Friday 7","where":"the house","coming":{"alex":[],"bo":["Maya"]},"came":["bo"],"guests_came":{"bo":["Maya"]},"via":{"host":null,"coming":{"bo":["sam"]},"came":{"bo":["alex"]},"guests_came":{"bo":{"Maya":["alex"]}}}}; gaps ["not_theirs"]; Cy's coming voided: true
+             Alex's computer: {"host":"sam","what":"dinner","when":"Friday 7","where":"the house","coming":{"alex":[],"bo":["Maya"]},"came":["bo"],"guests_came":{"bo":["Maya"]},"via":{"host":null,"coming":{"bo":["sam"]},"came":{"bo":["alex"]},"guests_came":{"bo":{"Maya":["alex"]}}}}; gaps ["not_theirs"]; Cy's coming voided: true
+           
+           
+           thread 'events' (56968912) panicked at crates/svrngs-node/tests/canaries.rs:125:5:
+           the events canary failed (exit status: 1):
+           the Events canary failed: both copies of house agree, but not with what the acts say ({"host":"sam","what":"dinner","when":"Friday 7","where":"the house","coming":{"alex":[],"bo":["Maya"]},"came":["bo"],"guests_came":{"bo":["Maya"]}}; Alex's change of Bo's answer not counted; Cy's 39b5ac3e4a42aad54ef2f27cc74460d85b9f88c087e56d4ed32528a10f1b1039 voiding hers on both):
+             Sam's computer: {"host":"sam","what":"dinner","when":"Friday 7","where":"the house","coming":{"alex":[],"bo":["Maya"]},"came":["bo"],"guests_came":{"bo":["Maya"]},"via":{"host":null,"coming":{"bo":["sam"]},"came":{"bo":["alex"]},"guests_came":{"bo":{"Maya":["alex"]}}}}; gaps ["not_theirs"]; Cy's coming voided: true
+             Alex's computer: {"host":"sam","what":"dinner","when":"Friday 7","where":"the house","coming":{"alex":[],"bo":["Maya"]},"came":["bo"],"guests_came":{"bo":["Maya"]},"via":{"host":null,"coming":{"bo":["sam"]},"came":{"bo":["alex"]},"guests_came":{"bo":{"Maya":["alex"]}}}}; gaps ["not_theirs"]; Cy's coming voided: true
+           
+           note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+           
+           
+           failures:
+               events
+           
+           test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.62s
+           
+           error: test failed, to rerun pass `-p svrngs-node --test canaries`
+failed     canaries
+           
+           running 2 tests
+           . 1/2
+           events --- FAILED
+           
+           failures:
+           
+           ---- events stdout ----
+           the Events canary failed: both copies of house agree, but not with what the acts say ({"host":"sam","what":"dinner","when":"Friday 7","where":"the house","coming":{"alex":[],"bo":["Maya"]},"came":["bo"],"guests_came":{"bo":["Maya"]}}; Alex's change of Bo's answer not counted; Cy's 656dd59499f35eaf6783f638667577fd3cc6d5117d37c1dc02b00feff74a9d6e voiding hers on both):
+             Sam's computer: {"host":"sam","what":"dinner","when":"Friday 7","where":"the house","coming":{"alex":[],"bo":["Maya"]},"came":["bo"],"guests_came":{"bo":["Maya"]},"via":{"host":null,"coming":{"bo":["sam"]},"came":{"bo":["alex"]},"guests_came":{"bo":{"Maya":["alex"]}}}}; gaps ["not_theirs"]; Cy's coming voided: true
+             Alex's computer: {"host":"sam","what":"dinner","when":"Friday 7","where":"the house","coming":{"alex":[],"bo":["Maya"]},"came":["bo"],"guests_came":{"bo":["Maya"]},"via":{"host":null,"coming":{"bo":["sam"]},"came":{"bo":["alex"]},"guests_came":{"bo":{"Maya":["alex"]}}}}; gaps ["not_theirs"]; Cy's coming voided: true
+           
+           
+           thread 'events' (56969169) panicked at crates/svrngs-node/tests/canaries.rs:125:5:
+           the events canary failed (exit status: 1):
+           the Events canary failed: both copies of house agree, but not with what the acts say ({"host":"sam","what":"dinner","when":"Friday 7","where":"the house","coming":{"alex":[],"bo":["Maya"]},"came":["bo"],"guests_came":{"bo":["Maya"]}}; Alex's change of Bo's answer not counted; Cy's 656dd59499f35eaf6783f638667577fd3cc6d5117d37c1dc02b00feff74a9d6e voiding hers on both):
+             Sam's computer: {"host":"sam","what":"dinner","when":"Friday 7","where":"the house","coming":{"alex":[],"bo":["Maya"]},"came":["bo"],"guests_came":{"bo":["Maya"]},"via":{"host":null,"coming":{"bo":["sam"]},"came":{"bo":["alex"]},"guests_came":{"bo":{"Maya":["alex"]}}}}; gaps ["not_theirs"]; Cy's coming voided: true
+             Alex's computer: {"host":"sam","what":"dinner","when":"Friday 7","where":"the house","coming":{"alex":[],"bo":["Maya"]},"came":["bo"],"guests_came":{"bo":["Maya"]},"via":{"host":null,"coming":{"bo":["sam"]},"came":{"bo":["alex"]},"guests_came":{"bo":{"Maya":["alex"]}}}}; gaps ["not_theirs"]; Cy's coming voided: true
+           
+           note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+           
+           
+           failures:
+               events
+           
+           test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.53s
+           
+           error: test failed, to rerun pass `-p svrngs-node --test canaries`
+passed     ceiling canary
+           CEILING idle round at 25 x 10,000: 0.0225 s of processor, the median of [0.1624610000000004, 0.022076000000001983, 0.022479000000000582], against 0.1 s; the last round's account {"acts_moved":0,"asleep":0,"cpu_s":0.022479000000000582,"dialled":24,"folds":{"digest":{"kept":96,"rebuilt":0},"offer":{"kept":48,"rebuilt":0},"register":{"kept":27,"rebuilt":0},"write_index":{"kept":123,"rebuilt":0}},"reached":24,"refused":0,"wall_s":0.004591}
+passed     web rustfmt and clippy
+passed     browser
+passed     joining in a browser

@@ -1,0 +1,49 @@
+note       open files: 1048576, raised to 10240
+passed     principles pinned
+passed     lean and RUST_ARCH
+passed     app nouns gate
+passed     app nouns
+passed     rustfmt
+passed     clippy
+passed     tests
+passed     canaries
+passed     ceiling canary
+           CEILING idle round at 25 x 10,000: 0.0256 s of processor, the median of [0.22400299999999973, 0.025572000000000372, 0.023786000000001195], against 0.1 s; the last round's account {"acts_moved":0,"asleep":0,"cpu_s":0.023786000000001195,"dialled":24,"folds":{"digest":{"kept":96,"rebuilt":0},"offer":{"kept":48,"rebuilt":0},"register":{"kept":27,"rebuilt":0},"write_index":{"kept":123,"rebuilt":0}},"reached":24,"refused":0,"wall_s":0.003272625}
+passed     web rustfmt and clippy
+passed     browser
+passed     joining in a browser
+passed     conformance canary
+           computer  /-absolute paths                   passed
+           computer  64 MiB read by Range               passed
+           computer  64 MiB uploaded, its length told   passed
+           computer  Host check, absolute redirect      passed
+           computer  SharedArrayBuffer under COOP/COEP  passed
+           computer  WebSocket echo, OPEN read          passed
+           computer  cookie sign-in, read unreloaded    passed
+           computer  its own service worker             passed
+           computer  local storage                      passed
+           computer  post, Origin checked               passed
+           computer  seeks back to back                 passed
+           computer  seeks back to back                 passed, a rate
+           computer  signed in by the lend, as themselves passed
+           wildcard  /-absolute paths                   passed
+           wildcard  64 MiB read by Range               passed
+           wildcard  64 MiB uploaded, its length told   passed
+           wildcard  Host check, absolute redirect      passed
+           wildcard  SharedArrayBuffer under COOP/COEP  passed
+           wildcard  WebSocket echo, OPEN read          passed
+           wildcard  cookie sign-in, read unreloaded    passed
+           wildcard  its own service worker             passed
+           wildcard  local storage                      passed
+           wildcard  post, Origin checked               passed
+           wildcard  seeks back to back                 passed
+           wildcard  seeks back to back                 passed, a rate
+           wildcard  signed in by the lend, as themselves passed
+rate       WebKit seeks back to back (u5-11): way, lend; through the lend and straight at the canary, the ms the last took to play again and its verdict
+           computer	sam	391	passed	4272	passed
+           computer	bo	407	passed	1991	passed
+           wildcard	sam	385	passed	4271	passed
+           wildcard	bo	384	passed	4370	passed
+           of 1714 here since 2026-10-07T01:30:06Z: 182 missed 5 s through a lend, 263 straight; 1258 ended at a load above 12 cores
+passed     app laws
+check.sh exit 0 in 678s

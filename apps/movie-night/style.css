@@ -1,0 +1,13 @@
+/* mn: own cards — Movie Night's look: one column, readable on a phone */
+body { font: 17px/1.4 system-ui, sans-serif; margin: 0 auto; max-width: 40rem; padding: 1rem; color: #1b1b1f; background: #f6f5f2; }
+h1 { font-size: 1.5rem; margin: 0 0 0.75rem; }
+form { display: flex; gap: 0.5rem; }
+input { flex: 1; font: inherit; padding: 0.5rem 0.6rem; border: 1px solid #8a8a90; border-radius: 6px; }
+button { font: inherit; padding: 0.5rem 0.9rem; border: 0; border-radius: 6px; background: #2c3e66; color: #fff; }
+ul { list-style: none; margin: 0; padding: 0; }
+#said { margin: 0.75rem 0; color: #55555c; font-size: 0.9rem; }
+#said [data-state="away"], #said [data-state="refused"], #said [data-state="failed"] { color: #8a3b12; }
+.card { background: #fff; border-radius: 8px; padding: 0.75rem 1rem; margin: 0 0 0.75rem; box-shadow: 0 1px 2px #0002; }
+.card h2 { font-size: 1.15rem; margin: 0 0 0.4rem; }
+.copy { display: block; padding: 0.35rem 0; color: #2c3e66; }
+.copy.first { font-weight: 600; }

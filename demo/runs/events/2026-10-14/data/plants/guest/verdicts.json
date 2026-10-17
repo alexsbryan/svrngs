@@ -1,0 +1,619 @@
+{
+ "plant": "guest",
+ "planted_on": [
+  "3",
+  "9"
+ ],
+ "verdicts": {
+  "1": "passed",
+  "2": "passed",
+  "3": "failed",
+  "4": "passed",
+  "5": "passed",
+  "6": "passed",
+  "7": "passed",
+  "8": "passed",
+  "9": "failed",
+  "10a": "passed",
+  "10b": "failed",
+  "11": "passed",
+  "12": "passed",
+  "13": "could-not-judge",
+  "people": "never-ran"
+ },
+ "bars": {
+  "1": {
+   "verdict": "passed",
+   "checks": [
+    {
+     "check": "one event, under one id, in each group's record, by Sam",
+     "held": true,
+     "evidence": {
+      "e9e83f43": [
+       "Sam"
+      ],
+      "aac10d7a": [
+       "Sam"
+      ]
+     }
+    },
+    {
+     "check": "Sam's page lands on the event, in a group it was posted to, within 5 s",
+     "held": true,
+     "evidence": {
+      "ms": 145,
+      "landed_in": "dWeb"
+     }
+    }
+   ]
+  },
+  "2": {
+   "verdict": "passed",
+   "checks": [
+    {
+     "check": "bo's \"I'm coming\" answered within 5 s",
+     "held": true,
+     "evidence": [
+      200,
+      88
+     ]
+    },
+    {
+     "check": "bo's \"Save\" answered within 5 s",
+     "held": true,
+     "evidence": [
+      200,
+      70
+     ]
+    },
+    {
+     "check": "cy's \"I'm coming\" answered within 15 s",
+     "held": true,
+     "evidence": [
+      200,
+      208
+     ]
+    },
+    {
+     "check": "di's \"I'm coming\" answered within 5 s",
+     "held": true,
+     "evidence": [
+      200,
+      76
+     ]
+    },
+    {
+     "check": "eve's \"I'm coming\" answered within 15 s",
+     "held": true,
+     "evidence": [
+      200,
+      197
+     ]
+    },
+    {
+     "check": "eve's \"Take my name off\" answered within 15 s",
+     "held": true,
+     "evidence": [
+      200,
+      218
+     ]
+    },
+    {
+     "check": "cy's \"Maya came\" answered within 15 s",
+     "held": true,
+     "evidence": [
+      200,
+      201
+     ]
+    },
+    {
+     "check": "bo's \"I came\" answered within 5 s",
+     "held": true,
+     "evidence": [
+      200,
+      72
+     ]
+    },
+    {
+     "check": "cy's \"I came\" answered within 15 s",
+     "held": true,
+     "evidence": [
+      200,
+      199
+     ]
+    },
+    {
+     "check": "di's \"I came\" answered within 5 s",
+     "held": true,
+     "evidence": [
+      200,
+      66
+     ]
+    },
+    {
+     "check": "fay's \"I'm coming\" answered within 5 s",
+     "held": true,
+     "evidence": [
+      200,
+      86
+     ]
+    },
+    {
+     "check": "cy's phone opens the event at #open= within 30 s",
+     "held": true,
+     "evidence": 1712
+    },
+    {
+     "check": "eve's phone opens the event at #open= within 30 s",
+     "held": true,
+     "evidence": 1667
+    },
+    {
+     "check": "Bo's, Cy's and Fay's acts in The House, Di's and Eve's in dWeb",
+     "held": true,
+     "evidence": {
+      "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f": [
+       "Bo",
+       "Cy",
+       "Fay",
+       "Sam"
+      ],
+      "aac10d7a34f834bfcaad0faf3f2f2ce4f8a2afd2b9ab51e9a9c8ce70ec7d9a32": [
+       "Di",
+       "Eve",
+       "Sam"
+      ]
+     }
+    }
+   ]
+  },
+  "3": {
+   "verdict": "failed",
+   "checks": [
+    {
+     "check": "Bo's live coming names Maya",
+     "held": true,
+     "evidence": [
+      {
+       "event": "61c4b88aa0c27fbf",
+       "guests": [
+        "Maya"
+       ],
+       "kind": "coming"
+      }
+     ]
+    },
+    {
+     "check": "Maya's came is Bo's, and only Bo's",
+     "held": true,
+     "evidence": [
+      "Bo"
+     ]
+    },
+    {
+     "check": "no \"Maya came\" offered on Cy's page",
+     "held": false,
+     "evidence": [
+      "Save",
+      "Take my name off",
+      "I came"
+     ]
+    },
+    {
+     "check": "Sam's view says Bo + Maya, and Maya, Bo's guest",
+     "held": true,
+     "evidence": {
+      "group": "e9e83f43055d94fc0e0256875a577605318f62e0d4d15b0429412c35957da42f",
+      "name": "The House",
+      "invited": [
+       "Bo",
+       "Cy",
+       "Fay"
+      ],
+      "coming": [
+       "Bo + Maya",
+       "Cy",
+       "Fay"
+      ],
+      "came": [
+       "Bo",
+       "Cy",
+       "Maya, Bo's guest"
+      ],
+      "unread": null
+     }
+    }
+   ]
+  },
+  "4": {
+   "verdict": "passed",
+   "checks": [
+    {
+     "check": "Bo's first coming taken back by his own correction",
+     "held": true,
+     "evidence": [
+      [
+       {
+        "event": "61c4b88aa0c27fbf",
+        "kind": "coming"
+       },
+       true
+      ],
+      [
+       {
+        "event": "61c4b88aa0c27fbf",
+        "guests": [
+         "Maya"
+        ],
+        "kind": "coming"
+       },
+       false
+      ]
+     ]
+    },
+    {
+     "check": "Eve's coming taken back by her own correction",
+     "held": true,
+     "evidence": [
+      [
+       {
+        "event": "61c4b88aa0c27fbf",
+        "kind": "coming"
+       },
+       true
+      ]
+     ]
+    },
+    {
+     "check": "Eve on no page but as invited",
+     "held": true,
+     "evidence": []
+    }
+   ]
+  },
+  "5": {
+   "verdict": "passed",
+   "checks": [
+    {
+     "check": "Sam's view: both groups, invited, coming and came",
+     "held": true,
+     "evidence": [
+      {
+       "name": "dWeb",
+       "invited": [
+        "Di",
+        "Eve"
+       ],
+       "coming": [
+        "Di"
+       ],
+       "came": [
+        "Di"
+       ]
+      },
+      {
+       "name": "The House",
+       "invited": [
+        "Bo",
+        "Cy",
+        "Fay"
+       ],
+       "coming": [
+        "Bo + Maya",
+        "Cy",
+        "Fay"
+       ],
+       "came": [
+        "Bo",
+        "Cy",
+        "Maya, Bo's guest"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "6": {
+   "verdict": "passed",
+   "checks": [
+    {
+     "check": "bo's view: their own group's alone",
+     "held": true,
+     "evidence": [
+      "The House"
+     ]
+    },
+    {
+     "check": "cy's view: their own group's alone",
+     "held": true,
+     "evidence": [
+      "The House"
+     ]
+    },
+    {
+     "check": "fay's view: their own group's alone",
+     "held": true,
+     "evidence": [
+      "The House"
+     ]
+    },
+    {
+     "check": "di's view: their own group's alone",
+     "held": true,
+     "evidence": [
+      "dWeb"
+     ]
+    },
+    {
+     "check": "eve's view: their own group's alone",
+     "held": true,
+     "evidence": [
+      "dWeb"
+     ]
+    },
+    {
+     "check": "cy refused dWeb's address of it",
+     "held": true,
+     "evidence": [
+      403,
+      "You're not in dWeb, so this event isn't yours to see.\n\nAll events"
+     ]
+    },
+    {
+     "check": "di refused The House's address of it",
+     "held": true,
+     "evidence": [
+      403,
+      "You're not in The House, so this event isn't yours to see.\n\nAll events"
+     ]
+    }
+   ]
+  },
+  "7": {
+   "verdict": "passed",
+   "checks": [
+    {
+     "check": "The House: every copy folds the same",
+     "held": true,
+     "evidence": {
+      "sam": [
+       {
+        "Bo": [
+         "Maya"
+        ],
+        "Cy": [],
+        "Fay": []
+       },
+       [
+        "Bo",
+        "Cy"
+       ],
+       []
+      ],
+      "bo": [
+       {
+        "Bo": [
+         "Maya"
+        ],
+        "Cy": [],
+        "Fay": []
+       },
+       [
+        "Bo",
+        "Cy"
+       ],
+       []
+      ],
+      "fay": [
+       {
+        "Bo": [
+         "Maya"
+        ],
+        "Cy": [],
+        "Fay": []
+       },
+       [
+        "Bo",
+        "Cy"
+       ],
+       []
+      ]
+     }
+    },
+    {
+     "check": "within 30 s of the last act",
+     "held": true,
+     "evidence": {
+      "same_ms": 19
+     }
+    },
+    {
+     "check": "dWeb: every copy folds the same",
+     "held": true,
+     "evidence": {
+      "sam": [
+       {
+        "Di": []
+       },
+       [
+        "Di"
+       ],
+       []
+      ],
+      "di": [
+       {
+        "Di": []
+       },
+       [
+        "Di"
+       ],
+       []
+      ]
+     }
+    },
+    {
+     "check": "within 30 s of the last act",
+     "held": true,
+     "evidence": {
+      "same_ms": 8
+     }
+    },
+    {
+     "check": "Di's copy holds what it slept through within 60 s of waking",
+     "held": true,
+     "evidence": {
+      "caught_up_ms": 394,
+      "ops_missed": 9
+     }
+    }
+   ]
+  },
+  "8": {
+   "verdict": "passed",
+   "checks": [
+    {
+     "check": "every payload one of three kinds, saying only what the fold reads",
+     "held": true,
+     "evidence": []
+    },
+    {
+     "check": "no page says a refusal",
+     "held": true,
+     "evidence": []
+    }
+   ]
+  },
+  "9": {
+   "verdict": "failed",
+   "checks": [
+    {
+     "check": "The House: every act its own person's press",
+     "held": false,
+     "evidence": {
+      "unpressed": [
+       [
+        [
+         "Bo",
+         "came:Maya"
+        ],
+        1
+       ]
+      ]
+     }
+    },
+    {
+     "check": "dWeb: every act its own person's press",
+     "held": true,
+     "evidence": {
+      "unpressed": []
+     }
+    }
+   ]
+  },
+  "10a": {
+   "verdict": "passed",
+   "checks": [
+    {
+     "check": "Bo's browser: svrngs says Sam's computer did not answer",
+     "held": true,
+     "evidence": [
+      502,
+      "{\"error\":\"the computer that lends this did not answer; try again later\",\"kind\":\"away\"}"
+     ]
+    },
+    {
+     "check": "Cy's phone: the same, in the page's words",
+     "held": true,
+     "evidence": [
+      502,
+      "The computer lending this did not answer. Try again later."
+     ]
+    },
+    {
+     "check": "the app: this group can't be read",
+     "held": true,
+     "evidence": {
+      "status": 502,
+      "said": "Events This group can't be read on this computer right now. All events"
+     }
+    },
+    {
+     "check": "never an event with no one coming",
+     "held": true,
+     "evidence": null
+    },
+    {
+     "check": "awake again: the same answers",
+     "held": true,
+     "evidence": 357
+    }
+   ]
+  },
+  "10b": {
+   "verdict": "failed",
+   "checks": [
+    {
+     "check": "bo's told within 30 s",
+     "held": false,
+     "evidence": 30020
+    },
+    {
+     "check": "cy's told within 30 s",
+     "held": false,
+     "evidence": 30030
+    }
+   ]
+  },
+  "11": {
+   "verdict": "passed",
+   "checks": [
+    {
+     "check": "Fay joined after the post",
+     "held": true,
+     "evidence": {
+      "joined": {
+       "at": 1791967274
+      },
+      "posted": 1791967266
+     }
+    },
+    {
+     "check": "Fay sees the event and says she's coming",
+     "held": true,
+     "evidence": [
+      "Bo",
+      "Cy",
+      "Fay"
+     ]
+    },
+    {
+     "check": "Fay invited on Sam's view",
+     "held": true,
+     "evidence": [
+      "Bo",
+      "Cy",
+      "Fay"
+     ]
+    }
+   ]
+  },
+  "12": {
+   "verdict": "passed",
+   "checks": [
+    {
+     "check": "no page says key, member, record, act, namespace or origin",
+     "held": true,
+     "evidence": []
+    }
+   ]
+  },
+  "13": {
+   "verdict": "could-not-judge",
+   "why": "a phone on cellular, a second host: the operator's (CHARTER.md)"
+  },
+  "people": {
+   "verdict": "never-ran",
+   "why": "every person is a program (AGENTS.md 7)"
+  }
+ }
+}

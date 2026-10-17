@@ -1,0 +1,5 @@
+This computer is in no group yet: make one with `svrngs new <name>`.
+Apps on this computer reach your groups at http://127.0.0.1:50669.
+Your groups, and what apps use of them, open at http://svrngs.localhost:50669/.
+
+Leave this running; Ctrl-C stops it.

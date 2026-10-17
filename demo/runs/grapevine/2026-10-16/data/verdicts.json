@@ -1,0 +1,58 @@
+{
+ "1": {
+  "verdict": "passed",
+  "why": "svrngs answered {'sam': {'1400 Page': 'Sam'}, 'jo': {'Waller block': 'Jo', '1400 Page': 'Jo'}, 'kim': {'Waller block': 'Kim'}}; the pages showed {'sam': ['1400 Page'], 'jo': ['1400 Page', 'Waller block'], 'kim': ['Waller block']}"
+ },
+ "2": {
+  "verdict": "passed",
+  "why": "7 presses, 58–187 ms from the press to the page read again; 0 slow or refused"
+ },
+ "3": {
+  "verdict": "passed",
+  "why": "Jo's page showed Carry to Waller block 0.543 s after Sam's press (1 reloads); Sam's pages' carry buttons: []"
+ },
+ "4": {
+  "verdict": "passed",
+  "why": "Kim's page showed it 0.534 s after Jo's press; Sam named on Kim's page before the names: []; told they might have one, but Kim: []"
+ },
+ "5": {
+  "verdict": "passed",
+  "why": "Sam's page showed the offer 3.184 s after Kim's press (6 reloads); Jo's page: 'A sealed message went by toward the person who asked: 96 bytes, Fri 16 Oct, 14:39.'; sealed words on Jo's pages: []"
+ },
+ "6": {
+  "verdict": "passed",
+  "why": "Kim's page holding Sam's yes named Sam: False; after Kim's yes, Kim's page named Sam 0.004 s and Sam's named Kim 5.293 s after it"
+ },
+ "7": {
+  "verdict": "passed",
+  "why": "Kim's page dropped it 5.383 s after Sam's press; Jo's computer held the withdrawal and then held Jo's correction 4.812 s later (bound 6.0 s)"
+ },
+ "8": {
+  "verdict": "passed",
+  "why": "Sam's Ask to the ask gone from Kim's page: 20.387 s; the start, from no svrngs to three pages open: 18.3 s"
+ },
+ "9": {
+  "verdict": "passed",
+  "why": "1 carry in Kim's copy, each Jo's, holding §3's fields alone, none of Sam, 1400 Page or the ask's handle; no act in Waller block is Sam's"
+ },
+ "10": {
+  "verdict": "passed",
+  "why": "44 files, 3,289,069 bytes searched; sealed words in {}; secret keys outside a state file in []; sealed words in the records kept: []; `tile saw` found in jo: 2, kim: 1, sam: 1 files"
+ },
+ "11": {
+  "verdict": "passed",
+  "why": "Jo's page after the carry, under Where it can’t go: ['Waller block: Waller block already has it', '1400 Page: 1400 Page already has it']"
+ },
+ "12": {
+  "verdict": "passed",
+  "why": "19 pages read: words to look up []; 12 conversations shown, without the shortcut []"
+ },
+ "13": {
+  "verdict": "never-ran",
+  "why": "judged across takes: README.md, against each plant's verdicts.json"
+ },
+ "14": {
+  "verdict": "never-ran",
+  "why": "bar 6 (two carriers), GRAPEVINE §7 bars 4 and 7, its product bars and kill bar (the operator's, with real neighbours), a second host and a phone"
+ }
+}

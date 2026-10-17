@@ -26,12 +26,17 @@
 //! new key does not stand already, and that `membership` over the journal
 //! with the redeeming `Admit` in it counts that `Admit` — the one decider of
 //! a lapsed, closed or voided link, and of the consent (svrngs-core
-//! membership.rs). Only then is the `Admit` written, and the answer sent.
+//! membership.rs). Only then is the `Admit` written, the round woken so
+//! the group's other computers hear of the newcomer now, and the answer
+//! sent.
 //!
 //! Every refusal is answered in one sentence, [`REFUSAL`], so the answer
 //! never says which groups the node holds or why — but a name that does not
-//! parse, answered with why it is not a name, which says nothing of groups; the trace at debug says
-//! which check it was. A key that already stands is answered success and
+//! parse, answered with why it is not a name, which says nothing of groups,
+//! and a name a standing person of the link's group goes by
+//! ([`RedeemRefusal::NameTaken`], bash-person), answered `409` with that
+//! person's name alone as its `error`, which the link's holder may know: the joiner words
+//! it and asks another name. The trace at debug says which check it was. A key that already stands is answered success and
 //! nothing is written, so a joiner whose answer was lost may open the link
 //! again.
 //!
@@ -40,7 +45,6 @@
 //! signs them with the command's body; they are re-exported here.
 
 use std::path::Path;
-use std::sync::Arc;
 
 use axum::extract::State;
 use axum::http::StatusCode;
@@ -50,11 +54,11 @@ use axum::{Extension, Json};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
-use crate::iroh::{Alpn, Dialer, Endpoint, EndpointAddr, HttpBridge};
+use crate::iroh::{Alpn, Dialer, Endpoint, EndpointAddr};
+use crate::node::Asking;
 use crate::register::Standing;
 use crate::ring_routes::err;
-use crate::ring_sync::peer_client;
-use crate::{Ed25519Verifier, Name, NotAName, OpId, Person, RailError, RingRail};
+use crate::{actor_of, Name, NotAName, OpId, Person, RailError, RingRail};
 use svrngs_core::{RedeemRefusal, Refused as CommitRefused};
 
 pub use svrngs_core::joining::{AskRequest, Asked, RedeemRequest};
@@ -109,36 +113,38 @@ enum NotAdmitted {
     Unjudged(RailError),
 }
 
-/// What the routes read: this node's journals, and how it reads a seed.
-#[derive(Clone)]
-struct Issuer {
-    rail: Arc<RingRail>,
-    seeds: SeedText,
-}
-
 /// The ask and redemption routes, served on [`Alpn::Redeem`] to any dialer.
-pub fn router(rail: Arc<RingRail>, seeds: SeedText) -> axum::Router {
+pub(crate) fn router(at: Asking) -> axum::Router {
     axum::Router::new()
         .route(ASK_ROUTE, post(ask_route))
         .route(ROUTE, post(redeem_route))
-        .with_state(Issuer { rail, seeds })
+        .with_state(at)
 }
 
 async fn ask_route(
-    State(issuer): State<Issuer>,
+    State(at): State<Asking>,
     dialer: Option<Extension<Dialer>>,
     Json(req): Json<AskRequest>,
 ) -> Response {
-    let asked = serve_ask(&issuer, dialer.map(|Extension(d)| d.actor()), &req);
+    let asked = serve_ask(&at, dialer.map(|Extension(d)| d.actor()), &req);
     answer("ask", &req.key, asked)
 }
 
 async fn redeem_route(
-    State(issuer): State<Issuer>,
+    State(at): State<Asking>,
     dialer: Option<Extension<Dialer>>,
     Json(req): Json<RedeemRequest>,
 ) -> Response {
-    let redeemed = serve_redeem(&issuer.rail, dialer.map(|Extension(d)| d.actor()), &req);
+    let redeemed = serve_redeem(&at.host.rail, dialer.map(|Extension(d)| d.actor()), &req);
+    // The group's other computers hear of the newcomer now, not at the
+    // round's next interval: until they hold the `Admit` each refuses the
+    // newcomer's computer, and waiting on the interval was 56 of a
+    // newcomer's 57 s (`demo/runs/first-minute/2026-10-12/README.md`).
+    if let Ok(Redeemed::Admitted(admit)) = &redeemed {
+        tracing::debug!(target: "redeem", key = %req.key, admit = %admit,
+            "redeem: the round woken, so the group's computers hear of the newcomer now");
+        at.door.ring.wake();
+    }
     answer("redeem", &req.key, redeemed)
 }
 
@@ -157,6 +163,16 @@ fn answer<T: Serialize>(route: &str, key: &str, decided: Result<T, NotAdmitted>)
                 "redeem: refused — the name is not one; answered with why, naming no group");
             err(StatusCode::FORBIDDEN, why.to_string())
         }
+        Err(NotAdmitted::Decided(RedeemRefusal::Cut)) => {
+            tracing::debug!(target: "redeem", route, key,
+                "redeem: refused — the group cut this key, by its person's leave or a removal; answered 410, so it is said as that, never as a refused link (#181)");
+            err(StatusCode::GONE, REFUSAL)
+        }
+        Err(NotAdmitted::Decided(RedeemRefusal::NameTaken(holder))) => {
+            tracing::debug!(target: "redeem", route, key, %holder,
+                "redeem: refused — a standing person goes by the name; answered 409 with theirs");
+            err(StatusCode::CONFLICT, holder.to_string())
+        }
         Err(NotAdmitted::Decided(why)) => {
             tracing::debug!(target: "redeem", route, key, why = ?why,
                 "redeem: the decider refused, answered in the one sentence every refusal shares");
@@ -173,30 +189,22 @@ fn answer<T: Serialize>(route: &str, key: &str, decided: Result<T, NotAdmitted>)
 /// The ask, as an adapter: parse ([`parse_ask`]), ask the runtime for this
 /// node's newest `Invite` naming the link's key, and answer that group's seed
 /// as the command keeps it.
-fn serve_ask(
-    issuer: &Issuer,
-    dialer: Option<String>,
-    req: &AskRequest,
-) -> Result<Asked, NotAdmitted> {
+fn serve_ask(at: &Asking, dialer: Option<String>, req: &AskRequest) -> Result<Asked, NotAdmitted> {
     parse_ask(dialer.as_deref(), req)?;
-    let (group, invite) = issuer
-        .rail
-        .invite_for(&req.link)
-        .map_err(NotAdmitted::Unjudged)?
-        .ok_or(NotAdmitted::NoInvite)?;
-    let dir = issuer
-        .rail
-        .group_dir(&group)
-        .map_err(NotAdmitted::Unjudged)?;
-    let seed = (issuer.seeds)(&dir)
+    let rail = &at.host.rail;
+    let found = rail.invite_for(&req.link).map_err(NotAdmitted::Unjudged)?;
+    let (group, invite, person) = found.ok_or(NotAdmitted::NoInvite)?;
+    let dir = rail.group_dir(&group).map_err(NotAdmitted::Unjudged)?;
+    let seed = (at.seeds)(&dir)
         .map_err(|e| NotAdmitted::Unjudged(RailError::Io(e)))?
         .ok_or(NotAdmitted::NotHeld)?;
-    tracing::debug!(target: "redeem", group, key = %req.key, invite = %invite,
-        "redeem: asked — the link's key is named by this node's Invite; answering its group's seed");
+    tracing::debug!(target: "redeem", group, key = %req.key, invite = %invite, ?person,
+        "redeem: asked — the link's key is named by this node's Invite; answering its group's seed, and a device link's person");
     Ok(Asked {
         group,
         seed,
         invite,
+        person,
     })
 }
 
@@ -234,7 +242,7 @@ fn serve_redeem(
 ) -> Result<Redeemed, NotAdmitted> {
     let person = parse_redeem(dialer.as_deref(), req)?;
     let group = req.group.as_str();
-    match rail.standing(group, &Ed25519Verifier) {
+    match rail.standing(group) {
         Ok(Standing::Members(_)) => {}
         Ok(_) => return Err(NotAdmitted::NotHeld),
         Err(e) => return Err(NotAdmitted::Unjudged(e)),
@@ -246,7 +254,7 @@ fn serve_redeem(
         cosig: req.cosig.clone(),
         device: req.device,
         link: req.link.clone(),
-        issuer: rail.signer().actor(),
+        issuer: actor_of(rail.signer()),
     };
     match rail
         .commit(group, &command)
@@ -264,9 +272,12 @@ fn serve_redeem(
             Ok(Redeemed::Admitted(admit))
         }
         Err(CommitRefused::NoStanding) => Err(NotAdmitted::Unjudged(RailError::NotInRoster {
-            actor: rail.signer().actor(),
+            actor: actor_of(rail.signer()),
             namespace: group.to_string(),
         })),
+        Err(CommitRefused::Unsettled) => Err(NotAdmitted::Unjudged(RailError::Unsettled(
+            group.to_string(),
+        ))),
         Err(CommitRefused::Command(why)) => Err(NotAdmitted::Decided(why)),
     }
 }
@@ -288,6 +299,14 @@ pub enum RedeemError {
     /// from a node of this build.
     #[error("refused: {0}")]
     Refused(String),
+    /// The issuer's node answered that someone in the group already goes
+    /// by the name: theirs, as the group names them.
+    #[error("someone in the group already goes by {0}")]
+    NameTaken(Name),
+    /// The issuer's node answered that the group cut the key asking: its
+    /// person left or was removed, so it does not join from that computer.
+    #[error("the group cut this computer's key")]
+    Cut,
     /// The issuer's node answered that it could not judge: [`UNJUDGED`].
     #[error("the issuer could not judge")]
     Unjudged,
@@ -316,35 +335,51 @@ pub async fn redeem(
     call(endpoint, issuer, ROUTE, req).await
 }
 
-/// Post `body` to `route` on the issuer's node, and read its answer.
+/// Post `body` to `route` on the issuer's node, and read its answer: on a
+/// connection dialled for it alone on [`Alpn::Redeem`], uncapped, the whole
+/// within [`crate::iroh::ANSWERED_WITHIN`] (arch-peer (c), where a bridge
+/// and the round's reqwest client carried it, with the same 10 s).
 async fn call<T: DeserializeOwned>(
     endpoint: &Endpoint,
     issuer: EndpointAddr,
     route: &str,
     body: &impl Serialize,
 ) -> Result<T, RedeemError> {
-    let bridge = HttpBridge::spawn(endpoint.clone(), issuer, Alpn::Redeem.bytes())
+    use crate::iroh::{dialled, on_stream, whole};
+    let no_answer = |e: String| RedeemError::NoAnswer(e);
+    let body = serde_json::to_vec(body).map_err(|e| no_answer(e.to_string()))?;
+    let ask = axum::http::Request::post(route)
+        .header(axum::http::header::CONTENT_TYPE, "application/json");
+    let ask = ask
+        .body(body.into())
+        .map_err(|e| no_answer(e.to_string()))?;
+    tracing::debug!(target: "redeem", route, issuer = %issuer.id.fmt_short(), "redeem: dialling the issuer by key");
+    let answered = whole(async {
+        on_stream(
+            &dialled(endpoint, issuer, Alpn::Redeem.bytes(), None).await?,
+            ask,
+        )
         .await
-        .map_err(|e| RedeemError::NoAnswer(format!("no bridge: {e}")))?;
-    let http = peer_client().map_err(|e| RedeemError::NoAnswer(e.to_string()))?;
-    let url = format!("http://{}{route}", bridge.local_addr());
-    tracing::debug!(target: "redeem", url, "redeem: dialling the issuer by key");
-    let response = http
-        .post(&url)
-        .json(body)
-        .send()
-        .await
-        .map_err(|e| RedeemError::NoAnswer(e.to_string()))?;
-    let status = response.status();
+    });
+    let answer = answered.await.map_err(|e| no_answer(e.to_string()))?;
+    let status = answer.status();
     tracing::debug!(target: "redeem", route, status = status.as_u16(), "redeem: the issuer answered");
+    let said = answer.body();
     match status {
-        StatusCode::OK => response
-            .json()
-            .await
+        StatusCode::OK => serde_json::from_slice(said)
             .map_err(|e| RedeemError::NoAnswer(format!("an answer this build cannot read: {e}"))),
         StatusCode::FORBIDDEN => Err(RedeemError::Refused(
-            response.text().await.unwrap_or_default(),
+            String::from_utf8_lossy(said).into_owned(),
         )),
+        StatusCode::CONFLICT => {
+            let said: serde_json::Value = serde_json::from_slice(said).unwrap_or_default();
+            let holder = said["error"].as_str().unwrap_or_default().to_string();
+            Err(Name::kept(holder).map_or_else(
+                |e| RedeemError::NoAnswer(format!("a name this build cannot read: {e}")),
+                RedeemError::NameTaken,
+            ))
+        }
+        StatusCode::GONE => Err(RedeemError::Cut),
         StatusCode::SERVICE_UNAVAILABLE => Err(RedeemError::Unjudged),
         other => Err(RedeemError::NoAnswer(format!("HTTP {other}"))),
     }

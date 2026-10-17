@@ -1,0 +1,39 @@
+# canon-core for House rules' page, JSON in and JSON out (src/lib.rs).
+#
+# Standalone on purpose: `[workspace]` below keeps it out of the svrngs
+# workspace, which never builds it. `apps/canon/build.sh` alone does, after
+# unpacking canon at the pinned commit into target/canon/src, where the path
+# below points; it builds for wasm32-unknown-unknown, then wasm2js.
+[package]
+name = "canon-page"
+version = "0.1.0"
+edition = "2021"
+publish = false
+# canon's own licence, which the build carries.
+license = "AGPL-3.0-or-later"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+canon-core = { path = "../../../target/canon/src/crates/canon-core" }
+# As canon-cli takes them (canon's Cargo.toml [workspace.dependencies]): its
+# replay.rs is compiled here unchanged and reads both with std.
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["raw_value"] }
+
+# `replay` is canon-cli's scenario runner (src/lib.rs), the proof's way in;
+# `--no-default-features` builds without it, for the measure of its share.
+[features]
+default = ["replay"]
+replay = []
+
+# Small first: the page downloads this. Panics abort, as a trap.
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[workspace]

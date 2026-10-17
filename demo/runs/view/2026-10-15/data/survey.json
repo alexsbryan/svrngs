@@ -1,0 +1,1061 @@
+{
+ "journals": 131,
+ "bytes": 1297584,
+ "view_bytes": 541279,
+ "share_of_all_bytes": 0.41714370707406995,
+ "share_min": 0.15905743740795286,
+ "share_median": 0.3528865295288653,
+ "share_max": 0.5593637786575821,
+ "most_keys_in_a_view": 6,
+ "unread": [],
+ "rows": [
+  {
+   "journal": "/private/tmp/arch-seal-run/ana/.svrngs/rings/0e3094d0a99ef78ffc4bb896b976ea44f69ce0b411bb69d1323eaf2104ae798d/ring_oplog.jsonl",
+   "bytes": 6738,
+   "lines": 9,
+   "view_bytes": 2498,
+   "share": 0.3707331552389433,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/arch-seal-run/bo/.svrngs/rings/0e3094d0a99ef78ffc4bb896b976ea44f69ce0b411bb69d1323eaf2104ae798d/ring_oplog.jsonl",
+   "bytes": 8895,
+   "lines": 12,
+   "view_bytes": 3384,
+   "share": 0.38043844856661047,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/asleep-dry/bo/.svrngs/rings/635df18d5ad981506c78b1c327be2af5fb2c80312e166c01d3e7ba87552e5506/ring_oplog.jsonl",
+   "bytes": 3645,
+   "lines": 5,
+   "view_bytes": 941,
+   "share": 0.25816186556927295,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/asleep-dry/sam/.svrngs/rings/635df18d5ad981506c78b1c327be2af5fb2c80312e166c01d3e7ba87552e5506/ring_oplog.jsonl",
+   "bytes": 3645,
+   "lines": 5,
+   "view_bytes": 941,
+   "share": 0.25816186556927295,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/asleep-run/bo/.svrngs/rings/caaac56237e07009628b46687b167d1384a9ecb8147d75f37e4012b1829c31ed/ring_oplog.jsonl",
+   "bytes": 3645,
+   "lines": 5,
+   "view_bytes": 941,
+   "share": 0.25816186556927295,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/asleep-run/sam/.svrngs/rings/caaac56237e07009628b46687b167d1384a9ecb8147d75f37e4012b1829c31ed/ring_oplog.jsonl",
+   "bytes": 3645,
+   "lines": 5,
+   "view_bytes": 941,
+   "share": 0.25816186556927295,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/6e09329f-0b30-4ff7-a272-bbdfce91c9c7/scratchpad/c-dry/alex/.svrngs/rings/41b29f090d85ce9a4b7ba55ab9203fe3f2fde02d805bc4daaba0290761d0be4b/ring_oplog.jsonl",
+   "bytes": 14311,
+   "lines": 12,
+   "view_bytes": 3545,
+   "share": 0.24771155055551675,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/6e09329f-0b30-4ff7-a272-bbdfce91c9c7/scratchpad/c-dry/ana/.svrngs/rings/41b29f090d85ce9a4b7ba55ab9203fe3f2fde02d805bc4daaba0290761d0be4b/ring_oplog.jsonl",
+   "bytes": 14311,
+   "lines": 12,
+   "view_bytes": 3545,
+   "share": 0.24771155055551675,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/6e09329f-0b30-4ff7-a272-bbdfce91c9c7/scratchpad/c-dry/bo/.svrngs/rings/41b29f090d85ce9a4b7ba55ab9203fe3f2fde02d805bc4daaba0290761d0be4b/ring_oplog.jsonl",
+   "bytes": 11256,
+   "lines": 9,
+   "view_bytes": 2498,
+   "share": 0.22192608386638238,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/6e09329f-0b30-4ff7-a272-bbdfce91c9c7/scratchpad/c-dry/dee/.svrngs/rings/41b29f090d85ce9a4b7ba55ab9203fe3f2fde02d805bc4daaba0290761d0be4b/ring_oplog.jsonl",
+   "bytes": 14311,
+   "lines": 12,
+   "view_bytes": 3545,
+   "share": 0.24771155055551675,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/6e09329f-0b30-4ff7-a272-bbdfce91c9c7/scratchpad/c-dry/eve/.svrngs/rings/41b29f090d85ce9a4b7ba55ab9203fe3f2fde02d805bc4daaba0290761d0be4b/ring_oplog.jsonl",
+   "bytes": 14311,
+   "lines": 12,
+   "view_bytes": 3545,
+   "share": 0.24771155055551675,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/6e09329f-0b30-4ff7-a272-bbdfce91c9c7/scratchpad/c-dry/name/ana/rings/b12a6399a7f7428445b312549b1a088995026ea2a483724e8fff2d4d1c37804d/ring_oplog.jsonl",
+   "bytes": 2263,
+   "lines": 3,
+   "view_bytes": 404,
+   "share": 0.17852408307556342,
+   "most_keys_in_a_view": 1
+  },
+  {
+   "journal": "/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/6e09329f-0b30-4ff7-a272-bbdfce91c9c7/scratchpad/c-dry/name/sam/rings/b12a6399a7f7428445b312549b1a088995026ea2a483724e8fff2d4d1c37804d/ring_oplog.jsonl",
+   "bytes": 2263,
+   "lines": 3,
+   "view_bytes": 404,
+   "share": 0.17852408307556342,
+   "most_keys_in_a_view": 1
+  },
+  {
+   "journal": "/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/6e09329f-0b30-4ff7-a272-bbdfce91c9c7/scratchpad/c-dry/name/second/rings/b12a6399a7f7428445b312549b1a088995026ea2a483724e8fff2d4d1c37804d/ring_oplog.jsonl",
+   "bytes": 2263,
+   "lines": 3,
+   "view_bytes": 404,
+   "share": 0.17852408307556342,
+   "most_keys_in_a_view": 1
+  },
+  {
+   "journal": "/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/6e09329f-0b30-4ff7-a272-bbdfce91c9c7/scratchpad/c-dry/sam/.svrngs/rings/41b29f090d85ce9a4b7ba55ab9203fe3f2fde02d805bc4daaba0290761d0be4b/ring_oplog.jsonl",
+   "bytes": 14311,
+   "lines": 12,
+   "view_bytes": 3545,
+   "share": 0.24771155055551675,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/6e09329f-0b30-4ff7-a272-bbdfce91c9c7/scratchpad/llama-run/data/bo/rings/28314b1869fb7e8b240e134e18e45f5cbbe7066b15795c966fb43892ceb66699/ring_oplog.jsonl",
+   "bytes": 1358,
+   "lines": 2,
+   "view_bytes": 216,
+   "share": 0.15905743740795286,
+   "most_keys_in_a_view": 1
+  },
+  {
+   "journal": "/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/6e09329f-0b30-4ff7-a272-bbdfce91c9c7/scratchpad/llama-run/data/sam/rings/28314b1869fb7e8b240e134e18e45f5cbbe7066b15795c966fb43892ceb66699/ring_oplog.jsonl",
+   "bytes": 1358,
+   "lines": 2,
+   "view_bytes": 216,
+   "share": 0.15905743740795286,
+   "most_keys_in_a_view": 1
+  },
+  {
+   "journal": "/private/tmp/devices-run/ana/.svrngs/rings/27250638fa0667b7841bbd8606b540d9de8439ab0f5120b405290820c52b408d/ring_oplog.jsonl",
+   "bytes": 7864,
+   "lines": 9,
+   "view_bytes": 2498,
+   "share": 0.3176500508646999,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/devices-run/bo/.svrngs/rings/27250638fa0667b7841bbd8606b540d9de8439ab0f5120b405290820c52b408d/ring_oplog.jsonl",
+   "bytes": 7864,
+   "lines": 9,
+   "view_bytes": 2498,
+   "share": 0.3176500508646999,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/devices-run/laptop/.svrngs/rings/27250638fa0667b7841bbd8606b540d9de8439ab0f5120b405290820c52b408d/ring_oplog.jsonl",
+   "bytes": 7864,
+   "lines": 9,
+   "view_bytes": 2498,
+   "share": 0.3176500508646999,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/devices-run/sam/.svrngs/rings/27250638fa0667b7841bbd8606b540d9de8439ab0f5120b405290820c52b408d/ring_oplog.jsonl",
+   "bytes": 7864,
+   "lines": 9,
+   "view_bytes": 2498,
+   "share": 0.3176500508646999,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/doclink-run/bo/.svrngs/rings/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/ring_oplog.jsonl",
+   "bytes": 6198,
+   "lines": 8,
+   "view_bytes": 1988,
+   "share": 0.3207486285898677,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/doclink-run/di/.svrngs/rings/225cfde43047ff0136223594eb99c44c9fc8bfb8b852dea5e5e64a320c019f98/ring_oplog.jsonl",
+   "bytes": 6200,
+   "lines": 8,
+   "view_bytes": 1988,
+   "share": 0.32064516129032256,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/doclink-run/sam/.svrngs/rings/225cfde43047ff0136223594eb99c44c9fc8bfb8b852dea5e5e64a320c019f98/ring_oplog.jsonl",
+   "bytes": 6200,
+   "lines": 8,
+   "view_bytes": 1988,
+   "share": 0.32064516129032256,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/doclink-run/sam/.svrngs/rings/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/ring_oplog.jsonl",
+   "bytes": 6198,
+   "lines": 8,
+   "view_bytes": 1988,
+   "share": 0.3207486285898677,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/econ-nohome/.svrngs/rings/098cfdc89235a6d69933192afc5fef92228ffce2a3f8501a36d8b996bb31c16b/ring_oplog.jsonl",
+   "bytes": 1094,
+   "lines": 2,
+   "view_bytes": 216,
+   "share": 0.19744058500914077,
+   "most_keys_in_a_view": 1
+  },
+  {
+   "journal": "/private/tmp/events-run/bo/.svrngs/rings/94f3803ddb0311cf6040533a38a9a07ed742151f397f42e92ca093f35d5f8b84/ring_oplog.jsonl",
+   "bytes": 13282,
+   "lines": 16,
+   "view_bytes": 4945,
+   "share": 0.37230838729107063,
+   "most_keys_in_a_view": 3
+  },
+  {
+   "journal": "/private/tmp/events-run/di/.svrngs/rings/3fe9fb73389305b3abb8a10d00e08e37d8b11df366cf0ccea02c04e6e8783a3e/ring_oplog.jsonl",
+   "bytes": 7869,
+   "lines": 10,
+   "view_bytes": 2686,
+   "share": 0.3413394332189605,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/events-run/fay/.svrngs/rings/94f3803ddb0311cf6040533a38a9a07ed742151f397f42e92ca093f35d5f8b84/ring_oplog.jsonl",
+   "bytes": 13282,
+   "lines": 16,
+   "view_bytes": 4945,
+   "share": 0.37230838729107063,
+   "most_keys_in_a_view": 3
+  },
+  {
+   "journal": "/private/tmp/events-run/sam/.svrngs/rings/3fe9fb73389305b3abb8a10d00e08e37d8b11df366cf0ccea02c04e6e8783a3e/ring_oplog.jsonl",
+   "bytes": 7869,
+   "lines": 10,
+   "view_bytes": 2686,
+   "share": 0.3413394332189605,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/events-run/sam/.svrngs/rings/94f3803ddb0311cf6040533a38a9a07ed742151f397f42e92ca093f35d5f8b84/ring_oplog.jsonl",
+   "bytes": 13282,
+   "lines": 16,
+   "view_bytes": 4945,
+   "share": 0.37230838729107063,
+   "most_keys_in_a_view": 3
+  },
+  {
+   "journal": "/private/tmp/events-shots/bo/.svrngs/rings/b2d84ddec0e43888701797ce647112f60765f8a4f2dee4707f9e56f6a13f121c/ring_oplog.jsonl",
+   "bytes": 13282,
+   "lines": 16,
+   "view_bytes": 4945,
+   "share": 0.37230838729107063,
+   "most_keys_in_a_view": 3
+  },
+  {
+   "journal": "/private/tmp/events-shots/di/.svrngs/rings/7e9321ba951c72a575a41dd91e3ac88b9c3131bf993662f075fb766762f782fc/ring_oplog.jsonl",
+   "bytes": 7908,
+   "lines": 10,
+   "view_bytes": 2686,
+   "share": 0.3396560445118867,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/events-shots/fay/.svrngs/rings/b2d84ddec0e43888701797ce647112f60765f8a4f2dee4707f9e56f6a13f121c/ring_oplog.jsonl",
+   "bytes": 13282,
+   "lines": 16,
+   "view_bytes": 4945,
+   "share": 0.37230838729107063,
+   "most_keys_in_a_view": 3
+  },
+  {
+   "journal": "/private/tmp/events-shots/sam/.svrngs/rings/7e9321ba951c72a575a41dd91e3ac88b9c3131bf993662f075fb766762f782fc/ring_oplog.jsonl",
+   "bytes": 7908,
+   "lines": 10,
+   "view_bytes": 2686,
+   "share": 0.3396560445118867,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/events-shots/sam/.svrngs/rings/b2d84ddec0e43888701797ce647112f60765f8a4f2dee4707f9e56f6a13f121c/ring_oplog.jsonl",
+   "bytes": 13282,
+   "lines": 16,
+   "view_bytes": 4945,
+   "share": 0.37230838729107063,
+   "most_keys_in_a_view": 3
+  },
+  {
+   "journal": "/private/tmp/fm-w/alex/.svrngs/rings/5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6/ring_oplog.jsonl",
+   "bytes": 2264,
+   "lines": 3,
+   "view_bytes": 404,
+   "share": 0.1784452296819788,
+   "most_keys_in_a_view": 1
+  },
+  {
+   "journal": "/private/tmp/fm-w/ana/.svrngs/rings/5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6/ring_oplog.jsonl",
+   "bytes": 2264,
+   "lines": 3,
+   "view_bytes": 404,
+   "share": 0.1784452296819788,
+   "most_keys_in_a_view": 1
+  },
+  {
+   "journal": "/private/tmp/fm-w/sam/.svrngs/rings/5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6/ring_oplog.jsonl",
+   "bytes": 2264,
+   "lines": 3,
+   "view_bytes": 404,
+   "share": 0.1784452296819788,
+   "most_keys_in_a_view": 1
+  },
+  {
+   "journal": "/private/tmp/n0-off-2026-10-12/alex/.svrngs/rings/f76edf68d5f5115feb278ec176cd24e4046c5ddded261a34fee64a18d5c93483/ring_oplog.jsonl",
+   "bytes": 2264,
+   "lines": 3,
+   "view_bytes": 404,
+   "share": 0.1784452296819788,
+   "most_keys_in_a_view": 1
+  },
+  {
+   "journal": "/private/tmp/n0-off-2026-10-12/ana/.svrngs/rings/f76edf68d5f5115feb278ec176cd24e4046c5ddded261a34fee64a18d5c93483/ring_oplog.jsonl",
+   "bytes": 2932,
+   "lines": 4,
+   "view_bytes": 753,
+   "share": 0.2568212824010914,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/n0-off-2026-10-12/sam/.svrngs/rings/f76edf68d5f5115feb278ec176cd24e4046c5ddded261a34fee64a18d5c93483/ring_oplog.jsonl",
+   "bytes": 3186,
+   "lines": 4,
+   "view_bytes": 592,
+   "share": 0.18581293157564344,
+   "most_keys_in_a_view": 1
+  },
+  {
+   "journal": "/private/tmp/onair-blob-w/ana/.svrngs/rings/7047149403c44a5f30c7b411fc8c376ab9e5761975a85ea901aa7bbaee31eb5e/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-blob-w/bo/.svrngs/rings/7047149403c44a5f30c7b411fc8c376ab9e5761975a85ea901aa7bbaee31eb5e/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-blob-w/cy/.svrngs/rings/7047149403c44a5f30c7b411fc8c376ab9e5761975a85ea901aa7bbaee31eb5e/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-blob-w/dee/.svrngs/rings/7047149403c44a5f30c7b411fc8c376ab9e5761975a85ea901aa7bbaee31eb5e/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-debug/w/ana/.svrngs/rings/623ad8847ae075d4f4ad11950a76a2a883eb24dbd87629f5a8662142c53a4d53/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-debug/w/bo/.svrngs/rings/623ad8847ae075d4f4ad11950a76a2a883eb24dbd87629f5a8662142c53a4d53/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-debug/w/cy/.svrngs/rings/623ad8847ae075d4f4ad11950a76a2a883eb24dbd87629f5a8662142c53a4d53/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-debug/w/dee/.svrngs/rings/623ad8847ae075d4f4ad11950a76a2a883eb24dbd87629f5a8662142c53a4d53/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-live-w/ana/.svrngs/rings/176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-live-w/bo/.svrngs/rings/176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-live-w/cy/.svrngs/rings/176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-live-w/dee/.svrngs/rings/176a2b2dbf9541a86df36432e31c04fc25c52b5342464b42b1459de189fdcb89/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-red-w/ana/.svrngs/rings/30da3959493f04350dce4bcf8526ed1205bb26e0ce9a681d5b0386cceb368f7f/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-red-w/bo/.svrngs/rings/30da3959493f04350dce4bcf8526ed1205bb26e0ce9a681d5b0386cceb368f7f/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-red-w/cy/.svrngs/rings/30da3959493f04350dce4bcf8526ed1205bb26e0ce9a681d5b0386cceb368f7f/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-red-w/dee/.svrngs/rings/30da3959493f04350dce4bcf8526ed1205bb26e0ce9a681d5b0386cceb368f7f/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-run-bo-not-serving-w/ana/.svrngs/rings/94bb1a05c672e89d93a7436b65eafe5a32918dc719842f3d715b1f2d2dfca228/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-run-bo-not-serving-w/bo/.svrngs/rings/94bb1a05c672e89d93a7436b65eafe5a32918dc719842f3d715b1f2d2dfca228/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-run-bo-not-serving-w/cy/.svrngs/rings/94bb1a05c672e89d93a7436b65eafe5a32918dc719842f3d715b1f2d2dfca228/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-run-bo-not-serving-w/dee/.svrngs/rings/94bb1a05c672e89d93a7436b65eafe5a32918dc719842f3d715b1f2d2dfca228/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-run-drain-w/ana/.svrngs/rings/5ba66e5f928a8be6abe644d8e3971779eb106c6fd85fe38fe84b2abad4b5de57/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-run-drain-w/bo/.svrngs/rings/5ba66e5f928a8be6abe644d8e3971779eb106c6fd85fe38fe84b2abad4b5de57/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-run-drain-w/cy/.svrngs/rings/5ba66e5f928a8be6abe644d8e3971779eb106c6fd85fe38fe84b2abad4b5de57/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-run-drain-w/dee/.svrngs/rings/5ba66e5f928a8be6abe644d8e3971779eb106c6fd85fe38fe84b2abad4b5de57/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-run-keep-ignored-w/ana/.svrngs/rings/21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-run-keep-ignored-w/bo/.svrngs/rings/21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-run-keep-ignored-w/cy/.svrngs/rings/21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-run-keep-ignored-w/dee/.svrngs/rings/21a3ec50bbafb13341a3784ab4da5a1fcfeba09b710ab3ddaec44e30ea097a71/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-run-w/ana/.svrngs/rings/0479fe5c473ff5eae1da38003a958a71933a8212a384cc6b146356a0bde93dc2/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-run-w/bo/.svrngs/rings/0479fe5c473ff5eae1da38003a958a71933a8212a384cc6b146356a0bde93dc2/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-run-w/cy/.svrngs/rings/0479fe5c473ff5eae1da38003a958a71933a8212a384cc6b146356a0bde93dc2/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-run-w/dee/.svrngs/rings/0479fe5c473ff5eae1da38003a958a71933a8212a384cc6b146356a0bde93dc2/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-sign-w/ana/.svrngs/rings/92358d510a3a698d3d7662491a07646dc97cd6f0b5a907eb86128a42fa751eb9/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-sign-w/bo/.svrngs/rings/92358d510a3a698d3d7662491a07646dc97cd6f0b5a907eb86128a42fa751eb9/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-sign-w/cy/.svrngs/rings/92358d510a3a698d3d7662491a07646dc97cd6f0b5a907eb86128a42fa751eb9/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onair-sign-w/dee/.svrngs/rings/92358d510a3a698d3d7662491a07646dc97cd6f0b5a907eb86128a42fa751eb9/ring_oplog.jsonl",
+   "bytes": 7697,
+   "lines": 9,
+   "view_bytes": 2981,
+   "share": 0.3872937508120047,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/onb-e-run/alex/rings/cce4490eab2e974e0312d4889805c69a2f655e58bc899444e59b11640df56c63/ring_oplog.jsonl",
+   "bytes": 3166,
+   "lines": 4,
+   "view_bytes": 592,
+   "share": 0.18698673404927352,
+   "most_keys_in_a_view": 1
+  },
+  {
+   "journal": "/private/tmp/onb-e-run/bo/rings/cce4490eab2e974e0312d4889805c69a2f655e58bc899444e59b11640df56c63/ring_oplog.jsonl",
+   "bytes": 3166,
+   "lines": 4,
+   "view_bytes": 592,
+   "share": 0.18698673404927352,
+   "most_keys_in_a_view": 1
+  },
+  {
+   "journal": "/private/tmp/onb-e-run/cy/rings/cce4490eab2e974e0312d4889805c69a2f655e58bc899444e59b11640df56c63/ring_oplog.jsonl",
+   "bytes": 3166,
+   "lines": 4,
+   "view_bytes": 592,
+   "share": 0.18698673404927352,
+   "most_keys_in_a_view": 1
+  },
+  {
+   "journal": "/private/tmp/onb-e-run/sam/rings/cce4490eab2e974e0312d4889805c69a2f655e58bc899444e59b11640df56c63/ring_oplog.jsonl",
+   "bytes": 3166,
+   "lines": 4,
+   "view_bytes": 592,
+   "share": 0.18698673404927352,
+   "most_keys_in_a_view": 1
+  },
+  {
+   "journal": "/private/tmp/onb-f-run/newcomer/.svrngs/rings/a9fed5d482c05b77fc2ea95a260f63c71c616c45c0c210f7f3e39536f087d88b/ring_oplog.jsonl",
+   "bytes": 2105,
+   "lines": 3,
+   "view_bytes": 404,
+   "share": 0.19192399049881234,
+   "most_keys_in_a_view": 1
+  },
+  {
+   "journal": "/private/tmp/onb-f-run/sam/rings/a9fed5d482c05b77fc2ea95a260f63c71c616c45c0c210f7f3e39536f087d88b/ring_oplog.jsonl",
+   "bytes": 2105,
+   "lines": 3,
+   "view_bytes": 404,
+   "share": 0.19192399049881234,
+   "most_keys_in_a_view": 1
+  },
+  {
+   "journal": "/private/tmp/reach-run/sam/.svrngs/rings/748802a95efd56de0beb6e03765136efd2dfbdf4ae407283c9cced761589de65/ring_oplog.jsonl",
+   "bytes": 2016,
+   "lines": 3,
+   "view_bytes": 404,
+   "share": 0.2003968253968254,
+   "most_keys_in_a_view": 1
+  },
+  {
+   "journal": "/private/tmp/relay-in-record-2026-10-12/alex/.svrngs/rings/fb7155193675cbef10dfa71b87417138e7fd7898cb6df775618c740b0e4cf9ad/ring_oplog.jsonl",
+   "bytes": 7213,
+   "lines": 9,
+   "view_bytes": 2337,
+   "share": 0.323998336337169,
+   "most_keys_in_a_view": 3
+  },
+  {
+   "journal": "/private/tmp/relay-in-record-2026-10-12/ana/.svrngs/rings/fb7155193675cbef10dfa71b87417138e7fd7898cb6df775618c740b0e4cf9ad/ring_oplog.jsonl",
+   "bytes": 7213,
+   "lines": 9,
+   "view_bytes": 2337,
+   "share": 0.323998336337169,
+   "most_keys_in_a_view": 3
+  },
+  {
+   "journal": "/private/tmp/relay-in-record-2026-10-12/sam/.svrngs/rings/fb7155193675cbef10dfa71b87417138e7fd7898cb6df775618c740b0e4cf9ad/ring_oplog.jsonl",
+   "bytes": 7213,
+   "lines": 9,
+   "view_bytes": 2337,
+   "share": 0.323998336337169,
+   "most_keys_in_a_view": 3
+  },
+  {
+   "journal": "/private/tmp/relay-in-record-2026-10-12-take2/alex/.svrngs/rings/e9e32608b903cdcc9e368ee325e0ee50d08327bed9b8c67ff5a42aeed24b540a/ring_oplog.jsonl",
+   "bytes": 7535,
+   "lines": 9,
+   "view_bytes": 2659,
+   "share": 0.3528865295288653,
+   "most_keys_in_a_view": 3
+  },
+  {
+   "journal": "/private/tmp/relay-in-record-2026-10-12-take2/ana/.svrngs/rings/e9e32608b903cdcc9e368ee325e0ee50d08327bed9b8c67ff5a42aeed24b540a/ring_oplog.jsonl",
+   "bytes": 7535,
+   "lines": 9,
+   "view_bytes": 2659,
+   "share": 0.3528865295288653,
+   "most_keys_in_a_view": 3
+  },
+  {
+   "journal": "/private/tmp/relay-in-record-2026-10-12-take2/sam/.svrngs/rings/e9e32608b903cdcc9e368ee325e0ee50d08327bed9b8c67ff5a42aeed24b540a/ring_oplog.jsonl",
+   "bytes": 7535,
+   "lines": 9,
+   "view_bytes": 2659,
+   "share": 0.3528865295288653,
+   "most_keys_in_a_view": 3
+  },
+  {
+   "journal": "/private/tmp/relay-in-record-2026-10-12-take3/alex/.svrngs/rings/37ac9fd4475cdd06f4cf8d3c7fedd46b550b4f8347248911c347d288c938a393/ring_oplog.jsonl",
+   "bytes": 7696,
+   "lines": 9,
+   "view_bytes": 2820,
+   "share": 0.36642411642411643,
+   "most_keys_in_a_view": 3
+  },
+  {
+   "journal": "/private/tmp/relay-in-record-2026-10-12-take3/ana/.svrngs/rings/37ac9fd4475cdd06f4cf8d3c7fedd46b550b4f8347248911c347d288c938a393/ring_oplog.jsonl",
+   "bytes": 7696,
+   "lines": 9,
+   "view_bytes": 2820,
+   "share": 0.36642411642411643,
+   "most_keys_in_a_view": 3
+  },
+  {
+   "journal": "/private/tmp/relay-in-record-2026-10-12-take3/sam/.svrngs/rings/37ac9fd4475cdd06f4cf8d3c7fedd46b550b4f8347248911c347d288c938a393/ring_oplog.jsonl",
+   "bytes": 7696,
+   "lines": 9,
+   "view_bytes": 2820,
+   "share": 0.36642411642411643,
+   "most_keys_in_a_view": 3
+  },
+  {
+   "journal": "/private/tmp/sa-w/bo/.svrngs/rings/eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa/ring_oplog.jsonl",
+   "bytes": 2562,
+   "lines": 4,
+   "view_bytes": 592,
+   "share": 0.23106947697111632,
+   "most_keys_in_a_view": 1
+  },
+  {
+   "journal": "/private/tmp/sa-w/sam/.svrngs/rings/eaaaad23d8defa09179f8b8f663e633eace8a9ff58faf8218bcd5076008accfa/ring_oplog.jsonl",
+   "bytes": 2562,
+   "lines": 4,
+   "view_bytes": 592,
+   "share": 0.23106947697111632,
+   "most_keys_in_a_view": 1
+  },
+  {
+   "journal": "/private/tmp/sh-w/bo/.svrngs/rings/908bd044d534f2ba229adadd4a60f55ffc070cb9275505aaa1d3b05d2066dda6/ring_oplog.jsonl",
+   "bytes": 5423,
+   "lines": 7,
+   "view_bytes": 1800,
+   "share": 0.33191960169647794,
+   "most_keys_in_a_view": 3
+  },
+  {
+   "journal": "/private/tmp/sh-w/cy/.svrngs/rings/908bd044d534f2ba229adadd4a60f55ffc070cb9275505aaa1d3b05d2066dda6/ring_oplog.jsonl",
+   "bytes": 4352,
+   "lines": 6,
+   "view_bytes": 1290,
+   "share": 0.29641544117647056,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/sh-w/sam/.svrngs/rings/908bd044d534f2ba229adadd4a60f55ffc070cb9275505aaa1d3b05d2066dda6/ring_oplog.jsonl",
+   "bytes": 5423,
+   "lines": 7,
+   "view_bytes": 1800,
+   "share": 0.33191960169647794,
+   "most_keys_in_a_view": 3
+  },
+  {
+   "journal": "/private/tmp/sh-w-after/bo/.svrngs/rings/50a38b0722cd4de7d94749242e6c4fd96b3b89ed6738425d739758ca437f8cbe/ring_oplog.jsonl",
+   "bytes": 11738,
+   "lines": 13,
+   "view_bytes": 4860,
+   "share": 0.41403987050604873,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/sh-w-after/cy/.svrngs/rings/50a38b0722cd4de7d94749242e6c4fd96b3b89ed6738425d739758ca437f8cbe/ring_oplog.jsonl",
+   "bytes": 10506,
+   "lines": 12,
+   "view_bytes": 4189,
+   "share": 0.39872453835903293,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/sh-w-after/eve/.svrngs/rings/50a38b0722cd4de7d94749242e6c4fd96b3b89ed6738425d739758ca437f8cbe/ring_oplog.jsonl",
+   "bytes": 8004,
+   "lines": 10,
+   "view_bytes": 2847,
+   "share": 0.35569715142428787,
+   "most_keys_in_a_view": 3
+  },
+  {
+   "journal": "/private/tmp/sh-w-after/sam/.svrngs/rings/50a38b0722cd4de7d94749242e6c4fd96b3b89ed6738425d739758ca437f8cbe/ring_oplog.jsonl",
+   "bytes": 11738,
+   "lines": 13,
+   "view_bytes": 4860,
+   "share": 0.41403987050604873,
+   "most_keys_in_a_view": 4
+  },
+  {
+   "journal": "/private/tmp/sm-w/bo/.svrngs/rings/1c5199f5df21257589438a075113a99c9c23458074655b8155d0d3ab8b260e9b/ring_oplog.jsonl",
+   "bytes": 5423,
+   "lines": 7,
+   "view_bytes": 1800,
+   "share": 0.33191960169647794,
+   "most_keys_in_a_view": 3
+  },
+  {
+   "journal": "/private/tmp/sm-w/cy/.svrngs/rings/1c5199f5df21257589438a075113a99c9c23458074655b8155d0d3ab8b260e9b/ring_oplog.jsonl",
+   "bytes": 4352,
+   "lines": 6,
+   "view_bytes": 1290,
+   "share": 0.29641544117647056,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/sm-w/sam/.svrngs/rings/1c5199f5df21257589438a075113a99c9c23458074655b8155d0d3ab8b260e9b/ring_oplog.jsonl",
+   "bytes": 5423,
+   "lines": 7,
+   "view_bytes": 1800,
+   "share": 0.33191960169647794,
+   "most_keys_in_a_view": 3
+  },
+  {
+   "journal": "/private/tmp/start-story/bo/.svrngs/rings/9ed3b80c81988f80936a83243947a0aa7cd31481fb1574c6d13111c115dd0317/ring_oplog.jsonl",
+   "bytes": 5813,
+   "lines": 7,
+   "view_bytes": 1639,
+   "share": 0.28195424049544127,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/start-story/sam/.svrngs/rings/9ed3b80c81988f80936a83243947a0aa7cd31481fb1574c6d13111c115dd0317/ring_oplog.jsonl",
+   "bytes": 5813,
+   "lines": 7,
+   "view_bytes": 1639,
+   "share": 0.28195424049544127,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/two-run/ana/.svrngs/rings/a1f1fa8d52e648d13aaf7f343f362ce0dfffcf85a7d27acbbf9823109b50f3c5/ring_oplog.jsonl",
+   "bytes": 4202,
+   "lines": 5,
+   "view_bytes": 1102,
+   "share": 0.2622560685387911,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/two-run/laptop/.svrngs/rings/a1f1fa8d52e648d13aaf7f343f362ce0dfffcf85a7d27acbbf9823109b50f3c5/ring_oplog.jsonl",
+   "bytes": 4202,
+   "lines": 5,
+   "view_bytes": 1102,
+   "share": 0.2622560685387911,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/two-run/sam/.svrngs/rings/a1f1fa8d52e648d13aaf7f343f362ce0dfffcf85a7d27acbbf9823109b50f3c5/ring_oplog.jsonl",
+   "bytes": 4202,
+   "lines": 5,
+   "view_bytes": 1102,
+   "share": 0.2622560685387911,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/two-run-b/ana/.svrngs/rings/4e87b8e3c07c4301702ea89ff62615d17eed3f6411444aa8eb210e46d7f44932/ring_oplog.jsonl",
+   "bytes": 4202,
+   "lines": 5,
+   "view_bytes": 1102,
+   "share": 0.2622560685387911,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/two-run-b/laptop/.svrngs/rings/4e87b8e3c07c4301702ea89ff62615d17eed3f6411444aa8eb210e46d7f44932/ring_oplog.jsonl",
+   "bytes": 4202,
+   "lines": 5,
+   "view_bytes": 1102,
+   "share": 0.2622560685387911,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/two-run-b/sam/.svrngs/rings/4e87b8e3c07c4301702ea89ff62615d17eed3f6411444aa8eb210e46d7f44932/ring_oplog.jsonl",
+   "bytes": 4202,
+   "lines": 5,
+   "view_bytes": 1102,
+   "share": 0.2622560685387911,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/u7-run/data/ana/rings/6e48d05b2495a1b3da4e6baf258338c4d1355d0e439c4c8a4a4b501ce461af56/ring_oplog.jsonl",
+   "bytes": 6281,
+   "lines": 8,
+   "view_bytes": 1666,
+   "share": 0.2652443878363318,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/u7-run/data/bo/rings/6e48d05b2495a1b3da4e6baf258338c4d1355d0e439c4c8a4a4b501ce461af56/ring_oplog.jsonl",
+   "bytes": 5379,
+   "lines": 7,
+   "view_bytes": 1317,
+   "share": 0.24484104852203012,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/u7-run/data/sam/rings/6e48d05b2495a1b3da4e6baf258338c4d1355d0e439c4c8a4a4b501ce461af56/ring_oplog.jsonl",
+   "bytes": 6281,
+   "lines": 8,
+   "view_bytes": 1666,
+   "share": 0.2652443878363318,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/v1ui-helper/ann/.svrngs/rings/2d21e5246c6790136a15360bd402661f763788b6621bf845f3b6d149af23449d/ring_oplog.jsonl",
+   "bytes": 43444,
+   "lines": 35,
+   "view_bytes": 24301,
+   "share": 0.5593637786575821,
+   "most_keys_in_a_view": 6
+  },
+  {
+   "journal": "/private/tmp/v1ui-helper/bo/.svrngs/rings/2d21e5246c6790136a15360bd402661f763788b6621bf845f3b6d149af23449d/ring_oplog.jsonl",
+   "bytes": 43444,
+   "lines": 35,
+   "view_bytes": 24301,
+   "share": 0.5593637786575821,
+   "most_keys_in_a_view": 6
+  },
+  {
+   "journal": "/private/tmp/v1ui-helper/cy/.svrngs/rings/2d21e5246c6790136a15360bd402661f763788b6621bf845f3b6d149af23449d/ring_oplog.jsonl",
+   "bytes": 43444,
+   "lines": 35,
+   "view_bytes": 24301,
+   "share": 0.5593637786575821,
+   "most_keys_in_a_view": 6
+  },
+  {
+   "journal": "/private/tmp/v1ui-helper/di/.svrngs/rings/2d21e5246c6790136a15360bd402661f763788b6621bf845f3b6d149af23449d/ring_oplog.jsonl",
+   "bytes": 43444,
+   "lines": 35,
+   "view_bytes": 24301,
+   "share": 0.5593637786575821,
+   "most_keys_in_a_view": 6
+  },
+  {
+   "journal": "/private/tmp/v1ui-helper/priya/.svrngs/rings/2d21e5246c6790136a15360bd402661f763788b6621bf845f3b6d149af23449d/ring_oplog.jsonl",
+   "bytes": 43444,
+   "lines": 35,
+   "view_bytes": 24301,
+   "share": 0.5593637786575821,
+   "most_keys_in_a_view": 6
+  },
+  {
+   "journal": "/private/tmp/v1ui-helper/sam/.svrngs/rings/2d21e5246c6790136a15360bd402661f763788b6621bf845f3b6d149af23449d/ring_oplog.jsonl",
+   "bytes": 26980,
+   "lines": 24,
+   "view_bytes": 13368,
+   "share": 0.4954781319495923,
+   "most_keys_in_a_view": 6
+  },
+  {
+   "journal": "/private/tmp/v1ui-run/ann/.svrngs/rings/ce985a0bbef0a4d7c0062d304c22a870a915794be349425503c093d041e6472d/ring_oplog.jsonl",
+   "bytes": 43444,
+   "lines": 35,
+   "view_bytes": 24301,
+   "share": 0.5593637786575821,
+   "most_keys_in_a_view": 6
+  },
+  {
+   "journal": "/private/tmp/v1ui-run/bo/.svrngs/rings/ce985a0bbef0a4d7c0062d304c22a870a915794be349425503c093d041e6472d/ring_oplog.jsonl",
+   "bytes": 43444,
+   "lines": 35,
+   "view_bytes": 24301,
+   "share": 0.5593637786575821,
+   "most_keys_in_a_view": 6
+  },
+  {
+   "journal": "/private/tmp/v1ui-run/cy/.svrngs/rings/ce985a0bbef0a4d7c0062d304c22a870a915794be349425503c093d041e6472d/ring_oplog.jsonl",
+   "bytes": 43444,
+   "lines": 35,
+   "view_bytes": 24301,
+   "share": 0.5593637786575821,
+   "most_keys_in_a_view": 6
+  },
+  {
+   "journal": "/private/tmp/v1ui-run/di/.svrngs/rings/ce985a0bbef0a4d7c0062d304c22a870a915794be349425503c093d041e6472d/ring_oplog.jsonl",
+   "bytes": 43444,
+   "lines": 35,
+   "view_bytes": 24301,
+   "share": 0.5593637786575821,
+   "most_keys_in_a_view": 6
+  },
+  {
+   "journal": "/private/tmp/v1ui-run/priya/.svrngs/rings/ce985a0bbef0a4d7c0062d304c22a870a915794be349425503c093d041e6472d/ring_oplog.jsonl",
+   "bytes": 43444,
+   "lines": 35,
+   "view_bytes": 24301,
+   "share": 0.5593637786575821,
+   "most_keys_in_a_view": 6
+  },
+  {
+   "journal": "/private/tmp/v1ui-run/sam/.svrngs/rings/ce985a0bbef0a4d7c0062d304c22a870a915794be349425503c093d041e6472d/ring_oplog.jsonl",
+   "bytes": 26980,
+   "lines": 24,
+   "view_bytes": 13368,
+   "share": 0.4954781319495923,
+   "most_keys_in_a_view": 6
+  },
+  {
+   "journal": "/private/tmp/wait-run/bo/.svrngs/rings/b3924f2dd9d20904dcbe353f9fcea0497b4a1513cc4cd67a2eedcc6209a5c015/ring_oplog.jsonl",
+   "bytes": 3645,
+   "lines": 5,
+   "view_bytes": 941,
+   "share": 0.25816186556927295,
+   "most_keys_in_a_view": 2
+  },
+  {
+   "journal": "/private/tmp/wait-run/sam/.svrngs/rings/b3924f2dd9d20904dcbe353f9fcea0497b4a1513cc4cd67a2eedcc6209a5c015/ring_oplog.jsonl",
+   "bytes": 3645,
+   "lines": 5,
+   "view_bytes": 941,
+   "share": 0.25816186556927295,
+   "most_keys_in_a_view": 2
+  }
+ ]
+}

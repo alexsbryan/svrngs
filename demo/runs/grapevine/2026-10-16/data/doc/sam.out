@@ -1,0 +1,9 @@
+Made 1400 Page, with you as Sam.
+Send this link to the people you want in it. It works for a day, while this computer is on:
+
+  svrngs://join/<the token>
+
+1400 Page's folder is /tmp/grapevine/sam/svrngs/1400 Page: what anyone in 1400 Page puts there reaches this computer, and what you put there reaches theirs.
+
+Leave this running; Ctrl-C stops it.
+{"port":64283,"at":"http://127.0.0.1:64283/","store":"record"}

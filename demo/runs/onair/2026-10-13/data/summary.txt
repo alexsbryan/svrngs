@@ -1,0 +1,38 @@
+run: commit 43724d7, 137 s start to end, load 7.2 at start, 5.3 at end
+verdict 4.1: passed
+verdict 4.1, carried: passed
+verdict 4.1, lapses: passed
+verdict 4.1, scoped: passed
+verdict 4.2: passed
+verdict 4.3: passed
+verdict off air: passed
+sound: ffmpeg aevalsrc, 40 s, mono, 128 kbit/s: generated here, nobody's rights; 640731 bytes, 10 pieces, [4.023, 4.023, 4.023, 4.023, 4.023, 4.023, 4.023, 4.023, 4.023, 3.84] s
+pieces: [64365, 64366, 64366, 64365, 64366, 64366, 64366, 64365, 64366, 61440], sum 640731
+station: 40.2 s on air; puts [200], signs [200], lives delivered [2], peers ['Bo', 'Cy']
+4.1: bound 4000 ms; Bo held_ms {'0': 88, '1': 23, '2': 25, '3': 33, '4': 28, '5': 29, '6': 42, '7': 50, '8': 108, '9': 78}; min 23 max 108
+4.1: Cy held_ms {0: 102, 1: 32, 2: 30, 3: 33, 4: 28, 5: 30, 6: 42, 7: 39, 8: 108, 9: 78}; min 28 max 108
+bo: fetched from {'254fdf0a': 1, '5299633c': 10}
+cy: fetched from {'5299633c': 10, '5b438c87': 1}
+keys: {'254fdf0a': 'Cy', '5299633c': 'Ana', '5b438c87': 'Bo', 'a3ad76e9': 'Dee'}
+ana sent: 20 gets done, 1221209 bytes
+bo sent: 1 gets done, 4112 bytes
+cy sent: 1 gets done, 64365 bytes
+carried: Cy's Y 200 4112 bytes in 3017 ms; Z 502 in 3003 ms
+lapses: 65.1 s after the last put; {'bo_piece0': 410, 'bo_Y': 410, 'bo_never': 502, 'cy_piece0': 410, 'cy_Y': 410, 'cy_never': 502}
+lapses: stores {'bo': 0, 'cy': 0, 'ana_stopped': 10, 'ana_restarted': 0}; Ana restarted, none left after 1.3 s
+scoped: Dee 403 {"error":"this computer does not stand in 0479fe5c473ff5eae1da38003a958a71933a8212a384cc6b146356a0bde93dc2"}
+page: played [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], refused [], said 'ended' 'after 10 pieces', errors []
+plant flipped: played [0, 2, 3, 4, 5, 6, 7, 8, 9], refused [(1, "its BLAKE3 is afdedf6b6058…, not the line's c225526d54ff…")], said 'ended' 'after 10 pieces', errors []
+plant act-sig: played [2, 3, 4, 5, 6, 7, 8, 9], refused [(0, "its signature does not check under the station's key 5299633c…"), (1, "its signature does not check under the station's key 5299633c…")], said 'ended' 'after 10 pieces', errors []
+plant no-ended: played [0, 1], refused [], said 'cannot reach' 'no line 2 in 12 s', errors []
+plant bo-signed: played [], refused [(0, "its signature does not check under the station's key 5299633c…; it names 5b438c87…"), (1, "its signature does not check under the station's key 5299633c…; it names 5b438c87…"), (2, "its signature does not check under the station's key 5299633c…; it names 5b438c87…")], said 'cannot reach' 'no line 3 in 12 s', errors []
+off air: the station's ended at 1791961209963; Bo +52 ms, Cy +53 ms, page +259 ms; one piece is 4000 ms
+bo-heard.mp3: 640731 bytes, sha256 9391ae38dd62b085
+ana upload: 1221209 bytes over 40.2 s on air = 243 kbit/s, 1.91 times the show, for 2 listeners and Y
+lines 4.3, onair-live: core +0, repository +11
+lines 4.2 core, onair-sign (b): core +28, repository +28
+lines 4.2 route, onair-sign (c): core +0, repository +25
+lines 4.1, onair-blob (a): core +0, repository +222
+lines the three, e114b96 to db6ba51: core +28, repository +286
+lines left at HEAD: 51 of the ceiling 16,287, core 33 of 3,182
+piece fetches by Bo and Cy: 20, from {'Ana': 19, 'Cy': 1}

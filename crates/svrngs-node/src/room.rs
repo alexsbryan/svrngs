@@ -27,8 +27,7 @@ use svrngs_core::pass::Label;
 use crate::api::ApiError;
 use crate::door::limit::{guess, Whereabouts};
 use crate::lend::LendName;
-use crate::node::{label, Asking, Lent, Node};
-use crate::ring_routes::err;
+use crate::node::{Asking, Lent, Node};
 
 /// The address a room's devices reach this computer at, from the
 /// addresses its endpoint lists (`Endpoint::addr().ip_addrs()`) and the
@@ -124,7 +123,7 @@ pub async fn open(node: &Node, at: Ipv4Addr, names: &[LendName]) -> Result<Room,
         asking: asking.clone(),
     };
     for lent in lent {
-        let Some(label) = label(&lent.key, lent.offered.name.as_str()) else {
+        let Some(label) = Label::of_hex(&lent.key, lent.offered.name.as_str()) else {
             continue;
         };
         let addr = SocketAddr::new(at.into(), port_of(&label));
@@ -149,9 +148,13 @@ pub async fn open(node: &Node, at: Ipv4Addr, names: &[LendName]) -> Result<Room,
     Ok(room)
 }
 
-/// A request at the room door, carried to its lend as at its origin.
-async fn in_room(State((at, label)): State<(Asking, Label)>, req: Request) -> Response {
-    crate::origin::reach(&at, label, req).await
+/// A request at the room door, carried to its lend as at its origin, for
+/// the lend's own page: the room serves one lend at each port.
+async fn in_room(
+    State((at, label)): State<(Asking, Label)>,
+    req: Request,
+) -> Result<Response, Response> {
+    crate::origin::reach(&at, label.clone(), label, req).await
 }
 
 /// Serve a request only from a caller on this computer's network: one the
@@ -168,7 +171,7 @@ pub(crate) async fn from_this_network(request: Request, next: Next) -> Response 
         return next.run(request).await;
     }
     tracing::debug!(target: "room", ?caller, path = %request.uri().path(), "room: refused — the caller is not on this computer's network");
-    err(
+    crate::door::LendRefusal::Closed.say(
         StatusCode::FORBIDDEN,
         "this is opened only on the network of the computer that serves it",
     )

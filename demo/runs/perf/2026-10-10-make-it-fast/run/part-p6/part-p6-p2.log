@@ -1,0 +1,132 @@
+2026-10-11T02:41:45.447860Z  INFO folder: folder: the store is open untagged=0
+2026-10-11T02:41:45.448183Z  INFO rails: api: serving the record to this computer's apps addr=127.0.0.1:50770
+2026-10-11T02:41:45.448487Z DEBUG rails: api: wrote where it listens, for apps it did not start path=/tmp/perf2-run/part-p6/data/p2/api addr=127.0.0.1:50770
+2026-10-11T02:41:45.448579Z  INFO svrngs_node::ring_sync: ring sync: loop started interval_secs=60
+PERF told of 2 members
+2026-10-11T02:41:46.591299Z DEBUG folder: folder: what the store keeps changed, so it drops every other version kept=0
+2026-10-11T02:41:47.709855Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:41:48.826666Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:41:49.915330Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:41:51.005443Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:41:52.090686Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:41:53.130087Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:41:54.256895Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:41:55.353597Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:41:56.445309Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:41:57.493215Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:41:58.601776Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:41:59.697755Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:00.791940Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:01.887021Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:02.964602Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:04.041338Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:05.138036Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:06.198123Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:07.318160Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:08.406275Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:09.494642Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:10.564361Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:11.666374Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:12.764886Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:13.836629Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:14.940659Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:16.025278Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:17.117712Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:18.199316Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:19.288382Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:20.364303Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:21.466179Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:22.583281Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:23.692165Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:24.799282Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:25.886410Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:26.969398Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:28.027515Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:29.149096Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:30.238710Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:31.326315Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:32.401454Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:33.472787Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:34.588573Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:35.662148Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:36.758852Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:37.852117Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:39.002692Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:40.079918Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:41.163486Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:42.266973Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:43.359415Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:44.438808Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:45.215714Z DEBUG rails: ring: the asker stands in the ring route="sync" namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" asker="8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c"
+2026-10-11T02:42:45.215816Z DEBUG rails: ring sync: exchange namespace=51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536 request_bytes=279 offered=0 ingested=0 sending=0 more_for_caller=false payload_bytes=132
+2026-10-11T02:42:45.217245Z DEBUG rails: ring: the asker stands in the ring route="sync" namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" asker="8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c"
+2026-10-11T02:42:45.224004Z DEBUG rails: ring sync: exchange namespace=51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536 request_bytes=1410 offered=2 ingested=2 sending=0 more_for_caller=false payload_bytes=292
+2026-10-11T02:42:45.225247Z DEBUG rails: ring: the asker stands in the ring route="sync" namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" asker="8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c"
+2026-10-11T02:42:45.225359Z DEBUG rails: ring sync: exchange namespace=51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536 request_bytes=279 offered=0 ingested=0 sending=0 more_for_caller=false payload_bytes=292
+2026-10-11T02:42:45.367672Z DEBUG rails: ring: the asker stands in the ring route="sync" namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" asker="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394"
+2026-10-11T02:42:45.367817Z DEBUG rails: ring sync: exchange namespace=51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536 request_bytes=279 offered=0 ingested=0 sending=0 more_for_caller=false payload_bytes=292
+2026-10-11T02:42:45.452330Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["p1/8139770e", "p0/8a88e3dd"] skipped_offline=[]
+2026-10-11T02:42:45.452473Z DEBUG svrngs_node::ring_sync: ring sync: namespace register namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" offered_to=["p1/8139770e", "p0/8a88e3dd"] skipped_not_standing=[]
+2026-10-11T02:42:45.452600Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=30029 peer=8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 error=Address already in use (os error 48)
+2026-10-11T02:42:45.452953Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=27113 peer=8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c error=Address already in use (os error 48)
+2026-10-11T02:42:45.457869Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:51097/internal/ring/sync" chunk=1 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-11T02:42:45.458090Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:51099/internal/ring/sync" chunk=1 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-11T02:42:45.458130Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=2 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=0 round_ms=6
+2026-10-11T02:42:45.529664Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:46.607933Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:46.609080Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:51108 path=/v1/folders
+2026-10-11T02:42:46.609278Z  INFO folder: synced: the directory kept in step with the group's folder namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" folder="Shared" dir=/tmp/perf2-run/part-p6/disk/p2/Shared
+2026-10-11T02:42:46.609525Z DEBUG folder: synced: the layout read folder="Shared" placed=0 holders=3 ms=0
+2026-10-11T02:42:46.609570Z DEBUG folder: synced: the layout to write folder="Shared" placed=0
+2026-10-11T02:42:46.609702Z DEBUG folder: synced: a step folder="Shared" files=0 sent=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=0
+2026-10-11T02:42:47.612884Z DEBUG folder: synced: the layout read folder="Shared" placed=0 holders=3 ms=0
+2026-10-11T02:42:47.613022Z DEBUG folder: synced: the layout to write folder="Shared" placed=0
+2026-10-11T02:42:47.613569Z DEBUG folder: synced: a step folder="Shared" files=0 sent=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=1
+2026-10-11T02:42:48.615481Z DEBUG folder: synced: the layout read folder="Shared" placed=0 holders=3 ms=0
+2026-10-11T02:42:48.615567Z DEBUG folder: synced: the layout to write folder="Shared" placed=0
+2026-10-11T02:42:48.616133Z DEBUG folder: synced: a step folder="Shared" files=0 sent=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=0
+2026-10-11T02:42:48.760644Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:49.620826Z DEBUG folder: synced: the layout read folder="Shared" placed=0 holders=3 ms=1
+2026-10-11T02:42:49.621053Z DEBUG folder: synced: the layout to write folder="Shared" placed=0
+2026-10-11T02:42:49.621938Z DEBUG folder: synced: a step folder="Shared" files=0 sent=0 read_ms=1 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=2
+2026-10-11T02:42:49.754363Z DEBUG rails: ring: the asker stands in the ring route="sync" namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" asker="8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c"
+2026-10-11T02:42:49.757563Z DEBUG rails: ring sync: exchange namespace=51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536 request_bytes=279 offered=0 ingested=0 sending=2 more_for_caller=false payload_bytes=1423
+2026-10-11T02:42:49.758274Z DEBUG rails: ring: the asker stands in the ring route="sync" namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" asker="8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c"
+2026-10-11T02:42:49.762519Z DEBUG rails: ring sync: exchange namespace=51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536 request_bytes=1020 offered=1 ingested=1 sending=0 more_for_caller=false payload_bytes=292
+2026-10-11T02:42:49.764789Z DEBUG rails: ring: the asker stands in the ring route="sync" namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" asker="8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c"
+2026-10-11T02:42:49.764826Z DEBUG rails: ring sync: exchange namespace=51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536 request_bytes=279 offered=0 ingested=0 sending=0 more_for_caller=false payload_bytes=292
+2026-10-11T02:42:49.883439Z DEBUG folder: folder: what the store keeps changed, so it drops every other version kept=1
+2026-10-11T02:42:50.626262Z DEBUG folder: synced: the layout read folder="Shared" placed=1 holders=3 ms=1
+2026-10-11T02:42:50.626471Z DEBUG folder: synced: the layout to write folder="Shared" placed=1
+2026-10-11T02:42:50.626515Z DEBUG folder: synced: to fetch, the layout placing it here folder="Shared" path=p6.bin hash=1c5225dd14f9123b0ce307996b619ffac842087b4a2cca88060dc9c827e317a9 size=104857600 from="8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c" seq=2
+2026-10-11T02:42:50.884189Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:51.928141Z DEBUG folder: folder: the fetch's phases, and the path iroh selected holder=8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c dial_ms=2.455 first_ms=6.334 last_ms=1301.335 relayed=Some(false) addr="Ip(127.0.0.1:61444)" rtt_ms=0.977 ok=true
+2026-10-11T02:42:51.930357Z  INFO folder: folder: fetched, verified hash=1c5225dd14f9123b0ce307996b619ffac842087b4a2cca88060dc9c827e317a9 holder=8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c payload=104857600 other=409544 ms=1303
+2026-10-11T02:42:51.930415Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:51.931022Z  INFO folder: synced: written into the directory folder="Shared" path=p6.bin hash=1c5225dd14f9123b0ce307996b619ffac842087b4a2cca88060dc9c827e317a9 from="8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c" seq=2 beside=false fetch_ms=1303 export_ms=0
+2026-10-11T02:42:51.939571Z DEBUG folder: synced: what the step took or fetched made durable folder="Shared" held=1
+2026-10-11T02:42:51.939834Z DEBUG folder: synced: a step folder="Shared" files=0 sent=0 read_ms=1 walk_ms=0 take_ms=0 write_ms=0 apply_ms=1304 kept_ms=8 ms=1314
+2026-10-11T02:42:52.942662Z DEBUG folder: synced: the layout read folder="Shared" placed=1 holders=3 ms=0
+2026-10-11T02:42:52.942894Z DEBUG folder: synced: the layout to write folder="Shared" placed=1
+2026-10-11T02:42:52.943502Z DEBUG folder: synced: a step folder="Shared" files=1 sent=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=1
+2026-10-11T02:42:53.945321Z DEBUG folder: synced: the layout read folder="Shared" placed=1 holders=3 ms=0
+2026-10-11T02:42:53.945527Z DEBUG folder: synced: the layout to write folder="Shared" placed=1
+2026-10-11T02:42:53.946179Z DEBUG folder: synced: a step folder="Shared" files=1 sent=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=1
+2026-10-11T02:42:54.111497Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:54.934673Z DEBUG rails: ring: the asker stands in the ring route="sync" namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" asker="8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c"
+2026-10-11T02:42:54.934817Z DEBUG rails: ring sync: exchange namespace=51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536 request_bytes=279 offered=0 ingested=0 sending=3 more_for_caller=false payload_bytes=2165
+2026-10-11T02:42:54.935472Z DEBUG rails: ring: the asker stands in the ring route="sync" namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" asker="8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c"
+2026-10-11T02:42:54.939800Z DEBUG rails: ring sync: exchange namespace=51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536 request_bytes=1106 offered=1 ingested=1 sending=0 more_for_caller=false payload_bytes=292
+2026-10-11T02:42:54.942068Z DEBUG rails: ring: the asker stands in the ring route="sync" namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" asker="8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c"
+2026-10-11T02:42:54.947509Z DEBUG rails: ring sync: exchange namespace=51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536 request_bytes=279 offered=0 ingested=0 sending=0 more_for_caller=false payload_bytes=292
+2026-10-11T02:42:54.947892Z DEBUG folder: synced: the layout read folder="Shared" placed=1 holders=3 ms=0
+2026-10-11T02:42:54.947994Z DEBUG folder: synced: the layout to write folder="Shared" placed=1
+2026-10-11T02:42:54.948006Z DEBUG folder: synced: to fetch, the layout placing it here folder="Shared" path=p6.bin hash=e98f3dd6bbb632dddc561f8c04cbe7414e642d34b1c1aeea9509588835210e4a size=0 from="8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c" seq=3
+2026-10-11T02:42:55.112694Z DEBUG folder: folder: what the store keeps changed, so it drops every other version kept=2
+2026-10-11T02:42:56.214194Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-11T02:42:56.320399Z DEBUG folder: folder: the fetch's phases, and the path iroh selected holder=8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c dial_ms=0.001 first_ms=122.032 last_ms=1372.276 relayed=Some(false) addr="Ip(127.0.0.1:61444)" rtt_ms=0.07 ok=true
+2026-10-11T02:42:56.320424Z  INFO folder: folder: fetched, verified hash=e98f3dd6bbb632dddc561f8c04cbe7414e642d34b1c1aeea9509588835210e4a holder=8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c payload=104857600 other=409544 ms=1372
+2026-10-11T02:42:56.468087Z  INFO folder: synced: written into the directory folder="Shared" path=p6.bin hash=e98f3dd6bbb632dddc561f8c04cbe7414e642d34b1c1aeea9509588835210e4a from="8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c" seq=3 beside=false fetch_ms=1372 export_ms=147
+2026-10-11T02:42:56.479750Z DEBUG folder: synced: what the step took or fetched made durable folder="Shared" held=1
+2026-10-11T02:42:56.480155Z DEBUG folder: synced: a step folder="Shared" files=1 sent=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=1520 kept_ms=12 ms=1532
+2026-10-11T02:42:57.311975Z DEBUG folder: folder: what the store keeps changed, so it drops every other version kept=1

@@ -1,0 +1,13 @@
+$ cmp /tmp/onair-run-w/tone.mp3 /tmp/onair-run-w/bo/heard.mp3
+exit 0
+$ cmp /tmp/onair-run-w/tone.mp3 /tmp/onair-run-w/cy/heard.mp3
+exit 0
+$ shasum -a 256 /tmp/onair-run-w/tone.mp3 /tmp/onair-run-w/bo/heard.mp3 /tmp/onair-run-w/cy/heard.mp3
+9391ae38dd62b0855469eaed45518517dee93e10ac4796b8d2ea1fedf3d5e220  /tmp/onair-run-w/tone.mp3
+9391ae38dd62b0855469eaed45518517dee93e10ac4796b8d2ea1fedf3d5e220  /tmp/onair-run-w/bo/heard.mp3
+9391ae38dd62b0855469eaed45518517dee93e10ac4796b8d2ea1fedf3d5e220  /tmp/onair-run-w/cy/heard.mp3
+exit 0
+$ ffprobe -v error -show_entries format=duration,bit_rate:stream=codec_name,sample_rate,channels -of compact /tmp/onair-run-w/bo/heard.mp3
+stream|codec_name=mp3|sample_rate=44100|channels=1
+format|duration=40.045688|bit_rate=127999
+exit 0

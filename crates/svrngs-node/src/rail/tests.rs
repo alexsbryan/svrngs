@@ -11,7 +11,7 @@ use std::sync::Arc;
 
 use axum::http::StatusCode;
 
-use crate::{actor_of, Person, RingRail, RingSigner, Roster, SigningKey};
+use crate::{actor_of, Person, RingRail, Roster, SigningKey};
 
 use super::{append_act, drain_answer, group_of, push_answer, LiveBuffer, RailApi};
 
@@ -67,14 +67,10 @@ async fn append_signs_as_the_node_and_assigns_the_fields() {
     assert_eq!(resp.status(), StatusCode::OK);
     let out = body_of(resp).await;
     assert_eq!(out["seq"], 0, "the door assigns the sequence, not the body");
-    assert_eq!(out["actor"], RingSigner::actor(&key(7)));
+    assert_eq!(out["actor"], actor_of(&key(7)));
     assert!(out["ts_unix"].as_i64().unwrap_or(0) > 0);
     assert!(out["id"].as_str().is_some());
     assert_eq!(out["namespace"], "ledger");
-    assert!(
-        out.get("retired").is_none(),
-        "a record has no prune to render"
-    );
 }
 
 const GUESTS: &[(&str, u8)] = &[("alex", 7), ("halo", 3)];
@@ -110,7 +106,7 @@ async fn an_append_names_the_person_an_app_serves() {
     assert_eq!(resp.status(), StatusCode::OK);
     assert_eq!(
         body_of(resp).await["actor"],
-        RingSigner::actor(&key(7)),
+        actor_of(&key(7)),
         "this computer signs"
     );
     let ops = svrngs_core::tests_support::wire_ops(&rail.admission(journal).unwrap());
@@ -212,17 +208,18 @@ async fn log_ships_admitted_ops_gaps_and_the_roster() {
     assert_eq!(out["gaps"].as_array().unwrap().len(), 0);
     assert_eq!(
         out["people"],
-        serde_json::json!([{ "person": "alex", "key": actor_of(&key(7)) }]),
+        serde_json::json!([{ "person": "alex", "key": actor_of(&key(7)), "person_key": actor_of(&key(7)), "joined": "started", "device": "computer" }]),
         "the answer carries the people standing after the ops (svrngs: \
          upstream's carried the roster they were admitted against)"
     );
 }
 
-/// A seal renders its prune in the append body: the seal is on disk either
-/// way, so a refused prune must never read as a failed seal — and a working
-/// one reports what it removed.
+/// An app's `{"op":"seal"}` is refused as not an app's to write, and retires
+/// nothing (arch-seal (b); WHO_KNOWS_WHOM §3, bar 10): the journal holds both
+/// records after it, and no seal. The failing input: the route seals, as it
+/// did, retiring both records.
 #[tokio::test]
-async fn a_seal_renders_its_prune() {
+async fn an_apps_seal_is_refused_and_retires_nothing() {
     let (_dir, rail) = rail_with(&[("alex", 7)]);
     group_of(&rail, "ledger").unwrap();
     let journal = "ledger";
@@ -234,22 +231,22 @@ async fn a_seal_renders_its_prune() {
         );
     }
     let resp = append_act(&rail, journal, serde_json::json!({ "op": "seal" })).await;
-    assert_eq!(resp.status(), StatusCode::OK);
-    let out = body_of(resp).await;
-    let retired = &out["retired"];
-    assert!(
-        retired.get("refused").is_none(),
-        "a prune this roster admits must not read as refused: {retired}"
-    );
-    assert_eq!(retired["removed"], 2, "both sealed-over acts retire");
-    assert_eq!(retired["kept"], 1, "the seal itself stays");
+    assert_eq!(resp.status(), StatusCode::UNPROCESSABLE_ENTITY);
+    assert_eq!(body_of(resp).await["kind"], "not_an_app_act");
+    let ops = svrngs_core::tests_support::wire_ops(&rail.admission(journal).unwrap());
+    assert_eq!(ops.len(), 2, "both records still count: {ops:?}");
+    let held =
+        std::fs::read_to_string(rail.group_dir(journal).unwrap().join("ring_oplog.jsonl")).unwrap();
+    assert!(!held.contains("\"seal\""), "no seal on disk:\n{held}");
 }
 
 /// The people door answers who stands in the group from the register — the
 /// seed's founder and everyone an `Admit` let in — each with their key's hex,
-/// and refuses a group this computer does not hold (svrngs, DESIGN §3). The
-/// failing input: the people read from the seed alone, which knows only the
-/// founder.
+/// and refuses a group this computer does not hold (svrngs, DESIGN §3). Each
+/// row says what holds its key (v1ui-door (a)): cy, in from a phone's page,
+/// is a browser's. The failing inputs: the people read from the seed alone,
+/// which knows only the founder; a row with no `device`, so a page cannot
+/// draw a phone as one.
 #[tokio::test]
 async fn the_people_door_answers_the_register_with_keys() {
     let (_dir, rail) = rail_with(&[("alex", 7)]);
@@ -265,11 +262,51 @@ async fn the_people_door_answers_the_register_with_keys() {
         on_behalf_of: None,
     };
     rail.commit(journal, &fixture).unwrap().unwrap();
+    let invite = svrngs_core::tests_support::Fixture {
+        act: crate::RailAct::Invite {
+            key: actor_of(&key(9)),
+            until: i64::MAX,
+            device_of: None,
+        },
+        on_behalf_of: None,
+    };
+    let invite = rail.commit(journal, &invite).unwrap().unwrap().lines()[0]
+        .id
+        .clone();
+    let cy = Person::parse("cy").unwrap();
+    let admit_cy = crate::RailAct::Admit {
+        invite: Some(crate::Redemption::sign(
+            &key(4),
+            journal,
+            &invite,
+            &cy,
+            crate::Device::Browser,
+        )),
+        person: cy,
+        key: actor_of(&key(4)),
+    };
+    let fixture = svrngs_core::tests_support::Fixture {
+        act: admit_cy,
+        on_behalf_of: None,
+    };
+    rail.commit(journal, &fixture).unwrap().unwrap();
     let out = body_of(super::people_answer(&rail, "ledger")).await;
+    // When bo joined: the time on the `Admit` this computer stamped
+    // (bash-same-name); alex started the group.
+    let bo_joined = (out["people"].as_array().unwrap().iter())
+        .find(|p| p["person"] == "bo")
+        .map(|p| p["joined"].clone())
+        .unwrap();
+    assert!(bo_joined["at"].is_i64(), "{out}");
+    let cy_joined = (out["people"].as_array().unwrap().iter())
+        .find(|p| p["person"] == "cy")
+        .map(|p| p["joined"].clone())
+        .unwrap();
     // In the order of their keys, as the register holds them.
     let mut want = vec![
-        serde_json::json!({ "person": "alex", "key": actor_of(&key(7)) }),
-        serde_json::json!({ "person": "bo", "key": actor_of(&key(3)) }),
+        serde_json::json!({ "person": "alex", "key": actor_of(&key(7)), "person_key": actor_of(&key(7)), "joined": "started", "device": "computer" }),
+        serde_json::json!({ "person": "bo", "key": actor_of(&key(3)), "person_key": actor_of(&key(3)), "joined": bo_joined, "device": "computer" }),
+        serde_json::json!({ "person": "cy", "key": actor_of(&key(4)), "person_key": actor_of(&key(4)), "joined": cy_joined, "device": "browser" }),
     ];
     want.sort_by_key(|p| p["key"].as_str().unwrap().to_string());
     assert_eq!(out["people"], serde_json::Value::from(want));
@@ -282,20 +319,28 @@ async fn the_people_door_answers_the_register_with_keys() {
 #[test]
 fn the_live_buffer_evicts_the_oldest_and_reports_it() {
     let live = LiveBuffer::default();
+    let said = |payload: String| super::Live {
+        payload,
+        key: "k".into(),
+        person_key: "k".into(),
+    };
     for i in 0..257 {
-        live.push("room", format!("p{i}"));
+        live.push("room", said(format!("p{i}")));
     }
     let (payloads, dropped) = live.drain("room");
     assert_eq!(payloads.len(), 256);
     assert_eq!(dropped, 1);
-    assert_eq!(payloads[0], "p1", "the OLDEST payload is the one evicted");
+    assert_eq!(
+        payloads[0].payload, "p1",
+        "the OLDEST payload is the one evicted"
+    );
     let (again, dropped) = live.drain("room");
     assert!(
         again.is_empty() && dropped == 0,
         "a drain empties the buffer"
     );
     // Another namespace's buffer is untouched.
-    live.push("other", "x".into());
+    live.push("other", said("x".into()));
     let (mine, _) = live.drain("room");
     assert!(mine.is_empty());
 }
@@ -355,6 +400,9 @@ fn the_live_fan_out_never_offers_a_browser() {
     let member = |name: &str, device| Member {
         person: Person::parse(name).unwrap(),
         device,
+        person_key: name.to_string(),
+        joined: crate::Joined::Started,
+        relay: None,
     };
     let standing = [
         (7, member("ada", Device::Computer)),

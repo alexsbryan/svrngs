@@ -1,0 +1,97 @@
+{
+ "f10000-taken": {
+  "value": 885.2,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    3.35,
+    5.56,
+    5.9
+   ],
+   "cores": 12,
+   "swap_used_mb": 8639.5,
+   "free_gb": 111.0
+  },
+  "end": {
+   "load": [
+    3.06,
+    5.25,
+    5.78
+   ],
+   "cores": 12,
+   "swap_used_mb": 8639.5,
+   "free_gb": 110.9
+  },
+  "unit": "ms",
+  "path": "loopback",
+  "steps": {
+   "read_ms": 0.5,
+   "walk_ms": 19.5,
+   "take_ms": 337.0,
+   "write_ms": 27.5,
+   "apply_ms": 15.0,
+   "kept_ms": 16.0,
+   "ms": 416.5,
+   "steps": 2
+  },
+  "first_step": {
+   "folder": "Shared",
+   "files": "10000",
+   "sent": "10000",
+   "read_ms": "0",
+   "walk_ms": "39",
+   "take_ms": "674",
+   "write_ms": "55",
+   "apply_ms": "24",
+   "kept_ms": "32",
+   "ms": "826"
+  }
+ },
+ "f10000-join": {
+  "value": 2312.0,
+  "target": null,
+  "verdict": "reported",
+  "start": {
+   "load": [
+    3.06,
+    5.25,
+    5.78
+   ],
+   "cores": 12,
+   "swap_used_mb": 8639.5,
+   "free_gb": 110.9
+  },
+  "end": {
+   "load": [
+    2.72,
+    4.79,
+    5.57
+   ],
+   "cores": 12,
+   "swap_used_mb": 8639.5,
+   "free_gb": 110.8
+  },
+  "unit": "ms",
+  "path": "loopback",
+  "held": 10000,
+  "stand_ms": 59460.8,
+  "of": 10000,
+  "member_steps": {
+   "read_ms": 22.0,
+   "walk_ms": 26.0,
+   "take_ms": 12.5,
+   "write_ms": 0.0,
+   "apply_ms": 962.5,
+   "kept_ms": 9.5,
+   "ms": 1034.5,
+   "steps": 2
+  },
+  "holder": {
+   "gets": 10000,
+   "median_ms": 0.1,
+   "sum_ms": 1178.3
+  },
+  "journal_bytes": 1191076
+ }
+}

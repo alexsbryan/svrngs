@@ -1,0 +1,5 @@
+{"t": 1791854853.127, "event": "start", "load": 24.7, "commit": "c22ca7d"}
+{"t": 1791854892.79, "event": "command", "who": "sam", "args": ["share", "8096", "--sign-in", "8097"], "exit": 0, "said": "Lent jellyfin (port 8096) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 8096 --limit <number>`.\nEach person is signed in to it as themselves by what answers on port 8097, with nothing typed.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare jellyfin` stops lending it.", "ms": 10}
+{"t": 1791854895.104, "event": "command", "who": "ana", "args": ["join", "http://localhost:50196/#<the token>", "--as", "Ana", "--no-run"], "exit": 0, "said": "You're in two, as Ana.\ntwo's folder is /tmp/two-run/ana/svrngs/two: what anyone in two puts there reaches this computer, and what you put there reaches theirs.", "ms": 2314}
+{"t": 1791854897.374, "event": "two", "load": 30.6}
+{"t": 1791855131.972, "event": "end"}

@@ -1,0 +1,66 @@
+04:24:38 jellyfin up: {"LocalAddress":"http://127.0.0.1:8096","ServerName":"Alexs-MacBook-Pro-4","Version":"12.0.0","ProductName":"Jellyfin Server","OperatingSystem":"","Id":"db090acca9d94d47b1ffccd986a4458b","StartupWizardCompleted":false}
+04:24:45 films: 3; users: ["sam"]
+04:24:48 the page: http://localhost:64502/
+04:24:49 sam: On a phone, each app opens at an address of its own under localhost:64502, which can see which app is opened.
+04:24:50 alex: You're in House, as Alex.
+04:24:50 sam: Lent jellyfin (port 8096) to everyone in your groups, up to 3 people at once.
+04:24:50 sam is told: jellyfin asks each person to sign in once, with an account you make them. In jellyfin: your picture at the top right, then Dashboard, Users and +; give it a name and a password, tick the libraries they may watch, and Save. Then tell each person theirs.
+04:24:58 sam made: ["sam"]
+04:25:01 alex's computer opens it at http://svrngs.localhost:64616/
+04:25:08 mw keep-back-off: listening on port 8097, signing people in to Jellyfin at 127.0.0.1:8096 ; users: ["sam"]
+04:25:08 sam: Lent jellyfin-mw (port 8096) to everyone in your groups, up to 3 people at once.
+04:25:08 sam is told: Each person is signed in to it as themselves by what answers on port 8097, with nothing typed. Each is told their share of the 37 Mbit/s upload you stated. svrngs is running here already, so they can open it now. `svrngs unshare jellyfin-mw` stops lending it. 
+04:25:09 bo: You're in House, as Bo.
+04:25:10 cy: You're in House, as Cy.
+04:25:13 alex's computer opens the middleware's lend at http://qrgttrdn1g5utjd8x2a7pw32fpjsgpr876vfncf9uknaxd0n919a22m038n775.localhost:64757/
+04:25:16 bo's computer opens the middleware's lend at http://qrgttrdn1g5utjd8x2a7pw32fpjsgpr876vfncf9uknaxd0n919a22m038n775.localhost:64795/
+04:25:19 cy's computer opens the middleware's lend at http://qrgttrdn1g5utjd8x2a7pw32fpjsgpr876vfncf9uknaxd0n919a22m038n775.localhost:64832/
+passed          each a user of their own: Alex Alex-6df0191cc56d133f (d81c2cdf6c3843308557427328083e66), made by the first ask [('Alex-6df0191cc56d133f', 'd81c2cdf6c3843308557427328083e66')]; Bo Bo-1e424b00582c07cd (c0a95cbfefbc4603a3a462d4030b90aa), made by the first ask [('Bo-1e424b00582c07cd', 'c0a95cbfefbc4603a3a462d4030b90aa')]
+passed          a second ask makes none: made by the second asks: Alex [], Bo []
+passed          each person's own device: Jellyfin's sessions by user: {'Alex': ['svrngs-6df0191cc56d133f'], 'Bo': ['svrngs-1e424b00582c07cd']}; each person's, named from their key: {'Alex': 'svrngs-6df0191cc56d133f', 'Bo': 'svrngs-1e424b00582c07cd'}
+passed          neither receives the lender's key: found: {'Alex': [], 'Bo': []}, in {'Alex': 79723, 'Bo': 79722} bytes
+passed          no key is refused: 403: "This port answers only svrngs's door: the ask names no person: it carries no x-svrngs-key.\n"
+passed          carried: Alex: body sent 204, range {'status': 206, 'bytes': 65536}, page {'status': 200, 'bytes': 5938}, socket {'status': 101, 'first_frame': '{"MessageId":"b8f1d9650d9242fd9fa64316732f4adf","Data":60,"MessageType":"ForceKeepAlive"}'}; Bo: body sent 204, range {'status': 206, 'bytes': 65536}, page {'status': 200, 'bytes': 5938}, socket {'status': 101, 'first_frame': '{"MessageId":"209bd8fadd374dc988ab5af37c36624f","Data":60,"MessageType":"ForceKeepAlive"}'}
+failed          Family kept back from each: each person's libraries, as their lend lists them: {'Alex': ['Family', 'Movies'], 'Bo': ['Family', 'Movies']}
+recorded        another person's key at the middleware's port: {'status': 200, 'answered_a_secret': True}
+04:25:29 mw keep-back: listening on port 8097, signing people in to Jellyfin at 127.0.0.1:8096 keeping Family back from everyone it signs in ; users: ["sam"]
+could-not-judge each a user of their own: a first /Users/Me did not answer 200: 401, 401
+failed          a second ask makes none: made by the second asks: Alex [('Alex-6df0191cc56d133f', '4d6cd3585a6b4fc8ace5928a8585deb1')], Bo [('Bo-1e424b00582c07cd', 'bc510b0b5e3e44cba9742e33dbc275f1')]
+failed          each person's own device: Jellyfin's sessions by user: {'Alex': [], 'Bo': []}; each person's, named from their key: {'Alex': 'svrngs-6df0191cc56d133f', 'Bo': 'svrngs-1e424b00582c07cd'}
+passed          neither receives the lender's key: found: {'Alex': [], 'Bo': []}, in {'Alex': 74828, 'Bo': 74822} bytes
+passed          no key is refused: 403: "This port answers only svrngs's door: the ask names no person: it carries no x-svrngs-key.\n"
+passed          carried: Alex: body sent 204, range {'status': 206, 'bytes': 65536}, page {'status': 200, 'bytes': 5938}, socket {'status': 101, 'first_frame': '{"MessageId":"28247624ff8447f5be1e1b42ae50254d","Data":60,"MessageType":"ForceKeepAlive"}'}; Bo: body sent 204, range {'status': 206, 'bytes': 65536}, page {'status': 200, 'bytes': 5938}, socket {'status': 101, 'first_frame': '{"MessageId":"8bd7e32f0ddb4b459e106ff4263740b9","Data":60,"MessageType":"ForceKeepAlive"}'}
+could-not-judge Family kept back from each: each person's libraries, as their lend lists them: {'Alex': None, 'Bo': None}
+recorded        another person's key at the middleware's port: {'status': 200, 'answered_a_secret': True}
+04:25:52 mw keep-back: listening on port 8097, signing people in to Jellyfin at 127.0.0.1:8096 keeping Family back from everyone it signs in ; users: ["sam"]
+04:25:52 mw: ALEX's kept answer, its account deleted, asked once more: 401
+04:25:52 mw: BO's kept answer, its account deleted, asked once more: 401
+passed          each a user of their own: Alex Alex-6df0191cc56d133f (6f64ae4d1f1c464cb3399d53dbfa5a21), made by the first ask [('Alex-6df0191cc56d133f', '6f64ae4d1f1c464cb3399d53dbfa5a21')]; Bo Bo-1e424b00582c07cd (d4b922a01d474d3b8f3d4b7c8ee419f7), made by the first ask [('Bo-1e424b00582c07cd', 'd4b922a01d474d3b8f3d4b7c8ee419f7')]
+passed          a second ask makes none: made by the second asks: Alex [], Bo []
+passed          each person's own device: Jellyfin's sessions by user: {'Alex': ['svrngs-6df0191cc56d133f'], 'Bo': ['svrngs-1e424b00582c07cd']}; each person's, named from their key: {'Alex': 'svrngs-6df0191cc56d133f', 'Bo': 'svrngs-1e424b00582c07cd'}
+passed          neither receives the lender's key: found: {'Alex': [], 'Bo': []}, in {'Alex': 78552, 'Bo': 78537} bytes
+passed          no key is refused: 403: "This port answers only svrngs's door: the ask names no person: it carries no x-svrngs-key.\n"
+passed          carried: Alex: body sent 204, range {'status': 206, 'bytes': 65536}, page {'status': 200, 'bytes': 5938}, socket {'status': 101, 'first_frame': '{"MessageId":"c3335a2cce464f299c59b6e3a2075421","Data":60,"MessageType":"ForceKeepAlive"}'}; Bo: body sent 204, range {'status': 206, 'bytes': 65536}, page {'status': 200, 'bytes': 5938}, socket {'status': 101, 'first_frame': '{"MessageId":"68845f3995654bf192c8766f1d3d8e0e","Data":60,"MessageType":"ForceKeepAlive"}'}
+passed          Family kept back from each: each person's libraries, as their lend lists them: {'Alex': ['Movies'], 'Bo': ['Movies']}
+recorded        another person's key at the middleware's port: {'status': 200, 'answered_a_secret': True}
+04:26:07 mw trio trio: listening on port 8097, signing people in to Jellyfin at 127.0.0.1:8096 keeping Family back from everyone it signs in ; users: ["sam"]
+04:26:07 mw: ALEX's kept answer, its account deleted, asked once more: 401
+04:26:07 mw: BO's kept answer, its account deleted, asked once more: 401
+04:26:07 trio mw-trio: load at the start: 21:26  up 2 days, 10:08, 5 users, load averages: 38.66 36.70 33.16
+04:36:29 trio mw-trio: load at the end: 21:36  up 2 days, 10:19, 5 users, load averages: 9.79 27.81 34.44
+04:36:30 trio mw-trio: each account opens: {"user":"Alex-6df0191cc56d133f","views":["Movies"]} {"user":"Bo-1e424b00582c07cd","views":["Movies"]} {"user":"Cy-9eecfe26e7c6d0b5","views":["Movies"]} ; kept back: Family
+{"mw-trio": {"alex": true, "bo": true, "cy": true}}
+passed           alex plays through the window: played 596.5 s of 600; stills of 5 s or more outside their own seeks []; events outside their own seeks {'emptied': 0, 'loadstart': 0, 'element': 0, 'waiting': 4, 'stalled': 0, 'error': 0, 'ended': 0}; signed in after as Alex-6df0191cc56d133f
+passed           alex seeks: 10 seeks, 0 missed 5000 ms: [1169, 941, 835, 1778, 595, 531, 453, 453, 944, 451]
+passed           bo plays through the window: played 565.1 s of 600; stills of 5 s or more outside their own seeks []; events outside their own seeks {'emptied': 0, 'loadstart': 0, 'element': 0, 'waiting': 0, 'stalled': 5, 'error': 0, 'ended': 0}; signed in after as Bo-1e424b00582c07cd
+failed           bo seeks: 10 seeks, 3 missed 5000 ms: [16534, 5349, 1706, 2849, 10242, 571, 450, 474, 454, 617]
+passed           cy plays through the window: played 589.5 s of 600; stills of 5 s or more outside their own seeks []; events outside their own seeks {'emptied': 0, 'loadstart': 0, 'element': 0, 'waiting': 3, 'stalled': 0, 'error': 0, 'ended': 0}; signed in after as Cy-9eecfe26e7c6d0b5
+passed           cy seeks: 10 seeks, 0 missed 5000 ms: [3668, 2106, 1752, 1800, 1521, 963, 632, 799, 948, 810]
+seeks: 30, 3 missed 5000 ms; {'n': 30, 'min': 450, 'median': 942.5, 'max': 16534}
+door, Alex: {'let_in': 0, 'home': 255}
+door, Cy: {'let_in': 4, 'home': 259, 'people': {'n': 4, 'min': 1, 'median': 1.0, 'max': 1}, 'share_bps': {'n': 4, 'min': 37000000, 'median': 37000000.0, 'max': 37000000}, 'declared_bps': 37000000, 'relayed': {'Some(false)': 4}, 'rtt_ms': {'n': 4, 'min': 7, 'median': 37.5, 'max': 169}}
+door, Bo: {'let_in': 3, 'home': 1629, 'people': {'n': 3, 'min': 1, 'median': 2, 'max': 2}, 'share_bps': {'n': 3, 'min': 18500000, 'median': 18500000, 'max': 37000000}, 'declared_bps': 37000000, 'relayed': {'Some(false)': 2, 'None': 1}, 'rtt_ms': {'n': 2, 'min': 32, 'median': 82.0, 'max': 132}}
+04:37:11 mw trio trio-2: listening on port 8097, signing people in to Jellyfin at 127.0.0.1:8096 keeping Family back from everyone it signs in ; users: ["sam"]
+04:37:11 mw: ALEX's kept answer, its account deleted, asked once more: 401
+04:37:11 mw: BO's kept answer, its account deleted, asked once more: 401
+04:37:11 trio mw-trio-2: load at the start: 21:37  up 2 days, 10:19, 5 users, load averages: 8.94 25.35 33.23

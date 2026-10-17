@@ -1,0 +1,21 @@
+# svrngs folders — group folders' second spike, in its own worktree beside scoped use made production (docs/DESIGN.md §8 "Then", §9, §10; operator, 2026-10-09). Launch, from anywhere:
+#
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py supervise --workdir ~/dev/svrngs-folders \
+#     --queue folders --install-launchd -- python3 ~/dev/commonwealth-ai/scripts/ralph.py \
+#     run --workdir ~/dev/svrngs-folders --queue folders --max-stall 3
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py start --workdir ~/dev/svrngs-folders --queue folders
+#
+# The branch is `folders`, cut from main at b482e08. It merges into main only
+# when the operator decides how to make folders production, from gf-2's verdict.
+# The first run: svrn-docs rings/runs/strm-2026-10-05/ (457f120).
+label = "svrngs-folders"
+session_timeout = 5400
+audit_every = 4
+worker_bin = "/Users/alexsbryan/dev/commonwealth-ai/scripts/ralph-claude-shim.sh"
+settings = "ralph/claude-settings.json"
+
+[models]
+worker = "claude-opus-5-5"
+review = "claude-opus-5-5"
+resolve = "claude-opus-5-5"
+variant = "high"

@@ -4,29 +4,22 @@
 //! key, hole-punching, optional relays). Upstream feature-gated it behind
 //! `iroh`; in svrngs it is the only transport, so nothing gates it.
 //!
-//! ## Shape: a localhost byte-tunnel to dial, hyper on the stream to serve
+//! ## Shape: hyper on the stream, both ways
 //!
-//! [`IrohTransport::base_url`] resolves a base URL, and every call
-//! site keeps its existing `reqwest` client — so the dialling half
-//! terminates iroh QUIC locally and hands HTTP a plain TCP socket:
-//!
-//! - Client side ([`IrohTransport`]): per-peer localhost
-//!   `TcpListener`; each accepted TCP connection opens one iroh
-//!   bi-stream to the peer (dialed by its Ed25519 key — the
-//!   [`Contact`]'s `key`) and copies bytes both ways.
+//! - Client side ([`IrohTransport::send`]): a request on a bi-stream of the
+//!   connection kept to a member, dialled by its Ed25519 key — the
+//!   [`Contact`]'s `key` — and read with hyper's HTTP/1 client, as the
+//!   phone's page reads one (`web/src/http.rs`).
 //! - Server side ([`IrohAcceptor`]): admits or closes each iroh
 //!   connection on its ALPN and the dialer's verified key, and serves
 //!   every bi-stream of an admitted one with hyper's HTTP/1 server and
 //!   the axum router its admit decision names — no loopback listener, and the dialer
 //!   reaches handlers as a [`Dialer`] request extension, never a header.
 //!
-//! Known upgrade path (deliberately NOT in the spike): serve hyper
-//! directly on iroh streams (drop the double-copy), carry the
-//! traffic class in the ALPN or a stream header so one acceptor can
-//! route to both daemon ports, and a tunnel-proxy sidecar for the
-//! raw-TCP `rpc-server` tensor traffic that this transport
-//! intentionally does not cover. (Upstream's words. The server side
-//! has taken the first; svrngs has one ALPN and no tensor traffic.)
+//! (svrngs, arch-peer: upstream's dialling half was a loopback port per
+//! peer, every call site's reqwest client pointed at it, and its "known
+//! upgrade path" was this. The port accepted any program on the computer
+//! and carried it to the peer as this computer's key, `tests/peer.rs`.)
 //!
 //! Upstream's `PeerTransport` port, `PeerContact`, `PeerEndpoint` and
 //! `TrafficClass` did not come over: there is one transport, so it is a
@@ -41,31 +34,31 @@
 //!   which resolves it — DESIGN §8, "Four facts".)
 
 use std::collections::HashMap;
+use std::future::Future;
 use std::net::{IpAddr, SocketAddr};
 
+use iroh::endpoint::Connection;
+use tokio::time::timeout;
+
+use n0_future::task::AbortOnDropHandle;
 use std::sync::Arc;
 use std::time::Duration;
 
 pub use crate::alpn::{Alpn, ALPN};
-// The guest dialer and the one HTTP bridge live in `crate::guest`, as they
-// lived in `mesh_reach::guest` upstream (pb-reach-guest, phase-b-35);
-// re-exported so callers spell them `svrngs_node::iroh::`.
-pub use crate::guest::{
-    build_relayed_endpoint, configured_proxy_redacted, parse_dial_string, ring_crypto_provider,
-    HttpBridge, RelayConfig,
-};
+// The guest dialer lives in `crate::guest`, as it lived in
+// `mesh_reach::guest` upstream (pb-reach-guest, phase-b-35); re-exported so
+// callers spell it `svrngs_node::iroh::`.
+pub use crate::guest::{build_relayed_endpoint, RelayConfig};
 
 // Re-exported so callers build endpoints without declaring their own iroh
 // dependency — keeps the version pin in exactly one place.
-pub use iroh::endpoint::presets;
-pub use iroh::endpoint::Builder as EndpointBuilder;
 pub use iroh::{Endpoint, EndpointAddr, PublicKey, RelayUrl, SecretKey};
 // svrngs: iroh's address book in memory, so a test tells a joiner the
 // loopback addresses a link's bare key resolves to (u2-8).
 pub use iroh::address_lookup::MemoryLookup;
 
 /// Render an endpoint's current dial info as a pairing string
-/// ([`parse_dial_string`]'s inverse). Relay URLs first (stable),
+/// (`<64-hex-endpoint-id>@<target>[,<target>...]`). Relay URLs first (stable),
 /// then direct addresses. `None` while the endpoint has no
 /// reachable address yet.
 pub fn format_dial_string(addr: &EndpointAddr) -> Option<String> {
@@ -81,6 +74,13 @@ pub fn format_dial_string(addr: &EndpointAddr) -> Option<String> {
     ))
 }
 
+/// Whether `endpoint` resolves a bare key by an address lookup: built only
+/// with `n0_services` (`guest::relayed_endpoint_builder`) or one a test adds.
+/// A closed endpoint has none.
+pub fn has_lookup(endpoint: &Endpoint) -> bool {
+    endpoint.address_lookup().is_ok_and(|l| !l.is_empty())
+}
+
 /// A peer to dial: its key, and whatever dial hints are known. Upstream's
 /// `PeerContact` was the mesh's gossiped record — a `NodeId`, IP addresses
 /// and an optional key; here the key is the peer and the hints are optional.
@@ -94,11 +94,36 @@ pub struct Contact {
     pub iroh_direct_addrs: Vec<SocketAddr>,
 }
 
-/// Client half: resolves a peer's key to a localhost base
-/// URL bridged over iroh.
+impl Contact {
+    /// A peer known by its key alone, no hint: how svrngs dials a member,
+    /// since nothing gossips addresses (DESIGN §8, "A bare key is dialled").
+    pub fn by_key(key: PublicKey) -> Self {
+        Self {
+            key,
+            relay_url: None,
+            iroh_direct_addrs: Vec::new(),
+        }
+    }
+
+    /// A member by its key and the relay its group's record names for it
+    /// (relay-in-record; DESIGN §6). With none named its key alone, said:
+    /// only an address lookup finds it then, and with none it is not dialled.
+    pub fn named(key: PublicKey, relay: Option<&svrngs_core::relay::Url>) -> Self {
+        if relay.is_none() {
+            tracing::debug!(target: "transport", peer = %key.fmt_short(),
+                "transport: the group names no relay for this computer — its key alone, which only an address lookup finds");
+        }
+        Self {
+            relay_url: relay.map(ToString::to_string),
+            ..Self::by_key(key)
+        }
+    }
+}
+
+/// Client half: a request to a member, dialled by its key.
 #[derive(Debug)]
 pub struct IrohTransport {
-    endpoint: iroh::Endpoint,
+    pub(crate) endpoint: iroh::Endpoint,
     /// Out-of-band dial hints: pubkey → iroh UDP socket addresses.
     /// **Fallback only.** Dial info comes first from the [`Contact`] —
     /// relay URL + direct addrs.
@@ -106,41 +131,63 @@ pub struct IrohTransport {
     /// contact carries its own addrs, both are merged.
     #[expect(clippy::disallowed_types, reason = "the transport's address cache")]
     known_addrs: std::sync::Mutex<HashMap<[u8; 32], Vec<SocketAddr>>>,
-    /// One localhost bridge per peer, on the one [`ALPN`]. Each entry
-    /// remembers the dial info it was built with (`dial_key`) so a
-    /// dial-info change RETARGETS the bridge — a frozen target
-    /// kept dialing a restarted peer's dead ephemeral port forever
-    /// (the 2026-07-19 dual-restart heal deadlock's transport half).
-    #[expect(clippy::disallowed_types, reason = "the transport's bridge cache")]
-    bridges: tokio::sync::Mutex<HashMap<[u8; 32], CachedBridge>>,
+    /// One connection per computer and protocol, kept while it stays open
+    /// ([`Self::kept`]), the one rule for a member's requests and a folder's
+    /// fetches (#177): each request is a bi-stream of it, as the phone's
+    /// page sends one (`web/src/http.rs`), so a round dials a member once,
+    /// not once a request (the ceiling's first round, every member dialled,
+    /// cost 0.19 s of processor at 965b52b, the next 0.024 s). One that
+    /// closes, or fails a request, is let go, so a member that restarted at
+    /// another address is dialled anew where its contact says.
+    pub(crate) conns: tokio::sync::watch::Sender<Connections>,
 }
 
-/// A cached bridge plus the normalized contact dial-info it targets.
-#[derive(Debug)]
-struct CachedBridge {
-    bridge: Arc<HttpBridge>,
-    dial_key: DialKey,
-}
-
-/// Normalized (relay_url, sorted direct addrs) — the parts of a
-/// [`Contact`] that determine where a bridge's iroh dials go.
-type DialKey = (Option<String>, Vec<SocketAddr>);
-
-fn dial_key_for(peer: &Contact) -> DialKey {
-    let mut addrs = peer.iroh_direct_addrs.clone();
-    addrs.sort();
-    addrs.dedup();
-    (peer.relay_url.clone(), addrs)
-}
+/// Each connection kept, by the computer's key and the protocol's bytes.
+pub(crate) type Connections = std::collections::BTreeMap<([u8; 32], &'static [u8]), Connection>;
 
 impl IrohTransport {
-    #[expect(clippy::disallowed_types, reason = "the transport's caches")]
+    #[expect(clippy::disallowed_types, reason = "the transport's address cache")]
     pub fn new(endpoint: iroh::Endpoint) -> Self {
         Self {
             endpoint,
             known_addrs: std::sync::Mutex::new(HashMap::new()),
-            bridges: tokio::sync::Mutex::new(HashMap::new()),
+            conns: tokio::sync::watch::Sender::new(Connections::new()),
         }
+    }
+
+    /// The connection kept to `peer` on `alpn` while it stays open, else
+    /// one [`dialled`] within `within`, each dial's own cap, and kept.
+    pub(crate) async fn kept(
+        &self,
+        peer: &Contact,
+        alpn: Alpn,
+        within: Duration,
+    ) -> Result<Connection, Unsent> {
+        let at = (*peer.key.as_bytes(), alpn.bytes());
+        let kept = self.conns.borrow().get(&at).cloned();
+        let kept = kept.filter(|c| c.close_reason().is_none());
+        tracing::debug!(target: "transport", peer = %peer.key.fmt_short(), ?alpn, kept = kept.is_some(), "iroh: a request on the connection kept to it, else on one dialled (#178)");
+        if let Some(conn) = kept {
+            return Ok(conn);
+        }
+        // Which of the key's addresses iroh dials: one in use is the only
+        // one it sends to (syp-6 b).
+        let known = self.endpoint.remote_info(peer.key).await;
+        let known: Vec<String> = (known.iter().flat_map(|i| i.addrs()))
+            .map(|a| format!("{:?} {:?}", a.addr(), a.usage()))
+            .collect();
+        tracing::debug!(target: "transport", peer = %peer.key.fmt_short(), ?alpn, ?known, "iroh: dialled by key, iroh holding these addresses for it");
+        let to = self.endpoint_addr_for(peer).ok_or(Unsent::NoPath)?;
+        let conn = dialled(&self.endpoint, to, alpn.bytes(), Some(within)).await?;
+        self.conns.send_modify(|m| drop(m.insert(at, conn.clone())));
+        Ok(conn)
+    }
+
+    /// The connection kept to `peer` on `alpn` let go, a request on it
+    /// failed: the next dials afresh.
+    pub(crate) fn let_go(&self, peer: &PublicKey, alpn: Alpn) {
+        self.conns
+            .send_if_modified(|m| m.remove(&(*peer.as_bytes(), alpn.bytes())).is_some());
     }
 
     /// Seed dial hints for a peer. Test/fallback surface — a caller with a
@@ -156,10 +203,10 @@ impl IrohTransport {
     /// `None` when there's no usable path (no relay AND no address) and the
     /// endpoint has no address lookup to resolve the key. (svrngs: upstream
     /// refused every bare key, since its mesh gossiped addresses; with no
-    /// gossip a member is dialled by key, and the endpoint's own lookup —
-    /// n0's DNS under `RelayConfig::n0_services` — finds it, DESIGN §8,
-    /// "Four facts".)
-    fn endpoint_addr_for(&self, peer: &Contact) -> Option<iroh::EndpointAddr> {
+    /// gossip a member is dialled by key and the relay its group names,
+    /// relay-in-record, else the endpoint's own lookup — n0's DNS under
+    /// `RelayConfig::n0_services` — finds it, DESIGN §8, "Four facts".)
+    pub(crate) fn endpoint_addr_for(&self, peer: &Contact) -> Option<iroh::EndpointAddr> {
         let mut ea = iroh::EndpointAddr::new(peer.key);
         let mut has_path = false;
         if let Some(relay) = peer.relay_url.as_deref() {
@@ -193,10 +240,7 @@ impl IrohTransport {
         if has_path {
             return Some(ea);
         }
-        let lookup = self
-            .endpoint
-            .address_lookup()
-            .is_ok_and(|services| !services.is_empty());
+        let lookup = has_lookup(&self.endpoint);
         tracing::debug!(
             target: "transport",
             transport = "iroh",
@@ -206,106 +250,150 @@ impl IrohTransport {
         );
         lookup.then_some(ea)
     }
+}
 
-    /// Get or create the localhost TCP bridge for the peer,
-    /// dialing the target resolved from `peer`.
-    async fn bridge_for(&self, peer: &Contact) -> Option<SocketAddr> {
-        let key = *peer.key.as_bytes();
-        let dial_key = dial_key_for(peer);
-        let mut bridges = self.bridges.lock().await;
-        if let Some(cached) = bridges.get(&key) {
-            if cached.dial_key == dial_key {
-                return Some(cached.bridge.local_addr());
-            }
+impl IrohTransport {
+    /// `req` sent to the member `peer` names, on the members' protocol, on
+    /// a bi-stream of the connection kept to it, or of one dialled within
+    /// [`crate::dial::DIAL_WITHIN`]: its answer's head, its body still to
+    /// read, so a stream or a WebSocket is carried whole. A connection that
+    /// fails a request is let go, and the next request dials afresh.
+    pub async fn send(&self, peer: &Contact, req: Request) -> Result<Streamed, Unsent> {
+        let conn = self
+            .kept(peer, Alpn::Member, crate::dial::DIAL_WITHIN)
+            .await?;
+        let answered = on_stream(&conn, req).await;
+        if answered.is_err() {
+            self.let_go(&peer.key, Alpn::Member);
         }
-        let Some(target) = self.endpoint_addr_for(peer) else {
-            // The fresh contact has no dialable path at all (no relay, no
-            // direct addrs). Nothing to retarget TO — drop any stale bridge
-            // rather than keep tunneling at an address the peer has left.
-            bridges.remove(&key);
-            return None;
-        };
-        if let Some(cached) = bridges.get_mut(&key) {
-            // The peer's dial info changed (typical: it
-            // restarted and its ephemeral iroh port moved). A frozen
-            // bridge would keep dialing the dead target forever — point
-            // this one at the fresh contact instead. Retargeting rather
-            // than rebuilding keeps the loopback port stable, which is
-            // what plain-TCP clients holding that address depend on (see
-            // `HttpBridge::retarget`); in-flight tunnels to the stale
-            // target were doomed either way.
-            cached.bridge.retarget(target);
-            cached.dial_key = dial_key;
-            let local_addr = cached.bridge.local_addr();
-            tracing::info!(
-                target: "transport",
-                peer = %hex::encode(&key[..4]),
-                bridge = %local_addr,
-                "iroh bridge: peer dial info changed — retargeted in place (port held)"
-            );
-            return Some(local_addr);
-        }
-        let bridge = HttpBridge::spawn_preferring(
-            self.endpoint.clone(),
-            target,
-            ALPN,
-            Some(preferred_bridge_port(&peer.key, ALPN)),
-        )
+        answered
+    }
+
+    /// [`Self::send`], its answer read whole within [`ANSWERED_WITHIN`].
+    pub async fn fetch(&self, peer: &Contact, req: Request) -> Result<Whole, Unsent> {
+        whole(self.send(peer, req)).await
+    }
+}
+
+/// How long a request read whole waits for its answer, the dial included:
+/// the ten seconds the round's reqwest client was built with
+/// (`ring_sync.rs` `peer_client` at 965b52b, cut with the bridge), kept.
+pub const ANSWERED_WITHIN: Duration = Duration::from_secs(10);
+
+/// A request on the stream: axum's, as the door and the origin carry one.
+pub type Request = axum::http::Request<axum::body::Body>;
+/// An answer's head, its body read as it comes.
+pub type Streamed = axum::http::Response<hyper::body::Incoming>;
+/// An answer read whole.
+pub type Whole = axum::http::Response<axum::body::Bytes>;
+
+/// Why a request to a computer has no answer, each traced at debug where
+/// it is decided.
+#[derive(Debug, thiserror::Error)]
+pub enum Unsent {
+    #[error("no dialable path: no relay, no address and no lookup")]
+    NoPath,
+    #[error("it answered, and does not know this computer stands in any group it holds")]
+    NotAdmitted,
+    /// A dial not answered within its cap: a computer taken as asleep.
+    #[error("not answered within {0:?}")]
+    Asleep(Duration),
+    #[error("{0}")]
+    Failed(String),
+}
+
+/// `answer` read whole, within [`ANSWERED_WITHIN`].
+pub(crate) async fn whole(
+    answer: impl Future<Output = Result<Streamed, Unsent>>,
+) -> Result<Whole, Unsent> {
+    use http_body_util::BodyExt;
+    let read = async {
+        let (head, body) = answer.await?.into_parts();
+        let body = body.collect().await.map_err(|e| e.to_string());
+        Ok(Whole::from_parts(
+            head,
+            body.map_err(Unsent::Failed)?.to_bytes(),
+        ))
+    };
+    let slow = Unsent::Failed(format!("no whole answer within {ANSWERED_WITHIN:?}"));
+    timeout(ANSWERED_WITHIN, read).await.unwrap_or(Err(slow))
+}
+
+/// A connection to `to` on `alpn`, dialled within `within` when given, and
+/// then held as a phone's page holds its dial ([`crate::dial::held`]), so a
+/// computer that stops answering a connection kept to it is taken as asleep
+/// within the cap too, as a fresh dial would be.
+pub(crate) async fn dialled(
+    e: &Endpoint,
+    to: EndpointAddr,
+    alpn: &'static [u8],
+    within: Option<Duration>,
+) -> Result<Connection, Unsent> {
+    let (peer, cap) = (to.id.fmt_short(), within.unwrap_or(Duration::MAX));
+    // Held only when capped: held, iroh gives up a handshake silent for the
+    // cap too, and a joiner's dial is not capped (`crate::dial`).
+    let held = within.map_or_else(Default::default, |_| crate::dial::held());
+    let held = iroh::endpoint::ConnectOptions::new().with_transport_config(held);
+    let connect = async move {
+        let connecting = e.connect_with_opts(to, alpn, held).await;
+        let failed = |e: &dyn std::fmt::Display| Unsent::Failed(e.to_string());
+        connecting
+            .map_err(|e| failed(&e))?
+            .await
+            .map_err(|e| failed(&e))
+    };
+    let dialled = timeout(cap, connect)
         .await
-        .ok()?;
-        let local_addr = bridge.local_addr();
-        bridges.insert(
-            key,
-            CachedBridge {
-                bridge: Arc::new(bridge),
-                dial_key,
-            },
-        );
-        Some(local_addr)
-    }
-
-    /// The peer's loopback base URL, bridged over iroh — upstream's
-    /// `PeerTransport::endpoints`, which answered at most one candidate on
-    /// this transport. `None` when the contact has no dialable path.
-    pub async fn base_url(&self, peer: &Contact) -> Option<String> {
-        let label = &peer.key.to_string()[..8];
-        let Some(local) = self.bridge_for(peer).await else {
-            tracing::debug!(
-                target: "transport",
-                transport = "iroh",
-                peer = %label,
-                "iroh: no dialable path in contact (no relay_url / iroh_direct_addrs) \
-                 and no address lookup — not dialable"
-            );
-            return None;
-        };
-        tracing::debug!(
-            target: "transport",
-            transport = "iroh",
-            peer = %label,
-            first = %format!("iroh:{local}→{label}"),
-            "transport: resolved"
-        );
-        Some(format!("http://{local}"))
-    }
+        .unwrap_or(Err(Unsent::Asleep(cap)));
+    tracing::debug!(target: "transport", %peer, ?within, error = ?dialled.as_ref().err(), "iroh: a dial, answered or not; one not answered in time is a computer taken as asleep");
+    dialled
 }
 
-/// The loopback port a peer's bridge prefers, from its key and the ALPN —
-/// identity from essence (ARCH §7.5), never a counter or whatever the kernel
-/// handed out last time. 20000..=32767 sits below Linux's default ephemeral
-/// range (32768–60999), so a derived port is never one an unrelated socket
-/// was just given; a collision between two peers is a 1-in-12768 event per
-/// pair and is handled by the named fallback in
-/// [`HttpBridge::spawn_preferring`].
-pub fn preferred_bridge_port(pubkey: &PublicKey, alpn: &[u8]) -> u16 {
-    // FNV-1a: spread, not secrecy. The inputs are public.
-    let mut h: u64 = 0xcbf2_9ce4_8422_2325;
-    for b in pubkey.as_bytes().iter().chain(alpn.iter()) {
-        h ^= u64::from(*b);
-        h = h.wrapping_mul(0x0100_0000_01b3);
+/// `req` on a new bi-stream of `conn`, one HTTP/1 connection driven with
+/// upgrades, a `Host` named when it names none, as the page names one
+/// (`web/src/http.rs`); a failure read as [`Unsent::NotAdmitted`] when the
+/// far end closed the connection as [`NOT_ADMITTED`].
+pub(crate) async fn on_stream(conn: &Connection, mut req: Request) -> Result<Streamed, Unsent> {
+    let host = req.headers_mut().entry(axum::http::header::HOST);
+    host.or_insert(axum::http::HeaderValue::from_static("svrngs"));
+    let sent = async {
+        let (send, recv) = conn.open_bi().await.map_err(|e| e.to_string())?;
+        let io = hyper_util::rt::TokioIo::new(tokio::io::join(recv, send));
+        let shake = hyper::client::conn::http1::handshake(io).await;
+        let (mut sender, driver) = shake.map_err(|e| e.to_string())?;
+        tokio::spawn(driver.with_upgrades());
+        sender.send_request(req).await.map_err(|e| e.to_string())
+    };
+    let failed = match sent.await {
+        Ok(answer) => return Ok(answer),
+        Err(failed) => failed,
+    };
+    let unadmitted = closed_unadmitted(conn).await;
+    tracing::debug!(target: "transport", peer = %conn.remote_id().fmt_short(), unadmitted, failed, "iroh: a request had no answer");
+    if unadmitted {
+        return Err(Unsent::NotAdmitted);
     }
-    20_000 + (h % 12_768) as u16
+    Err(Unsent::Failed(failed))
 }
+
+/// Whether the far end of `conn` closes it as [`NOT_ADMITTED`] within
+/// [`CLOSED_WITHIN`]: it answered, and does not know this computer stands
+/// in any group it holds.
+async fn closed_unadmitted(conn: &Connection) -> bool {
+    let closed = timeout(CLOSED_WITHIN, conn.closed()).await.ok();
+    let unadmitted = matches!(&closed, Some(iroh::endpoint::ConnectionError::ApplicationClosed(c)) if c.reason.as_ref() == NOT_ADMITTED);
+    tracing::debug!(target: "transport", peer = %conn.remote_id().fmt_short(), unadmitted, ?closed, "iroh: whether the peer closes this computer's connection as not admitted");
+    unadmitted
+}
+
+/// The reason the acceptor closes a connection it does not admit with,
+/// which a request on the stream reads ([`Unsent::NotAdmitted`]): the one answer a
+/// stranger is given, at the connection and never in HTTP.
+pub const NOT_ADMITTED: &[u8] = b"not admitted";
+
+/// How long a request with no answer waits for its connection's close: the
+/// acceptor closes as soon as the handshake is done.
+const CLOSED_WITHIN: Duration = Duration::from_secs(1);
 
 /// The acceptor's answer to a connection, decided once per connection on its
 /// negotiated ALPN and the key its handshake verified.
@@ -314,6 +402,9 @@ pub enum Admit {
     /// Serve every bi-stream on the connection with this router: the
     /// routes its protocol reaches, and no others.
     Serve(axum::Router),
+    /// Hand the connection to iroh-blobs' provider (gf-1): a shared
+    /// folder's bytes by hash, on its own protocol.
+    Blobs(iroh_blobs::BlobsProtocol),
     /// Close the connection before any stream is read: no HTTP answer.
     Refuse,
 }
@@ -326,11 +417,6 @@ pub enum Admit {
 pub struct Dialer(PublicKey);
 
 impl Dialer {
-    /// The verified key.
-    pub fn key(&self) -> PublicKey {
-        self.0
-    }
-
     /// The record's actor: the key's lowercase hex, as
     /// [`actor_of`](svrngs_core::actor_of) spells a signer.
     pub fn actor(&self) -> String {
@@ -398,13 +484,7 @@ pub fn actor_key(actor: &str) -> Option<PublicKey> {
 /// Server half: accept iroh connections, and serve each bi-stream of an
 /// admitted one with hyper's HTTP/1 server and the caller's router.
 pub struct IrohAcceptor {
-    task: tokio::task::JoinHandle<()>,
-}
-
-impl Drop for IrohAcceptor {
-    fn drop(&mut self) {
-        self.task.abort();
-    }
+    _task: AbortOnDropHandle<()>,
 }
 
 impl IrohAcceptor {
@@ -452,7 +532,13 @@ impl IrohAcceptor {
                                 dialer = %dialer.actor(),
                                 "iroh acceptor: dialer not admitted — closing connection"
                             );
-                            conn.close(0u32.into(), b"not admitted");
+                            conn.close(0u32.into(), NOT_ADMITTED);
+                            return;
+                        }
+                        Admit::Blobs(blobs) => {
+                            use iroh::protocol::ProtocolHandler;
+                            tracing::debug!(target: "transport", dialer = %dialer.actor(), "iroh acceptor: dialer admitted — its connection handed to the blobs provider");
+                            blobs.accept(conn).await.ok();
                             return;
                         }
                         Admit::Serve(router) => {
@@ -473,7 +559,9 @@ impl IrohAcceptor {
                 });
             }
         });
-        Self { task }
+        Self {
+            _task: AbortOnDropHandle::new(task),
+        }
     }
 }
 
@@ -511,406 +599,4 @@ async fn serve_stream(
 }
 
 #[cfg(test)]
-pub(crate) mod tests {
-    use super::*;
-    use tokio::io::{AsyncReadExt, AsyncWriteExt};
-
-    /// What keeps a router served on the stream: the serving endpoint, its
-    /// acceptor, and the dialer's transport, whose bridge the URL names.
-    pub(crate) struct OnStream {
-        _acceptor: IrohAcceptor,
-        _transport: IrohTransport,
-    }
-
-    /// `router` served by an acceptor that admits every dialer, on a
-    /// hermetic endpoint; and the base URL at which a dialer holding
-    /// `dialer` reaches it through the bridge. For a route that decides on
-    /// the [`Dialer`] itself, so the admit decision is not what a test of it
-    /// watches.
-    pub(crate) async fn serve_on_stream(
-        router: axum::Router,
-        dialer: SecretKey,
-    ) -> (String, OnStream) {
-        let served = hermetic_endpoint(0xEE, vec![ALPN.to_vec()]).await;
-        let addrs = loopback_sockets(&served);
-        let acceptor =
-            IrohAcceptor::spawn(served.clone(), move |_, _| Admit::Serve(router.clone()));
-        let dialling = EndpointBuilder::empty()
-            .crypto_provider(ring_crypto_provider())
-            .secret_key(dialer)
-            .bind()
-            .await
-            .expect("hermetic endpoint bind");
-        let transport = IrohTransport::new(dialling);
-        let base = transport
-            .base_url(&Contact {
-                key: served.id(),
-                relay_url: None,
-                iroh_direct_addrs: addrs,
-            })
-            .await
-            .expect("a contact with an address resolves");
-        (
-            base,
-            OnStream {
-                _acceptor: acceptor,
-                _transport: transport,
-            },
-        )
-    }
-
-    /// Bind an empty (no-relay, deterministic) endpoint serving `alpns`.
-    pub(crate) async fn hermetic_endpoint(seed: u8, alpns: Vec<Vec<u8>>) -> Endpoint {
-        EndpointBuilder::empty()
-            .crypto_provider(ring_crypto_provider())
-            .secret_key(SecretKey::from_bytes(&[seed; 32]))
-            .alpns(alpns)
-            .bind()
-            .await
-            .expect("hermetic endpoint bind")
-    }
-
-    /// iroh binds the wildcard; rewrite to loopback so the address is
-    /// dialable in-process (mirrors the spike e2e's `dialable_sockets`).
-    pub(crate) fn loopback_sockets(endpoint: &Endpoint) -> Vec<SocketAddr> {
-        endpoint
-            .bound_sockets()
-            .into_iter()
-            .map(|mut a| {
-                if a.ip().is_unspecified() {
-                    let ip = if a.is_ipv4() { "127.0.0.1" } else { "::1" };
-                    a.set_ip(ip.parse().unwrap());
-                }
-                a
-            })
-            .collect()
-    }
-
-    /// The same peer and protocol always prefer the same port, a different
-    /// protocol on the same peer prefers a different one, and every derived
-    /// port sits below the kernel's ephemeral range. The failing inputs are
-    /// a port outside 20000..=32767 or two calls disagreeing.
-    #[test]
-    fn a_peers_bridge_port_is_derived_from_its_key_and_alpn() {
-        let a = SecretKey::from_bytes(&[7u8; 32]).public();
-        let b = SecretKey::from_bytes(&[8u8; 32]).public();
-        // Upstream's CLIENT_ALPN bytes: a second protocol, which svrngs
-        // does not carry, still derives a different port.
-        let other: &[u8] = b"cwth/client/0";
-        let p = preferred_bridge_port(&a, ALPN);
-        assert_eq!(p, preferred_bridge_port(&a, ALPN));
-        assert_ne!(p, preferred_bridge_port(&a, other));
-        assert_ne!(p, preferred_bridge_port(&b, ALPN));
-        for port in [p, preferred_bridge_port(&b, ALPN)] {
-            assert!((20_000..=32_767).contains(&port), "{port}");
-        }
-    }
-
-    /// When the derived port is already bound, the bridge still comes up —
-    /// on another port, named at warn — rather than failing the dial.
-    #[tokio::test]
-    async fn a_taken_derived_port_falls_back_to_an_ephemeral_one_and_still_serves() {
-        let server_ep = hermetic_endpoint(61, vec![ALPN.to_vec()]).await;
-        let client_ep = hermetic_endpoint(62, vec![]).await;
-        let taken = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-        let port = taken.local_addr().unwrap().port();
-        let mut target = EndpointAddr::new(server_ep.id());
-        for sock in loopback_sockets(&server_ep) {
-            target = target.with_ip_addr(sock);
-        }
-        let bridge = HttpBridge::spawn_preferring(client_ep, target, ALPN, Some(port))
-            .await
-            .expect("a taken preferred port is not a failed bridge");
-        assert_ne!(bridge.local_addr().port(), port);
-        assert!(bridge.local_addr().ip().is_loopback());
-    }
-
-    /// A trivial TCP "service": every accepted connection is answered
-    /// with a fixed marker, then closed. Stands in for one of the
-    /// daemon's two local HTTP listeners — the marker is the witness
-    /// that a stream reached THIS listener and not the other. It also
-    /// drains the client's bytes so the close is a clean FIN, not a
-    /// RST that could truncate the marker in flight on loopback.
-    async fn spawn_marker_listener(marker: &'static [u8]) -> SocketAddr {
-        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-        let addr = listener.local_addr().unwrap();
-        tokio::spawn(async move {
-            loop {
-                let Ok((mut sock, _)) = listener.accept().await else {
-                    break;
-                };
-                tokio::spawn(async move {
-                    let _ = sock.write_all(marker).await;
-                    let _ = sock.shutdown().await;
-                    let mut drain = Vec::new();
-                    let _ = sock.read_to_end(&mut drain).await;
-                });
-            }
-        });
-        addr
-    }
-
-    /// Splice every stream `endpoint` accepts into `forward_to`, through the
-    /// one [`pump`](crate::guest::pump) — what upstream's
-    /// `IrohAcceptor::spawn_routed` did for these tests with a one-entry
-    /// table. These are the bridge's tests, which carry bytes, so a byte
-    /// splice shaped as `guest/tests.rs`'s `spawn_lender` stands in, whatever
-    /// the acceptor serves.
-    fn spawn_splicing_acceptor(endpoint: Endpoint, forward_to: SocketAddr) {
-        use crate::guest::{pump, PumpSide};
-        tokio::spawn(async move {
-            while let Some(incoming) = endpoint.accept().await {
-                tokio::spawn(async move {
-                    let Ok(conn) = incoming.await else { return };
-                    while let Ok((send, recv)) = conn.accept_bi().await {
-                        let tcp = tokio::net::TcpStream::connect(forward_to).await.unwrap();
-                        tokio::spawn(pump(
-                            tcp,
-                            send,
-                            recv,
-                            PumpSide::Acceptor,
-                            "peer".to_string(),
-                            ALPN,
-                        ));
-                    }
-                });
-            }
-        });
-    }
-
-    #[test]
-    fn relay_config_from_parts_maps_discovery() {
-        // Default / "n0" / absent / empty → n0 services on.
-        assert!(RelayConfig::default().n0_services);
-        assert!(
-            RelayConfig::from_parts(vec![], None)
-                .expect("absent is n0")
-                .n0_services
-        );
-        assert!(
-            RelayConfig::from_parts(vec![], Some("n0"))
-                .expect("n0")
-                .n0_services
-        );
-        assert!(
-            RelayConfig::from_parts(vec![], Some(""))
-                .expect("empty is n0")
-                .n0_services
-        );
-        // The one sovereignty spelling → n0 severed.
-        let c = RelayConfig::from_parts(vec![], Some("none")).expect("none");
-        assert!(!c.n0_services);
-        // relay_urls passes through.
-        let c = RelayConfig::from_parts(vec!["https://r.example:443".into()], Some("none"))
-            .expect("none");
-        assert_eq!(c.relay_urls, vec!["https://r.example:443".to_string()]);
-        assert!(!c.n0_services);
-    }
-
-    /// **C2: a typo'd value refuses to load** (ROOT_CAUSE_FIXES C2). The old
-    /// shape warned and kept n0 — the substitution this door exists to stop.
-    /// Watched failing first, with the warn-and-keep planted back.
-    #[test]
-    fn an_unknown_discovery_value_refuses_to_load() {
-        let err = RelayConfig::from_parts(vec![], Some("carrier-pigeon")).unwrap_err();
-        assert!(err.contains("carrier-pigeon"), "the value is named: {err}");
-        assert!(
-            err.contains("accepted"),
-            "and the accepted set is named: {err}"
-        );
-    }
-
-    /// **C2: `self`/`local` are refused naming `none`** — they were never
-    /// implemented, and aliasing them to `none` would keep the lie in the
-    /// vocabulary. Watched failing first with the same plant.
-    #[test]
-    fn self_and_local_refuse_naming_none() {
-        for d in ["self", "local"] {
-            let err = RelayConfig::from_parts(vec![], Some(d)).unwrap_err();
-            assert!(err.contains("never implemented"), "{d}: {err}");
-            assert!(
-                err.contains("`none`"),
-                "{d}: the honest spelling must be named: {err}"
-            );
-        }
-    }
-
-    #[tokio::test]
-    async fn build_sovereign_endpoint_binds_without_n0() {
-        // Sovereign mode (n0 severed, no custom relay = direct-addr
-        // only): must still bind a real endpoint. This is the
-        // air-gapped-LAN posture — Minimal preset, relays Disabled, no
-        // n0 DNS. Nothing here should touch the network at all.
-        let ep = build_relayed_endpoint(
-            SecretKey::from_bytes(&[78u8; 32]),
-            vec![ALPN.to_vec()],
-            &RelayConfig {
-                relay_urls: vec![],
-                n0_services: false,
-                loopback_only: false,
-            },
-        )
-        .await
-        .expect("sovereign (no-n0) endpoint must bind");
-        assert!(
-            !ep.bound_sockets().is_empty(),
-            "endpoint must bind a socket"
-        );
-    }
-
-    /// Read the marker a bridge's loopback port forwards to. Same handshake as
-    /// upstream's `read_marker_over` (send first so the peer's `accept_bi`
-    /// fires), but against an ALREADY-BOUND bridge port rather than a fresh
-    /// bridge — the point being that the port outlives a retarget.
-    async fn read_marker_from_port(port: SocketAddr) -> Vec<u8> {
-        let mut tcp = tokio::net::TcpStream::connect(port)
-            .await
-            .expect("connect to bridge port");
-        let _ = tcp.write_all(b"ping").await;
-        let _ = tcp.shutdown().await;
-        let mut buf = Vec::new();
-        let read = tokio::time::timeout(
-            std::time::Duration::from_secs(10),
-            tcp.read_to_end(&mut buf),
-        )
-        .await;
-        read.expect("read did not time out").expect("read ok");
-        buf
-    }
-
-    fn contact_for(server: &Endpoint, addrs: Vec<SocketAddr>) -> Contact {
-        Contact {
-            key: server.id(),
-            relay_url: None,
-            iroh_direct_addrs: addrs,
-        }
-    }
-
-    /// A peer's dial info changing must RETARGET the bridge, not
-    /// rebuild it: the loopback port is what plain-TCP clients hold (ggml's
-    /// rpc-server list, via the mesh's discovered worker endpoint string), and
-    /// minting a new one made an unmoved peer read downstream as a stream of
-    /// different workers (2026-07-25: 34207 → 40043 → 39419 → 34133 → 40021).
-    /// The tunnel must still land on the NEW target — that's what the rebuild
-    /// was originally protecting (the 2026-07-19 dual-restart heal deadlock), so
-    /// this asserts both halves: same port, fresh destination.
-    #[tokio::test]
-    async fn bridge_retargets_in_place_when_peer_dial_info_changes() {
-        let worker_addr = spawn_marker_listener(b"WORKER").await;
-        let server_ep = hermetic_endpoint(31, vec![ALPN.to_vec()]).await;
-        spawn_splicing_acceptor(server_ep.clone(), worker_addr);
-
-        let transport = IrohTransport::new(hermetic_endpoint(32, vec![]).await);
-
-        // Tick 1: the peer's address is stale (nothing listens there).
-        // The bridge binds a port; nothing is dialed until a client connects.
-        let stale: SocketAddr = "127.0.0.1:1".parse().unwrap();
-        let first = transport
-            .base_url(&contact_for(&server_ep, vec![stale]))
-            .await
-            .expect("a contact with an address resolves");
-        let port_before = first.clone();
-
-        // Tick 2: the contact carries the peer's real address. Different dial key.
-        let live = loopback_sockets(&server_ep);
-        let second = transport
-            .base_url(&contact_for(&server_ep, live))
-            .await
-            .expect("a contact with an address resolves");
-        assert_eq!(
-            second, port_before,
-            "a dial-info change must hold the loopback port, not mint a new one"
-        );
-
-        // …and the tunnel now reaches the peer at its NEW address, proving the
-        // held port is not a frozen bridge still dialing the dead one.
-        let bridge_port: SocketAddr = second.strip_prefix("http://").unwrap().parse().unwrap();
-        assert_eq!(
-            read_marker_from_port(bridge_port).await,
-            b"WORKER",
-            "the retargeted bridge must reach the peer's current address"
-        );
-    }
-
-    /// An unchanged contact re-resolves to the SAME bridge with no rebind. This
-    /// is what makes the mesh's per-tick re-mint of a known bridged worker
-    /// (`sovereign_daemon::daemon::reaffirm_plan` → `Rebridge`) free: it replaces
-    /// a `/status` probe that rode the same congested iroh path as the tunnel.
-    #[tokio::test]
-    async fn repeated_resolution_of_an_unchanged_peer_reuses_the_bridge() {
-        let server_ep = hermetic_endpoint(33, vec![ALPN.to_vec()]).await;
-        let transport = IrohTransport::new(hermetic_endpoint(34, vec![]).await);
-        let contact = contact_for(&server_ep, loopback_sockets(&server_ep));
-        let a = transport.base_url(&contact).await;
-        let b = transport.base_url(&contact).await;
-        assert!(a.is_some(), "a contact with an address resolves");
-        assert_eq!(a, b, "cached bridge must be reused");
-    }
-
-    /// A bare key — no relay and no address, in the contact or seeded — is
-    /// dialled when the endpoint has an address lookup, and the lookup's
-    /// answer is where the tunnel lands; with no lookup it is not dialled
-    /// (DESIGN §8, "Four facts"). A memory lookup stands in for n0's DNS.
-    #[tokio::test]
-    async fn a_bare_key_is_dialled_through_the_endpoints_address_lookup() {
-        let worker_addr = spawn_marker_listener(b"WORKER").await;
-        let server_ep = hermetic_endpoint(35, vec![ALPN.to_vec()]).await;
-        spawn_splicing_acceptor(server_ep.clone(), worker_addr);
-        let bare = contact_for(&server_ep, Vec::new());
-
-        let without = IrohTransport::new(hermetic_endpoint(36, vec![]).await);
-        assert_eq!(
-            without.base_url(&bare).await,
-            None,
-            "with no lookup a bare key is not dialled"
-        );
-
-        let lookup = iroh::address_lookup::MemoryLookup::new();
-        let mut found = iroh::EndpointAddr::new(server_ep.id());
-        for a in loopback_sockets(&server_ep) {
-            found = found.with_ip_addr(a);
-        }
-        lookup.add_endpoint_info(found);
-        let dialling = EndpointBuilder::empty()
-            .crypto_provider(ring_crypto_provider())
-            .secret_key(SecretKey::from_bytes(&[37; 32]))
-            .address_lookup(lookup)
-            .bind()
-            .await
-            .expect("hermetic endpoint bind");
-        let with = IrohTransport::new(dialling);
-        let base = with
-            .base_url(&bare)
-            .await
-            .expect("with a lookup a bare key is dialled");
-        let port: SocketAddr = base.strip_prefix("http://").unwrap().parse().unwrap();
-        assert_eq!(
-            read_marker_from_port(port).await,
-            b"WORKER",
-            "the tunnel lands where the lookup said"
-        );
-    }
-
-    #[test]
-    fn dial_key_normalizes_addr_order_and_dupes() {
-        let a: SocketAddr = "10.0.0.1:1000".parse().unwrap();
-        let b: SocketAddr = "10.0.0.2:2000".parse().unwrap();
-        let mk = |addrs: Vec<SocketAddr>| Contact {
-            key: SecretKey::from_bytes(&[1u8; 32]).public(),
-            relay_url: Some("https://r.example/".into()),
-            iroh_direct_addrs: addrs,
-        };
-        // Same set, different order / dup → SAME key: a reordered contact
-        // must NOT churn the bridge.
-        assert_eq!(
-            super::dial_key_for(&mk(vec![a, b])),
-            super::dial_key_for(&mk(vec![b, a, b]))
-        );
-        // A changed port (peer restarted) → DIFFERENT key → rebuild.
-        let b2: SocketAddr = "10.0.0.2:2001".parse().unwrap();
-        assert_ne!(
-            super::dial_key_for(&mk(vec![a, b])),
-            super::dial_key_for(&mk(vec![a, b2]))
-        );
-    }
-}
+pub(crate) mod tests;

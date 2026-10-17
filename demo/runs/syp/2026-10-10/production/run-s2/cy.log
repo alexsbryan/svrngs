@@ -1,0 +1,26 @@
+2026-10-11T00:59:48.310361Z  INFO folder: folder: the store is open untagged=0
+2026-10-11T00:59:48.831693Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=31221 peer=d041b07a4776e115ac157e0a0f98f2c7b2ddad5545af4b0759829f075fb483b5 error=Address already in use (os error 48)
+2026-10-11T00:59:49.381131Z  INFO folder: folder: the store is open untagged=0
+2026-10-11T00:59:49.383899Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=31221 peer=d041b07a4776e115ac157e0a0f98f2c7b2ddad5545af4b0759829f075fb483b5 error=Address already in use (os error 48)
+2026-10-11T00:59:49.384090Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=29645 peer=13d251b6ac4b1c52415467c9f3c16208402b1fa885f66a3c32ddc90ae81d5e74 error=Address already in use (os error 48)
+2026-10-11T00:59:49.538564Z  INFO folder: synced: the directory kept in step with the group's folder namespace="f9c98dd28ae81d3698f0af4f2395daca0a25cddb33988a2358e68e96db321e70" folder="Shared" dir=/tmp/syp4-run/disk/cy/Shared
+2026-10-11T00:59:49.539372Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=0 replaced=0 placed=0 conflicts=0
+2026-10-11T00:59:49.728025Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=13d251b6ac4b1c52415467c9f3c16208402b1fa885f66a3c32ddc90ae81d5e74 alpn=cwth/http/0 request_bytes=59
+2026-10-11T00:59:49.748691Z  WARN transport: iroh bridge: the peer accepted the stream but answered nothing — its origin or forward is down on the far side peer=13d251b6ac4b1c52415467c9f3c16208402b1fa885f66a3c32ddc90ae81d5e74 alpn=cwth/http/0 request_bytes=405
+2026-10-11T00:59:50.528549Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=0 replaced=0 placed=0 conflicts=0
+2026-10-11T00:59:50.542566Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=0 replaced=0 placed=0 conflicts=0
+2026-10-11T00:59:51.548243Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=0 replaced=0 placed=0 conflicts=0
+2026-10-11T00:59:51.596790Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=0 replaced=0 placed=0 conflicts=0
+2026-10-11T00:59:52.552683Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=0 replaced=0 placed=0 conflicts=0
+2026-10-11T00:59:53.706195Z  INFO folder: folder: the store is open untagged=0
+2026-10-11T00:59:53.708014Z  WARN transport: iroh bridge: the port derived from this peer's key is taken — substituting an ephemeral one, so this peer's URL differs from its usual preferred=31221 peer=d041b07a4776e115ac157e0a0f98f2c7b2ddad5545af4b0759829f075fb483b5 error=Address already in use (os error 48)
+2026-10-11T00:59:53.941863Z  INFO folder: synced: the directory kept in step with the group's folder namespace="f9c98dd28ae81d3698f0af4f2395daca0a25cddb33988a2358e68e96db321e70" folder="Shared" dir=/tmp/syp4-run/disk/cy/Shared
+2026-10-11T00:59:53.942987Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=0 replaced=0 placed=0 conflicts=0
+2026-10-11T00:59:54.748376Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=1 replaced=0 placed=1 conflicts=0
+2026-10-11T00:59:54.948829Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=1 replaced=0 placed=1 conflicts=0
+2026-10-11T00:59:55.876293Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=1 replaced=0 placed=1 conflicts=0
+2026-10-11T00:59:56.962964Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=1 replaced=0 placed=1 conflicts=0
+2026-10-11T00:59:57.952487Z  WARN folder: folder: a holder gave nothing of the range hash=a4e3b3ad5c1717748e6711c179fa76ddadeb6b0a475c2b6a50b9d0a0a39119b8 holder=d041b07a4776e115ac157e0a0f98f2c7b2ddad5545af4b0759829f075fb483b5 start=0 end=65536 why=did not answer within 3s
+2026-10-11T00:59:57.967715Z DEBUG rail:folder: synced: each path's heads placed, a second beside as a conflict written=1 replaced=0 placed=1 conflicts=0
+2026-10-11T00:59:57.993443Z  INFO folder: folder: fetched, verified hash=a4e3b3ad5c1717748e6711c179fa76ddadeb6b0a475c2b6a50b9d0a0a39119b8 holder=13d251b6ac4b1c52415467c9f3c16208402b1fa885f66a3c32ddc90ae81d5e74 start=0 end=65536 payload=65536 other=200 ms=40
+2026-10-11T00:59:57.995171Z  INFO folder: synced: written into the directory folder="Shared" path=s2.bin hash=a4e3b3ad5c1717748e6711c179fa76ddadeb6b0a475c2b6a50b9d0a0a39119b8 from="d041b07a4776e115ac157e0a0f98f2c7b2ddad5545af4b0759829f075fb483b5" seq=3 beside=false fetch_ms=3044 export_ms=1

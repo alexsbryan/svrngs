@@ -1,0 +1,70 @@
+   Compiling svrngs-node v0.1.0 (/Users/alexsbryan/dev/svrngs/crates/svrngs-node)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 7.20s
+     Running tests/peer.rs (target/debug/deps/peer-57b9e9aafd304bf2)
+running 4 tests
+test no_page_in_webkit_reaches_a_friends_door ... FAILED
+test no_page_from_the_internet_in_chromium_reaches_a_friends_door ... FAILED
+test no_loopback_port_reaches_a_friends_door ... FAILED
+test no_page_in_chromium_reaches_a_friends_door ... FAILED
+failures:
+---- no_page_in_webkit_reaches_a_friends_door stdout ----
+thread 'no_page_in_webkit_reaches_a_friends_door' (49890965) panicked at crates/svrngs-node/tests/peer.rs:345:5:
+a page at "http://127.0.0.1:64144/" in Webkit reached Sam's door through a port on this computer (the port Alex's bridge to Sam prefers is 30029):
+30029: Sam's pad, its service told the request is alex's
+a yes kept on Sam's book for an app nobody named: {
+  "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c": {
+    "a6dtrb2ja6dtrb2ja6dtrb2ja6dtrb2ja6dtrb2ja6dtrb2ja6dtnuhbk07tcj": {
+      "said": "yes",
+      "at": 1792097461
+    }
+  }
+}
+what the page was let see there: [{"lend":{"error":"TypeError: Load failed"},"lendBlind":{"type":"opaque"},"port":30029,"yes":{"type":"opaque"}}]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+---- no_page_from_the_internet_in_chromium_reaches_a_friends_door stdout ----
+thread 'no_page_from_the_internet_in_chromium_reaches_a_friends_door' (49890963) panicked at crates/svrngs-node/tests/peer.rs:345:5:
+a page at "http://127.0.0.1:64174/" in ChromiumPublic reached Sam's door through a port on this computer (the port Alex's bridge to Sam prefers is 30029):
+30029: Sam's pad, its service told the request is alex's
+a yes kept on Sam's book for an app nobody named: {
+  "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c": {
+    "a6dtrb2ja6dtrb2ja6dtrb2ja6dtrb2ja6dtrb2ja6dtrb2ja6dtnuhbk07tcj": {
+      "said": "yes",
+      "at": 1792097462
+    }
+  }
+}
+what the page was let see there: [{"lend":{"error":"TypeError: Failed to fetch"},"lendBlind":{"type":"opaque"},"port":30029,"yes":{"type":"opaque"}}]
+---- no_loopback_port_reaches_a_friends_door stdout ----
+thread 'no_loopback_port_reaches_a_friends_door' (49890962) panicked at crates/svrngs-node/tests/peer.rs:273:5:
+a program holding no key reached Sam's door through a port on this computer (the port Alex's bridge to Sam prefers is 30029):
+30029: Sam's pad, its service told the request is alex's
+a yes kept on Sam's book for an app nobody named: {
+  "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c": {
+    "a6dtrb2ja6dtrb2ja6dtrb2ja6dtrb2ja6dtrb2ja6dtrb2ja6dtnuhbk07tcj": {
+      "said": "yes",
+      "at": 1792097463
+    }
+  }
+}
+30029: Alex's choices on Sam's book, read: {"choices":{}}
+30029: Sam's door kept a yes as Alex's: {"app":"a6dtrb2ja6dtrb2ja6dtrb2ja6dtrb2ja6dtrb2ja6dtrb2ja6dtnuhbk07tcj","choice":{"at":1792097463,"said":"yes"}}
+---- no_page_in_chromium_reaches_a_friends_door stdout ----
+thread 'no_page_in_chromium_reaches_a_friends_door' (49890964) panicked at crates/svrngs-node/tests/peer.rs:345:5:
+a page at "http://127.0.0.1:64227/" in Chromium reached Sam's door through a port on this computer (the port Alex's bridge to Sam prefers is 30029):
+30029: Sam's pad, its service told the request is alex's
+a yes kept on Sam's book for an app nobody named: {
+  "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c": {
+    "a6dtrb2ja6dtrb2ja6dtrb2ja6dtrb2ja6dtrb2ja6dtrb2ja6dtnuhbk07tcj": {
+      "said": "yes",
+      "at": 1792097463
+    }
+  }
+}
+what the page was let see there: [{"lend":{"error":"TypeError: Failed to fetch"},"lendBlind":{"type":"opaque"},"port":30029,"yes":{"type":"opaque"}}]
+failures:
+    no_loopback_port_reaches_a_friends_door
+    no_page_from_the_internet_in_chromium_reaches_a_friends_door
+    no_page_in_chromium_reaches_a_friends_door
+    no_page_in_webkit_reaches_a_friends_door
+test result: FAILED. 0 passed; 4 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.29s
+error: test failed, to rerun pass `-p svrngs-node --test peer`

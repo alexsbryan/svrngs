@@ -1,0 +1,122 @@
+{
+ "S1-plant": {
+  "add_s": null,
+  "verdict": "failed"
+ },
+ "S1": {
+  "add_s": 1.13,
+  "edit_s": 1.67,
+  "delete_s": 1.19,
+  "verdict": "passed"
+ },
+ "S2-plant": {
+  "cy_s": null,
+  "hash": "ab8ce143d7fd36d79cd9ac7a5227e8db5f32ccc142ef3a262a714f783b1d07a8",
+  "from": [],
+  "verdict": "failed"
+ },
+ "S2": {
+  "cy_s": 4.27,
+  "hash": "93ac405fb5bc6eef7544e9ae4ca37cba59099890a6acc92c2ec28a820f7ff3ef",
+  "from": [
+   "ben"
+  ],
+  "verdict": "passed"
+ },
+ "S3-plant": {
+  "both_s": null,
+  "ana_edit": "e59a14e668d020e03edb0d326f05084dedc2650951a474583305874054fd2f81",
+  "ben_edit": "05513869d0de20108c9ec0b3fa16dcb4991ba7436a245831330d1d7d5f0db758",
+  "found": {
+   "ana": {
+    "s3-plant.txt": "e59a14e668d020e03edb0d326f05084dedc2650951a474583305874054fd2f81"
+   },
+   "ben": {
+    "s3-plant.txt": "e59a14e668d020e03edb0d326f05084dedc2650951a474583305874054fd2f81"
+   },
+   "cy": {
+    "s3-plant.txt": "e59a14e668d020e03edb0d326f05084dedc2650951a474583305874054fd2f81"
+   }
+  },
+  "verdict": "failed"
+ },
+ "S3": {
+  "both_s": 17.42,
+  "ana_edit": "36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd",
+  "ben_edit": "eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b",
+  "found": {
+   "ana": {
+    "s3 (conflict Ben).txt": "eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b",
+    "s3.txt": "36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd"
+   },
+   "ben": {
+    "s3 (conflict Ben).txt": "eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b",
+    "s3.txt": "36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd"
+   },
+   "cy": {
+    "s3 (conflict Ben).txt": "eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b",
+    "s3.txt": "36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd"
+   }
+  },
+  "verdict": "passed"
+ },
+ "S4-plant": {
+  "answers": [
+   {
+    "answer": "open after 5s",
+    "ask": "member-connection"
+   },
+   {
+    "answer": {
+     "bytes": 163,
+     "ops": null,
+     "status": 403
+    },
+    "ask": "record"
+   },
+   {
+    "answer": {
+     "payload": 65536
+    },
+    "ask": "bytes"
+   }
+  ],
+  "dee_hits": 2,
+  "beside_hits": 0,
+  "hits": [
+   {
+    "file": "/tmp/syp1-run/dee-plant/asked/blobs.db",
+    "needle": "ccea013dc2c9b4d2"
+   },
+   {
+    "file": "/tmp/syp1-run/dee-plant/asked/data/ccea013dc2c9b4d2a2afd407ef9225b7948ba0520b208fc0918abd4b0fa0a491.data",
+    "needle": "c58a659eeeaa5c97"
+   }
+  ],
+  "verdict": "failed"
+ },
+ "S4": {
+  "answers": [
+   {
+    "answer": "closed: closed by peer: not admitted (code 0)",
+    "ask": "member-connection"
+   },
+   {
+    "answer": {
+     "error": "reqwest::Error { kind: Request, url: \"http://127.0.0.1:52352/internal/ring/sync\", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) }"
+    },
+    "ask": "record"
+   },
+   {
+    "answer": {
+     "error": "io: connection lost\nCaused by:\n    connection lost\n    closed by peer: not admitted (code 0)"
+    },
+    "ask": "bytes"
+   }
+  ],
+  "dee_hits": 0,
+  "beside_hits": 0,
+  "hits": [],
+  "verdict": "passed"
+ }
+}

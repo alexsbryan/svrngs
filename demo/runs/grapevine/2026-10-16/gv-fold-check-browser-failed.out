@@ -1,0 +1,55 @@
+failed     browser
+           
+           running 96 tests
+           i........................i........................................ 66/96
+           tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit --- FAILED
+           .............................
+           failures:
+           
+           ---- tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit stdout ----
+           the tabs' run (webkit):
+             one: "You’re in house, as bo"
+             two: "You have house open in another tab"
+             "one" +9 ms (306 ms): "An app was stopped using ada’s shelf (k).\n"
+             "two" +315 ms (3 ms): null
+             "one" +2320 ms (259 ms): "An app was stopped using ada’s shelf (k).\n"
+             "two" +2579 ms (2 ms): null
+             "one" +4583 ms (276 ms): "An app was stopped using ada’s shelf (k).\n"
+             "two" +4859 ms (1 ms): null
+             "one" +6866 ms (281 ms): "An app was stopped using ada’s shelf (k).\n"
+             "two" +7147 ms (1 ms): null
+             "one" +9150 ms (244 ms): "An app was stopped using ada’s shelf (k).\n"
+             "two" +9394 ms (1 ms): null
+             "one" +11398 ms (336 ms): "An app was stopped using ada’s shelf (k).\n"
+             "two" +11734 ms (4 ms): null
+             "one" +13741 ms (355 ms): "An app was stopped using ada’s shelf (k).\n"
+             "two" +14096 ms (2 ms): null
+             "one" +16098 ms (43949 ms): "no line: TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('#uses summary')\n    - locator resolved to <summary>What apps use</summary>\n  - attempting click action\n    - waiting for element to be visible, enabled and stable\n    - element is visible, enabled and stable\n    - scrolling into view if needed\n"
+             "two" +60047 ms (59 ms): null
+             taken: {"ask":"An app was stopped using ada’s shelf (k).\n","one":"You have house open in another tab","two":"You’re in house, as bo"}
+           
+           thread 'tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit' (56679811) panicked at crates/svrngs-node/tests/browser/tabs.rs:93:5:
+           every ask in each tab that lists house is answered for 60000 ms; dropped:
+             "one" +16098 ms (43949 ms): "no line: TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('#uses summary')\n    - locator resolved to <summary>What apps use</summary>\n  - attempting click action\n    - waiting for element to be visible, enabled and stable\n    - element is visible, enabled and stable\n    - scrolling into view if needed\n"
+           {
+             "asks": [
+               {
+                 "at": 9,
+                 "ms": 306,
+                 "tab": "one",
+                 "words": "An app was stopped using ada’s shelf (k).\n"
+passed     principles pinned
+passed     lean and RUST_ARCH
+passed     app nouns gate
+passed     app nouns
+passed     rustfmt
+passed     clippy
+passed     tests
+passed     canaries
+passed     ceiling canary
+passed     web rustfmt and clippy
+failed     browser
+passed     joining in a browser
+passed     conformance canary
+passed     app laws
+check.sh exit 1

@@ -33,13 +33,6 @@ impl ActSet {
         true
     }
 
-    /// The union of `self` and `other`.
-    pub fn merge(&mut self, other: ActSet) {
-        for (key, op) in other.0 {
-            self.0.entry(key).or_insert(op);
-        }
-    }
-
     pub fn len(&self) -> usize {
         self.0.len()
     }

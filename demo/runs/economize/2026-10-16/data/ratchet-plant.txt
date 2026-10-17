@@ -1,0 +1,16 @@
+# The ratchet's plants (groups-economize (c)): one counted line past each cap, then gone.
+$ echo "planted = 1" > scripts/plant.py; python3 scripts/lean_check.py; echo exit $?
+crates/svrngs-core     2952 / 2953 lines
+.                     16136 / 16136 lines
+BROKEN  . has 16136 lines of code, budget 16136: raised only by the operator, with the reason in the commit
+exit 1
+$ echo "const PLANTED: u8 = 1;" > crates/svrngs-core/src/plant.rs; python3 scripts/lean_check.py; echo exit $?
+crates/svrngs-core     2953 / 2953 lines
+.                     16137 / 16136 lines
+BROKEN  crates/svrngs-core has 2953 lines of code, budget 2953: raised only by the operator, with the reason in the commit
+BROKEN  . has 16137 lines of code, budget 16136: raised only by the operator, with the reason in the commit
+exit 1
+$ rm both; python3 scripts/lean_check.py; echo exit $?
+crates/svrngs-core     2952 / 2953 lines
+.                     16135 / 16136 lines
+exit 0

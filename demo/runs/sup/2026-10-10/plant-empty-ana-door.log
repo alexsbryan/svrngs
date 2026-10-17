@@ -1,0 +1,4 @@
+2026-10-10T02:04:42.262131Z DEBUG door: door: a lend named by its label label="mna30m55cqm6b647d0u901gj9pjk7cv9jq82xn47915v89f2fnkaq9s0vcjzzq" found=Some("taste")
+2026-10-10T02:04:45.393526Z DEBUG door: door: a lend named by its label label="mna30m55cqm6b647d0u901gj9pjk7cv9jq82xn47915v89f2fnkaq9s0vcjzzq" found=Some("taste")
+2026-10-10T02:04:45.393705Z DEBUG door: door: a member's own pass names the app its page is actor="e0570c421f305333871c8693ea55240328c3de70c9f9d6cdaf74830904b7df43" lend=taste app=Some("9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdralqccgh449n")
+2026-10-10T02:04:45.393738Z DEBUG door: door: the person's choice for the app, judged lend=taste person=e0570c421f305333871c8693ea55240328c3de70c9f9d6cdaf74830904b7df43 app=Some("9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdralqccgh449n") asks=true choice=None judged=Err(Unasked)

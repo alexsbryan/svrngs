@@ -46,9 +46,11 @@ async fn sam_through_a_relay_on_this_computer() {
         .parse()
         .expect("DRY_LIMIT is how many at once");
     let relay = harness::relay().await;
-    let ours = RelayConfig::from_parts(vec![harness::relay_url(&relay)], Some("none"))
-        .unwrap()
-        .on_loopback_only();
+    let ours = RelayConfig {
+        relay_urls: vec![harness::relay_url(&relay)],
+        n0_services: false,
+        loopback_only: true,
+    };
     let sam_dir = dir.join("sam");
     std::fs::create_dir_all(&sam_dir).unwrap();
     let sam = Node::start(
@@ -65,12 +67,14 @@ async fn sam_through_a_relay_on_this_computer() {
         .expect("Sam's computer reaches the relay on 127.0.0.1");
     let film = Lend {
         name: LendName::parse("film").unwrap(),
-        port,
+        source: svrngs_node::lend::Source::Port(port),
         kind: Kind::parse("film").unwrap(),
-        limit,
+        limit: Some(limit),
         refused: Vec::new(),
         upload: None,
         reads: Vec::new(),
+        sign_in: None,
+        asks: None,
     };
     lend::declare(&sam_dir, &film, None).unwrap();
     let (_, printed) = cli::new_group(
@@ -78,6 +82,7 @@ async fn sam_through_a_relay_on_this_computer() {
         Name::parse("House").unwrap(),
         Name::parse("Sam").unwrap(),
         Some(&origin),
+        None,
         &ours,
     )
     .await

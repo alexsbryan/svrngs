@@ -1,0 +1,23 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.20s
+     Running unittests src/lib.rs (target/debug/deps/svrngs_node-0f519cdd5486c66c)
+
+running 1 test
+test ring_sync::tests::a_seal_another_member_signs_retires_nothing_here ... FAILED
+
+failures:
+
+---- ring_sync::tests::a_seal_another_member_signs_retires_nothing_here stdout ----
+
+thread 'ring_sync::tests::a_seal_another_member_signs_retires_nothing_here' (51493295) panicked at crates/svrngs-node/src/ring_sync/tests.rs:271:5:
+assertion `left == right` failed: the seal retired nothing: [Op { id: OpId(ContentHash(ba4ec19ae8076017)), v: 1, ts_unix: 1700000003, actor: "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394", kind: SignedOp { seq: 3, prev: Some(OpId(ContentHash(70a0cb8129c85114))), sig: "888409469552f368b0ae9a6bf751174e36db2246ec182b060b23f540f30fb9e384bf6e748dbaa810322b9f7a6cf7781a1650b6d6499b21fecca23915ce70ca09", act: Seal, on_behalf_of: None, view: None } }]
+  left: 1
+ right: 4
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    ring_sync::tests::a_seal_another_member_signs_retires_nothing_here
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 94 filtered out; finished in 0.09s
+
+error: test failed, to rerun pass `-p svrngs-node --lib`

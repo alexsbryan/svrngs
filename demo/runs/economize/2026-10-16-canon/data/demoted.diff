@@ -1,0 +1,3330 @@
+diff --git a/crates/svrngs-core/src/act_set.rs b/crates/svrngs-core/src/act_set.rs
+index b81946a0..cd0ea9bc 100644
+--- a/crates/svrngs-core/src/act_set.rs
++++ b/crates/svrngs-core/src/act_set.rs
+@@ -24,7 +24,7 @@ impl ActSet {
+     }
+ 
+     /// Adds `op`; `false` when the set already held that exact line.
+-    pub fn insert(&mut self, op: Op<SignedOp>) -> bool {
++    pub(crate) fn insert(&mut self, op: Op<SignedOp>) -> bool {
+         let key = line_key(&op);
+         if self.0.contains_key(&key) {
+             return false;
+@@ -33,7 +33,7 @@ impl ActSet {
+         true
+     }
+ 
+-    pub fn len(&self) -> usize {
++    pub(crate) fn len(&self) -> usize {
+         self.0.len()
+     }
+ 
+@@ -41,7 +41,7 @@ impl ActSet {
+         self.0.is_empty()
+     }
+ 
+-    pub fn iter(&self) -> impl Iterator<Item = &Op<SignedOp>> {
++    pub(crate) fn iter(&self) -> impl Iterator<Item = &Op<SignedOp>> {
+         self.0.values()
+     }
+ }
+diff --git a/crates/svrngs-core/src/admit.rs b/crates/svrngs-core/src/admit.rs
+index fcb82dd6..aa4cedbf 100644
+--- a/crates/svrngs-core/src/admit.rs
++++ b/crates/svrngs-core/src/admit.rs
+@@ -194,7 +194,7 @@ impl RailGap {
+     /// ask their own question of it — completeness is `class() ==
+     /// Absence`; `ring checkpoint --verify` refuses a document on the gaps
+     /// whose acts cannot stand — but there is one answer per kind here.
+-    pub fn class(&self) -> GapClass {
++    pub(crate) fn class(&self) -> GapClass {
+         match self {
+             Self::MalformedLine { .. }
+             | Self::NewerVersionLine { .. }
+@@ -314,30 +314,30 @@ impl core::fmt::Display for RailGap {
+ pub struct AdmittedOp {
+     /// Content-derived id. This is what a correction names, and what an app
+     /// hands back to [`RailAct::Correct`](crate::RailAct::Correct).
+-    pub id: OpId,
++    pub(crate) id: OpId,
+     /// The signing public key — the only field on the line a writer cannot
+     /// forge for someone else (ARCH §18.1).
+-    pub actor: String,
++    pub(crate) actor: String,
+     /// Who the roster says that key is. Present because admission already
+     /// refused every key the roster does not know, so an app never has to
+     /// render a balance against `node-44a1b3e8`.
+-    pub person: Person,
+-    pub seq: u64,
+-    pub ts_unix: i64,
++    pub(crate) person: Person,
++    pub(crate) seq: u64,
++    pub(crate) ts_unix: i64,
+     /// What this op voids, when it is a correction. The void is **already
+     /// applied** — carried so an app can say *what changed*, never so it can
+     /// re-derive the void set.
+     #[serde(default, skip_serializing_if = "Option::is_none")]
+-    pub corrects: Option<OpId>,
++    pub(crate) corrects: Option<OpId>,
+     /// `true` when a correction voided this op. It stays in the list so an
+     /// app can render history, and the SDK's `fold` skips it. An app that
+     /// walks `ops` itself instead of folding will double-count these — which
+     /// is why the SDK ships the fold.
+-    pub voided: bool,
++    pub(crate) voided: bool,
+     /// The app's act. `None` is a correction that only voids, and states no
+     /// replacement.
+     #[serde(default, skip_serializing_if = "Option::is_none")]
+-    pub payload: Option<Payload>,
++    pub(crate) payload: Option<Payload>,
+     /// [`SignedOp::on_behalf_of`](crate::SignedOp::on_behalf_of), carried
+     /// through unchanged. Carried and not interpreted: admission does not
+     /// look it up, does not refuse on it, and `person` still names the key's
+@@ -345,13 +345,13 @@ pub struct AdmittedOp {
+     /// built, so a reader that never sees the signed line — the log route,
+     /// and every app behind it — could not otherwise reach the field at all.
+     #[serde(default, skip_serializing_if = "Option::is_none")]
+-    pub on_behalf_of: Option<String>,
++    pub(crate) on_behalf_of: Option<String>,
+ }
+ 
+ impl AdmittedOp {
+     /// Whether an app's reducer should see this op. The one definition of
+     /// "surviving", so the SDK's fold and any Rust caller agree.
+-    pub fn applies(&self) -> bool {
++    pub(crate) fn applies(&self) -> bool {
+         !self.voided && self.payload.is_some()
+     }
+ }
+diff --git a/crates/svrngs-core/src/app.rs b/crates/svrngs-core/src/app.rs
+index 52484ad0..018231fd 100644
+--- a/crates/svrngs-core/src/app.rs
++++ b/crates/svrngs-core/src/app.rs
+@@ -39,7 +39,7 @@ impl App {
+ 
+     /// What is signed for this app over `bytes`:
+     /// `"svrngs-app:" || app || ":" || bytes`.
+-    pub fn message(&self, bytes: &[u8]) -> Vec<u8> {
++    pub(crate) fn message(&self, bytes: &[u8]) -> Vec<u8> {
+         [crate::sig::APP_DOMAIN, self.0.as_bytes(), b":", bytes].concat()
+     }
+ 
+diff --git a/crates/svrngs-core/src/command.rs b/crates/svrngs-core/src/command.rs
+index 3d41afd3..44d280d9 100644
+--- a/crates/svrngs-core/src/command.rs
++++ b/crates/svrngs-core/src/command.rs
+@@ -11,7 +11,7 @@ use crate::{admit, derive_id, sign_act, ActSet, Admission, Op, OpId, RailAct, Si
+ 
+ /// Which of the held acts a command's decision reads.
+ #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+-pub enum Reads {
++pub(crate) enum Reads {
+     /// The acts the register folds ([`crate::standing_reads`]).
+     Membership,
+     /// Every act held: a removal names the removed key's newest acts (U7).
+@@ -207,7 +207,7 @@ fn read<C: Command>(held: &ActSet) -> ActSet {
+ /// followed. A clock this far out is wrong, not skewed — Kerberos refuses a
+ /// peer's past five minutes by default (MIT krb5's `clockskew`, 300 s) —
+ /// and following one carried every later act past a link's day (#188).
+-pub const AHEAD_SECS: i64 = 300;
++pub(crate) const AHEAD_SECS: i64 = 300;
+ 
+ /// Signs `acts` as the signer's next lines: after its newest seq, naming the
+ /// line there its signature verifies, and timed strictly after every line
+diff --git a/crates/svrngs-core/src/hash.rs b/crates/svrngs-core/src/hash.rs
+index 0cdd2382..68cf3cc0 100644
+--- a/crates/svrngs-core/src/hash.rs
++++ b/crates/svrngs-core/src/hash.rs
+@@ -53,7 +53,7 @@ impl ContentHash {
+ 
+     /// Hash text. Convenience for the overwhelmingly common case; identical to
+     /// `ContentHash::of(s.as_bytes())`.
+-    pub fn of_str(s: &str) -> Self {
++    pub(crate) fn of_str(s: &str) -> Self {
+         ContentHash::of(s.as_bytes())
+     }
+ 
+@@ -69,7 +69,7 @@ impl ContentHash {
+     }
+ 
+     /// Full 64-character lowercase hex — the canonical wire and storage form.
+-    pub fn to_hex(&self) -> String {
++    pub(crate) fn to_hex(&self) -> String {
+         hex::encode(self.0)
+     }
+ 
+@@ -78,7 +78,7 @@ impl ContentHash {
+     /// zero-extended, because silently accepting it would re-create the
+     /// compare-across-encodings defect this type exists to remove
+     /// (principle 6: absence is reported, never defaulted).
+-    pub fn from_hex(s: &str) -> Option<Self> {
++    pub(crate) fn from_hex(s: &str) -> Option<Self> {
+         let arr: [u8; 32] = hex::decode(s.trim()).ok()?.try_into().ok()?;
+         Some(ContentHash(arr))
+     }
+@@ -89,7 +89,7 @@ impl ContentHash {
+     ///
+     /// A `short()` value is a display and bucketing key, never an identity:
+     /// it does not parse back via [`from_hex`](Self::from_hex), on purpose.
+-    pub fn short(&self) -> String {
++    pub(crate) fn short(&self) -> String {
+         hex::encode(&self.0[..8])
+     }
+ }
+diff --git a/crates/svrngs-core/src/joining.rs b/crates/svrngs-core/src/joining.rs
+index 9507f100..8edd0ab5 100644
+--- a/crates/svrngs-core/src/joining.rs
++++ b/crates/svrngs-core/src/joining.rs
+@@ -28,7 +28,7 @@ pub struct AskRequest {
+     /// The key the joiner dials with.
+     pub key: String,
+     /// The link's secret key's signature over the two.
+-    pub sig: String,
++    pub(crate) sig: String,
+ }
+ 
+ impl AskRequest {
+@@ -96,7 +96,7 @@ pub struct RedeemRequest {
+     /// The link's public key, actor hex.
+     pub link: String,
+     /// The link's secret key's signature over everything above.
+-    pub sig: String,
++    pub(crate) sig: String,
+ }
+ 
+ impl RedeemRequest {
+@@ -131,7 +131,7 @@ impl RedeemRequest {
+     /// preceded by its `u32` big-endian length. Public so a test can sign a
+     /// request naming a person no `Person` holds, as a hand-built client
+     /// could.
+-    pub fn message(&self) -> Vec<u8> {
++    pub(crate) fn message(&self) -> Vec<u8> {
+         let mut msg = crate::sig::REQUEST_DOMAIN.to_vec();
+         field(&mut msg, self.group.as_bytes());
+         field(&mut msg, self.invite.as_bytes());
+diff --git a/crates/svrngs-core/src/lib.rs b/crates/svrngs-core/src/lib.rs
+index 78abf35b..db1531f5 100644
+--- a/crates/svrngs-core/src/lib.rs
++++ b/crates/svrngs-core/src/lib.rs
+@@ -117,23 +117,67 @@ pub use ed25519_dalek::SigningKey;
+ use serde::{Deserialize, Serialize};
+ 
+ pub use act_set::ActSet;
+-pub use admit::{admit, body_json, Admission, AdmittedOp, GapClass, RailGap};
+-pub use command::{commit, Author, Authored, Command, Reads, Recorded, Refused, Store, Tip};
+-pub use membership::{membership, standing_reads, Cut, InviteFault, Invited, Joined, Membership};
+-pub use payload::{Payload, PayloadError, MAX_PAYLOAD_BYTES};
+-pub use project::{Invites, Wire};
+-pub use record::{Append, AppendRefusal};
+-pub use register::{
+-    HandOnRefusal, HandOnTo, Leave, MintInvite, Redeem, RedeemRefusal, RelayAt, Removal,
+-    RemovalRefusal,
+-};
+-pub use sig::{
+-    act_id, actor_of, derive_id, field, redemption_message, ring_op_message, sign_act,
+-    sign_message, sign_ring_op, verify_hex,
+-};
+-pub use sync::{digest, ops_missing_from_within, DigestFold, NO_BUDGET};
+-pub use synced::{Change, Entry, NotASyncPath, Placed, SyncFolder, SyncPath};
+-pub use view::{Digest, View, DIGEST_V};
++pub use admit::admit;
++pub use admit::body_json;
++pub use admit::Admission;
++pub use admit::AdmittedOp;
++pub use admit::GapClass;
++pub use admit::RailGap;
++pub use command::commit;
++pub use command::Author;
++pub use command::Authored;
++pub use command::Command;
++pub(crate) use command::Reads;
++pub use command::Recorded;
++pub use command::Refused;
++pub use command::Store;
++pub use command::Tip;
++pub use membership::membership;
++pub use membership::standing_reads;
++pub use membership::Cut;
++pub use membership::InviteFault;
++pub use membership::Invited;
++pub use membership::Joined;
++pub use membership::Membership;
++pub(crate) use payload::Payload;
++pub(crate) use payload::PayloadError;
++pub use payload::MAX_PAYLOAD_BYTES;
++pub use project::Invites;
++pub use project::Wire;
++pub use record::Append;
++pub use record::AppendRefusal;
++pub use register::HandOnRefusal;
++pub use register::HandOnTo;
++pub use register::Leave;
++pub use register::MintInvite;
++pub use register::Redeem;
++pub use register::RedeemRefusal;
++pub use register::RelayAt;
++pub use register::Removal;
++pub use register::RemovalRefusal;
++pub(crate) use sig::act_id;
++pub use sig::actor_of;
++pub use sig::derive_id;
++pub(crate) use sig::field;
++pub(crate) use sig::redemption_message;
++pub(crate) use sig::ring_op_message;
++pub(crate) use sig::sign_act;
++pub(crate) use sig::sign_message;
++pub(crate) use sig::sign_ring_op;
++pub(crate) use sig::verify_hex;
++pub use sync::digest;
++pub use sync::ops_missing_from_within;
++pub use sync::DigestFold;
++pub(crate) use sync::NO_BUDGET;
++pub use synced::Change;
++pub use synced::Entry;
++pub(crate) use synced::NotASyncPath;
++pub use synced::Placed;
++pub use synced::SyncFolder;
++pub use synced::SyncPath;
++pub use view::Digest;
++pub(crate) use view::View;
++pub(crate) use view::DIGEST_V;
+ 
+ /// The journal envelope, re-exported so a consumer of the rail names ONE
+ /// crate. `Op<SignedOp>` is what crosses the ring-sync wire
+@@ -141,7 +185,10 @@ pub use view::{Digest, View, DIGEST_V};
+ /// `sovereign-mesh/src/ring_sync.rs`), and a caller that had to name `oplog`
+ /// separately would be free to reach a different version of it.
+ pub use hash::ContentHash;
+-pub use op::{Journaled, Op, OpId, SkippedLine};
++pub use op::Journaled;
++pub use op::Op;
++pub use op::OpId;
++pub use op::SkippedLine;
+ 
+ // Until 2026-09-04 neither `SigningKey` (above) nor serde_json's `Value` was
+ // exported — so the only signer was a type the crate refused to hand you, and
+@@ -435,11 +482,11 @@ pub enum RailAct {
+ /// names only when the request's dialler is the new key, and the issuer's
+ /// signature on the `Admit` covers it.
+ #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+-pub struct Redemption {
++pub(crate) struct Redemption {
+     /// The id the `Invite`'s content derives ([`derive_id`]).
+-    pub id: OpId,
++    pub(crate) id: OpId,
+     /// Hex Ed25519 signature by the admitted key.
+-    pub sig: String,
++    pub(crate) sig: String,
+     /// What holds the new key. Absent on every line before
+     /// [`BROWSER_LINE_VERSION`], which admitted only computers, so absent
+     /// reads as [`Device::Computer`]; and skipped for a computer, so a
+@@ -449,7 +496,7 @@ pub struct Redemption {
+         default = "Device::before_browsers",
+         skip_serializing_if = "Device::is_computer"
+     )]
+-    pub device: Device,
++    pub(crate) device: Device,
+ }
+ 
+ /// What holds a standing key (u4-1; DESIGN §3 "Joining", call 2): the
+@@ -576,7 +623,7 @@ pub struct SignedOp {
+     /// its author's act at `seq − 1` (svrngs, U2; DESIGN §6). Skipped when
+     /// absent, so a first act carries no `prev` on its line.
+     #[serde(default, skip_serializing_if = "Option::is_none")]
+-    pub prev: Option<OpId>,
++    pub(crate) prev: Option<OpId>,
+     /// Hex Ed25519 signature over [`sig::ring_op_message`] — the act's id.
+     /// Not itself signed (that would be circular) and not in the id, so one
+     /// act carrying two valid signatures is one act.
+@@ -599,7 +646,7 @@ pub struct SignedOp {
+     /// verifies under the same signature — which
+     /// `rail_ops_written_before_on_behalf_of_still_verify` holds to.
+     #[serde(default, skip_serializing_if = "Option::is_none")]
+-    pub on_behalf_of: Option<String>,
++    pub(crate) on_behalf_of: Option<String>,
+     /// The author's view of the ring at the moment of writing: every actor's
+     /// [`View`] over what this writer held (the sync digest's entries),
+     /// inside the signature. Every commit stamped one until arch-view; none
+@@ -614,50 +661,50 @@ pub struct SignedOp {
+     /// it would have before the field existed (the `on_behalf_of` comment
+     /// above).
+     #[serde(default, skip_serializing_if = "Option::is_none")]
+-    pub view: Option<crate::Digest>,
++    pub(crate) view: Option<crate::Digest>,
+ }
+ 
+ /// The line format version the membership act cohort ships at
+ /// (`RailAct::Admit` / [`RailAct::Remove`]). The original three kinds stay at
+ /// `Journaled::VERSION` (1) — see [`SignedOp::line_version`].
+-pub const MEMBERSHIP_LINE_VERSION: u32 = 2;
++pub(crate) const MEMBERSHIP_LINE_VERSION: u32 = 2;
+ 
+ /// The line format version the link ships at (svrngs, U2): an
+ /// [`RailAct::Invite`], and an [`RailAct::Admit`] that redeems one. A build
+ /// at [`MEMBERSHIP_LINE_VERSION`] would read a redeeming `Admit` as a plain
+ /// one, drop the field it does not know, and derive another id; at this
+ /// version it names the line `NewerVersionLine` instead.
+-pub const LINK_LINE_VERSION: u32 = 3;
++pub(crate) const LINK_LINE_VERSION: u32 = 3;
+ 
+ /// The line format version a browser's redemption ships at (u4-1): an
+ /// [`RailAct::Admit`] whose [`Redemption`] names [`Device::Browser`]. A
+ /// build at [`LINK_LINE_VERSION`] would drop the field, read the key as a
+ /// computer's and derive another id; at this version it names the line
+ /// `NewerVersionLine` instead.
+-pub const BROWSER_LINE_VERSION: u32 = 4;
++pub(crate) const BROWSER_LINE_VERSION: u32 = 4;
+ 
+ /// The line format version a synced folder's change ships at (sy-1). 5
+ /// was a one-way shared folder's (gf-1), dropped by syp-1 before any record
+ /// outside a run's scratch held one: no build reads it.
+-pub const SYNCED_LINE_VERSION: u32 = 6;
++pub(crate) const SYNCED_LINE_VERSION: u32 = 6;
+ 
+ /// The line format version removal ships at (U7): a [`RailAct::Remove`]
+ /// naming the acts it covers by id, and a [`RailAct::HandOn`]. A build at
+ /// [`SYNCED_LINE_VERSION`] read `Remove` by a seq it no longer carries; at
+ /// this version it names the line `NewerVersionLine` instead.
+-pub const REMOVAL_LINE_VERSION: u32 = 7;
++pub(crate) const REMOVAL_LINE_VERSION: u32 = 7;
+ 
+ /// The line format version a device link ships at (bash-devices): an
+ /// [`RailAct::Invite`] naming the person it adds a device of. A build at
+ /// [`REMOVAL_LINE_VERSION`] would drop the field, read it as any link and
+ /// derive another id; at this version it names the line `NewerVersionLine`
+ /// instead, so it holds no device link and counts no `Admit` under one.
+-pub const DEVICE_LINE_VERSION: u32 = 8;
++pub(crate) const DEVICE_LINE_VERSION: u32 = 8;
+ 
+ /// The line format version a computer's relay ships at (relay-in-record):
+ /// a [`RailAct::Relay`]. A build at [`DEVICE_LINE_VERSION`] names it
+ /// `NewerVersionLine`, so it dials that computer as it did before.
+-pub const RELAY_LINE_VERSION: u32 = 9;
++pub(crate) const RELAY_LINE_VERSION: u32 = 9;
+ 
+ impl Journaled for SignedOp {
+     const FILE: &'static str = "ring_oplog.jsonl";
+@@ -760,7 +807,7 @@ fn actor_prefix(actor: &str) -> String {
+ // alone used it, core-0.)
+ 
+ /// Enough of an op id to recognise, short enough to read in a sentence.
+-pub fn short_id(id: &str) -> String {
++pub(crate) fn short_id(id: &str) -> String {
+     if id.chars().count() > 12 {
+         format!("{}…", id.chars().take(12).collect::<String>())
+     } else {
+@@ -825,4 +872,4 @@ mod tests_sealing;
+ // under `cfg(test)` — so clippy's allow-unwrap-in-tests exemption does not
+ // reach it and the panic ratchet would read a builder as production risk.
+ #[allow(clippy::unwrap_used, clippy::expect_used)]
+-pub mod tests_support;
++pub(crate) mod tests_support;
+diff --git a/crates/svrngs-core/src/link.rs b/crates/svrngs-core/src/link.rs
+index 289c10ff..9ff5e076 100644
+--- a/crates/svrngs-core/src/link.rs
++++ b/crates/svrngs-core/src/link.rs
+@@ -44,11 +44,11 @@ use ed25519_dalek::{SigningKey, VerifyingKey as PublicKey};
+ use url::Url as RelayUrl;
+ 
+ /// The client's link's prefix, before the token.
+-pub const CLIENT_PREFIX: &str = "svrngs://join/";
++pub(crate) const CLIENT_PREFIX: &str = "svrngs://join/";
+ 
+ /// The words DESIGN §1 keeps from people. The command's `mint` draws a
+ /// link's secret again while its token spells one, in any case.
+-pub const KEPT_WORDS: [&str; 7] = ["ring", "member", "key", "sync", "journal", "node", "relay"];
++pub(crate) const KEPT_WORDS: [&str; 7] = ["ring", "member", "key", "sync", "journal", "node", "relay"];
+ 
+ /// BLAKE3 `derive_key` context for a link's signing key from its secret.
+ const LINK_KEY_CONTEXT: &str = "svrngs 2026-10-04 link signing key from its secret";
+@@ -58,7 +58,7 @@ pub const SECRET_LEN: usize = 16;
+ 
+ /// What a token's bytes after its format byte hold: a closed set.
+ #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+-pub enum Format {
++pub(crate) enum Format {
+     /// The issuer's key and the secret: from an issuer that reached no
+     /// relay, or, before relay-park (c), one run with address lookup.
+     Bare,
+diff --git a/crates/svrngs-core/src/membership.rs b/crates/svrngs-core/src/membership.rs
+index 0b0e1020..274bedff 100644
+--- a/crates/svrngs-core/src/membership.rs
++++ b/crates/svrngs-core/src/membership.rs
+@@ -152,12 +152,12 @@ pub struct Membership {
+     /// Cumulative as [`Self::bindings`] is; ask [`Self::person_of`]. Skipped
+     /// when empty, so a fold with none serialises as before.
+     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+-    pub devices: BTreeMap<String, String>,
++    pub(crate) devices: BTreeMap<String, String>,
+     /// first key → the time on the `Admit` that made it a person
+     /// (bash-same-name); a seed row's has none. Cumulative as
+     /// [`Self::bindings`] is; ask [`Self::joined`]. Skipped when empty.
+     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+-    pub admitted_at: BTreeMap<String, i64>,
++    pub(crate) admitted_at: BTreeMap<String, i64>,
+     /// Who holds standing NOW: the seed plus counting `Admit`s, minus the
+     /// keys the keeper cut.
+     pub standing: BTreeSet<String>,
+@@ -165,15 +165,15 @@ pub struct Membership {
+     /// act's position in the rail's order, a cut covers it if its signer was
+     /// cut, and no counting `Correct` voids it. Everything else is held and
+     /// reported, never counted.
+-    pub counted: BTreeSet<OpId>,
++    pub(crate) counted: BTreeSet<OpId>,
+     /// The void set — the targets of counting corrections, never an act
+     /// that moves membership.
+-    pub voided: BTreeSet<OpId>,
++    pub(crate) voided: BTreeSet<OpId>,
+     /// Redeeming `Admit`s by a standing signer that do not count, each with
+     /// its fault (svrngs, U2). Skipped when empty, so a fold with none
+     /// serialises as before.
+     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+-    pub refused: BTreeMap<OpId, InviteFault>,
++    pub(crate) refused: BTreeMap<OpId, InviteFault>,
+     /// Every `Invite` held, by derived id.
+     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+     pub invites: BTreeMap<OpId, Invited>,
+@@ -182,7 +182,7 @@ pub struct Membership {
+     /// [`Self::device`], which answers only for a standing key. Skipped
+     /// when empty, so a fold with none serialises as before.
+     #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
+-    pub browsers: BTreeSet<String>,
++    pub(crate) browsers: BTreeSet<String>,
+     /// The group's keeper now (U7): the seed's, or whoever it was handed
+     /// on to. `None` only for an empty seed.
+     #[serde(default, skip_serializing_if = "Option::is_none")]
+@@ -198,7 +198,7 @@ pub struct Membership {
+     /// written; a key whose newest names none is absent (relay-in-record).
+     /// Cumulative as [`Self::bindings`] is; ask [`Self::relay`].
+     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+-    pub relays: BTreeMap<String, String>,
++    pub(crate) relays: BTreeMap<String, String>,
+ }
+ 
+ /// One counting cut: the keeper's `Remove`, the acts it names in
+@@ -208,9 +208,9 @@ pub struct Membership {
+ pub struct Cut {
+     pub by: OpId,
+     #[serde(default, skip_serializing_if = "Vec::is_empty")]
+-    pub unheld: Vec<OpId>,
++    pub(crate) unheld: Vec<OpId>,
+     #[serde(default, skip_serializing_if = "Vec::is_empty")]
+-    pub handed_on: Vec<OpId>,
++    pub(crate) handed_on: Vec<OpId>,
+     /// Whether the cut was its person's own leave (groups-leave): decided
+     /// here once, by `leaves`, and read where a removal is said (#180).
+     #[serde(default, skip_serializing_if = "core::ops::Not::not")]
+@@ -220,9 +220,9 @@ pub struct Cut {
+ /// An `Invite` as the register holds it.
+ #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+ pub struct Invited {
+-    pub issuer: String,
+-    pub key: String,
+-    pub until: i64,
++    pub(crate) issuer: String,
++    pub(crate) key: String,
++    pub(crate) until: i64,
+     /// A device link's person, by their first key (bash-devices).
+     #[serde(default, skip_serializing_if = "Option::is_none")]
+     pub device_of: Option<String>,
+@@ -246,7 +246,7 @@ impl Membership {
+     }
+ 
+     /// The keys standing now as the person whose first key is `first`.
+-    pub fn devices_of<'a>(&'a self, first: &'a str) -> impl Iterator<Item = &'a String> {
++    pub(crate) fn devices_of<'a>(&'a self, first: &'a str) -> impl Iterator<Item = &'a String> {
+         (self.standing.iter()).filter(move |k| self.person_of(k).is_some_and(|(f, _)| f == first))
+     }
+ 
+@@ -264,7 +264,7 @@ impl Membership {
+     /// name joined, earliest first — none when nobody does, more than one
+     /// when a race or a member's hand gave two people one name. svrngs
+     /// never guesses which of two (bash-same-name).
+-    pub fn one_named(&self, name: &Person, when: Option<Joined>) -> Result<&str, Vec<Joined>> {
++    pub(crate) fn one_named(&self, name: &Person, when: Option<Joined>) -> Result<&str, Vec<Joined>> {
+         let all: BTreeSet<(Joined, &str)> = (self.keys_of(name))
+             .filter_map(|k| self.person_of(k))
+             .map(|(first, _)| (self.joined(first), first))
+@@ -282,7 +282,7 @@ impl Membership {
+     }
+ 
+     /// The keys standing now under the name `person`.
+-    pub fn keys_of<'a, 'p>(
++    pub(crate) fn keys_of<'a, 'p>(
+         &'a self,
+         person: &'p Person,
+     ) -> impl Iterator<Item = &'a String> + use<'a, 'p> {
+diff --git a/crates/svrngs-core/src/op.rs b/crates/svrngs-core/src/op.rs
+index 1ecb42a0..55f26b3d 100644
+--- a/crates/svrngs-core/src/op.rs
++++ b/crates/svrngs-core/src/op.rs
+@@ -106,7 +106,7 @@ pub struct Op<K> {
+     pub id: OpId,
+     /// Line format version. Always written; the read-side gate skips lines
+     /// declaring a version this build does not understand.
+-    pub v: u32,
++    pub(crate) v: u32,
+     /// When the act happened (Unix seconds).
+     pub ts_unix: i64,
+     /// Who performed it. `human:<name>` for an adjudication a person made,
+diff --git a/crates/svrngs-core/src/pass.rs b/crates/svrngs-core/src/pass.rs
+index eca5c52b..5353e85d 100644
+--- a/crates/svrngs-core/src/pass.rs
++++ b/crates/svrngs-core/src/pass.rs
+@@ -136,15 +136,15 @@ pub struct Pass {
+     /// The person it lets act: their key.
+     pub person: String,
+     /// The key that may act as them.
+-    pub holder: String,
++    pub(crate) holder: String,
+     /// The app asking: the lend whose pages hold the pass, which it opens.
+     pub app: Label,
+     /// The other lends it opens: those of the kinds the app reads.
+-    pub reads: Vec<Label>,
++    pub(crate) reads: Vec<Label>,
+     /// When it stops opening them.
+     pub until: i64,
+     /// The person's signature over the five.
+-    pub sig: String,
++    pub(crate) sig: String,
+ }
+ 
+ /// Why a pass opens nothing here.
+diff --git a/crates/svrngs-core/src/payload.rs b/crates/svrngs-core/src/payload.rs
+index c6f0d938..94e2679d 100644
+--- a/crates/svrngs-core/src/payload.rs
++++ b/crates/svrngs-core/src/payload.rs
+@@ -71,12 +71,12 @@ pub const MAX_PAYLOAD_BYTES: usize = 64 * 1024;
+ /// hand — from a journal line, from a peer, from this node's own door — is
+ /// always one whose bytes every node agrees on.
+ #[derive(Debug, Clone, PartialEq, Eq)]
+-pub struct Payload(Value);
++pub(crate) struct Payload(Value);
+ 
+ /// Why a payload cannot go on the rail. Every variant renders as a sentence
+ /// naming the fix, because this text reaches an app author as a 422 body.
+ #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+-pub enum PayloadError {
++pub(crate) enum PayloadError {
+     #[error(
+         "a rail payload must be a JSON object — the rail carries acts, and an \
+          act needs a name for what it is (try `{{\"kind\": \"...\"}}`)"
+diff --git a/crates/svrngs-core/src/relay.rs b/crates/svrngs-core/src/relay.rs
+index 9791ba84..c4ff2bed 100644
+--- a/crates/svrngs-core/src/relay.rs
++++ b/crates/svrngs-core/src/relay.rs
+@@ -17,7 +17,8 @@
+ use alloc::string::String;
+ 
+ use url::Host;
+-pub use url::{ParseError, Url};
++pub use url::ParseError;
++pub use url::Url;
+ 
+ /// A relay as written — a link's, one the record names
+ /// ([`crate::RailAct::Relay`]), one a person or a peer tells a computer —
+diff --git a/crates/svrngs-core/src/seed.rs b/crates/svrngs-core/src/seed.rs
+index 7dd04f35..bf544250 100644
+--- a/crates/svrngs-core/src/seed.rs
++++ b/crates/svrngs-core/src/seed.rs
+@@ -66,7 +66,7 @@ impl Seed {
+         hex::encode(self.key.as_bytes())
+     }
+ 
+-    pub fn salt_hex(&self) -> String {
++    pub(crate) fn salt_hex(&self) -> String {
+         hex::encode(self.salt)
+     }
+ 
+diff --git a/crates/svrngs-core/src/sig.rs b/crates/svrngs-core/src/sig.rs
+index 1784c1e3..117faba8 100644
+--- a/crates/svrngs-core/src/sig.rs
++++ b/crates/svrngs-core/src/sig.rs
+@@ -114,7 +114,7 @@ pub fn actor_of(key: &SigningKey) -> String {
+ 
+ /// Append `bytes` to `msg` behind its `u32` big-endian length: the ONE
+ /// framing every signed message here uses, so no field's end is ambiguous.
+-pub fn field(msg: &mut Vec<u8>, bytes: &[u8]) {
++pub(crate) fn field(msg: &mut Vec<u8>, bytes: &[u8]) {
+     msg.extend_from_slice(&(bytes.len() as u32).to_be_bytes());
+     msg.extend_from_slice(bytes);
+ }
+@@ -138,7 +138,7 @@ pub fn field(msg: &mut Vec<u8>, bytes: &[u8]) {
+ /// bytes on every node and build. That is the property the whole scheme
+ /// rests on, and the payload half of it is why `Payload` is a type rather
+ /// than a `serde_json::Value`.
+-pub fn act_id(
++pub(crate) fn act_id(
+     namespace: &str,
+     actor: &str,
+     seq: u64,
+@@ -184,7 +184,7 @@ pub fn derive_id(op: &Op<SignedOp>, namespace: &str) -> OpId {
+ }
+ 
+ /// The bytes signed and verified for one act: `DOMAIN || id`.
+-pub fn ring_op_message(id: &OpId) -> Vec<u8> {
++pub(crate) fn ring_op_message(id: &OpId) -> Vec<u8> {
+     [RING_OP_DOMAIN, id.as_bytes().as_slice()].concat()
+ }
+ 
+@@ -194,7 +194,7 @@ pub fn ring_op_message(id: &OpId) -> Vec<u8> {
+ /// another group, the `Invite`'s id from being moved to another link, and
+ /// the person from being renamed. `person` is the name's text, so a test
+ /// can sign a consent to one no `Person` holds, as a hand could.
+-pub fn redemption_message(namespace: &str, invite: &OpId, person: &str, key: &str) -> Vec<u8> {
++pub(crate) fn redemption_message(namespace: &str, invite: &OpId, person: &str, key: &str) -> Vec<u8> {
+     let mut msg = Vec::with_capacity(REDEMPTION_DOMAIN.len() + 160);
+     msg.extend_from_slice(REDEMPTION_DOMAIN);
+     field(&mut msg, namespace.as_bytes());
+@@ -207,14 +207,14 @@ pub fn redemption_message(namespace: &str, invite: &OpId, person: &str, key: &st
+ /// Hex Ed25519 signature over `msg`: the ONE place a signature is made and
+ /// spelled, for an act's id, a redemption, a joiner's ask and a pass alike,
+ /// as [`verify_hex`] is the one place one is read.
+-pub fn sign_message(key: &SigningKey, msg: &[u8]) -> String {
++pub(crate) fn sign_message(key: &SigningKey, msg: &[u8]) -> String {
+     hex::encode(key.sign(msg).to_bytes())
+ }
+ 
+ /// Sign one act's id. Hex-encoded 64-byte Ed25519 signature, matching how the
+ /// join proof and the dial-info signature are already carried (serde has no
+ /// `[u8; 64]` impl).
+-pub fn sign_ring_op(key: &SigningKey, id: &OpId) -> String {
++pub(crate) fn sign_ring_op(key: &SigningKey, id: &OpId) -> String {
+     sign_message(key, &ring_op_message(id))
+ }
+ 
+@@ -222,7 +222,7 @@ pub fn sign_ring_op(key: &SigningKey, id: &OpId) -> String {
+ /// line. The ONE place an act is made, for the journal's door and the
+ /// fixtures alike, so the bytes signed have one definition (ARCH §10.6).
+ #[allow(clippy::too_many_arguments)]
+-pub fn sign_act(
++pub(crate) fn sign_act(
+     signer: &SigningKey,
+     namespace: &str,
+     ts_unix: i64,
+@@ -276,7 +276,7 @@ pub(crate) fn verify_ring_op(actor: &str, id: &OpId, sig_hex: &str) -> bool {
+ /// place a hex key and a hex signature are parsed, shared by ring ops,
+ /// redemptions, asks and passes; `false` on any malformed input, never a
+ /// panic.
+-pub fn verify_hex(signer: &str, msg: &[u8], sig_hex: &str) -> bool {
++pub(crate) fn verify_hex(signer: &str, msg: &[u8], sig_hex: &str) -> bool {
+     let Ok(key_bytes) = hex::decode(signer) else {
+         return false;
+     };
+diff --git a/crates/svrngs-core/src/sync.rs b/crates/svrngs-core/src/sync.rs
+index c79975cb..36be0bc8 100644
+--- a/crates/svrngs-core/src/sync.rs
++++ b/crates/svrngs-core/src/sync.rs
+@@ -173,7 +173,7 @@ impl DigestFold {
+ /// the value the pricing fast path tests for: costing every op is a second
+ /// whole serialisation of the journal, and a caller that cannot be cut short
+ /// must not pay for it.
+-pub const NO_BUDGET: usize = usize::MAX;
++pub(crate) const NO_BUDGET: usize = usize::MAX;
+ 
+ /// Every op this node holds that `theirs` says the peer is missing, stopped
+ /// at `budget_bytes` of serialised ops. Ordered by `(actor, seq)` so the wire
+diff --git a/crates/svrngs-core/src/view.rs b/crates/svrngs-core/src/view.rs
+index af2525fa..27ce2f0e 100644
+--- a/crates/svrngs-core/src/view.rs
++++ b/crates/svrngs-core/src/view.rs
+@@ -38,10 +38,10 @@ use crate::SignedOp;
+ /// it. Equal heads over an equal `(from, mark)` mean equal held sets; the
+ /// preimage resistance of the hash is the whole argument.
+ #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+-pub struct View {
+-    pub from: u64,
+-    pub mark: u64,
+-    pub head: String,
++pub(crate) struct View {
++    pub(crate) from: u64,
++    pub(crate) mark: u64,
++    pub(crate) head: String,
+ }
+ 
+ impl View {
+@@ -72,7 +72,7 @@ impl View {
+     /// for a second implementation. Ids at one seq are sorted and deduped;
+     /// pairs outside `[from, mark]` are ignored. `of` derives the ids and
+     /// delegates here, so the spec formula has exactly one home.
+-    pub fn fold_pairs(actor: &str, from: u64, mark: u64, pairs: &[(u64, String)]) -> Self {
++    pub(crate) fn fold_pairs(actor: &str, from: u64, mark: u64, pairs: &[(u64, String)]) -> Self {
+         let mut by_seq: BTreeMap<u64, BTreeSet<String>> = BTreeMap::new();
+         for (seq, id) in pairs {
+             if *seq >= from && *seq <= mark {
+@@ -109,10 +109,10 @@ impl View {
+ pub struct Digest(BTreeMap<String, View>);
+ 
+ /// The one digest envelope this build speaks.
+-pub const DIGEST_V: u32 = 2;
++pub(crate) const DIGEST_V: u32 = 2;
+ 
+ impl Digest {
+-    pub fn get(&self, actor: &str) -> Option<&View> {
++    pub(crate) fn get(&self, actor: &str) -> Option<&View> {
+         self.0.get(actor)
+     }
+ }
+diff --git a/crates/svrngs-node/src/api.rs b/crates/svrngs-node/src/api.rs
+index b0631922..e47abc29 100644
+--- a/crates/svrngs-node/src/api.rs
++++ b/crates/svrngs-node/src/api.rs
+@@ -71,7 +71,7 @@ pub fn kept_address(data_dir: &std::path::Path) -> Result<Option<SocketAddr>, Ap
+ 
+ /// Write `addr` to [`API_FILE`] in `data_dir`, through a file renamed into
+ /// place, so an app never reads half an address.
+-pub fn write_address(data_dir: &std::path::Path, addr: SocketAddr) -> Result<(), ApiError> {
++pub(crate) fn write_address(data_dir: &std::path::Path, addr: SocketAddr) -> Result<(), ApiError> {
+     let path = data_dir.join(API_FILE);
+     crate::declared::write_whole(&path, format!("http://{addr}\n").as_bytes())
+         .map_err(|(_, e)| ApiError::AddressFile(path.clone(), e))?;
+@@ -84,7 +84,7 @@ pub fn write_address(data_dir: &std::path::Path, addr: SocketAddr) -> Result<(),
+ /// in a browser ([`not_from_a_page`]); and, for a request whose `Host`
+ /// names a lend, `lends`, the lend's origin ([`crate::origin`], u5-2), which
+ /// answers no route of the record's. All behind the one loopback check.
+-pub fn router(api: RailApi, apps: Router, lends: Router) -> Router {
++pub(crate) fn router(api: RailApi, apps: Router, lends: Router) -> Router {
+     Router::new()
+         // The ring rail's doors (FIVE_PROGRAMS fp-44): durable append and
+         // the log, and the live lane's local buffer half. The bodies mirror
+@@ -188,7 +188,7 @@ async fn from_this_computer(request: Request, next: Next) -> Response {
+ /// The bind guard, as a function so it has a failing input that can be
+ /// named without standing an iroh endpoint up. This API has no auth because
+ /// loopback IS the auth; anywhere else is publishing it.
+-pub fn check_loopback(listen: SocketAddr) -> Result<(), ApiError> {
++pub(crate) fn check_loopback(listen: SocketAddr) -> Result<(), ApiError> {
+     // svrngs: canonical first, so `::ffff:127.0.0.1` reads as the loopback
+     // it is, where `Ipv6Addr::is_loopback` alone says no.
+     if listen.ip().to_canonical().is_loopback() {
+@@ -202,14 +202,14 @@ pub fn check_loopback(listen: SocketAddr) -> Result<(), ApiError> {
+ /// the listener. (svrngs: upstream's `serve` answered the task alone, for a
+ /// port its config named; the node binds whatever port the command asks,
+ /// `0` among them, so the address bound is answered too.)
+-pub struct Serving {
++pub(crate) struct Serving {
+     addr: SocketAddr,
+     _task: AbortOnDropHandle<()>,
+ }
+ 
+ impl Serving {
+     /// Where an app on this computer reaches the API.
+-    pub fn addr(&self) -> SocketAddr {
++    pub(crate) fn addr(&self) -> SocketAddr {
+         self.addr
+     }
+ }
+@@ -218,21 +218,21 @@ impl Serving {
+ /// `serve` bound and served in one call; the node binds before its
+ /// endpoint, so a refused address leaves no endpoint open, and serves once
+ /// the endpoint's transport exists, which the live lane dials through.)
+-pub struct Bound {
++pub(crate) struct Bound {
+     listener: tokio::net::TcpListener,
+     addr: SocketAddr,
+ }
+ 
+ impl Bound {
+     /// Where it listens.
+-    pub fn addr(&self) -> SocketAddr {
++    pub(crate) fn addr(&self) -> SocketAddr {
+         self.addr
+     }
+ }
+ 
+ /// Bind. Refuses a non-loopback address by name, and one another program
+ /// holds as that.
+-pub async fn bind(listen: SocketAddr) -> Result<Bound, ApiError> {
++pub(crate) async fn bind(listen: SocketAddr) -> Result<Bound, ApiError> {
+     check_loopback(listen)?;
+     let listener = tokio::net::TcpListener::bind(listen)
+         .await
+@@ -247,7 +247,7 @@ pub async fn bind(listen: SocketAddr) -> Result<Bound, ApiError> {
+ }
+ 
+ /// Serve `router` ([`router`]'s) on what [`bind`] bound.
+-pub fn serve(router: Router, bound: Bound) -> Serving {
++pub(crate) fn serve(router: Router, bound: Bound) -> Serving {
+     let Bound { listener, addr } = bound;
+     tracing::info!(target: "rails", %addr, "api: serving the record to this computer's apps");
+     let task = tokio::spawn(async move {
+diff --git a/crates/svrngs-node/src/carried.rs b/crates/svrngs-node/src/carried.rs
+index 335e02ac..3f898f03 100644
+--- a/crates/svrngs-node/src/carried.rs
++++ b/crates/svrngs-node/src/carried.rs
+@@ -53,7 +53,7 @@ use crate::register::Standing;
+ 
+ /// Where a carried app's page asks its own acts, and writes one, at its
+ /// own origin.
+-pub const ACTS: &str = "/svrngs/acts";
++pub(crate) const ACTS: &str = "/svrngs/acts";
+ 
+ /// The most a carried app's write reads: an act's most, and its envelope.
+ const WRITE_MOST: usize = svrngs_core::MAX_PAYLOAD_BYTES + 1024;
+diff --git a/crates/svrngs-node/src/declared.rs b/crates/svrngs-node/src/declared.rs
+index 4c7474b8..a9e115fb 100644
+--- a/crates/svrngs-node/src/declared.rs
++++ b/crates/svrngs-node/src/declared.rs
+@@ -30,7 +30,7 @@ use std::path::{Path, PathBuf};
+ /// nobody meant, and silently repairing it would produce a header the operator
+ /// did not write. `..`, `/`, and every control byte fail the same test as a
+ /// stray space.
+-pub fn valid_header_name(name: &str) -> bool {
++pub(crate) fn valid_header_name(name: &str) -> bool {
+     !name.is_empty()
+         && name.len() <= 64
+         && name
+@@ -43,7 +43,7 @@ pub fn valid_header_name(name: &str) -> bool {
+ ///
+ /// Order is stable (sorted by name) so a head is byte-reproducible across
+ /// runs; a directory iteration order is not.
+-pub fn read_declared_in(dir: &Path) -> Vec<(String, String)> {
++pub(crate) fn read_declared_in(dir: &Path) -> Vec<(String, String)> {
+     let Ok(entries) = std::fs::read_dir(dir) else {
+         return Vec::new();
+     };
+@@ -87,7 +87,7 @@ pub fn read_declared_in(dir: &Path) -> Vec<(String, String)> {
+ /// directory. Writing an empty value deletes the declaration — so `unpublish`
+ /// and "I typed the wrong key" are the same operation, and neither leaves a
+ /// stale secret behind.
+-pub fn write_declared_in(dir: &Path, name: &str, value: &str) -> std::io::Result<()> {
++pub(crate) fn write_declared_in(dir: &Path, name: &str, value: &str) -> std::io::Result<()> {
+     let name = name.to_ascii_lowercase();
+     if !valid_header_name(&name) {
+         return Err(std::io::Error::new(
+diff --git a/crates/svrngs-node/src/dial.rs b/crates/svrngs-node/src/dial.rs
+index 905bf41b..cf6edc1c 100644
+--- a/crates/svrngs-node/src/dial.rs
++++ b/crates/svrngs-node/src/dial.rs
+@@ -27,7 +27,7 @@
+ 
+ /// How long a dial to a lend's computer waits for its handshake before the
+ /// computer is taken as asleep.
+-pub const DIAL_WITHIN: std::time::Duration = std::time::Duration::from_secs(4);
++pub(crate) const DIAL_WITHIN: std::time::Duration = std::time::Duration::from_secs(4);
+ 
+ /// How long a phone's page waits for the computer that made its link to
+ /// answer its dial as a member (v1ui-reach (b); `web/src/lib.rs`
+@@ -43,7 +43,7 @@ pub const DIAL_WITHIN: std::time::Duration = std::time::Duration::from_secs(4);
+ /// one up at 30 s (that README). Cellular, a second host and a release build
+ /// were not measured, and are the operator's. The joiner's redeem dial stays
+ /// uncapped (5c097eb).
+-pub const LINK_WITHIN: std::time::Duration = std::time::Duration::from_secs(10);
++pub(crate) const LINK_WITHIN: std::time::Duration = std::time::Duration::from_secs(10);
+ 
+ /// How a phone's page holds its dial to a lender (events-wait (b)): given up
+ /// once the computer has sent nothing for [`DIAL_WITHIN`], as a dial it does
+@@ -54,7 +54,7 @@ pub const LINK_WITHIN: std::time::Duration = std::time::Duration::from_secs(10);
+ /// (`demo/runs/wait/2026-10-14/`, the plant take). A computer's connection
+ /// to a member is held so too, since it is kept across requests
+ /// (arch-peer, `iroh.rs` `dialled`).
+-pub fn held() -> iroh::endpoint::QuicTransportConfig {
++pub(crate) fn held() -> iroh::endpoint::QuicTransportConfig {
+     let idle = iroh::endpoint::VarInt::from_u32(DIAL_WITHIN.as_millis() as u32);
+     let held = iroh::endpoint::QuicTransportConfig::builder().max_idle_timeout(Some(idle.into()));
+     held.keep_alive_interval(DIAL_WITHIN / 4).build()
+diff --git a/crates/svrngs-node/src/door.rs b/crates/svrngs-node/src/door.rs
+index bb1a19c1..44adda9f 100644
+--- a/crates/svrngs-node/src/door.rs
++++ b/crates/svrngs-node/src/door.rs
+@@ -107,27 +107,27 @@ use crate::{Person, RingRail};
+ use limit::{Counts, Verdict, Whereabouts};
+ use svrngs_core::pass::{Label, Pass};
+ 
+-pub mod choices;
+-pub mod limit;
+-pub mod sign_in;
++pub(crate) mod choices;
++pub(crate) mod limit;
++pub(crate) mod sign_in;
+ use sign_in::Signing;
+ 
+ /// svrngs's own header prefix: every header under it on a request through
+ /// the door is the door's. A client's is stripped whole.
+-pub const IDENTITY_PREFIX: &str = "x-svrngs-";
++pub(crate) const IDENTITY_PREFIX: &str = "x-svrngs-";
+ 
+ /// The name to show for the person asking, as the register names them:
+ /// their name in the first group this computer holds, in the groups'
+ /// order, that they stand in. A name is a claim (bash-person): two people
+ /// may share one, so nothing is keyed on it — an account is
+ /// [`USER_HEADER`]'s.
+-pub const PERSON_HEADER: &str = "x-svrngs-person";
++pub(crate) const PERSON_HEADER: &str = "x-svrngs-person";
+ 
+ /// The person asking, by their first key in the group, as the record
+ /// spells an actor: its lowercase hex. The same from every device of
+ /// theirs (bash-devices), so an app keys a person on it; an id, not a key
+ /// to seal to — `/v1/rail/people` lists every key of each person.
+-pub const KEY_HEADER: &str = "x-svrngs-key";
++pub(crate) const KEY_HEADER: &str = "x-svrngs-key";
+ 
+ /// The device asking: the key it stands in the group by, as the record
+ /// spells an actor — one of the keys `/v1/rail/people` lists for the
+@@ -135,14 +135,14 @@ pub const KEY_HEADER: &str = "x-svrngs-key";
+ /// (bash-two-at-once). An app that holds something to a device, as
+ /// Jellyfin holds a session to the device a token was signed in under,
+ /// keys it on this; what is a person's, on [`KEY_HEADER`].
+-pub const DEVICE_HEADER: &str = "x-svrngs-device";
++pub(crate) const DEVICE_HEADER: &str = "x-svrngs-device";
+ 
+ /// The name of the account an app makes for the person asking:
+ /// [`user_name`]'s, unique by their key.
+-pub const USER_HEADER: &str = "x-svrngs-user";
++pub(crate) const USER_HEADER: &str = "x-svrngs-user";
+ 
+ /// What the door tells a lend, and its sign-in, of who asks.
+-pub type Identity = [(HeaderName, HeaderValue); 4];
++pub(crate) type Identity = [(HeaderName, HeaderValue); 4];
+ 
+ /// The account name for `person` asking with `key`: their name kept to
+ /// ASCII letters, digits, `-` and `.`, or `person` if none is left, then
+@@ -151,7 +151,7 @@ pub type Identity = [(HeaderName, HeaderValue); 4];
+ /// person's, and the same key finds the same account after any restart.
+ /// The characters are ones Jellyfin, Navidrome and Calibre-Web each take
+ /// in a user name and none reads as a pattern (`_` and `%` are SQL `LIKE`'s).
+-pub fn user_name(person: &Person, key: &str) -> String {
++pub(crate) fn user_name(person: &Person, key: &str) -> String {
+     let kept: String = (person.as_str().chars())
+         .filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '.')
+         .collect();
+@@ -164,13 +164,13 @@ pub fn user_name(person: &Person, key: &str) -> String {
+ /// page opened (`web/app.js`, `open`), or a computer's page as its origin
+ /// names it ([`crate::origin`]). Absent with no pass and no app named, so a
+ /// service reads its absence as no app named (su-1, the scoped-use spike).
+-pub const APP_HEADER: &str = "x-svrngs-app";
++pub(crate) const APP_HEADER: &str = "x-svrngs-app";
+ 
+ /// The lend's own label (events-links): the first name of its origin on a
+ /// computer, and the `<label>` of `<page>#open=<label>&at=<path>`, the
+ /// address at which a group's page opens the lend at a path on a phone
+ /// (`web/app.js`), so an app writes a link into itself.
+-pub const LABEL_HEADER: &str = "x-svrngs-label";
++pub(crate) const LABEL_HEADER: &str = "x-svrngs-label";
+ 
+ /// The page of each group held here that the device asking stands in,
+ /// `<group>=<page>` apart by a space: the `<page>` of [`LABEL_HEADER`]'s
+@@ -178,33 +178,33 @@ pub const LABEL_HEADER: &str = "x-svrngs-label";
+ /// when it keeps none and `unread` when that cannot be read. Every group,
+ /// as no request says which it is for: a lend is lent to every group held
+ /// here, and a computer's key stands in each of them; a phone's, in one.
+-pub const PAGES_HEADER: &str = "x-svrngs-pages";
++pub(crate) const PAGES_HEADER: &str = "x-svrngs-pages";
+ 
+ /// A person's share of the upload a lend declares, in bits a second, on
+ /// each request through the door and its answer: a declared figure, as the
+ /// name says (DESIGN §8, "The upload is declared"), never a measured one.
+-pub const SHARE_HEADER: &str = "x-svrngs-declared-share-bps";
++pub(crate) const SHARE_HEADER: &str = "x-svrngs-declared-share-bps";
+ 
+ /// The pass a holder presents with every request on the pass holders'
+ /// protocol (u5-2): [`Pass::encode`]'s form. Under [`IDENTITY_PREFIX`], so
+ /// no service ever receives it.
+-pub const PASS_HEADER: &str = "x-svrngs-pass";
++pub(crate) const PASS_HEADER: &str = "x-svrngs-pass";
+ 
+ /// On every answer svrngs makes in a lend's place, never on the lend's
+ /// own (a service's is dropped, [`forward`]): which of [`LendRefusal`] it is,
+ /// so an app tells svrngs's word from the lend's by more than a status
+ /// that both use (mnp-1; `demo/runs/mn/2026-10-08/README.md` §9, 2).
+-pub const REFUSED_HEADER: &str = "x-svrngs-refused";
++pub(crate) const REFUSED_HEADER: &str = "x-svrngs-refused";
+ 
+ /// Said to a computer in none of this one's groups, by the door and the
+ /// node alike, in the asker's words: this computer is the one they reached.
+-pub const LENDS_NOTHING: &str = "the computer you reached lends nothing to you";
++pub(crate) const LENDS_NOTHING: &str = "the computer you reached lends nothing to you";
+ 
+ /// Why svrngs answered rather than the lend: a closed set (AGENTS 9),
+ /// each kind spelt once in [`REFUSED_HEADER`] and the body's `kind`, as the
+ /// lend's worker spells it too (`web/lend.js`, `say`).
+ #[derive(Debug, Clone, Copy)]
+-pub enum LendRefusal {
++pub(crate) enum LendRefusal {
+     /// The lender's computer, or the lend's service on it, did not answer.
+     Away,
+     /// The pass presented does not open the lend now: ask the page for another.
+@@ -302,10 +302,10 @@ pub(crate) fn gone() -> Response {
+ }
+ 
+ /// Where a request for a lend starts.
+-pub const LEND_ROUTE: &str = "/lend/";
++pub(crate) const LEND_ROUTE: &str = "/lend/";
+ 
+ /// Where a member asks what this computer lends.
+-pub const LENDS_ROUTE: &str = "/lends";
++pub(crate) const LENDS_ROUTE: &str = "/lends";
+ 
+ /// Where a lend's choices are said and asked ([`choices`]).
+ const CHOICES: &str = "/choices/{lend}";
+@@ -337,24 +337,24 @@ const HOP_BY_HOP: [&str; 8] = [
+ /// What the door reads: the register, where the lends are declared, and
+ /// who is using each now.
+ #[derive(Clone)]
+-pub struct Door {
+-    pub rail: Arc<RingRail>,
++pub(crate) struct Door {
++    pub(crate) rail: Arc<RingRail>,
+     /// A round of the group's ring, asked for a pass's unknown signer.
+-    pub ring: crate::ring_sync::AskRound,
++    pub(crate) ring: crate::ring_sync::AskRound,
+     /// This computer's key, which its lends' labels name.
+-    pub key: [u8; 32],
+-    pub data_dir: PathBuf,
+-    pub using: Using,
+-    pub sign_ins: sign_in::SignIns,
++    pub(crate) key: [u8; 32],
++    pub(crate) data_dir: PathBuf,
++    pub(crate) using: Using,
++    pub(crate) sign_ins: sign_in::SignIns,
+     /// Each person's yes and stop to an app, written through one task.
+-    pub choices: choices::Choices,
++    pub(crate) choices: choices::Choices,
+     /// The groups' folders, which carry apps ([`Source::Carried`]).
+-    pub folders: crate::folder::Folders,
++    pub(crate) folders: crate::folder::Folders,
+ }
+ 
+ /// The door's routes, for the members' protocol's router: a lend, every
+ /// method, and the list of what this computer lends.
+-pub fn router(door: Door) -> axum::Router {
++pub(crate) fn router(door: Door) -> axum::Router {
+     axum::Router::new()
+         .route("/lend/{*rest}", any(through))
+         .route(LENDS_ROUTE, get(lends))
+@@ -365,7 +365,7 @@ pub fn router(door: Door) -> axum::Router {
+ 
+ /// The door's route on the pass holders' protocol ([`crate::alpn::Alpn::Lend`]):
+ /// a lend, every method, and nothing else.
+-pub fn holders_router(door: Door) -> axum::Router {
++pub(crate) fn holders_router(door: Door) -> axum::Router {
+     axum::Router::new()
+         .route("/lend/{*rest}", any(through_pass))
+         .route(CHOICES, axum::routing::post(choices::stop_with_pass))
+@@ -379,7 +379,7 @@ pub fn holders_router(door: Door) -> axum::Router {
+ /// begins a use, and its answer, dropped once streamed or abandoned, ends
+ /// it ([`InFlight`]). Never in the record.
+ #[derive(Clone)]
+-pub struct Using(mpsc::UnboundedSender<Use>);
++pub(crate) struct Using(mpsc::UnboundedSender<Use>);
+ 
+ enum Use {
+     /// A person, at a guessed whereabouts, asks for a lend; the verdict is
+@@ -405,7 +405,7 @@ fn now() -> Instant {
+ 
+ impl Using {
+     /// The task that keeps the count, ending when the last handle drops.
+-    pub fn spawn() -> Self {
++    pub(crate) fn spawn() -> Self {
+         let (tx, mut rx) = mpsc::unbounded_channel::<Use>();
+         let hold = tx.downgrade();
+         tokio::spawn(async move {
+@@ -463,7 +463,7 @@ impl Using {
+ 
+     /// How many people use `lend` now; `None` when the count's task is
+     /// gone, which is not a count of none.
+-    pub async fn people(&self, lend: &LendName) -> Option<u32> {
++    pub(crate) async fn people(&self, lend: &LendName) -> Option<u32> {
+         let (answer, counted) = oneshot::channel();
+         self.0.send(Use::People(lend.clone(), answer)).ok()?;
+         counted.await.ok()
+@@ -821,7 +821,7 @@ pub(crate) enum Who {
+     Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Serialize, serde::Deserialize,
+ )]
+ #[serde(transparent)]
+-pub struct PersonKey(String);
++pub(crate) struct PersonKey(String);
+ 
+ impl PersonKey {
+     /// The group `key`, actor hex, stands in here, and who they are there:
+@@ -840,7 +840,7 @@ svrngs_core::text_newtype!(PersonKey);
+ /// a device ([`sign_in`]), as an app may hold what it signs in to one
+ /// (demo/runs/two-at-once/2026-10-12/README.md, finding 1).
+ #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+-pub struct DeviceKey(String);
++pub(crate) struct DeviceKey(String);
+ svrngs_core::text_newtype!(DeviceKey);
+ 
+ /// The person a request for a lend is carried as.
+diff --git a/crates/svrngs-node/src/door/choices.rs b/crates/svrngs-node/src/door/choices.rs
+index 27515819..4eaf47e1 100644
+--- a/crates/svrngs-node/src/door/choices.rs
++++ b/crates/svrngs-node/src/door/choices.rs
+@@ -40,7 +40,7 @@ use svrngs_core::pass::Label;
+ /// What a person says of an app: a closed set (AGENTS 9).
+ #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+ #[serde(rename_all = "lowercase")]
+-pub enum Said {
++pub(crate) enum Said {
+     Yes,
+     Stop,
+ }
+@@ -55,9 +55,9 @@ enum Stopping {
+ 
+ /// A choice kept: what the person said, and when, in unix seconds.
+ #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+-pub struct Choice {
+-    pub said: Said,
+-    pub at: i64,
++pub(crate) struct Choice {
++    pub(crate) said: Said,
++    pub(crate) at: i64,
+ }
+ 
+ type Kept = BTreeMap<PersonKey, BTreeMap<Label, Choice>>;
+@@ -156,10 +156,10 @@ pub(super) fn check(
+ /// The task every choice is written through, so two never interleave
+ /// (RUST_ARCH 3, 4), ending when the last handle drops.
+ #[derive(Clone)]
+-pub struct Choices(mpsc::UnboundedSender<(PathBuf, Kept, Done)>);
++pub(crate) struct Choices(mpsc::UnboundedSender<(PathBuf, Kept, Done)>);
+ 
+ impl Choices {
+-    pub fn spawn() -> Self {
++    pub(crate) fn spawn() -> Self {
+         let (tx, mut rx) = mpsc::unbounded_channel::<(PathBuf, Kept, Done)>();
+         tokio::spawn(async move {
+             while let Some((path, kept, done)) = rx.recv().await {
+diff --git a/crates/svrngs-node/src/door/limit.rs b/crates/svrngs-node/src/door/limit.rs
+index 6c099f04..e99e5866 100644
+--- a/crates/svrngs-node/src/door/limit.rs
++++ b/crates/svrngs-node/src/door/limit.rs
+@@ -36,11 +36,11 @@ use crate::lend::{Lend, LendName, Upload};
+ /// How long a person whose last request ended is still counted on a lend:
+ /// a player fetches the next part of a stream every few seconds, and
+ /// between two fetches its person is still watching.
+-pub const WINDOW: Duration = Duration::from_secs(30);
++pub(crate) const WINDOW: Duration = Duration::from_secs(30);
+ 
+ /// Where the door guesses a viewer is, from their path's address.
+ #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+-pub enum Whereabouts {
++pub(crate) enum Whereabouts {
+     /// In the lender's home: a private, link-local or unique-local address.
+     Home,
+     /// Anywhere else — a public address, a relayed path, or no path seen.
+@@ -52,7 +52,7 @@ pub enum Whereabouts {
+ /// 192.168/16), link-local (169.254/16, fe80::/10) or unique-local
+ /// (fc00::/7), an IPv4 address written as IPv6 read as IPv4; else away.
+ /// Loopback is away: no other computer reaches this one over it.
+-pub fn guess(addr: Option<IpAddr>) -> Whereabouts {
++pub(crate) fn guess(addr: Option<IpAddr>) -> Whereabouts {
+     let home = match addr.map(|a| a.to_canonical()) {
+         Some(IpAddr::V4(v4)) => v4.is_private() || v4.is_link_local(),
+         Some(IpAddr::V6(v6)) => v6.is_unique_local() || v6.is_unicast_link_local(),
+@@ -67,7 +67,7 @@ pub fn guess(addr: Option<IpAddr>) -> Whereabouts {
+ 
+ /// The door's answer to a person asking for a lend.
+ #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+-pub enum Verdict {
++pub(crate) enum Verdict {
+     /// Let in and counted: `people` are counted with them, and each is told
+     /// `share` bits a second of the declared upload — `None` when the lend
+     /// declares none.
+@@ -99,13 +99,13 @@ impl Viewer {
+ /// Who is using each lend, by person: the door's own state, never in the
+ /// record.
+ #[derive(Debug, Default)]
+-pub struct Counts(BTreeMap<LendName, BTreeMap<String, Viewer>>);
++pub(crate) struct Counts(BTreeMap<LendName, BTreeMap<String, Viewer>>);
+ 
+ /// `upload` divided evenly among `people`, as `fair_share_cap` divides a
+ /// budget among the active — floored, with no floor of its own: a share
+ /// is what each may use, and an upload too small to divide is the lender's
+ /// to raise.
+-pub fn share_of(upload: Upload, people: NonZeroU32) -> u64 {
++pub(crate) fn share_of(upload: Upload, people: NonZeroU32) -> u64 {
+     upload.bps() / u64::from(people.get())
+ }
+ 
+@@ -113,7 +113,7 @@ impl Counts {
+     /// `actor`, at `whereabouts`, asks for `lend` at `now`. Let in, a
+     /// request of theirs begins and they are counted until [`Self::end`]
+     /// ends it and [`WINDOW`] passes; refused, nothing changes.
+-    pub fn ask(
++    pub(crate) fn ask(
+         &mut self,
+         lend: &Lend,
+         actor: &str,
+@@ -151,7 +151,7 @@ impl Counts {
+ 
+     /// A request `actor` began on `lend` ended at `now`, its answer whole
+     /// or abandoned. One that was never let in is no one's.
+-    pub fn end(&mut self, lend: &LendName, actor: &str, now: Instant) {
++    pub(crate) fn end(&mut self, lend: &LendName, actor: &str, now: Instant) {
+         if let Some(v) = self.0.get_mut(lend).and_then(|p| p.get_mut(actor)) {
+             v.in_flight = v.in_flight.saturating_sub(1);
+             v.last = now;
+@@ -159,7 +159,7 @@ impl Counts {
+     }
+ 
+     /// How many people are counted on `lend` at `now`.
+-    pub fn people(&self, lend: &LendName, now: Instant) -> u32 {
++    pub(crate) fn people(&self, lend: &LendName, now: Instant) -> u32 {
+         let n = self
+             .0
+             .get(lend)
+diff --git a/crates/svrngs-node/src/door/sign_in.rs b/crates/svrngs-node/src/door/sign_in.rs
+index 3e31491d..13e73640 100644
+--- a/crates/svrngs-node/src/door/sign_in.rs
++++ b/crates/svrngs-node/src/door/sign_in.rs
+@@ -48,11 +48,11 @@ use crate::lend::LendName;
+ /// What a browser holds in place of a person's secret, the same for every
+ /// lend and person: it names nobody, since the door puts in the secret of
+ /// whoever it let in, never by the stand-in.
+-pub const STAND_IN: &str = "svrngs-stand-in";
++pub(crate) const STAND_IN: &str = "svrngs-stand-in";
+ 
+ /// The header the door's ask names [`STAND_IN`] in, so what an answer's
+ /// script stores is read from the ask, never spelled by the app (#90).
+-pub const STAND_IN_HEADER: &str = "x-svrngs-stand-in";
++pub(crate) const STAND_IN_HEADER: &str = "x-svrngs-stand-in";
+ 
+ /// How long a sign-in may take to answer, asked and read.
+ const ASK_WITHIN: Duration = Duration::from_secs(30);
+@@ -70,11 +70,11 @@ pub(crate) struct Secret(String);
+ /// What a sign-in answered for one person, parsed.
+ #[derive(Clone)]
+ pub(crate) struct Answer {
+-    pub secret: Secret,
++    pub(crate) secret: Secret,
+     /// Set on each of the person's requests, displacing the client's.
+-    pub headers: Vec<(HeaderName, HeaderValue)>,
++    pub(crate) headers: Vec<(HeaderName, HeaderValue)>,
+     /// Put first in the lend's pages to the person ([`tag`], [`first_in`]).
+-    pub script: Option<String>,
++    pub(crate) script: Option<String>,
+ }
+ 
+ #[derive(serde::Deserialize)]
+@@ -89,7 +89,7 @@ struct Wire {
+ impl Answer {
+     /// `body` as a sign-in's answer, or why it is none. A serde error is
+     /// told by its class and place, never its text, which can quote a value.
+-    pub(crate) fn parse(body: &[u8]) -> Result<Self, Refusal> {
++    pub fn parse(body: &[u8]) -> Result<Self, Refusal> {
+         let bad = |why: String| Err(Refusal::Malformed(why));
+         let wire: Wire = match serde_json::from_slice(body) {
+             Ok(w) => w,
+@@ -144,8 +144,8 @@ pub(crate) enum Refusal {
+ /// A person signed in to a lend: their answer, and every secret the door
+ /// holds for the lend now, which its answers to anyone are swapped of.
+ pub(crate) struct Signed {
+-    pub answer: Answer,
+-    pub secrets: Vec<Secret>,
++    pub(crate) answer: Answer,
++    pub(crate) secrets: Vec<Secret>,
+ }
+ 
+ /// How a request through a lend is signed, decided once as the door lets
+@@ -277,11 +277,11 @@ enum Ask {
+ /// (RUST_ARCH 3, 4), as [`super::Using`] is. Each ask goes out on its own,
+ /// so one person's slow sign-in holds nobody else's request (#88).
+ #[derive(Clone)]
+-pub struct SignIns(mpsc::UnboundedSender<Ask>);
++pub(crate) struct SignIns(mpsc::UnboundedSender<Ask>);
+ 
+ impl SignIns {
+     /// The task that keeps the answers, ending when the last handle drops.
+-    pub fn spawn() -> Self {
++    pub(crate) fn spawn() -> Self {
+         let (tx, mut rx) = mpsc::unbounded_channel::<Ask>();
+         let back = tx.downgrade();
+         tokio::spawn(async move {
+@@ -336,7 +336,7 @@ impl SignIns {
+ 
+     /// The person `identity` names signed in to `lend` on the device
+     /// `actor`: kept, or asked of its sign-in at `port` now.
+-    pub(crate) async fn of(
++    pub async fn of(
+         &self,
+         lend: &LendName,
+         port: NonZeroU16,
+@@ -486,7 +486,7 @@ pub(crate) fn bytes(secrets: &[Secret]) -> Vec<&[u8]> {
+ }
+ 
+ impl Secret {
+-    pub(crate) fn as_str(&self) -> &str {
++    pub fn as_str(&self) -> &str {
+         &self.0
+     }
+ }
+diff --git a/crates/svrngs-node/src/folder.rs b/crates/svrngs-node/src/folder.rs
+index cf8aa591..456b631c 100644
+--- a/crates/svrngs-node/src/folder.rs
++++ b/crates/svrngs-node/src/folder.rs
+@@ -76,7 +76,7 @@ const SWEEP: Duration = Duration::from_secs(1);
+ type KeepAsk = oneshot::Sender<Option<HashSet<Hash>>>;
+ 
+ #[derive(Debug, thiserror::Error)]
+-pub enum FolderError {
++pub(crate) enum FolderError {
+     #[error("the folder {0} cannot be read: {1}")]
+     Read(PathBuf, std::io::Error),
+     #[error("the store refused {0}: {1}")]
+@@ -149,7 +149,7 @@ type ReadAt = (
+ 
+ impl Folders {
+     /// The store under `data_dir/blobs`, its sweep, and its provider.
+-    pub(crate) async fn start(
++    pub async fn start(
+         data_dir: &Path,
+         host: Arc<Host>,
+         nudge: Arc<Notify>,
+diff --git a/crates/svrngs-node/src/group.rs b/crates/svrngs-node/src/group.rs
+index 4e222dfa..fb3ec99f 100644
+--- a/crates/svrngs-node/src/group.rs
++++ b/crates/svrngs-node/src/group.rs
+@@ -35,7 +35,8 @@ use std::path::{Path, PathBuf};
+ use crate::namespaces_in;
+ /// The seed, its id and the belief in an issuer's answer are svrngs-core's
+ /// since u4-5, so a browser's page reads a seed with this body.
+-pub use crate::seed::{answered, Seed};
++pub(crate) use crate::seed::answered;
++pub use crate::seed::Seed;
+ /// A group's name and a person's share the core's one rule (u2-9).
+ pub use crate::Name;
+ use ed25519_dalek::VerifyingKey;
+@@ -80,12 +81,12 @@ pub enum SeedError {
+ 
+ /// Write `seed` into `dir`, the group's directory, with the register's
+ /// seed beside it.
+-pub fn write_seed(dir: &Path, seed: &Seed) -> Result<(), SeedError> {
++pub(crate) fn write_seed(dir: &Path, seed: &Seed) -> Result<(), SeedError> {
+     keep(dir, dir.join(SEED_FILE), &seed.to_text())
+ }
+ 
+ /// Read the seed in `dir`, or `None` when the directory holds none.
+-pub fn read_seed(dir: &Path) -> Result<Option<Seed>, SeedError> {
++pub(crate) fn read_seed(dir: &Path) -> Result<Option<Seed>, SeedError> {
+     let path = dir.join(SEED_FILE);
+     let Some(raw) = kept(&path)? else {
+         return Ok(None);
+@@ -104,7 +105,7 @@ pub fn seed_text(dir: &Path) -> Result<Option<String>, String> {
+ 
+ /// Keep `origin` in `dir`, the group's directory, as the page its links
+ /// print on from here.
+-pub fn write_origin(dir: &Path, origin: &Origin) -> Result<(), SeedError> {
++pub(crate) fn write_origin(dir: &Path, origin: &Origin) -> Result<(), SeedError> {
+     let path = dir.join(ORIGIN_FILE);
+     tracing::debug!(target: "group", path = %path.display(), origin = origin.as_str(), "group: origin kept");
+     keep(dir, path, origin.as_str())
+@@ -112,7 +113,7 @@ pub fn write_origin(dir: &Path, origin: &Origin) -> Result<(), SeedError> {
+ 
+ /// The origin kept in `dir`, or `None` when the directory keeps none, as
+ /// the node reads it for the home page too ([`crate::invite::kept_page`]).
+-pub fn read_origin(dir: &Path) -> Result<Option<Origin>, SeedError> {
++pub(crate) fn read_origin(dir: &Path) -> Result<Option<Origin>, SeedError> {
+     crate::invite::kept_page(dir).map_err(|why| SeedError::Read {
+         path: dir.join(ORIGIN_FILE),
+         why,
+@@ -121,7 +122,7 @@ pub fn read_origin(dir: &Path) -> Result<Option<Origin>, SeedError> {
+ 
+ /// Keep `relay` in `dir`, the group's directory, as where this computer
+ /// meets the group.
+-pub fn write_relay(dir: &Path, relay: &RelayUrl) -> Result<(), SeedError> {
++pub(crate) fn write_relay(dir: &Path, relay: &RelayUrl) -> Result<(), SeedError> {
+     let path = dir.join(RELAY_FILE);
+     tracing::debug!(target: "group", path = %path.display(), %relay, "group: relay kept");
+     keep(dir, path, &relay.to_string())
+@@ -204,7 +205,7 @@ impl crate::node::Host {
+ /// and the group's name, which every member who joined derives alike, so
+ /// their folders are one; `/`, `\` and `:` read as `-` and leading dots
+ /// dropped, so the name stays one directory under it, else the id's start.
+-pub fn folder_place(seed: &Seed) -> Option<PathBuf> {
++pub(crate) fn folder_place(seed: &Seed) -> Option<PathBuf> {
+     let home = std::env::var_os("HOME").filter(|h| !h.is_empty())?;
+     let name = seed.name().as_str().replace(['/', '\\', ':'], "-");
+     let name = match name.trim_start_matches('.') {
+@@ -321,7 +322,7 @@ fn called(seed: &Seed, name: &str) -> bool {
+ /// where the issuer's build met its groups, not the group's own, which kept
+ /// would outlast the operator's switch (DESIGN §10, 2026-10-13). At
+ /// svrngs's every relay is kept, n0's list never built there.
+-pub fn kept_relay(carried: Option<RelayUrl>, n0: bool) -> Option<RelayUrl> {
++pub(crate) fn kept_relay(carried: Option<RelayUrl>, n0: bool) -> Option<RelayUrl> {
+     let n0 = n0 && carried.as_ref().is_some_and(|r| n0_relays().contains(r));
+     tracing::debug!(target: "group", ?carried, n0, "group: join — the link's relay kept, unless it is one of n0's at n0's");
+     carried.filter(|_| !n0)
+diff --git a/crates/svrngs-node/src/guest.rs b/crates/svrngs-node/src/guest.rs
+index c10bd367..b208138d 100644
+--- a/crates/svrngs-node/src/guest.rs
++++ b/crates/svrngs-node/src/guest.rs
+@@ -28,7 +28,7 @@ mod tests;
+ /// iroh's `Builder::empty()` deliberately sets no provider (only
+ /// presets choose one), and `bind()` errors without it — pass this.
+ /// Ring, matching the rest of the workspace's rustls usage.
+-pub fn ring_crypto_provider() -> Arc<rustls::crypto::CryptoProvider> {
++pub(crate) fn ring_crypto_provider() -> Arc<rustls::crypto::CryptoProvider> {
+     Arc::new(rustls::crypto::ring::default_provider())
+ }
+ 
+@@ -89,7 +89,7 @@ impl Default for RelayConfig {
+ /// ([`crate`] consumers like `sovereign-server::iroh_access`) and the
+ /// mesh daemon — binds identically and any iroh-API churn stays here.
+ /// Hermetic tests still use `EndpointBuilder::empty()` directly.
+-pub async fn build_relayed_endpoint(
++pub(crate) async fn build_relayed_endpoint(
+     secret_key: SecretKey,
+     alpns: Vec<Vec<u8>>,
+     cfg: &RelayConfig,
+diff --git a/crates/svrngs-node/src/invite.rs b/crates/svrngs-node/src/invite.rs
+index 33a9a4b2..7164ae29 100644
+--- a/crates/svrngs-node/src/invite.rs
++++ b/crates/svrngs-node/src/invite.rs
+@@ -20,7 +20,7 @@ use crate::{actor_of, MintInvite, Person, RailError, Refused};
+ /// How long a link lets people in: upstream's one invite lapse
+ /// (`commonwealth-discovery/src/membership.rs:53` at `e1a43bcd2`, a day;
+ /// the core decides any lapse it is handed, u2-4b).
+-pub const LINK_LIFE_SECS: i64 = 24 * 60 * 60;
++pub(crate) const LINK_LIFE_SECS: i64 = 24 * 60 * 60;
+ 
+ /// How many secrets [`draw`] draws before answering one whose token spells
+ /// a kept word: the issuer's key is fixed, so its part may spell one that
+@@ -29,12 +29,12 @@ const DRAWS: usize = 256;
+ 
+ /// The one spelling of the file in a group's directory that keeps the page
+ /// its https links print on (u2-7; group.rs `write_origin` writes it).
+-pub const ORIGIN_FILE: &str = "origin";
++pub(crate) const ORIGIN_FILE: &str = "origin";
+ 
+ /// The page `dir`, a group's directory, keeps for its https links, or
+ /// `None` when it keeps none; why it cannot be read, never an absence
+ /// (ARCH 6). Moved from svrngs's group.rs `read_origin`.
+-pub fn kept_page(dir: &Path) -> Result<Option<Origin>, String> {
++pub(crate) fn kept_page(dir: &Path) -> Result<Option<Origin>, String> {
+     match std::fs::read_to_string(dir.join(ORIGIN_FILE)) {
+         Ok(raw) => Origin::parse(&raw)
+             .map(Some)
+@@ -69,7 +69,7 @@ pub enum Unminted {
+ /// secret drawn again, up to [`DRAWS`] times, while the token spells a
+ /// word DESIGN §1 keeps from people.
+ #[expect(clippy::disallowed_methods, reason = "draws a link's secret")]
+-pub fn draw(issuer: PublicKey, relay: Option<RelayUrl>) -> Token {
++pub(crate) fn draw(issuer: PublicKey, relay: Option<RelayUrl>) -> Token {
+     let mut token = Token {
+         issuer: ed25519_dalek::VerifyingKey::from_bytes(issuer.as_bytes())
+             .expect("iroh's key is a checked ed25519 key (iroh-base key.rs:122-127)"),
+@@ -91,7 +91,7 @@ pub fn draw(issuer: PublicKey, relay: Option<RelayUrl>) -> Token {
+ /// The relay a link carries, given how this computer reaches the network
+ /// and the home relay its endpoint reports: `home`, or the first relay
+ /// configured while the endpoint reports none, in either posture.
+-pub fn carried(relay: &RelayConfig, home: Option<RelayUrl>) -> Option<RelayUrl> {
++pub(crate) fn carried(relay: &RelayConfig, home: Option<RelayUrl>) -> Option<RelayUrl> {
+     let configured = || {
+         relay
+             .relay_urls
+@@ -116,7 +116,7 @@ impl Host {
+     /// computer, adding a device of the person `device_of` when given; the
+     /// token. The issuer's newer `Invite` closes their last one from its
+     /// place in the order (u2-4b, `membership`).
+-    pub fn mint(
++    pub(crate) fn mint(
+         &self,
+         group: &str,
+         relay: Option<RelayUrl>,
+@@ -192,7 +192,7 @@ impl Host {
+     /// This computer's person in `group`, by their first key and name, as
+     /// the register names them (bash-devices): whom a device link adds a
+     /// device of. A computer that stands there as nobody makes none.
+-    pub fn own_person(&self, group: &str) -> Result<(String, Person), Unminted> {
++    pub(crate) fn own_person(&self, group: &str) -> Result<(String, Person), Unminted> {
+         let me = actor_of(self.rail.signer());
+         let standing = (self.rail.standing(group)).map_err(|e| Unminted::Unkept(e.to_string()))?;
+         let own = standing
+diff --git a/crates/svrngs-node/src/iroh.rs b/crates/svrngs-node/src/iroh.rs
+index d1652481..f0b98cd6 100644
+--- a/crates/svrngs-node/src/iroh.rs
++++ b/crates/svrngs-node/src/iroh.rs
+@@ -44,24 +44,30 @@ use n0_future::task::AbortOnDropHandle;
+ use std::sync::Arc;
+ use std::time::Duration;
+ 
+-pub use crate::alpn::{Alpn, ALPN};
++pub(crate) use crate::alpn::Alpn;
++pub(crate) use crate::alpn::ALPN;
+ // The guest dialer lives in `crate::guest`, as it lived in
+ // `mesh_reach::guest` upstream (pb-reach-guest, phase-b-35); re-exported so
+ // callers spell it `svrngs_node::iroh::`.
+-pub use crate::guest::{build_relayed_endpoint, RelayConfig};
++pub(crate) use crate::guest::build_relayed_endpoint;
++pub use crate::guest::RelayConfig;
+ 
+ // Re-exported so callers build endpoints without declaring their own iroh
+ // dependency — keeps the version pin in exactly one place.
+-pub use iroh::{Endpoint, EndpointAddr, PublicKey, RelayUrl, SecretKey};
++pub(crate) use iroh::Endpoint;
++pub(crate) use iroh::EndpointAddr;
++pub(crate) use iroh::PublicKey;
++pub use iroh::RelayUrl;
++pub(crate) use iroh::SecretKey;
+ // svrngs: iroh's address book in memory, so a test tells a joiner the
+ // loopback addresses a link's bare key resolves to (u2-8).
+-pub use iroh::address_lookup::MemoryLookup;
++pub(crate) use iroh::address_lookup::MemoryLookup;
+ 
+ /// Render an endpoint's current dial info as a pairing string
+ /// (`<64-hex-endpoint-id>@<target>[,<target>...]`). Relay URLs first (stable),
+ /// then direct addresses. `None` while the endpoint has no
+ /// reachable address yet.
+-pub fn format_dial_string(addr: &EndpointAddr) -> Option<String> {
++pub(crate) fn format_dial_string(addr: &EndpointAddr) -> Option<String> {
+     let mut targets: Vec<String> = addr.relay_urls().map(|r| r.to_string()).collect();
+     targets.extend(addr.ip_addrs().map(|a| a.to_string()));
+     if targets.is_empty() {
+@@ -77,7 +83,7 @@ pub fn format_dial_string(addr: &EndpointAddr) -> Option<String> {
+ /// Whether `endpoint` resolves a bare key by an address lookup: built only
+ /// with `n0_services` (`guest::relayed_endpoint_builder`) or one a test adds.
+ /// A closed endpoint has none.
+-pub fn has_lookup(endpoint: &Endpoint) -> bool {
++pub(crate) fn has_lookup(endpoint: &Endpoint) -> bool {
+     endpoint.address_lookup().is_ok_and(|l| !l.is_empty())
+ }
+ 
+@@ -85,19 +91,19 @@ pub fn has_lookup(endpoint: &Endpoint) -> bool {
+ /// `PeerContact` was the mesh's gossiped record — a `NodeId`, IP addresses
+ /// and an optional key; here the key is the peer and the hints are optional.
+ #[derive(Debug, Clone)]
+-pub struct Contact {
++pub(crate) struct Contact {
+     /// The peer's Ed25519 key — what the QUIC handshake verifies.
+-    pub key: PublicKey,
++    pub(crate) key: PublicKey,
+     /// The peer's home relay, if known.
+-    pub relay_url: Option<String>,
++    pub(crate) relay_url: Option<String>,
+     /// The peer's iroh UDP socket addresses, if known.
+-    pub iroh_direct_addrs: Vec<SocketAddr>,
++    pub(crate) iroh_direct_addrs: Vec<SocketAddr>,
+ }
+ 
+ impl Contact {
+     /// A peer known by its key alone, no hint: how svrngs dials a member,
+     /// since nothing gossips addresses (DESIGN §8, "A bare key is dialled").
+-    pub fn by_key(key: PublicKey) -> Self {
++    pub(crate) fn by_key(key: PublicKey) -> Self {
+         Self {
+             key,
+             relay_url: None,
+@@ -108,7 +114,7 @@ impl Contact {
+     /// A member by its key and the relay its group's record names for it
+     /// (relay-in-record; DESIGN §6). With none named its key alone, said:
+     /// only an address lookup finds it then, and with none it is not dialled.
+-    pub fn named(key: PublicKey, relay: Option<&svrngs_core::relay::Url>) -> Self {
++    pub(crate) fn named(key: PublicKey, relay: Option<&svrngs_core::relay::Url>) -> Self {
+         if relay.is_none() {
+             tracing::debug!(target: "transport", peer = %key.fmt_short(),
+                 "transport: the group names no relay for this computer — its key alone, which only an address lookup finds");
+@@ -122,7 +128,7 @@ impl Contact {
+ 
+ /// Client half: a request to a member, dialled by its key.
+ #[derive(Debug)]
+-pub struct IrohTransport {
++pub(crate) struct IrohTransport {
+     pub(crate) endpoint: iroh::Endpoint,
+     /// Out-of-band dial hints: pubkey → iroh UDP socket addresses.
+     /// **Fallback only.** Dial info comes first from the [`Contact`] —
+@@ -147,7 +153,7 @@ pub(crate) type Connections = std::collections::BTreeMap<([u8; 32], &'static [u8
+ 
+ impl IrohTransport {
+     #[expect(clippy::disallowed_types, reason = "the transport's address cache")]
+-    pub fn new(endpoint: iroh::Endpoint) -> Self {
++    pub(crate) fn new(endpoint: iroh::Endpoint) -> Self {
+         Self {
+             endpoint,
+             known_addrs: std::sync::Mutex::new(HashMap::new()),
+@@ -192,7 +198,7 @@ impl IrohTransport {
+ 
+     /// Seed dial hints for a peer. Test/fallback surface — a caller with a
+     /// [`Contact`] passes its hints there instead.
+-    pub fn add_known_peer(&self, pubkey: PublicKey, addrs: Vec<SocketAddr>) {
++    pub(crate) fn add_known_peer(&self, pubkey: PublicKey, addrs: Vec<SocketAddr>) {
+         if let Ok(mut map) = self.known_addrs.lock() {
+             map.insert(*pubkey.as_bytes(), addrs);
+         }
+@@ -258,7 +264,7 @@ impl IrohTransport {
+     /// [`crate::dial::DIAL_WITHIN`]: its answer's head, its body still to
+     /// read, so a stream or a WebSocket is carried whole. A connection that
+     /// fails a request is let go, and the next request dials afresh.
+-    pub async fn send(&self, peer: &Contact, req: Request) -> Result<Streamed, Unsent> {
++    pub(crate) async fn send(&self, peer: &Contact, req: Request) -> Result<Streamed, Unsent> {
+         let conn = self
+             .kept(peer, Alpn::Member, crate::dial::DIAL_WITHIN)
+             .await?;
+@@ -270,7 +276,7 @@ impl IrohTransport {
+     }
+ 
+     /// [`Self::send`], its answer read whole within [`ANSWERED_WITHIN`].
+-    pub async fn fetch(&self, peer: &Contact, req: Request) -> Result<Whole, Unsent> {
++    pub(crate) async fn fetch(&self, peer: &Contact, req: Request) -> Result<Whole, Unsent> {
+         whole(self.send(peer, req)).await
+     }
+ }
+@@ -278,19 +284,19 @@ impl IrohTransport {
+ /// How long a request read whole waits for its answer, the dial included:
+ /// the ten seconds the round's reqwest client was built with
+ /// (`ring_sync.rs` `peer_client` at 965b52b, cut with the bridge), kept.
+-pub const ANSWERED_WITHIN: Duration = Duration::from_secs(10);
++pub(crate) const ANSWERED_WITHIN: Duration = Duration::from_secs(10);
+ 
+ /// A request on the stream: axum's, as the door and the origin carry one.
+-pub type Request = axum::http::Request<axum::body::Body>;
++pub(crate) type Request = axum::http::Request<axum::body::Body>;
+ /// An answer's head, its body read as it comes.
+-pub type Streamed = axum::http::Response<hyper::body::Incoming>;
++pub(crate) type Streamed = axum::http::Response<hyper::body::Incoming>;
+ /// An answer read whole.
+-pub type Whole = axum::http::Response<axum::body::Bytes>;
++pub(crate) type Whole = axum::http::Response<axum::body::Bytes>;
+ 
+ /// Why a request to a computer has no answer, each traced at debug where
+ /// it is decided.
+ #[derive(Debug, thiserror::Error)]
+-pub enum Unsent {
++pub(crate) enum Unsent {
+     #[error("no dialable path: no relay, no address and no lookup")]
+     NoPath,
+     #[error("it answered, and does not know this computer stands in any group it holds")]
+@@ -389,7 +395,7 @@ async fn closed_unadmitted(conn: &Connection) -> bool {
+ /// The reason the acceptor closes a connection it does not admit with,
+ /// which a request on the stream reads ([`Unsent::NotAdmitted`]): the one answer a
+ /// stranger is given, at the connection and never in HTTP.
+-pub const NOT_ADMITTED: &[u8] = b"not admitted";
++pub(crate) const NOT_ADMITTED: &[u8] = b"not admitted";
+ 
+ /// How long a request with no answer waits for its connection's close: the
+ /// acceptor closes as soon as the handshake is done.
+@@ -398,7 +404,7 @@ const CLOSED_WITHIN: Duration = Duration::from_secs(1);
+ /// The acceptor's answer to a connection, decided once per connection on its
+ /// negotiated ALPN and the key its handshake verified.
+ #[derive(Debug, Clone)]
+-pub enum Admit {
++pub(crate) enum Admit {
+     /// Serve every bi-stream on the connection with this router: the
+     /// routes its protocol reaches, and no others.
+     Serve(axum::Router),
+@@ -414,12 +420,12 @@ pub enum Admit {
+ /// and nothing outside this crate can build one, so a handler that extracts
+ /// `Extension<Dialer>` reads the connection — never a header a client typed.
+ #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+-pub struct Dialer(PublicKey);
++pub(crate) struct Dialer(PublicKey);
+ 
+ impl Dialer {
+     /// The record's actor: the key's lowercase hex, as
+     /// [`actor_of`](svrngs_core::actor_of) spells a signer.
+-    pub fn actor(&self) -> String {
++    pub(crate) fn actor(&self) -> String {
+         key_actor(&self.0)
+     }
+ }
+@@ -428,20 +434,20 @@ impl Dialer {
+ /// reads of the path it travels (svrngs, u3-6). Inserted by
+ /// [`IrohAcceptor`] as an extension, as the dialer is.
+ #[derive(Debug, Clone)]
+-pub struct Via(iroh::endpoint::Connection);
++pub(crate) struct Via(iroh::endpoint::Connection);
+ 
+ /// What a connection's selected path looks like now, as iroh's
+ /// `Connection::paths()` and `PathStats` report it: use, never capacity
+ /// (DESIGN §8, U3's inventory, its iroh_path row).
+ #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+-pub struct Observed {
++pub(crate) struct Observed {
+     /// The address the path ends at, `None` when it rides a relay.
+-    pub addr: Option<IpAddr>,
+-    pub relayed: bool,
+-    pub rtt: Duration,
++    pub(crate) addr: Option<IpAddr>,
++    pub(crate) relayed: bool,
++    pub(crate) rtt: Duration,
+     /// Bytes this computer has sent on the path, and received.
+-    pub sent: u64,
+-    pub received: u64,
++    pub(crate) sent: u64,
++    pub(crate) received: u64,
+ }
+ 
+ impl Via {
+@@ -450,7 +456,7 @@ impl Via {
+     /// leg and a relay both active read as relayed while bytes went direct
+     /// (`commonwealth-transport/src/iroh_path.rs:56-68`, `Mixed`); the
+     /// selected path is the one carrying them.
+-    pub fn observe(&self) -> Option<Observed> {
++    pub(crate) fn observe(&self) -> Option<Observed> {
+         let paths = self.0.paths();
+         let path = paths.iter().find(|p| p.is_selected())?;
+         let stats = path.stats();
+@@ -470,20 +476,20 @@ impl Via {
+ 
+ /// The record's actor for an iroh key: its lowercase hex, as
+ /// [`actor_of`](svrngs_core::actor_of) spells a signer.
+-pub fn key_actor(key: &PublicKey) -> String {
++pub(crate) fn key_actor(key: &PublicKey) -> String {
+     hex::encode(key.as_bytes())
+ }
+ 
+ /// The iroh key an actor's lowercase hex spells, or `None` — the inverse of
+ /// [`key_actor`], for a key the register names that the node dials.
+-pub fn actor_key(actor: &str) -> Option<PublicKey> {
++pub(crate) fn actor_key(actor: &str) -> Option<PublicKey> {
+     let bytes: [u8; 32] = hex::decode(actor).ok()?.try_into().ok()?;
+     PublicKey::from_bytes(&bytes).ok()
+ }
+ 
+ /// Server half: accept iroh connections, and serve each bi-stream of an
+ /// admitted one with hyper's HTTP/1 server and the caller's router.
+-pub struct IrohAcceptor {
++pub(crate) struct IrohAcceptor {
+     _task: AbortOnDropHandle<()>,
+ }
+ 
+@@ -499,7 +505,7 @@ impl IrohAcceptor {
+     /// not a credential; the verified key is the evidence `admit` decides
+     /// on. It is called again for every connection, so a decision that
+     /// consults live state sees membership change between dials.
+-    pub fn spawn<F>(endpoint: iroh::Endpoint, admit: F) -> Self
++    pub(crate) fn spawn<F>(endpoint: iroh::Endpoint, admit: F) -> Self
+     where
+         F: Fn(&[u8], &PublicKey) -> Admit + Send + Sync + 'static,
+     {
+diff --git a/crates/svrngs-node/src/join.rs b/crates/svrngs-node/src/join.rs
+index 2bf68f9d..1e50ce31 100644
+--- a/crates/svrngs-node/src/join.rs
++++ b/crates/svrngs-node/src/join.rs
+@@ -13,14 +13,14 @@ use crate::redeem::{ask, redeem, AskRequest, Asked, RedeemError, RedeemRequest,
+ use crate::{register::Standing, Device, Person};
+ 
+ /// The issuer's computer, as iroh names it.
+-pub fn key(token: &Token) -> PublicKey {
++pub(crate) fn key(token: &Token) -> PublicKey {
+     PublicKey::from_bytes(token.issuer.as_bytes())
+         .expect("the token's key was checked as iroh checks one (iroh-base key.rs:122-127)")
+ }
+ 
+ /// How the issuer's computer is dialled: its key, and its relay when
+ /// the token carries one.
+-pub fn addr(token: &Token) -> EndpointAddr {
++pub(crate) fn addr(token: &Token) -> EndpointAddr {
+     let addr = EndpointAddr::new(key(token));
+     match &token.relay {
+         Some(relay) => addr.with_relay_url(RelayUrl::from(relay.clone())),
+@@ -60,7 +60,7 @@ impl Host {
+     /// answer, and the seed answered, believed only when it hashes to the
+     /// group named (`group::answered`). The home page says it before it
+     /// joins.
+-    pub async fn asked(&self, link: &Link) -> Result<(Asked, Seed), NotJoined> {
++    pub(crate) async fn asked(&self, link: &Link) -> Result<(Asked, Seed), NotJoined> {
+         let request = AskRequest::sign(&link.token.key(), self.rail.signer());
+         let asked = ask(&self.endpoint, addr(&link.token), &request).await;
+         let asked = asked.map_err(|e| not_let_in(e, None))?;
+diff --git a/crates/svrngs-node/src/lend.rs b/crates/svrngs-node/src/lend.rs
+index f1e8d84e..f329577b 100644
+--- a/crates/svrngs-node/src/lend.rs
++++ b/crates/svrngs-node/src/lend.rs
+@@ -102,7 +102,7 @@ impl RefusedPath {
+     /// where upstream compared bytes: the services behind a lend read
+     /// `/Admin`, `/%41dmin` and `//admin` as `/admin`, and a refusal a
+     /// client could dodge by spelling is not one.
+-    pub fn covers(&self, path: &str) -> bool {
++    pub(crate) fn covers(&self, path: &str) -> bool {
+         let prefix = comparable(&self.0);
+         let path = comparable(path);
+         path == prefix
+@@ -159,7 +159,7 @@ impl Upload {
+         Self(NonZeroU64::from(mbit).saturating_mul(NonZeroU64::new(1_000_000).expect("not 0")))
+     }
+ 
+-    pub fn bps(self) -> u64 {
++    pub(crate) fn bps(self) -> u64 {
+         self.0.get()
+     }
+ }
+@@ -225,7 +225,7 @@ impl Lend {
+     /// app of one name gives each a label of its own (COMMUNITY_APPS §7,
+     /// found 2); `None` for a folder's name that is not a kind's, traced
+     /// as left out (#167).
+-    pub fn carried(kind: &str, group: &str) -> Option<Self> {
++    pub(crate) fn carried(kind: &str, group: &str) -> Option<Self> {
+         let name = format!("{kind}-{}", group.get(..16).unwrap_or(group));
+         let (Ok(name), Ok(parsed)) = (LendName::parse(&name), Kind::parse(kind)) else {
+             tracing::debug!(target: "folder", kind, group, "carried: left out, a folder under apps/ whose name no app can have");
+@@ -245,7 +245,7 @@ impl Lend {
+     }
+ 
+     /// The refused path covering `path`, if one does.
+-    pub fn refusing(&self, path: &str) -> Option<&RefusedPath> {
++    pub(crate) fn refusing(&self, path: &str) -> Option<&RefusedPath> {
+         self.refused.iter().find(|r| r.covers(path))
+     }
+ }
+@@ -289,32 +289,32 @@ pub struct Offered {
+     /// None when its lender names no number: everyone at once. On the wire
+     /// `null` then, and required on read, as `upload_bps` is.
+     #[serde(deserialize_with = "Option::deserialize")]
+-    pub limit: Option<NonZeroU16>,
++    pub(crate) limit: Option<NonZeroU16>,
+     /// The people the door counts on it now (`door::limit`): a request in
+     /// flight, or one within its window.
+-    pub using: u32,
++    pub(crate) using: u32,
+     /// The upload its lender declares (u5-1), so an app knows a lend's
+     /// share before the door counts anyone on it. On the wire as
+     /// `upload_bps`, `null` when none is declared, and required on read:
+     /// an answer that leaves it out is not one, never read as none.
+     #[serde(rename = "upload_bps", deserialize_with = "Option::deserialize")]
+-    pub upload: Option<Upload>,
++    pub(crate) upload: Option<Upload>,
+     /// The kinds of lend it reads (u5-2).
+-    pub reads: Vec<Kind>,
++    pub(crate) reads: Vec<Kind>,
+     /// Its lender's words for what an app receives, when it asks (sup-2):
+     /// absent when it asks nobody.
+     #[serde(skip_serializing_if = "Option::is_none")]
+-    pub asks: Option<String>,
++    pub(crate) asks: Option<String>,
+     /// Whether its lender's program signs each person in, once (mwp-1,
+     /// `sign_in`): the pages say so of how it opens (v1ui-door (c)). A
+     /// computer that does not say runs an older svrngs, and its lends are
+     /// not read at all ([`crate::version`]).
+-    pub signs_in: bool,
++    pub(crate) signs_in: bool,
+     /// The group that carries it, when its group's folder does (v1ui-shelf
+     /// (a)): lent to that group alone, and one copy of it shown, whichever
+     /// computer answers. Absent for a port's.
+     #[serde(skip_serializing_if = "Option::is_none")]
+-    pub group: Option<String>,
++    pub(crate) group: Option<String>,
+ }
+ 
+ impl Offered {
+@@ -366,25 +366,25 @@ pub enum LendError {
+ }
+ 
+ /// Where a computer keeps its lends' declarations.
+-pub fn lends_dir(data_dir: &Path) -> PathBuf {
++pub(crate) fn lends_dir(data_dir: &Path) -> PathBuf {
+     data_dir.join("lends")
+ }
+ 
+ /// Where the lend `name`'s door keeps each person's choices
+ /// ([`crate::door::choices`]), beside its declaration.
+-pub fn choices_path(data_dir: &Path, name: &LendName) -> PathBuf {
++pub(crate) fn choices_path(data_dir: &Path, name: &LendName) -> PathBuf {
+     data_dir.join("choices").join(format!("{name}.json"))
+ }
+ 
+ /// Where the lend `name` keeps its secret: [`crate::declared`]'s store, one
+ /// directory per lend, apart from the declaration.
+-pub fn secret_dir(data_dir: &Path, name: &LendName) -> PathBuf {
++pub(crate) fn secret_dir(data_dir: &Path, name: &LendName) -> PathBuf {
+     data_dir.join("secrets").join("lends").join(name.as_str())
+ }
+ 
+ /// The lend `name` as its declaration says, or `None` when this computer
+ /// lends nothing by that name.
+-pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError> {
++pub(crate) fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError> {
+     let path = lends_dir(data_dir).join(format!("{name}.json"));
+     let text = match std::fs::read_to_string(&path) {
+         Ok(t) => t,
+@@ -479,7 +479,7 @@ pub fn declare(
+ /// its groups (bash-limit; the home page's `/lent`): its declaration
+ /// rewritten whole, its secret and choices kept, so the door takes it at
+ /// its next request. `false` when this computer lends nothing by that name.
+-pub fn limit(
++pub(crate) fn limit(
+     data_dir: &Path,
+     name: &LendName,
+     limit: Option<NonZeroU16>,
+diff --git a/crates/svrngs-node/src/lib.rs b/crates/svrngs-node/src/lib.rs
+index d872223b..e7236cae 100644
+--- a/crates/svrngs-node/src/lib.rs
++++ b/crates/svrngs-node/src/lib.rs
+@@ -38,45 +38,45 @@ pub use svrngs_runtime::*;
+ // client side of the dial-by-key transport (`commonwealth-transport::iroh`).
+ // The ALPNs are svrngs-core's since u4-2, so a browser's page spells each as
+ // the node does; re-exported, so `crate::alpn` reads as before.
+-pub use svrngs_core::alpn;
++pub(crate) use svrngs_core::alpn;
+ // How long a dial to a lend's computer waits (events-asleep); the page
+ // compiles it too.
+-pub mod dial;
+-pub mod guest;
++pub(crate) mod dial;
++pub(crate) mod guest;
+ pub mod iroh;
+-pub mod peer_wire;
++pub(crate) mod peer_wire;
+ // Every relay URL without the DNS root's dot, so WebKit reaches it (u4-9).
+ pub mod relay;
+ 
+ // Ring sync and its route, forked in U1 (docs/DESIGN.md §8, U1's inventory):
+ // the round and the exchange (`commonwealth-rails`' `ring_sync`), and the sync
+ // route (`ring_routes.rs`), which a caller serves as an `axum::Router`.
+-pub mod ring_routes;
+-pub mod ring_sync;
++pub(crate) mod ring_routes;
++pub(crate) mod ring_sync;
+ 
+ // The register, U1's (docs/DESIGN.md §6): who stands in a group, the one
+ // answer the round, the acceptor, the sync route and the door ask.
+ 
+ // Redeeming a link, U2's (docs/DESIGN.md §6): the route served on the
+ // second ALPN, and the joiner's call to it.
+-pub mod redeem;
++pub(crate) mod redeem;
+ 
+ // The record over loopback, U3's (docs/DESIGN.md §8, U3's inventory): the
+ // rail's append, log and live doors (`commonwealth-rails`' `rail.rs`), on a
+ // listener that refuses any address but loopback (its `api.rs`), and the
+ // live lane's fan-out (`sovereign-daemon`'s `routes_rail_live.rs`).
+ pub mod api;
+-pub mod live;
++pub(crate) mod live;
+ pub mod rail;
+ // What an app asks beside the record, u5-1's (docs/DESIGN.md §3): the
+ // groups this computer holds, and what their people lend, on the same
+ // loopback listener.
+-pub mod surface;
++pub(crate) mod surface;
+ // Every lend at an origin of its own on this computer's loopback, u5-2's
+ // (docs/DESIGN.md §3, "Lent apps", call 1), on the same listener.
+ /// The home page at `svrngs.localhost` (sup-2).
+ pub mod home;
+-pub mod origin;
++pub(crate) mod origin;
+ // The room door, u6-1's (docs/DESIGN.md §3, "The room"): the lends a
+ // person names, served to this computer's network while the command runs.
+ pub mod room;
+@@ -87,8 +87,8 @@ pub mod share;
+ // carries a member's request to a lend's service, the lend's declaration,
+ // and the lender's secret for its own service, kept on its own computer
+ // (`commonwealth-media`'s `declared.rs`).
+-pub mod declared;
+-pub mod door;
++pub(crate) mod declared;
++pub(crate) mod door;
+ pub mod lend;
+ 
+ // The node, U1's (docs/DESIGN.md §8): the rail, the endpoint, the accept loop
+@@ -104,4 +104,4 @@ pub mod node;
+ pub mod removal;
+ // This build's version, which every answer a page reads carries, and the
+ // one check made of it (arch-version); the page compiles it too.
+-pub mod version;
++pub(crate) mod version;
+diff --git a/crates/svrngs-node/src/live.rs b/crates/svrngs-node/src/live.rs
+index af750b2b..8b46fd54 100644
+--- a/crates/svrngs-node/src/live.rs
++++ b/crates/svrngs-node/src/live.rs
+@@ -45,23 +45,23 @@ use crate::peer_wire::LiveEnvelope;
+ /// contact the transport dials. (svrngs: upstream read each from a mesh
+ /// `MemberRecord`, which did not come over.)
+ #[derive(Debug, Clone)]
+-pub struct LivePeer {
+-    pub node: String,
+-    pub name: Option<String>,
+-    pub contact: Contact,
++pub(crate) struct LivePeer {
++    pub(crate) node: String,
++    pub(crate) name: Option<String>,
++    pub(crate) contact: Contact,
+ }
+ 
+ /// What happened when one peer was offered a payload.
+ #[derive(Debug, serde::Serialize)]
+-pub struct PeerDelivery {
+-    pub node: String,
+-    pub name: Option<String>,
+-    pub delivered: bool,
++pub(crate) struct PeerDelivery {
++    pub(crate) node: String,
++    pub(crate) name: Option<String>,
++    pub(crate) delivered: bool,
+     /// Why not, in the words of whatever refused. Present iff `delivered` is
+     /// false — the page shows a live lane that is half up rather than
+     /// believing a 200 meant everyone saw it.
+     #[serde(skip_serializing_if = "Option::is_none")]
+-    pub error: Option<String>,
++    pub(crate) error: Option<String>,
+ }
+ 
+ /// POST `bytes` to every online peer's `/internal/ring/live`, concurrently.
+@@ -75,7 +75,7 @@ pub struct PeerDelivery {
+ /// impl"). (svrngs, arch-peer (c): a request on the stream to each, by its
+ /// key, [`IrohTransport::fetch`], where upstream tried each address a
+ /// loopback bridge answered with a reqwest client of its own.)
+-pub async fn push_ephemeral(
++pub(crate) async fn push_ephemeral(
+     transport: &IrohTransport,
+     peers: Vec<LivePeer>,
+     namespace: &str,
+diff --git a/crates/svrngs-node/src/node.rs b/crates/svrngs-node/src/node.rs
+index 6cf172cc..c2d9e0f1 100644
+--- a/crates/svrngs-node/src/node.rs
++++ b/crates/svrngs-node/src/node.rs
+@@ -88,7 +88,7 @@ pub struct Lent {
+     /// Whose it is: the person the first group naming their key names.
+     pub person: Person,
+     /// The key their computer is dialled by, as the record spells an actor.
+-    pub key: String,
++    pub(crate) key: String,
+     pub offered: Offered,
+     /// Where this computer's browser opens it: its origin on this
+     /// computer's loopback, `http://<label>.localhost:<api port>/`
+@@ -103,7 +103,7 @@ pub struct Lent {
+ /// gave up at about 10 s (`demo/runs/mnp/2026-10-09/README.md`, "What no
+ /// prediction named" 2), so a computer that answers is not held by one
+ /// that does not.
+-pub const ANSWER_WITHIN: Duration = Duration::from_secs(3);
++pub(crate) const ANSWER_WITHIN: Duration = Duration::from_secs(3);
+ 
+ /// Until this process is asked to stop: Ctrl-C, or SIGTERM, which a
+ /// service manager and `kill` send (syp-6 b). Its caller then closes the
+@@ -168,7 +168,7 @@ pub struct Unlisted {
+ impl Unlisted {
+     /// Whether `person`'s computer did not say what they lend, by any of
+     /// the four.
+-    pub(crate) fn names(&self, person: &Person) -> bool {
++    pub fn names(&self, person: &Person) -> bool {
+         let lists = [&self.unanswered, &self.unheard, &self.refused, &self.older];
+         lists.iter().any(|l| l.contains(person))
+     }
+@@ -248,7 +248,7 @@ impl Node {
+     /// [`DEFAULT_RING_SYNC_INTERVAL`]. The scale instrument
+     /// (`tests/scale.rs`) passes a day, so that no node's own round runs
+     /// inside one it is timing.
+-    pub async fn start_every(
++    pub(crate) async fn start_every(
+         data_dir: PathBuf,
+         key: SigningKey,
+         relay: &RelayConfig,
+@@ -435,7 +435,7 @@ impl Host {
+     /// admitted it, whom its own register may not know yet (DESIGN §8,
+     /// U2). The peer's addresses are seeded on the transport, so the round
+     /// reaches it too once the register names it.
+-    pub async fn sync_with(&self, namespace: &str, peer: &EndpointAddr) -> ExchangeOutcome {
++    pub(crate) async fn sync_with(&self, namespace: &str, peer: &EndpointAddr) -> ExchangeOutcome {
+         let addrs: Vec<_> = peer.ip_addrs().copied().collect();
+         self.transport.add_known_peer(peer.id, addrs.clone());
+         let contact = Contact {
+@@ -462,7 +462,7 @@ impl Host {
+     /// otherwise (relay-in-record). With relays and none reached yet it
+     /// says nothing, so a computer starting never withdraws its relay.
+     /// Whether anything was written.
+-    pub fn say_relay(&self) -> bool {
++    pub(crate) fn say_relay(&self) -> bool {
+         let home = self.endpoint.addr().relay_urls().next().cloned();
+         if home.is_none() && self.relayed {
+             tracing::debug!(target: "node", "node: no relay reached yet, so the record keeps what it says of this computer");
+@@ -776,7 +776,7 @@ fn answered(actor: &str, body: &[u8]) -> Answered {
+ }
+ 
+ /// Where a member asks what the people of its groups lend (u4-5).
+-pub const PEOPLE_LENDS_ROUTE: &str = "/people/lends";
++pub(crate) const PEOPLE_LENDS_ROUTE: &str = "/people/lends";
+ 
+ /// A lend as a member is told it when asking what the people of its
+ /// groups lend: whose it is, the key their computer is dialled by and the
+@@ -784,12 +784,12 @@ pub const PEOPLE_LENDS_ROUTE: &str = "/people/lends";
+ /// (relay-in-record), and the lend (DESIGN §3, call 4: the asker dials the
+ /// lender itself).
+ #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+-pub struct Lending {
+-    pub person: Person,
+-    pub key: String,
+-    pub relay: Option<String>,
++pub(crate) struct Lending {
++    pub(crate) person: Person,
++    pub(crate) key: String,
++    pub(crate) relay: Option<String>,
+     #[serde(flatten)]
+-    pub offered: Offered,
++    pub(crate) offered: Offered,
+ }
+ 
+ /// The node's handles, one of each, and the one state of every router
+@@ -944,7 +944,7 @@ fn admit_dialer(rail: &RingRail, alpn: &[u8], dialer: &PublicKey) -> Option<Alpn
+ #[cfg(any(test, feature = "test-support"))]
+ mod tests_support;
+ #[cfg(any(test, feature = "test-support"))]
+-pub use tests_support::splice;
++pub(crate) use tests_support::splice;
+ 
+ #[cfg(test)]
+ mod tests;
+diff --git a/crates/svrngs-node/src/origin.rs b/crates/svrngs-node/src/origin.rs
+index 46155eb6..2c639de7 100644
+--- a/crates/svrngs-node/src/origin.rs
++++ b/crates/svrngs-node/src/origin.rs
+@@ -126,7 +126,7 @@ fn own_pass(at: &Asking, app: &Label, label: &Label) -> Option<HeaderValue> {
+ 
+ /// Where this computer's browser opens the lend `label`, with the record
+ /// API listening on `port`.
+-pub fn origin(label: &Label, port: u16) -> String {
++pub(crate) fn origin(label: &Label, port: u16) -> String {
+     format!("http://{label}{LOCALHOST}:{port}/")
+ }
+ 
+diff --git a/crates/svrngs-node/src/peer_wire.rs b/crates/svrngs-node/src/peer_wire.rs
+index aeee803b..7b532bf3 100644
+--- a/crates/svrngs-node/src/peer_wire.rs
++++ b/crates/svrngs-node/src/peer_wire.rs
+@@ -30,7 +30,7 @@ use svrngs_core::{Digest, Op, SignedOp};
+ /// limit, and the sender's payload gauge has to warn against the SAME number
+ /// rather than a second copy of it (ARCH §10.6 — one decider, one name).
+ /// `sovereign-mesh::gossip` reads it.
+-pub const MAX_REQUEST_BODY_BYTES: usize = 8 * 1024 * 1024;
++pub(crate) const MAX_REQUEST_BODY_BYTES: usize = 8 * 1024 * 1024;
+ 
+ /// The byte budget one exchange's `ops` array may fill, in either direction.
+ ///
+@@ -48,30 +48,30 @@ pub const MAX_REQUEST_BODY_BYTES: usize = 8 * 1024 * 1024;
+ /// ~9,599 ops of the measured fixture the receiver answered 413 at the
+ /// extractor — so the handler never ran, no gauge fired, and the refused peer
+ /// reported a complete and empty ring.
+-pub const RING_SYNC_OPS_BUDGET_BYTES: usize = MAX_REQUEST_BODY_BYTES / 2;
++pub(crate) const RING_SYNC_OPS_BUDGET_BYTES: usize = MAX_REQUEST_BODY_BYTES / 2;
+ 
+ #[derive(Debug, Serialize, Deserialize)]
+-pub struct RingSyncRequest {
++pub(crate) struct RingSyncRequest {
+     /// Which ring's journal. Named explicitly because this is peer-to-peer
+     /// traffic and carries no grant — the grant scoping in `routes_rail` is
+     /// about a deployed APP, which is a different principal from a peer node.
+-    pub namespace: String,
++    pub(crate) namespace: String,
+     /// What the caller holds. Empty means "I hold nothing", which asks for
+     /// everything rather than defaulting to nothing.
+     #[serde(default)]
+-    pub digest: Digest,
++    pub(crate) digest: Digest,
+     /// Ops the caller believes this node lacks. Ingested as-signed.
+     #[serde(default)]
+-    pub ops: Vec<Op<SignedOp>>,
++    pub(crate) ops: Vec<Op<SignedOp>>,
+ }
+ 
+ #[derive(Debug, Serialize, Deserialize)]
+-pub struct RingSyncResponse {
+-    pub namespace: String,
++pub(crate) struct RingSyncResponse {
++    pub(crate) namespace: String,
+     /// What THIS node holds, so the caller can compute what to send next.
+-    pub digest: Digest,
++    pub(crate) digest: Digest,
+     /// Every op this node holds that the caller's digest says it lacks.
+-    pub ops: Vec<Op<SignedOp>>,
++    pub(crate) ops: Vec<Op<SignedOp>>,
+     /// How many of the caller's ops were new here. Zero is the steady state,
+     /// not a failure.
+     ///
+@@ -79,7 +79,7 @@ pub struct RingSyncResponse {
+     /// It preserves exactly the tolerance the sovereign-mesh client carried
+     /// before it stopped declaring its own copy of this struct.
+     #[serde(default)]
+-    pub ingested: usize,
++    pub(crate) ingested: usize,
+ }
+ 
+ /// What one peer posts to another's `/internal/ring/live`: the payload and
+@@ -88,7 +88,7 @@ pub struct RingSyncResponse {
+ /// `ring_routes::ring_live`. (svrngs, u3-3: built by
+ /// [`crate::live::push_ephemeral`], read by [`crate::ring_routes::ring_live`].)
+ #[derive(Debug, serde::Serialize, serde::Deserialize)]
+-pub struct LiveEnvelope {
+-    pub namespace: String,
+-    pub payload: String,
++pub(crate) struct LiveEnvelope {
++    pub(crate) namespace: String,
++    pub(crate) payload: String,
+ }
+diff --git a/crates/svrngs-node/src/rail.rs b/crates/svrngs-node/src/rail.rs
+index 1f6b52fa..fe83887f 100644
+--- a/crates/svrngs-node/src/rail.rs
++++ b/crates/svrngs-node/src/rail.rs
+@@ -65,12 +65,12 @@ use svrngs_core::{Append, AppendRefusal, Refused as CommitRefused};
+ /// (Upstream's handlers read them from `RailsDaemon`, which did not come
+ /// over, DESIGN §8.)
+ #[derive(Clone)]
+-pub struct RailApi {
+-    pub rail: Arc<RingRail>,
+-    pub nudge: Arc<tokio::sync::Notify>,
+-    pub live: Arc<LiveBuffer>,
++pub(crate) struct RailApi {
++    pub(crate) rail: Arc<RingRail>,
++    pub(crate) nudge: Arc<tokio::sync::Notify>,
++    pub(crate) live: Arc<LiveBuffer>,
+     /// The node's dial-by-key transport, the live lane's fan-out rides it.
+-    pub transport: Arc<IrohTransport>,
++    pub(crate) transport: Arc<IrohTransport>,
+ }
+ 
+ // ── The doors ────────────────────────────────────────────────
+@@ -78,9 +78,9 @@ pub struct RailApi {
+ /// Query parameters common to every rail route here. There are no grants on
+ /// a rails daemon, so the namespace is always the operator's explicit one.
+ #[derive(Debug, Deserialize)]
+-pub struct RailQuery {
++pub(crate) struct RailQuery {
+     #[serde(default)]
+-    pub namespace: Option<String>,
++    pub(crate) namespace: Option<String>,
+ }
+ 
+ pub(crate) fn namespace_of(q: &RailQuery) -> Result<String, Response> {
+@@ -386,7 +386,7 @@ fn people_answer(rail: &RingRail, namespace: &str) -> Response {
+ }
+ 
+ /// GET /v1/rail/people.
+-pub async fn people(
++pub(crate) async fn people(
+     State(api): State<RailApi>,
+     Query(q): Query<RailQuery>,
+ ) -> Result<Response, Response> {
+@@ -394,7 +394,7 @@ pub async fn people(
+ }
+ 
+ /// POST /v1/rail/append.
+-pub async fn append(
++pub(crate) async fn append(
+     State(api): State<RailApi>,
+     Query(q): Query<RailQuery>,
+     Json(body): Json<serde_json::Value>,
+@@ -405,7 +405,7 @@ pub async fn append(
+ }
+ 
+ /// GET /v1/rail/log.
+-pub async fn log(
++pub(crate) async fn log(
+     State(api): State<RailApi>,
+     Query(q): Query<RailQuery>,
+ ) -> Result<Response, Response> {
+@@ -431,16 +431,16 @@ pub(crate) const LIVE_PAYLOAD_MAX_BYTES: usize = 4096;
+ /// acceptor, and their person's first key, as `/v1/rail/people` names them
+ /// (ON_AIR §4.3), so an app knows who spoke without signing every payload.
+ #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+-pub struct Live {
+-    pub payload: String,
+-    pub key: String,
+-    pub person_key: String,
++pub(crate) struct Live {
++    pub(crate) payload: String,
++    pub(crate) key: String,
++    pub(crate) person_key: String,
+ }
+ 
+ /// The arrived-payload buffer: bounded, in memory, and the only place a
+ /// live payload ever sits. Keyed by namespace, the way append and log are.
+ #[derive(Debug, Default)]
+-pub struct LiveBuffer {
++pub(crate) struct LiveBuffer {
+     #[expect(
+         clippy::disallowed_types,
+         reason = "the live lane's buffer, this computer's only"
+@@ -459,7 +459,7 @@ struct LiveBufferInner {
+ impl LiveBuffer {
+     /// Take one arrived payload for `namespace`. Evicts that namespace's
+     /// oldest when full.
+-    pub fn push(&self, namespace: &str, payload: Live) {
++    pub(crate) fn push(&self, namespace: &str, payload: Live) {
+         let mut buffers = self
+             .inner
+             .lock()
+@@ -598,7 +598,7 @@ fn drain_answer(live: &LiveBuffer, namespace: &str) -> Response {
+ }
+ 
+ /// POST /v1/rail/live.
+-pub async fn live_push(
++pub(crate) async fn live_push(
+     State(api): State<RailApi>,
+     Query(q): Query<RailQuery>,
+     body: axum::body::Bytes,
+@@ -607,7 +607,7 @@ pub async fn live_push(
+ }
+ 
+ /// GET /v1/rail/live.
+-pub async fn live_drain(
++pub(crate) async fn live_drain(
+     State(api): State<RailApi>,
+     Query(q): Query<RailQuery>,
+ ) -> Result<Response, Response> {
+diff --git a/crates/svrngs-node/src/redeem.rs b/crates/svrngs-node/src/redeem.rs
+index eea7127d..3fe75184 100644
+--- a/crates/svrngs-node/src/redeem.rs
++++ b/crates/svrngs-node/src/redeem.rs
+@@ -61,7 +61,9 @@ use crate::ring_routes::err;
+ use crate::{actor_of, Name, NotAName, OpId, Person, RailError, RingRail};
+ use svrngs_core::{RedeemRefusal, Refused as CommitRefused};
+ 
+-pub use svrngs_core::joining::{AskRequest, Asked, RedeemRequest};
++pub(crate) use svrngs_core::joining::AskRequest;
++pub(crate) use svrngs_core::joining::Asked;
++pub(crate) use svrngs_core::joining::RedeemRequest;
+ 
+ /// The redemption's path.
+ const ROUTE: &str = "/redeem";
+@@ -72,19 +74,19 @@ const ASK_ROUTE: &str = "/ask";
+ /// How the issuer's node reads a group's seed, in the group's directory,
+ /// to answer an ask: `Ok(None)` when it keeps none there. The command's
+ /// (`svrngs::group::seed_text`), handed to [`crate::node::Node::start`].
+-pub type SeedText = fn(&Path) -> Result<Option<String>, String>;
++pub(crate) type SeedText = fn(&Path) -> Result<Option<String>, String>;
+ 
+ /// The one answer to every refusal: it names no group and no reason.
+-pub const REFUSAL: &str = "this link lets nobody in";
++pub(crate) const REFUSAL: &str = "this link lets nobody in";
+ 
+ /// The answer when the issuer's node could not judge — its own journal
+ /// unreadable — which is not the link's fault and is not a refusal.
+-pub const UNJUDGED: &str = "the computer that sent this link cannot let anyone in just now";
++pub(crate) const UNJUDGED: &str = "the computer that sent this link cannot let anyone in just now";
+ 
+ /// What a redemption did.
+ #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+ #[serde(rename_all = "snake_case")]
+-pub enum Redeemed {
++pub(crate) enum Redeemed {
+     /// The `Admit` this node wrote.
+     Admitted(OpId),
+     /// The key stood already; nothing was written.
+@@ -294,7 +296,7 @@ fn parse_redeem(dialer: Option<&str>, req: &RedeemRequest) -> Result<Person, Not
+ 
+ /// Why a joiner was not let in.
+ #[derive(Debug, thiserror::Error)]
+-pub enum RedeemError {
++pub(crate) enum RedeemError {
+     /// The issuer's node answered, and refused, in its words: [`REFUSAL`]
+     /// from a node of this build.
+     #[error("refused: {0}")]
+@@ -317,7 +319,7 @@ pub enum RedeemError {
+ 
+ /// Ask the issuer's node at `issuer` what `req`'s link is for, dialling
+ /// from `endpoint` on [`Alpn::Redeem`].
+-pub async fn ask(
++pub(crate) async fn ask(
+     endpoint: &Endpoint,
+     issuer: EndpointAddr,
+     req: &AskRequest,
+@@ -327,7 +329,7 @@ pub async fn ask(
+ 
+ /// Present `req` to the issuer's node at `issuer`, dialling from `endpoint`
+ /// on [`Alpn::Redeem`].
+-pub async fn redeem(
++pub(crate) async fn redeem(
+     endpoint: &Endpoint,
+     issuer: EndpointAddr,
+     req: &RedeemRequest,
+diff --git a/crates/svrngs-node/src/relay.rs b/crates/svrngs-node/src/relay.rs
+index e54e533f..1a59325b 100644
+--- a/crates/svrngs-node/src/relay.rs
++++ b/crates/svrngs-node/src/relay.rs
+@@ -22,7 +22,7 @@ use n0_future::boxed::BoxStream;
+ use n0_future::StreamExt as _;
+ 
+ /// `url` without its host's trailing dot ([`svrngs_core::relay::dotless`]).
+-pub fn dotless(url: RelayUrl) -> RelayUrl {
++pub(crate) fn dotless(url: RelayUrl) -> RelayUrl {
+     RelayUrl::from(svrngs_core::relay::dotless(url.into()))
+ }
+ 
+@@ -41,7 +41,7 @@ pub fn n0_relays() -> RelayMap {
+ }
+ 
+ /// `map`, its relays' URLs dotless and nothing else changed.
+-pub fn dotless_map(map: &RelayMap) -> RelayMap {
++pub(crate) fn dotless_map(map: &RelayMap) -> RelayMap {
+     map.relays::<Vec<_>>()
+         .into_iter()
+         .map(|relay| {
+@@ -56,7 +56,7 @@ pub fn dotless_map(map: &RelayMap) -> RelayMap {
+ /// dotless. What it publishes passes through unchanged: this computer's
+ /// own relay is dotless already.
+ #[derive(Debug)]
+-pub struct DotlessLookup<B>(pub B);
++pub(crate) struct DotlessLookup<B>(pub(crate) B);
+ 
+ impl<B: AddressLookupBuilder> AddressLookupBuilder for DotlessLookup<B> {
+     fn into_address_lookup(
+@@ -69,7 +69,7 @@ impl<B: AddressLookupBuilder> AddressLookupBuilder for DotlessLookup<B> {
+ 
+ /// A built lookup, its answers' relays made dotless as they arrive.
+ #[derive(Debug)]
+-pub struct Dotless<L>(pub L);
++pub(crate) struct Dotless<L>(pub(crate) L);
+ 
+ impl<L: AddressLookup> AddressLookup for Dotless<L> {
+     fn publish(&self, data: &EndpointData) {
+diff --git a/crates/svrngs-node/src/ring_routes.rs b/crates/svrngs-node/src/ring_routes.rs
+index 7bf9672f..7d01bd24 100644
+--- a/crates/svrngs-node/src/ring_routes.rs
++++ b/crates/svrngs-node/src/ring_routes.rs
+@@ -58,16 +58,16 @@ pub(crate) fn err(status: StatusCode, msg: impl Into<String>) -> Response {
+ /// live namespaces; it did not come over.) And the round's nudge, which a
+ /// push landing its asker's own relay wakes (relay-in-record).
+ #[derive(Clone)]
+-pub struct RingInbound {
+-    pub rail: Arc<RingRail>,
+-    pub live: Arc<LiveBuffer>,
+-    pub wake: Arc<tokio::sync::Notify>,
++pub(crate) struct RingInbound {
++    pub(crate) rail: Arc<RingRail>,
++    pub(crate) live: Arc<LiveBuffer>,
++    pub(crate) wake: Arc<tokio::sync::Notify>,
+ }
+ 
+ /// The sync and live routes, as a router (upstream's was a `RouteBundle`
+ /// for the internal listener). The sync route takes the peer-wire body
+ /// limit, because its exchange budget is half of it.
+-pub fn router(state: RingInbound) -> axum::Router {
++pub(crate) fn router(state: RingInbound) -> axum::Router {
+     axum::Router::new()
+         .route(
+             crate::ring_sync::SYNC_ROUTE,
+@@ -159,7 +159,7 @@ fn told_cut(rail: &RingRail, req: &RingSyncRequest, asker: Option<&str>) -> Opti
+ 
+ /// `POST /internal/ring/sync` — one anti-entropy exchange for one namespace.
+ /// The body is raw bytes so the gauge reads the direction with a limit.
+-pub async fn ring_sync(
++pub(crate) async fn ring_sync(
+     State(state): State<RingInbound>,
+     dialer: Option<Extension<Dialer>>,
+     body: axum::body::Bytes,
+@@ -232,7 +232,7 @@ pub async fn ring_sync(
+ /// or a group this node does not hold, is REFUSED as the sync route
+ /// refuses one (svrngs, u3-3; upstream refused a namespace no live
+ /// registration held, the daemon's rule).
+-pub async fn ring_live(
++pub(crate) async fn ring_live(
+     State(state): State<RingInbound>,
+     dialer: Option<Extension<Dialer>>,
+     body: axum::body::Bytes,
+diff --git a/crates/svrngs-node/src/ring_sync.rs b/crates/svrngs-node/src/ring_sync.rs
+index 14f0ae16..816f072c 100644
+--- a/crates/svrngs-node/src/ring_sync.rs
++++ b/crates/svrngs-node/src/ring_sync.rs
+@@ -96,7 +96,7 @@ use tracing::{debug, info, warn};
+ 
+ mod journal;
+ use journal::OnlinePeer;
+-pub use journal::RoundMembers;
++pub(crate) use journal::RoundMembers;
+ 
+ use crate::iroh::key_actor;
+ use crate::node::Host;
+@@ -104,7 +104,7 @@ use axum::http::StatusCode;
+ 
+ /// Money does not need ten-second convergence, and the bandwidth argument in
+ /// the module docs says it must not have it.
+-pub const DEFAULT_RING_SYNC_INTERVAL: Duration = Duration::from_secs(60);
++pub(crate) const DEFAULT_RING_SYNC_INTERVAL: Duration = Duration::from_secs(60);
+ 
+ /// How many chunked round-trips one [`exchange`] makes before it hands the
+ /// round back.
+@@ -121,22 +121,22 @@ pub const DEFAULT_RING_SYNC_INTERVAL: Duration = Duration::from_secs(60);
+ /// journal the module docs price, moved in one sixty-second round. Tripping
+ /// it costs nothing but time: every op ingested is already on disk, so the
+ /// next round resumes where this one stopped.
+-pub const MAX_CHUNKS_PER_EXCHANGE: usize = 16;
++pub(crate) const MAX_CHUNKS_PER_EXCHANGE: usize = 16;
+ 
+ /// Handle to the spawned loop. Aborts the task on drop, matching
+ /// the daemon's `GossipHandle` so the daemon tears both
+ /// down the same way.
+-pub struct RingSyncHandle {
++pub(crate) struct RingSyncHandle {
+     _task: AbortOnDropHandle<()>,
+ }
+ 
+ /// What one round moved. Returned rather than only logged so a test can
+ /// assert convergence instead of asserting on log lines.
+ #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+-pub struct RoundOutcome {
+-    pub namespaces: usize,
+-    pub peers_reached: usize,
+-    pub peers_unreachable: usize,
++pub(crate) struct RoundOutcome {
++    pub(crate) namespaces: usize,
++    pub(crate) peers_reached: usize,
++    pub(crate) peers_unreachable: usize,
+     /// Peers that ANSWERED and refused our body as too large.
+     ///
+     /// Counted apart from `peers_unreachable` because they are different
+@@ -149,42 +149,42 @@ pub struct RoundOutcome {
+     /// against peers on this build. A non-zero count means a peer's limit is
+     /// lower than this build's budget — which is worth seeing, and used not
+     /// to be visible at any level.
+-    pub peers_refused: usize,
+-    pub ops_pulled: usize,
+-    pub ops_pushed: usize,
++    pub(crate) peers_refused: usize,
++    pub(crate) ops_pulled: usize,
++    pub(crate) ops_pushed: usize,
+ }
+ 
+ /// How many rounds have begun and how many have ended, and how many of
+ /// their exchanges a member has answered, written by the loop alone: rounds
+ /// run one at a time, so the last ended is the `ended`th.
+ #[derive(Debug, Default, Clone, Copy)]
+-pub struct Progress {
+-    pub begun: u64,
+-    pub ended: u64,
+-    pub answered: u64,
++pub(crate) struct Progress {
++    pub(crate) begun: u64,
++    pub(crate) ended: u64,
++    pub(crate) answered: u64,
+ }
+ 
+ /// The loop's [`Progress`], for a door to wait on.
+-pub type Rounds = watch::Sender<Progress>;
++pub(crate) type Rounds = watch::Sender<Progress>;
+ 
+ /// A round asked for now and waited on (mnp-1): what a door holds to ask
+ /// the group's ring once before it answers a signer it does not know.
+ /// Asks while a round runs share the next round, as nudges do.
+ #[derive(Clone)]
+-pub struct AskRound {
++pub(crate) struct AskRound {
+     nudge: Arc<Notify>,
+     rounds: watch::Receiver<Progress>,
+ }
+ 
+ impl AskRound {
+-    pub fn new(nudge: Arc<Notify>, rounds: &Rounds) -> Self {
++    pub(crate) fn new(nudge: Arc<Notify>, rounds: &Rounds) -> Self {
+         let rounds = rounds.subscribe();
+         Self { nudge, rounds }
+     }
+ 
+     /// Wake the round now, waiting on nothing: a write that must reach the
+     /// group before the next interval (U7, a removal and a hand-on).
+-    pub fn wake(&self) {
++    pub(crate) fn wake(&self) {
+         self.nudge.notify_one();
+     }
+ 
+@@ -192,7 +192,7 @@ impl AskRound {
+     /// asked again as each member answers, or a round begun after this ask
+     /// ends: whether either came in time. A member that answers ends the
+     /// wait; one asleep holds only its own dial (asleep-1-none-held).
+-    pub async fn until(&self, within: Duration, known: impl Fn() -> bool) -> bool {
++    pub(crate) async fn until(&self, within: Duration, known: impl Fn() -> bool) -> bool {
+         let mut rounds = self.rounds.clone();
+         let after = rounds.borrow_and_update().begun + 1;
+         self.nudge.notify_one();
+@@ -226,7 +226,7 @@ impl AskRound {
+ /// to a peer, it asks this loop to. (svrngs: of those writers, the record
+ /// API's append door, [`append`]; beside it the member door asks one,
+ /// [`AskRound`], and `rounds` counts them begun and ended for it.)
+-pub fn spawn_ring_sync_loop(
++pub(crate) fn spawn_ring_sync_loop(
+     host: Arc<Host>,
+     interval: Duration,
+     nudge: Arc<Notify>,
+@@ -286,7 +286,7 @@ pub fn spawn_ring_sync_loop(
+ /// member had already let in, `demo/runs/mnp/2026-10-09/README.md`, "What
+ /// no prediction named" 1. Each exchange is idempotent and keyed on the op
+ /// id, so two at once with one journal duplicate nothing.)
+-pub async fn run_one_round(
++pub(crate) async fn run_one_round(
+     host: &Host,
+     answered: &(impl Fn() + Sync),
+     told: &mut Told,
+@@ -411,7 +411,7 @@ pub async fn run_one_round(
+ /// Each group this computer left and each computer told its leave there
+ /// that answered: the round's loop owns it, so a computer is told again
+ /// only until it answers, and once more after a restart (#190).
+-pub type Told = std::collections::BTreeSet<(String, String)>;
++pub(crate) type Told = std::collections::BTreeSet<(String, String)>;
+ 
+ /// A group this computer left stands for nobody here, so no exchange
+ /// carries its leave: told, each round, from the standing the round read,
+@@ -486,11 +486,11 @@ async fn exchange_with(to: To<'_>, rail: &RingRail, namespace: &str) -> (usize,
+ 
+ /// Where an exchange goes: a member, by its contact, through the
+ /// transport that dials it.
+-pub type To<'a> = (&'a crate::iroh::IrohTransport, &'a crate::iroh::Contact);
++pub(crate) type To<'a> = (&'a crate::iroh::IrohTransport, &'a crate::iroh::Contact);
+ 
+ /// Why an exchange with one peer address stopped.
+ #[derive(Debug)]
+-pub enum ExchangeStop {
++pub(crate) enum ExchangeStop {
+     /// The peer **answered**, and refused. Two statuses arrive here and both
+     /// are answers rather than reachability: `413`, our body was too large,
+     /// and `403`, this ring is not served to us.
+@@ -526,10 +526,10 @@ pub enum ExchangeStop {
+ /// threw the pulled count away — `ops_pulled` undercounted exactly in the
+ /// failure case, which is the case anyone reading the metric is looking for.
+ #[derive(Debug, Default)]
+-pub struct ExchangeOutcome {
+-    pub pulled: usize,
+-    pub pushed: usize,
+-    pub stop: Option<ExchangeStop>,
++pub(crate) struct ExchangeOutcome {
++    pub(crate) pulled: usize,
++    pub(crate) pushed: usize,
++    pub(crate) stop: Option<ExchangeStop>,
+ }
+ 
+ impl ExchangeOutcome {
+@@ -548,7 +548,7 @@ impl ExchangeOutcome {
+ /// (nothing came, nothing left to send) returns quietly, and *stalled*
+ /// (something outstanding, nothing moved anywhere) warns — repeating that
+ /// would repeat verbatim.
+-pub async fn exchange(to: To<'_>, rail: &RingRail, namespace: &str) -> ExchangeOutcome {
++pub(crate) async fn exchange(to: To<'_>, rail: &RingRail, namespace: &str) -> ExchangeOutcome {
+     let peer = to.1.key;
+     let mut out = ExchangeOutcome::default();
+     let mut last_peer_digest: Option<crate::Digest> = None;
+@@ -689,7 +689,7 @@ pub(crate) async fn post(
+ }
+ 
+ /// Where a member's exchange is asked, and served (`ring_routes.rs`).
+-pub const SYNC_ROUTE: &str = "/internal/ring/sync";
++pub(crate) const SYNC_ROUTE: &str = "/internal/ring/sync";
+ 
+ /// The responder's half of one exchange: ingest what the caller offered,
+ /// then answer with this node's digest and one budget of what the caller's
+@@ -700,7 +700,7 @@ pub const SYNC_ROUTE: &str = "/internal/ring/sync";
+ /// call. Called after the asker's roster check, never before: a refusal that
+ /// ran after the ingest would have taken the asker's ops onto this disk on its
+ /// way to saying no.
+-pub fn answer(
++pub(crate) fn answer(
+     rail: &RingRail,
+     req: &RingSyncRequest,
+ ) -> Result<(RingSyncResponse, bool), RailError> {
+@@ -725,7 +725,7 @@ pub fn answer(
+ /// A refused append wakes nothing. (svrngs: the nudge is the one the node
+ /// builds for its round, held by the record API's state, `RailApi`, where
+ /// upstream's was `RailsDaemon::ring_nudge`.)
+-pub async fn append(
++pub(crate) async fn append(
+     axum::extract::State(api): axum::extract::State<crate::rail::RailApi>,
+     query: axum::extract::Query<crate::rail::RailQuery>,
+     body: axum::Json<serde_json::Value>,
+diff --git a/crates/svrngs-node/src/ring_sync/journal.rs b/crates/svrngs-node/src/ring_sync/journal.rs
+index 9860da6d..18df3d47 100644
+--- a/crates/svrngs-node/src/ring_sync/journal.rs
++++ b/crates/svrngs-node/src/ring_sync/journal.rs
+@@ -19,7 +19,7 @@ use crate::iroh::{Contact, PublicKey};
+ /// the two name lists its glassbox line prints. Upstream's `RoundMembers::of`
+ /// built it from a walk of the mesh, and minted the mesh proof each dial
+ /// carried; neither came over. svrngs builds it from named keys.
+-pub struct RoundMembers {
++pub(crate) struct RoundMembers {
+     pub(super) peers: Vec<OnlinePeer>,
+     pub(super) exchanged_with: Vec<String>,
+     pub(super) skipped_offline: Vec<String>,
+diff --git a/crates/svrngs-node/src/room.rs b/crates/svrngs-node/src/room.rs
+index 950e56f4..9ff9bd7b 100644
+--- a/crates/svrngs-node/src/room.rs
++++ b/crates/svrngs-node/src/room.rs
+@@ -65,7 +65,7 @@ pub fn route() -> Option<IpAddr> {
+ /// The port the room serves `label` at: the same on every run, so a
+ /// device is typed the address once (DESIGN §8, U6's inventory), and below
+ /// macOS's ephemeral range. One that is taken is refused by name.
+-pub fn port_of(label: &Label) -> u16 {
++pub(crate) fn port_of(label: &Label) -> u16 {
+     let h = label
+         .as_str()
+         .bytes()
+diff --git a/crates/svrngs-node/src/share.rs b/crates/svrngs-node/src/share.rs
+index 6f18acb6..683e4c23 100644
+--- a/crates/svrngs-node/src/share.rs
++++ b/crates/svrngs-node/src/share.rs
+@@ -41,7 +41,7 @@ use crate::lend::{Kind, Lend, LendName, RefusedPath, Upload};
+ /// in it if it keeps its own, `#` for a comment: data, not code, since a
+ /// kind is an app's word the infra does not hold (DESIGN §5, the nouns
+ /// gate).
+-pub const WELL_KNOWN: &str = include_str!("well_known.txt");
++pub(crate) const WELL_KNOWN: &str = include_str!("well_known.txt");
+ 
+ /// How a kind [`WELL_KNOWN`] names signs each person in, and what its
+ /// lender does for it, in their words: either way it is lent with no
+@@ -60,7 +60,7 @@ pub enum Signs {
+ /// a kind at its well-known port; a kind known by its lender's word alone
+ /// (`-`); or a kind's sign-in helper (`helper`).
+ #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+-pub enum At {
++pub(crate) enum At {
+     Port(NonZeroU16),
+     Named,
+     Helper,
+@@ -70,7 +70,7 @@ pub enum At {
+ /// parsed once for every reader (REVIEW_FINDINGS #64, #169), and the rest
+ /// of the line, empty when there is none. A row whose port or kind does
+ /// not parse is none.
+-pub fn rows() -> impl Iterator<Item = (At, Kind, &'static str)> {
++pub(crate) fn rows() -> impl Iterator<Item = (At, Kind, &'static str)> {
+     WELL_KNOWN
+         .lines()
+         .map(|l| l.split('#').next().unwrap_or("").trim())
+@@ -180,7 +180,7 @@ pub fn accounts_of(kind: &Kind) -> Option<Signs> {
+ /// The port of `kind`'s sign-in helper, as [`WELL_KNOWN`]'s `helper` row
+ /// names it (v1ui-polish (d)): [`lend_of`] signs each person in by it when
+ /// it answers and its lender names no sign-in of their own.
+-pub fn helper_of(kind: &Kind) -> Option<NonZeroU16> {
++pub(crate) fn helper_of(kind: &Kind) -> Option<NonZeroU16> {
+     let (_, _, how) = rows().find(|(at, k, _)| *at == At::Helper && k == kind)?;
+     how.split_whitespace().next()?.parse().ok()
+ }
+@@ -189,7 +189,7 @@ pub fn helper_of(kind: &Kind) -> Option<NonZeroU16> {
+ /// lent (arch-helper (b); REVIEW_FINDINGS #174): a lend in `lent` names it
+ /// its sign-in, or [`WELL_KNOWN`] names it a kind's helper. Only svrngs on
+ /// this computer asks it; lent, it would answer each person as a lend.
+-pub fn signs_in(port: NonZeroU16, lent: &[Lend]) -> bool {
++pub(crate) fn signs_in(port: NonZeroU16, lent: &[Lend]) -> bool {
+     let lend = lent.iter().find(|l| l.sign_in == Some(port));
+     let helper = rows().find(|(at, k, _)| *at == At::Helper && helper_of(k) == Some(port));
+     tracing::debug!(target: "share", port, lend = ?lend.map(|l| &l.name), helper = ?helper.as_ref().map(|r| &r.1), "share: whether the port signs people in to a lend, so is never offered nor lent: refused where it does");
+@@ -198,7 +198,7 @@ pub fn signs_in(port: NonZeroU16, lent: &[Lend]) -> bool {
+ 
+ /// Each helper's steps, by its kind, the file its `helper` row names, as
+ /// build.rs embeds them for the home page (`/helper/<kind>`).
+-pub const HELPERS: &[(&str, &str)] = include!(concat!(env!("OUT_DIR"), "/helpers.rs"));
++pub(crate) const HELPERS: &[(&str, &str)] = include!(concat!(env!("OUT_DIR"), "/helpers.rs"));
+ 
+ /// Whether something on this computer accepts a TCP connection on `port`.
+ /// (svrngs: upstream's `probe_origin` over the one port given.)
+@@ -220,7 +220,7 @@ fn answers(port: &NonZeroU16) -> bool {
+ /// system's own services listen unless it is told otherwise, to 49151,
+ /// past which it hands ports to its own connections (IANA's dynamic
+ /// range, RFC 6335 §6), so what is offered is what a person started.
+-pub fn listening() -> Vec<NonZeroU16> {
++pub(crate) fn listening() -> Vec<NonZeroU16> {
+     let ports: Vec<NonZeroU16> = (1024..=49151).filter_map(NonZeroU16::new).collect();
+     let found: Vec<NonZeroU16> = std::thread::scope(|s| {
+         let asked: Vec<_> = (ports.chunks(1000))
+diff --git a/crates/svrngs-node/src/surface.rs b/crates/svrngs-node/src/surface.rs
+index 149e34d1..0dfa56dc 100644
+--- a/crates/svrngs-node/src/surface.rs
++++ b/crates/svrngs-node/src/surface.rs
+@@ -51,23 +51,23 @@ use crate::seed::Seed;
+ use crate::{register::RemovalSaid, Person};
+ 
+ /// Where an app asks which groups this computer holds.
+-pub const GROUPS_ROUTE: &str = "/v1/groups";
++pub(crate) const GROUPS_ROUTE: &str = "/v1/groups";
+ 
+ /// Where an app asks what a group's people lend.
+-pub const LENDS_ROUTE: &str = "/v1/lends";
++pub(crate) const LENDS_ROUTE: &str = "/v1/lends";
+ 
+ /// Where an app has this computer's key sign bytes for it.
+-pub const SIGN_ROUTE: &str = "/v1/sign";
++pub(crate) const SIGN_ROUTE: &str = "/v1/sign";
+ 
+ /// Where a lent page asks, at its own origin, the lends it reads: the one
+ /// path svrngs answers there in the lend's place (DESIGN §3, "Lent apps",
+ /// call 6; `web/lend.js` spells it for a phone).
+-pub const READS_PATH: &str = "/svrngs-reads";
++pub(crate) const READS_PATH: &str = "/svrngs-reads";
+ 
+ /// What ends `<READS_PATH>/<label>`, where a page posts its own stop at its
+ /// origin: `reads` tells it, `crate::origin`'s `lent` takes it
+ /// (`web/lend.js` spells it for a phone).
+-pub const STOP_SUFFIX: &str = "/svrngs-stop";
++pub(crate) const STOP_SUFFIX: &str = "/svrngs-stop";
+ 
+ /// The routes, for [`crate::api::router`] to serve behind its check, on
+ /// the node's one state ([`Asking`]).
+diff --git a/crates/svrngs-node/src/synced.rs b/crates/svrngs-node/src/synced.rs
+index 3e8803fb..7b2843af 100644
+--- a/crates/svrngs-node/src/synced.rs
++++ b/crates/svrngs-node/src/synced.rs
+@@ -157,7 +157,7 @@ impl Folders {
+     /// not: this computer does not stand in the group, the directories it
+     /// syncs cannot be read, or the folder or the directory is synced
+     /// already elsewhere. Asked again as it is, it is answered as it is.
+-    pub fn both_ways(&self, dir: PathBuf, group: String) -> Result<String, FolderError> {
++    pub(crate) fn both_ways(&self, dir: PathBuf, group: String) -> Result<String, FolderError> {
+         let folder = folder_of(&dir);
+         let standing = self.host.rail.standing(&group);
+         let standing = standing.map_err(|e| FolderError::Unread(group.clone(), e.to_string()))?;
+diff --git a/crates/svrngs-node/src/version.rs b/crates/svrngs-node/src/version.rs
+index 08a2b6c3..2ffaf4f4 100644
+--- a/crates/svrngs-node/src/version.rs
++++ b/crates/svrngs-node/src/version.rs
+@@ -16,10 +16,10 @@
+ //! go (2026-10-15, "Let them go; V1's publish replaces them").
+ 
+ /// This build's version, as its answers carry it.
+-pub const VERSION: u32 = 1;
++pub(crate) const VERSION: u32 = 1;
+ 
+ /// Whether an answer carrying `version`, none when it carries none, comes
+ /// from a computer running an older svrngs than this one.
+-pub fn older(version: Option<u32>) -> bool {
++pub(crate) fn older(version: Option<u32>) -> bool {
+     version.is_none_or(|v| v < VERSION)
+ }
+diff --git a/crates/svrngs-runtime/src/journal.rs b/crates/svrngs-runtime/src/journal.rs
+index bd113905..4e1c234d 100644
+--- a/crates/svrngs-runtime/src/journal.rs
++++ b/crates/svrngs-runtime/src/journal.rs
+@@ -240,7 +240,7 @@ impl RingJournal {
+     /// Open (lazily — nothing is created until the first append) the journal
+     /// for `namespace` under `root`.
+     #[expect(clippy::disallowed_types, reason = "the journal's single-writer lock")]
+-    pub fn open(root: &Path, namespace: &str) -> Result<Self, RailError> {
++    pub(crate) fn open(root: &Path, namespace: &str) -> Result<Self, RailError> {
+         if !valid_namespace(namespace) {
+             return Err(RailError::BadNamespace(namespace.to_string()));
+         }
+@@ -255,14 +255,14 @@ impl RingJournal {
+         })
+     }
+ 
+-    pub fn dir(&self) -> &Path {
++    pub(crate) fn dir(&self) -> &Path {
+         &self.dir
+     }
+ 
+     /// This namespace's roster file. One spelling of `roster.json`, so the
+     /// reader, the writer and the error message that names it cannot drift
+     /// onto three files (ARCH §10.6).
+-    pub fn roster_path(&self) -> PathBuf {
++    pub(crate) fn roster_path(&self) -> PathBuf {
+         self.dir.join("roster.json")
+     }
+ 
+@@ -278,7 +278,7 @@ impl RingJournal {
+     }
+ 
+     /// Every op on disk, plus the lines that could not be read.
+-    pub fn read(&self) -> Result<(Vec<Op<SignedOp>>, Vec<SkippedLine>), RailError> {
++    pub(crate) fn read(&self) -> Result<(Vec<Op<SignedOp>>, Vec<SkippedLine>), RailError> {
+         self.log()
+             .oplog
+             .read_all_with_skips()
+@@ -292,7 +292,7 @@ impl RingJournal {
+     /// opinion about which scheme judged the signatures on it — the caller
+     /// that reads an answer is the one that says what it trusted.
+     /// [`Ed25519Verifier`] is the shipped one.
+-    pub fn admit(&self, roster: &Roster, verifier: &dyn RingVerifier) -> Result<Admission, RailError> {
++    pub(crate) fn admit(&self, roster: &Roster, verifier: &dyn RingVerifier) -> Result<Admission, RailError> {
+         let (ops, skipped) = self.read()?;
+         Ok(admit(
+             &crate::ActSet::of(&ops),
+@@ -320,7 +320,7 @@ impl RingJournal {
+     }
+ 
+     /// The whole register, from the fold [`Self::folded`] keeps (U7).
+-    pub(crate) fn register(&self, seed: &Roster) -> Result<crate::register::Register, RailError> {
++    pub fn register(&self, seed: &Roster) -> Result<crate::register::Register, RailError> {
+         self.folded(seed).map(|(register, _)| register)
+     }
+ 
+@@ -444,7 +444,7 @@ impl RingJournal {
+         Ok(fresh.len())
+     }
+ 
+-    pub fn roster_file(&self) -> Result<Roster, RailError> {
++    pub(crate) fn roster_file(&self) -> Result<Roster, RailError> {
+         Ok(self.seed()?.unwrap_or_default())
+     }
+ 
+@@ -463,7 +463,7 @@ impl RingJournal {
+         }
+     }
+ 
+-    pub fn set_roster(&self, roster: &Roster) -> Result<(), RailError> {
++    pub(crate) fn set_roster(&self, roster: &Roster) -> Result<(), RailError> {
+         std::fs::create_dir_all(&self.dir).map_err(|e| RailError::Io(e.to_string()))?;
+         let raw = serde_json::to_string_pretty(roster).map_err(|e| RailError::Io(e.to_string()))?;
+         std::fs::write(self.roster_path(), raw).map_err(|e| RailError::Io(e.to_string()))
+diff --git a/crates/svrngs-runtime/src/oplog.rs b/crates/svrngs-runtime/src/oplog.rs
+index 4ebb947a..49612f46 100644
+--- a/crates/svrngs-runtime/src/oplog.rs
++++ b/crates/svrngs-runtime/src/oplog.rs
+@@ -92,7 +92,9 @@ use std::io::{BufRead, BufReader, Read, Seek, SeekFrom, Write};
+ use std::marker::PhantomData;
+ use std::path::PathBuf;
+ 
+-pub use svrngs_core::{Journaled, Op, SkippedLine};
++pub(crate) use svrngs_core::Journaled;
++pub(crate) use svrngs_core::Op;
++pub(crate) use svrngs_core::SkippedLine;
+ 
+ /// What can go wrong writing or reading a journal.
+ ///
+@@ -103,7 +105,7 @@ pub use svrngs_core::{Journaled, Op, SkippedLine};
+ /// observe the extraction (ARCH §18.3: the substitution would have to be
+ /// named, so there isn't one).
+ #[derive(Debug, thiserror::Error)]
+-pub enum OplogError {
++pub(crate) enum OplogError {
+     #[error("I/O error: {0}")]
+     Io(#[from] std::io::Error),
+     /// Serialising an op to its JSONL line failed. `log` is [`Journaled::LABEL`].
+@@ -114,7 +116,7 @@ pub enum OplogError {
+     },
+ }
+ 
+-pub type Result<T> = std::result::Result<T, OplogError>;
++pub(crate) type Result<T> = std::result::Result<T, OplogError>;
+ 
+ // ── The journal ──────────────────────────────────────────────
+ 
+@@ -126,7 +128,7 @@ pub type Result<T> = std::result::Result<T, OplogError>;
+ /// and joined for the other two, which bought nothing but a second name — an
+ /// `Oplog` holds a path and no handle, so it is as cheap to build as either
+ /// half was.
+-pub struct Oplog<K> {
++pub(crate) struct Oplog<K> {
+     path: PathBuf,
+     _kind: PhantomData<fn() -> K>,
+ }
+@@ -158,7 +160,7 @@ impl<K: Journaled> Oplog<K> {
+ 
+     /// Append several ops in one open. Creates the parent directory on
+     /// first write.
+-    pub fn append_all(&self, ops: &[Op<K>]) -> Result<()> {
++    pub(crate) fn append_all(&self, ops: &[Op<K>]) -> Result<()> {
+         if ops.is_empty() {
+             return Ok(());
+         }
+@@ -214,7 +216,7 @@ impl<K: Journaled> Oplog<K> {
+     /// returned the identical value. Returning the skips is the difference
+     /// between "here is the total" and "here is the total, and I could not
+     /// read two lines."
+-    pub fn read_all_with_skips(&self) -> Result<(Vec<Op<K>>, Vec<SkippedLine>)> {
++    pub(crate) fn read_all_with_skips(&self) -> Result<(Vec<Op<K>>, Vec<SkippedLine>)> {
+         if !self.path.exists() {
+             return Ok((Vec::new(), Vec::new()));
+         }
+@@ -247,7 +249,7 @@ impl<K: Journaled> Oplog<K> {
+     /// [`Tail::restarted`] says the caller's fold is void. Lines are judged by
+     /// the same rules as [`Self::read_all_with_skips`]; skipped ones are warned
+     /// and counted in its trace, with line numbers counted from where this read began.
+-    pub fn read_since(&self, cursor: Cursor) -> Result<Tail<K>> {
++    pub(crate) fn read_since(&self, cursor: Cursor) -> Result<Tail<K>> {
+         use std::io::{Read, Seek, SeekFrom};
+         let mut file = match fs::File::open(&self.path) {
+             Ok(f) => f,
+@@ -345,21 +347,21 @@ impl<K: Journaled> Oplog<K> {
+ /// Where a [`Oplog::read_since`] stopped: which file it read, and the byte
+ /// after the last whole line. The default is "nothing read yet".
+ #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+-pub struct Cursor {
++pub(crate) struct Cursor {
+     file: Option<(u64, u64)>,
+     end: u64,
+ }
+ 
+ /// What [`Oplog::read_since`] found.
+ #[derive(Debug)]
+-pub struct Tail<K> {
++pub(crate) struct Tail<K> {
+     /// The ops past the cursor, in append order.
+-    pub ops: Vec<Op<K>>,
++    pub(crate) ops: Vec<Op<K>>,
+     /// Where the next read starts.
+-    pub cursor: Cursor,
++    pub(crate) cursor: Cursor,
+     /// The read began at the top of the file, not at the cursor: whatever the
+     /// caller folded from earlier reads no longer describes this file.
+-    pub restarted: bool,
++    pub(crate) restarted: bool,
+ }
+ 
+ /// The file's (device, inode), so a rename over the path is seen. Where the
+diff --git a/crates/svrngs-runtime/src/register.rs b/crates/svrngs-runtime/src/register.rs
+index e4e21fa9..719c114d 100644
+--- a/crates/svrngs-runtime/src/register.rs
++++ b/crates/svrngs-runtime/src/register.rs
+@@ -57,8 +57,8 @@ pub struct Register {
+ /// it names, which the page is not sent.
+ #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+ pub struct Removing {
+-    pub by: Person,
+-    pub of: Person,
++    pub(crate) by: Person,
++    pub(crate) of: Person,
+     pub at: i64,
+     pub said: RemovalSaid,
+     #[serde(skip)]
+diff --git a/crates/svrngs/src/cli.rs b/crates/svrngs/src/cli.rs
+index 7a80a372..206bb2a2 100644
+--- a/crates/svrngs/src/cli.rs
++++ b/crates/svrngs/src/cli.rs
+@@ -224,14 +224,14 @@ Logging: RUST_LOG, default `error`.";
+ /// `<data dir>/api` (`svrngs_node::api::API_FILE`, u5-1), where an app
+ /// svrngs did not start finds it, and every start after listens again
+ /// (start-address, [`svrngs_node::api::kept_address`]).
+-pub const API: SocketAddr = SocketAddr::new(std::net::IpAddr::V4(Ipv4Addr::LOCALHOST), 0);
++pub(crate) const API: SocketAddr = SocketAddr::new(std::net::IpAddr::V4(Ipv4Addr::LOCALHOST), 0);
+ 
+ /// svrngs's own relay, where a computer meets each group it holds that
+ /// keeps none of its own once the build ships [`MeetAt::Svrngs`], with no
+ /// address lookup (DESIGN §10, the operator, 2026-10-12). It answers before
+ /// any build meeting its groups there is published (DESIGN §7,
+ /// `scripts/deploy-relay.sh`, `scripts/deploy-page.sh`).
+-pub const DEFAULT_RELAY: &str = "https://relay.svrnme.sh/";
++pub(crate) const DEFAULT_RELAY: &str = "https://relay.svrnme.sh/";
+ 
+ /// Where a computer meets each group it holds that keeps no relay of its
+ /// own: the switch the operator flips for production (DESIGN §9, §10, the
+@@ -315,7 +315,7 @@ const A_KIND: &str = "a kind: letters, digits, - and _ only";
+ /// Which of a keeper's two asks of a person in a group (U7): a closed set
+ /// (AGENTS 9), each posted to its own route on svrngs running here.
+ #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+-pub enum RemoveKind {
++pub(crate) enum RemoveKind {
+     /// `remove`: the person out of the group.
+     Remove,
+     /// `handover`: the keeper's office to the person.
+@@ -685,7 +685,7 @@ pub fn data_dir() -> Result<PathBuf, Refusal> {
+ 
+ /// Hold `<root>/lock` for as long as the file lives: one svrngs per data
+ /// dir, so each group's record has one writer (RUST_ARCH 3).
+-pub fn claim(root: &Path) -> Result<File, Refusal> {
++pub(crate) fn claim(root: &Path) -> Result<File, Refusal> {
+     std::fs::create_dir_all(root).map_err(|e| Refusal::DataDir(root.to_path_buf(), e))?;
+     let path = root.join("lock");
+     let file = File::create(&path).map_err(|e| Refusal::DataDir(path.clone(), e))?;
+@@ -986,7 +986,7 @@ fn place(origin: &Origin) -> Option<(&str, &str)> {
+     clippy::disallowed_methods,
+     reason = "draws a name nobody made, to ask the page's host for the page there"
+ )]
+-pub async fn checked_page(page: Origin) -> Result<Origin, Refusal> {
++pub(crate) async fn checked_page(page: Origin) -> Result<Origin, Refusal> {
+     // An address in brackets is IPv6's, a literal no name falls under.
+     let named = place(&page).filter(|(_, a)| {
+         let host = a.split(':').next().unwrap_or_default();
+@@ -1036,10 +1036,10 @@ pub async fn checked_page(page: Origin) -> Result<Origin, Refusal> {
+ /// A link as printed: the client's, and the https one for a group that
+ /// keeps a page origin, whose host its apps open under on a phone.
+ #[derive(Debug, Clone, PartialEq, Eq)]
+-pub struct Printed {
+-    pub client: String,
+-    pub https: Option<String>,
+-    pub page: Option<Origin>,
++pub(crate) struct Printed {
++    pub(crate) client: String,
++    pub(crate) https: Option<String>,
++    pub(crate) page: Option<Origin>,
+ }
+ 
+ impl Printed {
+@@ -1071,7 +1071,7 @@ impl std::fmt::Display for Printed {
+ 
+ /// What a verb tells the person, in DESIGN §1's words alone.
+ #[derive(Debug, Clone, PartialEq, Eq)]
+-pub enum Said {
++pub(crate) enum Said {
+     /// `new`: the group made, its first link, and the groups called so
+     /// already (#138).
+     Made {
+@@ -1350,7 +1350,7 @@ fn joined_of(raw: &str) -> Result<Joined, String> {
+ /// pinned by tests/home_group.rs): "You’re already in Trip (Sam’s, since
+ /// 3 Oct). This is a second group called trip." — the page's apostrophe,
+ /// and a day as its number and its month's first three letters.
+-pub fn namesakes_said(beside: &[group::Namesake], name: &str) -> String {
++pub(crate) fn namesakes_said(beside: &[group::Namesake], name: &str) -> String {
+     let at = |t| chrono::DateTime::from_timestamp(t, 0).map(|t| t.with_timezone(&chrono::Local));
+     let said = |g: &group::Namesake| {
+         let whose = (g.maker.as_ref()).map_or("yours".into(), |m| format!("{m}’s"));
+@@ -1375,7 +1375,7 @@ fn joined_said(joined: &Joined) -> String {
+ 
+ /// The header a lend's password is sent in: the one HTTP gives a
+ /// credential (RFC 9110 §11.6.2).
+-pub const SECRET_HEADER: &str = "authorization";
++pub(crate) const SECRET_HEADER: &str = "authorization";
+ 
+ /// Ask for the lend's password on this terminal, never echoed, and read
+ /// one line from standard input: `None` for an empty line or none. The
+@@ -1412,7 +1412,7 @@ fn prompt_secret(name: &LendName) -> Result<Option<String>, Refusal> {
+ 
+ /// `svrngs share`'s write: `lend` declared in the data dir at `root`, with
+ /// `secret` sent as [`SECRET_HEADER`], or none.
+-pub fn share_lend(root: &Path, lend: &Lend, secret: Option<&str>) -> Result<(), Refusal> {
++pub(crate) fn share_lend(root: &Path, lend: &Lend, secret: Option<&str>) -> Result<(), Refusal> {
+     lend::declare(root, lend, secret.map(|s| (SECRET_HEADER, s))).map_err(|e| {
+         tracing::debug!(target: "cli", lend = %lend.name, error = %e, "cli: share — the lend cannot be kept");
+         Refusal::KeepLend(lend.name.clone())
+@@ -1420,7 +1420,7 @@ pub fn share_lend(root: &Path, lend: &Lend, secret: Option<&str>) -> Result<(),
+ }
+ 
+ /// `svrngs unshare`: withdraw the lend `name` from the data dir at `root`.
+-pub fn unshare(root: &Path, name: &LendName) -> Result<Said, Refusal> {
++pub(crate) fn unshare(root: &Path, name: &LendName) -> Result<Said, Refusal> {
+     let keep = |e: lend::LendError| {
+         tracing::debug!(target: "cli", lend = %name, error = %e, "cli: unshare — the lend cannot be withdrawn");
+         Refusal::KeepLend(name.clone())
+@@ -1443,7 +1443,7 @@ pub fn unshare(root: &Path, name: &LendName) -> Result<Said, Refusal> {
+ 
+ /// What the bare command prints: the groups held, where apps reach them,
+ /// and what the people in them lend, asked now.
+-pub async fn running(root: &Path, node: &Node) -> Said {
++pub(crate) async fn running(root: &Path, node: &Node) -> Said {
+     Said::Running {
+         groups: group::groups(root)
+             .iter()
+@@ -1551,7 +1551,7 @@ async fn serve(
+ /// `svrngs join`: `link` redeemed as `person` by the node, which signs
+ /// with its own key, `key` ([`svrngs_node::join`]), once a relay the link
+ /// carries is waited for, in the command's words.
+-pub async fn join_group(
++pub(crate) async fn join_group(
+     node: &Node,
+     key: &SigningKey,
+     link: &Link,
+@@ -1627,7 +1627,7 @@ fn full_name(user: &str) -> Option<String> {
+ /// it is met (`new --relay`), else the relay a group made on the home page
+ /// keeps ([`svrngs_node::node::Host::made_relay`]), once this computer has
+ /// reached one; and its first link.
+-pub async fn new_group(
++pub(crate) async fn new_group(
+     node: &Node,
+     name: Name,
+     person: Name,
+@@ -1680,7 +1680,7 @@ fn group_named(root: &Path, reference: &str) -> Result<Seed, Refusal> {
+ /// `device` a device link (`svrngs link --device`; bash-devices): one this
+ /// computer's person's other computer or phone joins as them by, and that
+ /// person.
+-pub async fn link_to(
++pub(crate) async fn link_to(
+     node: &Node,
+     reference: &str,
+     page: Option<&Origin>,
+diff --git a/crates/svrngs/src/identity.rs b/crates/svrngs/src/identity.rs
+index 1f1a87d6..5b68c910 100644
+--- a/crates/svrngs/src/identity.rs
++++ b/crates/svrngs/src/identity.rs
+@@ -32,7 +32,7 @@ use svrngs_node::actor_of;
+ /// File name under the daemon data dir, sibling of `node_id`. (svrngs: the
+ /// file a refusal names, so it is called what a person may read — DESIGN
+ /// §1 keeps "node" and "key" from them; upstream's was `node_key`.)
+-pub const NODE_KEY_FILE: &str = "identity";
++pub(crate) const NODE_KEY_FILE: &str = "identity";
+ 
+ fn key_path(data_dir: &Path) -> std::path::PathBuf {
+     data_dir.join(NODE_KEY_FILE)
+@@ -77,7 +77,7 @@ fn save_key(data_dir: &Path, key: &SigningKey) -> std::io::Result<()> {
+ 
+ /// Why this computer has no key to run as.
+ #[derive(Debug, thiserror::Error)]
+-pub enum KeyError {
++pub(crate) enum KeyError {
+     #[error("cannot read {path}, which says who this computer is in its groups: {source}")]
+     Unreadable {
+         path: PathBuf,
+@@ -94,7 +94,7 @@ pub enum KeyError {
+ /// is no file there, a fresh one written there first. A file that cannot
+ /// be read, and a fresh key that cannot be written, refuse.
+ #[expect(clippy::disallowed_methods, reason = "draws a device key")]
+-pub fn load_or_generate_node_key(data_dir: &Path) -> Result<SigningKey, KeyError> {
++pub(crate) fn load_or_generate_node_key(data_dir: &Path) -> Result<SigningKey, KeyError> {
+     match load_key(data_dir) {
+         Ok(Some(key)) => {
+             tracing::debug!(
+diff --git a/crates/svrngs/src/lib.rs b/crates/svrngs/src/lib.rs
+index 2e182270..1e26dc9f 100644
+--- a/crates/svrngs/src/lib.rs
++++ b/crates/svrngs/src/lib.rs
+@@ -5,7 +5,7 @@
+ //! as iroh dials it, is the node's `join` since arch-command (a).
+ 
+ pub mod cli;
+-pub use svrngs_node::group;
+-pub mod identity;
++pub(crate) use svrngs_node::group;
++pub(crate) mod identity;
+ pub mod relay;
+-pub mod share;
++pub(crate) mod share;
+diff --git a/crates/svrngs/src/relay.rs b/crates/svrngs/src/relay.rs
+index b72e1f7a..31e6f336 100644
+--- a/crates/svrngs/src/relay.rs
++++ b/crates/svrngs/src/relay.rs
+@@ -42,19 +42,19 @@ use crate::identity;
+ /// second: the most a phone's film at Demo A's bitrate drew through a
+ /// relay in any one second, 8,799,728 of three takes, rounded up
+ /// (`demo/runs/relay-rate/2026-10-12/`).
+-pub const OPEN_RATE: NonZeroU32 = NonZeroU32::new(8_800_000).unwrap();
++pub(crate) const OPEN_RATE: NonZeroU32 = NonZeroU32::new(8_800_000).unwrap();
+ 
+ /// What `svrngs relay` was asked.
+ #[derive(Debug, PartialEq, Eq)]
+-pub struct Relay {
+-    pub at: At,
++pub(crate) struct Relay {
++    pub(crate) at: At,
+     /// `--open`: everyone, each held to [`OPEN_RATE`].
+-    pub open: bool,
++    pub(crate) open: bool,
+ }
+ 
+ /// Where it is reached.
+ #[derive(Debug, PartialEq, Eq)]
+-pub enum At {
++pub(crate) enum At {
+     /// `https://<name>/`, its certificate from Let's Encrypt, from its
+     /// staging service with `--staging`.
+     Name { name: String, staging: bool },
+@@ -122,7 +122,7 @@ fn verdict(key: &str, read: Result<Option<(String, Member)>, JoinError>) -> Acce
+ /// [`Server`] is shut down. Refused for its groups when this computer is in
+ /// none, so it would let nobody through, and when they cannot be read,
+ /// said as that, never as none (#128).
+-pub async fn spawn(relay: &Relay, root: &Path) -> Result<Server, Refusal> {
++pub(crate) async fn spawn(relay: &Relay, root: &Path) -> Result<Server, Refusal> {
+     let unread = |e: RailError| {
+         tracing::debug!(target: "relay", root = %root.display(), error = %e, "relay: refused — the groups this computer holds cannot be read");
+         Refusal::GroupsUnread(e.to_string())
+@@ -177,7 +177,7 @@ pub async fn spawn(relay: &Relay, root: &Path) -> Result<Server, Refusal> {
+ }
+ 
+ /// `svrngs relay`: start it, say so, and run until Ctrl-C.
+-pub async fn run(relay: Relay, root: &Path) -> Result<(), Refusal> {
++pub(crate) async fn run(relay: Relay, root: &Path) -> Result<(), Refusal> {
+     let mut server = spawn(&relay, root).await?;
+     let at = match &relay.at {
+         At::Name { name, .. } => format!("https://{name}/"),
+diff --git a/crates/svrngs/src/share.rs b/crates/svrngs/src/share.rs
+index 6641ad29..131b7d2e 100644
+--- a/crates/svrngs/src/share.rs
++++ b/crates/svrngs/src/share.rs
+@@ -18,7 +18,7 @@ pub use svrngs_node::share::*;
+ /// is that the app stays bound to this machine and is reached by mesh key. A
+ /// `0.0.0.0` target would already be on the LAN to anyone, with no identity
+ /// attached, which is the thing the mesh replaces.
+-pub fn resolve_target(port: &str) -> Result<NonZeroU16, String> {
++pub(crate) fn resolve_target(port: &str) -> Result<NonZeroU16, String> {
+     match port.parse::<u16>().ok().and_then(NonZeroU16::new) {
+         Some(p) => Ok(p),
+         None => Err(format!(
+diff --git a/web/src/http.rs b/web/src/http.rs
+index e347f1db..74d87703 100644
+--- a/web/src/http.rs
++++ b/web/src/http.rs
+@@ -65,7 +65,7 @@ pub enum Refused {
+ 
+ /// Why the page's request body stopped short.
+ #[derive(Debug, thiserror::Error)]
+-pub enum BodyError {
++pub(crate) enum BodyError {
+     #[error("the page's body yielded a chunk that is not bytes")]
+     NotBytes,
+     #[error("the page's body failed: {0}")]
+@@ -200,7 +200,7 @@ fn null_body(status: u16) -> bool {
+ /// Send one request on a new bi-stream of `conn` and answer the page's
+ /// `Response`, its body a `ReadableStream` read off the stream as the page
+ /// reads it.
+-pub async fn fetch(
++pub(crate) async fn fetch(
+     conn: Connection,
+     method: String,
+     path: String,
+@@ -280,7 +280,7 @@ pub async fn fetch(
+ /// ways (u5-2). Written by hand, as the head is all there is to HTTP here;
+ /// the door's hyper reads it, and splices the stream once its service
+ /// switches.
+-pub async fn socket(conn: Connection, path: &str, headers: &js_sys::Array) -> Result<JsValue, Refused> {
++pub(crate) async fn socket(conn: Connection, path: &str, headers: &js_sys::Array) -> Result<JsValue, Refused> {
+     let mut head = format!("GET {path} HTTP/1.1\r\n");
+     let host = headers_of(headers, |name, value, _, _| {
+         head.push_str(&format!("{name}: {value}\r\n"))

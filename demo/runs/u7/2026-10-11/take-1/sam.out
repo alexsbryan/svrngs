@@ -1,0 +1,12 @@
+Made Trip, with you as Sam.
+Send this link to the people you want in it. It works for a day, while this computer is on:
+
+  svrngs://join/AWH4NncI75gMdlZP9YAMiCA3BZgKFOmrIOCiE0OqM7V2FmuiPWk5CCNepWSORY1B6w
+
+or, to open it in a browser:
+
+  http://localhost:62152/#AWH4NncI75gMdlZP9YAMiCA3BZgKFOmrIOCiE0OqM7V2FmuiPWk5CCNepWSORY1B6w
+
+On a phone, each app opens at an address of its own under localhost:62152, which can see which app is opened.
+
+Leave this running; Ctrl-C stops it.

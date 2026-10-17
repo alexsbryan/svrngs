@@ -1,0 +1,24 @@
+# Grapevine's nouns. The infra may not use them (scripts/vocab_check.py).
+# Not listed, since svrngs's code uses them in its own sense
+# (GRAPEVINE_DEMO §13.6): `ask` and `asks` (a lend's asks, lend.rs; the
+# sign-in's ASK_DOMAIN, joining.rs), `asker` (carried.rs:135), `carry` and
+# `carried` (carried apps, carried.rs; a name that "cannot carry", lib.rs),
+# `seal` and `sealed` (admit.rs; "the key is kept sealed", web/app.js:213),
+# `route` and `routes` (node.rs), `kind` (lend kinds), `withheld`
+# (carried.rs:77), `relay` and `relayed` (relay.rs), `msg` (joining.rs:48),
+# `thread` (share.rs:225), `offer` (live.rs:97), and `withdraw` and
+# `withdrawn` (a lend withdrawn, lend.rs:5). Nor `handle` or `notice`: no
+# code uses either yet, but both are words any Rust code may need, and
+# neither is only grapevine's.
+grapevine
+carrier
+carriers
+carriable
+hop
+hops
+withdrawal
+replier
+repliers
+tool
+listing
+listings

@@ -1,0 +1,4 @@
+# before #172, at 1acbba2: run 1 — 1 passed, 1 failed (its panic not kept; load ~15 on 12 cores); runs 2 and 3:
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 92 filtered out; finished in 26.92s
+thread 'a_page_speaks_http_through_the_door_streaming_both_ways::webkit' (49657538) panicked at crates/svrngs-node/tests/browser/main.rs:548:5:
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 92 filtered out; finished in 54.86s

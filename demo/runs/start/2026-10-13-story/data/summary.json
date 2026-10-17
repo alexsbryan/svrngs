@@ -1,0 +1,432 @@
+{
+ "served": {
+  "page": "http://localhost:63714/",
+  "tarball": "svrngs-darwin-aarch64.tar.gz",
+  "bytes": 13160864,
+  "sum_matches": true
+ },
+ "sam_launchd_home_status": 200,
+ "sam": {
+  "page": {
+   "mode": "page",
+   "seen": [],
+   "at": 771,
+   "said": "Open this page from your group’s link. To make your group, paste this line in a terminal on your computer: it gets svrngs and opens your home page, where you make your group and invite people to it. curl -fsSL http://localhost:63714/install.sh | sh -s -- 'http://localhost:63714/' Copy What’s your name? Everyone in sees it. Join Yes Not now",
+   "line": "curl -fsSL http://localhost:63714/install.sh | sh -s -- 'http://localhost:63714/'"
+  },
+  "line": {
+   "exit": 0,
+   "ms": 1366,
+   "said": [
+    "Getting svrngs for this computer from http://localhost:63714/get/svrngs-darwin-aarch64.tar.gz",
+    "Checked: svrngs-darwin-aarch64.tar.gz matches SHA256SUMS.",
+    "Installed svrngs in /tmp/start-story/sam/.local/bin.",
+    "/tmp/start-story/sam/.local/bin is not on your PATH, so to run svrngs yourself type /tmp/start-story/sam/.local/bin/svrngs; nothing else needs it.",
+    "svrngs runs now, and whenever you log in (/tmp/start-story/sam/Library/LaunchAgents/sh.svrnme.svrngs.plist).",
+    "Your home page, the same address each time svrngs starts: http://svrngs.localhost:63742/"
+   ],
+   "open_asked": "http://svrngs.localhost:63742/",
+   "open_ms": 1359
+  },
+  "make": {
+   "mode": "make",
+   "seen": [],
+   "before": {
+    "at": 4464,
+    "said": "Your groups This page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group’s folder, make a group, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them. A link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays. A program on this computer, such as one you chat with a friend’s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address. This computer is in no group yet. Make one below, or join one by the line the page of the link you were sent gives. Make a group A name for the group: Your name in it: Make a group What this computer lends This computer lends nothing. Your home page, the same address each time svrngs starts: http://svrngs.localhost:63742/ Done in a terminal A few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <…>: Lend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom. Remove someone from a group: svrngs remove <their name> --group <the group’s name> Leaving a group is not possible yet: nothing in svrngs does it."
+   },
+   "pressed": 4536,
+   "made": 4856,
+   "after": {
+    "at": 4866,
+    "said": "Your groups This page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open each group’s folder, make a group, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them. A link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays. A program on this computer, such as one you chat with a friend’s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address. You made Lab. Make a link below to invite someone to it. Lab People: Sam Lab’s folder is on this computer at /tmp/start-story/sam/svrngs/Lab Open this folder Make a link to invite someone to LabMake a link to add your phone or another computer of yours Nobody lends anything here yet. Make a group A name for the group: Your name in it: Make a group What this computer lends This computer lends nothing. Your home page, the same address each time svrngs starts: http://svrngs.localhost:63742/ Done in a terminal A few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <…>: Lend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom. Remove someone from a group: svrngs remove <their name> --group <the group’s name> Leaving a group is not possible yet: nothing in svrngs does it.",
+    "folder": "Lab’s folder is on this computer at /tmp/start-story/sam/svrngs/Lab"
+   },
+   "linked": 4923,
+   "link_at": 5197,
+   "link": "http://localhost:63714/#<the token>",
+   "link_said": "Send this link to the person you are inviting: http://localhost:63714/#<the token> It opens in a browser, which says how to join from there. It works for a day, while this computer is on. Copy the link"
+  },
+  "groups": [
+   "Lab"
+  ],
+  "folder_is_dir": true,
+  "link_on_page": true,
+  "origin_kept": "http://localhost:63714/",
+  "share": [
+   {
+    "who": "sam",
+    "typed": "~/.local/bin/svrngs share 18089",
+    "exit": 1,
+    "said": "svrngs: say what is on port 18089: `svrngs share 18089 --kind <kind>`, its own name if it is one svrngs knows: jellyfin, navidrome, calibre-web, llama-server",
+    "ms": 8
+   },
+   {
+    "who": "sam",
+    "typed": "~/.local/bin/svrngs share 18089 --kind llama-server",
+    "exit": 0,
+    "said": "Lent llama-server (port 18089) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 18089 --limit <number>`.\nThey cannot open /slots, /v1/stream, /v1/streams, /v1/chat/completions/control, /lora-adapters, /metrics, /tools, /cors-proxy, /models: svrngs keeps these back whenever a llama-server is lent, since they show one person's use of it to the others or change it for everyone.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare llama-server` stops lending it.\nIf llama-server takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none):",
+    "ms": 8
+   }
+  ],
+  "home": "http://svrngs.localhost:63742/"
+ },
+ "bo": {
+  "shown": {
+   "mode": "line",
+   "shown": 301,
+   "line": "curl -fsSL http://localhost:63714/install.sh | sh -s -- 'http://localhost:63714/#<the token>'",
+   "said": "Opening your link… On this computer, paste this line in a terminal: it gets svrngs, joins you, and opens your home page, with the group’s folder on your disk. curl -fsSL http://localhost:63714/install.sh | sh -s -- 'http://localhost:63714/#<the token>' Copy What’s your name? Everyone in sees it. Join Yes Not now"
+  },
+  "line": {
+   "exit": 0,
+   "ms": 2406,
+   "said": [
+    "Getting svrngs for this computer from http://localhost:63714/get/svrngs-darwin-aarch64.tar.gz",
+    "Checked: svrngs-darwin-aarch64.tar.gz matches SHA256SUMS.",
+    "Installed svrngs in /tmp/start-story/bo/.local/bin.",
+    "/tmp/start-story/bo/.local/bin is not on your PATH, so to run svrngs yourself type /tmp/start-story/bo/.local/bin/svrngs; nothing else needs it.",
+    "You're in Lab, as Bo.",
+    "Lab's folder is /tmp/start-story/bo/svrngs/Lab: what anyone in Lab puts there reaches this computer, and what you put there reaches theirs.",
+    "",
+    "svrngs runs now, and whenever you log in (/tmp/start-story/bo/Library/LaunchAgents/sh.svrnme.svrngs.plist).",
+    "Your home page, the same address each time svrngs starts: http://svrngs.localhost:63811/"
+   ],
+   "open_asked": "http://svrngs.localhost:63811/",
+   "open_ms": 2398
+  },
+  "home": "http://svrngs.localhost:63811/",
+  "chat_chromium": {
+   "mode": "chat",
+   "seen": [],
+   "listed": 292,
+   "clicked": 356,
+   "tab_seen": [
+    "775 403 GET http://jmgax6p2agd925g41p8gzdg048t1nzsdz391llxvlktzjrg9s39tl0v0j15kh4.localhost:63811/tools path",
+    "915 403 POST http://jmgax6p2agd925g41p8gzdg048t1nzsdz391llxvlktzjrg9s39tl0v0j15kh4.localhost:63811/v1/streams/lookup path",
+    "930 403 GET http://jmgax6p2agd925g41p8gzdg048t1nzsdz391llxvlktzjrg9s39tl0v0j15kh4.localhost:63811/tools path"
+   ],
+   "tab": {
+    "at": 454,
+    "url": "http://jmgax6p2agd925g41p8gzdg048t1nzsdz391llxvlktzjrg9s39tl0v0j15kh4.localhost:63811/",
+    "title": ""
+   },
+   "ask": {
+    "box": 881,
+    "sent": 903,
+    "first": 930,
+    "done": 1825,
+    "words": "Sure, here are three rivers in Spain:\n\nRío Guadalajara (Spanish: \"Río Guadalajara\") - This river flows through the city of Guadalajara and is known for its rich agricultural heritage and as a source of water for the city's population.\n\nRío Cervantes (Spanish: \"Río Cervantes\") - This is one of the longest rivers in Spain, flowing through the city of Cervantes. It provides important water resources and has historical significance in Spanish history.\n\nRío Guadalquivorene (Spanish: \"Río Guadalquivorene\") - This is another significant river in Spain, particularly in the provinces of Andalusia and E"
+   }
+  },
+  "chat_webkit": {
+   "mode": "chat",
+   "seen": [],
+   "listed": 1237,
+   "clicked": 1264,
+   "tab_seen": [
+    "1880 403 GET http://jmgax6p2agd925g41p8gzdg048t1nzsdz391llxvlktzjrg9s39tl0v0j15kh4.localhost:63811/tools path",
+    "2060 403 POST http://jmgax6p2agd925g41p8gzdg048t1nzsdz391llxvlktzjrg9s39tl0v0j15kh4.localhost:63811/v1/streams/lookup path",
+    "2091 403 GET http://jmgax6p2agd925g41p8gzdg048t1nzsdz391llxvlktzjrg9s39tl0v0j15kh4.localhost:63811/tools path"
+   ],
+   "tab": {
+    "at": 1596,
+    "url": "http://jmgax6p2agd925g41p8gzdg048t1nzsdz391llxvlktzjrg9s39tl0v0j15kh4.localhost:63811/",
+    "title": ""
+   },
+   "ask": {
+    "box": 1985,
+    "sent": 2040,
+    "first": 2145,
+    "done": 3046,
+    "words": "Certainly! Here are three rivers in Spain:\n\nRio Guadal累 (Galician, Spanish: \"Guadalupe\") - This river is known for its long journey from the Andes mountains in Peru, through the Amazon rainforest, and on to the Atlantic Ocean in Spain.\nRio Tagua (Spanish: \"Tarquí\") - This river is the second longest river in Spain, flowing through the high Andes mountains in Peru and into the Atlantic Ocean in Spain.\nRio El Hierro (Spanish: \"El Hierro\") - This is the longest river in Spain, with a journey of about 5,000 kilometers (3,100 miles) from the Andes mountains in Peru, through the Amazon rainforest, a"
+   }
+  }
+ },
+ "program": {
+  "copy": {
+   "mode": "copy",
+   "listed": 418,
+   "button": "Copy its address for a program",
+   "pressed": 422,
+   "said": "Open Sam’s llama-server Copy its address for a program Copied: http://jmgax6p2agd925g41p8gzdg048t1nzsdz391llxvlktzjrg9s39tl0v0j15kh4.localhost:63811/",
+   "clipboard": "http://jmgax6p2agd925g41p8gzdg048t1nzsdz391llxvlktzjrg9s39tl0v0j15kh4.localhost:63811/"
+  },
+  "lends": {
+   "Sam/llama-server": "http://jmgax6p2agd925g41p8gzdg048t1nzsdz391llxvlktzjrg9s39tl0v0j15kh4.localhost:63811/"
+  },
+  "first": {
+   "address": "http://jmgax6p2agd925g41p8gzdg048t1nzsdz391llxvlktzjrg9s39tl0v0j15kh4.localhost:63811/",
+   "openai": "3.29.0",
+   "no_key": {
+    "made": false,
+    "error": "OpenAIError: Missing credentials. Please pass an `api_key`, `workload_identity`, `admin_api_key`, or set the `OPENAI_API_KEY` or `OPENAI_ADMIN_KEY` environment variable.",
+    "status": null
+   },
+   "streamed": {
+    "reached": true,
+    "chunks": 22,
+    "first_ms": 138.1,
+    "ms": 250.8,
+    "words": "Three rivers in Spain are the Garonne, the Garza, and the Guadalquivir."
+   }
+  }
+ },
+ "restart": {
+  "kickstart": {
+   "exit": 0,
+   "said": ""
+  },
+  "home_answers_ms": 445,
+  "home_before": "http://svrngs.localhost:63811/",
+  "home_after": "http://svrngs.localhost:63811/",
+  "home_status": 200,
+  "home_title": "Your groups",
+  "lends_after": {
+   "Sam/llama-server": "http://jmgax6p2agd925g41p8gzdg048t1nzsdz391llxvlktzjrg9s39tl0v0j15kh4.localhost:63811/"
+  },
+  "again": {
+   "address": "http://jmgax6p2agd925g41p8gzdg048t1nzsdz391llxvlktzjrg9s39tl0v0j15kh4.localhost:63811/",
+   "openai": "3.29.0",
+   "streamed": {
+    "reached": true,
+    "chunks": 22,
+    "first_ms": 64.1,
+    "ms": 151.0,
+    "words": "Three rivers in Spain are the Garonne, the Garza, and the Guadalquivir."
+   }
+  },
+  "answered_ms_since_restart": 1433
+ },
+ "kept_back": {
+  "/slots": {
+   "status": 403,
+   "refused": "path",
+   "said": "llama-server is lent without /slots"
+  },
+  "/v1/stream": {
+   "status": 403,
+   "refused": "path",
+   "said": "llama-server is lent without /v1/stream"
+  },
+  "/v1/streams": {
+   "status": 403,
+   "refused": "path",
+   "said": "llama-server is lent without /v1/streams"
+  },
+  "/v1/chat/completions/control": {
+   "status": 403,
+   "refused": "path",
+   "said": "llama-server is lent without /v1/chat/completions/control"
+  },
+  "/lora-adapters": {
+   "status": 403,
+   "refused": "path",
+   "said": "llama-server is lent without /lora-adapters"
+  },
+  "/metrics": {
+   "status": 403,
+   "refused": "path",
+   "said": "llama-server is lent without /metrics"
+  },
+  "/tools": {
+   "status": 403,
+   "refused": "path",
+   "said": "llama-server is lent without /tools"
+  },
+  "/cors-proxy": {
+   "status": 403,
+   "refused": "path",
+   "said": "llama-server is lent without /cors-proxy"
+  },
+  "/models": {
+   "status": 403,
+   "refused": "path",
+   "said": "llama-server is lent without /models"
+  },
+  "/health": {
+   "status": 200,
+   "refused": null,
+   "said": "{'status': 'ok'}"
+  },
+  "/props": {
+   "status": 200,
+   "refused": null,
+   "said": "{'default_generation_settings': {'params': {'seed': 4294967295, 'temperature': 0.800000011920929, 'dynatemp_range': 0.0,"
+  },
+  "/v1/models": {
+   "status": 200,
+   "refused": null,
+   "said": "{'models': [{'name': 'Qwen/Qwen2.5-0.5B-Instruct-GGUF:Q4_K_M', 'model': 'Qwen/Qwen2.5-0.5B-Instruct-GGUF:Q4_K_M', 'modif"
+  }
+ },
+ "phones": {
+  "mode": "phones",
+  "cy": {
+   "name": "Cy",
+   "seen": [
+    "4726 415 GET http://jmgax6p2agd925g41p8gzdg048t1nzsdz391llxvlktzjrg9s39tl0v0j15kh4.localhost:63714/ "
+   ],
+   "opened": 828,
+   "asked": 1831,
+   "status": {
+    "at": 3724,
+    "said": "You’re in Lab, as Cy"
+   },
+   "lent": [
+    "Sam’s llama-server"
+   ],
+   "listed": 3731,
+   "pressed": 3731,
+   "at_lend": {
+    "at": 4735,
+    "url": "http://jmgax6p2agd925g41p8gzdg048t1nzsdz391llxvlktzjrg9s39tl0v0j15kh4.localhost:63714/"
+   },
+   "page": {
+    "at": 5238,
+    "title": "",
+    "said": "Error: gzip is not supported by this browser"
+   },
+   "ask": {
+    "box": null,
+    "stopped": "no box to type in: Error: gzip is not supported by this browser"
+   }
+  },
+  "dee": {
+   "name": "Dee",
+   "seen": [
+    "39229 415 GET http://jmgax6p2agd925g41p8gzdg048t1nzsdz391llxvlktzjrg9s39tl0v0j15kh4.localhost:63714/ "
+   ],
+   "opened": 35952,
+   "asked": 36911,
+   "status": {
+    "at": 38301,
+    "said": "You’re in Lab, as Dee"
+   },
+   "lent": [
+    "Sam’s llama-server"
+   ],
+   "listed": 38305,
+   "pressed": 38305,
+   "at_lend": {
+    "at": 39237,
+    "url": "http://jmgax6p2agd925g41p8gzdg048t1nzsdz391llxvlktzjrg9s39tl0v0j15kh4.localhost:63714/"
+   },
+   "page": {
+    "at": 39740,
+    "title": "",
+    "said": "Error: gzip is not supported by this browser"
+   }
+  },
+  "eve": {
+   "name": "Eve",
+   "seen": [
+    "44107 415 GET http://jmgax6p2agd925g41p8gzdg048t1nzsdz391llxvlktzjrg9s39tl0v0j15kh4.localhost:63714/ ",
+    "114214 415 GET http://jmgax6p2agd925g41p8gzdg048t1nzsdz391llxvlktzjrg9s39tl0v0j15kh4.localhost:63714/ "
+   ],
+   "opened": 40436,
+   "asked": 41279,
+   "status": {
+    "at": 43195,
+    "said": "You’re in Lab, as Eve"
+   },
+   "lent": [
+    "Sam’s llama-server"
+   ],
+   "listed": 43198,
+   "pressed": 43198,
+   "at_lend": {
+    "at": 44115,
+    "url": "http://jmgax6p2agd925g41p8gzdg048t1nzsdz391llxvlktzjrg9s39tl0v0j15kh4.localhost:63714/"
+   },
+   "page": {
+    "at": 44616,
+    "title": "",
+    "said": "Error: gzip is not supported by this browser"
+   }
+  },
+  "none": {
+   "sent": 44624,
+   "each": {
+    "Cy": {
+     "box": null,
+     "stopped": "no box to type in: Error: gzip is not supported by this browser"
+    },
+    "Dee": {
+     "box": null,
+     "stopped": "no box to type in: Error: gzip is not supported by this browser"
+    },
+    "Eve": {
+     "box": null,
+     "stopped": "no box to type in: Error: gzip is not supported by this browser"
+    }
+   }
+  },
+  "window": {
+   "from": 74785
+  },
+  "limit": {
+   "before": "llama-server: everyone in your groups at once, 0 using it now. How many people at once: Let in this manyStop lending",
+   "pressed": 110361,
+   "after": "llama-server: up to 2 people at once, 0 using it now. How many people at once: Let in this manyLet everyone inStop lending",
+   "at": 110909
+  },
+  "two": {
+   "sent": 110983,
+   "eve": {
+    "opened": 112485,
+    "seen_from": 1,
+    "lent": [
+     "Sam’s llama-server"
+    ],
+    "listed": 113421,
+    "pressed": 113421,
+    "at_lend": {
+     "at": 114220,
+     "url": "http://jmgax6p2agd925g41p8gzdg048t1nzsdz391llxvlktzjrg9s39tl0v0j15kh4.localhost:63714/"
+    },
+    "page": {
+     "at": 114723,
+     "title": "",
+     "said": "Error: gzip is not supported by this browser"
+    },
+    "box": 0,
+    "said": "Error: gzip is not supported by this browser",
+    "seen": [
+     "114214 415 GET http://jmgax6p2agd925g41p8gzdg048t1nzsdz391llxvlktzjrg9s39tl0v0j15kh4.localhost:63714/ "
+    ]
+   },
+   "Cy": {
+    "box": null,
+    "stopped": "no box to type in: Error: gzip is not supported by this browser"
+   },
+   "Dee": {
+    "box": null,
+    "stopped": "no box to type in: Error: gzip is not supported by this browser"
+   },
+   "bo": {
+    "address": "http://jmgax6p2agd925g41p8gzdg048t1nzsdz391llxvlktzjrg9s39tl0v0j15kh4.localhost:63811/",
+    "openai": "3.29.0",
+    "streamed": {
+     "reached": true,
+     "chunks": 22,
+     "first_ms": 67.7,
+     "ms": 152.1,
+     "words": "Three rivers in Spain are the Garonne, the Garza, and the Guadalquivir."
+    }
+   }
+  }
+ },
+ "end": {
+  "load": [
+   8.98486328125,
+   14.54345703125,
+   19.92431640625
+  ]
+ },
+ "door": {
+  "full": 0,
+  "home": 165,
+  "let_in": 4
+ }
+}

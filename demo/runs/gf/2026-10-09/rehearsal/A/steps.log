@@ -1,0 +1,8 @@
+22:49:39 setup load: 15:49  up  4:32, 3 users, load averages: 19.14 38.00 54.03
+22:49:39 setup svrngs 362a6bd, ffmpeg version 8.1.2 Copyright (c) 2000-2026 the FFmpeg developers
+22:49:48 setup media: [('exp.mp4', 47076995), ('exp.mkv', 47015513), ('beside.bin', 1048576)]
+22:49:48 setup ana up, plant -: svrngs new Films --as Ana
+22:49:50 setup ben up, plant -: svrngs join <the link> --as Ben
+22:49:51 setup cy up, plant -: svrngs join <the link> --as Cy
+22:49:53 setup ana and cy shared
+22:50:02 setup jellyfin: {"LocalAddress":"http://127.0.0.1:18096","ServerName":"Alexs-MacBook-Pro-2","Version":"12.0.0","ProductName":"Jellyfin Server","OperatingSystem":"","Id":"49e9a572b1ee429f8dd908a7fcba5428","StartupWizardCompleted":false}

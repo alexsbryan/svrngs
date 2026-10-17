@@ -46,10 +46,24 @@ async fn serve(
     live: Arc<LiveBuffer>,
 ) -> (String, crate::iroh::tests::OnStream) {
     serve_on_stream(
-        router(RingInbound { rail, live }),
+        router(RingInbound {
+            rail,
+            live,
+            wake: Default::default(),
+        }),
         SecretKey::from_bytes(&key().to_bytes()),
     )
     .await
+}
+
+/// `payload` as it is drained when [`key`], Ada's only key, sent it.
+fn from_ada(payload: &str) -> Live {
+    let ada = crate::actor_of(&key());
+    Live {
+        payload: payload.into(),
+        key: ada.clone(),
+        person_key: ada,
+    }
 }
 
 fn fresh(dir: &tempfile::TempDir) -> (Arc<RingRail>, Arc<LiveBuffer>) {
@@ -90,6 +104,7 @@ async fn the_asker_is_the_verified_dialer_and_no_header_names_one() {
     let addr = serve_at(router(RingInbound {
         rail: rail.clone(),
         live: Arc::new(LiveBuffer::default()),
+        wake: Default::default(),
     }))
     .await;
     let off_stream = ask(&format!("http://{addr}/internal/ring/sync"), Some(&ada)).await;
@@ -104,6 +119,7 @@ async fn the_asker_is_the_verified_dialer_and_no_header_names_one() {
         router(RingInbound {
             rail: rail.clone(),
             live: Arc::new(LiveBuffer::default()),
+            wake: Default::default(),
         }),
         SecretKey::from_bytes(&key().to_bytes()),
     )
@@ -115,6 +131,7 @@ async fn the_asker_is_the_verified_dialer_and_no_header_names_one() {
         router(RingInbound {
             rail,
             live: Arc::new(LiveBuffer::default()),
+            wake: Default::default(),
         }),
         SecretKey::from_bytes(&[12u8; 32]),
     )
@@ -179,10 +196,7 @@ async fn a_live_payload_touches_nothing_on_disk() {
         let sent = push(&addr, LIVE_NS, p).await;
         assert_eq!(sent.status(), 200, "{}", sent.text().await.unwrap());
     }
-    assert_eq!(
-        live.drain(LIVE_NS),
-        (payloads.map(String::from).to_vec(), 0)
-    );
+    assert_eq!(live.drain(LIVE_NS), (payloads.map(from_ada).to_vec(), 0));
     assert_eq!(snapshot(dir.path()), before, "the live lane wrote to disk");
 }
 
@@ -199,7 +213,7 @@ async fn a_restart_empties_the_buffer() {
     assert_eq!(restarted.drain(LIVE_NS), (Vec::new(), 0));
     assert_eq!(
         live.drain(LIVE_NS),
-        (vec!["AQID".to_string()], 0),
+        (vec![from_ada("AQID")], 0),
         "control: the first process held it"
     );
 }
@@ -218,7 +232,7 @@ async fn a_drain_takes_only_its_own_namespace() {
     assert_eq!(live.drain(OTHER_LIVE_NS), (Vec::new(), 0));
     assert_eq!(
         live.drain(LIVE_NS),
-        (vec!["AQID".to_string(), "BAUG".to_string()], 0)
+        (vec![from_ada("AQID"), from_ada("BAUG")], 0)
     );
 }
 
@@ -260,6 +274,7 @@ async fn a_dialer_not_standing_in_the_group_named_is_refused() {
         router(RingInbound {
             rail: rail.clone(),
             live: live.clone(),
+            wake: Default::default(),
         }),
         SecretKey::from_bytes(&bo.to_bytes()),
     )
@@ -277,6 +292,7 @@ async fn a_dialer_not_standing_in_the_group_named_is_refused() {
     let addr = serve_at(router(RingInbound {
         rail,
         live: live.clone(),
+        wake: Default::default(),
     }))
     .await;
     let off_stream = push(&format!("http://{addr}"), LIVE_NS, "AQID").await;
@@ -286,4 +302,88 @@ async fn a_dialer_not_standing_in_the_group_named_is_refused() {
         "a request off the stream is refused"
     );
     assert_eq!(live.drain(LIVE_NS), (Vec::new(), 0));
+}
+
+/// A push landing the asker's own `Relay` wakes the round, so the group
+/// hears where a newcomer is reached now (relay-in-record): Ada says hers
+/// and pushes it to a computer holding the group, whose nudge then holds a
+/// permit; pushed again, nothing lands and nothing wakes. The failing
+/// input: a route that never wakes, as before.
+#[tokio::test]
+async fn a_push_landing_the_askers_own_relay_wakes_the_round() {
+    let (a, b) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let ada = rail_with_roster(a.path());
+    let url = svrngs_core::relay::parse("http://127.0.0.1:1/").ok();
+    let said = ada.commit(
+        NS,
+        &svrngs_core::RelayAt {
+            key: crate::actor_of(&key()),
+            url,
+        },
+    );
+    assert!(
+        matches!(said, Ok(Ok(ref s)) if !s.is_empty()),
+        "control: Ada's relay is written"
+    );
+    let issuer = Arc::new(RingRail::new(
+        b.path(),
+        Arc::new(SigningKey::from_bytes(&[13u8; 32])),
+    ));
+    let mut members = std::collections::BTreeMap::new();
+    members.insert(Person::parse("Ada").unwrap(), vec![crate::actor_of(&key())]);
+    issuer.set_seed(NS, &Roster::new(members)).unwrap();
+    let wake = Arc::new(tokio::sync::Notify::new());
+    let inbound = RingInbound {
+        rail: issuer,
+        live: Default::default(),
+        wake: wake.clone(),
+    };
+    let (base, _ada) =
+        serve_on_stream(router(inbound), SecretKey::from_bytes(&key().to_bytes())).await;
+    let body = serde_json::json!({
+        "namespace": NS,
+        "digest": ada.digest(NS).unwrap(),
+        "ops": ada.ops_missing_from_within(NS, &Digest::default(), usize::MAX).unwrap().0,
+    });
+    let push = || {
+        reqwest::Client::new()
+            .post(format!("{base}/internal/ring/sync"))
+            .json(&body)
+            .send()
+    };
+    assert_eq!(push().await.unwrap().status(), 200);
+    let woken = tokio::time::timeout(std::time::Duration::from_secs(1), wake.notified()).await;
+    assert!(
+        woken.is_ok(),
+        "the asker's own relay landed, and the round was not woken"
+    );
+    assert_eq!(push().await.unwrap().status(), 200);
+    let again = tokio::time::timeout(std::time::Duration::from_millis(200), wake.notified()).await;
+    assert!(again.is_err(), "nothing landed, and the round was woken");
+}
+
+/// **Whether a key stands in a group is decided in one place** (#146):
+/// the ring's routes serve exactly the keys the register's `names` names
+/// (Ada's here, never a stranger's, nobody in a group not held), each with
+/// the row `member` answers. Red on the plant the finding names, a change
+/// to who stands made in one place: `names` refusing a key with no relay
+/// named, which `standing_asker`, deciding inline, did not follow.
+#[test]
+fn the_routes_serve_the_keys_the_register_names() {
+    let dir = tempfile::tempdir().unwrap();
+    let rail = rail_with_roster(dir.path());
+    let stranger = SigningKey::from_bytes(&[12u8; 32]);
+    for ns in [NS, "not-held"] {
+        let standing = rail.standing(ns).unwrap();
+        for key in [key(), stranger.clone()] {
+            let actor = crate::actor_of(&key);
+            let dialer = crate::iroh::tests::dialer(&key);
+            let served = standing_asker(&rail, Some(dialer), "test", ns);
+            assert_eq!(
+                served.is_ok(),
+                standing.names(&actor),
+                "{ns}: served {actor} as the register names it: {served:?}"
+            );
+        }
+    }
 }

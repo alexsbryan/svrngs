@@ -1,0 +1,8 @@
+thread 'a_computer_the_group_cut_is_told_so_by_the_issuer' (55134739) panicked at crates/svrngs/tests/join_by_link.rs:1003:5:
+Err(LinkRefused)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+--
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.26s
+
+error: test failed, to rerun pass `-p svrngs --test join_by_link`

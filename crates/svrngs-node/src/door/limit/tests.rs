@@ -5,11 +5,11 @@
 #![allow(clippy::disallowed_methods)]
 
 use std::net::IpAddr;
-use std::num::{NonZeroU16, NonZeroU32, NonZeroU64};
+use std::num::{NonZeroU16, NonZeroU32};
 use std::time::{Duration, Instant};
 
 use super::*;
-use crate::lend::{Kind, Lend, LendName, Upload};
+use crate::lend::{Kind, Lend, LendName};
 
 const AWAY: Whereabouts = Whereabouts::Away;
 
@@ -17,12 +17,15 @@ const AWAY: Whereabouts = Whereabouts::Away;
 fn shelf(upload: Option<u64>) -> Lend {
     Lend {
         name: LendName::parse("shelf").unwrap(),
-        port: NonZeroU16::new(8096).unwrap(),
+        source: crate::lend::Source::Port(NonZeroU16::new(8096).unwrap()),
         kind: Kind::parse("k").unwrap(),
-        limit: NonZeroU16::new(3).unwrap(),
+        limit: NonZeroU16::new(3),
         refused: Vec::new(),
-        upload: upload.map(|b| Upload::new(NonZeroU64::new(b).unwrap())),
+        // Read as a declaration's `upload_bps` is.
+        upload: upload.map(|b| serde_json::from_value(serde_json::json!(b)).unwrap()),
         reads: Vec::new(),
+        sign_in: None,
+        asks: None,
     }
 }
 
@@ -68,7 +71,10 @@ fn a_fourth_is_refused_naming_three() {
     let mut counts = three_streaming(&lend, t0);
     assert_eq!(
         counts.ask(&lend, "dee", AWAY, t0),
-        Verdict::Full { using: 3 }
+        Verdict::Full {
+            using: 3,
+            limit: NonZeroU16::new(3).unwrap()
+        }
     );
     assert_eq!(counts.people(&lend.name, t0), 3, "a refusal counts no one");
 }
@@ -85,7 +91,10 @@ fn one_stops_and_after_the_window_the_fourth_is_let_in() {
     let inside = stopped + WINDOW - Duration::from_millis(1);
     assert_eq!(
         counts.ask(&lend, "dee", AWAY, inside),
-        Verdict::Full { using: 3 },
+        Verdict::Full {
+            using: 3,
+            limit: NonZeroU16::new(3).unwrap()
+        },
         "cy stopped within the window, so is still counted"
     );
     let after = stopped + WINDOW;
@@ -96,7 +105,10 @@ fn one_stops_and_after_the_window_the_fourth_is_let_in() {
     }
     assert_eq!(
         counts.ask(&lend, "cy", AWAY, after),
-        Verdict::Full { using: 3 },
+        Verdict::Full {
+            using: 3,
+            limit: NonZeroU16::new(3).unwrap()
+        },
         "cy, gone past the window, is a newcomer again"
     );
 }

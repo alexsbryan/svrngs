@@ -13,6 +13,24 @@
 // declared it reads; else refused. Each answer goes back as the door gave
 // it, a 206 and its `Content-Range` with it, its body streamed.
 //
+// Its pages are told the lends they read at `READS` on their own origin
+// (mnp-2; DESIGN §3, "Lent apps", call 6): each one's kind, name, lender
+// and an address under `READS` to ask it at, and whose computer did not
+// answer — what the group's page handed, never the pass or its key. A
+// request at such an address is that lend's; a page navigated there opens
+// that lend at the path asked, through the group's page, which signs its
+// pass, and its start page (open.js), which goes there.
+//
+// A lend that asks (sup-3; DESIGN §3, "What an app gets") is told with
+// its lender's words, `asks`, and `ask`, `<origin>/svrngs-ask?lend=&app=`,
+// the shape a computer's `/svrngs-reads` gives (surface.rs `reads`), to
+// which the page adds `&back=<its path>`: navigated, it opens the group's
+// page at `#ask=<lend>&app=<this lend>&at=<back>`, where only the person
+// says yes. A page stops its app using a lend, `POST` at `stop`,
+// `<origin><READS>/<label>/svrngs-stop`, told beside `ask`, sent to that
+// lend's door with the pass, whose app is this lend; the door takes no yes
+// with a pass.
+//
 // What a browser does for an origin and a worker cannot see, it does here:
 // - Cookies (a worker's request carries no `Cookie`, and its answer sets
 //   none): kept per lend, each in its own jar in this origin's store, sent
@@ -37,9 +55,14 @@ const SCOPE = new URL(self.registration.scope);
 const SITE = new URL('./', self.location).pathname;
 const SHELL = /^(open\.html|open\.js|lend\.js|shim\.js|store\.js|wasm\/svrngs_web(_bg\.wasm|\.js))$/;
 // This worker's lend: the first name of its address.
-const OWN = SCOPE.hostname.split('.')[0];
+const OWN = store.labelOf(SCOPE.hostname);
 const PLAIN = { 'content-type': 'text/plain; charset=utf-8' };
 const TRACE = `${SCOPE.pathname}svrngs-trace`;
+// Where its pages ask the lends they read, as a computer's origin answers
+// them too (crates/svrngs-node/src/surface.rs, `READS_PATH`).
+const READS = `${SCOPE.pathname}svrngs-reads`;
+const ASK = `${SCOPE.pathname}svrngs-ask`;
+const STOP = new RegExp(`^${READS}/([^/]+)/svrngs-stop$`);
 
 // Enough for a film's seeks, each range's lines with them (u5-11), over
 // this run and the last.
@@ -77,10 +100,13 @@ let app;
 
 // Where `label`'s pages are: this worker's lend under its scope; another
 // at an address of its own beside this one.
-const baseOf = (label) => (label === OWN ? SCOPE.href : `${SCOPE.protocol}//${label}${SCOPE.host.slice(OWN.length)}/`);
+const baseOf = (label) => (label === OWN ? SCOPE.href : `${store.lendOrigin(SCOPE.protocol, label, SCOPE.host.slice(OWN.length + 1))}/`);
 
-// The lend `url` is at, and its path there; or none.
+// The lend `url` is at, and its path there; or none. Under `READS`, a
+// lend this page reads, by its label.
 function at(url) {
+  const [, read, path] = (url.origin === SCOPE.origin && url.pathname.match(new RegExp(`^${READS}/([^/]+)(/.*)?$`))) || [];
+  if (read) return { label: read, path: `${path ?? '/'}${url.search}`, read: true };
   for (const label of [OWN, ...(handed?.lends ?? []).map((l) => l.label)]) {
     const base = new URL(baseOf(label));
     if (url.origin === base.origin && url.pathname.startsWith(base.pathname)) {
@@ -110,7 +136,8 @@ function dialFor(lender) {
       if (!endpoint) trace(`RUNTIME: opening the endpoint as the pass's holder`);
       endpoint ??= holder_endpoint(holder, handed.relay);
       trace(`RUNTIME: dialling ${lender} as the pass's holder`);
-      return (await endpoint).dial_lend(lender);
+      // Through the relay its group names for the lender (relay-in-record).
+      return (await endpoint).dial_lend(lender, handed.lends.find((l) => l.key === lender)?.relay ?? null);
     })();
     dials.set(lender, opening);
     opening.catch(() => dials.delete(lender));
@@ -245,7 +272,15 @@ function sent(blob, what) {
 // The header an answer that set cookies carries to the shim (shim.js).
 const PAGE_COOKIES = 'x-svrngs-page-cookies';
 
-const say = (status, words) => new Response(words, { status, headers: PLAIN });
+// svrngs's own answer in the lend's place, marked with its kind as the
+// door marks its own (door.rs, `LendRefusal`), so a page tells it from the
+// lend's (mnp-1).
+const REFUSED = 'x-svrngs-refused';
+const say = (status, words, kind) => new Response(words, { status, headers: { ...PLAIN, [REFUSED]: kind } });
+// The two refusals a page meets at the pass and the lend, each in one set of
+// words (#111): no pass held, and a lend the pass does not open.
+const unheld = () => say(503, 'Open this again from your group’s page.', 'pass');
+const closed = () => say(403, 'This is not open to this page.', 'closed');
 
 // The shim (shim.js) for a lend's page, with the cookies its pages read,
 // and the nonce of the page's script policy when it names one: under
@@ -260,12 +295,13 @@ const shim = (label, jar, policy) => {
 async function lent(request, url, where) {
   const h = await holding();
   if (!h) {
-    if (request.mode !== 'navigate') return say(503, 'Open this again from your group’s page.');
+    if (request.mode !== 'navigate') return unheld();
     trace(`RUNTIME: no pass for ${OWN}: its start page reads it again`);
     return Response.redirect(`${SCOPE.origin}${SITE}open.html?v=__VERSION__&for=${OWN}&back=${encodeURIComponent(url.pathname + url.search)}`, 302);
   }
   const lend = h.lends.find((l) => l.label === where.label);
-  if (!lend) return say(403, 'This is not open to this page.');
+  if (!lend) return closed();
+  if (where.read && request.mode === 'navigate') return opening(h, where);
   const jar = await jarOf(where.label);
   const headers = bounded(
     [...request.headers].filter(([n]) => !['cookie', 'content-length'].includes(n.toLowerCase())),
@@ -304,7 +340,9 @@ async function lent(request, url, where) {
     } catch (e) {
       dials.delete(lend.key);
       trace(`RUNTIME: ${request.method} ${path} failed (try ${tries + 1}): ${e}`);
-      if (body || tries) return say(502, 'The computer lending this did not answer. Try again later.');
+      // A dial that heard nothing from the computer within the cap, new or
+      // held, is not tried again: a second would wait the cap again.
+      if (body || tries || /asleep/.test(e)) return say(502, 'The computer lending this did not answer. Try again later.', 'away');
     }
   }
   said?.(`answered ${res.status} ${res.headers.get('content-range') ?? ''}${request.signal?.aborted ? ', after the browser let go of it' : ''}`);
@@ -313,12 +351,9 @@ async function lent(request, url, where) {
     for (const line of JSON.parse(set)) setCookie(jar, line);
     await keepJar(where.label);
   }
-  if (res.status === 403 && res.headers.get('content-type')?.includes('json')) {
-    const why = await res.clone().json().catch(() => ({}));
-    if (why.kind === 'pass' && request.mode === 'navigate') {
-      trace(`RUNTIME: the pass for ${where.label} is refused: its start page asks the group's page for another`);
-      return Response.redirect(`${SCOPE.origin}${SITE}open.html?v=__VERSION__&for=${OWN}&again`, 302);
-    }
+  if (res.headers.get(REFUSED) === 'pass' && request.mode === 'navigate') {
+    trace(`RUNTIME: the pass for ${where.label} is refused: its start page asks the group's page for another`);
+    return Response.redirect(`${SCOPE.origin}${SITE}open.html?v=__VERSION__&for=${OWN}&again`, 302);
   }
   const to = res.headers.get('location');
   if (res.status >= 300 && res.status < 400 && to) {
@@ -339,6 +374,77 @@ async function lent(request, url, where) {
   const at = head ? head.index + head[0].length : 0;
   const page = `${text.slice(0, at)}${shim(where.label, jar, res.headers.get('content-security-policy'))}${text.slice(at)}`;
   return new Response(page, { status: res.status, statusText: res.statusText, headers: headed });
+}
+
+// What this lend's pages are told of the lends they read: none of the
+// pass. A handoff that names no one unanswered is from a page before
+// mnp-2, which said nothing of them: asked for again, never read as none.
+async function told() {
+  const h = await holding();
+  if (!h?.unanswered) return unheld();
+  const lends = h.lends.filter((l) => l.label !== OWN);
+  trace(`RUNTIME: told this lend's page the ${lends.length} lend(s) it reads, ${h.unanswered.length} unanswered`);
+  return Response.json({
+    lends: lends.map((l) => ({
+      kind: l.kind,
+      name: l.name,
+      lender: l.person,
+      address: `${SCOPE.origin}${READS}/${l.label}/`,
+      ...(l.asks ? { asks: l.asks, ask: `${SCOPE.origin}${ASK}?lend=${l.label}&app=${OWN}`, stop: `${SCOPE.origin}${READS}/${l.label}/svrngs-stop` } : {}),
+    })),
+    unanswered: h.unanswered,
+  });
+}
+
+// The group's page at `to`, then `then` and the fragment this page was
+// opened with, which the browser keeps from a worker; so a page of this
+// worker's own sends it on, `<` escaped.
+function onward(to, then) {
+  const [there, tail] = [to, then].map((x) => JSON.stringify(x).replace(/</g, '\\u003c'));
+  const page = `<!doctype html><script>location.replace(${there} + encodeURIComponent(${tail} + location.hash))</script>`;
+  return new Response(page, { headers: { 'content-type': 'text/html; charset=utf-8' } });
+}
+
+// A page navigated to `where`, a lend it reads: the group's page opens that
+// lend at the path.
+function opening(h, where) {
+  trace(`RUNTIME: a page opens ${where.label}, which it reads, at ${where.path}: through the group's page`);
+  return onward(`${h.page}#open=${where.label}&at=`, where.path);
+}
+
+// A page sends its person to say yes to this lend using `lend`, one it
+// reads: the group's page asks, then opens this lend again at `back`.
+async function asking(url) {
+  const h = await holding();
+  const lend = url.searchParams.get('lend');
+  if (!h) return unheld();
+  if (!h.lends.some((l) => l.label === lend && l.label !== OWN)) {
+    trace(`RUNTIME: a page asks for ${lend}, which it does not read: refused`);
+    return closed();
+  }
+  trace(`RUNTIME: a page asks its person to let ${OWN} use ${lend}: through the group's page`);
+  return onward(`${h.page}#ask=${lend}&app=${OWN}&at=`, url.searchParams.get('back') ?? '/');
+}
+
+// A page stops this lend using `label`: sent to its door with the pass.
+async function stopping(label) {
+  const h = await holding();
+  if (!h) return unheld();
+  const lend = h.lends.find((l) => l.label === label);
+  if (!lend) {
+    trace(`RUNTIME: a page stops ${OWN} using ${label}, which it does not read: refused`);
+    return closed();
+  }
+  const body = new TextEncoder().encode('{"said":"stop"}');
+  const headers = [['x-svrngs-pass', h.pass], ['content-type', 'application/json'], ['content-length', String(body.length)]];
+  trace(`RUNTIME: a page stops ${OWN} using ${label}`);
+  try {
+    return await (await dialFor(lend.key)).fetch('POST', `/choices/${label}`, headers, new Blob([body]).stream());
+  } catch (e) {
+    dials.delete(lend.key);
+    trace(`RUNTIME: the stop for ${label} failed: ${e}`);
+    return say(502, 'The computer lending this did not answer. Try again later.', 'away');
+  }
 }
 
 // ── the app's own worker ────────────────────────────────────────────────
@@ -393,6 +499,10 @@ self.addEventListener('fetch', (e) => {
   }
   const shell = url.origin === self.location.origin && url.searchParams.has('v') && url.pathname.startsWith(SITE);
   if (shell && SHELL.test(url.pathname.slice(SITE.length))) return;
+  if (url.origin === self.location.origin && url.pathname === READS) return e.respondWith(told());
+  if (url.origin === self.location.origin && url.pathname === ASK) return e.respondWith(asking(url));
+  const stop = url.origin === self.location.origin && e.request.method === 'POST' && STOP.exec(url.pathname);
+  if (stop) return e.respondWith(stopping(stop[1]));
   const where = at(url);
   if (!where) return;
   e.respondWith(answered(e, url, where));

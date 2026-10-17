@@ -1,0 +1,12 @@
+Made House, with you as Sam.
+Send this link to the people you want in it. It works for a day, while this computer is on:
+
+  svrngs://join/<the link>
+
+or, to open it in a browser:
+
+  http://localhost:60467/#<the link>
+
+On a phone, each app opens at an address of its own under localhost:60467, which can see which app is opened.
+
+Leave this running; Ctrl-C stops it.

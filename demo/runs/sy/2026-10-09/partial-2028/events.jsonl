@@ -1,0 +1,106 @@
+{"t": 1791602798.778, "phase": "setup", "event": "load", "uptime": "20:26  up  9:09, 3 users, load averages: 41.67 55.62 79.06", "head": "db706d3"}
+{"t": 1791602799.67, "phase": "setup", "event": "up", "who": "ana", "plant": "", "args": ["new", "Shared", "--as", "Ana"]}
+{"t": 1791602800.326, "phase": "setup", "event": "up", "who": "ben", "plant": "", "args": ["join", "<the link>", "--as", "Ben"]}
+{"t": 1791602801.253, "phase": "setup", "event": "up", "who": "cy", "plant": "", "args": ["join", "<the link>", "--as", "Cy"]}
+{"t": 1791602801.835, "phase": "setup", "event": "keys", "keys": {"ben": "a59e7dfc72b741e9855b25be12e42b081363459587d41694583abc14c24eedae", "ana": "f3ebd1520dfd337eb618d768ffcd0e476f8ab598e30965c87563ef0775affc97", "cy": "984bea851c37d25700ddc6d99441ad27821095d24a712c4d388b8f704a980c03"}, "group": "1783b3a644ec7884c5a897d3d0e85d6c07c70d7b0bde25bf9a0b7a166579fe5e"}
+{"t": 1791602801.836, "phase": "S1-plant", "event": "phase"}
+{"t": 1791602801.839, "phase": "S1-plant", "event": "down", "who": "ana", "sig": "SIGTERM"}
+{"t": 1791602801.842, "phase": "S1-plant", "event": "down", "who": "ben", "sig": "SIGTERM"}
+{"t": 1791602801.845, "phase": "S1-plant", "event": "down", "who": "cy", "sig": "SIGTERM"}
+{"t": 1791602802.024, "phase": "S1-plant", "event": "up", "who": "ana", "plant": "deaf", "args": []}
+{"t": 1791602802.047, "phase": "S1-plant", "event": "both-ways", "who": "ana", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791602802.221, "phase": "S1-plant", "event": "up", "who": "ben", "plant": "", "args": []}
+{"t": 1791602802.23, "phase": "S1-plant", "event": "both-ways", "who": "ben", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791602802.407, "phase": "S1-plant", "event": "up", "who": "cy", "plant": "", "args": []}
+{"t": 1791602802.417, "phase": "S1-plant", "event": "both-ways", "who": "cy", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791602802.418, "phase": "S1-plant", "event": "wrote", "who": "ana", "path": "s1-plant.txt", "size": 4096, "blake3": "e38f805e8fe6c44ba600f3e8e876a8cabe45870fba68547eb3e240fc441a2c95"}
+{"t": 1791602812.467, "phase": "S1-plant", "event": "bar", "bar": "S1-plant", "add_s": null, "verdict": "failed"}
+{"t": 1791602812.468, "phase": "S1", "event": "phase"}
+{"t": 1791602812.471, "phase": "S1", "event": "down", "who": "ana", "sig": "SIGTERM"}
+{"t": 1791602812.474, "phase": "S1", "event": "down", "who": "ben", "sig": "SIGTERM"}
+{"t": 1791602812.477, "phase": "S1", "event": "down", "who": "cy", "sig": "SIGTERM"}
+{"t": 1791602812.59, "phase": "S1", "event": "up", "who": "ana", "plant": "", "args": []}
+{"t": 1791602812.606, "phase": "S1", "event": "both-ways", "who": "ana", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791602812.712, "phase": "S1", "event": "up", "who": "ben", "plant": "", "args": []}
+{"t": 1791602812.724, "phase": "S1", "event": "both-ways", "who": "ben", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791602812.856, "phase": "S1", "event": "up", "who": "cy", "plant": "", "args": []}
+{"t": 1791602812.868, "phase": "S1", "event": "both-ways", "who": "cy", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791602812.869, "phase": "S1", "event": "wrote", "who": "ana", "path": "s1.txt", "size": 4096, "blake3": "e75259f2f1ce554097e1f09f62c11702669317bcdb4addc6935ad42abfe132e5"}
+{"t": 1791602814.01, "phase": "S1", "event": "wrote", "who": "ben", "path": "s1.txt", "size": 5000, "blake3": "a7df34cca737521e3fdbdf3f90e0a0a8b6bcf0f29ab9bd8b26ace19425c1ac31"}
+{"t": 1791602815.669, "phase": "S1", "event": "deleted", "who": "cy", "path": "s1.txt"}
+{"t": 1791602816.847, "phase": "S1", "event": "bar", "bar": "S1", "add_s": 1.14, "edit_s": 1.66, "delete_s": 1.18, "verdict": "passed"}
+{"t": 1791602816.847, "phase": "S2-plant", "event": "phase"}
+{"t": 1791602816.852, "phase": "S2-plant", "event": "down", "who": "ana", "sig": "SIGTERM"}
+{"t": 1791602816.855, "phase": "S2-plant", "event": "down", "who": "ben", "sig": "SIGTERM"}
+{"t": 1791602816.858, "phase": "S2-plant", "event": "down", "who": "cy", "sig": "SIGTERM"}
+{"t": 1791602817.042, "phase": "S2-plant", "event": "up", "who": "ana", "plant": "", "args": []}
+{"t": 1791602817.066, "phase": "S2-plant", "event": "both-ways", "who": "ana", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791602817.236, "phase": "S2-plant", "event": "up", "who": "ben", "plant": "own-only", "args": []}
+{"t": 1791602817.253, "phase": "S2-plant", "event": "both-ways", "who": "ben", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791602817.381, "phase": "S2-plant", "event": "up", "who": "cy", "plant": "", "args": []}
+{"t": 1791602817.409, "phase": "S2-plant", "event": "both-ways", "who": "cy", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791602820.425, "phase": "S2-plant", "event": "down", "who": "cy", "sig": "SIGTERM"}
+{"t": 1791602820.428, "phase": "S2-plant", "event": "wrote", "who": "ana", "path": "s2-plant.bin", "size": 65536, "blake3": "4bffe3862d34798d8eed377e4293d39f877bcec3b4c301c45f8cb4828e6e6e23"}
+{"t": 1791602821.361, "phase": "S2-plant", "event": "down", "who": "ana", "sig": "SIGKILL"}
+{"t": 1791602821.532, "phase": "S2-plant", "event": "up", "who": "cy", "plant": "", "args": []}
+{"t": 1791602821.559, "phase": "S2-plant", "event": "both-ways", "who": "cy", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791602831.366, "phase": "S2-plant", "event": "bar", "bar": "S2-plant", "cy_s": null, "hash": "4bffe3862d34798d8eed377e4293d39f877bcec3b4c301c45f8cb4828e6e6e23", "verdict": "failed"}
+{"t": 1791602831.366, "phase": "S2", "event": "phase"}
+{"t": 1791602831.37, "phase": "S2", "event": "down", "who": "ben", "sig": "SIGTERM"}
+{"t": 1791602831.373, "phase": "S2", "event": "down", "who": "cy", "sig": "SIGTERM"}
+{"t": 1791602831.525, "phase": "S2", "event": "up", "who": "ana", "plant": "", "args": []}
+{"t": 1791602831.55, "phase": "S2", "event": "both-ways", "who": "ana", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791602831.67, "phase": "S2", "event": "up", "who": "ben", "plant": "", "args": []}
+{"t": 1791602831.684, "phase": "S2", "event": "both-ways", "who": "ben", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791602831.851, "phase": "S2", "event": "up", "who": "cy", "plant": "", "args": []}
+{"t": 1791602831.869, "phase": "S2", "event": "both-ways", "who": "cy", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791602834.923, "phase": "S2", "event": "down", "who": "cy", "sig": "SIGTERM"}
+{"t": 1791602834.925, "phase": "S2", "event": "wrote", "who": "ana", "path": "s2.bin", "size": 65536, "blake3": "10b2de5581f20e7ceb0ba1e11dcbc217717e1f6a6adcff249168ec989eb1e7cd"}
+{"t": 1791602835.869, "phase": "S2", "event": "down", "who": "ana", "sig": "SIGKILL"}
+{"t": 1791602836.034, "phase": "S2", "event": "up", "who": "cy", "plant": "", "args": []}
+{"t": 1791602836.065, "phase": "S2", "event": "both-ways", "who": "cy", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791602840.281, "phase": "S2", "event": "bar", "bar": "S2", "cy_s": 4.41, "hash": "10b2de5581f20e7ceb0ba1e11dcbc217717e1f6a6adcff249168ec989eb1e7cd", "verdict": "passed"}
+{"t": 1791602840.282, "phase": "S3-plant", "event": "phase"}
+{"t": 1791602840.285, "phase": "S3-plant", "event": "down", "who": "ben", "sig": "SIGTERM"}
+{"t": 1791602840.29, "phase": "S3-plant", "event": "down", "who": "cy", "sig": "SIGTERM"}
+{"t": 1791602840.478, "phase": "S3-plant", "event": "up", "who": "ana", "plant": "later-wins", "args": []}
+{"t": 1791602840.504, "phase": "S3-plant", "event": "both-ways", "who": "ana", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791602840.672, "phase": "S3-plant", "event": "up", "who": "ben", "plant": "later-wins", "args": []}
+{"t": 1791602840.689, "phase": "S3-plant", "event": "both-ways", "who": "ben", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791602840.799, "phase": "S3-plant", "event": "up", "who": "cy", "plant": "later-wins", "args": []}
+{"t": 1791602840.818, "phase": "S3-plant", "event": "both-ways", "who": "cy", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791602840.819, "phase": "S3-plant", "event": "wrote", "who": "ana", "path": "s3-plant.txt", "size": 20, "blake3": "925e9121558176816ec122ebadd212083d215ab517f91204c27c684ba2b8bcef"}
+{"t": 1791602843.967, "phase": "S3-plant", "event": "down", "who": "ben", "sig": "SIGTERM"}
+{"t": 1791602843.968, "phase": "S3-plant", "event": "wrote", "who": "ben", "path": "s3-plant.txt", "size": 50, "blake3": "05513869d0de20108c9ec0b3fa16dcb4991ba7436a245831330d1d7d5f0db758"}
+{"t": 1791602843.968, "phase": "S3-plant", "event": "wrote", "who": "ana", "path": "s3-plant.txt", "size": 52, "blake3": "e59a14e668d020e03edb0d326f05084dedc2650951a474583305874054fd2f81"}
+{"t": 1791602845.076, "phase": "S3-plant", "event": "up", "who": "ben", "plant": "later-wins", "args": []}
+{"t": 1791602845.095, "phase": "S3-plant", "event": "both-ways", "who": "ben", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791602875.149, "phase": "S3-plant", "event": "bar", "bar": "S3-plant", "both_s": null, "ana_edit": "e59a14e668d020e03edb0d326f05084dedc2650951a474583305874054fd2f81", "ben_edit": "05513869d0de20108c9ec0b3fa16dcb4991ba7436a245831330d1d7d5f0db758", "found": {"ana": {"s3-plant.txt": "05513869d0de20108c9ec0b3fa16dcb4991ba7436a245831330d1d7d5f0db758"}, "ben": {"s3-plant.txt": "05513869d0de20108c9ec0b3fa16dcb4991ba7436a245831330d1d7d5f0db758"}, "cy": {"s3-plant.txt": "05513869d0de20108c9ec0b3fa16dcb4991ba7436a245831330d1d7d5f0db758"}}, "verdict": "failed"}
+{"t": 1791602875.15, "phase": "S3", "event": "phase"}
+{"t": 1791602875.153, "phase": "S3", "event": "down", "who": "ana", "sig": "SIGTERM"}
+{"t": 1791602875.156, "phase": "S3", "event": "down", "who": "ben", "sig": "SIGTERM"}
+{"t": 1791602875.159, "phase": "S3", "event": "down", "who": "cy", "sig": "SIGTERM"}
+{"t": 1791602875.278, "phase": "S3", "event": "up", "who": "ana", "plant": "", "args": []}
+{"t": 1791602875.297, "phase": "S3", "event": "both-ways", "who": "ana", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791602875.414, "phase": "S3", "event": "up", "who": "ben", "plant": "", "args": []}
+{"t": 1791602875.432, "phase": "S3", "event": "both-ways", "who": "ben", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791602875.547, "phase": "S3", "event": "up", "who": "cy", "plant": "", "args": []}
+{"t": 1791602875.563, "phase": "S3", "event": "both-ways", "who": "cy", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791602875.564, "phase": "S3", "event": "wrote", "who": "ana", "path": "s3.txt", "size": 14, "blake3": "c23fddead5d762f252f52b6f9b3297f1120acc76074e55cca4ea4e4792c21862"}
+{"t": 1791602879.034, "phase": "S3", "event": "down", "who": "ben", "sig": "SIGTERM"}
+{"t": 1791602879.035, "phase": "S3", "event": "wrote", "who": "ben", "path": "s3.txt", "size": 44, "blake3": "eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b"}
+{"t": 1791602879.035, "phase": "S3", "event": "wrote", "who": "ana", "path": "s3.txt", "size": 46, "blake3": "36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd"}
+{"t": 1791602879.859, "phase": "S3", "event": "up", "who": "ben", "plant": "", "args": []}
+{"t": 1791602879.88, "phase": "S3", "event": "both-ways", "who": "ben", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791602897.931, "phase": "S3", "event": "bar", "bar": "S3", "both_s": 18.05, "ana_edit": "36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd", "ben_edit": "eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b", "found": {"ana": {"s3 (conflict Ana).txt": "36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd", "s3.txt": "eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b"}, "ben": {"s3 (conflict Ana).txt": "36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd", "s3.txt": "eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b"}, "cy": {"s3 (conflict Ana).txt": "36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd", "s3.txt": "eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b"}}, "verdict": "passed"}
+{"t": 1791602897.931, "phase": "S4-plant", "event": "phase"}
+{"t": 1791602897.935, "phase": "S4-plant", "event": "down", "who": "ana", "sig": "SIGTERM"}
+{"t": 1791602898.068, "phase": "S4-plant", "event": "up", "who": "ana", "plant": "open-gate", "args": []}
+{"t": 1791602898.094, "phase": "S4-plant", "event": "both-ways", "who": "ana", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791602906.08, "phase": "S4-plant", "event": "bar", "bar": "S4-plant", "answers": [{"answer": "open after 5s", "ask": "member-connection"}, {"answer": {"bytes": 163, "ops": null, "status": 403}, "ask": "record"}, {"answer": {"error": "io: stream reset by peer: error 3\nCaused by:\n    stream reset by peer: error 3"}, "ask": "bytes"}], "dee_hits": 0, "beside_hits": 0, "hits": [], "verdict": "passed"}
+{"t": 1791602906.081, "phase": "S4", "event": "phase"}
+{"t": 1791602906.082, "phase": "S4", "event": "down", "who": "ana", "sig": "SIGTERM"}
+{"t": 1791602906.259, "phase": "S4", "event": "up", "who": "ana", "plant": "", "args": []}
+{"t": 1791602906.28, "phase": "S4", "event": "both-ways", "who": "ana", "answer": "{\"name\":\"Shared\"}"}
+{"t": 1791602909.242, "phase": "S4", "event": "bar", "bar": "S4", "answers": [{"answer": "closed: closed by peer: not admitted (code 0)", "ask": "member-connection"}, {"answer": {"error": "reqwest::Error { kind: Request, url: \"http://127.0.0.1:61538/internal/ring/sync\", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) }"}, "ask": "record"}, {"answer": {"error": "io: connection lost\nCaused by:\n    connection lost\n    closed by peer: not admitted (code 0)"}, "ask": "bytes"}], "dee_hits": 0, "beside_hits": 0, "hits": [], "verdict": "passed"}
+{"t": 1791602909.243, "phase": "M1", "event": "phase"}

@@ -39,23 +39,29 @@ use crate::iroh::Dialer;
 use crate::peer_wire::{
     LiveEnvelope, RingSyncRequest, MAX_REQUEST_BODY_BYTES, RING_SYNC_OPS_BUDGET_BYTES,
 };
-use crate::rail::{LiveBuffer, LIVE_PAYLOAD_MAX_BYTES};
-use crate::register::Standing;
+use crate::rail::{Live, LiveBuffer, LIVE_PAYLOAD_MAX_BYTES};
+use crate::register::{Member, Standing};
 use crate::ring_sync::answer;
-use crate::{Ed25519Verifier, RingRail};
+use crate::{RailAct, RingRail};
 
-// rail.rs's refusal body, forked with the route (DESIGN §8, U1's inventory).
+// rail.rs's refusal body, forked with the route (DESIGN §8, U1's inventory);
+// each one traced, so a refusal its route does not trace still leaves one
+// (#149).
 pub(crate) fn err(status: StatusCode, msg: impl Into<String>) -> Response {
-    (status, Json(serde_json::json!({ "error": msg.into() }))).into_response()
+    let msg = msg.into();
+    tracing::debug!(target: "rails", %status, msg, "refused");
+    (status, Json(serde_json::json!({ "error": msg }))).into_response()
 }
 
 /// What the ring routes read: the journals and the live lane's buffer.
 /// (Upstream's also held the origin registry, whose registrations named the
-/// live namespaces; it did not come over.)
+/// live namespaces; it did not come over.) And the round's nudge, which a
+/// push landing its asker's own relay wakes (relay-in-record).
 #[derive(Clone)]
 pub struct RingInbound {
     pub rail: Arc<RingRail>,
     pub live: Arc<LiveBuffer>,
+    pub wake: Arc<tokio::sync::Notify>,
 }
 
 /// The sync and live routes, as a router (upstream's was a `RouteBundle`
@@ -64,22 +70,22 @@ pub struct RingInbound {
 pub fn router(state: RingInbound) -> axum::Router {
     axum::Router::new()
         .route(
-            "/internal/ring/sync",
+            crate::ring_sync::SYNC_ROUTE,
             post(ring_sync).layer(DefaultBodyLimit::max(MAX_REQUEST_BODY_BYTES)),
         )
         .route("/internal/ring/live", post(ring_live))
         .with_state(state)
 }
 
-/// Why this asker may not have this namespace, or `None` to serve it. Asked
-/// by the sync route and (svrngs, u3-3) the live route, named by `route` in
-/// the trace.
-fn standing_refusal(
+/// The asker's key and its row of the register, to serve it; or why it may
+/// not have this namespace. Asked by the sync route and (svrngs, u3-3) the
+/// live route, named by `route` in the trace.
+pub(crate) fn standing_asker(
     rail: &RingRail,
     dialer: Option<Dialer>,
     route: &'static str,
     namespace: &str,
-) -> Option<String> {
+) -> Result<(String, Member), String> {
     let Some(dialer) = dialer else {
         tracing::warn!(
             target: "rails",
@@ -88,7 +94,7 @@ fn standing_refusal(
             "ring: refused — no verified dialer on the request, so it did not \
              come on an iroh stream, and this route is served only there"
         );
-        return Some(format!(
+        return Err(format!(
             "{namespace} is served to its roster over iroh, and this request did not come on an iroh stream"
         ));
     };
@@ -96,27 +102,59 @@ fn standing_refusal(
     // One sentence for every refusal below, so the answer never says whether
     // this node holds the ring; the log says which it was.
     let refusal = format!("{namespace} is not served to {asker} here");
-    match rail.standing(namespace, &Ed25519Verifier) {
-        Ok(standing) if standing.names(&asker) => {
-            tracing::debug!(target: "rails", route, namespace, asker, "ring: the asker stands in the ring");
-            None
-        }
+    let standing = rail.standing(namespace);
+    if let Some(row) = standing.as_ref().ok().and_then(|s| s.member(&asker)) {
+        tracing::debug!(target: "rails", route, namespace, asker, "ring: the asker stands in the ring");
+        return Ok((asker, row.clone()));
+    }
+    match standing {
         Ok(Standing::NotHeld) => {
             tracing::debug!(target: "rails", route, namespace, asker,
                 "ring: refused — this node holds no such ring, answered as a stranger is");
-            Some(refusal)
+            Err(refusal)
         }
         Ok(_) => {
             tracing::debug!(target: "rails", route, namespace, asker,
                 "ring: refused — the asker holds no standing in this ring");
-            Some(refusal)
+            Err(refusal)
         }
         Err(e) => {
             tracing::warn!(target: "rails", route, namespace, asker, error = %e,
                 "ring: refused — this ring's register is unreadable, so nobody can be shown to stand in it");
-            Some(refusal)
+            Err(refusal)
         }
     }
+}
+
+/// To an asker that does not stand in the group, the first `Remove` naming
+/// it which its digest says it lacks, with the acts before it of the
+/// computer that signed it and every `HandOn` it lacks, and nothing else;
+/// none of the asker's are taken (#179). The hand-ons are how the fold
+/// reads a keeper the seed did not name as keeping (membership.rs
+/// `HandOn`), so a cut by one made while the asker was off is read as the
+/// cut, not an ask (#184). So a computer off as its cut landed, by a leave
+/// or a removal, reads itself out once it asks, never shown the group while
+/// every lender refuses it. The digest answered is the asker's own, so it
+/// sends nothing back. `None` where it lacks no `Remove` naming it, or
+/// what it lacks cannot be read here, said at warn.
+fn told_cut(rail: &RingRail, req: &RingSyncRequest, asker: Option<&str>) -> Option<Response> {
+    let (ns, digest, asker) = (req.namespace.clone(), req.digest.clone(), asker?);
+    let lacks = rail.ops_missing_from_within(&ns, &digest, RING_SYNC_OPS_BUDGET_BYTES);
+    let (mut ops, _) = lacks
+        .inspect_err(|e| tracing::warn!(target: "rails", namespace = ns, asker, error = %e, "ring sync: what an asker not standing lacks cannot be read here, so no cut is told it"))
+        .ok()?;
+    let cut = ops.iter().find(|op| op.kind.act.names() == Some(asker));
+    let (by, seq) = cut.map(|op| (op.actor.clone(), op.kind.seq))?;
+    let keeping = |act: &RailAct| matches!(act, RailAct::HandOn { .. });
+    ops.retain(|op| op.actor == by && op.kind.seq <= seq || keeping(&op.kind.act));
+    tracing::debug!(target: "rails", namespace = ns, asker, by, seq, told = ops.len(), "ring sync: an asker not standing, told the Remove naming it, its signer's acts before it and the hand-ons it lacks");
+    let told = crate::peer_wire::RingSyncResponse {
+        namespace: ns,
+        digest,
+        ops,
+        ingested: 0,
+    };
+    Some(Json(told).into_response())
 }
 
 /// `POST /internal/ring/sync` — one anti-entropy exchange for one namespace.
@@ -132,7 +170,11 @@ pub async fn ring_sync(
         Err(e) => return err(StatusCode::BAD_REQUEST, format!("malformed body: {e}")),
     };
     let dialer = dialer.map(|Extension(d)| d);
-    if let Some(refusal) = standing_refusal(&state.rail, dialer, "sync", &req.namespace) {
+    let asker = dialer.map(|d| d.actor());
+    if let Err(refusal) = standing_asker(&state.rail, dialer, "sync", &req.namespace) {
+        if let Some(told) = told_cut(&state.rail, &req, asker.as_deref()) {
+            return told;
+        }
         return err(StatusCode::FORBIDDEN, refusal);
     }
     let (response, more_for_caller) = match answer(state.rail.as_ref(), &req) {
@@ -154,6 +196,17 @@ pub async fn ring_sync(
         payload_bytes = bytes.len(),
         "ring sync: exchange"
     );
+    // A newcomer says where it is reached in its join's second exchange,
+    // after the redemption's wake has told the others of it: wake the round
+    // again, so they hear its relay now, not at their next interval
+    // (demo/runs/relay-in-record/2026-10-12/, take 2: 57 s).
+    let own_relay = |op: &&crate::Op<crate::SignedOp>| {
+        Some(&op.actor) == asker.as_ref() && matches!(op.kind.act, crate::RailAct::Relay { .. })
+    };
+    if response.ingested > 0 && req.ops.iter().any(|op| own_relay(&op)) {
+        tracing::debug!(target: "rails", namespace = %req.namespace, asker, "ring sync: the asker's own relay landed, so the round is woken");
+        state.wake.notify_one();
+    }
     if request_bytes >= RING_SYNC_OPS_BUDGET_BYTES {
         tracing::warn!(
             target: "rails",
@@ -207,17 +260,25 @@ pub async fn ring_live(
         );
     }
     // svrngs: the dialer must stand in the group its envelope names, the
-    // sync route's one question (`standing_refusal`), where upstream asked
+    // sync route's one question (`standing_asker`), where upstream asked
     // whether a live registration held the namespace and let any member
     // its acceptor admitted fill any ring's buffer. A group this node does
     // not hold is refused in the same words.
+    // onair-live: and the key it dialled with is kept with the payload,
+    // with its person's first key, so a drain says who spoke (ON_AIR §4.3).
     let dialer = dialer.map(|Extension(d)| d);
-    if let Some(refusal) = standing_refusal(&state.rail, dialer, "live", &namespace) {
-        return err(StatusCode::FORBIDDEN, refusal);
-    }
+    let (key, member) = match standing_asker(&state.rail, dialer, "live", &namespace) {
+        Ok(asker) => asker,
+        Err(refusal) => return err(StatusCode::FORBIDDEN, refusal),
+    };
     let bytes = payload.len();
-    state.live.push(&namespace, payload);
-    tracing::debug!(target: "rails", namespace, bytes, "ring live: buffered");
+    let live = Live {
+        payload,
+        key,
+        person_key: member.person_key,
+    };
+    tracing::debug!(target: "rails", namespace, bytes, live.key, live.person_key, "ring live: buffered, with its sender");
+    state.live.push(&namespace, live);
     Json(serde_json::json!({ "buffered": bytes })).into_response()
 }
 

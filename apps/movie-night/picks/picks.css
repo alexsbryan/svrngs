@@ -1,0 +1,8 @@
+/* mn: own picks */
+/* su: own picks — Tonight's Picks' look beside Movie Night's */
+#ask { background: #fff; border-radius: 8px; padding: 0.75rem 1rem; margin: 0 0 0.75rem; box-shadow: 0 1px 2px #0002; }
+.quiet { background: #e4e2dc; color: #1b1b1f; }
+#taste { color: #55555c; }
+#taste[data-state^="refused"], #taste[data-state="away"], #taste[data-state="failed"] { color: #8a3b12; }
+#picks { padding-left: 1.5rem; }
+#picks li { padding: 0.3rem 0; }

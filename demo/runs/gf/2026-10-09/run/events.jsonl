@@ -1,0 +1,39 @@
+{"t":1791587741.558,"phase":"setup","event":"ana up, plant -: svrngs new Films --as Ana"}
+{"t":1791587743.617,"phase":"setup","event":"ben up, plant -: svrngs join <the link> --as Ben"}
+{"t":1791587745.137,"phase":"setup","event":"cy up, plant -: svrngs join <the link> --as Cy"}
+{"t":1791587746.764,"phase":"setup","event":"ana and cy shared"}
+{"t":1791587859.646,"phase":"B-plant","event":"ana stopped (KILL)"}
+{"t":1791587859.675,"phase":"B-plant","event":"ana killed (-9), no goodbye"}
+{"t":1791587859.862,"phase":"B-plant","event":"ben stopped (TERM)"}
+{"t":1791587859.897,"phase":"B-plant","event":"ben up, plant unbounded: svrngs "}
+{"t":1791587944.462,"phase":"B","event":"ben stopped (TERM)"}
+{"t":1791587944.562,"phase":"B","event":"ben up, plant -: svrngs "}
+{"t":1791587973.84,"phase":"D-plant","event":"cy stopped (KILL)"}
+{"t":1791587973.864,"phase":"D-plant","event":"cy killed (-9)"}
+{"t":1791587973.896,"phase":"D-plant","event":"ana up, plant -: svrngs "}
+{"t":1791587974.197,"phase":"D-plant","event":"a byte of ana's mp4 flipped at 500000, after her store took it by reference"}
+{"t":1791587974.394,"phase":"D-plant","event":"ben stopped (TERM)"}
+{"t":1791587974.431,"phase":"D-plant","event":"the first run's range server on 18733 over the flipped file, unverified"}
+{"t":1791588000.107,"phase":"D","event":"ben up, plant -: svrngs "}
+{"t":1791588054.873,"phase":"D","event":"the byte flipped back"}
+{"t":1791588055.078,"phase":"C-plant","event":"ana stopped (TERM)"}
+{"t":1791588055.107,"phase":"C-plant","event":"ana up, plant unchecked: svrngs "}
+{"t":1791588055.631,"phase":"C-plant","event":"ben stopped (TERM)"}
+{"t":1791588055.665,"phase":"C-plant","event":"ben up, plant -: svrngs "}
+{"t":1791588057.104,"phase":"C-plant","event":"unshare called"}
+{"t":1791588057.161,"phase":"C-plant","event":"unshare returned"}
+{"t":1791588065.32,"phase":"C-plant","event":"ben's list no longer names ana's folder"}
+{"t":1791588065.499,"phase":"C","event":"ana stopped (TERM)"}
+{"t":1791588065.529,"phase":"C","event":"ana up, plant -: svrngs "}
+{"t":1791588066.021,"phase":"C","event":"ana shared again"}
+{"t":1791588066.188,"phase":"C","event":"ben stopped (TERM)"}
+{"t":1791588066.219,"phase":"C","event":"ben up, plant -: svrngs "}
+{"t":1791588068.049,"phase":"C","event":"unshare called"}
+{"t":1791588068.202,"phase":"C","event":"unshare returned"}
+{"t":1791588136.49,"phase":"C","event":"ben's list no longer names ana's folder"}
+{"t":1791588136.796,"phase":"P-plant","event":"ana stopped (TERM)"}
+{"t":1791588136.849,"phase":"P-plant","event":"ana up, plant follow-links: svrngs "}
+{"t":1791588137.282,"phase":"P-plant","event":"ana shared again, following links"}
+{"t":1791588137.516,"phase":"P-plant","event":"ben stopped (TERM)"}
+{"t":1791588137.554,"phase":"P-plant","event":"ben up, plant -: svrngs "}
+{"t":1791588138.379,"phase":"P-plant","event":"ben stopped (TERM)"}

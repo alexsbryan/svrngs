@@ -1,0 +1,31 @@
+2026-10-12T15:15:11.372367Z DEBUG cli: cli: data dir from $SVRNGS_DIR dir="/tmp/fm-w/ana/.svrngs"
+2026-10-12T15:15:11.372812Z DEBUG cli: cli: data dir claimed lock=/tmp/fm-w/ana/.svrngs/lock
+2026-10-12T15:15:11.377827Z  INFO svrngs::identity: node_key: generated + persisted identity key (first boot) node_pubkey=c20f8f85ad796bd3af9c6c9a5a1955ef33855003fe8bb0c8bf8e1b83b275663a
+2026-10-12T15:15:11.426034Z  INFO folder: folder: the store is open untagged=0
+2026-10-12T15:15:11.427060Z  INFO rails: api: serving the record to this computer's apps addr=127.0.0.1:56241
+2026-10-12T15:15:11.427713Z  INFO node: node: endpoint bound with the signing key actor="c20f8f85ad796bd3af9c6c9a5a1955ef33855003fe8bb0c8bf8e1b83b275663a" data_dir=/tmp/fm-w/ana/.svrngs dial=Some("c20f8f85ad796bd3af9c6c9a5a1955ef33855003fe8bb0c8bf8e1b83b275663a@192.168.1.4:65009") api=127.0.0.1:56241
+2026-10-12T15:15:11.428103Z  INFO svrngs_node::ring_sync: ring sync: loop started interval_secs=60
+2026-10-12T15:15:11.428786Z DEBUG redeem: redeem: dialling the issuer by key url="http://127.0.0.1:56243/ask"
+2026-10-12T15:15:11.804192Z  INFO endpoint{id=c20f8f85ad}:relay-actor: iroh::socket::transports::relay::actor: home is now relay https://usw1-1.relay.n0.iroh.link/, was None
+2026-10-12T15:15:12.207126Z DEBUG redeem: redeem: the issuer answered route="/ask" status=200
+2026-10-12T15:15:12.207778Z DEBUG redeem: redeem: dialling the issuer by key url="http://127.0.0.1:56268/redeem"
+2026-10-12T15:15:12.219971Z DEBUG redeem: redeem: the issuer answered route="/redeem" status=200
+2026-10-12T15:15:12.220114Z DEBUG cli: cli: join — let in group=5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6 redeemed=Admitted(OpId(ContentHash(276efab3788a3567)))
+2026-10-12T15:15:12.221123Z DEBUG cli: cli: join — a client's link, so no origin is kept group=5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6
+2026-10-12T15:15:12.224830Z DEBUG node: node: admitted — the dialer stands in a group held here actor="c7267fbad17ac8de4741ee6a480e23b6a114dcb685821c31be5bfefe0983c03d" namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6"
+2026-10-12T15:15:12.233658Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" url="http://127.0.0.1:22012/internal/ring/sync" chunk=1 pulled=2 pushed=0 peer_sent=2 offered=0 more_for_peer=false
+2026-10-12T15:15:12.236149Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" url="http://127.0.0.1:22012/internal/ring/sync" chunk=2 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-12T15:15:12.236214Z DEBUG node: node: sync_with — one exchange with the peer namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" pulled=2 pushed=0 stop=None
+2026-10-12T15:15:12.236240Z DEBUG cli: cli: join — synced once from the issuer group=5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6 pulled=2
+2026-10-12T15:15:12.238334Z  INFO folder: synced: the directory kept in step with the group's folder namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" folder="trip" dir=/tmp/fm-w/ana/svrngs/trip
+2026-10-12T15:15:12.238762Z DEBUG cli: cli: svrngs running here answered route="/v1/folders" ok=true
+2026-10-12T15:15:12.238890Z DEBUG cli: cli: join — the group's folder placed, or why not group=5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6 dir=/tmp/fm-w/ana/svrngs/trip placed=Ok(())
+2026-10-12T15:15:12.315701Z DEBUG node: node: a member stands in the group, to dial namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" member=Sam/c7267fba
+2026-10-12T15:15:12.317473Z DEBUG node: node: lends — the computer answered actor="c7267fbad17ac8de4741ee6a480e23b6a114dcb685821c31be5bfefe0983c03d" lends=1
+2026-10-12T15:15:12.317594Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=0
+2026-10-12T15:15:12.317737Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6" lent=2 unanswered=0
+2026-10-12T15:15:13.456256Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:15:14.494040Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:15:15.366056Z DEBUG node: node: admitted — the dialer stands in a group held here actor="c5eb6ab8bcbb948cbdf65ffea852fda079cfa107070ed2463da60638215df932" namespace="5f31a536097cb6cc3871e48584cd2de2bc0fdd65219a0fa90d95e40aec4758e6"
+2026-10-12T15:15:15.411050Z DEBUG node: node: asked to stop by SIGTERM
+2026-10-12T15:15:15.411085Z DEBUG cli: cli: stopping

@@ -1,0 +1,5 @@
+thread 'a_computer_the_group_cut_is_told_so_by_the_issuer' (55137729) panicked at crates/svrngs/tests/join_by_link.rs:1012:9:
+join: whether this computer was cut in the group cannot be read here: 2026-10-16T16:22:37.063663Z DEBUG redeem: redeem: dialling the issuer by key route="/ask" issuer=8a88e3dd74
+--
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.25s
+

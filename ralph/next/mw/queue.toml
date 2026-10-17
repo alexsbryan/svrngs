@@ -1,0 +1,21 @@
+# svrngs middleware — Jellyfin's zero sign-in as a program the lender runs (docs/DESIGN.md §8 "Then" :1093; §9 :1133). Launch, from anywhere:
+#
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py supervise --workdir ~/dev/svrngs \
+#     --queue mw --install-launchd -- python3 ~/dev/commonwealth-ai/scripts/ralph.py \
+#     run --workdir ~/dev/svrngs --queue mw --max-stall 3
+#
+# A spike, not a unit: its trigger (Demo B passes) fired 2026-10-07
+# (demo/runs/b/2026-10-07.json, 646fd73). Nothing under crates/ or web/
+# changes; the middleware lives in apps/jellyfin/, outside the size budget
+# (scripts/lean_check.py). Group folders come after it (§8 "Then").
+label = "svrngs-mw"
+session_timeout = 5400
+audit_every = 4
+worker_bin = "/Users/alexsbryan/dev/commonwealth-ai/scripts/ralph-claude-shim.sh"
+settings = "ralph/claude-settings.json"
+
+[models]
+worker = "claude-opus-5-5"
+review = "claude-opus-5-5"
+resolve = "claude-opus-5-5"
+variant = "high"

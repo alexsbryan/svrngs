@@ -1,0 +1,5 @@
+{"jellyfin": "12.0.0", "users": ["priya"]}
+{"asked": "POST /", "status": 403, "answer": "This port answers only svrngs's door: no x-svrngs-stand-in.\n", "holds the API key": false, "holds a token": false}
+{"asked": "GET /", "status": 404, "answer": "This port answers svrngs's door's POST / alone.\n", "holds the API key": false, "holds a token": false}
+{"users": ["priya"]}
+{"helper said": ["2026-10-15T19:53:18.989716Z  INFO jellyfin_mw::answer: mw: refused \u2014 the ask names no stand-in", "2026-10-15T19:53:18.990452Z  INFO jellyfin_mw::answer: mw: refused \u2014 not the door's ask method=GET path=/"]}

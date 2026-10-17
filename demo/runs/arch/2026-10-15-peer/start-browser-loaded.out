@@ -1,0 +1,14 @@
+# cargo test --quiet -p svrngs-node --test browser, at 965b52b (the row's start), a worktree, same host, same hour
+a_page_speaks_http_through_the_door_streaming_both_ways::chromium --- FAILED
+a_page_speaks_http_through_the_door_streaming_both_ways::webkit --- FAILED
+    "error": "Error: no stream could be opened to the computer: timed out",
+    "error": "Error: no stream could be opened to the computer: timed out",
+    "error": "Error: Error: no stream could be opened to the computer: timed out",
+    "error": "Error: error reading a body from connection",
+    "error": "Error: no stream could be opened to the computer: timed out",
+    "error": "Error: asleep: the computer's answer is not HTTP: connection error",
+    "error": "Error: Error: no stream could be opened to the computer: timed out",
+    "error": "Error: no answer within 60 s",
+test result: FAILED. 90 passed; 2 failed; 2 ignored; 0 measured; 0 filtered out; finished in 109.47s
+exit 101
+15:40  up 6 days,  4:23, 6 users, load averages: 30.23 23.41 18.47

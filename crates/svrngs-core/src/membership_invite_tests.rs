@@ -3,7 +3,7 @@
 //! once"): an `Invite`, and the `Admit`s that redeem it, judged by
 //! `membership` and named by `admit`.
 use super::*;
-use crate::tests_support::{after, key, ring, signed, NS};
+use crate::tests_support::{after, key, ring, signed, standing, NS};
 use crate::{actor_of, admit, Admission, Ed25519Verifier, RailGap};
 
 /// The link's key: the `Invite` names its public half.
@@ -19,6 +19,7 @@ fn invite_for(link: u8, until: i64) -> RailAct {
     RailAct::Invite {
         key: actor_of(&key(link)),
         until,
+        device_of: None,
     }
 }
 
@@ -60,10 +61,6 @@ fn redeem(inv: &Op<SignedOp>, person: &str, joining: u8) -> RailAct {
 
 fn admitted(ops: &[Op<SignedOp>]) -> Admission {
     admit(&crate::ActSet::of(ops), &[], &ring(), NS, &Ed25519Verifier)
-}
-
-fn standing(a: &Admission, k: u8) -> bool {
-    a.membership().standing.contains(&actor_of(&key(k)))
 }
 
 /// The one gap `a` names, which must refuse `refused` for `fault`, and the
@@ -110,8 +107,12 @@ fn a_redemption_under_a_lapsed_invite_is_refused() {
     refused_for(&a, &dee, InviteFault::Lapsed, &[4]);
 }
 
-/// A `Correct` of the `Invite` voids the link, and is not how it closes
-/// (u2-4b). Watched failing with the void ignored.
+/// A `Correct` of the `Invite` voided the link until U7, unseating every
+/// key it admitted: a removal no keeper sequenced. Since U7 a `Correct` of
+/// an act that moves membership voids nothing, so the redemption counts
+/// (DESIGN §6, "Removal has one decider"); a link closes by its issuer's
+/// next `Invite`. The name is the rule before U7, kept so u7-removal's
+/// check follows every test by name.
 #[test]
 fn a_redemption_under_a_voided_invite_is_refused() {
     let inv = signed(&key(1), 100, 0, invite(200));
@@ -125,8 +126,9 @@ fn a_redemption_under_a_voided_invite_is_refused() {
         },
     );
     let dee = after(&key(1), &close, 102, redeem(&inv, "dee", 4));
-    let a = admitted(&[inv, close, dee.clone()]);
-    refused_for(&a, &dee, InviteFault::Voided, &[4]);
+    let a = admitted(&[inv, close, dee]);
+    assert_eq!(a.gaps(), vec![], "nothing is refused");
+    assert!(standing(&a, 4), "dee stands");
 }
 
 /// Only the `Invite`'s signer redeems it: bo stands, but alex made the
@@ -307,7 +309,7 @@ fn the_register_answers_what_holds_each_standing_key() {
         105,
         RailAct::Remove {
             key: actor_of(&key(7)),
-            through_seq: 0,
+            through: Vec::new(),
         },
     );
     let now = admitted(&[inv, dee, eve, fay, gus, gone]);
@@ -336,7 +338,7 @@ fn the_register_answers_what_holds_each_standing_key() {
     ];
     for (given, admission, k, then) in rows {
         assert_eq!(
-            admission.project::<Membership>().device(&actor_of(&key(k))),
+            admission.membership().device(&actor_of(&key(k))),
             then,
             "given {given}"
         );
@@ -369,11 +371,11 @@ fn what_holds_each_key_is_a_function_of_the_set_of_acts() {
         105,
         RailAct::Remove {
             key: actor_of(&key(4)),
-            through_seq: 0,
+            through: Vec::new(),
         },
     );
     let ops = vec![inv, dee, eve, fay, fay_again, gone];
-    let once = admitted(&ops).project::<Membership>();
+    let once = admitted(&ops).membership().clone();
     let devices = |m: &Membership| [4, 5, 6].map(|k| m.device(&actor_of(&key(k))));
     assert_eq!(
         devices(&once),
@@ -384,7 +386,7 @@ fn what_holds_each_key_is_a_function_of_the_set_of_acts() {
     crate::tests::permute(&mut (0..ops.len()).collect(), 0, &mut |order| {
         let shuffled: Vec<_> = order.iter().map(|&i| ops[i].clone()).collect();
         assert_eq!(
-            admitted(&shuffled).project::<Membership>(),
+            admitted(&shuffled).membership().clone(),
             once,
             "order {order:?}"
         );
@@ -393,10 +395,6 @@ fn what_holds_each_key_is_a_function_of_the_set_of_acts() {
     assert_eq!(seen, 720);
     for (i, op) in ops.iter().enumerate() {
         let twice = [ops.clone(), vec![op.clone()]].concat();
-        assert_eq!(
-            admitted(&twice).project::<Membership>(),
-            once,
-            "act {i} twice"
-        );
+        assert_eq!(admitted(&twice).membership().clone(), once, "act {i} twice");
     }
 }

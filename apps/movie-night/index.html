@@ -1,0 +1,20 @@
+<!-- mn: own cards — Movie Night's page: the query, what each library said, the cards -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Movie Night</title>
+<link rel="stylesheet" href="style.css">
+<script type="module" src="app.js"></script>
+</head>
+<body>
+<h1>Movie Night</h1>
+<form id="search" role="search">
+<input id="q" type="search" placeholder="A film, as you remember it" autocomplete="off" aria-label="A film">
+<button>Search</button>
+</form>
+<ul id="said" aria-live="polite"></ul>
+<ul id="results"></ul>
+</body>
+</html>

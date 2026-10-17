@@ -1,0 +1,98 @@
+{
+ "S1": {
+  "add_s": 0.32,
+  "edit_s": 0.16,
+  "delete_s": 0.17,
+  "verdict": "passed"
+ },
+ "S2": {
+  "cy_s": 3.56,
+  "hash": "fdcd6fe0abc5e4242db77b939ec9fa6dae41b3ad7017d7604f6e2f123585555d",
+  "from": [
+   "ben"
+  ],
+  "verdict": "passed"
+ },
+ "S3": {
+  "both_s": null,
+  "ana_edit": "36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd",
+  "ben_edit": "eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b",
+  "found": {
+   "ana": {
+    "s3.txt": "36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd"
+   },
+   "ben": {
+    "s3 (conflict Ben).txt": "eb066e59e8b25697fe2eb3f6ae129ec3f63f644f7e7b28ec936b2d64b16fb49b",
+    "s3.txt": "36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd"
+   },
+   "cy": {
+    "s3.txt": "36f7c2fde9ba121ded06ca07a9a3dd5180b805487ee84326d13cc53789db07bd"
+   }
+  },
+  "verdict": "failed"
+ },
+ "S4": {
+  "answers": [
+   {
+    "answer": "closed: closed by peer: not admitted (code 0)",
+    "ask": "member-connection"
+   },
+   {
+    "answer": {
+     "error": "reqwest::Error { kind: Request, url: \"http://127.0.0.1:56656/internal/ring/sync\", source: hyper_util::client::legacy::Error(SendRequest, hyper::Error(IncompleteMessage)) }"
+    },
+    "ask": "record"
+   },
+   {
+    "answer": {
+     "error": "io: connection lost\nCaused by:\n    connection lost\n    closed by peer: not admitted (code 0)"
+    },
+    "ask": "bytes"
+   }
+  ],
+  "dee_hits": 0,
+  "beside_hits": 0,
+  "hits": [],
+  "verdict": "passed"
+ },
+ "M1": {
+  "ben_cy_s": 0.92,
+  "eve_s": 0.53,
+  "eve_journal_bytes": 128209,
+  "act_line_bytes": 61783,
+  "one_change_s": 0.43,
+  "one_change_bytes": 1165
+ },
+ "M2": {
+  "first_s": 6.0,
+  "edit_s": 7.04,
+  "received_bytes": {
+   "ben": 104857600,
+   "cy": 104857600
+  },
+  "edit_bytes": 1048576,
+  "stores": {
+   "ana": {
+    "first": 0,
+    "edit": 104857600
+   },
+   "ben": {
+    "first": 0,
+    "edit": 104857600
+   },
+   "cy": {
+    "first": 0,
+    "edit": 104857600
+   }
+  },
+  "dropped_s": 0.63
+ },
+ "load": {
+  "S1": "judged",
+  "S2": "judged",
+  "S3": "judged",
+  "S4": "judged",
+  "M1": "judged",
+  "M2": "judged"
+ }
+}

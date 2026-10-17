@@ -1,0 +1,15 @@
+test carried::the_phone_brings_things_to_the_table::chromium ... ok
+test carried::the_phone_brings_things_to_the_table::webkit ... ok
+test a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone::webkit ... ok
+test a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone::chromium ... ok
+test a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path::chromium ... ok
+test a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path::webkit ... ok
+test the_phone_goes_through_the_link_s_computer_while_it_answers::chromium ... ok
+test the_phone_goes_through_the_link_s_computer_while_it_answers::webkit ... ok
+test carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::chromium ... ok
+test carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::webkit ... ok
+test the_phone_reaches_whoever_s_awake::chromium ... ok
+test the_phone_reaches_whoever_s_awake::webkit ... ok
+test a_computer_that_did_not_answer_is_named_by_its_person::chromium ... ok
+test a_computer_that_did_not_answer_is_named_by_its_person::webkit ... ok
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 78 filtered out; finished in 21.12s

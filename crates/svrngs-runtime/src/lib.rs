@@ -7,6 +7,7 @@ pub use svrngs_core::*;
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
 #[expect(
     clippy::disallowed_types,
     reason = "the open-journal map; an actor per journal replaces it (DESIGN §5)"
@@ -54,30 +55,53 @@ fn ring_dir(root: &Path, namespace: &str) -> PathBuf {
 /// requests do.
 pub struct RingRail {
     root: PathBuf,
-    signer: Arc<dyn RingSigner>,
+    signer: Arc<SigningKey>,
     #[expect(
         clippy::disallowed_types,
         reason = "the open-journal map; an actor per journal replaces it (DESIGN §5)"
     )]
     open: Mutex<BTreeMap<String, Arc<RingJournal>>>,
+    /// Told a group's name after the group's journal takes an act, written
+    /// here or ingested from a peer (perf-2 d): what wakes a synced
+    /// folder's apply, where it waited up to a second (svrngs-node
+    /// synced.rs).
+    on_write: OnceLock<Teller>,
 }
+
+/// What [`RingRail::on_write`] tells.
+type Teller = Box<dyn Fn(&str) + Send + Sync>;
 
 impl RingRail {
     #[expect(clippy::disallowed_types, reason = "the open-journal map")]
-    pub fn new(root: impl Into<PathBuf>, signer: Arc<dyn RingSigner>) -> Self {
+    pub fn new(root: impl Into<PathBuf>, signer: Arc<SigningKey>) -> Self {
         Self {
             root: root.into(),
             signer,
             open: Mutex::new(BTreeMap::new()),
+            on_write: OnceLock::new(),
         }
     }
 
-    pub fn signer(&self) -> &dyn RingSigner {
+    /// `tell` told each group's name after its journal takes an act; one
+    /// teller, the first set, for the rail's life.
+    pub fn on_write(&self, tell: impl Fn(&str) + Send + Sync + 'static) {
+        if self.on_write.set(Box::new(tell)).is_err() {
+            tracing::warn!("ring rail: a second teller of writes refused; the first is kept");
+        }
+    }
+
+    fn wrote(&self, namespace: &str) {
+        if let Some(tell) = self.on_write.get() {
+            tell(namespace);
+        }
+    }
+
+    pub fn signer(&self) -> &SigningKey {
         self.signer.as_ref()
     }
 
-    /// The root this rail journals under — for [`namespaces_in`], the
-    /// unfiltered disk list a local-only rehydrate reads (fp-108).
+    /// The root this rail journals under, where the command finds its
+    /// groups' files.
     pub fn root(&self) -> &Path {
         &self.root
     }
@@ -91,19 +115,8 @@ impl RingRail {
     ///
     /// A missing `rings/` directory is an empty list, not an error: a daemon
     /// that has never hosted a ring is a normal daemon.
-    ///
-    /// A local-only namespace ([`is_local_only`]) is journaled here but never
-    /// offered, so it is not on this list.
     pub fn namespaces(&self) -> Result<Vec<String>, RailError> {
-        let mut out = namespaces_in(&self.root)?;
-        out.retain(|ns| {
-            let local = is_local_only(ns);
-            if local {
-                tracing::debug!(namespace = %ns, "ring rail: local-only journal, not offered");
-            }
-            !local
-        });
-        Ok(out)
+        namespaces_in(&self.root)
     }
 }
 
@@ -147,24 +160,8 @@ impl RingRail {
     }
 }
 
-// ── What a compaction did ────────────────────────────────────
-//
-// `Compaction` moved to `commonwealth-rail-core` beside the `Floors` map it
-// carries through: it is vocabulary, not storage, and the compact door's
-// answer crosses back to a dialing client as this type. The glob re-export
-// above keeps `commonwealth_rail::Compaction` resolving.
-
-/// One [`RingJournal::seal`]: the seal act, and the prune it authorises.
-///
-/// **A seal and its prune are one act, and they are not one result.** The seal
-/// is signed and on disk by the time the prune runs, so a refused prune is not
-/// a failed seal — reporting it as one would tell a caller its seal did not
-/// land when it did, and the retry would write a second one. So the pair is an
-/// `Ok` carrying a `Result`: the caller has to look at `retired` to say what
-/// happened, and cannot mistake "nothing was retired" for "the prune was
-/// refused" (ARCH §18.3).
-/// The runtime's whole surface for adapters: queries, `commit`, the seal, and
-/// the replication port. No adapter holds a journal.
+/// The runtime's whole surface for adapters: queries, `commit`, and the
+/// replication port. No adapter holds a journal.
 ///
 /// ```
 /// fn reads(r: &svrngs_runtime::RingRail) -> Result<svrngs_runtime::Admission, svrngs_runtime::RailError> {
@@ -199,32 +196,39 @@ impl RingRail {
             verifier: &Ed25519Verifier,
             now: now_unix(namespace)?,
         };
-        svrngs_core::commit(&*journal, command, &author)
+        let done = svrngs_core::commit(&*journal, command, &author);
+        if matches!(done, Ok(Ok(_))) {
+            self.wrote(namespace);
+        }
+        done
     }
 
-    /// The seal, then the prune it authorises.
-    pub fn seal(&self, namespace: &str) -> Result<Sealed, RailError> {
-        let journal = self.journal(namespace)?;
-        journal.seal(self.signer(), &journal.roster_file()?, &Ed25519Verifier)
-    }
-
-    /// This computer's newest `Invite` naming the link's key `link`, and the
-    /// group it is in.
-    pub fn invite_for(&self, link: &str) -> Result<Option<(String, OpId)>, RailError> {
-        let me = self.signer().actor();
+    /// This computer's newest `Invite` naming the link's key `link`, the
+    /// group it is in, and, for a device link, the person it adds a device
+    /// of, by name (bash-devices).
+    pub fn invite_for(&self, link: &str) -> Result<Option<(String, OpId, Option<Person>)>, RailError> {
+        let me = actor_of(self.signer());
         for namespace in self.namespaces()? {
             let journal = self.journal(&namespace)?;
             let (ops, _) = journal.read()?;
             let register = ActSet::of(ops.iter().filter(|op| op.kind.act.moves_membership()));
-            let invites =
-                admit(&register, &[], &journal.roster_file()?, &namespace, &Ed25519Verifier).project::<Invites>();
-            if let Some(id) = invites.newest(&me, link) {
-                tracing::debug!(target: "register", namespace, invite = %id,
-                    "runtime: this computer's newest Invite naming the link's key");
-                return Ok(Some((namespace, id.clone())));
+            let admission = admit(&register, &[], &journal.roster_file()?, &namespace, &Ed25519Verifier);
+            if let Some(id) = admission.invites().newest(&me, link) {
+                let m = admission.membership();
+                let of = m.invites.get(id).and_then(|i| i.device_of.as_deref());
+                let person = of.and_then(|f| m.person_of(f)).map(|(_, p)| p.clone());
+                tracing::debug!(target: "register", namespace, invite = %id, ?of, ?person,
+                    "runtime: this computer's newest Invite naming the link's key, and a device link's person");
+                return Ok(Some((namespace, id.clone(), person)));
             }
         }
         Ok(None)
+    }
+
+    /// The `Remove` acts this computer signed in `namespace`: its leave, once
+    /// it left (#190).
+    pub fn own_removes(&self, namespace: &str) -> Result<Vec<Op<SignedOp>>, RailError> {
+        self.journal(namespace)?.removes_by(&actor_of(self.signer()))
     }
 
     /// The group's directory, where the command keeps its own files.
@@ -238,7 +242,7 @@ impl RingRail {
     }
 
     pub fn digest(&self, namespace: &str) -> Result<Digest, RailError> {
-        self.journal(namespace)?.digest(&Ed25519Verifier)
+        self.journal(namespace)?.digest()
     }
 
     pub fn ops_missing_from_within(
@@ -247,18 +251,15 @@ impl RingRail {
         theirs: &Digest,
         budget_bytes: usize,
     ) -> Result<(Vec<Op<SignedOp>>, bool), RailError> {
-        self.journal(namespace)?
-            .ops_missing_from_within(&Ed25519Verifier, theirs, budget_bytes)
+        self.journal(namespace)?.ops_missing_from_within(theirs, budget_bytes)
     }
 
     pub fn ingest_all(&self, namespace: &str, ops: &[Op<SignedOp>]) -> Result<usize, RailError> {
-        self.journal(namespace)?.ingest_all(ops)
-    }
-
-    /// Deletes what the group's admitted seals retire.
-    pub fn compact(&self, namespace: &str) -> Result<Compaction, RailError> {
-        let journal = self.journal(namespace)?;
-        journal.compact(&journal.roster_file()?, &Ed25519Verifier)
+        let taken = self.journal(namespace)?.ingest_all(ops)?;
+        if taken > 0 {
+            self.wrote(namespace);
+        }
+        Ok(taken)
     }
 }
 
@@ -266,13 +267,6 @@ impl RingRail {
 /// groups a computer keeps before it starts one.
 pub fn group_dir_in(root: &Path, namespace: &str) -> Result<PathBuf, RailError> {
     Ok(RingJournal::open(root, namespace)?.dir().to_path_buf())
-}
-
-#[derive(Debug)]
-pub struct Sealed {
-    pub op: Op<SignedOp>,
-    /// What [`RingJournal::compact`] did, or why it would not.
-    pub retired: Result<Compaction, RailError>,
 }
 
 // ── The journal on disk ──────────────────────────────────────
@@ -287,8 +281,6 @@ pub mod register;
 
 #[cfg(test)]
 mod tests;
-#[cfg(test)]
-mod tests_local_only;
 #[cfg(test)]
 mod tests_queries;
 #[cfg(test)]

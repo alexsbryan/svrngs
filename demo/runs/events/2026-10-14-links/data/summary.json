@@ -1,0 +1,1137 @@
+{
+ "groups": {
+  "dWeb": "225cfde43047ff0136223594eb99c44c9fc8bfb8b852dea5e5e64a320c019f98",
+  "The House": "d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4"
+ },
+ "share": {
+  "exit": 0,
+  "said": "Lent events (port 62625) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 62625 --limit <number>`.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare events` stops lending it.\nIf events takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none):"
+ },
+ "lend": {
+  "label": "sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh",
+  "page": "http://localhost:62272/",
+  "sam": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62329"
+ },
+ "event": {
+  "id": "14eb8f7dfd40865a",
+  "landed": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62329/g/225cfde43047ff0136223594eb99c44c9fc8bfb8b852dea5e5e64a320c019f98/e/14eb8f7dfd40865a",
+  "ms": 134
+ },
+ "links": {
+  "d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4": "http://localhost:62272/#open=sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh&at=/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a",
+  "225cfde43047ff0136223594eb99c44c9fc8bfb8b852dea5e5e64a320c019f98": "http://localhost:62272/#open=sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh&at=/g/225cfde43047ff0136223594eb99c44c9fc8bfb8b852dea5e5e64a320c019f98/e/14eb8f7dfd40865a"
+ },
+ "stopped": {
+  "bo_paste": {
+   "status": 502,
+   "refused": "away",
+   "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62373/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a",
+   "text": "{\"error\":\"the computer that lends this did not answer; try again later\",\"kind\":\"away\"}",
+   "title": "",
+   "sections": [],
+   "buttons": [],
+   "ms": 4036,
+   "met": true
+  },
+  "bo_home": {
+   "status": 200,
+   "refused": null,
+   "url": "http://svrngs.localhost:62373/",
+   "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open a link to it someone sent in your group’s chat, open each group’s folder, make a group, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend’s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nThe House\n\nPeople: Sam, Cy, Bo\n\nThe House’s folder is on this computer at /tmp/doclink-run/bo/svrngs/The House\n\nOpen this folder\n\nMake a link to invite someone to The HouseMake a link to add your phone or another computer of yours\n\nSam's computer did not answer, so what they lend is not listed.\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:62373/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <…>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>\n\nLeaving a group is not possible yet: nothing in svrngs does it.",
+   "title": "Your groups",
+   "sections": [],
+   "buttons": [
+    "Open this folder",
+    "Make a link to invite someone to The House",
+    "Make a link to add your phone or another computer of yours",
+    "Open it",
+    "Make a group"
+   ],
+   "ms": 3210,
+   "met": true
+  },
+  "cy_again": {
+   "status": 502,
+   "refused": "away",
+   "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62272/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a?n=stopped",
+   "text": "The computer lending this did not answer. Try again later.",
+   "title": "",
+   "sections": [],
+   "buttons": [],
+   "ms": 4018
+  },
+  "cy_link": {
+   "status": 200,
+   "refused": null,
+   "url": "http://localhost:62272/#open=sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh&at=/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a",
+   "text": "Your group’s computer did not answer through usw1-1.relay.n0.iroh.link. Try again later.\n\nWhat’s your name? Everyone in sees it.\n\nJoin\nYes\nNot now\n",
+   "title": "The House",
+   "sections": [],
+   "buttons": [
+    "Copy",
+    "Join",
+    "Yes",
+    "Not now"
+   ],
+   "ms": 30497,
+   "met": true,
+   "landed": false,
+   "said": {
+    "status": "Your group’s computer did not answer through usw1-1.relay.n0.iroh.link. Try again later.",
+    "line": null
+   }
+  },
+  "woke": {
+   "bo": {
+    "status": 200,
+    "refused": null,
+    "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62373/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a",
+    "text": "Dinner\n\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nComing\nBo\nCy\nCame\n\nNo one yet.\n\nYou\nBringing anyone?  Save\nTake my name off\nI came\n\nAll events",
+    "title": "Dinner",
+    "sections": [
+     {
+      "group": "d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4",
+      "name": "The House",
+      "invited": [
+       "Bo",
+       "Cy"
+      ],
+      "coming": [
+       "Bo",
+       "Cy"
+      ],
+      "came": [],
+      "link": null,
+      "nolink": null
+     }
+    ],
+    "buttons": [
+     "Save",
+     "Take my name off",
+     "I came"
+    ],
+    "ms": 214,
+    "met": true
+   },
+   "bo_ms": 534,
+   "cy": {
+    "status": 200,
+    "refused": null,
+    "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62272/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a",
+    "text": "Dinner\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nComing\nBo\nCy\nCame\nNo one yet.\n\nYou\nBringing anyone?  Save\nTake my name off\nI came\nAll events",
+    "title": "Dinner",
+    "sections": [
+     {
+      "group": "d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4",
+      "name": "The House",
+      "invited": [
+       "Bo",
+       "Cy"
+      ],
+      "coming": [
+       "Bo",
+       "Cy"
+      ],
+      "came": [],
+      "link": null,
+      "nolink": null
+     }
+    ],
+    "buttons": [
+     "Save",
+     "Take my name off",
+     "I came"
+    ],
+    "ms": 1790,
+    "met": true,
+    "landed": true,
+    "said": null
+   },
+   "cy_ms": 2366
+  }
+ },
+ "frozen": {
+  "held": {
+   "status": 200,
+   "refused": null,
+   "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62272/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a?n=held",
+   "text": "Dinner\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nComing\nBo\nCy\nCame\nNo one yet.\n\nYou\nBringing anyone?  Save\nTake my name off\nI came\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy"
+     ],
+     "coming": [
+      "Bo",
+      "Cy"
+     ],
+     "came": [],
+     "link": null,
+     "nolink": null
+    }
+   ],
+   "buttons": [
+    "Save",
+    "Take my name off",
+    "I came"
+   ],
+   "ms": 90
+  },
+  "cy_again": {
+   "status": 502,
+   "refused": "away",
+   "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62272/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a?n=frozen",
+   "text": "The computer lending this did not answer. Try again later.",
+   "title": "",
+   "sections": [],
+   "buttons": [],
+   "ms": 4221
+  },
+  "bo_paste": {
+   "status": 502,
+   "refused": "away",
+   "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62373/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a",
+   "text": "{\"error\":\"the computer that lends this did not answer; try again later\",\"kind\":\"away\"}",
+   "title": "",
+   "sections": [],
+   "buttons": [],
+   "ms": 4038,
+   "met": true
+  },
+  "bo_home": {
+   "status": 200,
+   "refused": null,
+   "url": "http://svrngs.localhost:62373/",
+   "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open a link to it someone sent in your group’s chat, open each group’s folder, make a group, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend’s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nThe House\n\nPeople: Sam, Cy, Bo\n\nThe House’s folder is on this computer at /tmp/doclink-run/bo/svrngs/The House\n\nOpen this folder\n\nMake a link to invite someone to The HouseMake a link to add your phone or another computer of yours\n\nSam's computer did not answer, so what they lend is not listed.\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:62373/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <…>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>\n\nLeaving a group is not possible yet: nothing in svrngs does it.",
+   "title": "Your groups",
+   "sections": [],
+   "buttons": [
+    "Open this folder",
+    "Make a link to invite someone to The House",
+    "Make a link to add your phone or another computer of yours",
+    "Open it",
+    "Make a group"
+   ],
+   "ms": 3058,
+   "met": true
+  },
+  "cy_link": {
+   "status": 200,
+   "refused": null,
+   "url": "http://localhost:62272/#open=sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh&at=/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a",
+   "text": "Your group’s computer did not answer through usw1-1.relay.n0.iroh.link. Try again later.\n\nWhat’s your name? Everyone in sees it.\n\nJoin\nYes\nNot now\n",
+   "title": "The House",
+   "sections": [],
+   "buttons": [
+    "Copy",
+    "Join",
+    "Yes",
+    "Not now"
+   ],
+   "ms": 30522,
+   "met": true,
+   "landed": false,
+   "said": {
+    "status": "Your group’s computer did not answer through usw1-1.relay.n0.iroh.link. Try again later.",
+    "line": null
+   }
+  },
+  "woke": {
+   "bo": {
+    "status": 200,
+    "refused": null,
+    "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62373/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a",
+    "text": "Dinner\n\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nComing\nBo\nCy\nCame\n\nNo one yet.\n\nYou\nBringing anyone?  Save\nTake my name off\nI came\n\nAll events",
+    "title": "Dinner",
+    "sections": [
+     {
+      "group": "d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4",
+      "name": "The House",
+      "invited": [
+       "Bo",
+       "Cy"
+      ],
+      "coming": [
+       "Bo",
+       "Cy"
+      ],
+      "came": [],
+      "link": null,
+      "nolink": null
+     }
+    ],
+    "buttons": [
+     "Save",
+     "Take my name off",
+     "I came"
+    ],
+    "ms": 1312,
+    "met": true
+   },
+   "bo_ms": 1366,
+   "cy": {
+    "status": 200,
+    "refused": null,
+    "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62272/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a",
+    "text": "Dinner\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nComing\nBo\nCy\nCame\nNo one yet.\n\nYou\nBringing anyone?  Save\nTake my name off\nI came\nAll events",
+    "title": "Dinner",
+    "sections": [
+     {
+      "group": "d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4",
+      "name": "The House",
+      "invited": [
+       "Bo",
+       "Cy"
+      ],
+      "coming": [
+       "Bo",
+       "Cy"
+      ],
+      "came": [],
+      "link": null,
+      "nolink": null
+     }
+    ],
+    "buttons": [
+     "Save",
+     "Take my name off",
+     "I came"
+    ],
+    "ms": 1974,
+    "met": true,
+    "landed": true,
+    "said": null
+   },
+   "cy_ms": 3385
+  }
+ },
+ "views": [
+  {
+   "step": "0",
+   "do": "join",
+   "who": "cy",
+   "shot": "01-cy-0",
+   "ms": 2913,
+   "status": "You’re in The House, as Cy"
+  },
+  {
+   "step": "0",
+   "do": "join",
+   "who": "eve",
+   "shot": "02-eve-0",
+   "ms": 2851,
+   "status": "You’re in dWeb, as Eve"
+  },
+  {
+   "step": "1",
+   "do": "goto",
+   "who": "sam",
+   "shot": "03-sam-1",
+   "status": 200,
+   "refused": null,
+   "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62329/",
+   "text": "Events\ndWeb\n\nNothing posted yet.\n\nThe House\n\nNothing posted yet.\n\nPost an event\nWhat  When  Where \n\nTo  dWeb  The House\n\nPost",
+   "title": "Events",
+   "sections": [],
+   "buttons": [
+    "Post"
+   ],
+   "ms": 71
+  },
+  {
+   "step": "1",
+   "do": "press",
+   "who": "sam",
+   "shot": "04-sam-1",
+   "status": 200,
+   "refused": null,
+   "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62329/g/225cfde43047ff0136223594eb99c44c9fc8bfb8b852dea5e5e64a320c019f98/e/14eb8f7dfd40865a",
+   "text": "Dinner\n\nFriday 7 · the house\n\nSam is hosting.\n\ndWeb\nInvited\nDi\nEve\nComing\n\nNo one has said yet.\n\nCame\n\nNo one yet.\n\nTo send in dWeb's chat:  Copy the link to this event\n\nThe House\nInvited\nBo\nCy\nComing\n\nNo one has said yet.\n\nCame\n\nNo one yet.\n\nTo send in The House's chat:  Copy the link to this event\n\nYou\nBringing anyone?  I'm coming\nI came\n\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "225cfde43047ff0136223594eb99c44c9fc8bfb8b852dea5e5e64a320c019f98",
+     "name": "dWeb",
+     "invited": [
+      "Di",
+      "Eve"
+     ],
+     "coming": [],
+     "came": [],
+     "link": "http://localhost:62272/#open=sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh&at=/g/225cfde43047ff0136223594eb99c44c9fc8bfb8b852dea5e5e64a320c019f98/e/14eb8f7dfd40865a",
+     "nolink": null
+    },
+    {
+     "group": "d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy"
+     ],
+     "coming": [],
+     "came": [],
+     "link": "http://localhost:62272/#open=sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh&at=/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a",
+     "nolink": null
+    }
+   ],
+   "buttons": [
+    "Copy the link to this event",
+    "Copy the link to this event",
+    "I'm coming",
+    "I came"
+   ],
+   "ms": 134
+  },
+  {
+   "step": "L1",
+   "do": "copy",
+   "who": "sam",
+   "shot": "05-sam-L1",
+   "ms": 71,
+   "box": "http://localhost:62272/#open=sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh&at=/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a",
+   "said": "Copied",
+   "clipboard": "http://localhost:62272/#open=sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh&at=/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a"
+  },
+  {
+   "step": "L1",
+   "do": "copy",
+   "who": "sam",
+   "shot": "06-sam-L1",
+   "ms": 75,
+   "box": "http://localhost:62272/#open=sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh&at=/g/225cfde43047ff0136223594eb99c44c9fc8bfb8b852dea5e5e64a320c019f98/e/14eb8f7dfd40865a",
+   "said": "Copied",
+   "clipboard": "http://localhost:62272/#open=sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh&at=/g/225cfde43047ff0136223594eb99c44c9fc8bfb8b852dea5e5e64a320c019f98/e/14eb8f7dfd40865a"
+  },
+  {
+   "step": "L2",
+   "do": "link",
+   "who": "cy",
+   "shot": "07-cy-L2",
+   "status": 200,
+   "refused": null,
+   "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62272/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a",
+   "text": "Dinner\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nComing\nNo one has said yet.\n\nCame\nNo one yet.\n\nYou\nBringing anyone?  I'm coming\nI came\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy"
+     ],
+     "coming": [],
+     "came": [],
+     "link": null,
+     "nolink": null
+    }
+   ],
+   "buttons": [
+    "I'm coming",
+    "I came"
+   ],
+   "ms": 1753,
+   "met": true,
+   "landed": true,
+   "said": null
+  },
+  {
+   "step": "L2",
+   "do": "press",
+   "who": "cy",
+   "shot": "08-cy-L2",
+   "status": 200,
+   "refused": null,
+   "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62272/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a",
+   "text": "Dinner\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nComing\nCy\nCame\nNo one yet.\n\nYou\nBringing anyone?  Save\nTake my name off\nI came\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy"
+     ],
+     "coming": [
+      "Cy"
+     ],
+     "came": [],
+     "link": null,
+     "nolink": null
+    }
+   ],
+   "buttons": [
+    "Save",
+    "Take my name off",
+    "I came"
+   ],
+   "ms": 238
+  },
+  {
+   "step": "L2",
+   "do": "link",
+   "who": "eve",
+   "shot": "09-eve-L2",
+   "status": 200,
+   "refused": null,
+   "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62272/g/225cfde43047ff0136223594eb99c44c9fc8bfb8b852dea5e5e64a320c019f98/e/14eb8f7dfd40865a",
+   "text": "Dinner\nFriday 7 · the house\n\nSam is hosting.\n\ndWeb\nInvited\nDi\nEve\nComing\nNo one has said yet.\n\nCame\nNo one yet.\n\nYou\nBringing anyone?  I'm coming\nI came\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "225cfde43047ff0136223594eb99c44c9fc8bfb8b852dea5e5e64a320c019f98",
+     "name": "dWeb",
+     "invited": [
+      "Di",
+      "Eve"
+     ],
+     "coming": [],
+     "came": [],
+     "link": null,
+     "nolink": null
+    }
+   ],
+   "buttons": [
+    "I'm coming",
+    "I came"
+   ],
+   "ms": 1801,
+   "met": true,
+   "landed": true,
+   "said": null
+  },
+  {
+   "step": "L2",
+   "do": "press",
+   "who": "eve",
+   "shot": "10-eve-L2",
+   "status": 200,
+   "refused": null,
+   "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62272/g/225cfde43047ff0136223594eb99c44c9fc8bfb8b852dea5e5e64a320c019f98/e/14eb8f7dfd40865a",
+   "text": "Dinner\nFriday 7 · the house\n\nSam is hosting.\n\ndWeb\nInvited\nDi\nEve\nComing\nEve\nCame\nNo one yet.\n\nYou\nBringing anyone?  Save\nTake my name off\nI came\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "225cfde43047ff0136223594eb99c44c9fc8bfb8b852dea5e5e64a320c019f98",
+     "name": "dWeb",
+     "invited": [
+      "Di",
+      "Eve"
+     ],
+     "coming": [
+      "Eve"
+     ],
+     "came": [],
+     "link": null,
+     "nolink": null
+    }
+   ],
+   "buttons": [
+    "Save",
+    "Take my name off",
+    "I came"
+   ],
+   "ms": 197
+  },
+  {
+   "step": "L3",
+   "do": "link",
+   "who": "bo",
+   "shot": "11-bo-L3",
+   "status": 200,
+   "refused": null,
+   "url": "http://localhost:62272/#open=sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh&at=/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a",
+   "text": "This link opens in svrngs on your computer.\n\nCopy this link, open your svrngs home page, and paste it under “Open a link from your group”: it opens there. If svrngs is not on this computer, open the link on your phone.\n\nhttp://localhost:62272/#open=sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh&at=/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a\nCopy\nWhat’s your name? Everyone in sees it.\n\nJoin\nYes\nNot now",
+   "title": "You’re invited to a group",
+   "sections": [],
+   "buttons": [
+    "Copy",
+    "Join",
+    "Yes",
+    "Not now"
+   ],
+   "ms": 78,
+   "met": true,
+   "landed": false,
+   "said": {
+    "status": "This link opens in svrngs on your computer.",
+    "line": "http://localhost:62272/#open=sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh&at=/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a"
+   }
+  },
+  {
+   "step": "L3",
+   "do": "paste",
+   "who": "bo",
+   "shot": "12-bo-L3",
+   "status": 200,
+   "refused": null,
+   "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62373/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a",
+   "text": "Dinner\n\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nComing\nCy\nCame\n\nNo one yet.\n\nYou\nBringing anyone?  I'm coming\nI came\n\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy"
+     ],
+     "coming": [
+      "Cy"
+     ],
+     "came": [],
+     "link": null,
+     "nolink": null
+    }
+   ],
+   "buttons": [
+    "I'm coming",
+    "I came"
+   ],
+   "ms": 36,
+   "met": true
+  },
+  {
+   "step": "L3",
+   "do": "press",
+   "who": "bo",
+   "shot": "13-bo-L3",
+   "status": 200,
+   "refused": null,
+   "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62373/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a",
+   "text": "Dinner\n\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nComing\nBo\nCy\nCame\n\nNo one yet.\n\nYou\nBringing anyone?  Save\nTake my name off\nI came\n\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy"
+     ],
+     "coming": [
+      "Bo",
+      "Cy"
+     ],
+     "came": [],
+     "link": null,
+     "nolink": null
+    }
+   ],
+   "buttons": [
+    "Save",
+    "Take my name off",
+    "I came"
+   ],
+   "ms": 64
+  },
+  {
+   "step": "L3",
+   "do": "link",
+   "who": "di",
+   "shot": "14-di-L3",
+   "status": 200,
+   "refused": null,
+   "url": "http://localhost:62272/#open=sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh&at=/g/225cfde43047ff0136223594eb99c44c9fc8bfb8b852dea5e5e64a320c019f98/e/14eb8f7dfd40865a",
+   "text": "This link opens in svrngs on your computer.\n\nCopy this link, open your svrngs home page, and paste it under “Open a link from your group”: it opens there. If svrngs is not on this computer, open the link on your phone.\n\nhttp://localhost:62272/#open=sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh&at=/g/225cfde43047ff0136223594eb99c44c9fc8bfb8b852dea5e5e64a320c019f98/e/14eb8f7dfd40865a\nCopy\nWhat’s your name? Everyone in sees it.\n\nJoin\nYes\nNot now",
+   "title": "You’re invited to a group",
+   "sections": [],
+   "buttons": [
+    "Copy",
+    "Join",
+    "Yes",
+    "Not now"
+   ],
+   "ms": 76,
+   "met": true,
+   "landed": false,
+   "said": {
+    "status": "This link opens in svrngs on your computer.",
+    "line": "http://localhost:62272/#open=sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh&at=/g/225cfde43047ff0136223594eb99c44c9fc8bfb8b852dea5e5e64a320c019f98/e/14eb8f7dfd40865a"
+   }
+  },
+  {
+   "step": "L3",
+   "do": "paste",
+   "who": "di",
+   "shot": "15-di-L3",
+   "status": 200,
+   "refused": null,
+   "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62525/g/225cfde43047ff0136223594eb99c44c9fc8bfb8b852dea5e5e64a320c019f98/e/14eb8f7dfd40865a",
+   "text": "Dinner\n\nFriday 7 · the house\n\nSam is hosting.\n\ndWeb\nInvited\nDi\nEve\nComing\nEve\nCame\n\nNo one yet.\n\nYou\nBringing anyone?  I'm coming\nI came\n\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "225cfde43047ff0136223594eb99c44c9fc8bfb8b852dea5e5e64a320c019f98",
+     "name": "dWeb",
+     "invited": [
+      "Di",
+      "Eve"
+     ],
+     "coming": [
+      "Eve"
+     ],
+     "came": [],
+     "link": null,
+     "nolink": null
+    }
+   ],
+   "buttons": [
+    "I'm coming",
+    "I came"
+   ],
+   "ms": 36,
+   "met": true
+  },
+  {
+   "step": "L3",
+   "do": "press",
+   "who": "di",
+   "shot": "16-di-L3",
+   "status": 200,
+   "refused": null,
+   "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62525/g/225cfde43047ff0136223594eb99c44c9fc8bfb8b852dea5e5e64a320c019f98/e/14eb8f7dfd40865a",
+   "text": "Dinner\n\nFriday 7 · the house\n\nSam is hosting.\n\ndWeb\nInvited\nDi\nEve\nComing\nDi\nEve\nCame\n\nNo one yet.\n\nYou\nBringing anyone?  Save\nTake my name off\nI came\n\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "225cfde43047ff0136223594eb99c44c9fc8bfb8b852dea5e5e64a320c019f98",
+     "name": "dWeb",
+     "invited": [
+      "Di",
+      "Eve"
+     ],
+     "coming": [
+      "Di",
+      "Eve"
+     ],
+     "came": [],
+     "link": null,
+     "nolink": null
+    }
+   ],
+   "buttons": [
+    "Save",
+    "Take my name off",
+    "I came"
+   ],
+   "ms": 55
+  },
+  {
+   "step": "L4",
+   "do": "link",
+   "who": "cy",
+   "shot": "17-cy-L4",
+   "status": 403,
+   "refused": null,
+   "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62272/g/225cfde43047ff0136223594eb99c44c9fc8bfb8b852dea5e5e64a320c019f98/e/14eb8f7dfd40865a",
+   "text": "You're not in dWeb, so this event isn't yours to see.\n\nAll events",
+   "title": "Events",
+   "sections": [],
+   "buttons": [],
+   "ms": 1427,
+   "met": true,
+   "landed": true,
+   "said": null
+  },
+  {
+   "step": "L4",
+   "do": "paste",
+   "who": "di",
+   "shot": "18-di-L4",
+   "status": 403,
+   "refused": null,
+   "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62525/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a",
+   "text": "You're not in The House, so this event isn't yours to see.\n\nAll events",
+   "title": "Events",
+   "sections": [],
+   "buttons": [],
+   "ms": 35,
+   "met": true
+  },
+  {
+   "step": "L4s",
+   "do": "goto",
+   "who": "sam",
+   "shot": "19-sam-L4s",
+   "status": 200,
+   "refused": null,
+   "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62329/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a",
+   "text": "Dinner\n\nFriday 7 · the house\n\nSam is hosting.\n\ndWeb\nInvited\nDi\nEve\nComing\nDi\nEve\nCame\n\nNo one yet.\n\nTo send in dWeb's chat:  Copy the link to this event\n\nThe House\nInvited\nBo\nCy\nComing\nBo\nCy\nCame\n\nNo one yet.\n\nTo send in The House's chat:  Copy the link to this event\n\nYou\nBringing anyone?  I'm coming\nI came\n\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "225cfde43047ff0136223594eb99c44c9fc8bfb8b852dea5e5e64a320c019f98",
+     "name": "dWeb",
+     "invited": [
+      "Di",
+      "Eve"
+     ],
+     "coming": [
+      "Di",
+      "Eve"
+     ],
+     "came": [],
+     "link": "http://localhost:62272/#open=sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh&at=/g/225cfde43047ff0136223594eb99c44c9fc8bfb8b852dea5e5e64a320c019f98/e/14eb8f7dfd40865a",
+     "nolink": null
+    },
+    {
+     "group": "d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy"
+     ],
+     "coming": [
+      "Bo",
+      "Cy"
+     ],
+     "came": [],
+     "link": "http://localhost:62272/#open=sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh&at=/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a",
+     "nolink": null
+    }
+   ],
+   "buttons": [
+    "Copy the link to this event",
+    "Copy the link to this event",
+    "I'm coming",
+    "I came"
+   ],
+   "ms": 14
+  },
+  {
+   "step": "L5",
+   "do": "paste",
+   "who": "bo",
+   "shot": "20-bo-L5",
+   "status": 502,
+   "refused": "away",
+   "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62373/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a",
+   "text": "{\"error\":\"the computer that lends this did not answer; try again later\",\"kind\":\"away\"}",
+   "title": "",
+   "sections": [],
+   "buttons": [],
+   "ms": 4036,
+   "met": true
+  },
+  {
+   "step": "L5",
+   "do": "home",
+   "who": "bo",
+   "shot": "21-bo-L5",
+   "status": 200,
+   "refused": null,
+   "url": "http://svrngs.localhost:62373/",
+   "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open a link to it someone sent in your group’s chat, open each group’s folder, make a group, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend’s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nThe House\n\nPeople: Sam, Cy, Bo\n\nThe House’s folder is on this computer at /tmp/doclink-run/bo/svrngs/The House\n\nOpen this folder\n\nMake a link to invite someone to The HouseMake a link to add your phone or another computer of yours\n\nSam's computer did not answer, so what they lend is not listed.\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:62373/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <…>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>\n\nLeaving a group is not possible yet: nothing in svrngs does it.",
+   "title": "Your groups",
+   "sections": [],
+   "buttons": [
+    "Open this folder",
+    "Make a link to invite someone to The House",
+    "Make a link to add your phone or another computer of yours",
+    "Open it",
+    "Make a group"
+   ],
+   "ms": 3210,
+   "met": true
+  },
+  {
+   "step": "L5",
+   "do": "goto",
+   "who": "cy",
+   "shot": "22-cy-L5",
+   "status": 502,
+   "refused": "away",
+   "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62272/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a?n=stopped",
+   "text": "The computer lending this did not answer. Try again later.",
+   "title": "",
+   "sections": [],
+   "buttons": [],
+   "ms": 4018
+  },
+  {
+   "step": "L5",
+   "do": "link",
+   "who": "cy",
+   "shot": "23-cy-L5",
+   "status": 200,
+   "refused": null,
+   "url": "http://localhost:62272/#open=sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh&at=/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a",
+   "text": "Your group’s computer did not answer through usw1-1.relay.n0.iroh.link. Try again later.\n\nWhat’s your name? Everyone in sees it.\n\nJoin\nYes\nNot now\n",
+   "title": "The House",
+   "sections": [],
+   "buttons": [
+    "Copy",
+    "Join",
+    "Yes",
+    "Not now"
+   ],
+   "ms": 30497,
+   "met": true,
+   "landed": false,
+   "said": {
+    "status": "Your group’s computer did not answer through usw1-1.relay.n0.iroh.link. Try again later.",
+    "line": null
+   }
+  },
+  {
+   "step": "L5w",
+   "do": "paste",
+   "who": "bo",
+   "shot": "24-bo-L5w",
+   "status": 200,
+   "refused": null,
+   "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62373/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a",
+   "text": "Dinner\n\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nComing\nBo\nCy\nCame\n\nNo one yet.\n\nYou\nBringing anyone?  Save\nTake my name off\nI came\n\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy"
+     ],
+     "coming": [
+      "Bo",
+      "Cy"
+     ],
+     "came": [],
+     "link": null,
+     "nolink": null
+    }
+   ],
+   "buttons": [
+    "Save",
+    "Take my name off",
+    "I came"
+   ],
+   "ms": 214,
+   "met": true
+  },
+  {
+   "step": "L5w",
+   "do": "link",
+   "who": "cy",
+   "shot": "25-cy-L5w",
+   "status": 200,
+   "refused": null,
+   "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62272/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a",
+   "text": "Dinner\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nComing\nBo\nCy\nCame\nNo one yet.\n\nYou\nBringing anyone?  Save\nTake my name off\nI came\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy"
+     ],
+     "coming": [
+      "Bo",
+      "Cy"
+     ],
+     "came": [],
+     "link": null,
+     "nolink": null
+    }
+   ],
+   "buttons": [
+    "Save",
+    "Take my name off",
+    "I came"
+   ],
+   "ms": 1790,
+   "met": true,
+   "landed": true,
+   "said": null
+  },
+  {
+   "step": "L6",
+   "do": "goto",
+   "who": "cy",
+   "shot": "26-cy-L6",
+   "status": 200,
+   "refused": null,
+   "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62272/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a?n=held",
+   "text": "Dinner\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nComing\nBo\nCy\nCame\nNo one yet.\n\nYou\nBringing anyone?  Save\nTake my name off\nI came\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy"
+     ],
+     "coming": [
+      "Bo",
+      "Cy"
+     ],
+     "came": [],
+     "link": null,
+     "nolink": null
+    }
+   ],
+   "buttons": [
+    "Save",
+    "Take my name off",
+    "I came"
+   ],
+   "ms": 90
+  },
+  {
+   "step": "L6",
+   "do": "goto",
+   "who": "cy",
+   "shot": "27-cy-L6",
+   "status": 502,
+   "refused": "away",
+   "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62272/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a?n=frozen",
+   "text": "The computer lending this did not answer. Try again later.",
+   "title": "",
+   "sections": [],
+   "buttons": [],
+   "ms": 4221
+  },
+  {
+   "step": "L6",
+   "do": "paste",
+   "who": "bo",
+   "shot": "28-bo-L6",
+   "status": 502,
+   "refused": "away",
+   "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62373/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a",
+   "text": "{\"error\":\"the computer that lends this did not answer; try again later\",\"kind\":\"away\"}",
+   "title": "",
+   "sections": [],
+   "buttons": [],
+   "ms": 4038,
+   "met": true
+  },
+  {
+   "step": "L6",
+   "do": "home",
+   "who": "bo",
+   "shot": "29-bo-L6",
+   "status": 200,
+   "refused": null,
+   "url": "http://svrngs.localhost:62373/",
+   "text": "Your groups\n\nThis page is yours, on this computer alone. On it you see your groups and who is in each, open what the people in them lend you, each in a tab of its own beside this page, open a link to it someone sent in your group’s chat, open each group’s folder, make a group, make a link to invite someone or to add your phone or another computer, and choose how many people at once may use what this computer lends them.\n\nA link works for a day, while this computer is on. Making one stops the last link you made letting anyone new in; everyone it let in stays.\n\nA program on this computer, such as one you chat with a friend’s model in, reaches what is lent to you at the address beside it: its Copy button copies it, for you to paste where the program asks for an address.\n\nThe House\n\nPeople: Sam, Cy, Bo\n\nThe House’s folder is on this computer at /tmp/doclink-run/bo/svrngs/The House\n\nOpen this folder\n\nMake a link to invite someone to The HouseMake a link to add your phone or another computer of yours\n\nSam's computer did not answer, so what they lend is not listed.\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nWhat this computer lends\n\nThis computer lends nothing.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:62373/\n\nDone in a terminal\n\nA few things are not done on this page yet. For each, open the Terminal app and type its line, with your own words in place of each <…>:\n\nLend your groups a program this computer runs, such as a model: svrngs share <the number after the colon in its address>, as in svrngs share 8080 for one at http://localhost:8080. svrngs then says what it lent, and to whom.\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>\n\nLeaving a group is not possible yet: nothing in svrngs does it.",
+   "title": "Your groups",
+   "sections": [],
+   "buttons": [
+    "Open this folder",
+    "Make a link to invite someone to The House",
+    "Make a link to add your phone or another computer of yours",
+    "Open it",
+    "Make a group"
+   ],
+   "ms": 3058,
+   "met": true
+  },
+  {
+   "step": "L6",
+   "do": "link",
+   "who": "cy",
+   "shot": "30-cy-L6",
+   "status": 200,
+   "refused": null,
+   "url": "http://localhost:62272/#open=sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh&at=/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a",
+   "text": "Your group’s computer did not answer through usw1-1.relay.n0.iroh.link. Try again later.\n\nWhat’s your name? Everyone in sees it.\n\nJoin\nYes\nNot now\n",
+   "title": "The House",
+   "sections": [],
+   "buttons": [
+    "Copy",
+    "Join",
+    "Yes",
+    "Not now"
+   ],
+   "ms": 30522,
+   "met": true,
+   "landed": false,
+   "said": {
+    "status": "Your group’s computer did not answer through usw1-1.relay.n0.iroh.link. Try again later.",
+    "line": null
+   }
+  },
+  {
+   "step": "L6w",
+   "do": "paste",
+   "who": "bo",
+   "shot": "31-bo-L6w",
+   "status": 200,
+   "refused": null,
+   "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62373/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a",
+   "text": "Dinner\n\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nComing\nBo\nCy\nCame\n\nNo one yet.\n\nYou\nBringing anyone?  Save\nTake my name off\nI came\n\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy"
+     ],
+     "coming": [
+      "Bo",
+      "Cy"
+     ],
+     "came": [],
+     "link": null,
+     "nolink": null
+    }
+   ],
+   "buttons": [
+    "Save",
+    "Take my name off",
+    "I came"
+   ],
+   "ms": 1312,
+   "met": true
+  },
+  {
+   "step": "L6w",
+   "do": "link",
+   "who": "cy",
+   "shot": "32-cy-L6w",
+   "status": 200,
+   "refused": null,
+   "url": "http://sk3fz4at4q6a76jnn1x9glpp5g0x9381bcvaq388qtu9nnlppvctl6h4a6fbfh.localhost:62272/g/d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4/e/14eb8f7dfd40865a",
+   "text": "Dinner\nFriday 7 · the house\n\nSam is hosting.\n\nThe House\nInvited\nBo\nCy\nComing\nBo\nCy\nCame\nNo one yet.\n\nYou\nBringing anyone?  Save\nTake my name off\nI came\nAll events",
+   "title": "Dinner",
+   "sections": [
+    {
+     "group": "d0e765b914fd6152f2aeaa63d164ff637571699868ae5ccd3d165e3825b89dd4",
+     "name": "The House",
+     "invited": [
+      "Bo",
+      "Cy"
+     ],
+     "coming": [
+      "Bo",
+      "Cy"
+     ],
+     "came": [],
+     "link": null,
+     "nolink": null
+    }
+   ],
+   "buttons": [
+    "Save",
+    "Take my name off",
+    "I came"
+   ],
+   "ms": 1974,
+   "met": true,
+   "landed": true,
+   "said": null
+  }
+ ],
+ "end_load": 24.1
+}

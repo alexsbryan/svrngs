@@ -1,0 +1,154 @@
+{
+ "people": {
+  "54cbcf5bbcdb764b05f64e7a0fe667325831f74614b4931e9aa98d1d616fa4e1": "ana",
+  "5bbf55b3287be6a4473945c29418f09ccbec44d509e5bec228e69096aceef02b": "alex",
+  "87cc7434eef82630870895041d363d010d62fa5203ddb7ede43e1f035212ab3e": "Sam",
+  "95692cb27dec49c909a3722da636c3d50e975feaed41a3699bfa6038798c1298": "Cy"
+ },
+ "sam": {
+  "lines": 2583,
+  "no_address": 25,
+  "no_address_first": [
+   "2026-10-13T02:52:31.143314Z DEBUG transport: iroh: no dialable path in contact (no relay_url / iroh_direct_addrs) and no address lookup \u2014 not dialable transport=\"iroh\" peer=54cbcf5b",
+   "2026-10-13T02:52:31.529736Z DEBUG transport: iroh: no dialable path in contact (no relay_url / iroh_direct_addrs) and no address lookup \u2014 not dialable transport=\"iroh\" peer=54cbcf5b",
+   "2026-10-13T02:52:31.529778Z DEBUG transport: iroh: no dialable path in contact (no relay_url / iroh_direct_addrs) and no address lookup \u2014 not dialable transport=\"iroh\" peer=5bbf55b3"
+  ],
+  "no_address_to": {
+   "ana": 13,
+   "alex": 12
+  },
+  "rounds": {
+   "peers_reached=0 peers_unreachable=1": 1,
+   "peers_reached=0 peers_unreachable=2": 8
+  },
+  "asked_by": {
+   "ana": 2,
+   "alex": 2
+  },
+  "fetched": [],
+  "gave_nothing": [],
+  "asks": [],
+  "n0_lines": [],
+  "n0_count": 0
+ },
+ "ana": {
+  "lines": 3199,
+  "no_address": 11,
+  "no_address_first": [
+   "2026-10-13T02:52:31.691839Z DEBUG transport: iroh: no dialable path in contact (no relay_url / iroh_direct_addrs) and no address lookup \u2014 not dialable transport=\"iroh\" peer=87cc7434",
+   "2026-10-13T02:53:31.695466Z DEBUG transport: iroh: no dialable path in contact (no relay_url / iroh_direct_addrs) and no address lookup \u2014 not dialable transport=\"iroh\" peer=87cc7434",
+   "2026-10-13T02:54:31.698195Z DEBUG transport: iroh: no dialable path in contact (no relay_url / iroh_direct_addrs) and no address lookup \u2014 not dialable transport=\"iroh\" peer=87cc7434"
+  ],
+  "no_address_to": {
+   "Sam": 11
+  },
+  "rounds": {
+   "peers_reached=0 peers_unreachable=1": 11
+  },
+  "asked_by": {},
+  "fetched": [],
+  "gave_nothing": [],
+  "asks": [],
+  "n0_lines": [],
+  "n0_count": 0
+ },
+ "alex": {
+  "lines": 3147,
+  "no_address": 22,
+  "no_address_first": [
+   "2026-10-13T02:53:31.515742Z DEBUG transport: iroh: no dialable path in contact (no relay_url / iroh_direct_addrs) and no address lookup \u2014 not dialable transport=\"iroh\" peer=54cbcf5b",
+   "2026-10-13T02:53:31.515831Z DEBUG transport: iroh: no dialable path in contact (no relay_url / iroh_direct_addrs) and no address lookup \u2014 not dialable transport=\"iroh\" peer=87cc7434",
+   "2026-10-13T02:54:31.518442Z DEBUG transport: iroh: no dialable path in contact (no relay_url / iroh_direct_addrs) and no address lookup \u2014 not dialable transport=\"iroh\" peer=54cbcf5b"
+  ],
+  "no_address_to": {
+   "ana": 11,
+   "Sam": 11
+  },
+  "rounds": {
+   "peers_reached=0 peers_unreachable=2": 9
+  },
+  "asked_by": {},
+  "fetched": [],
+  "gave_nothing": [],
+  "asks": [],
+  "n0_lines": [],
+  "n0_count": 0
+ },
+ "relay": {
+  "lines": 237,
+  "no_address": 0,
+  "no_address_first": [],
+  "no_address_to": {},
+  "rounds": {},
+  "asked_by": {},
+  "fetched": [],
+  "gave_nothing": [],
+  "asks": [],
+  "n0_lines": [],
+  "n0_count": 0
+ },
+ "lsof": {
+  "samples_kept": 61,
+  "remote_hosts_by_process": [
+   [
+    "alex",
+    "127.0.0.1",
+    6
+   ],
+   [
+    "alex",
+    "192.168.1.1",
+    1
+   ],
+   [
+    "ana",
+    "127.0.0.1",
+    6
+   ],
+   [
+    "ana",
+    "192.168.1.1",
+    1
+   ],
+   [
+    "page",
+    "127.0.0.1",
+    5
+   ],
+   [
+    "relay",
+    "127.0.0.1",
+    5
+   ],
+   [
+    "sam",
+    "127.0.0.1",
+    1
+   ],
+   [
+    "sam",
+    "192.168.1.1",
+    1
+   ]
+  ],
+  "n0_hits": [],
+  "n0_ips": [
+   "178.105.170.157",
+   "178.156.173.73",
+   "2a01:4f8:1c19:39b4::1",
+   "2a01:4f8:1c1a:bff8::1",
+   "2a01:4f8:1c1c:75e2::1",
+   "2a01:4f8:c2c:7216::1",
+   "2a01:4ff:1f0:e599::1",
+   "2a01:4ff:2f0:29c1::1",
+   "2a01:4ff:f0:b1b3::1",
+   "2a01:4ff:f0:f255::1",
+   "49.13.207.244",
+   "49.13.237.105",
+   "5.223.65.62",
+   "5.78.69.43",
+   "87.99.151.110",
+   "91.99.237.97"
+  ]
+ }
+}

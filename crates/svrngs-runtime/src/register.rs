@@ -14,17 +14,17 @@
 //! §6).
 
 use std::collections::BTreeMap;
+use std::sync::Arc;
 
 use crate::{
-    admit, is_local_only, ring_dir, valid_namespace, Device, Membership, Op, Person, RailError, RingRail, RingVerifier,
-    Roster, SignedOp,
+    actor_of, admit, ring_dir, valid_namespace, Device, Joined, Membership, Op, Person, RailAct, RailError,
+    RingJournal, RingRail, RingVerifier, Roster, SignedOp,
 };
 
 /// Who stands in one group, on this node.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Standing {
-    /// This node holds no such group, or holds it local-only and offers it
-    /// to nobody: nobody stands in it here.
+    /// This node holds no such group: nobody stands in it here.
     NotHeld,
     /// The group is held with no seed, or a seed naming no key: nobody can
     /// be shown to stand, so everyone is refused — never an empty roster
@@ -33,47 +33,166 @@ pub enum Standing {
     /// The keys standing now, each with the person it is bound to and
     /// what holds it.
     Members(BTreeMap<String, Member>),
+    /// This computer's own key was cut here: its person left the group, or
+    /// was removed (groups-leave). The group stays held and readable, the
+    /// keys standing as this copy says; nobody stands in it here, so none
+    /// of it is live: no round, no sync, no lend reaching it.
+    Left(BTreeMap<String, Member>),
 }
 
-/// One key standing in a group: the person it is bound to, and what holds
-/// it ([`Device`], u4-1), as `membership` answers both.
+/// One fold of a group's register (U7): who stands, each key the group's
+/// keeper cut with the person it was bound to, the keeper's key, and every
+/// removal and ask to remove, shown to everyone in the group.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct Register {
+    pub members: BTreeMap<String, Member>,
+    pub removed: BTreeMap<String, Person>,
+    pub keeper: Option<String>,
+    pub removals: Vec<Removing>,
+}
+
+/// One counting `Remove`, as the group is shown it (v1-keeper-office (b)):
+/// who signed it, whom it names, when it is timed, and whether it was the
+/// keeper's cut, a leave or an ask, as `membership` judged it; and the key
+/// it names, which the page is not sent.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct Removing {
+    pub by: Person,
+    pub of: Person,
+    pub at: i64,
+    pub said: RemovalSaid,
+    #[serde(skip)]
+    pub key: String,
+}
+
+/// What a counting `Remove` was (DESIGN §6, "Removal has one decider").
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum RemovalSaid {
+    /// The keeper's: the cut.
+    Removed,
+    /// The person's own: their leave, the cut by them alone (groups-leave).
+    Left,
+    /// Anyone else's, or one that cut nobody: an ask.
+    Asked,
+}
+
+/// One key standing in a group: the person it is bound to, by name and by
+/// their first key in the group (bash-devices), what holds it ([`Device`],
+/// u4-1), when the person joined (bash-same-name), and the relay it is
+/// reached through (relay-in-record), as `membership` answers them.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Member {
     pub person: Person,
     pub device: Device,
+    /// The person's first key: the same for every device of theirs.
+    pub person_key: String,
+    pub joined: Joined,
+    /// The relay the group's record names for this key; `None` when it
+    /// names none.
+    pub relay: Option<svrngs_core::relay::Url>,
 }
 
 impl Standing {
-    /// Whether `actor` — a key's lowercase hex, as the record spells a
-    /// signer — stands in the group.
+    /// `actor`'s row — a key's lowercase hex, as the record spells a
+    /// signer — if it stands in the group: the one place that says who
+    /// stands, which every other asks (#146).
+    pub fn member(&self, actor: &str) -> Option<&Member> {
+        let Standing::Members(m) = self else { return None };
+        m.get(actor)
+    }
+
+    /// Whether `actor` stands in the group, as [`Standing::member`] says.
     pub fn names(&self, actor: &str) -> bool {
-        matches!(self, Standing::Members(m) if m.contains_key(actor))
+        self.member(actor).is_some()
     }
 }
 
 /// The keys standing in `namespace` after `ops`, from `seed`: membership
-/// over the acts admission authenticates, each with its person and device. The one
-/// decider: [`RingRail::standing`] answers with it, and the door
-/// ([`crate::RingJournal::append_all`]) asks it under its write lock.
-pub(crate) fn standing_in(
+/// over the acts admission authenticates, each with its person and device;
+/// and beside them each key the group's keeper cut, with the person it was
+/// bound to, and the keeper (U7). The one decider: [`RingRail::standing`]
+/// and [`RingRail::register`] answer with it, through the journal's kept
+/// fold (`RingJournal::standing`), which asks it under its write lock.
+pub(crate) fn register_in(
     ops: &[Op<SignedOp>],
     seed: &Roster,
     namespace: &str,
     verifier: &dyn RingVerifier,
-) -> Result<BTreeMap<String, Member>, RailError> {
+) -> Result<Register, RailError> {
     let m = membership_in(ops, seed, namespace, verifier)?;
-    Ok(m.standing
+    if m.unsettled {
+        tracing::warn!(target: "register", namespace, "register: the group's removals do not come to one answer, so nobody is read as standing");
+        return Err(RailError::Unsettled(namespace.to_string()));
+    }
+    let members = m
+        .standing
         .iter()
         .filter_map(|key| {
-            let person = m.bindings.get(key)?.clone();
-            let device = m.device(key)?;
-            Some((key.clone(), Member { person, device }))
+            let (first, person) = m.person_of(key)?;
+            let (person, person_key) = (person.clone(), first.to_string());
+            Some((
+                key.clone(),
+                Member {
+                    person,
+                    device: m.device(key)?,
+                    joined: m.joined(&person_key),
+                    relay: m.relay(key),
+                    person_key,
+                },
+            ))
         })
-        .collect())
+        .collect();
+    let removed = m
+        .cut
+        .keys()
+        .filter_map(|key| Some((key.clone(), m.bindings.get(key)?.clone())))
+        .collect();
+    let removals = removals_in(ops, &m, namespace);
+    Ok(Register {
+        members,
+        removed,
+        keeper: m.keeper,
+        removals,
+    })
+}
+
+/// Every `Remove` among `ops` that counts in `m`, by time: the cut when it
+/// is the one `m` cut its key by, a leave when `m` kept that cut as one
+/// (`Cut::left`, decided by the fold alone, #180), an ask otherwise. One that does not
+/// count, or whose signer or named key is bound to nobody, is said at
+/// debug and left out.
+fn removals_in(ops: &[Op<SignedOp>], m: &Membership, namespace: &str) -> Vec<Removing> {
+    let mut out: Vec<Removing> = ops
+        .iter()
+        .filter_map(|op| {
+            let RailAct::Remove { key, .. } = &op.kind.act else {
+                return None;
+            };
+            let id = crate::derive_id(op, namespace);
+            if !m.counts(&id) {
+                tracing::debug!(target: "register", namespace, id = %id, key, "register: a removal the fold does not count is not shown");
+                return None;
+            }
+            let (Some(by), Some(of)) = (m.bindings.get(&op.actor), m.bindings.get(key)) else {
+                tracing::debug!(target: "register", namespace, id = %id, actor = %op.actor, key, "register: a removal whose signer or named key is bound to nobody is not shown");
+                return None;
+            };
+            let said = match m.cut.get(key).filter(|c| c.by == id) {
+                Some(c) if c.left => RemovalSaid::Left,
+                Some(_) => RemovalSaid::Removed,
+                None => RemovalSaid::Asked,
+            };
+            tracing::debug!(target: "register", namespace, id = %id, by = %by, of = %of, ?said, "register: a removal shown to the group");
+            Some(Removing { by: by.clone(), of: of.clone(), at: op.ts_unix, said, key: key.clone() })
+        })
+        .collect();
+    out.sort_by_key(|r| r.at);
+    out
 }
 
 /// `membership` over the acts admission authenticates among `ops`, from
-/// `seed`: what [`standing_in`] reads, and what a redemption asks of the
+/// `seed`: what [`register_in`] reads, and what a redemption asks of the
 /// journal with its `Admit` in it (`crate::redeem`).
 pub(crate) fn membership_in(
     ops: &[Op<SignedOp>],
@@ -82,35 +201,78 @@ pub(crate) fn membership_in(
     verifier: &dyn RingVerifier,
 ) -> Result<Membership, RailError> {
     // Standing turns only on the acts `membership` reads
-    // (`RailAct::moves_membership`, beside it in svrngs-core's
+    // (`svrngs_core::standing_reads`, beside it in svrngs-core's
     // membership.rs), so the rest are left out before admission verifies
     // each signature — the sync route asks this per request, of journals of
     // tens of thousands of acts (ring_sync's ceiling tests timed out
     // verifying them all).
-    let acts: Vec<Op<SignedOp>> = ops
-        .iter()
-        .filter(|op| op.kind.act.moves_membership())
-        .cloned()
-        .collect();
-    Ok(admit(&crate::ActSet::of(&acts), &[], seed, namespace, verifier).project::<Membership>())
+    let acts: Vec<Op<SignedOp>> = svrngs_core::standing_reads(ops).cloned().collect();
+    Ok(admit(&crate::ActSet::of(&acts), &[], seed, namespace, verifier)
+        .membership()
+        .clone())
 }
 
 impl RingRail {
     /// Who stands in `namespace` on this node — the ONE accessor the round,
-    /// the acceptor and the sync route ask (ARCH 8).
+    /// the acceptor and the sync route ask (ARCH 8). Its signatures are
+    /// judged by [`crate::Ed25519Verifier`], the scheme every caller passed.
     ///
     /// A group this node does not hold is answered before anything is
     /// opened, so asking about it leaves no trace in the rail. Every branch
     /// traces at debug; a held group with no seed at warn, since it refuses
     /// everyone.
-    pub fn standing(&self, namespace: &str, verifier: &dyn RingVerifier) -> Result<Standing, RailError> {
-        if !valid_namespace(namespace) || is_local_only(namespace) || !ring_dir(&self.root, namespace).is_dir() {
+    pub fn standing(&self, namespace: &str) -> Result<Standing, RailError> {
+        let (journal, seed) = match self.seeded(namespace)? {
+            Ok(held) => held,
+            Err(nobody) => return Ok(nobody),
+        };
+        // One read of the kept fold for both who stands and whether this
+        // computer was cut (scale.rs `the_account_matches_a_hand_count`).
+        let (register, kept) = journal.folded(&seed)?;
+        let members = register.members;
+        let seeded = seed.members.values().flatten().count();
+        if kept {
+            tracing::debug!(target: "register", namespace, seeded, standing = members.len(),
+                "register: standing answered from the kept fold, no act that moves it since");
+        } else {
+            tracing::debug!(target: "register", namespace, seeded, standing = members.len(),
+                "register: standing read from the seed and the group's acts");
+        }
+        if register.removed.contains_key(&actor_of(&self.signer)) {
+            tracing::debug!(target: "register", namespace,
+                "register: this computer's key was cut here, its person left or removed, so the group is held and read, and nobody stands in it here");
+            return Ok(Standing::Left(members));
+        }
+        Ok(Standing::Members(members))
+    }
+
+    /// The register of `namespace` (U7; DESIGN §6): who stands, each key
+    /// its keeper cut with its person, and the keeper; from the journal's
+    /// kept fold, as [`Self::standing`] is. A group not held here or with
+    /// no seed is the empty register, said as
+    /// [`Self::standing`] says it.
+    pub fn register(&self, namespace: &str) -> Result<Register, RailError> {
+        let Ok((journal, seed)) = self.seeded(namespace)? else {
+            return Ok(Register::default());
+        };
+        let register = journal.register(&seed)?;
+        tracing::debug!(target: "register", namespace, standing = register.members.len(),
+            removed = register.removed.len(), keeper = ?register.keeper, "register: the group's register");
+        Ok(register)
+    }
+
+    /// The journal of `namespace` and its seed, or why nobody stands in it
+    /// here: the one check [`Self::standing`] and [`Self::register`] make.
+    /// A group not held is said at debug; a held group with no seed at
+    /// warn, since it refuses everyone.
+    fn seeded(&self, namespace: &str) -> Result<Result<(Arc<RingJournal>, Roster), Standing>, RailError> {
+        if !valid_namespace(namespace) || !ring_dir(&self.root, namespace).is_dir() {
             tracing::debug!(
                 target: "register",
                 namespace,
                 "register: this node holds no such group to offer, so nobody stands in it here"
             );
-            return Ok(Standing::NotHeld);
+            return Ok(Err(Standing::NotHeld));
         }
         let journal = self.journal(namespace)?;
         let Some(seed) = journal.seed()?.filter(|s| !s.members.is_empty()) else {
@@ -121,27 +283,18 @@ impl RingRail {
                 "register: this group has no seed, so nobody can be shown to stand in it and \
                  everyone is refused"
             );
-            return Ok(Standing::NoSeed);
+            return Ok(Err(Standing::NoSeed));
         };
-        let (ops, _) = journal.read()?;
-        let members = standing_in(&ops, &seed, namespace, verifier)?;
-        tracing::debug!(
-            target: "register",
-            namespace,
-            seeded = seed.members.values().flatten().count(),
-            standing = members.len(),
-            "register: standing read from the seed and the group's acts"
-        );
-        Ok(Standing::Members(members))
+        Ok(Ok((journal, seed)))
     }
 
     /// The first group this node holds, in [`RingRail::namespaces`]' order,
-    /// that `actor` stands in, and the person they stand as there; `None`
-    /// when they stand in none. The one answer the acceptor
+    /// that `actor` stands in, and the [`Member`] they stand as there, their
+    /// person by name and first key; `None` when they stand in none. The one answer the acceptor
     /// (`node::admit_dialer`) and the member door (`door::through`) ask. A
     /// group whose register is unreadable vouches for nobody, and groups
     /// that cannot be listed vouch for nobody at all.
-    pub fn standing_anywhere(&self, actor: &str, verifier: &dyn RingVerifier) -> Option<(String, Person)> {
+    pub fn standing_anywhere(&self, actor: &str) -> Option<(String, Member)> {
         let namespaces = match self.namespaces() {
             Ok(n) => n,
             Err(e) => {
@@ -151,12 +304,13 @@ impl RingRail {
             }
         };
         for namespace in &namespaces {
-            match self.standing(namespace, verifier) {
+            match self.standing(namespace) {
                 Ok(Standing::Members(m)) => {
-                    if let Some(Member { person, device }) = m.get(actor) {
-                        tracing::debug!(target: "register", actor, namespace, %person, ?device,
+                    if let Some(member) = m.get(actor) {
+                        tracing::debug!(target: "register", actor, namespace, person = %member.person,
+                            person_key = member.person_key, device = ?member.device,
                             "register: the key stands in a group held here");
-                        return Some((namespace.clone(), person.clone()));
+                        return Some((namespace.clone(), member.clone()));
                     }
                 }
                 Ok(_) => {}
@@ -170,107 +324,35 @@ impl RingRail {
             "register: the key stands in no group held here");
         None
     }
+
+    /// The first group held here whose keeper cut `actor`, or `None` (U7):
+    /// whom the members' protocol and the door tell they were removed.
+    ///
+    /// Groups that cannot be listed, and a group whose register is
+    /// unreadable, show nobody removed: said at warn, as
+    /// [`Self::standing_anywhere`] says them.
+    pub fn removed_anywhere(&self, actor: &str) -> Option<String> {
+        let namespaces = match self.namespaces() {
+            Ok(n) => n,
+            Err(e) => {
+                tracing::warn!(target: "register", actor, error = %e,
+                    "register: cannot list the groups held, so nobody can be shown to have been removed from one");
+                return None;
+            }
+        };
+        let found = namespaces.into_iter().find(|ns| match self.register(ns) {
+            Ok(r) => r.removed.contains_key(actor),
+            Err(e) => {
+                tracing::warn!(target: "register", actor, namespace = ns, error = %e,
+                    "register: a group's register is unreadable, so it shows nobody removed");
+                false
+            }
+        });
+        tracing::debug!(target: "register", actor, group = ?found, "register: whether a group held here removed the key");
+        found
+    }
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::{actor_of, Device, Ed25519Verifier, OpId, RailAct, Redemption};
-    use svrngs_core::tests_support::{after, key, record, signed, NS};
-
-    fn admit_act(person: &str, joining: u8) -> RailAct {
-        RailAct::Admit {
-            person: Person::parse(person).unwrap(),
-            key: actor_of(&key(joining)),
-            invite: None,
-        }
-    }
-
-    fn void(target: &OpId) -> RailAct {
-        RailAct::Correct {
-            corrects: target.clone(),
-            replacement: None,
-        }
-    }
-
-    /// Leaving out every act but `Admit`, `Remove`, `Correct` and `Invite`
-    /// changes nobody's standing: records between the membership acts, an
-    /// `Admit` voided, a `Remove`, a record voided, and an `Admit` redeeming
-    /// an `Invite` fold to the same standing keys and persons from those acts
-    /// alone as from the whole journal. The failing inputs are a filter that
-    /// leaves out `Correct`, and one that leaves out `Invite`.
-    #[test]
-    fn standing_from_the_membership_acts_alone_is_the_journals() {
-        let seed = Roster::new(
-            [(Person::parse("alex").unwrap(), vec![actor_of(&key(1))])]
-                .into_iter()
-                .collect(),
-        );
-        let admit_bo = signed(&key(1), 100, 0, admit_act("bo", 2));
-        let bo_writes = signed(&key(2), 101, 0, record("a"));
-        let admit_dee = after(&key(1), &admit_bo, 103, admit_act("dee", 4));
-        let void_dee = after(&key(1), &admit_dee, 104, void(&admit_dee.id));
-        let remove_cy = after(
-            &key(1),
-            &void_dee,
-            106,
-            RailAct::Remove {
-                key: actor_of(&key(3)),
-                through_seq: 0,
-            },
-        );
-        let ops = vec![
-            admit_bo,
-            bo_writes.clone(),
-            after(&key(2), &bo_writes, 102, admit_act("cy", 3)),
-            admit_dee.clone(),
-            void_dee,
-            signed(&key(3), 105, 0, record("b")),
-            remove_cy.clone(),
-            after(&key(1), &remove_cy, 107, void(&bo_writes.id)),
-        ];
-        let inv = after(
-            &key(1),
-            ops.last().unwrap(),
-            108,
-            RailAct::Invite {
-                key: actor_of(&key(9)),
-                until: 200,
-            },
-        );
-        let eve = Person::parse("eve").unwrap();
-        let redeem_eve = after(
-            &key(1),
-            &inv,
-            109,
-            RailAct::Admit {
-                invite: Some(Redemption::sign(&key(5), NS, &inv.id, &eve, Device::Computer)),
-                person: eve,
-                key: actor_of(&key(5)),
-            },
-        );
-        let ops = [ops, vec![inv, redeem_eve]].concat();
-        let whole = admit(&crate::ActSet::of(&ops), &[], &seed, NS, &Ed25519Verifier).project::<Membership>();
-        let expected: BTreeMap<String, Member> = whole
-            .standing
-            .iter()
-            .map(|k| {
-                let member = Member {
-                    person: whole.bindings[k].clone(),
-                    device: Device::Computer,
-                };
-                (k.clone(), member)
-            })
-            .collect();
-        assert_eq!(
-            expected.keys().cloned().collect::<Vec<_>>(),
-            {
-                let mut v = vec![actor_of(&key(1)), actor_of(&key(2)), actor_of(&key(5))];
-                v.sort();
-                v
-            },
-            "control: alex, bo and eve stand; cy was removed and dee's Admit voided"
-        );
-        assert_eq!(standing_in(&ops, &seed, NS, &Ed25519Verifier).unwrap(), expected);
-    }
-}
+#[path = "register_tests.rs"]
+mod tests;

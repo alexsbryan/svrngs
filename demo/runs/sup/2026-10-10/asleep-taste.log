@@ -1,0 +1,4 @@
+2026-10-10T02:16:18.606Z taste: listening on 127.0.0.1:8696, /tmp/sup/taste
+2026-10-10T02:16:18.757Z GET / {"person":null,"key":null,"app":null}
+2026-10-10T02:16:39.928Z POST /rank {"person":"Ana","key":"a0672f1f9f6387a13a9115bb92db4df0b4970c27466a9cf8b2519ffecfb663fb","app":"9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdralqccgh449n"}
+2026-10-10T02:16:39.932Z ranked 4 films for 9pwj2pvppds2705kt5jw8r637nagp0qcxvx57g3nvx75hmpvfdralqccgh449n

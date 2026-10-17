@@ -1,0 +1,41 @@
+   Compiling svrngs-node v0.1.0 (/Users/alexsbryan/dev/svrngs/crates/svrngs-node)
+   Compiling svrngs v0.1.0 (/Users/alexsbryan/dev/svrngs/crates/svrngs)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 14.16s
+     Running tests/leave_page.rs (target/debug/deps/leave_page-cba783c1a51226bd)
+
+running 1 test
+Ana's first computer's page, leaving Trip: {
+  "after": [
+    [
+      "You left Trip. Rejoining needs a new invitation, and this computer can’t rejoin yet.",
+      "Your home page, the same address each time svrngs starts: http://svrngs.localhost:50383/"
+    ]
+  ],
+  "all": [
+    "Your home page, the same address each time svrngs starts: http://svrngs.localhost:50383/"
+  ],
+  "clipboard": null,
+  "drawn": null,
+  "heading": "Walk (Sam’s, since 16 Oct)",
+  "links": [],
+  "logs": [],
+  "opened": null,
+  "read": null,
+  "text": null,
+  "timed": {}
+}
+test a_leave_reaches_the_leavers_other_computer::chromium has been running for over 60 seconds
+
+thread 'a_leave_reaches_the_leavers_other_computer::chromium' (55072826) panicked at crates/svrngs/tests/leave_page.rs:382:5:
+back on, Ana's second computer says she left Walk
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test a_leave_reaches_the_leavers_other_computer::chromium ... FAILED
+
+failures:
+
+failures:
+    a_leave_reaches_the_leavers_other_computer::chromium
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 3 filtered out; finished in 115.57s
+
+error: test failed, to rerun pass `-p svrngs --test leave_page`

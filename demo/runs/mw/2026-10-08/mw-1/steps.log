@@ -1,0 +1,55 @@
+13:44:01 jellyfin up: {"LocalAddress":"http://127.0.0.1:8096","ServerName":"Alexs-MacBook-Pro-2","Version":"12.0.0","ProductName":"Jellyfin Server","OperatingSystem":"","Id":"cb6395c236a34731b48949fabbe69db8","StartupWizardCompleted":false}
+13:44:07 films: 3; users: ["sam"]
+13:44:48 the page: http://localhost:58624/
+13:44:50 sam: On a phone, each app opens at an address of its own under localhost:58624, which can see which app is opened.
+13:44:51 alex: You're in House, as Alex.
+13:44:51 sam: Lent jellyfin (port 8096) to everyone in your groups, up to 8 people at once.
+13:44:51 sam is told: jellyfin asks each person to sign in once, with an account you make them. In jellyfin: your picture at the top right, then Dashboard, Users and +; give it a name and a password, tick the libraries they may watch, and Save. Then tell each person theirs.
+13:44:53 sam made: ["ana", "ben", "sam"]
+13:44:57 alex's computer opens it at http://s37xnas7mnc7s3lh210ln02l4twxqdgp0pxw0ck6llk5mfphp28tbbq3n1prdr.localhost:58706/
+13:54:51 mw plant-one-user: listening on port 8097, in front of Jellyfin at 127.0.0.1:8096; planted: one-user; users: ["ana", "ben", "sam"]
+13:55:21 mw plant-one-user: listening on port 8097, in front of Jellyfin at 127.0.0.1:8096; planted: one-user; users: ["ana", "ben", "sam"]
+13:55:21 sam: Lent jellyfin-mw (port 8097) to everyone in your groups, up to 8 people at once.
+13:55:21 sam is told: jellyfin-mw asks each person to sign in once, with an account you make them. In jellyfin: your picture at the top right, then Dashboard, Users and +; give it a name and a password, tick the libraries they may watch, and Save. Then tell each person theirs. svrngs is running here already, so they can open it now. `svrngs unshare jellyfin-mw` stops lending it. 
+13:55:23 bo: You're in House, as Bo.
+13:56:45 mw plant-one-user: listening on port 8097, in front of Jellyfin at 127.0.0.1:8096; planted: one-user; users: ["ana", "ben", "sam"]
+13:56:45 sam: Lent jellyfin-mw (port 8097) to everyone in your groups, up to 8 people at once.
+13:56:45 sam is told: jellyfin-mw asks each person to sign in once, with an account you make them. In jellyfin: your picture at the top right, then Dashboard, Users and +; give it a name and a password, tick the libraries they may watch, and Save. Then tell each person theirs. svrngs is running here already, so they can open it now. `svrngs unshare jellyfin-mw` stops lending it. 
+13:57:54 bo: 
+13:57:57 alex's computer opens the middleware's lend at http://s37xnas7mnc7s3lh210ln02l4twxqdgp0pxw0ck6llk5mfphp28t22m038n775.localhost:52491/
+13:58:16 mw plant-one-user: listening on port 8097, in front of Jellyfin at 127.0.0.1:8096; planted: one-user; users: ["ana", "ben", "sam"]
+13:58:16 sam: Lent jellyfin-mw (port 8097) to everyone in your groups, up to 8 people at once.
+13:58:16 sam is told: jellyfin-mw asks each person to sign in once, with an account you make them. In jellyfin: your picture at the top right, then Dashboard, Users and +; give it a name and a password, tick the libraries they may watch, and Save. Then tell each person theirs. svrngs is running here already, so they can open it now. `svrngs unshare jellyfin-mw` stops lending it. 
+13:58:28 alex's computer opens the middleware's lend at http://s37xnas7mnc7s3lh210ln02l4twxqdgp0pxw0ck6llk5mfphp28t22m038n775.localhost:55509/
+13:58:32 bo's computer opens the middleware's lend at http://s37xnas7mnc7s3lh210ln02l4twxqdgp0pxw0ck6llk5mfphp28t22m038n775.localhost:56033/
+failed          each a user of their own: Alex everyone-eeeeeeeeeeeeeeee (3dd4e24f727a4999a60e7304ece196f6), made by the first ask [('everyone-eeeeeeeeeeeeeeee', '3dd4e24f727a4999a60e7304ece196f6')]; Bo everyone-eeeeeeeeeeeeeeee (3dd4e24f727a4999a60e7304ece196f6), made by the first ask []
+passed          a second ask makes none: made by the second asks: Alex [], Bo []
+failed          each person's own device: Jellyfin's sessions by user: {'Alex': [], 'Bo': []}
+passed          neither receives the lender's key: found: {'Alex': [], 'Bo': []}, in {'Alex': 76509, 'Bo': 76508} bytes
+passed          no key is refused: 403: "This port answers only what svrngs's door forwards: the request names no person: it carries no x-svrngs-key.\n"
+passed          carried: Alex: body sent 204, range {'status': 206, 'bytes': 65536}, page {'status': 200, 'bytes': 5441}, socket {'status': 101, 'first_frame': '{"MessageId":"87cc0c1310314b589df46283685bf93d","Data":60,"MessageType":"ForceKeepAlive"}'}; Bo: body sent 204, range {'status': 206, 'bytes': 65536}, page {'status': 200, 'bytes': 5441}, socket {'status': 101, 'first_frame': '{"MessageId":"94b410e8494a4097bdb38e61ee3847d0","Data":60,"MessageType":"ForceKeepAlive"}'}
+recorded        another person's key at the middleware's port: {'status': None, 'user': "never-ran: Alex's key is not in the middleware's log"}
+13:58:58 mw plant-one-user: listening on port 8097, in front of Jellyfin at 127.0.0.1:8096; planted: one-user; users: ["ana", "ben", "sam"]
+failed          each a user of their own: Alex everyone-eeeeeeeeeeeeeeee (99c5d349c20947929b500eeca480fff2), made by the first ask [('everyone-eeeeeeeeeeeeeeee', '99c5d349c20947929b500eeca480fff2')]; Bo everyone-eeeeeeeeeeeeeeee (99c5d349c20947929b500eeca480fff2), made by the first ask []
+passed          a second ask makes none: made by the second asks: Alex [], Bo []
+failed          each person's own device: Jellyfin's sessions by user: {'Alex': ['mw1-alex', 'mw1-bo'], 'Bo': ['mw1-alex', 'mw1-bo']}
+passed          neither receives the lender's key: found: {'Alex': [], 'Bo': []}, in {'Alex': 76507, 'Bo': 76509} bytes
+passed          no key is refused: 403: "This port answers only what svrngs's door forwards: the request names no person: it carries no x-svrngs-key.\n"
+passed          carried: Alex: body sent 204, range {'status': 206, 'bytes': 65536}, page {'status': 200, 'bytes': 5441}, socket {'status': 101, 'first_frame': '{"MessageId":"e472d420f3d6467bae600c0fcca34373","Data":60,"MessageType":"ForceKeepAlive"}'}; Bo: body sent 204, range {'status': 206, 'bytes': 65536}, page {'status': 200, 'bytes': 5441}, socket {'status': 101, 'first_frame': '{"MessageId":"65cf850af3a8476aa3fb9d22746dd989","Data":60,"MessageType":"ForceKeepAlive"}'}
+recorded        another person's key at the middleware's port: {'status': None, 'user': "never-ran: Alex's key is not in the middleware's log"}
+13:59:06 mw plant-let-keyless: listening on port 8097, in front of Jellyfin at 127.0.0.1:8096; planted: let-keyless; users: ["ana", "ben", "sam"]
+passed          each a user of their own: Alex Alex-24e2646f6325dcc3 (65131b55833d48d8a996f301d0bdaf37), made by the first ask [('Alex-24e2646f6325dcc3', '65131b55833d48d8a996f301d0bdaf37')]; Bo Bo-82fe24fec739be58 (697084f0ca52416596be617078413227), made by the first ask [('Bo-82fe24fec739be58', '697084f0ca52416596be617078413227')]
+passed          a second ask makes none: made by the second asks: Alex [], Bo []
+passed          each person's own device: Jellyfin's sessions by user: {'Alex': ['mw1-alex'], 'Bo': ['mw1-bo']}
+passed          neither receives the lender's key: found: {'Alex': [], 'Bo': []}, in {'Alex': 76500, 'Bo': 76496} bytes
+failed          no key is refused: 200: '{"Name":"everyone-eeeeeeeeeeeeeeee","ServerId":"cb6395c236a34731b48949fabbe69db8","Id":"f5e475e7c6e64f39a34eff5c8d016827'
+passed          carried: Alex: body sent 204, range {'status': 206, 'bytes': 65536}, page {'status': 200, 'bytes': 5441}, socket {'status': 101, 'first_frame': '{"MessageId":"4152774b66054945b150fe06992e6c42","Data":60,"MessageType":"ForceKeepAlive"}'}; Bo: body sent 204, range {'status': 206, 'bytes': 65536}, page {'status': 200, 'bytes': 5441}, socket {'status': 101, 'first_frame': '{"MessageId":"f41cb647f2614791b67f70b5c8c541cd","Data":60,"MessageType":"ForceKeepAlive"}'}
+recorded        another person's key at the middleware's port: {'status': 200, 'user': 'Alex-24e2646f6325dcc3'}
+13:59:15 mw green: listening on port 8097, in front of Jellyfin at 127.0.0.1:8096; users: ["ana", "ben", "sam"]
+passed          each a user of their own: Alex Alex-24e2646f6325dcc3 (1b7f1a75ef994c51b99cb953cc559d01), made by the first ask [('Alex-24e2646f6325dcc3', '1b7f1a75ef994c51b99cb953cc559d01')]; Bo Bo-82fe24fec739be58 (a3316d0d245842d98397f9e26c069b7d), made by the first ask [('Bo-82fe24fec739be58', 'a3316d0d245842d98397f9e26c069b7d')]
+passed          a second ask makes none: made by the second asks: Alex [], Bo []
+passed          each person's own device: Jellyfin's sessions by user: {'Alex': ['mw1-alex'], 'Bo': ['mw1-bo']}
+passed          neither receives the lender's key: found: {'Alex': [], 'Bo': []}, in {'Alex': 76499, 'Bo': 76496} bytes
+passed          no key is refused: 403: "This port answers only what svrngs's door forwards: the request names no person: it carries no x-svrngs-key.\n"
+passed          carried: Alex: body sent 204, range {'status': 206, 'bytes': 65536}, page {'status': 200, 'bytes': 5441}, socket {'status': 101, 'first_frame': '{"MessageId":"21dace6b655e45f19dd6c1fed9c03628","Data":60,"MessageType":"ForceKeepAlive"}'}; Bo: body sent 204, range {'status': 206, 'bytes': 65536}, page {'status': 200, 'bytes': 5441}, socket {'status': 101, 'first_frame': '{"MessageId":"fe7d811b1ec149958a8899218f20b78d","Data":60,"MessageType":"ForceKeepAlive"}'}
+recorded        another person's key at the middleware's port: {'status': 200, 'user': 'Alex-24e2646f6325dcc3'}

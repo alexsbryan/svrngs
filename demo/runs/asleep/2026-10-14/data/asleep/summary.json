@@ -1,0 +1,202 @@
+{
+ "n0": {
+  "https://usw1-1.relay.n0.iroh.link/": true,
+  "https://use1-1.relay.n0.iroh.link/": true,
+  "https://euc1-1.relay.n0.iroh.link/": true,
+  "https://aps1-1.relay.n0.iroh.link/": true
+ },
+ "cy_join": {
+  "ms": 2852,
+  "status": "You’re in house, as Cy"
+ },
+ "setup": {
+  "label": "maaqvprvmbhk2zj2sr71jl7b0u80bwjabqnc5xk8dfu4wj94pwma7chbcckjpb",
+  "phone_first": {
+   "ms": 1805,
+   "answered_ms": 854,
+   "status": null,
+   "refused": null,
+   "url": "http://maaqvprvmbhk2zj2sr71jl7b0u80bwjabqnc5xk8dfu4wj94pwma7chbcckjpb.localhost:57363/",
+   "text": "probe here",
+   "shown": true
+  },
+  "bo_first": 200
+ },
+ "rounds": [
+  {
+   "mode": "stopped",
+   "round": 1,
+   "bo": {
+    "status": 502,
+    "refused": "away",
+    "ms": 30008,
+    "shown": false,
+    "said": "{\"error\":\"the computer that lends this did not answer; try again later\",\"kind\":\"away\"}"
+   },
+   "cy": {
+    "ms": 30058,
+    "answered_ms": 30041,
+    "status": 502,
+    "refused": "away",
+    "url": "http://maaqvprvmbhk2zj2sr71jl7b0u80bwjabqnc5xk8dfu4wj94pwma7chbcckjpb.localhost:57363/?open=2",
+    "text": "The computer lending this did not answer. Try again later.",
+    "shown": false,
+    "dials": [
+     {
+      "ms": 30012,
+      "ok": false,
+      "line": "LAYER tls/alpn+relay-hop: REFUSED — connect() failed: timed out"
+     }
+    ]
+   },
+   "both_s": 30.1,
+   "woke_ms": 30359
+  },
+  {
+   "mode": "stopped",
+   "round": 2,
+   "bo": {
+    "status": 502,
+    "refused": "away",
+    "ms": 30007,
+    "shown": false,
+    "said": "{\"error\":\"the computer that lends this did not answer; try again later\",\"kind\":\"away\"}"
+   },
+   "cy": {
+    "ms": 30053,
+    "answered_ms": 30036,
+    "status": 502,
+    "refused": "away",
+    "url": "http://maaqvprvmbhk2zj2sr71jl7b0u80bwjabqnc5xk8dfu4wj94pwma7chbcckjpb.localhost:57363/?open=4",
+    "text": "The computer lending this did not answer. Try again later.",
+    "shown": false,
+    "dials": [
+     {
+      "ms": 30007,
+      "ok": false,
+      "line": "LAYER tls/alpn+relay-hop: REFUSED — connect() failed: timed out"
+     }
+    ]
+   },
+   "both_s": 30.1,
+   "woke_ms": 30382
+  },
+  {
+   "mode": "stopped",
+   "round": 3,
+   "bo": {
+    "status": 502,
+    "refused": "away",
+    "ms": 30005,
+    "shown": false,
+    "said": "{\"error\":\"the computer that lends this did not answer; try again later\",\"kind\":\"away\"}"
+   },
+   "cy": {
+    "ms": 30048,
+    "answered_ms": 30026,
+    "status": 502,
+    "refused": "away",
+    "url": "http://maaqvprvmbhk2zj2sr71jl7b0u80bwjabqnc5xk8dfu4wj94pwma7chbcckjpb.localhost:57363/?open=6",
+    "text": "The computer lending this did not answer. Try again later.",
+    "shown": false,
+    "dials": [
+     {
+      "ms": 30007,
+      "ok": false,
+      "line": "LAYER tls/alpn+relay-hop: REFUSED — connect() failed: timed out"
+     }
+    ]
+   },
+   "both_s": 30.0,
+   "woke_ms": 30374
+  },
+  {
+   "mode": "frozen",
+   "round": 1,
+   "bo": {
+    "status": 502,
+    "refused": "away",
+    "ms": 30006,
+    "shown": false,
+    "said": "{\"error\":\"the computer that lends this did not answer; try again later\",\"kind\":\"away\"}"
+   },
+   "cy": {
+    "ms": 60074,
+    "answered_ms": 60055,
+    "status": 502,
+    "refused": "away",
+    "url": "http://maaqvprvmbhk2zj2sr71jl7b0u80bwjabqnc5xk8dfu4wj94pwma7chbcckjpb.localhost:57363/?open=8",
+    "text": "The computer lending this did not answer. Try again later.",
+    "shown": false,
+    "dials": [
+     {
+      "ms": 30008,
+      "ok": false,
+      "line": "LAYER tls/alpn+relay-hop: REFUSED — connect() failed: timed out"
+     }
+    ]
+   },
+   "both_s": 60.1,
+   "woke_ms": 60078
+  },
+  {
+   "mode": "frozen",
+   "round": 2,
+   "bo": {
+    "status": 502,
+    "refused": "away",
+    "ms": 30005,
+    "shown": false,
+    "said": "{\"error\":\"the computer that lends this did not answer; try again later\",\"kind\":\"away\"}"
+   },
+   "cy": {
+    "ms": 60086,
+    "answered_ms": 60067,
+    "status": 502,
+    "refused": "away",
+    "url": "http://maaqvprvmbhk2zj2sr71jl7b0u80bwjabqnc5xk8dfu4wj94pwma7chbcckjpb.localhost:57363/?open=10",
+    "text": "The computer lending this did not answer. Try again later.",
+    "shown": false,
+    "dials": [
+     {
+      "ms": 30011,
+      "ok": false,
+      "line": "LAYER tls/alpn+relay-hop: REFUSED — connect() failed: timed out"
+     }
+    ]
+   },
+   "both_s": 60.1,
+   "woke_ms": 60089
+  },
+  {
+   "mode": "frozen",
+   "round": 3,
+   "bo": {
+    "status": 502,
+    "refused": "away",
+    "ms": 30007,
+    "shown": false,
+    "said": "{\"error\":\"the computer that lends this did not answer; try again later\",\"kind\":\"away\"}"
+   },
+   "cy": {
+    "ms": 60220,
+    "answered_ms": 60196,
+    "status": 502,
+    "refused": "away",
+    "url": "http://maaqvprvmbhk2zj2sr71jl7b0u80bwjabqnc5xk8dfu4wj94pwma7chbcckjpb.localhost:57363/?open=12",
+    "text": "The computer lending this did not answer. Try again later.",
+    "shown": false,
+    "dials": [
+     {
+      "ms": 30004,
+      "ok": false,
+      "line": "LAYER tls/alpn+relay-hop: REFUSED — connect() failed: timed out"
+     }
+    ]
+   },
+   "both_s": 60.2,
+   "woke_ms": 60228
+  }
+ ],
+ "end_load": 2.6
+}

@@ -1,0 +1,167 @@
+{
+ "page": {
+  "origin": "http://sapa781hzuf5zhchllgvpkg34l2b1v2a3xzbqrc34cf74z47ga8tra1jd432f8.localhost:64205/",
+  "opened": {
+   "status": 200,
+   "ms": 976
+  },
+  "title": "llama-ui",
+  "text": "Hello there\n\nType a message or upload files to get started\n\nOpen prompt picker\nOpen resource picker\nAdd files, prompts, tools or MCP Servers\nQwen/Qwen2.5\n0.5B\nInstruct\nSend",
+  "asked": [
+   {
+    "path": "/",
+    "status": 200
+   },
+   {
+    "path": "/_app/immutable/assets/bundle.D7LDmMTE.css",
+    "status": 200
+   },
+   {
+    "path": "/_app/immutable/bundle.CtedIcFq.js",
+    "status": 200
+   },
+   {
+    "path": "/tools",
+    "status": 403
+   },
+   {
+    "path": "/_app/version.json",
+    "status": 200
+   },
+   {
+    "path": "/build.json",
+    "status": 200
+   },
+   {
+    "path": "/props",
+    "status": 200
+   },
+   {
+    "path": "/props",
+    "status": 200
+   },
+   {
+    "path": "/v1/models",
+    "status": 200
+   },
+   {
+    "path": "/props",
+    "status": 200
+   }
+  ],
+  "errors": []
+ },
+ "whole": {
+  "straight": {
+   "statuses": [
+    200
+   ],
+   "median_ms": 72.9,
+   "each_ms": [
+    294.0,
+    72.9,
+    73.5,
+    72.7,
+    72.6
+   ]
+  },
+  "lent": {
+   "statuses": [
+    200
+   ],
+   "median_ms": 75.8,
+   "each_ms": [
+    75.3,
+    75.9,
+    76.8,
+    75.8,
+    74.6
+   ]
+  },
+  "lent_body": {
+   "choices": [
+    {
+     "finish_reason": "stop",
+     "index": 0,
+     "message": {
+      "role": "assistant",
+      "content": "Three rivers in Spain are the Garonne, the Garza, and the Guadalquivir."
+     }
+    }
+   ],
+   "created": 1791770827,
+   "model": "Qwen/Qwen2.5-0.5B-Instruct-GGUF:Q4_K_M",
+   "system_fingerprint": "b10180-11b068d06",
+   "object": "chat.completion",
+   "usage": {
+    "completion_tokens": 21,
+    "prompt_tokens": 35,
+    "total_tokens": 56,
+    "prompt_tokens_details": {
+     "cached_tokens": 34
+    }
+   },
+   "id": "chatcmpl-f4QsBz5mlESQOSDxe2NNAC7qRTTw7dyG",
+   "timings": {
+    "cache_n": 34,
+    "prompt_n": 1,
+    "prompt_ms": 4.074,
+    "prompt_per_token_ms": 4.074,
+    "prompt_per_second": 245.4590083456063,
+    "predicted_n": 21,
+    "predicted_ms": 64.994,
+    "predicted_per_token_ms": 3.094952380952381,
+    "predicted_per_second": 323.1067483152291
+   }
+  }
+ },
+ "streamed": {
+  "straight": {
+   "statuses": [
+    200
+   ],
+   "events": [
+    23,
+    23,
+    23,
+    23,
+    23
+   ],
+   "first_ms_median": 6.4,
+   "span_ms_median": 65.4
+  },
+  "lent": {
+   "statuses": [
+    200
+   ],
+   "events": [
+    23,
+    23,
+    23,
+    23,
+    23
+   ],
+   "first_ms_median": 9.5,
+   "span_ms_median": 66.2
+  }
+ },
+ "slots": {
+  "straight": 200,
+  "lent": {
+   "status": 403,
+   "ms": 2.5,
+   "body": {
+    "error": "llama is lent without /slots",
+    "kind": "path"
+   }
+  }
+ },
+ "end": {
+  "load": [
+   11.26416015625,
+   17.55908203125,
+   19.9970703125
+  ],
+  "cores": 12
+ }
+}

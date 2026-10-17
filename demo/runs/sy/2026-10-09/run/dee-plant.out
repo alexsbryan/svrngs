@@ -1,0 +1,8 @@
+
+running 1 test
+SY-DEE {"answer":"open after 5s","ask":"member-connection"}
+SY-DEE {"answer":{"bytes":163,"ops":null,"status":403},"ask":"record"}
+SY-DEE {"answer":{"payload":65536},"ask":"bytes"}
+.
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.82s
+

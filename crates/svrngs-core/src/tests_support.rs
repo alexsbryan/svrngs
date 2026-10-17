@@ -144,28 +144,15 @@ pub fn forged(
     prev: Option<OpId>,
     act: RailAct,
 ) -> Op<SignedOp> {
-    struct Impostor<'a> {
-        signs: &'a SigningKey,
-        claims: String,
-    }
-    impl RingSigner for Impostor<'_> {
-        fn actor(&self) -> String {
-            self.claims.clone()
-        }
-        fn sign(&self, id: &OpId) -> String {
-            self.signs.sign(id)
-        }
-    }
-    let impostor = Impostor {
-        signs,
-        claims: actor_of(claims),
-    };
-    sign_act(&impostor, NS, ts, seq, prev, act, None, None)
+    let mut line = sign_act(claims, NS, ts, seq, prev, act, None, None);
+    line.kind.sig = sign_ring_op(signs, &line.id);
+    line
 }
 
-/// An id no act here derives: `fill` repeated over 32 bytes.
+/// An id no act here derives: `fill` repeated over 32 bytes, read as a
+/// line's id is.
 pub fn stray_id(fill: u8) -> OpId {
-    OpId::from_hex(&format!("{fill:02x}").repeat(32)).unwrap()
+    serde_json::from_value(serde_json::Value::String(format!("{fill:02x}").repeat(32))).unwrap()
 }
 
 /// Each op beside its id, for a function that takes ids its caller derived.
@@ -188,25 +175,50 @@ pub fn wire_ops(a: &Admission) -> Vec<crate::AdmittedOp> {
         .expect("an app reads back what the wire carries")
 }
 
+/// Every op `ops` holds that `theirs` says the peer is missing:
+/// [`ops_missing_from_within`] with no budget, the honest TOTAL a test
+/// measures. (Moved here from `sync.rs` in lean-3: nothing but tests asked
+/// for it, and everything that puts ops on a wire uses the budgeted form.)
+pub fn ops_missing_from(
+    ops: &[Op<SignedOp>],
+    namespace: &str,
+    verifier: &dyn RingVerifier,
+    theirs: &Digest,
+) -> Vec<Op<SignedOp>> {
+    ops_missing_from_within(ops, namespace, verifier, theirs, NO_BUDGET).0
+}
+
 /// The marks projection of a digest — what most sync bars assert on. The
 /// content commitment is asserted where it is the point (`view`'s tests and
 /// the fork bars); everywhere else the mark is the claim under test.
 pub fn marks(d: &crate::Digest) -> BTreeMap<String, u64> {
-    d.iter()
-        .map(|(actor, view)| (actor.clone(), view.mark))
+    entries(d)
+        .into_iter()
+        .map(|(actor, view)| (actor, view.mark))
         .collect()
+}
+
+/// A digest's `{actor → View}`, read as a peer reads it: through the wire,
+/// so the digest keeps its map to itself.
+pub fn entries(d: &crate::Digest) -> BTreeMap<String, crate::View> {
+    let mut wire = serde_json::to_value(d).expect("a digest serialises");
+    serde_json::from_value(wire["entries"].take()).expect("a digest's entries read back")
 }
 
 /// The `what` of every act an app's reducer would see, in order — the shape
 /// most of these tests assert on.
+/// Whether `key(k)` stands in the register `a` folds.
+pub fn standing(a: &Admission, k: u8) -> bool {
+    a.membership().standing.contains(&actor_of(&key(k)))
+}
+
 pub fn applied(a: &Admission) -> Vec<String> {
     a.ops()
         .iter()
         .filter(|o| o.applies())
         .filter_map(|o| {
-            o.payload
-                .as_ref()?
-                .as_value()
+            serde_json::to_value(o.payload.as_ref()?)
+                .ok()?
                 .get("what")?
                 .as_str()
                 .map(str::to_string)
@@ -281,5 +293,40 @@ impl crate::Command for Batch {
 
     fn decide(&self, _before: &Admission) -> Result<Vec<RailAct>, Self::Refusal> {
         Ok(self.0.clone())
+    }
+}
+
+// Op::new ported from commonwealth-ai oplog-types/src/lib.rs@e1a43bcd2, out of op.rs
+// so the budget counts no test code.
+impl<K: crate::Journaled> crate::Op<K> {
+    /// Build an op, deriving its content-addressed [`OpId`] from the
+    /// (prefix, ts, actor, body) tuple.
+    ///
+    /// svrngs: test-only, so no production path can build a ring act whose id
+    /// hashes the line, signature included — a ring act's id is
+    /// [`crate::act_id`]'s (U2). The journal's own tests build envelopes of
+    /// other kinds with it.
+    ///
+    /// Two byte-identical acts at the same second by the same actor collide by
+    /// design — callers append in real time, so this does not arise in
+    /// practice (the same birthday-bound caveat the atom content-hash ids
+    /// carry).
+    pub fn new(kind: K, ts_unix: i64, actor: impl Into<String>) -> Self {
+        let actor = actor.into();
+        // serde_json writes fields in declaration order, so the body string —
+        // and therefore the id — is deterministic across runs and builds. A
+        // kind failing to serialise is unreachable; silent `""` would derive
+        // an id over empty bytes (ROOT_CAUSE_FIXES C4).
+        let body = serde_json::to_string(&kind)
+            .expect("a kind serialises — an id over empty bytes is the named catastrophe");
+        let input = alloc::format!("{}|{ts_unix}|{actor}|{body}", K::ID_PREFIX);
+        let v = kind.line_version();
+        Self {
+            id: OpId::from_hash(ContentHash::of_str(&input)),
+            v,
+            ts_unix,
+            actor,
+            kind,
+        }
     }
 }

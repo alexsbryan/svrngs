@@ -104,15 +104,14 @@ fn an_unknown_digest_version_is_a_named_refusal() {
     assert!(err.to_string().contains("unrecognised"), "{err}");
 
     // And v2 round-trips.
-    let mut d = Digest::new();
-    d.insert(
-        "a".into(),
+    let d = Digest::from(BTreeMap::from([(
+        "a".to_string(),
         View {
             from: 0,
             mark: 0,
             head: "h".into(),
         },
-    );
+    )]));
     let wire = serde_json::to_value(&d).unwrap();
     assert_eq!(wire["v"], 2);
     assert_eq!(serde_json::from_value::<Digest>(wire).unwrap(), d);

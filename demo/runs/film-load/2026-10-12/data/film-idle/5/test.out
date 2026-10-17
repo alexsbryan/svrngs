@@ -1,0 +1,11 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.75s
+     Running tests/browser/main.rs (target/debug/deps/browser-78ee271d255dd1a7)
+
+running 2 tests
+the runtime's run: {"first":{"at":0.270546,"ms":271},"listed":["ada’s page (k)","cy’s shelf (k)","cy’s strict (k)"],"logs":"205 lines","openEnded":{"bytes":262144,"contentRange":"bytes 1000000-1262143/16777216","sha":"a39cd544ac0701601e5e02097fd1fd81afd42f8f3b41c391a45dd1c6e7b598ab","status":206},"opened":"http://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.localhost:63083/","other":{"bytes":4194304,"contentRange":"bytes 1000000-5194303/16777216","sha":"d7713cc9f6ebc3a72b5261f6c7310dbe4dd9f0e69bb750ae1bb570da7a215ee9","status":206},"refusals":[{"path":"x","refused":null,"status":403},{"path":"private/x","refused":"path","status":403}],"reopened":null,"replayed":null,"runs":["running","stopping","stopped","starting","running"],"runsAtStop":["running","stopping","stopped"],"seeks":[{"at":40.260568,"ms":280},{"at":20.257886,"ms":347},{"at":52.257602,"ms":614}]}
+test a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself::chromium ... ok
+the runtime's run: {"first":{"at":0.2721587082848586,"ms":873},"listed":["ada’s page (k)","cy’s shelf (k)","cy’s strict (k)"],"logs":"23 lines","openEnded":{"bytes":262144,"contentRange":"bytes 1000000-1262143/16777216","sha":"a39cd544ac0701601e5e02097fd1fd81afd42f8f3b41c391a45dd1c6e7b598ab","status":206},"opened":"http://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.localhost:63082/","other":{"bytes":4194304,"contentRange":"bytes 1000000-5194303/16777216","sha":"d7713cc9f6ebc3a72b5261f6c7310dbe4dd9f0e69bb750ae1bb570da7a215ee9","status":206},"refusals":[{"path":"x","refused":null,"status":403},{"path":"private/x","refused":"path","status":403}],"reopened":"http://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.localhost:63082/","replayed":{"at":0.2693539582936466,"ms":616},"runs":[],"runsAtStop":[],"seeks":[{"at":40.26635791701619,"ms":329},{"at":20.258064999997966,"ms":263},{"at":52.253470560172694,"ms":301}]}
+test a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself::webkit ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 34 filtered out; finished in 16.41s
+

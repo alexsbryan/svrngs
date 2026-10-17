@@ -4,14 +4,15 @@
 //! process, no relay.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
-use svrngs::cli::{self, Printed, Refusal, Verb, LINK_LIFE_SECS};
+use svrngs::cli::{self, Printed, Refusal, Verb};
 use svrngs::group::{self, Name};
-use svrngs::issuer;
+use svrngs_node::invite::{kept_page, LINK_LIFE_SECS};
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
+use svrngs_node::join as issuer;
 use svrngs_node::link::{Link, Origin, CLIENT_PREFIX};
 use svrngs_node::node::Node;
 use svrngs_node::register::Standing;
-use svrngs_node::{actor_of, derive_id, Ed25519Verifier, OpId, RailAct, SigningKey};
+use svrngs_node::{actor_of, derive_id, OpId, RailAct, SigningKey};
 
 /// The lines a group's journal holds on disk, as written.
 fn lines(node: &Node, group: &str) -> Vec<svrngs_node::Op<svrngs_node::SignedOp>> {
@@ -29,7 +30,11 @@ fn lines(node: &Node, group: &str) -> Vec<svrngs_node::Op<svrngs_node::SignedOp>
 }
 
 fn no_relay() -> RelayConfig {
-    RelayConfig::from_parts(Vec::new(), Some("none")).unwrap()
+    RelayConfig {
+        relay_urls: Vec::new(),
+        n0_services: false,
+        loopback_only: false,
+    }
 }
 
 async fn start(dir: &tempfile::TempDir) -> Node {
@@ -60,7 +65,7 @@ fn invites(node: &Node, id: &str) -> Vec<(String, i64, OpId)> {
     let ops = lines(node, id);
     ops.into_iter()
         .filter_map(|op| match &op.kind.act {
-            RailAct::Invite { key, until } => Some((key.clone(), *until, derive_id(&op, id))),
+            RailAct::Invite { key, until, .. } => Some((key.clone(), *until, derive_id(&op, id))),
             _ => None,
         })
         .collect()
@@ -80,9 +85,10 @@ async fn new_twice_with_one_name_makes_two_groups_with_two_ids() {
         .as_secs() as i64;
     let mut ids = Vec::new();
     for _ in 0..2 {
-        let (seed, printed) = cli::new_group(&node, name("house"), name("Sam"), None, &no_relay())
-            .await
-            .expect("new makes a group");
+        let (seed, printed) =
+            cli::new_group(&node, name("house"), name("Sam"), None, None, &no_relay())
+                .await
+                .expect("new makes a group");
         let id = seed.id();
         eprintln!(
             "new: a client's link, {} characters: {}",
@@ -110,8 +116,7 @@ async fn new_twice_with_one_name_makes_two_groups_with_two_ids() {
             (invites[0].1 - now - LINK_LIFE_SECS).abs() <= 5,
             "it lapses in a day"
         );
-        let Standing::Members(standing) = node.rail().standing(&id, &Ed25519Verifier).unwrap()
-        else {
+        let Standing::Members(standing) = node.rail().standing(&id).unwrap() else {
             panic!("the group is held and seeded")
         };
         assert_eq!(
@@ -136,10 +141,10 @@ async fn new_twice_with_one_name_makes_two_groups_with_two_ids() {
 async fn link_mints_a_new_link_to_the_group_it_names() {
     let dir = tempfile::tempdir().unwrap();
     let node = start(&dir).await;
-    let (house, first) = cli::new_group(&node, name("House"), name("Sam"), None, &no_relay())
+    let (house, first) = cli::new_group(&node, name("House"), name("Sam"), None, None, &no_relay())
         .await
         .unwrap();
-    let (again, second) = cli::new_link(&node, "house", None, &no_relay())
+    let (again, second, _) = cli::link_to(&node, "house", None, &no_relay(), false)
         .await
         .unwrap();
     assert_eq!(again, house);
@@ -151,17 +156,17 @@ async fn link_mints_a_new_link_to_the_group_it_names() {
     assert_eq!(keys, [key_of(&first), key_of(&second)]);
 
     assert!(matches!(
-        cli::new_link(&node, "work", None, &no_relay()).await,
+        cli::link_to(&node, "work", None, &no_relay(), false).await,
         Err(Refusal::NoGroup(_))
     ));
-    let (other, _) = cli::new_group(&node, name("house"), name("Sam"), None, &no_relay())
+    let (other, _) = cli::new_group(&node, name("house"), name("Sam"), None, None, &no_relay())
         .await
         .unwrap();
     assert!(matches!(
-        cli::new_link(&node, "house", None, &no_relay()).await,
+        cli::link_to(&node, "house", None, &no_relay(), false).await,
         Err(Refusal::Ambiguous { .. })
     ));
-    let (picked, _) = cli::new_link(&node, &other.id()[..8], None, &no_relay())
+    let (picked, _, _) = cli::link_to(&node, &other.id()[..8], None, &no_relay(), false)
         .await
         .unwrap();
     assert_eq!(picked, other);
@@ -181,24 +186,31 @@ async fn a_group_keeps_the_origin_its_links_print_on() {
         p.https.clone().unwrap_or_default()
     };
     let x = Origin::parse("https://x.example/").unwrap();
-    let (house, first) = cli::new_group(&node, name("house"), name("Sam"), Some(&x), &no_relay())
-        .await
-        .unwrap();
+    let (house, first) = cli::new_group(
+        &node,
+        name("house"),
+        name("Sam"),
+        Some(&x),
+        None,
+        &no_relay(),
+    )
+    .await
+    .unwrap();
     assert!(https(&first).starts_with("https://x.example/#"), "{first}");
-    let (_, later) = cli::new_link(&node, "house", None, &no_relay())
+    let (_, later, _) = cli::link_to(&node, "house", None, &no_relay(), false)
         .await
         .unwrap();
     assert!(https(&later).starts_with("https://x.example/#"), "{later}");
 
     let y = Origin::parse("https://y.example/ours/").unwrap();
-    let (_, moved) = cli::new_link(&node, "house", Some(&y), &no_relay())
+    let (_, moved, _) = cli::link_to(&node, "house", Some(&y), &no_relay(), false)
         .await
         .unwrap();
     assert!(
         https(&moved).starts_with("https://y.example/ours/#"),
         "{moved}"
     );
-    let (_, after) = cli::new_link(&node, "house", None, &no_relay())
+    let (_, after, _) = cli::link_to(&node, "house", None, &no_relay(), false)
         .await
         .unwrap();
     assert!(
@@ -206,11 +218,11 @@ async fn a_group_keeps_the_origin_its_links_print_on() {
         "{after}"
     );
 
-    let (work, plain) = cli::new_group(&node, name("work"), name("Sam"), None, &no_relay())
+    let (work, plain) = cli::new_group(&node, name("work"), name("Sam"), None, None, &no_relay())
         .await
         .unwrap();
     assert_eq!(https(&plain), "", "no origin, no https link: {plain}");
-    let (_, again) = cli::new_link(&node, "work", None, &no_relay())
+    let (_, again, _) = cli::link_to(&node, "work", None, &no_relay(), false)
         .await
         .unwrap();
     assert_eq!(https(&again), "", "{again}");
@@ -218,7 +230,7 @@ async fn a_group_keeps_the_origin_its_links_print_on() {
     // A group whose kept origin is gone prints the client's link alone.
     let kept = node.rail().group_dir(&house.id()).unwrap().join("origin");
     std::fs::remove_file(&kept).unwrap();
-    let (_, gone) = cli::new_link(&node, "house", None, &no_relay())
+    let (_, gone, _) = cli::link_to(&node, "house", None, &no_relay(), false)
         .await
         .unwrap();
     assert_eq!(https(&gone), "", "{gone}");
@@ -226,23 +238,61 @@ async fn a_group_keeps_the_origin_its_links_print_on() {
     assert_eq!(invites(&node, &work.id()).len(), 2);
 }
 
-/// A link carries a relay only from a computer without address lookup,
-/// which finds a bare key otherwise: its home relay, or the first one
-/// configured while it reports none, read without the root's dot (u4-9,
-/// svrngs_node::relay); with neither, the key alone.
+/// A link carries its issuer's home relay, with address lookup or without
+/// it (relay-park (c)), so a phone's page, which asks no lookup, opens it:
+/// its home relay, or the first one configured while it reports none, read
+/// without the root's dot (u4-9, svrngs_node::relay); with neither, the key
+/// alone. Planted: the key alone from a computer with lookup, as before.
 #[test]
-fn a_link_carries_the_relay_only_without_lookup() {
+fn a_link_carries_its_issuer_s_relay_with_lookup_or_without() {
     let ours: RelayUrl = "https://relay.example./".parse().unwrap();
     let home: RelayUrl = "https://home.example./".parse().unwrap();
-    let lookup = RelayConfig::from_parts(vec![ours.to_string()], None).unwrap();
-    assert_eq!(cli::link_relay(&lookup, Some(home.clone())), None);
-    assert_eq!(cli::link_relay(&RelayConfig::default(), None), None);
-    let without = RelayConfig::from_parts(vec![ours.to_string()], Some("none")).unwrap();
-    assert_eq!(cli::link_relay(&without, Some(home.clone())), Some(home));
     let dotless: RelayUrl = "https://relay.example/".parse().unwrap();
     assert_ne!(ours, dotless, "control: the operator wrote the dot");
-    assert_eq!(cli::link_relay(&without, None), Some(dotless));
-    assert_eq!(cli::link_relay(&no_relay(), None), None);
+    for n0_services in [true, false] {
+        let relay = RelayConfig {
+            relay_urls: vec![ours.to_string()],
+            n0_services,
+            loopback_only: false,
+        };
+        let said = format!("n0_services {n0_services}");
+        let carried = svrngs_node::invite::carried(&relay, Some(home.clone()));
+        assert_eq!(carried, Some(home.clone()), "{said}: its home relay");
+        let carried = svrngs_node::invite::carried(&relay, None);
+        assert_eq!(
+            carried,
+            Some(dotless.clone()),
+            "{said}: the first configured"
+        );
+    }
+    assert_eq!(
+        svrngs_node::invite::carried(&RelayConfig::default(), None),
+        None
+    );
+    assert_eq!(svrngs_node::invite::carried(&no_relay(), None), None);
+}
+
+/// A joiner keeps the relay its link carried, where it meets the group —
+/// at n0's, unless it is one of n0's, where the issuer's build met its
+/// groups and not the group's own, so none outlasts the operator's switch
+/// (relay-park (c)). At svrngs's every relay is kept, as before. Planted:
+/// every relay kept.
+#[test]
+fn a_joiner_at_n0_s_keeps_its_link_s_relay_unless_it_is_n0_s() {
+    let own: RelayUrl = "https://relay.example/".parse().unwrap();
+    let n0: Vec<RelayUrl> = svrngs_node::relay::n0_relays().urls();
+    assert_eq!(n0.len(), 4, "control: n0's four, {n0:?}");
+    for at_n0 in [true, false] {
+        assert_eq!(
+            group::kept_relay(Some(own.clone()), at_n0),
+            Some(own.clone())
+        );
+        assert_eq!(group::kept_relay(None, at_n0), None);
+    }
+    for url in n0 {
+        assert_eq!(group::kept_relay(Some(url.clone()), true), None, "{url}");
+        assert_eq!(group::kept_relay(Some(url.clone()), false), Some(url));
+    }
 }
 
 /// One svrngs per data dir: a second claim is refused while the first is
@@ -256,24 +306,24 @@ fn a_second_svrngs_on_one_data_dir_is_refused() {
     cli::claim(dir.path()).expect("free again");
 }
 
-/// A group's seed or origin that cannot be read is named, never read as
-/// none kept (ARCH 6): none kept is only no file there. Each is planted as
-/// a directory, which no read opens.
+/// A group's seed or origin that cannot be read is refused, never read as
+/// none kept (ARCH 6): none kept is only no file there (#20). Each is
+/// planted as a directory, which no read opens; the seed's refusal names
+/// its file. The origin is asked of `kept_page`, the reader every caller
+/// runs, each saying its own refusal.
 #[test]
-fn an_unreadable_seed_or_origin_refuses_naming_its_file() {
+fn an_unreadable_seed_or_origin_is_refused_never_none() {
     let dir = tempfile::tempdir().unwrap();
     assert!(matches!(group::read_seed(dir.path()), Ok(None)));
-    assert!(matches!(group::read_origin(dir.path()), Ok(None)));
+    assert!(matches!(kept_page(dir.path()), Ok(None)));
     for file in ["seed.json", "origin"] {
         std::fs::create_dir(dir.path().join(file)).unwrap();
     }
-    for (file, read) in [
-        ("seed.json", group::read_seed(dir.path()).map(|_| ())),
-        ("origin", group::read_origin(dir.path()).map(|_| ())),
-    ] {
-        let refused = read.expect_err(file).to_string();
-        assert!(refused.contains(file), "{refused}");
-    }
+    let refused = group::read_seed(dir.path())
+        .expect_err("seed.json")
+        .to_string();
+    assert!(refused.contains("seed.json"), "{refused}");
+    kept_page(dir.path()).expect_err("an origin that cannot be read is refused");
 }
 
 fn argv(s: &str) -> Vec<String> {
@@ -291,20 +341,52 @@ fn the_verbs_parse() {
             name: name("house"),
             person: Some(name("Sam")),
             origin: None,
+            relay: None,
         }
     );
+    // --relay: the group's own, a name read as its https address
+    // (relay-default (a)).
+    for (typed, url) in [
+        ("relay.example.org", "https://relay.example.org/"),
+        ("https://relay.example.org./", "https://relay.example.org/"),
+        ("http://127.0.0.1:3340", "http://127.0.0.1:3340/"),
+    ] {
+        let Verb::New { relay, .. } =
+            cli::parse(argv(&format!("new house --relay {typed}"))).unwrap()
+        else {
+            panic!("new");
+        };
+        assert_eq!(
+            relay.map(|r| r.to_string()).as_deref(),
+            Some(url),
+            "{typed}"
+        );
+    }
+    assert!(cli::parse(argv("new house --relay ::")).is_err());
+    assert!(cli::parse(argv("join x --relay relay.example.org")).is_err());
     assert_eq!(
         cli::parse(argv("link house --origin https://links.example.org/")).unwrap(),
         Verb::Link {
             group: "house".into(),
             origin: Some(Origin::parse("https://links.example.org/").unwrap()),
+            device: false,
         }
+    );
+    assert_eq!(
+        cli::parse(argv("link house --device")).unwrap(),
+        Verb::Link {
+            group: "house".into(),
+            origin: None,
+            device: true,
+        },
+        "--device: a link for another device of yours (bash-devices)"
     );
     assert_eq!(
         cli::parse(argv("link house")).unwrap(),
         Verb::Link {
             group: "house".into(),
             origin: None,
+            device: false,
         },
         "no --origin is the group's own, not the default"
     );
@@ -502,9 +584,16 @@ async fn a_page_origin_says_where_its_apps_open_or_is_refused() {
 
     let dir = tempfile::tempdir().unwrap();
     let node = start(&dir).await;
-    let (_, own) = cli::new_group(&node, name("house"), name("Sam"), Some(&ours), &no_relay())
-        .await
-        .unwrap();
+    let (_, own) = cli::new_group(
+        &node,
+        name("house"),
+        name("Sam"),
+        Some(&ours),
+        None,
+        &no_relay(),
+    )
+    .await
+    .unwrap();
     let https = own.https.clone().unwrap();
     assert!(
         https.starts_with(&format!("{}#", ours.as_str())) && !https.contains('~'),
@@ -516,7 +605,7 @@ async fn a_page_origin_says_where_its_apps_open_or_is_refused() {
         )),
         "{own}"
     );
-    let (_, again) = cli::new_link(&node, "house", None, &no_relay())
+    let (_, again, _) = cli::link_to(&node, "house", None, &no_relay(), false)
         .await
         .unwrap();
     assert!(
@@ -555,7 +644,8 @@ fn room_names_lends_and_says_who_can_open_them() {
         assert!(cli::parse(argv(wrong)).is_err(), "{wrong}");
     }
     let offered = serde_json::from_value(serde_json::json!({
-        "name": "jellyfin", "kind": "jellyfin", "limit": 3, "using": 0, "upload_bps": null
+        "name": "jellyfin", "kind": "jellyfin", "limit": 3, "using": 0, "upload_bps": null,
+        "reads": [], "signs_in": false
     }))
     .unwrap();
     let lent = svrngs_node::node::Lent {

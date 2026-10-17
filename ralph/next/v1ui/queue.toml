@@ -1,0 +1,20 @@
+# svrngs v1ui — the v1 UI build: the phone reaching whoever's awake, the door and the index, lending from the page, Money and Events in one tap, and its run (operator, 2026-10-14; svrn-docs rings/current/V1_UI_BUILD.md). Launch, from anywhere, once the events queue is done (one loop per tree):
+#
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py supervise --workdir ~/dev/svrngs \
+#     --queue v1ui --install-launchd -- python3 ~/dev/commonwealth-ai/scripts/ralph.py \
+#     run --workdir ~/dev/svrngs --queue v1ui --max-stall 3
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py start --workdir ~/dev/svrngs --queue v1ui
+#
+# The plist the first command writes carries no CARGO_INCREMENTAL=0; add it
+# under EnvironmentVariables after any reinstall (the host's disk is shared).
+label = "svrngs-v1ui"
+session_timeout = 5400
+audit_every = 4
+worker_bin = "/Users/alexsbryan/dev/commonwealth-ai/scripts/ralph-claude-shim.sh"
+settings = "ralph/claude-settings.json"
+
+[models]
+worker = "claude-opus-5-5"
+review = "claude-opus-5-5"
+resolve = "claude-opus-5-5"
+variant = "high"

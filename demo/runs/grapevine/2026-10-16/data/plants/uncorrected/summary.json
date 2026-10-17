@@ -1,0 +1,1553 @@
+{
+ "jo_join": {
+  "said": "You're in 1400 Page, as Jo.",
+  "ms": 4298
+ },
+ "kim_join": {
+  "said": "You're in Waller block, as Kim.",
+  "ms": 3979
+ },
+ "town": {
+  "sam": {
+   "1400 Page": "Sam"
+  },
+  "jo": {
+   "Waller block": "Jo",
+   "1400 Page": "Jo"
+  },
+  "kim": {
+   "Waller block": "Kim"
+  }
+ },
+ "groups": {
+  "1400 Page": "c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae",
+  "Waller block": "8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935"
+ },
+ "at": {
+  "sam": "http://127.0.0.1:58412/",
+  "jo": "http://127.0.0.1:58413/",
+  "kim": "http://127.0.0.1:58415/"
+ },
+ "start_s": 19.8,
+ "t0": 1792186938.983165,
+ "t6": 1792186954.407666,
+ "scene_s": 82.5,
+ "ok": true,
+ "copies": [
+  {
+   "computer": "sam",
+   "group": "c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae",
+   "log": {
+    "complete": true,
+    "gaps": [],
+    "held": 9,
+    "namespace": "c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae",
+    "ops": [
+     {
+      "actor": "efbc52b99101d350a5028039d8e6e14ee3c555edc6fbf2ea96cd6b95b3758656",
+      "id": "da5fac753e39f535c9d641c527b67b4a10d5b163b552c0ebeabbc6032ec9817b",
+      "person": "Sam",
+      "seq": 0,
+      "ts_unix": 1792186925,
+      "voided": false
+     },
+     {
+      "actor": "efbc52b99101d350a5028039d8e6e14ee3c555edc6fbf2ea96cd6b95b3758656",
+      "id": "960d5e84b8755aad41ed5f05e1a7768bc74f20cba3bcbb8c1c4cdf84feb30575",
+      "person": "Sam",
+      "seq": 1,
+      "ts_unix": 1792186926,
+      "voided": false
+     },
+     {
+      "actor": "efbc52b99101d350a5028039d8e6e14ee3c555edc6fbf2ea96cd6b95b3758656",
+      "id": "0bab21cc0a5b5ecced68e2f55c3c72ee50c70bc8f8721ae97f54907649743bc9",
+      "person": "Sam",
+      "seq": 2,
+      "ts_unix": 1792186929,
+      "voided": false
+     },
+     {
+      "actor": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c",
+      "id": "bb366c32563673354f19bb3c1545e76ad09b9114e0aeccb6478cb093d009af3d",
+      "person": "Jo",
+      "seq": 0,
+      "ts_unix": 1792186930,
+      "voided": false
+     },
+     {
+      "actor": "efbc52b99101d350a5028039d8e6e14ee3c555edc6fbf2ea96cd6b95b3758656",
+      "id": "60a62137302e7587778514b34f9e305ccc49ba8bda8c2985c8645d552a36bc35",
+      "on_behalf_of": "Sam",
+      "payload": {
+       "app": "grapevine",
+       "expires": 1792825199,
+       "fields": {
+        "what": "tile saw",
+        "when": "Saturday"
+       },
+       "handle": "J6l8/YOsuSjggRroajDNuA==",
+       "hops": 1,
+       "kind": "tool",
+       "name": "withheld",
+       "seal_to": "uyhONTkzr/szizrnmLubrzcCxYTxFuKvqYWamB/QuwI=",
+       "type": "ask"
+      },
+      "person": "Sam",
+      "seq": 3,
+      "ts_unix": 1792186939,
+      "voided": true
+     },
+     {
+      "actor": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c",
+      "id": "cf62e9132fd1a31a7715bfef2caac8227a040f69efb787a01559d792e5fbcb9d",
+      "on_behalf_of": "Jo",
+      "payload": {
+       "app": "grapevine",
+       "box": "0lFxsQKB7lVYG8vNLMT7n6Xx5x7NQ5cZNcCvbqqteNt9Bi6pdKDr//MC00xXtShxFeyGo4IWp9O/ZTna0Mld4Fx8crgYxTeq5KRvTa2EgU+1qSOlSd9HRWO8Ptxzpnwa",
+       "dir": "up",
+       "from": "RSImOHA5ZZW+/uJ9YUnHsfR99chMS8iirvOdxqdXHzk=",
+       "handle": "J6l8/YOsuSjggRroajDNuA==",
+       "nonce": "ImErueHmdlMY8KGQPcidOkUT41D+NFqv",
+       "to": "uyhONTkzr/szizrnmLubrzcCxYTxFuKvqYWamB/QuwI=",
+       "type": "msg"
+      },
+      "person": "Jo",
+      "seq": 1,
+      "ts_unix": 1792186943,
+      "voided": false
+     },
+     {
+      "actor": "efbc52b99101d350a5028039d8e6e14ee3c555edc6fbf2ea96cd6b95b3758656",
+      "id": "b06fd59ed46436639829c5fb1170d1f60f17ebe7c79ec9d7454ca8f25edb5637",
+      "on_behalf_of": "Sam",
+      "payload": {
+       "app": "grapevine",
+       "box": "oR4vP/BWBld1mQW+BZVQxjmP10LymGu8aWUIm0eD5rUwNmUahHwyksE9gBaTnHkS",
+       "dir": "down",
+       "from": "uyhONTkzr/szizrnmLubrzcCxYTxFuKvqYWamB/QuwI=",
+       "handle": "J6l8/YOsuSjggRroajDNuA==",
+       "nonce": "bcrvZFSR5/4nmWFmeXgaZwSV2z6XfH/M",
+       "to": "RSImOHA5ZZW+/uJ9YUnHsfR99chMS8iirvOdxqdXHzk=",
+       "type": "msg"
+      },
+      "person": "Sam",
+      "seq": 4,
+      "ts_unix": 1792186946,
+      "voided": false
+     },
+     {
+      "actor": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c",
+      "id": "46286aa3d9b6df23497a6317019992661e4a6b67cbf559ac82f42032c54f5681",
+      "on_behalf_of": "Jo",
+      "payload": {
+       "app": "grapevine",
+       "box": "PIUES9t0k98hxBzjDt8r8ENmzcCN9+coqBxOkvBH/ToUM0hfdUPgfilu3nNzKJMUCA==",
+       "dir": "up",
+       "from": "RSImOHA5ZZW+/uJ9YUnHsfR99chMS8iirvOdxqdXHzk=",
+       "handle": "J6l8/YOsuSjggRroajDNuA==",
+       "nonce": "Avjj2E6rYOixo5JA2G++MC/9MtmNg2dY",
+       "to": "uyhONTkzr/szizrnmLubrzcCxYTxFuKvqYWamB/QuwI=",
+       "type": "msg"
+      },
+      "person": "Jo",
+      "seq": 2,
+      "ts_unix": 1792186953,
+      "voided": false
+     },
+     {
+      "actor": "efbc52b99101d350a5028039d8e6e14ee3c555edc6fbf2ea96cd6b95b3758656",
+      "corrects": "60a62137302e7587778514b34f9e305ccc49ba8bda8c2985c8645d552a36bc35",
+      "id": "27e97e492f94b1ebf9489513c754a62854149c0604890626ef92ed00037d1b99",
+      "on_behalf_of": "Sam",
+      "person": "Sam",
+      "seq": 5,
+      "ts_unix": 1792186954,
+      "voided": false
+     }
+    ],
+    "people": [
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792186929
+      },
+      "key": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c",
+      "person": "Jo",
+      "person_key": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c"
+     },
+     {
+      "device": "computer",
+      "joined": "started",
+      "key": "efbc52b99101d350a5028039d8e6e14ee3c555edc6fbf2ea96cd6b95b3758656",
+      "person": "Sam",
+      "person_key": "efbc52b99101d350a5028039d8e6e14ee3c555edc6fbf2ea96cd6b95b3758656"
+     }
+    ]
+   }
+  },
+  {
+   "computer": "jo",
+   "group": "c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae",
+   "log": {
+    "complete": true,
+    "gaps": [],
+    "held": 9,
+    "namespace": "c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae",
+    "ops": [
+     {
+      "actor": "efbc52b99101d350a5028039d8e6e14ee3c555edc6fbf2ea96cd6b95b3758656",
+      "id": "da5fac753e39f535c9d641c527b67b4a10d5b163b552c0ebeabbc6032ec9817b",
+      "person": "Sam",
+      "seq": 0,
+      "ts_unix": 1792186925,
+      "voided": false
+     },
+     {
+      "actor": "efbc52b99101d350a5028039d8e6e14ee3c555edc6fbf2ea96cd6b95b3758656",
+      "id": "960d5e84b8755aad41ed5f05e1a7768bc74f20cba3bcbb8c1c4cdf84feb30575",
+      "person": "Sam",
+      "seq": 1,
+      "ts_unix": 1792186926,
+      "voided": false
+     },
+     {
+      "actor": "efbc52b99101d350a5028039d8e6e14ee3c555edc6fbf2ea96cd6b95b3758656",
+      "id": "0bab21cc0a5b5ecced68e2f55c3c72ee50c70bc8f8721ae97f54907649743bc9",
+      "person": "Sam",
+      "seq": 2,
+      "ts_unix": 1792186929,
+      "voided": false
+     },
+     {
+      "actor": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c",
+      "id": "bb366c32563673354f19bb3c1545e76ad09b9114e0aeccb6478cb093d009af3d",
+      "person": "Jo",
+      "seq": 0,
+      "ts_unix": 1792186930,
+      "voided": false
+     },
+     {
+      "actor": "efbc52b99101d350a5028039d8e6e14ee3c555edc6fbf2ea96cd6b95b3758656",
+      "id": "60a62137302e7587778514b34f9e305ccc49ba8bda8c2985c8645d552a36bc35",
+      "on_behalf_of": "Sam",
+      "payload": {
+       "app": "grapevine",
+       "expires": 1792825199,
+       "fields": {
+        "what": "tile saw",
+        "when": "Saturday"
+       },
+       "handle": "J6l8/YOsuSjggRroajDNuA==",
+       "hops": 1,
+       "kind": "tool",
+       "name": "withheld",
+       "seal_to": "uyhONTkzr/szizrnmLubrzcCxYTxFuKvqYWamB/QuwI=",
+       "type": "ask"
+      },
+      "person": "Sam",
+      "seq": 3,
+      "ts_unix": 1792186939,
+      "voided": true
+     },
+     {
+      "actor": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c",
+      "id": "cf62e9132fd1a31a7715bfef2caac8227a040f69efb787a01559d792e5fbcb9d",
+      "on_behalf_of": "Jo",
+      "payload": {
+       "app": "grapevine",
+       "box": "0lFxsQKB7lVYG8vNLMT7n6Xx5x7NQ5cZNcCvbqqteNt9Bi6pdKDr//MC00xXtShxFeyGo4IWp9O/ZTna0Mld4Fx8crgYxTeq5KRvTa2EgU+1qSOlSd9HRWO8Ptxzpnwa",
+       "dir": "up",
+       "from": "RSImOHA5ZZW+/uJ9YUnHsfR99chMS8iirvOdxqdXHzk=",
+       "handle": "J6l8/YOsuSjggRroajDNuA==",
+       "nonce": "ImErueHmdlMY8KGQPcidOkUT41D+NFqv",
+       "to": "uyhONTkzr/szizrnmLubrzcCxYTxFuKvqYWamB/QuwI=",
+       "type": "msg"
+      },
+      "person": "Jo",
+      "seq": 1,
+      "ts_unix": 1792186943,
+      "voided": false
+     },
+     {
+      "actor": "efbc52b99101d350a5028039d8e6e14ee3c555edc6fbf2ea96cd6b95b3758656",
+      "id": "b06fd59ed46436639829c5fb1170d1f60f17ebe7c79ec9d7454ca8f25edb5637",
+      "on_behalf_of": "Sam",
+      "payload": {
+       "app": "grapevine",
+       "box": "oR4vP/BWBld1mQW+BZVQxjmP10LymGu8aWUIm0eD5rUwNmUahHwyksE9gBaTnHkS",
+       "dir": "down",
+       "from": "uyhONTkzr/szizrnmLubrzcCxYTxFuKvqYWamB/QuwI=",
+       "handle": "J6l8/YOsuSjggRroajDNuA==",
+       "nonce": "bcrvZFSR5/4nmWFmeXgaZwSV2z6XfH/M",
+       "to": "RSImOHA5ZZW+/uJ9YUnHsfR99chMS8iirvOdxqdXHzk=",
+       "type": "msg"
+      },
+      "person": "Sam",
+      "seq": 4,
+      "ts_unix": 1792186946,
+      "voided": false
+     },
+     {
+      "actor": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c",
+      "id": "46286aa3d9b6df23497a6317019992661e4a6b67cbf559ac82f42032c54f5681",
+      "on_behalf_of": "Jo",
+      "payload": {
+       "app": "grapevine",
+       "box": "PIUES9t0k98hxBzjDt8r8ENmzcCN9+coqBxOkvBH/ToUM0hfdUPgfilu3nNzKJMUCA==",
+       "dir": "up",
+       "from": "RSImOHA5ZZW+/uJ9YUnHsfR99chMS8iirvOdxqdXHzk=",
+       "handle": "J6l8/YOsuSjggRroajDNuA==",
+       "nonce": "Avjj2E6rYOixo5JA2G++MC/9MtmNg2dY",
+       "to": "uyhONTkzr/szizrnmLubrzcCxYTxFuKvqYWamB/QuwI=",
+       "type": "msg"
+      },
+      "person": "Jo",
+      "seq": 2,
+      "ts_unix": 1792186953,
+      "voided": false
+     },
+     {
+      "actor": "efbc52b99101d350a5028039d8e6e14ee3c555edc6fbf2ea96cd6b95b3758656",
+      "corrects": "60a62137302e7587778514b34f9e305ccc49ba8bda8c2985c8645d552a36bc35",
+      "id": "27e97e492f94b1ebf9489513c754a62854149c0604890626ef92ed00037d1b99",
+      "on_behalf_of": "Sam",
+      "person": "Sam",
+      "seq": 5,
+      "ts_unix": 1792186954,
+      "voided": false
+     }
+    ],
+    "people": [
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792186929
+      },
+      "key": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c",
+      "person": "Jo",
+      "person_key": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c"
+     },
+     {
+      "device": "computer",
+      "joined": "started",
+      "key": "efbc52b99101d350a5028039d8e6e14ee3c555edc6fbf2ea96cd6b95b3758656",
+      "person": "Sam",
+      "person_key": "efbc52b99101d350a5028039d8e6e14ee3c555edc6fbf2ea96cd6b95b3758656"
+     }
+    ]
+   }
+  },
+  {
+   "computer": "jo",
+   "group": "8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935",
+   "log": {
+    "complete": true,
+    "gaps": [],
+    "held": 9,
+    "namespace": "8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935",
+    "ops": [
+     {
+      "actor": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c",
+      "id": "c664ff6038328ed533d5bef1699fd5bc5af0424ed385921b4f00cbc831a0c683",
+      "person": "Jo",
+      "seq": 0,
+      "ts_unix": 1792186933,
+      "voided": false
+     },
+     {
+      "actor": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c",
+      "id": "694a49cbe2b1ddd945ef2859a6c542fe067ddce7e45b2f3d23144cfd97ad2ab6",
+      "person": "Jo",
+      "seq": 1,
+      "ts_unix": 1792186934,
+      "voided": false
+     },
+     {
+      "actor": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c",
+      "id": "674c724d5da5650b8e08a28fe35f34800c6eecb2b9d8ce53987629720f6cc1ec",
+      "person": "Jo",
+      "seq": 2,
+      "ts_unix": 1792186937,
+      "voided": false
+     },
+     {
+      "actor": "c5df1a896fbf8293e8d97a827c0edaa497f4b1f8492a9409da13abde45c57f80",
+      "id": "54859d6e5173b25cd2bdff7e404ea081bdb1be899b5435eeb4b79bdc655c39e5",
+      "person": "Kim",
+      "seq": 0,
+      "ts_unix": 1792186938,
+      "voided": false
+     },
+     {
+      "actor": "c5df1a896fbf8293e8d97a827c0edaa497f4b1f8492a9409da13abde45c57f80",
+      "id": "2b5dd9be47bcafe457d145e2df4cfbb5c43c4bb3280b559c2259b459273ba75f",
+      "on_behalf_of": "Kim",
+      "payload": {
+       "app": "grapevine-listings",
+       "kind": "tool",
+       "listing": {
+        "what": "tile saw"
+       }
+      },
+      "person": "Kim",
+      "seq": 1,
+      "ts_unix": 1792186939,
+      "voided": false
+     },
+     {
+      "actor": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c",
+      "id": "0eb14e3b27e3d8e074cc643291821daad669ac6b234b6f476e4e835622d66737",
+      "on_behalf_of": "Jo",
+      "payload": {
+       "app": "grapevine",
+       "expires": 1792825199,
+       "fields": {
+        "what": "tile saw",
+        "when": "Saturday"
+       },
+       "handle": "ZI7UDSITfdiU1bOizLdPnA==",
+       "hops": 0,
+       "kind": "tool",
+       "of": "60a62137302e7587778514b34f9e305ccc49ba8bda8c2985c8645d552a36bc35",
+       "seal_to": "uyhONTkzr/szizrnmLubrzcCxYTxFuKvqYWamB/QuwI=",
+       "type": "carry"
+      },
+      "person": "Jo",
+      "seq": 3,
+      "ts_unix": 1792186940,
+      "voided": false
+     },
+     {
+      "actor": "c5df1a896fbf8293e8d97a827c0edaa497f4b1f8492a9409da13abde45c57f80",
+      "id": "35c37e3a40d08fc5b46a40993e1df710aaa60c2d907a07e01605aefaa75b16c7",
+      "on_behalf_of": "Kim",
+      "payload": {
+       "app": "grapevine",
+       "box": "0lFxsQKB7lVYG8vNLMT7n6Xx5x7NQ5cZNcCvbqqteNt9Bi6pdKDr//MC00xXtShxFeyGo4IWp9O/ZTna0Mld4Fx8crgYxTeq5KRvTa2EgU+1qSOlSd9HRWO8Ptxzpnwa",
+       "dir": "up",
+       "from": "RSImOHA5ZZW+/uJ9YUnHsfR99chMS8iirvOdxqdXHzk=",
+       "handle": "ZI7UDSITfdiU1bOizLdPnA==",
+       "nonce": "ImErueHmdlMY8KGQPcidOkUT41D+NFqv",
+       "to": "uyhONTkzr/szizrnmLubrzcCxYTxFuKvqYWamB/QuwI=",
+       "type": "msg"
+      },
+      "person": "Kim",
+      "seq": 2,
+      "ts_unix": 1792186941,
+      "voided": false
+     },
+     {
+      "actor": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c",
+      "id": "d09d2789e7ae8b5c29a888b31ede623592ba50a0c4a21c15b8d6865646db761c",
+      "on_behalf_of": "Jo",
+      "payload": {
+       "app": "grapevine",
+       "box": "oR4vP/BWBld1mQW+BZVQxjmP10LymGu8aWUIm0eD5rUwNmUahHwyksE9gBaTnHkS",
+       "dir": "down",
+       "from": "uyhONTkzr/szizrnmLubrzcCxYTxFuKvqYWamB/QuwI=",
+       "handle": "ZI7UDSITfdiU1bOizLdPnA==",
+       "nonce": "bcrvZFSR5/4nmWFmeXgaZwSV2z6XfH/M",
+       "to": "RSImOHA5ZZW+/uJ9YUnHsfR99chMS8iirvOdxqdXHzk=",
+       "type": "msg"
+      },
+      "person": "Jo",
+      "seq": 4,
+      "ts_unix": 1792186948,
+      "voided": false
+     },
+     {
+      "actor": "c5df1a896fbf8293e8d97a827c0edaa497f4b1f8492a9409da13abde45c57f80",
+      "id": "1c98890717cdf04c6a92553133eedf6b061a2b600d4b764d8d405c4dcf17437a",
+      "on_behalf_of": "Kim",
+      "payload": {
+       "app": "grapevine",
+       "box": "PIUES9t0k98hxBzjDt8r8ENmzcCN9+coqBxOkvBH/ToUM0hfdUPgfilu3nNzKJMUCA==",
+       "dir": "up",
+       "from": "RSImOHA5ZZW+/uJ9YUnHsfR99chMS8iirvOdxqdXHzk=",
+       "handle": "ZI7UDSITfdiU1bOizLdPnA==",
+       "nonce": "Avjj2E6rYOixo5JA2G++MC/9MtmNg2dY",
+       "to": "uyhONTkzr/szizrnmLubrzcCxYTxFuKvqYWamB/QuwI=",
+       "type": "msg"
+      },
+      "person": "Kim",
+      "seq": 3,
+      "ts_unix": 1792186949,
+      "voided": false
+     }
+    ],
+    "people": [
+     {
+      "device": "computer",
+      "joined": "started",
+      "key": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c",
+      "person": "Jo",
+      "person_key": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792186937
+      },
+      "key": "c5df1a896fbf8293e8d97a827c0edaa497f4b1f8492a9409da13abde45c57f80",
+      "person": "Kim",
+      "person_key": "c5df1a896fbf8293e8d97a827c0edaa497f4b1f8492a9409da13abde45c57f80"
+     }
+    ]
+   }
+  },
+  {
+   "computer": "kim",
+   "group": "8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935",
+   "log": {
+    "complete": true,
+    "gaps": [],
+    "held": 9,
+    "namespace": "8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935",
+    "ops": [
+     {
+      "actor": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c",
+      "id": "c664ff6038328ed533d5bef1699fd5bc5af0424ed385921b4f00cbc831a0c683",
+      "person": "Jo",
+      "seq": 0,
+      "ts_unix": 1792186933,
+      "voided": false
+     },
+     {
+      "actor": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c",
+      "id": "694a49cbe2b1ddd945ef2859a6c542fe067ddce7e45b2f3d23144cfd97ad2ab6",
+      "person": "Jo",
+      "seq": 1,
+      "ts_unix": 1792186934,
+      "voided": false
+     },
+     {
+      "actor": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c",
+      "id": "674c724d5da5650b8e08a28fe35f34800c6eecb2b9d8ce53987629720f6cc1ec",
+      "person": "Jo",
+      "seq": 2,
+      "ts_unix": 1792186937,
+      "voided": false
+     },
+     {
+      "actor": "c5df1a896fbf8293e8d97a827c0edaa497f4b1f8492a9409da13abde45c57f80",
+      "id": "54859d6e5173b25cd2bdff7e404ea081bdb1be899b5435eeb4b79bdc655c39e5",
+      "person": "Kim",
+      "seq": 0,
+      "ts_unix": 1792186938,
+      "voided": false
+     },
+     {
+      "actor": "c5df1a896fbf8293e8d97a827c0edaa497f4b1f8492a9409da13abde45c57f80",
+      "id": "2b5dd9be47bcafe457d145e2df4cfbb5c43c4bb3280b559c2259b459273ba75f",
+      "on_behalf_of": "Kim",
+      "payload": {
+       "app": "grapevine-listings",
+       "kind": "tool",
+       "listing": {
+        "what": "tile saw"
+       }
+      },
+      "person": "Kim",
+      "seq": 1,
+      "ts_unix": 1792186939,
+      "voided": false
+     },
+     {
+      "actor": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c",
+      "id": "0eb14e3b27e3d8e074cc643291821daad669ac6b234b6f476e4e835622d66737",
+      "on_behalf_of": "Jo",
+      "payload": {
+       "app": "grapevine",
+       "expires": 1792825199,
+       "fields": {
+        "what": "tile saw",
+        "when": "Saturday"
+       },
+       "handle": "ZI7UDSITfdiU1bOizLdPnA==",
+       "hops": 0,
+       "kind": "tool",
+       "of": "60a62137302e7587778514b34f9e305ccc49ba8bda8c2985c8645d552a36bc35",
+       "seal_to": "uyhONTkzr/szizrnmLubrzcCxYTxFuKvqYWamB/QuwI=",
+       "type": "carry"
+      },
+      "person": "Jo",
+      "seq": 3,
+      "ts_unix": 1792186940,
+      "voided": false
+     },
+     {
+      "actor": "c5df1a896fbf8293e8d97a827c0edaa497f4b1f8492a9409da13abde45c57f80",
+      "id": "35c37e3a40d08fc5b46a40993e1df710aaa60c2d907a07e01605aefaa75b16c7",
+      "on_behalf_of": "Kim",
+      "payload": {
+       "app": "grapevine",
+       "box": "0lFxsQKB7lVYG8vNLMT7n6Xx5x7NQ5cZNcCvbqqteNt9Bi6pdKDr//MC00xXtShxFeyGo4IWp9O/ZTna0Mld4Fx8crgYxTeq5KRvTa2EgU+1qSOlSd9HRWO8Ptxzpnwa",
+       "dir": "up",
+       "from": "RSImOHA5ZZW+/uJ9YUnHsfR99chMS8iirvOdxqdXHzk=",
+       "handle": "ZI7UDSITfdiU1bOizLdPnA==",
+       "nonce": "ImErueHmdlMY8KGQPcidOkUT41D+NFqv",
+       "to": "uyhONTkzr/szizrnmLubrzcCxYTxFuKvqYWamB/QuwI=",
+       "type": "msg"
+      },
+      "person": "Kim",
+      "seq": 2,
+      "ts_unix": 1792186941,
+      "voided": false
+     },
+     {
+      "actor": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c",
+      "id": "d09d2789e7ae8b5c29a888b31ede623592ba50a0c4a21c15b8d6865646db761c",
+      "on_behalf_of": "Jo",
+      "payload": {
+       "app": "grapevine",
+       "box": "oR4vP/BWBld1mQW+BZVQxjmP10LymGu8aWUIm0eD5rUwNmUahHwyksE9gBaTnHkS",
+       "dir": "down",
+       "from": "uyhONTkzr/szizrnmLubrzcCxYTxFuKvqYWamB/QuwI=",
+       "handle": "ZI7UDSITfdiU1bOizLdPnA==",
+       "nonce": "bcrvZFSR5/4nmWFmeXgaZwSV2z6XfH/M",
+       "to": "RSImOHA5ZZW+/uJ9YUnHsfR99chMS8iirvOdxqdXHzk=",
+       "type": "msg"
+      },
+      "person": "Jo",
+      "seq": 4,
+      "ts_unix": 1792186948,
+      "voided": false
+     },
+     {
+      "actor": "c5df1a896fbf8293e8d97a827c0edaa497f4b1f8492a9409da13abde45c57f80",
+      "id": "1c98890717cdf04c6a92553133eedf6b061a2b600d4b764d8d405c4dcf17437a",
+      "on_behalf_of": "Kim",
+      "payload": {
+       "app": "grapevine",
+       "box": "PIUES9t0k98hxBzjDt8r8ENmzcCN9+coqBxOkvBH/ToUM0hfdUPgfilu3nNzKJMUCA==",
+       "dir": "up",
+       "from": "RSImOHA5ZZW+/uJ9YUnHsfR99chMS8iirvOdxqdXHzk=",
+       "handle": "ZI7UDSITfdiU1bOizLdPnA==",
+       "nonce": "Avjj2E6rYOixo5JA2G++MC/9MtmNg2dY",
+       "to": "uyhONTkzr/szizrnmLubrzcCxYTxFuKvqYWamB/QuwI=",
+       "type": "msg"
+      },
+      "person": "Kim",
+      "seq": 3,
+      "ts_unix": 1792186949,
+      "voided": false
+     }
+    ],
+    "people": [
+     {
+      "device": "computer",
+      "joined": "started",
+      "key": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c",
+      "person": "Jo",
+      "person_key": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c"
+     },
+     {
+      "device": "computer",
+      "joined": {
+       "at": 1792186937
+      },
+      "key": "c5df1a896fbf8293e8d97a827c0edaa497f4b1f8492a9409da13abde45c57f80",
+      "person": "Kim",
+      "person_key": "c5df1a896fbf8293e8d97a827c0edaa497f4b1f8492a9409da13abde45c57f80"
+     }
+    ]
+   }
+  }
+ ],
+ "people": {
+  "1400 Page": {
+   "namespace": "c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae",
+   "people": [
+    {
+     "device": "computer",
+     "joined": {
+      "at": 1792186929
+     },
+     "key": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c",
+     "person": "Jo",
+     "person_key": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c"
+    },
+    {
+     "device": "computer",
+     "joined": "started",
+     "key": "efbc52b99101d350a5028039d8e6e14ee3c555edc6fbf2ea96cd6b95b3758656",
+     "person": "Sam",
+     "person_key": "efbc52b99101d350a5028039d8e6e14ee3c555edc6fbf2ea96cd6b95b3758656"
+    }
+   ]
+  },
+  "Waller block": {
+   "namespace": "8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935",
+   "people": [
+    {
+     "device": "computer",
+     "joined": "started",
+     "key": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c",
+     "person": "Jo",
+     "person_key": "63b8834c0df248fdaa46ed6ea5e5a5f27a55bfbce36c4a6846d8cfbd3ba74c1c"
+    },
+    {
+     "device": "computer",
+     "joined": {
+      "at": 1792186937
+     },
+     "key": "c5df1a896fbf8293e8d97a827c0edaa497f4b1f8492a9409da13abde45c57f80",
+     "person": "Kim",
+     "person_key": "c5df1a896fbf8293e8d97a827c0edaa497f4b1f8492a9409da13abde45c57f80"
+    }
+   ]
+  }
+ },
+ "steps": [
+  {
+   "step": "open",
+   "who": "sam",
+   "what": "the page its start line printed",
+   "s": null,
+   "ms": 168,
+   "pressed_ms": null,
+   "met": true,
+   "said": null,
+   "error": null,
+   "reloads": null,
+   "text": "Grapevine\n1400 Page\n\nNothing asked here yet.\n\nYour conversations\n\nNone yet.\n\nAsk your groups\n\nYour name stays with you until you and whoever offers have both said yes.\n\nask\nQuestion  In \n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\ntool\nWhat  When  In \n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nroom\nWhere  From  Nights  For \none person\ntwo people\na family\n In \n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nWhat you have\n\nIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.\n\ntool\nWhat  In \n1400 Page\n List it\nroom\nWhere  Sleeps \none person\ntwo people\na family\n In \n1400 Page\n List it",
+   "all": "Grapevine1400 PageNothing asked here yet.Your conversationsNone yet.Ask your groupsYour name stays with you until you and whoever offers have both said yes.askQuestion In 1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask toolWhat When In 1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask roomWhere From Nights For one persontwo peoplea family In 1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask What you haveIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.toolWhat In 1400 Page List it roomWhere Sleeps one persontwo peoplea family In 1400 Page List it",
+   "not": [],
+   "threads": [],
+   "groups": [
+    "1400 Page"
+   ],
+   "buttons": [
+    "Ask",
+    "Ask",
+    "Ask",
+    "List it",
+    "List it"
+   ]
+  },
+  {
+   "step": "open",
+   "who": "jo",
+   "what": "the page its start line printed",
+   "s": null,
+   "ms": 119,
+   "pressed_ms": null,
+   "met": true,
+   "said": null,
+   "error": null,
+   "reloads": null,
+   "text": "Grapevine\nWaller block\n\nNothing asked here yet.\n\n1400 Page\n\nNothing asked here yet.\n\nYour conversations\n\nNone yet.\n\nAsk your groups\n\nYour name stays with you until you and whoever offers have both said yes.\n\nask\nQuestion  In \nWaller block\n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\ntool\nWhat  When  In \nWaller block\n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nroom\nWhere  From  Nights  For \none person\ntwo people\na family\n In \nWaller block\n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nWhat you have\n\nIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.\n\ntool\nWhat  In \nWaller block\n1400 Page\n List it\nroom\nWhere  Sleeps \none person\ntwo people\na family\n In \nWaller block\n1400 Page\n List it",
+   "all": "GrapevineWaller blockNothing asked here yet.1400 PageNothing asked here yet.Your conversationsNone yet.Ask your groupsYour name stays with you until you and whoever offers have both said yes.askQuestion In Waller block1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask toolWhat When In Waller block1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask roomWhere From Nights For one persontwo peoplea family In Waller block1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask What you haveIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.toolWhat In Waller block1400 Page List it roomWhere Sleeps one persontwo peoplea family In Waller block1400 Page List it",
+   "not": [],
+   "threads": [],
+   "groups": [
+    "Waller block",
+    "1400 Page"
+   ],
+   "buttons": [
+    "Ask",
+    "Ask",
+    "Ask",
+    "List it",
+    "List it"
+   ]
+  },
+  {
+   "step": "open",
+   "who": "kim",
+   "what": "the page its start line printed",
+   "s": null,
+   "ms": 96,
+   "pressed_ms": null,
+   "met": true,
+   "said": null,
+   "error": null,
+   "reloads": null,
+   "text": "Grapevine\nWaller block\n\nNothing asked here yet.\n\nYour conversations\n\nNone yet.\n\nAsk your groups\n\nYour name stays with you until you and whoever offers have both said yes.\n\nask\nQuestion  In \nWaller block\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\ntool\nWhat  When  In \nWaller block\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nroom\nWhere  From  Nights  For \none person\ntwo people\na family\n In \nWaller block\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nWhat you have\n\nIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.\n\ntool\nWhat  In \nWaller block\n List it\nroom\nWhere  Sleeps \none person\ntwo people\na family\n In \nWaller block\n List it",
+   "all": "GrapevineWaller blockNothing asked here yet.Your conversationsNone yet.Ask your groupsYour name stays with you until you and whoever offers have both said yes.askQuestion In Waller block How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask toolWhat When In Waller block How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask roomWhere From Nights For one persontwo peoplea family In Waller block How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask What you haveIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.toolWhat In Waller block List it roomWhere Sleeps one persontwo peoplea family In Waller block List it",
+   "not": [],
+   "threads": [],
+   "groups": [
+    "Waller block"
+   ],
+   "buttons": [
+    "Ask",
+    "Ask",
+    "Ask",
+    "List it",
+    "List it"
+   ]
+  },
+  {
+   "step": 0,
+   "who": "kim",
+   "what": "Kim lists a tile saw in Waller block",
+   "s": null,
+   "ms": 649,
+   "pressed_ms": 108,
+   "met": true,
+   "said": null,
+   "error": null,
+   "reloads": null,
+   "text": "Grapevine\nWaller block\n\nNothing asked here yet.\n\nYour conversations\n\nNone yet.\n\nAsk your groups\n\nYour name stays with you until you and whoever offers have both said yes.\n\nask\nQuestion  In \nWaller block\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\ntool\nWhat  When  In \nWaller block\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nroom\nWhere  From  Nights  For \none person\ntwo people\na family\n In \nWaller block\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nWhat you have\n\nIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.\n\ntool\nWhat  In \nWaller block\n List it\nroom\nWhere  Sleeps \none person\ntwo people\na family\n In \nWaller block\n List it",
+   "all": "GrapevineWaller blockNothing asked here yet.Your conversationsNone yet.Ask your groupsYour name stays with you until you and whoever offers have both said yes.askQuestion In Waller block How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask toolWhat When In Waller block How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask roomWhere From Nights For one persontwo peoplea family In Waller block How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask What you haveIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.toolWhat In Waller block List it roomWhere Sleeps one persontwo peoplea family In Waller block List it",
+   "not": [],
+   "threads": [],
+   "groups": [
+    "Waller block"
+   ],
+   "buttons": [
+    "Ask",
+    "Ask",
+    "Ask",
+    "List it",
+    "List it"
+   ]
+  },
+  {
+   "step": 1,
+   "who": "sam",
+   "what": "Sam asks in 1400 Page for a tile saw, Saturday, one ring away",
+   "s": 0.296,
+   "ms": 295,
+   "pressed_ms": 126,
+   "met": true,
+   "said": null,
+   "error": null,
+   "reloads": null,
+   "text": "Grapevine\n1400 Page\n\nYou asked: tile saw, Saturday\n\nUntil Fri 23 Oct.\n\nTake it back\nWhere it can’t go\nYour conversations\n\nNone yet.\n\nAsk your groups\n\nYour name stays with you until you and whoever offers have both said yes.\n\nask\nQuestion  In \n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\ntool\nWhat  When  In \n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nroom\nWhere  From  Nights  For \none person\ntwo people\na family\n In \n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nWhat you have\n\nIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.\n\ntool\nWhat  In \n1400 Page\n List it\nroom\nWhere  Sleeps \none person\ntwo people\na family\n In \n1400 Page\n List it",
+   "all": "Grapevine1400 PageYou asked: tile saw, SaturdayUntil Fri 23 Oct. Take it back Where it can’t go1400 Page: 1400 Page already has itYour conversationsNone yet.Ask your groupsYour name stays with you until you and whoever offers have both said yes.askQuestion In 1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask toolWhat When In 1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask roomWhere From Nights For one persontwo peoplea family In 1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask What you haveIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.toolWhat In 1400 Page List it roomWhere Sleeps one persontwo peoplea family In 1400 Page List it",
+   "not": [
+    "1400 Page: 1400 Page already has it"
+   ],
+   "threads": [],
+   "groups": [
+    "1400 Page"
+   ],
+   "buttons": [
+    "Take it back",
+    "Ask",
+    "Ask",
+    "Ask",
+    "List it",
+    "List it"
+   ]
+  },
+  {
+   "step": 2,
+   "who": "jo",
+   "what": "Jo's page shows Carry to Waller block",
+   "s": 0.857,
+   "ms": 561,
+   "pressed_ms": null,
+   "met": true,
+   "said": null,
+   "error": null,
+   "reloads": 1,
+   "text": "Grapevine\nWaller block\n\nNothing asked here yet.\n\n1400 Page\n\nSam asks: tile saw, Saturday\n\nUntil Fri 23 Oct.\n\nWhen  Where  Offer\nCarry to Waller block\n\nEveryone in Waller block will see what was asked, and that you carried it; never who asked.\n\nWhere it can’t go\nYour conversations\n\nNone yet.\n\nAsk your groups\n\nYour name stays with you until you and whoever offers have both said yes.\n\nask\nQuestion  In \nWaller block\n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\ntool\nWhat  When  In \nWaller block\n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nroom\nWhere  From  Nights  For \none person\ntwo people\na family\n In \nWaller block\n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nWhat you have\n\nIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.\n\ntool\nWhat  In \nWaller block\n1400 Page\n List it\nroom\nWhere  Sleeps \none person\ntwo people\na family\n In \nWaller block\n1400 Page\n List it",
+   "all": "GrapevineWaller blockNothing asked here yet.1400 PageSam asks: tile saw, SaturdayUntil Fri 23 Oct.When Where Offer Carry to Waller block Everyone in Waller block will see what was asked, and that you carried it; never who asked.Where it can’t go1400 Page: 1400 Page already has itYour conversationsNone yet.Ask your groupsYour name stays with you until you and whoever offers have both said yes.askQuestion In Waller block1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask toolWhat When In Waller block1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask roomWhere From Nights For one persontwo peoplea family In Waller block1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask What you haveIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.toolWhat In Waller block1400 Page List it roomWhere Sleeps one persontwo peoplea family In Waller block1400 Page List it",
+   "not": [
+    "1400 Page: 1400 Page already has it"
+   ],
+   "threads": [],
+   "groups": [
+    "Waller block",
+    "1400 Page"
+   ],
+   "buttons": [
+    "Offer",
+    "Carry to Waller block",
+    "Ask",
+    "Ask",
+    "Ask",
+    "List it",
+    "List it"
+   ]
+  },
+  {
+   "step": 2,
+   "who": "jo",
+   "what": "Jo carries it",
+   "s": 0.982,
+   "ms": 123,
+   "pressed_ms": 80,
+   "met": true,
+   "said": null,
+   "error": null,
+   "reloads": null,
+   "text": "Grapevine\nWaller block\n\nYou carried: tile saw, Saturday\n\nWhat you can do with it is under 1400 Page.\n\n1400 Page\n\nSam asks: tile saw, Saturday\n\nUntil Fri 23 Oct. Also in Waller block.\n\nWhen  Where  Offer\nWhere it can’t go\nYour conversations\n\nYou carried “tile saw, Saturday” from 1400 Page to Waller block. You pass on what’s said, and can’t read it.\n\nNothing has gone by yet.\n\nEveryone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says.\n\nAsk your groups\n\nYour name stays with you until you and whoever offers have both said yes.\n\nask\nQuestion  In \nWaller block\n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\ntool\nWhat  When  In \nWaller block\n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nroom\nWhere  From  Nights  For \none person\ntwo people\na family\n In \nWaller block\n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nWhat you have\n\nIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.\n\ntool\nWhat  In \nWaller block\n1400 Page\n List it\nroom\nWhere  Sleeps \none person\ntwo people\na family\n In \nWaller block\n1400 Page\n List it",
+   "all": "GrapevineWaller blockYou carried: tile saw, SaturdayWhat you can do with it is under 1400 Page.1400 PageSam asks: tile saw, SaturdayUntil Fri 23 Oct. Also in Waller block.When Where Offer Where it can’t goWaller block: Waller block already has it1400 Page: 1400 Page already has itYour conversationsYou carried “tile saw, Saturday” from 1400 Page to Waller block. You pass on what’s said, and can’t read it.Nothing has gone by yet.Everyone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says.Ask your groupsYour name stays with you until you and whoever offers have both said yes.askQuestion In Waller block1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask toolWhat When In Waller block1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask roomWhere From Nights For one persontwo peoplea family In Waller block1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask What you haveIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.toolWhat In Waller block1400 Page List it roomWhere Sleeps one persontwo peoplea family In Waller block1400 Page List it",
+   "not": [
+    "Waller block: Waller block already has it",
+    "1400 Page: 1400 Page already has it"
+   ],
+   "threads": [
+    {
+     "role": "carrier",
+     "text": "You carried “tile saw, Saturday” from 1400 Page to Waller block. You pass on what’s said, and can’t read it.\n\nNothing has gone by yet.\n\nEveryone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says."
+    }
+   ],
+   "groups": [
+    "Waller block",
+    "1400 Page"
+   ],
+   "buttons": [
+    "Offer",
+    "Ask",
+    "Ask",
+    "Ask",
+    "List it",
+    "List it"
+   ]
+  },
+  {
+   "step": 3,
+   "who": "kim",
+   "what": "Kim's page: carried by Jo, you might have this",
+   "s": 1.525,
+   "ms": 541,
+   "pressed_ms": null,
+   "met": true,
+   "said": null,
+   "error": null,
+   "reloads": 1,
+   "text": "Grapevine\nWaller block\n\nA neighbour of Jo’s needs: tile saw, Saturday — carried by Jo\n\nUntil Fri 23 Oct.\n\nYou might have this.\n\nWhen  Where  Offer\nWhere it can’t go\nYour conversations\n\nNone yet.\n\nAsk your groups\n\nYour name stays with you until you and whoever offers have both said yes.\n\nask\nQuestion  In \nWaller block\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\ntool\nWhat  When  In \nWaller block\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nroom\nWhere  From  Nights  For \none person\ntwo people\na family\n In \nWaller block\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nWhat you have\n\nIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.\n\ntool\nWhat  In \nWaller block\n List it\nroom\nWhere  Sleeps \none person\ntwo people\na family\n In \nWaller block\n List it",
+   "all": "GrapevineWaller blockA neighbour of Jo’s needs: tile saw, Saturday — carried by JoUntil Fri 23 Oct.You might have this.When Where Offer Where it can’t goWaller block: Waller block already has itYour conversationsNone yet.Ask your groupsYour name stays with you until you and whoever offers have both said yes.askQuestion In Waller block How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask toolWhat When In Waller block How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask roomWhere From Nights For one persontwo peoplea family In Waller block How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask What you haveIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.toolWhat In Waller block List it roomWhere Sleeps one persontwo peoplea family In Waller block List it",
+   "not": [
+    "Waller block: Waller block already has it"
+   ],
+   "threads": [],
+   "groups": [
+    "Waller block"
+   ],
+   "buttons": [
+    "Offer",
+    "Ask",
+    "Ask",
+    "Ask",
+    "List it",
+    "List it"
+   ]
+  },
+  {
+   "step": 3,
+   "who": "kim",
+   "what": "Kim offers",
+   "s": 1.67,
+   "ms": 144,
+   "pressed_ms": 119,
+   "met": true,
+   "said": null,
+   "error": null,
+   "reloads": null,
+   "text": "Grapevine\nWaller block\n\nA neighbour of Jo’s needs: tile saw, Saturday — carried by Jo\n\nUntil Fri 23 Oct.\n\nYou might have this.\n\nWhere it can’t go\nYour conversations\n\nAbout “tile saw, Saturday”, which you offered to help with.\n\nSealed: only you two can read this.\n\nYou offered: when Saturday morning; where Waller and Pierce, Fri 16 Oct, 14:42.\n\nIt goes through Jo’s computer, which passes it on while it’s on.\n\nYour name, which they’ll see once you’ve both said yes  Yes\nNo thanks\n\nEveryone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says.\n\nAsk your groups\n\nYour name stays with you until you and whoever offers have both said yes.\n\nask\nQuestion  In \nWaller block\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\ntool\nWhat  When  In \nWaller block\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nroom\nWhere  From  Nights  For \none person\ntwo people\na family\n In \nWaller block\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nWhat you have\n\nIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.\n\ntool\nWhat  In \nWaller block\n List it\nroom\nWhere  Sleeps \none person\ntwo people\na family\n In \nWaller block\n List it",
+   "all": "GrapevineWaller blockA neighbour of Jo’s needs: tile saw, Saturday — carried by JoUntil Fri 23 Oct.You might have this.Where it can’t goWaller block: Waller block already has itYour conversationsAbout “tile saw, Saturday”, which you offered to help with.Sealed: only you two can read this.You offered: when Saturday morning; where Waller and Pierce, Fri 16 Oct, 14:42.It goes through Jo’s computer, which passes it on while it’s on.Your name, which they’ll see once you’ve both said yes Yes No thanks Everyone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says.Ask your groupsYour name stays with you until you and whoever offers have both said yes.askQuestion In Waller block How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask toolWhat When In Waller block How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask roomWhere From Nights For one persontwo peoplea family In Waller block How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask What you haveIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.toolWhat In Waller block List it roomWhere Sleeps one persontwo peoplea family In Waller block List it",
+   "not": [
+    "Waller block: Waller block already has it"
+   ],
+   "threads": [
+    {
+     "role": "replier",
+     "text": "About “tile saw, Saturday”, which you offered to help with.\n\nSealed: only you two can read this.\n\nYou offered: when Saturday morning; where Waller and Pierce, Fri 16 Oct, 14:42.\n\nIt goes through Jo’s computer, which passes it on while it’s on.\n\nYour name, which they’ll see once you’ve both said yes  Yes\nNo thanks\n\nEveryone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says."
+    }
+   ],
+   "groups": [
+    "Waller block"
+   ],
+   "buttons": [
+    "Yes",
+    "No thanks",
+    "Ask",
+    "Ask",
+    "Ask",
+    "List it",
+    "List it"
+   ]
+  },
+  {
+   "step": 4,
+   "who": "sam",
+   "what": "Sam's page shows the offer",
+   "s": 5.467,
+   "ms": 3795,
+   "pressed_ms": null,
+   "met": true,
+   "said": null,
+   "error": null,
+   "reloads": 4,
+   "text": "Grapevine\n1400 Page\n\nYou asked: tile saw, Saturday\n\nUntil Fri 23 Oct.\n\nTake it back\nWhere it can’t go\nYour conversations\n\nAbout your ask “tile saw, Saturday”.\n\nSealed: only you two can read this.\n\nSomeone who saw it offered: when Saturday morning; where Waller and Pierce, Fri 16 Oct, 14:42.\nYour name, which they’ll see once you’ve both said yes  Yes\nNo thanks\n\nEveryone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says.\n\nAsk your groups\n\nYour name stays with you until you and whoever offers have both said yes.\n\nask\nQuestion  In \n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\ntool\nWhat  When  In \n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nroom\nWhere  From  Nights  For \none person\ntwo people\na family\n In \n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nWhat you have\n\nIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.\n\ntool\nWhat  In \n1400 Page\n List it\nroom\nWhere  Sleeps \none person\ntwo people\na family\n In \n1400 Page\n List it",
+   "all": "Grapevine1400 PageYou asked: tile saw, SaturdayUntil Fri 23 Oct. Take it back Where it can’t go1400 Page: 1400 Page already has itYour conversationsAbout your ask “tile saw, Saturday”.Sealed: only you two can read this.Someone who saw it offered: when Saturday morning; where Waller and Pierce, Fri 16 Oct, 14:42.Your name, which they’ll see once you’ve both said yes Yes No thanks Everyone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says.Ask your groupsYour name stays with you until you and whoever offers have both said yes.askQuestion In 1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask toolWhat When In 1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask roomWhere From Nights For one persontwo peoplea family In 1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask What you haveIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.toolWhat In 1400 Page List it roomWhere Sleeps one persontwo peoplea family In 1400 Page List it",
+   "not": [
+    "1400 Page: 1400 Page already has it"
+   ],
+   "threads": [
+    {
+     "role": "asker",
+     "text": "About your ask “tile saw, Saturday”.\n\nSealed: only you two can read this.\n\nSomeone who saw it offered: when Saturday morning; where Waller and Pierce, Fri 16 Oct, 14:42.\nYour name, which they’ll see once you’ve both said yes  Yes\nNo thanks\n\nEveryone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says."
+    }
+   ],
+   "groups": [
+    "1400 Page"
+   ],
+   "buttons": [
+    "Take it back",
+    "Yes",
+    "No thanks",
+    "Ask",
+    "Ask",
+    "Ask",
+    "List it",
+    "List it"
+   ]
+  },
+  {
+   "step": 4,
+   "who": "jo",
+   "what": "Jo's page: a sealed message went by",
+   "s": 6.861,
+   "ms": 1378,
+   "pressed_ms": null,
+   "met": true,
+   "said": null,
+   "error": null,
+   "reloads": 1,
+   "text": "Grapevine\nWaller block\n\nYou carried: tile saw, Saturday\n\nWhat you can do with it is under 1400 Page.\n\n1400 Page\n\nSam asks: tile saw, Saturday\n\nUntil Fri 23 Oct. Also in Waller block.\n\nWhen  Where  Offer\nWhere it can’t go\nYour conversations\n\nYou carried “tile saw, Saturday” from 1400 Page to Waller block. You pass on what’s said, and can’t read it.\n\nA sealed message went by toward the person who asked: 96 bytes, Fri 16 Oct, 14:42.\n\nEveryone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says.\n\nAsk your groups\n\nYour name stays with you until you and whoever offers have both said yes.\n\nask\nQuestion  In \nWaller block\n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\ntool\nWhat  When  In \nWaller block\n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nroom\nWhere  From  Nights  For \none person\ntwo people\na family\n In \nWaller block\n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nWhat you have\n\nIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.\n\ntool\nWhat  In \nWaller block\n1400 Page\n List it\nroom\nWhere  Sleeps \none person\ntwo people\na family\n In \nWaller block\n1400 Page\n List it",
+   "all": "GrapevineWaller blockYou carried: tile saw, SaturdayWhat you can do with it is under 1400 Page.1400 PageSam asks: tile saw, SaturdayUntil Fri 23 Oct. Also in Waller block.When Where Offer Where it can’t goWaller block: Waller block already has it1400 Page: 1400 Page already has itYour conversationsYou carried “tile saw, Saturday” from 1400 Page to Waller block. You pass on what’s said, and can’t read it.A sealed message went by toward the person who asked: 96 bytes, Fri 16 Oct, 14:42.Everyone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says.Ask your groupsYour name stays with you until you and whoever offers have both said yes.askQuestion In Waller block1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask toolWhat When In Waller block1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask roomWhere From Nights For one persontwo peoplea family In Waller block1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask What you haveIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.toolWhat In Waller block1400 Page List it roomWhere Sleeps one persontwo peoplea family In Waller block1400 Page List it",
+   "not": [
+    "Waller block: Waller block already has it",
+    "1400 Page: 1400 Page already has it"
+   ],
+   "threads": [
+    {
+     "role": "carrier",
+     "text": "You carried “tile saw, Saturday” from 1400 Page to Waller block. You pass on what’s said, and can’t read it.\n\nA sealed message went by toward the person who asked: 96 bytes, Fri 16 Oct, 14:42.\n\nEveryone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says."
+    }
+   ],
+   "groups": [
+    "Waller block",
+    "1400 Page"
+   ],
+   "buttons": [
+    "Offer",
+    "Ask",
+    "Ask",
+    "Ask",
+    "List it",
+    "List it"
+   ]
+  },
+  {
+   "step": 5,
+   "who": "sam",
+   "what": "Sam says yes",
+   "s": 7.695,
+   "ms": 809,
+   "pressed_ms": 368,
+   "met": true,
+   "said": null,
+   "error": null,
+   "reloads": null,
+   "text": "Grapevine\n1400 Page\n\nYou asked: tile saw, Saturday\n\nUntil Fri 23 Oct.\n\nTake it back\nWhere it can’t go\nYour conversations\n\nAbout your ask “tile saw, Saturday”.\n\nSealed: only you two can read this.\n\nSomeone who saw it offered: when Saturday morning; where Waller and Pierce, Fri 16 Oct, 14:42.\nYou said yes, Fri 16 Oct, 14:42.\n\nEveryone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says.\n\nAsk your groups\n\nYour name stays with you until you and whoever offers have both said yes.\n\nask\nQuestion  In \n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\ntool\nWhat  When  In \n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nroom\nWhere  From  Nights  For \none person\ntwo people\na family\n In \n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nWhat you have\n\nIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.\n\ntool\nWhat  In \n1400 Page\n List it\nroom\nWhere  Sleeps \none person\ntwo people\na family\n In \n1400 Page\n List it",
+   "all": "Grapevine1400 PageYou asked: tile saw, SaturdayUntil Fri 23 Oct. Take it back Where it can’t go1400 Page: 1400 Page already has itYour conversationsAbout your ask “tile saw, Saturday”.Sealed: only you two can read this.Someone who saw it offered: when Saturday morning; where Waller and Pierce, Fri 16 Oct, 14:42.You said yes, Fri 16 Oct, 14:42.Everyone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says.Ask your groupsYour name stays with you until you and whoever offers have both said yes.askQuestion In 1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask toolWhat When In 1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask roomWhere From Nights For one persontwo peoplea family In 1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask What you haveIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.toolWhat In 1400 Page List it roomWhere Sleeps one persontwo peoplea family In 1400 Page List it",
+   "not": [
+    "1400 Page: 1400 Page already has it"
+   ],
+   "threads": [
+    {
+     "role": "asker",
+     "text": "About your ask “tile saw, Saturday”.\n\nSealed: only you two can read this.\n\nSomeone who saw it offered: when Saturday morning; where Waller and Pierce, Fri 16 Oct, 14:42.\nYou said yes, Fri 16 Oct, 14:42.\n\nEveryone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says."
+    }
+   ],
+   "groups": [
+    "1400 Page"
+   ],
+   "buttons": [
+    "Take it back",
+    "Ask",
+    "Ask",
+    "Ask",
+    "List it",
+    "List it"
+   ]
+  },
+  {
+   "step": 5,
+   "who": "kim",
+   "what": "Kim's page: the person who asked said yes",
+   "s": 10.603,
+   "ms": 2907,
+   "pressed_ms": null,
+   "met": true,
+   "said": null,
+   "error": null,
+   "reloads": 5,
+   "text": "Grapevine\nWaller block\n\nA neighbour of Jo’s needs: tile saw, Saturday — carried by Jo\n\nUntil Fri 23 Oct.\n\nYou might have this.\n\nWhere it can’t go\nYour conversations\n\nAbout “tile saw, Saturday”, which you offered to help with.\n\nSealed: only you two can read this.\n\nYou offered: when Saturday morning; where Waller and Pierce, Fri 16 Oct, 14:42.\nThe person who asked said yes, Fri 16 Oct, 14:42.\n\nIt goes through Jo’s computer, which passes it on while it’s on.\n\nYour name, which they’ll see once you’ve both said yes  Yes\nNo thanks\n\nEveryone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says.\n\nAsk your groups\n\nYour name stays with you until you and whoever offers have both said yes.\n\nask\nQuestion  In \nWaller block\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\ntool\nWhat  When  In \nWaller block\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nroom\nWhere  From  Nights  For \none person\ntwo people\na family\n In \nWaller block\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nWhat you have\n\nIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.\n\ntool\nWhat  In \nWaller block\n List it\nroom\nWhere  Sleeps \none person\ntwo people\na family\n In \nWaller block\n List it",
+   "all": "GrapevineWaller blockA neighbour of Jo’s needs: tile saw, Saturday — carried by JoUntil Fri 23 Oct.You might have this.Where it can’t goWaller block: Waller block already has itYour conversationsAbout “tile saw, Saturday”, which you offered to help with.Sealed: only you two can read this.You offered: when Saturday morning; where Waller and Pierce, Fri 16 Oct, 14:42.The person who asked said yes, Fri 16 Oct, 14:42.It goes through Jo’s computer, which passes it on while it’s on.Your name, which they’ll see once you’ve both said yes Yes No thanks Everyone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says.Ask your groupsYour name stays with you until you and whoever offers have both said yes.askQuestion In Waller block How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask toolWhat When In Waller block How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask roomWhere From Nights For one persontwo peoplea family In Waller block How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask What you haveIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.toolWhat In Waller block List it roomWhere Sleeps one persontwo peoplea family In Waller block List it",
+   "not": [
+    "Waller block: Waller block already has it"
+   ],
+   "threads": [
+    {
+     "role": "replier",
+     "text": "About “tile saw, Saturday”, which you offered to help with.\n\nSealed: only you two can read this.\n\nYou offered: when Saturday morning; where Waller and Pierce, Fri 16 Oct, 14:42.\nThe person who asked said yes, Fri 16 Oct, 14:42.\n\nIt goes through Jo’s computer, which passes it on while it’s on.\n\nYour name, which they’ll see once you’ve both said yes  Yes\nNo thanks\n\nEveryone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says."
+    }
+   ],
+   "groups": [
+    "Waller block"
+   ],
+   "buttons": [
+    "Yes",
+    "No thanks",
+    "Ask",
+    "Ask",
+    "Ask",
+    "List it",
+    "List it"
+   ]
+  },
+  {
+   "step": 5,
+   "who": "kim",
+   "what": "Kim says yes",
+   "s": 10.696,
+   "ms": 91,
+   "pressed_ms": 72,
+   "met": true,
+   "said": null,
+   "error": null,
+   "reloads": null,
+   "text": "Grapevine\nWaller block\n\nA neighbour of Jo’s needs: tile saw, Saturday — carried by Jo\n\nUntil Fri 23 Oct.\n\nYou might have this.\n\nWhere it can’t go\nYour conversations\n\nAbout “tile saw, Saturday”, which you offered to help with.\n\nSealed: only you two can read this.\n\nYou offered: when Saturday morning; where Waller and Pierce, Fri 16 Oct, 14:42.\nSam Reyes said yes, Fri 16 Oct, 14:42.\nYou said yes, Fri 16 Oct, 14:42.\n\nYou both said yes: they’re Sam Reyes, and they see you as Kim Okafor.\n\nIt goes through Jo’s computer, which passes it on while it’s on.\n\nEveryone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says.\n\nAsk your groups\n\nYour name stays with you until you and whoever offers have both said yes.\n\nask\nQuestion  In \nWaller block\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\ntool\nWhat  When  In \nWaller block\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nroom\nWhere  From  Nights  For \none person\ntwo people\na family\n In \nWaller block\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nWhat you have\n\nIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.\n\ntool\nWhat  In \nWaller block\n List it\nroom\nWhere  Sleeps \none person\ntwo people\na family\n In \nWaller block\n List it",
+   "all": "GrapevineWaller blockA neighbour of Jo’s needs: tile saw, Saturday — carried by JoUntil Fri 23 Oct.You might have this.Where it can’t goWaller block: Waller block already has itYour conversationsAbout “tile saw, Saturday”, which you offered to help with.Sealed: only you two can read this.You offered: when Saturday morning; where Waller and Pierce, Fri 16 Oct, 14:42.Sam Reyes said yes, Fri 16 Oct, 14:42.You said yes, Fri 16 Oct, 14:42.You both said yes: they’re Sam Reyes, and they see you as Kim Okafor.It goes through Jo’s computer, which passes it on while it’s on.Everyone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says.Ask your groupsYour name stays with you until you and whoever offers have both said yes.askQuestion In Waller block How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask toolWhat When In Waller block How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask roomWhere From Nights For one persontwo peoplea family In Waller block How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask What you haveIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.toolWhat In Waller block List it roomWhere Sleeps one persontwo peoplea family In Waller block List it",
+   "not": [
+    "Waller block: Waller block already has it"
+   ],
+   "threads": [
+    {
+     "role": "replier",
+     "text": "About “tile saw, Saturday”, which you offered to help with.\n\nSealed: only you two can read this.\n\nYou offered: when Saturday morning; where Waller and Pierce, Fri 16 Oct, 14:42.\nSam Reyes said yes, Fri 16 Oct, 14:42.\nYou said yes, Fri 16 Oct, 14:42.\n\nYou both said yes: they’re Sam Reyes, and they see you as Kim Okafor.\n\nIt goes through Jo’s computer, which passes it on while it’s on.\n\nEveryone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says."
+    }
+   ],
+   "groups": [
+    "Waller block"
+   ],
+   "buttons": [
+    "Ask",
+    "Ask",
+    "Ask",
+    "List it",
+    "List it"
+   ]
+  },
+  {
+   "step": 5,
+   "who": "kim",
+   "what": "Kim's page names Sam",
+   "s": 10.707,
+   "ms": 8,
+   "pressed_ms": null,
+   "met": true,
+   "said": null,
+   "error": null,
+   "reloads": 0,
+   "text": "Grapevine\nWaller block\n\nA neighbour of Jo’s needs: tile saw, Saturday — carried by Jo\n\nUntil Fri 23 Oct.\n\nYou might have this.\n\nWhere it can’t go\nYour conversations\n\nAbout “tile saw, Saturday”, which you offered to help with.\n\nSealed: only you two can read this.\n\nYou offered: when Saturday morning; where Waller and Pierce, Fri 16 Oct, 14:42.\nSam Reyes said yes, Fri 16 Oct, 14:42.\nYou said yes, Fri 16 Oct, 14:42.\n\nYou both said yes: they’re Sam Reyes, and they see you as Kim Okafor.\n\nIt goes through Jo’s computer, which passes it on while it’s on.\n\nEveryone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says.\n\nAsk your groups\n\nYour name stays with you until you and whoever offers have both said yes.\n\nask\nQuestion  In \nWaller block\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\ntool\nWhat  When  In \nWaller block\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nroom\nWhere  From  Nights  For \none person\ntwo people\na family\n In \nWaller block\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nWhat you have\n\nIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.\n\ntool\nWhat  In \nWaller block\n List it\nroom\nWhere  Sleeps \none person\ntwo people\na family\n In \nWaller block\n List it",
+   "all": "GrapevineWaller blockA neighbour of Jo’s needs: tile saw, Saturday — carried by JoUntil Fri 23 Oct.You might have this.Where it can’t goWaller block: Waller block already has itYour conversationsAbout “tile saw, Saturday”, which you offered to help with.Sealed: only you two can read this.You offered: when Saturday morning; where Waller and Pierce, Fri 16 Oct, 14:42.Sam Reyes said yes, Fri 16 Oct, 14:42.You said yes, Fri 16 Oct, 14:42.You both said yes: they’re Sam Reyes, and they see you as Kim Okafor.It goes through Jo’s computer, which passes it on while it’s on.Everyone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says.Ask your groupsYour name stays with you until you and whoever offers have both said yes.askQuestion In Waller block How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask toolWhat When In Waller block How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask roomWhere From Nights For one persontwo peoplea family In Waller block How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask What you haveIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.toolWhat In Waller block List it roomWhere Sleeps one persontwo peoplea family In Waller block List it",
+   "not": [
+    "Waller block: Waller block already has it"
+   ],
+   "threads": [
+    {
+     "role": "replier",
+     "text": "About “tile saw, Saturday”, which you offered to help with.\n\nSealed: only you two can read this.\n\nYou offered: when Saturday morning; where Waller and Pierce, Fri 16 Oct, 14:42.\nSam Reyes said yes, Fri 16 Oct, 14:42.\nYou said yes, Fri 16 Oct, 14:42.\n\nYou both said yes: they’re Sam Reyes, and they see you as Kim Okafor.\n\nIt goes through Jo’s computer, which passes it on while it’s on.\n\nEveryone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says."
+    }
+   ],
+   "groups": [
+    "Waller block"
+   ],
+   "buttons": [
+    "Ask",
+    "Ask",
+    "Ask",
+    "List it",
+    "List it"
+   ]
+  },
+  {
+   "step": 5,
+   "who": "sam",
+   "what": "Sam's page names Kim",
+   "s": 15.304,
+   "ms": 4596,
+   "pressed_ms": null,
+   "met": true,
+   "said": null,
+   "error": null,
+   "reloads": 8,
+   "text": "Grapevine\n1400 Page\n\nYou asked: tile saw, Saturday\n\nUntil Fri 23 Oct.\n\nTake it back\nWhere it can’t go\nYour conversations\n\nAbout your ask “tile saw, Saturday”.\n\nSealed: only you two can read this.\n\nKim Okafor offered: when Saturday morning; where Waller and Pierce, Fri 16 Oct, 14:42.\nYou said yes, Fri 16 Oct, 14:42.\nKim Okafor said yes, Fri 16 Oct, 14:42.\n\nYou both said yes: they’re Kim Okafor, and they see you as Sam Reyes.\n\nEveryone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says.\n\nAsk your groups\n\nYour name stays with you until you and whoever offers have both said yes.\n\nask\nQuestion  In \n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\ntool\nWhat  When  In \n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nroom\nWhere  From  Nights  For \none person\ntwo people\na family\n In \n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nWhat you have\n\nIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.\n\ntool\nWhat  In \n1400 Page\n List it\nroom\nWhere  Sleeps \none person\ntwo people\na family\n In \n1400 Page\n List it",
+   "all": "Grapevine1400 PageYou asked: tile saw, SaturdayUntil Fri 23 Oct. Take it back Where it can’t go1400 Page: 1400 Page already has itYour conversationsAbout your ask “tile saw, Saturday”.Sealed: only you two can read this.Kim Okafor offered: when Saturday morning; where Waller and Pierce, Fri 16 Oct, 14:42.You said yes, Fri 16 Oct, 14:42.Kim Okafor said yes, Fri 16 Oct, 14:42.You both said yes: they’re Kim Okafor, and they see you as Sam Reyes.Everyone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says.Ask your groupsYour name stays with you until you and whoever offers have both said yes.askQuestion In 1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask toolWhat When In 1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask roomWhere From Nights For one persontwo peoplea family In 1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask What you haveIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.toolWhat In 1400 Page List it roomWhere Sleeps one persontwo peoplea family In 1400 Page List it",
+   "not": [
+    "1400 Page: 1400 Page already has it"
+   ],
+   "threads": [
+    {
+     "role": "asker",
+     "text": "About your ask “tile saw, Saturday”.\n\nSealed: only you two can read this.\n\nKim Okafor offered: when Saturday morning; where Waller and Pierce, Fri 16 Oct, 14:42.\nYou said yes, Fri 16 Oct, 14:42.\nKim Okafor said yes, Fri 16 Oct, 14:42.\n\nYou both said yes: they’re Kim Okafor, and they see you as Sam Reyes.\n\nEveryone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says."
+    }
+   ],
+   "groups": [
+    "1400 Page"
+   ],
+   "buttons": [
+    "Take it back",
+    "Ask",
+    "Ask",
+    "Ask",
+    "List it",
+    "List it"
+   ]
+  },
+  {
+   "step": 6,
+   "who": "sam",
+   "what": "Sam takes it back",
+   "s": 15.424,
+   "ms": 119,
+   "pressed_ms": 76,
+   "met": true,
+   "said": null,
+   "error": null,
+   "reloads": null,
+   "text": "Grapevine\n1400 Page\n\nNothing asked here yet.\n\nYour conversations\n\nAbout your ask an ask that has ended or was taken back.\n\nSealed: only you two can read this.\n\nKim Okafor offered: when Saturday morning; where Waller and Pierce, Fri 16 Oct, 14:42.\nYou said yes, Fri 16 Oct, 14:42.\nKim Okafor said yes, Fri 16 Oct, 14:42.\n\nYou both said yes: they’re Kim Okafor, and they see you as Sam Reyes.\n\nEveryone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says.\n\nAsk your groups\n\nYour name stays with you until you and whoever offers have both said yes.\n\nask\nQuestion  In \n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\ntool\nWhat  When  In \n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nroom\nWhere  From  Nights  For \none person\ntwo people\na family\n In \n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nWhat you have\n\nIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.\n\ntool\nWhat  In \n1400 Page\n List it\nroom\nWhere  Sleeps \none person\ntwo people\na family\n In \n1400 Page\n List it",
+   "all": "Grapevine1400 PageNothing asked here yet.Your conversationsAbout your ask an ask that has ended or was taken back.Sealed: only you two can read this.Kim Okafor offered: when Saturday morning; where Waller and Pierce, Fri 16 Oct, 14:42.You said yes, Fri 16 Oct, 14:42.Kim Okafor said yes, Fri 16 Oct, 14:42.You both said yes: they’re Kim Okafor, and they see you as Sam Reyes.Everyone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says.Ask your groupsYour name stays with you until you and whoever offers have both said yes.askQuestion In 1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask toolWhat When In 1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask roomWhere From Nights For one persontwo peoplea family In 1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask What you haveIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.toolWhat In 1400 Page List it roomWhere Sleeps one persontwo peoplea family In 1400 Page List it",
+   "not": [],
+   "threads": [
+    {
+     "role": "asker",
+     "text": "About your ask an ask that has ended or was taken back.\n\nSealed: only you two can read this.\n\nKim Okafor offered: when Saturday morning; where Waller and Pierce, Fri 16 Oct, 14:42.\nYou said yes, Fri 16 Oct, 14:42.\nKim Okafor said yes, Fri 16 Oct, 14:42.\n\nYou both said yes: they’re Kim Okafor, and they see you as Sam Reyes.\n\nEveryone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says."
+    }
+   ],
+   "groups": [
+    "1400 Page"
+   ],
+   "buttons": [
+    "Ask",
+    "Ask",
+    "Ask",
+    "List it",
+    "List it"
+   ]
+  },
+  {
+   "step": 6,
+   "who": "kim",
+   "what": "the ask gone from Kim's page",
+   "s": 75.452,
+   "ms": 60027,
+   "pressed_ms": null,
+   "met": false,
+   "said": null,
+   "error": null,
+   "reloads": 111,
+   "text": "Grapevine\nWaller block\n\nA neighbour of Jo’s needs: tile saw, Saturday — carried by Jo\n\nUntil Fri 23 Oct.\n\nYou might have this.\n\nWhere it can’t go\nYour conversations\n\nAbout “tile saw, Saturday”, which you offered to help with.\n\nSealed: only you two can read this.\n\nYou offered: when Saturday morning; where Waller and Pierce, Fri 16 Oct, 14:42.\nSam Reyes said yes, Fri 16 Oct, 14:42.\nYou said yes, Fri 16 Oct, 14:42.\n\nYou both said yes: they’re Sam Reyes, and they see you as Kim Okafor.\n\nIt goes through Jo’s computer, which passes it on while it’s on.\n\nEveryone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says.\n\nAsk your groups\n\nYour name stays with you until you and whoever offers have both said yes.\n\nask\nQuestion  In \nWaller block\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\ntool\nWhat  When  In \nWaller block\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nroom\nWhere  From  Nights  For \none person\ntwo people\na family\n In \nWaller block\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nWhat you have\n\nIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.\n\ntool\nWhat  In \nWaller block\n List it\nroom\nWhere  Sleeps \none person\ntwo people\na family\n In \nWaller block\n List it",
+   "all": "GrapevineWaller blockA neighbour of Jo’s needs: tile saw, Saturday — carried by JoUntil Fri 23 Oct.You might have this.Where it can’t goWaller block: Waller block already has itYour conversationsAbout “tile saw, Saturday”, which you offered to help with.Sealed: only you two can read this.You offered: when Saturday morning; where Waller and Pierce, Fri 16 Oct, 14:42.Sam Reyes said yes, Fri 16 Oct, 14:42.You said yes, Fri 16 Oct, 14:42.You both said yes: they’re Sam Reyes, and they see you as Kim Okafor.It goes through Jo’s computer, which passes it on while it’s on.Everyone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says.Ask your groupsYour name stays with you until you and whoever offers have both said yes.askQuestion In Waller block How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask toolWhat When In Waller block How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask roomWhere From Nights For one persontwo peoplea family In Waller block How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask What you haveIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.toolWhat In Waller block List it roomWhere Sleeps one persontwo peoplea family In Waller block List it",
+   "not": [
+    "Waller block: Waller block already has it"
+   ],
+   "threads": [
+    {
+     "role": "replier",
+     "text": "About “tile saw, Saturday”, which you offered to help with.\n\nSealed: only you two can read this.\n\nYou offered: when Saturday morning; where Waller and Pierce, Fri 16 Oct, 14:42.\nSam Reyes said yes, Fri 16 Oct, 14:42.\nYou said yes, Fri 16 Oct, 14:42.\n\nYou both said yes: they’re Sam Reyes, and they see you as Kim Okafor.\n\nIt goes through Jo’s computer, which passes it on while it’s on.\n\nEveryone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says."
+    }
+   ],
+   "groups": [
+    "Waller block"
+   ],
+   "buttons": [
+    "Ask",
+    "Ask",
+    "Ask",
+    "List it",
+    "List it"
+   ]
+  },
+  {
+   "step": 6,
+   "who": "jo",
+   "what": "Jo's page after",
+   "s": 82.49,
+   "ms": 20,
+   "pressed_ms": null,
+   "met": true,
+   "said": null,
+   "error": null,
+   "reloads": null,
+   "text": "Grapevine\nWaller block\n\nYou carried: tile saw, Saturday\n\nUntil Fri 23 Oct.\n\nWhen  Where  Offer\nWhere it can’t go\n1400 Page\n\nNothing asked here yet.\n\nYour conversations\n\nYou carried “tile saw, Saturday” from 1400 Page to Waller block. You pass on what’s said, and can’t read it.\n\nA sealed message went by toward the person who asked: 96 bytes, Fri 16 Oct, 14:42.\nA sealed message went by toward the person who offered: 48 bytes, Fri 16 Oct, 14:42.\nA sealed message went by toward the person who asked: 51 bytes, Fri 16 Oct, 14:42.\n\nEveryone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says.\n\nAsk your groups\n\nYour name stays with you until you and whoever offers have both said yes.\n\nask\nQuestion  In \nWaller block\n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\ntool\nWhat  When  In \nWaller block\n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nroom\nWhere  From  Nights  For \none person\ntwo people\na family\n In \nWaller block\n1400 Page\n How far \nOnly this group\nOne ring away\nTwo rings away\nThree rings away\n Until  Ask\nWhat you have\n\nIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.\n\ntool\nWhat  In \nWaller block\n1400 Page\n List it\nroom\nWhere  Sleeps \none person\ntwo people\na family\n In \nWaller block\n1400 Page\n List it",
+   "all": "GrapevineWaller blockYou carried: tile saw, SaturdayUntil Fri 23 Oct.When Where Offer Where it can’t goWaller block: Waller block already has it1400 Page: the person who asked wanted it to go no further1400 PageNothing asked here yet.Your conversationsYou carried “tile saw, Saturday” from 1400 Page to Waller block. You pass on what’s said, and can’t read it.A sealed message went by toward the person who asked: 96 bytes, Fri 16 Oct, 14:42.A sealed message went by toward the person who offered: 48 bytes, Fri 16 Oct, 14:42.A sealed message went by toward the person who asked: 51 bytes, Fri 16 Oct, 14:42.Everyone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says.Ask your groupsYour name stays with you until you and whoever offers have both said yes.askQuestion In Waller block1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask toolWhat When In Waller block1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask roomWhere From Nights For one persontwo peoplea family In Waller block1400 Page How far Only this groupOne ring awayTwo rings awayThree rings away Until Ask What you haveIt stays in the group you choose and is never passed on. When someone asks for one, you’re told you might have it.toolWhat In Waller block1400 Page List it roomWhere Sleeps one persontwo peoplea family In Waller block1400 Page List it",
+   "not": [
+    "Waller block: Waller block already has it",
+    "1400 Page: the person who asked wanted it to go no further"
+   ],
+   "threads": [
+    {
+     "role": "carrier",
+     "text": "You carried “tile saw, Saturday” from 1400 Page to Waller block. You pass on what’s said, and can’t read it.\n\nA sealed message went by toward the person who asked: 96 bytes, Fri 16 Oct, 14:42.\nA sealed message went by toward the person who offered: 48 bytes, Fri 16 Oct, 14:42.\nA sealed message went by toward the person who asked: 51 bytes, Fri 16 Oct, 14:42.\n\nEveryone in a group a message goes through can see that a sealed message went by, how big it was, which ask it answers and when. Never what it says."
+    }
+   ],
+   "groups": [
+    "Waller block",
+    "1400 Page"
+   ],
+   "buttons": [
+    "Offer",
+    "Ask",
+    "Ask",
+    "Ask",
+    "List it",
+    "List it"
+   ]
+  }
+ ],
+ "seen": [
+  {
+   "computer": "sam",
+   "group": "c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae",
+   "op": "da5fac753e39f535c9d641c527b67b4a10d5b163b552c0ebeabbc6032ec9817b",
+   "t": 1792186937.6665962
+  },
+  {
+   "computer": "sam",
+   "group": "c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae",
+   "op": "960d5e84b8755aad41ed5f05e1a7768bc74f20cba3bcbb8c1c4cdf84feb30575",
+   "t": 1792186937.6665978
+  },
+  {
+   "computer": "sam",
+   "group": "c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae",
+   "op": "0bab21cc0a5b5ecced68e2f55c3c72ee50c70bc8f8721ae97f54907649743bc9",
+   "t": 1792186937.666602
+  },
+  {
+   "computer": "sam",
+   "group": "c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae",
+   "op": "bb366c32563673354f19bb3c1545e76ad09b9114e0aeccb6478cb093d009af3d",
+   "t": 1792186937.666603
+  },
+  {
+   "computer": "jo",
+   "group": "c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae",
+   "op": "da5fac753e39f535c9d641c527b67b4a10d5b163b552c0ebeabbc6032ec9817b",
+   "t": 1792186937.670539
+  },
+  {
+   "computer": "jo",
+   "group": "c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae",
+   "op": "960d5e84b8755aad41ed5f05e1a7768bc74f20cba3bcbb8c1c4cdf84feb30575",
+   "t": 1792186937.670541
+  },
+  {
+   "computer": "jo",
+   "group": "c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae",
+   "op": "0bab21cc0a5b5ecced68e2f55c3c72ee50c70bc8f8721ae97f54907649743bc9",
+   "t": 1792186937.670542
+  },
+  {
+   "computer": "jo",
+   "group": "c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae",
+   "op": "bb366c32563673354f19bb3c1545e76ad09b9114e0aeccb6478cb093d009af3d",
+   "t": 1792186937.670542
+  },
+  {
+   "computer": "jo",
+   "group": "8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935",
+   "op": "c664ff6038328ed533d5bef1699fd5bc5af0424ed385921b4f00cbc831a0c683",
+   "t": 1792186937.67294
+  },
+  {
+   "computer": "jo",
+   "group": "8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935",
+   "op": "694a49cbe2b1ddd945ef2859a6c542fe067ddce7e45b2f3d23144cfd97ad2ab6",
+   "t": 1792186937.6729422
+  },
+  {
+   "computer": "jo",
+   "group": "8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935",
+   "op": "674c724d5da5650b8e08a28fe35f34800c6eecb2b9d8ce53987629720f6cc1ec",
+   "t": 1792186937.6729422
+  },
+  {
+   "computer": "jo",
+   "group": "8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935",
+   "op": "54859d6e5173b25cd2bdff7e404ea081bdb1be899b5435eeb4b79bdc655c39e5",
+   "t": 1792186937.672943
+  },
+  {
+   "computer": "kim",
+   "group": "8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935",
+   "op": "c664ff6038328ed533d5bef1699fd5bc5af0424ed385921b4f00cbc831a0c683",
+   "t": 1792186937.6754901
+  },
+  {
+   "computer": "kim",
+   "group": "8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935",
+   "op": "694a49cbe2b1ddd945ef2859a6c542fe067ddce7e45b2f3d23144cfd97ad2ab6",
+   "t": 1792186937.6754901
+  },
+  {
+   "computer": "kim",
+   "group": "8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935",
+   "op": "674c724d5da5650b8e08a28fe35f34800c6eecb2b9d8ce53987629720f6cc1ec",
+   "t": 1792186937.675491
+  },
+  {
+   "computer": "kim",
+   "group": "8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935",
+   "op": "54859d6e5173b25cd2bdff7e404ea081bdb1be899b5435eeb4b79bdc655c39e5",
+   "t": 1792186937.675491
+  },
+  {
+   "computer": "jo",
+   "group": "8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935",
+   "op": "2b5dd9be47bcafe457d145e2df4cfbb5c43c4bb3280b559c2259b459273ba75f",
+   "t": 1792186939.1416588
+  },
+  {
+   "computer": "kim",
+   "group": "8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935",
+   "op": "2b5dd9be47bcafe457d145e2df4cfbb5c43c4bb3280b559c2259b459273ba75f",
+   "t": 1792186939.1455228
+  },
+  {
+   "computer": "sam",
+   "group": "c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae",
+   "op": "60a62137302e7587778514b34f9e305ccc49ba8bda8c2985c8645d552a36bc35",
+   "t": 1792186939.420897
+  },
+  {
+   "computer": "jo",
+   "group": "c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae",
+   "op": "60a62137302e7587778514b34f9e305ccc49ba8bda8c2985c8645d552a36bc35",
+   "t": 1792186939.4432588
+  },
+  {
+   "computer": "jo",
+   "group": "8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935",
+   "op": "0eb14e3b27e3d8e074cc643291821daad669ac6b234b6f476e4e835622d66737",
+   "t": 1792186940.077077
+  },
+  {
+   "computer": "kim",
+   "group": "8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935",
+   "op": "0eb14e3b27e3d8e074cc643291821daad669ac6b234b6f476e4e835622d66737",
+   "t": 1792186940.079283
+  },
+  {
+   "computer": "jo",
+   "group": "8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935",
+   "op": "35c37e3a40d08fc5b46a40993e1df710aaa60c2d907a07e01605aefaa75b16c7",
+   "t": 1792186940.811523
+  },
+  {
+   "computer": "kim",
+   "group": "8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935",
+   "op": "35c37e3a40d08fc5b46a40993e1df710aaa60c2d907a07e01605aefaa75b16c7",
+   "t": 1792186940.815273
+  },
+  {
+   "computer": "sam",
+   "group": "c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae",
+   "op": "cf62e9132fd1a31a7715bfef2caac8227a040f69efb787a01559d792e5fbcb9d",
+   "t": 1792186943.985616
+  },
+  {
+   "computer": "jo",
+   "group": "c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae",
+   "op": "cf62e9132fd1a31a7715bfef2caac8227a040f69efb787a01559d792e5fbcb9d",
+   "t": 1792186943.9923468
+  },
+  {
+   "computer": "sam",
+   "group": "c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae",
+   "op": "b06fd59ed46436639829c5fb1170d1f60f17ebe7c79ec9d7454ca8f25edb5637",
+   "t": 1792186946.577784
+  },
+  {
+   "computer": "jo",
+   "group": "c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae",
+   "op": "b06fd59ed46436639829c5fb1170d1f60f17ebe7c79ec9d7454ca8f25edb5637",
+   "t": 1792186946.862588
+  },
+  {
+   "computer": "jo",
+   "group": "8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935",
+   "op": "d09d2789e7ae8b5c29a888b31ede623592ba50a0c4a21c15b8d6865646db761c",
+   "t": 1792186949.08061
+  },
+  {
+   "computer": "kim",
+   "group": "8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935",
+   "op": "d09d2789e7ae8b5c29a888b31ede623592ba50a0c4a21c15b8d6865646db761c",
+   "t": 1792186949.0945978
+  },
+  {
+   "computer": "jo",
+   "group": "8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935",
+   "op": "1c98890717cdf04c6a92553133eedf6b061a2b600d4b764d8d405c4dcf17437a",
+   "t": 1792186949.664041
+  },
+  {
+   "computer": "kim",
+   "group": "8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935",
+   "op": "1c98890717cdf04c6a92553133eedf6b061a2b600d4b764d8d405c4dcf17437a",
+   "t": 1792186949.6671948
+  },
+  {
+   "computer": "sam",
+   "group": "c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae",
+   "op": "46286aa3d9b6df23497a6317019992661e4a6b67cbf559ac82f42032c54f5681",
+   "t": 1792186954.135472
+  },
+  {
+   "computer": "jo",
+   "group": "c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae",
+   "op": "46286aa3d9b6df23497a6317019992661e4a6b67cbf559ac82f42032c54f5681",
+   "t": 1792186954.139859
+  },
+  {
+   "computer": "sam",
+   "group": "c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae",
+   "op": "27e97e492f94b1ebf9489513c754a62854149c0604890626ef92ed00037d1b99",
+   "t": 1792186954.530827
+  },
+  {
+   "computer": "jo",
+   "group": "c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae",
+   "op": "27e97e492f94b1ebf9489513c754a62854149c0604890626ef92ed00037d1b99",
+   "t": 1792186954.534886
+  }
+ ],
+ "end_load": 17.9,
+ "run_s": 104.2,
+ "scan": {
+  "files": 44,
+  "bytes": 3405047,
+  "sealed": {},
+  "secrets": [],
+  "open": {
+   "jo": [
+    "jo/.svrngs/rings/8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935/ring_oplog.jsonl",
+    "jo/.svrngs/rings/c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae/ring_oplog.jsonl"
+   ],
+   "kim": [
+    "kim/.svrngs/rings/8156c8bbb09319805950f1035c06e25add538a236a402025cc4940ca47fd4935/ring_oplog.jsonl"
+   ],
+   "sam": [
+    "sam/.svrngs/rings/c0de534920fd383cb021cf9fa0f477fc71ac4d84d0a7ac512abeb8bd8d27f8ae/ring_oplog.jsonl"
+   ]
+  },
+  "states": {
+   "sam": 1,
+   "jo": 0,
+   "kim": 1
+  }
+ }
+}

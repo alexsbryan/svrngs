@@ -1,0 +1,64 @@
+
+running 2 tests
+streaming::chromium: {"chunked":{"ms":162,"status":200,"text":"hellohellohello"},"lines":["+1 ms LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c","+4 ms LAYER page: wasm module loaded and dial entered (iroh =1.0.2)","+4 ms LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c","+5 ms LAYER parse: ok — relay http://127.0.0.1:56749/","+5 ms LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…","+6 ms LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound","+6 ms LAYER relay-connect: waiting for the relay handshake (endpoint.online())…","+310 ms LAYER relay-connect: ok — endpoint reports online (relay handshake done)","+310 ms LAYER parse: the group names no relay for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c, so it is dialled through the link's","+310 ms LAYER tls/alpn+relay-hop: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol through a relay…","+335 ms LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol","+335 ms LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"","+335 ms HTTP: GET /lend/shelf/title.bin — a bi-stream opened","+397 ms HTTP: GET /lend/shelf/title.bin answered 206","+15376 ms HTTP: the response has ended; finishing the request's send half","+15376 ms HTTP: GET /lend/shelf/title.bin — the stream is done","+15385 ms HTTP: GET /lend/shelf/title.bin — a bi-stream opened","+15652 ms HTTP: GET /lend/shelf/title.bin answered 416","+15656 ms HTTP: the response has ended; finishing the request's send half","+15656 ms HTTP: GET /lend/shelf/title.bin — the stream is done","+15657 ms HTTP: GET /lend/tap/stream — a bi-stream opened","+15664 ms HTTP: GET /lend/tap/stream answered 200","+15818 ms HTTP: the response has ended; finishing the request's send half","+15818 ms HTTP: GET /lend/tap/stream — the stream is done","+15819 ms HTTP: POST /lend/sink/up — a bi-stream opened","+28719 ms HTTP: POST /lend/sink/up answered 200","+28719 ms HTTP: the response has ended; finishing the request's send half","+28719 ms HTTP: POST /lend/sink/up — the stream is done"],"past":{"bytes":0,"chunks":0,"contentRange":"bytes */67108864","largest":0,"ms":272,"sha":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","status":416},"post":{"held":1048576,"ms":12901,"status":200,"text":"8388608 48a95d92f5743545b6aab82415c4e48b029b02700a4735a7501497b071c18706"},"range":{"bytes":8999000,"chunks":6364,"contentRange":"bytes 1000-8999999/67108864","largest":1420,"ms":15050,"sha":"c11b3b71567feda89b6873737195713886ff9ec499972411589045bfa2d44510","status":206}}
+streaming::chromium: the 9 MB range in 15050 ms of its 60,000
+.test a_page_speaks_http_through_the_door_streaming_both_ways::webkit has been running for over 60 seconds
+streaming::webkit: {"chunked":{"error":"Error: no stream could be opened to the computer: timed out","ms":0},"lines":["+0 ms LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c","+1 ms LAYER page: wasm module loaded and dial entered (iroh =1.0.2)","+1 ms LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c","+1 ms LAYER parse: ok — relay http://127.0.0.1:56751/","+1 ms LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…","+1 ms LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound","+1 ms LAYER relay-connect: waiting for the relay handshake (endpoint.online())…","+380 ms LAYER relay-connect: ok — endpoint reports online (relay handshake done)","+380 ms LAYER parse: the group names no relay for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c, so it is dialled through the link's","+380 ms LAYER tls/alpn+relay-hop: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol through a relay…","+1014 ms LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol","+1014 ms LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"","+1015 ms HTTP: GET /lend/shelf/title.bin — a bi-stream opened","+1105 ms HTTP: GET /lend/shelf/title.bin answered 206","+54387 ms HTTP: the response has ended; finishing the request's send half","+54387 ms HTTP: GET /lend/shelf/title.bin — the stream is done","+54387 ms HTTP: GET /lend/shelf/title.bin — the body stopped short: error reading a body from connection","+54388 ms HTTP: GET /lend/shelf/title.bin — REFUSED — no stream could be opened to the computer: timed out","+54388 ms HTTP: GET /lend/tap/stream — REFUSED — no stream could be opened to the computer: timed out","+54388 ms HTTP: POST /lend/sink/up — REFUSED — no stream could be opened to the computer: timed out"],"past":{"error":"Error: no stream could be opened to the computer: timed out","ms":1},"post":{"error":"Error: Error: no stream could be opened to the computer: timed out","ms":0},"range":{"error":"Error: error reading a body from connection","ms":53373}}
+streaming::webkit: the 9 MB range in 53373 ms of its 60,000
+
+thread 'a_page_speaks_http_through_the_door_streaming_both_ways::webkit' (51215807) panicked at crates/svrngs-node/tests/browser/main.rs:512:5:
+assertion `left == right` failed: the range must come back 206:
+{
+  "chunked": {
+    "error": "Error: no stream could be opened to the computer: timed out",
+    "ms": 0
+  },
+  "lines": [
+    "+0 ms LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "+1 ms LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "+1 ms LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "+1 ms LAYER parse: ok — relay http://127.0.0.1:56751/",
+    "+1 ms LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "+1 ms LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "+1 ms LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "+380 ms LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "+380 ms LAYER parse: the group names no relay for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c, so it is dialled through the link's",
+    "+380 ms LAYER tls/alpn+relay-hop: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol through a relay…",
+    "+1014 ms LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+    "+1014 ms LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "+1015 ms HTTP: GET /lend/shelf/title.bin — a bi-stream opened",
+    "+1105 ms HTTP: GET /lend/shelf/title.bin answered 206",
+    "+54387 ms HTTP: the response has ended; finishing the request's send half",
+    "+54387 ms HTTP: GET /lend/shelf/title.bin — the stream is done",
+    "+54387 ms HTTP: GET /lend/shelf/title.bin — the body stopped short: error reading a body from connection",
+    "+54388 ms HTTP: GET /lend/shelf/title.bin — REFUSED — no stream could be opened to the computer: timed out",
+    "+54388 ms HTTP: GET /lend/tap/stream — REFUSED — no stream could be opened to the computer: timed out",
+    "+54388 ms HTTP: POST /lend/sink/up — REFUSED — no stream could be opened to the computer: timed out"
+  ],
+  "past": {
+    "error": "Error: no stream could be opened to the computer: timed out",
+    "ms": 1
+  },
+  "post": {
+    "error": "Error: Error: no stream could be opened to the computer: timed out",
+    "ms": 0
+  },
+  "range": {
+    "error": "Error: error reading a body from connection",
+    "ms": 53373
+  }
+}
+  left: Null
+ right: 206
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+ 1/2
+a_page_speaks_http_through_the_door_streaming_both_ways::webkit --- FAILED
+
+failures:
+
+failures:
+    a_page_speaks_http_through_the_door_streaming_both_ways::webkit
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 92 filtered out; finished in 68.37s
+
+error: test failed, to rerun pass `-p svrngs-node --test browser`

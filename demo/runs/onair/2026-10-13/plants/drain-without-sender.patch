@@ -1,0 +1,13 @@
+diff --git a/crates/svrngs-node/src/rail.rs b/crates/svrngs-node/src/rail.rs
+index c1608b7..cb8777b 100644
+--- a/crates/svrngs-node/src/rail.rs
++++ b/crates/svrngs-node/src/rail.rs
+@@ -610,7 +610,7 @@ fn drain_answer(live: &LiveBuffer, namespace: &str) -> Response {
+         );
+     }
+     Json(serde_json::json!({
+-        "payloads": payloads,
++        "payloads": payloads.iter().map(|l| &l.payload).collect::<Vec<_>>(), // PLANT: the drain without its sender
+         "dropped": dropped,
+     }))
+     .into_response()

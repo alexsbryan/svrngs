@@ -1,0 +1,500 @@
+[
+ {
+  "bar": "bar 4, asleep after the list",
+  "run": "asleep-chromium-plant-asleep-empty Jo",
+  "verdict": "failed",
+  "why": "Cy's library: [('asking', 13), ('answered', 60471)]; shown empty 1; said not to have answered at None ms; the others' first answer at 984 ms",
+  "said": [
+   "Asking the jellyfin at a43858b9\u2026",
+   "the jellyfin at a43858b9: nothing by that name"
+  ],
+  "away_ms": null,
+  "plant": true
+ },
+ {
+  "bar": "bar 4, asleep after the list",
+  "run": "asleep-chromium Eli",
+  "verdict": "passed",
+  "why": "Cy's library: [('asking', 8), ('away', 60440)]; shown empty 0; said not to have answered at 60440 ms; the others' first answer at 420 ms",
+  "said": [
+   "Asking the jellyfin at a43858b9\u2026",
+   "the jellyfin at a43858b9 did not answer: its computer may be asleep. Its films are not here."
+  ],
+  "away_ms": 60440,
+  "plant": false
+ },
+ {
+  "bar": "bar 4, asleep after the list",
+  "run": "asleep-webkit Fay",
+  "verdict": "passed",
+  "why": "Cy's library: [('asking', 7), ('away', 60291)]; shown empty 0; said not to have answered at 60291 ms; the others' first answer at 498 ms",
+  "said": [
+   "Asking the jellyfin at a43858b9\u2026",
+   "the jellyfin at a43858b9 did not answer: its computer may be asleep. Its films are not here."
+  ],
+  "away_ms": 60291,
+  "plant": false
+ },
+ {
+  "bar": "reads on a computer, discover",
+  "run": "computer Alex",
+  "verdict": "failed",
+  "why": "with nothing handed Movie Night said: ['No library is open to Movie Night here.']; this origin's stores: []"
+ },
+ {
+  "bar": "reads on a computer, request",
+  "run": "computer Alex",
+  "verdict": "recorded",
+  "why": "the labels handed by the run: [('answered', 'the library at 9jfg6x8p: 1 film'), ('answered', 'the library at hkcf2rf5: 1 film')]"
+ },
+ {
+  "bar": "bar 1",
+  "run": "computer Alex",
+  "verdict": "passed",
+  "why": "'bladruner': 1 Blade Runner card(s), copies [2], other cards []",
+  "first_card_ms": 876,
+  "all_said_ms": 905,
+  "searches_to_settle": null,
+  "cold": {
+   "first_card_ms": 876,
+   "all_said_ms": 905,
+   "said": [
+    "the library at 9jfg6x8p: 1 film",
+    "the library at hkcf2rf5: 1 film"
+   ]
+  },
+  "warm": null,
+  "plant": false
+ },
+ {
+  "bar": "bar 2",
+  "run": "computer Alex",
+  "verdict": "passed",
+  "why": "landed item in 6353 ms, 'Blade Runner', signed in True (asked from the list: None); Play to moving 3763 ms"
+ },
+ {
+  "bar": "bar 3",
+  "run": "computer Alex",
+  "verdict": "passed",
+  "why": "2 press(es) of Back to Movie Night; query kept True, cards the same True",
+  "presses": 2
+ },
+ {
+  "bar": "bar 1",
+  "run": "phone-chromium Ana",
+  "verdict": "passed",
+  "why": "'bladruner': 1 Blade Runner card(s), copies [2], other cards []",
+  "first_card_ms": 112,
+  "all_said_ms": 316,
+  "searches_to_settle": 4,
+  "cold": {
+   "first_card_ms": 448,
+   "all_said_ms": 482,
+   "said": [
+    "the jellyfin at 32044c38 would not let you in.",
+    "the jellyfin at f9c85e53: 1 film"
+   ]
+  },
+  "warm": {
+   "first_card_ms": 155,
+   "all_said_ms": 190
+  },
+  "plant": false
+ },
+ {
+  "bar": "bar 1, each their own",
+  "run": "phone-chromium Ana",
+  "verdict": "passed",
+  "why": "'brazl' after Sam's Brazil was left to them (): 1 Brazil card(s)"
+ },
+ {
+  "bar": "bar 1",
+  "run": "phone-chromium Ben",
+  "verdict": "passed",
+  "why": "'bladruner': 1 Blade Runner card(s), copies [2], other cards []",
+  "first_card_ms": 161,
+  "all_said_ms": 574,
+  "searches_to_settle": 2,
+  "cold": {
+   "first_card_ms": 482,
+   "all_said_ms": 482,
+   "said": [
+    "the jellyfin at 32044c38 would not let you in.",
+    "the jellyfin at f9c85e53: 1 film"
+   ]
+  },
+  "warm": {
+   "first_card_ms": 128,
+   "all_said_ms": 130
+  },
+  "plant": false
+ },
+ {
+  "bar": "bar 1, each their own",
+  "run": "phone-chromium Ben",
+  "verdict": "passed",
+  "why": "'brazl' after Sam's Brazil was kept from them (Ben-01b4495d294ee60b): 0 Brazil card(s)"
+ },
+ {
+  "bar": "bar 2, never opened",
+  "run": "phone-chromium Ana",
+  "verdict": "failed",
+  "why": "chose or from the jellyfin at f9c85e53: landed answered 404 (status 404, from its worker False) at <label>.localhost:64905/web/#/details?id=a2ab195109e40342c4ecfa1c19d2dbec&serverId=ff09eebbcd4e4727ac5a7ea1d9d5a7f3",
+  "shown": ""
+ },
+ {
+  "bar": "bar 2, opened from the list",
+  "run": "phone-chromium Ana",
+  "verdict": "passed",
+  "why": "landed item in 35161 ms, 'Blade Runner', signed in True (asked from the list: False); Play to moving 19806 ms"
+ },
+ {
+  "bar": "bar 3",
+  "run": "phone-chromium Ana",
+  "verdict": "passed",
+  "why": "2 press(es) of Back to Movie Night; query kept True, cards the same True",
+  "presses": 2
+ },
+ {
+  "bar": "bar 2, never opened",
+  "run": "phone-chromium Ben",
+  "verdict": "failed",
+  "why": "chose or from the jellyfin at 32044c38: landed answered 404 (status 404, from its worker False) at <label>.localhost:64905/web/#/details?id=d888aa54b375decd281502a03895e10d&serverId=4e8a02b6973a4fa7861ca4e38d00c8cb",
+  "shown": ""
+ },
+ {
+  "bar": "bar 2, opened from the list",
+  "run": "phone-chromium Ben",
+  "verdict": "passed",
+  "why": "landed item in 20149 ms, 'Blade Runner', signed in True (asked from the list: False); Play to moving 9386 ms"
+ },
+ {
+  "bar": "bar 3",
+  "run": "phone-chromium Ben",
+  "verdict": "passed",
+  "why": "2 press(es) of Back to Movie Night; query kept True, cards the same True",
+  "presses": 2
+ },
+ {
+  "bar": "bar 4, asleep before the list",
+  "run": "phone-chromium Ana",
+  "verdict": "passed",
+  "why": "spirit: no library of Cy's shown empty (0); letter: Movie Night names 0 library beside Sam's and Dee's, so says nothing of Cy's (failed); the group's page said: True",
+  "letter": "failed",
+  "spirit": "passed"
+ },
+ {
+  "bar": "bar 4, asleep before the list",
+  "run": "phone-chromium Ben",
+  "verdict": "passed",
+  "why": "spirit: no library of Cy's shown empty (0); letter: Movie Night names 0 library beside Sam's and Dee's, so says nothing of Cy's (failed); the group's page said: True",
+  "letter": "failed",
+  "spirit": "passed"
+ },
+ {
+  "bar": "bar 1",
+  "run": "phone-webkit Cleo",
+  "verdict": "passed",
+  "why": "'bladruner': 1 Blade Runner card(s), copies [2], other cards []",
+  "first_card_ms": 150,
+  "all_said_ms": 548,
+  "searches_to_settle": 2,
+  "cold": {
+   "first_card_ms": 645,
+   "all_said_ms": 645,
+   "said": [
+    "the jellyfin at 32044c38 would not let you in.",
+    "the jellyfin at f9c85e53: 1 film"
+   ]
+  },
+  "warm": {
+   "first_card_ms": 162,
+   "all_said_ms": 169
+  },
+  "plant": false
+ },
+ {
+  "bar": "bar 1, each their own",
+  "run": "phone-webkit Cleo",
+  "verdict": "passed",
+  "why": "'brazl' after Sam's Brazil was left to them (): 1 Brazil card(s)"
+ },
+ {
+  "bar": "bar 1",
+  "run": "phone-webkit Dara",
+  "verdict": "passed",
+  "why": "'bladruner': 1 Blade Runner card(s), copies [2], other cards []",
+  "first_card_ms": 161,
+  "all_said_ms": 610,
+  "searches_to_settle": 2,
+  "cold": {
+   "first_card_ms": 372,
+   "all_said_ms": 464,
+   "said": [
+    "the jellyfin at 32044c38 would not let you in.",
+    "the jellyfin at f9c85e53: 1 film"
+   ]
+  },
+  "warm": {
+   "first_card_ms": 103,
+   "all_said_ms": 103
+  },
+  "plant": false
+ },
+ {
+  "bar": "bar 1, each their own",
+  "run": "phone-webkit Dara",
+  "verdict": "passed",
+  "why": "'brazl' after Sam's Brazil was kept from them (Dara-a169d2cca99590ae): 0 Brazil card(s)"
+ },
+ {
+  "bar": "bar 2, never opened",
+  "run": "phone-webkit Cleo",
+  "verdict": "failed",
+  "why": "chose or from the jellyfin at f9c85e53: landed answered 404 (status 404, from its worker False) at <label>.localhost:64905/web/#/details?id=a2ab195109e40342c4ecfa1c19d2dbec&serverId=ff09eebbcd4e4727ac5a7ea1d9d5a7f3",
+  "shown": ""
+ },
+ {
+  "bar": "bar 2, opened from the list",
+  "run": "phone-webkit Cleo",
+  "verdict": "passed",
+  "why": "landed item in 22976 ms, 'Blade Runner', signed in True (asked from the list: False); Play to moving 17577 ms"
+ },
+ {
+  "bar": "bar 3",
+  "run": "phone-webkit Cleo",
+  "verdict": "passed",
+  "why": "2 press(es) of Back to Movie Night; query kept True, cards the same True",
+  "presses": 2
+ },
+ {
+  "bar": "bar 2, never opened",
+  "run": "phone-webkit Dara",
+  "verdict": "failed",
+  "why": "chose or from the jellyfin at 32044c38: landed answered 404 (status 404, from its worker False) at <label>.localhost:64905/web/#/details?id=d888aa54b375decd281502a03895e10d&serverId=4e8a02b6973a4fa7861ca4e38d00c8cb",
+  "shown": ""
+ },
+ {
+  "bar": "bar 2, opened from the list",
+  "run": "phone-webkit Dara",
+  "verdict": "passed",
+  "why": "landed item in 13220 ms, 'Blade Runner', signed in True (asked from the list: False); Play to moving 5607 ms"
+ },
+ {
+  "bar": "bar 3",
+  "run": "phone-webkit Dara",
+  "verdict": "passed",
+  "why": "2 press(es) of Back to Movie Night; query kept True, cards the same True",
+  "presses": 2
+ },
+ {
+  "bar": "bar 4, asleep before the list",
+  "run": "phone-webkit Cleo",
+  "verdict": "passed",
+  "why": "spirit: no library of Cy's shown empty (0); letter: Movie Night names 0 library beside Sam's and Dee's, so says nothing of Cy's (failed); the group's page said: True",
+  "letter": "failed",
+  "spirit": "passed"
+ },
+ {
+  "bar": "bar 4, asleep before the list",
+  "run": "phone-webkit Dara",
+  "verdict": "passed",
+  "why": "spirit: no library of Cy's shown empty (0); letter: Movie Night names 0 library beside Sam's and Dee's, so says nothing of Cy's (failed); the group's page said: True",
+  "letter": "failed",
+  "spirit": "passed"
+ },
+ {
+  "bar": "bar 1",
+  "run": "plant-per-copy Ivy",
+  "verdict": "failed",
+  "why": "'bladruner': 2 Blade Runner card(s), copies [1, 1], other cards []",
+  "first_card_ms": 132,
+  "all_said_ms": 792,
+  "searches_to_settle": 3,
+  "cold": {
+   "first_card_ms": 132,
+   "all_said_ms": 792,
+   "said": [
+    "the jellyfin at 32044c38: 1 film",
+    "the jellyfin at f9c85e53: 1 film"
+   ]
+  },
+  "warm": null,
+  "plant": true
+ },
+ {
+  "bar": "bar 5, no secret in a byte",
+  "run": "asleep-chromium eli",
+  "verdict": "passed",
+  "why": "10482878 bytes in 87 responses: others' secrets {} in {}; their own token 0",
+  "plant": false
+ },
+ {
+  "bar": "bar 5, no secret in a byte",
+  "run": "asleep-chromium-plant-asleep-empty jo",
+  "verdict": "passed",
+  "why": "10482613 bytes in 81 responses: others' secrets {} in {}; their own token 0",
+  "plant": false
+ },
+ {
+  "bar": "bar 5, no secret in a byte",
+  "run": "asleep-webkit fay",
+  "verdict": "passed",
+  "why": "5275235 bytes in 47 responses: others' secrets {} in {}; their own token 0",
+  "plant": false
+ },
+ {
+  "bar": "bar 5, no secret in a byte",
+  "run": "computer alex",
+  "verdict": "passed",
+  "why": "17498116 bytes in 172 responses: others' secrets {} in {}; their own token 0",
+  "plant": false
+ },
+ {
+  "bar": "bar 5, no secret in a byte",
+  "run": "limit gus",
+  "verdict": "passed",
+  "why": "10480272 bytes in 75 responses: others' secrets {} in {}; their own token 0",
+  "plant": false
+ },
+ {
+  "bar": "bar 5, no secret in a byte",
+  "run": "limit hal",
+  "verdict": "passed",
+  "why": "10495562 bytes in 89 responses: others' secrets {} in {}; their own token 0",
+  "plant": false
+ },
+ {
+  "bar": "bar 5, no secret in a byte",
+  "run": "phone-chromium ana",
+  "verdict": "passed",
+  "why": "38493674 bytes in 515 responses: others' secrets {} in {}; their own token 0",
+  "plant": false
+ },
+ {
+  "bar": "bar 5, no secret in a byte",
+  "run": "phone-chromium ben",
+  "verdict": "passed",
+  "why": "39564417 bytes in 438 responses: others' secrets {} in {}; their own token 0",
+  "plant": false
+ },
+ {
+  "bar": "bar 5, no secret in a byte",
+  "run": "phone-webkit cleo",
+  "verdict": "passed",
+  "why": "28670101 bytes in 377 responses: others' secrets {} in {}; their own token 0",
+  "plant": false
+ },
+ {
+  "bar": "bar 5, no secret in a byte",
+  "run": "phone-webkit dara",
+  "verdict": "passed",
+  "why": "28650094 bytes in 380 responses: others' secrets {} in {}; their own token 0",
+  "plant": false
+ },
+ {
+  "bar": "bar 5, no secret in a byte",
+  "run": "plant-lender-token kai",
+  "verdict": "failed",
+  "why": "10485167 bytes in 66 responses: others' secrets {'sam_admin_token': 1} in {'sam_admin_token': ['/plant.js']}; their own token 0",
+  "plant": true
+ },
+ {
+  "bar": "bar 5, no secret in a byte",
+  "run": "plant-per-copy ivy",
+  "verdict": "passed",
+  "why": "10483423 bytes in 63 responses: others' secrets {} in {}; their own token 0",
+  "plant": false
+ },
+ {
+  "bar": "bar 5, no secret in a byte",
+  "run": "searched for",
+  "verdict": "recorded",
+  "why": "dee_admin_token, dee_mw_key, dee_pw, sam_admin_token, sam_mw_key, sam_pw"
+ },
+ {
+  "bar": "bar 5, svrngs's names in Movie Night's source",
+  "run": "apps/movie-night",
+  "verdict": "failed",
+  "why": "2 line(s): ['app.js:19 (plumbing find) `svrngs-lend`', 'app.js:32 (plumbing find) `svrngs-lend`']",
+  "lines": [
+   "app.js:19 (plumbing find) `svrngs-lend`",
+   "app.js:32 (plumbing find) `svrngs-lend`"
+  ]
+ },
+ {
+  "bar": "bar 5, a credential in Movie Night's code",
+  "run": "apps/movie-night",
+  "verdict": "recorded",
+  "why": "3 line(s) naming one outside the plants: [\"app.js:39 (plumbing find): const get = db.transaction('kept').objectStore('kept').get(`pass ${OWN}`);\", 'app.js:53 (plumbing find): const pass = await kept();', 'app.js:54 (plumbing find): return (pass?.lends ?? [])']",
+  "lines": [
+   "app.js:39 (plumbing find): const get = db.transaction('kept').objectStore('kept').get(`pass ${OWN}`);",
+   "app.js:53 (plumbing find): const pass = await kept();",
+   "app.js:54 (plumbing find): return (pass?.lends ?? [])"
+  ]
+ },
+ {
+  "bar": "the limit",
+  "run": "most counted at once",
+  "verdict": "recorded",
+  "why": "{\"sam/movie-night\": 2, \"sam/jellyfin\": 2, \"dee/jellyfin\": 2}"
+ },
+ {
+  "bar": "the limit",
+  "run": "guessed home",
+  "verdict": "recorded",
+  "why": "{\"sam/movie-night\": {\"Alex\": 5}, \"sam/jellyfin\": {\"Alex\": 153}, \"dee/jellyfin\": {\"Alex\": 1}}"
+ },
+ {
+  "bar": "the limit",
+  "run": "relayed or not, by person",
+  "verdict": "recorded",
+  "why": "{\"sam/movie-night\": {\"Ivy Some(true)\": 5, \"Jo Some(true)\": 5, \"Kai Some(true)\": 5, \"Ana Some(true)\": 12, \"Ben Some(true)\": 12, \"Eli Some(true)\": 5, \"Cleo Some(true)\": 16, \"Dara Some(true)\": 16, \"Fay Some(true)\": 5, \"Gus Some(true)\": 5, \"Hal Some(true)\": 5}, \"sam/jellyfin\": {\"Ivy Some(true)\": 3, \"Jo Some(true)\": 2, \"Kai Some(true)\": 4, \"Ana Some(true)\": 294, \"Ben Some(true)\": 6, \"Eli Some(true)\": 2, \"Cleo Some(true)\": 273, \"Dara Some(true)\": 6, \"Fay Some(true)\": 2, \"Hal Some(true)\": 7, \"Gus Some(true)\": 1}, \"dee/jellyfin\": {\"Ivy Some(true)\": 1, \"Jo Some(true)\": 1, \"Kai Some(true)\": 1, \"Ana Some(true)\": 4, \"Ben Some(true)\": 282, \"Eli Some(true)\": 1, \"Cleo Some(true)\": 4, \"Dara Some(true)\": 267, \"Fay Some(true)\": 1, \"Hal Some(true)\": 6, \"Gus Some(true)\": 1}}"
+ },
+ {
+  "bar": "the limit",
+  "run": "Hal's searches after Gus's last",
+  "verdict": "recorded",
+  "why": "[{\"after_s\": 5, \"sam/jellyfin\": {\"people\": [2], \"since_first_last_s\": 6.4}, \"dee/jellyfin\": {\"people\": [2], \"since_first_last_s\": 6.2}}, {\"after_s\": 15, \"sam/jellyfin\": {\"people\": [2], \"since_first_last_s\": 16.4}, \"dee/jellyfin\": {\"people\": [2], \"since_first_last_s\": 16.2}}, {\"after_s\": 25, \"sam/jellyfin\": {\"people\": [2], \"since_first_last_s\": 26.5}, \"dee/jellyfin\": {\"people\": [2], \"since_first_last_s\": 26.3}}, {\"after_s\": 35, \"sam/jellyfin\": {\"people\": [1], \"since_first_last_s\": 36.4}, \"dee/jellyfin\": {\"people\": [1], \"since_first_last_s\": 36.2}}, {\"after_s\": 45, \"sam/jellyfin\": {\"people\": [1], \"since_first_last_s\": 46.5}, \"dee/jellyfin\": {\"people\": [1], \"since_first_last_s\": 46.2}}]"
+ },
+ {
+  "bar": "the limit",
+  "run": "refusals",
+  "verdict": "recorded",
+  "why": "{\"dee\": {\"a pass that does not open this lend (its signer stands in no group held here)\": 19}}"
+ },
+ {
+  "bar": "the count",
+  "run": "apps/movie-night",
+  "verdict": "recorded",
+  "why": "{'own': 157, 'plumbing': 39, 'plant': 7}; {'own cards': 96, 'own choose': 10, 'own match': 51, 'plant asleep-empty': 1, 'plant lender-token': 1, 'plant per-copy': 1, 'plant switch': 4, 'plumbing ask': 11, 'plumbing find': 28}",
+  "pieces": {
+   "own cards": 96,
+   "own choose": 10,
+   "own match": 51,
+   "plant asleep-empty": 1,
+   "plant lender-token": 1,
+   "plant per-copy": 1,
+   "plant switch": 4,
+   "plumbing ask": 11,
+   "plumbing find": 28
+  },
+  "sides": {
+   "own": 157,
+   "plumbing": 39,
+   "plant": 7
+  }
+ },
+ {
+  "bar": "the product untouched",
+  "run": "git diff c963f93..HEAD -- crates/*/src web",
+  "verdict": "passed",
+  "why": "empty"
+ },
+ {
+  "bar": "scripts/check.sh free of Jellyfin",
+  "run": "scripts/check.sh",
+  "verdict": "passed",
+  "why": "0 mention(s)"
+ }
+]

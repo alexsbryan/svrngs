@@ -63,14 +63,13 @@ fn a_declaration_is_read_strictly() {
     assert!(read(root.path(), &name).is_err(), "port 0 is no port");
     for unsaid in [
         r#"{"port": 8096, "limit": 3}"#,
-        r#"{"port": 8096, "kind": "k"}"#,
         r#"{"port": 8096, "kind": "k", "limit": 0}"#,
         r#"{"port": 8096, "kind": "a/b", "limit": 3}"#,
     ] {
         std::fs::write(&file, unsaid).unwrap();
         assert!(
             read(root.path(), &name).is_err(),
-            "a kind or limit absent or not one is refused, never defaulted: {unsaid}"
+            "a kind absent, or a kind or limit not one, is refused, never defaulted: {unsaid}"
         );
     }
     std::fs::write(
@@ -79,7 +78,7 @@ fn a_declaration_is_read_strictly() {
     )
     .unwrap();
     let lend = read(root.path(), &name).unwrap().unwrap();
-    assert_eq!(lend.port.get(), 8096);
+    assert_eq!(lend.source, Source::Port(NonZeroU16::new(8096).unwrap()));
     assert_eq!(
         lend.refusing("/Admin/x").map(RefusedPath::as_str),
         Some("/admin")
@@ -89,12 +88,14 @@ fn a_declaration_is_read_strictly() {
 fn lend(name: &str, port: u16) -> Lend {
     Lend {
         name: LendName::parse(name).unwrap(),
-        port: NonZeroU16::new(port).unwrap(),
+        source: Source::Port(NonZeroU16::new(port).unwrap()),
         kind: Kind::parse("k").unwrap(),
-        limit: NonZeroU16::new(3).unwrap(),
+        limit: NonZeroU16::new(3),
         refused: vec![refused("/admin")],
         upload: None,
         reads: Vec::new(),
+        sign_in: None,
+        asks: None,
     }
 }
 
@@ -136,6 +137,26 @@ fn a_lend_declared_is_read_back_and_withdrawn_whole() {
     );
 }
 
+/// A sign-in (mwp-1) is kept in the declaration and read back; with a
+/// secret beside it, refused and nothing written; and a lend with none is
+/// written with no word of it, as before.
+#[test]
+fn a_sign_in_is_declared_alone_and_a_lend_without_one_as_before() {
+    let root = tempfile::tempdir().unwrap();
+    let mut signed = lend("signed", 8096);
+    signed.sign_in = NonZeroU16::new(9000);
+    assert!(matches!(
+        declare(root.path(), &signed, Some(("authorization", "s3cret"))),
+        Err(LendError::SecretAndSignIn(_))
+    ));
+    assert_eq!(read(root.path(), &signed.name).unwrap(), None);
+    declare(root.path(), &signed, None).unwrap();
+    assert_eq!(read(root.path(), &signed.name).unwrap(), Some(signed));
+    declare(root.path(), &lend("pad", 9001), None).unwrap();
+    let text = std::fs::read_to_string(lends_dir(root.path()).join("pad.json")).unwrap();
+    assert!(!text.contains("sign_in"), "{text}");
+}
+
 /// A lend's upload is its lender's to state: absent is none declared, never
 /// a default; zero is no upload, refused; one stated reads back in bits a
 /// second, and prints as a speed test states it.
@@ -162,7 +183,64 @@ fn an_upload_is_declared_or_absent_never_defaulted() {
     assert_eq!(upload.bps(), 30_000_000);
     assert_eq!(upload.to_string(), "30 Mbit/s");
     assert_eq!(
-        Upload::new(NonZeroU64::new(1_500_000).unwrap()).to_string(),
+        Upload(NonZeroU64::new(1_500_000).unwrap()).to_string(),
         "1500000 bit/s"
     );
+}
+
+/// A declaration written before bash-limit is read as it was — its limit
+/// of three still lets in three, and refuses a fourth — and one that names
+/// no limit, which was refused, now lets in everyone at once: the absence
+/// held as itself, never as a number.
+#[test]
+fn a_limit_declared_is_kept_and_one_absent_is_none() {
+    use crate::door::limit::{Counts, Verdict, Whereabouts};
+    #[expect(
+        clippy::disallowed_methods,
+        reason = "the time is the counts' argument"
+    )]
+    let now = std::time::Instant::now();
+    let root = tempfile::tempdir().unwrap();
+    let name = LendName::parse("shelf").unwrap();
+    std::fs::create_dir_all(lends_dir(root.path())).unwrap();
+    let file = lends_dir(root.path()).join("shelf.json");
+    let fourth = |text: &str| {
+        std::fs::write(&file, text).unwrap();
+        let lend = read(root.path(), &name).unwrap().unwrap();
+        let mut counts = Counts::default();
+        for who in ["ana", "bo", "cy"] {
+            counts.ask(&lend, who, Whereabouts::Away, now);
+        }
+        counts.ask(&lend, "dee", Whereabouts::Away, now)
+    };
+    let before = "{\n  \"port\": 8096,\n  \"kind\": \"k\",\n  \"limit\": 3,\n  \"refused\": []\n}";
+    assert!(matches!(fourth(before), Verdict::Full { using: 3, .. }));
+    let unnamed = r#"{"port": 8096, "kind": "k", "refused": []}"#;
+    assert!(matches!(fourth(unnamed), Verdict::In { .. }));
+}
+
+/// **A lender's computer that says nothing of signing in is not read as
+/// no** (v1ui-findings (a); #159; arch-version (b)): a lend with no
+/// `signs_in` is no lend at all, never one read as `false`; one that says
+/// no is kept as no. A computer that says nothing runs an older svrngs, and
+/// is named so by the one version check (`node.rs` `answered`), where
+/// v1ui-findings (a) carried the absence on to the pages as `null`.
+/// Planted, watched failing: `#[serde(default)]` back on `signs_in`, a
+/// bool, which read the absence as no.
+#[test]
+fn a_lend_whose_computer_says_nothing_of_signing_in_is_not_read_as_no() {
+    let read = |signs_in: Option<bool>| {
+        let mut answer = serde_json::json!({
+            "name": "shelf", "kind": "k", "limit": null, "using": 0, "upload_bps": null, "reads": [],
+        });
+        if let Some(s) = signs_in {
+            answer["signs_in"] = s.into();
+        }
+        serde_json::from_value::<Offered>(answer)
+            .ok()
+            .map(|o| o.signs_in)
+    };
+    assert_eq!(read(None), None);
+    assert_eq!(read(Some(false)), Some(false));
+    assert_eq!(read(Some(true)), Some(true));
 }

@@ -40,7 +40,7 @@ async function start() {
   if (location.hash.length > 1) {
     handed = decode(location.hash.slice(1));
     history.replaceState(null, '', `${location.pathname}${location.search}`);
-    if (!location.hostname.startsWith(`${handed.label}.`)) throw new Error(`a pass for ${handed.label} opened at ${location.origin}`);
+    if (store.labelOf(location.hostname) !== handed.label) throw new Error(`a pass for ${handed.label} opened at ${location.origin}`);
     await store.lendKeep(`pass ${handed.label}`, handed);
   } else {
     handed = asked.get('for') && (await store.lendKept(`pass ${asked.get('for')}`));
@@ -51,7 +51,9 @@ async function start() {
   const script = new URL('./lend.js?v=__VERSION__', import.meta.url).pathname;
   const worker = await running(await navigator.serviceWorker.register(script, { scope: '/', type: 'module' }));
   if (!(await store.handOver(worker, { handed }))) throw new Error('the lend’s worker did not say it holds the pass');
-  location.replace(asked.get('back') ?? '/');
+  // A path of this origin's alone: the group's page hands one a lend asked for.
+  const back = new URL(asked.get('back') ?? '/', location.href);
+  location.replace(back.origin === location.origin ? back.href : '/');
 }
 
 start().catch((e) => {

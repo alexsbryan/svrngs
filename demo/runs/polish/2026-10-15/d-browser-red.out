@@ -1,0 +1,5 @@
+test the_home_page_lends_what_runs_here::webkit ... FAILED
+test the_home_page_lends_what_runs_here::chromium ... FAILED
+thread 'the_home_page_lends_what_runs_here::webkit' (48774926) panicked at crates/svrngs-node/tests/browser/main.rs:3326:5:
+thread 'the_home_page_lends_what_runs_here::chromium' (48774925) panicked at crates/svrngs-node/tests/browser/main.rs:3326:5:
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 90 filtered out; finished in 17.14s

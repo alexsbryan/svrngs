@@ -1,0 +1,1110 @@
+{
+ "n0": {
+  "use1-1.relay.n0.iroh.link": [
+   "87.99.151.110",
+   "2a01:4ff:f0:b1b3::1"
+  ],
+  "usw1-1.relay.n0.iroh.link": [
+   "5.78.69.43",
+   "2a01:4ff:1f0:e599::1"
+  ],
+  "euc1-1.relay.n0.iroh.link": [
+   "91.99.237.97",
+   "2a01:4f8:1c19:39b4::1"
+  ],
+  "aps1-1.relay.n0.iroh.link": [
+   "5.223.65.62",
+   "2a01:4ff:2f0:29c1::1"
+  ],
+  "use1-1.staging-relay.n0.iroh.link": [
+   "178.156.173.73",
+   "2a01:4ff:f0:f255::1"
+  ],
+  "euc1-1.staging-relay.n0.iroh.link": [
+   "178.105.170.157",
+   "2a01:4f8:1c1a:bff8::1"
+  ],
+  "dns.iroh.link": [
+   "49.13.207.244",
+   "2a01:4f8:c2c:7216::1"
+  ],
+  "staging-dns.iroh.link": [
+   "49.13.237.105",
+   "2a01:4f8:1c1c:75e2::1"
+  ]
+ },
+ "ours": {
+  "relay.svrnme.sh": [
+   "216.198.79.1",
+   "216.198.79.65"
+  ]
+ },
+ "relay": {
+  "at": "http://127.0.0.1:57771/",
+  "open": "Relaying at http://127.0.0.1:57771/ for every computer and phone that reaches it, each sending at most 70 Mbit/s. Leave this running."
+ },
+ "published": {
+  "page": "http://localhost:57849/",
+  "built": {
+   "build-web.sh": {
+    "exit": 0,
+    "s": 28,
+    "last": [
+     "    Finished `release` profile [optimized] target(s) in 27.38s"
+    ]
+   },
+   "build-release.sh": {
+    "exit": 0,
+    "s": 11,
+    "last": [
+     "    Finished `release` profile [optimized] target(s) in 0.46s"
+    ]
+   },
+   "relay": {
+    "exit": 0,
+    "binary": "n0_off-b3848139f63e6439"
+   }
+  },
+  "tarball": "svrngs-darwin-aarch64.tar.gz",
+  "bytes": 13140753,
+  "sum_matches": true,
+  "sums": [
+   "a315d5584e0ac2b6610fdc983023e77148ae8e723fcca886ee7abcc4ecd83a5e  svrngs-darwin-aarch64.tar.gz",
+   "4d634e770d1c10575452d5138e381b79393f6883730b7bc8a7b9e98fc7a91c35  svrngs-darwin-x86_64.tar.gz",
+   "257c905b3bfdb5325a640daf0bffd3f6af7b76f9257235038b6c40d0e966cdfd  svrngs-linux-aarch64.tar.gz",
+   "6c71f02177b499b18dad44c8ab6f757dee36d7e844c4ce49a7d7246237fecedc  svrngs-linux-x86_64.tar.gz"
+  ],
+  "binary_sha256": "07b1ac0e6ffb7253fe1d4314a0281d3ab302ec1b3b3aa45c6c55d203ad252bfb"
+ },
+ "apps": {
+  "server": "77985bfdad12498fa395f962f39f594e",
+  "jellyfin_version": "12.0.0",
+  "film": "129e6d853f9bc85f8c3bb9bf1467561c",
+  "users_before": [
+   "sam"
+  ],
+  "navidrome_version": "0.64.2 (source_archive)",
+  "album": "4bq4m0XwGcFrE4hapPMIZw",
+  "album_name": "Lake Songs 1",
+  "users_before_nd": [
+   "ana"
+  ],
+  "sha": "f0d756930aedac2e61d572033975ddf266feea79f0cfcc355f709fd71332a1d3"
+ },
+ "preview": {
+  "status": 200,
+  "title": "You\u2019re invited to a group",
+  "description": "Open the link to join: on a phone right here, on a computer by one line pasted in a terminal. What the group shares stays on its people\u2019s own computers."
+ },
+ "sam": {
+  "share": {
+   "who": "sam",
+   "args": [
+    "share",
+    "8096",
+    "--sign-in",
+    "8097"
+   ],
+   "exit": 0,
+   "said": "Lent jellyfin (port 8096) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 8096 --limit <number>`.\nEach person is signed in to it as themselves by what answers on port 8097, with nothing typed.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare jellyfin` stops lending it.",
+   "ms": 17
+  },
+  "folder": {
+   "said": "lake-trip's folder is /tmp/c-relay/sam/svrngs/lake-trip: what anyone in lake-trip puts there reaches this computer, and what you put there reaches theirs.",
+   "is_dir": true
+  }
+ },
+ "ana": {
+  "line_exit": 0,
+  "line_ms": 9730,
+  "folder": true,
+  "share": {
+   "who": "ana",
+   "args": [
+    "share",
+    "4533"
+   ],
+   "exit": 0,
+   "said": "Lent navidrome (port 4533) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 4533 --limit <number>`.\nnavidrome signs each person in as themselves, with nothing typed, once it takes them from svrngs: in navidrome, ND_EXTAUTH_USERHEADER=X-Svrngs-User and ND_EXTAUTH_TRUSTEDSOURCES=127.0.0.1/32 in its environment, then start it again.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare navidrome` stops lending it.",
+   "ms": 16
+  },
+  "navidrome_set": {
+   "ND_EXTAUTH_USERHEADER": "X-Svrngs-User",
+   "ND_EXTAUTH_TRUSTEDSOURCES": "127.0.0.1/32"
+  },
+  "photos": {
+   "files": 30,
+   "bytes": 146488940
+  }
+ },
+ "newcomers": {
+  "alex": {
+   "line": {
+    "shown": 1843,
+    "title": "You\u2019re invited to a group",
+    "stopped": null
+   },
+   "pasted_ms": 2099,
+   "line_exit": 0,
+   "line_done_ms": 8593,
+   "said_last": "Your home page: http://svrngs.localhost:62387/",
+   "home_opened_ms": 8585,
+   "mode": "person",
+   "home": {
+    "listed": 9131,
+    "said": "lake-trip\n\nPeople: ana, Sam, alex\n\nlake-trip\u2019s folder is on this computer at /tmp/c-relay/alex/svrngs/lake-trip\n\nSam\u2019s jellyfin\nana\u2019s navidrome\nWhat this computer lends\n\nThis computer lends nothing.\n\nWhat apps use",
+    "links": {
+     "Sam\u2019s jellyfin": "http://pflz78uj50mrvfs41v8dfzk4f8h16hvwcum2swlrcxdbl1q8hj8tbbq3n1prdr.localhost:62387/",
+     "ana\u2019s navidrome": "http://apkp8klm5lkc5bt4w4dt16at3muq22gkbatrnbw33agtddvsx72a0r4j328lfk.localhost:62387/"
+    }
+   },
+   "film_opened": 9148,
+   "film": {
+    "shown": 2029,
+    "asked": false,
+    "playing": 2660,
+    "done": 15982
+   },
+   "music_opened": 16150,
+   "music": {
+    "shown": 798,
+    "asked": false,
+    "as": "alex-8affec18aa208128",
+    "playing": 1869,
+    "track": "Track 1MP3 32Ana - Lake Songs 1 - 2026",
+    "done": 20327
+   },
+   "photo": {
+    "on_disk": 20334,
+    "decoded": {
+     "w": 4032,
+     "h": 3024
+    },
+    "opened": 20548
+   },
+   "done": 20548,
+   "logs": [],
+   "listed_after_line_ms": 538,
+   "load": [
+    33.7
+   ]
+  },
+  "bo": {
+   "line": {
+    "shown": 639,
+    "title": "You\u2019re invited to a group",
+    "stopped": null
+   },
+   "pasted_ms": 779,
+   "line_exit": 0,
+   "line_done_ms": 6678,
+   "said_last": "Your home page: http://svrngs.localhost:64862/",
+   "home_opened_ms": 6620,
+   "mode": "person",
+   "home": {
+    "listed": 7669,
+    "said": "lake-trip\n\nPeople: ana, Sam, alex, bo\n\nlake-trip\u2019s folder is on this computer at /tmp/c-relay/bo/svrngs/lake-trip\n\nSam\u2019s jellyfin\nana\u2019s navidrome\nWhat this computer lends\n\nThis computer lends nothing.\n\nWhat apps use",
+    "links": {
+     "Sam\u2019s jellyfin": "http://pflz78uj50mrvfs41v8dfzk4f8h16hvwcum2swlrcxdbl1q8hj8tbbq3n1prdr.localhost:64862/",
+     "ana\u2019s navidrome": "http://apkp8klm5lkc5bt4w4dt16at3muq22gkbatrnbw33agtddvsx72a0r4j328lfk.localhost:64862/"
+    }
+   },
+   "film_opened": 7700,
+   "film": {
+    "shown": 2270,
+    "asked": false,
+    "playing": 2230,
+    "done": 14522
+   },
+   "music_opened": 14688,
+   "music": {
+    "shown": 686,
+    "asked": false,
+    "as": "bo-d525d65a910e06f8",
+    "playing": 1554,
+    "track": "Track 1MP3 32Ana - Lake Songs 1 - 2026",
+    "done": 18438
+   },
+   "photo": {
+    "on_disk": 18445,
+    "decoded": {
+     "w": 4032,
+     "h": 3024
+    },
+    "opened": 18519
+   },
+   "done": 18519,
+   "logs": [],
+   "listed_after_line_ms": 991,
+   "load": [
+    38.4
+   ]
+  },
+  "dee": {
+   "line": {
+    "shown": 822,
+    "title": "You\u2019re invited to a group",
+    "stopped": null
+   },
+   "pasted_ms": 892,
+   "line_exit": 0,
+   "line_done_ms": 6910,
+   "said_last": "Your home page: http://svrngs.localhost:50955/",
+   "home_opened_ms": 6889,
+   "mode": "person",
+   "home": {
+    "listed": 7886,
+    "said": "lake-trip\n\nPeople: ana, Sam, alex, dee, bo\n\nlake-trip\u2019s folder is on this computer at /tmp/c-relay/dee/svrngs/lake-trip\n\nSam\u2019s jellyfin\nana\u2019s navidrome\nWhat this computer lends\n\nThis computer lends nothing.\n\nWhat apps use",
+    "links": {
+     "Sam\u2019s jellyfin": "http://pflz78uj50mrvfs41v8dfzk4f8h16hvwcum2swlrcxdbl1q8hj8tbbq3n1prdr.localhost:50955/",
+     "ana\u2019s navidrome": "http://apkp8klm5lkc5bt4w4dt16at3muq22gkbatrnbw33agtddvsx72a0r4j328lfk.localhost:50955/"
+    }
+   },
+   "film_opened": 7912,
+   "film": {
+    "shown": 1794,
+    "asked": false,
+    "playing": 2144,
+    "done": 13945
+   },
+   "music_opened": 14088,
+   "music": {
+    "shown": 580,
+    "asked": false,
+    "as": "dee-9f37154dbae4686c",
+    "playing": 1694,
+    "track": "Track 1MP3 32Ana - Lake Songs 1 - 2026",
+    "done": 17872
+   },
+   "photo": {
+    "on_disk": 17877,
+    "decoded": {
+     "w": 4032,
+     "h": 3024
+    },
+    "opened": 17933
+   },
+   "done": 17933,
+   "logs": [],
+   "listed_after_line_ms": 976,
+   "load": [
+    40.8
+   ]
+  }
+ },
+ "names": {
+  "sam": [
+   "Sam",
+   "alex",
+   "ana",
+   "bo",
+   "dee"
+  ],
+  "alex": [
+   "Sam",
+   "alex",
+   "ana",
+   "bo",
+   "dee"
+  ]
+ },
+ "cy": {
+  "mode": "phone",
+  "asked_name": true,
+  "name_asked_at": 2169,
+  "status": {
+   "at": 3069,
+   "said": "You\u2019re in lake-trip, as Cy"
+  },
+  "lent": [
+   "Sam\u2019s jellyfin",
+   "ana\u2019s navidrome"
+  ],
+  "lent_at": 3075,
+  "film_opened": 3075,
+  "film": {
+   "shown": 342,
+   "asked": false,
+   "playing": 3200,
+   "done": 9824
+  },
+  "music_opened": 10264,
+  "music": {
+   "shown": 1199,
+   "asked": false,
+   "as": "Cy-70d804bd8735711b",
+   "playing": 1467,
+   "track": "Track 1AnaLake Songs 1 - 2026",
+   "done": 14529
+  },
+  "done": 14529,
+  "logs": [],
+  "away": []
+ },
+ "removed": {
+  "before": {
+   "Sam/jellyfin": [
+    200,
+    null
+   ],
+   "ana/navidrome": [
+    200,
+    null
+   ]
+  },
+  "command": {
+   "who": "sam",
+   "args": [
+    "remove",
+    "bo",
+    "--group",
+    "lake-trip"
+   ],
+   "exit": 0,
+   "said": "bo is no longer in lake-trip. What bo already has stays with them; nothing new reaches them.",
+   "ms": 20
+  },
+  "refused_removed_s": {
+   "ana/navidrome": 0.036,
+   "Sam/jellyfin": 0.036
+  },
+  "bo_told": {
+   "at": 591,
+   "said": "lake-trip\n\nYou are no longer in lake-trip. What you already have stays on this computer; nothing new reaches it.\n\nWhat this computer lends\n\nThis computer lends nothing.\n\nWhat apps use",
+   "stopped": null
+  },
+  "after_jpg_s": {
+   "alex": 0.52,
+   "dee": 0.58,
+   "ana": 0.62,
+   "bo": null
+  },
+  "bo_tries": {
+   "who": "bo",
+   "args": [
+    "remove",
+    "Sam",
+    "--group",
+    "lake-trip"
+   ],
+   "exit": 1,
+   "said": "svrngs: You are no longer in lake-trip.",
+   "ms": 23
+  },
+  "standing": {
+   "sam": [
+    "Cy",
+    "Sam",
+    "alex",
+    "ana",
+    "dee"
+   ],
+   "ana": [
+    "Cy",
+    "Sam",
+    "alex",
+    "ana",
+    "dee"
+   ],
+   "alex": [
+    "Cy",
+    "Sam",
+    "alex",
+    "ana",
+    "dee"
+   ]
+  },
+  "bo_keeps": 30
+ },
+ "asleep": {
+  "eve": {
+   "line": {
+    "shown": 803,
+    "title": "You\u2019re invited to a group",
+    "stopped": null
+   },
+   "pasted_ms": 861,
+   "line_exit": 0,
+   "line_done_ms": 6640,
+   "said_last": "Your home page: http://svrngs.localhost:61879/",
+   "home_opened_ms": 6632,
+   "mode": "person",
+   "home": {
+    "listed": 9983,
+    "said": "lake-trip\n\nPeople: ana, Sam, Cy, alex, dee, eve\n\nlake-trip\u2019s folder is on this computer at /tmp/c-relay/eve/svrngs/lake-trip\n\nSam removed bo on Oct 13, 2026, 1:04 AM\nSam\u2019s jellyfin\nana's computer did not answer, so what they lend is not listed.\nWhat this computer lends\n\nThis computer lends nothing.\n\nWhat apps use",
+    "links": {
+     "Sam\u2019s jellyfin": "http://pflz78uj50mrvfs41v8dfzk4f8h16hvwcum2swlrcxdbl1q8hj8tbbq3n1prdr.localhost:61879/"
+    }
+   },
+   "film_opened": 10006,
+   "film": {
+    "shown": 1857,
+    "asked": false,
+    "playing": 2208,
+    "done": 16011
+   },
+   "photo": {
+    "on_disk": 16015,
+    "decoded": {
+     "w": 4032,
+     "h": 3024
+    },
+    "opened": 16178
+   },
+   "done": 16178,
+   "logs": [],
+   "listed_after_line_ms": 3343,
+   "load": [
+    20.1
+   ]
+  },
+  "all_thirty_s_after_eve_in": 9.7,
+  "eve_has": 30,
+  "unanswered": {
+   "eve": {
+    "at": 23375,
+    "said": "lake-trip\n\nPeople: ana, Sam, Cy, alex, dee, eve\n\nlake-trip\u2019s folder is on this computer at /tmp/c-relay/eve/svrngs/lake-trip\n\nSam removed bo on Oct 13, 2026, 1:04 AM\nSam\u2019s jellyfin\nana's computer did not answer, so what they lend is not listed.\nWhat this computer lends\n\nThis computer lends nothing.\n\nWhat apps use",
+    "stopped": null
+   },
+   "alex": {
+    "at": 26974,
+    "said": "lake-trip\n\nPeople: ana, Sam, Cy, alex, dee, eve\n\nlake-trip\u2019s folder is on this computer at /tmp/c-relay/alex/svrngs/lake-trip\n\nSam removed bo on Oct 13, 2026, 1:04 AM\nSam\u2019s jellyfin\nana's computer did not answer, so what they lend is not listed.\nWhat this computer lends\n\nThis computer lends nothing.\n\nWhat apps use",
+    "stopped": null
+   }
+  },
+  "jellyfin_answers": {
+   "alex": 200,
+   "dee": 200,
+   "eve": 200
+  }
+ },
+ "accounts": {
+  "x_svrngs_user": [
+   "Cy-70d804bd8735711b",
+   "Sam-61135efa27dd94e9",
+   "alex-8affec18aa208128",
+   "ana-0310cf212ada502d",
+   "dee-9f37154dbae4686c",
+   "eve-a1ec174da05c4dce"
+  ],
+  "jellyfin_before": [
+   "sam"
+  ],
+  "jellyfin_after": [
+   "Cy-70d804bd8735711b",
+   "alex-8affec18aa208128",
+   "bo-d525d65a910e06f8",
+   "dee-9f37154dbae4686c",
+   "eve-a1ec174da05c4dce",
+   "sam"
+  ],
+  "navidrome_before": [
+   "ana"
+  ],
+  "navidrome_after": [
+   "Cy-70d804bd8735711b",
+   "alex-8affec18aa208128",
+   "ana",
+   "bo-d525d65a910e06f8",
+   "dee-9f37154dbae4686c"
+  ]
+ },
+ "keys": {
+  "ana": "0310cf212ada502d861a9e870bf010caa2dc60a80820e58679c80b018e4fa770",
+  "Sam": "61135efa27dd94e911fabcbc32551a278d7e1a53145587cd2e150614ddbe31fd",
+  "Cy": "70d804bd8735711b65a6ee925bdba919063ffebe67a578b35f65b8bbae74c1f5",
+  "alex": "8affec18aa20812847ccb0905c2c377f6151a541859ce0e36001dca5955baa4f",
+  "dee": "9f37154dbae4686c9e03d8b9bca49153a17522d7be60604c92199a789395e3f3",
+  "bo": "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+  "eve": "a1ec174da05c4dce2c970c96e110825fc4ab2b3abbf2122bc64b90ac1b7743a1"
+ },
+ "group": {
+  "said": "Relaying at http://127.0.0.1:57771/ for the computers and phones of the groups this computer is in. Leave this running.",
+  "first": {
+   "Sam admitted": 0.3,
+   "alex admitted": 0.3,
+   "ana admitted": 0.3,
+   "dee admitted": 0.3,
+   "bo refused": 0.3,
+   "eve admitted": 0.3
+  },
+  "after2_jpg_s": {
+   "alex": 0.96,
+   "eve": 0.96,
+   "ana": 0.97,
+   "dee": 0.98,
+   "bo": null
+  },
+  "alex_home": {
+   "at": 841,
+   "said": "lake-trip\n\nPeople: ana, Sam, Cy, alex, dee, eve\n\nlake-trip\u2019s folder is on this computer at /tmp/c-relay/alex/svrngs/lake-trip\n\nSam removed bo on Oct 13, 2026, 1:04 AM\nSam\u2019s jellyfin\nana\u2019s navidrome\nWhat this computer lends\n\nThis computer lends nothing.\n\nWhat apps use",
+   "stopped": null
+  },
+  "cy": {
+   "mode": "phone",
+   "asked_name": false,
+   "status": {
+    "at": 2330,
+    "said": "You\u2019re in lake-trip, as Cy"
+   },
+   "lent": [
+    "Sam\u2019s jellyfin",
+    "ana\u2019s navidrome"
+   ],
+   "lent_at": 2364,
+   "film_opened": 2364,
+   "film": {
+    "shown": null,
+    "stopped": "no sign-in and no home: Open this page from your group\u2019s link. What\u2019s your name? Everyone in sees it. Join Yes Not now ",
+    "done": null
+   },
+   "music_opened": 153523,
+   "music": {
+    "shown": null,
+    "stopped": "no sign-in and no app: Opening\u2026",
+    "done": null
+   },
+   "done": null,
+   "logs": [
+    "pageerror: FetchEvent.respondWith received an error: TypeError: importScripts cannot be used if worker type is \"module\"",
+    "pageerror: Cannot load http: /apkp8klm5lkc5bt4w4dt16at3muq22gkbatrnbw33agtddvsx72a0r4j328lfk.localhost:57849/."
+   ],
+   "away": []
+  },
+  "fay": {
+   "line": {
+    "shown": 715,
+    "stopped": null
+   },
+   "exit": 1,
+   "said": "Getting svrngs for this computer from http://localhost:57849/get/svrngs-darwin-aarch64.tar.gz\nChecked: svrngs-darwin-aarch64.tar.gz matches SHA256SUMS.\nInstalled svrngs in /tmp/c-relay/fay/.local/bin.\n/tmp/c-relay/fay/.local/bin is not on your PATH, so to run svrngs yourself type /tmp/c-relay/fay/.local/bin/svrngs; nothing else needs it.\nsvrngs: this computer has not reached http://127.0.0.1:57771/ in 10 s, where its group reaches it; it goes on, and keeps trying.\nsvrngs: the computer that sent this link cannot be reached; it may be off, so try again later\nsvrngs: svrngs is in /tmp/c-relay/fay/.local/bin, and did not join the group: it said why above.\n",
+   "ms": 24385,
+   "people_after": [
+    "Cy",
+    "Sam",
+    "alex",
+    "ana",
+    "dee",
+    "eve"
+   ]
+  },
+  "gus": {
+   "mode": "phone",
+   "asked_name": false,
+   "status": {
+    "at": 61555,
+    "said": "The computer that sent this link did not answer through 127.0.0.1:57771. Try again later."
+   },
+   "lent": null,
+   "lent_at": null,
+   "done": null,
+   "logs": [],
+   "away": [],
+   "people_after": [
+    "Cy",
+    "Sam",
+    "alex",
+    "ana",
+    "dee",
+    "eve"
+   ]
+  },
+  "decisions": [
+   [
+    "admitted",
+    "61135efa27dd94e911fabcbc32551a278d7e1a53145587cd2e150614ddbe31fd",
+    "Sam"
+   ],
+   [
+    "admitted",
+    "8affec18aa20812847ccb0905c2c377f6151a541859ce0e36001dca5955baa4f",
+    "alex"
+   ],
+   [
+    "admitted",
+    "0310cf212ada502d861a9e870bf010caa2dc60a80820e58679c80b018e4fa770",
+    "ana"
+   ],
+   [
+    "admitted",
+    "9f37154dbae4686c9e03d8b9bca49153a17522d7be60604c92199a789395e3f3",
+    "dee"
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ],
+   [
+    "admitted",
+    "a1ec174da05c4dce2c970c96e110825fc4ab2b3abbf2122bc64b90ac1b7743a1",
+    "eve"
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ],
+   [
+    "admitted",
+    "70d804bd8735711b65a6ee925bdba919063ffebe67a578b35f65b8bbae74c1f5",
+    "Cy"
+   ],
+   [
+    "refused",
+    "2b0cc32e3030730c2ffd8969b804673cf1f05b6f72aa3c58e0da236125e32275",
+    null
+   ],
+   [
+    "refused",
+    "2b0cc32e3030730c2ffd8969b804673cf1f05b6f72aa3c58e0da236125e32275",
+    null
+   ],
+   [
+    "refused",
+    "2b0cc32e3030730c2ffd8969b804673cf1f05b6f72aa3c58e0da236125e32275",
+    null
+   ],
+   [
+    "refused",
+    "2b0cc32e3030730c2ffd8969b804673cf1f05b6f72aa3c58e0da236125e32275",
+    null
+   ],
+   [
+    "refused",
+    "2b0cc32e3030730c2ffd8969b804673cf1f05b6f72aa3c58e0da236125e32275",
+    null
+   ],
+   [
+    "refused",
+    "2b0cc32e3030730c2ffd8969b804673cf1f05b6f72aa3c58e0da236125e32275",
+    null
+   ],
+   [
+    "refused",
+    "2b0cc32e3030730c2ffd8969b804673cf1f05b6f72aa3c58e0da236125e32275",
+    null
+   ],
+   [
+    "refused",
+    "2b0cc32e3030730c2ffd8969b804673cf1f05b6f72aa3c58e0da236125e32275",
+    null
+   ],
+   [
+    "refused",
+    "2b0cc32e3030730c2ffd8969b804673cf1f05b6f72aa3c58e0da236125e32275",
+    null
+   ],
+   [
+    "refused",
+    "2b0cc32e3030730c2ffd8969b804673cf1f05b6f72aa3c58e0da236125e32275",
+    null
+   ],
+   [
+    "refused",
+    "2b0cc32e3030730c2ffd8969b804673cf1f05b6f72aa3c58e0da236125e32275",
+    null
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ],
+   [
+    "refused",
+    "2b0cc32e3030730c2ffd8969b804673cf1f05b6f72aa3c58e0da236125e32275",
+    null
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ],
+   [
+    "refused",
+    "2b0cc32e3030730c2ffd8969b804673cf1f05b6f72aa3c58e0da236125e32275",
+    null
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ],
+   [
+    "refused",
+    "2b0cc32e3030730c2ffd8969b804673cf1f05b6f72aa3c58e0da236125e32275",
+    null
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ],
+   [
+    "admitted",
+    "70d804bd8735711b65a6ee925bdba919063ffebe67a578b35f65b8bbae74c1f5",
+    "Cy"
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ],
+   [
+    "refused",
+    "bfd6ab6a652c9b7e3aae58f004fd88ade69f101f61cbdd32204f1dfb9fe6dad1",
+    null
+   ],
+   [
+    "refused",
+    "bfd6ab6a652c9b7e3aae58f004fd88ade69f101f61cbdd32204f1dfb9fe6dad1",
+    null
+   ],
+   [
+    "refused",
+    "bfd6ab6a652c9b7e3aae58f004fd88ade69f101f61cbdd32204f1dfb9fe6dad1",
+    null
+   ],
+   [
+    "refused",
+    "bfd6ab6a652c9b7e3aae58f004fd88ade69f101f61cbdd32204f1dfb9fe6dad1",
+    null
+   ],
+   [
+    "refused",
+    "bfd6ab6a652c9b7e3aae58f004fd88ade69f101f61cbdd32204f1dfb9fe6dad1",
+    null
+   ],
+   [
+    "refused",
+    "bfd6ab6a652c9b7e3aae58f004fd88ade69f101f61cbdd32204f1dfb9fe6dad1",
+    null
+   ],
+   [
+    "refused",
+    "bfd6ab6a652c9b7e3aae58f004fd88ade69f101f61cbdd32204f1dfb9fe6dad1",
+    null
+   ],
+   [
+    "refused",
+    "bfd6ab6a652c9b7e3aae58f004fd88ade69f101f61cbdd32204f1dfb9fe6dad1",
+    null
+   ],
+   [
+    "refused",
+    "bfd6ab6a652c9b7e3aae58f004fd88ade69f101f61cbdd32204f1dfb9fe6dad1",
+    null
+   ],
+   [
+    "refused",
+    "bfd6ab6a652c9b7e3aae58f004fd88ade69f101f61cbdd32204f1dfb9fe6dad1",
+    null
+   ],
+   [
+    "refused",
+    "bfd6ab6a652c9b7e3aae58f004fd88ade69f101f61cbdd32204f1dfb9fe6dad1",
+    null
+   ],
+   [
+    "refused",
+    "d8922ed022fb8231c8dacdc265daa22e3e7d8219910f9181253370d9d76566fd",
+    null
+   ],
+   [
+    "refused",
+    "d8922ed022fb8231c8dacdc265daa22e3e7d8219910f9181253370d9d76566fd",
+    null
+   ],
+   [
+    "refused",
+    "d8922ed022fb8231c8dacdc265daa22e3e7d8219910f9181253370d9d76566fd",
+    null
+   ],
+   [
+    "refused",
+    "d8922ed022fb8231c8dacdc265daa22e3e7d8219910f9181253370d9d76566fd",
+    null
+   ],
+   [
+    "refused",
+    "d8922ed022fb8231c8dacdc265daa22e3e7d8219910f9181253370d9d76566fd",
+    null
+   ],
+   [
+    "refused",
+    "d8922ed022fb8231c8dacdc265daa22e3e7d8219910f9181253370d9d76566fd",
+    null
+   ],
+   [
+    "refused",
+    "d8922ed022fb8231c8dacdc265daa22e3e7d8219910f9181253370d9d76566fd",
+    null
+   ],
+   [
+    "refused",
+    "d8922ed022fb8231c8dacdc265daa22e3e7d8219910f9181253370d9d76566fd",
+    null
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ],
+   [
+    "refused",
+    "d8922ed022fb8231c8dacdc265daa22e3e7d8219910f9181253370d9d76566fd",
+    null
+   ],
+   [
+    "refused",
+    "d8922ed022fb8231c8dacdc265daa22e3e7d8219910f9181253370d9d76566fd",
+    null
+   ],
+   [
+    "refused",
+    "d8922ed022fb8231c8dacdc265daa22e3e7d8219910f9181253370d9d76566fd",
+    null
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ],
+   [
+    "refused",
+    "d8922ed022fb8231c8dacdc265daa22e3e7d8219910f9181253370d9d76566fd",
+    null
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ],
+   [
+    "refused",
+    "d8922ed022fb8231c8dacdc265daa22e3e7d8219910f9181253370d9d76566fd",
+    null
+   ],
+   [
+    "refused",
+    "d8922ed022fb8231c8dacdc265daa22e3e7d8219910f9181253370d9d76566fd",
+    null
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ],
+   [
+    "refused",
+    "d8922ed022fb8231c8dacdc265daa22e3e7d8219910f9181253370d9d76566fd",
+    null
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ],
+   [
+    "refused",
+    "d8922ed022fb8231c8dacdc265daa22e3e7d8219910f9181253370d9d76566fd",
+    null
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ],
+   [
+    "refused",
+    "d8922ed022fb8231c8dacdc265daa22e3e7d8219910f9181253370d9d76566fd",
+    null
+   ],
+   [
+    "refused",
+    "d525d65a910e06f83c132caa96a612e86cdeaa052ab171f810acc5005a8df36f",
+    null
+   ]
+  ]
+ },
+ "end": {
+  "load": [
+   17.56201171875,
+   23.83642578125,
+   29.09619140625
+  ]
+ },
+ "door": {
+  "sam": {
+   "full": 0,
+   "home": 680,
+   "let_in": 186
+  },
+  "ana": {
+   "full": 0,
+   "home": 148,
+   "let_in": 35
+  }
+ },
+ "n0_in_traces": {
+  "sam": [],
+  "ana": [],
+  "alex": [],
+  "bo": [],
+  "dee": [],
+  "eve": [],
+  "relay-open": [],
+  "relay-group": []
+ },
+ "traced_lines": {
+  "sam": 11470,
+  "ana": 2698,
+  "alex": 728,
+  "bo": 1485,
+  "dee": 672,
+  "eve": 498,
+  "relay-open": 733,
+  "relay-group": 557
+ },
+ "lsof": {
+  "sampled": 561,
+  "processes": [
+   "?:2.1.295",
+   "?:2.1.296",
+   "?:Code\\x20H",
+   "?:ControlCe",
+   "?:Python",
+   "?:ersilia",
+   "?:firefox",
+   "?:gvproxy",
+   "?:identitys",
+   "?:opencode",
+   "?:postgres",
+   "?:rapportd",
+   "?:replicato",
+   "?:rust-anal",
+   "?:sharingd",
+   "?:sovereign",
+   "?:sshd",
+   "?:vfkit",
+   "alex:svrngs",
+   "ana:svrngs",
+   "bo:svrngs",
+   "browser:chrome-he",
+   "browser:com.apple",
+   "dee:svrngs",
+   "eve:svrngs",
+   "fay:svrngs",
+   "jellyfin:jellyfin",
+   "mw:jellyfin-",
+   "navidrome:navidrome",
+   "page:node",
+   "relay:n0_off-b3",
+   "sam:svrngs"
+  ],
+  "n0_hits": [],
+  "ours_hits": [],
+  "off_host": [
+   "?:2.1.295 TCP 160.79.104.10:443",
+   "?:2.1.295 TCP 34.149.66.165:443",
+   "?:2.1.296 TCP 160.79.104.10:443",
+   "?:2.1.296 TCP 34.149.66.165:443",
+   "?:Code\\x20H TCP 150.171.109.152:443",
+   "?:firefox TCP 15.197.213.252:443",
+   "?:firefox TCP 160.79.104.10:443",
+   "?:firefox TCP 172.64.41.4:443",
+   "?:firefox TCP 18.97.36.64:443",
+   "?:firefox TCP 216.150.16.1:443",
+   "?:firefox TCP 34.107.243.93:443",
+   "?:firefox TCP 44.219.165.61:443",
+   "?:identitys TCP [fe80:18::2bc5:22aa:435e:17fb]:1024",
+   "?:identitys TCP [fe80:18::2bc5:22aa:435e:17fb]:1028",
+   "?:rapportd TCP [fe80:e::43:865d:f39e:2ff6]:58465",
+   "alex:svrngs TCP 192.168.1.1:5000",
+   "ana:svrngs TCP 192.168.1.1:5000",
+   "bo:svrngs TCP 192.168.1.1:5000",
+   "browser:chrome-he TCP 142.251.219.131:443",
+   "browser:chrome-he TCP 142.251.219.35:443",
+   "dee:svrngs TCP 192.168.1.1:5000",
+   "eve:svrngs TCP 192.168.1.1:5000",
+   "jellyfin:jellyfin TCP 104.20.34.121:443",
+   "jellyfin:jellyfin TCP 18.244.214.89:443",
+   "jellyfin:jellyfin TCP 64.227.89.49:443",
+   "jellyfin:jellyfin TCP 68.183.204.194:443",
+   "navidrome:navidrome TCP 104.21.43.229:443",
+   "navidrome:navidrome TCP 23.192.228.147:443",
+   "navidrome:navidrome TCP 23.62.46.181:443",
+   "sam:svrngs TCP 192.168.1.1:5000"
+  ]
+ }
+}

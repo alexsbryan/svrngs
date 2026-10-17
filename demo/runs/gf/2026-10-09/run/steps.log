@@ -1,0 +1,43 @@
+23:15:25 setup load: 16:15  up  4:58, 3 users, load averages: 30.24 24.65 26.07
+23:15:26 setup svrngs 575a911, ffmpeg version 8.1.2 Copyright (c) 2000-2026 the FFmpeg developers
+23:15:41 setup media: [('exp.mp4', 47111781), ('exp.mkv', 47050291), ('beside.bin', 1048576)]
+23:15:41 setup ana up, plant -: svrngs new Films --as Ana
+23:15:43 setup ben up, plant -: svrngs join <the link> --as Ben
+23:15:45 setup cy up, plant -: svrngs join <the link> --as Cy
+23:15:46 setup ana and cy shared
+23:16:01 setup jellyfin: {"LocalAddress":"http://127.0.0.1:18096","ServerName":"Alexs-MacBook-Pro-2","Version":"12.0.0","ProductName":"Jellyfin Server","OperatingSystem":"","Id":"292cf152b6444ef7837e5e90cb427923","StartupWizardCompleted":false}
+23:17:39 B-plant ana stopped (KILL)
+23:17:39 B-plant ana killed (-9), no goodbye
+23:17:39 B-plant ben stopped (TERM)
+23:17:39 B-plant ben up, plant unbounded: svrngs 
+23:19:04 B ben stopped (TERM)
+23:19:04 B ben up, plant -: svrngs 
+23:19:33 D-plant cy stopped (KILL)
+23:19:33 D-plant cy killed (-9)
+23:19:33 D-plant ana up, plant -: svrngs 
+23:19:34 D-plant a byte of ana's mp4 flipped at 500000, after her store took it by reference
+23:19:34 D-plant ben stopped (TERM)
+23:19:34 D-plant the first run's range server on 18733 over the flipped file, unverified
+23:20:00 D ben up, plant -: svrngs 
+23:20:54 D the byte flipped back
+23:20:55 C-plant ana stopped (TERM)
+23:20:55 C-plant ana up, plant unchecked: svrngs 
+23:20:55 C-plant ben stopped (TERM)
+23:20:55 C-plant ben up, plant -: svrngs 
+23:20:57 C-plant unshare called
+23:20:57 C-plant unshare returned
+23:21:05 C-plant ben's list no longer names ana's folder
+23:21:05 C ana stopped (TERM)
+23:21:05 C ana up, plant -: svrngs 
+23:21:06 C ana shared again
+23:21:06 C ben stopped (TERM)
+23:21:06 C ben up, plant -: svrngs 
+23:21:08 C unshare called
+23:21:08 C unshare returned
+23:22:16 C ben's list no longer names ana's folder
+23:22:16 P-plant ana stopped (TERM)
+23:22:16 P-plant ana up, plant follow-links: svrngs 
+23:22:17 P-plant ana shared again, following links
+23:22:17 P-plant ben stopped (TERM)
+23:22:17 P-plant ben up, plant -: svrngs 
+23:22:18 P-plant ben stopped (TERM)

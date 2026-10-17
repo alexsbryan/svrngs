@@ -1,0 +1,10 @@
+{"t": 1791691176.278, "phase": "setup", "event": "start", "pass_": "part", "host": {"load": [3.26, 4.61, 5.2], "cores": 12, "swap_used_mb": 8623.5, "free_gb": 111.1}, "head": "08fb51f", "df": "Filesystem   1024-blocks      Used Available Capacity iused      ifree %iused  Mounted on\n/dev/disk3s5   971350180 826608688 108452668    89% 6624110 1084526680    1%   /System/Volumes/Data\n"}
+{"t": 1791691176.279, "phase": "setup", "event": "built", "bin": "/tmp/perf2-bin-fetch-32-p"}
+{"t": 1791691176.279, "phase": "part-join", "event": "phase"}
+{"t": 1791691176.279, "phase": "f10000", "event": "phase"}
+{"t": 1791691177.938, "phase": "f10000", "event": "up", "group": "f10000", "who": 0, "path": "loopback"}
+{"t": 1791691208.059, "phase": "f10000", "event": "converged", "group": "f10000", "s": 0.001}
+{"t": 1791691209.186, "phase": "f10000", "event": "shared", "group": "f10000", "who": 0, "answer": {"name": "Shared"}, "refused_for_s": 0.055}
+{"t": 1791691211.042, "phase": "f10000", "event": "number", "name": "f10000-taken", "value": 868.8, "target": null, "verdict": "reported", "start": {"load": [3.26, 4.61, 5.2], "cores": 12, "swap_used_mb": 8623.5, "free_gb": 111.0}, "end": {"load": [2.81, 4.35, 5.08], "cores": 12, "swap_used_mb": 8623.5, "free_gb": 110.8}, "unit": "ms", "path": "loopback", "steps": {"read_ms": 0.5, "walk_ms": 19.5, "take_ms": 326.5, "write_ms": 28.0, "apply_ms": 15.0, "kept_ms": 17.5, "ms": 408.5, "steps": 2}, "first_step": {"folder": "Shared", "files": "10000", "sent": "10000", "read_ms": "0", "walk_ms": "39", "take_ms": "653", "write_ms": "56", "apply_ms": "24", "kept_ms": "35", "ms": "810"}}
+{"t": 1791691211.042, "phase": "f10000", "event": "journal", "group": "f10000", "bytes": 1191076}
+{"t": 1791691211.213, "phase": "f10000", "event": "up", "group": "f10000", "who": 1, "path": "loopback"}

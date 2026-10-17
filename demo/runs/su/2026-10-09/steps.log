@@ -1,0 +1,65 @@
+06:07:04 sam's jellyfin up at 8296: {"LocalAddress":"http://127.0.0.1:8296","ServerName":"Alexs-MacBook-Pro-2","Version":"12.0.0","ProductName":"Jellyfin Server","OperatingSystem":"","Id":"9bec8e03a6204dc6b0da4cf47bf2a6a6","StartupWizardCompleted":false}
+06:07:09 sam's films: [["Alien", 1979, {"Imdb": "tt0078748", "Tmdb": "348"}], ["Blade Runner", 1982, {"Imdb": "tt0083658", "Tmdb": "78"}], ["Brazil", 1985, {"Imdb": "tt0088846", "Tmdb": "68"}]]
+06:07:09 sam's middleware: listening on port 8297, signing people in to Jellyfin at 127.0.0.1:8296
+06:07:16 dee's jellyfin up at 8396: {"LocalAddress":"http://127.0.0.1:8396","ServerName":"Alexs-MacBook-Pro-2","Version":"12.0.0","ProductName":"Jellyfin Server","OperatingSystem":"","Id":"f248c6338cc149ac95c0ac574f5a7b3c","StartupWizardCompleted":false}
+06:07:20 dee's films: [["Arrival", 2016, {"Imdb": "tt2543164", "Tmdb": "329865"}], ["Blade Runner", 1982, {"Imdb": "tt0083658", "Tmdb": "78"}]]
+06:07:20 dee's middleware: listening on port 8397, signing people in to Jellyfin at 127.0.0.1:8396
+06:07:21 the page: http://localhost:65007/
+06:07:24 dee: You're in House, as Dee.
+06:07:25 cy: You're in House, as Cy.
+06:07:26 alex: You're in House, as Alex.
+06:07:26 sam: Lent jellyfin (port 8296) to everyone in your groups, up to 8 people at once.
+06:07:26 dee: Lent jellyfin (port 8396) to everyone in your groups, up to 8 people at once.
+06:07:27 cy: Lent jellyfin (port 8496) to everyone in your groups, up to 8 people at once.
+06:07:27 sam: Lent movie-night (port 8596) to everyone in your groups, up to 8 people at once.
+06:07:27 sam is told: Each person is signed in to it as themselves by what answers on port 8297, with nothing typed. svrngs is running here already, so they can open it now. `svrngs unshare jellyfin` stops lending it. It can open the jellyfin your groups lend, as whoever opens it. svrngs is running here already, so they can open it now. `svrngs unshare movie-night` stops lending it. 
+06:08:23 dee: round membership exchanged_with=["Sam/034372d0", "Alex/0c803819", "Cy/72c5b23d"] skipped_offline=[]
+06:08:39 alex's computer: 3 lends listed; Cy asleep
+06:08:40 ana: You're in House, as Ana.
+06:08:40 ana's taste: owned by her computer's key 93868136f0fe43a37065cde5a7b09f6ecfde409d67d2715a31dc02ff1d446b4b
+06:08:41 taste: up, no yes kept
+06:08:41 ana: Lent taste (port 8696) to everyone in your groups, up to 8 people at once.
+06:08:42 sam: Lent tonights-picks (port 8697) to everyone in your groups, up to 8 people at once. Lent other (port 8698) to everyone in your groups, up to 8 people at once. 
+06:09:40 ana: round membership exchanged_with=["Sam/034372d0", "Alex/0c803819", "Cy/72c5b23d", "Dee/7e2c9768"] skipped_offline=[]
+06:09:41 taste: up with plant bo, no yes kept
+06:09:41 plant bo: on
+06:10:46 plant-bo: plant-bo; ana-chromium: yes→ranked ['Arrival', 'Brazil', 'Blade Runner', 'Alien']; bo: ok
+06:10:47 taste: up, no yes kept
+06:10:47 plant bo taken back
+06:10:48 taste: up, no yes kept
+06:10:48 plant history: taste lent without --refuse: Lent taste (port 8696) to everyone in your groups, up to 8 people at once.
+06:10:48 plant history: on
+06:12:05 plant-history: plant-history; ana-chromium: yes→ranked ['Arrival', 'Brazil', 'Blade Runner', 'Alien']
+06:12:06 taste: up, no yes kept
+06:12:06 plant history taken back
+06:12:08 taste: up with plant other-app, no yes kept
+06:12:08 plant other-app: on
+06:13:37 plant-other-app: plant-other-app; ana-chromium: yes→ranked ['Arrival', 'Brazil', 'Blade Runner', 'Alien']
+06:13:39 taste: up, no yes kept
+06:13:39 plant other-app taken back
+06:13:40 taste: up with plant after-stop, no yes kept
+06:13:40 plant after-stop: on
+06:14:28 plant-after-stop: plant-after-stop; ana-chromium: yes→ranked ['Arrival', 'Brazil', 'Blade Runner', 'Alien']
+06:14:30 taste: up, no yes kept
+06:14:30 plant after-stop taken back
+06:14:31 taste: up, no yes kept
+06:14:31 plant empty: on
+06:15:37 plant-empty: plant-empty; ana-chromium: yes→ranked ['Arrival', 'Brazil', 'Blade Runner', 'Alien']; bo: ok
+06:15:39 taste: up, no yes kept
+06:15:39 plant empty taken back
+06:15:44 taste: up, no yes kept
+06:17:37 night-chromium: night-chromium; ana-chromium: yes→ranked ['Arrival', 'Brazil', 'Blade Runner', 'Alien']; ana-webkit: ok; bo: ok
+06:17:38 taste: up, no yes kept
+06:19:31 night-webkit: night-webkit; ana-webkit: yes→ranked ['Arrival', 'Brazil', 'Blade Runner', 'Alien']; ana-chromium: ok; bo: ok
+06:19:33 taste: up, no yes kept
+06:21:04 asleep: asleep; ana-chromium: yes→ranked ['Arrival', 'Brazil', 'Blade Runner', 'Alien']
+{"asleep": {"ana-chromium": true}, "night-chromium": {"ana-chromium": true, "ana-webkit": true, "bo": true}, "night-webkit": {"ana-chromium": true, "ana-webkit": true, "bo": true}, "plant-after-stop": {"ana-chromium": true}, "plant-bo": {"ana-chromium": true, "bo": true}, "plant-empty": {"ana-chromium": true, "bo": true}, "plant-history": {"ana-chromium": false}, "plant-other-app": {"ana-chromium": true}}
+bar 1: chromium passed; webkit passed
+bar 2: chromium passed; webkit passed
+bar 3: chromium passed; webkit passed; scan passed
+bar 4: chromium passed; webkit passed
+the unasked yes: chromium True; webkit True
+bar 5: chromium passed; webkit passed
+bar 6: chromium passed; webkit passed; asleep passed
+plants (each should be failed): bo failed; history failed; other-app failed; after-stop failed; empty failed
+the count: {'enforce': 46, 'own': 186, 'plant': 5, 'plumbing': 39} {'enforce app': 9, 'enforce owner': 3, 'enforce refuse': 9, 'enforce stop': 9, 'enforce yes': 16, 'own consent': 48, 'own diary': 2, 'own picks': 86, 'own rank': 22, 'own serve': 28, 'plant after-stop': 1, 'plant bo': 1, 'plant empty': 1, 'plant other-app': 1, 'plant switch': 1, 'plumbing find': 26, 'plumbing refusal': 13}

@@ -35,14 +35,22 @@ struct Writer {
 
 /// The facts [`RingJournal::append_all`] and [`RingJournal::ingest_all`]
 /// read off the log: each actor's newest seq, with the lines held at it, and
-/// the ids already held.
+/// the ids already held; and the digest's fold ([`DigestFold`]), which
+/// [`RingJournal::digest`] and [`RingJournal::ops_missing_from_within`] answer
+/// from.
 ///
 /// svrngs (U2): each id is the one the act's content derives ([`derive_id`]),
 /// never the `id` field its line carries. A held set keyed by the line's field
 /// skipped a peer's act as already held when another line merely claimed its
-/// id, so the act never landed (DESIGN §6). The lines at an actor's newest
-/// seq are kept, id and signature, because the door's next act names one of
-/// them as its previous act, and only one that verifies is the signer's own.
+/// id, so the act never landed (DESIGN §6). And an id is held once a line of
+/// it verifies: the signature is not part of the id, so a forged copy held
+/// first made every later genuine one "held" and dropped it, its copy apart
+/// from its peers' (#189). A line that does not verify is kept by its id and
+/// signature (`forged`), so the same bytes are not appended twice. The lines
+/// at an actor's newest seq are kept, id and signature, because the door's
+/// next act names one of them as its previous act; only a line whose
+/// signature verifies counts toward it, so a forged line moves no member's
+/// next seq (U7, #16).
 ///
 /// Folded from the file and caught up from its tail before each write
 /// ([`Oplog::read_since`]), so a write costs the lines appended since the last
@@ -50,35 +58,110 @@ struct Writer {
 /// cost rows x log lines a tick, and a door write grow with the journal
 /// (pc-rails-journal-linear). The file stays the source of truth: lines
 /// another process appended are in the tail, and a file renamed over the path
-/// (a compaction, ours or theirs) restarts the fold from the top.
+/// (a restore from a backup) restarts the fold from the top.
+///
+/// The digest is caught up the same way, for the same reason: rebuilt from
+/// the whole log, every signature checked again, it cost an idle round at 25
+/// members and 10,000 acts most of its 73 s of processor (svrn-docs
+/// `rings/current/THE_CEILING.md`, fix 1). An act's signature is checked
+/// here as the tail brings it in, under [`Ed25519Verifier`], the scheme
+/// every caller of the digest judged by.
+///
+/// And each signature that verified is kept, so it is checked once, as its
+/// line enters, and not again by the offer ([`Checked`]): the offer read
+/// whole checked every signature it held again, every exchange with a peer
+/// not in step (THE_CEILING.md fix 2). A verdict is a function of the actor,
+/// the id and the signature alone, so one kept cannot go stale whatever
+/// happens to the file; what restarts the fold restarts this with it all
+/// the same, and a file replaced from outside has its lines checked again.
+///
+/// And the register ([`RingRail::standing`]) is caught up the same way: the
+/// acts that move membership, a handful among thousands, and every act of a
+/// key a `Remove` names (U7), kept as the tail brings them in, and the
+/// register last folded from them, with the seed it was folded from. A key
+/// named for the first time has its acts already held added from the whole
+/// log, after the tail's, so they are not in the log's order, and an act
+/// of it after the `Remove` in the same tail is kept twice; the fold reads
+/// them as a set (`ActSet::of`), so neither moves it. Read whole on every
+/// connection, sync request and round, it was what an idle round still
+/// paid for (26 reads of 10,000 acts, 5.5 s; scale.rs, ceiling-3's runs;
+/// THE_CEILING.md fix 3).
+/// An act that moves membership voids the standing; a seed unlike the one it
+/// was folded from folds it again.
 #[derive(Default)]
 struct Held {
     cursor: crate::oplog::Cursor,
     newest: std::collections::HashMap<String, Newest>,
     ids: std::collections::HashSet<OpId>,
+    forged: std::collections::HashSet<(OpId, String)>,
+    digest: DigestFold,
+    passed: Passed,
+    membership: Vec<Op<SignedOp>>,
+    /// The keys some held `Remove` names: their every act is kept in
+    /// `membership` too, since a cut covers a key's acts along their chain
+    /// (U7; `svrngs_core::standing_reads`).
+    named: std::collections::HashSet<String>,
+    standing: Option<(Roster, crate::register::Register)>,
 }
 
-/// One actor's newest seq on the log, and each line held at it: the id its
-/// content derives and the signature it carries.
+/// Each line whose signature [`Ed25519Verifier`] passed as the tail brought
+/// it in: its actor, the id its content derives and its signature, the three
+/// the verifier judged.
+type Passed = std::collections::HashSet<(String, OpId, String)>;
+
+/// [`Ed25519Verifier`], answered from the signatures [`Held`] checked as each
+/// line entered. A line this handle did not see enter is checked now, so it
+/// answers as [`Ed25519Verifier`] does for every line, and trusts nothing it
+/// did not check.
+struct Checked<'a>(&'a Passed);
+
+impl RingVerifier for Checked<'_> {
+    fn name(&self) -> &'static str {
+        "ed25519, each line checked once as it entered"
+    }
+
+    fn verify(&self, actor: &str, id: &OpId, sig_hex: &str) -> bool {
+        if self.0.contains(&(actor.to_string(), id.clone(), sig_hex.to_string())) {
+            return true;
+        }
+        let verified = Ed25519Verifier.verify(actor, id, sig_hex);
+        tracing::debug!(actor, %id, verified,
+            "ring rail: a signature not passed as its line entered, checked now");
+        verified
+    }
+}
+
+/// One actor's newest seq among the lines that actor signed, and each such
+/// line held at it: the id its content derives and the signature it carries.
 struct Newest {
     seq: u64,
     lines: Vec<(OpId, String)>,
 }
 
 impl Held {
-    /// Fold in whatever the log gained since the last call.
-    fn catch_up(&mut self, oplog: &Oplog<SignedOp>, namespace: &str) -> Result<(), RailError> {
+    /// Fold in whatever the log gained since the last call; true when the
+    /// fold began again from the top.
+    fn catch_up(&mut self, oplog: &Oplog<SignedOp>, namespace: &str) -> Result<bool, RailError> {
         let tail = oplog
             .read_since(self.cursor)
             .map_err(|e| RailError::Io(e.to_string()))?;
         if tail.restarted {
-            self.newest.clear();
-            self.ids.clear();
+            *self = Held::default();
         }
+        // Held, but not verified under its claimed actor: no part of the
+        // digest (svrngs-core sync.rs `digest`).
+        let mut unverified = 0usize;
+        let mut newly_named: Vec<String> = Vec::new();
         for op in &tail.ops {
             let id = derive_id(op, namespace);
             let line = (id.clone(), op.kind.sig.clone());
+            let verified = Ed25519Verifier.verify(&op.actor, &id, &op.kind.sig);
+            // Only a line its claimed actor signed moves that actor's newest
+            // seq (U7; ralph/REVIEW_FINDINGS.md #16): a forged line above a
+            // member's newest act left the door signing past it, holes that
+            // never fill.
             match self.newest.get_mut(&op.actor) {
+                _ if !verified => {}
                 Some(n) if n.seq > op.kind.seq => {}
                 Some(n) if n.seq == op.kind.seq => n.lines.push(line),
                 _ => {
@@ -91,17 +174,50 @@ impl Held {
                     );
                 }
             }
-            self.ids.insert(id);
+            if verified {
+                self.passed.insert((op.actor.clone(), id.clone(), op.kind.sig.clone()));
+                self.digest.add(id.clone(), op);
+            } else {
+                self.forged.insert((id.clone(), op.kind.sig.clone()));
+                unverified += 1;
+            }
+            if let Some(key) = op.kind.act.names().filter(|k| self.named.insert(k.to_string())) {
+                newly_named.push(key.to_string());
+            }
+            if op.kind.act.moves_membership() || self.named.contains(&op.actor) {
+                self.membership.push(op.clone());
+                self.standing = None;
+            }
+            if verified {
+                self.ids.insert(id);
+            }
+        }
+        if !newly_named.is_empty() {
+            // A key a `Remove` names for the first time: its acts already
+            // held join the fold of standing, read once from the whole log.
+            let (all, _) = oplog.read_all_with_skips().map_err(|e| RailError::Io(e.to_string()))?;
+            let before = self.membership.len();
+            self.membership.extend(
+                all.into_iter()
+                    .filter(|op| newly_named.contains(&op.actor) && !op.kind.act.moves_membership()),
+            );
+            tracing::debug!(
+                namespace,
+                ?newly_named,
+                kept = self.membership.len() - before,
+                "ring rail: a key a Remove names — its acts held join the fold of standing"
+            );
         }
         tracing::debug!(
             namespace,
             folded = tail.ops.len(),
+            unverified,
             restarted = tail.restarted,
             held = self.ids.len(),
             "ring rail: write index caught up with the log"
         );
         self.cursor = tail.cursor;
-        Ok(())
+        Ok(tail.restarted)
     }
 
     /// [`Self::catch_up`] past a write that already landed. A failure here
@@ -187,90 +303,59 @@ impl RingJournal {
         ))
     }
 
-    /// A test's fixture, written through [`commit`](svrngs_core::commit) like
-    /// every other act: never compiled outside tests.
-    #[cfg(test)]
-    pub fn append(
-        &self,
-        act: RailAct,
-        signer: &dyn RingSigner,
-        roster: &Roster,
-        on_behalf_of: Option<&str>,
-        verifier: &dyn RingVerifier,
-    ) -> Result<Op<SignedOp>, RailError> {
-        let fixture = svrngs_core::tests_support::Fixture {
-            act,
-            on_behalf_of: on_behalf_of.map(str::to_string),
-        };
-        let author = svrngs_core::Author {
-            signer,
-            roster,
-            namespace: &self.namespace,
-            verifier,
-            now: now_unix(&self.namespace)?,
-        };
-        match svrngs_core::commit(self, &fixture, &author)? {
-            Ok(recorded) => Ok(recorded.lines()[0].clone()),
-            Err(_) => Err(RailError::NotInRoster {
-                actor: signer.actor(),
-                namespace: self.namespace.clone(),
-            }),
-        }
-    }
-
-    #[cfg(test)]
-    /// Append an op that arrived from a peer, exactly as it was signed.
-    ///
-    /// No validation and no re-signing: the signature covers the op, and
-    /// anything wrong with it becomes a gap when [`admit`] reads it back.
-    /// Doing otherwise would mean this node deciding what a peer said.
-    pub fn ingest(&self, op: &Op<SignedOp>) -> Result<bool, RailError> {
-        let mut guard = self.log();
-        let log = &mut *guard;
-        log.held.catch_up(&log.oplog, &self.namespace)?;
-        let id = derive_id(op, &self.namespace);
-        if log.held.ids.contains(&id) {
-            tracing::debug!(
-                namespace = %self.namespace,
-                id = %id,
-                "ring rail: peer op already held, not re-appended"
-            );
-            return Ok(false);
-        }
-        log.oplog.append(op).map_err(|e| RailError::Io(e.to_string()))?;
-        log.held.after_write(&log.oplog, &self.namespace);
-        Ok(true)
-    }
-
     /// What this node can honestly claim to need nothing below, per actor —
     /// the ~600-byte payload a peer needs in order to work out what to send
     /// back. See [`digest`] for why the mark is contiguous and why an op that
     /// does not verify under its claimed actor counts for nothing.
-    pub fn digest(&self, verifier: &dyn RingVerifier) -> Result<Digest, RailError> {
-        Ok(digest(&self.read()?.0, &self.namespace, verifier))
+    ///
+    /// Caught up from the log's tail ([`Held`]); its line is the one the
+    /// scale instrument counts as the digest, kept or, when the fold began
+    /// again from the top, rebuilt (`crates/svrngs-node/tests/scale.rs`).
+    pub fn digest(&self) -> Result<Digest, RailError> {
+        let mut guard = self.log();
+        let log = &mut *guard;
+        let restarted = log.held.catch_up(&log.oplog, &self.namespace)?;
+        tracing::debug!(namespace = %self.namespace, restarted, "ring rail: digest caught up with the log");
+        Ok(log.held.digest.digest())
     }
 
-    #[cfg(test)]
-    /// Every op this node holds that `theirs` says the peer is missing.
-    /// Author-blind: a node republishes what it HOLDS, so a housemate who
-    /// leaves the ring does not take their half of the journal with them.
-    ///
-    /// The honest TOTAL, and therefore the wrong thing to put on a wire: use
-    /// [`RingJournal::ops_missing_from_within`] for that.
-    ///
-    /// Takes the verifier for the reason [`RingJournal::digest`] does: the
-    /// peer's claim folds only authenticated ops, so ours must be judged by
-    /// the same scheme or a forged line reads as a fork that never heals.
-    pub fn ops_missing_from(
-        &self,
-        verifier: &dyn RingVerifier,
-        theirs: &Digest,
-    ) -> Result<Vec<Op<SignedOp>>, RailError> {
-        Ok(ops_missing_from(&self.read()?.0, &self.namespace, verifier, theirs))
+    /// The whole register, from the fold [`Self::folded`] keeps (U7).
+    pub(crate) fn register(&self, seed: &Roster) -> Result<crate::register::Register, RailError> {
+        self.folded(seed).map(|(register, _)| register)
     }
 
-    /// [`RingJournal::ops_missing_from`], stopped at `budget_bytes` of
-    /// serialised ops. Returns `(ops, more)` — see
+    /// The group's register from `seed` ([`crate::register::register_in`]),
+    /// who stands and who was cut, over the acts that move membership as
+    /// [`Held`] caught them up, judged by [`Checked`]; and true when it was
+    /// answered from the register kept since the last call, false when
+    /// folded now.
+    pub(crate) fn folded(&self, seed: &Roster) -> Result<(crate::register::Register, bool), RailError> {
+        let mut guard = self.log();
+        let log = &mut *guard;
+        log.held.catch_up(&log.oplog, &self.namespace)?;
+        let held = &mut log.held;
+        if let Some((_, register)) = held.standing.as_ref().filter(|(from, _)| from == seed) {
+            return Ok((register.clone(), true));
+        }
+        let register = crate::register::register_in(&held.membership, seed, &self.namespace, &Checked(&held.passed))?;
+        held.standing = Some((seed.clone(), register.clone()));
+        Ok((register, false))
+    }
+
+    /// The `Remove` acts `actor` signed, from the acts that move membership
+    /// as [`Held`] keeps them: a leave, which its leaver's round tells (#190).
+    pub(crate) fn removes_by(&self, actor: &str) -> Result<Vec<Op<SignedOp>>, RailError> {
+        let mut guard = self.log();
+        let log = &mut *guard;
+        log.held.catch_up(&log.oplog, &self.namespace)?;
+        let by = |op: &&Op<SignedOp>| op.actor == actor && matches!(op.kind.act, RailAct::Remove { .. });
+        Ok(log.held.membership.iter().filter(by).cloned().collect())
+    }
+
+    /// Every op this node holds that `theirs` says the peer is missing,
+    /// stopped at `budget_bytes` of serialised ops; author-blind, so a node
+    /// republishes what it HOLDS, and a housemate who leaves the ring does
+    /// not take their half of the journal with them. Returns `(ops, more)` — see
     /// [`ops_missing_from_within`] for why the truncation is in the return
     /// type and why repeating this terminates.
     ///
@@ -279,24 +364,35 @@ impl RingJournal {
     /// body limit by the crate that owns that limit
     /// (`sovereign_daemon::routes_internal::RING_SYNC_OPS_BUDGET_BYTES`), so
     /// the rail stays a crate a ring app can lift without an HTTP server.
+    ///
+    /// A peer whose digest is ours is answered from the kept fold, unread,
+    /// when [`DigestFold::missing_nothing`] says the slow path would send it
+    /// nothing; every other peer is answered from the whole log, every
+    /// signature judged by [`Checked`]: the ones passed as their lines entered
+    /// are not checked again.
     pub fn ops_missing_from_within(
         &self,
-        verifier: &dyn RingVerifier,
         theirs: &Digest,
         budget_bytes: usize,
     ) -> Result<(Vec<Op<SignedOp>>, bool), RailError> {
-        // A local-only journal answers no peer ([`is_local_only`]).
-        if is_local_only(&self.namespace) {
-            tracing::debug!(
-                namespace = %self.namespace,
-                "ring rail: local-only journal, nothing offered to the peer"
-            );
+        let mut guard = self.log();
+        let log = &mut *guard;
+        let restarted = log.held.catch_up(&log.oplog, &self.namespace)?;
+        tracing::debug!(namespace = %self.namespace, restarted, "ring rail: digest caught up with the log");
+        let newest = log.held.newest.iter().map(|(actor, n)| (actor.as_str(), n.seq));
+        if log.held.digest.missing_nothing(theirs, newest) {
+            tracing::debug!(namespace = %self.namespace, "ring rail: offer answered unread, the peer's digest is ours");
             return Ok((Vec::new(), false));
         }
+        let (ops, _) = log
+            .oplog
+            .read_all_with_skips()
+            .map_err(|e| RailError::Io(e.to_string()))?;
+        tracing::debug!(namespace = %self.namespace, lines = ops.len(), "ring rail: offer folded from the whole log");
         Ok(ops_missing_from_within(
-            &self.read()?.0,
+            &ops,
             &self.namespace,
-            verifier,
+            &Checked(&log.held.passed),
             theirs,
             budget_bytes,
         ))
@@ -316,14 +412,16 @@ impl RingJournal {
         let mut guard = self.log();
         let log = &mut *guard;
         log.held.catch_up(&log.oplog, &self.namespace)?;
-        let mut batch: std::collections::BTreeSet<OpId> = std::collections::BTreeSet::new();
+        let mut batch = std::collections::BTreeSet::new();
         let mut fresh: Vec<Op<SignedOp>> = Vec::new();
         for op in ops {
             // Also dedupes WITHIN the batch: a peer that sends the same op
             // twice in one body must not get two lines out of it. By the id
-            // its content derives, never the line's own (svrngs, U2).
-            let id = derive_id(op, &self.namespace);
-            if !log.held.ids.contains(&id) && batch.insert(id) {
+            // its content derives, never the line's own (svrngs, U2), held
+            // once a line of it verified; else by id and signature, so a
+            // forged copy never stands in for the act (#189).
+            let line = (derive_id(op, &self.namespace), op.kind.sig.clone());
+            if !log.held.ids.contains(&line.0) && !log.held.forged.contains(&line) && batch.insert(line) {
                 fresh.push(op.clone());
             }
         }
@@ -346,236 +444,6 @@ impl RingJournal {
         Ok(fresh.len())
     }
 
-    /// Sign a [`Seal`](RailAct::Seal) and delete what it retires — the pair.
-    ///
-    /// **THE one seal-and-prune (ARCH §10.6).** Rung S taught the read path to
-    /// skip a retired prefix; nothing removed one from disk, so a seal on its
-    /// own changed no bytes anywhere, and a prune with no seal behind it
-    /// reports the deleted range as missing, forever, on every node. Neither
-    /// half is worth anything alone. The two callers that seal — the rail
-    /// route an app reaches (`sovereign_daemon::routes_rail::append`) and
-    /// cw-rails' plane seal (`commonwealth_rails::plane_seal`) — reach this
-    /// rather than each writing the sequence themselves, because a second
-    /// spelling of "seal, then compact, and a refused compaction is not a
-    /// failed seal" is a decider with two answers.
-    ///
-    /// The seal's own failure IS an `Err`: nothing was written, so there is no
-    /// half-done state to describe.
-    pub fn seal(
-        &self,
-        signer: &dyn RingSigner,
-        roster: &Roster,
-        verifier: &dyn RingVerifier,
-    ) -> Result<Sealed, RailError> {
-        let author = svrngs_core::Author {
-            signer,
-            roster,
-            namespace: &self.namespace,
-            verifier,
-            now: now_unix(&self.namespace)?,
-        };
-        let op = match svrngs_core::commit(self, &svrngs_core::Seal, &author)? {
-            Ok(recorded) => recorded.lines()[0].clone(),
-            Err(_) => {
-                return Err(RailError::NotInRoster {
-                    actor: signer.actor(),
-                    namespace: self.namespace.clone(),
-                });
-            }
-        };
-        let retired = self.compact(roster, verifier);
-        if let Err(e) = &retired {
-            tracing::warn!(
-                namespace = %self.namespace,
-                error = %e,
-                "ring rail: the seal is written, the prune it authorises was refused"
-            );
-        }
-        Ok(Sealed { op, retired })
-    }
-
-    /// Delete every line a seal has retired, and report what went.
-    ///
-    /// **This is the half that makes the rail's storage bounded.** A journal
-    /// that can only be appended to grows for as long as the ring is used, and
-    /// every peer holds a full copy of everyone's history forever; the seal
-    /// (rung S) taught the READ path to stop asking for a retired prefix, but
-    /// nothing until now removed one from disk. Both halves are needed and
-    /// neither is provable alone: a seal nobody prunes on saves no bytes, and a
-    /// prune with no seal behind it produced ten thousand
-    /// [`SequenceHole`](RailGap::SequenceHole)s in the ceiling measurement,
-    /// because every node then reported the retired range as missing forever.
-    ///
-    /// # The floor is admission's, never re-derived here
-    ///
-    /// An op is dropped when its `seq` is strictly below its own actor's floor
-    /// on [`Admission::floors`] — the map [`admit`] built from seals that
-    /// passed the signature and roster checks. A prune that read the seals
-    /// itself would be a second answer to "what is retired" (ARCH §10.6), and
-    /// the two would part company at the worst possible place: a forged seal is
-    /// refused by admission and would be believed by a naive re-read, so one
-    /// pushed line would erase a member's history from disk on every node that
-    /// received it. Deleting by the ADMITTED floor makes that unwritable rather
-    /// than checked.
-    ///
-    /// The seal itself is kept — the floor IS its `seq`, and the comparison is
-    /// strict — which is what keeps [`digest`]'s contiguous run non-empty for a
-    /// compacted actor. Dropping it would make this node claim it holds nothing
-    /// of that actor, and every peer would re-send the whole history back.
-    ///
-    /// It prunes **every** actor's retired prefix, not just this node's. A seal
-    /// is a statement by its author that binds whoever admits it, so a peer
-    /// stops storing what the author retired as soon as the seal reaches it.
-    /// Author-only pruning would bound the writer's disk and nobody else's.
-    ///
-    /// # Two things it will not delete
-    ///
-    /// **A journal with unreadable lines is not rewritten at all.**
-    /// [`SkippedLine`] carries a line number and a parse error, never the
-    /// bytes, so a line this build cannot parse cannot survive a rewrite — and
-    /// that includes a line from a NEWER format version, which is exactly the
-    /// content an old build must not be the one to destroy. Refusing is the
-    /// only honest option; silently dropping them would be a compaction that
-    /// deletes the future (ARCH §18.3).
-    ///
-    /// **An op a surviving correction names is kept regardless of the floor.**
-    /// Retired means "nobody will ask for this again", and a
-    /// [`Correct`](RailAct::Correct) still pointing at it says otherwise.
-    /// Without this clause, sealing over a corrected op turns its correction
-    /// into a permanent [`DanglingCorrection`](RailGap::DanglingCorrection) —
-    /// and the guard below would then refuse every future compaction of that
-    /// ring, so the growth this method exists to stop would quietly come back.
-    ///
-    /// # It verifies its own result before committing it (ARCH §7)
-    ///
-    /// The kept set is re-admitted and compared against the admission we
-    /// started from; if compaction would raise a gap the journal did not
-    /// already have, nothing is written and the refusal names the gap. This is
-    /// the invariant "a node may delete only what a floor covers" encoded so it
-    /// cannot be forgotten, rather than left as a rule a future caller has to
-    /// remember — and it costs one fold over an in-memory `Vec` that is by
-    /// construction shorter than the one already read.
-    ///
-    /// Gaps may DISAPPEAR, and that is not refused: a line that failed the
-    /// signature check below a floor its claimed author authenticated is one
-    /// nobody will ever want, and keeping it would let anyone grow a peer's
-    /// journal without bound by pushing junk under an old seal. The count is
-    /// reported on [`Compaction::gaps_cleared`] rather than left silent.
-    ///
-    /// The writer lock is held across read, decide and replace, because
-    /// `O_APPEND` orders appends against each other and does nothing for an
-    /// append racing the rename underneath it.
-    pub fn compact(&self, roster: &Roster, verifier: &dyn RingVerifier) -> Result<Compaction, RailError> {
-        let mut log = self.log();
-        let (ops, skipped) = log
-            .oplog
-            .read_all_with_skips()
-            .map_err(|e| RailError::Io(e.to_string()))?;
-
-        if !skipped.is_empty() {
-            return Err(RailError::Rejected(format!(
-                "`{}` holds {} line(s) this build cannot read, and a rewrite would \
-                 destroy them — their bytes are not recoverable from the skip \
-                 report. Nothing was deleted. Run `svrn ring log {}` to see what \
-                 they are; a line from a newer format version means this node is \
-                 the old one and must not be the one to compact.",
-                self.namespace,
-                skipped.len(),
-                self.namespace,
-            )));
-        }
-
-        let before = admit(&crate::ActSet::of(&ops), &skipped, roster, &self.namespace, verifier);
-        let unchanged = |floors: Floors, kept: usize| Compaction {
-            removed: 0,
-            kept,
-            gaps_cleared: 0,
-            floors,
-        };
-        // The decision is the core's: `Compact` reads the seals in the record
-        // and only `react` hands back the `Due` this deletion runs from.
-        let due = match before.react(&svrngs_core::Compact) {
-            Ok(Some(due)) => due,
-            Ok(None) => {
-                tracing::debug!(
-                    namespace = %self.namespace,
-                    held = ops.len(),
-                    "ring rail: nothing sealed, nothing to compact"
-                );
-                return Ok(unchanged(Floors::new(), ops.len()));
-            }
-            Err(uncaused) => {
-                return Err(RailError::Rejected(format!(
-                    "compacting `{}` was decided from {} act(s) that do not stand in its record, \
-                     so nothing was deleted",
-                    self.namespace,
-                    uncaused.0.len(),
-                )));
-            }
-        };
-        let retire = due.effect();
-        let kept: Vec<Op<SignedOp>> = ops
-            .iter()
-            .filter(|op| retire.keeps(op, &self.namespace))
-            .cloned()
-            .collect();
-        let removed = ops.len() - kept.len();
-        if removed == 0 {
-            tracing::debug!(
-                namespace = %self.namespace,
-                held = ops.len(),
-                sealed = ?retire.floors(),
-                "ring rail: every line held is at or above its floor"
-            );
-            return Ok(unchanged(retire.floors().clone(), kept.len()));
-        }
-
-        let after = admit(&crate::ActSet::of(&kept), &[], roster, &self.namespace, verifier);
-        let raised = retire.raises(&after);
-        if !raised.is_empty() {
-            return Err(RailError::Rejected(format!(
-                "compacting `{}` would raise {} gap(s) the journal does not have, \
-                 so nothing was deleted. First: {}",
-                self.namespace,
-                raised.len(),
-                raised[0],
-            )));
-        }
-        let gaps_cleared = retire.clears(&after);
-
-        log.oplog.replace_all(&kept).map_err(|e| RailError::Io(e.to_string()))?;
-        // The rename already voids the cursor; this says so without relying
-        // on the platform having inodes.
-        log.held = Held::default();
-        // INFO, not debug: this is the one call in the rail that destroys
-        // something, and an operator reading logs after a shrinking journal
-        // needs the floors it happened under without turning debug on.
-        tracing::info!(
-            namespace = %self.namespace,
-            held = ops.len(),
-            removed,
-            kept = kept.len(),
-            gaps_cleared,
-            sealed = ?retire.floors(),
-            causes = ?due.causes(),
-            "ring rail: compacted"
-        );
-        Ok(Compaction {
-            removed,
-            kept: kept.len(),
-            gaps_cleared,
-            floors: retire.floors().clone(),
-        })
-    }
-
-    /// The roster FILE. A missing file is an empty ring, not an error — and
-    /// an empty ring admits nothing but gaps, which is the honest answer
-    /// before anyone has been added.
-    ///
-    /// This is the storage half, and its name says so. (svrngs: the file is
-    /// every group's seed, and who stands in the group is the register's,
-    /// [`RingRail::standing`]; upstream's `RingRail::roster`, which chose
-    /// between this file and a derived roster, went with the derived ones.)
     pub fn roster_file(&self) -> Result<Roster, RailError> {
         Ok(self.seed()?.unwrap_or_default())
     }
@@ -650,3 +518,7 @@ impl svrngs_core::Store for RingJournal {
         Ok(answer)
     }
 }
+
+#[cfg(test)]
+#[path = "journal_tests.rs"]
+mod tests;

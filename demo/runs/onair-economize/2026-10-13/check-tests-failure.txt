@@ -1,0 +1,46 @@
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+           
+           
+           running 62 tests
+           i.................................................... 53/62
+           the_home_page_says_a_refusal_apart_from_no_answer::chromium --- FAILED
+           ........
+           failures:
+           
+           ---- the_home_page_says_a_refusal_apart_from_no_answer::chromium stdout ----
+           the home page's run: {
+             "after": [],
+             "all": [
+               "Asking each computer in the group what it lends…"
+             ],
+             "clipboard": null,
+             "heading": "A group whose name this computer cannot read",
+             "links": [],
+             "logs": [],
+             "read": null,
+             "timed": {}
+           }
+           
+           thread 'the_home_page_says_a_refusal_apart_from_no_answer::chromium' (36318882) panicked at crates/svrngs-node/tests/browser/main.rs:2110:5:
+           assertion `left == right` failed: {
+             "after": [],
+             "all": [
+               "Asking each computer in the group what it lends…"
+             ],
+             "clipboard": null,
+             "heading": "A group whose name this computer cannot read",
+             "links": [],
+             "logs": [],
+             "read": null,
+             "timed": {}
+           }
+             left: ["Asking each computer in the group what it lends…"]
+            right: ["bo's computer did not answer, so what they lend is not listed.", "cy's computer answered without saying what they lend, so it is not listed.", "dee's computer did not answer, so what they lend is not listed.", "eve's computer has not heard of this computer yet, so what they lend is not listed yet."]
+           note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+           
+           
+           failures:
+               the_home_page_says_a_refusal_apart_from_no_answer::chromium
+           
+           test result: FAILED. 60 passed; 1 failed; 1 ignored; 0 measured; 0 filtered out; finished in 81.10s

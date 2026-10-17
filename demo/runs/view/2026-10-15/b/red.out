@@ -1,0 +1,26 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.73s
+
+running 5 tests
+test record::tests::on_behalf_of_someone_outside_the_group_writes_nothing ... ok
+test record::tests::an_app_cannot_write_the_registers_acts_or_a_seal ... ok
+test record::tests::an_app_record_is_written_and_stamped_with_whom_it_speaks_for ... ok
+test record::tests::acts_signed_with_a_view_still_verify ... ok
+test record::tests::a_commit_signs_no_view ... FAILED
+
+failures:
+
+---- record::tests::a_commit_signs_no_view stdout ----
+
+thread 'record::tests::a_commit_signs_no_view' (51819694) panicked at crates/svrngs-core/src/record_tests.rs:102:5:
+assertion `left == right` failed: a new act holds no view
+  left: Some(Digest({"8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c": View { from: 0, mark: 0, head: "fce64712ba52a75daa306662bbbf083672d21833710396c062e48fb309b7d908" }}))
+ right: None
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    record::tests::a_commit_signs_no_view
+
+test result: FAILED. 4 passed; 1 failed; 0 ignored; 0 measured; 168 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `-p svrngs-core --lib`

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // ported from commonwealth-ai commonwealth/crates/commonwealth-rail-core/src/sync.rs@e1a43bcd2
 use super::*;
-use crate::tests_support::{key, marks, record, signed, NS};
+use crate::tests_support::{key, marks, ops_missing_from, record, signed, NS};
 use crate::{Ed25519Verifier, RailAct};
 
 fn actor(seed: u8) -> String {
@@ -45,7 +45,7 @@ fn a_hole_lowers_the_mark_so_the_peer_re_sends_across_it() {
 #[test]
 fn an_actor_whose_first_op_is_missing_is_absent_from_the_digest() {
     let held = vec![op(1, 3, 13)];
-    assert!(digest_of(&held).is_empty());
+    assert_eq!(digest_of(&held), Digest::default());
     let peer_has = vec![op(1, 0, 10), op(1, 1, 11), op(1, 3, 13)];
     assert_eq!(
         ops_missing_from(&peer_has, NS, &Ed25519Verifier, &digest_of(&held)).len(),
@@ -60,7 +60,7 @@ fn an_actor_whose_first_op_is_missing_is_absent_from_the_digest() {
 fn an_unknown_actor_gets_their_whole_history() {
     let peer_has = vec![op(2, 0, 10), op(2, 1, 11)];
     assert_eq!(
-        ops_missing_from(&peer_has, NS, &Ed25519Verifier, &Digest::new()).len(),
+        ops_missing_from(&peer_has, NS, &Ed25519Verifier, &Digest::default()).len(),
         2
     );
 }
@@ -83,63 +83,39 @@ fn a_node_republishes_ops_it_did_not_author() {
 
 /// Two nodes with the same holdings must produce the same bytes, or a
 /// captured payload diff means nothing.
-// ── the sealed floor ─────────────────────────────────
+// ── a seal, held ─────────────────────────────────────
 
 fn seal(seed: u8, seq: u64, ts: i64) -> Op<SignedOp> {
     signed(&key(seed), ts, seq, RailAct::Seal)
 }
 
-/// **Truncation must not undo itself.** Before the floor existed,
-/// `digest` early-returned `None` for any actor whose seq 0 it did not
-/// hold — so a node that compacted a sealed prefix advertised NOTHING for
-/// that actor, every peer read that as "I have none of theirs", and the
-/// whole holding came back on the next sixty-second round. Compaction
-/// amplified traffic and then reversed itself.
-///
-/// The first assertion is the negative control: the same holding with no
-/// seal in it really is unadvertisable, so the second cannot pass on a
-/// digest that was never empty.
+/// **An older copy is never sent what it pruned below the floor it claims.**
+/// An older build that honoured a seal pruned below it and claims its run
+/// from there, `from` its seal's seq (arch-seal). This build keeps every
+/// line and claims from zero, and it keeps to the window the older copy
+/// claims, or the older copy is sent the pruned prefix every round, to prune
+/// it again. And the seal still travels, as an op, to a copy lacking it.
 #[test]
-fn a_compacted_actor_is_advertised_from_its_seal_instead_of_not_at_all() {
-    let no_seal = vec![op(1, 3, 103), op(1, 4, 104)];
-    assert!(
-        digest_of(&no_seal).is_empty(),
-        "control: nothing sealed, nothing contiguous from 0, nothing to claim"
-    );
-
-    let compacted = vec![seal(1, 3, 103), op(1, 4, 104)];
-    assert_eq!(
-        marks(&digest_of(&compacted)),
-        BTreeMap::from([(actor(1), 4)]),
-        "the mark counts from the sealed floor, not from zero"
-    );
-}
-
-/// **A peer must not re-send a sealed prefix, ever.** This is the same
-/// defect seen from the other end: the responder holds the retired ops
-/// and, reading a digest that could not name a floor, shipped all of them
-/// every round.
-#[test]
-fn a_peer_never_re_sends_what_the_seal_retired() {
-    // The prefix the seal retires, and what is left after compaction. The
-    // peer is a node that never compacted, so it holds both.
+fn an_older_copy_is_never_sent_below_the_floor_it_claims() {
     let retired: Vec<_> = (0..3).map(|s| op(1, s, 100 + s as i64)).collect();
-    let compacted = vec![seal(1, 3, 103), op(1, 4, 104)];
-    let peer_holds: Vec<_> = retired.iter().chain(&compacted).cloned().collect();
+    let pruned = vec![seal(1, 3, 103), op(1, 4, 104)];
+    let holds: Vec<_> = retired.iter().chain(&pruned).cloned().collect();
+    let ids: Vec<_> = pruned
+        .iter()
+        .map(|o| (o.kind.seq, crate::derive_id(o, NS).to_string()))
+        .collect();
+    let older = BTreeMap::from([(actor(1), crate::View::fold_pairs(&actor(1), 3, 4, &ids))]);
     assert!(
-        ops_missing_from(&peer_holds, NS, &Ed25519Verifier, &digest_of(&compacted)).is_empty(),
-        "the retired prefix is not wanted and must not be sent"
+        ops_missing_from(&holds, NS, &Ed25519Verifier, &older.into()).is_empty(),
+        "the older copy's pruned prefix is not sent to it"
     );
-
-    // And the seal still travels to a peer that has not got it yet: a
-    // node cannot honour a floor it has never seen.
     assert_eq!(
-        ops_missing_from(&peer_holds, NS, &Ed25519Verifier, &digest_of(&retired))
+        ops_missing_from(&holds, NS, &Ed25519Verifier, &digest_of(&retired))
             .iter()
             .map(|o| o.kind.seq)
             .collect::<Vec<_>>(),
         vec![3, 4],
-        "the seal itself is an op, and it is how the floor propagates"
+        "the seal is an op, and travels as one"
     );
 }
 
@@ -277,8 +253,8 @@ fn the_payload_order_is_content_derived_not_arrival_order() {
     let a = vec![op(1, 0, 10), op(2, 0, 11), op(1, 1, 12)];
     let b = vec![op(1, 1, 12), op(1, 0, 10), op(2, 0, 11)];
     assert_eq!(
-        ops_missing_from(&a, NS, &Ed25519Verifier, &Digest::new()),
-        ops_missing_from(&b, NS, &Ed25519Verifier, &Digest::new())
+        ops_missing_from(&a, NS, &Ed25519Verifier, &Digest::default()),
+        ops_missing_from(&b, NS, &Ed25519Verifier, &Digest::default())
     );
 }
 
@@ -294,10 +270,10 @@ fn wire_bytes(ops: &[Op<SignedOp>]) -> usize {
 fn the_unbudgeted_form_is_the_budgeted_one_with_no_budget() {
     let held: Vec<_> = (0..20).map(|s| op(1, s, 100 + s as i64)).collect();
     let (all, more) =
-        ops_missing_from_within(&held, NS, &Ed25519Verifier, &Digest::new(), NO_BUDGET);
+        ops_missing_from_within(&held, NS, &Ed25519Verifier, &Digest::default(), NO_BUDGET);
     assert_eq!(
         all,
-        ops_missing_from(&held, NS, &Ed25519Verifier, &Digest::new())
+        ops_missing_from(&held, NS, &Ed25519Verifier, &Digest::default())
     );
     assert!(!more, "a budget that cannot bind never truncates");
 }
@@ -308,7 +284,7 @@ fn a_budget_nothing_reaches_sends_everything_and_reports_no_more() {
     let held: Vec<_> = (0..20).map(|s| op(1, s, 100 + s as i64)).collect();
     let whole = wire_bytes(&held);
     let (sent, more) =
-        ops_missing_from_within(&held, NS, &Ed25519Verifier, &Digest::new(), whole * 2);
+        ops_missing_from_within(&held, NS, &Ed25519Verifier, &Digest::default(), whole * 2);
     assert_eq!(sent.len(), 20);
     assert!(!more);
 }
@@ -320,7 +296,8 @@ fn a_budget_nothing_reaches_sends_everything_and_reports_no_more() {
 fn a_budget_that_binds_sends_the_lowest_ops_and_reports_more() {
     let held: Vec<_> = (0..20).map(|s| op(1, s, 100 + s as i64)).collect();
     let five = wire_bytes(&held[..5]);
-    let (sent, more) = ops_missing_from_within(&held, NS, &Ed25519Verifier, &Digest::new(), five);
+    let (sent, more) =
+        ops_missing_from_within(&held, NS, &Ed25519Verifier, &Digest::default(), five);
     assert!(more, "the budget cut it short and must say so");
     assert!(
         (1..20).contains(&sent.len()),
@@ -344,7 +321,7 @@ fn a_budget_that_binds_sends_the_lowest_ops_and_reports_more() {
 #[test]
 fn an_op_bigger_than_the_whole_budget_is_still_sent_alone() {
     let held: Vec<_> = (0..3).map(|s| op(1, s, 100 + s as i64)).collect();
-    let (sent, more) = ops_missing_from_within(&held, NS, &Ed25519Verifier, &Digest::new(), 1);
+    let (sent, more) = ops_missing_from_within(&held, NS, &Ed25519Verifier, &Digest::default(), 1);
     assert_eq!(sent.len(), 1, "exactly one, never zero");
     assert_eq!(sent[0].kind.seq, 0);
     assert!(more);
@@ -381,4 +358,118 @@ fn repeating_a_budgeted_chunk_converges_and_every_round_moves_the_mark() {
     assert_eq!(peer.len(), 40, "converged, in {rounds} rounds");
     assert_eq!(digest_of(&peer), digest_of(&held), "two nodes, one claim");
     assert!(rounds > 1, "the control: this budget really did chunk");
+}
+
+// ── the kept fold ────────────────────────────────────
+
+/// Journals of every shape the digest turns on — holes, forks, seals,
+/// corrections (of seals too) and forged lines, among four actors — from a
+/// fixed xorshift, so a failure names a journal that comes back.
+fn journals() -> impl Iterator<Item = Vec<Op<SignedOp>>> {
+    let mut x: u64 = 0x9E37_79B9_7F4A_7C15;
+    let mut rnd = move |n: u64| {
+        x ^= x << 13;
+        x ^= x >> 7;
+        x ^= x << 17;
+        x % n
+    };
+    (0..400).map(move |_| {
+        let mut ops: Vec<Op<SignedOp>> = Vec::new();
+        for _ in 0..rnd(24) {
+            let a = rnd(4) as u8 + 1;
+            let (seq, ts) = (rnd(8), 100 + rnd(5) as i64);
+            let o = match rnd(10) {
+                0 => seal(a, seq, ts),
+                1 if !ops.is_empty() => {
+                    let corrects = crate::derive_id(&ops[rnd(ops.len() as u64) as usize], NS);
+                    signed(
+                        &key(a),
+                        ts,
+                        seq,
+                        RailAct::Correct {
+                            corrects,
+                            replacement: None,
+                        },
+                    )
+                }
+                2 => spoofed(a % 4 + 1, a, seq, ts, record("f")),
+                3 => spoofed(a % 4 + 1, a, seq, ts, RailAct::Seal),
+                _ => signed(
+                    &key(a),
+                    ts,
+                    seq,
+                    record(if rnd(2) == 0 { "x" } else { "y" }),
+                ),
+            };
+            ops.push(o);
+        }
+        ops
+    })
+}
+
+/// **A fold caught up from the tail answers what a fold of the whole
+/// journal would.** Each journal is folded in pieces, its digest asked
+/// between them as a journal asks it between appends, and each answer is
+/// the whole-journal digest of what was folded so far. Watched failing on
+/// a fold that did not refold the other actors when a floor moved.
+#[test]
+fn a_digest_folded_in_pieces_is_the_whole_journals() {
+    for ops in journals() {
+        let mut fold = DigestFold::default();
+        let mut at = 0;
+        while at < ops.len() {
+            let to = (at + 1 + (at * 7 + ops.len()) % 5).min(ops.len());
+            for (id, op) in authentic(&ops[at..to], NS, &Ed25519Verifier) {
+                fold.add(id, op);
+            }
+            assert_eq!(fold.digest(), digest_of(&ops[..to]), "{:#?}", &ops[..to]);
+            at = to;
+        }
+    }
+}
+
+/// **An equal digest is answered unread exactly when the slow path would
+/// send nothing.** For a peer in step (its digest ours), `missing_nothing`
+/// and `ops_missing_from_within` agree on every journal; for a peer behind
+/// (it holds the first half), `missing_nothing` never claims nothing is
+/// missing when something is.
+fn fold_of(ops: &[Op<SignedOp>]) -> DigestFold {
+    let mut fold = DigestFold::default();
+    for (id, op) in authentic(ops, NS, &Ed25519Verifier) {
+        fold.add(id, op);
+    }
+    fold
+}
+
+#[test]
+fn missing_nothing_agrees_with_the_slow_path() {
+    let (mut unread, mut slow) = (0, 0);
+    for ops in journals() {
+        let ours = digest_of(&ops);
+        let mut newest: BTreeMap<&str, u64> = BTreeMap::new();
+        for op in &ops {
+            let n = newest.entry(op.actor.as_str()).or_default();
+            *n = (*n).max(op.kind.seq);
+        }
+        let newest = || newest.iter().map(|(a, n)| (*a, *n));
+        let behind = digest_of(&ops[..ops.len() / 2]);
+        for theirs in [&ours, &behind] {
+            let sent = ops_missing_from_within(&ops, NS, &Ed25519Verifier, theirs, NO_BUDGET).0;
+            let judged = fold_of(&ops).missing_nothing(theirs, newest());
+            if theirs == &ours {
+                assert_eq!(judged, sent.is_empty(), "{ops:#?}");
+                if judged {
+                    unread += 1
+                } else {
+                    slow += 1
+                }
+            } else {
+                assert!(!judged || sent.is_empty(), "{ops:#?}");
+            }
+        }
+    }
+    assert!(
+        unread > 20 && slow > 20,
+        "both answers exercised: {unread} unread, {slow} slow"
+    );
 }

@@ -1,0 +1,109 @@
+
+running 4 tests
+carried::the_home_page_brings_things_to_the_table::chromium --- FAILED
+carried::the_home_page_brings_things_to_the_table::webkit --- FAILED
+carried::the_phone_brings_things_to_the_table::webkit --- FAILED
+carried::the_phone_brings_things_to_the_table::chromium --- FAILED
+
+failures:
+
+---- carried::the_home_page_brings_things_to_the_table::chromium stdout ----
+
+thread 'carried::the_home_page_brings_things_to_the_table::chromium' (46112480) panicked at crates/svrngs-node/tests/browser/main.rs:236:5:
+the browser half failed (exit status: 1):
+the page did not finish: TimeoutError: locator.click: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('text=Bring the ticked ones to house').first()
+
+
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- carried::the_home_page_brings_things_to_the_table::webkit stdout ----
+
+thread 'carried::the_home_page_brings_things_to_the_table::webkit' (46112481) panicked at crates/svrngs-node/tests/browser/main.rs:236:5:
+the browser half failed (exit status: 1):
+the page did not finish: TimeoutError: locator.click: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('text=Bring the ticked ones to house').first()
+
+
+
+
+---- carried::the_phone_brings_things_to_the_table::webkit stdout ----
+
+thread 'carried::the_phone_brings_things_to_the_table::webkit' (46112483) panicked at crates/svrngs-node/tests/browser/main.rs:236:5:
+the browser half failed (exit status: 1):
+the page did not finish: TimeoutError: locator.innerText: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('#shelf')
+
+error: Did not parse stylesheet at 'http://localhost:58751/look.css?v=b0751c1ca5be' because non CSS MIME types are not allowed in strict mode.
+debug: STORE: the sealing key absent: making one
+debug: PAGE: no line offered: not a computer, or not a token
+error: TypeError: null is not an object (evaluating 'asked.has')
+error: Did not parse stylesheet at 'http://localhost:58751/look.css?v=b0751c1ca5be' because non CSS MIME types are not allowed in strict mode.
+debug: PAGE: no line offered: not a computer, or not a token
+debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt
+debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c
+debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)
+debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c
+debug: LAYER parse: ok — relay http://127.0.0.1:58696/
+debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…
+debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound
+debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…
+debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)
+debug: LAYER parse: the group names no relay for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c, so it is dialled through the link's
+debug: LAYER tls/alpn+relay-hop: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol through a relay…
+debug: LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol
+debug: LAYER tls/alpn: negotiated ALPN = "cwth/http/0"
+debug: HTTP: GET /people/lends — a bi-stream opened
+debug: HTTP: GET /people/lends answered 200
+debug: HTTP: the response has ended; finishing the request's send half
+debug: HTTP: GET /people/lends — the stream is done
+error: WebSocket connection to 'ws://127.0.0.1:58696/relay' failed: The operation couldn’t be completed. Socket is not connected
+
+
+---- carried::the_phone_brings_things_to_the_table::chromium stdout ----
+
+thread 'carried::the_phone_brings_things_to_the_table::chromium' (46112482) panicked at crates/svrngs-node/tests/browser/main.rs:236:5:
+the browser half failed (exit status: 1):
+the page did not finish: TimeoutError: locator.innerText: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('#shelf')
+
+error: Refused to apply style from 'http://localhost:58752/look.css?v=b0751c1ca5be' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+debug: STORE: the sealing key absent: making one
+debug: PAGE: the line offered, for a computer: founds
+error: TypeError: Cannot read properties of null (reading 'has')
+    at opening (http://localhost:58752/app.js?v=b0751c1ca5be:482:25)
+error: Refused to apply style from 'http://localhost:58752/look.css?v=b0751c1ca5be' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+debug: PAGE: the line offered, for a computer: joins
+debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt
+debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c
+debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)
+debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c
+debug: LAYER parse: ok — relay http://127.0.0.1:58695/
+debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…
+debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound
+debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…
+debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)
+debug: LAYER parse: the group names no relay for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c, so it is dialled through the link's
+debug: LAYER tls/alpn+relay-hop: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol through a relay…
+debug: LAYER tls/alpn+relay-hop: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol
+debug: LAYER tls/alpn: negotiated ALPN = "cwth/http/0"
+debug: HTTP: GET /people/lends — a bi-stream opened
+debug: HTTP: GET /people/lends answered 200
+debug: HTTP: the response has ended; finishing the request's send half
+debug: HTTP: GET /people/lends — the stream is done
+
+
+
+failures:
+    carried::the_home_page_brings_things_to_the_table::chromium
+    carried::the_home_page_brings_things_to_the_table::webkit
+    carried::the_phone_brings_things_to_the_table::chromium
+    carried::the_phone_brings_things_to_the_table::webkit
+
+test result: FAILED. 0 passed; 4 failed; 0 ignored; 0 measured; 82 filtered out; finished in 35.26s
+

@@ -1,0 +1,19 @@
+{
+ "host": {
+  "macos": "27.0.1",
+  "arch": "arm64"
+ },
+ "line_exit": 0,
+ "ms_from_paste": {
+  "line_done": 4642,
+  "home_page_opened": 4585,
+  "home_page_lists_trip_and_its_folder": 6029,
+  "sams_photo_in_the_folder": 6489
+ },
+ "home": {
+  "mode": "home",
+  "url": "http://svrngs.localhost:59236/",
+  "listed_ms": 6029,
+  "shown": "Trip\n\nPeople: Sam, alexsbryan\n\nTrip\u2019s folder is on this computer at /tmp/onb-f-run/newcomer/svrngs/Trip\n\nNobody lends anything here yet.\nWhat apps use"
+ }
+}

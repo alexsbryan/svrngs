@@ -21,10 +21,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::{field, Name, Person, Roster};
 
-/// Domain separator for a group id's hash, so an id is never the hash of
-/// anything else svrngs hashes (an act id is `svrngs/act/v1`).
-const GROUP_ID_DOMAIN: &[u8] = b"svrngs/group/v1\0";
-
 /// What a group is founded on. Every field is inside the id's hash.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Seed {
@@ -49,7 +45,7 @@ impl Seed {
     /// preceded by its `u32` big-endian length. It names the group's
     /// directory, as a namespace (`svrngs_node`'s `valid_namespace`).
     pub fn id(&self) -> String {
-        let mut input = GROUP_ID_DOMAIN.to_vec();
+        let mut input = crate::sig::GROUP_ID_DOMAIN.to_vec();
         field(&mut input, self.name.as_str().as_bytes());
         field(&mut input, self.founder.as_str().as_bytes());
         input.extend_from_slice(self.key.as_bytes());

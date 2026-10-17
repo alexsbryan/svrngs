@@ -1,0 +1,473 @@
+{
+ "tag": "plant-let-keyless",
+ "plant": "let-keyless",
+ "people": {
+  "Alex": {
+   "at": "http://s37xnas7mnc7s3lh210ln02l4twxqdgp0pxw0ck6llk5mfphp28t22m038n775.localhost:55509/",
+   "first": {
+    "status": 200,
+    "user": {
+     "Name": "Alex-24e2646f6325dcc3",
+     "ServerId": "cb6395c236a34731b48949fabbe69db8",
+     "Id": "65131b55833d48d8a996f301d0bdaf37",
+     "HasPassword": true,
+     "HasConfiguredPassword": true,
+     "HasConfiguredEasyPassword": false,
+     "EnableAutoLogin": false,
+     "LastLoginDate": "2026-10-08T13:59:06.663127Z",
+     "LastActivityDate": "2026-10-08T13:59:06.663127Z",
+     "Configuration": {
+      "PlayDefaultAudioTrack": true,
+      "SubtitleLanguagePreference": "",
+      "DisplayMissingEpisodes": false,
+      "GroupedFolders": [],
+      "SubtitleMode": "Default",
+      "DisplayCollectionsView": false,
+      "EnableLocalPassword": false,
+      "OrderedViews": [],
+      "LatestItemsExcludes": [],
+      "MyMediaExcludes": [],
+      "HidePlayedInLatest": true,
+      "RememberAudioSelections": true,
+      "RememberSubtitleSelections": true,
+      "EnableNextEpisodeAutoPlay": true,
+      "CastReceiverId": "F007D354"
+     },
+     "Policy": {
+      "IsAdministrator": false,
+      "IsHidden": true,
+      "EnableCollectionManagement": false,
+      "EnableSubtitleManagement": false,
+      "EnableLyricManagement": false,
+      "IsDisabled": false,
+      "BlockedTags": [],
+      "AllowedTags": [],
+      "EnableUserPreferenceAccess": true,
+      "AccessSchedules": [],
+      "BlockUnratedItems": [],
+      "EnableRemoteControlOfOtherUsers": false,
+      "EnableSharedDeviceControl": true,
+      "EnableRemoteAccess": true,
+      "EnableLiveTvManagement": false,
+      "EnableLiveTvAccess": true,
+      "EnableMediaPlayback": true,
+      "EnableAudioPlaybackTranscoding": true,
+      "EnableVideoPlaybackTranscoding": true,
+      "EnablePlaybackRemuxing": true,
+      "ForceRemoteSourceTranscoding": false,
+      "EnableContentDeletion": false,
+      "EnableContentDeletionFromFolders": [],
+      "EnableContentDownloading": true,
+      "EnableSyncTranscoding": true,
+      "EnableMediaConversion": true,
+      "EnabledDevices": [],
+      "EnableAllDevices": true,
+      "EnabledChannels": [],
+      "EnableAllChannels": true,
+      "EnabledFolders": [],
+      "EnableAllFolders": true,
+      "InvalidLoginAttemptCount": 0,
+      "LoginAttemptsBeforeLockout": -1,
+      "MaxActiveSessions": 0,
+      "EnablePublicSharing": true,
+      "BlockedMediaFolders": [],
+      "BlockedChannels": [],
+      "RemoteClientBitrateLimit": 0,
+      "AuthenticationProviderId": "Jellyfin.Server.Implementations.Users.DefaultAuthenticationProvider",
+      "PasswordResetProviderId": "Jellyfin.Server.Implementations.Users.DefaultPasswordResetProvider",
+      "SyncPlayAccess": "CreateAndJoinGroups"
+     }
+    }
+   },
+   "second": {
+    "status": 200,
+    "user": {
+     "Name": "Alex-24e2646f6325dcc3",
+     "ServerId": "cb6395c236a34731b48949fabbe69db8",
+     "Id": "65131b55833d48d8a996f301d0bdaf37",
+     "HasPassword": true,
+     "HasConfiguredPassword": true,
+     "HasConfiguredEasyPassword": false,
+     "EnableAutoLogin": false,
+     "LastLoginDate": "2026-10-08T13:59:06.663127Z",
+     "LastActivityDate": "2026-10-08T13:59:06.663127Z",
+     "Configuration": {
+      "PlayDefaultAudioTrack": true,
+      "SubtitleLanguagePreference": "",
+      "DisplayMissingEpisodes": false,
+      "GroupedFolders": [],
+      "SubtitleMode": "Default",
+      "DisplayCollectionsView": false,
+      "EnableLocalPassword": false,
+      "OrderedViews": [],
+      "LatestItemsExcludes": [],
+      "MyMediaExcludes": [],
+      "HidePlayedInLatest": true,
+      "RememberAudioSelections": true,
+      "RememberSubtitleSelections": true,
+      "EnableNextEpisodeAutoPlay": true,
+      "CastReceiverId": "F007D354"
+     },
+     "Policy": {
+      "IsAdministrator": false,
+      "IsHidden": true,
+      "EnableCollectionManagement": false,
+      "EnableSubtitleManagement": false,
+      "EnableLyricManagement": false,
+      "IsDisabled": false,
+      "BlockedTags": [],
+      "AllowedTags": [],
+      "EnableUserPreferenceAccess": true,
+      "AccessSchedules": [],
+      "BlockUnratedItems": [],
+      "EnableRemoteControlOfOtherUsers": false,
+      "EnableSharedDeviceControl": true,
+      "EnableRemoteAccess": true,
+      "EnableLiveTvManagement": false,
+      "EnableLiveTvAccess": true,
+      "EnableMediaPlayback": true,
+      "EnableAudioPlaybackTranscoding": true,
+      "EnableVideoPlaybackTranscoding": true,
+      "EnablePlaybackRemuxing": true,
+      "ForceRemoteSourceTranscoding": false,
+      "EnableContentDeletion": false,
+      "EnableContentDeletionFromFolders": [],
+      "EnableContentDownloading": true,
+      "EnableSyncTranscoding": true,
+      "EnableMediaConversion": true,
+      "EnabledDevices": [],
+      "EnableAllDevices": true,
+      "EnabledChannels": [],
+      "EnableAllChannels": true,
+      "EnabledFolders": [],
+      "EnableAllFolders": true,
+      "InvalidLoginAttemptCount": 0,
+      "LoginAttemptsBeforeLockout": -1,
+      "MaxActiveSessions": 0,
+      "EnablePublicSharing": true,
+      "BlockedMediaFolders": [],
+      "BlockedChannels": [],
+      "RemoteClientBitrateLimit": 0,
+      "AuthenticationProviderId": "Jellyfin.Server.Implementations.Users.DefaultAuthenticationProvider",
+      "PasswordResetProviderId": "Jellyfin.Server.Implementations.Users.DefaultPasswordResetProvider",
+      "SyncPlayAccess": "CreateAndJoinGroups"
+     }
+    }
+   },
+   "made_by_first": [
+    [
+     "Alex-24e2646f6325dcc3",
+     "65131b55833d48d8a996f301d0bdaf37"
+    ]
+   ],
+   "made_by_second": [],
+   "body_sent": 204,
+   "range": {
+    "status": 206,
+    "bytes": 65536
+   },
+   "page": {
+    "status": 200,
+    "bytes": 5441
+   },
+   "socket": {
+    "status": 101,
+    "first_frame": "{\"MessageId\":\"4152774b66054945b150fe06992e6c42\",\"Data\":60,\"MessageType\":\"ForceKeepAlive\"}"
+   }
+  },
+  "Bo": {
+   "at": "http://s37xnas7mnc7s3lh210ln02l4twxqdgp0pxw0ck6llk5mfphp28t22m038n775.localhost:56033/",
+   "first": {
+    "status": 200,
+    "user": {
+     "Name": "Bo-82fe24fec739be58",
+     "ServerId": "cb6395c236a34731b48949fabbe69db8",
+     "Id": "697084f0ca52416596be617078413227",
+     "HasPassword": true,
+     "HasConfiguredPassword": true,
+     "HasConfiguredEasyPassword": false,
+     "EnableAutoLogin": false,
+     "LastLoginDate": "2026-10-08T13:59:06.995552Z",
+     "LastActivityDate": "2026-10-08T13:59:06.995552Z",
+     "Configuration": {
+      "PlayDefaultAudioTrack": true,
+      "SubtitleLanguagePreference": "",
+      "DisplayMissingEpisodes": false,
+      "GroupedFolders": [],
+      "SubtitleMode": "Default",
+      "DisplayCollectionsView": false,
+      "EnableLocalPassword": false,
+      "OrderedViews": [],
+      "LatestItemsExcludes": [],
+      "MyMediaExcludes": [],
+      "HidePlayedInLatest": true,
+      "RememberAudioSelections": true,
+      "RememberSubtitleSelections": true,
+      "EnableNextEpisodeAutoPlay": true,
+      "CastReceiverId": "F007D354"
+     },
+     "Policy": {
+      "IsAdministrator": false,
+      "IsHidden": true,
+      "EnableCollectionManagement": false,
+      "EnableSubtitleManagement": false,
+      "EnableLyricManagement": false,
+      "IsDisabled": false,
+      "BlockedTags": [],
+      "AllowedTags": [],
+      "EnableUserPreferenceAccess": true,
+      "AccessSchedules": [],
+      "BlockUnratedItems": [],
+      "EnableRemoteControlOfOtherUsers": false,
+      "EnableSharedDeviceControl": true,
+      "EnableRemoteAccess": true,
+      "EnableLiveTvManagement": false,
+      "EnableLiveTvAccess": true,
+      "EnableMediaPlayback": true,
+      "EnableAudioPlaybackTranscoding": true,
+      "EnableVideoPlaybackTranscoding": true,
+      "EnablePlaybackRemuxing": true,
+      "ForceRemoteSourceTranscoding": false,
+      "EnableContentDeletion": false,
+      "EnableContentDeletionFromFolders": [],
+      "EnableContentDownloading": true,
+      "EnableSyncTranscoding": true,
+      "EnableMediaConversion": true,
+      "EnabledDevices": [],
+      "EnableAllDevices": true,
+      "EnabledChannels": [],
+      "EnableAllChannels": true,
+      "EnabledFolders": [],
+      "EnableAllFolders": true,
+      "InvalidLoginAttemptCount": 0,
+      "LoginAttemptsBeforeLockout": -1,
+      "MaxActiveSessions": 0,
+      "EnablePublicSharing": true,
+      "BlockedMediaFolders": [],
+      "BlockedChannels": [],
+      "RemoteClientBitrateLimit": 0,
+      "AuthenticationProviderId": "Jellyfin.Server.Implementations.Users.DefaultAuthenticationProvider",
+      "PasswordResetProviderId": "Jellyfin.Server.Implementations.Users.DefaultPasswordResetProvider",
+      "SyncPlayAccess": "CreateAndJoinGroups"
+     }
+    }
+   },
+   "second": {
+    "status": 200,
+    "user": {
+     "Name": "Bo-82fe24fec739be58",
+     "ServerId": "cb6395c236a34731b48949fabbe69db8",
+     "Id": "697084f0ca52416596be617078413227",
+     "HasPassword": true,
+     "HasConfiguredPassword": true,
+     "HasConfiguredEasyPassword": false,
+     "EnableAutoLogin": false,
+     "LastLoginDate": "2026-10-08T13:59:06.995552Z",
+     "LastActivityDate": "2026-10-08T13:59:06.995552Z",
+     "Configuration": {
+      "PlayDefaultAudioTrack": true,
+      "SubtitleLanguagePreference": "",
+      "DisplayMissingEpisodes": false,
+      "GroupedFolders": [],
+      "SubtitleMode": "Default",
+      "DisplayCollectionsView": false,
+      "EnableLocalPassword": false,
+      "OrderedViews": [],
+      "LatestItemsExcludes": [],
+      "MyMediaExcludes": [],
+      "HidePlayedInLatest": true,
+      "RememberAudioSelections": true,
+      "RememberSubtitleSelections": true,
+      "EnableNextEpisodeAutoPlay": true,
+      "CastReceiverId": "F007D354"
+     },
+     "Policy": {
+      "IsAdministrator": false,
+      "IsHidden": true,
+      "EnableCollectionManagement": false,
+      "EnableSubtitleManagement": false,
+      "EnableLyricManagement": false,
+      "IsDisabled": false,
+      "BlockedTags": [],
+      "AllowedTags": [],
+      "EnableUserPreferenceAccess": true,
+      "AccessSchedules": [],
+      "BlockUnratedItems": [],
+      "EnableRemoteControlOfOtherUsers": false,
+      "EnableSharedDeviceControl": true,
+      "EnableRemoteAccess": true,
+      "EnableLiveTvManagement": false,
+      "EnableLiveTvAccess": true,
+      "EnableMediaPlayback": true,
+      "EnableAudioPlaybackTranscoding": true,
+      "EnableVideoPlaybackTranscoding": true,
+      "EnablePlaybackRemuxing": true,
+      "ForceRemoteSourceTranscoding": false,
+      "EnableContentDeletion": false,
+      "EnableContentDeletionFromFolders": [],
+      "EnableContentDownloading": true,
+      "EnableSyncTranscoding": true,
+      "EnableMediaConversion": true,
+      "EnabledDevices": [],
+      "EnableAllDevices": true,
+      "EnabledChannels": [],
+      "EnableAllChannels": true,
+      "EnabledFolders": [],
+      "EnableAllFolders": true,
+      "InvalidLoginAttemptCount": 0,
+      "LoginAttemptsBeforeLockout": -1,
+      "MaxActiveSessions": 0,
+      "EnablePublicSharing": true,
+      "BlockedMediaFolders": [],
+      "BlockedChannels": [],
+      "RemoteClientBitrateLimit": 0,
+      "AuthenticationProviderId": "Jellyfin.Server.Implementations.Users.DefaultAuthenticationProvider",
+      "PasswordResetProviderId": "Jellyfin.Server.Implementations.Users.DefaultPasswordResetProvider",
+      "SyncPlayAccess": "CreateAndJoinGroups"
+     }
+    }
+   },
+   "made_by_first": [
+    [
+     "Bo-82fe24fec739be58",
+     "697084f0ca52416596be617078413227"
+    ]
+   ],
+   "made_by_second": [],
+   "body_sent": 204,
+   "range": {
+    "status": 206,
+    "bytes": 65536
+   },
+   "page": {
+    "status": 200,
+    "bytes": 5441
+   },
+   "socket": {
+    "status": 101,
+    "first_frame": "{\"MessageId\":\"f41cb647f2614791b67f70b5c8c541cd\",\"Data\":60,\"MessageType\":\"ForceKeepAlive\"}"
+   }
+  }
+ },
+ "bars": {
+  "each a user of their own": {
+   "verdict": "passed",
+   "why": "Alex Alex-24e2646f6325dcc3 (65131b55833d48d8a996f301d0bdaf37), made by the first ask [('Alex-24e2646f6325dcc3', '65131b55833d48d8a996f301d0bdaf37')]; Bo Bo-82fe24fec739be58 (697084f0ca52416596be617078413227), made by the first ask [('Bo-82fe24fec739be58', '697084f0ca52416596be617078413227')]"
+  },
+  "a second ask makes none": {
+   "verdict": "passed",
+   "why": "made by the second asks: Alex [], Bo []"
+  },
+  "each person's own device": {
+   "verdict": "passed",
+   "why": "Jellyfin's sessions by user: {'Alex': ['mw1-alex'], 'Bo': ['mw1-bo']}"
+  },
+  "neither receives the lender's key": {
+   "verdict": "passed",
+   "why": "found: {'Alex': [], 'Bo': []}, in {'Alex': 76500, 'Bo': 76496} bytes"
+  },
+  "no key is refused": {
+   "verdict": "failed",
+   "why": "200: '{\"Name\":\"everyone-eeeeeeeeeeeeeeee\",\"ServerId\":\"cb6395c236a34731b48949fabbe69db8\",\"Id\":\"f5e475e7c6e64f39a34eff5c8d016827'"
+  },
+  "carried": {
+   "verdict": "passed",
+   "why": "Alex: body sent 204, range {'status': 206, 'bytes': 65536}, page {'status': 200, 'bytes': 5441}, socket {'status': 101, 'first_frame': '{\"MessageId\":\"4152774b66054945b150fe06992e6c42\",\"Data\":60,\"MessageType\":\"ForceKeepAlive\"}'}; Bo: body sent 204, range {'status': 206, 'bytes': 65536}, page {'status': 200, 'bytes': 5441}, socket {'status': 101, 'first_frame': '{\"MessageId\":\"f41cb647f2614791b67f70b5c8c541cd\",\"Data\":60,\"MessageType\":\"ForceKeepAlive\"}'}"
+  }
+ },
+ "users_before": [
+  [
+   "ana",
+   "36f15d0758de4e3ea0407cc92f0ff609"
+  ],
+  [
+   "ben",
+   "865e3b1386474185898b8584110f9575"
+  ],
+  [
+   "sam",
+   "78c1bc68eac64220b84ce4390d2b2e4f"
+  ]
+ ],
+ "users_after": [
+  [
+   "Alex-24e2646f6325dcc3",
+   "65131b55833d48d8a996f301d0bdaf37"
+  ],
+  [
+   "Bo-82fe24fec739be58",
+   "697084f0ca52416596be617078413227"
+  ],
+  [
+   "ana",
+   "36f15d0758de4e3ea0407cc92f0ff609"
+  ],
+  [
+   "ben",
+   "865e3b1386474185898b8584110f9575"
+  ],
+  [
+   "sam",
+   "78c1bc68eac64220b84ce4390d2b2e4f"
+  ]
+ ],
+ "sessions": [
+  [
+   "Alex-24e2646f6325dcc3",
+   "mw1-alex",
+   "Alex computer",
+   "mw-1 check"
+  ],
+  [
+   "Bo-82fe24fec739be58",
+   "mw1-bo",
+   "Bo computer",
+   "mw-1 check"
+  ],
+  [
+   "sam",
+   "u5-4-setup",
+   "Sam computer",
+   "u5-4 check"
+  ]
+ ],
+ "no_key": {
+  "status": 200,
+  "body": "{\"Name\":\"everyone-eeeeeeeeeeeeeeee\",\"ServerId\":\"cb6395c236a34731b48949fabbe69db8\",\"Id\":\"f5e475e7c6e64f39a34eff5c8d016827\",\"HasPassword\":true,\"HasConfiguredPassword\":true,\"HasConfiguredEasyPassword\":false,\"EnableAutoLogin\":false,\"LastLoginDate\":\"2026-10-08T13:59:07.337005Z\",\"LastActivityDate\":\"2026-1"
+ },
+ "anothers_key": {
+  "status": 200,
+  "user": "Alex-24e2646f6325dcc3"
+ },
+ "sessions_after_anothers_key": [
+  [
+   "Alex-24e2646f6325dcc3",
+   "mw1-mallory",
+   "Mallory computer"
+  ],
+  [
+   "everyone-eeeeeeeeeeeeeeee",
+   "mw1-nobody",
+   "Nobody computer"
+  ],
+  [
+   "sam",
+   "u5-4-setup",
+   "Sam computer"
+  ]
+ ],
+ "found": {
+  "Alex": [],
+  "Bo": []
+ },
+ "received_bytes": {
+  "Alex": 76500,
+  "Bo": 76496
+ },
+ "recorded": {
+  "another person's key at the middleware's port": {
+   "status": 200,
+   "user": "Alex-24e2646f6325dcc3"
+  }
+ }
+}

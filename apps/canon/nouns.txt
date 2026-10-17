@@ -1,0 +1,9 @@
+# House rules' nouns, canon's words. The infra may not use them (scripts/vocab_check.py).
+canon
+ratification
+commitment
+commitments
+proposal
+proposals
+objection
+objections

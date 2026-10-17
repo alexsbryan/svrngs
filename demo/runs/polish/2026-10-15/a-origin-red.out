@@ -1,0 +1,11 @@
+thread 'a_stopped_lend_is_said_by_its_lender_as_a_page_to_a_tab_and_json_to_a_program' (48497612) panicked at crates/svrngs-node/tests/lend_origin.rs:737:9:
+HTTP/1.1 502 Bad Gateway
+content-type: application/json
+x-svrngs-refused: away
+content-length: 78
+connection: close
+date: Thu, 15 Oct 2026 18:12:14 GMT
+
+{"error":"telly is not answering on the computer that lends it","kind":"away"}
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+

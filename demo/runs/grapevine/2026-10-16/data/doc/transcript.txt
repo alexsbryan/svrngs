@@ -1,0 +1,62 @@
+demo/grapevine.md at 2ce51207: 6 blocks, 11 lines
+[copy] $ cargo build -p svrngs
+[copy] exit 0     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.37s
+
+[sam] $ export HOME=/tmp/grapevine/sam; mkdir -p $HOME
+[sam] $ target/debug/svrngs new "1400 Page" --as Sam &
+[sam] printed a link
+[jo] $ export HOME=/tmp/grapevine/jo; mkdir -p $HOME
+[jo] $ target/debug/svrngs join 'svrngs://join/<the token>' --as Jo --no-run
+[jo] said: You're in 1400 Page, as Jo.
+[jo] $ target/debug/svrngs new "Waller block" --as Jo &
+[jo] printed a link
+[kim] $ export HOME=/tmp/grapevine/kim; mkdir -p $HOME
+[kim] $ target/debug/svrngs join 'svrngs://join/<the token>' --as Kim &
+[kim] said: You're in Waller block, as Kim.
+[sam] $ echo "{\"record\": \"$(cat $HOME/.svrngs/api)\", \"data\": \"$HOME\"}" > $HOME/grapevine.json
+[sam] grapevine.json: {"record": "http://127.0.0.1:64074", "data": "/tmp/grapevine/sam"}
+[sam] $ node apps/grapevine/server.mjs $HOME/grapevine.json
+[sam] printed: {"port":64283,"at":"http://127.0.0.1:64283/","store":"record"}
+[jo] $ echo "{\"record\": \"$(cat $HOME/.svrngs/api)\", \"data\": \"$HOME\"}" > $HOME/grapevine.json
+[jo] grapevine.json: {"record": "http://127.0.0.1:64141", "data": "/tmp/grapevine/jo"}
+[jo] $ node apps/grapevine/server.mjs $HOME/grapevine.json
+[jo] printed: {"port":64290,"at":"http://127.0.0.1:64290/","store":"record"}
+[kim] $ echo "{\"record\": \"$(cat $HOME/.svrngs/api)\", \"data\": \"$HOME\"}" > $HOME/grapevine.json
+[kim] grapevine.json: {"record": "http://127.0.0.1:64249", "data": "/tmp/grapevine/kim"}
+[kim] $ node apps/grapevine/server.mjs $HOME/grapevine.json
+[kim] printed: {"port":64291,"at":"http://127.0.0.1:64291/","store":"record"}
+[sam] open None: ok (562 ms)
+[sam] goto http://127.0.0.1:64283/: ok (88 ms)
+[sam] page shows ['1400 Page']
+[jo] open None: ok (100 ms)
+[jo] goto http://127.0.0.1:64290/: ok (43 ms)
+[jo] page shows ['Waller block', '1400 Page']
+[kim] open None: ok (113 ms)
+[kim] goto http://127.0.0.1:64291/: ok (42 ms)
+[kim] page shows ['Waller block']
+[kim] press List it: ok (121 ms)
+[sam] press Ask: ok (177 ms)
+[jo] await ['Sam asks: tile saw, Saturday', 'Carry to Waller block', 'Everyone in Waller block will see what was asked, and that you carried it; never who asked.']: ok (533 ms)
+[jo] press Carry to Waller block: ok (59 ms)
+[kim] await ['A neighbour of Jo’s needs: tile saw, Saturday — carried by Jo', 'You might have this.']: ok (533 ms)
+[kim] press Offer: ok (71 ms)
+[sam] await ['Someone who saw it offered: when Saturday morning; where Waller and Pierce', 'Sealed: only you two can read this.']: ok (1559 ms)
+[jo] await ['A sealed message went by toward the person who asked: 96 bytes']: ok (520 ms)
+[sam] press Yes: ok (48 ms)
+[kim] await ['The person who asked said yes']: ok (4648 ms)
+[kim] press Yes: ok (59 ms)
+[kim] await ['You both said yes: they’re Sam Reyes']: ok (1 ms)
+[sam] await ['they’re Kim Okafor']: ok (5216 ms)
+[sam] press Take it back: ok (64 ms)
+[kim] await ['needs: tile saw, Saturday']: ok (4666 ms)
+[sam] Control-C (1 program stopped)
+[sam] $ kill %1
+[jo] Control-C (1 program stopped)
+[jo] $ kill %1
+[kim] Control-C (1 program stopped)
+[kim] $ kill %1
+[sam] $ rm -rf /tmp/grapevine
+[sam] window closed, exit 0; processes left: 0
+[jo] window closed, exit 0; processes left: 0
+[kim] window closed, exit 0; processes left: 0
+/tmp/grapevine there after: False

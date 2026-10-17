@@ -1,0 +1,17 @@
+# svrngs-core, repository: lines scripts/lean_check.py counts at each commit, read from git's objects by its rules as of HEAD
+$ python3 demo/runs/onair/2026-10-13/lines_at.py e114b96 38ab822 b3bfc0f ddf8bbc 79b8301 f61b252 57dbade c03b6db 6e55692 d0347ae db6ba51 43724d7
+ 3121  15950  e114b96 ralph: onair-economize done
+ 3121  15950  38ab822 budget: the repository's cap from 15,951 to 15,962, svrngs-core's kept at 3,122 (o
+ 3121  15961  b3bfc0f change(live): the live lane names who spoke — each drained payload with its sender
+ 3121  15961  ddf8bbc ralph: onair-live done
+ 3121  15961  79b8301 move(core): every domain the core signs or hashes under in one home, sig.rs (onair
+ 3121  15961  f61b252 budget: svrngs-core's cap from 3,122 to 3,150, the repository's from 15,962 to 16,
+ 3149  15989  57dbade change(core): a signature for an app — App, parsed once, and what a computer's key
+ 3149  16014  c03b6db change(record API): POST /v1/sign?app=<app> — this computer's own key signs an app
+ 3149  16014  6e55692 ralph: REVIEW-audit-onair-auto-1 done
+ 3149  16014  d0347ae budget: the repository's cap from 16,015 to 16,237, svrngs-core's kept at 3,150 (o
+ 3149  16236  db6ba51 add(node): onair-blob (a) — bytes by hash, for an app, with a lifetime: PUT and GE
+ 3149  16236  43724d7 run(onair-run): each code plant red on its own bar — three on the harness, one on 
+$ python3 scripts/lean_check.py   # at HEAD, in the tree
+crates/svrngs-core     3149 / 3150 lines
+.                     16236 / 16237 lines

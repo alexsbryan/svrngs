@@ -1,0 +1,5 @@
+2026-10-12T19:47:22.881912Z  INFO jellyfin_mw::answer: mw: the door asks who a person is to Jellyfin key=289aba36199a039f31976f27ff866f06649437131a4485c31de3cef2efe93d7f person=Ana
+2026-10-12T19:47:22.882067Z  INFO jellyfin_mw::people: mw: a key not seen by this process — finding or making the account the door names key=289aba36199a039f31976f27ff866f06649437131a4485c31de3cef2efe93d7f person=Ana user=Ana-289aba36199a039f
+2026-10-12T19:47:23.067926Z  INFO jellyfin_mw::viewer: mw: provision — the person's read-only account made and its policy read back origin=127.0.0.1:8096 viewer_user=c72376a1b339428e9eeab717a8ddafce name="Ana-289aba36199a039f"
+2026-10-12T19:47:23.068066Z  INFO jellyfin_mw::people: mw: signing the person's device in key=289aba36199a039f31976f27ff866f06649437131a4485c31de3cef2efe93d7f user=Ana-289aba36199a039f device=svrngs-289aba36199a039f
+2026-10-12T19:47:23.183713Z  INFO jellyfin_mw::answer: mw: answered the door — the person's token, its authorization and the stored sign-in key=289aba36199a039f31976f27ff866f06649437131a4485c31de3cef2efe93d7f user=c72376a1b339428e9eeab717a8ddafce device=svrngs-289aba36199a039f

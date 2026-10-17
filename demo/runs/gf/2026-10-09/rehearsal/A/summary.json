@@ -1,0 +1,168 @@
+{
+ "verdict": {
+  "B3": "passed",
+  "B2": "passed",
+  "B4": "passed",
+  "B5": "passed",
+  "B6": "never-ran",
+  "B1": "never-ran",
+  "B7": "never-ran"
+ },
+ "data": {
+  "B3": {
+   "scan_s": 22.7,
+   "holder_requests": 0,
+   "endpoint_answers": 0,
+   "endpoint_uas": []
+  },
+  "A_chromium_mp4": {
+   "window": [
+    1791586229.56,
+    1791586310.892
+   ],
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/147.0.7727.15 Safari/537.36",
+   "holder_sent_bytes": 43077712,
+   "holder_payload_bytes": 42893312,
+   "holder_requests": 42,
+   "holders": [
+    "ana"
+   ],
+   "browser_bytes_of_what_holders_sent": 42205184,
+   "browser_bytes_written": 42303488,
+   "share": 0.9797,
+   "probe_holder_bytes": 2106000,
+   "jellyfin_answers": 1,
+   "jellyfin_bytes_written": 1048576,
+   "jellyfin_uas": [
+    "Lavf/62.12.102"
+   ],
+   "first": {
+    "playing_ms": 1189,
+    "advancing_seen_ms": 1231
+   },
+   "seeks_ms": [
+    98,
+    142,
+    82
+   ],
+   "play_method": "DirectPlay",
+   "src": "http://127.0.0.1:18733/7287fca2b0243365cd48c64531ede51dce9767a6c534a404372a5703f2d0f3f2/exp.mp4?type=video%2Fmp4",
+   "error": null
+  },
+  "A_webkit_mp4": {
+   "window": [
+    1791586313.876,
+    1791586395.609
+   ],
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Safari/605.1.15",
+   "holder_sent_bytes": 4943419,
+   "holder_payload_bytes": 4920963,
+   "holder_requests": 7,
+   "holders": [
+    "ana"
+   ],
+   "browser_bytes_of_what_holders_sent": 4773507,
+   "browser_bytes_written": 47076995,
+   "share": 0.9656,
+   "probe_holder_bytes": 0,
+   "jellyfin_answers": 1,
+   "jellyfin_bytes_written": 2097152,
+   "jellyfin_uas": [
+    "Lavf/62.12.102"
+   ],
+   "first": {
+    "playing_ms": 1371,
+    "advancing_seen_ms": 1406
+   },
+   "seeks_ms": [
+    57,
+    53,
+    105
+   ],
+   "play_method": "DirectPlay",
+   "src": "http://127.0.0.1:18733/7287fca2b0243365cd48c64531ede51dce9767a6c534a404372a5703f2d0f3f2/exp.mp4?type=video%2Fmp4",
+   "error": null
+  },
+  "A_webkit_mkv": {
+   "window": [
+    1791586398.843,
+    1791586482.749
+   ],
+   "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Safari/605.1.15",
+   "holder_sent_bytes": 47212993,
+   "holder_payload_bytes": 47015513,
+   "holder_requests": 45,
+   "holders": [
+    "ana"
+   ],
+   "browser_bytes_of_what_holders_sent": 0,
+   "browser_bytes_written": 0,
+   "share": 0.0,
+   "probe_holder_bytes": null,
+   "jellyfin_answers": 6,
+   "jellyfin_bytes_written": 54599888,
+   "jellyfin_uas": [
+    "Lavf/62.12.102"
+   ],
+   "first": {
+    "playing_ms": 3594,
+    "advancing_seen_ms": 3633
+   },
+   "seeks_ms": [
+    117,
+    207,
+    106
+   ],
+   "play_method": "Transcode",
+   "src": "http://127.0.0.1:18096/videos/b1da9957-7497-142a-09fd-00779883df14/master.m3u8?DeviceId=TW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTBfMTVfNykgQXBwbGVXZWJLaXQvNjA1LjEuMTUgKEtIVE1MLCBsaWtlIEdlY2tvKSBWZXJzaW9uLzI2LjQgU2FmYXJpLzYwNS4xLjE1fDE3OTE1ODYzOTgxNzE1&MediaSourceId=b1da99577497142a09fd00779883df14&VideoCodec=hevc,h264,vp9&AudioCodec=aac&AudioStreamIndex=1&VideoBitrate=2147291647&AudioBitrate=192000&AudioSampleRate=48000&MaxFramerate=30&SegmentContainer=mp4&MinSegments=2&PlaySessionId=002faf627d1547869260524c3496c0ed&ApiKey=19fddc5913dd4f9f91b0fc466a12e328&TranscodingMaxAudioChannels=6&RequireAvc=false&EnableAudioVbrEncoding=true&Tag=fe8f8b91b21d03bcd99ab0e5fbe0afdd&SubtitleMethod=Encode&h264-level=40&h264-videobitdepth=8&h264-profile=high&h264-audiochannels=2&aac-profile=lc&vp9-rangetype=SDR,HDR10,HDR10Plus,HLG&hevc-profile=main,main10&hevc-rangetype=SDR,HDR10,HDR10Plus,HLG,DOVI,DOVIWithHDR10,DOVIWithHLG,DOVIWithSDR,DOVIWithHDR10Plus&hevc-level=186&hevc-deinterlace=true&hevc-codectag=hvc1,dvh1&h264-rangetype=SDR&h264-deinterlace=true&TranscodeReasons=ContainerNotSupported",
+   "error": null,
+   "file_size": 47015513
+  },
+  "B6_plant": null,
+  "B6": null,
+  "B1_served_ranges": {
+   "answers": 26,
+   "bytes": 195677656,
+   "not_the_source_s_bytes": []
+  },
+  "B7_stop_plant": null,
+  "B7_stop": null,
+  "B7_scan": {
+   "files": 12,
+   "bytes": 95520919,
+   "hits": []
+  },
+  "B7_scan_plant": null,
+  "B7": {
+   "act_names": [
+    "exp.mkv",
+    "exp.mp4"
+   ],
+   "plant_act_names": [],
+   "planted_served_by_ana_before_the_plant": 0,
+   "planted_bytes_served_by_ben": 0
+  }
+ },
+ "keys": {
+  "Ana": "38601feb76497909b3d86ca7516f3ab3110452835fd6e4bfaa749be7f6c1cf5c",
+  "Cy": "70235d5e4a52b14d8b6040ae6411de8f47d6e60c71bbd781cf4bc404e6936061"
+ },
+ "media": [
+  {
+   "path": "/tmp/gf-reh/media/ana/films/exp.mp4",
+   "size": 47076995,
+   "blake3": "7287fca2b0243365cd48c64531ede51dce9767a6c534a404372a5703f2d0f3f2"
+  },
+  {
+   "path": "/tmp/gf-reh/media/ana/films/exp.mkv",
+   "size": 47015513,
+   "blake3": "f1e06faca68d14db032cece64a820eceb328b4d170cec0948345e8213e66f131"
+  },
+  {
+   "path": "/tmp/gf-reh/media/ana/beside.bin",
+   "size": 1048576,
+   "blake3": "7f650cf8d251002b562572e49bce8b18fdde4833d1c843e9178175deee031926"
+  }
+ ],
+ "jellyfin_version": "12.0.0"
+}

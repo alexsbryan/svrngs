@@ -1,0 +1,285 @@
+2026-10-12T15:06:45.424804Z DEBUG cli: cli: data dir from $SVRNGS_DIR dir="/tmp/fm-w/ana/.svrngs"
+2026-10-12T15:06:45.425242Z DEBUG cli: cli: data dir claimed lock=/tmp/fm-w/ana/.svrngs/lock
+2026-10-12T15:06:45.430691Z  INFO svrngs::identity: node_key: generated + persisted identity key (first boot) node_pubkey=774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87
+2026-10-12T15:06:45.510031Z  INFO folder: folder: the store is open untagged=0
+2026-10-12T15:06:45.511007Z  INFO rails: api: serving the record to this computer's apps addr=127.0.0.1:53410
+2026-10-12T15:06:45.511600Z  INFO node: node: endpoint bound with the signing key actor="774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87" data_dir=/tmp/fm-w/ana/.svrngs dial=Some("774cbcf2b641fef32ef6ee979ded4a162f9993a385786a0e343bd804faf26a87@192.168.1.4:49712") api=127.0.0.1:53410
+2026-10-12T15:06:45.511984Z  INFO svrngs_node::ring_sync: ring sync: loop started interval_secs=60
+2026-10-12T15:06:45.512443Z DEBUG redeem: redeem: dialling the issuer by key url="http://127.0.0.1:53414/ask"
+2026-10-12T15:06:45.971109Z  INFO endpoint{id=774cbcf2b6}:relay-actor: iroh::socket::transports::relay::actor: home is now relay https://usw1-1.relay.n0.iroh.link/, was None
+2026-10-12T15:06:46.117537Z DEBUG redeem: redeem: the issuer answered route="/ask" status=200
+2026-10-12T15:06:46.118066Z DEBUG redeem: redeem: dialling the issuer by key url="http://127.0.0.1:53432/redeem"
+2026-10-12T15:06:46.140873Z DEBUG redeem: redeem: the issuer answered route="/redeem" status=200
+2026-10-12T15:06:46.140995Z DEBUG cli: cli: join — let in group=2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641 redeemed=Admitted(OpId(ContentHash(68ab369319d949c7)))
+2026-10-12T15:06:46.147626Z DEBUG cli: cli: join — a client's link, so no origin is kept group=2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641
+2026-10-12T15:06:46.160387Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" url="http://127.0.0.1:22619/internal/ring/sync" chunk=1 pulled=2 pushed=0 peer_sent=2 offered=0 more_for_peer=false
+2026-10-12T15:06:46.161666Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" url="http://127.0.0.1:22619/internal/ring/sync" chunk=2 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-12T15:06:46.161715Z DEBUG node: node: sync_with — one exchange with the peer namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" pulled=2 pushed=0 stop=None
+2026-10-12T15:06:46.161744Z DEBUG cli: cli: join — synced once from the issuer group=2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641 pulled=2
+2026-10-12T15:06:46.164797Z  INFO folder: synced: the directory kept in step with the group's folder namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" folder="trip" dir=/tmp/fm-w/ana/svrngs/trip
+2026-10-12T15:06:46.165153Z DEBUG cli: cli: svrngs running here answered route="/v1/folders" ok=true
+2026-10-12T15:06:46.168051Z DEBUG cli: cli: join — the group's folder placed, or why not group=2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641 dir=/tmp/fm-w/ana/svrngs/trip placed=Ok(())
+2026-10-12T15:06:46.199035Z DEBUG node: node: admitted — the dialer stands in a group held here actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641"
+2026-10-12T15:06:46.203178Z DEBUG node: node: a member stands in the group, to dial namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" member=Sam/23976f6a
+2026-10-12T15:06:46.204651Z DEBUG node: node: lends — the computer answered actor="23976f6a3e8b77e060f2cfae15080570531c567096324d8ebf179fa032e39963" lends=1
+2026-10-12T15:06:46.204756Z DEBUG node: node: lends — asked every computer of the groups lent=1 unanswered=0
+2026-10-12T15:06:46.204894Z DEBUG surface: surface: lends — answered what the group's people lend, this computer's own among them, each at its origin namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641" lent=2 unanswered=0
+2026-10-12T15:06:47.708748Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:48.800747Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:49.387384Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:06:49.387785Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:06:49.875137Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:49.943540Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:06:49.944038Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:06:50.478741Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:06:50.479068Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:06:50.978999Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:51.018941Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:06:51.019273Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:06:51.581611Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:06:51.581998Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:06:52.075538Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:52.150552Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:06:52.151105Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:06:52.737404Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:06:52.737653Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:06:53.091080Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:53.295733Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:06:53.310441Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:06:53.870185Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:06:53.870549Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:06:54.186254Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:54.385268Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:06:54.386002Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:06:54.929828Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:06:54.930318Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:06:55.267857Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:55.474130Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:06:55.474975Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:06:56.061956Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:06:56.063278Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:06:56.336151Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:56.831907Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:06:56.832692Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:06:57.422391Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:06:57.422693Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:06:57.439648Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:58.172418Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:06:58.172888Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:06:58.460662Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:06:58.836405Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:06:58.836735Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:06:59.424249Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:06:59.424560Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:06:59.485957Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:00.033448Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:00.034639Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:00.501401Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:00.652691Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:00.668461Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:01.203864Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:01.207895Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:01.541115Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:01.732062Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:01.746481Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:02.255146Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:02.257623Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:02.637192Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:02.891152Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:02.891570Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:03.553600Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:03.566346Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:03.693825Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:04.138168Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:04.158041Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:04.733944Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:04.789491Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:04.789739Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:05.419586Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:05.420252Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:05.748858Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:05.952963Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:05.953202Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:06.550210Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:06.552168Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:06.771570Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:07.216768Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:07.226768Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:07.814849Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:07.948462Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:07.998719Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:08.522680Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:08.522991Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:08.831637Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:09.051506Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:09.052745Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:09.572529Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:09.589212Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:09.836730Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:10.124363Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:10.124678Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:10.669811Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:10.670213Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:10.860177Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:11.157407Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:11.162176Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:11.704649Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:11.752582Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:11.920014Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:12.265738Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:12.281723Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:12.770031Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:12.770294Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:12.997844Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:13.293242Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:13.293417Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:13.792590Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:13.807559Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:14.006715Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:14.354390Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:14.369138Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:14.852148Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:14.869289Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:15.021554Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:15.380164Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:15.387534Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:15.903500Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:15.905414Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:16.052953Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:16.459058Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:16.465093Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:17.025485Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:17.044783Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:17.073236Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:17.724669Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:17.726826Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:18.113239Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:18.403764Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:18.421620Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:18.965786Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:18.966251Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:19.137509Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:19.555989Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:19.556179Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:20.099647Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:20.100099Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:20.141997Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:20.622805Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:20.623091Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:21.124527Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:21.125230Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:21.151906Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:21.627419Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:21.627637Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:22.154951Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:22.155228Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:22.204032Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:22.680092Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:22.680315Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:23.210144Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:23.218411Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:23.218635Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:23.727031Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:23.727263Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:24.219505Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:24.219871Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:24.254332Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:24.709718Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:24.709935Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:25.234649Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:25.234865Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:25.276534Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:25.761179Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:25.761393Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:26.247102Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:26.247303Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:26.287084Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:26.805063Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:26.805303Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:27.316538Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:27.334753Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:27.334983Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:27.853258Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:27.853515Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:28.348441Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:28.410065Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:28.410378Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:28.942762Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:28.942969Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:29.376786Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:29.549258Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:29.549478Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:30.043825Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:30.044048Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:30.398357Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:30.554810Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:30.555035Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:31.067902Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:31.068133Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:31.451203Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:31.599036Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:31.599266Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:32.098900Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:32.099141Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:32.507794Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:32.641935Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:32.642171Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:33.156632Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:33.156849Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:33.533756Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:33.653116Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:33.653336Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:34.181852Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:34.182101Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:34.559671Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:34.737298Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:34.737529Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:35.261390Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:35.261608Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:35.573699Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:35.784952Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:35.785211Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:36.309569Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:36.309813Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:36.607076Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:36.837722Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:36.838004Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:37.351985Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:37.352190Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:37.629433Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:37.813991Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:37.814225Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:38.345619Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:38.345880Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:38.655992Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:38.867206Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:38.867435Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:39.387397Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:39.387632Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:39.677310Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:39.912149Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:39.912378Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:40.442022Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:40.442242Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:40.679123Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:40.992708Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:40.992924Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:41.517880Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:41.518126Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:41.697223Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:42.500923Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:42.501153Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:42.711089Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:43.063346Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:43.063567Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:43.633936Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:43.634163Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:43.724219Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:44.167450Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:44.167731Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:44.709983Z DEBUG node: node: refused — the dialer stands in no group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35"
+2026-10-12T15:07:44.710227Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=cwth/http/0 dialer=0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35
+2026-10-12T15:07:44.780460Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-12T15:07:45.220932Z DEBUG node: node: admitted — the dialer stands in a group held here actor="0f87c1aaa7d3de319781c8da127939be07b814675ab93cc3f1b50ad95fa1ed35" namespace="2262cc2c04311d2418cbc1e3f13af94689cf74a852ba2326795526da3d9b4641"
+2026-10-12T15:07:45.276249Z DEBUG node: node: asked to stop by SIGTERM
+2026-10-12T15:07:45.276339Z DEBUG cli: cli: stopping

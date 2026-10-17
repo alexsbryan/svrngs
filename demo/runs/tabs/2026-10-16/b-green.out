@@ -1,0 +1,125 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.18s
+     Running tests/browser/main.rs (target/debug/deps/browser-4e25e65e2ca9f398)
+
+running 2 tests
+test tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::chromium ... the tabs' run (chromium):
+  one: "You’re in house, as bo"
+  two: "You have house open in another tab"
+  "one" +7 ms (293 ms): "An app was stopped using ada’s shelf (k)."
+  "two" +300 ms (0 ms): null
+  "one" +2304 ms (260 ms): "An app was stopped using ada’s shelf (k)."
+  "two" +2564 ms (1 ms): null
+  "one" +4567 ms (257 ms): "An app was stopped using ada’s shelf (k)."
+  "two" +4824 ms (1 ms): null
+  "one" +6826 ms (274 ms): "An app was stopped using ada’s shelf (k)."
+  "two" +7100 ms (1 ms): null
+  "one" +9105 ms (263 ms): "An app was stopped using ada’s shelf (k)."
+  "two" +9368 ms (1 ms): null
+  "one" +11374 ms (278 ms): "An app was stopped using ada’s shelf (k)."
+  "two" +11652 ms (1 ms): null
+  "one" +13655 ms (268 ms): "An app was stopped using ada’s shelf (k)."
+  "two" +13923 ms (1 ms): null
+  "one" +15926 ms (278 ms): "An app was stopped using ada’s shelf (k)."
+  "two" +16204 ms (1 ms): null
+  "one" +18208 ms (270 ms): "An app was stopped using ada’s shelf (k)."
+  "two" +18478 ms (1 ms): null
+  "one" +20480 ms (261 ms): "An app was stopped using ada’s shelf (k)."
+  "two" +20741 ms (1 ms): null
+  "one" +22744 ms (278 ms): "An app was stopped using ada’s shelf (k)."
+  "two" +23022 ms (0 ms): null
+  "one" +25025 ms (268 ms): "An app was stopped using ada’s shelf (k)."
+  "two" +25293 ms (1 ms): null
+  "one" +27297 ms (268 ms): "An app was stopped using ada’s shelf (k)."
+  "two" +27565 ms (1 ms): null
+  "one" +29570 ms (277 ms): "An app was stopped using ada’s shelf (k)."
+  "two" +29847 ms (1 ms): null
+  "one" +31849 ms (284 ms): "An app was stopped using ada’s shelf (k)."
+  "two" +32133 ms (1 ms): null
+  "one" +34137 ms (264 ms): "An app was stopped using ada’s shelf (k)."
+  "two" +34401 ms (2 ms): null
+  "one" +36405 ms (276 ms): "An app was stopped using ada’s shelf (k)."
+  "two" +36681 ms (1 ms): null
+  "one" +38685 ms (274 ms): "An app was stopped using ada’s shelf (k)."
+  "two" +38959 ms (1 ms): null
+  "one" +40963 ms (275 ms): "An app was stopped using ada’s shelf (k)."
+  "two" +41238 ms (1 ms): null
+  "one" +43242 ms (263 ms): "An app was stopped using ada’s shelf (k)."
+  "two" +43505 ms (1 ms): null
+  "one" +45510 ms (264 ms): "An app was stopped using ada’s shelf (k)."
+  "two" +45774 ms (0 ms): null
+  "one" +47777 ms (263 ms): "An app was stopped using ada’s shelf (k)."
+  "two" +48040 ms (1 ms): null
+  "one" +50044 ms (265 ms): "An app was stopped using ada’s shelf (k)."
+  "two" +50309 ms (0 ms): null
+  "one" +52312 ms (270 ms): "An app was stopped using ada’s shelf (k)."
+  "two" +52582 ms (1 ms): null
+  "one" +54584 ms (258 ms): "An app was stopped using ada’s shelf (k)."
+  "two" +54842 ms (1 ms): null
+  "one" +56846 ms (268 ms): "An app was stopped using ada’s shelf (k)."
+  "two" +57114 ms (0 ms): null
+  "one" +59118 ms (282 ms): "An app was stopped using ada’s shelf (k)."
+  "two" +59400 ms (1 ms): null
+  taken: {"ask":"An app was stopped using ada’s shelf (k).","one":"You have house open in another tab","two":"You’re in house, as bo"}
+ok
+test tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit ... the tabs' run (webkit):
+  one: "You’re in house, as bo"
+  two: "You have house open in another tab"
+  "one" +7 ms (280 ms): "An app was stopped using ada’s shelf (k).\n"
+  "two" +287 ms (2 ms): null
+  "one" +2292 ms (276 ms): "An app was stopped using ada’s shelf (k).\n"
+  "two" +2568 ms (2 ms): null
+  "one" +4573 ms (285 ms): "An app was stopped using ada’s shelf (k).\n"
+  "two" +4858 ms (1 ms): null
+  "one" +6862 ms (280 ms): "An app was stopped using ada’s shelf (k).\n"
+  "two" +7142 ms (1 ms): null
+  "one" +9146 ms (281 ms): "An app was stopped using ada’s shelf (k).\n"
+  "two" +9427 ms (1 ms): null
+  "one" +11431 ms (306 ms): "An app was stopped using ada’s shelf (k).\n"
+  "two" +11737 ms (2 ms): null
+  "one" +13742 ms (299 ms): "An app was stopped using ada’s shelf (k).\n"
+  "two" +14041 ms (3 ms): null
+  "one" +16046 ms (281 ms): "An app was stopped using ada’s shelf (k).\n"
+  "two" +16327 ms (1 ms): null
+  "one" +18331 ms (291 ms): "An app was stopped using ada’s shelf (k).\n"
+  "two" +18622 ms (1 ms): null
+  "one" +20625 ms (276 ms): "An app was stopped using ada’s shelf (k).\n"
+  "two" +20901 ms (1 ms): null
+  "one" +22904 ms (270 ms): "An app was stopped using ada’s shelf (k).\n"
+  "two" +23174 ms (2 ms): null
+  "one" +25179 ms (302 ms): "An app was stopped using ada’s shelf (k).\n"
+  "two" +25481 ms (2 ms): null
+  "one" +27486 ms (278 ms): "An app was stopped using ada’s shelf (k).\n"
+  "two" +27764 ms (1 ms): null
+  "one" +29768 ms (312 ms): "An app was stopped using ada’s shelf (k).\n"
+  "two" +30080 ms (2 ms): null
+  "one" +32085 ms (283 ms): "An app was stopped using ada’s shelf (k).\n"
+  "two" +32368 ms (1 ms): null
+  "one" +34372 ms (279 ms): "An app was stopped using ada’s shelf (k).\n"
+  "two" +34651 ms (1 ms): null
+  "one" +36655 ms (295 ms): "An app was stopped using ada’s shelf (k).\n"
+  "two" +36950 ms (1 ms): null
+  "one" +38954 ms (271 ms): "An app was stopped using ada’s shelf (k).\n"
+  "two" +39225 ms (2 ms): null
+  "one" +41230 ms (300 ms): "An app was stopped using ada’s shelf (k).\n"
+  "two" +41530 ms (0 ms): null
+  "one" +43532 ms (276 ms): "An app was stopped using ada’s shelf (k).\n"
+  "two" +43808 ms (1 ms): null
+  "one" +45812 ms (271 ms): "An app was stopped using ada’s shelf (k).\n"
+  "two" +46083 ms (2 ms): null
+  "one" +48089 ms (273 ms): "An app was stopped using ada’s shelf (k).\n"
+  "two" +48362 ms (2 ms): null
+  "one" +50366 ms (279 ms): "An app was stopped using ada’s shelf (k).\n"
+  "two" +50645 ms (1 ms): null
+  "one" +52649 ms (281 ms): "An app was stopped using ada’s shelf (k).\n"
+  "two" +52930 ms (2 ms): null
+  "one" +54934 ms (277 ms): "An app was stopped using ada’s shelf (k).\n"
+  "two" +55211 ms (1 ms): null
+  "one" +57215 ms (267 ms): "An app was stopped using ada’s shelf (k).\n"
+  "two" +57482 ms (2 ms): null
+  "one" +59487 ms (279 ms): "An app was stopped using ada’s shelf (k).\n"
+  "two" +59766 ms (1 ms): null
+  taken: {"ask":"An app was stopped using ada’s shelf (k).\n","one":"You have house open in another tab","two":"You’re in house, as bo"}
+ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 94 filtered out; finished in 133.96s
+

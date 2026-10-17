@@ -36,9 +36,11 @@ async fn start(seed: u8, dir: &std::path::Path) -> Node {
     Node::start(
         dir.to_path_buf(),
         signing(seed),
-        &RelayConfig::from_parts(Vec::new(), Some("none"))
-            .unwrap()
-            .on_loopback_only(),
+        &RelayConfig {
+            relay_urls: Vec::new(),
+            n0_services: false,
+            loopback_only: true,
+        },
         seed_file,
         "127.0.0.1:0".parse().unwrap(),
     )
@@ -55,6 +57,50 @@ fn lends(dir: &std::path::Path, name: &str, port: u16, upload_bps: Option<u64>) 
         body["upload_bps"] = bps.into();
     }
     std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
+}
+
+/// `dir`'s computer lends `name` on `port`, of `kind`, declaring the kinds
+/// it `reads`.
+fn declare(dir: &std::path::Path, name: &str, port: u16, kind: &str, reads: &[&str]) {
+    let at = lend::lends_dir(dir);
+    std::fs::create_dir_all(&at).unwrap();
+    let body = serde_json::json!({ "port": port, "kind": kind, "limit": 3, "reads": reads });
+    std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
+}
+
+/// `path` asked of `node`'s API at the origin of the lend `at`, by a
+/// caller on loopback; from the page at `from`'s origin, with its
+/// browser's fetch headers, when one is named. Its status and JSON body.
+async fn at_origin(
+    node: &Node,
+    at: &svrngs_core::pass::Label,
+    path: &str,
+    from: Option<&str>,
+) -> (u16, serde_json::Value) {
+    use tower::ServiceExt;
+    let port = node.api_addr().port();
+    let mut request =
+        axum::http::Request::get(path).header("host", format!("{at}.localhost:{port}"));
+    if let Some(page) = from {
+        request = request
+            .header("sec-fetch-site", "same-site")
+            .header("sec-fetch-mode", "cors")
+            .header("origin", format!("http://{page}.localhost:{port}"));
+    }
+    let mut request = request.body(axum::body::Body::empty()).unwrap();
+    let caller: SocketAddr = "127.0.0.1:50000".parse().unwrap();
+    request
+        .extensions_mut()
+        .insert(axum::extract::ConnectInfo(caller));
+    let answer = tokio::time::timeout(Duration::from_secs(30), node.api_routes().oneshot(request))
+        .await
+        .expect("the ask finishes")
+        .unwrap();
+    let status = answer.status().as_u16();
+    let body = axum::body::to_bytes(answer.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    (status, serde_json::from_slice(&body).unwrap())
 }
 
 /// Alex's group "house" and Sam in it, each computer holding its seed, and
@@ -213,8 +259,12 @@ async fn an_app_asks_what_the_group_s_people_lend_its_own_included_and_none_stal
 }
 
 /// **An app asks which groups this computer holds, and finds the API by
-/// itself** (the u5-1 row): `/v1/groups` answers the group's id, its name
-/// and Alex as this computer's person; the data dir's `api` file names the
+/// itself** (the u5-1 row): `/v1/groups` answers the group's id, its name,
+/// Alex as this computer's person, that Alex was not removed (U7), that
+/// nobody was removed or asked to be (v1-keeper-office (b)), that Alex did
+/// not leave it and keeps the order of removals (groups-leave); who made it,
+/// Alex's own computer, and since when it holds it, the time its seed was
+/// written (v1ui-door (c)); the data dir's `api` file names the
 /// address the app asked at. Planted: the file not written.
 #[tokio::test]
 async fn an_app_finds_the_api_and_asks_the_groups_this_computer_holds() {
@@ -225,9 +275,49 @@ async fn an_app_finds_the_api_and_asks_the_groups_this_computer_holds() {
 
     let (status, body) = house.ask(svrngs_node::surface::GROUPS_ROUTE).await;
     assert_eq!(status, 200, "{body:#}");
+    let made = made_by_alex(&body);
     assert_eq!(
         body,
-        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "person": "alex" }] }),
+        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": "alex", "removed": false, "removals": [], "left": false, "keeps": true, "folders": [] }] }),
+    );
+    house.close().await;
+}
+
+/// The first group's `made`, as `/v1/groups` answers it on Alex's
+/// computer: house, made by this computer (no `maker`), held since a time.
+fn made_by_alex(body: &serde_json::Value) -> serde_json::Value {
+    let made = &body["groups"][0]["made"];
+    assert!(made["since"].is_i64(), "{body:#}");
+    serde_json::json!({ "name": "house", "maker": null, "since": made["since"] })
+}
+
+/// **A register that cannot be read is said as itself** (REVIEW_FINDINGS
+/// #123): with Alex's copy of the group's seed unreadable, `/v1/groups`
+/// answers `removed: null`, never "not removed", and `removals: null`,
+/// never none (v1-keeper-office (b)), and `left` and `keeps` null beside
+/// them (groups-leave), so the home page can say
+/// this computer could not read who is in the group. Red at 09e1484,
+/// which read it `removed: false`.
+#[tokio::test]
+async fn an_unreadable_register_is_not_read_as_not_removed() {
+    use std::os::unix::fs::PermissionsExt;
+    let house = House::new().await;
+    let roster = house
+        .alex
+        .rail()
+        .group_dir(&house.id)
+        .unwrap()
+        .join("roster.json");
+    std::fs::set_permissions(&roster, std::fs::Permissions::from_mode(0o000)).unwrap();
+    let unread = house.alex.rail().register(&house.id).is_err();
+    let (status, body) = house.ask(svrngs_node::surface::GROUPS_ROUTE).await;
+    std::fs::set_permissions(&roster, std::fs::Permissions::from_mode(0o644)).unwrap();
+    assert!(unread, "the plant: Alex's register cannot be read");
+    assert_eq!(status, 200, "{body:#}");
+    let made = made_by_alex(&body);
+    assert_eq!(
+        body,
+        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": null, "removed": null, "removals": null, "left": null, "keeps": null, "folders": [] }] }),
     );
     house.close().await;
 }
@@ -264,6 +354,171 @@ async fn a_caller_off_loopback_is_refused_the_groups_and_the_lends() {
                 assert_eq!(body["kind"], "not_loopback", "{path}");
             }
         }
+    }
+    house.close().await;
+}
+
+/// **A lent page asks, at its own origin, the lends it reads** (mnp-2):
+/// Alex lends a page, `night`, reading kind `media`, and a `telly` of it;
+/// Sam a `films`. At `night`'s origin on Alex's computer, `/svrngs-reads`
+/// answers `telly` and `films`, each with its kind, name, lender's person
+/// and its origin on this computer, never `night` itself; then, Sam's
+/// computer gone, `telly` alone and Sam named as not answering. Planted:
+/// the unanswered answered none.
+#[tokio::test]
+async fn a_lent_page_asks_at_its_own_origin_the_lends_it_reads() {
+    let mut house = House::new().await;
+    declare(house.alex_dir.path(), "night", 8596, "night", &["media"]);
+    declare(house.alex_dir.path(), "telly", 8096, "media", &[]);
+    declare(house.sam_dir.path(), "films", 8097, "media", &[]);
+    let port = house.alex.api_addr().port();
+    let label = |seed: u8, name: &str| {
+        svrngs_core::pass::Label::of(signing(seed).verifying_key().as_bytes(), name)
+    };
+    let at = |seed: u8, name: &str| svrngs_node::origin::origin(&label(seed, name), port);
+    let (night, reads) = (label(1, "night"), svrngs_node::surface::READS_PATH);
+    let telly = serde_json::json!({ "kind": "media", "name": "telly", "lender": "alex", "address": at(1, "telly") });
+
+    let (status, body) = at_origin(&house.alex, &night, reads, None).await;
+    assert_eq!(status, 200, "{body:#}");
+    assert_eq!(
+        body,
+        serde_json::json!({
+            "lends": [telly, { "kind": "media", "name": "films", "lender": "sam", "address": at(2, "films") }],
+            "unanswered": [],
+        }),
+    );
+
+    let gone = house.sam.take().unwrap();
+    gone.endpoint().close().await;
+    drop(gone);
+    let (status, body) = at_origin(&house.alex, &night, reads, None).await;
+    assert_eq!(status, 200, "{body:#}");
+    assert_eq!(
+        body,
+        serde_json::json!({ "lends": [telly], "unanswered": ["sam"] }),
+        "Sam's computer gone: his lend not told, he named as not answering"
+    );
+    house.close().await;
+}
+
+/// **A lent page is not held by a computer that never answers**
+/// (asleep-1-none-held (b); `demo/runs/mnp/2026-10-09/README.md`, "What no
+/// prediction named" 2): as `a_lent_page_asks_at_its_own_origin_the_lends_it_reads`,
+/// with Cy let in too and Cy's computer asleep. `/svrngs-reads` at `night`'s
+/// origin answers `telly` and Sam's `films` within
+/// [`svrngs_node::node::ANSWER_WITHIN`] and a second, Cy named as not
+/// answering, never dropped. Planted: every lender's ask awaited to its own
+/// end (node.rs `lends_in` before this row), which held the answer to the
+/// asleep dial's timeout.
+#[tokio::test]
+async fn a_lent_page_is_not_held_by_a_computer_that_never_answers() {
+    let house = House::new().await;
+    declare(house.alex_dir.path(), "night", 8596, "night", &["media"]);
+    declare(house.alex_dir.path(), "telly", 8096, "media", &[]);
+    declare(house.sam_dir.path(), "films", 8097, "media", &[]);
+    let admit = svrngs_core::tests_support::Fixture {
+        act: RailAct::Admit {
+            person: Person::parse("cy").unwrap(),
+            key: actor_of(&signing(3)),
+            invite: None,
+        },
+        on_behalf_of: None,
+    };
+    house
+        .alex
+        .rail()
+        .commit(&house.id, &admit)
+        .unwrap()
+        .unwrap();
+    let (_asleep, at_cy) = common::never_answers();
+    let cy =
+        svrngs_node::iroh::PublicKey::from_bytes(signing(3).verifying_key().as_bytes()).unwrap();
+    house.alex.transport().add_known_peer(cy, at_cy);
+    let port = house.alex.api_addr().port();
+    let label = |seed: u8, name: &str| {
+        svrngs_core::pass::Label::of(signing(seed).verifying_key().as_bytes(), name)
+    };
+    let at = |seed: u8, name: &str| svrngs_node::origin::origin(&label(seed, name), port);
+    let reads = svrngs_node::surface::READS_PATH;
+
+    let asked = std::time::Instant::now();
+    let (status, body) = at_origin(&house.alex, &label(1, "night"), reads, None).await;
+    let took = asked.elapsed();
+    eprintln!("the reads answered in {took:?}: {body}");
+    assert_eq!(status, 200, "{body:#}");
+    assert_eq!(
+        body,
+        serde_json::json!({
+            "lends": [
+                { "kind": "media", "name": "telly", "lender": "alex", "address": at(1, "telly") },
+                { "kind": "media", "name": "films", "lender": "sam", "address": at(2, "films") },
+            ],
+            "unanswered": ["cy"],
+        }),
+        "Cy's computer asleep: named as not answering, never dropped"
+    );
+    let bound = svrngs_node::node::ANSWER_WITHIN + Duration::from_secs(1);
+    assert!(
+        took < bound,
+        "the reads waited {took:?} on a computer that never answers, past {bound:?}"
+    );
+    house.close().await;
+}
+
+/// **A silent lender is could-not-judge, on both paths** (onair-economize
+/// (a)): one decider of what a lent page reads, and one reading of a lender
+/// whose computer did not say what it lends. Alex lends a page, `night`,
+/// reading `media`, and a `telly`; Sam a page, `reel`, reading `media`, and
+/// a `films`. Sam's computer gone, at Alex's: `/svrngs-reads` at `reel`'s
+/// origin, `night`'s fetch at Sam's `films` and `reel`'s fetch at Alex's
+/// `telly` are each refused `away`, 502 — never "nothing is lent here", nor
+/// "this page does not read that". Red at a20ed46: the reads answered 404
+/// `unlent` for `reel`, as if Sam had answered that it is not lent.
+#[tokio::test]
+async fn a_silent_lender_is_could_not_judge_on_the_page_s_reads_and_at_the_origin() {
+    let mut house = House::new().await;
+    declare(house.alex_dir.path(), "night", 8596, "night", &["media"]);
+    declare(house.alex_dir.path(), "telly", 8096, "media", &[]);
+    declare(house.sam_dir.path(), "reel", 8597, "night", &["media"]);
+    declare(house.sam_dir.path(), "films", 8097, "media", &[]);
+    let label = |seed: u8, name: &str| {
+        svrngs_core::pass::Label::of(signing(seed).verifying_key().as_bytes(), name)
+    };
+    let alex = &house.alex;
+    let ask = |at, path, from| async move {
+        let (status, body) = at_origin(alex, &at, path, from).await;
+        (status, body["kind"].as_str().map(str::to_string))
+    };
+    let (night, reel) = (label(1, "night").to_string(), label(2, "reel").to_string());
+    let (status, body) = ask(label(2, "reel"), "/svrngs-reads", None).await;
+    assert_eq!(
+        status, 200,
+        "Sam's computer up, reel's reads answered: {body:?}"
+    );
+
+    let gone = house.sam.take().unwrap();
+    gone.endpoint().close().await;
+    drop(gone);
+    let away = (502, Some("away".to_string()));
+    for (row, at, path, from) in [
+        ("reel's reads", label(2, "reel"), "/svrngs-reads", None),
+        (
+            "night's fetch at Sam's films",
+            label(2, "films"),
+            "/x",
+            Some(night.as_str()),
+        ),
+        (
+            "reel's fetch at Alex's telly",
+            label(1, "telly"),
+            "/x",
+            Some(reel.as_str()),
+        ),
+    ] {
+        let got = ask(at, path, from).await;
+        eprintln!("{row}: {got:?}");
+        assert_eq!(got, away, "{row}: Sam's computer silent, could-not-judge");
     }
     house.close().await;
 }

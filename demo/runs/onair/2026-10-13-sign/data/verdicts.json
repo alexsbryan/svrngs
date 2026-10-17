@@ -1,0 +1,103 @@
+{
+ "4.1": {
+  "verdict": "failed",
+  "why": "Bo held 0 of 10 pieces, 0 past 4000 ms",
+  "bound_ms": 4000,
+  "held_ms": {},
+  "station_puts": [
+   "404"
+  ],
+  "bo_refusals": [
+   "not held 404"
+  ]
+ },
+ "4.1, carried": {
+  "verdict": "failed",
+  "why": "Cy's get of Y with Ana stopped: 404 (0 bytes), Bo named in Cy's trace: False; the plant Z: 404 ''",
+  "ana_put_Y": 404,
+  "bo_get_Y": 404,
+  "cy_trace": []
+ },
+ "4.1, lapses": {
+  "verdict": "failed",
+  "why": "65.1 s after the last put: still held []; said lapsed []; lapsed told apart from never held: False",
+  "answers": {
+   "bo_piece0": [
+    404,
+    ""
+   ],
+   "bo_Y": [
+    404,
+    ""
+   ],
+   "bo_never": [
+    404,
+    ""
+   ],
+   "cy_piece0": [
+    404,
+    ""
+   ],
+   "cy_Y": [
+    404,
+    ""
+   ],
+   "cy_never": [
+    404,
+    ""
+   ]
+  }
+ },
+ "4.1, scoped": {
+  "verdict": "failed",
+  "why": "Dee's get of Y: 404 ''; a provider's refusal of Dee in Bo's trace: False",
+  "provider_refusals": []
+ },
+ "4.2": {
+  "verdict": "passed",
+  "why": "the page on evening played 10 of 10; plants played {'act-sig': [2, 3, 4, 5, 6, 7, 8, 9], 'flipped': [0, 2, 3, 4, 5, 6, 7, 8, 9], 'no-ended': [0, 1], 'bo-signed': []}",
+  "signs": [
+   "200"
+  ],
+  "page_refused": [],
+  "page_said": [
+   "ended",
+   "after 10 pieces"
+  ],
+  "plant_refusals": {
+   "act-sig": [
+    "its signature does not check under the station's key d8b34eed…"
+   ],
+   "flipped": [
+    "its BLAKE3 is afdedf6b6058…, not the line's c225526d54ff…"
+   ],
+   "no-ended": [],
+   "bo-signed": [
+    "its signature does not check under the station's key d8b34eed…; it names 61a033d4…"
+   ]
+  }
+ },
+ "4.3": {
+  "verdict": "passed",
+  "why": "Bo drained 11, Cy 12; senders named: ['{\"key\": \"61a033d46541b3531f679be3dac9671691374e4337c1d3fe37a03b6bd83ea8bd\", \"person_key\": \"61a033d46541b3531f679be3dac9671691374e4337c1d3fe37a03b6bd83ea8bd\"}', '{\"key\": \"d8b34eed680fc3b7cdd5d51998390d6fb944853d3f79a05d48c4529fb46dffdd\", \"person_key\": \"d8b34eed680fc3b7cdd5d51998390d6fb944853d3f79a05d48c4529fb46dffdd\"}']; Bo's note in Cy's drain: {'key': '61a033d46541b3531f679be3dac9671691374e4337c1d3fe37a03b6bd83ea8bd', 'person_key': '61a033d46541b3531f679be3dac9671691374e4337c1d3fe37a03b6bd83ea8bd'}",
+  "live_delivered": [
+   "2"
+  ],
+  "bo_note": {
+   "status": 200,
+   "said": "{\"bytes\":27,\"delivered\":2,\"peers\":[{\"delivered\":true,\"name\":\"Cy\",\"node\":\"17f480e09e5ef79f9cc189e101b10713cb17fbfc05870406500e5e8f44f6625d\"},{\"delivered\":true,\"name\":\"Ana\",\"node\":\"d8b34eed680fc3b7cdd5d51998390d6fb944853d3f79a05d48c4529fb46dffdd\"}]}",
+   "ms": 247,
+   "length": 247
+  }
+ },
+ "off air": {
+  "verdict": "passed",
+  "why": "ended said within 4 s: Bo True, Cy True, page True (it said 'ended'); the plant no-ended: 'cannot reach'",
+  "listeners_stopped": {
+   "bo": null,
+   "cy": null
+  },
+  "page_why": "after 10 pieces",
+  "plant_why": "no line 2 in 12 s"
+ }
+}

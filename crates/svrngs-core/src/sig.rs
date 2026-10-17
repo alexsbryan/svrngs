@@ -50,15 +50,57 @@ use crate::hash::ContentHash;
 use crate::op::{Journaled, Op, OpId};
 use crate::SignedOp;
 
+// ── Every domain svrngs signs or hashes under, in this one home ──────────
+//
+// svrngs (onair-sign): each was beside the one thing it separates; gathered
+// here so a new one is written beside every other, and `sig_tests.rs`
+// (`domains_live_here_and_none_begins_another`) holds that none begins
+// another and that no core file outside this one spells one.
+
 /// Domain separator for the signature. Distinct from `cwth-dial-info-binding:`
 /// and from the join proof-of-possession, so no signature is valid in two
 /// contexts; and from upstream's `cwth-ring-op-binding:`, whose message was
 /// the fields rather than the id.
-const RING_OP_DOMAIN: &[u8] = b"svrngs-act-id-binding:";
+pub(crate) const RING_OP_DOMAIN: &[u8] = b"svrngs-act-id-binding:";
 
 /// Domain separator for the id's hash, so an act id is never the hash of
 /// anything else the record hashes (a view head, a payload).
 const ACT_ID_DOMAIN: &[u8] = b"svrngs/act/v1\0";
+
+/// Domain separator for a redemption's co-signature (svrngs, U2), so the
+/// admitted key's consent is never valid as an act's signature, nor one as
+/// the other.
+pub(crate) const REDEMPTION_DOMAIN: &[u8] = b"svrngs-redemption-binding:";
+
+/// Domain separator for the link key's signature over a request
+/// ([`crate::joining`]), so it is never valid as an act's signature or a
+/// consent, nor either as it.
+pub(crate) const REQUEST_DOMAIN: &[u8] = b"svrngs-redeem-request:";
+
+/// Domain separator for the link key's signature over an ask.
+pub(crate) const ASK_DOMAIN: &[u8] = b"svrngs-redeem-ask:";
+
+/// Domain separator for a lend name's hash in its label ([`crate::pass`]).
+pub(crate) const LABEL_DOMAIN: &[u8] = b"svrngs-lend-label:";
+
+/// Domain separator for a person's signature over a pass, so it is never
+/// valid as an act's, a link's or a consent.
+pub(crate) const PASS_DOMAIN: &[u8] = b"svrngs-pass:";
+
+/// Domain separator for what a computer's key signs for an app
+/// ([`crate::app`]): bytes the app chose, never an act's, a link's, a
+/// pass's or a consent.
+pub(crate) const APP_DOMAIN: &[u8] = b"svrngs-app:";
+
+/// Domain separator for a group id's hash ([`crate::seed`]), so an id is
+/// never the hash of anything else svrngs hashes (an act id is
+/// `svrngs/act/v1`).
+pub(crate) const GROUP_ID_DOMAIN: &[u8] = b"svrngs/group/v1\0";
+
+/// Domain separation and definition version for a view's fold
+/// ([`crate::view`]). A second definition gets a second label; old heads
+/// stay meaningful.
+pub(crate) const VIEW_DOMAIN: &[u8] = b"cwth/view/1";
 
 /// The hex form of a node's public key, which is how a ring op names its
 /// signer. 64 lowercase hex characters.
@@ -146,11 +188,6 @@ pub fn ring_op_message(id: &OpId) -> Vec<u8> {
     [RING_OP_DOMAIN, id.as_bytes().as_slice()].concat()
 }
 
-/// Domain separator for a redemption's co-signature (svrngs, U2), so the
-/// admitted key's consent is never valid as an act's signature, nor one as
-/// the other.
-const REDEMPTION_DOMAIN: &[u8] = b"svrngs-redemption-binding:";
-
 /// The bytes a redeeming `Admit`'s new key signs:
 /// `DOMAIN || ns || invite[32] || person || key`, every variable field
 /// length-prefixed. The namespace keeps a consent from being replayed into
@@ -168,8 +205,8 @@ pub fn redemption_message(namespace: &str, invite: &OpId, person: &str, key: &st
 }
 
 /// Hex Ed25519 signature over `msg`: the ONE place a signature is made and
-/// spelled, for an act's id, a redemption and a guest attestation alike, as
-/// [`verify_hex`] is the one place one is read.
+/// spelled, for an act's id, a redemption, a joiner's ask and a pass alike,
+/// as [`verify_hex`] is the one place one is read.
 pub fn sign_message(key: &SigningKey, msg: &[u8]) -> String {
     hex::encode(key.sign(msg).to_bytes())
 }
@@ -181,12 +218,12 @@ pub fn sign_ring_op(key: &SigningKey, id: &OpId) -> String {
     sign_message(key, &ring_op_message(id))
 }
 
-/// Sign one act under `signer`: derive its id, sign the id, and build the
+/// Sign one act with `signer`, as its actor: derive its id, sign the id, and build the
 /// line. The ONE place an act is made, for the journal's door and the
 /// fixtures alike, so the bytes signed have one definition (ARCH §10.6).
 #[allow(clippy::too_many_arguments)]
 pub fn sign_act(
-    signer: &dyn crate::RingSigner,
+    signer: &SigningKey,
     namespace: &str,
     ts_unix: i64,
     seq: u64,
@@ -195,13 +232,13 @@ pub fn sign_act(
     on_behalf_of: Option<&str>,
     view: Option<crate::Digest>,
 ) -> Op<SignedOp> {
-    let actor = signer.actor();
+    let actor = actor_of(signer);
     let body = crate::body_json(&act, on_behalf_of, view.as_ref());
     let id = act_id(namespace, &actor, seq, prev.as_ref(), ts_unix, &body);
     let kind = SignedOp {
         seq,
         prev,
-        sig: signer.sign(&id),
+        sig: sign_ring_op(signer, &id),
         act,
         on_behalf_of: on_behalf_of.map(str::to_string),
         view,
@@ -236,8 +273,9 @@ pub(crate) fn verify_ring_op(actor: &str, id: &OpId, sig_hex: &str) -> bool {
 }
 
 /// Verify `sig_hex` over `msg` under the hex public key `signer`. The ONE
-/// place a hex key and a hex signature are parsed, shared by ring ops and
-/// guest attestations; `false` on any malformed input, never a panic.
+/// place a hex key and a hex signature are parsed, shared by ring ops,
+/// redemptions, asks and passes; `false` on any malformed input, never a
+/// panic.
 pub fn verify_hex(signer: &str, msg: &[u8], sig_hex: &str) -> bool {
     let Ok(key_bytes) = hex::decode(signer) else {
         return false;

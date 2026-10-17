@@ -1,0 +1,260 @@
+{
+ "n0": {
+  "use1-1.relay.n0.iroh.link": [
+   "87.99.151.110",
+   "2a01:4ff:f0:b1b3::1"
+  ],
+  "usw1-1.relay.n0.iroh.link": [
+   "5.78.69.43",
+   "2a01:4ff:1f0:e599::1"
+  ],
+  "euc1-1.relay.n0.iroh.link": [
+   "91.99.237.97",
+   "2a01:4f8:1c19:39b4::1"
+  ],
+  "aps1-1.relay.n0.iroh.link": [
+   "5.223.65.62",
+   "2a01:4ff:2f0:29c1::1"
+  ],
+  "use1-1.staging-relay.n0.iroh.link": [
+   "178.156.173.73",
+   "2a01:4ff:f0:f255::1"
+  ],
+  "euc1-1.staging-relay.n0.iroh.link": [
+   "178.105.170.157",
+   "2a01:4f8:1c1a:bff8::1"
+  ],
+  "dns.iroh.link": [
+   "49.13.207.244",
+   "2a01:4f8:c2c:7216::1"
+  ],
+  "staging-dns.iroh.link": [
+   "49.13.237.105",
+   "2a01:4f8:1c1c:75e2::1"
+  ]
+ },
+ "sam": {
+  "link_ms": 3186,
+  "folder": true
+ },
+ "ana": {
+  "joined_ms": 219,
+  "said": "You're in house, as ana.",
+  "folder": true,
+  "share": {
+   "who": "ana",
+   "args": [
+    "share",
+    "56068",
+    "--kind",
+    "film",
+    "--name",
+    "film"
+   ],
+   "exit": 0,
+   "said": "Lent film (port 56068) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 56068 --limit <number>`.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare film` stops lending it.\nIf film takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none):",
+   "ms": 10
+  }
+ },
+ "alex": {
+  "joined_ms": 272,
+  "said": "You're in house, as alex.",
+  "folder": true
+ },
+ "photo_1": {
+  "sam": 60611,
+  "alex": 61319
+ },
+ "home": {
+  "sam": {
+   "mode": "home",
+   "said": "house\n\nPeople: ana, Sam, alex\n\nhouse\u2019s folder is on this computer at /tmp/relay-in-record-2026-10-12/sam/svrngs/house\n\nana\u2019s film\nWhat this computer lends\n\nThis computer lends nothing.\n\nWhat apps use",
+   "at": 62279,
+   "logs": []
+  },
+  "alex": {
+   "mode": "home",
+   "said": "house\n\nPeople: ana, Sam, alex\n\nhouse\u2019s folder is on this computer at /tmp/relay-in-record-2026-10-12/alex/svrngs/house\n\nana's computer did not answer, so what they lend is not listed.\nWhat this computer lends\n\nThis computer lends nothing.\n\nWhat apps use",
+   "at": 67432,
+   "logs": []
+  }
+ },
+ "phone": {
+  "mode": "phone",
+  "opened": 1163,
+  "asked_name": true,
+  "name_asked_at": 1469,
+  "named_at": 1543,
+  "status": {
+   "at": 2388,
+   "said": "You\u2019re in house, as Cy"
+  },
+  "lent": [
+   "ana\u2019s film"
+  ],
+  "lent_at": 2390,
+  "film_opened": 2390,
+  "film_at": "http://czl00u3b5k3l3l83n6a7hl15cumhb8g45q3vgpuw823lx1kdmk5atsjbvnv4x0.localhost:56067/open.html?v=45b90639a3bd",
+  "playing": 4632,
+  "logs": [
+   "console: LAYER parse: ok \u2014 relay http://127.0.0.1:56065/",
+   "console: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only)\u2026",
+   "console: LAYER wasm-bindgen/iroh-endpoint: ok \u2014 local endpoint f1d9bb3dbdec10d9db7f455688487712c3a114fa4dee0e9720a9e2988af6fdf2 bound",
+   "console: LAYER relay-connect: waiting for the relay handshake (endpoint.online())\u2026",
+   "console: LAYER relay-connect: ok \u2014 endpoint reports online (relay handshake done)",
+   "console: LAYER parse: the group names no relay for 2448d559419a3f57596078db64830cbb319623da38fb2774e6a9be93aec94bbc, so it is dialled through the link's, else found by lookup",
+   "console: LAYER tls/alpn+relay-hop: dialing 2448d559419a3f57596078db64830cbb319623da38fb2774e6a9be93aec94bbc on the Redeem protocol through a relay\u2026",
+   "console: LAYER tls/alpn+relay-hop: ok \u2014 QUIC connection established to 2448d559419a3f57596078db64830cbb319623da38fb2774e6a9be93aec94bbc on the Redeem protocol",
+   "console: LAYER tls/alpn: negotiated ALPN = \"svrngs/redeem/0\"",
+   "console: JOIN: asking the issuer what the link is for, as f1d9bb3dbdec10d9db7f455688487712c3a114fa4dee0e9720a9e2988af6fdf2",
+   "console: HTTP: POST /ask \u2014 a bi-stream opened",
+   "console: HTTP: POST /ask answered 200",
+   "console: HTTP: the response has ended; finishing the request's send half",
+   "console: HTTP: POST /ask \u2014 the stream is done",
+   "console: JOIN: the answer is believed \u2014 the group fb7155193675cbef10dfa71b87417138e7fd7898cb6df775618c740b0e4cf9ad, a device link of None",
+   "console: PAGE: asking the person's name to join house",
+   "console: WebSocket connection to 'ws://127.0.0.1:56065/relay' failed: The operation couldn\u2019t be completed. Socket is not connected",
+   "console: JOIN: redeeming the link as \"Cy\", f1d9bb3dbdec10d9db7f455688487712c3a114fa4dee0e9720a9e2988af6fdf2, a browser's key",
+   "console: LAYER parse: ok \u2014 issuer 2448d559419a3f57596078db64830cbb319623da38fb2774e6a9be93aec94bbc",
+   "console: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+   "console: LAYER key: ok \u2014 the key f1d9bb3dbdec10d9db7f455688487712c3a114fa4dee0e9720a9e2988af6fdf2",
+   "console: LAYER parse: ok \u2014 relay http://127.0.0.1:56065/",
+   "console: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only)\u2026",
+   "console: LAYER wasm-bindgen/iroh-endpoint: ok \u2014 local endpoint f1d9bb3dbdec10d9db7f455688487712c3a114fa4dee0e9720a9e2988af6fdf2 bound",
+   "console: LAYER relay-connect: waiting for the relay handshake (endpoint.online())\u2026",
+   "console: LAYER relay-connect: ok \u2014 endpoint reports online (relay handshake done)",
+   "console: LAYER parse: the group names no relay for 2448d559419a3f57596078db64830cbb319623da38fb2774e6a9be93aec94bbc, so it is dialled through the link's, else found by lookup",
+   "console: LAYER tls/alpn+relay-hop: dialing 2448d559419a3f57596078db64830cbb319623da38fb2774e6a9be93aec94bbc on the Redeem protocol through a relay\u2026",
+   "console: LAYER tls/alpn+relay-hop: ok \u2014 QUIC connection established to 2448d559419a3f57596078db64830cbb319623da38fb2774e6a9be93aec94bbc on the Redeem protocol",
+   "console: LAYER tls/alpn: negotiated ALPN = \"svrngs/redeem/0\"",
+   "console: HTTP: POST /redeem \u2014 a bi-stream opened",
+   "console: HTTP: POST /redeem answered 200",
+   "console: HTTP: the response has ended; finishing the request's send half",
+   "console: HTTP: POST /redeem \u2014 the stream is done",
+   "console: STORE: the sealing key absent: making one",
+   "console: PAGE: joined fb7155193675cbef10dfa71b87417138e7fd7898cb6df775618c740b0e4cf9ad as Cy; the key is kept sealed",
+   "console: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+   "console: LAYER parse: ok \u2014 issuer 2448d559419a3f57596078db64830cbb319623da38fb2774e6a9be93aec94bbc",
+   "console: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+   "console: LAYER key: ok \u2014 the key f1d9bb3dbdec10d9db7f455688487712c3a114fa4dee0e9720a9e2988af6fdf2",
+   "console: LAYER parse: ok \u2014 relay http://127.0.0.1:56065/",
+   "console: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only)\u2026",
+   "console: LAYER wasm-bindgen/iroh-endpoint: ok \u2014 local endpoint f1d9bb3dbdec10d9db7f455688487712c3a114fa4dee0e9720a9e2988af6fdf2 bound",
+   "console: LAYER relay-connect: waiting for the relay handshake (endpoint.online())\u2026",
+   "console: WebSocket connection to 'ws://127.0.0.1:56065/relay' failed: The operation couldn\u2019t be completed. Socket is not connected",
+   "console: LAYER relay-connect: ok \u2014 endpoint reports online (relay handshake done)",
+   "console: LAYER parse: the group names no relay for 2448d559419a3f57596078db64830cbb319623da38fb2774e6a9be93aec94bbc, so it is dialled through the link's, else found by lookup",
+   "console: LAYER tls/alpn+relay-hop: dialing 2448d559419a3f57596078db64830cbb319623da38fb2774e6a9be93aec94bbc on the Member protocol through a relay\u2026",
+   "console: LAYER tls/alpn+relay-hop: ok \u2014 QUIC connection established to 2448d559419a3f57596078db64830cbb319623da38fb2774e6a9be93aec94bbc on the Member protocol",
+   "console: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+   "console: HTTP: GET /people/lends \u2014 a bi-stream opened",
+   "console: HTTP: GET /people/lends answered 200",
+   "console: HTTP: the response has ended; finishing the request's send half",
+   "console: HTTP: GET /people/lends \u2014 the stream is done",
+   "console: WebSocket connection to 'ws://127.0.0.1:56065/relay' failed: The operation couldn\u2019t be completed. Socket is not connected",
+   "console: PAGE: opening czl00u3b5k3l3l83n6a7hl15cumhb8g45q3vgpuw823lx1kdmk5atsjbvnv4x0 at http://czl00u3b5k3l3l83n6a7hl15cumhb8g45q3vgpuw823lx1kdmk5atsjbvnv4x0.localhost:56067/open.html?v=45b90639a3bd, a pass to 1 lend(s) until 1791908586",
+   "console: Button failed to load, iconName = invalid-placard, layoutTraits = [MacOSLayoutTraits Inline], src = blob:http://czl00u3b5k3l3l83n6a7hl15cumhb8g45q3vgpuw823lx1kdmk5atsjbvnv4x0.localhost:56067/3e457e5b-5f61-428c-8a08-1a82e7635ae5",
+   "console: Button failed to load, iconName = pip-placard, layoutTraits = [MacOSLayoutTraits Inline], src = blob:http://czl00u3b5k3l3l83n6a7hl15cumhb8g45q3vgpuw823lx1kdmk5atsjbvnv4x0.localhost:56067/c0276640-1b32-4cce-a5d9-ccc333b03d00",
+   "console: Button failed to load, iconName = pip-placard, layoutTraits = [MacOSLayoutTraits Inline], src = blob:http://czl00u3b5k3l3l83n6a7hl15cumhb8g45q3vgpuw823lx1kdmk5atsjbvnv4x0.localhost:56067/c0276640-1b32-4cce-a5d9-ccc333b03d00",
+   "console: Button failed to load, iconName = airplay-placard, layoutTraits = [MacOSLayoutTraits Inline], src = blob:http://czl00u3b5k3l3l83n6a7hl15cumhb8g45q3vgpuw823lx1kdmk5atsjbvnv4x0.localhost:56067/b9f5b0d3-1360-422a-a041-04d781ff8063"
+  ]
+ },
+ "film_answers": 12,
+ "photo_2_sam_stopped": {
+  "alex_ms": 515,
+  "waited_s": 150
+ },
+ "photo_2_sam_again": {
+  "alex_ms": 0
+ },
+ "people": {
+  "namespace": "fb7155193675cbef10dfa71b87417138e7fd7898cb6df775618c740b0e4cf9ad",
+  "people": [
+   {
+    "joined": {
+     "at": 1791865313
+    },
+    "key": "15536b4721da329ca7d95f01d326fb145460f8badb7322b233f6329a5d035236",
+    "person": "ana",
+    "person_key": "15536b4721da329ca7d95f01d326fb145460f8badb7322b233f6329a5d035236"
+   },
+   {
+    "joined": "started",
+    "key": "2448d559419a3f57596078db64830cbb319623da38fb2774e6a9be93aec94bbc",
+    "person": "Sam",
+    "person_key": "2448d559419a3f57596078db64830cbb319623da38fb2774e6a9be93aec94bbc"
+   },
+   {
+    "joined": {
+     "at": 1791865314
+    },
+    "key": "59f8e7fce5225f348198c667d72358a2afa5c7d5d13fb077434a4565c973ced0",
+    "person": "alex",
+    "person_key": "59f8e7fce5225f348198c667d72358a2afa5c7d5d13fb077434a4565c973ced0"
+   },
+   {
+    "joined": {
+     "at": 1791865386
+    },
+    "key": "f1d9bb3dbdec10d9db7f455688487712c3a114fa4dee0e9720a9e2988af6fdf2",
+    "person": "Cy",
+    "person_key": "f1d9bb3dbdec10d9db7f455688487712c3a114fa4dee0e9720a9e2988af6fdf2"
+   }
+  ]
+ },
+ "film_log": [
+  [
+   1791865387.238,
+   "200 / - 100"
+  ],
+  [
+   1791865387.323,
+   "206 /film.mp4 bytes=0-1 2"
+  ],
+  [
+   1791865387.332,
+   "206 /film.mp4 bytes=0-2097151 2097152"
+  ],
+  [
+   1791865387.355,
+   "206 /film.mp4 bytes=34947-2132098 2097152"
+  ],
+  [
+   1791865387.372,
+   "206 /film.mp4 bytes=66390-2163541 2097152"
+  ],
+  [
+   1791865387.509,
+   "206 /film.mp4 bytes=2163542-4260693 2097152"
+  ],
+  [
+   1791865387.634,
+   "206 /film.mp4 bytes=4260694-6357845 2097152"
+  ],
+  [
+   1791865387.758,
+   "206 /film.mp4 bytes=6357846-8454997 2097152"
+  ],
+  [
+   1791865387.87,
+   "206 /film.mp4 bytes=8454998-10552149 2097152"
+  ],
+  [
+   1791865387.992,
+   "206 /film.mp4 bytes=10552150-12649301 2097152"
+  ],
+  [
+   1791865388.114,
+   "206 /film.mp4 bytes=12649302-14746453 2097152"
+  ],
+  [
+   1791865388.246,
+   "206 /film.mp4 bytes=14746454-15280674 534221"
+  ]
+ ],
+ "since_in_s": 78,
+ "end": {
+  "load": 89.69970703125,
+  "t": 1791865420.906
+ }
+}

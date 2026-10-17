@@ -1,0 +1,3 @@
+thread 'record::tests::acts_signed_with_a_view_still_verify' (51820457) panicked at crates/svrngs-core/src/record_tests.rs:139:5:
+[BadSignature { id: OpId(ContentHash(71b4b09a06ed0bf2)), actor: "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" }, BadSignature { id: OpId(ContentHash(e01b16f13d1cbb1c)), actor: "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf374
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 172 filtered out; finished in 0.01s

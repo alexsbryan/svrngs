@@ -9,7 +9,7 @@
 //! (`digest`, `missing`, `ingest`, `roster`, `read`, `admit`, `compact`,
 //! `namespaces`, `actor`), all rail-core-typed. The append and log
 //! bodies mirror the inference daemon's `routes_rail` door for door — same
-//! paths, same server-assigned fields, same retire rendering, same gap
+//! paths, same server-assigned fields, same gap
 //! sentences — so a page written against one daemon behaves the same against
 //! the other (ARCH §10.6). What is deliberately NOT mirrored is the guest
 //! half: there are no grants and no sessions here (loopback IS the auth),
@@ -51,12 +51,12 @@ use axum::Json;
 use serde::Deserialize;
 
 // rail.rs's refusal body came over with the sync route (u1-3), so there is one.
-use crate::iroh::{Contact, IrohTransport};
+use crate::iroh::IrohTransport;
 use crate::live::{push_ephemeral, LivePeer};
 use crate::node::dialled;
 use crate::register::{Member, Standing};
 use crate::ring_routes::err;
-use crate::{Compaction, Ed25519Verifier, Membership, Person, RailAct, RailError, RingRail};
+use crate::{actor_of, Device, Joined, Person, RailAct, RailError, RingRail};
 use svrngs_core::{Append, AppendRefusal, Refused as CommitRefused};
 
 /// What the doors read: the journals, the nudge that wakes the round
@@ -81,22 +81,6 @@ pub struct RailApi {
 pub struct RailQuery {
     #[serde(default)]
     pub namespace: Option<String>,
-}
-
-/// Render what [`RingJournal::seal`]'s prune did, for the append body — the
-/// daemon's rendering verbatim: a seal and the prune it authorises are one
-/// act to the caller, and a refused prune is not a failed seal, so the
-/// outcome is reported in the body instead of a status code.
-fn retire(retired: &Result<Compaction, RailError>) -> serde_json::Value {
-    match retired {
-        Ok(done) => serde_json::json!({
-            "removed": done.removed,
-            "kept": done.kept,
-            "gaps_cleared": done.gaps_cleared,
-            "floors": done.floors,
-        }),
-        Err(e) => serde_json::json!({ "refused": e.to_string() }),
-    }
 }
 
 pub(crate) fn namespace_of(q: &RailQuery) -> Result<String, Response> {
@@ -148,9 +132,9 @@ pub(crate) fn standing_of(
         )
             .into_response()
     };
-    match rail.standing(namespace, &Ed25519Verifier) {
-        Ok(Standing::Members(people)) => {
-            tracing::debug!(target: "rails", namespace, people = people.len(), "rail: the group is held here, and its register read");
+    match rail.standing(namespace) {
+        Ok(Standing::Members(people) | Standing::Left(people)) => {
+            tracing::debug!(target: "rails", namespace, people = people.len(), "rail: the group is held here, left or not, and its register read");
             Ok(people)
         }
         Ok(Standing::NotHeld) => {
@@ -176,16 +160,28 @@ pub(crate) fn standing_of(
     }
 }
 
-/// The people standing in a group as an app reads them: each person, with
-/// the key they stand by, its lowercase hex — a key an app may seal to
-/// (DESIGN §3). The one shape every door that names the people answers.
+/// The people standing in a group as an app reads them: one row per key,
+/// each with its person, the key's lowercase hex — a key an app may seal
+/// to (DESIGN §3) — the person's first key, which every key of theirs
+/// shares and the door tells a lend as `x-svrngs-key` (bash-devices), and
+/// when the person joined, which tells two of one name apart
+/// (bash-same-name), and what holds the key — `computer` or `browser`, so a
+/// page draws a phone as one (v1ui-door (a)). The one shape every door that
+/// names the people answers.
 pub(crate) fn people_json<'a>(
-    standing: impl IntoIterator<Item = (&'a String, &'a Person)>,
+    standing: impl IntoIterator<Item = (&'a String, &'a Person, &'a str, Joined, Device)>,
 ) -> serde_json::Value {
-    standing
-        .into_iter()
-        .map(|(key, person)| serde_json::json!({ "person": person, "key": key }))
+    (standing.into_iter())
+        .map(|(key, person, first, joined, device)| serde_json::json!({ "person": person, "key": key, "person_key": first, "joined": joined, "device": device }))
         .collect()
+}
+
+/// The people standing, the register's rows, in [`people_json`]'s shape:
+/// the people door's, and the members' `/people/lends` beside what they
+/// lend, so a phone's page draws the door (v1ui-door (d)).
+pub(crate) fn standing_json(s: &BTreeMap<String, Member>) -> serde_json::Value {
+    let rows = s.iter();
+    people_json(rows.map(|(k, m)| (k, &m.person, m.person_key.as_str(), m.joined, m.device)))
 }
 
 /// POST /v1/rail/append — sign and append one act to the named namespace.
@@ -195,7 +191,8 @@ pub(crate) fn people_json<'a>(
 /// number or actor could write as somebody else.
 ///
 /// (svrngs: upstream dropped a bare `on_behalf_of`, since a caller could
-/// stamp only with a signed `GuestAttestation`, which went with `attest`.
+/// stamp only with a signed `GuestAttestation`, which went with `attest`,
+/// and from the core in core-0.
 /// Here an app serving someone else names them, and the act is signed as
 /// this computer with `on_behalf_of` naming that person — whom the member
 /// door verified (DESIGN §3, §8 "Localhost is the trust boundary"). The
@@ -217,53 +214,46 @@ pub(crate) async fn append_act(
         Ok(act) => act,
         Err(e) => return err(StatusCode::UNPROCESSABLE_ENTITY, e.to_string()),
     };
-    let sealed = matches!(act, RailAct::Seal);
-    let appended = if sealed {
-        // A seal takes no stamp: it is delivery, not words.
-        if let Some(person) = &stamp {
-            tracing::debug!(target: "rails", namespace, %person, "rail: a seal is signed as this computer alone, whoever was named");
+    // A seal is an act like any other here: `Append` refuses it as not an
+    // app's (arch-seal (b); WHO_KNOWS_WHOM §3).
+    let append = Append {
+        act,
+        on_behalf_of: stamp,
+    };
+    let appended = match rail.commit(namespace, &append) {
+        Ok(Ok(recorded)) => Ok(recorded.lines()[0].clone()),
+        Ok(Err(CommitRefused::NoStanding)) => Err(RailError::NotInRoster {
+            actor: actor_of(rail.signer()),
+            namespace: namespace.to_string(),
+        }),
+        Ok(Err(CommitRefused::Unsettled)) => Err(RailError::Unsettled(namespace.to_string())),
+        Ok(Err(CommitRefused::Command(AppendRefusal::NotInGroup(person)))) => {
+            tracing::debug!(target: "rails", namespace, %person, "rail: refused — on_behalf_of names nobody in the group");
+            return refused(
+                namespace,
+                "not_in_group",
+                format!("{person} is not in {namespace}"),
+            );
         }
-        rail.seal(namespace)
-            .map(|done| (done.op, Some(retire(&done.retired))))
-    } else {
-        let append = Append {
-            act,
-            on_behalf_of: stamp,
-        };
-        match rail.commit(namespace, &append) {
-            Ok(Ok(recorded)) => Ok((recorded.lines()[0].clone(), None)),
-            Ok(Err(CommitRefused::NoStanding)) => Err(RailError::NotInRoster {
-                actor: rail.signer().actor(),
-                namespace: namespace.to_string(),
-            }),
-            Ok(Err(CommitRefused::Command(AppendRefusal::NotInGroup(person)))) => {
-                tracing::debug!(target: "rails", namespace, %person, "rail: refused — on_behalf_of names nobody in the group");
-                return refused(
-                    namespace,
-                    "not_in_group",
-                    format!("{person} is not in {namespace}"),
-                );
-            }
-            Ok(Err(CommitRefused::Command(AppendRefusal::NotAnAppAct))) => {
-                tracing::debug!(target: "rails", namespace, "rail: refused — the register's acts and the seal are not an app's to write");
-                return refused(
-                    namespace,
-                    "not_an_app_act",
-                    "an app writes records and corrections; admitting, removing and inviting are the group's own".into(),
-                );
-            }
-            Err(e) => Err(e),
+        Ok(Err(CommitRefused::Command(AppendRefusal::NotAnAppAct))) => {
+            tracing::debug!(target: "rails", namespace, "rail: refused — the register's acts and a seal are not an app's to write");
+            return refused(
+                namespace,
+                "not_an_app_act",
+                "an app writes records and corrections; admitting, removing, inviting and sealing are not an app's".into(),
+            );
         }
+        Err(e) => Err(e),
     };
     match appended {
-        Ok((op, retired)) => {
+        Ok(op) => {
             // The whole op rides beside the flat fields, so a dialing client
             // that speaks the rail's TYPES (the mesh round's port, since the
             // journals moved here) reads back an `Op<SignedOp>` instead of
             // re-deriving one from the render (ARCH §10.6). The flat fields
             // stay: they are what a page renders, and the daemon's append
             // door answers with exactly them.
-            let mut out = serde_json::json!({
+            let out = serde_json::json!({
                 "id": op.id,
                 "seq": op.kind.seq,
                 "actor": op.actor,
@@ -271,9 +261,6 @@ pub(crate) async fn append_act(
                 "namespace": namespace,
                 "op": op,
             });
-            if let Some(retired) = retired {
-                out["retired"] = retired;
-            }
             Json(out).into_response()
         }
         Err(e @ RailError::NotInRoster { .. }) => {
@@ -363,11 +350,12 @@ async fn log_answer(rail: &RingRail, namespace: &str) -> Response {
             v
         })
         .collect();
-    let register = admission.project::<Membership>();
-    let people: BTreeMap<String, Person> = register
-        .standing
-        .iter()
-        .filter_map(|key| Some((key.clone(), register.bindings.get(key)?.clone())))
+    let register = admission.membership();
+    let people: Vec<(&String, &Person, &str, Joined, Device)> = (register.standing.iter())
+        .filter_map(|key| {
+            let ((first, person), device) = register.person_of(key).zip(register.device(key))?;
+            Some((key, person, first, register.joined(first), device))
+        })
         .collect();
     Json(serde_json::json!({
         "namespace": namespace,
@@ -375,7 +363,9 @@ async fn log_answer(rail: &RingRail, namespace: &str) -> Response {
         "gaps": gaps,
         "held": admission.held(),
         "complete": admission.is_complete(),
-        "people": people_json(&people),
+        // Unsettled cuts (#124): who stands is not judged, so nobody is
+        // listed as standing; the `unsettled` gap says why.
+        "people": (!register.unsettled).then(|| people_json(people)),
     }))
     .into_response()
 }
@@ -388,7 +378,7 @@ fn people_answer(rail: &RingRail, namespace: &str) -> Response {
     match standing_of(rail, namespace) {
         Ok(people) => Json(serde_json::json!({
             "namespace": namespace,
-            "people": people_json(people.iter().map(|(key, m)| (key, &m.person))),
+            "people": standing_json(&people),
         }))
         .into_response(),
         Err(refusal) => refusal,
@@ -396,12 +386,11 @@ fn people_answer(rail: &RingRail, namespace: &str) -> Response {
 }
 
 /// GET /v1/rail/people.
-pub async fn people(State(api): State<RailApi>, Query(q): Query<RailQuery>) -> Response {
-    let namespace = match namespace_of(&q) {
-        Ok(ns) => ns,
-        Err(refusal) => return refusal,
-    };
-    people_answer(&api.rail, &namespace)
+pub async fn people(
+    State(api): State<RailApi>,
+    Query(q): Query<RailQuery>,
+) -> Result<Response, Response> {
+    Ok(people_answer(&api.rail, &namespace_of(&q)?))
 }
 
 /// POST /v1/rail/append.
@@ -409,27 +398,20 @@ pub async fn append(
     State(api): State<RailApi>,
     Query(q): Query<RailQuery>,
     Json(body): Json<serde_json::Value>,
-) -> Response {
-    let namespace = match namespace_of(&q) {
-        Ok(ns) => ns,
-        Err(refusal) => return refusal,
-    };
-    if let Err(refusal) = group_of(&api.rail, &namespace) {
-        return refusal;
-    }
-    append_act(&api.rail, &namespace, body).await
+) -> Result<Response, Response> {
+    let namespace = namespace_of(&q)?;
+    group_of(&api.rail, &namespace)?;
+    Ok(append_act(&api.rail, &namespace, body).await)
 }
 
 /// GET /v1/rail/log.
-pub async fn log(State(api): State<RailApi>, Query(q): Query<RailQuery>) -> Response {
-    let namespace = match namespace_of(&q) {
-        Ok(ns) => ns,
-        Err(refusal) => return refusal,
-    };
-    if let Err(refusal) = group_of(&api.rail, &namespace) {
-        return refusal;
-    }
-    log_answer(&api.rail, &namespace).await
+pub async fn log(
+    State(api): State<RailApi>,
+    Query(q): Query<RailQuery>,
+) -> Result<Response, Response> {
+    let namespace = namespace_of(&q)?;
+    group_of(&api.rail, &namespace)?;
+    Ok(log_answer(&api.rail, &namespace).await)
 }
 
 // ── The live lane ────────────────────────────────────────────
@@ -445,6 +427,16 @@ const LIVE_BUFFER_CAPACITY: usize = 256;
 /// keeps.
 pub(crate) const LIVE_PAYLOAD_MAX_BYTES: usize = 4096;
 
+/// One arrived payload and who sent it: the dialer's key, verified by the
+/// acceptor, and their person's first key, as `/v1/rail/people` names them
+/// (ON_AIR §4.3), so an app knows who spoke without signing every payload.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct Live {
+    pub payload: String,
+    pub key: String,
+    pub person_key: String,
+}
+
 /// The arrived-payload buffer: bounded, in memory, and the only place a
 /// live payload ever sits. Keyed by namespace, the way append and log are.
 #[derive(Debug, Default)]
@@ -458,7 +450,7 @@ pub struct LiveBuffer {
 
 #[derive(Debug, Default)]
 struct LiveBufferInner {
-    payloads: VecDeque<String>,
+    payloads: VecDeque<Live>,
     /// Payloads evicted because the buffer was full, since the last drain.
     /// Eviction is a real loss and it is REPORTED, never silent.
     dropped: usize,
@@ -467,7 +459,7 @@ struct LiveBufferInner {
 impl LiveBuffer {
     /// Take one arrived payload for `namespace`. Evicts that namespace's
     /// oldest when full.
-    pub fn push(&self, namespace: &str, payload: String) {
+    pub fn push(&self, namespace: &str, payload: Live) {
         let mut buffers = self
             .inner
             .lock()
@@ -490,7 +482,7 @@ impl LiveBuffer {
 
     /// Empty `namespace`'s buffer, returning what was in it and how many
     /// were lost. Every other namespace's buffer is untouched.
-    pub(crate) fn drain(&self, namespace: &str) -> (Vec<String>, usize) {
+    pub(crate) fn drain(&self, namespace: &str) -> (Vec<Live>, usize) {
         let mut buffers = self
             .inner
             .lock()
@@ -546,7 +538,7 @@ async fn push_answer(api: &RailApi, namespace: &str, body: axum::body::Bytes) ->
         Ok(people) => people,
         Err(refusal) => return refusal,
     };
-    let peers = live_peers(&api.rail.signer().actor(), namespace, &standing);
+    let peers = live_peers(&actor_of(api.rail.signer()), namespace, &standing);
     let peers = push_ephemeral(&api.transport, peers, namespace, payload).await;
     let delivered = peers.iter().filter(|p| p.delivered).count();
     tracing::debug!(
@@ -566,28 +558,26 @@ async fn push_answer(api: &RailApi, namespace: &str, body: axum::body::Bytes) ->
 }
 
 /// The peers a live payload in `namespace` is offered to: every key
-/// standing in it but `this` node's, each by its key alone, named by its
-/// person: the keys the round dials ([`crate::node::dialled`]), so neither
+/// standing in it but `this` node's, each by its key and the relay its
+/// group names (relay-in-record), named by its person: the keys the round dials ([`crate::node::dialled`]), so neither
 /// a browser's key (u4-1) nor one that is not an iroh key is offered it.
 /// New (u3-3): upstream walked the mesh's Online members.
 fn live_peers(this: &str, namespace: &str, standing: &BTreeMap<String, Member>) -> Vec<LivePeer> {
     let mut peers = Vec::new();
-    for (actor, person, key) in dialled(this, namespace, standing) {
+    let relay = |a: &str| standing.get(a)?.relay.as_ref();
+    for (actor, person, contact) in dialled(this, namespace, standing, relay) {
         tracing::debug!(target: "rails", namespace, actor, %person, "rail live: a person stands in the group, to offer the payload");
         peers.push(LivePeer {
             node: actor.clone(),
             name: Some(person.to_string()),
-            contact: Contact {
-                key,
-                relay_url: None,
-                iroh_direct_addrs: Vec::new(),
-            },
+            contact,
         });
     }
     peers
 }
 
-/// GET /v1/rail/live — drain the caller's namespace since the last call.
+/// GET /v1/rail/live — drain the caller's namespace since the last call,
+/// each payload with its sender ([`Live`]): `{payload, key, person_key}`.
 fn drain_answer(live: &LiveBuffer, namespace: &str) -> Response {
     let (payloads, dropped) = live.drain(namespace);
     if dropped > 0 {
@@ -612,21 +602,16 @@ pub async fn live_push(
     State(api): State<RailApi>,
     Query(q): Query<RailQuery>,
     body: axum::body::Bytes,
-) -> Response {
-    let namespace = match namespace_of(&q) {
-        Ok(ns) => ns,
-        Err(refusal) => return refusal,
-    };
-    push_answer(&api, &namespace, body).await
+) -> Result<Response, Response> {
+    Ok(push_answer(&api, &namespace_of(&q)?, body).await)
 }
 
 /// GET /v1/rail/live.
-pub async fn live_drain(State(api): State<RailApi>, Query(q): Query<RailQuery>) -> Response {
-    let namespace = match namespace_of(&q) {
-        Ok(ns) => ns,
-        Err(refusal) => return refusal,
-    };
-    drain_answer(&api.live, &namespace)
+pub async fn live_drain(
+    State(api): State<RailApi>,
+    Query(q): Query<RailQuery>,
+) -> Result<Response, Response> {
+    Ok(drain_answer(&api.live, &namespace_of(&q)?))
 }
 
 #[cfg(test)]

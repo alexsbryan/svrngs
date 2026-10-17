@@ -1,0 +1,890 @@
+2026-10-10T20:40:10.522960Z  INFO folder: folder: the store is open
+2026-10-10T20:40:10.523175Z  INFO rails: api: serving the record to this computer's apps addr=127.0.0.1:61228
+2026-10-10T20:40:10.523403Z DEBUG rails: api: wrote where it listens, for apps it did not start path=/tmp/perf-run/small-n0/data/p0/api addr=127.0.0.1:61228
+2026-10-10T20:40:10.523459Z  INFO svrngs_node::ring_sync: ring sync: loop started interval_secs=60
+PERF told of 2 members
+2026-10-10T20:41:10.528147Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["p1/8139770e", "p2/ed4928c6"] skipped_offline=[]
+2026-10-10T20:41:10.528301Z DEBUG svrngs_node::ring_sync: ring sync: namespace register namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" offered_to=["p1/8139770e", "p2/ed4928c6"] skipped_not_standing=[]
+2026-10-10T20:41:11.403446Z DEBUG rails: ring: the asker stands in the ring route="sync" namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" asker="ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1"
+2026-10-10T20:41:11.403963Z DEBUG rails: ring sync: exchange namespace=51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536 request_bytes=119 offered=0 ingested=0 sending=2 more_for_caller=false payload_bytes=1423
+2026-10-10T20:41:11.405354Z DEBUG rails: ring: the asker stands in the ring route="sync" namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" asker="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394"
+2026-10-10T20:41:11.405602Z DEBUG rails: ring sync: exchange namespace=51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536 request_bytes=119 offered=0 ingested=0 sending=2 more_for_caller=false payload_bytes=1423
+2026-10-10T20:41:11.457369Z DEBUG rails: ring: the asker stands in the ring route="sync" namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" asker="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394"
+2026-10-10T20:41:11.457454Z DEBUG rails: ring: the asker stands in the ring route="sync" namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" asker="ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1"
+2026-10-10T20:41:11.457564Z DEBUG rails: ring sync: exchange namespace=51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536 request_bytes=279 offered=0 ingested=0 sending=0 more_for_caller=false payload_bytes=292
+2026-10-10T20:41:11.457700Z DEBUG rails: ring sync: exchange namespace=51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536 request_bytes=279 offered=0 ingested=0 sending=0 more_for_caller=false payload_bytes=292
+2026-10-10T20:41:11.677544Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:22182/internal/ring/sync" chunk=1 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-10T20:41:11.723630Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:30029/internal/ring/sync" chunk=1 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-10T20:41:11.723684Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=2 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=0 round_ms=1196
+2026-10-10T20:41:12.655744Z DEBUG rails: api: a caller on this computer caller=127.0.0.1:64786 path=/v1/folders
+2026-10-10T20:41:12.656935Z DEBUG folder: synced: the layout read folder="Shared" placed=0 ms=0
+2026-10-10T20:41:12.657539Z DEBUG folder: synced: a step folder="Shared" files=0 sent=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=1
+2026-10-10T20:41:13.661826Z DEBUG folder: synced: the layout read folder="Shared" placed=0 ms=1
+2026-10-10T20:41:13.662644Z DEBUG folder: synced: a step folder="Shared" files=0 sent=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=1 kept_ms=0 ms=2
+2026-10-10T20:41:14.664741Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="c4k-0.bin" size=4096
+2026-10-10T20:41:14.665291Z DEBUG folder: synced: taken into the store folder="Shared" path="c4k-0.bin" hash=99c989512442aedaaad42ff96d58573c4a032bc8c2c715cda6f1676943a83d99 ms=0
+2026-10-10T20:41:14.679400Z  INFO folder: folder: written to the record namespace=51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536 folder="Shared" files=1
+2026-10-10T20:41:14.679470Z  INFO folder: synced: a change sent folder="Shared" path="c4k-0.bin" now=Some((ContentHash(99c989512442aeda), 4096))
+2026-10-10T20:41:14.682295Z DEBUG folder: synced: the layout read folder="Shared" placed=1 ms=2
+2026-10-10T20:41:14.688111Z DEBUG folder: synced: a step folder="Shared" files=1 sent=1 read_ms=0 walk_ms=0 take_ms=0 write_ms=14 apply_ms=7 kept_ms=1 ms=23
+2026-10-10T20:41:14.688237Z DEBUG svrngs_node::ring_sync: ring sync: woken by a local write rather than the interval
+2026-10-10T20:41:14.688979Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["p1/8139770e", "p2/ed4928c6"] skipped_offline=[]
+2026-10-10T20:41:14.689169Z DEBUG svrngs_node::ring_sync: ring sync: namespace register namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" offered_to=["p1/8139770e", "p2/ed4928c6"] skipped_not_standing=[]
+2026-10-10T20:41:14.704146Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:22182/internal/ring/sync" chunk=1 pulled=0 pushed=1 peer_sent=2 offered=1 more_for_peer=false
+2026-10-10T20:41:14.710083Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:30029/internal/ring/sync" chunk=1 pulled=0 pushed=1 peer_sent=2 offered=1 more_for_peer=false
+2026-10-10T20:41:14.713065Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:22182/internal/ring/sync" chunk=2 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-10T20:41:14.717632Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:30029/internal/ring/sync" chunk=2 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-10T20:41:14.720797Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=2 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=2 round_ms=32
+2026-10-10T20:41:15.679915Z  INFO folder: folder: serving — a synced folder places the hash hash=99c989512442aedaaad42ff96d58573c4a032bc8c2c715cda6f1676943a83d99 conn=530000678096 request=0 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=1.34
+2026-10-10T20:41:15.682049Z  INFO folder: folder: sent hash=99c989512442aedaaad42ff96d58573c4a032bc8c2c715cda6f1676943a83d99 conn=530000678096 request=0 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:15.682607Z  INFO folder: folder: serving — a synced folder places the hash hash=99c989512442aedaaad42ff96d58573c4a032bc8c2c715cda6f1676943a83d99 conn=530000677232 request=0 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.557
+2026-10-10T20:41:15.682751Z  INFO folder: folder: sent hash=99c989512442aedaaad42ff96d58573c4a032bc8c2c715cda6f1676943a83d99 conn=530000677232 request=0 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:15.690227Z DEBUG folder: synced: the layout read folder="Shared" placed=1 ms=0
+2026-10-10T20:41:15.690690Z DEBUG folder: synced: a step folder="Shared" files=1 sent=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=1
+2026-10-10T20:41:16.694386Z DEBUG folder: synced: the layout read folder="Shared" placed=1 ms=1
+2026-10-10T20:41:16.695307Z DEBUG folder: synced: a step folder="Shared" files=1 sent=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=1 kept_ms=0 ms=2
+2026-10-10T20:41:17.696709Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="c4k-1.bin" size=4096
+2026-10-10T20:41:17.698059Z DEBUG folder: synced: taken into the store folder="Shared" path="c4k-1.bin" hash=757224fb25b9a5c7873d29122d8d64717d8c9b568007a63d8d1409248da43ea6 ms=1
+2026-10-10T20:41:17.704507Z  INFO folder: folder: written to the record namespace=51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536 folder="Shared" files=1
+2026-10-10T20:41:17.704573Z  INFO folder: synced: a change sent folder="Shared" path="c4k-1.bin" now=Some((ContentHash(757224fb25b9a5c7), 4096))
+2026-10-10T20:41:17.705283Z DEBUG folder: synced: the layout read folder="Shared" placed=2 ms=0
+2026-10-10T20:41:17.705665Z DEBUG folder: synced: a step folder="Shared" files=2 sent=1 read_ms=0 walk_ms=0 take_ms=1 write_ms=6 apply_ms=0 kept_ms=0 ms=9
+2026-10-10T20:41:17.705694Z DEBUG svrngs_node::ring_sync: ring sync: woken by a local write rather than the interval
+2026-10-10T20:41:17.705893Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["p1/8139770e", "p2/ed4928c6"] skipped_offline=[]
+2026-10-10T20:41:17.705979Z DEBUG svrngs_node::ring_sync: ring sync: namespace register namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" offered_to=["p1/8139770e", "p2/ed4928c6"] skipped_not_standing=[]
+2026-10-10T20:41:17.719504Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:22182/internal/ring/sync" chunk=1 pulled=0 pushed=1 peer_sent=3 offered=1 more_for_peer=false
+2026-10-10T20:41:17.719689Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:30029/internal/ring/sync" chunk=1 pulled=0 pushed=1 peer_sent=3 offered=1 more_for_peer=false
+2026-10-10T20:41:17.721861Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:22182/internal/ring/sync" chunk=2 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-10T20:41:17.722102Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:30029/internal/ring/sync" chunk=2 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-10T20:41:17.722123Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=2 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=2 round_ms=16
+2026-10-10T20:41:18.693008Z  INFO folder: folder: serving — a synced folder places the hash hash=757224fb25b9a5c7873d29122d8d64717d8c9b568007a63d8d1409248da43ea6 conn=530000677232 request=1 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.72
+2026-10-10T20:41:18.693144Z  INFO folder: folder: sent hash=757224fb25b9a5c7873d29122d8d64717d8c9b568007a63d8d1409248da43ea6 conn=530000677232 request=1 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:18.694108Z  INFO folder: folder: serving — a synced folder places the hash hash=757224fb25b9a5c7873d29122d8d64717d8c9b568007a63d8d1409248da43ea6 conn=530000678096 request=1 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.722
+2026-10-10T20:41:18.694204Z  INFO folder: folder: sent hash=757224fb25b9a5c7873d29122d8d64717d8c9b568007a63d8d1409248da43ea6 conn=530000678096 request=1 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:18.709958Z DEBUG folder: synced: the layout read folder="Shared" placed=2 ms=0
+2026-10-10T20:41:18.710600Z DEBUG folder: synced: a step folder="Shared" files=2 sent=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=1 kept_ms=0 ms=1
+2026-10-10T20:41:19.713913Z DEBUG folder: synced: the layout read folder="Shared" placed=2 ms=0
+2026-10-10T20:41:19.714314Z DEBUG folder: synced: a step folder="Shared" files=2 sent=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=1
+2026-10-10T20:41:20.715453Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="c4k-2.bin" size=4096
+2026-10-10T20:41:20.715836Z DEBUG folder: synced: taken into the store folder="Shared" path="c4k-2.bin" hash=d82ec6ed16677237abeab69627d32c45e2eca8def44b5b55a2d65de98666e743 ms=0
+2026-10-10T20:41:20.724370Z  INFO folder: folder: written to the record namespace=51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536 folder="Shared" files=1
+2026-10-10T20:41:20.724428Z  INFO folder: synced: a change sent folder="Shared" path="c4k-2.bin" now=Some((ContentHash(d82ec6ed16677237), 4096))
+2026-10-10T20:41:20.725353Z DEBUG folder: synced: the layout read folder="Shared" placed=3 ms=0
+2026-10-10T20:41:20.725800Z DEBUG folder: synced: a step folder="Shared" files=3 sent=1 read_ms=0 walk_ms=0 take_ms=0 write_ms=8 apply_ms=1 kept_ms=0 ms=10
+2026-10-10T20:41:20.725826Z DEBUG svrngs_node::ring_sync: ring sync: woken by a local write rather than the interval
+2026-10-10T20:41:20.726043Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["p1/8139770e", "p2/ed4928c6"] skipped_offline=[]
+2026-10-10T20:41:20.726137Z DEBUG svrngs_node::ring_sync: ring sync: namespace register namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" offered_to=["p1/8139770e", "p2/ed4928c6"] skipped_not_standing=[]
+2026-10-10T20:41:20.738310Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:30029/internal/ring/sync" chunk=1 pulled=0 pushed=1 peer_sent=4 offered=1 more_for_peer=false
+2026-10-10T20:41:20.738519Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:22182/internal/ring/sync" chunk=1 pulled=0 pushed=1 peer_sent=4 offered=1 more_for_peer=false
+2026-10-10T20:41:20.739301Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:22182/internal/ring/sync" chunk=2 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-10T20:41:20.739388Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:30029/internal/ring/sync" chunk=2 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-10T20:41:20.739406Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=2 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=2 round_ms=13
+2026-10-10T20:41:21.707666Z  INFO folder: folder: serving — a synced folder places the hash hash=d82ec6ed16677237abeab69627d32c45e2eca8def44b5b55a2d65de98666e743 conn=530000677232 request=2 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.812
+2026-10-10T20:41:21.708757Z  INFO folder: folder: serving — a synced folder places the hash hash=d82ec6ed16677237abeab69627d32c45e2eca8def44b5b55a2d65de98666e743 conn=530000678096 request=2 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.768
+2026-10-10T20:41:21.708790Z  INFO folder: folder: sent hash=d82ec6ed16677237abeab69627d32c45e2eca8def44b5b55a2d65de98666e743 conn=530000677232 request=2 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:21.708862Z  INFO folder: folder: sent hash=d82ec6ed16677237abeab69627d32c45e2eca8def44b5b55a2d65de98666e743 conn=530000678096 request=2 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:21.729736Z DEBUG folder: synced: the layout read folder="Shared" placed=3 ms=0
+2026-10-10T20:41:21.730169Z DEBUG folder: synced: a step folder="Shared" files=3 sent=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=1 kept_ms=0 ms=1
+2026-10-10T20:41:22.733189Z DEBUG folder: synced: the layout read folder="Shared" placed=3 ms=1
+2026-10-10T20:41:22.733727Z DEBUG folder: synced: a step folder="Shared" files=3 sent=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=1 kept_ms=0 ms=1
+2026-10-10T20:41:23.737844Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="c4k-3.bin" size=4096
+2026-10-10T20:41:23.738403Z DEBUG folder: synced: taken into the store folder="Shared" path="c4k-3.bin" hash=b5895bcbfe1b8fbff62fb1db37d9e3b55b1aa52b8ea9fa663ca507a792c92895 ms=0
+2026-10-10T20:41:23.744907Z  INFO folder: folder: written to the record namespace=51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536 folder="Shared" files=1
+2026-10-10T20:41:23.744975Z  INFO folder: synced: a change sent folder="Shared" path="c4k-3.bin" now=Some((ContentHash(b5895bcbfe1b8fbf), 4096))
+2026-10-10T20:41:23.745908Z DEBUG folder: synced: the layout read folder="Shared" placed=4 ms=0
+2026-10-10T20:41:23.746396Z DEBUG folder: synced: a step folder="Shared" files=4 sent=1 read_ms=0 walk_ms=0 take_ms=0 write_ms=6 apply_ms=1 kept_ms=0 ms=8
+2026-10-10T20:41:23.746422Z DEBUG svrngs_node::ring_sync: ring sync: woken by a local write rather than the interval
+2026-10-10T20:41:23.746648Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["p1/8139770e", "p2/ed4928c6"] skipped_offline=[]
+2026-10-10T20:41:23.746743Z DEBUG svrngs_node::ring_sync: ring sync: namespace register namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" offered_to=["p1/8139770e", "p2/ed4928c6"] skipped_not_standing=[]
+2026-10-10T20:41:23.759334Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:22182/internal/ring/sync" chunk=1 pulled=0 pushed=1 peer_sent=5 offered=1 more_for_peer=false
+2026-10-10T20:41:23.759829Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:30029/internal/ring/sync" chunk=1 pulled=0 pushed=1 peer_sent=5 offered=1 more_for_peer=false
+2026-10-10T20:41:23.760333Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:22182/internal/ring/sync" chunk=2 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-10T20:41:23.760758Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:30029/internal/ring/sync" chunk=2 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-10T20:41:23.760778Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=2 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=2 round_ms=14
+2026-10-10T20:41:24.721621Z  INFO folder: folder: serving — a synced folder places the hash hash=b5895bcbfe1b8fbff62fb1db37d9e3b55b1aa52b8ea9fa663ca507a792c92895 conn=530000677232 request=3 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.927
+2026-10-10T20:41:24.722502Z  INFO folder: folder: serving — a synced folder places the hash hash=b5895bcbfe1b8fbff62fb1db37d9e3b55b1aa52b8ea9fa663ca507a792c92895 conn=530000678096 request=3 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.83
+2026-10-10T20:41:24.722532Z  INFO folder: folder: sent hash=b5895bcbfe1b8fbff62fb1db37d9e3b55b1aa52b8ea9fa663ca507a792c92895 conn=530000677232 request=3 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:24.722626Z  INFO folder: folder: sent hash=b5895bcbfe1b8fbff62fb1db37d9e3b55b1aa52b8ea9fa663ca507a792c92895 conn=530000678096 request=3 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:24.749224Z DEBUG folder: synced: the layout read folder="Shared" placed=4 ms=0
+2026-10-10T20:41:24.749797Z DEBUG folder: synced: a step folder="Shared" files=4 sent=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=1 kept_ms=0 ms=1
+2026-10-10T20:41:25.754641Z DEBUG folder: synced: the layout read folder="Shared" placed=4 ms=1
+2026-10-10T20:41:25.755164Z DEBUG folder: synced: a step folder="Shared" files=4 sent=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=1 kept_ms=0 ms=1
+2026-10-10T20:41:26.757159Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="c4k-4.bin" size=4096
+2026-10-10T20:41:26.757704Z DEBUG folder: synced: taken into the store folder="Shared" path="c4k-4.bin" hash=0c4ed997091f53b1a3f8c1eedbd75ea64e0ab5a9003409973a5ce947e6aa660b ms=0
+2026-10-10T20:41:26.765058Z  INFO folder: folder: written to the record namespace=51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536 folder="Shared" files=1
+2026-10-10T20:41:26.765310Z  INFO folder: synced: a change sent folder="Shared" path="c4k-4.bin" now=Some((ContentHash(0c4ed997091f53b1), 4096))
+2026-10-10T20:41:26.766329Z DEBUG folder: synced: the layout read folder="Shared" placed=5 ms=0
+2026-10-10T20:41:26.766866Z DEBUG folder: synced: a step folder="Shared" files=5 sent=1 read_ms=0 walk_ms=0 take_ms=0 write_ms=7 apply_ms=1 kept_ms=0 ms=10
+2026-10-10T20:41:26.766890Z DEBUG svrngs_node::ring_sync: ring sync: woken by a local write rather than the interval
+2026-10-10T20:41:26.767131Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["p1/8139770e", "p2/ed4928c6"] skipped_offline=[]
+2026-10-10T20:41:26.767253Z DEBUG svrngs_node::ring_sync: ring sync: namespace register namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" offered_to=["p1/8139770e", "p2/ed4928c6"] skipped_not_standing=[]
+2026-10-10T20:41:26.775451Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:22182/internal/ring/sync" chunk=1 pulled=0 pushed=1 peer_sent=6 offered=1 more_for_peer=false
+2026-10-10T20:41:26.779392Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:30029/internal/ring/sync" chunk=1 pulled=0 pushed=1 peer_sent=6 offered=1 more_for_peer=false
+2026-10-10T20:41:26.779803Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:22182/internal/ring/sync" chunk=2 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-10T20:41:26.780172Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:30029/internal/ring/sync" chunk=2 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-10T20:41:26.780191Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=2 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=2 round_ms=13
+2026-10-10T20:41:27.741577Z  INFO folder: folder: serving — a synced folder places the hash hash=0c4ed997091f53b1a3f8c1eedbd75ea64e0ab5a9003409973a5ce947e6aa660b conn=530000677232 request=4 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=2.914
+2026-10-10T20:41:27.744695Z  INFO folder: folder: serving — a synced folder places the hash hash=0c4ed997091f53b1a3f8c1eedbd75ea64e0ab5a9003409973a5ce947e6aa660b conn=530000678096 request=4 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=3.045
+2026-10-10T20:41:27.744741Z  INFO folder: folder: sent hash=0c4ed997091f53b1a3f8c1eedbd75ea64e0ab5a9003409973a5ce947e6aa660b conn=530000677232 request=4 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:27.744850Z  INFO folder: folder: sent hash=0c4ed997091f53b1a3f8c1eedbd75ea64e0ab5a9003409973a5ce947e6aa660b conn=530000678096 request=4 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:27.770180Z DEBUG folder: synced: the layout read folder="Shared" placed=5 ms=1
+2026-10-10T20:41:27.770639Z DEBUG folder: synced: a step folder="Shared" files=5 sent=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=1 kept_ms=0 ms=1
+2026-10-10T20:41:28.772837Z DEBUG folder: synced: the layout read folder="Shared" placed=5 ms=1
+2026-10-10T20:41:28.773396Z DEBUG folder: synced: a step folder="Shared" files=5 sent=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=1 kept_ms=0 ms=2
+2026-10-10T20:41:29.775609Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000078.bin" size=4096
+2026-10-10T20:41:29.775850Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000078.bin" hash=3d3b005ae060c129a5b09c5e90a9af5d567b9f2490a003b13b2ccad7c437a016 ms=0
+2026-10-10T20:41:29.775890Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000050.bin" size=4096
+2026-10-10T20:41:29.776020Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000050.bin" hash=2b2032ec4a55ca9531e50b3d9fc818807e0b8231617e88dcf14c6009ac27e871 ms=0
+2026-10-10T20:41:29.776040Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000044.bin" size=4096
+2026-10-10T20:41:29.776164Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000044.bin" hash=0cf074a234981cf9fd20d838be326b13beedaedd14628f50165882a2cbb6fbba ms=0
+2026-10-10T20:41:29.776191Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000093.bin" size=4096
+2026-10-10T20:41:29.776318Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000093.bin" hash=ec10e2ae7b280fd3291eb1700c194574a62843250a9a89668ca786960efe7a5e ms=0
+2026-10-10T20:41:29.776333Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000087.bin" size=4096
+2026-10-10T20:41:29.776443Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000087.bin" hash=2d4d6351f1e5fd1e55bfe08e9df19d1c8b57bda728d5178439d42dd0d5b604e7 ms=0
+2026-10-10T20:41:29.776460Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000086.bin" size=4096
+2026-10-10T20:41:29.776609Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000086.bin" hash=758d03e09bae90ece4c40cec3dca8a3ca88578896bad89d31b9832ec12092532 ms=0
+2026-10-10T20:41:29.776627Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000092.bin" size=4096
+2026-10-10T20:41:29.776740Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000092.bin" hash=a1dff296d66cef0cd07529173c2d389ac7bf8d9984f0cfd27310bdb3f68d56c1 ms=0
+2026-10-10T20:41:29.776760Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000045.bin" size=4096
+2026-10-10T20:41:29.776875Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000045.bin" hash=439f089e2ce169bfb2ca097c61aa477885248a419b34f34da8fb6085808d2f74 ms=0
+2026-10-10T20:41:29.776891Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000051.bin" size=4096
+2026-10-10T20:41:29.777000Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000051.bin" hash=f080be07f6180ec36a84ec45e5d5f47847efc404b6ce8a5f924ff44a842f42fe ms=0
+2026-10-10T20:41:29.777017Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000079.bin" size=4096
+2026-10-10T20:41:29.777111Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000079.bin" hash=31d66a95db40d00ebcc852ac47369278b540742a18f622692b79eafe23a2bfcf ms=0
+2026-10-10T20:41:29.777129Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000047.bin" size=4096
+2026-10-10T20:41:29.777239Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000047.bin" hash=b49c755eca907a987de781007aa6924f098fd8752b8c051fac2f5978c91ec843 ms=0
+2026-10-10T20:41:29.777258Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000053.bin" size=4096
+2026-10-10T20:41:29.777397Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000053.bin" hash=c5de2209d28cec1fcd94c827a92a92ef54b9e190f4e487f6122d15ea0897b737 ms=0
+2026-10-10T20:41:29.777413Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000084.bin" size=4096
+2026-10-10T20:41:29.777550Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000084.bin" hash=67ae0d620e7fce992795c0db04699701b3c56806fcb5b230b19ee89a0253941e ms=0
+2026-10-10T20:41:29.777563Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000090.bin" size=4096
+2026-10-10T20:41:29.777668Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000090.bin" hash=371ec094c367ccf4f1c8958ce2b6fde168c52cbd2795855009cb61f1a2c3b5f0 ms=0
+2026-10-10T20:41:29.777682Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000091.bin" size=4096
+2026-10-10T20:41:29.777772Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000091.bin" hash=1c285f6ae401e997110babdb4682ca673a4a646edb2fec4861a4b75551d75904 ms=0
+2026-10-10T20:41:29.777789Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000085.bin" size=4096
+2026-10-10T20:41:29.777891Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000085.bin" hash=98b2a8283bdfe0ff7316755060ef819e4f4387ed3b83f6b3df919d8601291af7 ms=0
+2026-10-10T20:41:29.777903Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000052.bin" size=4096
+2026-10-10T20:41:29.778006Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000052.bin" hash=f4ebf7728c383f291b1914fc89ed4c28ee2ea5f68ed8b0aaf5e085d767f8d0b0 ms=0
+2026-10-10T20:41:29.778022Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000046.bin" size=4096
+2026-10-10T20:41:29.778125Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000046.bin" hash=098b8a760fbc9224b30a5acc0c892b1f96bbfe4d88d6532dd01c42f6a791498f ms=0
+2026-10-10T20:41:29.778141Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000042.bin" size=4096
+2026-10-10T20:41:29.778260Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000042.bin" hash=2fedaccb20eb2455bd0619177e9e795d45ecf10b56acff0b9de17472d850ede4 ms=0
+2026-10-10T20:41:29.778278Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000056.bin" size=4096
+2026-10-10T20:41:29.778381Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000056.bin" hash=660c185bb718cae60bdb76a833abb1d20320bc783d6858a84c68fe9d82e7c55c ms=0
+2026-10-10T20:41:29.778394Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000081.bin" size=4096
+2026-10-10T20:41:29.778492Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000081.bin" hash=8fea84f06af547993e9fec85642353ec84fa5f532c7ccbfae06672d59672edd7 ms=0
+2026-10-10T20:41:29.778519Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000095.bin" size=4096
+2026-10-10T20:41:29.778660Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000095.bin" hash=e3c82ae04badce0cf12274570daeb26e4fcd6751b54bf6de88880c0d742d30f3 ms=0
+2026-10-10T20:41:29.778716Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000094.bin" size=4096
+2026-10-10T20:41:29.778909Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000094.bin" hash=21e94d8c554b6d3126ccffcc518de08922e461e57d762061d1fcaae29b670f37 ms=0
+2026-10-10T20:41:29.778928Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000080.bin" size=4096
+2026-10-10T20:41:29.779060Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000080.bin" hash=a48fc30b614b2be1f045bfa49088a2940daf32e61a033a181b0052f13edcdaae ms=0
+2026-10-10T20:41:29.779084Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000057.bin" size=4096
+2026-10-10T20:41:29.779216Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000057.bin" hash=a15a34ce4c6773ed80bd6929186dc23afd6ea22008e67bb942e37ad9fda7889f ms=0
+2026-10-10T20:41:29.779238Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000043.bin" size=4096
+2026-10-10T20:41:29.779389Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000043.bin" hash=b57c31d4565780e0b50269f3db00d1af6b0cb0007be4ee47edfb708f8a48749e ms=0
+2026-10-10T20:41:29.779420Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000055.bin" size=4096
+2026-10-10T20:41:29.779536Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000055.bin" hash=ba504bdcfe16f644e1fb3d04f49dc3b8ec49aed9970d104e959a0f2a59a46962 ms=0
+2026-10-10T20:41:29.779551Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000041.bin" size=4096
+2026-10-10T20:41:29.779655Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000041.bin" hash=fc877ef64cfc3c4ba071e06763a1d711366a28abe8399c40c6efb01e692584c2 ms=0
+2026-10-10T20:41:29.779675Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000069.bin" size=4096
+2026-10-10T20:41:29.779784Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000069.bin" hash=203a6875b7f6a5e0c23f82fab2a04bdb936e64277707526797c7c8c8e43cc8f4 ms=0
+2026-10-10T20:41:29.779799Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000096.bin" size=4096
+2026-10-10T20:41:29.779904Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000096.bin" hash=f824887f681aeb0f2ea7dd51823ae799696203329fafc9f229600c56016b070b ms=0
+2026-10-10T20:41:29.779921Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000082.bin" size=4096
+2026-10-10T20:41:29.780020Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000082.bin" hash=a179be7670810f7eed426d9082b5c7d35d3bced2e4df737ba2072eca7db4cecc ms=0
+2026-10-10T20:41:29.780037Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000083.bin" size=4096
+2026-10-10T20:41:29.780153Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000083.bin" hash=d2260ed93c798b557192e0c0241da82c2a025c2a297763e604528a7d2f1026ce ms=0
+2026-10-10T20:41:29.780164Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000097.bin" size=4096
+2026-10-10T20:41:29.780271Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000097.bin" hash=161b6c14a8e9af35a6f1f9821461d513198c4410c1750956619d319d4d031d0f ms=0
+2026-10-10T20:41:29.780289Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000068.bin" size=4096
+2026-10-10T20:41:29.780393Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000068.bin" hash=3aa6a91fce81b7cc6f235db1b363265fba04fdb95f18e4633d5cb6ee98f8f77a ms=0
+2026-10-10T20:41:29.780410Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000040.bin" size=4096
+2026-10-10T20:41:29.780510Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000040.bin" hash=0581794e1eaac3d0a6aee2e42ca91897c0ec3d4ce491f6374dda52ca2a2c6040 ms=0
+2026-10-10T20:41:29.780525Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000054.bin" size=4096
+2026-10-10T20:41:29.780638Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000054.bin" hash=6da109ffb2f53022327c0fa0339d68765d779874767614d43af95511de121f1b ms=0
+2026-10-10T20:41:29.780654Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000033.bin" size=4096
+2026-10-10T20:41:29.780767Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000033.bin" hash=dafb6cd017300241a9e80a76bcf7599845dca8007e66313216a8a199c9470c3a ms=0
+2026-10-10T20:41:29.780788Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000027.bin" size=4096
+2026-10-10T20:41:29.780932Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000027.bin" hash=6f0fe48fcba815ae9308f62b0c47ba4734f6332b6b1389f461027a0459965f51 ms=0
+2026-10-10T20:41:29.780967Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000026.bin" size=4096
+2026-10-10T20:41:29.781078Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000026.bin" hash=a76c95a0a4f379a4ed06182fda72b86345770c508737c35ad799ed119b1def05 ms=0
+2026-10-10T20:41:29.781092Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000032.bin" size=4096
+2026-10-10T20:41:29.781208Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000032.bin" hash=d60f81a17a0738edc59293f2609d6c322f6fa68dcd908f52cc212ad56abc7c3b ms=0
+2026-10-10T20:41:29.781231Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000018.bin" size=4096
+2026-10-10T20:41:29.781369Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000018.bin" hash=f1bd477f4eb3c0a9f69d48784522777ecde7ad1c5a03f10be398a1ebc38e4a1b ms=0
+2026-10-10T20:41:29.781387Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000024.bin" size=4096
+2026-10-10T20:41:29.781495Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000024.bin" hash=afd32a5c61717680c714d07a91ad5d03098bc369e958694b0313c90b86b6dcc0 ms=0
+2026-10-10T20:41:29.781510Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000030.bin" size=4096
+2026-10-10T20:41:29.781627Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000030.bin" hash=3a9d3d008897a29e4b959aa73fa1a127edda2c9441cce75667069a5b6246636d ms=0
+2026-10-10T20:41:29.781647Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000031.bin" size=4096
+2026-10-10T20:41:29.781788Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000031.bin" hash=cf4793374e952e4688c556a231166be1c6e427fbf76757839ea57192c5d368f4 ms=0
+2026-10-10T20:41:29.781807Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000025.bin" size=4096
+2026-10-10T20:41:29.781915Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000025.bin" hash=6ccdf0bd5c846b0b447544b1458079b7321b1a6a2d52492f01ace9d86677fbaa ms=0
+2026-10-10T20:41:29.781928Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000019.bin" size=4096
+2026-10-10T20:41:29.782018Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000019.bin" hash=c86483e741ff20c9c7b4b57160cea394b161755c1e672529507b8fcdd866e77b ms=0
+2026-10-10T20:41:29.782032Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000021.bin" size=4096
+2026-10-10T20:41:29.782144Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000021.bin" hash=0bc186d22bee4713ef3dabea9ab114284e2e523b0eea848e307e450edfe78fd5 ms=0
+2026-10-10T20:41:29.782174Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000035.bin" size=4096
+2026-10-10T20:41:29.782329Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000035.bin" hash=011040cd98c11077c2f93453835876dd784e4de77300fb2ba767161c2b436b02 ms=0
+2026-10-10T20:41:29.782347Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000009.bin" size=4096
+2026-10-10T20:41:29.782473Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000009.bin" hash=ac4f66c55a0a48a02757ba8f5d6428cfab950678ba60e9048ba3db2fffefab5d ms=0
+2026-10-10T20:41:29.782486Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000008.bin" size=4096
+2026-10-10T20:41:29.782577Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000008.bin" hash=a8be2f1ae32e4362ade3b3d9eafc669e7dc17fbd10d7e53ea27b3877c01a77d9 ms=0
+2026-10-10T20:41:29.782589Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000034.bin" size=4096
+2026-10-10T20:41:29.782684Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000034.bin" hash=2108137dd7898216f4f9abe746a77db09bea82e1925ff957380c762344eeaf15 ms=0
+2026-10-10T20:41:29.782706Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000020.bin" size=4096
+2026-10-10T20:41:29.782855Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000020.bin" hash=3a49fe6a107bd4d9771f68ca03cc9f364f422e9a8a92e82e57ec60fef9377852 ms=0
+2026-10-10T20:41:29.782873Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000036.bin" size=4096
+2026-10-10T20:41:29.782987Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000036.bin" hash=22449daa490f6e4637319c24c43eb30b71654cc894a5b296b9a407b065773a20 ms=0
+2026-10-10T20:41:29.783002Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000022.bin" size=4096
+2026-10-10T20:41:29.783096Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000022.bin" hash=6ab7ff0b85ab532f1abe8e22a76948101e9715903b6b51c5722d22ac96b910c1 ms=0
+2026-10-10T20:41:29.783109Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000023.bin" size=4096
+2026-10-10T20:41:29.783193Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000023.bin" hash=438c1e2531943637cf3278c287b1ab236141bcfc10a87c72cb488a18882d29aa ms=0
+2026-10-10T20:41:29.783206Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000037.bin" size=4096
+2026-10-10T20:41:29.783307Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000037.bin" hash=5ea02a56c7c6402fc05380b607e2e51f44130e77d27973a2c70729e6bc9747c1 ms=0
+2026-10-10T20:41:29.783329Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000012.bin" size=4096
+2026-10-10T20:41:29.788644Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000012.bin" hash=4741da0e0269a29e164e8089114afb770a5ba9a05d6c3ffef4983a833096c9d7 ms=5
+2026-10-10T20:41:29.788668Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000006.bin" size=4096
+2026-10-10T20:41:29.788809Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000006.bin" hash=8cff182464bc6407c18a16284ac09d57f46d363bbcb3e12133bfacc8d607b9c7 ms=0
+2026-10-10T20:41:29.788841Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000007.bin" size=4096
+2026-10-10T20:41:29.788972Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000007.bin" hash=ce54b960002f9fefae56e1e382bbf80cfc0ccc014f6b269e8d56ed71bff6951e ms=0
+2026-10-10T20:41:29.788991Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000013.bin" size=4096
+2026-10-10T20:41:29.789082Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000013.bin" hash=bfc46ffcd594a476bde6f4c8b2107e38d491c2432ae0d096ff5badb542a0bd24 ms=0
+2026-10-10T20:41:29.789098Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000039.bin" size=4096
+2026-10-10T20:41:29.789198Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000039.bin" hash=7f30f418c627f7a3e1d611ebaed6819d86f8758ad3b86963468b2e5d21eb59d2 ms=0
+2026-10-10T20:41:29.789217Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000005.bin" size=4096
+2026-10-10T20:41:29.789312Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000005.bin" hash=f04349e83194a81c8037b3836f469168c3d6924518028572a1e108f191ee64a3 ms=0
+2026-10-10T20:41:29.789325Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000011.bin" size=4096
+2026-10-10T20:41:29.789417Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000011.bin" hash=a570da45a2b2c55a11dcdf2d8e48e1cb4a823e3fed2818433d6aab9b05173aba ms=0
+2026-10-10T20:41:29.789452Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000010.bin" size=4096
+2026-10-10T20:41:29.789590Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000010.bin" hash=e017443d74b1f4140a50bc088081e27d2fa30941b25111611b3f132ec81dce8d ms=0
+2026-10-10T20:41:29.789602Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000004.bin" size=4096
+2026-10-10T20:41:29.789721Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000004.bin" hash=861a29691bf69f0f4133e93f3bddc537d8e4355d2f37bd3e78374ecc42fb68e9 ms=0
+2026-10-10T20:41:29.789742Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000038.bin" size=4096
+2026-10-10T20:41:29.789870Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000038.bin" hash=21341aa8b9f74a1a58dbaa50a26d952b5cbdfad1da1574f645a73f9701c7387b ms=0
+2026-10-10T20:41:29.789887Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000000.bin" size=4096
+2026-10-10T20:41:29.790003Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000000.bin" hash=e5ba0c09fe01e827719a05a0c152c58f81d42d753288e6c51b8684bc6b3a4b94 ms=0
+2026-10-10T20:41:29.790026Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000014.bin" size=4096
+2026-10-10T20:41:29.790144Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000014.bin" hash=69a98bb7d04d56fe2c423b3f358d03674b136aeb6ff8d5184ddc9fdb01f44060 ms=0
+2026-10-10T20:41:29.790159Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000028.bin" size=4096
+2026-10-10T20:41:29.790274Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000028.bin" hash=2dbcfdd2035e4c2406f373fc54e8f54fe4c6e88b4b9733ae5c1a60f1be448086 ms=0
+2026-10-10T20:41:29.790290Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000029.bin" size=4096
+2026-10-10T20:41:29.790432Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000029.bin" hash=d3ef3d9f3aea18677403b5d24967b1ac6a21eac1f00c3c613624505aa853a0fd ms=0
+2026-10-10T20:41:29.790447Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000015.bin" size=4096
+2026-10-10T20:41:29.790550Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000015.bin" hash=9719c0b2de9c0b6cf1c399e5a44c516d505caa83e0a3ceb760977bbe6cad5667 ms=0
+2026-10-10T20:41:29.790563Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000001.bin" size=4096
+2026-10-10T20:41:29.790667Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000001.bin" hash=22b2388d2556c94b362377359c3fd349c89bc23e9bce62596fe33314fa4ad07c ms=0
+2026-10-10T20:41:29.790683Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000017.bin" size=4096
+2026-10-10T20:41:29.790795Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000017.bin" hash=b638beb83b0b002eece7c0fe386495b61a667d18bf92be2c09ec1f35317df264 ms=0
+2026-10-10T20:41:29.790809Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000003.bin" size=4096
+2026-10-10T20:41:29.790924Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000003.bin" hash=f36e27e5f17eb0ff8cba5e97ae6f2addf29d39e5cf98495211eb95e85481e039 ms=0
+2026-10-10T20:41:29.790945Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000002.bin" size=4096
+2026-10-10T20:41:29.791056Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000002.bin" hash=ef2b46682823dcae93da65b4fa5573a64b0b97785b0dc759c3b11828dae982d9 ms=0
+2026-10-10T20:41:29.791070Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000016.bin" size=4096
+2026-10-10T20:41:29.791195Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000016.bin" hash=7f3b5b1295186efc30d70fdcbc90cf43185a5c762071d03a695f4625e1c9138f ms=0
+2026-10-10T20:41:29.791210Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000059.bin" size=4096
+2026-10-10T20:41:29.791300Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000059.bin" hash=9cf9fb891a8cb128aac23b8a2140928b19b106a804414b5c6f7cdce183a6253d ms=0
+2026-10-10T20:41:29.791325Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000071.bin" size=4096
+2026-10-10T20:41:29.791424Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000071.bin" hash=a1488a44d9de4f94e4cf668638e959555e5b71cbf8cccd20da2767cf925cc08a ms=0
+2026-10-10T20:41:29.791441Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000065.bin" size=4096
+2026-10-10T20:41:29.791555Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000065.bin" hash=2086a6cf9c46051ce37a952252ec08227805f927e3bd0ceac52de9f933841b76 ms=0
+2026-10-10T20:41:29.791572Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000064.bin" size=4096
+2026-10-10T20:41:29.791675Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000064.bin" hash=6b59a9ce1bf89a34bf5afbaa6b7ace883ca86277d3aab90dde26d4d43d07cf31 ms=0
+2026-10-10T20:41:29.791691Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000070.bin" size=4096
+2026-10-10T20:41:29.791796Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000070.bin" hash=4b4fbeebed2c6a1e0a9ab3c273536a63237bea229fb5c282d1916ce44f5285da ms=0
+2026-10-10T20:41:29.791812Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000058.bin" size=4096
+2026-10-10T20:41:29.791915Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000058.bin" hash=3e3722e63863ecd66e21a82d151d3692d100169982cbf00eb9ddb6ebc9aefdae ms=0
+2026-10-10T20:41:29.791931Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000066.bin" size=4096
+2026-10-10T20:41:29.792037Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000066.bin" hash=bb94908e9942928f9318bec84c119b75cc87195d45924f518c62117cf5f53ac1 ms=0
+2026-10-10T20:41:29.792054Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000072.bin" size=4096
+2026-10-10T20:41:29.792149Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000072.bin" hash=1eae758372ca19983261f23d76b8cc1ac70f27a5b4d41c11d070d1b752a536a1 ms=0
+2026-10-10T20:41:29.792165Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000099.bin" size=4096
+2026-10-10T20:41:29.792279Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000099.bin" hash=49ac524f0399c471e4996cba12e9e62e1492dfe475add25422bd64048ac51ad2 ms=0
+2026-10-10T20:41:29.792292Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000098.bin" size=4096
+2026-10-10T20:41:29.792392Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000098.bin" hash=998d402c8f0b7f2775baee3791338f58afdaae924f26364b91d5edd7870d7b39 ms=0
+2026-10-10T20:41:29.792408Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000073.bin" size=4096
+2026-10-10T20:41:29.792515Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000073.bin" hash=eeeeb19127eaa5154889ad91033fec37ab55c9ca2963448ed5dcfcb67afda05e ms=0
+2026-10-10T20:41:29.792528Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000067.bin" size=4096
+2026-10-10T20:41:29.792644Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000067.bin" hash=b4d91b77882134e0a062968d34968075049b58c4f7295e8ba80736bca52a5b8d ms=0
+2026-10-10T20:41:29.792671Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000063.bin" size=4096
+2026-10-10T20:41:29.792784Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000063.bin" hash=0105fd72ad307356326b9565b784776a140ede9058f0fee5f50cc4cec513b393 ms=0
+2026-10-10T20:41:29.792798Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000077.bin" size=4096
+2026-10-10T20:41:29.792906Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000077.bin" hash=6f22c4883f36496f1e52636c12bfdeac85bf7d2583e9a5ed2ddfa3d8bc806a2b ms=0
+2026-10-10T20:41:29.792922Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000088.bin" size=4096
+2026-10-10T20:41:29.793024Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000088.bin" hash=a06371e96d712e6c097d4a117cdec0f0200a448fe6edd1c6b86fbc1f72007bb8 ms=0
+2026-10-10T20:41:29.793036Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000089.bin" size=4096
+2026-10-10T20:41:29.793136Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000089.bin" hash=854a35ce2ca032248690bca21a04f855ffcf306810d40e45c3fb1515576685df ms=0
+2026-10-10T20:41:29.793153Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000076.bin" size=4096
+2026-10-10T20:41:29.793253Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000076.bin" hash=36fc1969b8daf763170bbdfaa5238c43f26279e66f692e266bdd0243350dd802 ms=0
+2026-10-10T20:41:29.793266Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000062.bin" size=4096
+2026-10-10T20:41:29.793380Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000062.bin" hash=5108628e8739580ab5e80b325d5333d88c2d4c185cd71b244ac5c13759aaf762 ms=0
+2026-10-10T20:41:29.793396Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000074.bin" size=4096
+2026-10-10T20:41:29.793505Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000074.bin" hash=7ba416ca36a789c4088357c4dbe22c8b3b6549aa47242eaad08949e8f67fe4e9 ms=0
+2026-10-10T20:41:29.793519Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000060.bin" size=4096
+2026-10-10T20:41:29.793625Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000060.bin" hash=c6afaafd4a90cca9528d8dd7b7245134c5889cc797dcad4be3bdd3753514fbce ms=0
+2026-10-10T20:41:29.793640Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000048.bin" size=4096
+2026-10-10T20:41:29.793748Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000048.bin" hash=2d22de729d3fd551cb6396deda8d7ca7e11009f52844d54ffff79844df42f6bc ms=0
+2026-10-10T20:41:29.793761Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000049.bin" size=4096
+2026-10-10T20:41:29.793851Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000049.bin" hash=52d101e647ab91132c28ce8a661a14cec73b4beebea77201e3f3821ec7c0a66f ms=0
+2026-10-10T20:41:29.793865Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000061.bin" size=4096
+2026-10-10T20:41:29.793958Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000061.bin" hash=c2eca30e42ec9d5697b6721cc9c5b2d9d42a1239f4e4b8dbb85036f437494346 ms=0
+2026-10-10T20:41:29.793975Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="m100/000075.bin" size=4096
+2026-10-10T20:41:29.794134Z DEBUG folder: synced: taken into the store folder="Shared" path="m100/000075.bin" hash=6195b1ab6a36aa0bce251d0c55ab1a0df420e183fbf93834fc76cdc7c555c32e ms=0
+2026-10-10T20:41:29.800061Z  INFO folder: folder: written to the record namespace=51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536 folder="Shared" files=100
+2026-10-10T20:41:29.800089Z  INFO folder: synced: a change sent folder="Shared" path="m100/000078.bin" now=Some((ContentHash(3d3b005ae060c129), 4096))
+2026-10-10T20:41:29.800097Z  INFO folder: synced: a change sent folder="Shared" path="m100/000050.bin" now=Some((ContentHash(2b2032ec4a55ca95), 4096))
+2026-10-10T20:41:29.800103Z  INFO folder: synced: a change sent folder="Shared" path="m100/000044.bin" now=Some((ContentHash(0cf074a234981cf9), 4096))
+2026-10-10T20:41:29.800108Z  INFO folder: synced: a change sent folder="Shared" path="m100/000093.bin" now=Some((ContentHash(ec10e2ae7b280fd3), 4096))
+2026-10-10T20:41:29.800113Z  INFO folder: synced: a change sent folder="Shared" path="m100/000087.bin" now=Some((ContentHash(2d4d6351f1e5fd1e), 4096))
+2026-10-10T20:41:29.800117Z  INFO folder: synced: a change sent folder="Shared" path="m100/000086.bin" now=Some((ContentHash(758d03e09bae90ec), 4096))
+2026-10-10T20:41:29.800121Z  INFO folder: synced: a change sent folder="Shared" path="m100/000092.bin" now=Some((ContentHash(a1dff296d66cef0c), 4096))
+2026-10-10T20:41:29.800128Z  INFO folder: synced: a change sent folder="Shared" path="m100/000045.bin" now=Some((ContentHash(439f089e2ce169bf), 4096))
+2026-10-10T20:41:29.800131Z  INFO folder: synced: a change sent folder="Shared" path="m100/000051.bin" now=Some((ContentHash(f080be07f6180ec3), 4096))
+2026-10-10T20:41:29.800136Z  INFO folder: synced: a change sent folder="Shared" path="m100/000079.bin" now=Some((ContentHash(31d66a95db40d00e), 4096))
+2026-10-10T20:41:29.800139Z  INFO folder: synced: a change sent folder="Shared" path="m100/000047.bin" now=Some((ContentHash(b49c755eca907a98), 4096))
+2026-10-10T20:41:29.800143Z  INFO folder: synced: a change sent folder="Shared" path="m100/000053.bin" now=Some((ContentHash(c5de2209d28cec1f), 4096))
+2026-10-10T20:41:29.800147Z  INFO folder: synced: a change sent folder="Shared" path="m100/000084.bin" now=Some((ContentHash(67ae0d620e7fce99), 4096))
+2026-10-10T20:41:29.800151Z  INFO folder: synced: a change sent folder="Shared" path="m100/000090.bin" now=Some((ContentHash(371ec094c367ccf4), 4096))
+2026-10-10T20:41:29.800155Z  INFO folder: synced: a change sent folder="Shared" path="m100/000091.bin" now=Some((ContentHash(1c285f6ae401e997), 4096))
+2026-10-10T20:41:29.800159Z  INFO folder: synced: a change sent folder="Shared" path="m100/000085.bin" now=Some((ContentHash(98b2a8283bdfe0ff), 4096))
+2026-10-10T20:41:29.800163Z  INFO folder: synced: a change sent folder="Shared" path="m100/000052.bin" now=Some((ContentHash(f4ebf7728c383f29), 4096))
+2026-10-10T20:41:29.800167Z  INFO folder: synced: a change sent folder="Shared" path="m100/000046.bin" now=Some((ContentHash(098b8a760fbc9224), 4096))
+2026-10-10T20:41:29.800171Z  INFO folder: synced: a change sent folder="Shared" path="m100/000042.bin" now=Some((ContentHash(2fedaccb20eb2455), 4096))
+2026-10-10T20:41:29.800175Z  INFO folder: synced: a change sent folder="Shared" path="m100/000056.bin" now=Some((ContentHash(660c185bb718cae6), 4096))
+2026-10-10T20:41:29.800182Z  INFO folder: synced: a change sent folder="Shared" path="m100/000081.bin" now=Some((ContentHash(8fea84f06af54799), 4096))
+2026-10-10T20:41:29.800187Z  INFO folder: synced: a change sent folder="Shared" path="m100/000095.bin" now=Some((ContentHash(e3c82ae04badce0c), 4096))
+2026-10-10T20:41:29.800192Z  INFO folder: synced: a change sent folder="Shared" path="m100/000094.bin" now=Some((ContentHash(21e94d8c554b6d31), 4096))
+2026-10-10T20:41:29.800196Z  INFO folder: synced: a change sent folder="Shared" path="m100/000080.bin" now=Some((ContentHash(a48fc30b614b2be1), 4096))
+2026-10-10T20:41:29.800199Z  INFO folder: synced: a change sent folder="Shared" path="m100/000057.bin" now=Some((ContentHash(a15a34ce4c6773ed), 4096))
+2026-10-10T20:41:29.800203Z  INFO folder: synced: a change sent folder="Shared" path="m100/000043.bin" now=Some((ContentHash(b57c31d4565780e0), 4096))
+2026-10-10T20:41:29.800215Z  INFO folder: synced: a change sent folder="Shared" path="m100/000055.bin" now=Some((ContentHash(ba504bdcfe16f644), 4096))
+2026-10-10T20:41:29.800219Z  INFO folder: synced: a change sent folder="Shared" path="m100/000041.bin" now=Some((ContentHash(fc877ef64cfc3c4b), 4096))
+2026-10-10T20:41:29.800223Z  INFO folder: synced: a change sent folder="Shared" path="m100/000069.bin" now=Some((ContentHash(203a6875b7f6a5e0), 4096))
+2026-10-10T20:41:29.800226Z  INFO folder: synced: a change sent folder="Shared" path="m100/000096.bin" now=Some((ContentHash(f824887f681aeb0f), 4096))
+2026-10-10T20:41:29.800230Z  INFO folder: synced: a change sent folder="Shared" path="m100/000082.bin" now=Some((ContentHash(a179be7670810f7e), 4096))
+2026-10-10T20:41:29.800235Z  INFO folder: synced: a change sent folder="Shared" path="m100/000083.bin" now=Some((ContentHash(d2260ed93c798b55), 4096))
+2026-10-10T20:41:29.800240Z  INFO folder: synced: a change sent folder="Shared" path="m100/000097.bin" now=Some((ContentHash(161b6c14a8e9af35), 4096))
+2026-10-10T20:41:29.800247Z  INFO folder: synced: a change sent folder="Shared" path="m100/000068.bin" now=Some((ContentHash(3aa6a91fce81b7cc), 4096))
+2026-10-10T20:41:29.800251Z  INFO folder: synced: a change sent folder="Shared" path="m100/000040.bin" now=Some((ContentHash(0581794e1eaac3d0), 4096))
+2026-10-10T20:41:29.800258Z  INFO folder: synced: a change sent folder="Shared" path="m100/000054.bin" now=Some((ContentHash(6da109ffb2f53022), 4096))
+2026-10-10T20:41:29.800264Z  INFO folder: synced: a change sent folder="Shared" path="m100/000033.bin" now=Some((ContentHash(dafb6cd017300241), 4096))
+2026-10-10T20:41:29.800269Z  INFO folder: synced: a change sent folder="Shared" path="m100/000027.bin" now=Some((ContentHash(6f0fe48fcba815ae), 4096))
+2026-10-10T20:41:29.800274Z  INFO folder: synced: a change sent folder="Shared" path="m100/000026.bin" now=Some((ContentHash(a76c95a0a4f379a4), 4096))
+2026-10-10T20:41:29.800278Z  INFO folder: synced: a change sent folder="Shared" path="m100/000032.bin" now=Some((ContentHash(d60f81a17a0738ed), 4096))
+2026-10-10T20:41:29.800282Z  INFO folder: synced: a change sent folder="Shared" path="m100/000018.bin" now=Some((ContentHash(f1bd477f4eb3c0a9), 4096))
+2026-10-10T20:41:29.800285Z  INFO folder: synced: a change sent folder="Shared" path="m100/000024.bin" now=Some((ContentHash(afd32a5c61717680), 4096))
+2026-10-10T20:41:29.800289Z  INFO folder: synced: a change sent folder="Shared" path="m100/000030.bin" now=Some((ContentHash(3a9d3d008897a29e), 4096))
+2026-10-10T20:41:29.800293Z  INFO folder: synced: a change sent folder="Shared" path="m100/000031.bin" now=Some((ContentHash(cf4793374e952e46), 4096))
+2026-10-10T20:41:29.800296Z  INFO folder: synced: a change sent folder="Shared" path="m100/000025.bin" now=Some((ContentHash(6ccdf0bd5c846b0b), 4096))
+2026-10-10T20:41:29.800300Z  INFO folder: synced: a change sent folder="Shared" path="m100/000019.bin" now=Some((ContentHash(c86483e741ff20c9), 4096))
+2026-10-10T20:41:29.800303Z  INFO folder: synced: a change sent folder="Shared" path="m100/000021.bin" now=Some((ContentHash(0bc186d22bee4713), 4096))
+2026-10-10T20:41:29.800307Z  INFO folder: synced: a change sent folder="Shared" path="m100/000035.bin" now=Some((ContentHash(011040cd98c11077), 4096))
+2026-10-10T20:41:29.800311Z  INFO folder: synced: a change sent folder="Shared" path="m100/000009.bin" now=Some((ContentHash(ac4f66c55a0a48a0), 4096))
+2026-10-10T20:41:29.800314Z  INFO folder: synced: a change sent folder="Shared" path="m100/000008.bin" now=Some((ContentHash(a8be2f1ae32e4362), 4096))
+2026-10-10T20:41:29.800318Z  INFO folder: synced: a change sent folder="Shared" path="m100/000034.bin" now=Some((ContentHash(2108137dd7898216), 4096))
+2026-10-10T20:41:29.800321Z  INFO folder: synced: a change sent folder="Shared" path="m100/000020.bin" now=Some((ContentHash(3a49fe6a107bd4d9), 4096))
+2026-10-10T20:41:29.800325Z  INFO folder: synced: a change sent folder="Shared" path="m100/000036.bin" now=Some((ContentHash(22449daa490f6e46), 4096))
+2026-10-10T20:41:29.800337Z  INFO folder: synced: a change sent folder="Shared" path="m100/000022.bin" now=Some((ContentHash(6ab7ff0b85ab532f), 4096))
+2026-10-10T20:41:29.800341Z  INFO folder: synced: a change sent folder="Shared" path="m100/000023.bin" now=Some((ContentHash(438c1e2531943637), 4096))
+2026-10-10T20:41:29.800345Z  INFO folder: synced: a change sent folder="Shared" path="m100/000037.bin" now=Some((ContentHash(5ea02a56c7c6402f), 4096))
+2026-10-10T20:41:29.800348Z  INFO folder: synced: a change sent folder="Shared" path="m100/000012.bin" now=Some((ContentHash(4741da0e0269a29e), 4096))
+2026-10-10T20:41:29.800352Z  INFO folder: synced: a change sent folder="Shared" path="m100/000006.bin" now=Some((ContentHash(8cff182464bc6407), 4096))
+2026-10-10T20:41:29.800356Z  INFO folder: synced: a change sent folder="Shared" path="m100/000007.bin" now=Some((ContentHash(ce54b960002f9fef), 4096))
+2026-10-10T20:41:29.800359Z  INFO folder: synced: a change sent folder="Shared" path="m100/000013.bin" now=Some((ContentHash(bfc46ffcd594a476), 4096))
+2026-10-10T20:41:29.800363Z  INFO folder: synced: a change sent folder="Shared" path="m100/000039.bin" now=Some((ContentHash(7f30f418c627f7a3), 4096))
+2026-10-10T20:41:29.800366Z  INFO folder: synced: a change sent folder="Shared" path="m100/000005.bin" now=Some((ContentHash(f04349e83194a81c), 4096))
+2026-10-10T20:41:29.800370Z  INFO folder: synced: a change sent folder="Shared" path="m100/000011.bin" now=Some((ContentHash(a570da45a2b2c55a), 4096))
+2026-10-10T20:41:29.800373Z  INFO folder: synced: a change sent folder="Shared" path="m100/000010.bin" now=Some((ContentHash(e017443d74b1f414), 4096))
+2026-10-10T20:41:29.800377Z  INFO folder: synced: a change sent folder="Shared" path="m100/000004.bin" now=Some((ContentHash(861a29691bf69f0f), 4096))
+2026-10-10T20:41:29.800380Z  INFO folder: synced: a change sent folder="Shared" path="m100/000038.bin" now=Some((ContentHash(21341aa8b9f74a1a), 4096))
+2026-10-10T20:41:29.800384Z  INFO folder: synced: a change sent folder="Shared" path="m100/000000.bin" now=Some((ContentHash(e5ba0c09fe01e827), 4096))
+2026-10-10T20:41:29.800387Z  INFO folder: synced: a change sent folder="Shared" path="m100/000014.bin" now=Some((ContentHash(69a98bb7d04d56fe), 4096))
+2026-10-10T20:41:29.800391Z  INFO folder: synced: a change sent folder="Shared" path="m100/000028.bin" now=Some((ContentHash(2dbcfdd2035e4c24), 4096))
+2026-10-10T20:41:29.800395Z  INFO folder: synced: a change sent folder="Shared" path="m100/000029.bin" now=Some((ContentHash(d3ef3d9f3aea1867), 4096))
+2026-10-10T20:41:29.800398Z  INFO folder: synced: a change sent folder="Shared" path="m100/000015.bin" now=Some((ContentHash(9719c0b2de9c0b6c), 4096))
+2026-10-10T20:41:29.800402Z  INFO folder: synced: a change sent folder="Shared" path="m100/000001.bin" now=Some((ContentHash(22b2388d2556c94b), 4096))
+2026-10-10T20:41:29.800405Z  INFO folder: synced: a change sent folder="Shared" path="m100/000017.bin" now=Some((ContentHash(b638beb83b0b002e), 4096))
+2026-10-10T20:41:29.800409Z  INFO folder: synced: a change sent folder="Shared" path="m100/000003.bin" now=Some((ContentHash(f36e27e5f17eb0ff), 4096))
+2026-10-10T20:41:29.800412Z  INFO folder: synced: a change sent folder="Shared" path="m100/000002.bin" now=Some((ContentHash(ef2b46682823dcae), 4096))
+2026-10-10T20:41:29.800416Z  INFO folder: synced: a change sent folder="Shared" path="m100/000016.bin" now=Some((ContentHash(7f3b5b1295186efc), 4096))
+2026-10-10T20:41:29.800420Z  INFO folder: synced: a change sent folder="Shared" path="m100/000059.bin" now=Some((ContentHash(9cf9fb891a8cb128), 4096))
+2026-10-10T20:41:29.800423Z  INFO folder: synced: a change sent folder="Shared" path="m100/000071.bin" now=Some((ContentHash(a1488a44d9de4f94), 4096))
+2026-10-10T20:41:29.800427Z  INFO folder: synced: a change sent folder="Shared" path="m100/000065.bin" now=Some((ContentHash(2086a6cf9c46051c), 4096))
+2026-10-10T20:41:29.800431Z  INFO folder: synced: a change sent folder="Shared" path="m100/000064.bin" now=Some((ContentHash(6b59a9ce1bf89a34), 4096))
+2026-10-10T20:41:29.800435Z  INFO folder: synced: a change sent folder="Shared" path="m100/000070.bin" now=Some((ContentHash(4b4fbeebed2c6a1e), 4096))
+2026-10-10T20:41:29.800443Z  INFO folder: synced: a change sent folder="Shared" path="m100/000058.bin" now=Some((ContentHash(3e3722e63863ecd6), 4096))
+2026-10-10T20:41:29.800447Z  INFO folder: synced: a change sent folder="Shared" path="m100/000066.bin" now=Some((ContentHash(bb94908e9942928f), 4096))
+2026-10-10T20:41:29.800450Z  INFO folder: synced: a change sent folder="Shared" path="m100/000072.bin" now=Some((ContentHash(1eae758372ca1998), 4096))
+2026-10-10T20:41:29.800454Z  INFO folder: synced: a change sent folder="Shared" path="m100/000099.bin" now=Some((ContentHash(49ac524f0399c471), 4096))
+2026-10-10T20:41:29.800457Z  INFO folder: synced: a change sent folder="Shared" path="m100/000098.bin" now=Some((ContentHash(998d402c8f0b7f27), 4096))
+2026-10-10T20:41:29.800462Z  INFO folder: synced: a change sent folder="Shared" path="m100/000073.bin" now=Some((ContentHash(eeeeb19127eaa515), 4096))
+2026-10-10T20:41:29.800466Z  INFO folder: synced: a change sent folder="Shared" path="m100/000067.bin" now=Some((ContentHash(b4d91b77882134e0), 4096))
+2026-10-10T20:41:29.800470Z  INFO folder: synced: a change sent folder="Shared" path="m100/000063.bin" now=Some((ContentHash(0105fd72ad307356), 4096))
+2026-10-10T20:41:29.800475Z  INFO folder: synced: a change sent folder="Shared" path="m100/000077.bin" now=Some((ContentHash(6f22c4883f36496f), 4096))
+2026-10-10T20:41:29.800479Z  INFO folder: synced: a change sent folder="Shared" path="m100/000088.bin" now=Some((ContentHash(a06371e96d712e6c), 4096))
+2026-10-10T20:41:29.800482Z  INFO folder: synced: a change sent folder="Shared" path="m100/000089.bin" now=Some((ContentHash(854a35ce2ca03224), 4096))
+2026-10-10T20:41:29.800486Z  INFO folder: synced: a change sent folder="Shared" path="m100/000076.bin" now=Some((ContentHash(36fc1969b8daf763), 4096))
+2026-10-10T20:41:29.800489Z  INFO folder: synced: a change sent folder="Shared" path="m100/000062.bin" now=Some((ContentHash(5108628e8739580a), 4096))
+2026-10-10T20:41:29.800493Z  INFO folder: synced: a change sent folder="Shared" path="m100/000074.bin" now=Some((ContentHash(7ba416ca36a789c4), 4096))
+2026-10-10T20:41:29.800497Z  INFO folder: synced: a change sent folder="Shared" path="m100/000060.bin" now=Some((ContentHash(c6afaafd4a90cca9), 4096))
+2026-10-10T20:41:29.800502Z  INFO folder: synced: a change sent folder="Shared" path="m100/000048.bin" now=Some((ContentHash(2d22de729d3fd551), 4096))
+2026-10-10T20:41:29.800506Z  INFO folder: synced: a change sent folder="Shared" path="m100/000049.bin" now=Some((ContentHash(52d101e647ab9113), 4096))
+2026-10-10T20:41:29.800511Z  INFO folder: synced: a change sent folder="Shared" path="m100/000061.bin" now=Some((ContentHash(c2eca30e42ec9d56), 4096))
+2026-10-10T20:41:29.800515Z  INFO folder: synced: a change sent folder="Shared" path="m100/000075.bin" now=Some((ContentHash(6195b1ab6a36aa0b), 4096))
+2026-10-10T20:41:29.801488Z DEBUG folder: synced: the layout read folder="Shared" placed=105 ms=0
+2026-10-10T20:41:29.802031Z DEBUG folder: synced: a step folder="Shared" files=105 sent=100 read_ms=0 walk_ms=0 take_ms=18 write_ms=6 apply_ms=1 kept_ms=0 ms=27
+2026-10-10T20:41:29.802056Z DEBUG svrngs_node::ring_sync: ring sync: woken by a local write rather than the interval
+2026-10-10T20:41:29.802189Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["p1/8139770e", "p2/ed4928c6"] skipped_offline=[]
+2026-10-10T20:41:29.802255Z DEBUG svrngs_node::ring_sync: ring sync: namespace register namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" offered_to=["p1/8139770e", "p2/ed4928c6"] skipped_not_standing=[]
+2026-10-10T20:41:29.810175Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:30029/internal/ring/sync" chunk=1 pulled=0 pushed=1 peer_sent=7 offered=1 more_for_peer=false
+2026-10-10T20:41:29.814154Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:22182/internal/ring/sync" chunk=1 pulled=0 pushed=1 peer_sent=7 offered=1 more_for_peer=false
+2026-10-10T20:41:29.814246Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:30029/internal/ring/sync" chunk=2 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-10T20:41:29.814698Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:22182/internal/ring/sync" chunk=2 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-10T20:41:29.814709Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=2 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=2 round_ms=12
+2026-10-10T20:41:30.768411Z  INFO folder: folder: serving — a synced folder places the hash hash=e5ba0c09fe01e827719a05a0c152c58f81d42d753288e6c51b8684bc6b3a4b94 conn=530000678096 request=5 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=3.36
+2026-10-10T20:41:30.770013Z  INFO folder: folder: sent hash=e5ba0c09fe01e827719a05a0c152c58f81d42d753288e6c51b8684bc6b3a4b94 conn=530000678096 request=5 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.771785Z  INFO folder: folder: serving — a synced folder places the hash hash=e5ba0c09fe01e827719a05a0c152c58f81d42d753288e6c51b8684bc6b3a4b94 conn=530000677232 request=5 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=1.6
+2026-10-10T20:41:30.773349Z  INFO folder: folder: serving — a synced folder places the hash hash=22b2388d2556c94b362377359c3fd349c89bc23e9bce62596fe33314fa4ad07c conn=530000678096 request=6 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=1.517
+2026-10-10T20:41:30.773416Z  INFO folder: folder: sent hash=e5ba0c09fe01e827719a05a0c152c58f81d42d753288e6c51b8684bc6b3a4b94 conn=530000677232 request=5 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.774988Z  INFO folder: folder: serving — a synced folder places the hash hash=22b2388d2556c94b362377359c3fd349c89bc23e9bce62596fe33314fa4ad07c conn=530000677232 request=6 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=1.578
+2026-10-10T20:41:30.775027Z  INFO folder: folder: sent hash=22b2388d2556c94b362377359c3fd349c89bc23e9bce62596fe33314fa4ad07c conn=530000678096 request=6 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.776735Z  INFO folder: folder: serving — a synced folder places the hash hash=ef2b46682823dcae93da65b4fa5573a64b0b97785b0dc759c3b11828dae982d9 conn=530000678096 request=7 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=1.714
+2026-10-10T20:41:30.776773Z  INFO folder: folder: sent hash=22b2388d2556c94b362377359c3fd349c89bc23e9bce62596fe33314fa4ad07c conn=530000677232 request=6 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.778978Z  INFO folder: folder: serving — a synced folder places the hash hash=ef2b46682823dcae93da65b4fa5573a64b0b97785b0dc759c3b11828dae982d9 conn=530000677232 request=7 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=2.209
+2026-10-10T20:41:30.779013Z  INFO folder: folder: sent hash=ef2b46682823dcae93da65b4fa5573a64b0b97785b0dc759c3b11828dae982d9 conn=530000678096 request=7 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.780790Z  INFO folder: folder: serving — a synced folder places the hash hash=f36e27e5f17eb0ff8cba5e97ae6f2addf29d39e5cf98495211eb95e85481e039 conn=530000678096 request=8 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=1.563
+2026-10-10T20:41:30.787594Z  INFO folder: folder: sent hash=ef2b46682823dcae93da65b4fa5573a64b0b97785b0dc759c3b11828dae982d9 conn=530000677232 request=7 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.787644Z  INFO folder: folder: sent hash=f36e27e5f17eb0ff8cba5e97ae6f2addf29d39e5cf98495211eb95e85481e039 conn=530000678096 request=8 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.790811Z  INFO folder: folder: serving — a synced folder places the hash hash=861a29691bf69f0f4133e93f3bddc537d8e4355d2f37bd3e78374ecc42fb68e9 conn=530000678096 request=9 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=1.821
+2026-10-10T20:41:30.792444Z  INFO folder: folder: serving — a synced folder places the hash hash=f36e27e5f17eb0ff8cba5e97ae6f2addf29d39e5cf98495211eb95e85481e039 conn=530000677232 request=8 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=1.574
+2026-10-10T20:41:30.792570Z  INFO folder: folder: sent hash=861a29691bf69f0f4133e93f3bddc537d8e4355d2f37bd3e78374ecc42fb68e9 conn=530000678096 request=9 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.793439Z  INFO folder: folder: serving — a synced folder places the hash hash=f04349e83194a81c8037b3836f469168c3d6924518028572a1e108f191ee64a3 conn=530000678096 request=10 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.962
+2026-10-10T20:41:30.793478Z  INFO folder: folder: sent hash=f36e27e5f17eb0ff8cba5e97ae6f2addf29d39e5cf98495211eb95e85481e039 conn=530000677232 request=8 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.793535Z  INFO folder: folder: sent hash=f04349e83194a81c8037b3836f469168c3d6924518028572a1e108f191ee64a3 conn=530000678096 request=10 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.794966Z  INFO folder: folder: serving — a synced folder places the hash hash=861a29691bf69f0f4133e93f3bddc537d8e4355d2f37bd3e78374ecc42fb68e9 conn=530000677232 request=9 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=1.135
+2026-10-10T20:41:30.795034Z  INFO folder: folder: sent hash=861a29691bf69f0f4133e93f3bddc537d8e4355d2f37bd3e78374ecc42fb68e9 conn=530000677232 request=9 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.795809Z  INFO folder: folder: serving — a synced folder places the hash hash=8cff182464bc6407c18a16284ac09d57f46d363bbcb3e12133bfacc8d607b9c7 conn=530000678096 request=11 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.82
+2026-10-10T20:41:30.795875Z  INFO folder: folder: sent hash=8cff182464bc6407c18a16284ac09d57f46d363bbcb3e12133bfacc8d607b9c7 conn=530000678096 request=11 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.796606Z  INFO folder: folder: serving — a synced folder places the hash hash=f04349e83194a81c8037b3836f469168c3d6924518028572a1e108f191ee64a3 conn=530000677232 request=10 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.778
+2026-10-10T20:41:30.796672Z  INFO folder: folder: sent hash=f04349e83194a81c8037b3836f469168c3d6924518028572a1e108f191ee64a3 conn=530000677232 request=10 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.797399Z  INFO folder: folder: serving — a synced folder places the hash hash=ce54b960002f9fefae56e1e382bbf80cfc0ccc014f6b269e8d56ed71bff6951e conn=530000678096 request=12 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.774
+2026-10-10T20:41:30.797461Z  INFO folder: folder: sent hash=ce54b960002f9fefae56e1e382bbf80cfc0ccc014f6b269e8d56ed71bff6951e conn=530000678096 request=12 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.798231Z  INFO folder: folder: serving — a synced folder places the hash hash=8cff182464bc6407c18a16284ac09d57f46d363bbcb3e12133bfacc8d607b9c7 conn=530000677232 request=11 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.814
+2026-10-10T20:41:30.798288Z  INFO folder: folder: sent hash=8cff182464bc6407c18a16284ac09d57f46d363bbcb3e12133bfacc8d607b9c7 conn=530000677232 request=11 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.799109Z  INFO folder: folder: serving — a synced folder places the hash hash=a8be2f1ae32e4362ade3b3d9eafc669e7dc17fbd10d7e53ea27b3877c01a77d9 conn=530000678096 request=13 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.86
+2026-10-10T20:41:30.799173Z  INFO folder: folder: sent hash=a8be2f1ae32e4362ade3b3d9eafc669e7dc17fbd10d7e53ea27b3877c01a77d9 conn=530000678096 request=13 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.799906Z  INFO folder: folder: serving — a synced folder places the hash hash=ce54b960002f9fefae56e1e382bbf80cfc0ccc014f6b269e8d56ed71bff6951e conn=530000677232 request=12 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.784
+2026-10-10T20:41:30.799970Z  INFO folder: folder: sent hash=ce54b960002f9fefae56e1e382bbf80cfc0ccc014f6b269e8d56ed71bff6951e conn=530000677232 request=12 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.800696Z  INFO folder: folder: serving — a synced folder places the hash hash=ac4f66c55a0a48a02757ba8f5d6428cfab950678ba60e9048ba3db2fffefab5d conn=530000678096 request=14 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.772
+2026-10-10T20:41:30.800751Z  INFO folder: folder: sent hash=ac4f66c55a0a48a02757ba8f5d6428cfab950678ba60e9048ba3db2fffefab5d conn=530000678096 request=14 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.801457Z  INFO folder: folder: serving — a synced folder places the hash hash=a8be2f1ae32e4362ade3b3d9eafc669e7dc17fbd10d7e53ea27b3877c01a77d9 conn=530000677232 request=13 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.749
+2026-10-10T20:41:30.801508Z  INFO folder: folder: sent hash=a8be2f1ae32e4362ade3b3d9eafc669e7dc17fbd10d7e53ea27b3877c01a77d9 conn=530000677232 request=13 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.802227Z  INFO folder: folder: serving — a synced folder places the hash hash=e017443d74b1f4140a50bc088081e27d2fa30941b25111611b3f132ec81dce8d conn=530000678096 request=15 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.758
+2026-10-10T20:41:30.802282Z  INFO folder: folder: sent hash=e017443d74b1f4140a50bc088081e27d2fa30941b25111611b3f132ec81dce8d conn=530000678096 request=15 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.803025Z  INFO folder: folder: serving — a synced folder places the hash hash=ac4f66c55a0a48a02757ba8f5d6428cfab950678ba60e9048ba3db2fffefab5d conn=530000677232 request=14 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.783
+2026-10-10T20:41:30.803090Z  INFO folder: folder: sent hash=ac4f66c55a0a48a02757ba8f5d6428cfab950678ba60e9048ba3db2fffefab5d conn=530000677232 request=14 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.803796Z  INFO folder: folder: serving — a synced folder places the hash hash=a570da45a2b2c55a11dcdf2d8e48e1cb4a823e3fed2818433d6aab9b05173aba conn=530000678096 request=16 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.758
+2026-10-10T20:41:30.803876Z  INFO folder: folder: sent hash=a570da45a2b2c55a11dcdf2d8e48e1cb4a823e3fed2818433d6aab9b05173aba conn=530000678096 request=16 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.804567Z  INFO folder: folder: serving — a synced folder places the hash hash=e017443d74b1f4140a50bc088081e27d2fa30941b25111611b3f132ec81dce8d conn=530000677232 request=15 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.751
+2026-10-10T20:41:30.804633Z  INFO folder: folder: sent hash=e017443d74b1f4140a50bc088081e27d2fa30941b25111611b3f132ec81dce8d conn=530000677232 request=15 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.804832Z DEBUG folder: synced: the layout read folder="Shared" placed=105 ms=0
+2026-10-10T20:41:30.805303Z DEBUG folder: synced: a step folder="Shared" files=105 sent=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=1 kept_ms=0 ms=2
+2026-10-10T20:41:30.805357Z  INFO folder: folder: serving — a synced folder places the hash hash=4741da0e0269a29e164e8089114afb770a5ba9a05d6c3ffef4983a833096c9d7 conn=530000678096 request=17 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.774
+2026-10-10T20:41:30.805433Z  INFO folder: folder: sent hash=4741da0e0269a29e164e8089114afb770a5ba9a05d6c3ffef4983a833096c9d7 conn=530000678096 request=17 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.806176Z  INFO folder: folder: serving — a synced folder places the hash hash=a570da45a2b2c55a11dcdf2d8e48e1cb4a823e3fed2818433d6aab9b05173aba conn=530000677232 request=16 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.806
+2026-10-10T20:41:30.806240Z  INFO folder: folder: sent hash=a570da45a2b2c55a11dcdf2d8e48e1cb4a823e3fed2818433d6aab9b05173aba conn=530000677232 request=16 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.807014Z  INFO folder: folder: serving — a synced folder places the hash hash=bfc46ffcd594a476bde6f4c8b2107e38d491c2432ae0d096ff5badb542a0bd24 conn=530000678096 request=18 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.821
+2026-10-10T20:41:30.807086Z  INFO folder: folder: sent hash=bfc46ffcd594a476bde6f4c8b2107e38d491c2432ae0d096ff5badb542a0bd24 conn=530000678096 request=18 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.807828Z  INFO folder: folder: serving — a synced folder places the hash hash=4741da0e0269a29e164e8089114afb770a5ba9a05d6c3ffef4983a833096c9d7 conn=530000677232 request=17 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.798
+2026-10-10T20:41:30.807891Z  INFO folder: folder: sent hash=4741da0e0269a29e164e8089114afb770a5ba9a05d6c3ffef4983a833096c9d7 conn=530000677232 request=17 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.808610Z  INFO folder: folder: serving — a synced folder places the hash hash=69a98bb7d04d56fe2c423b3f358d03674b136aeb6ff8d5184ddc9fdb01f44060 conn=530000678096 request=19 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.766
+2026-10-10T20:41:30.808668Z  INFO folder: folder: sent hash=69a98bb7d04d56fe2c423b3f358d03674b136aeb6ff8d5184ddc9fdb01f44060 conn=530000678096 request=19 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.809391Z  INFO folder: folder: serving — a synced folder places the hash hash=bfc46ffcd594a476bde6f4c8b2107e38d491c2432ae0d096ff5badb542a0bd24 conn=530000677232 request=18 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.765
+2026-10-10T20:41:30.809447Z  INFO folder: folder: sent hash=bfc46ffcd594a476bde6f4c8b2107e38d491c2432ae0d096ff5badb542a0bd24 conn=530000677232 request=18 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.810237Z  INFO folder: folder: serving — a synced folder places the hash hash=9719c0b2de9c0b6cf1c399e5a44c516d505caa83e0a3ceb760977bbe6cad5667 conn=530000678096 request=20 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.831
+2026-10-10T20:41:30.810302Z  INFO folder: folder: sent hash=9719c0b2de9c0b6cf1c399e5a44c516d505caa83e0a3ceb760977bbe6cad5667 conn=530000678096 request=20 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.811091Z  INFO folder: folder: serving — a synced folder places the hash hash=69a98bb7d04d56fe2c423b3f358d03674b136aeb6ff8d5184ddc9fdb01f44060 conn=530000677232 request=19 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.834
+2026-10-10T20:41:30.811145Z  INFO folder: folder: sent hash=69a98bb7d04d56fe2c423b3f358d03674b136aeb6ff8d5184ddc9fdb01f44060 conn=530000677232 request=19 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.811937Z  INFO folder: folder: serving — a synced folder places the hash hash=7f3b5b1295186efc30d70fdcbc90cf43185a5c762071d03a695f4625e1c9138f conn=530000678096 request=21 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.831
+2026-10-10T20:41:30.811999Z  INFO folder: folder: sent hash=7f3b5b1295186efc30d70fdcbc90cf43185a5c762071d03a695f4625e1c9138f conn=530000678096 request=21 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.812766Z  INFO folder: folder: serving — a synced folder places the hash hash=9719c0b2de9c0b6cf1c399e5a44c516d505caa83e0a3ceb760977bbe6cad5667 conn=530000677232 request=20 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.81
+2026-10-10T20:41:30.812821Z  INFO folder: folder: sent hash=9719c0b2de9c0b6cf1c399e5a44c516d505caa83e0a3ceb760977bbe6cad5667 conn=530000677232 request=20 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.813559Z  INFO folder: folder: serving — a synced folder places the hash hash=b638beb83b0b002eece7c0fe386495b61a667d18bf92be2c09ec1f35317df264 conn=530000678096 request=22 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.776
+2026-10-10T20:41:30.813619Z  INFO folder: folder: sent hash=b638beb83b0b002eece7c0fe386495b61a667d18bf92be2c09ec1f35317df264 conn=530000678096 request=22 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.814405Z  INFO folder: folder: serving — a synced folder places the hash hash=7f3b5b1295186efc30d70fdcbc90cf43185a5c762071d03a695f4625e1c9138f conn=530000677232 request=21 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.829
+2026-10-10T20:41:30.814471Z  INFO folder: folder: sent hash=7f3b5b1295186efc30d70fdcbc90cf43185a5c762071d03a695f4625e1c9138f conn=530000677232 request=21 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.815227Z  INFO folder: folder: serving — a synced folder places the hash hash=f1bd477f4eb3c0a9f69d48784522777ecde7ad1c5a03f10be398a1ebc38e4a1b conn=530000678096 request=23 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.807
+2026-10-10T20:41:30.815291Z  INFO folder: folder: sent hash=f1bd477f4eb3c0a9f69d48784522777ecde7ad1c5a03f10be398a1ebc38e4a1b conn=530000678096 request=23 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.816006Z  INFO folder: folder: serving — a synced folder places the hash hash=b638beb83b0b002eece7c0fe386495b61a667d18bf92be2c09ec1f35317df264 conn=530000677232 request=22 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.764
+2026-10-10T20:41:30.816070Z  INFO folder: folder: sent hash=b638beb83b0b002eece7c0fe386495b61a667d18bf92be2c09ec1f35317df264 conn=530000677232 request=22 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.816788Z  INFO folder: folder: serving — a synced folder places the hash hash=c86483e741ff20c9c7b4b57160cea394b161755c1e672529507b8fcdd866e77b conn=530000678096 request=24 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.768
+2026-10-10T20:41:30.816851Z  INFO folder: folder: sent hash=c86483e741ff20c9c7b4b57160cea394b161755c1e672529507b8fcdd866e77b conn=530000678096 request=24 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.817547Z  INFO folder: folder: serving — a synced folder places the hash hash=f1bd477f4eb3c0a9f69d48784522777ecde7ad1c5a03f10be398a1ebc38e4a1b conn=530000677232 request=23 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.745
+2026-10-10T20:41:30.817614Z  INFO folder: folder: sent hash=f1bd477f4eb3c0a9f69d48784522777ecde7ad1c5a03f10be398a1ebc38e4a1b conn=530000677232 request=23 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.818316Z  INFO folder: folder: serving — a synced folder places the hash hash=3a49fe6a107bd4d9771f68ca03cc9f364f422e9a8a92e82e57ec60fef9377852 conn=530000678096 request=25 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.746
+2026-10-10T20:41:30.818387Z  INFO folder: folder: sent hash=3a49fe6a107bd4d9771f68ca03cc9f364f422e9a8a92e82e57ec60fef9377852 conn=530000678096 request=25 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.819069Z  INFO folder: folder: serving — a synced folder places the hash hash=c86483e741ff20c9c7b4b57160cea394b161755c1e672529507b8fcdd866e77b conn=530000677232 request=24 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.731
+2026-10-10T20:41:30.819150Z  INFO folder: folder: sent hash=c86483e741ff20c9c7b4b57160cea394b161755c1e672529507b8fcdd866e77b conn=530000677232 request=24 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.819816Z  INFO folder: folder: serving — a synced folder places the hash hash=0bc186d22bee4713ef3dabea9ab114284e2e523b0eea848e307e450edfe78fd5 conn=530000678096 request=26 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.734
+2026-10-10T20:41:30.819888Z  INFO folder: folder: sent hash=0bc186d22bee4713ef3dabea9ab114284e2e523b0eea848e307e450edfe78fd5 conn=530000678096 request=26 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.820565Z  INFO folder: folder: serving — a synced folder places the hash hash=3a49fe6a107bd4d9771f68ca03cc9f364f422e9a8a92e82e57ec60fef9377852 conn=530000677232 request=25 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.735
+2026-10-10T20:41:30.820634Z  INFO folder: folder: sent hash=3a49fe6a107bd4d9771f68ca03cc9f364f422e9a8a92e82e57ec60fef9377852 conn=530000677232 request=25 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.821319Z  INFO folder: folder: serving — a synced folder places the hash hash=6ab7ff0b85ab532f1abe8e22a76948101e9715903b6b51c5722d22ac96b910c1 conn=530000678096 request=27 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.735
+2026-10-10T20:41:30.821389Z  INFO folder: folder: sent hash=6ab7ff0b85ab532f1abe8e22a76948101e9715903b6b51c5722d22ac96b910c1 conn=530000678096 request=27 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.822070Z  INFO folder: folder: serving — a synced folder places the hash hash=0bc186d22bee4713ef3dabea9ab114284e2e523b0eea848e307e450edfe78fd5 conn=530000677232 request=26 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.735
+2026-10-10T20:41:30.822144Z  INFO folder: folder: sent hash=0bc186d22bee4713ef3dabea9ab114284e2e523b0eea848e307e450edfe78fd5 conn=530000677232 request=26 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.822812Z  INFO folder: folder: serving — a synced folder places the hash hash=438c1e2531943637cf3278c287b1ab236141bcfc10a87c72cb488a18882d29aa conn=530000678096 request=28 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.727
+2026-10-10T20:41:30.822876Z  INFO folder: folder: sent hash=438c1e2531943637cf3278c287b1ab236141bcfc10a87c72cb488a18882d29aa conn=530000678096 request=28 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.823682Z  INFO folder: folder: serving — a synced folder places the hash hash=6ab7ff0b85ab532f1abe8e22a76948101e9715903b6b51c5722d22ac96b910c1 conn=530000677232 request=27 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.845
+2026-10-10T20:41:30.824478Z  INFO folder: folder: serving — a synced folder places the hash hash=afd32a5c61717680c714d07a91ad5d03098bc369e958694b0313c90b86b6dcc0 conn=530000678096 request=29 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.776
+2026-10-10T20:41:30.824501Z  INFO folder: folder: sent hash=6ab7ff0b85ab532f1abe8e22a76948101e9715903b6b51c5722d22ac96b910c1 conn=530000677232 request=27 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.825283Z  INFO folder: folder: serving — a synced folder places the hash hash=438c1e2531943637cf3278c287b1ab236141bcfc10a87c72cb488a18882d29aa conn=530000677232 request=28 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.791
+2026-10-10T20:41:30.825304Z  INFO folder: folder: sent hash=afd32a5c61717680c714d07a91ad5d03098bc369e958694b0313c90b86b6dcc0 conn=530000678096 request=29 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.826052Z  INFO folder: folder: serving — a synced folder places the hash hash=6ccdf0bd5c846b0b447544b1458079b7321b1a6a2d52492f01ace9d86677fbaa conn=530000678096 request=30 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.755
+2026-10-10T20:41:30.826072Z  INFO folder: folder: sent hash=438c1e2531943637cf3278c287b1ab236141bcfc10a87c72cb488a18882d29aa conn=530000677232 request=28 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.826810Z  INFO folder: folder: serving — a synced folder places the hash hash=afd32a5c61717680c714d07a91ad5d03098bc369e958694b0313c90b86b6dcc0 conn=530000677232 request=29 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.746
+2026-10-10T20:41:30.826837Z  INFO folder: folder: sent hash=6ccdf0bd5c846b0b447544b1458079b7321b1a6a2d52492f01ace9d86677fbaa conn=530000678096 request=30 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.827577Z  INFO folder: folder: serving — a synced folder places the hash hash=a76c95a0a4f379a4ed06182fda72b86345770c508737c35ad799ed119b1def05 conn=530000678096 request=31 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.747
+2026-10-10T20:41:30.827596Z  INFO folder: folder: sent hash=afd32a5c61717680c714d07a91ad5d03098bc369e958694b0313c90b86b6dcc0 conn=530000677232 request=29 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.828327Z  INFO folder: folder: serving — a synced folder places the hash hash=6ccdf0bd5c846b0b447544b1458079b7321b1a6a2d52492f01ace9d86677fbaa conn=530000677232 request=30 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.739
+2026-10-10T20:41:30.828349Z  INFO folder: folder: sent hash=a76c95a0a4f379a4ed06182fda72b86345770c508737c35ad799ed119b1def05 conn=530000678096 request=31 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.829083Z  INFO folder: folder: serving — a synced folder places the hash hash=6f0fe48fcba815ae9308f62b0c47ba4734f6332b6b1389f461027a0459965f51 conn=530000678096 request=32 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.742
+2026-10-10T20:41:30.829105Z  INFO folder: folder: sent hash=6ccdf0bd5c846b0b447544b1458079b7321b1a6a2d52492f01ace9d86677fbaa conn=530000677232 request=30 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.829862Z  INFO folder: folder: serving — a synced folder places the hash hash=a76c95a0a4f379a4ed06182fda72b86345770c508737c35ad799ed119b1def05 conn=530000677232 request=31 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.765
+2026-10-10T20:41:30.829884Z  INFO folder: folder: sent hash=6f0fe48fcba815ae9308f62b0c47ba4734f6332b6b1389f461027a0459965f51 conn=530000678096 request=32 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.830630Z  INFO folder: folder: serving — a synced folder places the hash hash=2dbcfdd2035e4c2406f373fc54e8f54fe4c6e88b4b9733ae5c1a60f1be448086 conn=530000678096 request=33 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.757
+2026-10-10T20:41:30.830650Z  INFO folder: folder: sent hash=a76c95a0a4f379a4ed06182fda72b86345770c508737c35ad799ed119b1def05 conn=530000677232 request=31 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.831412Z  INFO folder: folder: serving — a synced folder places the hash hash=6f0fe48fcba815ae9308f62b0c47ba4734f6332b6b1389f461027a0459965f51 conn=530000677232 request=32 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.766
+2026-10-10T20:41:30.831433Z  INFO folder: folder: sent hash=2dbcfdd2035e4c2406f373fc54e8f54fe4c6e88b4b9733ae5c1a60f1be448086 conn=530000678096 request=33 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.832191Z  INFO folder: folder: serving — a synced folder places the hash hash=d3ef3d9f3aea18677403b5d24967b1ac6a21eac1f00c3c613624505aa853a0fd conn=530000678096 request=34 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.767
+2026-10-10T20:41:30.832215Z  INFO folder: folder: sent hash=6f0fe48fcba815ae9308f62b0c47ba4734f6332b6b1389f461027a0459965f51 conn=530000677232 request=32 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.833005Z  INFO folder: folder: serving — a synced folder places the hash hash=2dbcfdd2035e4c2406f373fc54e8f54fe4c6e88b4b9733ae5c1a60f1be448086 conn=530000677232 request=33 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.8
+2026-10-10T20:41:30.833031Z  INFO folder: folder: sent hash=d3ef3d9f3aea18677403b5d24967b1ac6a21eac1f00c3c613624505aa853a0fd conn=530000678096 request=34 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.833794Z  INFO folder: folder: serving — a synced folder places the hash hash=3a9d3d008897a29e4b959aa73fa1a127edda2c9441cce75667069a5b6246636d conn=530000678096 request=35 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.771
+2026-10-10T20:41:30.833817Z  INFO folder: folder: sent hash=2dbcfdd2035e4c2406f373fc54e8f54fe4c6e88b4b9733ae5c1a60f1be448086 conn=530000677232 request=33 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.834554Z  INFO folder: folder: serving — a synced folder places the hash hash=d3ef3d9f3aea18677403b5d24967b1ac6a21eac1f00c3c613624505aa853a0fd conn=530000677232 request=34 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.745
+2026-10-10T20:41:30.834583Z  INFO folder: folder: sent hash=3a9d3d008897a29e4b959aa73fa1a127edda2c9441cce75667069a5b6246636d conn=530000678096 request=35 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.835335Z  INFO folder: folder: serving — a synced folder places the hash hash=cf4793374e952e4688c556a231166be1c6e427fbf76757839ea57192c5d368f4 conn=530000678096 request=36 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.766
+2026-10-10T20:41:30.835353Z  INFO folder: folder: sent hash=d3ef3d9f3aea18677403b5d24967b1ac6a21eac1f00c3c613624505aa853a0fd conn=530000677232 request=34 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.836096Z  INFO folder: folder: serving — a synced folder places the hash hash=3a9d3d008897a29e4b959aa73fa1a127edda2c9441cce75667069a5b6246636d conn=530000677232 request=35 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.749
+2026-10-10T20:41:30.836119Z  INFO folder: folder: sent hash=cf4793374e952e4688c556a231166be1c6e427fbf76757839ea57192c5d368f4 conn=530000678096 request=36 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.836857Z  INFO folder: folder: serving — a synced folder places the hash hash=d60f81a17a0738edc59293f2609d6c322f6fa68dcd908f52cc212ad56abc7c3b conn=530000678096 request=37 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.746
+2026-10-10T20:41:30.836878Z  INFO folder: folder: sent hash=3a9d3d008897a29e4b959aa73fa1a127edda2c9441cce75667069a5b6246636d conn=530000677232 request=35 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.837617Z  INFO folder: folder: serving — a synced folder places the hash hash=cf4793374e952e4688c556a231166be1c6e427fbf76757839ea57192c5d368f4 conn=530000677232 request=36 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.747
+2026-10-10T20:41:30.837636Z  INFO folder: folder: sent hash=d60f81a17a0738edc59293f2609d6c322f6fa68dcd908f52cc212ad56abc7c3b conn=530000678096 request=37 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.838408Z  INFO folder: folder: serving — a synced folder places the hash hash=dafb6cd017300241a9e80a76bcf7599845dca8007e66313216a8a199c9470c3a conn=530000678096 request=38 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.78
+2026-10-10T20:41:30.838428Z  INFO folder: folder: sent hash=cf4793374e952e4688c556a231166be1c6e427fbf76757839ea57192c5d368f4 conn=530000677232 request=36 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.839204Z  INFO folder: folder: serving — a synced folder places the hash hash=d60f81a17a0738edc59293f2609d6c322f6fa68dcd908f52cc212ad56abc7c3b conn=530000677232 request=37 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.783
+2026-10-10T20:41:30.839222Z  INFO folder: folder: sent hash=dafb6cd017300241a9e80a76bcf7599845dca8007e66313216a8a199c9470c3a conn=530000678096 request=38 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.839978Z  INFO folder: folder: serving — a synced folder places the hash hash=2108137dd7898216f4f9abe746a77db09bea82e1925ff957380c762344eeaf15 conn=530000678096 request=39 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.763
+2026-10-10T20:41:30.839997Z  INFO folder: folder: sent hash=d60f81a17a0738edc59293f2609d6c322f6fa68dcd908f52cc212ad56abc7c3b conn=530000677232 request=37 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.840748Z  INFO folder: folder: serving — a synced folder places the hash hash=dafb6cd017300241a9e80a76bcf7599845dca8007e66313216a8a199c9470c3a conn=530000677232 request=38 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.759
+2026-10-10T20:41:30.840765Z  INFO folder: folder: sent hash=2108137dd7898216f4f9abe746a77db09bea82e1925ff957380c762344eeaf15 conn=530000678096 request=39 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.841507Z  INFO folder: folder: serving — a synced folder places the hash hash=011040cd98c11077c2f93453835876dd784e4de77300fb2ba767161c2b436b02 conn=530000678096 request=40 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.749
+2026-10-10T20:41:30.841525Z  INFO folder: folder: sent hash=dafb6cd017300241a9e80a76bcf7599845dca8007e66313216a8a199c9470c3a conn=530000677232 request=38 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.842263Z  INFO folder: folder: serving — a synced folder places the hash hash=2108137dd7898216f4f9abe746a77db09bea82e1925ff957380c762344eeaf15 conn=530000677232 request=39 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.746
+2026-10-10T20:41:30.842284Z  INFO folder: folder: sent hash=011040cd98c11077c2f93453835876dd784e4de77300fb2ba767161c2b436b02 conn=530000678096 request=40 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.843018Z  INFO folder: folder: serving — a synced folder places the hash hash=22449daa490f6e4637319c24c43eb30b71654cc894a5b296b9a407b065773a20 conn=530000678096 request=41 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.742
+2026-10-10T20:41:30.843036Z  INFO folder: folder: sent hash=2108137dd7898216f4f9abe746a77db09bea82e1925ff957380c762344eeaf15 conn=530000677232 request=39 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.843770Z  INFO folder: folder: serving — a synced folder places the hash hash=011040cd98c11077c2f93453835876dd784e4de77300fb2ba767161c2b436b02 conn=530000677232 request=40 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.742
+2026-10-10T20:41:30.843788Z  INFO folder: folder: sent hash=22449daa490f6e4637319c24c43eb30b71654cc894a5b296b9a407b065773a20 conn=530000678096 request=41 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.844517Z  INFO folder: folder: serving — a synced folder places the hash hash=5ea02a56c7c6402fc05380b607e2e51f44130e77d27973a2c70729e6bc9747c1 conn=530000678096 request=42 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.737
+2026-10-10T20:41:30.844540Z  INFO folder: folder: sent hash=011040cd98c11077c2f93453835876dd784e4de77300fb2ba767161c2b436b02 conn=530000677232 request=40 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.845285Z  INFO folder: folder: serving — a synced folder places the hash hash=22449daa490f6e4637319c24c43eb30b71654cc894a5b296b9a407b065773a20 conn=530000677232 request=41 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.755
+2026-10-10T20:41:30.845311Z  INFO folder: folder: sent hash=5ea02a56c7c6402fc05380b607e2e51f44130e77d27973a2c70729e6bc9747c1 conn=530000678096 request=42 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.846037Z  INFO folder: folder: serving — a synced folder places the hash hash=21341aa8b9f74a1a58dbaa50a26d952b5cbdfad1da1574f645a73f9701c7387b conn=530000678096 request=43 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.738
+2026-10-10T20:41:30.846060Z  INFO folder: folder: sent hash=22449daa490f6e4637319c24c43eb30b71654cc894a5b296b9a407b065773a20 conn=530000677232 request=41 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.846819Z  INFO folder: folder: serving — a synced folder places the hash hash=5ea02a56c7c6402fc05380b607e2e51f44130e77d27973a2c70729e6bc9747c1 conn=530000677232 request=42 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.768
+2026-10-10T20:41:30.846839Z  INFO folder: folder: sent hash=21341aa8b9f74a1a58dbaa50a26d952b5cbdfad1da1574f645a73f9701c7387b conn=530000678096 request=43 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.847563Z  INFO folder: folder: serving — a synced folder places the hash hash=7f30f418c627f7a3e1d611ebaed6819d86f8758ad3b86963468b2e5d21eb59d2 conn=530000678096 request=44 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.731
+2026-10-10T20:41:30.847580Z  INFO folder: folder: sent hash=5ea02a56c7c6402fc05380b607e2e51f44130e77d27973a2c70729e6bc9747c1 conn=530000677232 request=42 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.848307Z  INFO folder: folder: serving — a synced folder places the hash hash=21341aa8b9f74a1a58dbaa50a26d952b5cbdfad1da1574f645a73f9701c7387b conn=530000677232 request=43 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.731
+2026-10-10T20:41:30.848326Z  INFO folder: folder: sent hash=7f30f418c627f7a3e1d611ebaed6819d86f8758ad3b86963468b2e5d21eb59d2 conn=530000678096 request=44 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.849058Z  INFO folder: folder: serving — a synced folder places the hash hash=0581794e1eaac3d0a6aee2e42ca91897c0ec3d4ce491f6374dda52ca2a2c6040 conn=530000678096 request=45 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.741
+2026-10-10T20:41:30.849077Z  INFO folder: folder: sent hash=21341aa8b9f74a1a58dbaa50a26d952b5cbdfad1da1574f645a73f9701c7387b conn=530000677232 request=43 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.849802Z  INFO folder: folder: serving — a synced folder places the hash hash=7f30f418c627f7a3e1d611ebaed6819d86f8758ad3b86963468b2e5d21eb59d2 conn=530000677232 request=44 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.733
+2026-10-10T20:41:30.849821Z  INFO folder: folder: sent hash=0581794e1eaac3d0a6aee2e42ca91897c0ec3d4ce491f6374dda52ca2a2c6040 conn=530000678096 request=45 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.850548Z  INFO folder: folder: serving — a synced folder places the hash hash=fc877ef64cfc3c4ba071e06763a1d711366a28abe8399c40c6efb01e692584c2 conn=530000678096 request=46 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.734
+2026-10-10T20:41:30.850567Z  INFO folder: folder: sent hash=7f30f418c627f7a3e1d611ebaed6819d86f8758ad3b86963468b2e5d21eb59d2 conn=530000677232 request=44 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.851300Z  INFO folder: folder: serving — a synced folder places the hash hash=0581794e1eaac3d0a6aee2e42ca91897c0ec3d4ce491f6374dda52ca2a2c6040 conn=530000677232 request=45 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.742
+2026-10-10T20:41:30.851319Z  INFO folder: folder: sent hash=fc877ef64cfc3c4ba071e06763a1d711366a28abe8399c40c6efb01e692584c2 conn=530000678096 request=46 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.852044Z  INFO folder: folder: serving — a synced folder places the hash hash=2fedaccb20eb2455bd0619177e9e795d45ecf10b56acff0b9de17472d850ede4 conn=530000678096 request=47 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.733
+2026-10-10T20:41:30.852064Z  INFO folder: folder: sent hash=0581794e1eaac3d0a6aee2e42ca91897c0ec3d4ce491f6374dda52ca2a2c6040 conn=530000677232 request=45 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.852810Z  INFO folder: folder: serving — a synced folder places the hash hash=fc877ef64cfc3c4ba071e06763a1d711366a28abe8399c40c6efb01e692584c2 conn=530000677232 request=46 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.755
+2026-10-10T20:41:30.852830Z  INFO folder: folder: sent hash=2fedaccb20eb2455bd0619177e9e795d45ecf10b56acff0b9de17472d850ede4 conn=530000678096 request=47 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.853578Z  INFO folder: folder: serving — a synced folder places the hash hash=b57c31d4565780e0b50269f3db00d1af6b0cb0007be4ee47edfb708f8a48749e conn=530000678096 request=48 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.755
+2026-10-10T20:41:30.853600Z  INFO folder: folder: sent hash=fc877ef64cfc3c4ba071e06763a1d711366a28abe8399c40c6efb01e692584c2 conn=530000677232 request=46 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.854346Z  INFO folder: folder: serving — a synced folder places the hash hash=2fedaccb20eb2455bd0619177e9e795d45ecf10b56acff0b9de17472d850ede4 conn=530000677232 request=47 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.753
+2026-10-10T20:41:30.854364Z  INFO folder: folder: sent hash=b57c31d4565780e0b50269f3db00d1af6b0cb0007be4ee47edfb708f8a48749e conn=530000678096 request=48 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.855091Z  INFO folder: folder: serving — a synced folder places the hash hash=0cf074a234981cf9fd20d838be326b13beedaedd14628f50165882a2cbb6fbba conn=530000678096 request=49 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.735
+2026-10-10T20:41:30.855114Z  INFO folder: folder: sent hash=2fedaccb20eb2455bd0619177e9e795d45ecf10b56acff0b9de17472d850ede4 conn=530000677232 request=47 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.855863Z  INFO folder: folder: serving — a synced folder places the hash hash=b57c31d4565780e0b50269f3db00d1af6b0cb0007be4ee47edfb708f8a48749e conn=530000677232 request=48 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.757
+2026-10-10T20:41:30.855884Z  INFO folder: folder: sent hash=0cf074a234981cf9fd20d838be326b13beedaedd14628f50165882a2cbb6fbba conn=530000678096 request=49 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.856630Z  INFO folder: folder: serving — a synced folder places the hash hash=439f089e2ce169bfb2ca097c61aa477885248a419b34f34da8fb6085808d2f74 conn=530000678096 request=50 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.753
+2026-10-10T20:41:30.856654Z  INFO folder: folder: sent hash=b57c31d4565780e0b50269f3db00d1af6b0cb0007be4ee47edfb708f8a48749e conn=530000677232 request=48 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.857376Z  INFO folder: folder: serving — a synced folder places the hash hash=0cf074a234981cf9fd20d838be326b13beedaedd14628f50165882a2cbb6fbba conn=530000677232 request=49 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.734
+2026-10-10T20:41:30.857400Z  INFO folder: folder: sent hash=439f089e2ce169bfb2ca097c61aa477885248a419b34f34da8fb6085808d2f74 conn=530000678096 request=50 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.858140Z  INFO folder: folder: serving — a synced folder places the hash hash=098b8a760fbc9224b30a5acc0c892b1f96bbfe4d88d6532dd01c42f6a791498f conn=530000678096 request=51 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.748
+2026-10-10T20:41:30.858158Z  INFO folder: folder: sent hash=0cf074a234981cf9fd20d838be326b13beedaedd14628f50165882a2cbb6fbba conn=530000677232 request=49 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.858802Z  INFO folder: folder: serving — a synced folder places the hash hash=439f089e2ce169bfb2ca097c61aa477885248a419b34f34da8fb6085808d2f74 conn=530000677232 request=50 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.651
+2026-10-10T20:41:30.858828Z  INFO folder: folder: sent hash=098b8a760fbc9224b30a5acc0c892b1f96bbfe4d88d6532dd01c42f6a791498f conn=530000678096 request=51 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.859453Z  INFO folder: folder: serving — a synced folder places the hash hash=b49c755eca907a987de781007aa6924f098fd8752b8c051fac2f5978c91ec843 conn=530000678096 request=52 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.632
+2026-10-10T20:41:30.859477Z  INFO folder: folder: sent hash=439f089e2ce169bfb2ca097c61aa477885248a419b34f34da8fb6085808d2f74 conn=530000677232 request=50 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.860058Z  INFO folder: folder: serving — a synced folder places the hash hash=098b8a760fbc9224b30a5acc0c892b1f96bbfe4d88d6532dd01c42f6a791498f conn=530000677232 request=51 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.591
+2026-10-10T20:41:30.860081Z  INFO folder: folder: sent hash=b49c755eca907a987de781007aa6924f098fd8752b8c051fac2f5978c91ec843 conn=530000678096 request=52 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.860655Z  INFO folder: folder: serving — a synced folder places the hash hash=2d22de729d3fd551cb6396deda8d7ca7e11009f52844d54ffff79844df42f6bc conn=530000678096 request=53 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.583
+2026-10-10T20:41:30.860678Z  INFO folder: folder: sent hash=098b8a760fbc9224b30a5acc0c892b1f96bbfe4d88d6532dd01c42f6a791498f conn=530000677232 request=51 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.861251Z  INFO folder: folder: serving — a synced folder places the hash hash=b49c755eca907a987de781007aa6924f098fd8752b8c051fac2f5978c91ec843 conn=530000677232 request=52 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.582
+2026-10-10T20:41:30.861272Z  INFO folder: folder: sent hash=2d22de729d3fd551cb6396deda8d7ca7e11009f52844d54ffff79844df42f6bc conn=530000678096 request=53 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.861832Z  INFO folder: folder: serving — a synced folder places the hash hash=52d101e647ab91132c28ce8a661a14cec73b4beebea77201e3f3821ec7c0a66f conn=530000678096 request=54 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.57
+2026-10-10T20:41:30.861854Z  INFO folder: folder: sent hash=b49c755eca907a987de781007aa6924f098fd8752b8c051fac2f5978c91ec843 conn=530000677232 request=52 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.862486Z  INFO folder: folder: serving — a synced folder places the hash hash=2d22de729d3fd551cb6396deda8d7ca7e11009f52844d54ffff79844df42f6bc conn=530000677232 request=53 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.641
+2026-10-10T20:41:30.862516Z  INFO folder: folder: sent hash=52d101e647ab91132c28ce8a661a14cec73b4beebea77201e3f3821ec7c0a66f conn=530000678096 request=54 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.863333Z  INFO folder: folder: serving — a synced folder places the hash hash=2b2032ec4a55ca9531e50b3d9fc818807e0b8231617e88dcf14c6009ac27e871 conn=530000678096 request=55 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.827
+2026-10-10T20:41:30.863358Z  INFO folder: folder: sent hash=2d22de729d3fd551cb6396deda8d7ca7e11009f52844d54ffff79844df42f6bc conn=530000677232 request=53 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.864125Z  INFO folder: folder: serving — a synced folder places the hash hash=52d101e647ab91132c28ce8a661a14cec73b4beebea77201e3f3821ec7c0a66f conn=530000677232 request=54 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.777
+2026-10-10T20:41:30.864152Z  INFO folder: folder: sent hash=2b2032ec4a55ca9531e50b3d9fc818807e0b8231617e88dcf14c6009ac27e871 conn=530000678096 request=55 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.864895Z  INFO folder: folder: serving — a synced folder places the hash hash=f080be07f6180ec36a84ec45e5d5f47847efc404b6ce8a5f924ff44a842f42fe conn=530000678096 request=56 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.751
+2026-10-10T20:41:30.864920Z  INFO folder: folder: sent hash=52d101e647ab91132c28ce8a661a14cec73b4beebea77201e3f3821ec7c0a66f conn=530000677232 request=54 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.865605Z  INFO folder: folder: serving — a synced folder places the hash hash=2b2032ec4a55ca9531e50b3d9fc818807e0b8231617e88dcf14c6009ac27e871 conn=530000677232 request=55 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.692
+2026-10-10T20:41:30.865630Z  INFO folder: folder: sent hash=f080be07f6180ec36a84ec45e5d5f47847efc404b6ce8a5f924ff44a842f42fe conn=530000678096 request=56 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.866224Z  INFO folder: folder: serving — a synced folder places the hash hash=f4ebf7728c383f291b1914fc89ed4c28ee2ea5f68ed8b0aaf5e085d767f8d0b0 conn=530000678096 request=57 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.603
+2026-10-10T20:41:30.866246Z  INFO folder: folder: sent hash=2b2032ec4a55ca9531e50b3d9fc818807e0b8231617e88dcf14c6009ac27e871 conn=530000677232 request=55 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.867015Z  INFO folder: folder: serving — a synced folder places the hash hash=f080be07f6180ec36a84ec45e5d5f47847efc404b6ce8a5f924ff44a842f42fe conn=530000677232 request=56 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.778
+2026-10-10T20:41:30.867040Z  INFO folder: folder: sent hash=f4ebf7728c383f291b1914fc89ed4c28ee2ea5f68ed8b0aaf5e085d767f8d0b0 conn=530000678096 request=57 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.867834Z  INFO folder: folder: serving — a synced folder places the hash hash=c5de2209d28cec1fcd94c827a92a92ef54b9e190f4e487f6122d15ea0897b737 conn=530000678096 request=58 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.801
+2026-10-10T20:41:30.867853Z  INFO folder: folder: sent hash=f080be07f6180ec36a84ec45e5d5f47847efc404b6ce8a5f924ff44a842f42fe conn=530000677232 request=56 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.868597Z  INFO folder: folder: serving — a synced folder places the hash hash=f4ebf7728c383f291b1914fc89ed4c28ee2ea5f68ed8b0aaf5e085d767f8d0b0 conn=530000677232 request=57 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.752
+2026-10-10T20:41:30.868616Z  INFO folder: folder: sent hash=c5de2209d28cec1fcd94c827a92a92ef54b9e190f4e487f6122d15ea0897b737 conn=530000678096 request=58 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.869342Z  INFO folder: folder: serving — a synced folder places the hash hash=6da109ffb2f53022327c0fa0339d68765d779874767614d43af95511de121f1b conn=530000678096 request=59 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.733
+2026-10-10T20:41:30.869360Z  INFO folder: folder: sent hash=f4ebf7728c383f291b1914fc89ed4c28ee2ea5f68ed8b0aaf5e085d767f8d0b0 conn=530000677232 request=57 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.870083Z  INFO folder: folder: serving — a synced folder places the hash hash=c5de2209d28cec1fcd94c827a92a92ef54b9e190f4e487f6122d15ea0897b737 conn=530000677232 request=58 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.731
+2026-10-10T20:41:30.870101Z  INFO folder: folder: sent hash=6da109ffb2f53022327c0fa0339d68765d779874767614d43af95511de121f1b conn=530000678096 request=59 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.870847Z  INFO folder: folder: serving — a synced folder places the hash hash=ba504bdcfe16f644e1fb3d04f49dc3b8ec49aed9970d104e959a0f2a59a46962 conn=530000678096 request=60 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.754
+2026-10-10T20:41:30.870867Z  INFO folder: folder: sent hash=c5de2209d28cec1fcd94c827a92a92ef54b9e190f4e487f6122d15ea0897b737 conn=530000677232 request=58 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.871597Z  INFO folder: folder: serving — a synced folder places the hash hash=6da109ffb2f53022327c0fa0339d68765d779874767614d43af95511de121f1b conn=530000677232 request=59 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.738
+2026-10-10T20:41:30.871615Z  INFO folder: folder: sent hash=ba504bdcfe16f644e1fb3d04f49dc3b8ec49aed9970d104e959a0f2a59a46962 conn=530000678096 request=60 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.872343Z  INFO folder: folder: serving — a synced folder places the hash hash=660c185bb718cae60bdb76a833abb1d20320bc783d6858a84c68fe9d82e7c55c conn=530000678096 request=61 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.736
+2026-10-10T20:41:30.872362Z  INFO folder: folder: sent hash=6da109ffb2f53022327c0fa0339d68765d779874767614d43af95511de121f1b conn=530000677232 request=59 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.873084Z  INFO folder: folder: serving — a synced folder places the hash hash=ba504bdcfe16f644e1fb3d04f49dc3b8ec49aed9970d104e959a0f2a59a46962 conn=530000677232 request=60 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.73
+2026-10-10T20:41:30.873102Z  INFO folder: folder: sent hash=660c185bb718cae60bdb76a833abb1d20320bc783d6858a84c68fe9d82e7c55c conn=530000678096 request=61 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.873832Z  INFO folder: folder: serving — a synced folder places the hash hash=a15a34ce4c6773ed80bd6929186dc23afd6ea22008e67bb942e37ad9fda7889f conn=530000678096 request=62 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.738
+2026-10-10T20:41:30.873856Z  INFO folder: folder: sent hash=ba504bdcfe16f644e1fb3d04f49dc3b8ec49aed9970d104e959a0f2a59a46962 conn=530000677232 request=60 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.874598Z  INFO folder: folder: serving — a synced folder places the hash hash=660c185bb718cae60bdb76a833abb1d20320bc783d6858a84c68fe9d82e7c55c conn=530000677232 request=61 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.75
+2026-10-10T20:41:30.874616Z  INFO folder: folder: sent hash=a15a34ce4c6773ed80bd6929186dc23afd6ea22008e67bb942e37ad9fda7889f conn=530000678096 request=62 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.875351Z  INFO folder: folder: serving — a synced folder places the hash hash=3e3722e63863ecd66e21a82d151d3692d100169982cbf00eb9ddb6ebc9aefdae conn=530000678096 request=63 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.743
+2026-10-10T20:41:30.875376Z  INFO folder: folder: sent hash=660c185bb718cae60bdb76a833abb1d20320bc783d6858a84c68fe9d82e7c55c conn=530000677232 request=61 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.876120Z  INFO folder: folder: serving — a synced folder places the hash hash=a15a34ce4c6773ed80bd6929186dc23afd6ea22008e67bb942e37ad9fda7889f conn=530000677232 request=62 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.751
+2026-10-10T20:41:30.876141Z  INFO folder: folder: sent hash=3e3722e63863ecd66e21a82d151d3692d100169982cbf00eb9ddb6ebc9aefdae conn=530000678096 request=63 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.876775Z  INFO folder: folder: serving — a synced folder places the hash hash=9cf9fb891a8cb128aac23b8a2140928b19b106a804414b5c6f7cdce183a6253d conn=530000678096 request=64 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.64
+2026-10-10T20:41:30.876799Z  INFO folder: folder: sent hash=a15a34ce4c6773ed80bd6929186dc23afd6ea22008e67bb942e37ad9fda7889f conn=530000677232 request=62 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.877397Z  INFO folder: folder: serving — a synced folder places the hash hash=3e3722e63863ecd66e21a82d151d3692d100169982cbf00eb9ddb6ebc9aefdae conn=530000677232 request=63 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.607
+2026-10-10T20:41:30.877420Z  INFO folder: folder: sent hash=9cf9fb891a8cb128aac23b8a2140928b19b106a804414b5c6f7cdce183a6253d conn=530000678096 request=64 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.878002Z  INFO folder: folder: serving — a synced folder places the hash hash=c6afaafd4a90cca9528d8dd7b7245134c5889cc797dcad4be3bdd3753514fbce conn=530000678096 request=65 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.591
+2026-10-10T20:41:30.878023Z  INFO folder: folder: sent hash=3e3722e63863ecd66e21a82d151d3692d100169982cbf00eb9ddb6ebc9aefdae conn=530000677232 request=63 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.878591Z  INFO folder: folder: serving — a synced folder places the hash hash=9cf9fb891a8cb128aac23b8a2140928b19b106a804414b5c6f7cdce183a6253d conn=530000677232 request=64 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.578
+2026-10-10T20:41:30.878617Z  INFO folder: folder: sent hash=c6afaafd4a90cca9528d8dd7b7245134c5889cc797dcad4be3bdd3753514fbce conn=530000678096 request=65 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.879182Z  INFO folder: folder: serving — a synced folder places the hash hash=c2eca30e42ec9d5697b6721cc9c5b2d9d42a1239f4e4b8dbb85036f437494346 conn=530000678096 request=66 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.575
+2026-10-10T20:41:30.879204Z  INFO folder: folder: sent hash=9cf9fb891a8cb128aac23b8a2140928b19b106a804414b5c6f7cdce183a6253d conn=530000677232 request=64 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.879770Z  INFO folder: folder: serving — a synced folder places the hash hash=c6afaafd4a90cca9528d8dd7b7245134c5889cc797dcad4be3bdd3753514fbce conn=530000677232 request=65 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.576
+2026-10-10T20:41:30.879794Z  INFO folder: folder: sent hash=c2eca30e42ec9d5697b6721cc9c5b2d9d42a1239f4e4b8dbb85036f437494346 conn=530000678096 request=66 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.880397Z  INFO folder: folder: serving — a synced folder places the hash hash=5108628e8739580ab5e80b325d5333d88c2d4c185cd71b244ac5c13759aaf762 conn=530000678096 request=67 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.612
+2026-10-10T20:41:30.880425Z  INFO folder: folder: sent hash=c6afaafd4a90cca9528d8dd7b7245134c5889cc797dcad4be3bdd3753514fbce conn=530000677232 request=65 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.881228Z  INFO folder: folder: serving — a synced folder places the hash hash=c2eca30e42ec9d5697b6721cc9c5b2d9d42a1239f4e4b8dbb85036f437494346 conn=530000677232 request=66 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.814
+2026-10-10T20:41:30.881249Z  INFO folder: folder: sent hash=5108628e8739580ab5e80b325d5333d88c2d4c185cd71b244ac5c13759aaf762 conn=530000678096 request=67 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.882000Z  INFO folder: folder: serving — a synced folder places the hash hash=0105fd72ad307356326b9565b784776a140ede9058f0fee5f50cc4cec513b393 conn=530000678096 request=68 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.758
+2026-10-10T20:41:30.882022Z  INFO folder: folder: sent hash=c2eca30e42ec9d5697b6721cc9c5b2d9d42a1239f4e4b8dbb85036f437494346 conn=530000677232 request=66 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.882774Z  INFO folder: folder: serving — a synced folder places the hash hash=5108628e8739580ab5e80b325d5333d88c2d4c185cd71b244ac5c13759aaf762 conn=530000677232 request=67 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.759
+2026-10-10T20:41:30.882794Z  INFO folder: folder: sent hash=0105fd72ad307356326b9565b784776a140ede9058f0fee5f50cc4cec513b393 conn=530000678096 request=68 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.883543Z  INFO folder: folder: serving — a synced folder places the hash hash=6b59a9ce1bf89a34bf5afbaa6b7ace883ca86277d3aab90dde26d4d43d07cf31 conn=530000678096 request=69 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.756
+2026-10-10T20:41:30.883561Z  INFO folder: folder: sent hash=5108628e8739580ab5e80b325d5333d88c2d4c185cd71b244ac5c13759aaf762 conn=530000677232 request=67 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.884306Z  INFO folder: folder: serving — a synced folder places the hash hash=0105fd72ad307356326b9565b784776a140ede9058f0fee5f50cc4cec513b393 conn=530000677232 request=68 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.752
+2026-10-10T20:41:30.884328Z  INFO folder: folder: sent hash=6b59a9ce1bf89a34bf5afbaa6b7ace883ca86277d3aab90dde26d4d43d07cf31 conn=530000678096 request=69 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.885064Z  INFO folder: folder: serving — a synced folder places the hash hash=2086a6cf9c46051ce37a952252ec08227805f927e3bd0ceac52de9f933841b76 conn=530000678096 request=70 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.74
+2026-10-10T20:41:30.885098Z  INFO folder: folder: sent hash=0105fd72ad307356326b9565b784776a140ede9058f0fee5f50cc4cec513b393 conn=530000677232 request=68 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.885829Z  INFO folder: folder: serving — a synced folder places the hash hash=6b59a9ce1bf89a34bf5afbaa6b7ace883ca86277d3aab90dde26d4d43d07cf31 conn=530000677232 request=69 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.739
+2026-10-10T20:41:30.885849Z  INFO folder: folder: sent hash=2086a6cf9c46051ce37a952252ec08227805f927e3bd0ceac52de9f933841b76 conn=530000678096 request=70 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.886582Z  INFO folder: folder: serving — a synced folder places the hash hash=bb94908e9942928f9318bec84c119b75cc87195d45924f518c62117cf5f53ac1 conn=530000678096 request=71 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.741
+2026-10-10T20:41:30.886608Z  INFO folder: folder: sent hash=6b59a9ce1bf89a34bf5afbaa6b7ace883ca86277d3aab90dde26d4d43d07cf31 conn=530000677232 request=69 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.887354Z  INFO folder: folder: serving — a synced folder places the hash hash=2086a6cf9c46051ce37a952252ec08227805f927e3bd0ceac52de9f933841b76 conn=530000677232 request=70 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.753
+2026-10-10T20:41:30.887377Z  INFO folder: folder: sent hash=bb94908e9942928f9318bec84c119b75cc87195d45924f518c62117cf5f53ac1 conn=530000678096 request=71 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.888121Z  INFO folder: folder: serving — a synced folder places the hash hash=b4d91b77882134e0a062968d34968075049b58c4f7295e8ba80736bca52a5b8d conn=530000678096 request=72 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.751
+2026-10-10T20:41:30.888144Z  INFO folder: folder: sent hash=2086a6cf9c46051ce37a952252ec08227805f927e3bd0ceac52de9f933841b76 conn=530000677232 request=70 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.888788Z  INFO folder: folder: serving — a synced folder places the hash hash=bb94908e9942928f9318bec84c119b75cc87195d45924f518c62117cf5f53ac1 conn=530000677232 request=71 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.652
+2026-10-10T20:41:30.888813Z  INFO folder: folder: sent hash=b4d91b77882134e0a062968d34968075049b58c4f7295e8ba80736bca52a5b8d conn=530000678096 request=72 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.889427Z  INFO folder: folder: serving — a synced folder places the hash hash=3aa6a91fce81b7cc6f235db1b363265fba04fdb95f18e4633d5cb6ee98f8f77a conn=530000678096 request=73 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.623
+2026-10-10T20:41:30.889449Z  INFO folder: folder: sent hash=bb94908e9942928f9318bec84c119b75cc87195d45924f518c62117cf5f53ac1 conn=530000677232 request=71 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.890026Z  INFO folder: folder: serving — a synced folder places the hash hash=b4d91b77882134e0a062968d34968075049b58c4f7295e8ba80736bca52a5b8d conn=530000677232 request=72 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.586
+2026-10-10T20:41:30.890050Z  INFO folder: folder: sent hash=3aa6a91fce81b7cc6f235db1b363265fba04fdb95f18e4633d5cb6ee98f8f77a conn=530000678096 request=73 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.890628Z  INFO folder: folder: serving — a synced folder places the hash hash=203a6875b7f6a5e0c23f82fab2a04bdb936e64277707526797c7c8c8e43cc8f4 conn=530000678096 request=74 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.587
+2026-10-10T20:41:30.890653Z  INFO folder: folder: sent hash=b4d91b77882134e0a062968d34968075049b58c4f7295e8ba80736bca52a5b8d conn=530000677232 request=72 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.891222Z  INFO folder: folder: serving — a synced folder places the hash hash=3aa6a91fce81b7cc6f235db1b363265fba04fdb95f18e4633d5cb6ee98f8f77a conn=530000677232 request=73 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.574
+2026-10-10T20:41:30.891254Z  INFO folder: folder: sent hash=203a6875b7f6a5e0c23f82fab2a04bdb936e64277707526797c7c8c8e43cc8f4 conn=530000678096 request=74 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.891824Z  INFO folder: folder: serving — a synced folder places the hash hash=4b4fbeebed2c6a1e0a9ab3c273536a63237bea229fb5c282d1916ce44f5285da conn=530000678096 request=75 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.579
+2026-10-10T20:41:30.891849Z  INFO folder: folder: sent hash=3aa6a91fce81b7cc6f235db1b363265fba04fdb95f18e4633d5cb6ee98f8f77a conn=530000677232 request=73 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.892478Z  INFO folder: folder: serving — a synced folder places the hash hash=203a6875b7f6a5e0c23f82fab2a04bdb936e64277707526797c7c8c8e43cc8f4 conn=530000677232 request=74 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.638
+2026-10-10T20:41:30.892497Z  INFO folder: folder: sent hash=4b4fbeebed2c6a1e0a9ab3c273536a63237bea229fb5c282d1916ce44f5285da conn=530000678096 request=75 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.893257Z  INFO folder: folder: serving — a synced folder places the hash hash=a1488a44d9de4f94e4cf668638e959555e5b71cbf8cccd20da2767cf925cc08a conn=530000678096 request=76 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.767
+2026-10-10T20:41:30.893275Z  INFO folder: folder: sent hash=203a6875b7f6a5e0c23f82fab2a04bdb936e64277707526797c7c8c8e43cc8f4 conn=530000677232 request=74 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.894002Z  INFO folder: folder: serving — a synced folder places the hash hash=4b4fbeebed2c6a1e0a9ab3c273536a63237bea229fb5c282d1916ce44f5285da conn=530000677232 request=75 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.735
+2026-10-10T20:41:30.894020Z  INFO folder: folder: sent hash=a1488a44d9de4f94e4cf668638e959555e5b71cbf8cccd20da2767cf925cc08a conn=530000678096 request=76 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.894742Z  INFO folder: folder: serving — a synced folder places the hash hash=1eae758372ca19983261f23d76b8cc1ac70f27a5b4d41c11d070d1b752a536a1 conn=530000678096 request=77 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.729
+2026-10-10T20:41:30.894762Z  INFO folder: folder: sent hash=4b4fbeebed2c6a1e0a9ab3c273536a63237bea229fb5c282d1916ce44f5285da conn=530000677232 request=75 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.895481Z  INFO folder: folder: serving — a synced folder places the hash hash=a1488a44d9de4f94e4cf668638e959555e5b71cbf8cccd20da2767cf925cc08a conn=530000677232 request=76 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.728
+2026-10-10T20:41:30.895504Z  INFO folder: folder: sent hash=1eae758372ca19983261f23d76b8cc1ac70f27a5b4d41c11d070d1b752a536a1 conn=530000678096 request=77 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.896225Z  INFO folder: folder: serving — a synced folder places the hash hash=eeeeb19127eaa5154889ad91033fec37ab55c9ca2963448ed5dcfcb67afda05e conn=530000678096 request=78 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.728
+2026-10-10T20:41:30.896243Z  INFO folder: folder: sent hash=a1488a44d9de4f94e4cf668638e959555e5b71cbf8cccd20da2767cf925cc08a conn=530000677232 request=76 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.896962Z  INFO folder: folder: serving — a synced folder places the hash hash=1eae758372ca19983261f23d76b8cc1ac70f27a5b4d41c11d070d1b752a536a1 conn=530000677232 request=77 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.726
+2026-10-10T20:41:30.896982Z  INFO folder: folder: sent hash=eeeeb19127eaa5154889ad91033fec37ab55c9ca2963448ed5dcfcb67afda05e conn=530000678096 request=78 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.897704Z  INFO folder: folder: serving — a synced folder places the hash hash=7ba416ca36a789c4088357c4dbe22c8b3b6549aa47242eaad08949e8f67fe4e9 conn=530000678096 request=79 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.73
+2026-10-10T20:41:30.897723Z  INFO folder: folder: sent hash=1eae758372ca19983261f23d76b8cc1ac70f27a5b4d41c11d070d1b752a536a1 conn=530000677232 request=77 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.898437Z  INFO folder: folder: serving — a synced folder places the hash hash=eeeeb19127eaa5154889ad91033fec37ab55c9ca2963448ed5dcfcb67afda05e conn=530000677232 request=78 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.721
+2026-10-10T20:41:30.898456Z  INFO folder: folder: sent hash=7ba416ca36a789c4088357c4dbe22c8b3b6549aa47242eaad08949e8f67fe4e9 conn=530000678096 request=79 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.899183Z  INFO folder: folder: serving — a synced folder places the hash hash=6195b1ab6a36aa0bce251d0c55ab1a0df420e183fbf93834fc76cdc7c555c32e conn=530000678096 request=80 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.735
+2026-10-10T20:41:30.899202Z  INFO folder: folder: sent hash=eeeeb19127eaa5154889ad91033fec37ab55c9ca2963448ed5dcfcb67afda05e conn=530000677232 request=78 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.899927Z  INFO folder: folder: serving — a synced folder places the hash hash=7ba416ca36a789c4088357c4dbe22c8b3b6549aa47242eaad08949e8f67fe4e9 conn=530000677232 request=79 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.732
+2026-10-10T20:41:30.899945Z  INFO folder: folder: sent hash=6195b1ab6a36aa0bce251d0c55ab1a0df420e183fbf93834fc76cdc7c555c32e conn=530000678096 request=80 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.900653Z  INFO folder: folder: serving — a synced folder places the hash hash=36fc1969b8daf763170bbdfaa5238c43f26279e66f692e266bdd0243350dd802 conn=530000678096 request=81 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.716
+2026-10-10T20:41:30.900678Z  INFO folder: folder: sent hash=7ba416ca36a789c4088357c4dbe22c8b3b6549aa47242eaad08949e8f67fe4e9 conn=530000677232 request=79 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.901390Z  INFO folder: folder: serving — a synced folder places the hash hash=6195b1ab6a36aa0bce251d0c55ab1a0df420e183fbf93834fc76cdc7c555c32e conn=530000677232 request=80 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.719
+2026-10-10T20:41:30.901414Z  INFO folder: folder: sent hash=36fc1969b8daf763170bbdfaa5238c43f26279e66f692e266bdd0243350dd802 conn=530000678096 request=81 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.902217Z  INFO folder: folder: serving — a synced folder places the hash hash=6f22c4883f36496f1e52636c12bfdeac85bf7d2583e9a5ed2ddfa3d8bc806a2b conn=530000678096 request=82 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.812
+2026-10-10T20:41:30.902246Z  INFO folder: folder: sent hash=6195b1ab6a36aa0bce251d0c55ab1a0df420e183fbf93834fc76cdc7c555c32e conn=530000677232 request=80 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.903002Z  INFO folder: folder: serving — a synced folder places the hash hash=36fc1969b8daf763170bbdfaa5238c43f26279e66f692e266bdd0243350dd802 conn=530000677232 request=81 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.762
+2026-10-10T20:41:30.903025Z  INFO folder: folder: sent hash=6f22c4883f36496f1e52636c12bfdeac85bf7d2583e9a5ed2ddfa3d8bc806a2b conn=530000678096 request=82 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.903753Z  INFO folder: folder: serving — a synced folder places the hash hash=3d3b005ae060c129a5b09c5e90a9af5d567b9f2490a003b13b2ccad7c437a016 conn=530000678096 request=83 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.735
+2026-10-10T20:41:30.903774Z  INFO folder: folder: sent hash=36fc1969b8daf763170bbdfaa5238c43f26279e66f692e266bdd0243350dd802 conn=530000677232 request=81 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.904513Z  INFO folder: folder: serving — a synced folder places the hash hash=6f22c4883f36496f1e52636c12bfdeac85bf7d2583e9a5ed2ddfa3d8bc806a2b conn=530000677232 request=82 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.747
+2026-10-10T20:41:30.904536Z  INFO folder: folder: sent hash=3d3b005ae060c129a5b09c5e90a9af5d567b9f2490a003b13b2ccad7c437a016 conn=530000678096 request=83 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.905270Z  INFO folder: folder: serving — a synced folder places the hash hash=31d66a95db40d00ebcc852ac47369278b540742a18f622692b79eafe23a2bfcf conn=530000678096 request=84 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.742
+2026-10-10T20:41:30.905294Z  INFO folder: folder: sent hash=6f22c4883f36496f1e52636c12bfdeac85bf7d2583e9a5ed2ddfa3d8bc806a2b conn=530000677232 request=82 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.906029Z  INFO folder: folder: serving — a synced folder places the hash hash=3d3b005ae060c129a5b09c5e90a9af5d567b9f2490a003b13b2ccad7c437a016 conn=530000677232 request=83 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.743
+2026-10-10T20:41:30.906053Z  INFO folder: folder: sent hash=31d66a95db40d00ebcc852ac47369278b540742a18f622692b79eafe23a2bfcf conn=530000678096 request=84 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.906781Z  INFO folder: folder: serving — a synced folder places the hash hash=a48fc30b614b2be1f045bfa49088a2940daf32e61a033a181b0052f13edcdaae conn=530000678096 request=85 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.739
+2026-10-10T20:41:30.906802Z  INFO folder: folder: sent hash=3d3b005ae060c129a5b09c5e90a9af5d567b9f2490a003b13b2ccad7c437a016 conn=530000677232 request=83 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.907530Z  INFO folder: folder: serving — a synced folder places the hash hash=31d66a95db40d00ebcc852ac47369278b540742a18f622692b79eafe23a2bfcf conn=530000677232 request=84 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.736
+2026-10-10T20:41:30.907550Z  INFO folder: folder: sent hash=a48fc30b614b2be1f045bfa49088a2940daf32e61a033a181b0052f13edcdaae conn=530000678096 request=85 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.908276Z  INFO folder: folder: serving — a synced folder places the hash hash=8fea84f06af547993e9fec85642353ec84fa5f532c7ccbfae06672d59672edd7 conn=530000678096 request=86 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.734
+2026-10-10T20:41:30.908304Z  INFO folder: folder: sent hash=31d66a95db40d00ebcc852ac47369278b540742a18f622692b79eafe23a2bfcf conn=530000677232 request=84 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.909047Z  INFO folder: folder: serving — a synced folder places the hash hash=a48fc30b614b2be1f045bfa49088a2940daf32e61a033a181b0052f13edcdaae conn=530000677232 request=85 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.751
+2026-10-10T20:41:30.909065Z  INFO folder: folder: sent hash=8fea84f06af547993e9fec85642353ec84fa5f532c7ccbfae06672d59672edd7 conn=530000678096 request=86 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.909802Z  INFO folder: folder: serving — a synced folder places the hash hash=a179be7670810f7eed426d9082b5c7d35d3bced2e4df737ba2072eca7db4cecc conn=530000678096 request=87 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.744
+2026-10-10T20:41:30.909822Z  INFO folder: folder: sent hash=a48fc30b614b2be1f045bfa49088a2940daf32e61a033a181b0052f13edcdaae conn=530000677232 request=85 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.910557Z  INFO folder: folder: serving — a synced folder places the hash hash=8fea84f06af547993e9fec85642353ec84fa5f532c7ccbfae06672d59672edd7 conn=530000677232 request=86 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.742
+2026-10-10T20:41:30.910575Z  INFO folder: folder: sent hash=a179be7670810f7eed426d9082b5c7d35d3bced2e4df737ba2072eca7db4cecc conn=530000678096 request=87 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.911307Z  INFO folder: folder: serving — a synced folder places the hash hash=d2260ed93c798b557192e0c0241da82c2a025c2a297763e604528a7d2f1026ce conn=530000678096 request=88 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.74
+2026-10-10T20:41:30.911327Z  INFO folder: folder: sent hash=8fea84f06af547993e9fec85642353ec84fa5f532c7ccbfae06672d59672edd7 conn=530000677232 request=86 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.912049Z  INFO folder: folder: serving — a synced folder places the hash hash=a179be7670810f7eed426d9082b5c7d35d3bced2e4df737ba2072eca7db4cecc conn=530000677232 request=87 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.729
+2026-10-10T20:41:30.912070Z  INFO folder: folder: sent hash=d2260ed93c798b557192e0c0241da82c2a025c2a297763e604528a7d2f1026ce conn=530000678096 request=88 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.912796Z  INFO folder: folder: serving — a synced folder places the hash hash=67ae0d620e7fce992795c0db04699701b3c56806fcb5b230b19ee89a0253941e conn=530000678096 request=89 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.734
+2026-10-10T20:41:30.912817Z  INFO folder: folder: sent hash=a179be7670810f7eed426d9082b5c7d35d3bced2e4df737ba2072eca7db4cecc conn=530000677232 request=87 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.913536Z  INFO folder: folder: serving — a synced folder places the hash hash=d2260ed93c798b557192e0c0241da82c2a025c2a297763e604528a7d2f1026ce conn=530000677232 request=88 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.727
+2026-10-10T20:41:30.913561Z  INFO folder: folder: sent hash=67ae0d620e7fce992795c0db04699701b3c56806fcb5b230b19ee89a0253941e conn=530000678096 request=89 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.914276Z  INFO folder: folder: serving — a synced folder places the hash hash=98b2a8283bdfe0ff7316755060ef819e4f4387ed3b83f6b3df919d8601291af7 conn=530000678096 request=90 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.726
+2026-10-10T20:41:30.914300Z  INFO folder: folder: sent hash=d2260ed93c798b557192e0c0241da82c2a025c2a297763e604528a7d2f1026ce conn=530000677232 request=88 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.915040Z  INFO folder: folder: serving — a synced folder places the hash hash=67ae0d620e7fce992795c0db04699701b3c56806fcb5b230b19ee89a0253941e conn=530000677232 request=89 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.747
+2026-10-10T20:41:30.915059Z  INFO folder: folder: sent hash=98b2a8283bdfe0ff7316755060ef819e4f4387ed3b83f6b3df919d8601291af7 conn=530000678096 request=90 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.915781Z  INFO folder: folder: serving — a synced folder places the hash hash=758d03e09bae90ece4c40cec3dca8a3ca88578896bad89d31b9832ec12092532 conn=530000678096 request=91 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.729
+2026-10-10T20:41:30.915803Z  INFO folder: folder: sent hash=67ae0d620e7fce992795c0db04699701b3c56806fcb5b230b19ee89a0253941e conn=530000677232 request=89 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.916534Z  INFO folder: folder: serving — a synced folder places the hash hash=98b2a8283bdfe0ff7316755060ef819e4f4387ed3b83f6b3df919d8601291af7 conn=530000677232 request=90 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.738
+2026-10-10T20:41:30.916552Z  INFO folder: folder: sent hash=758d03e09bae90ece4c40cec3dca8a3ca88578896bad89d31b9832ec12092532 conn=530000678096 request=91 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.917265Z  INFO folder: folder: serving — a synced folder places the hash hash=2d4d6351f1e5fd1e55bfe08e9df19d1c8b57bda728d5178439d42dd0d5b604e7 conn=530000678096 request=92 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.721
+2026-10-10T20:41:30.917275Z  INFO folder: folder: sent hash=98b2a8283bdfe0ff7316755060ef819e4f4387ed3b83f6b3df919d8601291af7 conn=530000677232 request=90 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.917316Z  INFO folder: folder: sent hash=2d4d6351f1e5fd1e55bfe08e9df19d1c8b57bda728d5178439d42dd0d5b604e7 conn=530000678096 request=92 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.918010Z  INFO folder: folder: serving — a synced folder places the hash hash=758d03e09bae90ece4c40cec3dca8a3ca88578896bad89d31b9832ec12092532 conn=530000677232 request=91 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.726
+2026-10-10T20:41:30.918750Z  INFO folder: folder: serving — a synced folder places the hash hash=a06371e96d712e6c097d4a117cdec0f0200a448fe6edd1c6b86fbc1f72007bb8 conn=530000678096 request=93 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.728
+2026-10-10T20:41:30.918767Z  INFO folder: folder: sent hash=758d03e09bae90ece4c40cec3dca8a3ca88578896bad89d31b9832ec12092532 conn=530000677232 request=91 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.919482Z  INFO folder: folder: serving — a synced folder places the hash hash=2d4d6351f1e5fd1e55bfe08e9df19d1c8b57bda728d5178439d42dd0d5b604e7 conn=530000677232 request=92 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.722
+2026-10-10T20:41:30.919501Z  INFO folder: folder: sent hash=a06371e96d712e6c097d4a117cdec0f0200a448fe6edd1c6b86fbc1f72007bb8 conn=530000678096 request=93 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.920263Z  INFO folder: folder: serving — a synced folder places the hash hash=854a35ce2ca032248690bca21a04f855ffcf306810d40e45c3fb1515576685df conn=530000678096 request=94 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.77
+2026-10-10T20:41:30.920283Z  INFO folder: folder: sent hash=2d4d6351f1e5fd1e55bfe08e9df19d1c8b57bda728d5178439d42dd0d5b604e7 conn=530000677232 request=92 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.921062Z  INFO folder: folder: serving — a synced folder places the hash hash=a06371e96d712e6c097d4a117cdec0f0200a448fe6edd1c6b86fbc1f72007bb8 conn=530000677232 request=93 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.786
+2026-10-10T20:41:30.921082Z  INFO folder: folder: sent hash=854a35ce2ca032248690bca21a04f855ffcf306810d40e45c3fb1515576685df conn=530000678096 request=94 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.921818Z  INFO folder: folder: serving — a synced folder places the hash hash=371ec094c367ccf4f1c8958ce2b6fde168c52cbd2795855009cb61f1a2c3b5f0 conn=530000678096 request=95 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.744
+2026-10-10T20:41:30.921841Z  INFO folder: folder: sent hash=a06371e96d712e6c097d4a117cdec0f0200a448fe6edd1c6b86fbc1f72007bb8 conn=530000677232 request=93 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.922558Z  INFO folder: folder: serving — a synced folder places the hash hash=854a35ce2ca032248690bca21a04f855ffcf306810d40e45c3fb1515576685df conn=530000677232 request=94 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.726
+2026-10-10T20:41:30.922576Z  INFO folder: folder: sent hash=371ec094c367ccf4f1c8958ce2b6fde168c52cbd2795855009cb61f1a2c3b5f0 conn=530000678096 request=95 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.923298Z  INFO folder: folder: serving — a synced folder places the hash hash=1c285f6ae401e997110babdb4682ca673a4a646edb2fec4861a4b75551d75904 conn=530000678096 request=96 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.73
+2026-10-10T20:41:30.923318Z  INFO folder: folder: sent hash=854a35ce2ca032248690bca21a04f855ffcf306810d40e45c3fb1515576685df conn=530000677232 request=94 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.924038Z  INFO folder: folder: serving — a synced folder places the hash hash=371ec094c367ccf4f1c8958ce2b6fde168c52cbd2795855009cb61f1a2c3b5f0 conn=530000677232 request=95 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.728
+2026-10-10T20:41:30.924061Z  INFO folder: folder: sent hash=1c285f6ae401e997110babdb4682ca673a4a646edb2fec4861a4b75551d75904 conn=530000678096 request=96 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.924787Z  INFO folder: folder: serving — a synced folder places the hash hash=a1dff296d66cef0cd07529173c2d389ac7bf8d9984f0cfd27310bdb3f68d56c1 conn=530000678096 request=97 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.734
+2026-10-10T20:41:30.924816Z  INFO folder: folder: sent hash=371ec094c367ccf4f1c8958ce2b6fde168c52cbd2795855009cb61f1a2c3b5f0 conn=530000677232 request=95 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.925543Z  INFO folder: folder: serving — a synced folder places the hash hash=1c285f6ae401e997110babdb4682ca673a4a646edb2fec4861a4b75551d75904 conn=530000677232 request=96 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.734
+2026-10-10T20:41:30.925566Z  INFO folder: folder: sent hash=a1dff296d66cef0cd07529173c2d389ac7bf8d9984f0cfd27310bdb3f68d56c1 conn=530000678096 request=97 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.926285Z  INFO folder: folder: serving — a synced folder places the hash hash=ec10e2ae7b280fd3291eb1700c194574a62843250a9a89668ca786960efe7a5e conn=530000678096 request=98 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.726
+2026-10-10T20:41:30.926306Z  INFO folder: folder: sent hash=1c285f6ae401e997110babdb4682ca673a4a646edb2fec4861a4b75551d75904 conn=530000677232 request=96 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.927051Z  INFO folder: folder: serving — a synced folder places the hash hash=a1dff296d66cef0cd07529173c2d389ac7bf8d9984f0cfd27310bdb3f68d56c1 conn=530000677232 request=97 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.753
+2026-10-10T20:41:30.927073Z  INFO folder: folder: sent hash=ec10e2ae7b280fd3291eb1700c194574a62843250a9a89668ca786960efe7a5e conn=530000678096 request=98 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.927800Z  INFO folder: folder: serving — a synced folder places the hash hash=21e94d8c554b6d3126ccffcc518de08922e461e57d762061d1fcaae29b670f37 conn=530000678096 request=99 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.732
+2026-10-10T20:41:30.927824Z  INFO folder: folder: sent hash=a1dff296d66cef0cd07529173c2d389ac7bf8d9984f0cfd27310bdb3f68d56c1 conn=530000677232 request=97 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.928567Z  INFO folder: folder: serving — a synced folder places the hash hash=ec10e2ae7b280fd3291eb1700c194574a62843250a9a89668ca786960efe7a5e conn=530000677232 request=98 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.751
+2026-10-10T20:41:30.928588Z  INFO folder: folder: sent hash=21e94d8c554b6d3126ccffcc518de08922e461e57d762061d1fcaae29b670f37 conn=530000678096 request=99 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.929309Z  INFO folder: folder: serving — a synced folder places the hash hash=e3c82ae04badce0cf12274570daeb26e4fcd6751b54bf6de88880c0d742d30f3 conn=530000678096 request=100 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.729
+2026-10-10T20:41:30.929336Z  INFO folder: folder: sent hash=ec10e2ae7b280fd3291eb1700c194574a62843250a9a89668ca786960efe7a5e conn=530000677232 request=98 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.930061Z  INFO folder: folder: serving — a synced folder places the hash hash=21e94d8c554b6d3126ccffcc518de08922e461e57d762061d1fcaae29b670f37 conn=530000677232 request=99 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.736
+2026-10-10T20:41:30.930091Z  INFO folder: folder: sent hash=e3c82ae04badce0cf12274570daeb26e4fcd6751b54bf6de88880c0d742d30f3 conn=530000678096 request=100 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.930774Z  INFO folder: folder: serving — a synced folder places the hash hash=f824887f681aeb0f2ea7dd51823ae799696203329fafc9f229600c56016b070b conn=530000678096 request=101 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.691
+2026-10-10T20:41:30.930802Z  INFO folder: folder: sent hash=21e94d8c554b6d3126ccffcc518de08922e461e57d762061d1fcaae29b670f37 conn=530000677232 request=99 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.931449Z  INFO folder: folder: serving — a synced folder places the hash hash=e3c82ae04badce0cf12274570daeb26e4fcd6751b54bf6de88880c0d742d30f3 conn=530000677232 request=100 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.654
+2026-10-10T20:41:30.931472Z  INFO folder: folder: sent hash=f824887f681aeb0f2ea7dd51823ae799696203329fafc9f229600c56016b070b conn=530000678096 request=101 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.932075Z  INFO folder: folder: serving — a synced folder places the hash hash=161b6c14a8e9af35a6f1f9821461d513198c4410c1750956619d319d4d031d0f conn=530000678096 request=102 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.612
+2026-10-10T20:41:30.932098Z  INFO folder: folder: sent hash=e3c82ae04badce0cf12274570daeb26e4fcd6751b54bf6de88880c0d742d30f3 conn=530000677232 request=100 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.932679Z  INFO folder: folder: serving — a synced folder places the hash hash=f824887f681aeb0f2ea7dd51823ae799696203329fafc9f229600c56016b070b conn=530000677232 request=101 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.59
+2026-10-10T20:41:30.932701Z  INFO folder: folder: sent hash=161b6c14a8e9af35a6f1f9821461d513198c4410c1750956619d319d4d031d0f conn=530000678096 request=102 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.933291Z  INFO folder: folder: serving — a synced folder places the hash hash=998d402c8f0b7f2775baee3791338f58afdaae924f26364b91d5edd7870d7b39 conn=530000678096 request=103 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.6
+2026-10-10T20:41:30.933313Z  INFO folder: folder: sent hash=f824887f681aeb0f2ea7dd51823ae799696203329fafc9f229600c56016b070b conn=530000677232 request=101 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.933905Z  INFO folder: folder: serving — a synced folder places the hash hash=161b6c14a8e9af35a6f1f9821461d513198c4410c1750956619d319d4d031d0f conn=530000677232 request=102 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.601
+2026-10-10T20:41:30.933929Z  INFO folder: folder: sent hash=998d402c8f0b7f2775baee3791338f58afdaae924f26364b91d5edd7870d7b39 conn=530000678096 request=103 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.934625Z  INFO folder: folder: serving — a synced folder places the hash hash=49ac524f0399c471e4996cba12e9e62e1492dfe475add25422bd64048ac51ad2 conn=530000678096 request=104 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.705
+2026-10-10T20:41:30.934645Z  INFO folder: folder: sent hash=161b6c14a8e9af35a6f1f9821461d513198c4410c1750956619d319d4d031d0f conn=530000677232 request=102 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.935389Z  INFO folder: folder: serving — a synced folder places the hash hash=998d402c8f0b7f2775baee3791338f58afdaae924f26364b91d5edd7870d7b39 conn=530000677232 request=103 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.751
+2026-10-10T20:41:30.935402Z  INFO folder: folder: sent hash=49ac524f0399c471e4996cba12e9e62e1492dfe475add25422bd64048ac51ad2 conn=530000678096 request=104 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.935442Z  INFO folder: folder: sent hash=998d402c8f0b7f2775baee3791338f58afdaae924f26364b91d5edd7870d7b39 conn=530000677232 request=103 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:30.936676Z  INFO folder: folder: serving — a synced folder places the hash hash=49ac524f0399c471e4996cba12e9e62e1492dfe475add25422bd64048ac51ad2 conn=530000677232 request=104 ranges="ChunkRangesSeq([(0, RangeSet{0..4}), (1, RangeSet{})])" record_ms=0.75
+2026-10-10T20:41:30.936720Z  INFO folder: folder: sent hash=49ac524f0399c471e4996cba12e9e62e1492dfe475add25422bd64048ac51ad2 conn=530000677232 request=104 done=true last=4096 payload=4096 other=8
+2026-10-10T20:41:31.809084Z DEBUG folder: synced: the layout read folder="Shared" placed=105 ms=0
+2026-10-10T20:41:31.810318Z DEBUG folder: synced: a step folder="Shared" files=105 sent=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=1 kept_ms=0 ms=3
+2026-10-10T20:41:32.814834Z DEBUG folder: synced: the layout read folder="Shared" placed=105 ms=0
+2026-10-10T20:41:32.815209Z DEBUG folder: synced: a step folder="Shared" files=105 sent=0 read_ms=0 walk_ms=0 take_ms=0 write_ms=0 apply_ms=1 kept_ms=0 ms=2
+2026-10-10T20:41:33.819543Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="c1m-0.bin" size=1048576
+2026-10-10T20:41:33.823597Z DEBUG folder: synced: taken into the store folder="Shared" path="c1m-0.bin" hash=dff7733ded8abb9a844a8519b7643f15b25f857b275f02435d835a905f44d9fa ms=3
+2026-10-10T20:41:33.834207Z  INFO folder: folder: written to the record namespace=51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536 folder="Shared" files=1
+2026-10-10T20:41:33.834268Z  INFO folder: synced: a change sent folder="Shared" path="c1m-0.bin" now=Some((ContentHash(dff7733ded8abb9a), 1048576))
+2026-10-10T20:41:33.836491Z DEBUG folder: synced: the layout read folder="Shared" placed=106 ms=2
+2026-10-10T20:41:33.837394Z DEBUG folder: synced: a step folder="Shared" files=106 sent=1 read_ms=0 walk_ms=0 take_ms=4 write_ms=10 apply_ms=2 kept_ms=0 ms=19
+2026-10-10T20:41:33.837448Z DEBUG svrngs_node::ring_sync: ring sync: woken by a local write rather than the interval
+2026-10-10T20:41:33.837732Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["p1/8139770e", "p2/ed4928c6"] skipped_offline=[]
+2026-10-10T20:41:33.837852Z DEBUG svrngs_node::ring_sync: ring sync: namespace register namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" offered_to=["p1/8139770e", "p2/ed4928c6"] skipped_not_standing=[]
+2026-10-10T20:41:33.849761Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:30029/internal/ring/sync" chunk=1 pulled=0 pushed=1 peer_sent=8 offered=1 more_for_peer=false
+2026-10-10T20:41:33.853644Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:22182/internal/ring/sync" chunk=1 pulled=0 pushed=1 peer_sent=8 offered=1 more_for_peer=false
+2026-10-10T20:41:33.854082Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:30029/internal/ring/sync" chunk=2 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-10T20:41:33.854615Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:22182/internal/ring/sync" chunk=2 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-10T20:41:33.854642Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=2 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=2 round_ms=17
+2026-10-10T20:41:33.957222Z  INFO folder: folder: serving — a synced folder places the hash hash=dff7733ded8abb9a844a8519b7643f15b25f857b275f02435d835a905f44d9fa conn=530000678096 request=105 ranges="ChunkRangesSeq([(0, RangeSet{0..1024}), (1, RangeSet{})])" record_ms=2.996
+2026-10-10T20:41:33.960485Z  INFO folder: folder: serving — a synced folder places the hash hash=dff7733ded8abb9a844a8519b7643f15b25f857b275f02435d835a905f44d9fa conn=530000677232 request=105 ranges="ChunkRangesSeq([(0, RangeSet{0..1024}), (1, RangeSet{})])" record_ms=3.201
+2026-10-10T20:41:33.964906Z  INFO folder: folder: sent hash=dff7733ded8abb9a844a8519b7643f15b25f857b275f02435d835a905f44d9fa conn=530000677232 request=105 done=true last=1048576 payload=1048576 other=4040
+2026-10-10T20:41:33.997551Z  INFO folder: folder: sent hash=dff7733ded8abb9a844a8519b7643f15b25f857b275f02435d835a905f44d9fa conn=530000678096 request=105 done=true last=1048576 payload=1048576 other=4040
+2026-10-10T20:41:34.844691Z DEBUG folder: synced: the layout read folder="Shared" placed=106 ms=2
+2026-10-10T20:41:34.845749Z DEBUG folder: synced: a step folder="Shared" files=106 sent=0 read_ms=0 walk_ms=1 take_ms=0 write_ms=0 apply_ms=2 kept_ms=0 ms=5
+2026-10-10T20:41:35.848565Z DEBUG folder: synced: found on disk, changed since it was last held folder="Shared" path="c1m-1.bin" size=1048576
+2026-10-10T20:41:35.851592Z DEBUG folder: synced: taken into the store folder="Shared" path="c1m-1.bin" hash=b771e6550824f35b1d8d475ca1c6ec6d26699e1fd020c06bb8afabb8cee0bcb2 ms=2
+2026-10-10T20:41:35.859297Z  INFO folder: folder: written to the record namespace=51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536 folder="Shared" files=1
+2026-10-10T20:41:35.859352Z  INFO folder: synced: a change sent folder="Shared" path="c1m-1.bin" now=Some((ContentHash(b771e6550824f35b), 1048576))
+2026-10-10T20:41:35.861610Z DEBUG folder: synced: the layout read folder="Shared" placed=107 ms=2
+2026-10-10T20:41:35.862458Z DEBUG folder: synced: a step folder="Shared" files=107 sent=1 read_ms=0 walk_ms=1 take_ms=3 write_ms=7 apply_ms=2 kept_ms=0 ms=15
+2026-10-10T20:41:35.862506Z DEBUG svrngs_node::ring_sync: ring sync: woken by a local write rather than the interval
+2026-10-10T20:41:35.862754Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["p1/8139770e", "p2/ed4928c6"] skipped_offline=[]
+2026-10-10T20:41:35.862860Z DEBUG svrngs_node::ring_sync: ring sync: namespace register namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" offered_to=["p1/8139770e", "p2/ed4928c6"] skipped_not_standing=[]
+2026-10-10T20:41:35.874054Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:22182/internal/ring/sync" chunk=1 pulled=0 pushed=1 peer_sent=9 offered=1 more_for_peer=false
+2026-10-10T20:41:35.877836Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:30029/internal/ring/sync" chunk=1 pulled=0 pushed=1 peer_sent=9 offered=1 more_for_peer=false
+2026-10-10T20:41:35.878267Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:22182/internal/ring/sync" chunk=2 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-10T20:41:35.878703Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="51564ea8ae0514f1b32ec24be3cb76f40750d3e9d1b97d101a01d0c184e9c536" url="http://127.0.0.1:30029/internal/ring/sync" chunk=2 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-10T20:41:35.878730Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=2 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=2 round_ms=16
+2026-10-10T20:41:36.032242Z  INFO folder: folder: serving — a synced folder places the hash hash=b771e6550824f35b1d8d475ca1c6ec6d26699e1fd020c06bb8afabb8cee0bcb2 conn=530000678096 request=106 ranges="ChunkRangesSeq([(0, RangeSet{0..1024}), (1, RangeSet{})])" record_ms=2.083
+2026-10-10T20:41:36.035274Z  INFO folder: folder: serving — a synced folder places the hash hash=b771e6550824f35b1d8d475ca1c6ec6d26699e1fd020c06bb8afabb8cee0bcb2 conn=530000677232 request=106 ranges="ChunkRangesSeq([(0, RangeSet{0..1024}), (1, RangeSet{})])" record_ms=2.96
+2026-10-10T20:41:36.067860Z  INFO folder: folder: sent hash=b771e6550824f35b1d8d475ca1c6ec6d26699e1fd020c06bb8afabb8cee0bcb2 conn=530000677232 request=106 done=true last=1048576 payload=1048576 other=4040
+2026-10-10T20:41:36.078426Z  INFO folder: folder: sent hash=b771e6550824f35b1d8d475ca1c6ec6d26699e1fd020c06bb8afabb8cee0bcb2 conn=530000678096 request=106 done=true last=1048576 payload=1048576 other=4040
+2026-10-10T20:41:36.867809Z DEBUG folder: synced: the layout read folder="Shared" placed=107 ms=2
+2026-10-10T20:41:36.868634Z DEBUG folder: synced: a step folder="Shared" files=107 sent=0 read_ms=0 walk_ms=1 take_ms=0 write_ms=0 apply_ms=2 kept_ms=0 ms=5
