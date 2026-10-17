@@ -154,9 +154,10 @@ apps of one name have two origins (`crates/svrngs-node/src/lend.rs`,
 them, while that one is on. Both pages show one copy of each
 (`question.js`, `once`); every copy is listed, so a phone knows each computer
 it can reach the group through. svrngs runs none of its code: the door answers
-it from the store (`crates/svrngs-node/src/carried.rs`) — a file by the hash
-the group's layout places at its path, `index.html` for a directory's — and
-from **its route**, `/svrngs/acts` at its own origin: `GET` answers its own
+it from the store (`crates/svrngs-node/src/carried.rs`) — a file by its hash in
+the version that runs as the person asking (below), `index.html` for a
+directory's, fetched from a computer of the group's when this one never held
+it — and from **its route**, `/svrngs/acts` at its own origin: `GET` answers its own
 acts, each whose `kind` begins `<kind>/`, the prefix taken off, and each
 correction of one, as `ops` in the shape `/v1/rail/log` gives them, voided ones
 too, so an app's fold reads them as it reads the record (Events' decides whose
@@ -175,6 +176,28 @@ headers (COMMUNITY_APPS §6.2): a policy that lets the page load and connect
 only to its own origin, no camera, microphone or location, no DNS prefetch.
 It comes to a group from the shelf (below, the home page's "brings things to
 the table") or as any folder dropped into the group's folder under `apps/`.
+
+**What runs as you is what your group brought, and each new version is your
+own yes** (canon-pin; svrn-docs `rings/current/WHAT_RUNS_AS_YOU.md` §3, §8).
+Bringing pins it: the folder acts that place an app's files name their
+hashes, and each path under `apps/<kind>/` as the record first placed it is
+the app as it was brought (`svrngs_core::Runs`, folded in
+`crates/svrngs-core/src/synced.rs` alike on every copy). A member's change to
+its files is a new version, by its files' hashes, and runs as nobody until
+they say yes. Both pages ask, under "Bring things to the table": "kim
+changed Money's files on 16 Oct. Open the new version?" The yes (`POST
+/runs`, on the home page and through the computer a phone reaches) records a
+`RailAct::Runs` naming the app's files placed now, as the person's: its
+`on_behalf_of`, else its writer's, so a yes through another member's
+computer is that computer's word for the person, as every act it writes for
+a phone is. Until a person says yes, the version they last said yes to, else
+the one brought, keeps running as them, on their computers and phones
+alike, and every computer keeps and serves each version someone runs
+(`Runs::of`, the one decider). An app brought before the pin landed is
+pinned at its first files, nothing migrated; a change made before then is a
+new version like any later one. Whether a new version also waits for the
+house's agreement is a house rule: canon may configure a house's
+(WHAT_RUNS_AS_YOU §8). svrngs keeps the pin and each person's yes.
 Not yet: an inline `<script>` (svrngs computes no hashes of them), bytes from
 the route, and reading another app's acts.
 
@@ -2807,9 +2830,10 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   pinned before a house's rules are carried (WHAT_RUNS_AS_YOU §1, §7;
   svrn-docs `rings/current/CANON_IN_SVRNGS.md`): its economizing pass first
   (landed, `088d6f32`), then the trust floor, the one file that pins every
-  page's policy and every listener, with a gate in `scripts/check.sh`; then a
-  carried app pinned at the files its group brought, each new version run for
-  a person only after their own yes; then canon-core built to plain
+  page's policy and every listener, with a gate in `scripts/check.sh`
+  (landed, `1467d286`); then a carried app pinned at the files its group
+  brought, each new version run for a person only after their own yes
+  (landed, `40295803`; §3, "What runs as you"); then canon-core built to plain
   JavaScript through `wasm2js`, so carried pages get no `'wasm-unsafe-eval'`,
   and carried as House rules on the shelf, membership its standing; then a
   house's run;
