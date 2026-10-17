@@ -87,8 +87,9 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # already there. The canon rows have +150 over that and svrngs-core +40, at
 # most 16,564 and 3,032 (the operator, 2026-10-16), each raise to one past
 # where it lands: canon-floor (b), the trust floor's gate and its step in
-# check.sh, 57 lines.
-BUDGET = {"crates/svrngs-core": 2992, ".": 16471}
+# check.sh, 57 lines; its (c), the gate reading the floor's behavioural
+# gates, 2.
+BUDGET = {"crates/svrngs-core": 2992, ".": 16473}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
