@@ -1,0 +1,13 @@
+$ wasm2js target/canon/cargo/wasm32-unknown-unknown/release/canon_page.wasm -o raw.js
+(the first error, the count by kind, and the end, of   517483 lines)
+[wasm-validator error in function 4] unexpected false: memory.copy operations require bulk memory operations [--enable-bulk-memory-opt], on 
+(memory.copy
+ (local.get $5)
+ (local.get $1)
+ (local.get $2)
+)
+...
+  37 require bulk memory [--enable-bulk-memory-opt]
+ 718 require bulk memory operations [--enable-bulk-memory-opt]
+Fatal: error in validating input
+wasm2js raw exit=1

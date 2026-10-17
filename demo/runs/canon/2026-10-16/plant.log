@@ -1,0 +1,21 @@
+plant            cpr/alanya-fishery/scenario.jsonl: step a-panel-is-announced altered in canon-cli's answer
+failed           cpr/alanya-fishery/scenario.jsonl: 32 steps, as expected; wasm differs at a-panel-is-announced; js differs at a-panel-is-announced
+passed           cpr/commonwealth-mesh/scenario.jsonl: 32 steps, as expected; wasm equal; js equal
+passed           cpr/crosswalk-coliving/scenario.jsonl: 33 steps, as expected; wasm equal; js equal
+passed           cpr/crosswalk-upstream-capture/scenario.jsonl: 33 steps, as expected; wasm equal; js equal
+passed           cpr/harbourside-makerspace/scenario.jsonl: 32 steps, as expected; wasm equal; js equal
+passed           cpr/harbourside-no-boundary/scenario.jsonl: 32 steps, as expected; wasm equal; js equal
+passed           cpr/meridian-imposed-rules/scenario.jsonl: 32 steps, as expected; wasm equal; js equal
+passed           cpr/meridian-monorepo/scenario.jsonl: 33 steps, as expected; wasm equal; js equal
+passed           cpr/northgate-buildfarm/scenario.jsonl: 32 steps, as expected; wasm equal; js equal
+passed           cpr/northgate-unwatched/scenario.jsonl: 32 steps, as expected; wasm equal; js equal
+passed           cpr/parkside-allotments/scenario.jsonl: 32 steps, as expected; wasm equal; js equal
+passed           cpr/tidepool-forum/scenario.jsonl: 33 steps, as expected; wasm equal; js equal
+passed           cpr/torbel-alpine/scenario.jsonl: 32 steps, as expected; wasm equal; js equal
+passed           cpr/valencia-huerta/scenario.jsonl: 32 steps, as expected; wasm equal; js equal
+passed           eleven-principles/scenario.jsonl: 26 steps, as expected; wasm equal; js equal
+passed           fernwood-commons/scenario.jsonl: 44 steps, as expected; wasm equal; js equal
+passed           maple-house/accepted/scenario.jsonl: 0 steps, no expected file; wasm equal; js equal
+passed           fernwood-commons/kitchen.jsonl: 19 steps, as expected; wasm equal; js equal
+18 of 18 replays judged; NOT all equal
+exit=1
