@@ -722,6 +722,11 @@ async fn an_app_is_told_each_person_s_time_in_the_group() {
         json!(["ana", "ben"]),
         "today's names, as before:\n{read:#}"
     );
+    assert_eq!(
+        read["group"],
+        json!(group),
+        "the group, which House rules names its house by:\n{read:#}"
+    );
     let spans = read["spans"]
         .as_array()
         .expect("each person's time in the group");

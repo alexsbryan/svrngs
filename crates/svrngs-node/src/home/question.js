@@ -12,8 +12,11 @@
 // A lend as a person reads it: "Ana’s taste", and "Sam’s tonights-picks
 // (movie-night)" when its name and kind differ; an app the group carries
 // by its kind alone, "Money", its lend name holding the group's id
-// (lend.rs `carried`) and its copies everyone's (v1ui-polish (b)).
-export const named = (l) => (l.group ? l.kind : `${l.person}’s ${l.name === l.kind ? l.name : `${l.name} (${l.kind})`}`);
+// (lend.rs `carried`) and its copies everyone's (v1ui-polish (b)), a `-`
+// in it said as a space: a kind is one word (declared.rs
+// `valid_header_name`), and "House-rules" reads "House rules" (canon-house).
+export const spoken = (kind) => kind.replaceAll('-', ' ');
+export const named = (l) => (l.group ? spoken(l.kind) : `${l.person}’s ${l.name === l.kind ? l.name : `${l.name} (${l.kind})`}`);
 
 // Whose a lend is on group `g`'s index: its lender's, or the group's for an
 // app the group carries, whichever computer's copy is listed (`once`).
@@ -133,15 +136,15 @@ export function table(g, lends, bring, yes) {
   const on = (a) => lends.lent.some((l) => l.group === g.id && l.kind === a.name);
   const ticks = lends.shelf.filter((a) => !on(a)).map((a) => [a.name, Object.assign(el('input'), { type: 'checkbox', checked: true })]);
   const said = el('p', ticks.length ? `These come with svrngs. Bring one, and everyone in ${name} opens it on their own computer or phone, while any computer in ${name} is on.` : '');
-  const s = el('section', '', el('h3', 'Bring things to the table'), ...lends.shelf.filter(on).map((a) => el('p', `${a.name} is on the table.`)), said);
-  for (const [name, tick] of ticks) s.append(el('p', '', el('label', '', tick, ` ${name}: ${lends.shelf.find((a) => a.name === name).words}`)));
-  const done = (r) => (r.already ? `${r.app} is on the table already.` : `You brought ${r.app} to ${name}: everyone in it can open it in a few seconds.`);
+  const s = el('section', '', el('h3', 'Bring things to the table'), ...lends.shelf.filter(on).map((a) => el('p', `${spoken(a.name)} is on the table.`)), said);
+  for (const [name, tick] of ticks) s.append(el('p', '', el('label', '', tick, ` ${spoken(name)}: ${lends.shelf.find((a) => a.name === name).words}`)));
+  const done = (r) => (r.already ? `${spoken(r.app)} is on the table already.` : `You brought ${spoken(r.app)} to ${name}: everyone in it can open it in a few seconds.`);
   const go = () => bring(ticks.filter(([, t]) => t.checked).map(([n]) => n)).then((b) => said.replaceChildren(b.map(done).join(' ') || 'Tick something to bring first.'), (e) => said.replaceChildren(`Nothing was brought: ${e.message}`));
   if (ticks.length) s.append(el('p', '', Object.assign(el('button', `Bring the ticked ones to ${name}`), { onclick: go })));
   if (lends.changed === null) s.append(el('p', `This computer can’t say whether anyone changed an app in ${name}.`));
   for (const c of (lends.changed ?? []).filter((c) => c.group === g.id)) {
-    const p = s.appendChild(el('p', `${c.by === g.person ? 'You' : c.by} changed ${c.app}’s files on ${new Date(c.at * 1000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}. Open the new version? `));
-    p.append(Object.assign(el('button', `Yes, use the new version of ${c.app}`), { onclick: () => yes(c.app).then(() => p.replaceChildren(`${c.app} opens at its new version for you now.`), (e) => p.append(` ${e.message}`)) }));
+    const p = s.appendChild(el('p', `${c.by === g.person ? 'You' : c.by} changed ${spoken(c.app)}’s files on ${new Date(c.at * 1000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}. Open the new version? `));
+    p.append(Object.assign(el('button', `Yes, use the new version of ${spoken(c.app)}`), { onclick: () => yes(c.app).then(() => p.replaceChildren(`${spoken(c.app)} opens at its new version for you now.`), (e) => p.append(` ${e.message}`)) }));
   }
   return s;
 }

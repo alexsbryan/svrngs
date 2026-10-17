@@ -112,7 +112,7 @@ async function show(g, s) {
       const [opened, now] = opens(l, 'In a tab');
       const how = el('td', `${opened}. `, button('Copy its address for a program', () => Promise.resolve().then(() => navigator.clipboard.writeText(l.origin)).then(() => how.append(` Copied: ${l.origin}`), () => how.append(` Copy it from here: ${l.origin}`))));
       if (l.room) how.append(` On your TV too, at ${l.room}`);
-      body.append(el('tr', '', el('td', '', Object.assign(el('a', `Open ${named(l)}`), { href: l.origin, target: '_blank' })), el('td', l.kind), el('td', owner(l, g)), how, el('td', now)));
+      body.append(el('tr', '', el('td', '', Object.assign(el('a', `Open ${named(l)}`), { href: l.origin, target: '_blank' })), el('td', l.group ? named(l) : l.kind), el('td', owner(l, g)), how, el('td', now)));
     }
     // Each computer that did not say, by how (bash-first-minute (c)), a row
     // of its own: what it lends never stale, and never nobody's. One that

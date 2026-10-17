@@ -348,6 +348,9 @@ in_both_engines!(
     /// as the group's, no word holding its lend name, `<kind>-<the group's
     /// id>` (v1ui-polish (b); `demo/runs/v1ui/2026-10-15/README.md` finding
     /// 4). Planted: the lend name drawn, and its first lender's, as before.
+    /// House rules comes with them (canon-house): its folder `House-rules`,
+    /// a kind's name, said as "House rules"; it brings canon's build in
+    /// `vendor/`, and opened at its origin it asks how the house decides.
     the_home_page_brings_things_to_the_table
 );
 async fn the_home_page_brings_things_to_the_table(engine: Engine) {
@@ -367,20 +370,44 @@ async fn the_home_page_brings_things_to_the_table(engine: Engine) {
         "{seen:#}"
     );
     assert!(before.contains("Events: post a get-together"), "{seen:#}");
+    assert!(
+        before.contains("House rules: the rules your house agrees"),
+        "{seen:#}"
+    );
     let after = seen["after"][0].to_string();
     assert!(
         after.contains(
             "You brought Money to your group: everyone in it can open it in a few seconds."
-        ) && after.contains("You brought Events to your group"),
+        ) && after.contains("You brought Events to your group")
+            && after.contains("You brought House rules to your group"),
         "{seen:#}"
     );
-    for app in ["Money", "Events"] {
+    for app in ["Money", "Events", "House-rules"] {
         carried_at(&ada, app).await;
         assert!(folder.join("apps").join(app).join("look.css").exists());
     }
+    let canon = folder.join("apps/House-rules/vendor/canon.js");
+    assert_eq!(
+        std::fs::read(canon).unwrap(),
+        std::fs::read(repo().join("apps/canon/vendor/canon.js")).unwrap(),
+        "House rules brings canon's build as vendored"
+    );
+    let rules = carried_at(&ada, "House-rules").await;
+    let opened = drive(
+        engine,
+        "carried.mjs",
+        json!({ "url": rules, "do": [] }),
+        None,
+    )
+    .await;
+    let said = opened["said"].as_str().unwrap_or_default();
+    assert!(
+        said.contains("How does your house decide its rules?"),
+        "House rules runs at its origin under the carried policy: {opened:#}"
+    );
     let index = home_page(engine, &ada, json!({ "all": "#home table.index tr" })).await;
     let rows = index["all"].to_string();
-    for app in ["Money", "Events"] {
+    for app in ["Money", "Events", "House rules"] {
         let drawn = format!("Open {app}{app}your groupIn a tab");
         assert!(
             rows.contains(&drawn),

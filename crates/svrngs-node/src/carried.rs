@@ -116,7 +116,7 @@ type Served = Result<Response, Withheld>;
 /// stranger's (COMMUNITY_APPS §6.2). Each its name, what it is in a
 /// sentence, and its files, as `src/shelf.txt` lists them and build.rs
 /// embeds them.
-const SHELF: &[(&str, &str, [File; 4])] = include!(concat!(env!("OUT_DIR"), "/shelf.rs"));
+const SHELF: &[(&str, &str, &[File])] = include!(concat!(env!("OUT_DIR"), "/shelf.rs"));
 
 /// A file an app brings: its name in the app's folder, and its text.
 type File = (&'static str, &'static str);
@@ -156,8 +156,9 @@ fn brought(at: &Asking, group: &str, asker: &str, apps: &[String]) -> Served {
     for (name, _, files) in SHELF.iter().filter(|(n, ..)| apps.iter().any(|a| a == n)) {
         let at = dir.join("apps").join(name);
         let there = at.join("index.html").exists();
-        let put =
-            |(f, text): &(&str, &str)| create_dir_all(&at).and_then(|()| write(at.join(f), text));
+        let put = |(f, text): &(&str, &str)| {
+            create_dir_all(at.join(f).with_file_name("")).and_then(|()| write(at.join(f), text))
+        };
         let wrote: Result<(), _> = files.iter().filter(|_| !there).try_for_each(put);
         wrote.map_err(|e| traced(group, UNWRITTEN, &e))?;
         said.push(json!({ "app": name, "already": there }));
@@ -332,7 +333,8 @@ impl Folders {
                 .filter(|m| !m.unsettled);
             let spans = register.map(|m| m.spans());
             tracing::debug!(target: "folder", group, %kind, spans = ?spans.as_ref().map(Vec::len), "carried: each person's time in the group, or none, their standing unsettled");
-            let read = json!({ "you": person, "people": all, "spans": spans, "ops": ops });
+            let read =
+                json!({ "you": person, "group": group, "people": all, "spans": spans, "ops": ops });
             return Ok(Json(read).into_response());
         }
         let body = (to_bytes(req.into_body(), WRITE_MOST).await).map_err(|_| TOO_LARGE)?;
@@ -362,7 +364,7 @@ impl Folders {
 fn content_type(file: &Path) -> &'static str {
     match file.extension().and_then(|e| e.to_str()) {
         Some("html") => "text/html; charset=utf-8",
-        Some("js") => "text/javascript; charset=utf-8",
+        Some("js" | "mjs") => "text/javascript; charset=utf-8",
         Some("css") => "text/css; charset=utf-8",
         Some("json") => "application/json",
         Some("svg") => "image/svg+xml",

@@ -429,7 +429,7 @@ async function enter(group, asked) {
     row(['What', 'What it is', 'Whose', 'How it opens', 'Now'], 'th'),
     ...once(lent).map((l) => {
       const button = Object.assign(el('button', named(l)), { onclick: () => open(group, key, lent, unanswered, l) });
-      return row([button, l.kind, owner(l, group), ...opens(l, 'Here, in this tab')]);
+      return row([button, l.group ? named(l) : l.kind, owner(l, group), ...opens(l, 'Here, in this tab')]);
     }),
   );
   const again = asked?.get('open') && lent.find((l) => label(l.key, l.name) === asked.get('open'));

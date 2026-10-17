@@ -19,14 +19,15 @@ fn main() {
         .lines()
         .filter(|l| !l.starts_with('#') && !l.trim().is_empty());
     for fields in lines.map(|l| l.split('\t').collect::<Vec<_>>()) {
-        let (name, app, fold, words) = (
+        let (name, app, beside, words) = (
             fields[0],
             here.join("../../apps").join(fields[1]),
-            fields[2],
+            fields[2].split(' '),
             fields[3],
         );
-        let files = ["index.html", "index.js", fold].map(|f| file(&app, f));
-        shelf += &format!("({name:?}, {words:?}, [{}, {look}]),", files.join(", "));
+        let files = Vec::from_iter(["index.html", "index.js"].into_iter().chain(beside));
+        let files: Vec<_> = files.into_iter().map(|f| file(&app, f)).collect();
+        shelf += &format!("({name:?}, {words:?}, &[{}, {look}]),", files.join(", "));
     }
     let out = Path::new(&std::env::var("OUT_DIR").expect("cargo sets OUT_DIR")).join("shelf.rs");
     std::fs::write(&out, shelf + "]").expect("the shelf is written");
