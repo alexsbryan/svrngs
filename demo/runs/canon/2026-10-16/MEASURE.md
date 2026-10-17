@@ -53,4 +53,5 @@ took 70–73 ms, five fresh processes (`import.log`).
   scope's standing, handed to canon as the roster. canon folds standing from
   `grant` acts alone. Writing grants that no member wrote, in someone's
   name, would break "who said it, truly" (the queue's fence 4). It is a
-  change to canon-core, canon's repository's: row (d)'s second case.
+  change to canon-core, canon's repository's: row (d)'s second case,
+  `NEEDS_HUMAN.md` beside this file.
