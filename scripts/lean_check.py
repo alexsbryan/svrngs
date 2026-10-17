@@ -77,8 +77,9 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # +100 over that and svrngs-core +15, at most 16,423 and 2,996 (the operator,
 # 2026-10-16), each raise to one past where they land: #187, one hole a run;
 # #188, the time following only signed lines at most five minutes on; #189,
-# an id held once a line of it verifies; #191, a torn tail ended first.
-BUDGET = {"crates/svrngs-core": 2992, ".": 16347}
+# an id held once a line of it verifies; #191, a torn tail ended first;
+# #190, the leaver's round telling the leave until each computer answers.
+BUDGET = {"crates/svrngs-core": 2992, ".": 16392}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
