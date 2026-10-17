@@ -161,7 +161,16 @@ it — and from **its route**, `/svrngs/acts` at its own origin: `GET` answers i
 acts, each whose `kind` begins `<kind>/`, the prefix taken off, and each
 correction of one, as `ops` in the shape `/v1/rail/log` gives them, voided ones
 too, so an app's fold reads them as it reads the record (Events' decides whose
-correction counts), with `you` and the group's `people`;
+correction counts), with `you`, the group's `people` now, and `spans`: each
+person's time in the group, one `{person, joined, left}` for each stretch they
+stood, so a house's rules count a past act with whoever stood when it was
+written (canon-spans). The stretches come from svrngs-core's membership
+(`Membership::spans`), the one decider of who stood when. `joined` is the time
+on the act that admitted them, null for whoever started the group. `left` is
+the time on the cut of their last key, null while one stands. Both are stamps
+on acts, never a computer's clock, so every copy that holds the acts says the
+same. A person who leaves and comes back does so by a new key, so they have two
+stretches. `spans` is null while who stands is unsettled (#124), never empty;
 `POST {op}` records one and `{corrects, op}` corrects one of its own, `op`
 null to void it. svrngs puts the prefix on, and writes `on_behalf_of` as the
 person the door resolved, never a word of the request's body; a correction of
