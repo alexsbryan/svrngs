@@ -81,8 +81,8 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # #190, the leaver's round telling the leave until each computer answers;
 # #203, the door's clock before 1970 refused; #153, a path kept within its
 # lend; #194, the vocab gate reading what it missed; #195, the shared-state
-# regex reading every path.
-BUDGET = {"crates/svrngs-core": 2992, ".": 16418}
+# regex reading every path; #190 again, the leave told from the round's read.
+BUDGET = {"crates/svrngs-core": 2992, ".": 16420}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
