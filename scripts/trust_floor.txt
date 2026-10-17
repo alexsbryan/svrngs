@@ -1,0 +1,70 @@
+# The trust floor (svrn-docs rings/current/WHAT_RUNS_AS_YOU.md §1, §4): the one
+# home for what svrngs lets a page or a socket do. What runs as you, and what
+# can reach you, is what you or your group chose to bring; svrngs never widens
+# it silently. scripts/trust_check.py, in scripts/check.sh, holds the code to
+# this file, and this file to its history: a commit that changes it says why
+# on a line of its body, `Trust floor: <the reason, and what was tried first>`.
+# Changing it is the operator's, as a size-budget raise is (AGENTS.md "Done").
+#
+# page <name> <file> <anchor>: the policy that file serves, the one string
+#   literal after the anchor, which the file holds once. Under it, each
+#   directive as served, token by token, in any order. Anything past 'self'
+#   or 'none' is a widening, and gives its reason after ` | `.
+# listen <file>: <the line> | <the address, and why>: each place svrngs binds
+#   a socket, the line as its code reads, trimmed. A line that binds and is
+#   not here fails the gate; so does one here that is gone.
+
+# A carried app's every answer (crates/svrngs-node/src/carried.rs, `FLOOR`):
+# code from its own files alone, and nothing loaded from elsewhere
+# (COMMUNITY_APPS §6.2). Never 'wasm-unsafe-eval': canon runs here as plain
+# JavaScript, built through wasm2js (ralph/next/canon/CHARTER.md).
+page carried crates/svrngs-node/src/carried.rs const POLICY: &str =
+  default-src 'self'
+  script-src 'self'
+  style-src 'self' 'unsafe-inline' | an app's own styles, in its page; its scripts are untouched
+  img-src 'self' data: | an app's own images written into its page as a data URL; an image runs nothing
+  connect-src 'self'
+  object-src 'none'
+  base-uri 'none'
+  form-action 'self'
+  frame-src 'self'
+  worker-src 'self'
+page carried-permissions crates/svrngs-node/src/carried.rs "permissions-policy",
+  camera=()
+  microphone=()
+  geolocation=()
+page carried-prefetch crates/svrngs-node/src/carried.rs "x-dns-prefetch-control",
+  off
+
+# The home page (crates/svrngs-node/src/home.rs, `only_itself`): no widening.
+page home crates/svrngs-node/src/home.rs const POLICY: &str =
+  default-src 'self'
+  frame-ancestors 'none'
+
+# The group's page, as scripts/build-web.sh copies it and the page host
+# serves it (web/index.html's comment says each token's why).
+page group web/index.html <meta http-equiv="Content-Security-Policy" content=
+  default-src 'none'
+  script-src 'self' 'wasm-unsafe-eval' | svrngs's own wasm (web/src), the phone's iroh endpoint; no other code
+  connect-src 'self' wss: https: | the relays a link names: their WebSocket, and iroh's probe of each one's /ping (web/index.html:21-24)
+  img-src 'none'
+  style-src 'self'
+  base-uri 'none'
+  form-action 'none'
+page group-host web/vercel.json "key": "Content-Security-Policy", "value":
+  frame-ancestors 'none'
+page open web/open.html <meta http-equiv="Content-Security-Policy" content=
+  default-src 'none'
+  script-src 'self'
+  base-uri 'none'
+  form-action 'none'
+
+# Where svrngs listens.
+listen crates/svrngs-node/src/api.rs: let listener = tokio::net::TcpListener::bind(listen) | loopback alone: the record API, the home page and each lend's origin, refused off loopback by `check_loopback` just before (api.rs:235)
+listen crates/svrngs-node/src/room.rs: let listener = tokio::net::TcpListener::bind(addr) | the room door: this computer's private address alone (`pick`), only while `svrngs room` runs, each caller asked to be on this network (room.rs:107-130)
+listen crates/svrngs-node/src/room.rs: let probe = std::net::UdpSocket::bind("0.0.0.0:0").ok()?; | no listener: a socket connected to learn the outward route's address, which sends nothing and is dropped (room.rs:59-63)
+listen crates/svrngs-node/src/guest.rs: .bind() | the iroh endpoint, UDP on every interface: QUIC that admits a dialer only by its key and the protocols the node names, so a member's computer is reached with no port forwarded (DESIGN §3)
+listen crates/svrngs-node/src/guest.rs: .bind_addr(SocketAddr::from(([127, 0, 0, 1], 0))) | the iroh endpoint on loopback alone, for `loopback_only`, the tests' two nodes on one host
+listen web/src/lib.rs: let ep = match builder.bind().await { | the phone's iroh endpoint, in the browser: it offers no protocol and reaches out through its relay alone (web/src/lib.rs:139)
+listen crates/svrngs/src/relay.rs: let any = |port| SocketAddr::from((Ipv6Addr::UNSPECIFIED, port)); | `svrngs relay` at a name: ports 80, 443 and 7842 on every interface, since a relay is what others reach, by default admitting only keys standing in a group its computer holds
+listen crates/svrngs/src/relay.rs: Server::spawn(server).await.map_err(|e| { | `svrngs relay`: at the name's ports above, or plain HTTP at the address its caller gives, which only the tests do

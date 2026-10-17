@@ -717,6 +717,8 @@ links; it marks a row done itself, when a session reports it. U1's queue is
 
 **`scripts/`**: `check.sh` is the definition of done; `lean_check.py` keeps the
 repository standalone and within budget; `vocab_check.py` keeps every app's
-nouns (`apps/<app>/nouns.txt`) out of infra code; `ports.py` lists the fork's pairs;
+nouns (`apps/<app>/nouns.txt`) out of infra code; `trust_check.py` holds every
+page's policy and every listener to `trust_floor.txt`, their one home, and
+the floor to a reason for each change; `ports.py` lists the fork's pairs;
 `principles_check.py` keeps `docs/principles/` pinned; `build-web.sh` builds
 and lints the page (`web/`).

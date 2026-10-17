@@ -1,0 +1,55 @@
+== unsafe-eval: 'unsafe-eval' added to the carried policy's script-src
+trust floor: 7 policies, 8 listeners
+BROKEN  carried as served: script-src holds 'unsafe-eval'
+BROKEN  carried: crates/svrngs-node/src/carried.rs serves `script-src 'self' 'unsafe-eval'`, the floor `'self'`
+exit 1
+
+== wasm: 'wasm-unsafe-eval' added to the carried policy's script-src, in the code alone
+trust floor: 7 policies, 8 listeners
+BROKEN  carried as served: script-src holds 'wasm-unsafe-eval'
+BROKEN  carried: crates/svrngs-node/src/carried.rs serves `script-src 'self' 'wasm-unsafe-eval'`, the floor `'self'`
+exit 1
+
+== wasm-pinned: 'wasm-unsafe-eval' added to the carried policy and pinned in the floor with a reason, committed with one
+trust floor: 7 policies, 8 listeners
+BROKEN  carried: script-src holds 'wasm-unsafe-eval'
+BROKEN  carried as served: script-src holds 'wasm-unsafe-eval'
+exit 1
+
+== host: a host in the home page's script-src
+trust floor: 7 policies, 8 listeners
+BROKEN  home as served: its script-src holds https://cdn.example.com
+BROKEN  home as served: its worker-src holds https://cdn.example.com
+BROKEN  home: crates/svrngs-node/src/home.rs serves `script-src 'self' https://cdn.example.com`, the floor `(absent)`
+exit 1
+
+== drift: the published page's connect-src drifting from the floor: the tests' loopback allowance back (v1patch-loopback)
+trust floor: 7 policies, 8 listeners
+BROKEN  group: web/index.html serves `connect-src 'self' https: ws://127.0.0.1:* wss:`, the floor `'self' https: wss:`
+exit 1
+
+== wide: the room door's listener bound on 0.0.0.0
+trust floor: 7 policies, 8 listeners
+BROKEN  crates/svrngs-node/src/room.rs: let listener = tokio::net::TcpListener::bind("0.0.0.0:0"): binds a socket the floor does not name
+BROKEN  scripts/trust_floor.txt names `crates/svrngs-node/src/room.rs: let listener = tokio::net::TcpListener::bind(addr)`, which no code holds now
+exit 1
+
+== unreasoned: the floor changed in a commit whose body gives no reason
+trust floor: 7 policies, 8 listeners
+BROKEN  bffb5c9 changed scripts/trust_floor.txt and its body gives no `Trust floor:` reason
+exit 1
+
+== uncommitted: the floor changed and not committed, so no reason can be read
+trust floor: 7 policies, 8 listeners
+BROKEN  scripts/trust_floor.txt is not committed here, so whether its change gives a reason could not be judged
+exit 1
+
+== no-why: a widening pinned in the floor with no reason after it
+trust floor: 7 policies, 8 listeners
+BROKEN  scripts/trust_floor.txt:49: connect-src 'self' wss: https: widens with no reason given
+exit 1
+
+== tree: the tree as it is, nothing planted
+trust floor: 7 policies, 8 listeners
+exit 0
+

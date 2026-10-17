@@ -19,6 +19,9 @@ step() {  # step <name> <command...>
 }
 step "principles pinned"  python3 scripts/principles_check.py
 step "lean and RUST_ARCH" python3 scripts/lean_check.py
+# What a page or a socket may do, held to its one home, scripts/trust_floor.txt
+# (svrn-docs rings/current/WHAT_RUNS_AS_YOU.md §4; canon-floor).
+step "trust floor"        python3 scripts/trust_check.py
 step "app nouns gate"   python3 scripts/vocab_check.py --self-test
 step "app nouns"        python3 scripts/vocab_check.py
 if [ -f Cargo.toml ]; then
