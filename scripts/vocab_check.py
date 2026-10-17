@@ -3,12 +3,12 @@
 
 Every app lists its nouns in apps/<app>/nouns.txt, one per line, `#` for a
 comment. Each is refused, as a whole word in any case, in infra code: every
-.rs file under crates/, with comments and tests apart — test files by name,
-and a file's inline tests from its first `#[cfg(test)]` on — since an example
-in a comment or a test is fine; and the pages' own scripts, the home page's
-under crates/ and the group's page, web/app.js, so neither types a kind's
-noun of its own (v1ui-door (c)). `--self-test` plants a noun in each and
-watches it caught.
+.rs file under crates/ and web/src/, comments and tests apart (test files by
+name; an item `#[cfg(test)]` gates, to its `;` or closing brace: it once
+ended the file, hiding what followed a `mod tests;`, #194), since an example
+there is fine; and the pages' scripts, the home page's and web/'s but lend.js
+and shim.js, whose DOM `event` is no app's (v1ui-door (c)). `--self-test`
+plants a noun in each and watches it caught.
 """
 import re
 import sys
@@ -30,12 +30,27 @@ def nouns(root):
 
 
 def code_lines(text):
-    for n, line in enumerate(text.splitlines(), 1):
-        if line.strip().startswith("#[cfg(test)]"):
-            return
+    lines, past = text.splitlines(), 0
+    for n, line in enumerate(lines, 1):
+        past = gated_to(lines, n) if n > past and line.strip().startswith("#[cfg(test)]") else past
         code = line.split("//", 1)[0]
-        if code.strip():
+        if n > past and code.strip():
             yield n, code
+
+
+# The last line of the item the attribute on line `at` gates: past any
+# further attributes, to its `;`, or to the brace that closes its first.
+def gated_to(lines, at):
+    depth = None
+    for n in range(at, len(lines)):
+        code = lines[n].split("//", 1)[0]
+        if depth is None and code.strip().startswith("#["):
+            continue
+        if depth is not None or "{" in code:
+            depth = (depth or 0) + code.count("{") - code.count("}")
+        if (depth is not None and depth <= 0) or (depth is None and code.rstrip().endswith(";")):
+            return n + 1
+    return len(lines)
 
 
 def check(root):
@@ -44,8 +59,9 @@ def check(root):
         return [], 0
     pattern = re.compile(r"\b(" + "|".join(map(re.escape, words)) + r")\b", re.I)
     found = []
-    pages = [*(root / "crates").glob("*/src/**/*.js"), *(root / "web").glob("app.js")]
-    for f in sorted([*(root / "crates").glob("*/src/**/*.rs"), *pages]):
+    pages = [*(root / "crates").glob("*/src/**/*.js"), *(root / "web").glob("*.js")]
+    pages = [f for f in pages if f.relative_to(root).as_posix() not in ("web/lend.js", "web/shim.js")]
+    for f in sorted([*(root / "crates").glob("*/src/**/*.rs"), *(root / "web/src").glob("**/*.rs"), *pages]):
         rel = f.relative_to(root).as_posix()
         if "/tests/" in f"/{rel}" or TEST_FILE.search(rel):
             continue
@@ -67,8 +83,13 @@ def self_test():
         clean, _ = check(root)
         (src / "door.rs").write_text("pub struct Film; // planted\n")
         (src / "home.js").write_text("// planted\nconst what = { k: 'film' };\n")
+        (src / "guest.rs").write_text("#[cfg(test)]\nmod tests;\n\npub struct Film; // planted, after a test's declaration\n")
+        (root / "web/src").mkdir(parents=True)
+        (root / "web/src/lib.rs").write_text("fn f() { let _ = \"film\"; } // planted in the page's crate\n")
+        (root / "web/open.js").write_text("const what = 'film'; // planted in a page script\n")
         caught, _ = check(root)
-    ok = clean == [] and [c.split(" ")[0] for c in caught] == ["crates/x/src/door.rs:1:", "crates/x/src/home.js:2:"]
+    planted = ["crates/x/src/door.rs:1:", "crates/x/src/guest.rs:4:", "crates/x/src/home.js:2:", "web/open.js:1:", "web/src/lib.rs:1:"]
+    ok = clean == [] and [c.split(" ")[0] for c in caught] == planted
     print(f"self-test: clean tree {clean}, planted tree {caught} -> {'holds' if ok else 'BROKEN'}")
     return 0 if ok else 1
 

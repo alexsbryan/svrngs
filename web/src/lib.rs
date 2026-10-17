@@ -198,7 +198,7 @@ async fn reach(
     let relay = named.unwrap_or_else(|| bound.relay.clone());
     let addr = iroh::EndpointAddr::from_parts(node_id, [iroh::TransportAddr::Relay(relay)]);
 
-    t!("LAYER tls/alpn+relay-hop: dialing {node_id} on the {alpn:?} protocol through a relay…");
+    t!("LAYER tls/alpn+relay: dialing {node_id} on the {alpn:?} protocol through a relay…");
     // The issuer's dial is held as iroh holds one, a lender's as
     // `dial::held` says, from whichever endpoint: a lender's 4 s of silence
     // would end the issuer's before its cap did (v1ui-race (a)).
@@ -213,10 +213,10 @@ async fn reach(
     };
     let conn = match dialled {
         Ok(Ok(c)) => c,
-        Err(_) => refuse!("LAYER tls/alpn+relay-hop: REFUSED — not answered in {within:?}: asleep"),
-        Ok(Err(e)) => refuse!("LAYER tls/alpn+relay-hop: REFUSED — connect() failed: {e}"),
+        Err(_) => refuse!("LAYER tls/alpn+relay: REFUSED — not answered in {within:?}: asleep"),
+        Ok(Err(e)) => refuse!("LAYER tls/alpn+relay: REFUSED — connect() failed: {e}"),
     };
-    t!("LAYER tls/alpn+relay-hop: ok — QUIC connection established to {node_id} on the {alpn:?} protocol");
+    t!("LAYER tls/alpn+relay: ok — QUIC connection established to {node_id} on the {alpn:?} protocol");
 
     t!(
         "LAYER tls/alpn: negotiated ALPN = {:?}",
