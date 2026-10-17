@@ -21,10 +21,12 @@
   `<meta>`, so the page host sends it (vercel.json). `wasm-unsafe-eval` is required to instantiate WebAssembly;
   `connect-src` must allow the relay's WebSocket (wss://*.relay.n0.iroh.link
   by default, plus any self-hosted relay a link carries), and iroh's latency
-  probe, an HTTP GET of the relay's `/ping`. A relay on this computer, plain
-  HTTP on 127.0.0.1, is allowed too: the browser tests run one, so they
-  reach nothing on the internet, and loopback is no third party. Nothing
-  here is allowed to phone a third party. Every word a person reads here is DESIGN
+  probe, an HTTP GET of the relay's `/ping`. Nothing on this computer is
+  allowed: the browser tests run their relay there, plain HTTP on
+  127.0.0.1, and add `ws://127.0.0.1:* http://127.0.0.1:*` where they serve
+  the page (web/tests/page.mjs), never in what scripts/build-web.sh writes
+  (crates/svrngs-node/tests/browser/main.rs checks it). Nothing here is
+  allowed to phone a third party. Every word a person reads here is DESIGN
   §1's: the group, people's names, computer, phone.
 
   A chat previews the link from this file alone, its title and description
@@ -38,7 +40,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' wss: https: ws://127.0.0.1:* http://127.0.0.1:*; img-src 'none'; style-src 'self'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' wss: https:; img-src 'none'; style-src 'self'; base-uri 'none'; form-action 'none'">
 <title>You’re invited to a group</title>
 <meta name="description" content="Open the link to join: on a phone right here, on a computer by one line pasted in a terminal. What the group shares stays on its people’s own computers.">
 <meta property="og:title" content="You’re invited to a group">

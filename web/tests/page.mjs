@@ -30,6 +30,21 @@ const TYPES = {
 // (web/vercel.json, sup-3), each `source` read as a pattern of the path:
 // its `frame-ancestors` is the one guard a `<meta>` policy cannot be.
 const HOST = JSON.parse(await readFile(new URL('../vercel.json', import.meta.url), 'utf8')).headers;
+//
+// The page's policy is given the tests' own allowance, and no other: their
+// relay, plain HTTP on 127.0.0.1 (crates/svrngs-node/tests/browser/harness.rs),
+// which the published page never holds (web/index.html). A page whose
+// `connect-src` no longer reads as below stops the tests, said, rather
+// than serving it without the allowance.
+const CONNECT = "connect-src 'self' wss: https:;";
+const LOOPBACK = 'ws://127.0.0.1:* http://127.0.0.1:*';
+function tests(page) {
+  if (!String(page).includes(CONNECT)) {
+    console.error(`the page's policy holds no \`${CONNECT}\`, so page.mjs cannot add the tests' relay to it`);
+    process.exit(1);
+  }
+  return String(page).replace(CONNECT, `${CONNECT.slice(0, -1)} ${LOOPBACK};`);
+}
 export function serve(dir, { worker, port = 0 } = {}) {
   const root = resolve(dir);
   const asked = [];
@@ -43,6 +58,7 @@ export function serve(dir, { worker, port = 0 } = {}) {
     if (!file.startsWith(root)) return res.writeHead(403).end();
     try {
       let body = await readFile(file);
+      if (file.endsWith('/index.html')) body = tests(body);
       if (worker && path === '/lend.js') body = `${worker}\n${body}`;
       res.writeHead(200, { 'content-type': TYPES[extname(file)] ?? 'application/octet-stream' });
       res.end(body);
