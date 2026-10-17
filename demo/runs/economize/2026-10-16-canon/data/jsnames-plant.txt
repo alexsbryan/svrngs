@@ -1,0 +1,6 @@
+$ (plant: a function appended to web/app.js, never called)
+12 files
+web/app.js: plantedNeverCalled said 1
+$ (web/app.js restored)
+12 files
+every top-level name is said again

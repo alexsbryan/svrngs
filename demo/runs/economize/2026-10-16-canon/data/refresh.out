@@ -1,0 +1,12 @@
+svrnmesh: bridged 2 legacy SOVEREIGN_* env var(s) to SVRNMESH_* (the SOVEREIGN_* prefix is deprecated — update your scripts)
+  ⚠ Daemon nudge failed: 404 Not Found: {"error":"canon-a0129152 is not registered; run `sovereign project register` first"}
+    Falling back to local in-process rebuild.
+  Refreshing call graph...
+  ⚠ SCIP DB schema v0 is stale (current: v3); resetting.
+    Exporting rust...          ✓ rust: 17459 symbols, 101448 references    
+    Exporting typescript...          ⚠ typescript: skipped (export failed)    
+    Exporting python...          ⚠ python: skipped (export failed)    
+    ✓ 17459 symbols (+17459)
+    ✓ 101448 edges (+101448)
+    ✓ Done in 85 seconds
+  ✓ LanceDB index current — skipping (pass --rebuild-index to force).
