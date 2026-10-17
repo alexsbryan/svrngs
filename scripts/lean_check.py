@@ -96,8 +96,10 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # one chain, cut 32 and lowered both to one past where the cut landed. Its
 # (b), each person's time in the group folded by the membership and given
 # a carried app, raised svrngs-core 24 and the repository 31, to one past
-# where it landed: 23 and 7 left under the ceiling.
-BUDGET = {"crates/svrngs-core": 3009, ".": 16557}
+# where it landed: 23 and 7 left under the ceiling. canon-house's shelf, a
+# shelf app bringing any files and `-` said as a space, raised the
+# repository's 3, to one past where it landed: svrngs-core's 23 and 3 left.
+BUDGET = {"crates/svrngs-core": 3009, ".": 16561}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
