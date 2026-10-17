@@ -30,7 +30,7 @@ impl Node {
 
     /// Run one round now, beside the interval's, and say what it moved.
     pub async fn round(&self) -> crate::ring_sync::RoundOutcome {
-        crate::ring_sync::run_one_round(self.host.as_ref(), &|| {}).await
+        crate::ring_sync::run_one_round(self.host.as_ref(), &|| {}, &mut Default::default()).await
     }
 }
 

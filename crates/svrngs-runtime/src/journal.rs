@@ -342,6 +342,16 @@ impl RingJournal {
         Ok((register, false))
     }
 
+    /// The `Remove` acts `actor` signed, from the acts that move membership
+    /// as [`Held`] keeps them: a leave, which its leaver's round tells (#190).
+    pub(crate) fn removes_by(&self, actor: &str) -> Result<Vec<Op<SignedOp>>, RailError> {
+        let mut guard = self.log();
+        let log = &mut *guard;
+        log.held.catch_up(&log.oplog, &self.namespace)?;
+        let by = |op: &&Op<SignedOp>| op.actor == actor && matches!(op.kind.act, RailAct::Remove { .. });
+        Ok(log.held.membership.iter().filter(by).cloned().collect())
+    }
+
     /// Every op this node holds that `theirs` says the peer is missing,
     /// stopped at `budget_bytes` of serialised ops; author-blind, so a node
     /// republishes what it HOLDS, and a housemate who leaves the ring does

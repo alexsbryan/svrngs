@@ -1745,20 +1745,26 @@ tag `e0-bot`, `docs/DESIGN.md` §D5, "C1 the record".
   the fold would read as the signer's own leave is refused (`Own`), since
   its keys' order is not the leave's. `svrngs leave <group>` asks the node
   running here, as `svrngs remove` does (`POST /v1/leaves`, `removal.rs`
-  `leave`): it commits the `Leave` and tells the leave once to each other
-  computer standing in the group before it, the leaver's own others among
-  them (#179), the leave alone, as a cut is told to the removed; nothing
-  else is sent (the operator, 2026-10-14: "Record only"). A computer the
-  leave did not cut, off as it lands, hears it from the others' rounds;
-  one of the leaver's own is told by the first computer it asks to sync,
-  as a removed computer is (`crates/svrngs/tests/leave_page.rs`,
-  `a_leave_reaches_the_leavers_other_computer`). From
+  `leave`): it commits the `Leave` and tells it at once to each computer
+  the leave cut, the leaver's own others (#179), as a cut is told to the
+  removed. Every other computer standing in the group is told it by the
+  leaver's round, at once and each round after until it answers, took
+  it or refused it (`ring_sync.rs` `tell_leaves`, #190): from then on
+  the leaver's computer stands for nobody there, so no exchange carries
+  the leave, and told once it was lost to a computer off as it landed.
+  Either way the leave alone is sent, the computer's own `Remove`s
+  (`RingRail::own_removes`), and nothing else (the operator, 2026-10-14:
+  "Record only"). A computer off as it lands hears it once it and the
+  leaver's are on together (`crates/svrngs/tests/leave_page.rs`,
+  `a_leave_reaches_a_computer_off_as_it_landed`); one of the leaver's
+  own is told by the first computer it asks to sync, as a removed
+  computer is (`a_leave_reaches_the_leavers_other_computer`). From
   then on the leaver's computer holds the group and nobody stands in it
   there: `RingRail::standing` answers `Standing::Left`, with the keys its
   copy says stand, for any group whose register cut this computer's own
   key, left or removed (`crates/svrngs-runtime/src/register.rs`). Every
   gate that asks who stands — the round, the acceptor, the sync route,
-  the door and the lends — finds nobody, so no round dials for it, no
+  the door and the lends — finds nobody, so no round exchanges it, no
   sync serves it and nothing this computer lends reaches it; the record
   API still reads it. An address on that computer of a lend of someone
   still in the group says the cut, "You left Trip on 16 Oct" or a

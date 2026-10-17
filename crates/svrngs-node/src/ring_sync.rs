@@ -237,6 +237,7 @@ pub fn spawn_ring_sync_loop(
             interval_secs = interval.as_secs(),
             "ring sync: loop started"
         );
+        let mut told = Told::new();
         loop {
             #[expect(
                 clippy::disallowed_methods,
@@ -245,7 +246,7 @@ pub fn spawn_ring_sync_loop(
             let started = Instant::now();
             rounds.send_modify(|p| p.begun += 1);
             let answered = || rounds.send_modify(|p| p.answered += 1);
-            let outcome = run_one_round(host.as_ref(), &answered).await;
+            let outcome = run_one_round(host.as_ref(), &answered, &mut told).await;
             rounds.send_modify(|p| p.ended = p.begun);
             if outcome.namespaces > 0 {
                 debug!(
@@ -285,7 +286,11 @@ pub fn spawn_ring_sync_loop(
 /// member had already let in, `demo/runs/mnp/2026-10-09/README.md`, "What
 /// no prediction named" 1. Each exchange is idempotent and keyed on the op
 /// id, so two at once with one journal duplicate nothing.)
-pub async fn run_one_round(host: &Host, answered: &(impl Fn() + Sync)) -> RoundOutcome {
+pub async fn run_one_round(
+    host: &Host,
+    answered: &(impl Fn() + Sync),
+    told: &mut Told,
+) -> RoundOutcome {
     let mut outcome = RoundOutcome::default();
     let rail = &host.rail;
     let namespaces = match rail.namespaces() {
@@ -301,6 +306,7 @@ pub async fn run_one_round(host: &Host, answered: &(impl Fn() + Sync)) -> RoundO
     // Where this computer is reached, said before it dials, so a move goes
     // out in this round (relay-in-record).
     host.say_relay();
+    let leaves = tell_leaves(host, &namespaces, told);
 
     let Some(RoundMembers {
         peers,
@@ -309,6 +315,7 @@ pub async fn run_one_round(host: &Host, answered: &(impl Fn() + Sync)) -> RoundO
     }) = host.members().await
     else {
         debug!("ring sync: this node has no membership to round with");
+        leaves.await;
         return outcome;
     };
     // GLASSBOX: which members this round carried and which it passed over. A
@@ -322,6 +329,7 @@ pub async fn run_one_round(host: &Host, answered: &(impl Fn() + Sync)) -> RoundO
         "ring sync: round membership"
     );
     if peers.is_empty() {
+        leaves.await;
         return outcome;
     }
     let transport = &host.transport;
@@ -384,7 +392,8 @@ pub async fn run_one_round(host: &Host, answered: &(impl Fn() + Sync)) -> RoundO
             });
         }
     }
-    for (pulled, pushed, reach) in n0_future::join_all(dials).await {
+    let ((), ended) = tokio::join!(leaves, n0_future::join_all(dials));
+    for (pulled, pushed, reach) in ended {
         // Counted BEFORE the verdict is read: see `exchange_with`.
         outcome.ops_pulled += pulled;
         outcome.ops_pushed += pushed;
@@ -395,6 +404,39 @@ pub async fn run_one_round(host: &Host, answered: &(impl Fn() + Sync)) -> RoundO
         }
     }
     outcome
+}
+
+/// Each group this computer left and each computer told its leave there
+/// that answered: the round's loop owns it, so a computer is told again
+/// only until it answers, and once more after a restart (#190).
+pub type Told = std::collections::BTreeSet<(String, String)>;
+
+/// A group this computer left stands for nobody here, so no exchange
+/// carries its leave: told, each round, to each computer the copy says
+/// stands and has not answered (#190), at once with the round's dials.
+async fn tell_leaves(host: &Host, namespaces: &[String], told: &mut Told) {
+    for ns in namespaces {
+        let Ok(crate::register::Standing::Left(stands)) = host.rail.standing(ns) else {
+            continue;
+        };
+        let computers: Vec<_> = (stands.into_iter())
+            .filter(|(k, m)| {
+                m.device == crate::Device::Computer && !told.contains(&(ns.clone(), k.clone()))
+            })
+            .map(|(k, m)| (k, m.relay))
+            .collect();
+        let lines = host.rail.own_removes(ns).unwrap_or_else(|e| {
+            warn!(namespace = ns, error = %e, "ring sync: a group left, whose leave cannot be read, so it is not told");
+            Vec::new()
+        });
+        debug!(namespace = ns, owed = computers.len(), lines = lines.len(), "ring sync: a group this computer left — its leave told to each computer standing that has not answered; none when it was removed");
+        if computers.is_empty() || lines.is_empty() {
+            continue;
+        }
+        for actor in crate::removal::tell(host, ns, computers, &lines).await {
+            told.insert((ns.clone(), actor));
+        }
+    }
 }
 
 /// How a round's exchange with one member ended: it answered, it answered

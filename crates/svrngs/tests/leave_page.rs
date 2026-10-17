@@ -525,3 +525,90 @@ async fn a_cut_by_a_handed_on_keeper_reaches_a_computer_off_as_it_landed() {
         n.endpoint().close().await;
     }
 }
+
+/// `svrngs leave <group>` asked of `node`, as the command asks it: what
+/// happened.
+async fn leave_from(node: &Node, group: &str) -> svrngs_node::removal::Outcome {
+    use svrngs_node::removal::{LeaveAsk, LEAVES_ROUTE};
+    let ask = reqwest::Client::builder().no_proxy().build().unwrap();
+    let body = serde_json::to_string(&LeaveAsk {
+        group: group.to_string(),
+    });
+    let sent = ask
+        .post(format!("http://{}{LEAVES_ROUTE}", node.api_addr()))
+        .header("content-type", "application/json")
+        .body(body.unwrap())
+        .send();
+    serde_json::from_str(&sent.await.unwrap().text().await.unwrap()).unwrap()
+}
+
+/// **A leave reaches a computer off as it lands, with nobody else to tell
+/// it** (#190). Sam makes Trip and Ana joins from his link: a group of two.
+/// Sam's computer is off as Ana leaves from hers; back on, from a copy of
+/// what it held, within 90 s of each computer's rounds its copy holds Ana
+/// out — told by the one computer that holds the leave, Ana's, whose round
+/// tells it until Sam's answers. Red at fc2ad0ec: told once as it landed,
+/// to a computer that was off, and never again.
+#[tokio::test]
+async fn a_leave_reaches_a_computer_off_as_it_landed() {
+    let (_relay, ours, sam_dir, sam) = common::sams_computer(6).await;
+    let (seed, _) = cli::new_group(&sam, name("Trip"), name("Sam"), None, None, &ours)
+        .await
+        .expect("Sam makes a group");
+    let trip = seed.id();
+    let ana_dir = tempfile::tempdir().unwrap();
+    let ana_key = SigningKey::from_bytes(&[7; 32]);
+    let ana = computer(ana_dir.path(), &ana_key, &ours).await;
+    let made = sam
+        .host()
+        .link(&trip, false, None)
+        .expect("Sam makes a link");
+    let sent = Link::parse(&client_link(&made.token)).unwrap();
+    ana.host()
+        .join(&sent, &name("Ana"))
+        .await
+        .expect("Ana joins");
+    let ana_actor = actor_of(&ana_key);
+    assert!(
+        sam.rail().standing(&trip).unwrap().names(&ana_actor),
+        "control: Sam's computer holds Ana in Trip"
+    );
+
+    sam.endpoint().close().await;
+    drop(sam);
+    assert_eq!(
+        leave_from(&ana, &trip).await,
+        svrngs_node::removal::Outcome::Left,
+        "Ana leaves Trip while Sam's computer is off"
+    );
+    // Off past the leave's first telling: its dial is given up at the cap
+    // (svrngs_node::dial::DIAL_WITHIN), and is kept waiting here twice that,
+    // as a computer asleep for longer than a dial is. Back within it, the
+    // first telling's dial reached it (the trace of this test, a first run).
+    tokio::time::sleep(svrngs_node::dial::DIAL_WITHIN * 2).await;
+    let again = tempfile::tempdir().unwrap();
+    held_again(sam_dir.path(), again.path());
+    let sam = computer(again.path(), &SigningKey::from_bytes(&[6; 32]), &ours).await;
+    let out = || {
+        sam.rail()
+            .register(&trip)
+            .unwrap()
+            .removed
+            .contains_key(&ana_actor)
+    };
+    let told = tokio::time::timeout(Duration::from_secs(90), async {
+        while !out() {
+            for n in [&ana, &sam] {
+                let _ = tokio::time::timeout(Duration::from_secs(10), n.round()).await;
+            }
+            tokio::time::sleep(Duration::from_secs(1)).await;
+        }
+    });
+    assert!(
+        told.await.is_ok(),
+        "back on, Sam's computer holds Ana's leave"
+    );
+    for n in [&ana, &sam] {
+        n.endpoint().close().await;
+    }
+}

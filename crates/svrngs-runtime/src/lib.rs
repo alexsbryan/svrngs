@@ -225,6 +225,12 @@ impl RingRail {
         Ok(None)
     }
 
+    /// The `Remove` acts this computer signed in `namespace`: its leave, once
+    /// it left (#190).
+    pub fn own_removes(&self, namespace: &str) -> Result<Vec<Op<SignedOp>>, RailError> {
+        self.journal(namespace)?.removes_by(&actor_of(self.signer()))
+    }
+
     /// The group's directory, where the command keeps its own files.
     pub fn group_dir(&self, namespace: &str) -> Result<PathBuf, RailError> {
         Ok(self.journal(namespace)?.dir().to_path_buf())

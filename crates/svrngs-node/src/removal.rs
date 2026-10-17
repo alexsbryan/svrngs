@@ -208,19 +208,18 @@ async fn cut<C: Command<Refusal = RemovalRefusal>>(
             decides: decides(&after),
         };
     }
-    // Each with the relay the record named before the cut (relay-in-record).
+    // The computers it cut, told now, each with the relay the record named
+    // before the cut (relay-in-record): for a leave, the leaver's others.
+    // The rest hear it by the round: the keeper's exchange, or for a leave,
+    // which leaves this computer standing for nobody, its round's telling
+    // until each has answered (#190).
     let computers = (before.members.into_iter())
-        .filter(|(k, m)| {
-            m.device == Device::Computer && *k != at.host.actor && (left || cut.contains(k))
-        })
+        .filter(|(k, m)| m.device == Device::Computer && *k != at.host.actor && cut.contains(k))
         .map(|(k, m)| (k, m.relay))
         .collect();
-    tokio::spawn(tell(
-        at,
-        group.to_string(),
-        computers,
-        recorded.lines().to_vec(),
-    ));
+    let host = at.host.clone();
+    let (group, lines) = (group.to_string(), recorded.lines().to_vec());
+    tokio::spawn(async move { tell(&host, &group, computers, &lines).await });
     if left {
         Outcome::Left
     } else {
@@ -229,32 +228,40 @@ async fn cut<C: Command<Refusal = RemovalRefusal>>(
 }
 
 /// Tell each of `computers` the cut, `lines` and nothing else of the
-/// group, one sync request each; traced, never retried.
-async fn tell(
-    at: Asking,
-    group: String,
+/// group, one sync request each, all at once; traced, and the computers
+/// that answered — took it, or refused it — returned, so the round tells a
+/// leave again only to the rest (#190).
+pub(crate) async fn tell(
+    host: &crate::node::Host,
+    group: &str,
     computers: Vec<(String, Option<svrngs_core::relay::Url>)>,
-    lines: Vec<crate::Op<crate::SignedOp>>,
-) {
-    let Ok(digest) = at.host.rail.digest(&group) else {
+    lines: &[crate::Op<crate::SignedOp>],
+) -> Vec<String> {
+    let Ok(digest) = host.rail.digest(group) else {
         tracing::warn!(target: "removal", group, "removal: no digest, so the removed computers are not told");
-        return;
+        return Vec::new();
     };
-    for (actor, relay) in computers {
+    let told = computers.into_iter().filter_map(|(actor, relay)| {
         let Some(key) = actor_key(&actor) else {
             tracing::debug!(target: "removal", group, actor, "removal: the removed key is no computer's address, so it is not told");
-            continue;
+            return None;
         };
-        let contact = Contact::named(key, relay.as_ref());
         let request = RingSyncRequest {
-            namespace: group.clone(),
+            namespace: group.to_string(),
             digest: digest.clone(),
-            ops: lines.clone(),
+            ops: lines.to_vec(),
         };
-        let told = crate::ring_sync::post((&at.host.transport, &contact), &request).await;
-        tracing::debug!(target: "removal", group, actor, told = told.is_ok(), error = ?told.err(),
-            "removal: the removed computer told its cut, or why not");
-    }
+        Some(async move {
+            let contact = Contact::named(key, relay.as_ref());
+            let told = crate::ring_sync::post((&host.transport, &contact), &request).await;
+            let answered = !matches!(told, Err(crate::ring_sync::ExchangeStop::Failed(_)));
+            tracing::debug!(target: "removal", group, actor, answered, error = ?told.err(),
+                "removal: a computer told the cut, or why not");
+            answered.then_some(actor)
+        })
+    });
+    let answered = n0_future::join_all(told.collect::<Vec<_>>()).await;
+    answered.into_iter().flatten().collect()
 }
 
 async fn hand_over(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> Outcome {
