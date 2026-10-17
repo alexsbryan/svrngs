@@ -13,7 +13,8 @@
 #    gate finds a new listener by its code, not a new page;
 # 5. a line that binds a socket and that the floor does not name, or one it
 #    names that is gone;
-# 6. the floor changed in a commit whose body has no `Trust floor:` line, or
+# 6. a behavioural gate the floor names whose test is gone, or ignored;
+# 7. the floor changed in a commit whose body has no `Trust floor:` line, or
 #    changed and not committed, so no reason can be read.
 import re, subprocess, sys
 from collections import Counter
@@ -56,7 +57,7 @@ def widenings(name, d):
 
 
 def main():
-    broken, pages, listens = [], {}, Counter()
+    broken, pages, listens, gates = [], {}, Counter(), []
     for n, line in enumerate(read(FLOOR).splitlines(), 1):
         body, _, why = (s.strip() for s in line.partition(" | "))
         if line.startswith("  ") and body:
@@ -65,10 +66,10 @@ def main():
         elif body.startswith("page "):
             _, page, file, anchor = body.split(" ", 3)
             pages[page] = (file, anchor, {})
-        elif body.startswith("listen ") and why:
-            listens.update([body[7:]])
+        elif body.startswith(("listen ", "gate ")) and why:
+            listens.update([body[7:]]) if body.startswith("listen ") else gates.append(body[5:].split())
         elif body and not body.startswith("#"):
-            broken.append(f"{FLOOR}:{n}: not a page, a directive or a listener with its reason")
+            broken.append(f"{FLOOR}:{n}: not a page, a directive, a listener or a gate with its reason")
     for name, (file, anchor, pinned) in pages.items():
         got = served(file, anchor)
         broken += widenings(name, pinned) + widenings(f"{name} as served", got or {})
@@ -80,12 +81,14 @@ def main():
                     and not TEST_FILE.search(f) for s in read(f).splitlines() if BINDS.search(s) and not s.strip().startswith("//"))
     broken += [f"{s}: binds a socket the floor does not name" for s in sites - listens]
     broken += [f"{FLOOR} names `{s}`, which no code holds now" for s in listens - sites]
+    broken += [f"{file}: the gate `{test}` is gone or ignored, which widens the floor" for file, test in gates if not (m := re.search(
+        rf"((?:#\[[^\]]*\]\s*)+)(?:pub\s+)?(?:async\s+)?fn {test}\(", read(file))) or "test" not in m[1] or "ignore" in m[1]]
     log = git("log", "--no-merges", "--format=%h%x00%B%x01", "--", FLOOR)
     if log.returncode != 0 or git("status", "--porcelain", "--", FLOOR).stdout:
         broken.append(f"{FLOOR} is not committed here, so whether its change gives a reason could not be judged")
     broken += [f"{c} changed {FLOOR} and its body gives no `Trust floor:` reason" for c, _, b in
                (e.strip().partition("\x00") for e in log.stdout.split("\x01") if e.strip()) if not re.search(r"^Trust floor: \S", b, re.M)]
-    print(f"trust floor: {len(pages)} policies, {sum(listens.values())} listeners" + "".join(f"\nBROKEN  {b}" for b in broken))
+    print(f"trust floor: {len(pages)} policies, {sum(listens.values())} listeners, {len(gates)} gates" + "".join(f"\nBROKEN  {b}" for b in broken))
     return 1 if broken else 0
 
 

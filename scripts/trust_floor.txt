@@ -13,6 +13,8 @@
 # listen <file>: <the line> | <the address, and why>: each place svrngs binds
 #   a socket, the line as its code reads, trimmed. A line that binds and is
 #   not here fails the gate; so does one here that is gone.
+# gate <file> <test> | <what it holds>: a behavioural gate, a test cargo runs
+#   in check.sh. Taking it out, renaming it or ignoring it is a widening.
 
 # A carried app's every answer (crates/svrngs-node/src/carried.rs, `FLOOR`):
 # code from its own files alone, and nothing loaded from elsewhere
@@ -68,3 +70,13 @@ listen crates/svrngs-node/src/guest.rs: .bind_addr(SocketAddr::from(([127, 0, 0,
 listen web/src/lib.rs: let ep = match builder.bind().await { | the phone's iroh endpoint, in the browser: it offers no protocol and reaches out through its relay alone (web/src/lib.rs:139)
 listen crates/svrngs/src/relay.rs: let any = |port| SocketAddr::from((Ipv6Addr::UNSPECIFIED, port)); | `svrngs relay` at a name: ports 80, 443 and 7842 on every interface, since a relay is what others reach, by default admitting only keys standing in a group its computer holds
 listen crates/svrngs/src/relay.rs: Server::spawn(server).await.map_err(|e| { | `svrngs relay`: at the name's ports above, or plain HTTP at the address its caller gives, which only the tests do
+
+# The behavioural gates.
+gate crates/svrngs-node/tests/peer.rs no_loopback_port_reaches_a_friends_door | no port on this computer reaches a friend's door as this computer's key (#175)
+gate crates/svrngs-node/tests/lend_origin.rs the_record_answers_no_lend_s_origin_and_refuses_a_page | the record API refuses a page in a browser (api.rs, `not_from_a_page`)
+gate crates/svrngs-node/tests/door/main.rs a_forged_identity_header_is_replaced_by_the_verified_one | the door strips the identity headers a client typed, and says who the door verified
+gate crates/svrngs-node/tests/record_api.rs a_listener_not_on_loopback_is_refused_by_name | the record API binds loopback alone
+gate crates/svrngs-node/tests/record_api.rs a_caller_not_on_loopback_is_refused_by_name | the record API answers a caller on this computer alone
+gate crates/svrngs-node/src/room_tests.rs picks_the_private_lan_address_or_none | the room door's address is the private LAN's, or none
+gate crates/svrngs-node/src/room_tests.rs a_caller_off_this_network_is_refused | the room door answers a caller on this network alone
+gate crates/svrngs-node/tests/browser/main.rs the_published_page_allows_no_loopback | the published page reaches nothing on this computer (v1patch-loopback)

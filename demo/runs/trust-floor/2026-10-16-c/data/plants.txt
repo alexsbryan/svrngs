@@ -1,0 +1,14 @@
+== renamed: peer.rs's test renamed (#175's gate)
+trust floor: 7 policies, 8 listeners, 8 gates
+BROKEN  crates/svrngs-node/tests/peer.rs: the gate `no_loopback_port_reaches_a_friends_door` is gone or ignored, which widens the floor
+exit 1
+
+== ignored: the door's typed-identity test ignored
+trust floor: 7 policies, 8 listeners, 8 gates
+BROKEN  crates/svrngs-node/tests/door/main.rs: the gate `a_forged_identity_header_is_replaced_by_the_verified_one` is gone or ignored, which widens the floor
+exit 1
+
+== tree: the tree as it is, nothing planted
+trust floor: 7 policies, 8 listeners, 8 gates
+exit 0
+
