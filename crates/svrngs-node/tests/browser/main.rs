@@ -2643,14 +2643,18 @@ async fn the_home_page_opens_a_link_only_within_its_lend(engine: Engine) {
     let dir = tempfile::tempdir().unwrap();
     let ada = node(dir.path(), &relay, &signing(7)).await;
     let port = ada.api_addr().port();
-    let links = ["/at/a/path", "/\\evil.example/x"].map(|at| format!("http://page.example/#open=abc123&at={at}"));
+    let links = ["/at/a/path", "/\\evil.example/x"]
+        .map(|at| format!("http://page.example/#open=abc123&at={at}"));
     let seen = home_page(engine, &ada, json!({ "opens": links })).await;
     let opens = &seen["opens"];
     let lent = format!("http://abc123.localhost:{port}/at/a/path");
     assert_eq!(opens[0][0], json!([lent]), "{seen:#}");
     assert_eq!(opens[1][0], json!([]), "{seen:#}");
     let said = opens[1][1].as_str().unwrap_or_default();
-    assert!(said.ends_with("That is not a link to something lent in your groups."), "{seen:#}");
+    assert!(
+        said.ends_with("That is not a link to something lent in your groups."),
+        "{seen:#}"
+    );
     drop(ada);
 }
 
