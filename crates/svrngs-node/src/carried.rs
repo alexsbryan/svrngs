@@ -10,8 +10,10 @@
 //! it opens while any of them is on; the door answers it here
 //! ([`Folders::open`]), where a port's is carried to its service:
 //!
-//! - a file, from the store, by the hash the group's layout places at its
-//!   path, `index.html` for a directory's;
+//! - a file, `index.html` for a directory's, by the hash the app was
+//!   brought with at its path ([`svrngs_core::Runs`]; canon-pin), never by
+//!   what a member's later change placed there: from the store, else
+//!   fetched from a member's;
 //! - [`ACTS`], the app's route: `GET` its own acts — each whose `kind`
 //!   begins `<kind>/`, the prefix taken off, and each correction of one —
 //!   as `ops`, in the record's order and the shape `/v1/rail/log` gives
@@ -42,7 +44,7 @@ use axum::response::{IntoResponse, Response};
 use axum::{Extension, Json};
 use iroh_blobs::Hash;
 use serde_json::{json, Map, Value};
-use svrngs_core::Placed;
+use svrngs_core::{Placed, SyncPath};
 
 use super::{blob::People, dirs_of, Folders};
 use crate::door::LendRefusal::{self, Away, Closed, Fault, Path as Malformed, Unlent};
@@ -199,7 +201,7 @@ impl Folders {
         let answered = match self.host.rail.standing(group) {
             Ok(Standing::Members(people)) if people.contains_key(key) => match path {
                 ACTS => self.acts((&lend.kind, group), (&people, key), req).await,
-                _ => self.file(group, &format!("apps/{}{path}", lend.kind)).await,
+                _ => self.file((group, lend.kind.as_str()), path, &people).await,
             },
             Ok(_) => Err(NOT_ITS_GROUP),
             Err(e) => Err(traced(group, UNREAD, &e)),
@@ -212,17 +214,25 @@ impl Folders {
         answer
     }
 
-    /// The file the group's layout places at `path`, `index.html` for a
-    /// directory's, from this computer's store.
-    async fn file(&self, group: &str, path: &str) -> Served {
-        let path = (path.strip_suffix('/')).map_or(path.into(), |dir| format!("{dir}/index.html"));
+    /// The file at `path` of the app `kind` carried in `group`, `index.html`
+    /// for a directory's, as the app runs ([`svrngs_core::Runs`]), from
+    /// this computer's store, else fetched from a member's.
+    async fn file(&self, (group, kind): (&str, &str), path: &str, people: &People) -> Served {
+        let path = format!("apps/{kind}{path}");
+        let path = (path.strip_suffix('/')).map_or(path.clone(), |dir| format!("{dir}/index.html"));
         let read = self.layout(group).map_err(|e| traced(group, UNREAD, &e))?;
-        let at = |p: &&Placed| !p.beside && p.path.as_str() == path;
-        let hash = Hash::from(*read.placed.iter().find(at).ok_or(NOT_HERE)?.hash.as_bytes());
+        let files = read.runs.get(&(kind.into(), None));
+        let at = SyncPath::parse(&path)
+            .ok()
+            .and_then(|p| files?.get(&p).copied());
+        let hash = Hash::from(*at.ok_or(NOT_HERE)?.as_bytes());
+        let fetched = self
+            .hold(hash, &people.keys().cloned().collect::<Vec<_>>())
+            .await;
         let held = self.store.get_bytes(hash).await;
         // Not held yet only when the store says it lacks the file; else it failed to read it.
         let lacks = held.is_err() && matches!(self.store.has(hash).await, Ok(false));
-        tracing::debug!(target: "folder", path, lacks, why = ?held.as_ref().err(), "carried: the file from the store, or why not");
+        tracing::debug!(target: "folder", path, %hash, lacks, ?fetched, why = ?held.as_ref().err(), "carried: the file as the app was brought, from the store, or why not");
         let held = held.map_err(|_| if lacks { NOT_YET } else { UNSTORED })?;
         let kind = content_type(Path::new(&path));
         Ok(([(header::CONTENT_TYPE, kind)], held).into_response())

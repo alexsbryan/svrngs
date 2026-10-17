@@ -195,3 +195,39 @@ fn a_conflict_s_name_makes_no_part_of_its_writer_s_person() {
     assert_eq!(named.as_str(), "d/a (conflict x∕..∕..∕y).txt");
     assert_eq!(SyncPath::parse(named.as_str()), Ok(named));
 }
+
+/// **An app runs as it was brought** (canon-pin (b)): alex brings Money,
+/// its page and its script in two acts, and a note beside it; bo changes
+/// its script. The layout places bo's script, and what runs of Money is
+/// alex's two files, each path as the record first placed it; the note is
+/// no app's. Planted: the layout's current hash — bo's script runs.
+#[test]
+fn an_app_runs_as_it_was_brought_whoever_changes_it() {
+    let mut ops = run(
+        &key(1),
+        1_000,
+        [synced("apps/Money/index.html", now(7), None)],
+    );
+    ops.extend(run(
+        &key(1),
+        1_001,
+        [synced("apps/Money/app.js", now(8), None)],
+    ));
+    ops.extend(run(&key(1), 1_002, [synced("notes.txt", now(5), None)]));
+    let base = entry(1, 1, "apps/Money/app.js");
+    ops.extend(run(
+        &key(2),
+        1_010,
+        [synced("apps/Money/app.js", now(9), base)],
+    ));
+    assert!(placed(&ops).contains(&at("apps/Money/app.js", 9)));
+    let runs = admitted(&ops).runs().clone();
+    let money: Vec<_> = (runs[&("Money".into(), None)].iter())
+        .map(|(p, h)| (p.as_str(), h.as_bytes()[0]))
+        .collect();
+    assert_eq!(
+        money,
+        [("apps/Money/app.js", 8), ("apps/Money/index.html", 7)]
+    );
+    assert_eq!(runs.len(), 1, "the note is no app's");
+}

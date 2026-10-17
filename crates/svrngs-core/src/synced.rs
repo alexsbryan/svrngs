@@ -9,7 +9,7 @@
 //! bytes and never what they are. A path is a [`SyncPath`], parsed on the
 //! write that makes it and again when any copy reads the act (syp-4 c).
 
-use alloc::collections::BTreeSet;
+use alloc::collections::{BTreeMap, BTreeSet};
 use alloc::format;
 use alloc::string::String;
 use alloc::vec;
@@ -138,10 +138,20 @@ impl Command for SyncFolder {
     }
 }
 
+/// An app's files by path, as one version of it holds them.
+pub type Files = BTreeMap<SyncPath, ContentHash>;
+
+/// What runs of each app a group carries (canon-pin; DESIGN §3), by its
+/// kind and, with `None`, as it was brought: each path under `apps/<kind>/`
+/// as the record first placed it, so a member's later change to a file
+/// runs as nobody it was not brought as.
+pub type Runs = BTreeMap<(String, Option<String>), Files>;
+
 /// Every change, from the acts in admission's order: each entry another
-/// names as its base, and each file written, unplaced, with its writer's
-/// person. What [`Admission::layout`] reads.
-pub(crate) type Written = (BTreeSet<Entry>, Vec<(Placed, Person)>);
+/// names as its base, each file written, unplaced, with its writer's
+/// person, and what runs of each app. What [`Admission::layout`] and
+/// [`Admission::runs`] read.
+pub(crate) type Written = (BTreeSet<Entry>, Vec<(Placed, Person)>, Runs);
 
 pub(crate) fn written<'a>(
     acts: impl Iterator<Item = (&'a str, &'a Person, u64, &'a crate::RailAct)>,
@@ -157,6 +167,10 @@ pub(crate) fn written<'a>(
                 continue;
             };
             let (path, key) = (c.path.clone(), key.into());
+            if let ["apps", kind, _, ..] = path.as_str().split('/').collect::<Vec<_>>()[..] {
+                let brought = out.2.entry((kind.into(), None)).or_default();
+                brought.entry(path.clone()).or_insert(hash);
+            }
             let entry = Entry {
                 key,
                 seq,
@@ -195,11 +209,16 @@ fn beside(path: &SyncPath, person: &Person) -> SyncPath {
 }
 
 impl Admission {
+    /// What runs of each app the group carries ([`Runs`]).
+    pub fn runs(&self) -> &Runs {
+        &self.synced.2
+    }
+
     /// Every synced folder's files where the record places them: each
     /// path's live heads, the first by entry under its path and each other
     /// beside it; a path whose heads are all deletes is absent.
     pub fn layout(&self) -> Vec<Placed> {
-        let (replaced, written) = &self.synced;
+        let (replaced, written, _) = &self.synced;
         let mut heads: Vec<&(Placed, Person)> = written
             .iter()
             .filter(|(p, _)| !replaced.contains(&p.entry))

@@ -45,7 +45,7 @@ use iroh_blobs::{BlobFormat, BlobsProtocol, Hash};
 use n0_future::StreamExt as _;
 use std::convert::Infallible;
 
-use svrngs_core::{Command, ContentHash, Digest, Placed, Recorded};
+use svrngs_core::{Command, ContentHash, Digest, Placed, Recorded, Runs};
 use tokio::sync::{mpsc, oneshot, watch, Notify};
 
 use crate::iroh::{key_actor, Alpn, Unsent};
@@ -121,8 +121,9 @@ pub struct Folders {
     carried: watch::Sender<blob::Carried>,
 }
 
-/// A group's synced folders' files where its record places them, the set
-/// of their hashes, and the record's digest when they were read: equal
+/// A group's synced folders' files where its record places them, what
+/// runs of the apps it carries (`svrngs_core::Runs`), the set of the
+/// hashes of both, and the record's digest when they were read: equal
 /// digests hold equal acts (svrngs-core view.rs, `View`), as the store's
 /// sweep reads them ([`Folders::read_at`]). Read again only when the
 /// digest moved, which [`Folders::layout`] asks before each answer, so a
@@ -131,6 +132,7 @@ pub struct Folders {
 struct Layout {
     at: Digest,
     placed: Arc<[Placed]>,
+    runs: Arc<Runs>,
     hashes: Arc<HashSet<ContentHash>>,
 }
 
@@ -254,16 +256,18 @@ impl Folders {
         if let Some(kept) = kept.filter(|l| l.at == at) {
             return Ok(kept);
         }
-        let placed: Arc<[Placed]> = self
-            .host
-            .rail
-            .admission(group)
-            .map_err(unread)?
-            .layout()
-            .into();
-        let hashes = Arc::new(placed.iter().map(|p| p.hash).collect());
+        let admission = self.host.rail.admission(group).map_err(unread)?;
+        let (placed, runs): (Arc<[Placed]>, Arc<Runs>) =
+            (admission.layout().into(), admission.runs().clone().into());
+        let ran = runs.values().flat_map(|files| files.values());
+        let hashes = Arc::new(placed.iter().map(|p| p.hash).chain(ran.copied()).collect());
         tracing::debug!(target: "folder", namespace = group, placed = placed.len(), "folder: the layout read again, the record having moved");
-        let read = Layout { at, placed, hashes };
+        let read = Layout {
+            at,
+            placed,
+            runs,
+            hashes,
+        };
         self.layouts
             .send_modify(|m| drop(m.insert(group.into(), read.clone())));
         Ok(read)
@@ -404,7 +408,7 @@ impl Folders {
     }
 
     /// What the store keeps: every version a synced folder's layout places
-    /// in a group a directory here syncs, a conflict's other side among
+    /// in a group a directory here syncs, or a carried app runs at, a conflict's other side among
     /// them, and every version a synced directory holds as last taken or
     /// written, and every hash an app placed that has not lapsed at `now`;
     /// `None`, said, when any of it cannot be read, so nothing is dropped
@@ -453,7 +457,8 @@ impl Folders {
     }
 
     /// Whether a synced folder of a group `dialer` stands in places `hash`,
-    /// whoever wrote it, or an app placed it in that group and it has not
+    /// whoever wrote it, or a version of an app it carries that runs holds
+    /// it ([`Layout`]), or an app placed it in that group and it has not
     /// lapsed at `now` (blob.rs): the one rule of who receives a group's
     /// bytes. Who stands where is [`Host::standings`]'s, and a group whose
     /// record cannot be read places nothing it serves, said by its name.

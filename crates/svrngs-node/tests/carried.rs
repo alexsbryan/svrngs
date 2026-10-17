@@ -590,8 +590,12 @@ async fn a_carried_app_runs_as_it_was_brought_after_a_member_changes_it() {
         .await,
         "Ben's change reaches Ana's and Cy's folders"
     );
-    for (who, node) in [("Ana", ana), ("Cy", cy)] {
-        let origin = of_kind(&lends(node, &group).await, "Money")[0]["origin"]
+    for (who, node, seed) in [("Ana", ana, 1), ("Cy", cy, 3)] {
+        let listed = lends(node, &group).await;
+        let own = of_kind(&listed, "Money")
+            .into_iter()
+            .find(|l| l["key"] == actor_of(&signing(seed)));
+        let origin = own.expect("its own copy")["origin"]
             .as_str()
             .unwrap()
             .to_string();
@@ -603,6 +607,58 @@ async fn a_carried_app_runs_as_it_was_brought_after_a_member_changes_it() {
             "Money runs as it was brought on {who}'s computer, not as Ben changed it"
         );
     }
+    for node in [ana, ben, cy] {
+        node.endpoint().close().await;
+    }
+}
+
+/// **A computer that never held an app as it was brought fetches it**
+/// (canon-pin (b)): Ana brings Money and Ben changes its script before Cy
+/// keeps a folder of the group, so Cy's folder and store take Ben's
+/// version alone. Cy's computer serves Money's script as Ana brought it,
+/// fetched from a member's. Planted: no fetch — 503, "does not hold it
+/// yet", for as long as Cy's computer is on.
+#[tokio::test]
+async fn a_computer_that_never_held_an_app_as_brought_fetches_it() {
+    let (nodes, _dirs) = computers().await;
+    let (ana, ben, cy) = (&nodes[0], &nodes[1], &nodes[2]);
+    let group = found("house", 9, ana, &[(ben, 2), (cy, 3)]);
+    for node in [cy, ben, ana] {
+        round(node).await;
+    }
+    let roots: Vec<_> = (0..3).map(|_| tempfile::tempdir().unwrap()).collect();
+    let at_ana = synced_in(ana, roots[0].path(), &group).await;
+    let at_ben = synced_in(ben, roots[1].path(), &group).await;
+    carry(&at_ana, "Money");
+    let script = |dir: &Path| std::fs::read_to_string(dir.join("apps/Money/app.js"));
+    let (brought, changed) = ("// Money's script\n", "// Ben's script\n");
+    assert!(until(&[ana, ben], || script(&at_ben).is_ok_and(|s| s == brought)).await);
+    std::fs::write(at_ben.join("apps/Money/app.js"), changed).unwrap();
+    assert!(until(&[ben, ana], || script(&at_ana).is_ok_and(|s| s == changed)).await);
+    // Cy's record takes Ben's change first, so Cy's folder never fetches
+    // Money as it was brought.
+    round(cy).await;
+    let at_cy = synced_in(cy, roots[2].path(), &group).await;
+    assert!(
+        until(&[cy, ana, ben], || script(&at_cy)
+            .is_ok_and(|s| s == changed))
+        .await
+    );
+    let listed = lends(cy, &group).await;
+    let own = of_kind(&listed, "Money")
+        .into_iter()
+        .find(|l| l["key"] == actor_of(&signing(3)));
+    let origin = own.expect("Cy's own copy")["origin"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let js = at(cy, &origin, "GET", "/app.js", None).await;
+    assert_eq!(js.status(), 200);
+    assert_eq!(
+        js.text().await.unwrap(),
+        brought,
+        "fetched as Ana brought it"
+    );
     for node in [ana, ben, cy] {
         node.endpoint().close().await;
     }
