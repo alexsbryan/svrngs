@@ -276,3 +276,44 @@ fn the_fold_answers_each_keys_relay_its_newest_winning() {
         );
     }
 }
+
+/// **Each person's stretch in the group** (canon-spans (b)): alex founds
+/// it with two keys, bo and cy join, alex's second key is cut, cy leaves,
+/// and cy comes back by a new key. alex stands from the seed, the cut of
+/// one key of two ending nothing; bo from his admission; cy's first
+/// stretch ends at her leave, and her second, a new person of her name,
+/// stands. Planted: `left` read as none for everyone, and cy reads as
+/// standing still; a rejoin read as one stretch, and cy has one.
+#[test]
+fn the_fold_answers_each_persons_stretch_in_the_group() {
+    let mut seed = BTreeMap::new();
+    seed.insert(
+        Person::parse("alex").unwrap(),
+        vec![actor_of(&key(1)), actor_of(&key(5))],
+    );
+    let ops = vec![
+        admit_act(1, 100, 0, "bo", 2),
+        admit_act(1, 101, 1, "cy", 3),
+        remove_act(1, 102, 2, 5, &[]),
+        remove_act(3, 103, 0, 3, &[]),
+        admit_act(1, 105, 3, "cy", 4),
+    ];
+    let m = membership(with_ids(ops.iter()), &Roster::new(seed), NS);
+    let mut spans: Vec<_> = m
+        .spans()
+        .into_iter()
+        .map(|s| (s.person.to_string(), s.joined, s.left))
+        .collect();
+    spans.sort();
+    let at = |name: &str, joined, left| (String::from(name), joined, left);
+    assert_eq!(
+        spans,
+        [
+            at("alex", None, None),
+            at("bo", Some(100), None),
+            at("cy", Some(101), Some(103)),
+            at("cy", Some(105), None)
+        ],
+        "{m:?}"
+    );
+}

@@ -18,7 +18,10 @@
 //!   begins `<kind>/`, the prefix taken off, and each correction of one —
 //!   as `ops`, in the record's order and the shape `/v1/rail/log` gives
 //!   them, voided ones too, so an app's fold reads them as it reads the
-//!   record; with who asks, `you`, and the people in the group;
+//!   record; with who asks, `you`, the people in the group now, and
+//!   `spans`, each person's time in it, `{person, joined, left}`, from
+//!   svrngs-core's membership (canon-spans), null while who stands is
+//!   unsettled (#124);
 //!   `POST {op}` records an act, and `{corrects, op}` corrects one of its
 //!   own, `op` null to void it, and absent never (#165): the prefix put on its kind, and
 //!   `on_behalf_of` the person the door resolved, never a word of the
@@ -304,7 +307,8 @@ impl Folders {
     async fn acts(&self, app: (&Kind, &str), asker: (&People, &str), req: Request) -> Served {
         let ((kind, group), (people, key)) = (app, asker);
         let (prefix, rail, person) = (format!("{kind}/"), &self.host.rail, &people[key].person);
-        let read = (rail.admission(group).ok()).and_then(|a| serde_json::to_value(a.wire()).ok());
+        let admission = rail.admission(group).ok();
+        let read = (admission.as_ref()).and_then(|a| serde_json::to_value(a.wire()).ok());
         let ops = read.as_ref().and_then(Value::as_array).ok_or(UNREAD)?;
         let own =
             |o: &Value| Some((o["payload"]["kind"].as_str()?.strip_prefix(&prefix)?).to_string());
@@ -322,7 +326,14 @@ impl Folders {
             });
             let (all, ops): (BTreeSet<_>, Vec<_>) =
                 (people.values().map(|m| &m.person).collect(), ops.collect());
-            return Ok(Json(json!({ "you": person, "people": all, "ops": ops })).into_response());
+            // Who stood when is not judged on unsettled cuts (#124): none, never empty.
+            let register = (admission.as_ref())
+                .map(|a| a.membership())
+                .filter(|m| !m.unsettled);
+            let spans = register.map(|m| m.spans());
+            tracing::debug!(target: "folder", group, %kind, spans = ?spans.as_ref().map(Vec::len), "carried: each person's time in the group, or none, their standing unsettled");
+            let read = json!({ "you": person, "people": all, "spans": spans, "ops": ops });
+            return Ok(Json(read).into_response());
         }
         let body = (to_bytes(req.into_body(), WRITE_MOST).await).map_err(|_| TOO_LARGE)?;
         let mut body: Map<String, Value> = serde_json::from_slice(&body).map_err(|_| NOT_AN_ACT)?;

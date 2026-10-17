@@ -140,6 +140,21 @@ pub enum Joined {
     At(i64),
 }
 
+/// One stretch a person stood in the group (canon-spans): from when they
+/// joined ([`Membership::joined`]), `None` for a seed row's person, to the
+/// time on the act that cut the last of their keys, `None` while one
+/// stands. Both are stamps on acts, never a computer's clock, so every copy
+/// holding the acts says the same. A person who left and came back did so
+/// by a new key, since a cut key is never let back in (`register.rs`,
+/// `RedeemRefusal::Cut`): a new person of the same name, with a stretch of
+/// their own.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize)]
+pub struct Span {
+    pub person: Person,
+    pub joined: Option<i64>,
+    pub left: Option<i64>,
+}
+
 /// What one fold of the membership acts concludes.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Membership {
@@ -207,6 +222,8 @@ pub struct Membership {
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Cut {
     pub by: OpId,
+    /// The time on the act that cut it.
+    pub at: i64,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub unheld: Vec<OpId>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -257,6 +274,27 @@ impl Membership {
         self.admitted_at
             .get(first)
             .map_or(Joined::Started, |t| Joined::At(*t))
+    }
+
+    /// Each person's stretch in the group, by their first key: from when
+    /// they joined, and once none of their keys stands, to the latest cut
+    /// of one, which, the walk being in time, cut their last.
+    pub fn spans(&self) -> Vec<Span> {
+        let people = (self.bindings.iter()).filter(|(k, _)| !self.devices.contains_key(*k));
+        let stands = |first: &str| self.devices_of(first).next().is_some();
+        let left = |first: &str| {
+            let cuts = (self.cut.iter())
+                .filter(|(k, _)| self.person_of(k).is_some_and(|(f, _)| f == first));
+            (cuts.map(|(_, c)| c.at).max()).filter(|_| !stands(first))
+        };
+        let span = |(first, person): (&String, &Person)| Span {
+            person: person.clone(),
+            joined: self.admitted_at.get(first).copied(),
+            left: left(first),
+        };
+        let spans = people.map(span).collect();
+        tracing::debug!(target: "rail:membership", ?spans, "membership: each person's stretch, from when they joined to their last key's cut, or standing");
+        spans
     }
 
     /// The one person standing under `name` who joined `when`, when it is
@@ -581,6 +619,7 @@ fn walk(
                         key.clone(),
                         Cut {
                             by: id.clone(),
+                            at: op.ts_unix,
                             unheld: Vec::new(),
                             handed_on,
                             left: leaves,

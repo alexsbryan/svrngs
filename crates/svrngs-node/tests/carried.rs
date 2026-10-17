@@ -664,32 +664,27 @@ async fn a_computer_that_never_held_an_app_as_brought_fetches_it() {
     }
 }
 
-/// Unix seconds now, as this host's clock reads them.
-fn now() -> i64 {
-    let since = std::time::UNIX_EPOCH.elapsed().unwrap();
-    since.as_secs() as i64
-}
-
 /// **A house's history, asked** (canon-spans (a)): Ana founds a group, Ben
 /// joins, Cy joins and then leaves, and Ana's computer is asked
 /// `svrngs/acts` for Money. It answers each person's time in the group,
 /// Cy's with when Cy left, so a house's rules count a past decision with
 /// whoever stood then; `people` stays today's names, so Money is
-/// untouched. Red at ce3396d8: the answer had today's names alone.
+/// untouched. Each time is read against Ana's register, never this host's
+/// clock: a commit is timed after every act it holds (svrngs-core
+/// command.rs `commit`), so may run ahead of it. Red at ce3396d8: the
+/// answer had today's names alone. Planted (canon-spans (b)): `left` read
+/// as none for everyone, and Cy reads as standing still.
 #[tokio::test]
 async fn an_app_is_told_each_person_s_time_in_the_group() {
     use svrngs_node::removal::{LeaveAsk, Outcome, LEAVES_ROUTE};
     let (nodes, _dirs) = computers().await;
     let (ana, ben, cy) = (&nodes[0], &nodes[1], &nodes[2]);
-    let joining = now();
     let group = found("house", 9, ana, &[(ben, 2), (cy, 3)]);
-    let joined = now();
     for node in [cy, ben, ana] {
         round(node).await;
     }
     let root = tempfile::tempdir().unwrap();
     carry(&synced_in(ana, root.path(), &group).await, "Money");
-    let leaving = now();
     let leave = http().post(format!("http://{}{LEAVES_ROUTE}", cy.api_addr()));
     let ask = leave
         .json(&LeaveAsk {
@@ -700,7 +695,6 @@ async fn an_app_is_told_each_person_s_time_in_the_group() {
         ask.await.unwrap().json::<Outcome>().await.unwrap(),
         Outcome::Left
     );
-    let left = now();
     let cy_key = actor_of(&signing(3));
     assert!(
         until(&[ana], || ana.rail().standing_anywhere(&cy_key).is_none()).await,
@@ -737,8 +731,12 @@ async fn an_app_is_told_each_person_s_time_in_the_group() {
             .map(|s| (s["joined"].clone(), s["left"].clone()))
             .collect()
     };
-    let within =
-        |t: &Value, from: i64, to: i64| t.as_i64().is_some_and(|t| (from..=to).contains(&t));
+    let register = ana.rail().register(&group).unwrap();
+    let ben_joined = register.members[&actor_of(&signing(2))].joined;
+    let cy_left = (register.removals.iter())
+        .find(|r| r.key == cy_key)
+        .map(|r| r.at)
+        .expect("Ana's register holds Cy's leave");
     assert_eq!(
         span("ana"),
         [(Value::Null, Value::Null)],
@@ -746,13 +744,16 @@ async fn an_app_is_told_each_person_s_time_in_the_group() {
     );
     let ben_s = span("ben");
     assert!(
-        matches!(&ben_s[..], [(j, Value::Null)] if within(j, joining, joined)),
-        "Ben joined when Ana admitted him and stands:\n{read:#}"
+        matches!(&ben_s[..], [(j, Value::Null)] if svrngs_core::Joined::At(j.as_i64().unwrap()) == ben_joined),
+        "Ben joined when Ana admitted him, {ben_joined:?}, and stands:\n{read:#}"
     );
     let cy_s = span("cy");
-    assert!(
-        matches!(&cy_s[..], [(j, l)] if within(j, joining, joined) && within(l, leaving, left)),
-        "Cy joined, and left when Cy's leave was written:\n{read:#}"
+    let (cy_joined, ben_joined) = (cy_s.first().and_then(|s| s.0.as_i64()), ben_s[0].0.as_i64());
+    assert!(cy_joined > ben_joined, "Cy joined after Ben:\n{read:#}");
+    assert_eq!(
+        cy_s.iter().map(|s| s.1.as_i64()).collect::<Vec<_>>(),
+        [Some(cy_left)],
+        "Cy's one stretch ends when Cy's leave is timed:\n{read:#}"
     );
     assert_eq!(spans.len(), 3, "{read:#}");
     for node in [ana, ben, cy] {
