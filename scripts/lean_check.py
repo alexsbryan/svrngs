@@ -91,8 +91,10 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # gates, 2. canon-pin (b), a carried app served at the files it was brought
 # with, svrngs-core 9 of its 40 and the repository 18; its (c), a new
 # version asked of each person and run only after their yes, svrngs-core 16
-# and the repository 66, both pages included.
-BUDGET = {"crates/svrngs-core": 3017, ".": 16558}
+# and the repository 66, both pages included. canon-spans' economizing pass,
+# the membership fold's traces on one line each and the seed's bindings in
+# one chain, cut 32 and lowered both to one past where the cut landed.
+BUDGET = {"crates/svrngs-core": 2985, ".": 16526}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
