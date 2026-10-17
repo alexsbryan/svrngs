@@ -6,7 +6,7 @@
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 use svrngs::cli::{self, Printed, Refusal, Verb};
 use svrngs::group::{self, Name};
-use svrngs_node::invite::LINK_LIFE_SECS;
+use svrngs_node::invite::{kept_page, LINK_LIFE_SECS};
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
 use svrngs_node::join as issuer;
 use svrngs_node::link::{Link, Origin, CLIENT_PREFIX};
@@ -306,24 +306,24 @@ fn a_second_svrngs_on_one_data_dir_is_refused() {
     cli::claim(dir.path()).expect("free again");
 }
 
-/// A group's seed or origin that cannot be read is named, never read as
-/// none kept (ARCH 6): none kept is only no file there. Each is planted as
-/// a directory, which no read opens.
+/// A group's seed or origin that cannot be read is refused, never read as
+/// none kept (ARCH 6): none kept is only no file there (#20). Each is
+/// planted as a directory, which no read opens; the seed's refusal names
+/// its file. The origin is asked of `kept_page`, the reader every caller
+/// runs, each saying its own refusal.
 #[test]
-fn an_unreadable_seed_or_origin_refuses_naming_its_file() {
+fn an_unreadable_seed_or_origin_is_refused_never_none() {
     let dir = tempfile::tempdir().unwrap();
     assert!(matches!(group::read_seed(dir.path()), Ok(None)));
-    assert!(matches!(group::read_origin(dir.path()), Ok(None)));
+    assert!(matches!(kept_page(dir.path()), Ok(None)));
     for file in ["seed.json", "origin"] {
         std::fs::create_dir(dir.path().join(file)).unwrap();
     }
-    for (file, read) in [
-        ("seed.json", group::read_seed(dir.path()).map(|_| ())),
-        ("origin", group::read_origin(dir.path()).map(|_| ())),
-    ] {
-        let refused = read.expect_err(file).to_string();
-        assert!(refused.contains(file), "{refused}");
-    }
+    let refused = group::read_seed(dir.path())
+        .expect_err("seed.json")
+        .to_string();
+    assert!(refused.contains("seed.json"), "{refused}");
+    kept_page(dir.path()).expect_err("an origin that cannot be read is refused");
 }
 
 fn argv(s: &str) -> Vec<String> {

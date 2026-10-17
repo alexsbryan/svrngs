@@ -307,7 +307,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
             "{who}'s own copy of the register lets {who} in"
         );
         let dir = friend.node.rail().group_dir(&group).unwrap();
-        let kept = group::read_origin(&dir).unwrap();
+        let kept = svrngs_node::invite::kept_page(&dir).unwrap();
         assert_eq!(
             kept, opened.origin,
             "{who} keeps the origin of an https link, and none from another"

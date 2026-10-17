@@ -110,15 +110,6 @@ pub fn write_origin(dir: &Path, origin: &Origin) -> Result<(), SeedError> {
     keep(dir, path, origin.as_str())
 }
 
-/// The origin kept in `dir`, or `None` when the directory keeps none, as
-/// the node reads it for the home page too ([`crate::invite::kept_page`]).
-pub fn read_origin(dir: &Path) -> Result<Option<Origin>, SeedError> {
-    crate::invite::kept_page(dir).map_err(|why| SeedError::Read {
-        path: dir.join(ORIGIN_FILE),
-        why,
-    })
-}
-
 /// Keep `relay` in `dir`, the group's directory, as where this computer
 /// meets the group.
 pub fn write_relay(dir: &Path, relay: &RelayUrl) -> Result<(), SeedError> {
