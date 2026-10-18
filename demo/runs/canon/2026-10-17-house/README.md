@@ -134,3 +134,10 @@ the driver's own fixes.
 about 16 minutes. All fifteen gates passed; none failed, could not be
 judged or never ran. One WebKit seek through a lend took 13,632 ms. That
 was a rate line, inside a gate that passed.
+
+## After the fix
+
+canon-fix fixed both findings: #206 in 5eb3d563 and #205 in 3666d2a4
+(`ralph/REVIEW_FINDINGS.md`). `scripts/check.sh` ran once at 6c7b8296 and
+exited 0 after 15m36s. All fifteen gates passed. None failed, could not be
+judged or never ran.
