@@ -1,0 +1,118 @@
+{
+ "1": {
+  "verdict": "passed",
+  "said_ms": 221,
+  "listed": {
+   "ana": {
+    "listed": true,
+    "ms": 586
+   },
+   "bo": {
+    "listed": true,
+    "ms": 803
+   },
+   "cy": {
+    "listed": true,
+    "ms": 806
+   }
+  },
+  "build": {
+   "bytes": 5679979,
+   "bo": {
+    "held": true,
+    "ms": 810
+   },
+   "cy": {
+    "held": true,
+    "ms": 813
+   }
+  }
+ },
+ "2": {
+  "verdict": "passed",
+  "ms": 221
+ },
+ "3": {
+  "verdict": "passed",
+  "ms": 235,
+  "reached_ms": {
+   "bo": 10,
+   "cy": 2
+  }
+ },
+ "4": {
+  "verdict": "passed",
+  "through": "Ana",
+  "drawn_ms": 4760,
+  "listed_ms": 825
+ },
+ "5": {
+  "verdict": "passed",
+  "ms": 227,
+  "reached_ms": {
+   "ana": 4,
+   "bo": 3
+  }
+ },
+ "6": {
+  "verdict": "passed",
+  "reached_ms": {
+   "ana": 3,
+   "cy": 3
+  },
+  "every_page_ms": 6029,
+  "phone_listed_ms": 881
+ },
+ "7": {
+  "verdict": "passed",
+  "held_out": {
+   "ana": {
+    "out": true,
+    "ms": 522
+   },
+   "cy": {
+    "out": true,
+    "ms": 523
+   }
+  },
+  "phone_listed_ms": 882
+ },
+ "8": {
+  "verdict": "passed",
+  "proposed_ms": 219,
+  "agreed_to_read_ms": 2496,
+  "right_after_agree": "House rules\nHow your house decides\n\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them."
+ },
+ "9": {
+  "verdict": "passed",
+  "held_out": {
+   "ana": {
+    "out": true,
+    "ms": 522
+   }
+  }
+ },
+ "10": {
+  "verdict": "passed",
+  "phone_listed_ms": 1066,
+  "after_press_ms": 2341,
+  "right_after_agree": "House rules\nHow your house decides\n\nA rule holds once everyone in your house when it was proposed agrees, and one objection stops it."
+ },
+ "11": {
+  "verdict": "passed",
+  "asked_ms": 5845,
+  "changed_ms": 580
+ },
+ "12": {
+  "verdict": "passed",
+  "read": 86
+ },
+ "13": {
+  "verdict": "passed",
+  "steps": 26
+ },
+ "14": {
+  "verdict": "never-ran",
+  "why": "a house with real people, a second host and a phone on cellular are the operator's"
+ }
+}
