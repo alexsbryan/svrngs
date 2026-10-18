@@ -11087,3 +11087,291 @@ the run is `demo/runs/canon/2026-10-17-house/` (README.md, "What it found").
 | 205 | 6 | web/app.js:322-334 (`reachGroup`, the first computer to answer), :392 (`enter`, one computer's `/people/lends`), :97 (`failed`'s words) | fixed in 3666d2a4 (browser carried.rs `the_phone_goes_on_to_a_computer_that_answers`, red at HEAD in both engines, 2606e527, with cy's computer made the first to answer; red again on a plant, the first computer's failure ending the reach) | **Run.** After Bo left Elm, Dee's phone reached Elm through Bo's computer, which still runs svrngs and answers the dial. Its `/people/lends` failed ("the computer's answer is not HTTP: connection error"), and the page said "This browser could not open the page." without trying Ana's computer, which was on. House rules was listed only when the page was opened again, 10,937 ms later (`data/takes/2/summary.json`, step 7-dee, its console). The trial takes met it after both leaves, for 52.7 s and 134.1 s (2b2107aa's body). It is a race: takes 1 and 3 never met it. `enter` could go on to the next computer that answers when one fails, or drop a computer whose person the group's last answer said left. |
 | 206 | 8 | apps/canon/index.js:53 (`fold` asked at `Date.now()`); crates/svrngs-core/src/command.rs:243-250 (a new act timed after every act held) | fixed in 5eb3d563 (laws.test.mjs `one answer has one clock`, red at HEAD, 5af576d4; red again on a plant, `fold` asked at `Date.now()` alone) | **Run, and reproduced.** Right after the Agree that passed a change (the clean take's steps 8 and 10), Ana's page said the old rule with nothing proposed; opened again, the new rule. An agreement written in the second of the proposal is timed a second ahead of the browser's clock, and canon asked before that second calls the change ratified and keeps the old rule in force (`same_second.mjs` there: "asked at 2099: the change ratified since 2100; the rule in force majority"). The page has two clocks for one answer. Asking canon at no earlier than the newest act's time would give it one. |
 | 207 | 6 | apps/canon/house.js `fold` (canon asked at the newest act it is handed, #206's fix); crates/svrngs-core/src/command.rs:238-250 (`reach`, AHEAD_SECS) | not fixed (a follow-up: none is written by svrngs) | **Read, and run under node.** Since 5eb3d563 an act dated ahead moves the page's clock with it. svrngs signs none more than AHEAD_SECS past the newest act it follows, so only a changed svrngs writes one. With one, a house deciding "unless someone objects" sees a proposal as holding before its two days are out: a proposal at 2000 and an act dated three days on, asked at 2200, read `active`; with bo's objection at 2100, `refused`, as canon judges by the acts' own times (a scratch script over `fold` and the vendored build, 2026-10-17). Bounding the clock at AHEAD_SECS in the page would be that threshold's second home; svrngs telling the page the time it would give a new act would keep one. |
+
+## REVIEW-audit-canon-auto-1 (2026-10-17, range ac5d2d0f..59ddb5b2)
+
+The previous `REVIEW-audit-` row is REVIEW-audit-grapevine-auto-1, its hash
+ac5d2d0f (ralph/next/grapevine/STATE.md, its row); no audit row ran in
+v1patch or before this one in canon. The range ends at 59ddb5b2, the
+commit that made this row. `git rev-list --count ac5d2d0f..59ddb5b2` is
+122, none a merge (`--merges`: 0). They are: grapevine-auto-1's `done`;
+the north-star audit (6369790c) and its fixes, #187-#204 and #153;
+v1patch-loopback; canon-economize, canon-floor, canon-pin, canon-spike,
+canon-spans, canon-house, canon-share, canon-run, canon-docs and canon-fix;
+V1.1's release notes (3637ccaf); and this row's own commit. The row reads
+`docs/ARCH_PRINCIPLES.md` and `target/debug/sovereign-cli`, as
+grapevine-auto-1's did (e040ffed): the principles are
+docs/principles/ARCH_PRINCIPLES.md, the instrument
+~/dev/commonwealth-ai/target/debug/sovereign-cli. The state file is left
+as it is; the loop owns the row.
+
+This audit's own commits before this section:
+- c949a678, the runtime's three torn-tail tests set up through one helper;
+- f9c7aeef, ring_sync's `Told` and carried.rs's `Answer` renamed.
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' --no-merges
+ac5d2d0f..59ddb5b2` (/tmp/canonaudit/ledger.raw) is summed by
+grapevine-auto-1's ledger.py, its unit list this range's
+(/tmp/canonaudit/ledger.out; each commit's unit in ledger.commits). A
+commit naming no unit counts toward the next that does: 5bc0db8e, 1edc5fbd
+and 6369790c (docs, and the north-star audit) to northstar-economize; the
+north-star fixes, each named by its finding, and the queue files 4e0c6cdd
+and 606fea37 to northstar, whose budget commits name it; 1a4f8961 to
+v1patch-loopback; bcaec482 (DESIGN §8) to canon-floor; 59348697 (DESIGN
+§3) to canon-pin; c522d907 to canon-house; ddf0e902, 8d24369f and 3637ccaf
+(LICENSE, the queue, V1.1's notes) to canon-share. The lines are raw,
+comments and blanks in:
+
+| unit | commits | src + | src − | src net | test + | test − | test net | markup net | apps src net | apps test net | apps vendor | scripts net |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| REVIEW-audit-grapevine-auto-1 (its `done`) | 1 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| northstar-economize | 6 | 10 | 56 | **−46** | 0 | 44 | −44 | 0 | 0 | 0 | 0 | +2 (+3 −1) |
+| northstar | 30 | 256 | 124 | **+132** | 317 | 38 | +279 | −1 | 0 | 0 | 0 | +30 (+70 −40) |
+| v1patch-loopback | 4 | 0 | 0 | **0** | 43 | 0 | +43 | +2 (+7 −5) | 0 | 0 | 0 | 0 |
+| canon-economize | 5 | 0 | 9 | **−9** | 14 | 14 | 0 | 0 | 0 | 0 | 0 | +3 (+4 −1) |
+| canon-floor | 6 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 | 0 | +102 (+112 −10) |
+| canon-pin | 7 | 233 | 80 | **+153** | 383 | 24 | +359 | 0 | 0 | 0 | 0 | +3 (+7 −4) |
+| canon-spike | 5 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | +593 (+594 −1) | +60 | +147062 | 0 |
+| canon-spans | 8 | 59 | 41 | **+18** | 156 | 18 | +138 | 0 | 0 | 0 | 0 | +5 (+9 −4) |
+| canon-house | 11 | 24 | 18 | **+6** | 35 | 3 | +32 | 0 | +344 | +312 (+315 −3) | 0 | +2 (+5 −3) |
+| canon-share | 10 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | +18 (+57 −39) | +27 (+58 −31) | +4994 (+40519 −35525) | 0 |
+| canon-run | 9 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| canon-docs | 10 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| canon-fix | 9 | 15 | 7 | **+8** | 153 | 5 | +148 | 0 | +6 (+10 −4) | +15 | 0 | +3 (+4 −1) |
+| REVIEW-audit-canon-auto-1 (its row) | 1 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| total | 122 | 597 | 335 | **+262** | 1101 | 146 | +955 | +1 (+7 −6) | +961 (+1005 −44) | +414 (+448 −34) | +152056 (+187581 −35525) | +150 (+214 −64) |
+
+Where the src lines went (`git diff --stat ac5d2d0f 59ddb5b2`, tests
+apart): the north-star fixes across svrngs-core (admit.rs, command.rs),
+svrngs-runtime (journal.rs, oplog.rs) and svrngs-node (removal.rs,
+ring_sync.rs, door.rs, home.js), and their cut of upstream's local-only
+namespaces (lib.rs, tests_local_only.rs gone, #200); canon-pin's
+carried.rs (+102 −19 over the range: the files an app was brought with,
+`POST /runs`, `changed`) and synced.rs's `Runs` in svrngs-core (+52 −7);
+canon-spans' `Span` and `Membership::spans` (membership.rs), the four
+traces it put on one line each (3141a979) netting it low; canon-fix's
+reach in web/app.js (+21 −13 over the range with canon-pin's yes).
+scripts/: canon-floor's trust_check.py (95) and trust_floor.txt, and
+northstar's vocab_check.py and lean_check.py.
+
+apps/: canon is new, 961 lines of source (build.sh 125, build/src/lib.rs
+224, house.js 210, index.js 153, build's house.mjs 88, prove.mjs 104,
+call.mjs 19, examples/time.rs 38) and 414 of tests (canon.test.mjs 60,
+laws.test.mjs 234, page.test.mjs 120). canon's build is vendored whole and pinned by sha256: 147,062
+lines at 0.3.0 (canon-spike), 152,056 at 0.5.0 (canon-share, faf50750).
+demo/runs/canon/'s drivers are what ran, which the ledger and the budget
+leave apart.
+
+What the budget counts, by HEAD's scripts/lean_check.py over a `git
+archive` tree of each end and of each unit's `done`
+(/tmp/canonaudit/lean-<hash>.out). Under HEAD's caps a555a225 and 455398af
+read BROKEN on svrngs-core's 3,016 / 3,009; their own cap was 3,017
+(bdf99942), which canon-spans' cut ratcheted:
+
+| at | svrngs-core | repository | counted net |
+|---|---:|---:|---:|
+| ac5d2d0f, range start | 2992 | 16350 | |
+| c2db36c3, northstar's last budget commit | 2991 | 16419 | +69 |
+| a0129152, v1patch-loopback done | 2991 | 16419 | 0 |
+| 96c19ed0, canon-economize done | 2991 | 16413 | −6 |
+| 8d86ed29, canon-floor done | 2991 | 16472 | +59 |
+| a555a225, canon-pin done | 3016 | 16557 | +85 |
+| 455398af, canon-spike's needs-human | 3016 | 16557 | 0 |
+| b718b316, canon-spans done | 3008 | 16556 | −1 |
+| 8c52cf5c, canon-house done | 3008 | 16560 | +4 |
+| 5bb317e5, canon-share done | 3008 | 16560 | 0 |
+| 0c52b4c7, canon-run done | 3008 | 16560 | 0 |
+| 9bd35aed, canon-docs done | 3008 | 16560 | 0 |
+| 923805f3, canon-fix done | 3008 | 16563 | +3 |
+| 59ddb5b2, range end | **3008** | **16563** | **+213** |
+
+The caps (`git log ac5d2d0f..59ddb5b2 -- scripts/lean_check.py`, BUDGET
+at each):
+
+| commit | the repository's cap | svrngs-core's | for |
+|---|---|---|---|
+| ac5d2d0f, range start | 16,351 | 2,993 | |
+| 71be570f, northstar-economize | → 16,323 | → 2,981 | the cut, #200 |
+| 02893e39, c3c795b8, 7a3a77f3, fc2ad0ec, 0d0f4f9b, d62c393e, 23dcc2ef, bab14a6e, 10b23294, c2db36c3 | → 16,420 | → 2,992 | #187, #188, #189, #191, #190, #203, #153, #194, #195, #190, within the operator's +100 and +15 (2026-10-16) |
+| 8d6f6cdf, canon-economize (c) | → 16,414 | 2,992 | the cut, ratcheted |
+| 2d6d5edb, 9d2e7256, canon-floor | → 16,473 | 2,992 | the trust floor's gate, +59 |
+| 42377ed5, bdf99942, canon-pin | → 16,558 | → 3,017 | a carried app pinned, each new version each person's yes, +85 and +25 |
+| 26f94fe9, canon-spans' cut | → 16,526 | → 2,985 | ratcheted, one past where the cut landed |
+| 4e267e48, canon-spans (b) | → 16,557 | → 3,009 | each person's time in the group |
+| ceb999f9, canon-house (a) | → 16,561 | 3,009 | House rules on the shelf |
+| 9e62c074, canon-fix (d) | → 16,564 | 3,009 | the page going on to a computer that answers (#205) |
+
+The CHARTER's budget is "+150 repo, +40 core" over the caps the economizing
+pass left, 16,414 and 2,992: ceilings 16,564 and 3,032. The range closes at
+16,563 / 16,564, all 150 spent, and at 3,008 / 3,009, 17 of 40 spent and 23
+under the ceiling unraised. lean_check fails at `n >= cap`
+(lean_check.py:173), so no counted line is left under the repository's
+cap. This audit's commits move no counted line: c949a678 is test code,
+f9c7aeef renames on the lines it touches (16563 / 3008 after each).
+
+### The instrument
+
+The binary is ~/dev/commonwealth-ai/target/debug/sovereign-cli, sha256
+7230170e… (`shasum -a 256`), the one grapevine-auto-1 ran.
+
+The corpus is 59ddb5b2's crates/, web/, scripts/, apps/, Cargo.toml and
+Cargo.lock, every `vendor/` and `node_modules/` left out, by `git archive`
+into /tmp/canonaudit/canon-59ddb5b2 (365 files).
+- `code index . --corpus-id canon-59ddb5b2`: 3950 chunks in 601 s
+  (index.out).
+- `refresh`, run in the corpus: rust, 17787 symbols and 103324 edges;
+  typescript and python "skipped (export failed)" (I4) (refresh.out).
+
+### (2) Clones (`code dry-report`)
+
+The range touched crates/svrngs-core, svrngs-runtime, svrngs-node and
+svrngs, web, scripts and apps/canon (`git diff --stat ac5d2d0f 59ddb5b2 --
+crates apps web scripts`, vendor/ apart). Each was reported at 0.95 and
+0.90, and apps/ whole, so a clone across two apps is seen
+(/tmp/canonaudit/clean-*.md). Whether a side was added in the range is
+`git blame` at 59ddb5b2 over each side's lines against ac5d2d0f (132
+sides, cluster-sides.txt; blame-clusters.out). Its plant: house.js:1-6
+says 38cbfa58, in range, and api.rs's old `addr` pair (:212-214) says
+5d6ddd5c, before (plant.verdicts).
+
+| scope | exact | near 0.95 | near 0.90 | with a side added in the range |
+|---|---|---:|---:|---|
+| crates/svrngs-core/ | 4 | 0 | 11 | 1 cluster, 2 sides |
+| crates/svrngs-runtime/ | 1 | 0 | 0 | 0 |
+| crates/svrngs-node/ | 1 | 1 | 10 | 0 |
+| crates/svrngs/ | 0 | 0 | 0 | — |
+| web/ | could-not-judge (I4) | 0 | 2 | 0 |
+| scripts/ | could-not-judge (I4) | 0 | 0 | 0 |
+| apps/canon/ | could-not-judge (I4) | 0 | 1 | 1 cluster, 2 sides |
+| apps/ whole | could-not-judge (I4) | 24 | 33 | 1 cluster, 2 sides (the 0.95 `pins` pair; at 0.90 the same four as one) |
+
+The clusters with a side the range added:
+
+| cosine | range side | other side | read |
+|---|---|---|---|
+| 1.000 | apps/canon/canon.test.mjs:12-21 `pins` (e0996d7f) | apps/grapevine/grapevine.test.mjs:19-28 `pins` | A copy, byte for byte, and `unpinned` under it (:18-29 and :25-36): how a vendored file's sha256 is read from vendor/README.md's table and checked, two apps' tests reading one format. #208. |
+| 0.928 | canon.test.mjs:12-21 `pins` | canon.test.mjs:18-29 `unpinned` | Not a clone: two neighbours, padded to overlap (I32). |
+| 0.902 | crates/svrngs-core/src/register_tests.rs:950-960 `a_link_redeems_after_an_act_timed_days_ahead` (82aac96e) | :959-970 `a_link_redeems_after_a_forged_line_timed_ahead` (82aac96e) | Not a clone: #188's two plants, a signed act and a line nobody signed, each its own test. A test file reported as production (I8). |
+
+Every other cluster's sides blame to commits before ac5d2d0f.
+
+**The line-window pass.** grapevine-auto-1's windows.py over its file set,
+with every code file the range added or changed (vendor/ apart), at
+59ddb5b2 (241 files, windows.files). **220 window hits, 56 spans, 3 new**
+(windows.spans; windows.verdicts, by newspans3.sh's blame against
+ac5d2d0f; 53 old). Its positive control: the old span
+apps/events/store.mjs:17-100 == apps/grapevine/store.mjs:17-100 is among
+the 53.
+
+| new span | read |
+|---|---|
+| apps/canon/canon.test.mjs:12-25 == apps/grapevine/grapevine.test.mjs:19-32 | `pins` and `unpinned`, #208. |
+| crates/svrngs-runtime/src/tests.rs:167-174 == :858-865 | 4a22ab43's #191 test, the third copy of a nine-line setup. **Fixed in c949a678.** |
+| crates/svrngs-runtime/src/tests.rs:622-631 == :858-867 | The same. |
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git log -p --no-merges ac5d2d0f..59ddb5b2 -- crates
+apps web scripts` (vendor/ apart), matched against `(struct|enum|trait|
+type|class) +[A-Z]\w*` (new-types.out), give ten: `Request`, `Film`,
+`Runs` (twice: `type`, then `struct`), `Span`, `Answer`, `Files`, `Told`,
+`Written`, `Yes`. Removed (removed-types.out): `type Runs` and `type
+Written`, each rewritten in place (synced.rs). `Film` is vocab_check.py's
+planted text (:84, :86), not a type.
+
+`converge noun <Name> --corpus-id canon-59ddb5b2` over each (nouns.out):
+
+| noun | definitions | read |
+|---|---|---|
+| `Answer` | 3: crates/svrngs-node/src/carried.rs:172 (`type Answer = Result<Response, Response>`, 40295803, in range); door/sign_in.rs:71 (`struct Answer`, a sign-in's answer, 8572711e); node.rs:758 (fn-local, a computer's lends answer, 533c6442) | The range's is an alias for one signature. **Renamed `Handled` in f9c7aeef**; the older two stay. |
+| `Told` | 2: crates/svrngs-node/src/door.rs:1182 (`struct Told`, what the door decided for a request let in, 345bfdfd); ring_sync.rs:413 (`pub type Told`, the leaves told, 1716275e, in range) | One name, two things, in one crate (principle 8). **Renamed `LeavesTold` in f9c7aeef.** |
+| `Request` | 1 seen: crates/svrngs-node/src/iroh.rs:283 (axum's request, 07ae5d19) | By `git grep`, a second: apps/canon/build/src/lib.rs:84 (`enum Request`, a question to canon's build, afd379c9). The build is its own Cargo project under apps/ (AGENTS.md 12), not in the workspace (Cargo.toml:3), so the instrument cannot see it (I34). Two systems, not two deciders; not a finding. |
+| `Runs`, `Span`, `Files`, `Written`, `Yes` | 1 each | synced.rs:146, membership.rs:151, synced.rs:141, :173; `Yes` carried.rs:170 by `git grep` (`converge` names it once). |
+
+(The instrument's lines are one early, I1.)
+
+### Reading the range
+
+The canon rows' src was read hunk by hunk (`git diff ac5d2d0f 59ddb5b2 --
+crates/svrngs-node/src/carried.rs crates/svrngs-core/src/synced.rs
+crates/svrngs-core/src/membership.rs crates/svrngs-core/src/record.rs
+web/app.js scripts/trust_check.py`), and apps/canon's house.js and
+index.js whole for silent defaults (`catch`, `?? `, `|| []`), each hit
+read. The north-star fixes were each read and planted by their own
+commits against #187-#204 (6369790c's section above), not judged again
+here.
+
+- **An unreadable answer said as an unsettled house** (principle 6).
+  index.js:49 reads the house's acts as `r.json().catch(() => ({}))`, and
+  when the answer was OK, `fold` takes `{}` as `spans` absent: `{"unsettled":
+  true}` (house.js:171; run under node, 2026-10-17), so the page says
+  "This computer can't yet say who is in your house … Open this page again
+  in a minute." for a body it could not read. The pattern is Expenses'
+  (index.js:26) and Events' (:31). #209.
+- **canon's page traces nothing** (principle 1). No `console` or trace in
+  apps/canon/*.js (`grep -n 'console\.\|trace' apps/canon/*.js`: none);
+  house.js:181's bare `catch` drops an act canon could not build with "this
+  version of House rules can't read it" and canon's own error lost. The
+  page says each refusal to the person; nothing says it to whoever reads
+  why. #210.
+- **One decider** (fence 3, principle 8). house.js decides no rule of
+  canon's: what passes, holds and who has a seat are canon's answers
+  (`derive`, `rule`, `seat`, house.js:191, :200, :203); its own refusals
+  (house.js:90-100) are what House rules carries — acts speaking for
+  someone else, or moving membership, which svrngs alone writes. "Most"
+  and "everyone" are canon's shares, cited at ratify.rs (house.js:126).
+  #207 stays open.
+- **Never silently substitute** (AGENTS.md 6). carried.rs `changed` says a
+  group whose record cannot be read at warn and answers `null`, never
+  "nothing changed" (:246-247); `acts` answers `spans` null, never empty,
+  while who stands is unsettled (:331-333). `changed[kind]` is indexed
+  safely: every placed `apps/<kind>/index.html` came from a write that set
+  it (synced.rs:195-198).
+- **Glassbox** (principle 1). Each new branch in carried.rs, synced.rs
+  `Runs::of` and `Membership::spans` traces at debug.
+- **The trust floor's gate** reads every line of the floor or says it is
+  not one (trust_check.py:61-72), and judges what it could not read as
+  BROKEN, never passed (:76, :88).
+- **Forked code** (AGENTS.md 11). The range forked nothing from
+  commonwealth-ai: 69 files carry a `ported from` line at ac5d2d0f and 68
+  at 59ddb5b2, the one gone tests_local_only.rs, cut with #200 (befedc5b).
+  canon's build is vendored whole and pinned (canon.test.mjs, red on a
+  changed byte), not forked.
+
+### Fixed here
+
+- c949a678: the runtime's three torn-tail tests set up through
+  `whole_then`, copies 3 → 1. `cargo test -p svrngs-runtime --lib` 46
+  passed; red on a plant (the helper writing no tail), 3 failed at
+  tests.rs:190, :634, :865.
+- f9c7aeef: `Told` → `LeavesTold` (ring_sync.rs:414), `Answer` →
+  `Handled` (carried.rs:173). `cargo check -p svrngs-node --tests` and
+  `cargo fmt --check` clean; vocab_check.py "73 app nouns, 0 in infra
+  code"; counted lines unchanged.
+
+Not fixed here: #208 is a move across apps, with #150; #209 and #210
+change what a page does, so each wants its red run first.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 208 | 8 | apps/canon/canon.test.mjs:12-29 (`pins`, `unpinned`); apps/grapevine/grapevine.test.mjs:19-36 | not fixed (a move across apps, with #150) | How a vendored file is pinned — vendor/README.md's `\| \`file\` \| \`sha256\` \|` table, and each file's hash against it — is read by two copies, byte for byte (dry-report 1.000; line-window span). A change to the table's form in one app's README passes the other's test unread. With #150's shared module: one reader both apps' tests import. |
+| 209 | 6 | apps/canon/index.js:49 (`r.json().catch(() => ({}))`), apps/canon/house.js:171 (`spans` absent is unsettled); apps/expenses/index.js:26, apps/events/index.js:31 (the pattern) | not fixed (changes what the page says; red first) | An OK answer whose body is not JSON is read as `{}`, and House rules says the house's membership is unsettled, "Open this page again in a minute", where it could not read the answer at all (`fold(call, {}, …)` is `{"unsettled":true}`, run under node). In Expenses and Events the same `{}` folds as a group with nothing in it. A body that cannot be read is said as that. |
+| 210 | 1 | apps/canon/house.js:181 (bare `catch`), apps/canon/index.js (no trace anywhere) | not fixed (a page's trace, as grapevine's `GRAPEVINE_DEBUG` and web/app.js's `trace` do it; red first) | canon's page makes every decision a person can see — an act dropped and why, the rule asked of canon at which time — and traces none. An act canon refuses to build is said "this version of House rules can't read it", and canon's own error is lost. |
+| 150 | 8 | as recorded, and apps/canon/canon.test.mjs:12-29 | not fixed: a move across apps | A fourth app's tests now copy a third helper (#208). |
+| 80 | — | scripts/lean_check.py:105 BUDGET, :173 `n >= cap` | not fixed (operator's) | 16,563 / 16,564 and 3,008 / 3,009 after this audit: +213 and +16 over the range, the CHARTER's +150 spent to the line, 23 of core's +40 left unraised. |
+| 205, 206 | as recorded | as recorded | fixed (canon-fix; 3666d2a4, 5eb3d563) | Not reached by this range's findings. |
+| 207 | as recorded | as recorded | not fixed | Still open; read above under "One decider". |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun`, dry-report spans | Still one line early: carried.rs:172 for :173, ring_sync.rs:413 for :414, door.rs:1182 for :1183. |
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)". web/'s, scripts/' and apps/' exact tiers could not judge, and `converge noun` sees no JS class. |
+| I8 | 6 | dry-report scope | Still present: register_tests.rs and `*.test.mjs` reported as production. |
+| I32 | 7 | dry-report's near tier, nested spans | Still present: canon.test.mjs `pins` over `unpinned`. |
+| I34 | 6 | `converge noun`, `refresh` | New: a Rust crate outside the Cargo workspace is not exported, so its nouns are absent with nothing said: apps/canon/build/src/lib.rs:84's `enum Request`, which `git grep` finds, is not among `Request`'s definitions. |
