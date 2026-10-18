@@ -739,7 +739,10 @@ the evidence is U4's inventory, §8):
    measured, `demo/runs/reach/2026-10-14/`), each lender within its 4 s:
    the first to answer is asked, the rest closed when they answer late, and
    the page says through whose computer it reached the group (v1ui-reach
-   (c), v1ui-race (a)). A member who lends nothing is not among them: the
+   (c), v1ui-race (a)). When that answer fails, as a computer whose person
+   left still answers the dial and no more, the next to answer of those not
+   yet asked is asked; only once every one has been is the page stopped
+   (canon-fix (d), #205). A member who lends nothing is not among them: the
    answer names no key of theirs.
 5. *One body for the link.* The command and the page parse a token and sign
    the ask and the redemption with the same code, in svrngs-core: bytes and
