@@ -1,0 +1,7 @@
+# V1.1 (a555a225) as group.svrnme.sh served it, fetched 2026-10-17; tarballs checked against SHA256SUMS (all MATCH)
+4d087b938f01ccbb4da5e71e7127b5751b305cecfd2df54df4f869014e57c216  svrngs-darwin-aarch64.tar.gz
+a2259c899addae44b7d60289ab11b48845e1d8b5bc16b489ad62dd3765081deb  darwin-aarch64/svrngs
+fd24125bd01f1efbe682435dca7097541b872e29e4ee08aed6843399fb023659  svrngs-linux-x86_64.tar.gz
+8d3c502023dc68d8322dc7699ead98a847222e6913d476cd998465358ab0a553  linux-x86_64/svrngs
+211b9e2c2d4d530e8c211813c17ceaac9492e4baf8accdd363ea924266961040  svrngs-linux-aarch64.tar.gz
+99148b296a3d5c3fc6723d811990f2b15e94d65680838de519ec48f6dc8b1bc2  linux-aarch64/svrngs
