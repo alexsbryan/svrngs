@@ -1,0 +1,27 @@
+--- src/crates/svrngs/src/main.rs.orig	2026-10-17 18:29:45.572487695 -0700
++++ src/crates/svrngs/src/main.rs	2026-10-17 18:29:45.587505033 -0700
+@@ -42,6 +42,24 @@
+             return ExitCode::from(3);
+         }
+     };
++    // leak diagnosis only (scratch copy, never the repo): with
++    // SVRNGS_TASKPROBE=<file>, the runtime's alive tasks each second.
++    if let Ok(path) = std::env::var("SVRNGS_TASKPROBE") {
++        let h = runtime.handle().clone();
++        std::thread::spawn(move || {
++            use std::io::Write;
++            let mut f = std::fs::OpenOptions::new().create(true).append(true).open(path).expect("probe file");
++            loop {
++                let m = h.metrics();
++                let t = std::time::SystemTime::now()
++                    .duration_since(std::time::UNIX_EPOCH)
++                    .map(|d| d.as_secs_f64())
++                    .unwrap_or(0.0);
++                let _ = writeln!(f, "{t:.3} {} {}", m.num_alive_tasks(), m.global_queue_depth());
++                std::thread::sleep(std::time::Duration::from_secs(1));
++            }
++        });
++    }
+     let relay = match cli::reach(&root, &command, cli::SHIPPED) {
+         Ok(r) => r,
+         Err(e) => return refuse(e),
