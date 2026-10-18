@@ -1,5 +1,73 @@
 # svrngs releases
 
+## Next, not released yet
+
+The next release brings House rules: your house writes down what it
+agrees, and how it agrees it. It's in this repository, and not yet in the
+build at `group.svrnme.sh`.
+
+**House rules.** On your home page, under **Bring things to the table**,
+tick House rules and press **Bring the ticked ones to** your group. The
+first person to open it answers one question, "How does your house decide
+its rules?", with one of three answers: anyone proposes a rule and it holds
+after two days unless someone objects; most of you agree; or everyone
+agrees. Then anyone writes a rule and presses **Propose this rule to
+everyone in your house**. The rest of you press **Agree**, or **Object** and
+say why, and the page says when it has become your house's rule. You change
+how your house decides the same way you agree to anything else.
+- Everyone in the group has a say, from the day they joined until the day
+  they left. "Most" and "everyone" count the people in your house when the
+  rule was proposed, so a rule agreed last month stays agreed when someone
+  joins or leaves today.
+- When people leave, the rest of you still decide, including how you
+  decide.
+- An agreement made from a phone says whose computer it went through:
+  "Agreed: Dee, through Ana’s computer."
+- It runs on every computer and phone in your group. Nobody keeps a server
+  on, and nobody keeps the book.
+
+**canon decides, svrngs shows.** House rules is built on
+[canon](https://github.com/alexsbryan/canon), a library for a group's
+rules, at its release 0.5.0. canon decides every answer the page gives:
+what is a rule, what is still waiting, who has a say. svrngs carries what
+each of you wrote and vouches for who wrote it. It never reads a rule and
+never enforces one. If your house agrees on quiet hours from 10pm, nothing
+in svrngs stops a party at 11; you do.
+
+**Its files run as you only after your yes.** House rules is on the table
+like Money and Events, so V1.1's rule holds for it too. If someone in the
+group changes its files, your page asks "Open the new version?", and the
+version you have keeps working until you press **Yes, use the new version
+of House rules**.
+
+**In the run.** A house of four, three on computers and one on a phone,
+chose "most of you agree" and agreed on quiet hours over one objection.
+Then one person left, and the house changed to "everyone agrees". Another
+left, and the two still there changed it back. Each person was a program, and everything ran on one
+computer. The scene took 91.2 s. House rules' 5.7 MB reached the other
+two computers within 1.2 s of being brought, in each of three takes. Once
+the third person agreed, every computer and the phone listed the rule
+within 6.1 s. The phone took 4.5 to 4.8 s to open House rules, through
+n0's relays. Nobody has used House rules in a real house yet
+(`demo/runs/canon/2026-10-17-house/README.md`).
+
+**What House rules doesn't do yet.**
+- canon can also draw people by lot, take turns with a shared thing, and
+  let a smaller group decide its own corner. The page offers none of these
+  yet. In canon 0.5.0 they would count the house itself among its people,
+  so they wait for a canon that counts only people.
+- Right after the agreement that changes how your house decides, your page
+  can show the old way, with nothing proposed, for about a second. Open it
+  again and it shows the new one (#206).
+- After someone leaves, a phone can reach that person's computer first and
+  say "This browser could not open the page.", while other computers in the
+  group are on. Open the page again (#205).
+
+**If you build apps.** A carried app's `svrngs/acts` now says each person's
+time in the group, `spans`, those who left included, so an app can count a
+past entry with whoever was in the group when it was written.
+[`docs/DESIGN.md`](docs/DESIGN.md) §3 has it.
+
 ## V1.1, 17 October 2026
 
 V1.1 closes a way for one person in a group to act as everyone else, and
