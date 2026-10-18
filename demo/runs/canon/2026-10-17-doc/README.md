@@ -38,3 +38,12 @@ Two things the runs showed, neither a fault in House rules:
   same port (`crates/svrngs-node/src/home.rs:110-112`). A person who
   installs from the line in `start.md` never needs it: the install opens
   the home page.
+
+## The close
+
+`scripts/check.sh` ran once at f4f8ecb4, the row's last change before this
+section. It exited 0 in about 17 minutes. All fifteen gates passed; none
+failed, could not be judged or never ran. `scripts/vocab_check.py` said
+"73 app nouns, 0 in infra code", and `scripts/lean_check.py` 16,560 of
+16,561 lines, and 3,008 of 3,009 in svrngs-core: words only, nothing
+raised.
