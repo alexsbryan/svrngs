@@ -11,9 +11,9 @@
 label = "svrngs-canon"
 session_timeout = 5400
 # One closing audit for the queue, none inside it (the operator, 2026-10-15 and
-# 2026-10-16: audits at the queue's end). Ten units since 2026-10-17, so a
-# cadence of 11 never comes due inside it.
-audit_every = 11
+# 2026-10-16: audits at the queue's end). Eleven units since 2026-10-17, so a
+# cadence of 12 never comes due inside it.
+audit_every = 12
 worker_bin = "/Users/alexsbryan/dev/commonwealth-ai/scripts/ralph-claude-shim.sh"
 settings = "ralph/claude-settings.json"
 
