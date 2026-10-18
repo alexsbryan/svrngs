@@ -333,7 +333,8 @@ the route, and reading another app's acts.
   are told apart (#138), in a colour derived from its id, nothing to
   choose (look.css; the operator, "Derived from the group"). Under it
   (v1ui-door (c), V1_UI_BUILD §3.1):
-  - **the door**, each person once, a cell in a grid: lit, "on now",
+  - **the door**, each person once, a cell in a grid, in the order they
+    joined: lit, "on now",
     while their computer answers; drawn off, "did not answer", when it
     did not, judged within the one round that asks what each lends and
     never lit before; and "in from a phone" when their only keys are a
@@ -377,6 +378,15 @@ the route, and reading another app's acts.
     page itself, opened with such a link in a computer's browser that
     keeps no group, says the link opens in svrngs there and shows it to
     copy, since it cannot know the computer's port;
+  - shows a group on a screen — a TV, a spare laptop, a projector — at
+    `/?screen=<its id>`, opened in a tab of its own from "Show <group> on a
+    screen": its door alone, big, each person's lends in their window, read
+    again a second after each read began, since back to back a 25-computer
+    group's founder spent 180% of a core
+    (`demo/runs/twentyfive/2026-10-17/README.md`); and beside it who joined
+    and what was lent since the screen opened, the newest marked, kept by
+    the page alone. Who went off is never a line: the door says only who is
+    on now;
   - makes a group, by its name and theirs, made by the svrngs running
     there as `svrngs new` makes one (start-group, the node's `group.rs`
     `Asking::found`), so a computer whose svrngs runs from login, where
