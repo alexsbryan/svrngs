@@ -75,6 +75,15 @@ where the group's folder is on this computer.
 
 ![Sam's home page, the group made](runs/start/2026-10-13-story/data/shots/sam-home-made.png)
 
+Under Lab, below the table of what's lent, the home page shows **Bring
+things to the table**: Money, Events and House rules, which come with
+svrngs, each ticked. This walk doesn't need them, so leave them. Pressing
+**Bring the ticked ones to Lab** brings them, and everyone in Lab can open
+them. House rules is where a group agrees on its rules: someone proposes, the
+rest agree or object, and canon, the library under it, decides when a rule
+holds (`../RELEASES.md`, "Next"). (Not in the run, which came before House
+rules.)
+
 Press **Make a link to invite someone to Lab**. The page says *"Send this
 link to the person you are inviting: …"* with **Copy the link**. Send it
 to Bo however you two talk — a chat, a message, an email. It works for a
