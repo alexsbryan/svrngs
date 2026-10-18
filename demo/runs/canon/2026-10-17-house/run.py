@@ -7,17 +7,19 @@ WebKit as an iPhone for the phone, pressing what their page shows.
 
     W=<scratch> python3 demo/runs/canon/2026-10-17-house/run.py
     PLANT=<via|now|count|pin> W=<scratch> python3 demo/runs/canon/2026-10-17-house/run.py
+    TAKE=<n> W=<scratch> python3 demo/runs/canon/2026-10-17-house/run.py
 
 A plant is applied to the tree, svrngs and the page built with it, and the
 tree put back before the story starts; the story runs on the build copied
-to W. Data in data/ (data/plants/<plant>/), the links' tokens never in it.
+to W. Data in data/ (data/plants/<plant>/; another clean take's in
+data/takes/<n>/), the links' tokens never in it.
 judge.py reads the summary. scripts/check.sh runs none of this."""
 import json, os, re, shutil, signal, subprocess, sys, threading, time, urllib.error, urllib.request
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent; REPO = HERE.parents[3]
-PLANT = os.environ.get("PLANT")
-OUT = HERE / "data" / ("plants/" + PLANT if PLANT else ""); W = Path(os.environ["W"]); BIN = W / "svrngs"
+PLANT, TAKE = os.environ.get("PLANT"), os.environ.get("TAKE")
+OUT = HERE / "data" / ("plants/" + PLANT if PLANT else "takes/" + TAKE if TAKE else ""); W = Path(os.environ["W"]); BIN = W / "svrngs"
 ELM, APP = "Elm", "House-rules"
 LOG = "info,folder=debug,removal=debug,join=debug,redeem=debug,rails=debug"
 QUIET, ROOM, WHY = "Quiet hours are 10pm to 7am", "Ana keeps the big room", "I work late on Fridays"
@@ -196,9 +198,9 @@ def main():
     global browsers
     shutil.rmtree(W, ignore_errors=True); W.mkdir(parents=True)
     for f in OUT.glob("*") if OUT.exists() else []:
-        if f.name != "plants": shutil.rmtree(f) if f.is_dir() else f.unlink()
+        if f.name not in ("plants", "takes"): shutil.rmtree(f) if f.is_dir() else f.unlink()
     OUT.mkdir(parents=True, exist_ok=True)
-    say("start", head=git("rev-parse", "--short", "HEAD"), plant=PLANT, load=round(os.getloadavg()[0], 1),
+    say("start", head=git("rev-parse", "--short", "HEAD"), plant=PLANT, take=TAKE, load=round(os.getloadavg()[0], 1),
         cores=os.cpu_count(), dirty=git("status", "--short").splitlines())
     try:
         build()
