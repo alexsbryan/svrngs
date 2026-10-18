@@ -97,8 +97,9 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # screen's economizing pass cut 3, home.js reading a read's answer and a
 # write's one way, and lowered it to one past where that landed. The screen,
 # a group on a TV or a projector (home.js `screen`), raised it by 23 to one
-# past where it landed, within the operator's "Yes, up to +30" (2026-10-18).
-BUDGET = {"crates/svrngs-core": 3017, ".": 16576}
+# past where it landed, within the operator's "Yes, up to +30" (2026-10-18),
+# and its founder drawn first by 1 more, 24 of the 30.
+BUDGET = {"crates/svrngs-core": 3017, ".": 16577}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
