@@ -339,10 +339,10 @@ is added once each computer has answered or not, so a computer asleep holds
 back only that list. Each group is headed by its name, who made it and since
 when this computer has held it, so two of one name are told apart, in a colour
 derived from its id, nothing to choose. Under it:
-- **the door**: each person once, a cell in a grid — lit, "on now", while
-  their computer answers; drawn off, "did not answer", when it did not; "in
-  from a phone" when their only keys are a browser's. Presence is only "on
-  now", never when last seen.
+- **the door**: each person once, a cell in a grid, in the order they
+  joined — lit, "on now", while their computer answers; drawn off, "did not
+  answer", when it did not; "in from a phone" when their only keys are a
+  browser's. Presence is only "on now", never when last seen.
 - **the index**: one table of what is in the group, on any port — each thing
   by its link; what it is, in its lender's word, never one of svrngs's own
   (`scripts/vocab_check.py` reads the pages' scripts too); whose; how it
@@ -376,6 +376,14 @@ On it a person can:
 - change how many people at once may use what their computer lends, a number
   or everyone, or stop lending it;
 - say yes to an app, or stop it;
+- show a group on a screen — a TV, a spare laptop, a projector — at
+  `/?screen=<its id>`, opened in a tab of its own from "Show <group> on a
+  screen": its door alone, big, each person's lends in their window, read
+  again a second after each read began, since back to back a 25-computer
+  group's founder spent 180% of a core
+  (`demo/runs/twentyfive/2026-10-17/README.md`); and beside it who joined
+  and what was lent since the screen opened, the newest marked, kept by the
+  page alone. Who went off is never a line: the door says only who is on now;
 - leave a group: "Leave <group>" says first what stays on this computer,
   what stops, that coming back needs a new invitation and that this
   computer cannot come back yet; the keeper is offered the hand-on beside it.

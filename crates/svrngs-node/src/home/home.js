@@ -3,7 +3,8 @@
 // people in each and what each lends, from the routes that answer this
 // computer's apps (/v1/groups, /v1/lends, /v1/rail/people), and who was
 // removed or asked to be, from /v1/groups (v1-keeper-office (b)); the ask at
-// /ask; a link from a group's page opened here; what apps use, each with
+// /ask; a group on a screen at /?screen=<its id> (`screen`); a link from a
+// group's page opened here; what apps use, each with
 // Stop; and what this computer lends, each
 // with how many it lets in at once, to set, clear or stop (bash-limit). Its
 // only writes are the person's yes and stop, to its own origin's /choices,
@@ -67,7 +68,8 @@ async function show(g, s) {
   try {
     const rows = (await get(`/v1/rail/people?namespace=${ns}`)).people;
     const [people, judge] = door(rows);
-    s.append(people);
+    // Its screen, in a tab of its own: for a TV, a spare laptop or a projector.
+    s.append(people, el('p', '', Object.assign(el('a', `Show ${g.name ?? 'this group'} on a screen`), { href: `/?screen=${ns}`, target: '_blank' })));
     // Where the group's folder is on this disk (v1-onboarding (d)).
     const its = g.name ? `${g.name}’s folder` : 'The group’s folder';
     if (g.folders === null) s.append(el('p', `This computer cannot say where ${its} is.`));
@@ -205,6 +207,43 @@ async function lending() {
   }
 }
 
+// A group on a screen, `/?screen=<its id>`, opened from its section in a tab
+// of its own, for a TV, a spare laptop or a projector (the operator, "Wall
+// is approved", of the Draft 2 canvas's frames 8-10): its door alone, big,
+// each person's lends in their window (question.js `door`), drawn again
+// from a read begun a second after the last one began, or once that one
+// lands. Read back to back, a 25-computer group's founder spent 180% of a
+// core and grew to 442 MiB in 80 s; read once a second, at most 10% and
+// 65.5 MiB (demo/runs/twentyfive/2026-10-17/README.md). Each door is drawn
+// and judged before it takes the last one's place, so no window reads
+// "asking…" again. Beside it, who joined and what was lent since the screen
+// opened, at this computer's time, newest first, the newest marked new
+// there and in its window: kept by this page alone, so opened again it
+// starts over, and never who went off, which the door never says.
+function screen(g) {
+  [document.body.className, document.title] = ['screen', `${g?.name ?? 'A group'} on a screen`];
+  if (!g || g.left || g.removed !== false) return main.append(el('p', 'This computer cannot show that group on a screen: you are not in it here.'));
+  const [ns, count, at, list, seen, many] = [encodeURIComponent(g.id), el('p'), el('div'), el('ol'), new Set(), (n, one, more) => `${n} ${n === 1 ? one : more}`];
+  section(g).append(count, at, el('aside', '', el('h2', 'Since this screen opened'), el('p', 'Kept on this screen only: it starts over when the screen is opened again.'), list, el('p', 'Nothing new yet. Who joins, and what they lend, shows here as it happens.')), el('footer', '', el('p', 'Lit: answered just now. Dashed: did not answer. Dotted: in from a phone.'), el('p', `Each thing lent opens in a tab as ${g.person}, from this computer.`)));
+  let newest;
+  // The first read's people and lends were here before the screen opened:
+  // seen, and said by no line.
+  const read = (first, began = Date.now()) => Promise.all([get(`/v1/rail/people?namespace=${ns}`), get(`/v1/lends?namespace=${ns}`)]).then(([{ people: rows }, lends]) => {
+    const [people, judge] = door(rows, lends.lent);
+    judge(lends);
+    const arrived = [...rows.map((r) => [r.person_key, `${r.person} joined`]), ...lends.lent.filter((l) => !l.group).map((l) => [l.origin, `${l.person} lent ${l.name}`])].filter(([key]) => !seen.has(key) && seen.add(key));
+    for (const [key, words] of first ? [] : arrived) {
+      list.querySelector('mark')?.remove();
+      list.prepend(el('li', '', el('time', new Date().toLocaleTimeString([], { timeStyle: 'short' })), ` ${words} `, el('mark', 'new')));
+      newest = key;
+    }
+    people.querySelector(`a[href="${newest}"]`)?.after(' ', el('mark', 'new'));
+    at.replaceChildren(people);
+    count.replaceChildren(`${many(people.children.length, 'person', 'people')} · ${people.querySelectorAll('.on').length} on now · ${many(people.querySelectorAll('a').length, 'thing', 'things')} lent`);
+  }, (e) => count.replaceChildren(`This computer cannot read ${g.name ?? 'this group'} now: ${e.message}`)).finally(() => setTimeout(read, began + 1000 - Date.now(), false));
+  read(true);
+}
+
 // `at` (`/` when none) as an address at `origin`, or null: resolved, and
 // kept only if it is still there, as open.js judges its way back — a path
 // `startsWith` let through, `/\evil.example`, left for another host (#153).
@@ -223,11 +262,12 @@ function ask(lent, q) {
 try {
   const { groups } = await get('/v1/groups');
   main.replaceChildren();
-  if (location.pathname === '/ask') ask((await Promise.all(groups.map(lentIn))).flat(), new URLSearchParams(location.search));
+  const q = new URLSearchParams(location.search);
+  if (location.pathname === '/ask') ask((await Promise.all(groups.map(lentIn))).flat(), q);
+  else if (q.has('screen')) screen(groups.find((g) => g.id === q.get('screen')));
   else {
     // Said after a group is made here (start-group), with where its folder
     // could not be made, if it could not.
-    const q = new URLSearchParams(location.search);
     const unplaced = q.has('unplaced') ? `Its folder could not be made: ${q.get('unplaced')}. ` : '';
     if (q.has('made')) main.append(el('p', `You made ${q.get('made')}. ${q.get('also') ? `${q.get('also')} ` : ''}${unplaced}Make a link below to invite someone to it.`));
     // Said after a group is joined here (arch-command (c)).

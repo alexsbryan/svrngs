@@ -97,9 +97,12 @@ export const namesakes = (n, name, verb) => (n.length ? `You’re already in ${n
 // `svrngs remove --joined` takes (home.rs `WHEN`): this computer's time as
 // the `sv-SE` locale writes it, then its offset as ±hhmm, so a fall-back
 // night's repeated hour reads back to one instant (#126).
-// Each with what holds their keys, `device` (v1ui-door (c)).
+// Each with what holds their keys, `device` (v1ui-door (c)). In the order
+// they joined, whoever started the group first, so a newcomer's window comes
+// last and no window moves as people arrive (the screen, home.js `screen`;
+// the Draft 2 canvas's frames 8-10): one order for every door.
 function people(rows) {
-  const each = [...new Map(rows.map((r) => [r.person_key, r])).values()];
+  const each = [...new Map(rows.map((r) => [r.person_key, r])).values()].sort((a, b) => (a.joined.at ?? 0) - (b.joined.at ?? 0));
   const at = (d, m = -d.getTimezoneOffset()) => `${d.toLocaleString('sv-SE')} ${m < 0 ? '-' : '+'}${String(Math.trunc(Math.abs(m) / 60) * 100 + (Math.abs(m) % 60)).padStart(4, '0')}`;
   const when = (j) => (j === 'started' ? 'started the group' : `joined ${at(new Date(j.at * 1000))}`);
   return each.map((p) => [p, each.filter((q) => q.person === p.person).length > 1 ? `${p.person} (${when(p.joined)})` : p.person, rows.filter((r) => r.person_key === p.person_key).map((r) => r.device)]);
@@ -110,9 +113,13 @@ function people(rows) {
 // (/v1/lends, `judge`): then lit, "on now", while their computer answers;
 // drawn off when it did not, never lit and never left out; and one in only
 // from a phone, which nobody asks, marked so with no presence claimed.
-// Presence is only "on now", never when last seen.
-export function door(rows) {
-  const cells = people(rows).map(([p, name, devices]) => [p, devices, el('li', '', el('strong', name), ' ', el('small', 'asking…'))]);
+// Presence is only "on now", never when last seen. Given `lent`, as the
+// screen gives it (home.js `screen`), each person's own lends in their
+// window, a link each by its name, opened in a tab as this computer's
+// person; an app the group carries is the group's, in nobody's window.
+export function door(rows, lent = []) {
+  const theirs = (p) => lent.filter((l) => !l.group && l.person === p.person).flatMap((l) => [' ', Object.assign(el('a', l.name), { href: l.origin, target: '_blank' })]);
+  const cells = people(rows).map(([p, name, devices]) => [p, devices, el('li', '', el('strong', name), ...theirs(p), ' ', el('small', 'asking…'))]);
   const judge = (lends) => cells.forEach(([p, devices, li]) => {
     const phone = devices.includes('browser') ? (devices.includes('computer') ? ', a phone too' : 'in from a phone') : '';
     const [drawn, words] = !devices.includes('computer') ? ['phone', ''] : !lends ? ['', 'not known now'] : lends.unanswered.includes(p.person) ? ['off', 'did not answer'] : ['on', 'on now'];

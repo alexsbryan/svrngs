@@ -19,6 +19,10 @@ context.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
 try {
   const page = await context.newPage();
   page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
+  // With SVRNGS_SHOT, a path: the screen as a projector shows it, a picture
+  // at 1920x1080 once it has said what arrived (a look, never judged).
+  const shot = process.env.SVRNGS_SHOT;
+  if (shot) await page.setViewportSize({ width: 1920, height: 1080 });
   await page.goto(args.at);
   const judged = () => ((ws) => ws.length && ![...ws].some((w) => w.textContent.includes('asking…')))(document.querySelectorAll('.door li'));
   await page.waitForFunction(judged, null, { timeout: 30_000 });
@@ -36,6 +40,7 @@ try {
   const says = (w) => [...document.querySelectorAll('aside ol li')].some((li) => li.textContent.includes(w));
   await page.waitForFunction(says, args.says, { timeout: 30_000 });
   const after = await read();
+  if (shot) await page.screenshot({ path: shot });
   console.log(JSON.stringify({ opened, lent, after, logs }));
 } catch (e) {
   console.error(`the screen did not finish: ${e}\n${logs.join('\n')}`);

@@ -31,6 +31,9 @@ Every line and every button: [`demo/start.md`](demo/start.md).
   proposes, the rest of you agree or object, and the page says when it
   holds. [canon](https://github.com/alexsbryan/canon) decides; svrngs only
   shows it. See [`demo/house-rules.md`](demo/house-rules.md).
+- **Put your group on a screen.** Your home page opens any group on a TV
+  or a projector: who's on now, what each lends, and who arrived since it
+  opened.
 - **Ask a friend of a friend.** The grapevine carries an ask from one group
   to another, through someone who's in both. See [`demo/grapevine.md`](demo/grapevine.md).
 - **Leave.** Whenever you like. What you already have stays yours.
