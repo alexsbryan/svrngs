@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! A lend's address, and the pass that opens it (DESIGN §3, "Lent apps",
 //! calls 1 and 6; u5-2). New: upstream had no lend at an origin of its own
-//! and nothing a person signs for another key (DESIGN §8, U5's inventory).
+//! and nothing a person signs for another key (PLAN §4, U5's inventory).
 //!
 //! **A lend's label** is one DNS label naming its lender's key and its
 //! name, so a lend can be an origin of its own — `<label>.localhost` on a

@@ -8,7 +8,7 @@ received, and none of them made an account: every user in Jellyfin's list
 after the run was there before it, or was made by a program Sam runs in
 front of Jellyfin for a person who came, one each (`apps/jellyfin/README.md`;
 `runs/mw/2026-10-08/README.md` §6). Shown after U5, in Jellyfin's own player
-through the lend (DESIGN §8).
+through the lend (PLAN §4, "Demo A").
 
 **Before the run.** Sam: a computer at home running Jellyfin with at least
 three films, svrngs, and Jellyfin's sign-in program beside it, built and

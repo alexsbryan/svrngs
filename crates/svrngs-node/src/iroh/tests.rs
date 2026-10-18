@@ -134,7 +134,7 @@ fn contact_for(server: &Endpoint, addrs: Vec<SocketAddr>) -> Contact {
 /// A bare key — no relay and no address, in the contact or seeded — is
 /// dialled when the endpoint has an address lookup, and the lookup's
 /// answer is where the request lands; with no lookup it is not dialled
-/// (DESIGN §8, "Four facts"). A memory lookup stands in for n0's DNS.
+/// (PLAN §4, U1's "A bare key is dialled"). A memory lookup stands in for n0's DNS.
 /// (svrngs, arch-peer (d): asked by a request on the stream, where the
 /// bridge's test read a marker through its loopback port.)
 #[tokio::test]

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! What an app on this computer asks of it beside the record (DESIGN §3;
 //! u5-1): the groups it holds, and what each group's people lend. New: upstream's
-//! apps read the mesh's doors, which did not come over (DESIGN §8, U5's
+//! apps read the mesh's doors, which did not come over (PLAN §4, U5's
 //! inventory). Served on the record's loopback listener, behind its one
 //! check ([`crate::api::router`]), and asked of the runtime and of the
 //! lenders' computers now; nothing is kept between asks, and no event is

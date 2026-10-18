@@ -23,7 +23,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 cd "$(dirname "$0")/.."
-# Where its computers meet their groups, the switch (DESIGN §9): at n0's
+# Where its computers meet their groups, the switch (PLAN §2): at n0's
 # relays, chosen until the operator flips it; at svrngs's, whose relay
 # answers before the build is published (DESIGN §7); unread, refused.
 case "$(sed -n 's/^pub const SHIPPED: MeetAt = MeetAt::\(.*\);$/\1/p' crates/svrngs/src/cli.rs)" in

@@ -208,7 +208,7 @@ fn the_link_ships_at_its_own_line_version() {
 }
 
 /// A new link closes the old one from its place in the order (u2-4b, DESIGN
-/// §8): dee, eve and fay redeem link one; alex appends link two; gus, under
+/// §6): dee, eve and fay redeem link one; alex appends link two; gus, under
 /// link one after it, is refused `Closed` by link two, while the three keep
 /// standing and their own acts count, and hal under link two stands.
 /// Watched failing with the older `Invite` voided (the three lose standing)

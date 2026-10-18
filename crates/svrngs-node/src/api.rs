@@ -7,7 +7,7 @@
 //! people lend, `/v1/{groups,lends}`, in [`crate::surface`]. The address it
 //! is served on is written to [`API_FILE`] in the data dir.
 //! (svrngs: the mesh, media, publish, origin, membership, store and ledger
-//! doors beside them stay behind; DESIGN §8, U3's inventory.)
+//! doors beside them stay behind; PLAN §4, U3's inventory.)
 //!
 //! **Loopback IS the auth.** There is no bearer here, and the bind refuses
 //! any address that is not loopback rather than serving an unauthenticated
@@ -153,7 +153,7 @@ async fn not_from_a_page(request: Request, next: Next) -> Response {
 /// one decision ([`check_loopback`]) asked of the caller's address, which
 /// [`serve`] hands every request. A caller elsewhere, or one whose address
 /// is unknown, is refused 403 naming why, before any door runs. (svrngs:
-/// upstream relied on the bind alone; DESIGN §8, "Localhost is the trust
+/// upstream relied on the bind alone; DESIGN §3, "Localhost is the trust
 /// boundary".)
 async fn from_this_computer(request: Request, next: Next) -> Response {
     let caller = request

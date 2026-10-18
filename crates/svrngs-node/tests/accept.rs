@@ -1,5 +1,5 @@
 //! The accept loop admits on the dialer's verified key and serves the caller's
-//! router on the stream (DESIGN §8, U1's inventory, the iroh row): two
+//! router on the stream (PLAN §4, U1's inventory, the iroh row): two
 //! hermetic endpoints in one process, no relay, B dialling A through the
 //! loopback bridge with reqwest.
 

@@ -720,7 +720,7 @@ fn the_door_names_its_own_act_and_not_a_forgery_beside_it() {
 }
 
 /// **A forged line above a member's newest act never moves their next seq**
-/// (DESIGN §6, "U7 also closes two holes"; ralph/REVIEW_FINDINGS.md #16).
+/// (DESIGN §6, "A grow-only set, linked like git"; ralph/REVIEW_FINDINGS.md #16).
 /// Cy pushes a line claiming alex's key at seq 5, above alex's seq 0. Alex's
 /// next act is seq 1, following alex's own, and the one gap is the forgery.
 /// At u7-removal's base `Held::catch_up` folded every line's seq, verified

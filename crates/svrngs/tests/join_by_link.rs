@@ -1,4 +1,4 @@
-//! Join by link, U2's bar (DESIGN §8): Sam makes a group and sends one
+//! Join by link, U2's bar (PLAN §4): Sam makes a group and sends one
 //! link; Alex, Bo and Cy each open it with `svrngs join` and are let in
 //! once, by Sam's computer, and each copy syncs Sam's record. A closed
 //! link, a lapsed one, a forged one and an open one's key on a request its

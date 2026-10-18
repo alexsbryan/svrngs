@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! The node (DESIGN §8, U1): one group member's computer — its journals, the
+//! The node (PLAN §4, U1): one group member's computer — its journals, the
 //! iroh endpoint it dials and is dialled on, the accept loop serving the sync
 //! route, the round, and (U3) the loopback listener serving the record to
 //! this computer's apps ([`crate::api`]). It replaces upstream's `RailsDaemon` and `RailsNode`
@@ -8,19 +8,19 @@
 //! store, the work plane, presence, the self-heal and
 //! `rails.toml` stay behind (the inventory's `RailsDaemon` row).
 //!
-//! **One key signs and dials** (DESIGN §8, "Four facts"): the endpoint is
+//! **One key signs and dials** (PLAN §4, U1's inventory): the endpoint is
 //! bound with the key the rail signs with, as upstream's was
 //! (`lib.rs:400-402`), so a member's actor is the key iroh verifies when it
 //! dials, and a key standing in a group's register is a key the round can
 //! dial.
 //!
-//! **A link is redeemed on a second protocol** (DESIGN §8, U2's inventory,
+//! **A link is redeemed on a second protocol** (PLAN §4, U2's inventory,
 //! the acceptor row): [`Alpn::Redeem`] is served to any dialer, with its
 //! two routes, the ask and the redemption ([`crate::redeem`]), so a key standing nowhere reaches that and
 //! nothing else; [`Alpn::Member`] stays closed to it.
 //!
-//! **What the people of its groups lend is asked, not stored** (DESIGN §8,
-//! U3; u3-5): [`Node::lends`] asks every computer's key standing in a
+//! **What the people of its groups lend is asked, not stored** (DESIGN §3,
+//! "Lends are asked, not stored"; u3-5): [`Node::lends`] asks every computer's key standing in a
 //! group the node holds, now, what its computer lends ([`crate::door`]'s `GET /lends`),
 //! and answers each lend with whose it is and its origin on this
 //! computer's loopback ([`crate::origin`]), which reaches it on a request
@@ -35,7 +35,7 @@
 //! writes its yes to a carried app's new version (`POST /runs`; canon-pin),
 //! each as the asker.
 //!
-//! **The group decides who is in it** (DESIGN §6, U1): the register —
+//! **The group decides who is in it** (DESIGN §6): the register —
 //! [`RingRail::standing`], over each group's seed and its acts — answers
 //! all three questions the node asks. The round dials every computer's key
 //! standing in a group the node holds and offers each group to its own; the
@@ -435,7 +435,7 @@ impl Node {
 impl Host {
     /// One exchange of `namespace` with the node at `peer`, whatever this
     /// node's register says of it: a joiner syncs once from the issuer that
-    /// admitted it, whom its own register may not know yet (DESIGN §8,
+    /// admitted it, whom its own register may not know yet (PLAN §4,
     /// U2). The peer's addresses are seeded on the transport, so the round
     /// reaches it too once the register names it.
     pub async fn sync_with(&self, namespace: &str, peer: &EndpointAddr) -> ExchangeOutcome {
@@ -920,7 +920,7 @@ impl Asking {
 /// The accept loop's decision: the protocol whose routes a dialer is
 /// served, or `None` to close it. Any dialer may redeem a link; the member
 /// protocol serves a dialer standing in any group this node holds and closes
-/// the rest (DESIGN §8, U1's inventory, "the mesh" row — upstream asked the
+/// the rest (PLAN §4, U1's inventory, "the mesh" row — upstream asked the
 /// mesh, `acceptor.rs:47-61`). Asked once per connection, so a member
 /// admitted or removed since the last dial is answered as it stands now.
 fn admit_dialer(rail: &RingRail, alpn: &[u8], dialer: &PublicKey) -> Option<Alpn> {

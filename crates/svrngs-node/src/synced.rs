@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! A directory kept in step with its folder in one group, synced both ways
-//! (sy-1, the mesh-Dropbox spike; syp-4; DESIGN §9). Each time the OS says
+//! (sy-1, the mesh-Dropbox spike; syp-4; PLAN §2). Each time the OS says
 //! files under it changed (perf-2 f), the group's record takes an act
 //! (perf-2 d), at its start and each ten minutes, when it is walked
 //! whole, and again, a second and doubling to fifteen, while a file the

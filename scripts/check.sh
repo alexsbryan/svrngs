@@ -31,15 +31,15 @@ if [ -f Cargo.toml ]; then
   # browser's below), printed after the browser's: kept from this check alone.
   rm -rf target/could-not-judge
   step "tests"    cargo test --quiet
-  # The canaries (DESIGN §8) again, by name: the apps that keep the infra general.
+  # The canaries (DESIGN §5) again, by name: the apps that keep the infra general.
   step "canaries" cargo test --quiet -p svrngs-node --test canaries
-  # The ceiling's canary (DESIGN §8 :1083, ceiling-4), the one scale number
-  # held here: at 25 members and 10,000 acts an idle round under 0.1 s of
-  # processor, in release, by name from the ignored instrument. Its reading
-  # is printed, passed or failed.
+  # The ceiling's canary (DESIGN §5, "The canaries"; PLAN §4, "The ceiling";
+  # ceiling-4), the one scale number held here: at 25 members and 10,000 acts
+  # an idle round under 0.1 s of processor, in release, by name from the
+  # ignored instrument. Its reading is printed, passed or failed.
   step "ceiling canary" cargo test --release --quiet -p svrngs-node --test scale -- --ignored --exact an_idle_round_is_under_the_ceiling --nocapture
   grep -h '^CEILING' /tmp/svrngs-check.$$ | sed 's/^/           /'
-  # The page (DESIGN §8, U4): its crate is a workspace of its own, for wasm.
+  # The page (PLAN §4, U4): its crate is a workspace of its own, for wasm.
   step "web rustfmt and clippy" scripts/build-web.sh --lint
   # The page in a browser, again by name: it builds the page, runs a relay
   # and a node on 127.0.0.1 and drives Playwright's Chromium, and its
@@ -53,7 +53,7 @@ if [ -f Cargo.toml ]; then
   # A phone joining by the link `svrngs new --origin` prints (u4-5), in
   # both engines.
   step "joining in a browser" cargo test --quiet -p svrngs --test join_page
-  # The conformance canary (DESIGN §8; u5-2): apps/web-conformance, lent by
+  # The conformance canary (DESIGN §5; u5-2): apps/web-conformance, lent by
   # two computers, opened from a computer and from a phone, each app at an
   # address of its own (DESIGN §7), in both engines; and, with accounts of its
   # own, two people signed in through a lend's sign-in (mwp-4). Each route's

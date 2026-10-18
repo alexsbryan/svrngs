@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // The identity tests: ported from commonwealth-ai commonwealth/crates/commonwealth-transport/src/iroh_identity_forward.rs@e1a43bcd2
-//! The member door, through it (DESIGN §3; §8 U3's inventory; the u3-4
+//! The member door, through it (DESIGN §3; PLAN §4, U3's inventory; the u3-4
 //! row). A lends a service on its loopback; B, standing in A's group, dials
 //! A by key and asks through B's own loopback bridge, as a member's browser
 //! will. Nodes in one process, no relay, each listening on 127.0.0.1 alone:
@@ -1025,8 +1025,8 @@ async fn declarations_that_cannot_be_read_are_refused_on_both_routes_never_lent_
     pair.close().await;
 }
 
-/// A WebSocket's upgrade is carried both ways (u5-2; DESIGN §3, "What an
-/// app cannot yet ask", a live socket): B asks A's lend to switch to
+/// A WebSocket's upgrade is carried both ways (u5-2; PLAN §4, "What an
+/// app could not yet ask, at U5", a live socket): B asks A's lend to switch to
 /// `websocket`, the service answers 101, and the bytes B writes after come
 /// back echoed through the door, the person set on the head as on any
 /// request. Planted: the door stripping `Upgrade` as hop-by-hop

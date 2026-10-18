@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! A relay's URL as every browser reaches it (u4-9; DESIGN §11, risk 5).
+//! A relay's URL as every browser reaches it (u4-9; DESIGN §8, risk 5).
 //!
 //! iroh spells each of n0's relays with the DNS root's trailing dot,
 //! `https://use1-1.relay.n0.iroh.link./` (`iroh-1.0.2/src/defaults.rs:27-33`,

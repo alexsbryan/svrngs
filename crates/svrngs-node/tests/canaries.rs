@@ -1,4 +1,4 @@
-//! The canaries (DESIGN §8): small apps in `apps/`, run against the infra on
+//! The canaries (DESIGN §5): small apps in `apps/`, run against the infra on
 //! every check, each using only what DESIGN §3 says an app gets, so a change
 //! that serves one app and breaks another fails the build. This file stands
 //! the computers up — nodes in one process, no relay, peers reached by
@@ -63,7 +63,7 @@ fn founded_by_sam() -> Roster {
 }
 
 /// Sam's computer lets `person`'s key in to `group`, as a test admits a
-/// member by hand (DESIGN §8, U1).
+/// member by hand (PLAN §4, U1).
 fn admit(sam: &Node, group: &str, person: &str, joining: u8) {
     let fixture = svrngs_core::tests_support::Fixture {
         act: RailAct::Admit {
@@ -129,7 +129,7 @@ async fn canary(app: &str, args: &[String]) {
     );
 }
 
-/// **Expenses** (DESIGN §8, the u3-7 row): no server, all state in the
+/// **Expenses** (DESIGN §5, "The canaries"; the u3-7 row): no server, all state in the
 /// record. Apps on Sam's computer and Alex's write — for their own person,
 /// and for Bo and Cy by name — a correction voids, and both copies fold to
 /// the same balances, the ones the acts say (`apps/expenses/canary.mjs`).

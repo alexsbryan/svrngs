@@ -1,4 +1,4 @@
-// The Events canary (DESIGN §8 "The canaries"; events-app (c)): two computers
+// The Events canary (DESIGN §5 "The canaries"; events-app (c)): two computers
 // hold one group's record; everyone answers through the record's loopback
 // API, a correction voids, and both copies fold, with events.js, to the same
 // event, who is coming and who came — the ones the acts say; and a second

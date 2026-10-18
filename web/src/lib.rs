@@ -10,7 +10,7 @@
 //! group, and speaks HTTP/1.1 over the connection, one bi-stream per
 //! request, by hyper's client (`http.rs`, u4-4). The
 //! relay forwards ciphertext and nothing proxies HTTP — there is no TLS to
-//! terminate and no door to expose (DESIGN §8, U4's inventory).
+//! terminate and no door to expose (PLAN §4, U4's inventory).
 //!
 //! Proven upstream at these pins: `browser-dial` bd-1 measured every layer
 //! below answering against a live node (commonwealth-ai `ralph/DECISIONS.md`,

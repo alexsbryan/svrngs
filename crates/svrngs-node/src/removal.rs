@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! Removal, as this computer's person asks it (U7; DESIGN §6 "Removal has
-//! one decider"; §10, 2026-10-09: removing someone stays in the command).
+//! one decider"; PLAN §3, 2026-10-09: removing someone stays in the command).
 //! `svrngs remove` and `svrngs handover` ask the node running here, the one
 //! process that writes this computer's acts, as `share --folder` does
 //! ([`crate::folder`]): `POST /v1/removals` commits svrngs-core's

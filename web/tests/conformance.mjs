@@ -36,7 +36,7 @@ const port = server?.address().port;
 const pageOrigin = `http://localhost:${port}/`;
 
 // In a lent page: the groups a `svrngs` store at this origin holds, which
-// a lent page would unseal the person's key from (DESIGN §11, risk 5).
+// a lent page would unseal the person's key from (DESIGN §8, risk 5).
 async function unsealable() {
   const shim = document.querySelector('script[src*="shim.js"]');
   const version = shim ? new URL(shim.src).searchParams.get('v') : null;

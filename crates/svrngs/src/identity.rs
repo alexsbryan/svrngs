@@ -14,7 +14,7 @@
 //! load_or_generate_self_node_id` exactly: tmp-then-rename, 0600 on
 //! Unix.
 //!
-//! svrngs (DESIGN §8, U2's inventory, the identity.rs row): this is the
+//! svrngs (PLAN §4, U2's inventory, the identity.rs row): this is the
 //! command's device key, and the key every group on this computer knows it
 //! by (`svrngs_node::node`, "One key signs and dials"). Upstream fell back
 //! to a fresh key nobody keeps when the file could not be read or the

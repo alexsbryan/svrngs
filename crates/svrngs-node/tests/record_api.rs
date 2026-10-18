@@ -1,4 +1,4 @@
-//! The record over loopback (DESIGN §3, §8 U3's inventory, the u3-2 and
+//! The record over loopback (DESIGN §3; PLAN §4, U3's inventory, the u3-2 and
 //! u3-3 rows): an app on a member's computer appends to its group, reads the
 //! log and the people, and pushes and drains the live lane, on a listener
 //! bound to 127.0.0.1, and nothing else reaches it.
@@ -70,7 +70,7 @@ fn hold(node: &Node, ns: &str, founder: u8) {
 }
 
 /// The founder admits `joining` as `person` through its door, as a test
-/// admits a member by hand (DESIGN §8, U1).
+/// admits a member by hand (PLAN §4, U1).
 fn admit(node: &Node, person: &str, joining: u8) {
     admit_to(node, NS, person, joining)
 }

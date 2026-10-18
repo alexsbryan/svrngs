@@ -84,7 +84,7 @@ impl Host {
     /// What `link` is for ([`Self::asked`]); redeem it there as `person`,
     /// signing with this computer's key; keep the group's seed once let in, and the
     /// origin of an https link; sync once from the issuer, whom this
-    /// computer's copy of the register may not know yet (DESIGN §8, U2).
+    /// computer's copy of the register may not know yet (PLAN §4, U2).
     /// Nothing is written until the issuer has let this computer in, so a
     /// refused link leaves nothing behind.
     pub async fn join(&self, link: &Link, person: &Name) -> Result<Entered, NotJoined> {

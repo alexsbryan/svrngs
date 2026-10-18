@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! The register (DESIGN §6, U1): who stands in a group, read from the group
+//! The register (DESIGN §6, "The group decides who is in it"): who stands in a group, read from the group
 //! itself — its seed and its `Admit` and `Remove` acts, as
 //! [`membership`](crate::membership::membership) folds them over the acts
 //! admission authenticates. One answer, asked by all four callers: the round
@@ -7,7 +7,7 @@
 //! in any group the node holds, the sync route serves a dialer standing in
 //! the group its request names, and the door signs only for a standing key.
 //! Upstream asked the mesh for the first three and the seed for the last
-//! (DESIGN §8, U1's inventory, "the mesh" row).
+//! (PLAN §4, U1's inventory, "the mesh" row).
 //!
 //! The seed is the group's `roster.json`: the founder's key alone, bound to
 //! the founder's name, written by `svrngs new` from the group's seed (DESIGN

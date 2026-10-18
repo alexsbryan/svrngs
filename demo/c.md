@@ -4,7 +4,7 @@
 > fulfill and the Demo C run of show"; and on the chat, "Hopefully not more
 > the 50 lines in our own source and a pretty commodity integration", then
 > "Rewrite that way": the link is the chat's door, no bot). Every bar below is the seat's
-> proposal and the operator's to set. DESIGN §8 names it and its units, §10
+> proposal and the operator's to set. PLAN §4 names it and its units, §3
 > the operator's words.
 
 Gate: four of five newcomers, each at home, get from the link in the group's
@@ -118,7 +118,7 @@ before the first run.
    same on a phone, the link opening the group's page in the browser,
    without the folder.
 4. **Sam removes Bo**: `svrngs remove Bo --group <name>` on Sam's
-   computer, which says "Bo is no longer in <name>. …" (DESIGN §10,
+   computer, which says "Bo is no longer in <name>. …" (PLAN §3,
    2026-10-09: removing someone stays in the command until a row moves it).
 5. **Ana's laptop is closed.** Then Eve, the last newcomer, opens the link
    on Eve's computer and does step 3's three things.

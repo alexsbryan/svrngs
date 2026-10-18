@@ -275,7 +275,7 @@ makes the group, so Lab's folder is put in Sam's home folder, not yours).
 
 Written 2026-10-13 for anyone getting started (the operator: "nail down
 the svrn / llama-server on svrngs story and make it part of an early demo
-document for anyone getting started"). DESIGN §8 names this demo.
+document for anyone getting started"). PLAN §4 names this demo.
 
 Gate (the seat's proposal, the operator's to set): **Sam**, with no link,
 from the group's page to the model lent within five minutes, the founder's

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! A folder synced both ways (sy-1, the mesh-Dropbox spike; DESIGN §9).
+//! A folder synced both ways (sy-1, the mesh-Dropbox spike; PLAN §2).
 //! Each change any member makes to a file names its path, its bytes by hash
 //! and size (none for a delete) and its base, the entry it replaces as its
 //! writer last held the path. An entry no other names as its base is a

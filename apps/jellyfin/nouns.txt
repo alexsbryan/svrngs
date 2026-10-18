@@ -1,4 +1,4 @@
-# Jellyfin's nouns: what knows its API lives in apps/jellyfin/ (DESIGN §3, U5's call 3). The infra may not use them (scripts/vocab_check.py).
+# Jellyfin's nouns: what knows its API lives in apps/jellyfin/ (DESIGN §3, "Lent apps", call 3). The infra may not use them (scripts/vocab_check.py).
 jellyfin
 plex
 emby

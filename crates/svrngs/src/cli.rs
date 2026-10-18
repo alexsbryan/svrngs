@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! The command surface (DESIGN §5; §8, U2's inventory, the cli.rs row):
+//! The command surface (DESIGN §5; PLAN §4, U2's inventory, the cli.rs row):
 //! verbs parsed by hand, no framework, in the shape of upstream's
 //! `commonwealth/crates/commonwealth-rails/src/cli.rs` and `main.rs` at
 //! `e1a43bcd2` — an error string for a wrong argument, never a guess; exit
@@ -29,7 +29,7 @@
 //! ```
 //!
 //! `remove` and `handover` ask the node running here, as `share --folder`
-//! does (U7; DESIGN §6 "Removal has one decider"; §10, 2026-10-09):
+//! does (U7; DESIGN §6 "Removal has one decider"; PLAN §3, 2026-10-09):
 //! `svrngs_node::removal` commits them and answers what happened, worded
 //! here. One person in a group decides who is removed from it — its maker
 //! at first, until they hand that on — and anyone else's `remove` asks
@@ -228,13 +228,13 @@ pub const API: SocketAddr = SocketAddr::new(std::net::IpAddr::V4(Ipv4Addr::LOCAL
 
 /// svrngs's own relay, where a computer meets each group it holds that
 /// keeps none of its own once the build ships [`MeetAt::Svrngs`], with no
-/// address lookup (DESIGN §10, the operator, 2026-10-12). It answers before
+/// address lookup (PLAN §3, the operator, 2026-10-12). It answers before
 /// any build meeting its groups there is published (DESIGN §7,
 /// `scripts/deploy-relay.sh`, `scripts/deploy-page.sh`).
 pub const DEFAULT_RELAY: &str = "https://relay.svrnme.sh/";
 
 /// Where a computer meets each group it holds that keeps no relay of its
-/// own: the switch the operator flips for production (DESIGN §9, §10, the
+/// own: the switch the operator flips for production (PLAN §2, §3, the
 /// operator, 2026-10-13).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MeetAt {
@@ -247,7 +247,7 @@ pub enum MeetAt {
 /// Where this build meets its groups: n0's, chosen, until the operator
 /// starts paying for svrngs's. Flipping it, then `scripts/deploy-relay.sh`,
 /// then `scripts/deploy-page.sh`, which reads this line, is theirs, in that
-/// order (DESIGN §7, §9).
+/// order (DESIGN §7; PLAN §2).
 pub const SHIPPED: MeetAt = MeetAt::N0;
 
 /// How long `new` and `link` wait for this computer's address before
@@ -1635,8 +1635,8 @@ pub async fn new_group(
     kept: Option<RelayUrl>,
     relay: &RelayConfig,
 ) -> Result<(Seed, Printed), Refusal> {
-    // The founder is the key this computer signs and dials with (DESIGN
-    // §8, "One key signs and dials").
+    // The founder is the key this computer signs and dials with (PLAN
+    // §4, U1's "One key signs and dials").
     let founder = VerifyingKey::from_bytes(node.endpoint().id().as_bytes())
         .expect("an iroh endpoint id is an Ed25519 key");
     let seed = group::draw(name, person, founder);

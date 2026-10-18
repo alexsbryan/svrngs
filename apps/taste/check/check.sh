@@ -12,7 +12,7 @@
 #   taste --kind taste --refuse /diary --ask "$ASK"`. Its owners: the key
 #   of her computer and of each of her phones, each read from Sam's
 #   computer's log as it admits it (the only place a person's key across
-#   devices is told; DESIGN §9).
+#   devices is told; PLAN §4, "Then").
 # - Tonight's Picks (apps/movie-night/picks), served by a plain file
 #   server, lent by Sam `--name tonights-picks --kind movie-night --reads
 #   jellyfin --reads taste`.

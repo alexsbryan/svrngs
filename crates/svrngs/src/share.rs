@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // ported from commonwealth-ai sovereign/crates/sovereign-cli-mesh/src/publish_cmd.rs@e1a43bcd2
-//! `svrngs share` (DESIGN §8, U3's inventory, its publish_cmd row): the
+//! `svrngs share` (PLAN §4, U3's inventory, its publish_cmd row): the
 //! verb's shape as upstream had it, `resolve_target` from `svrn publish`
 //! (publish_cmd.rs:409-434, its tests in `share/tests.rs`). The probe, the
 //! well-known table and the lend's decision are the node's

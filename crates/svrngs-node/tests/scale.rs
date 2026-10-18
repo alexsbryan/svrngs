@@ -6,7 +6,7 @@
 //! `scripts/check.sh` does run here is the account's hand count, below, and
 //! by name, in release, the ceiling's canary,
 //! `an_idle_round_is_under_the_ceiling`: at 25 members and 10,000 acts an
-//! idle round under 0.1 s of processor (DESIGN §8 :1083).
+//! idle round under 0.1 s of processor (DESIGN §5, "The canaries"; PLAN §4, "The ceiling").
 //!
 //! It stands up real nodes — the record, the round, iroh — as `canaries.rs`
 //! does: in one process, no relay, peers reached by seeded loopback
@@ -694,7 +694,7 @@ async fn idle_rounds(nodes: &[Node]) -> (Vec<f64>, Vec<f64>, Cost) {
     (wall, cpu, last.expect("three idle rounds ran"))
 }
 
-/// The ceiling (DESIGN §8 :1083): at 25 members and 10,000 acts an idle
+/// The ceiling (DESIGN §5, "The canaries"; PLAN §4, "The ceiling"): at 25 members and 10,000 acts an idle
 /// round costs under this much processor, the median of three.
 const CEILING_CPU_S: f64 = 0.1;
 

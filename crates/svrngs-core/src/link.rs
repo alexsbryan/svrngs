@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // ported from commonwealth-ai mesh-join-vocab/src/deep_link.rs@e1a43bcd2
-//! A group's link (DESIGN §8, U2's inventory, the deep_link.rs row; §10,
+//! A group's link (PLAN §4, U2's inventory, the deep_link.rs row; §3,
 //! 2026-10-04): short and opaque (u2-8). It carries only what the joiner
 //! cannot ask the issuer for, as one base64url [`Token`]: a [`Format`]
 //! byte, the issuer's key — the computer that redeems the link, dialled by
 //! key — and 16 secret bytes the link's signing key is derived from
-//! ([`Token::key`]); and the issuer's relay (DESIGN §11, risk 5), from a
+//! ([`Token::key`]); and the issuer's relay (DESIGN §8, risk 5), from a
 //! computer with address lookup or without it since relay-park (c), so a
 //! phone's page, which asks no lookup, dials it (§3, "Where a computer
 //! meets its groups"). The group's seed and the
@@ -24,7 +24,7 @@
 //! fields, percent helpers and lapse are gone: the lapse is the issuer's
 //! `Invite`'s, and the issuer's node decides a redemption (DESIGN §6).
 //!
-//! In svrngs-core since u4-2 (DESIGN §10, call 5), so the command and a
+//! In svrngs-core since u4-2 (DESIGN §3, "Joining", call 5), so the command and a
 //! browser's page parse a link with one body. The core has no iroh, so the
 //! two types it named are the ones iroh's wrap, imported under iroh's
 //! names: the issuer's key is the ed25519 key iroh's `PublicKey::from_bytes`

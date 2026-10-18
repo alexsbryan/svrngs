@@ -8,7 +8,7 @@ as what it describes.
 
 svrngs owns the group's code, forked from commonwealth-ai's ring slice (DESIGN
 §4): the record, the journal on disk, sync over iroh with its round and
-route, the routes and the member door, each forked the same way (DESIGN §8,
+route, the routes and the member door, each forked the same way (PLAN §4,
 U1-U3), and since then the page a phone opens (`web/`). The `svrngs` command
 runs a node: it makes a group, mints its link, joins one by a link, removes
 someone and leaves one, and runs for every group the computer holds, serving
@@ -127,7 +127,7 @@ ends it first, so the act it writes is read whole (#191); and
 leave its round tells (#190).
 
 **`crates/svrngs-node`**: beside the journals, it holds the dialling half of sync over iroh
-(DESIGN §8, U1's inventory), forked at `e1a43bcd2` the same way:
+(PLAN §4, U1's inventory), forked at `e1a43bcd2` the same way:
 `peer_wire.rs` is `sovereign-peer-wire` whole (the sync bodies, the body limit
 and the exchange budget); `alpn.rs` is `mesh-reach`'s `alpn.rs` with its one
 `ALPN`, then the enum it promised (`Alpn`, U2), moved whole into svrngs-core
@@ -150,7 +150,7 @@ iroh's `PublicKey`; the sync
 bodies import the record from `svrngs-core`. Then it changed: a bare key, with
 no address in its contact or seeded, is dialled when the endpoint has an
 address lookup (n0's DNS under `RelayConfig::n0_services`), where upstream
-refused it (DESIGN §8, "Four facts"); and `RelayConfig::loopback_only`
+refused it (PLAN §4, U1's "A bare key is dialled"); and `RelayConfig::loopback_only`
 binds the endpoint to 127.0.0.1 alone, for nodes that share one computer in
 a test (ralph/REVIEW_FINDINGS.md #33). `iroh.rs` also holds the
 serving half, upstream's accept loop (`IrohAcceptor`) forked without its
@@ -171,7 +171,7 @@ and the seam the round reads (`RingSyncHost`, `RingSyncJournal`, implemented
 for `RingRail`); `ring_routes.rs` is its sync route, with `rail.rs`'s `err`.
 Their edits cut the mesh ties: `RoundMembers` loses its walk of the mesh
 (`RoundMembers::of`), and is built from named keys instead, which the node
-reads from the register (DESIGN §8, U1); the mesh proof stamp the exchange
+reads from the register (PLAN §4, U1); the mesh proof stamp the exchange
 carried goes; `RingSyncHost::transport` is the concrete `IrohTransport`, and a
 contact's addresses were its one `base_url`, cut with the bridge for a
 request on the connection kept to it (`ring_sync::post`). The append
@@ -202,7 +202,7 @@ it serves the record to this computer's apps on (`api::bind`, refusing any
 other, before the endpoint; `api::serve` once the endpoint's transport,
 which the live lane dials through, exists; `Node::api_addr` answers the port bound); it binds the endpoint
 with that key, so the key that signs a group's acts is the key iroh verifies
-when the node dials (DESIGN §8, "Four facts"), and holds the `RingRail`
+when the node dials (PLAN §4, U1's "One key signs and dials"), and holds the `RingRail`
 signed by it, an `IrohTransport` over the endpoint, which the round and the
 live lane share, the accept loop serving
 the sync route's router on the members' ALPN and the redemption route on
@@ -216,8 +216,8 @@ yet; a test runs a round now with `Node::round`, which with `transport` and
 `api_routes` is test support since lean-3, `node/tests_support.rs` behind
 svrngs-node's `test-support` feature).
 
-Redemption is `redeem.rs` (DESIGN §6, U2), new code in the shape of
-commonwealth-rails' mesh join. A link carries only the issuer's key and the
+Redemption is `redeem.rs` (DESIGN §6, "A link admits each person once"), new code in the shape
+of commonwealth-rails' mesh join. A link carries only the issuer's key and the
 link's secret, so the joiner first asks: `AskRequest`, the link's key and
 its own, signed by the link's key, answered (`Asked`) with the group whose
 `Invite` of this node's names that key, its seed as the command keeps it
@@ -250,7 +250,7 @@ that does not parse, answered with why, and a name a standing person goes by
 (`RedeemRefusal::NameTaken`), answered `409` with theirs; a key that already
 stands is answered `AlreadyIn`, nothing written.
 
-Who is in a group is the register's (`register.rs`, DESIGN §6, U1):
+Who is in a group is the register's (`register.rs`, DESIGN §6, "The group decides who is in it"):
 `RingRail::standing` answers a group's standing keys from `membership` over
 its seed — the group's `roster.json`, the founder's key alone — and the acts
 admission authenticates; a group the node does not hold answers `NotHeld`,
@@ -285,7 +285,7 @@ ring's roster be derived from the mesh, `RingRail::roster` and
 taken their callers. Compaction and the prune after a peer's seal went in
 arch-seal: nothing deletes a line from a journal.
 
-The record over loopback (DESIGN §8, U3's inventory, the rail.rs row) is
+The record over loopback (PLAN §4, U3's inventory, the rail.rs row) is
 `rail.rs` and `api.rs`, commonwealth-rails' `rail.rs` and `api.rs` at
 `e1a43bcd2`: the append door (`append_act`) and the log (`log_answer`), with
 `RailQuery`, `namespace_of` and `journal_of`, served as an `axum::Router`
@@ -317,7 +317,7 @@ in upstream's `api.rs`. Then it changed: the append door's
 attestation branch went with `attest`, and `GuestAttestation` from the
 core in core-0. An append's `on_behalf_of` is the
 person an app names when it serves someone else — whom the member door
-verified (DESIGN §8, "Localhost is the trust boundary") — signed by this
+verified (DESIGN §3, "Localhost is the trust boundary") — signed by this
 computer, and refused (`not_a_name`, `not_in_group`) unless it parses as a
 person standing in the group; upstream dropped a bare one.
 The register stands where the roster stood: `journal_of` asks
@@ -330,7 +330,7 @@ and the person's first key), where upstream's answered the roster. `GET /v1/rail
 the same people, through the same gate (`standing_of`), so an app needs no
 second source for who is in its group or a key to seal to (DESIGN §3).
 
-The member door (DESIGN §8, U3's inventory) starts from `declared.rs`,
+The member door (PLAN §4, U3's inventory) starts from `declared.rs`,
 commonwealth-media's `declared.rs` at `e1a43bcd2` (:51-77, 164-247): a
 lender's credential for its own service, a header value in a 0600 file
 under a 0700 dir, the file named by its header, never logged. Its house
@@ -342,7 +342,7 @@ ignored it and reported a secret readable by others as stored; the file is
 created 0600; and that a credential is set is traced at debug, since the door
 reads the store on every request.
 
-The door is `door.rs`, new code holding upstream's rules (DESIGN §8, U3's
+The door is `door.rs`, new code holding upstream's rules (PLAN §4, U3's
 inventory, its identity and forward_stream rows), merged into the members'
 protocol's router beside sync and live. `/lend/<lend>/<path>` reaches the
 lend's port on 127.0.0.1 as `/<path>`, one hyper HTTP/1 connection per
@@ -497,10 +497,10 @@ case-blind and with repeated slashes as one. `tests/door/` runs a lender
 and a member through it, with upstream's `picky_origin` and Range origin
 forked as fixtures. `tests/canaries.rs` stands up Sam's computer and Alex's
 in one group, in one process with no relay, and runs each canary of DESIGN
-§8 under Node against their loopback record APIs; `scripts/check.sh` runs it
+§5 under Node against their loopback record APIs; `scripts/check.sh` runs it
 as its own step, and a canary that cannot start fails.
 The room door (`room.rs`, u6-1, new code in the shape of upstream's LAN
-door and `advertised_base`, DESIGN §8, U6's inventory) serves the lends a
+door and `advertised_base`, PLAN §4, U6's inventory) serves the lends a
 person names to this computer's network while the command runs:
 `room::open` asks `Node::lends`, refuses a name nobody lends, and binds
 each named lend alone at `<private address>:<room::port_of(label)>`, a
@@ -684,11 +684,11 @@ key handed to the test, which posts a yes with them at the lender's door.
 the bot at tag `e0-bot`. Its reducer (`init`, `reduce`) folds the acts
 `actsOf` reads from the record's log, `by` the person an app wrote for, else
 the person whose computer wrote it. `canary.mjs` is the Expenses canary of
-DESIGN §8: apps on two computers write, a correction voids, and both copies
+DESIGN §5: apps on two computers write, a correction voids, and both copies
 fold to the same balances, the ones the acts say, or it names both and what
 each says. Its chat handlers went with the bot and are at that tag.
 
-**`apps/web-conformance/`**: the conformance canary (DESIGN §8; u5-2), a
+**`apps/web-conformance/`**: the conformance canary (DESIGN §5; u5-2), a
 Node service with no dependency (`serve.mjs`), one route per thing a
 self-hosted app leans on, and the checks its page runs (`checks.js`).
 `crates/svrngs-node/tests/conformance.rs` lends two of it and opens both
@@ -699,10 +699,10 @@ key, `serve.mjs` keeps accounts, a token each, and `answer.mjs` is the
 lend's sign-in that answers each person's (mwp-4): a second app, after
 Jellyfin's, on the door's sign-in (DESIGN §3, "The room", call 6).
 
-**`apps/jellyfin/`**: whatever knows Jellyfin's API (DESIGN §3, U5's call
-3): its `nouns.txt`, the sign-in program a lender runs beside it (`mw/`,
+**`apps/jellyfin/`**: whatever knows Jellyfin's API (DESIGN §3, "Lent apps",
+call 3): its `nouns.txt`, the sign-in program a lender runs beside it (`mw/`,
 its README), and the drivers of its measured runs (`check/`, `folders/`).
-**`apps/tap/`**: only Tap's `nouns.txt`. Tap is a canary DESIGN §8 plans,
+**`apps/tap/`**: only Tap's `nouns.txt`. Tap is a canary PLAN §4 plans,
 after U3, and is not built: nothing runs it (#196).
 
 **`demo/`**: how a demo is recorded. **`ralph/`**: the work loop. A queue is a

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! Who the door lets in to a lend, and each one's share of its upload
-//! (DESIGN §8, "Many people, one library" and U3's inventory, its
+//! (DESIGN §3, "Many people, one library"; PLAN §4, U3's inventory, its
 //! `fair_share_cap` row): a decision over what the door observed, pure and
 //! synchronous, the time an argument. The door's task owns one [`Counts`]
 //! and reads the clock ([`super::Using`]); nothing here does I/O.
@@ -13,7 +13,7 @@
 //! one person, so seeking costs nobody else a share. A lend whose lender
 //! names no limit lets in everyone. Nothing queues — a
 //! person past the limit is refused with how many are using it, and an app
-//! turns that into a choice (DESIGN §8, "Too many at once").
+//! turns that into a choice (DESIGN §3, "Too many at once").
 //!
 //! **Who is counted** on a lend: each person with a request through the door
 //! to it in flight, or one that ended within [`WINDOW`] — a player between
@@ -21,7 +21,7 @@
 //!
 //! **Who is not**: a viewer whose path ends at a private, link-local or
 //! unique-local address is taken to be in the lender's home, where the
-//! lender's upload is not spent (DESIGN §8, "The local network is guessed").
+//! lender's upload is not spent (DESIGN §3, "The local network is guessed").
 //! iroh says nothing of homes; [`guess`] is a guess, and the door traces it
 //! as one. A viewer guessed home is let in, uncounted, and told no share:
 //! their path is not the upload.

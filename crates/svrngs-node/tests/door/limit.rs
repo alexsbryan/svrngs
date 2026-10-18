@@ -1,5 +1,5 @@
 //! The people-at-once limit and each one's share, through the door (u3-6;
-//! DESIGN §8, "Many people, one library"). A lends a streaming service to
+//! DESIGN §3, "Many people, one library"). A lends a streaming service to
 //! three people at once, 30 Mbit/s declared; bo, cy, dee and eve, each on
 //! their own computer standing in A's group, dial A by key over loopback
 //! alone, started by `super::start` (#33). The window is

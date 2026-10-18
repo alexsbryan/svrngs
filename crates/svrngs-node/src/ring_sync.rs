@@ -9,7 +9,7 @@
 //! daemon's copy retired with pb-mesh-exit-transport: this is the one round.
 //! (svrngs: forked in U1 without `RailsDaemon`; the round runs in the node,
 //! [`crate::node`], and reads its [`Host`] directly — with one host, the
-//! `RingSyncHost` seam went, DESIGN §8.)
+//! `RingSyncHost` seam went, PLAN §4, U1's inventory.)
 //!
 //! # Why this is a digest and not a snapshot
 //!
@@ -340,7 +340,7 @@ pub async fn run_one_round(
         // read through the rail's ONE accessor (`RingRail::standing`), the
         // answer the serving route asks too: the keys standing in the ring's
         // seed and its `Admit` and `Remove` acts. (svrngs: upstream read the
-        // roster — its seed, or one derived from the mesh — DESIGN §8, U1.)
+        // roster — its seed, or one derived from the mesh — PLAN §4, U1.)
         //
         // A ring with no seed, or an UNREADABLE register, offers nothing for
         // this namespace. Under-share, never over-share.

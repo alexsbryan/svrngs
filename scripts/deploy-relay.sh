@@ -3,13 +3,13 @@
 # meets its groups unless a group keeps its own, once the build ships it
 # (`DEFAULT_RELAY` and `SHIPPED`, crates/svrngs/src/cli.rs; DESIGN §3,
 # "Where a computer meets its groups"). Parked at the gate until the
-# operator starts paying for it (DESIGN §9; the operator, 2026-10-13); the
+# operator starts paying for it (PLAN §2; the operator, 2026-10-13); the
 # switch, theirs, in order: `SHIPPED` flipped to `MeetAt::Svrngs`, this
 # script, then scripts/deploy-page.sh, which publishes a build meeting its
 # groups at svrngs's only once this relay answers. Written by relay-default
 # (c), never run there. In order:
 #  1. this commit's svrngs for Linux, built here (scripts/build-release.sh);
-#  2. a DigitalOcean droplet in US West (DESIGN §10), a cloud firewall
+#  2. a DigitalOcean droplet in US West (PLAN §3), a cloud firewall
 #     letting in SSH and what `svrngs relay` serves: TCP 80 and 443, UDP
 #     7842 (crates/svrngs/src/relay.rs);
 #  3. svrngs there by install.sh as the user svrngs, from the build, and

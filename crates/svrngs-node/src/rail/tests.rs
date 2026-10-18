@@ -2,7 +2,7 @@
 // ported from commonwealth-ai commonwealth/crates/commonwealth-rails/src/rail/tests.rs@e1a43bcd2
 //! The rail doors' tests. (svrngs: upstream's fixtures built a mesh whose
 //! membership was every ring's roster; here a ring's roster is its seed
-//! file, which the register reads, DESIGN §8, U1's inventory. The roster
+//! file, which the register reads, PLAN §4, U1's inventory. The roster
 //! derivation's tests, the two-keys census and the sync doors' did not come
 //! over with what they test, and the two attestation tests went with the
 //! branch they tested.)
@@ -143,7 +143,7 @@ async fn append_outside_the_mesh_refuses_naming_the_join_verb() {
     assert_eq!(out["kind"], "not_in_roster", "{out}");
 }
 
-/// The register is asked before a journal is opened (svrngs, DESIGN §8,
+/// The register is asked before a journal is opened (svrngs, PLAN §4,
 /// U3's inventory): a group this computer does not hold is refused
 /// `not_held` and leaves nothing on disk, and one held with no seed is
 /// refused `no_seed`. The failing input: `journal_of` opening any

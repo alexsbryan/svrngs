@@ -1,4 +1,4 @@
-//! A group is not a mesh (DESIGN §8, U1): who may connect, who is synced and
+//! A group is not a mesh (PLAN §4, U1): who may connect, who is synced and
 //! who may write come from the group's register — its seed, the founder's
 //! key alone, and the `Admit` acts written through its door — never a mesh.
 //! Nodes in one process, no relay; peers are reached by seeded addresses.

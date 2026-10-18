@@ -1,4 +1,4 @@
-//! The page in a browser (DESIGN §3, "Joining"; §8, U4): the built page,
+//! The page in a browser (DESIGN §3, "Joining"; PLAN §4, U4): the built page,
 //! in Playwright's headless Chromium and in its WebKit as an iPhone (u4-7),
 //! each test once in each, dials a node by key as a person who stands in
 //! its group. Everything runs on this computer: iroh's relay
