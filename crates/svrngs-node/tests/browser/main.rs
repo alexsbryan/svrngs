@@ -2803,8 +2803,11 @@ in_both_engines!(
     /// and the screen, reading again by itself, says "ada lent shelf" under
     /// "Since this screen opened", marked new there and in ada's window,
     /// the only marks; `shelf` opens in a tab; and its count says three
-    /// people, two on now, two things lent. Planted, watched failing: the
-    /// page at b7be71c3, which answers `/?screen=` with the home page.
+    /// people, two on now, two things lent. Ada's window comes first, as
+    /// she started the group. Planted, watched failing: the page at
+    /// b7be71c3, which answers `/?screen=` with the home page; and the
+    /// page at 7a385472, which drew ada's window second: its order read
+    /// `'started'.at`, which is a string's method, not a time.
     the_screen_shows_what_is_lent_after_it_opened
 );
 async fn the_screen_shows_what_is_lent_after_it_opened(engine: Engine) {
@@ -2833,6 +2836,9 @@ async fn the_screen_shows_what_is_lent_after_it_opened(engine: Engine) {
         .iter()
         .map(words)
         .collect();
+    // Ada started the group, so her window comes first: people are drawn in
+    // the order they joined (question.js `people`).
+    assert_eq!(windows[0][1], "ada shelf new on now", "{seen:#}");
     windows.sort_by(|a, b| a[1].cmp(&b[1]));
     let want = [
         ["on", "ada shelf new on now"],
