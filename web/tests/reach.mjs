@@ -4,11 +4,12 @@
 // `args.ready` and waits for a line `go` on stdin, which the Rust half sends
 // once it has stopped that computer; then it opens the group's page again,
 // timed from the address given to its status shown, and opens the lend
-// `args.open` from its list, timed to its page's title, `args.title`.
+// `args.open` from its list, when given, timed to its page's title,
+// `args.title`.
 //
 //   node web/tests/reach.mjs '{"engine": "chromium"|"webkit", "site": ...,
-//     "key": ..., "token": ..., "ready": "<file>", "open": "<the lend's
-//     name>", "title": "<its page's title>"}'
+//     "key": ..., "token": ..., "ready": "<file>", "open"?: "<the lend's
+//     name>", "title"?: "<its page's title>"}'
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
@@ -35,7 +36,7 @@ await driving(args, async ({ page, origin }) => {
   await page.waitForSelector('#status.good, #status.bad', { timeout: 90_000 });
   const listed = { ms: Date.now() - t0, ...(await shown(page)) };
   let opened = null;
-  if (listed.lent.some((l) => l.includes(args.open))) {
+  if (args.open && listed.lent.some((l) => l.includes(args.open))) {
     await page.locator('#lent button', { hasText: args.open }).click();
     await page.waitForFunction((t) => document.title === t, args.title, { timeout: 60_000 }).catch(() => {});
     opened = { ms: Date.now() - t0, url: page.url(), title: await page.title() };

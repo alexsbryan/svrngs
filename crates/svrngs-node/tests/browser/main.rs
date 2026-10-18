@@ -101,11 +101,22 @@ async fn computer(
     me: u8,
     founder: &str,
 ) -> Node {
+    computer_on(dir, relay_url(relay), admitted, me, founder).await
+}
+
+/// [`computer`], its relay reached at `relay`, a URL.
+async fn computer_on(
+    dir: &Path,
+    relay: String,
+    admitted: &SigningKey,
+    me: u8,
+    founder: &str,
+) -> Node {
     let node = Node::start(
         dir.to_path_buf(),
         signing(me),
         &RelayConfig {
-            relay_urls: vec![relay_url(relay)],
+            relay_urls: vec![relay],
             n0_services: false,
             loopback_only: true,
         },
@@ -3295,6 +3306,26 @@ async fn a_computer_that_did_not_answer_is_named_by_its_person(engine: Engine) {
         !text.contains(&host) && !text.contains("127.0.0.1"),
         "no word on the page names the relay, {host}:\n{seen:#}"
     );
+}
+
+/// A way to `relay` that holds each new connection `by` before passing it
+/// on, so a dial through it lands that much after one through the relay
+/// itself: which computer answers first, made so rather than raced.
+async fn slow_way(relay: &Server, by: Duration) -> String {
+    let to = relay.http_addr().expect("the relay serves HTTP");
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let at = listener.local_addr().unwrap();
+    tokio::spawn(async move {
+        while let Ok((mut near, _)) = listener.accept().await {
+            tokio::spawn(async move {
+                tokio::time::sleep(by).await;
+                if let Ok(mut far) = tokio::net::TcpStream::connect(to).await {
+                    let _ = tokio::io::copy_bidirectional(&mut near, &mut far).await;
+                }
+            });
+        }
+    });
+    format!("http://{at}/")
 }
 
 /// One test at a time holds 8096, Jellyfin's, on this host: the bar's
