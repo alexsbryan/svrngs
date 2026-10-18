@@ -26,6 +26,9 @@ how your house decides the same way you agree to anything else.
 - It runs on every computer and phone in your group. Nobody keeps a server
   on, and nobody keeps the book.
 
+[`demo/house-rules.md`](demo/house-rules.md) walks through it on one
+computer, with three people each on a computer of their own.
+
 **canon decides, svrngs shows.** House rules is built on
 [canon](https://github.com/alexsbryan/canon), a library for a group's
 rules, at its release 0.5.0. canon decides every answer the page gives:

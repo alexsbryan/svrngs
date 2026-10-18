@@ -30,7 +30,7 @@ Every line and every button: [`demo/start.md`](demo/start.md).
 - **Agree on your house's rules.** House rules comes with svrngs too. Someone
   proposes, the rest of you agree or object, and the page says when it
   holds. [canon](https://github.com/alexsbryan/canon) decides; svrngs only
-  shows it.
+  shows it. See [`demo/house-rules.md`](demo/house-rules.md).
 - **Ask a friend of a friend.** The grapevine carries an ask from one group
   to another, through someone who's in both. See [`demo/grapevine.md`](demo/grapevine.md).
 - **Leave.** Whenever you like. What you already have stays yours.
