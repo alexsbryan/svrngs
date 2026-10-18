@@ -130,4 +130,7 @@ the driver's own fixes.
 
 ## The close
 
-`scripts/check.sh` ran once at the close, after this README.
+`scripts/check.sh` ran once at 52a9fc0d, after this README. It exited 0 in
+about 16 minutes. All fifteen gates passed; none failed, could not be
+judged or never ran. One WebKit seek through a lend took 13,632 ms. That
+was a rate line, inside a gate that passed.
