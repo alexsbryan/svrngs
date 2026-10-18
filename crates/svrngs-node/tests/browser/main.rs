@@ -2794,6 +2794,76 @@ async fn the_door_draws_who_is_on_now(engine: Engine) {
     drop((ada, cy));
 }
 
+in_both_engines!(
+    /// **A group on a screen** (the operator, "Wall is approved", of the
+    /// Draft 2 canvas's frames 8-10). Ada's home page opened as the group's
+    /// screen, `/?screen=<group>`: cy lent `radio` before it opened, so it
+    /// is in cy's window and no line says it arrived; bo's computer never
+    /// answers. Once the screen has drawn, ada lends `shelf` from the page,
+    /// and the screen, reading again by itself, says "ada lent shelf" under
+    /// "Since this screen opened", marked new there and in ada's window,
+    /// the only marks; `shelf` opens in a tab; and its count says three
+    /// people, two on now, two things lent. Planted, watched failing: the
+    /// page at b7be71c3, which answers `/?screen=` with the home page.
+    the_screen_shows_what_is_lent_after_it_opened
+);
+async fn the_screen_shows_what_is_lent_after_it_opened(engine: Engine) {
+    let relay = relay().await;
+    let (ada_dir, cy_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let ada = node(ada_dir.path(), &relay, &signing(7)).await;
+    let cy = joined(cy_dir.path(), &relay, &ada, 2, "cy").await;
+    let radio = page_origin("<!doctype html><title>cy's radio</title>").await;
+    let shelf = page_origin("<!doctype html><title>ada's shelf</title>").await;
+    lend(cy_dir.path(), "radio", radio.port());
+    let at = format!(
+        "http://svrngs.localhost:{}/?screen={NS}",
+        ada.api_addr().port()
+    );
+    let lent = json!({ "port": shelf.port(), "name": "shelf", "kind": "k" });
+    let args = json!({ "at": at, "lend": lent, "says": "ada lent shelf" });
+    let seen = drive(engine, "screen.mjs", args, None).await;
+    eprintln!("the screen's run: {seen:#}");
+    assert_eq!(seen["lent"], 200, "{seen:#}");
+    assert_eq!(seen["opened"]["since"], json!([]), "{seen:#}");
+    let after = &seen["after"];
+    let words = |w: &Value| [&w["class"], &w["words"]].map(|s| s.as_str().unwrap().to_string());
+    let mut windows: Vec<_> = after["windows"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(words)
+        .collect();
+    windows.sort_by(|a, b| a[1].cmp(&b[1]));
+    let want = [
+        ["on", "ada shelf new on now"],
+        ["off", "bo did not answer"],
+        ["on", "cy radio on now"],
+    ];
+    assert_eq!(windows, want, "{seen:#}");
+    let since = after["since"].as_array().unwrap();
+    assert_eq!(since.len(), 1, "{seen:#}");
+    assert!(
+        since[0].as_str().unwrap().ends_with(" ada lent shelf new"),
+        "{seen:#}"
+    );
+    let marks = after["marks"].as_array().unwrap();
+    assert_eq!(marks.len(), 2, "{seen:#}");
+    let links = after["windows"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .flat_map(|w| w["links"].as_array().unwrap());
+    assert!(
+        links.clone().all(|l| l[2] == "_blank") && links.count() == 2,
+        "{seen:#}"
+    );
+    assert_eq!(
+        after["count"], "3 people · 2 on now · 2 things lent",
+        "{seen:#}"
+    );
+    drop((ada, cy, radio, shelf));
+}
+
 /// Each of `words`, or its plural, that `text` holds as a whole word.
 fn words_said<'a>(text: &str, words: &[&'a str]) -> Vec<&'a str> {
     let said: BTreeSet<&str> = text
