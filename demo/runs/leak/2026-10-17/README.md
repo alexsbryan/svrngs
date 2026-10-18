@@ -37,6 +37,22 @@ cargo on macOS's own malloc:
 | mac-i | back to back, 60 s | 10,263 | 0.01, 0.00 | 44.7 → 44.8 MiB | 181% |
 | mac-ii | one read a second, 600 s | 595 | 1.48 (4.36 first third, −0.65 last), −1.72 | 42.6 → 43.4 MiB | 7.6% |
 
+And the fix, `61a06614`, on Fedora: its Linux x86_64 binary built on the
+Mac as `build-release.sh` builds it (`cargo zigbuild --release --locked -p
+svrngs --target x86_64-unknown-linux-musl`, sha256 `6be2cfca…`), zig's
+musl with mimalloc 0.1.52 as the global allocator:
+
+| condition | B | B's reads | KiB a read | RSS through B | CPU in B |
+|---|---|---:|---|---|---:|
+| ix | back to back, 60 s | 33,423 | 0.39 (0.59 first third, 0.14 last) | 96.6 → 109.4 MiB | 210% |
+| x | one read a second, 600 s | 599 | 45.5 (39.1 first third, −71.5 last) | 89.8 → 116.4 MiB, high-water 133.5 | 1.5% |
+| xi | one read a second, 1,800 s | 1,798 | −2.07 (−5.58 first third, −1.22 last) | 95.8 → 92.2 MiB, high-water 102.0 | 1.3% |
+
+Idle at the end of A, the release's founder was 66.8–67.4 MiB and Aiko
+50.2–51.4 MiB (ii, viii); the fix's founder 88.7–95.2 MiB and Aiko
+76.8–83.5 MiB (ix–xi). That is mimalloc's price on a 32-core machine:
+about 20–30 MiB more for every Linux computer, asked or asking.
+
 - **Idle phases keep it.** C (60 s after B) moved +12 to +1,388 KiB in
   every condition. Nothing was given back.
 - **`/v1/rail/people`, which dials no one, costs nothing.** D did
@@ -77,6 +93,21 @@ cargo on macOS's own malloc:
 9. The Mac, paced: **held.** 1.48 KiB a read in RSS and −1.72 in
    footprint, under 5, against Linux's 89.8 (viii). No idle phase raised
    it by more than 0.5 MiB.
+10. The fix, fast: **held.** 0.39 KiB a read, under 1; CPU 210%, inside
+    150–260%; RSS at the end of A 95.2 MiB, under 200.
+11. The fix, paced for 600 s: **failed as written.** 45.5 KiB a read
+    over B, against under 5. The founder sat at 89–98 MiB for 300 reads,
+    stepped to 129 MiB about 330 s in, and fell back to 116 MiB by B's
+    end. Aiko, who only answers, rose too, from 76.8 to 123.8 MiB by C's
+    end, and was 119.3 MiB at E's. (12's own text gives these in
+    thousands of KiB: 92 → 134 → 119, and 78.7 → 126.7.) What stepped is
+    not known: no read of the founder's own changed then.
+12. The fix, paced for 1,800 s: **held.** The founder was 92.5 MiB 600 s
+    into B and 92.2 MiB at its end, within 15%; its high-water 102.0 MiB
+    and Aiko's 93.2, each under 160. Against the release's 53 MiB climb
+    in 600 s (viii), this run gave back 3.6 MiB over 1,800. With x, it
+    reads as mimalloc's heaps filling to a ceiling once, not reads kept:
+    x's step is one excursion in two paced runs, not a rate.
 
 ## What it means for the evening
 
@@ -89,6 +120,11 @@ same per page that asks it what everyone lends.
 The Mac build is `cargo build` on macOS's own malloc, and it doesn't keep
 it (mac-i, mac-ii): a Mac at the projector stays at about 45 MiB.
 
+With the fix, a Linux founder at the wall's pace stayed between 88 and
+134 MiB and ended at 92–116 (x, xi), and stayed under 115 MiB through
+33,423 reads back to back (ix). It
+reaches people only in a release built from `61a06614` or later.
+
 ## The fix, and the check that shows it
 
 The site is the release's Linux toolchain, not a line of svrngs. What
@@ -99,12 +135,15 @@ churns is each `/v1/lends` read:
   spawned driver (`crates/svrngs-node/src/iroh.rs:360-365`, `on_stream`);
 - all of it spread over 32 worker threads.
 
-Two ways out, each measured:
+Two ways out, each measured. The first landed in `61a06614`, gated to
+`target_env = "musl"`, since macOS kept nothing (mac-i, mac-ii):
 - **A global allocator for Linux:** `#[global_allocator]` mimalloc in
   `crates/svrngs/src/main.rs`, gated to Linux musl (`mimalloc.diff`). It
   stayed flat at the release's CPU (vii). The costs:
   - a C dependency, `libmimalloc-sys`;
-  - a higher idle RSS, about 120–160 MiB against 67 MiB.
+  - a higher idle RSS: vii's guess was 120–160 MiB; measured on the
+    fix, 88.7–95.2 MiB for the founder against 67, and about 80 MiB for
+    a member against 51 (ix–xi).
 - **Linking Linux with rustc's own musl instead of zig's:** flat (v), but
   at 2.5 times the CPU under the same reads (509% against 203%), since
   musl's own malloc is slow under contention. Cross-building `ring`'s C
@@ -112,20 +151,23 @@ Two ways out, each measured:
 
 The red check is `leak.py`'s B against the built Linux artifact: 25 or
 fewer computers, 20,000 reads, failing above 1 KiB a read. On this data it
-is red for the release (19–21 KiB) and green for vii. It belongs beside
-`build-release.sh`, not `check.sh`, since it needs the built binary and
-about two minutes.
+is red for the release (19–21 KiB) and green for vii and for the fix (ix,
+0.39). It belongs beside `build-release.sh`, not `check.sh`, since it
+needs a Linux host, the built binary and about seven minutes. It isn't
+in the tree yet: as a counted script it would cost about 100 lines of the
+budget, which is the operator's to give.
 
 ## Data
 
 - `data-<condition>/`:
   - `summary.json`: each phase's numbers, `alive_tasks` where probed;
   - `samples.jsonl`: one line a second, the founder and Aiko.
-- `run-mac-*.out`: what each Mac condition printed. `build-*.out`: each
-  scratch build on Fedora (`build-gnu.out` was `build.out` there, the
-  build iv ran).
+- `run-mac-*.out`: what each Mac condition printed: nothing, since
+  `leak.py` prints only when it fails. `build-*.out`: each scratch build
+  on Fedora (`build-gnu.out` was `build.out` there, the build iv ran).
 - `binaries.sha256`: each binary measured on Fedora; the release's is
-  `8d3c5020…`. The Mac's is the kit's `bin/RECORD.txt`.
+  `8d3c5020…`, the fix's `6be2cfca…`. The Mac's is the kit's
+  `bin/RECORD.txt`.
 - `probe.diff`, `mimalloc.diff`: the scratch patches i–viii measured,
   never in the repo as such.
 - `leak-since-viii.diff`: how `leak.py` here differs from the one i–viii

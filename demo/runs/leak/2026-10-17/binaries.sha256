@@ -3,3 +3,4 @@ de1e6b950dc1c1b07dbfe5087774fa4b0834c2a28e2ec6d6c388a3ee99b5b259  src/target/x86
 90784b9aa5c3735c00acdfe05f10482120854af27f33cc57b515a0e8fbada9e1  src/target-zig/x86_64-unknown-linux-musl/release/svrngs
 cb7fe229d3cab501cf16680e5afb3d98fa8407fe849fba131abfe8f91adac417  src-mi/target-zig/x86_64-unknown-linux-musl/release/svrngs
 8d3c502023dc68d8322dc7699ead98a847222e6913d476cd998465358ab0a553  ../svrngs
+6be2cfca2db96934c9387eb58a088b1113b3ccf052219d63fafa7371994c0b5a  ix-xi: the fix, 61a06614, x86_64-unknown-linux-musl by cargo zigbuild --release --locked on the Mac
