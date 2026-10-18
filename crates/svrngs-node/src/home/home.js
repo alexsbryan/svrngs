@@ -19,24 +19,23 @@ import { door, el, named, namesakes, once, opens, owner, question, removal, row,
 const main = document.getElementById('home');
 const button = (text, act) => Object.assign(el('button', text), { onclick: act });
 
-// A route's answer, or its words when it refuses: never read as empty.
-async function get(path) {
-  const r = await fetch(path);
+// A route's answer, or its words when it refuses: never read as empty. One
+// reading for a read and a write alike.
+async function answer(r) {
   const body = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(body.error || `answered ${r.status}`);
   return body;
 }
+const get = (path) => fetch(path).then(answer);
 
-const post = (path, body) => fetch(path, {
-  method: 'POST',
-  headers: { 'content-type': 'application/json' },
-  body: JSON.stringify(body),
-}).then(async (r) => (r.ok ? r.json().catch(() => ({})) : Promise.reject(new Error((await r.json().catch(() => ({}))).error || `answered ${r.status}`))));
+// `body` sent as JSON, as every write of the page sends it.
+const sent = (body) => ({ method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+const post = (path, body) => fetch(path, sent(body)).then(answer);
 const said = (lend, app, what) => post('/choices', { lend, app, said: what });
 
 // A leave or a hand-on asked of the node (removal.rs), its answer said in
 // `p` beside its button; a leave goes on to the page again, saying so.
-const asked = (path, body, p, name) => fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then((r) => r.json()).then(({ outcome: o }) => (o === 'left' ? location.assign(`/?${new URLSearchParams({ left: name })}`) : p.append(` ${{ handed: `${body.person} keeps the order of removals in ${name} now, so you can leave it.`, decides: `You keep the order of removals in ${name}: choose who keeps it after you, then leave.`, not_in: `You are no longer in ${name}.` }[o] ?? `${name} cannot be changed on this computer now.`}`)), (e) => p.append(` ${name} cannot be changed on this computer now: ${e.message}`));
+const asked = (path, body, p, name) => fetch(path, sent(body)).then((r) => r.json()).then(({ outcome: o }) => (o === 'left' ? location.assign(`/?${new URLSearchParams({ left: name })}`) : p.append(` ${{ handed: `${body.person} keeps the order of removals in ${name} now, so you can leave it.`, decides: `You keep the order of removals in ${name}: choose who keeps it after you, then leave.`, not_in: `You are no longer in ${name}.` }[o] ?? `${name} cannot be changed on this computer now.`}`)), (e) => p.append(` ${name} cannot be changed on this computer now: ${e.message}`));
 
 // The lend's label, the first name of its origin here.
 const label = (l) => new URL(l.origin).hostname.split('.')[0];

@@ -103,8 +103,10 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # answer fails (#205), raised it by those 3, to one past where it landed:
 # the operator's ceiling, none left. The musl allocator fix
 # (demo/runs/leak/2026-10-17/) cut 3 first, door.rs's two dialer guards made
-# one, spent 1, and lowered it to one past where it landed.
-BUDGET = {"crates/svrngs-core": 3009, ".": 16562}
+# one, spent 1, and lowered it to one past where it landed. The screen's
+# economizing pass cut 3, home.js reading a read's answer and a write's one
+# way, and lowered it to one past where that landed.
+BUDGET = {"crates/svrngs-core": 3009, ".": 16559}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
