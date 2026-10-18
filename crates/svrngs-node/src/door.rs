@@ -867,14 +867,17 @@ async fn through_pass(
     via: Option<Extension<Via>>,
     req: Request,
 ) -> Result<Response, Response> {
-    let Some(Extension(dialer)) = dialer else {
-        tracing::warn!(target: "door", "door: refused — no verified dialer, so the request did not come on an iroh stream");
-        return Err(LendRefusal::Closed.say(
-            StatusCode::FORBIDDEN,
-            "you can open this only through your group",
-        ));
-    };
+    let dialer = dialed(dialer, "you can open this only through your group")?;
     lend_for(&door, Who::Holder(dialer), via.map(|Extension(v)| v), req).await
+}
+
+/// The key a request was dialled with, which only an iroh stream carries;
+/// without one it is refused in `words`, the protocol's own.
+fn dialed(dialer: Option<Extension<Dialer>>, words: &str) -> Result<Dialer, Response> {
+    dialer.map(|Extension(d)| d).ok_or_else(|| {
+        tracing::warn!(target: "door", "door: refused — no verified dialer, so the request did not come on an iroh stream");
+        LendRefusal::Closed.say(StatusCode::FORBIDDEN, words)
+    })
 }
 
 /// The lend `raw` names here: by its name, or by its label when that names
@@ -1033,13 +1036,10 @@ async fn through(
     via: Option<Extension<Via>>,
     req: Request,
 ) -> Result<Response, Response> {
-    let Some(Extension(dialer)) = dialer else {
-        tracing::warn!(target: "door", "door: refused — no verified dialer, so the request did not come on an iroh stream");
-        return Err(LendRefusal::Closed.say(
-            StatusCode::FORBIDDEN,
-            "you can open this only from a computer in its group",
-        ));
-    };
+    let dialer = dialed(
+        dialer,
+        "you can open this only from a computer in its group",
+    )?;
     lend_for(&door, Who::Member(dialer), via.map(|Extension(v)| v), req).await
 }
 
