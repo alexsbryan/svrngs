@@ -71,6 +71,38 @@ time in the group, `spans`, those who left included, so an app can count a
 past entry with whoever was in the group when it was written.
 [`docs/DESIGN.md`](docs/DESIGN.md) §3 has it.
 
+## V1.1.2, 18 October 2026
+
+V1.1.2 puts your group on a screen. On your home page, each group has
+**Show** your group **on a screen**. It opens a page for a TV, a spare
+laptop or a projector:
+- everyone in the group, lit while their computer answers;
+- what each person lends, inside their window, each opening in a tab as you;
+- who joined and what they lent since the screen opened, newest first, the
+  newest marked.
+
+The page reads your group again once a second. The list lives on that
+screen only, and starts over when you open the screen again. It never
+says when someone went off: their window just stops being lit.
+
+Your home page now lists people in the order they joined, whoever started
+the group first, and so does the group's page on a phone. Before, the
+order came from their keys.
+
+That's the trade: a screen left open asks every computer in your group
+what it lends, once a second. With 25 computers on one machine, the one
+showing the screen spent at most a tenth of a core on it, and each
+person's window lit about 4 seconds after they began to join, most of it
+their wait for n0's relay. When the computer that started the group
+stopped answering, another person's screen drew it "did not answer" 3.5
+seconds later, and everything else still opened
+(`demo/runs/screen/2026-10-18/`, `demo/runs/v1.1.2/2026-10-18/`).
+
+Everything else is V1.1.1's. House rules is still for the next release.
+
+V1.1.2 is the build at `group.svrnme.sh`, from commit `aacb3fe5`, tagged
+`v1.1.2`.
+
 ## V1.1.1, 18 October 2026
 
 V1.1.1 stops a Linux computer from holding on to memory. Each time a page
@@ -93,8 +125,7 @@ and nobody has measured a laptop yet (`demo/runs/v1.1.1/2026-10-18/`).
 
 Everything else is V1.1's. House rules is still for the next release.
 
-V1.1.1 is the build at `group.svrnme.sh`, from commit `6db0cccf`, tagged
-`v1.1.1`.
+V1.1.1 was built from commit `6db0cccf`, tagged `v1.1.1`.
 
 ## V1.1, 17 October 2026
 
