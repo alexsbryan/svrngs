@@ -217,3 +217,18 @@ test('someone who joins after a rule is proposed is not counted toward it', () =
   assert.equal(status(view, q), 'active', 'ana and bo are more than half of the three');
   assert.deepEqual(view.deciding, ['ana', 'bo', 'dee', 'cy']);
 });
+
+test('one answer has one clock: an agreement timed ahead of the browser’s clock is in force when the page asks', () => {
+  // svrngs times a new act after every act it holds (crates/svrngs-core/src/
+  // command.rs:243-250), so bo's agreement, written in the second of ana's
+  // change, is timed a second ahead of the browser's clock; the page asks
+  // right after, at that clock (index.js, `Date.now()`), and says the rule
+  // the agreement passed (#206; demo/runs/canon/2026-10-17-house/same_second.mjs).
+  const spans = founders('ana', 'bo', 'cy');
+  const change = decide('everyone');
+  const c = idOf(2000, 'ana', change);
+  const ops = [rec(1000, 'ana', decide('most')), rec(2000, 'ana', change), rec(2100, 'bo', agree(c))];
+  const view = fold(call, read(spans, ops), 2099);
+  assert.equal(view.changes.find((x) => x.id === c)?.verdict.verdict, 'ratified');
+  assert.deepEqual(view.rule, change.rule, 'the rule bo’s agreement passed, not the one it replaced');
+});
