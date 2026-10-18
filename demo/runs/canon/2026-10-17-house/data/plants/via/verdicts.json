@@ -1,0 +1,116 @@
+{
+ "1": {
+  "verdict": "passed",
+  "said_ms": 228,
+  "listed": {
+   "ana": {
+    "listed": true,
+    "ms": 599
+   },
+   "bo": {
+    "listed": true,
+    "ms": 601
+   },
+   "cy": {
+    "listed": true,
+    "ms": 602
+   }
+  },
+  "build": {
+   "bytes": 5679979,
+   "bo": {
+    "held": true,
+    "ms": 1166
+   },
+   "cy": {
+    "held": true,
+    "ms": 1169
+   }
+  }
+ },
+ "2": {
+  "verdict": "passed",
+  "ms": 220
+ },
+ "3": {
+  "verdict": "passed",
+  "ms": 223,
+  "reached_ms": {
+   "bo": 5,
+   "cy": 2
+  }
+ },
+ "4": {
+  "verdict": "failed",
+  "why": "the phone: House rules\n\nHow your house decides\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYour house’s rules\nYour house has no rules yet.\n\nWhat’s proposed\nQuiet hours are 10pm to 7am\n\nAna proposed it on 17 Oct. Agreed: you.\n\nPropose a rule\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\nEveryone in your house has a say: Bo, Ana, you and Cy.\n\nBo joined on 17 Oct.\n\nYou joined on"
+ },
+ "5": {
+  "verdict": "passed",
+  "ms": 217,
+  "reached_ms": {
+   "ana": 3,
+   "bo": 2
+  }
+ },
+ "6": {
+  "verdict": "passed",
+  "reached_ms": {
+   "ana": 6,
+   "cy": 3
+  },
+  "every_page_ms": 5601,
+  "phone_listed_ms": 668
+ },
+ "7": {
+  "verdict": "passed",
+  "held_out": {
+   "ana": {
+    "out": true,
+    "ms": 289
+   },
+   "cy": {
+    "out": true,
+    "ms": 290
+   }
+  },
+  "phone_listed_ms": 11230
+ },
+ "8": {
+  "verdict": "passed",
+  "proposed_ms": 220,
+  "agreed_to_read_ms": 2513,
+  "right_after_agree": "House rules\nHow your house decides\n\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them."
+ },
+ "9": {
+  "verdict": "passed",
+  "held_out": {
+   "ana": {
+    "out": true,
+    "ms": 301
+   }
+  }
+ },
+ "10": {
+  "verdict": "passed",
+  "phone_listed_ms": 868,
+  "after_press_ms": 2340,
+  "right_after_agree": "House rules\nHow your house decides\n\nA rule holds once everyone in your house when it was proposed agrees, and one objection stops it."
+ },
+ "11": {
+  "verdict": "passed",
+  "asked_ms": 5715,
+  "changed_ms": 565
+ },
+ "12": {
+  "verdict": "passed",
+  "read": 86
+ },
+ "13": {
+  "verdict": "passed",
+  "steps": 26
+ },
+ "14": {
+  "verdict": "never-ran",
+  "why": "a house with real people, a second host and a phone on cellular are the operator's"
+ }
+}

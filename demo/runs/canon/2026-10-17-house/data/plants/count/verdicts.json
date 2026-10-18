@@ -1,0 +1,109 @@
+{
+ "1": {
+  "verdict": "passed",
+  "said_ms": 229,
+  "listed": {
+   "ana": {
+    "listed": true,
+    "ms": 620
+   },
+   "bo": {
+    "listed": true,
+    "ms": 622
+   },
+   "cy": {
+    "listed": true,
+    "ms": 624
+   }
+  },
+  "build": {
+   "bytes": 5679979,
+   "bo": {
+    "held": true,
+    "ms": 1213
+   },
+   "cy": {
+    "held": true,
+    "ms": 1216
+   }
+  }
+ },
+ "2": {
+  "verdict": "passed",
+  "ms": 217
+ },
+ "3": {
+  "verdict": "passed",
+  "ms": 219,
+  "reached_ms": {
+   "bo": 5,
+   "cy": 2
+  }
+ },
+ "4": {
+  "verdict": "passed",
+  "through": "Ana",
+  "drawn_ms": 4476,
+  "listed_ms": 824
+ },
+ "5": {
+  "verdict": "passed",
+  "ms": 237,
+  "reached_ms": {
+   "ana": 7,
+   "bo": 3
+  }
+ },
+ "6": {
+  "verdict": "passed",
+  "reached_ms": {
+   "ana": 5,
+   "cy": 3
+  },
+  "every_page_ms": 5776,
+  "phone_listed_ms": 869
+ },
+ "7": {
+  "verdict": "passed",
+  "held_out": {
+   "ana": {
+    "out": true,
+    "ms": 528
+   },
+   "cy": {
+    "out": true,
+    "ms": 529
+   }
+  },
+  "phone_listed_ms": 682
+ },
+ "8": {
+  "verdict": "failed",
+  "why": "step 8's click: Error: the page never said Change how your house decides: A rule holds once everyone within 30000 ms"
+ },
+ "9": {
+  "verdict": "failed",
+  "why": "not under everyone agrees"
+ },
+ "10": {
+  "verdict": "failed",
+  "why": "step 10-ana's poll: Error: http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/ never said How your house decides\\n+A rule holds once more than half within 30000 ms"
+ },
+ "11": {
+  "verdict": "passed",
+  "asked_ms": 5669,
+  "changed_ms": 579
+ },
+ "12": {
+  "verdict": "passed",
+  "read": 86
+ },
+ "13": {
+  "verdict": "failed",
+  "why": "failed [['8', 'Error: the page never said Change how your house decides: A rule holds once everyone within 30000 ms'], ['8-ana', 'Error: http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/ never said How your house decides\\\\n+A rule holds once everyone within 30000 ms'], ['10-ana', 'Error: http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/ never said How your house decides\\\\n+A rule holds once more than half within 30000 ms']]; errors []"
+ },
+ "14": {
+  "verdict": "never-ran",
+  "why": "a house with real people, a second host and a phone on cellular are the operator's"
+ }
+}
