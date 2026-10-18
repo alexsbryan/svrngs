@@ -99,7 +99,10 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # where it landed: 23 and 7 left under the ceiling. canon-house's shelf, a
 # shelf app bringing any files and `-` said as a space, raised the
 # repository's by 4, to one past where it landed: svrngs-core's 23 and 3 left.
-BUDGET = {"crates/svrngs-core": 3009, ".": 16561}
+# canon-fix (d), the page asking the next computer to answer when one's
+# answer fails (#205), raised it by those 3, to one past where it landed:
+# the operator's ceiling, none left.
+BUDGET = {"crates/svrngs-core": 3009, ".": 16564}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
