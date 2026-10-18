@@ -1,0 +1,209 @@
+{
+ "cond": "i-debug",
+ "n": 25,
+ "log": "kit",
+ "env": [],
+ "b_secs": 60,
+ "bin": "/home/alexbryan/twentyfive/svrngs",
+ "started": 1792285944.898999,
+ "cores": 32,
+ "shared": 24,
+ "phases": {
+  "A": [
+   1792285964.32,
+   1792286084.32
+  ],
+  "B": [
+   1792286084.32,
+   1792286144.321
+  ],
+  "C": [
+   1792286144.321,
+   1792286204.321
+  ],
+  "D": [
+   1792286204.322,
+   1792286264.322
+  ],
+  "E": [
+   1792286264.322,
+   1792286324.322
+  ]
+ },
+ "result": {
+  "A": {
+   "secs": 119.0,
+   "rss_kib": [
+    63764,
+    65552
+   ],
+   "anon_kib": [
+    39676,
+    41464
+   ],
+   "hwm_kib": 65552,
+   "grew_kib": 1788,
+   "reads": 0,
+   "errors": 0,
+   "kib_per_read": null,
+   "cpu_pct": 0.9,
+   "threads": [
+    66,
+    66
+   ],
+   "fds": [
+    20,
+    20
+   ],
+   "log_bytes": [
+    577900,
+    611013
+   ],
+   "aiko_rss_kib": [
+    35924,
+    51752
+   ]
+  },
+  "B": {
+   "secs": 59.0,
+   "rss_kib": [
+    66076,
+    1096300
+   ],
+   "anon_kib": [
+    42064,
+    1072224
+   ],
+   "hwm_kib": 1096300,
+   "grew_kib": 1030224,
+   "reads": 51306,
+   "errors": 0,
+   "kib_per_read": 20.08,
+   "cpu_pct": 232.9,
+   "threads": [
+    66,
+    66
+   ],
+   "fds": [
+    21,
+    20
+   ],
+   "log_bytes": [
+    812175,
+    1093534583
+   ],
+   "aiko_rss_kib": [
+    51892,
+    58188
+   ],
+   "kib_per_read_first_third": 26.26,
+   "kib_per_read_last_third": 15.12
+  },
+  "C": {
+   "secs": 59.0,
+   "rss_kib": [
+    1110460,
+    1110728
+   ],
+   "anon_kib": [
+    1086372,
+    1086640
+   ],
+   "hwm_kib": 1110728,
+   "grew_kib": 268,
+   "reads": 0,
+   "errors": 0,
+   "kib_per_read": null,
+   "cpu_pct": 1.0,
+   "threads": [
+    66,
+    66
+   ],
+   "fds": [
+    19,
+    19
+   ],
+   "log_bytes": [
+    1110506280,
+    1110512837
+   ],
+   "aiko_rss_kib": [
+    58200,
+    59420
+   ]
+  },
+  "D": {
+   "secs": 59.0,
+   "rss_kib": [
+    1110784,
+    1111048
+   ],
+   "anon_kib": [
+    1086696,
+    1086960
+   ],
+   "hwm_kib": 1111048,
+   "grew_kib": 264,
+   "reads": 445854,
+   "errors": 0,
+   "kib_per_read": 0.0,
+   "cpu_pct": 37.8,
+   "threads": [
+    66,
+    66
+   ],
+   "fds": [
+    19,
+    21
+   ],
+   "log_bytes": [
+    1110532477,
+    1110539034
+   ],
+   "aiko_rss_kib": [
+    59432,
+    60764
+   ],
+   "kib_per_read_first_third": 0.0,
+   "kib_per_read_last_third": 0.0
+  },
+  "E": {
+   "secs": 59.0,
+   "rss_kib": [
+    1111292,
+    1111492
+   ],
+   "anon_kib": [
+    1087204,
+    1087420
+   ],
+   "hwm_kib": 1111492,
+   "grew_kib": 200,
+   "reads": 0,
+   "errors": 0,
+   "kib_per_read": null,
+   "cpu_pct": 0.9,
+   "threads": [
+    66,
+    66
+   ],
+   "fds": [
+    22,
+    20
+   ],
+   "log_bytes": [
+    1110558674,
+    1110565131
+   ],
+   "aiko_rss_kib": [
+    60764,
+    62312
+   ]
+  }
+ },
+ "verdict": "ran",
+ "ended": 1792286325.8248878,
+ "stopped": "{\"keepers\": {\"found\": \"stopped\", \"start\": \"stopped\"}, \"killed_after\": []}",
+ "founder_log_bytes": 1110585103,
+ "cleaned": "{\"removed\": \"/home/alexbryan/twentyfive/leak/w-i-debug\"}"
+}
