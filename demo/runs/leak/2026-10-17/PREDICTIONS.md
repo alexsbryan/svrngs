@@ -114,3 +114,16 @@ prediction.
 
 The fix is green when 10 and 11 hold; red is the release's ii, iii and
 viii, already measured.
+
+## After 11: is the fix's rise a ceiling?
+
+Added 2026-10-17, after `x-fix-paced1s` failed 11 as written (45.5 KiB a
+read over B; the founder 92 → 134 → 119 MiB, and Aiko, who only answers,
+78.7 → 126.7 MiB by C) and before the run below.
+
+12. **The fix, paced for 30 minutes, `xi-fix-paced30m`** (B at one read a
+    second for 1,800 s). Predicted, if mimalloc's heaps fill to a ceiling
+    rather than keeping reads: the founder's RSS at B's end within 15% of
+    its value 600 s into B; its high-water under 160 MiB; Aiko's RSS
+    under 160 MiB throughout. The release at the same pace climbed 53 MiB
+    in 600 s (viii), so it would be past 220 MiB by 1,800 s.
