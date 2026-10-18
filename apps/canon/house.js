@@ -159,10 +159,15 @@ export function payload(act) {
   return { kind: 'act', app: 'canon', act };
 }
 
-/** Everything the page shows, canon's answers read at `now` from what
- * `svrngs/acts` answered (`read`): `{unsettled}` when svrngs cannot say who
- * stood when (#124), never an empty house. */
-export function fold(call, read, now) {
+/** Everything the page shows, canon's answers read from what `svrngs/acts`
+ * answered (`read`) at `asked`, or at the newest act handed to canon when
+ * that is later: svrngs times a new act after every act it holds
+ * (crates/svrngs-core/src/command.rs:243-250), so one written in the second
+ * of another is ahead of the browser's clock, and canon asked before it
+ * says it passed a change yet keeps the old rule (#206). One answer, one
+ * clock. `{unsettled}` when svrngs cannot say who stood when (#124), never
+ * an empty house. */
+export function fold(call, read, asked) {
   if (!Array.isArray(read.spans)) return { unsettled: true };
   const members = membership(call, read.group, read.spans);
   const ours = new Set(members.map((l) => JSON.parse(l).id));
@@ -181,6 +186,7 @@ export function fold(call, read, now) {
     lines.push(line);
   }
   const acts = [...members, ...lines].join('\n');
+  const now = Math.max(asked, ...[...members, ...lines].map((l) => JSON.parse(l).ts_unix));
   // canon leaves an empty list out of its answer.
   const canon = { commitments: [], ratifications: [], positions: [], unattended: [], bootstrap: [], ungoverned: [], ...call({ call: 'derive', acts, now }) };
   const whose = (id) => who[id] ?? null;
