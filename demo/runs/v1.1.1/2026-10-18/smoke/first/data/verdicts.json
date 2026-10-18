@@ -1,0 +1,108 @@
+{
+ "0": {
+  "verdict": "passed",
+  "n0": {
+   "n0_from_linux": {
+    "use1-1": "200",
+    "usw1-1": "200",
+    "euc1-1": "200",
+    "aps1-1": "200"
+   }
+  },
+  "founded": {
+   "founder": "Priya",
+   "gid": "b41eac9be7b1f0c6c11fdc29f4e7231789bd5fc6207ea9084a4e207e91ea1e94",
+   "lent": true,
+   "port": 45991
+  }
+ },
+ "1": {
+  "verdict": "failed",
+  "in": 24,
+  "of": 24,
+  "not_in": [],
+  "median_s": 3.34,
+  "max_s": 3.53,
+  "each_s": {
+   "Luz": 3.32,
+   "Nell": 3.32,
+   "Lena": 3.33,
+   "Jun": 3.33,
+   "Dev": 3.33,
+   "Gus": 3.33,
+   "Ife": 3.33,
+   "Oren": 3.33,
+   "Bo": 3.33,
+   "Max": 3.33,
+   "Cy": 3.33,
+   "Ravi": 3.34,
+   "Hana": 3.34,
+   "Wren": 3.34,
+   "Theo": 3.34,
+   "Aiko": 3.34,
+   "Mara": 3.37,
+   "Saul": 3.38,
+   "Kit": 3.42,
+   "Noor": 3.43,
+   "Pia": 3.43,
+   "Sam": 3.43,
+   "Femi": 3.53,
+   "Rosa": 3.53
+  }
+ },
+ "2": {
+  "verdict": "passed",
+  "never_lit": [],
+  "median_s": 3.77,
+  "max_s": 4.27
+ },
+ "3": {
+  "verdict": "passed",
+  "never_listed": [],
+  "share_failed": [],
+  "median_s": 0.39,
+  "max_s": 1.65
+ },
+ "4": {
+  "verdict": "passed",
+  "after_last_join_s": 3.35,
+  "bound_s": 30
+ },
+ "5": {
+  "verdict": "passed",
+  "reads": 20,
+  "p50_ms": 4,
+  "p95_ms": 5,
+  "max_ms": 5,
+  "all_reads": 40,
+  "p50_ms_whole_run": 3
+ },
+ "6": {
+  "verdict": "passed",
+  "after_last_share_s": 27.97,
+  "rounds": 1
+ },
+ "7": {
+  "verdict": "passed",
+  "visits": 75,
+  "wanted": 75,
+  "right": 75,
+  "wrong": [],
+  "same_p50_ms": 2,
+  "far_p50_ms": null
+ },
+ "8": {
+  "verdict": "failed",
+  "founder_steady_pct": 0.0,
+  "other_steady_max_pct": 19.9,
+  "founder_burst_pct": 20.0,
+  "rss_max_mib": 98.3,
+  "load_max": {
+   "linux": 3.91650390625
+  }
+ },
+ "9": {
+  "verdict": "never-ran",
+  "why": "one machine only: no pair across two"
+ }
+}

@@ -40,6 +40,10 @@ lookup, as `cli::SHIPPED` names now. V1.1, released 17 October 2026, is the
 page and downloads published at `a555a225`: V1 with the north-star audit's
 fixes, the loopback patch, the trust floor and pinned carried code, and none
 of House rules, which waits for its run and this queue's closing audit.
+V1.1.1, released 18 October 2026, is the page and downloads published at
+`6db0cccf` (tag `v1.1.1`, on no branch): V1.1 with the Linux build's
+allocator fix (`61a06614` here) and nothing else, House rules still not
+in it (`demo/runs/v1.1.1/2026-10-18/`).
 
 **After V1**, in this order (the operator, 2026-10-16: "Ok so the queue
 next is: loopback, canon, then guest"; "Yes, floor and pin first"):

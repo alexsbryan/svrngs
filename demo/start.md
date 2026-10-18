@@ -230,7 +230,7 @@ do.
 
 ## Serving the page from a checkout
 
-`https://group.svrnme.sh/` serves the published build (V1.1, a555a225, 17 Oct
+`https://group.svrnme.sh/` serves the published build (V1.1.1, 6db0cccf, 18 Oct
 2026). To try a build of your own checkout instead, serve the page from it,
 on the computer Sam and Bo can reach, as the run did:
 

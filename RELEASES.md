@@ -71,6 +71,31 @@ time in the group, `spans`, those who left included, so an app can count a
 past entry with whoever was in the group when it was written.
 [`docs/DESIGN.md`](docs/DESIGN.md) §3 has it.
 
+## V1.1.1, 18 October 2026
+
+V1.1.1 stops a Linux computer from holding on to memory. Each time a page
+asked it what everyone in your group lends, it kept the memory that answer
+used and never gave it back: about 20 KiB each time in a group of 25. A
+home page left open, which asks once a second, grew by about 300 MB an
+hour. If you run svrngs on Linux, run the install line again; it updates
+in place. On a Mac nothing changes, since macOS gives the memory back.
+
+The Linux build now uses mimalloc to hand out memory, in place of the one
+that came with the toolchain that builds it. With 25 computers on one
+Linux machine, a computer asked back to back kept 0.43 KiB each time
+instead of 21, and asked once a second for half an hour it stayed flat.
+
+That's the trade: a Linux computer starts out using about 15 to 35 MB
+more memory, and the first time it asks everyone in a group of 25 at
+once, it spends about half a second more CPU doing it. After that, asking
+costs it no more than before. Those numbers are from one 32-core machine,
+and nobody has measured a laptop yet (`demo/runs/v1.1.1/2026-10-18/`).
+
+Everything else is V1.1's. House rules is still for the next release.
+
+V1.1.1 is the build at `group.svrnme.sh`, from commit `6db0cccf`, tagged
+`v1.1.1`.
+
 ## V1.1, 17 October 2026
 
 V1.1 closes a way for one person in a group to act as everyone else, and
@@ -108,7 +133,7 @@ never needed them, and now it can't make them.
 
 Everything under "What V1 doesn't do yet" still holds.
 
-V1.1 is the build at `group.svrnme.sh`, from commit `a555a225`.
+V1.1 was built from commit `a555a225`.
 
 ## V1, 16 October 2026
 
