@@ -24,13 +24,25 @@ charter disagree, they win, and the decision says so.
 - **A lend's limit:** "Yes they count the same". A guest is one person
   against it.
 
-## The budget
+## What the operator decided, 2026-10-18, on a lean pass
 
-Not set yet: the operator's. GUESTS §9 guesses 50-80 lines of svrngs-core,
-about 40 in the door and about 60 in the pages; CANON_IN_SVRNGS §5 adds
-about 2 of core and 20 of page for the link. svrngs-core stands at 3,008 of
-3,009 and the repository at 16,561 of 16,562, so every row past the
-economizing pass needs a raise.
+The first draft (203ac18b) built GUESTS whole. The operator chose the
+smallest build that tests, with people, whether a member has a friend over
+and whether the house is fine seeing it (STATE.md says the bets):
+- **"A link in any chat."** A visit is made the way a person joins. The
+  grapevine's two taps wait.
+- **"+150 repo, +60 core",** over the caps this queue's economizing pass
+  leaves: the small version.
+  - Every fact of GUESTS §3 is kept. A lean cut drops features, never what
+    was entrusted.
+  - The bounds are fixed at the decided two guests per host and 48 hours,
+    each one constant in svrngs-core. `GuestRules` and House rules' say
+    over it wait.
+  - A guest opens only their host's own lends. The welcome waits.
+  - `apps/` is not counted.
+- **"At the run."** The queue builds it, runs it on one host and stops. The
+  words for people wait for a real visit, whose bars the operator sets
+  before it.
 
 ## Why
 
@@ -43,8 +55,11 @@ to prevent (`crates/svrngs-node/src/door.rs:67-72`).
 ## Decide
 
 - Row order and splits, within the order in STATE.md.
-- The `Visit` and `GuestRules` acts' exact fields, within GUESTS §5.
+- The `Visit` act's exact fields, within GUESTS §5, so `GuestRules` and the
+  welcome fit later with no new act.
 - A guest's account name, so it can't collide with a member's.
+- How the visit link reuses the join link: the token, the redemption, and
+  how the issuer knows what it issued.
 - The guest's page: the phone's page (`web/`) already keeps a key per group
   (`web/store.js`) and dials a computer by key, which is the likely home.
 - The smaller reversible step.
@@ -57,10 +72,12 @@ yourself, saying both in the commit, and keep going.
 
 Write `NEEDS_HUMAN.md` and stop for:
 
-- **the budget:** past the ceiling, or a raise without the pass first;
+- **the budget:** past "+150 repo, +60 core", or a raise without the pass
+  first;
+- **a wait built early:** the welcome, `GuestRules`, House rules' say over
+  it, the grapevine's path, or the words for people (STATE.md, "Waits");
 - **the trust floor:** any widening of a page's policy or a listener;
-- **canon's repository:** anything canon-core needs, such as a typed value
-  on a commitment, if 0.5.0 has none;
+- **canon's repository:** anything canon-core needs;
 - **existing groups:** a change that alters what a computer holds or makes a
   member someone new;
 - **a new office or policy** in svrngs past GUESTS §3 and §5;
