@@ -100,9 +100,11 @@ export const namesakes = (n, name, verb) => (n.length ? `You’re already in ${n
 // Each with what holds their keys, `device` (v1ui-door (c)). In the order
 // they joined, whoever started the group first, so a newcomer's window comes
 // last and no window moves as people arrive (the screen, home.js `screen`;
-// the Draft 2 canvas's frames 8-10): one order for every door.
+// the Draft 2 canvas's frames 8-10): one order for every door. `started`
+// is a string, whose `.at` is a method, so it is asked by name.
 function people(rows) {
-  const each = [...new Map(rows.map((r) => [r.person_key, r])).values()].sort((a, b) => (a.joined.at ?? 0) - (b.joined.at ?? 0));
+  const since = (p) => (p.joined === 'started' ? 0 : p.joined.at);
+  const each = [...new Map(rows.map((r) => [r.person_key, r])).values()].sort((a, b) => since(a) - since(b));
   const at = (d, m = -d.getTimezoneOffset()) => `${d.toLocaleString('sv-SE')} ${m < 0 ? '-' : '+'}${String(Math.trunc(Math.abs(m) / 60) * 100 + (Math.abs(m) % 60)).padStart(4, '0')}`;
   const when = (j) => (j === 'started' ? 'started the group' : `joined ${at(new Date(j.at * 1000))}`);
   return each.map((p) => [p, each.filter((q) => q.person === p.person).length > 1 ? `${p.person} (${when(p.joined)})` : p.person, rows.filter((r) => r.person_key === p.person_key).map((r) => r.device)]);
