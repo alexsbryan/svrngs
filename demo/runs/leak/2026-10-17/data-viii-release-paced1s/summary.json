@@ -1,0 +1,211 @@
+{
+ "cond": "viii-release-paced1s",
+ "n": 25,
+ "log": "error",
+ "env": [],
+ "b_secs": 600.0,
+ "bin": "/home/alexbryan/twentyfive/svrngs",
+ "probe": false,
+ "b_every": 1.0,
+ "started": 1792289803.8052123,
+ "cores": 32,
+ "shared": 24,
+ "phases": {
+  "A": [
+   1792289823.734,
+   1792289943.734
+  ],
+  "B": [
+   1792289943.735,
+   1792290543.807
+  ],
+  "C": [
+   1792290543.807,
+   1792290603.808
+  ],
+  "D": [
+   1792290603.808,
+   1792290663.808
+  ],
+  "E": [
+   1792290663.809,
+   1792290723.809
+  ]
+ },
+ "result": {
+  "A": {
+   "secs": 119.0,
+   "rss_kib": [
+    65620,
+    68376
+   ],
+   "anon_kib": [
+    41680,
+    44444
+   ],
+   "hwm_kib": 68376,
+   "grew_kib": 2756,
+   "reads": 0,
+   "errors": 0,
+   "kib_per_read": null,
+   "cpu_pct": 1.3,
+   "threads": [
+    66,
+    66
+   ],
+   "fds": [
+    20,
+    20
+   ],
+   "log_bytes": [
+    0,
+    91
+   ],
+   "aiko_rss_kib": [
+    36616,
+    51452
+   ]
+  },
+  "B": {
+   "secs": 599.1,
+   "rss_kib": [
+    68680,
+    122460
+   ],
+   "anon_kib": [
+    44748,
+    98528
+   ],
+   "hwm_kib": 122460,
+   "grew_kib": 53780,
+   "reads": 599,
+   "errors": 0,
+   "kib_per_read": 89.78,
+   "cpu_pct": 1.5,
+   "threads": [
+    66,
+    66
+   ],
+   "fds": [
+    20,
+    19
+   ],
+   "log_bytes": [
+    91,
+    91
+   ],
+   "aiko_rss_kib": [
+    51524,
+    69240
+   ],
+   "kib_per_read_first_third": 114.37,
+   "kib_per_read_last_third": 69.07
+  },
+  "C": {
+   "secs": 59.0,
+   "rss_kib": [
+    122648,
+    123356
+   ],
+   "anon_kib": [
+    98716,
+    99424
+   ],
+   "hwm_kib": 123356,
+   "grew_kib": 708,
+   "reads": 0,
+   "errors": 0,
+   "kib_per_read": null,
+   "cpu_pct": 1.0,
+   "threads": [
+    66,
+    66
+   ],
+   "fds": [
+    19,
+    19
+   ],
+   "log_bytes": [
+    91,
+    91
+   ],
+   "aiko_rss_kib": [
+    69260,
+    71228
+   ]
+  },
+  "D": {
+   "secs": 59.0,
+   "rss_kib": [
+    123540,
+    125000
+   ],
+   "anon_kib": [
+    99608,
+    101068
+   ],
+   "hwm_kib": 125000,
+   "grew_kib": 1460,
+   "reads": 216168,
+   "errors": 0,
+   "kib_per_read": 0.01,
+   "cpu_pct": 37.6,
+   "threads": [
+    66,
+    66
+   ],
+   "fds": [
+    20,
+    19
+   ],
+   "log_bytes": [
+    91,
+    91
+   ],
+   "aiko_rss_kib": [
+    71264,
+    73476
+   ],
+   "kib_per_read_first_third": 0.01,
+   "kib_per_read_last_third": 0.01
+  },
+  "E": {
+   "secs": 59.0,
+   "rss_kib": [
+    125184,
+    125420
+   ],
+   "anon_kib": [
+    101252,
+    101488
+   ],
+   "hwm_kib": 125420,
+   "grew_kib": 236,
+   "reads": 0,
+   "errors": 0,
+   "kib_per_read": null,
+   "cpu_pct": 0.9,
+   "threads": [
+    66,
+    66
+   ],
+   "fds": [
+    19,
+    20
+   ],
+   "log_bytes": [
+    91,
+    91
+   ],
+   "aiko_rss_kib": [
+    73488,
+    76152
+   ]
+  }
+ },
+ "verdict": "ran",
+ "ended": 1792290725.3122067,
+ "stopped": "{\"keepers\": {\"found\": \"stopped\", \"start\": \"stopped\"}, \"killed_after\": []}",
+ "founder_log_bytes": 91,
+ "cleaned": "{\"removed\": \"/home/alexbryan/twentyfive/leak/w-viii-release-paced1s\"}"
+}

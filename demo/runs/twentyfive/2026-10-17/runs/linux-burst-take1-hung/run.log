@@ -1,0 +1,29 @@
+Traceback (most recent call last):
+  File "/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/bb17e709-0dcd-4285-9662-14f7287f9f8d/scratchpad/twentyfive/run.py", line 361, in <module>
+    main()
+    ~~~~^^
+  File "/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/bb17e709-0dcd-4285-9662-14f7287f9f8d/scratchpad/twentyfive/run.py", line 242, in main
+    drive(a, machines, counts, founder_on, summary, save)
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/bb17e709-0dcd-4285-9662-14f7287f9f8d/scratchpad/twentyfive/run.py", line 251, in drive
+    m.keeper("sampler", "--bin", m.bin, "--w", m.w, "--secs", 10)
+    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/bb17e709-0dcd-4285-9662-14f7287f9f8d/scratchpad/twentyfive/run.py", line 69, in keeper
+    r = self.sh(cmd, timeout=30)
+  File "/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/bb17e709-0dcd-4285-9662-14f7287f9f8d/scratchpad/twentyfive/run.py", line 55, in sh
+    r = subprocess.run(argv, capture_output=True, timeout=timeout, text=not binary)
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/subprocess.py", line 556, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/subprocess.py", line 1222, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/subprocess.py", line 2126, in _communicate
+    self._check_timeout(endtime, orig_timeout, stdout, stderr)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/subprocess.py", line 1266, in _check_timeout
+    raise TimeoutExpired(
+    ...<2 lines>...
+            stderr=b''.join(stderr_seq) if stderr_seq else None)
+subprocess.TimeoutExpired: Command '['ssh', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=10', 'alexbryan@fedora', 'cd /home/alexbryan/twentyfive && mkdir -p /home/alexbryan/twentyfive/w && nohup python3 fleet.py sampler --bin /home/alexbryan/twentyfive/svrngs --w /home/alexbryan/twentyfive/w --secs 10 > /home/alexbryan/twentyfive/w/keeper-sampler.out 2>&1 < /dev/null &']' timed out after 30 seconds
+exit 1

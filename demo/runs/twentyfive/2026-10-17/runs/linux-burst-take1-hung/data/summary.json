@@ -1,0 +1,61 @@
+{
+ "mode": "burst",
+ "layout": "linux",
+ "counts": {
+  "linux": 25
+ },
+ "founder_on": "linux",
+ "started": 1792285203.5835378,
+ "pre": {
+  "linux_kit": {
+   "binary": "linux-x86_64",
+   "sha256": "8d3c502023dc68d8322dc7699ead98a847222e6913d476cd998465358ab0a553",
+   "same_as_fetched": true
+  },
+  "linux_clock": {
+   "offset_s": 0.1526,
+   "rtt_s": 0.349
+  },
+  "release_sums": {
+   "svrngs-darwin-aarch64.tar.gz": "4d087b938f01ccbb4da5e71e7127b5751b305cecfd2df54df4f869014e57c216",
+   "svrngs-darwin-x86_64.tar.gz": "db470a50751e29a1a28ee2dd9c8aa2102cd9abfa16c44a6b7491477081f79b71",
+   "svrngs-linux-aarch64.tar.gz": "211b9e2c2d4d530e8c211813c17ceaac9492e4baf8accdd363ea924266961040",
+   "svrngs-linux-x86_64.tar.gz": "fd24125bd01f1efbe682435dca7097541b872e29e4ee08aed6843399fb023659"
+  },
+  "n0_from_linux": {
+   "use1-1": "200",
+   "usw1-1": "200",
+   "euc1-1": "200",
+   "aps1-1": "200"
+  },
+  "load_linux": "3.97 3.19 2.66 4/2059 548392"
+ },
+ "verdict_inputs_on": "the Mac's clock",
+ "stopped": {
+  "linux": {
+   "keepers": {
+    "sampler": "stopped"
+   },
+   "killed_after": []
+  }
+ },
+ "events_linux": [],
+ "samples_linux": [
+  {
+   "t0": 1792285219.03,
+   "t1": 1792285229.053,
+   "load": 3.5859375,
+   "cores": 32,
+   "rows": []
+  },
+  {
+   "t0": 1792285229.053,
+   "t1": 1792285239.075,
+   "load": 3.72998046875,
+   "cores": 32,
+   "rows": []
+  }
+ ],
+ "wall": [],
+ "ended": 1792285251.1060858
+}
