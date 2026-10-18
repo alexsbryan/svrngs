@@ -1,0 +1,118 @@
+{
+ "1": {
+  "verdict": "passed",
+  "said_ms": 219,
+  "listed": {
+   "ana": {
+    "listed": true,
+    "ms": 522
+   },
+   "bo": {
+    "listed": true,
+    "ms": 526
+   },
+   "cy": {
+    "listed": true,
+    "ms": 528
+   }
+  },
+  "build": {
+   "bytes": 5679979,
+   "bo": {
+    "held": true,
+    "ms": 1113
+   },
+   "cy": {
+    "held": true,
+    "ms": 1115
+   }
+  }
+ },
+ "2": {
+  "verdict": "passed",
+  "ms": 218
+ },
+ "3": {
+  "verdict": "passed",
+  "ms": 222,
+  "reached_ms": {
+   "bo": 3,
+   "cy": 2
+  }
+ },
+ "4": {
+  "verdict": "passed",
+  "through": "Ana",
+  "drawn_ms": 4510,
+  "listed_ms": 832
+ },
+ "5": {
+  "verdict": "passed",
+  "ms": 217,
+  "reached_ms": {
+   "ana": 3,
+   "bo": 3
+  }
+ },
+ "6": {
+  "verdict": "passed",
+  "reached_ms": {
+   "ana": 5,
+   "cy": 3
+  },
+  "every_page_ms": 5632,
+  "phone_listed_ms": 869
+ },
+ "7": {
+  "verdict": "passed",
+  "held_out": {
+   "ana": {
+    "out": true,
+    "ms": 294
+   },
+   "cy": {
+    "out": true,
+    "ms": 295
+   }
+  },
+  "phone_listed_ms": 10937
+ },
+ "8": {
+  "verdict": "passed",
+  "proposed_ms": 220,
+  "agreed_to_read_ms": 383,
+  "right_after_agree": "House rules\nHow your house decides\n\nA rule holds once everyone in your house when it was proposed agrees, and one objection stops it."
+ },
+ "9": {
+  "verdict": "passed",
+  "held_out": {
+   "ana": {
+    "out": true,
+    "ms": 529
+   }
+  }
+ },
+ "10": {
+  "verdict": "passed",
+  "phone_listed_ms": 1887,
+  "after_press_ms": 256,
+  "right_after_agree": "House rules\nHow your house decides\n\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them."
+ },
+ "11": {
+  "verdict": "passed",
+  "asked_ms": 5608,
+  "changed_ms": 579
+ },
+ "12": {
+  "verdict": "passed",
+  "read": 86
+ },
+ "13": {
+  "verdict": "passed",
+  "steps": 26
+ },
+ "14": {
+  "verdict": "never-ran",
+  "why": "a house with real people, a second host and a phone on cellular are the operator's"
+ }
+}
