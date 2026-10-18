@@ -20,6 +20,21 @@ fn open(dir: &std::path::Path) -> RingJournal {
     RingJournal::open(dir, NS).unwrap()
 }
 
+/// A journal holding one whole line, "whole", with `tail` written after it
+/// as a peer's malformed line or a torn write leaves it; its directory
+/// with it, kept for as long as the journal is read.
+fn whole_then(tail: &str) -> (tempfile::TempDir, RingJournal) {
+    let dir = tempfile::tempdir().unwrap();
+    let journal = open(dir.path());
+    journal
+        .append(record("whole"), &key(1), &ring(), None, &Ed25519Verifier)
+        .unwrap();
+    let path = journal.dir().join("ring_oplog.jsonl");
+    let raw = std::fs::read_to_string(&path).unwrap() + tail;
+    std::fs::write(&path, raw).unwrap();
+    (dir, journal)
+}
+
 /// One peer op, and the honest total a peer lacks: the tests' spellings of
 /// the doors the round uses, `ingest_all` of one and
 /// `ops_missing_from_within` with no budget.
@@ -164,19 +179,11 @@ fn the_door_has_no_opinion_about_what_an_act_says() {
 /// mysterious bad signature.
 #[test]
 fn a_payload_with_no_canonical_form_is_a_malformed_line() {
-    let dir = tempfile::tempdir().unwrap();
-    let journal = open(dir.path());
-    let r = ring();
-    journal
-        .append(record("whole"), &key(1), &r, None, &Ed25519Verifier)
-        .unwrap();
-    let path = journal.dir().join("ring_oplog.jsonl");
-    let mut raw = std::fs::read_to_string(&path).unwrap();
-    raw.push_str(
+    let (_dir, journal) = whole_then(concat!(
         r#"{"id":"ring-abc","v":1,"ts_unix":1,"actor":"aa","seq":0,"sig":"x","op":"record","payload":{"amount":3.5}}"#,
-    );
-    raw.push('\n');
-    std::fs::write(&path, raw).unwrap();
+        "\n"
+    ));
+    let r = ring();
 
     let f = journal.admit(&r, &Ed25519Verifier).unwrap();
     assert_eq!(applied(&f), vec!["whole"]);
@@ -619,16 +626,8 @@ fn a_half_delivered_peer_is_a_named_hole_not_a_clean_answer() {
 /// reported gap, not an invisible subtraction.
 #[test]
 fn a_torn_last_line_is_reported_rather_than_quietly_dropped() {
-    let dir = tempfile::tempdir().unwrap();
-    let journal = open(dir.path());
+    let (_dir, journal) = whole_then("{\"id\":\"ring-abc\",\"v\":1,\"ts_un");
     let r = ring();
-    journal
-        .append(record("whole"), &key(1), &r, None, &Ed25519Verifier)
-        .unwrap();
-    let path = journal.dir().join("ring_oplog.jsonl");
-    let mut raw = std::fs::read_to_string(&path).unwrap();
-    raw.push_str("{\"id\":\"ring-abc\",\"v\":1,\"ts_un");
-    std::fs::write(&path, raw).unwrap();
 
     let f = journal.admit(&r, &Ed25519Verifier).unwrap();
     assert_eq!(applied(&f), vec!["whole"], "the whole line still counts");
@@ -855,16 +854,8 @@ fn a_forged_copy_first_does_not_shadow_the_act() {
 /// unreadable from then on.
 #[test]
 fn an_act_after_a_torn_line_is_whole() {
-    let dir = tempfile::tempdir().unwrap();
-    let journal = open(dir.path());
+    let (_dir, journal) = whole_then("{\"id\":\"ring-abc\",\"v\":1,\"ts_un");
     let r = ring();
-    journal
-        .append(record("whole"), &key(1), &r, None, &Ed25519Verifier)
-        .unwrap();
-    let path = journal.dir().join("ring_oplog.jsonl");
-    let mut raw = std::fs::read_to_string(&path).unwrap();
-    raw.push_str("{\"id\":\"ring-abc\",\"v\":1,\"ts_un");
-    std::fs::write(&path, raw).unwrap();
     journal
         .append(record("after"), &key(1), &r, None, &Ed25519Verifier)
         .unwrap();
