@@ -27,7 +27,7 @@ cd "$(dirname "$0")/.."
 # relays, chosen until the operator flips it; at svrngs's, whose relay
 # answers before the build is published (DESIGN §7); unread, refused.
 case "$(sed -n 's/^pub const SHIPPED: MeetAt = MeetAt::\(.*\);$/\1/p' crates/svrngs/src/cli.rs)" in
-  N0) echo "deploy-page: this build meets its groups at n0's relays, until the switch to svrngs's (DESIGN §9)" ;;
+  N0) echo "deploy-page: this build meets its groups at n0's relays, until the switch to svrngs's (PLAN §2)" ;;
   Svrngs) RELAY="$(sed -n 's/^pub const DEFAULT_RELAY: &str = "\(.*\)";$/\1/p' crates/svrngs/src/cli.rs)"
     scripts/relay-answers.sh "$RELAY" || { echo "deploy-page: ${RELAY:-no relay} does not answer, and this build meets its groups there: run scripts/deploy-relay.sh first" >&2; exit 1; } ;;
   *) echo "deploy-page: cannot read where this build meets its groups (SHIPPED, crates/svrngs/src/cli.rs)" >&2; exit 1 ;;
