@@ -1,0 +1,62 @@
+demo/house-rules.md at c5d29109: 6 blocks, 9 lines
+[copy] $ cargo build -p svrngs
+[copy] exit 0    Compiling svrngs-node v0.1.0 (/Users/alexsbryan/dev/svrngs/crates/svrngs-node)
+   Compiling svrngs v0.1.0 (/Users/alexsbryan/dev/svrngs/crates/svrngs)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 14.41s
+
+[ana] $ export HOME=/tmp/house/ana; mkdir -p $HOME
+[ana] $ target/debug/svrngs new "Elm" --as Ana &
+[ana] printed a link
+[bo] $ export HOME=/tmp/house/bo; mkdir -p $HOME
+[bo] $ target/debug/svrngs join 'svrngs://join/<the token>' --as Bo &
+[bo] said: You're in Elm, as Bo.
+[cy] $ export HOME=/tmp/house/cy; mkdir -p $HOME
+[cy] $ target/debug/svrngs join 'svrngs://join/<the token>' --as Cy &
+[cy] said: You're in Elm, as Cy.
+[ana] $ sed 's/127.0.0.1/svrngs.localhost/' $HOME/.svrngs/api
+[ana] home page: http://svrngs.localhost:59586/
+[bo] $ sed 's/127.0.0.1/svrngs.localhost/' $HOME/.svrngs/api
+[bo] home page: http://svrngs.localhost:59612/
+[cy] $ sed 's/127.0.0.1/svrngs.localhost/' $HOME/.svrngs/api
+[cy] home page: http://svrngs.localhost:59630/
+[ana] step 5: ok (563 ms)
+[ana] step 6, the link: ok (250 ms)
+[ana] step 6: ok (397 ms)
+[ana] step 7: ok (226 ms)
+[cy] step 8, the link: ok (430 ms)
+[cy] step 8: ok (557 ms)
+[bo] step 9, the link: ok (232 ms)
+[bo] step 9: ok (545 ms)
+[ana] step 9, Ana's: ok (257 ms)
+[bo] step 10: ok (517 ms)
+[ana] step 10, Ana's: ok (259 ms)
+step 10, Ana's: the page never said 'Your house’s rules\\n+Quiet hours are 10pm to 7am \\(you proposed it on \\d{1,2} \\w{3}\\)':
+House rules
+How your house decides
+
+A rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.
+
+Your house’s rules
+
+Your house has no rules yet.
+
+What’s proposed
+
+Quiet hours are 10pm to 7am
+
+You proposed it on 17 Oct.
+
+Cy objects: “I work late on Fridays”
+
+Propose a rule
+
+Your rule:  Propose this rule to everyone in your house
+
+Change how your house decides
+Who has a say
+
+Everyone in your house has a say: Cy and you.
+
+Bo had a say from 17 Oct until 17 Oct, when they left.
+
+Cy joined on 17 Oct.
