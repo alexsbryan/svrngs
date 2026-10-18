@@ -43,6 +43,10 @@ and whether the house is fine seeing it (STATE.md says the bets):
 - **"At the run."** The queue builds it, runs it on one host and stops. The
   words for people wait for a real visit, whose bars the operator sets
   before it.
+- **The host chooses how long.** "Let's make that duration configurable,
+  but with reasonable default (48hr)", and, asked how long a host may
+  choose, "Up to 48 hours". 48 hours is chosen to start, and a host can
+  choose less. The house's 48 hours stays the bound.
 
 ## Why
 
