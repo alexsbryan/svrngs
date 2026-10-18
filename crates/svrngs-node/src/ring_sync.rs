@@ -237,7 +237,7 @@ pub fn spawn_ring_sync_loop(
             interval_secs = interval.as_secs(),
             "ring sync: loop started"
         );
-        let mut told = Told::new();
+        let mut told = LeavesTold::new();
         loop {
             #[expect(
                 clippy::disallowed_methods,
@@ -289,7 +289,7 @@ pub fn spawn_ring_sync_loop(
 pub async fn run_one_round(
     host: &Host,
     answered: &(impl Fn() + Sync),
-    told: &mut Told,
+    told: &mut LeavesTold,
 ) -> RoundOutcome {
     let mut outcome = RoundOutcome::default();
     let rail = &host.rail;
@@ -411,7 +411,7 @@ pub async fn run_one_round(
 /// Each group this computer left and each computer told its leave there
 /// that answered: the round's loop owns it, so a computer is told again
 /// only until it answers, and once more after a restart (#190).
-pub type Told = std::collections::BTreeSet<(String, String)>;
+pub type LeavesTold = std::collections::BTreeSet<(String, String)>;
 
 /// A group this computer left stands for nobody here, so no exchange
 /// carries its leave: told, each round, from the standing the round read,
@@ -421,7 +421,7 @@ fn leave_told<'a>(
     host: &'a Host,
     ns: &'a str,
     stands: std::collections::BTreeMap<String, crate::register::Member>,
-    told: &Told,
+    told: &LeavesTold,
 ) -> Option<impl std::future::Future<Output = Vec<(String, String)>> + 'a> {
     let computers: Vec<_> = (stands.into_iter())
         .filter(|(k, m)| {

@@ -170,12 +170,12 @@ fn brought(at: &Asking, group: &str, asker: &str, apps: &[String]) -> Served {
 type Yes = Json<(String, String)>;
 
 /// svrngs's answer, or its refusal.
-type Answer = Result<Response, Response>;
+type Handled = Result<Response, Response>;
 
 /// `POST /runs`: the asker's yes to the version of an app carried in their
 /// group that its files now are (canon-pin (c)), from the home page or a
 /// phone of the group's dialling it (`by`), written as theirs.
-pub(crate) async fn yes(at: State<Asking>, by: Option<Extension<Dialer>>, a: Yes) -> Answer {
+pub(crate) async fn yes(at: State<Asking>, by: Option<Extension<Dialer>>, a: Yes) -> Handled {
     let (State(at), Json((group, app))) = (at, a);
     let asker = by.map_or(at.host.actor.to_string(), |Extension(d)| d.actor());
     let act = says(&at, (&group, &app), &asker);
