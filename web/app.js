@@ -318,17 +318,19 @@ async function uses(lent, dialler, shown) {
 // within its cap (dial.rs `LINK_WITHIN`, `DIAL_WITHIN`), so none is waited
 // out before the next is asked; one answering late is closed (v1ui-race
 // (a)). Each from `dialler`'s one endpoint, as a relay keeps one per key.
+// None whose key is in `tried`, the link's computer by its issuer's.
 // The dial, and whose computer it is when not the link's.
-async function reachGroup(group, key, dialler) {
+async function reachGroup(group, key, dialler, tried = []) {
   relayed(group.token);
   const link = (group.computers ?? []).find((c) => c.key === issuer_of(group.token));
-  const others = (group.computers ?? []).filter((c) => c !== link);
-  trace(`PAGE: dialling the link's computer and ${others.length} other computer(s) at once`);
+  const others = (group.computers ?? []).filter((c) => c !== link && !tried.includes(c.key));
+  const linked = !tried.includes(issuer_of(group.token));
+  trace(`PAGE: dialling ${linked ? "the link's computer and " : ''}${others.length} other computer(s) at once`);
   const tries = [
-    dialler().then((ep) => ep.dial_link()).then((d) => [d]),
+    ...(linked ? [dialler().then((ep) => ep.dial_link()).then((d) => [d])] : []),
     ...others.map((c) => dialler().then((ep) => ep.dial(c.key, c.relay)).then((d) => [d, c])),
   ];
-  const [d, c] = await reach(Promise.any(tries), unanswered([link, ...others]));
+  const [d, c] = await reach(Promise.any(tries), unanswered([...(linked ? [link] : []), ...others]));
   trace(`PAGE: reached ${group.name} through ${c ? `${c.person}'s` : "the link's"} computer`);
   tries.forEach((t) => t.then(([o]) => o !== d && (trace('PAGE: a computer answered late, so closed'), o.close()), () => {}));
   return [d, c];
@@ -387,9 +389,15 @@ async function enter(group, asked) {
   // per key (web/src/lib.rs `endpoint`).
   let bound;
   const dialler = () => (bound ??= endpoint(key, group.token));
-  const [d, via] = await reachGroup(group, key, dialler);
+  // What the group lends, asked of the first computer to answer; when its
+  // answer fails, as a computer whose person left still answers the dial
+  // and no more (#205), of the next to answer of those not yet asked. Only
+  // once every one has been asked does the first failure stop the page.
+  const lends = (tried) => reachGroup(group, key, dialler, tried).then(([d, via]) => d.fetch('GET', PEOPLE_LENDS, [['accept', 'application/json']], null).then((res) => [d, via, res], (e) => (
+    trace(`PAGE: ${PEOPLE_LENDS} failed through ${whoseComputer(via)}, so the next to answer is asked: ${e}`), d.close(),
+    lends([...tried, via?.key ?? issuer_of(group.token)]).catch(() => Promise.reject(e)))));
+  const [d, via, res] = await lends([]);
   const whom = whoseComputer(via ?? (group.computers ?? []).find((c) => c.key === issuer_of(group.token)));
-  const res = await d.fetch('GET', PEOPLE_LENDS, [['accept', 'application/json']], null);
   if (!res.ok) {
     const why = res.headers.get('x-svrngs-refused');
     trace(`PAGE: ${PEOPLE_LENDS} answered ${res.status}, refused ${why}`);
