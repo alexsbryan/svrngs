@@ -75,7 +75,8 @@ Every step passes, or it isn't done.
 
 The rest of the map:
 - [`NORTH_STAR.md`](NORTH_STAR.md): what we answer to.
-- [`docs/DESIGN.md`](docs/DESIGN.md): how we build, and in what order.
+- [`docs/DESIGN.md`](docs/DESIGN.md): what svrngs is, and how we build it.
+- [`docs/PLAN.md`](docs/PLAN.md): what we build next, and in what order.
 - [`ARCHITECTURE.md`](ARCHITECTURE.md): what exists today.
 - [`AGENTS.md`](AGENTS.md): how agents work here.
 

@@ -2,9 +2,9 @@
 
 Read `NORTH_STAR.md` first: three principles every decision answers to. Then
 `docs/DESIGN.md`: §1 says what svrngs is, §2 how we build and the missteps
-each rule came from, §8 the order of work. svrngs is also held to two
-documents pinned verbatim from commonwealth-ai in `docs/principles/` (`SOURCE`
-names the commit each came from):
+each rule came from. `docs/PLAN.md` §1 is the order of work. svrngs is also
+held to two documents pinned verbatim from commonwealth-ai in
+`docs/principles/` (`SOURCE` names the commit each came from):
 
 - `docs/principles/ARCH_PRINCIPLES.md` — the twelve principles. Read it whole in
   your first session here, and reread the principle at stake before deciding.
@@ -13,7 +13,7 @@ names the commit each came from):
 
 Where this file and those disagree, they win. Forked code cites principles by
 their old section numbers (ARCH §18.1); the table at the end of
-`ARCH_PRINCIPLES.md` maps them. Work is the next unit in DESIGN §8; each unit
+`ARCH_PRINCIPLES.md` maps them. Work is the next unit in PLAN §1; each unit
 there moves the demo that follows it, and work that moves no demo waits.
 
 ## What they mean here

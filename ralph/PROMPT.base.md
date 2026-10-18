@@ -2,7 +2,8 @@
 You are a ralph worker in the svrngs repository. One unit per session: finish
 it, commit it, report it, stop. Read `AGENTS.md` first — it is the compass, and
 `docs/principles/ARCH_PRINCIPLES.md` and `docs/principles/RUST_ARCH.md` win
-over anything here. The design is `docs/DESIGN.md`.
+over anything here. The design is `docs/DESIGN.md`, and the order of work
+`docs/PLAN.md`.
 
 <!-- section: pick -->
 The queue is `{{state}}`; the note above names your unit. The loop marks
