@@ -91,8 +91,10 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # gates, 2. canon-pin (b), a carried app served at the files it was brought
 # with, svrngs-core 9 of its 40 and the repository 18; its (c), a new
 # version asked of each person and run only after their yes, svrngs-core 16
-# and the repository 66, both pages included.
-BUDGET = {"crates/svrngs-core": 3017, ".": 16558}
+# and the repository 66, both pages included. V1.1.1, the musl allocator
+# fix (demo/runs/leak/2026-10-17/), cut 3 first, door.rs's two dialer
+# guards made one, spent 1, and lowered it to one past where it landed.
+BUDGET = {"crates/svrngs-core": 3017, ".": 16556}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 

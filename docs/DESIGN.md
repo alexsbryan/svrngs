@@ -2057,7 +2057,8 @@ it, so any host a group names in ours' place serves it too: `install.sh`
 at the page's address, and under `get/` a tarball of `svrngs` for each
 platform built — macOS on Apple silicon and on Intel, Linux on x86_64 and
 aarch64 as static musl binaries, cross-built here by zig
-(cargo-zigbuild) — beside one `SHA256SUMS`. Nothing is fetched from
+(cargo-zigbuild) on mimalloc, since the malloc of zig's musl kept what
+svrngs freed (`demo/runs/leak/2026-10-17/`) — beside one `SHA256SUMS`. Nothing is fetched from
 anywhere else: the repository is private and has no releases.
 `install.sh`, POSIX `sh`, names the platform and refuses any other;
 fetches the tarball and the sums from the address the link names and

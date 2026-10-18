@@ -8,9 +8,11 @@
 #
 # macOS's two by cargo; Linux's two static (musl) by zig through
 # cargo-zigbuild, the open-source cross toolchain (brew install zig;
-# cargo install cargo-zigbuild). A platform that does not build is said by
-# name and the run exits 1 after the rest: never a site that lacks one
-# silently.
+# cargo install cargo-zigbuild), on mimalloc rather than the malloc of
+# zig's musl, which kept what svrngs frees (crates/svrngs/src/main.rs;
+# demo/runs/leak/2026-10-17/README.md). A platform that does not build is
+# said by name and the run exits 1 after the rest: never a site that lacks
+# one silently.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 OUT="target/web/site"
