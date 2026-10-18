@@ -11354,6 +11354,10 @@ here.
 Not fixed here: #208 is a move across apps, with #150; #209 and #210
 change what a page does, so each wants its red run first.
 
+`scripts/check.sh` at f9c7aeef, this audit's last code commit, exit 0:
+all 15 steps passed, principles pinned to app laws
+(/tmp/canonaudit/check.out).
+
 ### Findings
 
 | # | principle | path:line | fixed in | finding |
