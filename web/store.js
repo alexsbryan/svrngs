@@ -4,7 +4,8 @@
 //
 //   seal     `key`: the page's sealing key, AES-GCM 256, made once with
 //            `extractable: false`, so no script can read its bytes out,
-//            by the page when it first keeps a group, never by its worker.
+//            by the page when it first keeps a group, never by its worker;
+//            and beside it each visit made here, `visit <token>` (below).
 //   groups   by `id`: the group's name, the person's name in it, the link's
 //            token it was joined by, when it was last opened, and the
 //            person's key — 32 bytes — sealed: `iv` and `sealed`,
@@ -93,9 +94,30 @@ const bound = (id, iv) => ({ name: 'AES-GCM', iv, additionalData: new TextEncode
 // `maker`, who made the group, and `since`, when this phone joined it, in
 // seconds, so two of one name are told apart (v1ui-door (d)).
 export async function keep({ id, name, person, token, key, maker, since }) {
+  const kept = await sealed(id, key);
+  await run('groups', 'readwrite', (s) => s.put({ id, name, person, token, ...kept, opened: Date.now(), maker, since }));
+}
+
+// `key` sealed, bound to `id`: its `iv` and `sealed`.
+async function sealed(id, key) {
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const sealed = new Uint8Array(await crypto.subtle.encrypt(bound(id, iv), await sealingKey(true), key));
-  await run('groups', 'readwrite', (s) => s.put({ id, name, person, token, iv, sealed, opened: Date.now(), maker, since }));
+  return { iv, sealed: new Uint8Array(await crypto.subtle.encrypt(bound(id, iv), await sealingKey(true), key)) };
+}
+
+// A visit (guests-link; GUESTS §3.9), kept never as a group, so no group
+// lists it: beside the sealing key, under `visit <token>`, what the host's
+// computer answered and the visit's key, sealed as a group's is, bound to
+// the link's token. So the link opened again shows the visit again, or
+// says it has ended.
+export async function keepVisit(token, visit, key) {
+  const kept = await sealed(token, key);
+  await run('seal', 'readwrite', (s) => s.put({ ...visit, ...kept }, `visit ${token}`));
+}
+
+// The visit the link `token` made here, its key unsealed; else undefined.
+export async function visitOf(token) {
+  const v = await run('seal', 'readonly', (s) => s.get(`visit ${token}`));
+  return v && { ...v, key: await unseal({ ...v, id: token }) };
 }
 
 // Every group kept, the last opened first. Their keys stay sealed.

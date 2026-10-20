@@ -215,6 +215,36 @@ async function join(token, kept) {
   }
 }
 
+// A visit (guests-link; GUESTS §5, "How a visit is made"): a link a member
+// made for a guest, `<origin>#visit=<token>`. The page asks the guest's
+// name once, makes a key fresh for this visit, never one it keeps for a
+// group (§3.9), and redeems the link at the member's computer, which
+// writes the visit; it keeps the visit apart from every group
+// (store.js `keepVisit`), so the link opened again shows it again, or says
+// it has ended. Each pass lasts past the visit, so on a lend's page the
+// lender's door, which asks the fold, says it has ended (door.rs `guest_of`).
+async function visit(token) {
+  relayed(token);
+  let { key, ...v } = (await store.visitOf(token)) ?? {};
+  if (!key) {
+    key = crypto.getRandomValues(new Uint8Array(32));
+    const asking = askName('the group you’re visiting');
+    heading.textContent = 'You’re invited over as a guest';
+    const guest = await asking;
+    heading.textContent = 'Opening your link…';
+    const issuer = await reach(connect_to_join(key, token), 'The computer that sent this link did not answer. Try again later.');
+    v = JSON.parse(await post(issuer, '/visit', JSON.stringify({ ask: JSON.parse(ask(key, token)), guest })).finally(() => issuer.close()));
+    await store.keepVisit(token, v, key);
+  }
+  const until = new Date(v.until * 1000).toLocaleString();
+  trace(`PAGE: a guest of ${v.host} until ${v.until}, opening ${Object.keys(v.lent).join(', ')}`);
+  if (v.until <= Date.now() / 1000) return show(`Your visit as ${v.host}’s guest ended ${until}.`, false);
+  const lent = Object.entries(v.lent).map(([name, kind]) => ({ key: issuer_of(token), relay: relay_of(token), name, kind, person: v.host }));
+  show(`You’re ${v.host}’s guest until ${until}`, true);
+  list.replaceChildren(...lent.map((l) => row([Object.assign(el('button', named(l)), { onclick: () => open({ token }, key, lent, [], l, undefined, v.until + PASS_LIFE) })])));
+  said.textContent = lent.length ? '' : `${v.host} lends nothing yet.`;
+}
+
 const hex = (bytes) => [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
 
 // Open `l`, one of `lent`, as the person whose key is `key` in `group`: a
@@ -222,7 +252,8 @@ const hex = (bytes) => [...bytes].map((b) => b.toString(16).padStart(2, '0')).jo
 // to its origin in the fragment, which no origin is sent (the module docs),
 // with whose each is and whose computer did not answer, which its worker
 // tells its pages (lend.js `told`). Asked by a lend, at `at`.
-function open(group, key, lent, unanswered, l, at) {
+// A guest's pass lasts until `until` (guests-link), past the visit.
+function open(group, key, lent, unanswered, l, at, until = Math.floor(Date.now() / 1000) + PASS_LIFE) {
   if (!('serviceWorker' in navigator)) {
     said.textContent = `This browser cannot open ${named(l)}.`;
     return;
@@ -231,7 +262,6 @@ function open(group, key, lent, unanswered, l, at) {
   const reads = lent.filter((o) => o !== l && (l.reads ?? []).includes(o.kind));
   const lends = [l, ...reads].map((o) => ({ label: label(o.key, o.name), key: o.key, relay: o.relay ?? null, name: o.name, kind: o.kind, person: o.person, asks: o.asks }));
   const holder = crypto.getRandomValues(new Uint8Array(32));
-  const until = Math.floor(Date.now() / 1000) + PASS_LIFE;
   // Each app at an address of its own under this page's host (DESIGN §7),
   // the page's files at its root.
   const back = at ? `&back=${encodeURIComponent(at)}` : '';
@@ -524,6 +554,7 @@ async function opening(fragment) {
     // The wasm by its one URL, from the cache the worker reads it from
     // too (store.js `runtime`, u4-9).
     await init({ module_or_path: store.runtime() });
+    if (fragment.startsWith('visit=')) return await visit(fragment.slice('visit='.length));
     const asked = /^(open|ask)=/.test(fragment) ? new URLSearchParams(fragment) : null;
     const token = asked ? '' : fragment;
     if (token) offer(token);

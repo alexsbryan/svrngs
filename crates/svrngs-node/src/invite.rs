@@ -27,6 +27,16 @@ pub const LINK_LIFE_SECS: i64 = 24 * 60 * 60;
 /// no secret changes.
 const DRAWS: usize = 256;
 
+/// Where this computer keeps the links it made for a guest (guests-link;
+/// GUESTS §5), under its journals' root, one file a link named by the
+/// link's key: off the record, as nobody but this computer redeems one.
+pub const VISIT_LINKS: &str = "visit-links";
+
+/// A link made for a guest, as kept until it is redeemed or lapses: its
+/// group, how long the visit lasts from when the guest opens it, in
+/// seconds, and when it was made.
+pub type VisitLink = (String, i64, i64);
+
 /// The one spelling of the file in a group's directory that keeps the page
 /// its https links print on (u2-7; group.rs `write_origin` writes it).
 pub const ORIGIN_FILE: &str = "origin";
@@ -153,15 +163,18 @@ impl Host {
     /// A link to `group`, for the home page (start-home) and `svrngs link`
     /// and `new` alike: the https one on `page`, kept from now on, when
     /// given (`link --origin`), else on the group's kept page; with
-    /// `device`, a device link, and whose. Its relay is the one reached
-    /// now, with no wait: a running computer has reached it, the command
-    /// waits first, or [`carried`] says why.
+    /// `device`, a device link, and whose; with `visit`, a guest's link for
+    /// a visit that long, kept here ([`VisitLink`]) in place of an
+    /// `Invite`, so it lets nobody join, and on the group's page alone. Its
+    /// relay is the one reached now, with no wait: a running computer has
+    /// reached it, the command waits first, or [`carried`] says why.
     #[expect(clippy::disallowed_methods, reason = "a link's life starts now")]
     pub fn link(
         &self,
         group: &str,
         device: bool,
         page: Option<&Origin>,
+        visit: Option<i64>,
     ) -> Result<Linked, Unminted> {
         let unkept = |e: &dyn std::fmt::Display| Unminted::Unkept(e.to_string());
         // Held first, so no journal is opened for a group it does not hold.
@@ -180,13 +193,47 @@ impl Host {
         let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH);
         let now = now.map_err(|e| unkept(&e))?.as_secs() as i64;
         let home = self.endpoint.addr().relay_urls().next().cloned();
-        let token = self.mint(group, carried(&self.relay, home), key, now)?;
+        let relay = carried(&self.relay, home);
+        let token = match visit {
+            None => self.mint(group, relay, key, now)?,
+            Some(_) if page.is_none() => {
+                tracing::debug!(target: "link", group, "link: refused — a guest's link opens in a browser, and this group keeps no page");
+                return Err(Unminted::Unkept(
+                    "this group keeps no page for a guest to open".into(),
+                ));
+            }
+            Some(length) => {
+                let (token, dir) = (
+                    draw(self.endpoint.id(), relay),
+                    self.rail.root().join(VISIT_LINKS),
+                );
+                let kept = serde_json::to_vec(&(group, length, now)).map_err(|e| unkept(&e))?;
+                let at = dir.join(actor_of(&token.key()));
+                (std::fs::create_dir_all(&dir).and_then(|()| std::fs::write(at, kept)))
+                    .map_err(|e| unkept(&e))?;
+                tracing::debug!(target: "link", group, length, "link: a guest's link, kept here and in no record");
+                token
+            }
+        };
         tracing::debug!(target: "link", group, ?device, page = ?page.as_ref().map(Origin::as_str), "link: made, on the group's kept page too when it keeps one");
         Ok(Linked {
             token,
             page,
             device,
         })
+    }
+
+    /// The guest's link whose key is `link`, claimed: removed as it is
+    /// read, so of two redeeming it at once one has it, and it lets one
+    /// guest in, once (guests-link). None when this computer never made it,
+    /// it was claimed, or it lapsed [`LINK_LIFE_SECS`] after it was made.
+    pub(crate) fn claim_visit(&self, link: &str, now: i64) -> Option<VisitLink> {
+        let at = self.rail.root().join(VISIT_LINKS).join(link);
+        let kept = (std::fs::read(&at).ok()).filter(|_| std::fs::remove_file(&at).is_ok());
+        let kept = kept.and_then(|k| serde_json::from_slice::<VisitLink>(&k).ok());
+        let lapsed = kept.as_ref().map(|k| now > k.2 + LINK_LIFE_SECS);
+        tracing::debug!(target: "link", link, held = kept.is_some(), ?lapsed, "link: a guest's link claimed, if this computer made it and nobody claimed it first, and in time");
+        kept.filter(|_| lapsed == Some(false))
     }
 
     /// This computer's person in `group`, by their first key and name, as

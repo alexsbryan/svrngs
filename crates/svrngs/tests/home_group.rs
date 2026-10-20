@@ -272,7 +272,7 @@ async fn the_home_page_joins_another_group_from_its_link_while_svrngs_runs(
     )
     .await
     .expect("Sam makes Trip");
-    let made = (sam.host().link(&trip.id(), false, None)).expect("Sam makes a link to Trip");
+    let made = (sam.host().link(&trip.id(), false, None, None)).expect("Sam makes a link to Trip");
     let link = svrngs_node::link::client_link(&made.token);
 
     let home = tempfile::tempdir().unwrap();

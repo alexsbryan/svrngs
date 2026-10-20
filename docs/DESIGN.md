@@ -1111,7 +1111,17 @@ from the journal waits in PLAN §2.
   app (`door.rs`, `guest_of`; `RingRail::visit_anywhere`). It counts the
   guest as one person against the lend's limit. Each refusal says which of
   those refused it: `ended`, with the end, its time, the host's Stop or the
-  host no longer a member; else `closed`.
+  host no longer a member; else `closed`. A visit is made by a link in any
+  chat: the host's home page asks how long, 48 hours chosen to start and
+  nothing longer offered, and makes `<page>#visit=<token>`, a join link's
+  token with its secret in the fragment. It is in no `Invite`, since
+  redeeming one writes an `Admit`: the host's computer keeps it a day
+  (`invite.rs`, `VISIT_LINKS`), and `/visit` on the redeem protocol claims
+  it once, judged as an ask is, and writes the `Visit` for the name the
+  guest gave and the key their page made, `until` the length from then.
+  The guest's page keeps the visit apart from every group (`web/store.js`,
+  `keepVisit`), so the link opened again shows it again or says it has
+  ended.
 - **What an app places by hash is not kept.** Its bytes are in no act and no
   folder; which hashes a computer carries for which group, and until when,
   is in its running process alone, each kept past its lapse so a get says

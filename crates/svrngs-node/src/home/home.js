@@ -84,7 +84,12 @@ async function show(g, s) {
     const shown = (...words) => s.querySelector('.link').replaceChildren(...words);
     const copy = (link, p) => button('Copy the link', () => Promise.resolve().then(() => navigator.clipboard.writeText(link)).then(() => p.append(' Copied.'), () => p.append(' Select it above to copy it.')));
     const made = (device, words) => button(words, () => post('/link', { group: g.id, device }).then(({ client, https }) => shown(device ? 'Open this link on your other computer or phone; it joins as you, so send it to nobody else: ' : 'Send this link to the person you are inviting: ', el('code', https ?? client), https ? ' It opens in a browser, which says how to join from there.' : ' They join with svrngs join and this link.', ' It works for a day, while this computer is on. ', copy(https ?? client, s.querySelector('.link'))), (e) => shown(e.message)));
-    s.append(el('p', '', made(false, `Make a link to invite someone to ${g.name ?? 'this group'}`), made(true, 'Make a link to add your phone or another computer of yours')), Object.assign(el('p'), { className: 'link' }));
+    // A guest (guests-link; GUESTS §5): how long asked first, 48 hours
+    // chosen to start and nothing longer offered, counted from when the
+    // guest opens the link; then the link, for any chat.
+    const length = el('select', '', ...[48, 24, 6].map((h) => Object.assign(el('option', `${h} hours`), { value: h * 3600 })));
+    const guest = button('Have a guest', () => guest.replaceWith(el('label', 'For how long, from when they open the link: ', length), button('Make a link for your guest', () => post('/link', { group: g.id, device: false, visit: Number(length.value) }).then(({ https }) => shown('Send this link to your guest, in any chat: ', el('code', https), ` They open it in a browser and give their name. For ${length.selectedOptions[0].textContent} from then they can open what you lend, and everyone in ${g.name ?? 'this group'} sees they are your guest. It lets one guest in, once, within a day, while this computer is on. `, copy(https, s.querySelector('.link'))), (e) => shown(e.message)))));
+    s.append(el('p', '', made(false, `Make a link to invite someone to ${g.name ?? 'this group'}`), made(true, 'Make a link to add your phone or another computer of yours'), guest), Object.assign(el('p'), { className: 'link' }));
     // Leaving (groups-leave), what stays and what stops said before; whoever
     // keeps the order of removals chooses who keeps it next, beside it.
     const name = g.name ?? 'this group';

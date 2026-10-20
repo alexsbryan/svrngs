@@ -383,20 +383,31 @@ async fn lend_one(
 }
 
 /// What the person asks a link for: to invite someone to `group`, or,
-/// with `device`, to add a computer or phone of their own.
+/// with `device`, to add a computer or phone of their own, or, with
+/// `visit`, to have a guest for that many seconds (guests-link).
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Linking {
     group: String,
     device: bool,
+    #[serde(default)]
+    visit: Option<i64>,
 }
 
 /// `POST /link`: a link to the group, as `svrngs link` makes it
-/// ([`crate::node::Host::link`]).
+/// ([`crate::node::Host::link`]); a guest's, `<page>#visit=<token>`, so
+/// the page tells it from a join link before it asks anything.
 async fn link(State(at): State<Asking>, Json(l): Json<Linking>) -> Response {
-    match at.host.link(&l.group, l.device, None) {
+    match at.host.link(&l.group, l.device, None, l.visit) {
         Ok(made) => {
             let https = made.page.map(|p| https_link(&p, &made.token));
+            let https = https.map(|h| {
+                if l.visit.is_some() {
+                    h.replacen('#', "#visit=", 1)
+                } else {
+                    h
+                }
+            });
             Json(serde_json::json!({ "client": client_link(&made.token), "https": https }))
                 .into_response()
         }

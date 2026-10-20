@@ -138,6 +138,18 @@ impl Command for MintInvite {
     }
 }
 
+/// A host's computer writes the visit a guest's link made (guests-link;
+/// GUESTS §5): the fold, never this, decides whether it is one, so a visit
+/// past a bound is written, seen, and a visit nowhere (§3.7).
+impl Command for crate::Visit {
+    type Refusal = Infallible;
+    const READS: Reads = Reads::Membership;
+
+    fn decide(&self, _before: &Admission) -> Result<Vec<RailAct>, Infallible> {
+        Ok(vec![RailAct::Visit(self.clone())])
+    }
+}
+
 /// A member asks that `person` leave the group (U7; DESIGN §6 "Removal has
 /// one decider"): a `Remove` of each key standing as the one person of that
 /// name who joined `joined`, when it is asked, every device of theirs,

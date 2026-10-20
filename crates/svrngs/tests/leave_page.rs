@@ -74,7 +74,7 @@ async fn leaving_on_the_home_page_is_said_as_a_leave_everywhere(engine: harness:
         .await
         .expect("Sam makes Trip");
     let link = || {
-        let made = sam.host().link(&trip.id(), false, None);
+        let made = sam.host().link(&trip.id(), false, None, None);
         client_link(&made.expect("Sam makes a link to Trip").token)
     };
     let ana_dir = tempfile::tempdir().unwrap();
@@ -296,7 +296,10 @@ async fn a_leave_reaches_the_leavers_other_computer(engine: harness::Engine) {
     let one = computer(one_dir.path(), &one_key, &ours).await;
     let mut two = computer(two_dir.path(), &two_key, &ours).await;
     for g in &groups {
-        let made = sam.host().link(g, false, None).expect("Sam makes a link");
+        let made = sam
+            .host()
+            .link(g, false, None, None)
+            .expect("Sam makes a link");
         let sent = Link::parse(&client_link(&made.token)).unwrap();
         one.host()
             .join(&sent, &name("Ana"))
@@ -304,7 +307,7 @@ async fn a_leave_reaches_the_leavers_other_computer(engine: harness::Engine) {
             .expect("Ana joins");
         let made = one
             .host()
-            .link(g, true, None)
+            .link(g, true, None, None)
             .expect("Ana makes a link for her devices");
         let sent = Link::parse(&client_link(&made.token)).unwrap();
         two.host()
@@ -433,7 +436,7 @@ async fn a_cut_by_a_handed_on_keeper_reaches_a_computer_off_as_it_landed() {
     for (who, as_) in [(&bo, "Bo"), (&one, "Ana")] {
         let made = sam
             .host()
-            .link(&trip, false, None)
+            .link(&trip, false, None, None)
             .expect("Sam makes a link");
         let sent = Link::parse(&client_link(&made.token)).unwrap();
         who.host()
@@ -443,7 +446,7 @@ async fn a_cut_by_a_handed_on_keeper_reaches_a_computer_off_as_it_landed() {
     }
     let made = one
         .host()
-        .link(&trip, true, None)
+        .link(&trip, true, None, None)
         .expect("Ana's link for her devices");
     let sent = Link::parse(&client_link(&made.token)).unwrap();
     two.host()
@@ -561,7 +564,7 @@ async fn a_leave_reaches_a_computer_off_as_it_landed() {
     let ana = computer(ana_dir.path(), &ana_key, &ours).await;
     let made = sam
         .host()
-        .link(&trip, false, None)
+        .link(&trip, false, None, None)
         .expect("Sam makes a link");
     let sent = Link::parse(&client_link(&made.token)).unwrap();
     ana.host()

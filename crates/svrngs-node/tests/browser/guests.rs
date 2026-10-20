@@ -5,9 +5,12 @@
 
 use super::*;
 
-/// Whose computer Kim's is, and whose Bo's.
+/// Whose computer Kim's is, Bo's and Cy's, and the key of a group of Sam's
+/// own, kept on Sam's page.
 const KIM: u8 = 1;
 const BO: u8 = 7;
+const CY: u8 = 8;
+const OWN: u8 = 9;
 
 in_both_engines!(
     /// **A visit by a link** (guests-link (a)). Kim's computer holds house,
@@ -19,12 +22,29 @@ in_both_engines!(
     /// Jellyfin from what the page lists: the film plays, and Jellyfin is
     /// told "Sam (Kim's guest)" on every request, never Kim. Kim's record
     /// holds one visit, Sam's, of 48 hours from when Sam opened the link.
+    ///
+    /// And the row's plants (guests-link (b)): no length past 48 hours is
+    /// offered, and one asked of `/link` anyway lets Ana in nowhere; Sam's
+    /// page, holding a group of Sam's own, makes the visit's key fresh and
+    /// keeps the visit apart from that group, shows it again on the link
+    /// opened again, and says when it has ended; the link lets Ana in
+    /// after Sam nowhere; and its secret never leaves the fragment. Cy is a
+    /// third member, so the house's bound leaves room for both guests.
     sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest
 );
 async fn sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest(engine: Engine) {
     let relay = relay().await;
     let dir = tempfile::tempdir().unwrap();
     let kim = computer(dir.path(), &relay, &signing(BO), KIM, "Kim").await;
+    let cy = svrngs_core::tests_support::Fixture {
+        act: RailAct::Admit {
+            person: Person::parse("Cy").unwrap(),
+            key: actor_of(&signing(CY)),
+            invite: None,
+        },
+        on_behalf_of: None,
+    };
+    kim.rail().commit(NS, &cy).unwrap().unwrap();
     let mp4 = dir.path().join("title.mp4");
     let size = film(&mp4);
     let (film_origin, film_heads) = origins::kept_range_origin(mp4, size).await;
@@ -57,7 +77,9 @@ async fn sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest(engine:
     std::fs::write(group.join(svrngs_node::invite::ORIGIN_FILE), &origin).unwrap();
     let home = format!("http://svrngs.localhost:{}/", kim.api_addr().port());
     let mut stdin = half.stdin.take().unwrap();
-    let told = json!({ "home": home, "name": "Sam", "open": "jellyfin" });
+    let own = hex::encode(signing(OWN).to_bytes());
+    let told =
+        json!({ "home": home, "name": "Sam", "open": "jellyfin", "group": NS, "ownKey": own });
     stdin
         .write_all(format!("{told}\n").as_bytes())
         .await
@@ -87,12 +109,21 @@ async fn sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest(engine:
     ));
     eprintln!("the visit's run: {seen:#}");
 
-    // Kim kept the length the page chose to start, and got a link on the
-    // group's page, its secret in the fragment.
+    // Kim kept the length the page chose to start, of none past 48 hours,
+    // and got a link on the group's page, its secret in the fragment, which
+    // no request to the page carried.
     assert_eq!(seen["length"], "48 hours", "{shown:#}");
+    let hours = |l: &Value| (l.as_str()?.strip_suffix(" hours")?.parse::<i64>()).ok();
+    let lengths = seen["lengths"].as_array().cloned().unwrap_or_default();
+    assert!(
+        !lengths.is_empty() && lengths.iter().all(|l| hours(l).is_some_and(|h| h <= 48)),
+        "{shown:#}"
+    );
+    assert_eq!(seen["secretAsked"], json!([]), "{shown:#}");
     let link = seen["link"].as_str().unwrap_or_default();
-    assert!(link.starts_with(&format!("{origin}#")), "{shown:#}");
-    let token = svrngs_core::link::Link::parse(link)
+    // A guest's link, `<page>#visit=<token>`: its token a join link's.
+    assert!(link.starts_with(&format!("{origin}#visit=")), "{shown:#}");
+    let token = svrngs_core::link::Link::parse(&link.replacen("#visit=", "#", 1))
         .expect("the link shown is a link")
         .token;
     assert_eq!(token.issuer, signing(KIM).verifying_key(), "{shown:#}");
@@ -130,12 +161,32 @@ async fn sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest(engine:
         );
     }
 
-    // One visit in Kim's record, Sam's, 48 hours from its act.
+    // Ana, at a link of 72 hours, is let in nowhere; at Sam's link after
+    // Sam, the same. Sam, at the link again, is shown the visit again, then
+    // told it has ended, never asked again; Sam's page keeps the group of
+    // Sam's own alone.
+    let refused = "This link lets nobody in. Ask for a new one.";
+    assert_eq!(seen["anaLong"], refused, "{shown:#}");
+    assert_eq!(seen["anaAgain"], refused, "{shown:#}");
+    assert_eq!(seen["again"]["asked"], false, "{shown:#}");
+    assert_eq!(seen["again"]["status"], seen["status"], "{shown:#}");
+    assert_eq!(seen["ended"]["asked"], false, "{shown:#}");
+    assert!(
+        seen["ended"]["status"]
+            .as_str()
+            .is_some_and(|s| s.starts_with("Your visit as Kim’s guest ended")),
+        "{shown:#}"
+    );
+    assert_eq!(seen["groups"], json!(["own"]), "{shown:#}");
+
+    // One visit in Kim's record, Sam's, 48 hours from its act, its key
+    // made for it, never the key of Sam's own group.
     let register = kim.rail().register(NS).unwrap();
     let visits: Vec<_> = register.visits.values().collect();
     assert_eq!(visits.len(), 1, "{visits:#?}");
     let sam = visits[0];
     assert_eq!(sam.visit.guest.as_str(), "Sam", "{sam:#?}");
+    assert_ne!(sam.visit.key, actor_of(&signing(OWN)), "{sam:#?}");
     assert_eq!(sam.host, actor_of(&signing(KIM)), "{sam:#?}");
     let length = sam.visit.until - sam.at;
     assert!(
