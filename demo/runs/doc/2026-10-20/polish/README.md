@@ -78,6 +78,31 @@ The page was the one served then (`index.html` `ac15e0ef…`, V1.1.2's).
   server it would come from is not answering.
 - `bo-joined.png`: back, with the others' carets.
 
+## Take 2, at 9302090a
+
+The same story, driver and bars, rerun once HardBreak was out of the
+page's schema (9302090a), so the pictures are of the page as it is now.
+Its data is in `take2/data/`. The Mac's load was 4.6 and Fedora's 0.7,
+with Fedora's clock 3 ms ahead of the Mac's over a 6 ms round trip.
+
+| # | Read | Verdict |
+|---|---|---|
+| 1 | Bo 2,243 ms and Di 2,328 ms; Cy 167 ms | passed |
+| 2 | named, and everyone here | passed |
+| 3 | 106, 126 and 110 ms | passed |
+| 4 | every note names its paragraph's writer | passed |
+| 5 | "☾ Alex’s window is dark" 4,308, 4,455 and 4,611 ms after the lid | passed |
+| 6 | each away edit kept | passed |
+| 7 | goodnight gone 3,393, 2,936 and 5,347 ms after the lid opened; all seven lines on all three pages by 5,408 ms | passed |
+| 8 | a new page held all seven lines; 80 acts | passed |
+| 9 | the seven lines, no paragraph without words | passed |
+| 10 | seven notes on each phone, each inside its own paragraph | passed |
+
+The server's doc after the take: seven paragraphs of words and no hard
+break. The pictures are in `take2/data/shots/`. `di-goodnight.png` and
+`bo-goodnight.png` show the goodnight, and `bo-joined.png` shows the page
+after the lid opened.
+
 ## What this does not show
 
 The same as `../README.md`: no real phone, no real lid, no venue network,
