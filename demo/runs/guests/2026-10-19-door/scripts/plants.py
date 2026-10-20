@@ -21,7 +21,7 @@ PLANTS = {
   "c": [
     ("the guest's key put in Standing (bar 3)", [(REGISTER,
       "    let removed = m\n",
-      "    let mut members = members;\n    for g in m.visits.values() {\n        let host = members.get(&g.host).cloned();\n        host.map(|h| members.insert(g.visit.key.clone(), Member { person: g.visit.guest.clone(), ..h }));\n    }\n    let removed = m\n")]),
+      "    let mut members: BTreeMap<String, Member> = members;\n    for g in m.visits.values() {\n        let host = members.get(&g.host).cloned();\n        host.map(|h| members.insert(g.visit.key.clone(), Member { person: g.visit.guest.clone(), ..h }));\n    }\n    let removed = m\n")]),
   ],
 }
 part = sys.argv[1]

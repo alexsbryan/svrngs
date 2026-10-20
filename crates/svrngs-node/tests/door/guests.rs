@@ -233,3 +233,92 @@ async fn sams_visit_ends_at_its_time_at_kims_stop_and_at_kims_leave() {
     }
     assert!(unsaid.is_empty(), "each end refused and said: {unsaid:#?}");
 }
+
+/// What `to` answers `request` from Sam's visit key on `alpn`, every byte
+/// of it: none when it closes the connection unserved.
+async fn sam_on(to: &Node, alpn: Alpn, request: String) -> String {
+    let bridge = bridge_as(&signing(SAM), to, alpn).await;
+    let mut sock = tokio::net::TcpStream::connect(bridge.local_addr())
+        .await
+        .unwrap();
+    sock.write_all(request.as_bytes()).await.unwrap();
+    let mut reply = Vec::new();
+    let read = tokio::time::timeout(Duration::from_secs(10), sock.read_to_end(&mut reply)).await;
+    assert!(read.is_ok(), "{alpn:?}: neither answered nor closed");
+    String::from_utf8_lossy(&reply).into_owned()
+}
+
+/// Whether `to` closes a connection Sam's visit key dials on `alpn` within
+/// three seconds, having served it nothing.
+async fn closes_to_sam(to: &Node, alpn: Alpn) -> bool {
+    use svrngs_node::guest::ring_crypto_provider;
+    use svrngs_node::iroh::{EndpointAddr, SecretKey};
+    let sam = iroh::endpoint::Builder::empty()
+        .crypto_provider(ring_crypto_provider())
+        .secret_key(SecretKey::from_bytes(&signing(SAM).to_bytes()))
+        .bind()
+        .await
+        .unwrap();
+    let mut target = EndpointAddr::new(to.endpoint().id());
+    for sock in common::loopback_sockets(to.endpoint()) {
+        target = target.with_ip_addr(sock);
+    }
+    match sam.connect(target, alpn.bytes()).await {
+        Err(_) => true,
+        Ok(c) => tokio::time::timeout(Duration::from_secs(3), c.closed())
+            .await
+            .is_ok(),
+    }
+}
+
+/// **Never the house's papers** (part (c); GUESTS §3.3, §7 bar 3): while
+/// Sam's visit is live, Sam's visit key, on every protocol a member's key
+/// is served, syncs nothing and reads no person, presence or record. On
+/// the members' protocol the record's sync, the live lane, the people's
+/// lends and what Kim lends are each answered with nothing, the connection
+/// closed; the blobs protocol closes too; on the pass holders' protocol
+/// none of those routes is there, and the lend Sam opens is told no group's
+/// page. Planted: the guest's key put in `Standing`.
+#[tokio::test]
+async fn sams_visit_key_syncs_nothing_and_reads_no_person_presence_or_record() {
+    let house = House::new().await;
+    let (jellyfin, heads) = origins::head_origin().await;
+    lends_on(house.dirs[0].path(), "jellyfin", jellyfin.port());
+    house.visit(unix_now() + 24 * 3600, &[(&house.kim, "jellyfin")]);
+    assert_eq!(as_sam(&house.kim, "jellyfin").await.status, 200);
+    let pages = header_values(&last(&heads), "x-svrngs-pages").join(" ");
+
+    let sync = serde_json::to_string(&svrngs_node::peer_wire::RingSyncRequest {
+        namespace: NS.into(),
+        digest: Default::default(),
+        ops: Vec::new(),
+    })
+    .unwrap();
+    let asks = [
+        format!("POST /internal/ring/sync HTTP/1.1\r\nHost: local\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{sync}", sync.len()),
+        format!("POST /internal/ring/live HTTP/1.1\r\nHost: local\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{sync}", sync.len()),
+        "GET /people/lends HTTP/1.1\r\nHost: local\r\nConnection: close\r\n\r\n".to_string(),
+        "GET /lends HTTP/1.1\r\nHost: local\r\nConnection: close\r\n\r\n".to_string(),
+        "GET /v1/rail/people HTTP/1.1\r\nHost: local\r\nConnection: close\r\n\r\n".to_string(),
+    ];
+    let mut served = Vec::new();
+    if pages.contains(NS) {
+        served.push(format!("Jellyfin was told Sam's group's page: {pages}"));
+    }
+    for ask in &asks {
+        let line = ask.lines().next().unwrap();
+        let member = sam_on(&house.kim, Alpn::Member, ask.clone()).await;
+        if !member.is_empty() {
+            served.push(format!("members' protocol, {line}: {member}"));
+        }
+        let holders = sam_on(&house.kim, Alpn::Lend, ask.clone()).await;
+        if !holders.starts_with("HTTP/1.1 404") && !holders.starts_with("HTTP/1.1 405") {
+            served.push(format!("holders' protocol, {line}: {holders}"));
+        }
+    }
+    if !closes_to_sam(&house.kim, Alpn::Blobs).await {
+        served.push("the blobs protocol kept Sam's connection".into());
+    }
+    assert!(served.is_empty(), "Sam's visit key was served: {served:#?}");
+    house.close().await;
+}

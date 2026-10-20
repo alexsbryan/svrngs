@@ -1,0 +1,45 @@
+## plant: the guest's key put in Standing (bar 3)
+crates/svrngs-runtime/src/register.rs
+-       let removed = m
+-   
++       let mut members: BTreeMap<String, Member> = members;
++       for g in m.visits.values() {
++           let host = members.get(&g.host).cloned();
++           host.map(|h| members.insert(g.visit.key.clone(), Member { person: g.visit.guest.clone(), ..h }));
++       }
++       let removed = m
++   
+guests::sam_opens_kims_jellyfin_as_kims_guest --- FAILED
+guests::sam_opens_no_lend_of_bos_nor_one_kim_did_not_open --- FAILED
+guests::sams_visit_key_syncs_nothing_and_reads_no_person_presence_or_record --- FAILED
+guests::sams_visit_ends_at_its_time_at_kims_stop_and_at_kims_leave --- FAILED
+thread 'guests::sam_opens_kims_jellyfin_as_kims_guest' (68546801) panicked at crates/svrngs-node/tests/door/guests.rs:112:5:
+assertion `left == right` failed: GET /whoami HTTP/1.1
+x-svrngs-person: Sam
+x-svrngs-key: 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c
+x-svrngs-user: Sam-8a88e3dd7409f195
+x-svrngs-device: fd1724385aa0c75b64fb78cd602fa1d991fdebf76b13c58ed702eac835e9f618
+x-svrngs-app: umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rabbq3n1prdr
+x-svrngs-label: umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rabbq3n1prdr
+x-svrngs-pages: house=none
+  left: ["Sam"]
+ right: ["Sam (Kim's guest)"]
+thread 'guests::sam_opens_no_lend_of_bos_nor_one_kim_did_not_open' (68546802) panicked at crates/svrngs-node/tests/door/guests.rs:136:5:
+assertion `left == right` failed: HTTP/1.1 200 OK
+  left: 200
+ right: 403
+thread 'guests::sams_visit_key_syncs_nothing_and_reads_no_person_presence_or_record' (68546804) panicked at crates/svrngs-node/tests/door/guests.rs:322:5:
+    "Jellyfin was told Sam's group's page: house=none",
+    "members' protocol, POST /internal/ring/sync HTTP/1.1: HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: 763\r\nconnection: close\r\ndate: Tue, 20 Oct 2026 06:22:22 GMT\r\n\r\n{\"namespace\":\"house\",\"digest\":{\"v\":2,\"entries\":{\"8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c\":{\"from\":0,\"mark\":0,\"head\":\"05bdc8ae7393b2959ca56fc32e9f672485fb16da5947768bc1014113769083aa\"}}},\"ops\":[{\"id\":\"2c55066e37b07e77ae7a512eba85faecb694b0f265221b53ff049fcdd863fa65\",\"v\":11,\"ts_unix\":1792477342,\"actor\":\"8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c\",\"seq\":0,\"sig\":\"f121677719d87b4a2ee65be17c37ed1fbe9a43c09b67a82efdffe474a37736e69570df2f8dddf3b907fb5902e1465df75d3a5f3949f6a24066e904f38b821d0a\",\"op\":\"visit\",\"guest\":\"Sam\",\"key\":\"fd1724385aa0c75b64fb78cd602fa1d991fdebf76b13c58ed702eac835e9f618\",\"opens\":{\"8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c\":[\"jellyfin\"]},\"until\":1792563742}],\"ingested\":0}",
+    "members' protocol, POST /internal/ring/live HTTP/1.1: HTTP/1.1 422 Unprocessable Entity\r\ncontent-type: application/json\r\ncontent-length: 112\r\nconnection: close\r\ndate: Tue, 20 Oct 2026 06:22:22 GMT\r\n\r\n{\"error\":\"live envelope is not {\\\"namespace\\\", \\\"payload\\\"} JSON (missing field `payload` at line 1 column 60)\"}",
+    "members' protocol, GET /people/lends HTTP/1.1: HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: 1392\r\nconnection: close\r\ndate: Tue, 20 Oct 2026 06:22:22 GMT\r\n\r\n{\"changed\":[],\"lent\":[{\"key\":\"8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c\",\"kind\":\"k\",\"limit\":3,\"name\":\"jellyfin\",\"person\":\"Kim\",\"reads\":[],\"relay\":null,\"signs_in\":false,\"upload_bps\":null,\"using\":1}],\"older\":[],\"people\":[{\"device\":\"computer\",\"joined\":\"started\",\"key\":\"8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394\",\"person\":\"Bo\",\"person_key\":\"8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394\"},{\"device\":\"computer\",\"joined\":\"started\",\"key\":\"8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c\",\"person\":\"Kim\",\"person_key\":\"8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c\"},{\"device\":\"computer\",\"joined\":\"started\",\"key\":\"ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c\",\"person\":\"Alex\",\"person_key\":\"ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c\"},{\"device\":\"computer\",\"joined\":\"started\",\"key\":\"fd1724385aa0c75b64fb78cd602fa1d991fdebf76b13c58ed702eac835e9f618\",\"person\":\"Sam\",\"person_key\":\"8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c\"}],\"refused\":[],\"removals\":[],\"shelf\":[{\"name\":\"Money\",\"words\":\"who paid for what, and who owes whom.\"},{\"name\":\"Events\",\"words\":\"post a get-together, and see who’s coming.\"},{\"name\":\"House-rules\",\"words\":\"the rules your house agrees, and how you agree them.\"}],\"unanswered\":[\"Bo\",\"Alex\"],\"unheard\":[],\"version\":1}",
+    "members' protocol, GET /lends HTTP/1.1: HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: 120\r\nconnection: close\r\ndate: Tue, 20 Oct 2026 06:22:22 GMT\r\n\r\n{\"lends\":[{\"kind\":\"k\",\"limit\":3,\"name\":\"jellyfin\",\"reads\":[],\"signs_in\":false,\"upload_bps\":null,\"using\":1}],\"version\":1}",
+    "members' protocol, GET /v1/rail/people HTTP/1.1: HTTP/1.1 404 Not Found\r\nconnection: close\r\ncontent-length: 0\r\ndate: Tue, 20 Oct 2026 06:22:22 GMT\r\n\r\n",
+    "the blobs protocol kept Sam's connection",
+thread 'guests::sams_visit_ends_at_its_time_at_kims_stop_and_at_kims_leave' (68546803) panicked at crates/svrngs-node/tests/door/guests.rs:234:5:
+    "time: wanted \"your visit with Kim is over: its time is up\", got HTTP/1.1 200 OK\r\ncontent-length: 2\r\nconnection: close\r\ndate: Tue, 20 Oct 2026 06:22:25 GMT\r\n\r\nok",
+    "stop: wanted \"Kim ended your visit\", got HTTP/1.1 200 OK\r\ncontent-length: 2\r\nconnection: close\r\ndate: Tue, 20 Oct 2026 06:22:26 GMT\r\n\r\nok",
+test result: FAILED. 0 passed; 4 failed; 0 ignored; 0 measured; 35 filtered out; finished in 5.00s
+error: test failed, to rerun pass `-p svrngs-node --test door`
+exit 101
+
