@@ -241,3 +241,24 @@ test('an answer the page could not read is said as unread, never as a house whos
   assert.deepEqual(fold(call, { ...read(founders('ana'), []), spans: null }, 3000), { unsettled: true });
   assert.throws(() => fold(call, {}, 3000), /^Error: this computer’s answer doesn’t say who is in your house$/);
 });
+
+test('every decision the glue makes is traced, and what canon refused is traced in canon’s own words', () => {
+  // AGENTS.md 1: what the page says to a person is also said, at debug, to
+  // whoever reads why; an act canon would not build keeps canon's error (#210).
+  const traced = [];
+  const trace = (what, fields) => traced.push([what, fields]);
+  const spans = founders('ana', 'bo', 'kim');
+  const q = idOf(2000, 'ana', QUIET);
+  const ops = [rec(1000, 'ana', decide('most')), rec(2000, 'ana', QUIET), raw(2100, 'bo', { op: 'assert' }), raw(2200, 'kim', { ...agree(q), actor: human('bo') }), rec(2300, 'bo', agree(q))];
+  fold(call, read(spans, ops), 2099, trace);
+  const [, , refused, speaks, agreed] = ops;
+  assert.deepEqual(traced.filter(([what]) => what === 'not counted').map(([, f]) => f), [
+    { id: speaks.id, by: 'kim', via: null, why: 'it speaks as human:bo, not as kim, who wrote it' },
+    { id: refused.id, by: 'bo', via: null, why: 'this version of House rules can’t read it', canon: 'canon: missing field `text`' },
+  ]);
+  assert.deepEqual(traced.find(([what]) => what === 'canon asked')?.[1], { asked: 2099, at: agreed.ts_unix, newest: agreed.ts_unix });
+  assert.deepEqual(traced.find(([what]) => what === 'how the house decides')?.[1], { rule: { rule: 'majority' } });
+  const unsettled = [];
+  fold(call, { ...read(spans, []), spans: null }, 3000, (what, fields) => unsettled.push([what, fields]));
+  assert.deepEqual(unsettled, [['unsettled', { group: G }]]);
+});
