@@ -748,3 +748,7 @@ mod invite_tests;
 #[cfg(test)]
 #[path = "removal_tests.rs"]
 mod removal_tests;
+
+#[cfg(test)]
+#[path = "visit_tests.rs"]
+mod visit_tests;
