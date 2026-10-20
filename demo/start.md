@@ -189,10 +189,6 @@ do.
   llama-server` at its end.
 - **The terminal waits after `svrngs share`**, its last line asking
   about a password. Press Enter.
-- **On a phone, Sam's llama-server opens to "Error: gzip is not supported
-  by this browser."** A phone cannot open llama-server's chat page through
-  svrngs yet (the run's finding: llama-server answers a phone's page with
-  nothing it can show). Use a computer: steps 6 to 8.
 - **A program says "Missing credentials. Please pass an `api_key`"**
   (Python's `openai`). It wants a key before it asks anything. Give it any
   key, such as `none` (step 9).
@@ -277,8 +273,8 @@ the only thing typed but the question; a program given the address the
 home page copies answered, and answered again at that address after
 svrngs starts again; nobody made an account, nothing asked anyone for a
 key or a password but a program's own key field, answered with anything.
-A phone from the link to an answer within two minutes waits on the
-phone's page asking for gzip (above).
+A phone from the link to an answer within two minutes waited on the
+phone's page asking for gzip, which it does from V1.1.3.
 
 The run, every person a program, one host, not a rate (AGENTS.md 7): the
 founder's line 1.4 s; the group made 0.3 s after the press; the share

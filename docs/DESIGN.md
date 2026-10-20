@@ -837,7 +837,9 @@ U5 builds the apps' part by seven calls; the evidence is U5's inventory
    — for the lend it opens and the lends its lender declared it reads
    (`svrngs share --reads <kind>`); the lend's origin dials with the pass's
    key, and the runtime keeps each lend's cookies apart, since a service
-   worker sees no `Cookie`. A lent page can use only its own pass. Never
+   worker sees no `Cookie`, and asks for gzip but for a range, unpacking it,
+   since it sees no `Accept-Encoding` either and llama-server's chat page
+   comes only in gzip. A lent page can use only its own pass. Never
    the key (u5-2). So a lent page composes others by `reads` (the Movie
    Night spike, `demo/runs/mn/2026-10-08/` §8): a static page searched
    two Jellyfins as each person may see them and opened the chosen copy

@@ -323,6 +323,11 @@ async function lent(request, url, where) {
   if (posted && !named && (request.mode !== 'navigate' || from === self.location.origin)) {
     headers.push(['origin', self.location.origin]);
   }
+  // A browser never shows a worker the `Accept-Encoding` it sends, and
+  // llama-server's chat page comes only in gzip, 415 to a request without
+  // (demo/runs/start/2026-10-13-story/ 9): so gzip is asked for here, but
+  // for a range, and the answer unpacked below.
+  if (!headers.some(([n]) => /^(range|accept-encoding)$/i.test(n))) headers.push(['accept-encoding', 'gzip']);
   // A body is read whole, as a Blob, which the browser keeps on disk when
   // it is large, so it goes with its length, a slice at a time (`sent`): a
   // worker never sees the page's Content-Length, and a parser that reads by
@@ -361,15 +366,18 @@ async function lent(request, url, where) {
     trace(`RUNTIME: ${path} redirects to ${to}, read as ${there}`);
     return Response.redirect(there, [301, 302, 303, 307, 308].includes(res.status) ? res.status : 302);
   }
+  // Unpacked from gzip as a browser unpacks what it asked for itself.
+  const gzip = /^gzip$/i.test(res.headers.get('content-encoding') ?? '');
+  const answer = gzip ? res.body?.pipeThrough(new DecompressionStream('gzip')) : res.body;
   const headed = new Headers(res.headers);
-  headed.delete('x-svrngs-set-cookies');
+  ['x-svrngs-set-cookies', ...(gzip ? ['content-encoding', 'content-length'] : [])].forEach((h) => headed.delete(h));
   // What its pages may read now, for the shim to take in before the page
   // reads the answer: Immich reads its sign-in's cookie unreloaded.
   if (set) headed.set(PAGE_COOKIES, cookieFor(jar, '/', true));
   const html = request.method === 'GET' && (res.headers.get('content-type') ?? '').includes('text/html');
-  if (!html) return new Response(said && res.body ? counted(res.body, said) : res.body, { status: res.status, statusText: res.statusText, headers: headed });
+  if (!html) return new Response(said && answer ? counted(answer, said) : answer, { status: res.status, statusText: res.statusText, headers: headed });
   headed.delete('content-length');
-  const text = await res.text();
+  const text = await new Response(answer).text();
   const head = /<head[^>]*>/i.exec(text) ?? /<html[^>]*>/i.exec(text) ?? /<!doctype[^>]*>/i.exec(text);
   const at = head ? head.index + head[0].length : 0;
   const page = `${text.slice(0, at)}${shim(where.label, jar, res.headers.get('content-security-policy'))}${text.slice(at)}`;
