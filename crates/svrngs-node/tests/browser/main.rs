@@ -3643,6 +3643,82 @@ async fn the_home_page_never_offers_a_sign_in_helper(engine: Engine) {
     drop(ada);
 }
 
+/// A stand-in for llama-server's chat page (`demo/runs/start/
+/// 2026-10-13-story/` 9): `415 Unsupported Media Type` to a request that
+/// does not ask for gzip, and to one that does, its page gzipped, as
+/// llama-server answers `GET /`. The page is "llama chat", gzip's bytes of
+/// `<!doctype html><title>llama chat</title><p>Unpacked on the phone.`.
+async fn gzip_only() -> std::net::SocketAddr {
+    const PAGE: [u8; 81] = [
+        31, 139, 8, 0, 0, 0, 0, 0, 2, 255, 179, 81, 76, 201, 79, 46, 169, 44, 72, 85, 200, 40, 201,
+        205, 177, 179, 41, 201, 44, 201, 73, 181, 203, 201, 73, 204, 77, 84, 72, 206, 72, 44, 177,
+        209, 135, 136, 216, 20, 216, 133, 230, 21, 36, 38, 103, 167, 166, 40, 228, 231, 41, 148,
+        100, 164, 42, 20, 100, 228, 231, 165, 234, 1, 0, 35, 241, 10, 241, 65, 0, 0, 0,
+    ];
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    tokio::spawn(async move {
+        while let Ok((mut sock, _)) = listener.accept().await {
+            tokio::spawn(async move {
+                let mut head = [0u8; 8192];
+                let n = tokio::io::AsyncReadExt::read(&mut sock, &mut head)
+                    .await
+                    .unwrap_or(0);
+                let head = String::from_utf8_lossy(&head[..n]).to_ascii_lowercase();
+                let gzip = head
+                    .lines()
+                    .any(|l| l.starts_with("accept-encoding:") && l.contains("gzip"));
+                let mut answer = if gzip {
+                    format!("HTTP/1.1 200 OK\r\ncontent-type: text/html; charset=utf-8\r\ncontent-encoding: gzip\r\ncontent-length: {}\r\nconnection: close\r\n\r\n", PAGE.len()).into_bytes()
+                } else {
+                    b"HTTP/1.1 415 Unsupported Media Type\r\ncontent-type: text/plain\r\ncontent-length: 34\r\nconnection: close\r\n\r\ngzip is not supported by this one".to_vec()
+                };
+                if gzip {
+                    answer.extend_from_slice(&PAGE);
+                }
+                let _ = sock.write_all(&answer).await;
+            });
+        }
+    });
+    addr
+}
+
+in_both_engines!(
+    /// **A phone opens a lend that answers only in gzip** (V1.1.3; the
+    /// story run's finding, `demo/runs/start/2026-10-13-story/` 9 and §4):
+    /// ada lends a stand-in for llama-server's chat page, which answers
+    /// 415 unless asked for gzip, and bo's phone opens it from the group's
+    /// list: its page, unpacked, "llama chat". Planted: HEAD before it,
+    /// whose worker never asked for gzip, so the phone was shown the 415.
+    a_phone_opens_a_lend_that_answers_only_in_gzip
+);
+async fn a_phone_opens_a_lend_that_answers_only_in_gzip(engine: Engine) {
+    let site = site();
+    let relay = relay().await;
+    let bo = signing(7);
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &bo).await;
+    lend(dir.path(), "chat", gzip_only().await.port());
+    let args = json!({
+        "site": site,
+        "key": hex::encode(bo.to_bytes()),
+        "token": token(&signing(1), &relay),
+        "open": "chat",
+        "title": "llama chat",
+    });
+    let seen = drive(engine, "night.mjs", args, None).await;
+    eprintln!("the phone's run: {seen:#}");
+    let opened = &seen["opened"];
+    assert_eq!(opened["title"], "llama chat", "{seen:#}");
+    assert!(
+        opened["text"]
+            .as_str()
+            .is_some_and(|t| t.contains("Unpacked on the phone.")),
+        "{seen:#}"
+    );
+    drop(ada);
+}
+
 in_both_engines!(
     /// **A phone is shown a lend's computer that did not answer as its
     /// person's window, dark** (V1.1.3; the operator's "a graceful and cute
