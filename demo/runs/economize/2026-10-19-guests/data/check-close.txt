@@ -1,0 +1,17 @@
+scripts/check.sh at 50071696, run by the loop (ralph-result await), exit 0 after 16m41s; its verdict lines:
+note       open files: 256, raised to 10240
+passed     principles pinned
+passed     lean and RUST_ARCH
+passed     trust floor
+passed     app nouns gate
+passed     app nouns
+passed     rustfmt
+passed     clippy
+passed     tests
+passed     canaries
+passed     ceiling canary
+passed     web rustfmt and clippy
+passed     browser
+passed     joining in a browser
+passed     conformance canary
+passed     app laws
