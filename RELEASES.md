@@ -71,6 +71,46 @@ time in the group, `spans`, those who left included, so an app can count a
 past entry with whoever was in the group when it was written.
 [`docs/DESIGN.md`](docs/DESIGN.md) §3 has it.
 
+## V1.1.3, 20 October 2026
+
+V1.1.3 says goodnight. When the computer lending something doesn't answer,
+as when its lid is closed, opening what it lends shows that person's
+window, dark:
+
+> ☾ Alex’s window is dark
+>
+> Alex’s computer didn’t answer, so Alex’s doc can’t open right now. It
+> opens again once that computer answers.
+>
+> Try again
+>
+> Goodnight from Alex.
+
+It's the same on a computer and on a phone, where the page names what
+you opened. It never says the computer is asleep, or since when. A
+program that asks still gets svrngs's JSON, `away`.
+
+On a phone:
+- **llama-server's chat page opens.** The phone's page asks for gzip and
+  unpacks it, where llama-server answered 415 before.
+- **A live app comes back after the lid opens.** Once the lender's
+  computer answers again, the sockets the phone's page opens to it open
+  again, without opening the page again.
+- **If the first computer to answer then fails,** the phone's page asks
+  the next one instead of stopping (#205).
+
+That's the trade: a phone fetches the goodnight page from
+`group.svrnme.sh` when it needs it, and without it says the plain words.
+In a run on one Linux machine, with a phone in each engine on the Mac, the
+goodnight showed 4.0 seconds after the phone asked. A socket opened on the
+first try once the computer was back, and the chat page opened in under
+3.3 seconds (`demo/runs/v1.1.3/2026-10-20/`).
+
+Everything else is V1.1.2's. House rules is still for the next release.
+
+V1.1.3 is the build at `group.svrnme.sh`, from commit `d1b4309e`, tagged
+`v1.1.3`.
+
 ## V1.1.2, 18 October 2026
 
 V1.1.2 puts your group on a screen. On your home page, each group has
