@@ -631,7 +631,7 @@ fn walk(
                 visits.values().any(|g| g.visit.key == v.key) || bindings.contains_key(&v.key);
             let timely = (1..=VISIT_LONGEST).contains(&v.until.saturating_sub(at));
             let is = !used && timely && on.len() + 1 < members && theirs < GUESTS_PER_HOST;
-            tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor, guests = on.len(), members, theirs, used, timely, is, "membership: a Visit is one only with its key never used before, within 48 hours, its guests fewer than the members and its host's at most two");
+            tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor, on = on.len(), members, theirs, used, timely, is, "membership: a Visit is one only with its key never used before, within 48 hours, the visits on then fewer than the members and its host's at most two");
             if !is {
                 continue;
             }

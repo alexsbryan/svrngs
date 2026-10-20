@@ -1,0 +1,17 @@
+$ scripts/check.sh   # at 8690bef2; stopped by the session's 20-minute limit after "web rustfmt and clippy": could-not-judge, never a pass
+note       open files: 1048576, raised to 10240
+passed     principles pinned
+passed     lean and RUST_ARCH
+passed     trust floor
+passed     app nouns gate
+failed     app nouns
+           BROKEN  crates/svrngs-core/src/membership.rs:634: `guests` is events's noun
+           BROKEN  crates/svrngs-core/src/membership.rs:634: `guests` is events's noun
+           73 app nouns, 2 in infra code
+passed     rustfmt
+passed     clippy
+passed     tests
+passed     canaries
+passed     ceiling canary
+           CEILING idle round at 25 x 10,000: 0.0237 s of processor, the median of [0.29834000000000316, 0.02368900000000096, 0.02370600000000067], against 0.1 s; the last round's account {"acts_moved":0,"asleep":0,"cpu_s":0.02370600000000067,"dialled":24,"folds":{"digest":{"kept":96,"rebuilt":0},"offer":{"kept":48,"rebuilt":0},"register":{"kept":27,"rebuilt":0},"write_index":{"kept":123,"rebuilt":0}},"reached":24,"refused":0,"wall_s":0.003912583}
+passed     web rustfmt and clippy
