@@ -155,3 +155,10 @@ then gave no line until the run was gone at 15:41, with no exit status.
 Run alone at f3b2faa9 right after, the four browser tests passed in 28.44 s
 (load 16.8) and the conformance canary passed in 88.56 s (load 17.0). The
 close runs a third time under `ralph-result await`.
+
+`scripts/check.sh` a third time, under `ralph-result await`, begun 15:46 at
+135a622f: passed, exit 0 after 19m25s, every gate `passed` (its log,
+`ralph/next/guests/ctl/log/sessions/guests-run-6.await.log`, 49 lines, none
+`failed`, `could-not-judge` or `never-ran`). Two `docs/PLAN.md` commits
+(6d2c8041, 58565c37) landed in the checkout while it ran; they touch no
+code.
