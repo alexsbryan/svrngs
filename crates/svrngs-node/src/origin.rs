@@ -301,8 +301,11 @@ async fn carried(
     *request.method_mut() = parts.method;
     *request.headers_mut() = parts.headers;
     let mut answer = at.host.transport.send(contact, request).await.map_err(|e| {
-        tracing::debug!(target: "origin", label, error = %e, "origin: the lender's computer did not answer");
-        away()
+        let whose = at.host.rail.standing_anywhere(&hex::encode(contact.key.as_bytes())).map(|(_, m)| m.person);
+        tracing::debug!(target: "origin", label, error = %e, whose = ?whose.as_ref().map(|p| p.as_str()), "origin: the lender's computer did not answer, so a tab is shown their window dark, or svrngs's words where no group held here names them");
+        let mut away = away();
+        whose.map(|p| away.extensions_mut().insert(door::Dark(p)));
+        away
     })?;
     let switched = door::upgrade_of(answer.headers())
         .filter(|_| answer.status() == StatusCode::SWITCHING_PROTOCOLS);

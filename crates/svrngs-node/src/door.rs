@@ -275,19 +275,29 @@ const ASK_WITHIN: Duration = Duration::from_secs(10);
 #[derive(Clone)]
 struct Words(String);
 
+/// Whose computer did not answer, kept on an answer `away` for [`paged`],
+/// which draws their window on the door, dark: home/away.html.
+#[derive(Clone)]
+pub(crate) struct Dark(pub(crate) Person);
+const AWAY: &str = include_str!("home/away.html");
+
 /// svrngs's answer drawn as a page when a browser's tab asked for one, by
 /// `Accept`; a program asking anything else is given its JSON (v1ui-polish
 /// (a)): the routes a person's tab reaches a lend by are layered by it.
 pub(crate) async fn paged(req: Request, next: axum::middleware::Next) -> Response {
     let tab = sign_in::a_tab(req.headers());
     let mut answer = next.run(req).await;
+    let dark = answer.extensions_mut().remove::<Dark>();
     let Some(Words(words)) = answer.extensions_mut().remove::<Words>().filter(|_| tab) else {
         return answer;
     };
-    tracing::debug!(target: "door", words, "door: svrngs's own answer to a browser's tab, drawn as a page");
+    tracing::debug!(target: "door", words, dark = ?dark.as_ref().map(|Dark(p)| p.as_str()), "door: svrngs's own answer to a browser's tab, drawn as a page: whose window is dark, when a computer did not answer");
     // The words, a sentence begun lower-case, are drawn as one, with nothing in them markup.
     let words = words.trim_end_matches('.').replace('<', "&lt;");
-    let page = format!("<!doctype html><meta charset=utf-8><meta name=viewport content=width=device-width><style>p::first-letter{{text-transform:uppercase}}</style><p>{words}.");
+    let page = match dark {
+        Some(Dark(p)) => AWAY.replace("{who}", &p.as_str().replace('<', "&lt;")).replace("{what}", "this"),
+        None => format!("<!doctype html><meta charset=utf-8><meta name=viewport content=width=device-width><style>p::first-letter{{text-transform:uppercase}}</style><p>{words}."),
+    };
     let (mut parts, _) = answer.into_parts();
     parts.headers.remove(header::CONTENT_TYPE);
     (parts, axum::response::Html(page)).into_response()

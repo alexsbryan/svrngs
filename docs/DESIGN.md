@@ -1175,7 +1175,11 @@ that by five calls, and a sixth waits; the evidence is U6's inventory (§8).
      "<lender>’s <lend> is not answering now: try again later", the
      lender named as this computer's person (v1ui-polish (a)). Any of
      svrngs's refusals to a browser's tab, which asks `Accept: text/html`,
-     is drawn as a page of its words; a program is given the JSON.
+     is drawn as a page of its words; a program is given the JSON. A lend
+     whose computer did not answer, `away`, is drawn as its person's window
+     on the door, dark (`home/away.html`, which a phone's lend worker shows
+     too, naming the lend): that their computer did not answer, never that
+     it sleeps, nor since when.
    - *What it keeps, and when it asks again.* Each person's answer, by
      key, in the door's memory for this run of the node: never logged,
      never in the record, never on the wire but to the service, as

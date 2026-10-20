@@ -342,7 +342,7 @@ async function lent(request, url, where) {
       trace(`RUNTIME: ${request.method} ${path} failed (try ${tries + 1}): ${e}`);
       // A dial that heard nothing from the computer within the cap, new or
       // held, is not tried again: a second would wait the cap again.
-      if (body || tries || /asleep/.test(e)) return say(502, 'The computer lending this did not answer. Try again later.', 'away');
+      if (body || tries || /asleep/.test(e)) return away(request, lend);
     }
   }
   said?.(`answered ${res.status} ${res.headers.get('content-range') ?? ''}${request.signal?.aborted ? ', after the browser let go of it' : ''}`);
@@ -374,6 +374,18 @@ async function lent(request, url, where) {
   const at = head ? head.index + head[0].length : 0;
   const page = `${text.slice(0, at)}${shim(where.label, jar, res.headers.get('content-security-policy'))}${text.slice(at)}`;
   return new Response(page, { status: res.status, statusText: res.statusText, headers: headed });
+}
+
+// The lend's computer did not answer: a person's tab is shown its person's
+// window, dark, naming the lend (away.html, which a computer's door shows
+// too, scripts/build-web.sh copying it here); a page's own request, and a
+// tab when that page cannot be fetched, svrngs's words.
+async function away(request, lend) {
+  const who = lend.person.replace(/</g, '&lt;');
+  const page = request.mode === 'navigate' && (await fetch(`${SITE}away.html?v=__VERSION__`).then((r) => (r.ok ? r.text() : Promise.reject(r.status))).catch((e) => trace(`RUNTIME: away.html not fetched: ${e}`)));
+  trace(`RUNTIME: ${lend.label}'s computer did not answer, said ${page ? 'as its window, dark' : 'in svrngs’s words'}`);
+  if (!page) return say(502, 'The computer lending this did not answer. Try again later.', 'away');
+  return new Response(page.replaceAll('{who}', who).replaceAll('{what}', `${who}’s ${lend.name.replace(/</g, '&lt;')}`), { status: 502, headers: { 'content-type': 'text/html; charset=utf-8', [REFUSED]: 'away' } });
 }
 
 // What this lend's pages are told of the lends they read: none of the
