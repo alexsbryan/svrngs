@@ -10,7 +10,8 @@ demo/runs/canon/2026-10-17-house/run.py, with a guest's story.
     PLANT=<host|bo|count|lapsed> TRIAL=1 W=<scratch> python3 demo/runs/guests/2026-10-20-run/run.py
     TRIAL=1 W=<scratch> python3 demo/runs/guests/2026-10-20-run/run.py
 
-TRIAL skips step 8's wait for the visit until tonight to end. A plant is
+Every take skips step 8's wait for the visit until tonight to end (the
+operator, 2026-10-20: "Cut it"); TRIAL only keeps its data apart. A plant is
 applied to the tree, svrngs built with it, and the tree put back before the
 story starts; the story runs on the build copied to W. Data in data/
 (data/plants/<plant>/; a trial's in data/trial/), the links' tokens never
@@ -371,16 +372,9 @@ def main():
         homes("7", home)
         steps("7-sam", "sam", {"goto": sam_film}, {"wait": "\\S", "within": 60_000}, {"read": True})
 
-        # 8. Tonight's visit ends then, on every copy.
-        jo_until = (summary["jo"].get("visit") or {}).get("until")
-        summary["tonight"] = {"until": jo_until, "ran": not TRIAL and jo_until is not None}
-        if summary["tonight"]["ran"]:
-            say("waiting", until=jo_until, s=round(jo_until - time.time()))
-            while time.time() < jo_until: time.sleep(min(60, max(0.05, jo_until - time.time())))
-            summary["tonight"]["ended"] = {who: {"ms": until(lambda: visiting(who) is not None and "Jo" not in guests_on(who), 60), "on": guests_on(who)}
-                                           for who in COMPUTERS}
-            homes("8", home)
-            steps("8-jo", "jo", {"goto": jo_film}, {"wait": "\\S", "within": 60_000}, {"read": True})
+        # 8. Tonight's visit ends then: never run. Every take skips the wait,
+        # the clean one too (the operator, 2026-10-20: "Cut it").
+        summary["tonight"] = {"until": (summary["jo"].get("visit") or {}).get("until"), "ran": False}
 
         # 9. Kim's leave ends a third: Lee watches Kim's film, then Kim leaves.
         link9, _ = make_link("9", "kim", home, None)

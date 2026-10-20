@@ -124,7 +124,7 @@ v[7] = {"verdict": verdict(all((stop.get(w) or {}).get("ms") is not None and sto
 # 8. Tonight's visit ends then, on every copy.
 tn = s.get("tonight") or {}
 if not tn.get("ran"):
-    v[8] = {"verdict": NEVER, "why": "TRIAL" if s.get("trial") else "no until for Jo's visit"}
+    v[8] = {"verdict": NEVER, "why": "the wait cut (the operator, 2026-10-20: \"Cut it\")"}
 else:
     ended = tn.get("ended") or {}
     v[8] = {"verdict": verdict(all((ended.get(w) or {}).get("ms") is not None and ended[w]["ms"] <= 60_000 for w in ("ana", "kim", "bo"))
