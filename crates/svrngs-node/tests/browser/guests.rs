@@ -287,3 +287,69 @@ async fn every_home_page_shows_sam_visiting_and_kims_stop_ends_it(engine: Engine
     assert_eq!(listed(&bos["all"]), Vec::<String>::new(), "{bos:#}");
     drop((kim, bo));
 }
+
+/// Ana's phone, in house beside Kim and Bo.
+const ANA: u8 = 11;
+
+/// Who the phone's page lists as visiting, opened by a group's link that
+/// Bo's computer made, as Ana.
+async fn on_anas_phone(engine: Engine, relay: &Server) -> Value {
+    let args = json!({
+        "site": site(),
+        "key": hex::encode(signing(ANA).to_bytes()),
+        "token": token(&signing(BO), relay),
+        "person": "Ana",
+    });
+    let seen = drive(engine, "drive.mjs", args, None).await;
+    eprintln!("Ana's phone: {seen:#}");
+    assert_eq!(seen["status"], "You’re in house, as Ana", "{seen:#}");
+    seen
+}
+
+in_both_engines!(
+    /// **Who's visiting, on the phone's page too** (guests-pages (b);
+    /// GUESTS §5 "The pages", §7 bar 7). Kim hosts Sam, as in (a), and Ana
+    /// is in house by her phone, whose page reaches Bo's computer: it lists
+    /// Sam visiting, Kim's guest, until then. Kim presses Stop on Kim's
+    /// home page; Bo's computer syncs Kim's record, and Ana's page, opened
+    /// again, lists nobody. Planted: the visit kept off the record, so only
+    /// its host's computer lists it; Stop taking the row off Kim's page
+    /// alone.
+    the_phones_page_shows_sam_visiting_and_kims_stop_ends_it
+);
+async fn the_phones_page_shows_sam_visiting_and_kims_stop_ends_it(engine: Engine) {
+    let relay = relay().await;
+    let (kim_dir, bo_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let ana = svrngs_core::tests_support::Fixture {
+        act: RailAct::Admit {
+            person: Person::parse("Ana").unwrap(),
+            key: actor_of(&signing(ANA)),
+            invite: None,
+        },
+        on_behalf_of: None,
+    };
+    let (kim, bo, day) = sam_visiting(kim_dir.path(), bo_dir.path(), &relay).await;
+    kim.rail().commit(NS, &ana).unwrap().unwrap();
+    let synced = bo.host().sync_with(NS, &kim.endpoint().addr()).await;
+    assert!(
+        synced.stop.is_none(),
+        "Bo syncs Ana's admission: {synced:?}"
+    );
+
+    let seen = on_anas_phone(engine, &relay).await;
+    let visiting = format!("Sam, Kim’s guest, until {day}");
+    let on = seen["visiting"].as_array().cloned().unwrap_or_default();
+    assert!(
+        on.len() == 1 && on[0].as_str().is_some_and(|l| l.starts_with(&visiting)),
+        "Ana's phone lists Sam visiting, Kim's guest, until {day}: {seen:#}"
+    );
+
+    let stop = json!({ "all": LISTED, "do": [["#home .yours button"]] });
+    let kims = home_page(engine, &kim, stop).await;
+    assert_eq!(kims["after"][0], json!([]), "{kims:#}");
+    let synced = bo.host().sync_with(NS, &kim.endpoint().addr()).await;
+    assert!(synced.stop.is_none(), "Bo syncs Kim's Stop: {synced:?}");
+    let seen = on_anas_phone(engine, &relay).await;
+    assert_eq!(seen["visiting"], json!([]), "{seen:#}");
+    drop((kim, bo));
+}

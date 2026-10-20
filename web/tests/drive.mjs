@@ -185,6 +185,8 @@ try {
     answer: document.getElementById('response').textContent,
     lent: [...document.querySelectorAll('#lent button')].map((b) => b.textContent),
     removals: [...document.querySelectorAll('#removals li')].map((l) => l.textContent),
+    // Who is visiting now (guests-pages (b)).
+    visiting: [...document.querySelectorAll('.visiting li')].map((l) => l.textContent),
     // The door, each cell's class and words, and the index's rows, each
     // cell's words (v1ui-door (d)).
     drawn: [...document.querySelectorAll('.door li')].map((e) => [e.className, e.textContent]),
