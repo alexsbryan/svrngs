@@ -232,3 +232,12 @@ test('one answer has one clock: an agreement timed ahead of the browser’s cloc
   assert.equal(view.changes.find((x) => x.id === c)?.verdict.verdict, 'ratified');
   assert.deepEqual(view.rule, change.rule, 'the rule bo’s agreement passed, not the one it replaced');
 });
+
+test('an answer the page could not read is said as unread, never as a house whose people are unsettled', () => {
+  // svrngs says a house whose people are unsettled as `spans: null`
+  // (crates/svrngs-node/src/carried.rs `acts`); an answer with no `spans` at
+  // all, as index.js made of a body that was not JSON (`{}`), is one the page
+  // could not read, and says so (#209).
+  assert.deepEqual(fold(call, { ...read(founders('ana'), []), spans: null }, 3000), { unsettled: true });
+  assert.throws(() => fold(call, {}, 3000), /^Error: this computer’s answer doesn’t say who is in your house$/);
+});
