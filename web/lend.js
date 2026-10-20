@@ -390,11 +390,10 @@ async function lent(request, url, where) {
 // tab when that page cannot be fetched, svrngs's words.
 async function away(request, lend) {
   const who = lend.person.replace(/</g, '&lt;');
-  const whose = `${who}’s`;
   const page = request.mode === 'navigate' && (await fetch(`${SITE}away.html?v=__VERSION__`).then((r) => (r.ok ? r.text() : Promise.reject(r.status))).catch((e) => trace(`RUNTIME: away.html not fetched: ${e}`)));
   trace(`RUNTIME: ${lend.label}'s computer did not answer, said ${page ? 'as its window, dark' : 'in svrngs’s words'}`);
   if (!page) return say(502, 'The computer lending this did not answer. Try again later.', 'away');
-  return new Response(page.replaceAll('{whose}', whose).replaceAll('{who}', who).replaceAll('{what}', `${whose} ${lend.name.replace(/</g, '&lt;')}`), { status: 502, headers: { 'content-type': 'text/html; charset=utf-8', [REFUSED]: 'away' } });
+  return new Response(page.replaceAll('{who}', who).replaceAll('{what}', `${who}’s ${lend.name.replace(/</g, '&lt;')}`), { status: 502, headers: { 'content-type': 'text/html; charset=utf-8', [REFUSED]: 'away' } });
 }
 
 // What this lend's pages are told of the lends they read: none of the

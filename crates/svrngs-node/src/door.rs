@@ -300,10 +300,7 @@ pub(crate) async fn paged(req: Request, next: axum::middleware::Next) -> Respons
     // The words, a sentence begun lower-case, are drawn as one, with nothing in them markup.
     let words = words.trim_end_matches('.').replace('<', "&lt;");
     let page = match dark {
-        Some(Dark(p)) => {
-            let who = p.as_str().replace('<', "&lt;");
-            AWAY.replace("{whose}", &format!("{who}’s")).replace("{who}", &who).replace("{what}", "this")
-        }
+        Some(Dark(p)) => AWAY.replace("{who}", &p.as_str().replace('<', "&lt;")).replace("{what}", "this"),
         None => format!("<!doctype html><meta charset=utf-8><meta name=viewport content=width=device-width><style>p::first-letter{{text-transform:uppercase}}</style><p>{words}."),
     };
     let (mut parts, _) = answer.into_parts();
