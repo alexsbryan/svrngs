@@ -292,7 +292,11 @@ alike:**
   `closed`, `unlent`, `path`, `full`, `sign-in`, `fault`, `unasked`,
   `stopped`, `removed`, `ended`), and a lend's own answer never does (`door::LendRefusal`). Any
   of svrngs's refusals to a browser's tab, which asks `Accept: text/html`, is
-  drawn as a page of its words; a program is given the JSON. On a
+  drawn as a page of its words; a program is given the JSON. A lend whose
+  computer did not answer, `away`, is drawn as its person's window on the
+  door, dark (`home/away.html`, which a phone's lend worker shows too,
+  naming the lend): that their computer did not answer, never that it
+  sleeps, nor since when. On a
   computer a page that reads a lend may read svrngs's answers at that lend's
   origin, which allow its origin alone, never `*`, and the lend's own answer
   only as far as that answer allows; any other page is allowed nothing
