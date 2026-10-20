@@ -201,3 +201,89 @@ async fn sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest(engine:
     );
     drop(kim);
 }
+
+/// Sam's visit key, in the record alone: no page of Sam's runs here.
+const SAM: u8 = 10;
+
+/// Kim's computer, holding house, Kim and Bo in it, and Sam visiting as
+/// Kim's guest until 40 hours from now, written as Kim's `/visit` writes
+/// it; and Bo's computer, Kim's record synced to it. The visit's id, and
+/// the day and time it ends, as a page in this computer's own time says it.
+async fn sam_visiting(kim_dir: &Path, bo_dir: &Path, relay: &Server) -> (Node, Node, String) {
+    let kim = computer(kim_dir, relay, &signing(BO), KIM, "Kim").await;
+    let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH);
+    let until = now.unwrap().as_secs() as i64 + 40 * 60 * 60;
+    let visit = svrngs_core::Visit {
+        guest: Person::parse("Sam").unwrap(),
+        key: actor_of(&signing(SAM)),
+        opens: Default::default(),
+        until,
+    };
+    kim.rail().commit(NS, &visit).unwrap().unwrap();
+    let bo = standing_under(bo_dir, relay, &kim, BO, "bo", "Kim").await;
+    use chrono::TimeZone;
+    let day = chrono::Local.timestamp_opt(until, 0).unwrap();
+    (kim, bo, day.format("%A").to_string())
+}
+
+/// Who each home page lists as visiting, and as its own guests.
+const LISTED: &str = "#home .guests li, #home .visiting li";
+
+in_both_engines!(
+    /// **Who's visiting, on every home page** (guests-pages (a); GUESTS
+    /// §3.2, §5 "The pages", §7 bar 7). Kim hosts Sam until a day and an
+    /// hour 40 hours from now. Bo's home page lists Sam visiting, Kim's
+    /// guest, until then; Kim's lists Sam under **Your guests** too, with
+    /// **Stop**, which says what it does before it does it. Kim presses
+    /// it: Kim's page, opened again, lists nobody; Bo's computer syncs
+    /// Kim's record, and Bo's lists nobody either. Planted: the visit kept
+    /// off the record, so only its host's page lists it; Stop taking the
+    /// row off Kim's page alone.
+    every_home_page_shows_sam_visiting_and_kims_stop_ends_it
+);
+async fn every_home_page_shows_sam_visiting_and_kims_stop_ends_it(engine: Engine) {
+    let relay = relay().await;
+    let (kim_dir, bo_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (kim, bo, day) = sam_visiting(kim_dir.path(), bo_dir.path(), &relay).await;
+    let visiting = format!("Sam, Kim’s guest, until {day}");
+    let listed = |seen: &Value| -> Vec<String> {
+        let all = seen.as_array().cloned().unwrap_or_default();
+        all.iter()
+            .map(|l| l.as_str().unwrap().to_string())
+            .collect()
+    };
+
+    let bos = home_page(engine, &bo, json!({ "all": LISTED })).await;
+    eprintln!("Bo's home page: {bos:#}");
+    let on_bos = listed(&bos["all"]);
+    assert!(
+        on_bos.len() == 1 && on_bos[0].starts_with(&visiting),
+        "Bo's home page lists Sam visiting, Kim's guest, until {day}: {bos:#}"
+    );
+
+    let stop = json!([["#home .guests button"]]);
+    let kims = home_page(engine, &kim, json!({ "all": LISTED, "do": stop })).await;
+    eprintln!("Kim's home page: {kims:#}");
+    let on_kims = listed(&kims["all"]);
+    assert!(
+        on_kims.len() == 2
+            && on_kims[0].starts_with(&format!("Sam, until {day}"))
+            && on_kims[0].contains("Stop ends the visit now")
+            && on_kims[1].starts_with(&visiting),
+        "Kim's home page lists Sam as Kim's guest, with Stop, and visiting: {kims:#}"
+    );
+    assert_eq!(listed(&kims["after"][0]), Vec::<String>::new(), "{kims:#}");
+    let register = kim.rail().register(NS).unwrap();
+    assert!(
+        register.visits.values().all(|g| g.stopped.is_some()),
+        "Kim's Stop is in Kim's record: {:#?}",
+        register.visits
+    );
+
+    let synced = bo.host().sync_with(NS, &kim.endpoint().addr()).await;
+    assert!(synced.stop.is_none(), "Bo syncs Kim's record: {synced:?}");
+    let bos = home_page(engine, &bo, json!({ "all": LISTED })).await;
+    eprintln!("Bo's home page after Kim's Stop: {bos:#}");
+    assert_eq!(listed(&bos["all"]), Vec::<String>::new(), "{bos:#}");
+    drop((kim, bo));
+}

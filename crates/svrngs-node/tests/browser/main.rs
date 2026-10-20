@@ -171,6 +171,18 @@ async fn joined(dir: &Path, relay: &Server, ada: &Node, me: u8, person: &str) ->
 /// The computer of `person`, whose key `signing(me)` ada's group already
 /// holds: started, and ada's record synced to it once, as [`joined`] does.
 async fn standing(dir: &Path, relay: &Server, ada: &Node, me: u8, person: &str) -> Node {
+    standing_under(dir, relay, ada, me, person, "ada").await
+}
+
+/// [`standing`], the group's founder, `signing(1)`, named `founder`.
+async fn standing_under(
+    dir: &Path,
+    relay: &Server,
+    ada: &Node,
+    me: u8,
+    person: &str,
+    founder: &str,
+) -> Node {
     let node = Node::start(
         dir.to_path_buf(),
         signing(me),
@@ -185,7 +197,7 @@ async fn standing(dir: &Path, relay: &Server, ada: &Node, me: u8, person: &str) 
     .await
     .expect("a node starts");
     let seed = Roster::new(
-        [(Person::parse("ada").unwrap(), vec![actor_of(&signing(1))])]
+        [(Person::parse(founder).unwrap(), vec![actor_of(&signing(1))])]
             .into_iter()
             .collect(),
     );
