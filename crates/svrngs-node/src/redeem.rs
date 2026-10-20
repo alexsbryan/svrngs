@@ -173,14 +173,9 @@ fn answer<T: Serialize>(route: &str, key: &str, decided: Result<T, NotAdmitted>)
                 "redeem: refused — a standing person goes by the name; answered 409 with theirs");
             err(StatusCode::CONFLICT, holder.to_string())
         }
-        Err(NotAdmitted::Decided(why)) => {
-            tracing::debug!(target: "redeem", route, key, why = ?why,
-                "redeem: the decider refused, answered in the one sentence every refusal shares");
-            err(StatusCode::FORBIDDEN, REFUSAL)
-        }
         Err(why) => {
             tracing::debug!(target: "redeem", route, key, why = ?why,
-                "redeem: refused, in the one sentence every refusal shares");
+                "redeem: refused, by the decider (`Decided`) or before it, in the one sentence every refusal shares");
             err(StatusCode::FORBIDDEN, REFUSAL)
         }
     }
