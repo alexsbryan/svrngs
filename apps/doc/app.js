@@ -10,7 +10,6 @@ import {
   CollaborationCaret,
   Document,
   Editor,
-  HardBreak,
   Heading,
   IndexeddbPersistence,
   Italic,
@@ -87,7 +86,11 @@ const editor = new Editor({
     Heading.configure({ levels: [1, 2] }),
     BulletList,
     ListItem,
-    HardBreak,
+    // No hard break: Enter makes a new paragraph, and a line break inside
+    // one has no use on a phone. With it in the schema, Enter pressed on
+    // several pages at once at the doc's end left a <br> the editor kept
+    // as an empty line inside a paragraph (demo/runs/doc/2026-10-20/polish/
+    // found/hb-race.out: 10 in 6 rounds with it, none in 6 without).
     // Yjs owns undo: the built-in history stack would undo a peer's paragraph
     // on a local ctrl-Z, because it has no idea the document has other authors.
     Collaboration.configure({ document: ydoc }),
