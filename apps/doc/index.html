@@ -20,6 +20,7 @@
       .docwrap { position: relative; margin: 1rem 0; }
       #editor .tiptap { outline: none; min-height: 14rem; border: var(--rule); padding: 0.75rem 1rem; }
       #editor .tiptap:focus { border-color: royalblue; }
+      #editor .tiptap[contenteditable="false"] { border-style: dashed; }
       #editor .tiptap > :first-child { margin-top: 0; }
       /* The caret extension sets only the COLOUR inline (app.js `caret`);
          position and label are the page's, and without them a cursor renders

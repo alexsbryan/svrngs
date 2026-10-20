@@ -100,7 +100,7 @@ async function server(keep) {
 function page(port, person) {
   const doc = new Y.Doc();
   const awareness = new awarenessProtocol.Awareness(doc);
-  const seen = { hello: null, lines: null, away: [], here: 0, joined: [], pokes: 0 };
+  const seen = { hello: null, lines: null, away: [], here: 0, joined: [], pokes: 0, synced: 0 };
   const headers = person ? { 'x-svrngs-person': Buffer.from(person).toString('latin1'), 'x-svrngs-key': keyOf(person) } : {};
   const s = sync({
     url: `ws://127.0.0.1:${port}/sync`,
@@ -116,6 +116,7 @@ function page(port, person) {
       lines: (l) => (seen.lines = l),
       away: (a) => seen.away.push({ ...a, at: Date.now() }),
       here: () => (seen.here += 1),
+      synced: () => (seen.synced += 1),
       joined: (j) => seen.joined.push({ ...j, at: Date.now() }),
     },
   }).start();
@@ -147,6 +148,8 @@ test('two pages write at once and read one doc, each named as the door named the
   const zoe = page(srv.port, 'Zoë');
   t.after(async () => (bo.close(), zoe.close(), await srv.end(), rmSync(keep, { recursive: true })));
   await until('both are greeted', () => bo.seen.hello && zoe.seen.hello);
+  // The page lets its person type once this has been said (app.js).
+  await until('both are told they hold the server\'s doc', () => bo.seen.synced && zoe.seen.synced);
   assert.deepEqual([bo.seen.hello.you, zoe.seen.hello.you], ['Bo', 'Zoë']);
   bo.write('bring chips');
   zoe.write('bring a speaker');

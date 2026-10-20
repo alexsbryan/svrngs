@@ -27,7 +27,8 @@ const BACKOFF_MS = [500, 1000, 2000, 4000];
 
 /**
  * One page's sync. `on` takes `hello({you, key, lender})`, `lines(entries)`,
- * `away({kept})`, `kept(n)`, `here()` and `joined({kept})`; `kept` is how
+ * `synced()` (each time the server's doc has arrived), `away({kept})`,
+ * `kept(n)`, `here()` and `joined({kept})`; `kept` is how
  * many edits this page has made while away, said again as each is made.
  * `poke`, when given, is asked before each socket after the first: one
  * plain request to the server, awaited, whatever it answers. `clock` stands in for the page's timers in
@@ -121,6 +122,7 @@ export function sync({ url, doc, awareness, WebSocket, poke = null, on = {}, clo
         encoding.writeVarUint(reply, SYNC);
         const step = syncProtocol.readSyncMessage(m.body, reply, doc, self);
         if (encoding.length(reply) > 1) send(encoding.toUint8Array(reply));
+        if (step === syncProtocol.messageYjsSyncStep2) on.synced?.();
         if (step === syncProtocol.messageYjsSyncStep2 && joining) {
           joining = false;
           trace("doc: joined again", { kept });

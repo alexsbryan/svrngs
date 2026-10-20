@@ -65,6 +65,13 @@ upstream's expense book is not kept (svrngs's is `apps/expenses/`).
   that writing again from every browser that kept a copy.
 - **Opened at its own port**, not through svrngs, a page is named nobody,
   and says so.
+- **A doc nobody has written in yet** starts as a line of each page's own.
+  Pages that edit it at once each write theirs, as blank lines between
+  the words or as words mixed into one line
+  (`demo/runs/doc/2026-10-20/polish/found/`). Write the doc's first line
+  before the room opens it. Each page takes typing only once it holds the
+  server's doc, so a page that already has a first line never writes its
+  own.
 
 ## Tests
 

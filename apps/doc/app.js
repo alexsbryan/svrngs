@@ -70,8 +70,14 @@ function caret(user) {
   return c;
 }
 
+// The editor takes typing once it holds the server's doc (`synced`). Until
+// then it shows a starting line of its own, which no other page has: the
+// first edit there writes that line beside everyone else's, as a blank line
+// above the words or mixed into another page's
+// (demo/runs/doc/2026-10-20/polish/found/).
 const editor = new Editor({
   element: el("editor"),
+  editable: false,
   extensions: [
     Document,
     Paragraph,
@@ -213,6 +219,9 @@ sync({
     },
     here() {
       el("night").hidden = true;
+    },
+    synced() {
+      if (!editor.isEditable) editor.setEditable(true);
     },
     joined({ kept }) {
       if (!kept) return;
