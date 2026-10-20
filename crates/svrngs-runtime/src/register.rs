@@ -17,8 +17,8 @@ use std::collections::BTreeMap;
 use std::sync::Arc;
 
 use crate::{
-    actor_of, admit, ring_dir, valid_namespace, Device, Joined, Membership, Op, Person, RailAct, RailError,
-    RingJournal, RingRail, RingVerifier, Roster, SignedOp,
+    actor_of, admit, ring_dir, valid_namespace, Cut, Device, Guest, Joined, Membership, Op, OpId, Person, RailAct,
+    RailError, RingJournal, RingRail, RingVerifier, Roster, SignedOp,
 };
 
 /// Who stands in one group, on this node.
@@ -42,13 +42,17 @@ pub enum Standing {
 
 /// One fold of a group's register (U7): who stands, each key the group's
 /// keeper cut with the person it was bound to, the keeper's key, and every
-/// removal and ask to remove, shown to everyone in the group.
+/// removal and ask to remove, shown to everyone in the group; and each
+/// visit the fold counts, by its id, with each cut, which ends its host's
+/// (guests-door): [`Guest::live`] reads the two.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Register {
     pub members: BTreeMap<String, Member>,
     pub removed: BTreeMap<String, Person>,
     pub keeper: Option<String>,
     pub removals: Vec<Removing>,
+    pub visits: BTreeMap<OpId, Guest>,
+    pub cut: BTreeMap<String, Cut>,
 }
 
 /// One counting `Remove`, as the group is shown it (v1-keeper-office (b)):
@@ -76,6 +80,10 @@ pub enum RemovalSaid {
     /// Anyone else's, or one that cut nobody: an ask.
     Asked,
 }
+
+/// A visit as the door reads it ([`RingRail::visit_anywhere`]): its group,
+/// that group's register and the visit.
+pub type Visiting = (String, Register, Guest);
 
 /// One key standing in a group: the person it is bound to, by name and by
 /// their first key in the group (bash-devices), what holds it ([`Device`],
@@ -154,6 +162,8 @@ pub(crate) fn register_in(
         removed,
         keeper: m.keeper,
         removals,
+        visits: m.visits,
+        cut: m.cut,
     })
 }
 
@@ -323,6 +333,22 @@ impl RingRail {
         tracing::debug!(target: "register", actor, groups = namespaces.len(),
             "register: the key stands in no group held here");
         None
+    }
+
+    /// The first group held here a visit the fold counts is `key`'s in, its
+    /// register and the visit, live or not (guests-door): whom the door lets
+    /// in as a guest, asking the visit's liveness of [`Guest::live`]. `None`
+    /// when no group held here has one; groups that cannot be listed, and a
+    /// group whose register is unreadable, have none, said at warn.
+    pub fn visit_anywhere(&self, key: &str) -> Option<Visiting> {
+        let held = self.namespaces().inspect_err(|e| tracing::warn!(target: "register", key, error = %e, "register: cannot list the groups held, so no visit can be shown"));
+        let found = held.ok()?.into_iter().find_map(|ns| {
+            let register = self.register(&ns).inspect_err(|e| tracing::warn!(target: "register", key, namespace = ns, error = %e, "register: a group's register is unreadable, so it shows no visit")).ok()?;
+            let guest = register.visits.values().find(|g| g.visit.key == key)?.clone();
+            Some((ns, register, guest))
+        });
+        tracing::debug!(target: "register", key, group = ?found.as_ref().map(|f| &f.0), "register: whether a visit held here is the key's");
+        found
     }
 
     /// The first group held here whose keeper cut `actor`, or `None` (U7):

@@ -72,7 +72,8 @@
 //! held here ([`svrngs_core::pass::Pass::check`]); then it is that person's
 //! request, counted, told its share and carried as any member's. A lend is
 //! named by its name or by its label ([`find`]), which names this
-//! computer's key.
+//! computer's key. A pass a guest's visit key signed lets its holder in as
+//! that guest, their host's, never as the host ([`guest_of`], guests-door).
 //!
 //! **What the door refuses**, by name: a request not on an iroh stream; a
 //! dialer standing in no group this computer holds; a path that can step
@@ -103,7 +104,7 @@ use crate::declared::read_declared_in;
 use crate::iroh::{Dialer, Via};
 use crate::lend::{self, Lend, LendName, Offered, Source};
 use crate::ring_routes::err;
-use crate::{Person, RingRail};
+use crate::{register::Visiting, Person, RingRail};
 use limit::{Counts, Verdict, Whereabouts};
 use svrngs_core::pass::{Label, Pass};
 
@@ -227,6 +228,9 @@ pub enum LendRefusal {
     Stopped,
     /// The asker was removed from the group (U7; DESIGN §6).
     Removed,
+    /// The asker's visit has ended: at its time, by its host's Stop, or as
+    /// its host left (guests-door).
+    Ended,
 }
 
 impl LendRefusal {
@@ -243,6 +247,7 @@ impl LendRefusal {
             LendRefusal::Unasked => "unasked",
             LendRefusal::Stopped => "stopped",
             LendRefusal::Removed => "removed",
+            LendRefusal::Ended => "ended",
         }
     }
 
@@ -851,6 +856,9 @@ struct Asker {
     person: Person,
     /// The pass's app; none for a key of the group's with no pass.
     app: Option<Label>,
+    /// Whose guest they are, for a visit's key ([`guest_of`]); none for a
+    /// person of the group.
+    host: Option<Person>,
 }
 
 /// Who asks, decided before the lend is found or after: a member by the
@@ -969,6 +977,9 @@ async fn holder_of(
         return Err(gone());
     }
     if standing.is_none() {
+        if let Some(visit) = door.rail.visit_anywhere(&pass.person) {
+            return guest_of(&hex::encode(door.key), visit, pass, lend, now);
+        }
         tracing::debug!(target: "door", holder = key, signer = pass.person, lend = %lend.name,
             "door: the pass's signer stands in no group held here, so the group's ring is asked once first");
         let known = || door.rail.standing_anywhere(&pass.person).is_some();
@@ -988,6 +999,51 @@ async fn holder_of(
         actor,
         group,
         person,
+        host: None,
+    })
+}
+
+/// The guest whose visit's key signed `pass` (guests-door; GUESTS §3.4-§3.6,
+/// §5 "The door"): let in as themselves, their host's guest, only while the
+/// fold says the visit is live ([`svrngs_core::Guest::live`]) and it names
+/// this lend, its host's, this computer's own, and never a carried app, the
+/// group's. Each refusal says which of those refused it: `ended` for the
+/// visit's end, `closed` for the rest. A visit begun later than now, which
+/// only this computer's clock stepping back makes, is said as one ended.
+fn guest_of(me: &str, v: Visiting, pass: Pass, lend: &Lend, now: i64) -> Result<Asker, Response> {
+    let ((group, register, guest), name) = (v, lend.name.as_str());
+    let host = register.members.get(&guest.host).map(|m| &m.person);
+    let Some(host) = host.or(register.removed.get(&guest.host)).cloned() else {
+        tracing::debug!(target: "door", guest = pass.person, host = guest.host, "door: refused — a visit whose host is bound to nobody here");
+        return Err(LendRefusal::Closed.say(StatusCode::FORBIDDEN, "nobody here hosts your visit"));
+    };
+    let live = guest.live(&register.cut, now);
+    let gone = register.cut.get(&guest.host).is_some_and(|c| c.at <= now);
+    let stopped = guest.stopped.is_some_and(|s| s <= now);
+    // A carried app is its group's, never its host's own.
+    let own = guest.host == me && matches!(lend.source, Source::Port(_));
+    let named = guest.visit.opens.get(me).is_some_and(|l| l.contains(name));
+    let ended = |w| Some((LendRefusal::Ended, w));
+    let closed = |w| Some((LendRefusal::Closed, w));
+    let refused = match () {
+        _ if gone => ended(format!("{host} is no longer a member, so your visit ended")),
+        _ if stopped => ended(format!("{host} ended your visit")),
+        _ if !live => ended(format!("your visit with {host} is over: its time is up")),
+        _ if !own => closed(format!("{name} is not {host}'s to open to you")),
+        _ if !named => closed(format!("{host} did not open {name} to you")),
+        _ => None,
+    };
+    tracing::debug!(target: "door", guest = pass.person, %host, lend = name, live, own, named, ?refused, "door: a visit's key — let in as its host's guest only while the visit is live and names this lend, its host's own, never a carried app");
+    if let Some((kind, words)) = refused {
+        return Err(kind.say(StatusCode::FORBIDDEN, words));
+    }
+    Ok(Asker {
+        app: Some(pass.app),
+        actor: PersonKey(pass.person.clone()),
+        device: DeviceKey(pass.person),
+        group,
+        person: guest.visit.guest,
+        host: Some(host),
     })
 }
 
@@ -1084,6 +1140,7 @@ pub(crate) async fn lend_for(
                     Who::Own(app) => Some(app.clone()),
                     _ => None,
                 },
+                host: None,
             })
         }
         Who::Holder(dialer) => Pending::Pass(*dialer),
@@ -1095,6 +1152,7 @@ pub(crate) async fn lend_for(
         group,
         person,
         mut app,
+        host,
     } = match pending {
         Pending::Known(asker) => asker,
         Pending::Pass(holder) => holder_of(door, &holder, req.headers(), &lend).await?,
@@ -1163,13 +1221,14 @@ pub(crate) async fn lend_for(
             share
         }
     };
-    tracing::debug!(target: "door", actor, person = person.as_str(), group, lend = %lend.name, app = ?app.as_ref().map(Label::as_str),
-        method = %req.method(), path = service_path, "door: carrying a request to the lend's service, the app the pass's or none");
+    tracing::debug!(target: "door", actor, person = person.as_str(), host = ?host.as_ref().map(Person::as_str), group, lend = %lend.name, app = ?app.as_ref().map(Label::as_str),
+        method = %req.method(), path = service_path, "door: carrying a request to the lend's service, the app the pass's or none, a guest's host's or none");
     let told = Told { share, held };
     forward(
         door,
         (&lend, port),
         (&whose, &device, &person, app.as_ref()),
+        host.as_ref(),
         service_path,
         req,
         told,
@@ -1327,6 +1386,7 @@ async fn forward(
     door: &Door,
     (lend, port): (&Lend, NonZeroU16),
     (whose, device, person, app): (&PersonKey, &DeviceKey, &Person, Option<&Label>),
+    host: Option<&Person>,
     path: String,
     req: Request,
     Told { share, held }: Told,
@@ -1346,10 +1406,14 @@ async fn forward(
     let asker_side = upgrade.as_ref().map(|_| hyper::upgrade::on(&mut req));
     let (mut parts, body) = req.into_parts();
     let get = parts.method == axum::http::Method::GET;
+    // A guest is told as their host's guest, with an account of their own: a
+    // member's ends in 16 hex ([`user_name`]), and `.guest` in none (GUESTS §3.5).
+    let told = host.map_or(person.to_string(), |h| format!("{person} ({h}'s guest)"));
+    let user = user_name(person, actor) + if host.is_some() { ".guest" } else { "" };
     let (Ok(person_value), Ok(key_value), Ok(user_value), Ok(device_value)) = (
-        HeaderValue::from_bytes(person.as_str().as_bytes()),
+        HeaderValue::from_bytes(told.as_bytes()),
         HeaderValue::from_str(actor),
-        HeaderValue::from_str(&user_name(person, actor)),
+        HeaderValue::from_str(&user),
         HeaderValue::from_str(device.as_str()),
     ) else {
         tracing::warn!(target: "door", actor, "door: refused — the person's name cannot be a header");

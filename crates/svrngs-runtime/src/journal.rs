@@ -76,8 +76,9 @@ struct Writer {
 /// the same, and a file replaced from outside has its lines checked again.
 ///
 /// And the register ([`RingRail::standing`]) is caught up the same way: the
-/// acts that move membership, a handful among thousands, and every act of a
-/// key a `Remove` names (U7), kept as the tail brings them in, and the
+/// acts that move membership and every `Correct` ([`read_by_standing`]), a
+/// handful among thousands, and every act of a key a `Remove` names (U7),
+/// kept as the tail brings them in, and the
 /// register last folded from them, with the seed it was folded from. A key
 /// named for the first time has its acts already held added from the whole
 /// log, after the tail's, so they are not in the log's order, and an act
@@ -86,7 +87,7 @@ struct Writer {
 /// connection, sync request and round, it was what an idle round still
 /// paid for (26 reads of 10,000 acts, 5.5 s; scale.rs, ceiling-3's runs;
 /// THE_CEILING.md fix 3).
-/// An act that moves membership voids the standing; a seed unlike the one it
+/// An act kept so voids the standing; a seed unlike the one it
 /// was folded from folds it again.
 #[derive(Default)]
 struct Held {
@@ -102,6 +103,14 @@ struct Held {
     /// (U7; `svrngs_core::standing_reads`).
     named: std::collections::HashSet<String>,
     standing: Option<(Roster, crate::register::Register)>,
+}
+
+/// Whether a fold of standing reads `op` whoever a `Remove` names: asked
+/// of [`svrngs_core::standing_reads`], the rule's one home, which keeps a
+/// visit's Stop, a `Correct` (guests-door). Until then [`Held`] kept only
+/// the acts that move membership, so a stopped visit read as live here.
+fn read_by_standing(op: &Op<SignedOp>) -> bool {
+    svrngs_core::standing_reads(std::slice::from_ref(op)).next().is_some()
 }
 
 /// Each line whose signature [`Ed25519Verifier`] passed as the tail brought
@@ -184,7 +193,7 @@ impl Held {
             if let Some(key) = op.kind.act.names().filter(|k| self.named.insert(k.to_string())) {
                 newly_named.push(key.to_string());
             }
-            if op.kind.act.moves_membership() || self.named.contains(&op.actor) {
+            if read_by_standing(op) || self.named.contains(&op.actor) {
                 self.membership.push(op.clone());
                 self.standing = None;
             }
@@ -199,7 +208,7 @@ impl Held {
             let before = self.membership.len();
             self.membership.extend(
                 all.into_iter()
-                    .filter(|op| newly_named.contains(&op.actor) && !op.kind.act.moves_membership()),
+                    .filter(|op| newly_named.contains(&op.actor) && !read_by_standing(op)),
             );
             tracing::debug!(
                 namespace,

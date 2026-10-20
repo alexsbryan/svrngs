@@ -230,6 +230,10 @@ alike:**
   - `x-svrngs-device`: the device asking, by the key it stands in the group
     by, so an app that holds something to a device tells a person's devices
     apart under one account;
+  - a guest (below, "A visit is folded beside membership") is told as their
+    host's: `x-svrngs-person` `Sam (Kim's guest)`, `x-svrngs-key` and
+    `x-svrngs-device` their visit's key, and `x-svrngs-user` `.guest` after
+    `user_name`'s, which no member's account ends in; never as their host;
   - `x-svrngs-app`: when one app's page asks another lend, the app asking,
     read only from a pass, or on a computer from what the browser says of the
     page ("Lent apps", call 6); none for a key asking with no pass;
@@ -286,7 +290,7 @@ alike:**
   lend's place — the door's refusals, the lend's worker's and the
   computer's — carries `x-svrngs-refused`, naming which (`away`, `pass`,
   `closed`, `unlent`, `path`, `full`, `sign-in`, `fault`, `unasked`,
-  `stopped`), and a lend's own answer never does (`door::LendRefusal`). Any
+  `stopped`, `removed`, `ended`), and a lend's own answer never does (`door::LendRefusal`). Any
   of svrngs's refusals to a browser's tab, which asks `Accept: text/html`, is
   drawn as a page of its words; a program is given the JSON. On a
   computer a page that reads a lend may read svrngs's answers at that lend's
@@ -1100,7 +1104,14 @@ from the journal waits in PLAN §2.
   copy, and nothing refuses it. A visit binds nothing, so a guest's key
   never stands. It ends at its `until`, at the host's `Correct` of it,
   their Stop, which another's `Correct` is not, or when the host's key is
-  cut; the act stays counted, seen (`Membership::visiting`).
+  cut; the act stays counted, seen (`Membership::visiting`). The lender's
+  door, on the pass holders' protocol, lets in a pass a visit's key signed
+  as the guest, only while the fold says the visit is live and it names
+  this lend, which is the host's own, this computer's and never a carried
+  app (`door.rs`, `guest_of`; `RingRail::visit_anywhere`). It counts the
+  guest as one person against the lend's limit. Each refusal says which of
+  those refused it: `ended`, with the end, its time, the host's Stop or the
+  host no longer a member; else `closed`.
 - **What an app places by hash is not kept.** Its bytes are in no act and no
   folder; which hashes a computer carries for which group, and until when,
   is in its running process alone, each kept past its lapse so a get says

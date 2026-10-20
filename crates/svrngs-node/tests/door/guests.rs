@@ -130,3 +130,106 @@ async fn sam_opens_kims_jellyfin_as_kims_guest() {
     assert!(!head.contains(&kim), "Kim's key reached Jellyfin: {head}");
     house.close().await;
 }
+
+/// That `reply` is svrngs's refusal `kind`, 403, in `words`.
+fn refused(reply: &Reply, kind: &str, words: &str) {
+    assert_eq!(reply.status, 403, "{}", reply.text);
+    let marked = format!("x-svrngs-refused: {kind}");
+    assert!(reply.text.contains(&marked), "{marked}: {}", reply.text);
+    assert!(reply.text.contains(words), "{words}: {}", reply.text);
+}
+
+/// **A guest opens only their host's own lends** (GUESTS §3.4, §7 bar 2's
+/// first half): Kim's visit names Bo's Jellyfin as well as Kim's, and Bo's
+/// door refuses Sam, saying Jellyfin is not Kim's; Kim's door refuses Kim's
+/// `films`, which the visit does not name. Neither service is asked.
+/// Planted: the door letting a visit in at any lend it names, its host's
+/// or not.
+#[tokio::test]
+async fn sam_opens_no_lend_of_bos_nor_one_kim_did_not_open() {
+    let house = House::new().await;
+    let (bos, bos_heads) = origins::head_origin().await;
+    let (films, films_heads) = origins::head_origin().await;
+    lends_on(house.dirs[1].path(), "jellyfin", bos.port());
+    lends_on(house.dirs[0].path(), "films", films.port());
+    let tomorrow = unix_now() + 24 * 3600;
+    house.visit(
+        tomorrow,
+        &[(&house.kim, "jellyfin"), (&house.bo, "jellyfin")],
+    );
+
+    let at_bos = as_sam(&house.bo, "jellyfin").await;
+    refused(&at_bos, "closed", "jellyfin is not Kim's to open to you");
+    let unopened = as_sam(&house.kim, "films").await;
+    refused(&unopened, "closed", "Kim did not open films to you");
+    assert!(
+        bos_heads.lock().unwrap().is_empty(),
+        "Bo's Jellyfin was asked"
+    );
+    assert!(
+        films_heads.lock().unwrap().is_empty(),
+        "Kim's films was asked"
+    );
+    house.close().await;
+}
+
+/// Until the clock reaches the time on `recorded`'s acts: the record times
+/// an act after the last of its chain, so a Stop or a leave in the visit's
+/// own second is timed the next, and ends the visit then.
+async fn at_its_time(recorded: &svrngs_core::Recorded) {
+    let at = recorded.lines().iter().map(|op| op.ts_unix).max().unwrap();
+    while unix_now() < at {
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+}
+
+/// **A visit ends on time** (GUESTS §3.1, §3.6, §7 bar 4): Sam opens Kim's
+/// Jellyfin, and then is refused `ended`, each end said: at the visit's
+/// `until`, here two seconds on; at Kim's Stop, a `Correct` of the visit;
+/// and at Kim's leave. Planted: the door not asking whether the visit is
+/// live; and svrngs-runtime's kept fold of standing keeping no `Correct`,
+/// so a stopped visit reads as live.
+#[tokio::test]
+async fn sams_visit_ends_at_its_time_at_kims_stop_and_at_kims_leave() {
+    let mut unsaid = Vec::new();
+    for end in ["time", "stop", "leave"] {
+        let house = House::new().await;
+        let (jellyfin, _heads) = origins::head_origin().await;
+        lends_on(house.dirs[0].path(), "jellyfin", jellyfin.port());
+        let until = unix_now() + if end == "time" { 2 } else { 3600 };
+        let visit = house.visit(until, &[(&house.kim, "jellyfin")]);
+        let opened = as_sam(&house.kim, "jellyfin").await;
+        assert_eq!(opened.status, 200, "{end}: {}", opened.text);
+        let words = match end {
+            "time" => {
+                tokio::time::sleep(Duration::from_secs(3)).await;
+                "your visit with Kim is over: its time is up"
+            }
+            "stop" => {
+                let stop = svrngs_core::tests_support::Fixture {
+                    act: RailAct::Correct {
+                        corrects: visit,
+                        replacement: None,
+                    },
+                    on_behalf_of: None,
+                };
+                let stopped = house.kim.rail().commit(NS, &stop).unwrap().unwrap();
+                at_its_time(&stopped).await;
+                "Kim ended your visit"
+            }
+            _ => {
+                let leave = svrngs_node::Leave(actor_of(&signing(1)));
+                let left = house.kim.rail().commit(NS, &leave).unwrap().unwrap();
+                at_its_time(&left).await;
+                "Kim is no longer a member, so your visit ended"
+            }
+        };
+        let reply = as_sam(&house.kim, "jellyfin").await;
+        let ended = reply.text.contains("x-svrngs-refused: ended");
+        if reply.status != 403 || !ended || !reply.text.contains(words) {
+            unsaid.push(format!("{end}: wanted {words:?}, got {}", reply.text));
+        }
+        house.close().await;
+    }
+    assert!(unsaid.is_empty(), "each end refused and said: {unsaid:#?}");
+}
