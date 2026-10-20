@@ -3642,3 +3642,75 @@ async fn the_home_page_never_offers_a_sign_in_helper(engine: Engine) {
     );
     drop(ada);
 }
+
+in_both_engines!(
+    /// **A phone is shown a lend's computer that did not answer as its
+    /// person's window, dark** (V1.1.3; the operator's "a graceful and cute
+    /// goodnight state", 2026-10-20). Ada's computer made bo's link; cy's
+    /// lends a shelf, which bo's phone opens. Then cy's computer is stopped,
+    /// as a closed lid leaves it, and the phone goes to the shelf's address
+    /// again: within the dial's cap and a second its worker shows
+    /// home/away.html, the page a computer shows too, 502 `away`: cy's
+    /// window is dark, cy's shelf can't open right now, goodnight from
+    /// cy — never that it sleeps, nor since when. Planted: HEAD before
+    /// it, whose worker said "The computer lending this did not answer.
+    /// Try again later." in plain text.
+    a_phone_is_shown_a_lend_s_computer_that_did_not_answer_as_its_window_dark
+);
+async fn a_phone_is_shown_a_lend_s_computer_that_did_not_answer_as_its_window_dark(engine: Engine) {
+    let site = site();
+    let relay = relay().await;
+    let bo = signing(7);
+    let (ada_dir, cy_dir, kept) = (
+        tempfile::tempdir().unwrap(),
+        tempfile::tempdir().unwrap(),
+        tempfile::tempdir().unwrap(),
+    );
+    let ada = node(ada_dir.path(), &relay, &bo).await;
+    let cy = joined(cy_dir.path(), &relay, &ada, 2, "cy").await;
+    let shelf = page_origin("<!doctype html><title>cy's shelf</title>").await;
+    lend(cy_dir.path(), "shelf", shelf.port());
+    let ready = kept.path().join("ready");
+    let (go, release) = tokio::sync::oneshot::channel();
+    let args = json!({
+        "site": site,
+        "key": hex::encode(bo.to_bytes()),
+        "token": token(&signing(1), &relay),
+        "ready": ready,
+        "open": "shelf",
+        "title": "cy's shelf",
+    });
+    let phone = tokio::spawn(drive(engine, "night.mjs", args, Some(release)));
+    tokio::time::timeout(Duration::from_secs(120), async {
+        while !ready.exists() {
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+    })
+    .await
+    .expect("the phone opens cy's shelf while cy's computer answers");
+    cy.endpoint().close().await;
+    drop(cy);
+    go.send(()).unwrap();
+    let seen = phone.await.unwrap();
+    eprintln!("the phone's run: {seen:#}");
+    assert_eq!(seen["opened"]["title"], "cy's shelf", "{seen:#}");
+    let again = &seen["again"];
+    assert_eq!(again["status"], 502, "{seen:#}");
+    assert_eq!(again["refused"], "away", "{seen:#}");
+    assert_eq!(again["title"], "cy’s window is dark", "{seen:#}");
+    let text = again["text"].as_str().unwrap_or_default();
+    for words in [
+        "cy’s computer didn’t answer, so cy’s shelf can’t open right now.",
+        "Goodnight from cy.",
+    ] {
+        assert!(text.contains(words), "the page lacks {words:?}:\n{seen:#}");
+    }
+    let within = (svrngs_node::dial::DIAL_WITHIN + Duration::from_secs(1)).as_millis();
+    assert!(
+        again["ms"]
+            .as_u64()
+            .is_some_and(|ms| u128::from(ms) < within),
+        "shown within the dial's cap and a second, {within} ms:\n{seen:#}"
+    );
+    drop(ada);
+}
