@@ -829,7 +829,9 @@ person is told an asleep computer did not answer then, not after iroh's 30 s.
 A joiner's dial to the computer its link names waits as iroh does. A phone's
 dial is held only while the computer sends something within that time, a
 keep-alive each second, and a request on a dial that falls silent is not
-dialled again. Every request to a member's computer is a stream of the one
+dialled again. A dial a request or a socket failed on is let go, so the
+next one dials the computer afresh once it answers again (V1.1.3,
+`demo/runs/doc/2026-10-20/found/`). Every request to a member's computer is a stream of the one
 connection kept to it, read whole within 10 s, and no port on this
 computer's loopback reaches another computer's door.
 

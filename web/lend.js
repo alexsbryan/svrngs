@@ -594,6 +594,9 @@ async function socket({ url, protocols }, port) {
   try {
     s = await (await dialFor(lend.key)).socket(`/lend/${where.label}${where.path}`, headers);
   } catch (e) {
+    // The dial let go, as `lent` does, so the next socket dials the
+    // computer afresh once it answers again (demo/runs/doc/2026-10-20/found/).
+    dials.delete(lend.key);
     trace(`RUNTIME: a socket at ${where.path} failed: ${e}`);
     return port.postMessage({ closed: 1006, reason: String(e) });
   }
