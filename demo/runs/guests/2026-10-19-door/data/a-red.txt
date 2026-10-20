@@ -1,0 +1,29 @@
+$ cargo test -q -p svrngs-node --test door guests   # at bc4b588d, (a) alone
+
+running 1 test
+guests::sam_opens_kims_jellyfin_as_kims_guest --- FAILED
+
+failures:
+
+---- guests::sam_opens_kims_jellyfin_as_kims_guest stdout ----
+
+thread 'guests::sam_opens_kims_jellyfin_as_kims_guest' (68369180) panicked at crates/svrngs-node/tests/door/guests.rs:108:5:
+assertion `left == right` failed: HTTP/1.1 403 Forbidden
+content-type: application/json
+x-svrngs-refused: pass
+content-length: 96
+connection: close
+
+{"error":"jellyfin is not open to you here; open it again from your group's page","kind":"pass"}
+  left: 403
+ right: 200
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    guests::sam_opens_kims_jellyfin_as_kims_guest
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 35 filtered out; finished in 0.17s
+
+error: test failed, to rerun pass `-p svrngs-node --test door`
+exit 101

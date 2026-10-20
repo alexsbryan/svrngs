@@ -17,6 +17,7 @@
 mod choices;
 #[path = "../common/mod.rs"]
 mod common;
+mod guests;
 mod limit;
 mod newcomer;
 mod origins;
