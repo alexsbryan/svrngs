@@ -1,0 +1,12 @@
+$ git apply b-draft.patch   # at 65c7fbb3
+$ CARGO_INCREMENTAL=0 cargo test -q -p svrngs-node --test browser guests::
+running 2 tests
+..
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 107 filtered out; finished in 24.67s
+
+$ python3 scripts/lean_check.py
+crates/svrngs-core     3075 / 3069 lines
+.                     16821 / 16704 lines
+BROKEN  crates/svrngs-core has 3075 lines of code, budget 3069: raised only by the operator, with the reason in the commit
+BROKEN  . has 16821 lines of code, budget 16704: raised only by the operator, with the reason in the commit
+exit 1

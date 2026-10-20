@@ -1,0 +1,439 @@
+diff --git a/crates/svrngs-core/src/register.rs b/crates/svrngs-core/src/register.rs
+index 80faf033..9ef6d1b3 100644
+--- a/crates/svrngs-core/src/register.rs
++++ b/crates/svrngs-core/src/register.rs
+@@ -138,6 +138,18 @@ impl Command for MintInvite {
+     }
+ }
+ 
++/// A host's computer writes the visit a guest's link made (guests-link;
++/// GUESTS §5): the fold, never this, decides whether it is one, so a visit
++/// past a bound is written, seen, and a visit nowhere (§3.7).
++impl Command for crate::Visit {
++    type Refusal = Infallible;
++    const READS: Reads = Reads::Membership;
++
++    fn decide(&self, _before: &Admission) -> Result<Vec<RailAct>, Infallible> {
++        Ok(vec![RailAct::Visit(self.clone())])
++    }
++}
++
+ /// A member asks that `person` leave the group (U7; DESIGN §6 "Removal has
+ /// one decider"): a `Remove` of each key standing as the one person of that
+ /// name who joined `joined`, when it is asked, every device of theirs,
+diff --git a/crates/svrngs-node/src/home.rs b/crates/svrngs-node/src/home.rs
+index c8afea4c..2abfa7df 100644
+--- a/crates/svrngs-node/src/home.rs
++++ b/crates/svrngs-node/src/home.rs
+@@ -383,20 +383,31 @@ async fn lend_one(
+ }
+ 
+ /// What the person asks a link for: to invite someone to `group`, or,
+-/// with `device`, to add a computer or phone of their own.
++/// with `device`, to add a computer or phone of their own, or, with
++/// `visit`, to have a guest for that many seconds (guests-link).
+ #[derive(Deserialize)]
+ #[serde(deny_unknown_fields)]
+ struct Linking {
+     group: String,
+     device: bool,
++    #[serde(default)]
++    visit: Option<i64>,
+ }
+ 
+ /// `POST /link`: a link to the group, as `svrngs link` makes it
+-/// ([`crate::node::Host::link`]).
++/// ([`crate::node::Host::link`]); a guest's, `<page>#visit=<token>`, so
++/// the page tells it from a join link before it asks anything.
+ async fn link(State(at): State<Asking>, Json(l): Json<Linking>) -> Response {
+-    match at.host.link(&l.group, l.device, None) {
++    match at.host.link(&l.group, l.device, None, l.visit) {
+         Ok(made) => {
+             let https = made.page.map(|p| https_link(&p, &made.token));
++            let https = https.map(|h| {
++                if l.visit.is_some() {
++                    h.replacen('#', "#visit=", 1)
++                } else {
++                    h
++                }
++            });
+             Json(serde_json::json!({ "client": client_link(&made.token), "https": https }))
+                 .into_response()
+         }
+diff --git a/crates/svrngs-node/src/home/home.js b/crates/svrngs-node/src/home/home.js
+index a7c7887c..c95d039a 100644
+--- a/crates/svrngs-node/src/home/home.js
++++ b/crates/svrngs-node/src/home/home.js
+@@ -84,7 +84,12 @@ async function show(g, s) {
+     const shown = (...words) => s.querySelector('.link').replaceChildren(...words);
+     const copy = (link, p) => button('Copy the link', () => Promise.resolve().then(() => navigator.clipboard.writeText(link)).then(() => p.append(' Copied.'), () => p.append(' Select it above to copy it.')));
+     const made = (device, words) => button(words, () => post('/link', { group: g.id, device }).then(({ client, https }) => shown(device ? 'Open this link on your other computer or phone; it joins as you, so send it to nobody else: ' : 'Send this link to the person you are inviting: ', el('code', https ?? client), https ? ' It opens in a browser, which says how to join from there.' : ' They join with svrngs join and this link.', ' It works for a day, while this computer is on. ', copy(https ?? client, s.querySelector('.link'))), (e) => shown(e.message)));
+-    s.append(el('p', '', made(false, `Make a link to invite someone to ${g.name ?? 'this group'}`), made(true, 'Make a link to add your phone or another computer of yours')), Object.assign(el('p'), { className: 'link' }));
++    // A guest (guests-link; GUESTS §5): how long asked first, 48 hours
++    // chosen to start and nothing longer offered, counted from when the
++    // guest opens the link; then the link, for any chat.
++    const length = el('select', '', ...[48, 24, 6].map((h) => Object.assign(el('option', `${h} hours`), { value: h * 3600 })));
++    const guest = button('Have a guest', () => guest.replaceWith(el('label', 'For how long, from when they open the link: ', length), button('Make a link for your guest', () => post('/link', { group: g.id, device: false, visit: Number(length.value) }).then(({ https }) => shown('Send this link to your guest, in any chat: ', el('code', https), ` They open it in a browser and give their name. For ${length.selectedOptions[0].textContent} from then they can open what you lend, and everyone in ${g.name ?? 'this group'} sees they are your guest. It lets one guest in, once, within a day, while this computer is on. `, copy(https, s.querySelector('.link'))), (e) => shown(e.message)))));
++    s.append(el('p', '', made(false, `Make a link to invite someone to ${g.name ?? 'this group'}`), made(true, 'Make a link to add your phone or another computer of yours'), guest), Object.assign(el('p'), { className: 'link' }));
+     // Leaving (groups-leave), what stays and what stops said before; whoever
+     // keeps the order of removals chooses who keeps it next, beside it.
+     const name = g.name ?? 'this group';
+diff --git a/crates/svrngs-node/src/invite.rs b/crates/svrngs-node/src/invite.rs
+index 33a9a4b2..9590c271 100644
+--- a/crates/svrngs-node/src/invite.rs
++++ b/crates/svrngs-node/src/invite.rs
+@@ -27,6 +27,16 @@ pub const LINK_LIFE_SECS: i64 = 24 * 60 * 60;
+ /// no secret changes.
+ const DRAWS: usize = 256;
+ 
++/// Where this computer keeps the links it made for a guest (guests-link;
++/// GUESTS §5), under its journals' root, one file a link named by the
++/// link's key: off the record, as nobody but this computer redeems one.
++pub const VISIT_LINKS: &str = "visit-links";
++
++/// A link made for a guest, as kept until it is redeemed or lapses: its
++/// group, how long the visit lasts from when the guest opens it, in
++/// seconds, and when it was made.
++pub type VisitLink = (String, i64, i64);
++
+ /// The one spelling of the file in a group's directory that keeps the page
+ /// its https links print on (u2-7; group.rs `write_origin` writes it).
+ pub const ORIGIN_FILE: &str = "origin";
+@@ -153,15 +163,18 @@ impl Host {
+     /// A link to `group`, for the home page (start-home) and `svrngs link`
+     /// and `new` alike: the https one on `page`, kept from now on, when
+     /// given (`link --origin`), else on the group's kept page; with
+-    /// `device`, a device link, and whose. Its relay is the one reached
+-    /// now, with no wait: a running computer has reached it, the command
+-    /// waits first, or [`carried`] says why.
++    /// `device`, a device link, and whose; with `visit`, a guest's link for
++    /// a visit that long, kept here ([`VisitLink`]) in place of an
++    /// `Invite`, so it lets nobody join, and on the group's page alone. Its
++    /// relay is the one reached now, with no wait: a running computer has
++    /// reached it, the command waits first, or [`carried`] says why.
+     #[expect(clippy::disallowed_methods, reason = "a link's life starts now")]
+     pub fn link(
+         &self,
+         group: &str,
+         device: bool,
+         page: Option<&Origin>,
++        visit: Option<i64>,
+     ) -> Result<Linked, Unminted> {
+         let unkept = |e: &dyn std::fmt::Display| Unminted::Unkept(e.to_string());
+         // Held first, so no journal is opened for a group it does not hold.
+@@ -180,7 +193,28 @@ impl Host {
+         let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH);
+         let now = now.map_err(|e| unkept(&e))?.as_secs() as i64;
+         let home = self.endpoint.addr().relay_urls().next().cloned();
+-        let token = self.mint(group, carried(&self.relay, home), key, now)?;
++        let relay = carried(&self.relay, home);
++        let token = match visit {
++            None => self.mint(group, relay, key, now)?,
++            Some(_) if page.is_none() => {
++                tracing::debug!(target: "link", group, "link: refused — a guest's link opens in a browser, and this group keeps no page");
++                return Err(Unminted::Unkept(
++                    "this group keeps no page for a guest to open".into(),
++                ));
++            }
++            Some(length) => {
++                let (token, dir) = (
++                    draw(self.endpoint.id(), relay),
++                    self.rail.root().join(VISIT_LINKS),
++                );
++                let kept = serde_json::to_vec(&(group, length, now)).map_err(|e| unkept(&e))?;
++                let at = dir.join(actor_of(&token.key()));
++                (std::fs::create_dir_all(&dir).and_then(|()| std::fs::write(at, kept)))
++                    .map_err(|e| unkept(&e))?;
++                tracing::debug!(target: "link", group, length, "link: a guest's link, kept here and in no record");
++                token
++            }
++        };
+         tracing::debug!(target: "link", group, ?device, page = ?page.as_ref().map(Origin::as_str), "link: made, on the group's kept page too when it keeps one");
+         Ok(Linked {
+             token,
+@@ -189,6 +223,19 @@ impl Host {
+         })
+     }
+ 
++    /// The guest's link whose key is `link`, claimed: removed as it is
++    /// read, so of two redeeming it at once one has it, and it lets one
++    /// guest in, once (guests-link). None when this computer never made it,
++    /// it was claimed, or it lapsed [`LINK_LIFE_SECS`] after it was made.
++    pub(crate) fn claim_visit(&self, link: &str, now: i64) -> Option<VisitLink> {
++        let at = self.rail.root().join(VISIT_LINKS).join(link);
++        let kept = (std::fs::read(&at).ok()).filter(|_| std::fs::remove_file(&at).is_ok());
++        let kept = kept.and_then(|k| serde_json::from_slice::<VisitLink>(&k).ok());
++        let lapsed = kept.as_ref().map(|k| now > k.2 + LINK_LIFE_SECS);
++        tracing::debug!(target: "link", link, held = kept.is_some(), ?lapsed, "link: a guest's link claimed, if this computer made it and nobody claimed it first, and in time");
++        kept.filter(|_| lapsed == Some(false))
++    }
++
+     /// This computer's person in `group`, by their first key and name, as
+     /// the register names them (bash-devices): whom a device link adds a
+     /// device of. A computer that stands there as nobody makes none.
+diff --git a/crates/svrngs-node/src/redeem.rs b/crates/svrngs-node/src/redeem.rs
+index a6d442f0..17ea26e7 100644
+--- a/crates/svrngs-node/src/redeem.rs
++++ b/crates/svrngs-node/src/redeem.rs
+@@ -58,7 +58,8 @@ use crate::iroh::{Alpn, Dialer, Endpoint, EndpointAddr};
+ use crate::node::Asking;
+ use crate::register::Standing;
+ use crate::ring_routes::err;
+-use crate::{actor_of, Name, NotAName, OpId, Person, RailError, RingRail};
++use crate::{actor_of, Name, NotAName, OpId, Person, RailError, RingRail, Visit};
++use std::collections::BTreeSet;
+ use svrngs_core::{RedeemRefusal, Refused as CommitRefused};
+ 
+ pub use svrngs_core::joining::{AskRequest, Asked, RedeemRequest};
+@@ -69,6 +70,9 @@ const ROUTE: &str = "/redeem";
+ /// The ask's path.
+ const ASK_ROUTE: &str = "/ask";
+ 
++/// A guest's link's path (guests-link).
++const VISIT_ROUTE: &str = "/visit";
++
+ /// How the issuer's node reads a group's seed, in the group's directory,
+ /// to answer an ask: `Ok(None)` when it keeps none there. The command's
+ /// (`svrngs::group::seed_text`), handed to [`crate::node::Node::start`].
+@@ -111,6 +115,19 @@ enum NotAdmitted {
+     Decided(RedeemRefusal),
+     /// This node could not read its own journal.
+     Unjudged(RailError),
++    /// The `Visit` is written, and the fold counts it nowhere: it is past
++    /// a bound (GUESTS §3.7).
++    Uncounted,
++}
++
++/// What a guest's page presents (guests-link; GUESTS §5): the link's ask,
++/// which proves the page holds the link and dials as the key it names,
++/// made fresh for this visit, and the name the guest gives.
++#[derive(Debug, Deserialize)]
++#[serde(deny_unknown_fields)]
++pub struct VisitRequest {
++    pub ask: AskRequest,
++    pub guest: String,
+ }
+ 
+ /// The ask and redemption routes, served on [`Alpn::Redeem`] to any dialer.
+@@ -118,6 +135,7 @@ pub(crate) fn router(at: Asking) -> axum::Router {
+     axum::Router::new()
+         .route(ASK_ROUTE, post(ask_route))
+         .route(ROUTE, post(redeem_route))
++        .route(VISIT_ROUTE, post(visit_route))
+         .with_state(at)
+ }
+ 
+@@ -148,6 +166,61 @@ async fn redeem_route(
+     answer("redeem", &req.key, redeemed)
+ }
+ 
++async fn visit_route(
++    State(at): State<Asking>,
++    dialer: Option<Extension<Dialer>>,
++    Json(req): Json<VisitRequest>,
++) -> Response {
++    let visited = serve_visit(&at, dialer.map(|Extension(d)| d.actor()), &req);
++    answer("visit", &req.ask.key, visited)
++}
++
++/// A guest's link redeemed (guests-link): judged as an ask is, and the
++/// name as a joiner's; the link claimed, once; then the `Visit` written,
++/// opening each lend this computer declares, until the link's length
++/// from now, when the guest opened it. Whether it is a visit is the
++/// fold's alone: one past a bound is written, seen, and refused here as
++/// none. Answered the host, until when, and the lends the visit opens, on
++/// this computer, which the page dials by the link.
++fn serve_visit(
++    at: &Asking,
++    dialer: Option<String>,
++    req: &VisitRequest,
++) -> Result<serde_json::Value, NotAdmitted> {
++    parse_ask(dialer.as_deref(), &req.ask)?;
++    let guest = Name::kept(req.guest.clone()).map_err(NotAdmitted::NotAName)?;
++    let now = crate::door::unix_now().ok_or(NotAdmitted::NoInvite)?;
++    let (group, length, _) =
++        (at.host.claim_visit(&req.ask.link, now)).ok_or(NotAdmitted::NoInvite)?;
++    let (rail, group) = (&at.host.rail, group.as_str());
++    let host = (at.host.own_person(group))
++        .map_err(|_| NotAdmitted::NotHeld)?
++        .1;
++    let lends = crate::lend::all(&at.door.data_dir).unwrap_or_default();
++    let lent: BTreeSet<String> = (lends.into_iter().flatten())
++        .map(|l| l.name.as_str().to_string())
++        .collect();
++    let me = actor_of(rail.signer());
++    let visit = Visit {
++        guest: Person::from(guest),
++        key: req.ask.key.clone(),
++        opens: [(me, lent.clone())].into(),
++        until: now + length,
++    };
++    let recorded = rail.commit(group, &visit).map_err(NotAdmitted::Unjudged)?;
++    let id = recorded.map_err(|_| NotAdmitted::NotHeld)?.lines()[0]
++        .id
++        .clone();
++    let register = rail.register(group).map_err(NotAdmitted::Unjudged)?;
++    let counted = register.visits.contains_key(&id);
++    tracing::debug!(target: "redeem", group, key = %req.ask.key, %id, until = visit.until, counted, ?lent,
++        "redeem: a guest's link redeemed and its Visit written, a visit only as the fold counts it");
++    let until = counted
++        .then_some(visit.until)
++        .ok_or(NotAdmitted::Uncounted)?;
++    Ok(serde_json::json!({ "host": host, "until": until, "lent": lent }))
++}
++
+ /// A decision as the wire carries it: what was done, [`UNJUDGED`], or the
+ /// one [`REFUSAL`].
+ fn answer<T: Serialize>(route: &str, key: &str, decided: Result<T, NotAdmitted>) -> Response {
+diff --git a/crates/svrngs-node/tests/browser/guests.rs b/crates/svrngs-node/tests/browser/guests.rs
+index 923419f6..b6be26c7 100644
+--- a/crates/svrngs-node/tests/browser/guests.rs
++++ b/crates/svrngs-node/tests/browser/guests.rs
+@@ -91,8 +91,9 @@ async fn sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest(engine:
+     // group's page, its secret in the fragment.
+     assert_eq!(seen["length"], "48 hours", "{shown:#}");
+     let link = seen["link"].as_str().unwrap_or_default();
+-    assert!(link.starts_with(&format!("{origin}#")), "{shown:#}");
+-    let token = svrngs_core::link::Link::parse(link)
++    // A guest's link, `<page>#visit=<token>`: its token a join link's.
++    assert!(link.starts_with(&format!("{origin}#visit=")), "{shown:#}");
++    let token = svrngs_core::link::Link::parse(&link.replacen("#visit=", "#", 1))
+         .expect("the link shown is a link")
+         .token;
+     assert_eq!(token.issuer, signing(KIM).verifying_key(), "{shown:#}");
+diff --git a/crates/svrngs/src/cli.rs b/crates/svrngs/src/cli.rs
+index f50ef3f2..8afdd87c 100644
+--- a/crates/svrngs/src/cli.rs
++++ b/crates/svrngs/src/cli.rs
+@@ -1647,7 +1647,7 @@ pub async fn new_group(
+     let keep = node.host().keep_group(&seed, page, kept.as_ref());
+     keep.map_err(|why| keep_refused(&seed, &why))?;
+     tracing::debug!(target: "cli", group = %id, name = %seed.name(), page = ?page.map(Origin::as_str), ?kept, asked, "cli: group made, keeping the relay asked, else the one the home page's keeps");
+-    let made = node.host().link(&id, false, None);
++    let made = node.host().link(&id, false, None, None);
+     let made = made.map_err(|e| unminted(&seed, e))?;
+     Ok((seed, Printed::of(&made)))
+ }
+@@ -1689,7 +1689,7 @@ pub async fn link_to(
+ ) -> Result<(Seed, Printed, Option<Person>), Refusal> {
+     let seed = group_named(node.rail().root(), reference)?;
+     wait_online(node, &relay.relay_urls).await;
+-    let made = node.host().link(&seed.id(), device, page);
++    let made = node.host().link(&seed.id(), device, page, None);
+     let made = made.map_err(|e| unminted(&seed, e))?;
+     Ok((seed, Printed::of(&made), made.device))
+ }
+diff --git a/crates/svrngs/tests/home_group.rs b/crates/svrngs/tests/home_group.rs
+index 69f4454b..2d8aabbf 100644
+--- a/crates/svrngs/tests/home_group.rs
++++ b/crates/svrngs/tests/home_group.rs
+@@ -272,7 +272,7 @@ async fn the_home_page_joins_another_group_from_its_link_while_svrngs_runs(
+     )
+     .await
+     .expect("Sam makes Trip");
+-    let made = (sam.host().link(&trip.id(), false, None)).expect("Sam makes a link to Trip");
++    let made = (sam.host().link(&trip.id(), false, None, None)).expect("Sam makes a link to Trip");
+     let link = svrngs_node::link::client_link(&made.token);
+ 
+     let home = tempfile::tempdir().unwrap();
+diff --git a/crates/svrngs/tests/leave_page.rs b/crates/svrngs/tests/leave_page.rs
+index d640db04..e7df68b7 100644
+--- a/crates/svrngs/tests/leave_page.rs
++++ b/crates/svrngs/tests/leave_page.rs
+@@ -74,7 +74,7 @@ async fn leaving_on_the_home_page_is_said_as_a_leave_everywhere(engine: harness:
+         .await
+         .expect("Sam makes Trip");
+     let link = || {
+-        let made = sam.host().link(&trip.id(), false, None);
++        let made = sam.host().link(&trip.id(), false, None, None);
+         client_link(&made.expect("Sam makes a link to Trip").token)
+     };
+     let ana_dir = tempfile::tempdir().unwrap();
+@@ -296,7 +296,10 @@ async fn a_leave_reaches_the_leavers_other_computer(engine: harness::Engine) {
+     let one = computer(one_dir.path(), &one_key, &ours).await;
+     let mut two = computer(two_dir.path(), &two_key, &ours).await;
+     for g in &groups {
+-        let made = sam.host().link(g, false, None).expect("Sam makes a link");
++        let made = sam
++            .host()
++            .link(g, false, None, None)
++            .expect("Sam makes a link");
+         let sent = Link::parse(&client_link(&made.token)).unwrap();
+         one.host()
+             .join(&sent, &name("Ana"))
+diff --git a/web/app.js b/web/app.js
+index 69d68086..9671c6f0 100644
+--- a/web/app.js
++++ b/web/app.js
+@@ -215,6 +215,29 @@ async function join(token, kept) {
+   }
+ }
+ 
++// A visit (guests-link; GUESTS §5, "How a visit is made"): a link a member
++// made for a guest, `<origin>#visit=<token>`. The page asks the guest's
++// name once, makes a key fresh for this visit, kept nowhere and never one
++// it keeps for a group (§3.9), and redeems the link at the member's
++// computer, which writes the visit; then it lists what the visit opens and
++// until when. Each pass lasts past the visit, so the lender's door, never
++// this page, says when the visit has ended (door.rs `guest_of`).
++async function visit(token) {
++  relayed(token);
++  const key = crypto.getRandomValues(new Uint8Array(32));
++  const asking = askName('the group you’re visiting');
++  heading.textContent = 'You’re invited over as a guest';
++  const guest = await asking;
++  heading.textContent = 'Opening your link…';
++  const issuer = await reach(connect_to_join(key, token), 'The computer that sent this link did not answer. Try again later.');
++  const v = JSON.parse(await post(issuer, '/visit', JSON.stringify({ ask: JSON.parse(ask(key, token)), guest })).finally(() => issuer.close()));
++  trace(`PAGE: a guest of ${v.host} until ${v.until}, opening ${v.lent.length} lend(s)`);
++  const lent = v.lent.map((name) => ({ key: issuer_of(token), relay: relay_of(token), name, person: v.host }));
++  show(`You’re ${v.host}’s guest until ${new Date(v.until * 1000).toLocaleString()}`, true);
++  list.replaceChildren(...lent.map((l) => row([Object.assign(el('button', named(l)), { onclick: () => open({ token }, key, lent, [], l, undefined, v.until + PASS_LIFE) })])));
++  said.textContent = lent.length ? '' : `${v.host} lends nothing yet.`;
++}
++
+ const hex = (bytes) => [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
+ 
+ // Open `l`, one of `lent`, as the person whose key is `key` in `group`: a
+@@ -222,7 +245,8 @@ const hex = (bytes) => [...bytes].map((b) => b.toString(16).padStart(2, '0')).jo
+ // to its origin in the fragment, which no origin is sent (the module docs),
+ // with whose each is and whose computer did not answer, which its worker
+ // tells its pages (lend.js `told`). Asked by a lend, at `at`.
+-function open(group, key, lent, unanswered, l, at) {
++// A guest's pass lasts until `until` (guests-link).
++function open(group, key, lent, unanswered, l, at, until = Math.floor(Date.now() / 1000) + PASS_LIFE) {
+   if (!('serviceWorker' in navigator)) {
+     said.textContent = `This browser cannot open ${named(l)}.`;
+     return;
+@@ -231,7 +255,6 @@ function open(group, key, lent, unanswered, l, at) {
+   const reads = lent.filter((o) => o !== l && (l.reads ?? []).includes(o.kind));
+   const lends = [l, ...reads].map((o) => ({ label: label(o.key, o.name), key: o.key, relay: o.relay ?? null, name: o.name, kind: o.kind, person: o.person, asks: o.asks }));
+   const holder = crypto.getRandomValues(new Uint8Array(32));
+-  const until = Math.floor(Date.now() / 1000) + PASS_LIFE;
+   // Each app at an address of its own under this page's host (DESIGN §7),
+   // the page's files at its root.
+   const back = at ? `&back=${encodeURIComponent(at)}` : '';
+@@ -524,6 +547,7 @@ async function opening(fragment) {
+     // The wasm by its one URL, from the cache the worker reads it from
+     // too (store.js `runtime`, u4-9).
+     await init({ module_or_path: store.runtime() });
++    if (fragment.startsWith('visit=')) return await visit(fragment.slice('visit='.length));
+     const asked = /^(open|ask)=/.test(fragment) ? new URLSearchParams(fragment) : null;
+     const token = asked ? '' : fragment;
+     if (token) offer(token);
+diff --git a/web/tests/visit.mjs b/web/tests/visit.mjs
+index 9dd037bf..39bfd0f6 100644
+--- a/web/tests/visit.mjs
++++ b/web/tests/visit.mjs
+@@ -41,7 +41,10 @@ try {
+   watch('kim', kim.context);
+   const page = await kim.context.newPage();
+   await page.goto(home);
+-  const section = page.locator('#home section', { has: page.locator('button', { hasText: 'Have a guest' }) }).first();
++  // The group's section, held by its place: its button goes once tapped.
++  await page.locator('#home section button', { hasText: 'Have a guest' }).first().waitFor({ timeout: 30_000 });
++  const at = await page.locator('#home section').evaluateAll((ss) => ss.findIndex((s) => [...s.querySelectorAll('button')].some((b) => b.textContent === 'Have a guest')));
++  const section = page.locator('#home section').nth(at);
+   await section.locator('button', { hasText: 'Have a guest' }).click({ timeout: 30_000 });
+   // The length the page asks before it makes the link, as chosen to start.
+   const length = await section.locator('select').first().evaluate((s) => s.selectedOptions[0]?.textContent ?? null, null, { timeout: 30_000 });
