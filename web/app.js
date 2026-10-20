@@ -52,7 +52,7 @@ import init, {
   relay_of,
 } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
-import { door, el, named, once, opens, owner, question, removal, row, table, unlent, uses as used, whose } from './question.js?v=__VERSION__';
+import { door, el, named, once, opens, owner, question, removal, row, table, unlent, uses as used, visiting, whose } from './question.js?v=__VERSION__';
 
 const heading = document.getElementById('status');
 const said = document.getElementById('response');
@@ -435,7 +435,7 @@ async function enter(group, asked) {
     if (why === 'removed') throw new Said(`You are no longer in ${group.name}.`);
     throw new Said(`${whom} said no when you asked what ${group.name} lends.`);
   }
-  const { version, lent, unanswered, unheard, refused, older: behind, removals, people, shelf, changed } = await res.json();
+  const { version, lent, unanswered, unheard, refused, older: behind, removals, visiting: on, people, shelf, changed } = await res.json();
   await d.close();
   // One version check (arch-version; the node's version.rs): a computer
   // running an older svrngs is said so once, by whose it is, and nothing
@@ -449,6 +449,11 @@ async function enter(group, asked) {
   // (v1-keeper-office (b)); `null` when the computer could not read it.
   const gone = (removals ?? [null]).map((r) => el('li', r ? removal(r) : `Who was removed from ${group.name} cannot be read just now.`));
   document.getElementById('removals').replaceChildren(...gone);
+  // Who is visiting now, as the home page lists them (guests-pages;
+  // question.js `visiting`), `null` when the computer could not read it;
+  // a guest's Stop is on the home page of the computer that made their link.
+  const mine = on?.some((v) => v.host === group.person) ? [el('p', 'You stop your guest’s visit on the home page of the computer you made their link on.')] : [];
+  document.getElementById('visitors').replaceChildren(...(on ? (on.length ? [el('h2', 'Visiting now'), visiting(on), ...mine] : []) : [el('p', `Who is visiting ${group.name} cannot be read just now.`)]));
   show(`You’re in ${titled(group)}, as ${group.person}${via ? `, through ${via.person}’s computer` : ''}`, true);
   // The door and the index as the home page draws them (question.js;
   // V1_UI_BUILD §3.1), judged by the answer this computer gave: whose

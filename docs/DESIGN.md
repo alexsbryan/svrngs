@@ -1121,11 +1121,13 @@ from the journal waits in PLAN §2.
   guest gave and the key their page made, `until` the length from then.
   The guest's page keeps the visit apart from every group (`web/store.js`,
   `keepVisit`), so the link opened again shows it again or says it has
-  ended. Every member's home page lists who is visiting now, by host, with
-  until when, from the fold alone (`rail.rs`, `visiting`); the host's
-  lists their own first, each with Stop, which writes the `Correct` as an
-  app's is (`home.rs`, `POST /visits`), only of a visit this computer
-  hosts, and draws the page again at the act's own time.
+  ended. Every member's home page, and the phone's page through whichever
+  computer it reaches (`/people/lends`), lists who is visiting now, by
+  host, with until when, from the fold alone (`rail.rs`, `visiting`). The
+  host's home page lists their own first, each with Stop, which writes the
+  `Correct` as an app's is (`home.rs`, `POST /visits`), only of a visit
+  this computer hosts, and draws the page again at the act's own time; the
+  phone's page says a guest's Stop is there.
 - **What an app places by hash is not kept.** Its bytes are in no act and no
   folder; which hashes a computer carries for which group, and until when,
   is in its running process alone, each kept past its lapse so a get says

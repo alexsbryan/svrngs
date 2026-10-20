@@ -72,7 +72,7 @@ use crate::iroh::{
     Endpoint, EndpointAddr, IrohAcceptor, IrohTransport, PublicKey, RelayConfig, SecretKey, Unsent,
 };
 use crate::lend::Offered;
-use crate::rail::{LiveBuffer, RailApi};
+use crate::rail::{visiting, LiveBuffer, RailApi};
 use crate::redeem::SeedText;
 use crate::register::{Member, Standing};
 use crate::ring_routes::{self, err, RingInbound};
@@ -827,7 +827,8 @@ fn people_router(asking: Asking) -> axum::Router {
 /// dials, which answers what it can see and proxies no lend (DESIGN §3,
 /// call 4). A group the dialer does not stand in adds nothing. Beside them,
 /// every removal and ask to remove in those groups, from each register
-/// (v1-keeper-office (b)): `null` when one cannot be read here; and the
+/// (v1-keeper-office (b)), and who is visiting them now (guests-pages;
+/// [`crate::rail::visiting`]): `null` when one cannot be read here; and the
 /// people standing in them, as `/v1/rail/people` answers them, for the
 /// door (v1ui-door (d)); each carried app whose files changed since the
 /// version that runs as the asker ([`crate::folder::Folders::changed`];
@@ -851,22 +852,26 @@ async fn people_lends(
         return Err(err(StatusCode::FORBIDDEN, crate::door::LENDS_NOTHING));
     };
     let (lent, unlisted) = at.lent(&groups, &own, Some(&asker)).await?;
-    let removals = groups
+    let registers = groups
         .iter()
         .map(|(namespace, _)| {
-            at.host.rail.register(namespace).map(|r| r.removals).inspect_err(|e| {
-                tracing::warn!(target: "node", asker, namespace, error = %e, "node: people's lends — a group's register is unreadable, so its removals are not known");
+            at.host.rail.register(namespace).inspect_err(|e| {
+                tracing::warn!(target: "node", asker, namespace, error = %e, "node: people's lends — a group's register is unreadable, so its removals and who is visiting are not known");
             })
         })
         .collect::<Result<Vec<_>, _>>()
-        .ok()
-        .map(|each| each.concat());
+        .ok();
+    let (me, rs) = (at.host.actor.as_str(), registers.as_deref());
+    let removals: Option<Vec<_>> =
+        rs.map(|rs| rs.iter().flat_map(|r| r.removals.clone()).collect());
+    let on: Option<Vec<_>> = rs.and_then(|rs| rs.iter().map(|r| visiting(r, me)).collect());
     tracing::debug!(target: "node", asker, groups = groups.len(), lent = lent.len(), ?unlisted,
         removals = ?removals.as_ref().map(Vec::len),
         "node: people's lends — answered what the people of the asker's groups lend, each with its lender's key");
     let mut body = serde_json::json!(unlisted);
     body["lent"] = serde_json::json!(lent);
     body["removals"] = serde_json::json!(removals);
+    body["visiting"] = serde_json::json!(on.map(|each| each.concat()));
     let people: BTreeMap<_, _> = groups.iter().flat_map(|(_, s)| s.clone()).collect();
     body["people"] = crate::rail::standing_json(&people);
     body["shelf"] = crate::folder::shelf();

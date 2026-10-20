@@ -4,8 +4,9 @@
   The page a group's link opens on a phone: `<origin>#<token>` (DESIGN §3,
   "Joining"). It asks a newcomer's name once, then lists what the group's
   people lend (app.js); it asks the person's yes when an app sends them
-  here, and lists what apps use (sup-3), and who was removed from the
-  group or asked to be (v1-keeper-office (b)). Static files any origin
+  here, and lists what apps use (sup-3), who was removed from the
+  group or asked to be (v1-keeper-office (b)), and who is visiting it
+  (guests-pages). Static files any origin
   can serve — no server, no certificate, no data. The FRAGMENT carries the link's token, and a browser never sends
   the fragment to the origin, so the page loads from public static hosting
   while the link stays on the phone; `no-referrer` keeps it out of every
@@ -72,6 +73,7 @@
 <table class="index"><tbody id="lent"></tbody></table>
 <div id="shelf"></div>
 <ul id="removals"></ul>
+<section id="visitors"></section>
 <details id="uses" hidden><summary>What apps use</summary><ul id="used"></ul></details>
 <pre id="response"></pre>
 <script type="module" src="./app.js?v=__VERSION__"></script>

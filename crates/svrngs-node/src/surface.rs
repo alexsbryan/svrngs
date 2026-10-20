@@ -113,7 +113,7 @@ struct Held {
     folders: Option<Vec<std::path::PathBuf>>,
     /// Who is visiting now (guests-pages; [`crate::rail::visiting`]): `null`
     /// beside `removed`'s, or when this computer's clock cannot be read.
-    visiting: Option<serde_json::Value>,
+    visiting: Option<Vec<serde_json::Value>>,
 }
 
 /// `GET /v1/groups`.
