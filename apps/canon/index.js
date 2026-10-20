@@ -46,8 +46,10 @@ function ways(name) {
 
 async function show() {
   const r = await fetch(ACTS);
-  const read = await r.json().catch(() => ({}));
-  if (!r.ok) return app.replaceChildren(el('h1', 'House rules'), el('p', `Your house’s rules can’t be read just now: ${read.error ?? `it answered ${r.status}`}.`));
+  // A body that is not JSON is said as that, never read as an empty answer (#209).
+  const read = await r.json().catch(() => null);
+  if (!r.ok) return app.replaceChildren(el('h1', 'House rules'), el('p', `Your house’s rules can’t be read just now: ${read?.error ?? `it answered ${r.status}`}.`));
+  if (read === null || typeof read !== 'object') return app.replaceChildren(el('h1', 'House rules'), el('p', 'Your house’s rules can’t be read just now: this computer answered in a way House rules can’t read.'));
   let view;
   try {
     view = fold(call, read, Math.floor(Date.now() / 1000));

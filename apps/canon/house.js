@@ -165,10 +165,12 @@ export function payload(act) {
  * (crates/svrngs-core/src/command.rs:243-250), so one written in the second
  * of another is ahead of the browser's clock, and canon asked before it
  * says it passed a change yet keeps the old rule (#206). One answer, one
- * clock. `{unsettled}` when svrngs cannot say who stood when (#124), never
- * an empty house. */
+ * clock. `{unsettled}` when svrngs cannot say who stood when (#124), its
+ * `spans` null, never an empty house; an answer with no `spans` at all is
+ * not one svrngs gives, and is said as unread, never as unsettled (#209). */
 export function fold(call, read, asked) {
-  if (!Array.isArray(read.spans)) return { unsettled: true };
+  if (read.spans === null) return { unsettled: true };
+  if (!Array.isArray(read.spans)) throw new Error('this computer’s answer doesn’t say who is in your house');
   const members = membership(call, read.group, read.spans);
   const ours = new Set(members.map((l) => JSON.parse(l).id));
   const { kept, dropped } = recorded(read, ours);
