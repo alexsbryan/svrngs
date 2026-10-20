@@ -183,11 +183,23 @@ async fn standing_under(
     person: &str,
     founder: &str,
 ) -> Node {
+    standing_on(dir, relay_url(relay), ada, me, person, founder).await
+}
+
+/// [`standing_under`], its relay reached at `relay`, a URL.
+async fn standing_on(
+    dir: &Path,
+    relay: String,
+    ada: &Node,
+    me: u8,
+    person: &str,
+    founder: &str,
+) -> Node {
     let node = Node::start(
         dir.to_path_buf(),
         signing(me),
         &RelayConfig {
-            relay_urls: vec![relay_url(relay)],
+            relay_urls: vec![relay],
             n0_services: false,
             loopback_only: true,
         },
@@ -3789,4 +3801,138 @@ async fn a_phone_is_shown_a_lend_s_computer_that_did_not_answer_as_its_window_da
         "shown within the dial's cap and a second, {within} ms:\n{seen:#}"
     );
     drop(ada);
+}
+
+/// A lent page that holds a socket, on one port: a request asking
+/// `Upgrade: websocket` switched and left open, as a live app's sync
+/// socket is, and any other answered with "cy's room".
+async fn socket_page() -> std::net::SocketAddr {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    tokio::spawn(async move {
+        while let Ok((mut sock, _)) = listener.accept().await {
+            tokio::spawn(async move {
+                let mut head = [0u8; 8192];
+                let n = tokio::io::AsyncReadExt::read(&mut sock, &mut head)
+                    .await
+                    .unwrap_or(0);
+                let head = String::from_utf8_lossy(&head[..n]).to_ascii_lowercase();
+                if head.contains("\r\nupgrade: websocket") {
+                    let yes = "HTTP/1.1 101 Switching Protocols\r\nConnection: Upgrade\r\nUpgrade: websocket\r\n\r\n";
+                    if sock.write_all(yes.as_bytes()).await.is_ok() {
+                        let (mut r, mut w) = sock.split();
+                        let _ = tokio::io::copy(&mut r, &mut w).await;
+                    }
+                    return;
+                }
+                let html = "<!doctype html><title>cy's room</title>";
+                let answer = format!(
+                    "HTTP/1.1 200 OK\r\ncontent-type: text/html; charset=utf-8\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{html}",
+                    html.len()
+                );
+                let _ = sock.write_all(answer.as_bytes()).await;
+            });
+        }
+    });
+    addr
+}
+
+/// A way to `relay` that shuts, as a closed lid leaves a computer reached
+/// only through it: shut (`false` sent), it ends every connection through
+/// it and refuses each new one, until opened again (`true`).
+async fn lid(relay: &Server) -> (String, tokio::sync::watch::Sender<bool>) {
+    let to = relay.http_addr().expect("the relay serves HTTP");
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let at = listener.local_addr().unwrap();
+    let (open, watch) = tokio::sync::watch::channel(true);
+    tokio::spawn(async move {
+        while let Ok((mut near, _)) = listener.accept().await {
+            let mut shut = watch.clone();
+            if !*shut.borrow() {
+                continue;
+            }
+            tokio::spawn(async move {
+                if let Ok(mut far) = tokio::net::TcpStream::connect(to).await {
+                    tokio::select! {
+                        _ = tokio::io::copy_bidirectional(&mut near, &mut far) => {}
+                        _ = shut.wait_for(|open| !*open) => {}
+                    }
+                }
+            });
+        }
+    });
+    (format!("http://{at}/"), open)
+}
+
+in_both_engines!(
+    /// **A phone's socket opens again once its lender answers again**
+    /// (V1.1.3; the doc run's finding, `demo/runs/doc/2026-10-20/found/
+    /// lid-45s.jsonl`, 3fee02f4: a phone's sockets never came back after
+    /// the lid opened). Cy's computer is reached only through its own
+    /// relay, by a way that shuts (`lid`). Cy lends a room whose page holds
+    /// a socket, and bo's phone opens it: a socket there opens. The way is
+    /// shut, as a closed lid leaves cy's computer, and a socket does not
+    /// open. The way opens again, and within 60 s a socket the page asks
+    /// for opens, the page not opened again. Planted: HEAD before it,
+    /// whose worker kept the dial a socket failed on (web/lend.js
+    /// `socket`, as `lent` does not), so every socket after went to a
+    /// connection that had gone.
+    a_phone_s_socket_opens_again_once_its_lender_answers_again
+);
+async fn a_phone_s_socket_opens_again_once_its_lender_answers_again(engine: Engine) {
+    let site = site();
+    let (relay, far) = (relay().await, relay().await);
+    let (cys, lid) = lid(&far).await;
+    let bo = signing(7);
+    let (ada_dir, cy_dir, kept) = (
+        tempfile::tempdir().unwrap(),
+        tempfile::tempdir().unwrap(),
+        tempfile::tempdir().unwrap(),
+    );
+    let ada = node(ada_dir.path(), &relay, &bo).await;
+    let fixture = svrngs_core::tests_support::Fixture {
+        act: RailAct::Admit {
+            person: Person::parse("cy").unwrap(),
+            key: actor_of(&signing(2)),
+            invite: None,
+        },
+        on_behalf_of: None,
+    };
+    ada.rail().commit(NS, &fixture).unwrap().unwrap();
+    let cy = standing_on(cy_dir.path(), cys, &ada, 2, "cy", "ada").await;
+    lend(cy_dir.path(), "room", socket_page().await.port());
+    let (ready, again) = (kept.path().join("ready"), kept.path().join("again"));
+    let args = json!({
+        "site": site,
+        "key": hex::encode(bo.to_bytes()),
+        "token": token(&signing(1), &relay),
+        "ready": ready,
+        "again": again,
+        "open": "room",
+        "title": "cy's room",
+        "socket": "/sync",
+    });
+    let (go, release) = tokio::sync::oneshot::channel();
+    let phone = tokio::spawn(drive(engine, "night.mjs", args, Some(release)));
+    let written = |f: std::path::PathBuf| async move {
+        tokio::time::timeout(Duration::from_secs(120), async {
+            while !f.exists() {
+                tokio::time::sleep(Duration::from_millis(100)).await;
+            }
+        })
+        .await
+        .expect("the phone writes its file");
+    };
+    written(ready.clone()).await;
+    lid.send(false).unwrap();
+    go.send(()).unwrap();
+    written(again.clone()).await;
+    lid.send(true).unwrap();
+    let seen = phone.await.unwrap();
+    eprintln!("the phone's run: {seen:#}");
+    assert_eq!(seen["opened"]["title"], "cy's room", "{seen:#}");
+    assert_eq!(seen["first"], "open", "{seen:#}");
+    assert_ne!(seen["stopped"], "open", "{seen:#}");
+    assert_eq!(seen["back"]["last"], "open", "{seen:#}");
+    drop((cy, ada));
 }
