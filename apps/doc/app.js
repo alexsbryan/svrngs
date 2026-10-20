@@ -110,11 +110,14 @@ named();
 // Who last edited each paragraph, as the server last said; the "ago" is
 // redrawn every few seconds from it.
 let entries = [];
+// Wide enough for a margin beside the doc, as index.html's media rule says.
+const NARROW = matchMedia("(max-width: 62rem)");
 function drawLines() {
   const prose = el("editor").querySelector(".tiptap");
   const gutter = el("attribution");
   if (!prose) return;
   const blocks = Array.from(prose.children);
+  const wrap = gutter.parentElement.getBoundingClientRect();
   gutter.replaceChildren();
   entries.forEach((entry, i) => {
     const line = attributionLine(entry, Date.now());
@@ -122,9 +125,20 @@ function drawLines() {
     if (line === null || block === undefined) return;
     const note = document.createElement("div");
     note.className = "note";
-    note.style.top = `${block.offsetTop}px`;
     note.textContent = line;
     gutter.appendChild(note);
+    // Measured as drawn, against the doc's box, so a note follows its
+    // paragraph wherever the editor puts it.
+    const at = block.getBoundingClientRect();
+    if (NARROW.matches) {
+      note.style.left = `${at.left - wrap.left}px`;
+      note.style.width = `${at.width}px`;
+      note.style.top = `${at.bottom - wrap.top - note.offsetHeight}px`;
+    } else {
+      note.style.left = `calc(100% + 0.9rem)`;
+      note.style.width = "10rem";
+      note.style.top = `${at.top - wrap.top}px`;
+    }
   });
 }
 // Redrawn when the paragraphs move under the notes, as well as when the
@@ -137,6 +151,7 @@ const drawSoon = () => {
 };
 editor.on("transaction", drawSoon);
 addEventListener("resize", drawSoon);
+NARROW.addEventListener("change", drawSoon);
 setInterval(drawLines, 5000);
 
 function drawHere() {
