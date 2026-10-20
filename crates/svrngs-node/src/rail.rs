@@ -57,7 +57,7 @@ use crate::node::dialled;
 use crate::register::{Member, Standing};
 use crate::ring_routes::err;
 use crate::{actor_of, Device, Joined, Person, RailAct, RailError, RingRail};
-use svrngs_core::{Append, AppendRefusal, Refused as CommitRefused};
+use svrngs_core::{Append, AppendRefusal};
 
 /// What the doors read: the journals, the nudge that wakes the round
 /// after an append ([`crate::ring_sync::append`]), and the live lane's
@@ -220,14 +220,9 @@ pub(crate) async fn append_act(
         act,
         on_behalf_of: stamp,
     };
-    let appended = match rail.commit(namespace, &append) {
+    let appended = match rail.commit_said(namespace, &append) {
         Ok(Ok(recorded)) => Ok(recorded.lines()[0].clone()),
-        Ok(Err(CommitRefused::NoStanding)) => Err(RailError::NotInRoster {
-            actor: actor_of(rail.signer()),
-            namespace: namespace.to_string(),
-        }),
-        Ok(Err(CommitRefused::Unsettled)) => Err(RailError::Unsettled(namespace.to_string())),
-        Ok(Err(CommitRefused::Command(AppendRefusal::NotInGroup(person)))) => {
+        Ok(Err(AppendRefusal::NotInGroup(person))) => {
             tracing::debug!(target: "rails", namespace, %person, "rail: refused — on_behalf_of names nobody in the group");
             return refused(
                 namespace,
@@ -235,7 +230,7 @@ pub(crate) async fn append_act(
                 format!("{person} is not in {namespace}"),
             );
         }
-        Ok(Err(CommitRefused::Command(AppendRefusal::NotAnAppAct))) => {
+        Ok(Err(AppendRefusal::NotAnAppAct)) => {
             tracing::debug!(target: "rails", namespace, "rail: refused — the register's acts and a seal are not an app's to write");
             return refused(
                 namespace,

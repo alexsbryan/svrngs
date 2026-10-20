@@ -203,6 +203,27 @@ impl RingRail {
         done
     }
 
+    /// [`Self::commit`], with the two refusals no command's decider makes
+    /// said as the rail's errors, as the rail's appends and the redeem
+    /// protocol say them: this computer standing nowhere in the group
+    /// [`RailError::NotInRoster`], its journal unsettled
+    /// [`RailError::Unsettled`]. What is left is the command's own refusal.
+    pub fn commit_said<C: Command>(
+        &self,
+        namespace: &str,
+        command: &C,
+    ) -> Result<Result<Recorded, C::Refusal>, RailError> {
+        match self.commit(namespace, command)? {
+            Ok(recorded) => Ok(Ok(recorded)),
+            Err(Refused::Command(why)) => Ok(Err(why)),
+            Err(Refused::NoStanding) => Err(RailError::NotInRoster {
+                actor: actor_of(self.signer()),
+                namespace: namespace.to_string(),
+            }),
+            Err(Refused::Unsettled) => Err(RailError::Unsettled(namespace.to_string())),
+        }
+    }
+
     /// This computer's newest `Invite` naming the link's key `link`, the
     /// group it is in, and, for a device link, the person it adds a device
     /// of, by name (bash-devices).

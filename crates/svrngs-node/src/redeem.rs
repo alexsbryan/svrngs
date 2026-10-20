@@ -59,7 +59,7 @@ use crate::node::Asking;
 use crate::register::Standing;
 use crate::ring_routes::err;
 use crate::{actor_of, Name, NotAName, OpId, Person, RailError, RingRail};
-use svrngs_core::{RedeemRefusal, Refused as CommitRefused};
+use svrngs_core::RedeemRefusal;
 
 pub use svrngs_core::joining::{AskRequest, Asked, RedeemRequest};
 
@@ -252,7 +252,7 @@ fn serve_redeem(
         issuer: actor_of(rail.signer()),
     };
     match rail
-        .commit(group, &command)
+        .commit_said(group, &command)
         .map_err(NotAdmitted::Unjudged)?
     {
         Ok(recorded) if recorded.is_empty() => {
@@ -266,14 +266,7 @@ fn serve_redeem(
                 "redeem: admitted — the Admit is written, naming the device the request named");
             Ok(Redeemed::Admitted(admit))
         }
-        Err(CommitRefused::NoStanding) => Err(NotAdmitted::Unjudged(RailError::NotInRoster {
-            actor: actor_of(rail.signer()),
-            namespace: group.to_string(),
-        })),
-        Err(CommitRefused::Unsettled) => Err(NotAdmitted::Unjudged(RailError::Unsettled(
-            group.to_string(),
-        ))),
-        Err(CommitRefused::Command(why)) => Err(NotAdmitted::Decided(why)),
+        Err(why) => Err(NotAdmitted::Decided(why)),
     }
 }
 
