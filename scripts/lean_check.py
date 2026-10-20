@@ -101,7 +101,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # and its founder drawn first by 1 more, 24 of the 30. V1.1.3 carries
 # canon-fix (d), the page asking the next computer to answer when one's
 # answer fails (#205), and the 3 lines the operator gave it on main.
-BUDGET = {"crates/svrngs-core": 3017, ".": 16580}
+# Its own changes are within the operator's "Approve, up to +24 each"
+# (2026-10-20). Its away page, a lend's computer that did not answer drawn as
+# its person's window, dark, on a computer and a phone, raised it by 16 to one
+# past where it landed, after an economizing pass that cut its own lines and
+# found no fold elsewhere.
+BUDGET = {"crates/svrngs-core": 3017, ".": 16596}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
