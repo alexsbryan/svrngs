@@ -31,6 +31,8 @@ mod load;
 mod carried;
 // The group's page in two tabs (groups-tabs).
 mod tabs;
+// A visit made with a link (guests-link).
+mod guests;
 
 use std::collections::BTreeSet;
 use std::path::Path;

@@ -1,0 +1,152 @@
+//! A visit made with a link in any chat (guests-link; svrn-docs
+//! `rings/current/GUESTS.md` §3.9, §5 "How a visit is made"; the operator,
+//! 2026-10-18, "A link in any chat"). The browser half is
+//! `web/tests/visit.mjs`.
+
+use super::*;
+
+/// Whose computer Kim's is, and whose Bo's.
+const KIM: u8 = 1;
+const BO: u8 = 7;
+
+in_both_engines!(
+    /// **A visit by a link** (guests-link (a)). Kim's computer holds house,
+    /// Kim and Bo in it, and lends Kim's Jellyfin, a page and its film; the
+    /// group keeps the page's origin, so its links open there. On Kim's home
+    /// page Kim taps **Have a guest**, keeps the 48 hours it starts at, and
+    /// gets a link to send in any chat. Sam opens it in a browser holding
+    /// nothing of any group, is asked their name once, and opens Kim's
+    /// Jellyfin from what the page lists: the film plays, and Jellyfin is
+    /// told "Sam (Kim's guest)" on every request, never Kim. Kim's record
+    /// holds one visit, Sam's, of 48 hours from when Sam opened the link.
+    sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest
+);
+async fn sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let kim = computer(dir.path(), &relay, &signing(BO), KIM, "Kim").await;
+    let mp4 = dir.path().join("title.mp4");
+    let size = film(&mp4);
+    let (film_origin, film_heads) = origins::kept_range_origin(mp4, size).await;
+    let html = "<!doctype html><title>Jellyfin</title>\
+                <video src=\"title.mp4\" playsinline preload=\"auto\"></video>";
+    let jellyfin = one_origin(page_origin(html).await, film_origin).await;
+    lend(dir.path(), "jellyfin", jellyfin.port());
+
+    let mut half = tokio::process::Command::new("node")
+        .arg(repo().join("web/tests/visit.mjs"))
+        .arg(json!({ "engine": engine.as_str(), "site": site() }).to_string())
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .kill_on_drop(true)
+        .spawn()
+        .expect("node runs: the browser tests need Node 18 or later");
+    use tokio::io::{AsyncBufReadExt, AsyncReadExt};
+    let mut out = tokio::io::BufReader::new(half.stdout.take().unwrap()).lines();
+    let first = out
+        .next_line()
+        .await
+        .unwrap()
+        .expect("the browser half prints its origin");
+    let origin: Value = serde_json::from_str(&first).unwrap();
+    let origin = origin["origin"].as_str().unwrap().to_string();
+    // The group's links open on the page the browser half serves, as
+    // `svrngs new --origin` keeps it.
+    let group = kim.rail().group_dir(NS).unwrap();
+    std::fs::write(group.join(svrngs_node::invite::ORIGIN_FILE), &origin).unwrap();
+    let home = format!("http://svrngs.localhost:{}/", kim.api_addr().port());
+    let mut stdin = half.stdin.take().unwrap();
+    let told = json!({ "home": home, "name": "Sam", "open": "jellyfin" });
+    stdin
+        .write_all(format!("{told}\n").as_bytes())
+        .await
+        .unwrap();
+    stdin.flush().await.unwrap();
+    let mut last = None;
+    while let Some(line) = out.next_line().await.unwrap() {
+        last = Some(line);
+    }
+    let mut stderr = String::new();
+    half.stderr
+        .take()
+        .unwrap()
+        .read_to_string(&mut stderr)
+        .await
+        .unwrap();
+    let status = half.wait().await.unwrap();
+    assert!(
+        status.success(),
+        "the browser half failed ({status}):\n{stderr}"
+    );
+    let seen: Value = serde_json::from_str(&last.expect("the browser half printed")).unwrap();
+    let mut shown = seen.clone();
+    shown["logs"] = json!(format!(
+        "{} lines",
+        seen["logs"].as_array().map_or(0, Vec::len)
+    ));
+    eprintln!("the visit's run: {seen:#}");
+
+    // Kim kept the length the page chose to start, and got a link on the
+    // group's page, its secret in the fragment.
+    assert_eq!(seen["length"], "48 hours", "{shown:#}");
+    let link = seen["link"].as_str().unwrap_or_default();
+    assert!(link.starts_with(&format!("{origin}#")), "{shown:#}");
+    let token = svrngs_core::link::Link::parse(link)
+        .expect("the link shown is a link")
+        .token;
+    assert_eq!(token.issuer, signing(KIM).verifying_key(), "{shown:#}");
+
+    // Sam asked their name once, and in as Kim's guest.
+    assert_eq!(seen["askedAgain"], false, "{shown:#}");
+    assert!(
+        seen["status"]
+            .as_str()
+            .is_some_and(|s| s.contains("Kim’s guest")),
+        "{shown:#}"
+    );
+    assert!(
+        at_origin(&seen["opened"], &label(KIM, "jellyfin")),
+        "{shown:#}"
+    );
+    assert!(
+        seen["first"]["ms"].is_u64(),
+        "Kim's film must play for Sam:\n{shown:#}"
+    );
+
+    // Jellyfin told Sam, as Kim's guest, never Kim.
+    let heads = film_heads.lock().unwrap().clone();
+    assert!(!heads.is_empty(), "{shown:#}");
+    for head in &heads {
+        assert_eq!(
+            told_in(head, "x-svrngs-person").as_deref(),
+            Some("Sam (Kim's guest)"),
+            "{head}"
+        );
+        assert_ne!(
+            told_in(head, "x-svrngs-key"),
+            Some(actor_of(&signing(KIM))),
+            "{head}"
+        );
+    }
+
+    // One visit in Kim's record, Sam's, 48 hours from its act.
+    let register = kim.rail().register(NS).unwrap();
+    let visits: Vec<_> = register.visits.values().collect();
+    assert_eq!(visits.len(), 1, "{visits:#?}");
+    let sam = visits[0];
+    assert_eq!(sam.visit.guest.as_str(), "Sam", "{sam:#?}");
+    assert_eq!(sam.host, actor_of(&signing(KIM)), "{sam:#?}");
+    let length = sam.visit.until - sam.at;
+    assert!(
+        (svrngs_core::VISIT_LONGEST - 5..=svrngs_core::VISIT_LONGEST).contains(&length),
+        "48 hours from when Sam opened the link, not {length} s: {sam:#?}"
+    );
+    assert!(
+        heads
+            .iter()
+            .all(|h| told_in(h, "x-svrngs-key") == Some(sam.visit.key.clone())),
+        "Jellyfin told Sam's visit key: {heads:#?}"
+    );
+    drop(kim);
+}
