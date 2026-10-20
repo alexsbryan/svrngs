@@ -114,7 +114,10 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # was already there (demo/runs/economize/2026-10-19-guests/SURVEY.md). The
 # guests rows have +150 over that and svrngs-core +60, at most 16,728 and
 # 3,069 (the operator, 2026-10-18), each raise to one past where it lands.
-BUDGET = {"crates/svrngs-core": 3009, ".": 16578}
+# guests-visit (b), a visit folded by svrngs-core beside membership, raised
+# svrngs-core 60 and the repository 60, to one past where it landed: none
+# left under svrngs-core's ceiling, 90 under the repository's.
+BUDGET = {"crates/svrngs-core": 3069, ".": 16638}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
