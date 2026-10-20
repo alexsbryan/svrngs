@@ -46,9 +46,7 @@ curl -fsSL https://group.svrnme.sh/install.sh | sh -s -- 'https://group.svrnme.s
 ![The page with no link](runs/start/2026-10-13-story/data/shots/sam-page.png)
 
 Above the line the page says, in red, *"Open this page from your group’s
-link."*, and below it shows a name box, **Join**, **Yes** and **Not now**.
-Leave them: they are for a phone with a link, and show here by mistake
-(the run's finding, its §4). Press **Copy**.
+link."*: it is for a phone, which joins only from a link. Press **Copy**.
 
 **3. Paste that line in a terminal.** Within a few seconds (1.4 s in the
 run) it says:
@@ -135,8 +133,9 @@ Bo to use it.
 **6. Open Sam's link** in a browser on Bo's computer. Within a second it
 says *"On this computer, paste this line in a terminal: it gets svrngs,
 joins you, and opens your home page, with the group’s folder on your
-disk."*, with the line and **Copy**. (The same name box and buttons show
-below it as in step 2; leave them.)
+disk."*, with the line and **Copy**. (Below it, a name box and **Join**
+join this browser as a phone would; leave them: the line is what makes
+Bo's computer one of the group's.)
 
 If svrngs is on Bo's computer already, from another group, Bo needs no
 terminal: on Bo's home page, under **Join a group from a link**, paste
@@ -186,9 +185,8 @@ for chunk in client.chat.completions.create(model="any", stream=True,
 Each of these is something the run met, or words svrngs says, with what to
 do.
 
-- **"Open this page from your group’s link."**, in red, with a name box,
-  **Join**, **Yes** and **Not now**, beside the line (steps 2 and 6). A
-  mistake of the page's: the line is what you need. Copy it and go on.
+- **"Open this page from your group’s link."**, in red, beside the line
+  (step 2). It is for a phone: the line is what you need. Copy it and go on.
 - **`svrngs: command not found`**, or *"To run svrngs yourself, type …"*
   after step 3 or 7. Type svrngs where it was put,
   `~/.local/bin/svrngs`, as in step 5.
