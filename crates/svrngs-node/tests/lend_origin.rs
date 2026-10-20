@@ -708,3 +708,90 @@ async fn a_stopped_lend_is_said_by_its_lender_as_a_page_to_a_tab_and_json_to_a_p
         "{log}"
     );
 }
+
+/// **A lend's computer that did not answer is shown to a tab as its
+/// person's window, dark** (V1.1.3; the operator's "a graceful and cute
+/// goodnight state", 2026-10-20). Alex lets Cy in, and Cy's computer is a
+/// socket nobody reads (`common::never_answers`), as a closed lid leaves
+/// it. At Cy's pad's origin on Alex's computer a tab (`Accept: text/html`)
+/// is shown home/away.html: Cy's window is dark, Cy's computer did not
+/// answer, and goodnight from Cy — never that it sleeps, nor since when.
+/// A program is given svrngs's JSON as before, `away`, in the same words.
+/// Who did not answer is traced. Planted: HEAD before it, which drew the
+/// words alone, "The computer that lends this did not answer".
+#[tokio::test]
+async fn a_lend_s_computer_that_did_not_answer_is_shown_to_a_tab_as_its_window_dark() {
+    let (said, _heard) = common::heard("origin=debug,door=debug");
+    let alex_dir = tempfile::tempdir().unwrap();
+    let alex = start(1, alex_dir.path()).await;
+    let seed = Roster::new(
+        [(Person::parse("alex").unwrap(), vec![actor_of(&signing(1))])]
+            .into_iter()
+            .collect(),
+    );
+    alex.rail().set_seed(NS, &seed).unwrap();
+    let (_asleep, at_cy) = common::never_answers();
+    let cy =
+        svrngs_node::iroh::PublicKey::from_bytes(signing(3).verifying_key().as_bytes()).unwrap();
+    alex.transport().add_known_peer(cy, at_cy);
+    let admit = svrngs_core::tests_support::Fixture {
+        act: RailAct::Admit {
+            person: Person::parse("cy").unwrap(),
+            key: actor_of(&signing(3)),
+            invite: None,
+        },
+        on_behalf_of: None,
+    };
+    alex.rail().commit(NS, &admit).unwrap().unwrap();
+    let api = alex.api_addr();
+    let host = format!(
+        "{}.localhost:{}",
+        Label::of(&signing(3).verifying_key().to_bytes(), "pad"),
+        api.port()
+    );
+
+    let tab = "GET / HTTP/1.1\r\nAccept: text/html,*/*\r\nSec-Fetch-Mode: navigate\r\nConnection: close\r\n";
+    let (head, sock) = ask(api, &host, tab).await;
+    let page = format!("{head}{}", body(sock).await);
+    eprintln!("Cy's pad, Cy's computer not answering, to a tab: {page}");
+    assert!(page.starts_with("HTTP/1.1 502"), "{page}");
+    assert_eq!(
+        header_values(&head, "x-svrngs-refused"),
+        vec!["away"],
+        "{head}"
+    );
+    assert!(
+        page.to_ascii_lowercase()
+            .contains("content-type: text/html"),
+        "{page}"
+    );
+    for words in [
+        "<title>cy’s window is dark</title>",
+        "cy’s computer didn’t answer, so this can’t open right now.",
+        "Goodnight from cy.",
+    ] {
+        assert!(page.contains(words), "the page lacks {words:?}: {page}");
+    }
+    assert!(
+        !page.contains("{whose}") && !page.contains("{what}") && !page.contains("{\""),
+        "{page}"
+    );
+
+    let (head, sock) = ask(api, &host, "GET / HTTP/1.1\r\nConnection: close\r\n").await;
+    let program = format!("{head}{}", body(sock).await);
+    assert!(
+        program.contains(
+            r#"{"error":"the computer that lends this did not answer; try again later","kind":"away"}"#
+        ),
+        "{program}"
+    );
+    let log = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
+    assert!(
+        log.lines().any(
+            |l| l.contains("origin: the lender's computer did not answer")
+                && l.contains("whose=Some(\"cy\")")
+        ),
+        "{log}"
+    );
+    alex.endpoint().close().await;
+}
