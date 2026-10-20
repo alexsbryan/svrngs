@@ -911,7 +911,7 @@ at the end of `docs/principles/ARCH_PRINCIPLES.md` maps them.
 
 Signed acts admitted into one total order by `(ts_unix, actor, seq, id)`:
 `Record`, `Correct`, `Admit`, `Remove`, `HandOn`, `Invite`, `Relay`,
-`Synced` (a folder's changes) and `Runs` (`RailAct`,
+`Synced` (a folder's changes), `Runs` and `Visit` (`RailAct`,
 `crates/svrngs-core/src/lib.rs`). `Correct` voids without erasing. A
 per-actor digest lets sync send only what is missing. Upstream's `Seal`
 retired everything its signer wrote before it, on every copy it reached;
@@ -968,8 +968,8 @@ from the journal waits in PLAN §2.
     cut naming an act a copy lacks is `UnheldCut`, an absence; a cut that
     cycles is said unsettled (`Membership::unsettled`), and nothing is
     decided on it. The register folds standing from the acts that move
-    membership and every act of a key a `Remove` names
-    (`svrngs_core::standing_reads`).
+    membership, every act of a key a `Remove` names, and every `Correct`,
+    since one may be a visit's Stop (`svrngs_core::standing_reads`).
   - A `Correct` voids nothing that moves membership.
   - The keeper can equivocate, signing two acts on one parent; that is the
     trust risk 2 names (§8).
@@ -1088,6 +1088,19 @@ from the journal waits in PLAN §2.
   (`node::relay_of`). A key with none named is traced, and with no address
   lookup the transport refuses it before iroh is asked, never dialling it
   blind.
+- **A visit is folded beside membership** (svrn-docs `GUESTS.md` §3, §5).
+  A `Visit{guest, key, opens, until}`, signed by the host's computer, names
+  the guest, a key fresh for the visit and the lends it opens, by each
+  lender's key (line version 11). It is a visit only when, at its place in
+  the walk, its key was never a member's or another visit's, `until` is
+  within 48 hours of the act's own time, and with it the group's guests on
+  then stay fewer than the people standing and the host's at most two:
+  `VISIT_LONGEST` and `GUESTS_PER_HOST`, one constant each in
+  `crates/svrngs-core/src/membership.rs`. Otherwise it is no visit on any
+  copy, and nothing refuses it. A visit binds nothing, so a guest's key
+  never stands. It ends at its `until`, at the host's `Correct` of it,
+  their Stop, which another's `Correct` is not, or when the host's key is
+  cut; the act stays counted, seen (`Membership::visiting`).
 - **What an app places by hash is not kept.** Its bytes are in no act and no
   folder; which hashes a computer carries for which group, and until when,
   is in its running process alone, each kept past its lapse so a get says

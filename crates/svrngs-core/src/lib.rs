@@ -103,7 +103,7 @@ mod sync;
 mod synced;
 mod view;
 
-use alloc::collections::BTreeMap;
+use alloc::collections::{BTreeMap, BTreeSet};
 use alloc::format;
 use alloc::string::String;
 use alloc::string::ToString;
@@ -426,6 +426,26 @@ pub enum RailAct {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         url: Option<String>,
     },
+    /// A member's computer says: this person is my guest, until then
+    /// (guests-visit; svrn-docs `rings/current/GUESTS.md` §5). It is a visit
+    /// only within the bounds the fold keeps ([`Membership::visiting`]),
+    /// and the host's [`Self::Correct`] of it is their Stop. It binds
+    /// nothing, so a guest's key never stands. Carries no [`Payload`].
+    Visit(Visit),
+}
+
+/// What a [`RailAct::Visit`] says: the guest's name, the key they made for
+/// this visit, the lends it opens and until when.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Visit {
+    pub guest: Person,
+    pub key: String,
+    /// Each lender's key, and the lends of theirs the visit opens: the
+    /// host's own; a lend whose lender welcomes guests, which waits (GUESTS
+    /// §8), fits here with no new act.
+    pub opens: BTreeMap<String, BTreeSet<String>>,
+    /// Unix seconds, within [`VISIT_LONGEST`] of the act's own time.
+    pub until: i64,
 }
 
 /// What a redeeming [`RailAct::Admit`] carries: the [`RailAct::Invite`] it
@@ -669,15 +689,20 @@ pub const RELAY_LINE_VERSION: u32 = 9;
 /// names it `NewerVersionLine`, so it serves the app as it was brought.
 pub const RUNS_LINE_VERSION: u32 = 10;
 
+/// The line format version a guest's visit ships at (guests-visit): a
+/// [`RailAct::Visit`]. A build at [`RUNS_LINE_VERSION`] names it
+/// `NewerVersionLine`, so it holds no visit and lets no guest in.
+pub const VISIT_LINE_VERSION: u32 = 11;
+
 impl Journaled for SignedOp {
     const FILE: &'static str = "ring_oplog.jsonl";
     const ID_PREFIX: &'static str = "ring";
     const LABEL: &'static str = "ring_rail";
     /// This build reads the membership cohort's, the link's, a browser's
-    /// redemption's, a folder's, removal's, a device link's, a relay's and
-    /// a yes to a carried app's version's lines too (see
+    /// redemption's, a folder's, removal's, a device link's, a relay's, a
+    /// yes to a carried app's version's and a visit's lines too (see
     /// [`Self::line_version`]).
-    const UNDERSTANDS: u32 = RUNS_LINE_VERSION;
+    const UNDERSTANDS: u32 = VISIT_LINE_VERSION;
     /// The membership acts — [`RailAct::Admit`] and [`RailAct::Remove`] —
     /// ship at the bumped line version and the original three keep the bytes
     /// they always had, so an un-upgraded node names exactly the acts it
@@ -706,6 +731,7 @@ impl Journaled for SignedOp {
             RailAct::Synced { .. } => SYNCED_LINE_VERSION,
             RailAct::Relay { .. } => RELAY_LINE_VERSION,
             RailAct::Runs { .. } => RUNS_LINE_VERSION,
+            RailAct::Visit(_) => VISIT_LINE_VERSION,
             _ => Self::VERSION,
         }
     }

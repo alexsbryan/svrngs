@@ -745,7 +745,8 @@ pub fn admit(
                 | RailAct::Invite { .. }
                 | RailAct::Synced { .. }
                 | RailAct::Runs { .. }
-                | RailAct::Relay { .. } => (None, None),
+                | RailAct::Relay { .. }
+                | RailAct::Visit(_) => (None, None),
             };
             AdmittedOp {
                 id: a.id.clone(),

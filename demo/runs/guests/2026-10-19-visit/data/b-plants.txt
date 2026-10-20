@@ -1,0 +1,96 @@
+$ python3 plants.py   # each plant applied alone to crates/svrngs-core/src/membership.rs, then `cargo test -q -p svrngs-core --lib visit_tests`, then restored
+## plant: the fold counting no guests
+-   let is = !used && timely && on.len() + 1 < members && theirs < GUESTS_PER_HOST;
++   let is = !used && timely;
+thread 'membership::visit_tests::guests_are_fewer_than_members_and_two_a_host' (68118313) panicked at crates/svrngs-core/src/visit_tests.rs:107:5:
+assertion `left == right` failed: a third guest of three members is none
+  left: ["sam", "tia", "uma"]
+ right: ["sam", "tia"]
+test result: FAILED. 4 passed; 1 failed; 0 ignored; 0 measured; 185 filtered out; finished in 0.01s
+error: test failed, to rerun pass `-p svrngs-core --lib`
+exit 101
+
+## plant: until unchecked
+-   let timely = (1..=VISIT_LONGEST).contains(&v.until.saturating_sub(at));
++   let timely = true;
+thread 'membership::visit_tests::a_visit_past_48_hours_is_none' (68118797) panicked at crates/svrngs-core/src/visit_tests.rs:166:9:
+assertion `left == right` failed: a visit of 49 hours
+  left: true
+ right: false
+test result: FAILED. 4 passed; 1 failed; 0 ignored; 0 measured; 185 filtered out; finished in 0.01s
+error: test failed, to rerun pass `-p svrngs-core --lib`
+exit 101
+
+## plant: a host's leave leaving the visit live
+-   let cut = cut.get(&self.host).map(|c| c.at);
++   let cut = None;
+thread 'membership::visit_tests::the_hosts_leave_or_stop_ends_the_visit' (68119118) panicked at crates/svrngs-core/src/visit_tests.rs:205:5:
+test result: FAILED. 4 passed; 1 failed; 0 ignored; 0 measured; 185 filtered out; finished in 0.01s
+error: test failed, to rerun pass `-p svrngs-core --lib`
+exit 101
+
+## plant: a bound read from the page rather than the fold: the length the page chose is the bound
+-   let timely = (1..=VISIT_LONGEST).contains(&v.until.saturating_sub(at));
++   let timely = (1..=v.until.saturating_sub(at)).contains(&v.until.saturating_sub(at));
+thread 'membership::visit_tests::a_visit_past_48_hours_is_none' (68119342) panicked at crates/svrngs-core/src/visit_tests.rs:166:9:
+assertion `left == right` failed: a visit of 49 hours
+  left: true
+ right: false
+test result: FAILED. 4 passed; 1 failed; 0 ignored; 0 measured; 185 filtered out; finished in 0.01s
+error: test failed, to rerun pass `-p svrngs-core --lib`
+exit 101
+
+## plant: the Stop unread
+-   visit.map(|g| g.stopped.get_or_insert(op.ts_unix));
++   visit.map(|g| g.stopped);
+thread 'membership::visit_tests::the_hosts_leave_or_stop_ends_the_visit' (68119608) panicked at crates/svrngs-core/src/visit_tests.rs:229:5:
+thread 'membership::visit_tests::guests_are_fewer_than_members_and_two_a_host' (68119606) panicked at crates/svrngs-core/src/visit_tests.rs:151:5:
+assertion `left == right` failed: a Stop frees its place
+  left: ["sam", "tia"]
+ right: ["tia", "uma"]
+test result: FAILED. 3 passed; 2 failed; 0 ignored; 0 measured; 185 filtered out; finished in 0.01s
+error: test failed, to rerun pass `-p svrngs-core --lib`
+exit 101
+
+## plant: anyone's Correct a Stop
+-   let visit = visits.get_mut(corrects).filter(|g| g.host == op.actor);
++   let visit = visits.get_mut(corrects);
+thread 'membership::visit_tests::the_hosts_leave_or_stop_ends_the_visit' (68119895) panicked at crates/svrngs-core/src/visit_tests.rs:216:5:
+assertion `left == right` failed: Bo's Correct stops nobody's guest
+  left: []
+ right: ["sam"]
+test result: FAILED. 4 passed; 1 failed; 0 ignored; 0 measured; 185 filtered out; finished in 0.01s
+error: test failed, to rerun pass `-p svrngs-core --lib`
+exit 101
+
+## plant: the key's freshness unread
+-   visits.values().any(|g| g.visit.key == v.key) || bindings.contains_key(&v.key);
++   false;
+thread 'membership::visit_tests::a_visits_key_is_fresh_and_never_stands' (68120087) panicked at crates/svrngs-core/src/visit_tests.rs:247:5:
+test result: FAILED. 4 passed; 1 failed; 0 ignored; 0 measured; 185 filtered out; finished in 0.01s
+error: test failed, to rerun pass `-p svrngs-core --lib`
+exit 101
+
+## plant: the register's fold leaving out the Stop
+-   let kept = |a: &RailAct| a.moves_membership() || matches!(a, RailAct::Correct { .. });
++   let kept = |a: &RailAct| a.moves_membership();
+thread 'membership::visit_tests::the_hosts_leave_or_stop_ends_the_visit' (68120323) panicked at crates/svrngs-core/src/visit_tests.rs:235:5:
+test result: FAILED. 4 passed; 1 failed; 0 ignored; 0 measured; 185 filtered out; finished in 0.00s
+error: test failed, to rerun pass `-p svrngs-core --lib`
+exit 101
+
+## plant: the guest's key put in standing
+-               visits.insert(id.clone(), g);
++               live.insert(g.visit.key.clone(), g.visit.guest.clone());
+            visits.insert(id.clone(), g);
+thread 'membership::visit_tests::guests_are_fewer_than_members_and_two_a_host' (68120551) panicked at crates/svrngs-core/src/visit_tests.rs:107:5:
+assertion `left == right` failed: a third guest of three members is none
+  left: ["sam", "tia", "uma"]
+ right: ["sam", "tia"]
+thread 'membership::visit_tests::kim_hosts_sam_until_sunday_and_the_fold_says_so' (68120552) panicked at crates/svrngs-core/src/visit_tests.rs:62:5:
+thread 'membership::visit_tests::a_visits_key_is_fresh_and_never_stands' (68120550) panicked at crates/svrngs-core/src/visit_tests.rs:261:5:
+assertion failed: !a.membership().standing.contains(&actor_of(&key(9)))
+test result: FAILED. 2 passed; 3 failed; 0 ignored; 0 measured; 185 filtered out; finished in 0.01s
+error: test failed, to rerun pass `-p svrngs-core --lib`
+exit 101
+
