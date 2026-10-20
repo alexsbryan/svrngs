@@ -560,7 +560,8 @@ calls:
    for the lend it opens and the lends its lender declared it reads (`svrngs
    share --reads <kind>`). The lend's origin dials with the pass's key, and
    its worker keeps each lend's cookies apart, since a service worker sees no
-   `Cookie`. A lent page can use only its own pass. A pass names its app
+   `Cookie`, and asks for gzip but for a range, unpacking it, since it sees no
+   `Accept-Encoding` either and llama-server's chat page comes only in gzip. A lent page can use only its own pass. A pass names its app
    apart from the lends it reads, `Pass { app, reads }`, and the door tells a
    service the app from it alone (`crates/svrngs-core/src/pass.rs`). A pass
    names no method or path: through it the page may do anything the person
