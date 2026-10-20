@@ -36,7 +36,10 @@ among what you lend, on their phone or on their svrngs home page.
   that hears nothing for 5 seconds says goodnight, keeps writing into its
   own copy, and opens a new socket until one answers. On a phone the
   socket is svrngs's (`web/shim.js`, `web/lend.js`), which does not close
-  when the lender's computer stops, so silence is what the page reads.
+  when the lender's computer stops, so silence is what the page reads; and
+  the lend's worker keeps a dead connection for sockets until a plain
+  request fails on it, so each new socket is preceded by one, `GET /here`
+  (`demo/runs/doc/2026-10-20/found/`).
 - `app.js`, `index.html`: the editor, the doc kept in the browser
   (IndexedDB), the notes, the goodnight. svrngs's look: the browser's own
   fonts, plain rules, named colours.

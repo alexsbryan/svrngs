@@ -154,6 +154,15 @@ sync({
   doc: ydoc,
   awareness,
   WebSocket,
+  // On a phone, a socket after the lender stopped answering goes through
+  // the lend's worker, which keeps its dead connection to the lender for
+  // sockets and drops it only when a plain request fails on it (svrngs
+  // web/lend.js: `fetch` deletes the dial on a failure, `socket` does not).
+  // So each new socket is preceded by one plain request, which the worker
+  // answers by dialling again once the old connection fails it. Seen in
+  // demo/runs/doc/2026-10-20/: without it, a phone never rejoined after a
+  // 45 s lid; with one request, it rejoined 3 s later.
+  poke: () => fetch("./here", { cache: "no-store", signal: AbortSignal.timeout(5000) }),
   on: {
     hello(h) {
       you = h.you;

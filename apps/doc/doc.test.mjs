@@ -100,13 +100,14 @@ async function server(keep) {
 function page(port, person) {
   const doc = new Y.Doc();
   const awareness = new awarenessProtocol.Awareness(doc);
-  const seen = { hello: null, lines: null, away: [], here: 0, joined: [] };
+  const seen = { hello: null, lines: null, away: [], here: 0, joined: [], pokes: 0 };
   const headers = person ? { 'x-svrngs-person': Buffer.from(person).toString('latin1'), 'x-svrngs-key': keyOf(person) } : {};
   const s = sync({
     url: `ws://127.0.0.1:${port}/sync`,
     doc,
     awareness,
     WebSocket: socketAs(headers),
+    poke: () => ((seen.pokes += 1), fetch(`http://127.0.0.1:${port}/here`, { signal: AbortSignal.timeout(5000) })),
     on: {
       hello: (h) => {
         seen.hello = h;
@@ -202,6 +203,7 @@ test('a lender gone quiet is goodnight within QUIET_MS and a tick, and what was 
   await until('both read all three', () => bo.text().length === 3 && zoe.text().length === 3, 10_000);
   assert.deepEqual(bo.text(), zoe.text());
   assert.deepEqual(bo.seen.joined[0].kept, 1, 'Bo is told his one edit joined');
+  assert.ok(bo.seen.pokes > 0 && zoe.seen.pokes > 0, 'each page asked the server plainly before a new socket');
   console.log(`# goodnight after ${bo.seen.away[0].at - stopped} and ${zoe.seen.away[0].at - stopped} ms; joined ${bo.seen.joined[0].at - woke} and ${zoe.seen.joined[0].at - woke} ms after the lid opened`);
 });
 

@@ -180,6 +180,8 @@ export async function start({ port = 0, keep, api = null }) {
   const server = http.createServer((req, res) => {
     const path = decodeURIComponent(new URL(req.url, 'http://doc').pathname).replace(/^\/+/, '') || 'index.html';
     const name = normalize(path);
+    // What a page asks before a new socket (sync.js `poke`): nothing, at once.
+    if (req.method === 'GET' && name === 'here') return res.writeHead(204, { 'cache-control': 'no-store' }).end();
     if (req.method !== 'GET' || !PAGE.has(name)) {
       trace('page: refused — not one of the page\'s files', { path });
       res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }).end('There is no such page here.');

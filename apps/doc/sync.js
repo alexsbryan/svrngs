@@ -28,10 +28,12 @@ const BACKOFF_MS = [500, 1000, 2000, 4000];
 /**
  * One page's sync. `on` takes `hello({you, key, lender})`, `lines(entries)`,
  * `away({kept})`, `kept(n)`, `here()` and `joined({kept})`; `kept` is how
- * many edits this page has made while away, said again as each is made. `clock` stands in for the page's timers in
+ * many edits this page has made while away, said again as each is made.
+ * `poke`, when given, is asked before each socket after the first: one
+ * plain request to the server, awaited, whatever it answers. `clock` stands in for the page's timers in
  * the tests.
  */
-export function sync({ url, doc, awareness, WebSocket, on = {}, clock = globalThis }) {
+export function sync({ url, doc, awareness, WebSocket, poke = null, on = {}, clock = globalThis }) {
   let ws = null;
   let state = "opening";
   let heard = clock.Date.now();
@@ -41,6 +43,7 @@ export function sync({ url, doc, awareness, WebSocket, on = {}, clock = globalTh
   let tries = 0;
   let kept = 0;
   let joining = false;
+  let poking = false;
   const trace = (what, fields) => on.trace?.(what, fields);
 
   const send = (bytes) => {
@@ -83,7 +86,13 @@ export function sync({ url, doc, awareness, WebSocket, on = {}, clock = globalTh
     trace("socket: another in a moment", { why, tries, in_ms: next - clock.Date.now() });
     tries += 1;
   };
-  const connect = () => {
+  const connect = async () => {
+    if (tries > 0 && poke) {
+      poking = true;
+      await poke().catch(() => {});
+      poking = false;
+      if (ws) return;
+    }
     opening = clock.Date.now();
     trace("socket: opening", { url, state });
     try {
@@ -155,7 +164,7 @@ export function sync({ url, doc, awareness, WebSocket, on = {}, clock = globalTh
     ticked = now;
     if (state !== "away" && now - heard > QUIET_MS) return away();
     if (ws?.readyState === 0 && now - opening > CONNECT_WITHIN_MS) return later("it did not open in time");
-    if (!ws && now >= next) connect();
+    if (!ws && !poking && now >= next) connect();
   };
 
   const self = {
