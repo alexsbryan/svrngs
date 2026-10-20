@@ -92,3 +92,11 @@ over 3,069. Each raise is still one past where its commit lands.
     git apply demo/runs/guests/2026-10-19-link/b-draft.patch
     CARGO_INCREMENTAL=0 cargo test -q -p svrngs-node --test browser guests::
     python3 scripts/lean_check.py
+
+## Answered, 2026-10-20
+
+The operator, asked: "Cover both rows". The guests rows' ceiling is now at
+most 16,905 for the repository and 3,076 for svrngs-core: option 1 here,
+the reopened link kept, plus about 40 for guests-pages (CHARTER.md). Apply
+`b-draft.patch`, finish what remains above, and land each raise one past
+where its commit lands.

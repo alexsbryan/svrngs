@@ -48,6 +48,18 @@ and whether the house is fine seeing it (STATE.md says the bets):
   choose, "Up to 48 hours". 48 hours is chosen to start, and a host can
   choose less. The house's 48 hours stays the bound.
 
+## What the operator decided, 2026-10-20, of guests-link's raise
+
+guests-link parked over the ceiling
+(`demo/runs/guests/2026-10-19-link/NEEDS_HUMAN.md`): its draft measures +118
+repository lines and +7 svrngs-core, about +17 still to come, and
+guests-pages after it. Asked, the operator chose "Cover both rows": the
+guests rows' ceiling is now at most **16,905** for the repository and
+**3,076** for svrngs-core, for guests-link with the reopened link kept
+(option 1 there) and about 40 for guests-pages. Each raise is still one
+past where its commit lands, in its own commit. Past these is
+NEEDS_HUMAN.md again.
+
 ## Why
 
 The operator: "the main thing svrngs must do is to never violate the trust
@@ -76,8 +88,8 @@ yourself, saying both in the commit, and keep going.
 
 Write `NEEDS_HUMAN.md` and stop for:
 
-- **the budget:** past "+150 repo, +60 core", or a raise without the pass
-  first;
+- **the budget:** past 16,905 for the repository or 3,076 for svrngs-core
+  (2026-10-20), or a raise without the pass first;
 - **a wait built early:** the welcome, `GuestRules`, House rules' say over
   it, the grapevine's path, or the words for people (STATE.md, "Waits");
 - **the trust floor:** any widening of a page's policy or a listener;
