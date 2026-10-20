@@ -165,7 +165,10 @@ export function payload(act) {
  * (crates/svrngs-core/src/command.rs:243-250), so one written in the second
  * of another is ahead of the browser's clock, and canon asked before it
  * says it passed a change yet keeps the old rule (#206). One answer, one
- * clock. `{unsettled}` when svrngs cannot say who stood when (#124), its
+ * clock. An act dated past where svrngs times one (AHEAD_SECS on, :238)
+ * moves it too: only a changed svrngs writes one, canon still judges each
+ * act at its own time, and the move is traced as `canon asked`; bounding it
+ * here would be AHEAD_SECS's second home (#207, closed). `{unsettled}` when svrngs cannot say who stood when (#124), its
  * `spans` null, never an empty house; an answer with no `spans` at all is
  * not one svrngs gives, and is said as unread, never as unsettled (#209).
  * Each decision is handed to `trace`, `(what, fields)`, at debug (AGENTS.md
