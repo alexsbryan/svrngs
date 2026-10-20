@@ -74,6 +74,8 @@ for (const engine of ['chromium', 'webkit']) {
     try {
       const page = await context.newPage();
       page.on('pageerror', (e) => errors.push(String(e)));
+      const traced = [];
+      page.on('console', (m) => m.type() === 'debug' && traced.push(m.text()));
       const said = [];
       const text = () => page.innerText('main');
       const as = async (person, computer = person) => {
@@ -111,6 +113,10 @@ for (const engine of ['chromium', 'webkit']) {
       assert.match(await text(), /Nothing is waiting on anyone\./);
       assert.match(await text(), /Everyone in your house has a say: ana, bo, you and dee\./);
       for (const words of said) assert.doesNotMatch(words, NOT_SAID);
+      // Each decision traced at debug, house.js's included (#210).
+      for (const what of ['svrngs/acts answered', 'asking how the house decides', 'sent', 'canon asked', 'how the house decides']) {
+        assert.ok(traced.some((l) => l.startsWith(`House rules: ${what} `)), `traced: ${what}`);
+      }
       assert.deepEqual(errors, []);
     } finally {
       await close();

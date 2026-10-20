@@ -14,6 +14,9 @@ import { CHOICES, agree, decide, fold, object, payload, propose } from './house.
 
 const ACTS = 'svrngs/acts';
 const call = bind(build);
+// Each decision the page and house.js make, at debug in the console, never
+// on the page (AGENTS.md 1; #210), as web/app.js traces the phone's page.
+const trace = (what, fields = {}) => console.debug('House rules:', what, JSON.stringify(fields));
 const app = document.getElementById('app');
 const el = (tag, text, ...kids) => {
   const e = document.createElement(tag);
@@ -47,13 +50,15 @@ function ways(name) {
 async function show() {
   const r = await fetch(ACTS);
   // A body that is not JSON is said as that, never read as an empty answer (#209).
-  const read = await r.json().catch(() => null);
+  const read = await r.json().catch((e) => (trace('the answer is not JSON', { status: r.status, error: String(e) }), null));
+  trace('svrngs/acts answered', { status: r.status, ops: read?.ops?.length ?? null });
   if (!r.ok) return app.replaceChildren(el('h1', 'House rules'), el('p', `Your house’s rules can’t be read just now: ${read?.error ?? `it answered ${r.status}`}.`));
   if (read === null || typeof read !== 'object') return app.replaceChildren(el('h1', 'House rules'), el('p', 'Your house’s rules can’t be read just now: this computer answered in a way House rules can’t read.'));
   let view;
   try {
-    view = fold(call, read, Math.floor(Date.now() / 1000));
+    view = fold(call, read, Math.floor(Date.now() / 1000), trace);
   } catch (e) {
+    trace('not read', { error: e.message });
     return app.replaceChildren(el('h1', 'House rules'), el('p', `This version of House rules can’t read your house’s rules: ${e.message}.`));
   }
   if (view.unsettled) return app.replaceChildren(el('h1', 'House rules'), el('p', 'This computer can’t yet say who is in your house, so it can’t say what your house agreed. Open this page again in a minute.'));
@@ -70,10 +75,12 @@ async function show() {
     try {
       body = JSON.stringify({ op: payload(act) });
     } catch (e) {
+      trace('not sent', { op: act?.op, error: e.message });
       return said.replaceChildren(`That isn’t saved: ${e.message}.`);
     }
+    trace('sent', { op: act.op });
     const sent = fetch(ACTS, { method: 'POST', headers: { 'content-type': 'application/json' }, body });
-    return sent.then(async (w) => (w.ok ? show() : Promise.reject(new Error((await w.json().catch(() => ({}))).error ?? `it answered ${w.status}`)))).catch((e) => said.replaceChildren(`That isn’t saved: ${e.message}.`));
+    return sent.then(async (w) => (w.ok ? show() : Promise.reject(new Error((await w.json().catch(() => ({}))).error ?? `it answered ${w.status}`)))).catch((e) => (trace('not saved', { op: act.op, error: e.message }), said.replaceChildren(`That isn’t saved: ${e.message}.`)));
   };
   const ticked = (name) => app.querySelector(`input[name=${name}]:checked`)?.value;
   const people = el('section', '', el('h2', 'Who has a say'), el('p', `Everyone in your house has a say: ${list(view.deciding.map((p) => (p === you ? 'you' : p)))}.`));
@@ -87,6 +94,7 @@ async function show() {
   if (view.bootstrap.length || view.unattended.length) notes.append(el('p', 'Some entries took effect before anyone in your house had a say.'));
 
   if (!view.rule) {
+    trace('asking how the house decides');
     return app.replaceChildren(
       el('h1', 'House rules'),
       el('h2', 'How does your house decide its rules?'),
@@ -110,6 +118,7 @@ async function show() {
       try {
         return send(object(p.id, why.querySelector('input').value));
       } catch (e) {
+        trace('not sent', { op: 'position', error: e.message });
         return said.replaceChildren(`${cap(e.message)} first.`);
       }
     }));

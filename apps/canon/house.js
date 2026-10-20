@@ -167,9 +167,12 @@ export function payload(act) {
  * says it passed a change yet keeps the old rule (#206). One answer, one
  * clock. `{unsettled}` when svrngs cannot say who stood when (#124), its
  * `spans` null, never an empty house; an answer with no `spans` at all is
- * not one svrngs gives, and is said as unread, never as unsettled (#209). */
-export function fold(call, read, asked) {
-  if (read.spans === null) return { unsettled: true };
+ * not one svrngs gives, and is said as unread, never as unsettled (#209).
+ * Each decision is handed to `trace`, `(what, fields)`, at debug (AGENTS.md
+ * 1; #210): what isn't counted and why, canon's own error beside the page's
+ * words when canon would not build an act, the time canon is asked at. */
+export function fold(call, read, asked, trace = () => {}) {
+  if (read.spans === null) return (trace('unsettled', { group: read.group }), { unsettled: true });
   if (!Array.isArray(read.spans)) throw new Error('this computer’s answer doesn’t say who is in your house');
   const members = membership(call, read.group, read.spans);
   const ours = new Set(members.map((l) => JSON.parse(l).id));
@@ -180,15 +183,18 @@ export function fold(call, read, asked) {
     let line;
     try {
       line = call({ call: 'act', kind: r.act, ts_unix: r.ts, actor: human(r.by) }).trim();
-    } catch {
-      dropped.push({ id: r.id, by: r.by, via: r.via, why: 'this version of House rules can’t read it' });
+    } catch (e) {
+      dropped.push({ id: r.id, by: r.by, via: r.via, why: 'this version of House rules can’t read it', canon: e.message });
       continue;
     }
     who[JSON.parse(line).id] = { by: r.by, via: r.via };
     lines.push(line);
   }
   const acts = [...members, ...lines].join('\n');
-  const now = Math.max(asked, ...[...members, ...lines].map((l) => JSON.parse(l).ts_unix));
+  const newest = Math.max(...[...members, ...lines].map((l) => JSON.parse(l).ts_unix));
+  const now = Math.max(asked, newest);
+  for (const d of dropped) trace('not counted', d);
+  trace('canon asked', { asked, at: now, newest });
   // canon leaves an empty list out of its answer.
   const canon = { commitments: [], ratifications: [], positions: [], unattended: [], bootstrap: [], ungoverned: [], ...call({ call: 'derive', acts, now }) };
   const whose = (id) => who[id] ?? null;
@@ -198,8 +204,10 @@ export function fold(call, read, asked) {
   const said = (id) => canon.positions.filter((p) => p.about === id && whose(p.act)).map((p) => ({ ...whose(p.act), agrees: p.position.pull === 'toward', why: p.position.because, at: p.at }));
   const entry = (c) => ({ id: c.id, text: c.text, status: c.status, at: c.asserted_at, ...whose(c.id), said: said(c.id) });
   const changes = canon.ratifications.filter((r) => r.scope == null && whose(r.act)).map((r) => ({ id: r.act, rule: r.rule, verdict: r.verdict, at: r.at, ...whose(r.act), said: said(r.act) }));
+  const rule = decided ? call({ call: 'rule', acts, now }).rule : null;
+  trace('how the house decides', { rule });
   return {
-    rule: decided ? call({ call: 'rule', acts, now }).rule : null,
+    rule,
     rules: canon.commitments.filter((c) => whose(c.id)).map(entry),
     changes,
     deciding: standing.filter((p) => call({ call: 'seat', acts, actor: human(p), now }) === 'held'),
