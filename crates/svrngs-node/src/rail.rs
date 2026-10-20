@@ -184,6 +184,20 @@ pub(crate) fn standing_json(s: &BTreeMap<String, Member>) -> serde_json::Value {
     people_json(rows.map(|(k, m)| (k, &m.person, m.person_key.as_str(), m.joined, m.device)))
 }
 
+/// Who is visiting `r`'s group now, by this computer's clock, from the
+/// fold's visits alone (svrngs-core's `Guest::live`), as the pages show
+/// them (guests-pages; GUESTS §5 "The pages"): the visit's id, which its
+/// host's Stop names; the guest; their host by name; until when; and
+/// whether `me` hosts them, so may stop it. `None` when the clock cannot
+/// be read, never read as nobody.
+pub(crate) fn visiting(r: &crate::register::Register, me: &str) -> Option<serde_json::Value> {
+    let now = crate::door::unix_now()?;
+    let live = (r.visits.iter()).filter(|(_, g)| g.live(&r.cut, now));
+    let on: Vec<_> = live.map(|(id, g)| serde_json::json!({ "id": id, "guest": g.visit.guest, "host": r.members.get(&g.host).map(|m| &m.person), "until": g.visit.until, "yours": g.host == me })).collect();
+    tracing::debug!(target: "rails", visits = r.visits.len(), on = on.len(), "rail: who is visiting now, the fold's visits live at this computer's time");
+    Some(on.into())
+}
+
 /// POST /v1/rail/append — sign and append one act to the named namespace.
 ///
 /// The body is the act alone. `seq`, the signature, the timestamp and the id

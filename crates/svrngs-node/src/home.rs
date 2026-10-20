@@ -25,7 +25,8 @@
 //! how many it lets in at once, a number or everyone, or no longer lent —
 //! written to its declaration, which the door reads at its next request;
 //! **a link to a group** (`POST /link`, start-home), made as `svrngs
-//! link` makes it, in the group's record; **a group's folder opened**
+//! link` makes it, in the group's record; **a guest's visit stopped** by
+//! its host (`POST /visits`, guests-pages); **a group's folder opened**
 //! in this computer's file browser (`POST /folder`, start-home); and **a
 //! group made** by the svrngs running here, as `svrngs new` makes one
 //! (`POST /group`, start-group; the node's group.rs `Asking::found`);
@@ -131,6 +132,7 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
         .route("/running", get(running).post(lend_one))
         .route("/helper/{kind}", get(steps))
         .route("/link", axum::routing::post(link))
+        .route("/visits", axum::routing::post(stop))
         .route("/folder", axum::routing::post(open))
         .route("/shelf", axum::routing::post(crate::folder::bring))
         .route("/runs", axum::routing::post(crate::folder::yes))
@@ -425,6 +427,26 @@ async fn link(State(at): State<Asking>, Json(l): Json<Linking>) -> Response {
                 format!("this computer cannot make a link: {e}"),
             )
         }
+    }
+}
+
+/// `POST /visits`, `[group, visit]`: the host's Stop (guests-pages; GUESTS
+/// §5), a `Correct` of a visit this computer hosts, written as an app's act
+/// is ([`crate::rail::append_act`]), so the fold ends it on every copy;
+/// any other id refused, so a Stop voids nothing else.
+async fn stop(State(at): State<Asking>, Json([group, visit]): Json<[String; 2]>) -> Response {
+    let hosts = (at.host.rail.register(&group)).map(|r| {
+        (r.visits.iter()).any(|(id, g)| id.to_string() == visit && g.host == at.host.actor)
+    });
+    tracing::debug!(target: "home", group, visit, hosts = ?hosts.as_ref().ok(), "home: a visit stopped only by the computer that hosts it");
+    match hosts {
+        Ok(true) => {
+            let act =
+                serde_json::json!({ "op": "correct", "corrects": visit, "replacement": null });
+            crate::rail::append_act(&at.host.rail, &group, act).await
+        }
+        Ok(false) => LendRefusal::Closed.say(StatusCode::FORBIDDEN, "you host no such visit here"),
+        Err(e) => LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
     }
 }
 

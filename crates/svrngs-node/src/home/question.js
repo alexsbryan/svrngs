@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // svrngs's question, what apps use, who was removed from the group, who is
-// on now and what is in it (the door and the index's rows, v1ui-door), in
+// visiting, who is on now and what is in it (the door and the index's rows, v1ui-door), in
 // one wording for the two pages
 // that ask a person: the home page on a computer (home.js, served by
 // home.rs) and the group's page on a phone (web/app.js, which
@@ -17,6 +17,12 @@
 // `valid_header_name`), and "House-rules" reads "House rules" (canon-house).
 export const spoken = (kind) => kind.replaceAll('-', ' ');
 export const named = (l) => (l.group ? spoken(l.kind) : `${l.person}’s ${l.name === l.kind ? l.name : `${l.name} (${l.kind})`}`);
+
+// Who is visiting now (guests-pages; GUESTS §5 "The pages"), from the
+// record, as every member's page shows them: each guest, by host, until a
+// day and an hour.
+export const until = (v) => new Date(v.until * 1000).toLocaleString([], { weekday: 'long', hour: 'numeric', minute: '2-digit' });
+export const visiting = (vs) => Object.assign(el('ul', '', ...[...vs].sort((a, b) => a.host.localeCompare(b.host)).map((v) => el('li', `${v.guest}, ${v.host}’s guest, until ${until(v)}`))), { className: 'visiting' });
 
 // Whose a lend is on group `g`'s index: its lender's, or the group's for an
 // app the group carries, whichever computer's copy is listed (`once`).

@@ -9,13 +9,14 @@
 // with how many it lets in at once, to set, clear or stop (bash-limit). Its
 // only writes are the person's yes and stop, to its own origin's /choices,
 // their change to what this computer lends, to its /lent, what runs here
-// lent (/running, v1ui-lend (b)), a link (/link),
+// lent (/running, v1ui-lend (b)), a link (/link), a guest's visit stopped
+// (/visits, guests-pages),
 // a folder opened (/folder), a group made (/group, start-group), one
 // joined from a link (/join, arch-command (c)), the shelf's apps brought
 // (/shelf) and a yes to a carried app's new version (/runs, canon-pin (c)). Its words are
 // DESIGN §1's: groups, people, what they lend, computer; its question and
 // what apps use and its removals are question.js's, the group's page's too.
-import { door, el, named, namesakes, once, opens, owner, question, removal, row, table, unlent, uses as used, whose } from './question.js';
+import { door, el, named, namesakes, once, opens, owner, question, removal, row, table, unlent, until, uses as used, visiting, whose } from './question.js';
 
 const main = document.getElementById('home');
 const button = (text, act) => Object.assign(el('button', text), { onclick: act });
@@ -99,6 +100,18 @@ async function show(g, s) {
     const leave = el('p', `Leaving ${name} stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. `, button(`Leave ${name}`, () => asked('/v1/leaves', { group: g.id }, leave, name)));
     s.append(...(g.keeps && others.length ? [hand] : []), Object.assign(leave, { className: 'leave' }));
     if (g.removals.length) s.append(Object.assign(el('ul', '', ...g.removals.map((r) => el('li', removal(r)))), { className: 'removals' }));
+    // Who is visiting (guests-pages; GUESTS §5 "The pages"), from the
+    // record, as every member's page shows them: who you have over first
+    // (GUESTS's "Your guests", in words that are not events's noun), each
+    // with Stop, which says what it does before it does it; then everyone's,
+    // by host, with until when. The page is drawn again at the Stop's own
+    // time, which is after every act its computer holds, so may be a second
+    // on (svrngs-core command.rs `sign_lines`): sooner, Sam reads as here.
+    if (!g.visiting) s.append(el('p', `This computer cannot say who is visiting ${name} now.`));
+    const stop = (v, li = el('li', `${v.guest}, until ${until(v)}. Stop ends the visit now: what you lend stops opening to ${v.guest}, and everyone in ${name} sees it ended. `)) => (li.append(button(`Stop ${v.guest}’s visit`, () => post('/visits', [g.id, v.id]).then((a) => setTimeout(() => location.reload(), a.ts_unix * 1000 - Date.now()), (e) => li.append(` ${e.message}`)))), li);
+    const mine = (g.visiting ?? []).filter((v) => v.yours);
+    if (mine.length) s.append(el('h3', 'Who you have over'), Object.assign(el('ul', '', ...mine.map((v) => stop(v))), { className: 'yours' }));
+    if (g.visiting?.length) s.append(el('h3', 'Visiting now'), visiting(g.visiting));
     // The index (V1_UI_BUILD §3.1): one table of what is in the group, on
     // any port — each thing by a link that opens it in a tab and says what
     // and whose (question.js `named`); what it is, its lender's word, never

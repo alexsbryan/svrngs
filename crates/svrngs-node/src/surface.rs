@@ -111,6 +111,9 @@ struct Held {
     /// the home page says so. `null` when the list cannot be read here,
     /// said at warn, never read as none.
     folders: Option<Vec<std::path::PathBuf>>,
+    /// Who is visiting now (guests-pages; [`crate::rail::visiting`]): `null`
+    /// beside `removed`'s, or when this computer's clock cannot be read.
+    visiting: Option<serde_json::Value>,
 }
 
 /// `GET /v1/groups`.
@@ -134,8 +137,9 @@ async fn groups(State(at): State<Asking>) -> Response {
         let made = seed.map(|s| Namesake::of(rail.root(), &s, me));
         // One read for both: a group not held or with no seed is the empty
         // register, said by the rail (`RingRail::register`).
-        let (person, removed, removals, left, keeps) = match rail.register(&id) {
+        let (person, removed, removals, left, keeps, visiting) = match rail.register(&id) {
             Ok(r) => {
+                let visiting = crate::rail::visiting(&r, me);
                 let person_of = |k: &str| r.members.get(k).map(|m| &m.person_key);
                 let keeps = r
                     .keeper
@@ -150,11 +154,12 @@ async fn groups(State(at): State<Asking>) -> Response {
                     Some(r.removals),
                     Some(left),
                     Some(keeps),
+                    visiting,
                 )
             }
             Err(e) => {
                 tracing::warn!(target: "surface", namespace = id, error = %e, "surface: groups — its register is unreadable, so neither this computer's person nor whether it was removed is known");
-                (None, None, None, None, None)
+                (None, None, None, None, None, None)
             }
         };
         let folders = crate::folder::dirs_of(&at.door.data_dir, &id)
@@ -172,6 +177,7 @@ async fn groups(State(at): State<Asking>) -> Response {
             left,
             keeps,
             folders,
+            visiting,
         });
     }
     Json(serde_json::json!({ "groups": held })).into_response()

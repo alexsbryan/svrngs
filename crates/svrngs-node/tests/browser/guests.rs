@@ -227,13 +227,13 @@ async fn sam_visiting(kim_dir: &Path, bo_dir: &Path, relay: &Server) -> (Node, N
 }
 
 /// Who each home page lists as visiting, and as its own guests.
-const LISTED: &str = "#home .guests li, #home .visiting li";
+const LISTED: &str = "#home .yours li, #home .visiting li";
 
 in_both_engines!(
     /// **Who's visiting, on every home page** (guests-pages (a); GUESTS
     /// §3.2, §5 "The pages", §7 bar 7). Kim hosts Sam until a day and an
     /// hour 40 hours from now. Bo's home page lists Sam visiting, Kim's
-    /// guest, until then; Kim's lists Sam under **Your guests** too, with
+    /// guest, until then; Kim's lists Sam under Who you have over too, with
     /// **Stop**, which says what it does before it does it. Kim presses
     /// it: Kim's page, opened again, lists nobody; Bo's computer syncs
     /// Kim's record, and Bo's lists nobody either. Planted: the visit kept
@@ -261,7 +261,7 @@ async fn every_home_page_shows_sam_visiting_and_kims_stop_ends_it(engine: Engine
         "Bo's home page lists Sam visiting, Kim's guest, until {day}: {bos:#}"
     );
 
-    let stop = json!([["#home .guests button"]]);
+    let stop = json!([["#home .yours button"]]);
     let kims = home_page(engine, &kim, json!({ "all": LISTED, "do": stop })).await;
     eprintln!("Kim's home page: {kims:#}");
     let on_kims = listed(&kims["all"]);
