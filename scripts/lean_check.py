@@ -109,7 +109,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # on a TV or a projector (home.js `screen`), raised it by 23 to one past
 # where it landed, within the operator's "Yes, up to +30" (2026-10-18), and
 # its founder drawn first by 1 more, 24 of the 30.
-BUDGET = {"crates/svrngs-core": 3009, ".": 16583}
+# guests-economize cut 5, redeem.rs `answer`'s two arms of one refusal, and
+# lowered the repository's to one past where the cut landed; svrngs-core's
+# was already there (demo/runs/economize/2026-10-19-guests/SURVEY.md). The
+# guests rows have +150 over that and svrngs-core +60, at most 16,728 and
+# 3,069 (the operator, 2026-10-18), each raise to one past where it lands.
+BUDGET = {"crates/svrngs-core": 3009, ".": 16578}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
