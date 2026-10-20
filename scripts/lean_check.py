@@ -106,7 +106,9 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # its person's window, dark, on a computer and a phone, raised it by 16 to one
 # past where it landed, after an economizing pass that cut its own lines and
 # found no fold elsewhere.
-BUDGET = {"crates/svrngs-core": 3017, ".": 16596}
+# The phone's lend worker asking for gzip and unpacking it raised it by 3
+# more, to one past where it landed.
+BUDGET = {"crates/svrngs-core": 3017, ".": 16599}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
