@@ -1,45 +1,23 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // ported from commonwealth-ai cmnwlth/apps/ring-doc/adapter.js@47b8acfd0
-// The durable doc adapter: the rail's acts in, one Yjs document out.
+// The doc's rules that need no socket: who last edited each paragraph, an
+// update as text, and a person's colour. Pure functions over values, so
+// they run under `node --test` with no browser and no server; the server
+// (server.mjs) and the page (app.js) are the halves that do I/O.
 //
-// Everything here is a pure function over values, so it runs under
-// `node --test` with no browser and no daemon. `app.js` is the half that
-// touches `window.ring`, the DOM and the clock; this half is the half with
-// the rules, and the rules are the ones that can be got wrong silently.
-//
-// The property that makes this work is Yjs's, not ours: updates are
-// commutative, associative and idempotent. The rail's total order is a
-// convenience — it gives every node the same list to walk — and NOT something
-// convergence depends on. `adapter.test.mjs` pins both halves of that: the
-// same acts in two orders reach the same state vector, and an act applied
-// twice is applied once.
-import { Y, awarenessProtocol } from "./vendor/ring-doc-bundle.js";
-
-/// The act kind this app writes and reads. One string, one place — an app
-/// whose writer and reader spell the kind separately stops converging the day
-/// one of them is edited.
-export const DOC_CHANGE = "doc-change";
-
-/// The document this app edits. The act carries it so one ring can hold more
-/// than one doc later without the reader needing to change.
-export const DOC_ID = "ring-doc";
-
-/// The `origin` stamped on every `Y.applyUpdate` that came from the rail.
-///
-/// `app.js` checks for it in `doc.on('update', ...)` and does NOT append.
-/// Without it, applying a peer's act produces a local update event, which
-/// appends an act, which the peer applies, which appends — the two nodes
-/// write to the journal forever over a document that has stopped changing.
-export const FROM_RAIL = "rail";
+// Upstream read edits as signed acts off commonwealth-ai's rail. Here the
+// server is where every edit arrives, on a socket svrngs's door opened as a
+// named person, so the server writes each edit down as an act stamped with
+// that person (server.mjs `wrote`) and the rules below read those acts as
+// they read the rail's.
+import { Y } from "./vendor/doc-bundle.js";
 
 // base64 in chunks. `String.fromCharCode(...bytes)` spreads the whole array
 // onto the call stack and throws on a document of any size; 0x8000 is the
 // conventional safe stride.
 const CHUNK = 0x8000;
 
-/// A Yjs update as a JSON-safe string. The rail's payload must be whole
-/// numbers and strings — two nodes have to derive identical bytes from an act
-/// — so the update travels base64, never as an array of numbers.
+/// A Yjs update as a JSON-safe string, as the server keeps each act.
 export function bytesToB64(bytes) {
   let s = "";
   for (let i = 0; i < bytes.length; i += CHUNK) {
@@ -57,98 +35,21 @@ export function b64ToBytes(b64) {
   return out;
 }
 
-/// The act this app writes. One act per debounce window, never one per
-/// keystroke.
-///
-/// Nothing about a guest rides in here. A guest writes through the door, which
-/// signs on their behalf and resolves the attribution once, on the log route
-/// (`routes_rail::shipped`) — so this app names nobody and reads `op.person`.
-export const changeAct = (update, doc = DOC_ID) => ({
-  kind: DOC_CHANGE,
-  doc,
-  update: bytesToB64(update),
-});
-
-/// The reducer half of the read path, over ONE act at a time.
-///
-/// Written as a reducer rather than a loop over `log.ops` because the SDK's
-/// `fold` is what knows which acts survived a correction. Walking `ops`
-/// directly would apply a voided update — and Yjs has no un-apply, so the
-/// document would be wrong with nothing on screen to say so.
-export function docReducer(acc, payload, op) {
-  if (!payload || payload.kind !== DOC_CHANGE || payload.doc !== acc.doc) {
-    return acc;
-  }
-  if (typeof payload.update !== "string") {
-    acc.gaps.push(`act ${op.id} carries a ${typeof payload.update} update`);
-    return acc;
-  }
-  // `actor`, `person` and `ts_unix` ride along for attribution. They come from
-  // the SIGNER the rail authenticated, never from anything inside the update.
-  acc.acts.push({
-    id: op.id,
-    actor: op.actor,
-    person: op.person,
-    seq: op.seq,
-    ts: op.ts_unix,
-    update: payload.update,
-  });
-  return acc;
-}
-
-export const initial = (doc = DOC_ID) => ({ doc, acts: [], gaps: [] });
-
-/// Every `doc-change` act for `doc`, in the rail's order, voided ones already
-/// gone.
-///
-/// `fold` is a parameter rather than a global because that is the whole reason
-/// this file tests without a browser — `app.js` hands it `window.ring.fold`,
-/// which is the one implementation of "which acts survived".
-export function decodeActs(log, fold, doc = DOC_ID) {
-  return fold(log, docReducer, initial(doc));
-}
-
-/// Apply the acts this document has not seen, and say which ids were applied.
-///
-/// `applied` is a `Set` of op ids the caller owns across polls. Deduping here
-/// rather than trusting idempotency is not belt-and-braces: re-applying every
-/// act on every 500 ms poll is O(journal) work per tick, and the cost shows up
-/// as typing latency long before it shows up as a wrong document.
-export function applyNew(ydoc, acts, applied) {
-  const fresh = [];
-  for (const act of acts) {
-    if (applied.has(act.id)) continue;
-    applied.add(act.id);
-    fresh.push(act);
-  }
-  if (fresh.length === 0) return fresh;
-  // One transaction for the batch: Yjs fires one update event for the whole
-  // transaction, so a poll that pulls twenty peer acts does not produce twenty
-  // observer passes over the editor.
-  Y.transact(
-    ydoc,
-    () => {
-      for (const act of fresh) Y.applyUpdate(ydoc, b64ToBytes(act.update));
-    },
-    FROM_RAIL,
-  );
-  return fresh;
-}
-
 // ---------------------------------------------------------------------------
 // Attribution — who last edited each paragraph, and when.
 //
 // Yjs stamps every character with the clientID of the client that produced it,
-// and a clientID is self-asserted: a page edited to announce another node's
+// and a clientID is self-asserted: a page edited to announce another person's
 // number writes that number into every update it makes, and nothing in Yjs
-// checks it. The rail's `actor` is the other kind of field — the signing key
-// admission verified before the act was admitted (`admit.rs:204`) — and a
-// writer cannot set it for somebody else.
+// checks it. An act's `person` is the other kind of field — the name svrngs's
+// door set on the socket the edit came in on (`x-svrngs-person`), which a page
+// cannot set for somebody else: the door strips a client's copy and sets its
+// own (svrngs crates/svrngs-node/src/door.rs, "Who is asking").
 //
 // So nothing below reads a name out of an update. It replays the acts in the
-// rail's order and records, per paragraph, WHICH ACT last changed it; the name
-// is that act's `actor` through the roster. A forged clientID travels inside
-// an act like any other bytes and renders under the key that signed the act.
+// server's order and records, per paragraph, WHICH ACT last changed it; the
+// name is that act's `person`. A forged clientID travels inside an act like
+// any other bytes and renders under the person whose socket carried it.
 //
 // This is also why per-character colouring is not shown, and why the page says
 // so out loud: telling two authors apart INSIDE one paragraph could only read
@@ -161,18 +62,12 @@ export const PROSE_FRAGMENT = "default";
 
 /// Replay the acts and keep, per paragraph, the act that last touched it.
 ///
-/// The replay runs on its OWN `Y.Doc` rather than on the editor's: `applyNew`
-/// applies a poll's acts in one transaction, deliberately, so the editor sees
-/// one update event for the batch — and a batch is exactly what destroys the
-/// act-to-paragraph correspondence. Here each act is applied alone, which is
+/// The replay runs on its OWN `Y.Doc`: each act is applied alone, which is
 /// what makes "which act touched this paragraph" an observed fact rather than
-/// a guess. The caller owns the returned object across polls, the way it owns
-/// `applied`, so each act is replayed once and not once per tick.
+/// a guess. The caller owns the returned object, so each act is replayed once.
 ///
-/// The answer is a function of the acts in RAIL order, not arrival order: the
-/// rail's `ts` is whole seconds, so two actors' acts inside one second can
-/// reach two pages in opposite polls, and replaying each as it arrived named a
-/// different last editor on each page. An act that sorts before one already
+/// The answer is a function of the acts in their order (`ts`, then `actor`,
+/// `seq`, `id`), not arrival order: an act that sorts before one already
 /// replayed rebuilds the replay from the full ordered list.
 export function createAttribution() {
   const seen = new Set();
@@ -202,37 +97,46 @@ export function createAttribution() {
   reset();
 
   return {
-    /// Replay every act not replayed yet, in the rail's order.
+    /// Replay every act not replayed yet, in order.
     absorb(acts) {
       const fresh = acts.filter((act) => !seen.has(act.id));
       if (fresh.length === 0) return;
       for (const act of fresh) seen.add(act.id);
-      fresh.sort(railOrder);
+      fresh.sort(order);
       const last = absorbed[absorbed.length - 1];
-      const inOrder = last === undefined || railOrder(last, fresh[0]) < 0;
+      const inOrder = last === undefined || order(last, fresh[0]) < 0;
       absorbed.push(...fresh);
       if (inOrder) {
         fresh.forEach(replay);
       } else {
-        absorbed.sort(railOrder);
+        absorbed.sort(order);
         reset();
         absorbed.forEach(replay);
       }
       current = null;
     },
+    /// One entry per top-level block, in document order: `{person, ts}` of
+    /// the act that last touched it, or `null` where none has. What the
+    /// server sends the pages (protocol.js `LINES`).
+    entries() {
+      return frag.toArray().map((block) => {
+        const e = by.get(block);
+        return e ? { person: e.person, ts: e.ts } : null;
+      });
+    },
     /// One line per top-level block, in document order; `null` where no act
-    /// has touched that block yet (a paragraph the typist has made and not
-    /// yet had read back).
+    /// has touched that block yet.
     lines(nowMs) {
-      return frag.toArray().map((block) => attributionLine(by.get(block), nowMs));
+      return this.entries().map((e) => attributionLine(e, nowMs));
     },
   };
 }
 
-/// The rail's order over admitted acts: `(ts_unix, actor, seq, id)`, the key
-/// `commonwealth-rail-core/src/admit.rs` sorts by.
+/// The order over acts: `(ts, actor, seq, id)`. The server gives each act a
+/// `ts` later than the last (server.mjs `wrote`), so this is the order the
+/// edits reached it.
 const byText = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
-const railOrder = (x, y) =>
+const order = (x, y) =>
   x.ts - y.ts || byText(x.actor, y.actor) || x.seq - y.seq || byText(x.id, y.id);
 
 /// The top-level blocks one Yjs event changed.
@@ -253,102 +157,23 @@ function touchedBlocks(event, frag) {
   return node && node.parent === frag ? [node] : [];
 }
 
-/// "last edited by alex 4s ago", from the act, or `null` when no act has
+/// "last edited by Bo 4s ago", from the entry, or `null` when no act has
 /// touched this paragraph.
 ///
-/// The name is `op.person` — the rail's own stamp, composed once on the log
-/// route for members and guests alike — not a lookup this page does. A page
-/// that resolved the signer itself would be a second spelling of one sentence
-/// (ARCH §8), and for a guest's act it would read the door's member.
-///
-/// An op that arrives without one is SAID to be unnamed rather than rendered
-/// as the key or as "someone" — an absence reported, never defaulted
-/// (ARCH §6).
+/// An act that came in on a socket svrngs named nobody on (the page was opened
+/// at the server's own port, not through svrngs) is SAID to be unnamed rather
+/// than rendered as "someone" — an absence reported, never defaulted.
 export function attributionLine(entry, nowMs) {
   if (!entry) return null;
   const name = entry.person;
   const ago = Math.max(0, Math.round(nowMs / 1000 - entry.ts));
   return name === null || name === undefined
-    ? `last edited by a key the rail's roster does not name, ${ago}s ago`
+    ? `last edited by someone svrngs didn't name, ${ago}s ago`
     : `last edited by ${name} ${ago}s ago`;
 }
 
-// ---------------------------------------------------------------------------
-// The ask — what the room answered, and which house held the evidence.
-//
-// The door runs the turn and hands back `{answer, epistemic_state}` and
-// nothing else (`routes_guest_ask.rs`). What makes that worth showing on a
-// guest's phone is not the prose: it is that each released citation names the
-// MESH MEMBER whose corpus the passage came from, so a person standing in one
-// room can see the answer was assembled out of several houses' shelves.
-
-/// One line per released citation: `<corpus> on <member>`, in release order.
-///
-/// A citation with no `member` came from the corpus on the daemon that
-/// answered — `ReleasedCitation.member` is documented as "`None` = local" —
-/// and renders as the corpus alone. It is NOT given the answering node's name:
-/// the page does not know it, and printing a guess would be the one failure
-/// this column exists to rule out. Absence reported, never defaulted.
-///
-/// An epistemic state with no citations yields an empty list, which is a real
-/// answer about an ungrounded turn and not the same thing as "no ledger".
-export function citationLines(epistemicState) {
-  const cites = (epistemicState && epistemicState.citations) || [];
-  return cites.map((c) => {
-    const corpus = (c.target && c.target.corpus_id) || "an unnamed corpus";
-    return c.member ? `${corpus} on ${c.member}` : corpus;
-  });
-}
-
-// ---------------------------------------------------------------------------
-// Presence — the LIVE lane, not the rail.
-//
-// A cursor is delivery, never record: y-protocols drops a peer whose last
-// awareness update is `outdatedTimeout` old (30 s), and `ring_sync` runs on a
-// 60 s tick, so a cursor carried by the journal would have faded before it
-// arrived. Everything below travels `POST /v1/rail/live` and is gone on a
-// restart, which `sovereign-api/src/routes_rail_live.rs` proves rather than
-// asserts.
-//
-// **The name on a cursor is self-asserted and this file knows it.** The
-// SENDER looks its own key up in the roster and puts the person it found in
-// its awareness state; a receiver has no way to check that, because awareness
-// is unauthenticated by its own spec (`ring-apps-shelf.md` §identity). That is
-// why a name is the MOST a cursor carries and why per-character colouring is
-// not shown — attribution that a reader can check is act-level, from the
-// signer, and lives in the `doc-change` acts above.
-
-/// The envelope kind on the live lane. The buffer is one per daemon, so a
-/// payload says what it is; anything else on the lane is skipped, not guessed
-/// at.
-export const PRESENCE_KIND = "awareness";
-
-/// The `origin` stamped on every `applyAwarenessUpdate` that came from a peer.
-///
-/// `app.js` checks for it the way it checks [`FROM_RAIL`]: without it, applying
-/// a peer's presence fires a local awareness update, which posts it back to
-/// every peer, which applies it — three nodes saturating the live lane over a
-/// document nobody is typing in.
-export const FROM_LIVE = "live";
-
-/// The person this key signs for, or `null` when the roster does not know it.
-///
-/// `members` is the `person → [keys]` map (`log.roster.members`), the same one
-/// `expenses.js` takes — a key can belong to two laptops of one person, so the
-/// lookup is over the values and the answer is the person.
-///
-/// `null` is a real answer and is rendered as one. A page that fell back to
-/// the key, or to "someone", would be substituting for an absence (ARCH §6).
-export function personFor(members, key) {
-  if (!key) return null;
-  for (const [person, keys] of Object.entries(members || {})) {
-    if ((keys || []).includes(key)) return person;
-  }
-  return null;
-}
-
-/// A stable colour for a name, so one person is the same colour on all three
-/// screens without anyone agreeing on a palette.
+/// A stable colour for a name, so one person is the same colour on every
+/// screen without anyone agreeing on a palette.
 ///
 /// Derived from the NAME rather than the Yjs clientID: a clientID is new on
 /// every reload, which would recolour everyone whenever anybody refreshed.
@@ -383,56 +208,3 @@ export function colorFor(name) {
       .padStart(2, "0");
   return `#${hex(rgb[0])}${hex(rgb[1])}${hex(rgb[2])}`;
 }
-
-/// One awareness update as a live-lane payload.
-///
-/// Base64 inside JSON text, the same spelling a `doc-change` act uses: the
-/// lane carries text (`routes_rail_live.rs`), and one encoding for both lanes
-/// is one decoder to get wrong.
-export const presenceEnvelope = (update, doc = DOC_ID) =>
-  JSON.stringify({ kind: PRESENCE_KIND, doc, awareness: bytesToB64(update) });
-
-/// The awareness updates in a drain, and what could not be read.
-///
-/// Takes what `GET /v1/rail/live` returned — payload strings — and returns
-/// `Uint8Array`s to hand to `applyAwarenessUpdate`. A payload for another doc
-/// or another kind is skipped silently (it is not ours); a payload that claims
-/// to be ours and cannot be read is a GAP, because a cursor that never appears
-/// otherwise looks exactly like a peer who is not typing.
-export function decodePresence(payloads, doc = DOC_ID) {
-  const updates = [];
-  const gaps = [];
-  for (const raw of payloads || []) {
-    let env;
-    try {
-      env = JSON.parse(raw);
-    } catch (e) {
-      gaps.push(`a live payload is not JSON: ${String(e.message || e)}`);
-      continue;
-    }
-    if (!env || env.kind !== PRESENCE_KIND || env.doc !== doc) continue;
-    try {
-      updates.push(b64ToBytes(env.awareness));
-    } catch (e) {
-      gaps.push(`a live presence payload is not base64: ${String(e.message || e)}`);
-    }
-  }
-  return { updates, gaps };
-}
-
-/// Apply a drain's presence onto this node's awareness map.
-///
-/// Stamped [`FROM_LIVE`] so the sender in `app.js` does not echo it back.
-export function applyPresence(awareness, updates) {
-  for (const update of updates) {
-    awarenessProtocol.applyAwarenessUpdate(awareness, update, FROM_LIVE);
-  }
-}
-
-/// This node's own awareness state, as bytes to send.
-///
-/// Only THIS client: a node that re-broadcast the peers it had heard from
-/// would keep a departed cursor alive on the third node forever, because every
-/// rebroadcast refreshes the `lastUpdated` that `outdatedTimeout` reads.
-export const encodeSelf = (awareness) =>
-  awarenessProtocol.encodeAwarenessUpdate(awareness, [awareness.clientID]);
