@@ -1,0 +1,1725 @@
+{
+ "plant": "count",
+ "trial": true,
+ "group": "e503c5faa5829e59e666445656d619b883e1da7ef5a0b4dd96be79fcb0f908a3",
+ "computers": {
+  "Ana": "1bf50eec60e974821a3d870f9c0108ae55d408294eb73ae3aab6b125a09e1fda",
+  "Bo": "b0cc1a3ad964d3d90aec3013a9d0e0aedbeba9243fef2e186616617923647236",
+  "Kim": "b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89"
+ },
+ "share": {
+  "kim": {
+   "exit": 0,
+   "said": "You lend jellyfin (port 55329) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 55329 --limit <number>`.\njellyfin asks each person to sign in once, with an account you make them. In jellyfin: your picture at the top right, then Dashboard, Users and +; give it a name and a password, tick the libraries they may watch, and Save. Then tell each person theirs.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare jellyfin` stops lending it."
+  },
+  "bo": {
+   "exit": 0,
+   "said": "You lend jellyfin (port 55332) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 55332 --limit <number>`.\njellyfin asks each person to sign in once, with an account you make them. In jellyfin: your picture at the top right, then Dashboard, Users and +; give it a name and a password, tick the libraries they may watch, and Save. Then tell each person theirs.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare jellyfin` stops lending it."
+  }
+ },
+ "listed": {
+  "kim": true,
+  "bo": true
+ },
+ "steps": {
+  "1": {
+   "who": "kim",
+   "do": "steps",
+   "ms": 313,
+   "done": [
+    {
+     "step": {
+      "goto": "http://svrngs.localhost:55277/"
+     },
+     "ms": 18,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\nasking…\nKim\nasking…\nBo\nasking…\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/kim/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursHave a guest\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nAsking each computer in the group what it lends…\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/"
+    },
+    {
+     "step": {
+      "wait": "Have a guest"
+     },
+     "ms": 24,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/kim/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursHave a guest\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 0 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55277/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/"
+    },
+    {
+     "step": {
+      "click": "Have a guest",
+      "until": "For how long"
+     },
+     "ms": 70,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/kim/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursFor how long, from when they open the link: \n48 hours\n24 hours\n6 hours\nMake a link for your guest\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 0 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55277/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/"
+    },
+    {
+     "step": {
+      "options": "label:has-text('For how long') select"
+     },
+     "ms": 91,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/kim/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursFor how long, from when they open the link: \n48 hours\n24 hours\n6 hours\nMake a link for your guest\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 0 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55277/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/",
+     "value": {
+      "chosen": "48 hours",
+      "offered": [
+       "48 hours",
+       "24 hours",
+       "6 hours"
+      ]
+     }
+    },
+    {
+     "step": {
+      "click": "Make a link for your guest",
+      "until": "Send this link to your guest"
+     },
+     "ms": 310,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/kim/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursFor how long, from when they open the link: \n48 hours\n24 hours\n6 hours\nMake a link for your guest\n\nSend this link to your guest, in any chat: http://localhost:55233/#visit=<the token> They open it in a browser and give their name. For 48 hours from then they can open what you lend, and everyone in Oak sees they are your guest. It lets one guest in, once, within a day, while this computer is on. Copy the link\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 0 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55277/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/"
+    },
+    {
+     "step": {
+      "text": "p.link code"
+     },
+     "ms": 312,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/kim/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursFor how long, from when they open the link: \n48 hours\n24 hours\n6 hours\nMake a link for your guest\n\nSend this link to your guest, in any chat: http://localhost:55233/#visit=<the token> They open it in a browser and give their name. For 48 hours from then they can open what you lend, and everyone in Oak sees they are your guest. It lets one guest in, once, within a day, while this computer is on. Copy the link\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 0 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55277/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/",
+     "value": "http://localhost:55233/#visit=<the token>"
+    }
+   ],
+   "url": "http://svrngs.localhost:55277/",
+   "errors": [],
+   "logs": [],
+   "started": 1792519491.104
+  },
+  "2-visit": {
+   "who": "sam",
+   "do": "visit",
+   "ms": 1453,
+   "asked": true,
+   "askedAgain": false,
+   "status": "You’re Kim’s guest until 10/22/2026, 11:04:52 AM",
+   "listed": [
+    "Kim’s jellyfin"
+   ],
+   "text": "You’re Kim’s guest until 10/22/2026, 11:04:52 AM\n\nKim’s jellyfin\n",
+   "url": "http://localhost:55233/#visit=<the token>",
+   "errors": [],
+   "logs": [
+    "error: Did not parse stylesheet at 'http://localhost:55233/look.css?v=3646130c003a' because non CSS MIME types are not allowed in strict mode.",
+    "debug: PAGE: asking the person's name to join the group you’re visiting",
+    "debug: LAYER parse: ok — issuer b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key e4be27fe9194c4574f1699e2e1b3f833089246d73f1d8cd350d52ac1b973aeb3",
+    "debug: LAYER parse: ok — relay https://usw1-1.relay.n0.iroh.link/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint e4be27fe9194c4574f1699e2e1b3f833089246d73f1d8cd350d52ac1b973aeb3 bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay: dialing b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89 on the Redeem protocol through a relay…",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89 on the Redeem protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"svrngs/redeem/0\"",
+    "debug: JOIN: asking the issuer what the link is for, as e4be27fe9194c4574f1699e2e1b3f833089246d73f1d8cd350d52ac1b973aeb3",
+    "debug: HTTP: POST /visit — a bi-stream opened",
+    "debug: HTTP: POST /visit answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: POST /visit — the stream is done",
+    "debug: STORE: the sealing key absent: making one",
+    "debug: PAGE: a guest of Kim until 1792692292, opening jellyfin",
+    "error: WebSocket connection to 'wss://usw1-1.relay.n0.iroh.link/relay' failed: The operation couldn’t be completed. Socket is not connected"
+   ],
+   "started": 1792519491.419
+  },
+  "2-watch": {
+   "who": "sam",
+   "do": "watch",
+   "ms": 2672,
+   "opened": 1035,
+   "played": {
+    "ms": 1625,
+    "at": 0.2723524163173096
+   },
+   "text": "",
+   "url": "http://09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr.localhost:55233/",
+   "errors": [],
+   "logs": [
+    "debug: PAGE: opening 09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr at http://09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr.localhost:55233/open.html?v=3646130c003a, a pass to 1 lend(s) until 1792735492"
+   ],
+   "started": 1792519492.872
+  },
+  "3-page": {
+   "who": "sam",
+   "do": "steps",
+   "ms": 77,
+   "done": [
+    {
+     "step": {
+      "goto": "http://localhost:55233/"
+     },
+     "ms": 53,
+     "text": "Opening…\n\n",
+     "url": "http://localhost:55233/"
+    },
+    {
+     "step": {
+      "wait": "\\S",
+      "within": 60000
+     },
+     "ms": 57,
+     "text": "Opening…\n\n",
+     "url": "http://localhost:55233/"
+    }
+   ],
+   "url": "http://localhost:55233/",
+   "errors": [],
+   "logs": [
+    "error: Did not parse stylesheet at 'http://localhost:55233/look.css?v=3646130c003a' because non CSS MIME types are not allowed in strict mode."
+   ],
+   "started": 1792519543.314
+  },
+  "3-forge": {
+   "who": "sam",
+   "do": "forge",
+   "ms": 2936,
+   "text": "Jellyfin is not Kim's to open to you.",
+   "video": 0,
+   "url": "http://0dhbxr03pwl7vc1phal4wxjaz5q81mlfj91v6hdhc3t1vk5frk5abbq3n1prdr.localhost:55233/",
+   "errors": [],
+   "logs": [
+    "debug: PAGE: no line offered: not a computer, or not a token",
+    "error: Error: Open this page from your group’s link.",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "error: Failed to load resource: the server responded with a status of 403 (Forbidden)"
+   ],
+   "started": 1792519543.391
+  },
+  "4-ana": {
+   "who": "ana",
+   "do": "steps",
+   "ms": 233,
+   "done": [
+    {
+     "step": {
+      "poll": "http://svrngs.localhost:55241/",
+      "re": "Sam, Kim’s guest, until",
+      "within": 120000,
+      "every": 3000
+     },
+     "ms": 232,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (yours, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/ana/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursHave a guest\n\nYou keep the order of removals in Oak. Choose who keeps it after you, then leave: \nBo\nKim\nHand it on\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nVisiting now\nSam, Kim’s guest, until Thursday 11:04 AM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\n\nYou lend nothing yet.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55241/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55241/"
+    }
+   ],
+   "url": "http://svrngs.localhost:55241/",
+   "errors": [],
+   "logs": [],
+   "started": 1792519546.327
+  },
+  "4-kim": {
+   "who": "kim",
+   "do": "steps",
+   "ms": 226,
+   "done": [
+    {
+     "step": {
+      "poll": "http://svrngs.localhost:55277/",
+      "re": "Sam, Kim’s guest, until",
+      "within": 120000,
+      "every": 3000
+     },
+     "ms": 225,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/kim/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursHave a guest\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nWho you have over\nSam, until Thursday 11:04 AM. Stop ends the visit now: what you lend stops opening to Sam, and everyone in Oak sees it ended. Stop Sam’s visit\nVisiting now\nSam, Kim’s guest, until Thursday 11:04 AM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 1 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55277/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/"
+    }
+   ],
+   "url": "http://svrngs.localhost:55277/",
+   "errors": [],
+   "logs": [],
+   "started": 1792519546.563
+  },
+  "4-bo": {
+   "who": "bo",
+   "do": "steps",
+   "ms": 244,
+   "done": [
+    {
+     "step": {
+      "poll": "http://svrngs.localhost:55308/",
+      "re": "Sam, Kim’s guest, until",
+      "within": 120000,
+      "every": 3000
+     },
+     "ms": 241,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/bo/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursHave a guest\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nVisiting now\nSam, Kim’s guest, until Thursday 11:04 AM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 0 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55308/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55308/"
+    }
+   ],
+   "url": "http://svrngs.localhost:55308/",
+   "errors": [],
+   "logs": [],
+   "started": 1792519546.791
+  },
+  "5": {
+   "who": "kim",
+   "do": "steps",
+   "ms": 284,
+   "done": [
+    {
+     "step": {
+      "goto": "http://svrngs.localhost:55277/"
+     },
+     "ms": 13,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/"
+    },
+    {
+     "step": {
+      "wait": "Have a guest"
+     },
+     "ms": 17,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\nasking…\nKim\nasking…\nBo\nasking…\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/kim/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursHave a guest\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nWho you have over\nSam, until Thursday 11:04 AM. Stop ends the visit now: what you lend stops opening to Sam, and everyone in Oak sees it ended. Stop Sam’s visit\nVisiting now\nSam, Kim’s guest, until Thursday 11:04 AM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nAsking each computer in the group what it lends…\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 1 using it now. How many people at once: Let in this manyStop lending\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/"
+    },
+    {
+     "step": {
+      "click": "Have a guest",
+      "until": "For how long"
+     },
+     "ms": 52,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/kim/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursFor how long, from when they open the link: \n48 hours\n24 hours\n6 hours\nMake a link for your guest\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nWho you have over\nSam, until Thursday 11:04 AM. Stop ends the visit now: what you lend stops opening to Sam, and everyone in Oak sees it ended. Stop Sam’s visit\nVisiting now\nSam, Kim’s guest, until Thursday 11:04 AM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 1 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55277/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/"
+    },
+    {
+     "step": {
+      "options": "label:has-text('For how long') select"
+     },
+     "ms": 61,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/kim/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursFor how long, from when they open the link: \n48 hours\n24 hours\n6 hours\nMake a link for your guest\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nWho you have over\nSam, until Thursday 11:04 AM. Stop ends the visit now: what you lend stops opening to Sam, and everyone in Oak sees it ended. Stop Sam’s visit\nVisiting now\nSam, Kim’s guest, until Thursday 11:04 AM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 1 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55277/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/",
+     "value": {
+      "chosen": "48 hours",
+      "offered": [
+       "48 hours",
+       "24 hours",
+       "6 hours"
+      ]
+     }
+    },
+    {
+     "step": {
+      "select": "label:has-text('For how long') select",
+      "label": "6 hours"
+     },
+     "ms": 63,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/kim/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursFor how long, from when they open the link: \n48 hours\n24 hours\n6 hours\nMake a link for your guest\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nWho you have over\nSam, until Thursday 11:04 AM. Stop ends the visit now: what you lend stops opening to Sam, and everyone in Oak sees it ended. Stop Sam’s visit\nVisiting now\nSam, Kim’s guest, until Thursday 11:04 AM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 1 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55277/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/",
+     "value": [
+      "21600"
+     ]
+    },
+    {
+     "step": {
+      "click": "Make a link for your guest",
+      "until": "Send this link to your guest"
+     },
+     "ms": 281,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/kim/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursFor how long, from when they open the link: \n48 hours\n24 hours\n6 hours\nMake a link for your guest\n\nSend this link to your guest, in any chat: http://localhost:55233/#visit=<the token> They open it in a browser and give their name. For 6 hours from then they can open what you lend, and everyone in Oak sees they are your guest. It lets one guest in, once, within a day, while this computer is on. Copy the link\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nWho you have over\nSam, until Thursday 11:04 AM. Stop ends the visit now: what you lend stops opening to Sam, and everyone in Oak sees it ended. Stop Sam’s visit\nVisiting now\nSam, Kim’s guest, until Thursday 11:04 AM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 1 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55277/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/"
+    },
+    {
+     "step": {
+      "text": "p.link code"
+     },
+     "ms": 283,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/kim/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursFor how long, from when they open the link: \n48 hours\n24 hours\n6 hours\nMake a link for your guest\n\nSend this link to your guest, in any chat: http://localhost:55233/#visit=<the token> They open it in a browser and give their name. For 6 hours from then they can open what you lend, and everyone in Oak sees they are your guest. It lets one guest in, once, within a day, while this computer is on. Copy the link\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nWho you have over\nSam, until Thursday 11:04 AM. Stop ends the visit now: what you lend stops opening to Sam, and everyone in Oak sees it ended. Stop Sam’s visit\nVisiting now\nSam, Kim’s guest, until Thursday 11:04 AM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 1 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55277/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/",
+     "value": "http://localhost:55233/#visit=<the token>"
+    }
+   ],
+   "url": "http://svrngs.localhost:55277/",
+   "errors": [],
+   "logs": [],
+   "started": 1792519547.042
+  },
+  "5-visit": {
+   "who": "jo",
+   "do": "visit",
+   "ms": 1406,
+   "asked": true,
+   "askedAgain": false,
+   "status": "You’re Kim’s guest until 10/20/2026, 5:05:48 PM",
+   "listed": [
+    "Kim’s jellyfin"
+   ],
+   "text": "You’re Kim’s guest until 10/20/2026, 5:05:48 PM\nKim’s jellyfin",
+   "url": "http://localhost:55233/#visit=<the token>",
+   "errors": [],
+   "logs": [
+    "error: Refused to apply style from 'http://localhost:55233/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "debug: PAGE: asking the person's name to join the group you’re visiting",
+    "debug: LAYER parse: ok — issuer b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key 84a2007b256d29b39f655896e39e9092e7a76f64f27cd65188e639c71380dd80",
+    "debug: LAYER parse: ok — relay https://usw1-1.relay.n0.iroh.link/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 84a2007b256d29b39f655896e39e9092e7a76f64f27cd65188e639c71380dd80 bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay: dialing b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89 on the Redeem protocol through a relay…",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89 on the Redeem protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"svrngs/redeem/0\"",
+    "debug: JOIN: asking the issuer what the link is for, as 84a2007b256d29b39f655896e39e9092e7a76f64f27cd65188e639c71380dd80",
+    "debug: HTTP: POST /visit — a bi-stream opened",
+    "debug: HTTP: POST /visit answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: POST /visit — the stream is done",
+    "debug: STORE: the sealing key absent: making one",
+    "debug: PAGE: a guest of Kim until 1792541148, opening jellyfin"
+   ],
+   "started": 1792519547.328
+  },
+  "5-watch": {
+   "who": "jo",
+   "do": "watch",
+   "ms": 1677,
+   "opened": 874,
+   "played": {
+    "ms": 794,
+    "at": 0.321707
+   },
+   "text": "",
+   "url": "http://09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr.localhost:55233/",
+   "errors": [],
+   "logs": [
+    "debug: PAGE: opening 09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr at http://09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr.localhost:55233/open.html?v=3646130c003a, a pass to 1 lend(s) until 1792584348",
+    "debug: RUNTIME: this run of the worker begins",
+    "debug: RUNTIME: the page handed over the pass for 09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr, 1 lend(s)",
+    "debug: RUNTIME: opening the endpoint as the pass's holder",
+    "debug: RUNTIME: dialling b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89 as the pass's holder",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key fe63744514645cc40cba465b4e580a0fe1b406589c8749beb5a4ce822ded66ef",
+    "debug: LAYER parse: ok — relay https://usw1-1.relay.n0.iroh.link/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint fe63744514645cc40cba465b4e580a0fe1b406589c8749beb5a4ce822ded66ef bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: ok — b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89's group names its relay https://usw1-1.relay.n0.iroh.link/",
+    "debug: LAYER tls/alpn+relay: dialing b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89 on the Lend protocol through a relay…",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89 on the Lend protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"svrngs/lend/0\"",
+    "debug: HTTP: GET /lend/09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr/ — a bi-stream opened",
+    "debug: HTTP: GET /lend/09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr/ answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /lend/09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr/ — the stream is done",
+    "debug: RUNTIME: bytes=0- for video runs on: asked as a part of 262144 bytes",
+    "debug: RANGE 1: asked /lend/09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr/title.mp4 bytes=0- for video, 0 ms",
+    "debug: HTTP: GET /lend/09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr/title.mp4 — a bi-stream opened",
+    "debug: HTTP: GET /lend/09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr/title.mp4 answered 206",
+    "debug: RANGE 1: answered 206 bytes 0-262143/29197117, 66 ms",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /lend/09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr/title.mp4 — the stream is done",
+    "debug: RANGE 1: read whole, 262144 bytes, 532 ms",
+    "debug: RUNTIME: bytes=262144- for video runs on: asked as a part of 524288 bytes",
+    "debug: RANGE 2: asked /lend/09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr/title.mp4 bytes=262144- for video, 0 ms",
+    "debug: HTTP: GET /lend/09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr/title.mp4 — a bi-stream opened"
+   ],
+   "started": 1792519548.735
+  },
+  "5-ana": {
+   "who": "ana",
+   "do": "steps",
+   "ms": 3273,
+   "done": [
+    {
+     "step": {
+      "poll": "http://svrngs.localhost:55241/",
+      "re": "Jo, Kim’s guest, until",
+      "within": 120000,
+      "every": 3000
+     },
+     "ms": 3272,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (yours, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/ana/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursHave a guest\n\nYou keep the order of removals in Oak. Choose who keeps it after you, then leave: \nBo\nKim\nHand it on\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nVisiting now\nJo, Kim’s guest, until Tuesday 5:05 PM\nSam, Kim’s guest, until Thursday 11:04 AM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\n\nYou lend nothing yet.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55241/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55241/"
+    }
+   ],
+   "url": "http://svrngs.localhost:55241/",
+   "errors": [],
+   "logs": [],
+   "started": 1792519550.422
+  },
+  "5-kim": {
+   "who": "kim",
+   "do": "steps",
+   "ms": 221,
+   "done": [
+    {
+     "step": {
+      "poll": "http://svrngs.localhost:55277/",
+      "re": "Jo, Kim’s guest, until",
+      "within": 120000,
+      "every": 3000
+     },
+     "ms": 220,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/kim/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursHave a guest\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nWho you have over\nJo, until Tuesday 5:05 PM. Stop ends the visit now: what you lend stops opening to Jo, and everyone in Oak sees it ended. Stop Jo’s visit\nSam, until Thursday 11:04 AM. Stop ends the visit now: what you lend stops opening to Sam, and everyone in Oak sees it ended. Stop Sam’s visit\nVisiting now\nJo, Kim’s guest, until Tuesday 5:05 PM\nSam, Kim’s guest, until Thursday 11:04 AM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 1 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55277/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/"
+    }
+   ],
+   "url": "http://svrngs.localhost:55277/",
+   "errors": [],
+   "logs": [],
+   "started": 1792519553.695
+  },
+  "5-bo": {
+   "who": "bo",
+   "do": "steps",
+   "ms": 223,
+   "done": [
+    {
+     "step": {
+      "poll": "http://svrngs.localhost:55308/",
+      "re": "Jo, Kim’s guest, until",
+      "within": 120000,
+      "every": 3000
+     },
+     "ms": 221,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/bo/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursHave a guest\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nVisiting now\nJo, Kim’s guest, until Tuesday 5:05 PM\nSam, Kim’s guest, until Thursday 11:04 AM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 0 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55308/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55308/"
+    }
+   ],
+   "url": "http://svrngs.localhost:55308/",
+   "errors": [],
+   "logs": [],
+   "started": 1792519553.918
+  },
+  "6": {
+   "who": "ana",
+   "do": "steps",
+   "ms": 514,
+   "done": [
+    {
+     "step": {
+      "goto": "http://svrngs.localhost:55241/"
+     },
+     "ms": 15,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nReading your groups…\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55241/"
+    },
+    {
+     "step": {
+      "wait": "Have a guest"
+     },
+     "ms": 221,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (yours, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/ana/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursHave a guest\n\nYou keep the order of removals in Oak. Choose who keeps it after you, then leave: \nBo\nKim\nHand it on\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nVisiting now\nJo, Kim’s guest, until Tuesday 5:05 PM\nSam, Kim’s guest, until Thursday 11:04 AM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\n\nYou lend nothing yet.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55241/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55241/"
+    },
+    {
+     "step": {
+      "click": "Have a guest",
+      "until": "For how long"
+     },
+     "ms": 276,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (yours, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/ana/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursFor how long, from when they open the link: \n48 hours\n24 hours\n6 hours\nMake a link for your guest\n\nYou keep the order of removals in Oak. Choose who keeps it after you, then leave: \nBo\nKim\nHand it on\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nVisiting now\nJo, Kim’s guest, until Tuesday 5:05 PM\nSam, Kim’s guest, until Thursday 11:04 AM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\n\nYou lend nothing yet.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55241/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55241/"
+    },
+    {
+     "step": {
+      "options": "label:has-text('For how long') select"
+     },
+     "ms": 301,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (yours, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/ana/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursFor how long, from when they open the link: \n48 hours\n24 hours\n6 hours\nMake a link for your guest\n\nYou keep the order of removals in Oak. Choose who keeps it after you, then leave: \nBo\nKim\nHand it on\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nVisiting now\nJo, Kim’s guest, until Tuesday 5:05 PM\nSam, Kim’s guest, until Thursday 11:04 AM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\n\nYou lend nothing yet.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55241/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55241/",
+     "value": {
+      "chosen": "48 hours",
+      "offered": [
+       "48 hours",
+       "24 hours",
+       "6 hours"
+      ]
+     }
+    },
+    {
+     "step": {
+      "click": "Make a link for your guest",
+      "until": "Send this link to your guest"
+     },
+     "ms": 510,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (yours, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/ana/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursFor how long, from when they open the link: \n48 hours\n24 hours\n6 hours\nMake a link for your guest\n\nSend this link to your guest, in any chat: http://localhost:55233/#visit=<the token> They open it in a browser and give their name. For 48 hours from then they can open what you lend, and everyone in Oak sees they are your guest. It lets one guest in, once, within a day, while this computer is on. Copy the link\n\nYou keep the order of removals in Oak. Choose who keeps it after you, then leave: \nBo\nKim\nHand it on\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nVisiting now\nJo, Kim’s guest, until Tuesday 5:05 PM\nSam, Kim’s guest, until Thursday 11:04 AM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\n\nYou lend nothing yet.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55241/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55241/"
+    },
+    {
+     "step": {
+      "text": "p.link code"
+     },
+     "ms": 513,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (yours, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/ana/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursFor how long, from when they open the link: \n48 hours\n24 hours\n6 hours\nMake a link for your guest\n\nSend this link to your guest, in any chat: http://localhost:55233/#visit=<the token> They open it in a browser and give their name. For 48 hours from then they can open what you lend, and everyone in Oak sees they are your guest. It lets one guest in, once, within a day, while this computer is on. Copy the link\n\nYou keep the order of removals in Oak. Choose who keeps it after you, then leave: \nBo\nKim\nHand it on\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nVisiting now\nJo, Kim’s guest, until Tuesday 5:05 PM\nSam, Kim’s guest, until Thursday 11:04 AM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\n\nYou lend nothing yet.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55241/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55241/",
+     "value": "http://localhost:55233/#visit=<the token>"
+    }
+   ],
+   "url": "http://svrngs.localhost:55241/",
+   "errors": [],
+   "logs": [],
+   "started": 1792519554.146
+  },
+  "6-visit": {
+   "who": "max",
+   "do": "visit",
+   "ms": 1397,
+   "asked": true,
+   "askedAgain": false,
+   "status": "You’re Ana’s guest until 10/22/2026, 11:05:55 AM",
+   "listed": [],
+   "text": "You’re Ana’s guest until 10/22/2026, 11:05:55 AM\nAna lends nothing yet.",
+   "url": "http://localhost:55233/#visit=<the token>",
+   "errors": [],
+   "logs": [
+    "error: Refused to apply style from 'http://localhost:55233/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "debug: PAGE: asking the person's name to join the group you’re visiting",
+    "debug: LAYER parse: ok — issuer 1bf50eec60e974821a3d870f9c0108ae55d408294eb73ae3aab6b125a09e1fda",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key 5cff26e498b891a31a906b8b4650f1db57d3c2f3caf7989c76498383b7c35d47",
+    "debug: LAYER parse: ok — relay https://usw1-1.relay.n0.iroh.link/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 5cff26e498b891a31a906b8b4650f1db57d3c2f3caf7989c76498383b7c35d47 bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for 1bf50eec60e974821a3d870f9c0108ae55d408294eb73ae3aab6b125a09e1fda, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay: dialing 1bf50eec60e974821a3d870f9c0108ae55d408294eb73ae3aab6b125a09e1fda on the Redeem protocol through a relay…",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 1bf50eec60e974821a3d870f9c0108ae55d408294eb73ae3aab6b125a09e1fda on the Redeem protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"svrngs/redeem/0\"",
+    "debug: JOIN: asking the issuer what the link is for, as 5cff26e498b891a31a906b8b4650f1db57d3c2f3caf7989c76498383b7c35d47",
+    "debug: HTTP: POST /visit — a bi-stream opened",
+    "debug: HTTP: POST /visit answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: POST /visit — the stream is done",
+    "debug: STORE: the sealing key absent: making one",
+    "debug: PAGE: a guest of Ana until 1792692355, opening "
+   ],
+   "started": 1792519554.662
+  },
+  "6-ana": {
+   "who": "ana",
+   "do": "steps",
+   "ms": 221,
+   "done": [
+    {
+     "step": {
+      "poll": "http://svrngs.localhost:55241/",
+      "re": "Have a guest|Leave",
+      "within": 30000,
+      "every": 3000
+     },
+     "ms": 220,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (yours, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/ana/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursHave a guest\n\nYou keep the order of removals in Oak. Choose who keeps it after you, then leave: \nBo\nKim\nHand it on\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nWho you have over\nMax, until Thursday 11:05 AM. Stop ends the visit now: what you lend stops opening to Max, and everyone in Oak sees it ended. Stop Max’s visit\nVisiting now\nMax, Ana’s guest, until Thursday 11:05 AM\nJo, Kim’s guest, until Tuesday 5:05 PM\nSam, Kim’s guest, until Thursday 11:04 AM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\n\nYou lend nothing yet.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55241/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55241/"
+    }
+   ],
+   "url": "http://svrngs.localhost:55241/",
+   "errors": [],
+   "logs": [],
+   "started": 1792519610.498
+  },
+  "6-kim": {
+   "who": "kim",
+   "do": "steps",
+   "ms": 222,
+   "done": [
+    {
+     "step": {
+      "poll": "http://svrngs.localhost:55277/",
+      "re": "Have a guest|Leave",
+      "within": 30000,
+      "every": 3000
+     },
+     "ms": 221,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/kim/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursHave a guest\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nWho you have over\nJo, until Tuesday 5:05 PM. Stop ends the visit now: what you lend stops opening to Jo, and everyone in Oak sees it ended. Stop Jo’s visit\nSam, until Thursday 11:04 AM. Stop ends the visit now: what you lend stops opening to Sam, and everyone in Oak sees it ended. Stop Sam’s visit\nVisiting now\nMax, Ana’s guest, until Thursday 11:05 AM\nJo, Kim’s guest, until Tuesday 5:05 PM\nSam, Kim’s guest, until Thursday 11:04 AM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 1 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55277/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/"
+    }
+   ],
+   "url": "http://svrngs.localhost:55277/",
+   "errors": [],
+   "logs": [],
+   "started": 1792519610.721
+  },
+  "6-bo": {
+   "who": "bo",
+   "do": "steps",
+   "ms": 222,
+   "done": [
+    {
+     "step": {
+      "poll": "http://svrngs.localhost:55308/",
+      "re": "Have a guest|Leave",
+      "within": 30000,
+      "every": 3000
+     },
+     "ms": 220,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/bo/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursHave a guest\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nVisiting now\nMax, Ana’s guest, until Thursday 11:05 AM\nJo, Kim’s guest, until Tuesday 5:05 PM\nSam, Kim’s guest, until Thursday 11:04 AM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 0 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55308/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55308/"
+    }
+   ],
+   "url": "http://svrngs.localhost:55308/",
+   "errors": [],
+   "logs": [],
+   "started": 1792519610.944
+  },
+  "7": {
+   "who": "kim",
+   "do": "steps",
+   "ms": 60,
+   "done": [
+    {
+     "step": {
+      "goto": "http://svrngs.localhost:55277/"
+     },
+     "ms": 15,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/"
+    },
+    {
+     "step": {
+      "wait": "Stop Sam’s visit"
+     },
+     "ms": 19,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\nasking…\nKim\nasking…\nBo\nasking…\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/kim/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursHave a guest\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nWho you have over\nJo, until Tuesday 5:05 PM. Stop ends the visit now: what you lend stops opening to Jo, and everyone in Oak sees it ended. Stop Jo’s visit\nSam, until Thursday 11:04 AM. Stop ends the visit now: what you lend stops opening to Sam, and everyone in Oak sees it ended. Stop Sam’s visit\nVisiting now\nMax, Ana’s guest, until Thursday 11:05 AM\nJo, Kim’s guest, until Tuesday 5:05 PM\nSam, Kim’s guest, until Thursday 11:04 AM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nAsking each computer in the group what it lends…\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 1 using it now. How many people at once: Let in this manyStop lending\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/"
+    },
+    {
+     "step": {
+      "click": "Stop Sam’s visit"
+     },
+     "ms": 59,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/kim/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursHave a guest\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nWho you have over\nJo, until Tuesday 5:05 PM. Stop ends the visit now: what you lend stops opening to Jo, and everyone in Oak sees it ended. Stop Jo’s visit\nSam, until Thursday 11:04 AM. Stop ends the visit now: what you lend stops opening to Sam, and everyone in Oak sees it ended. Stop Sam’s visit\nVisiting now\nMax, Ana’s guest, until Thursday 11:05 AM\nJo, Kim’s guest, until Tuesday 5:05 PM\nSam, Kim’s guest, until Thursday 11:04 AM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 1 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55277/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/"
+    }
+   ],
+   "url": "http://svrngs.localhost:55277/",
+   "errors": [],
+   "logs": [],
+   "started": 1792519611.168
+  },
+  "7-ana": {
+   "who": "ana",
+   "do": "steps",
+   "ms": 222,
+   "done": [
+    {
+     "step": {
+      "poll": "http://svrngs.localhost:55241/",
+      "re": "Have a guest|Leave",
+      "within": 30000,
+      "every": 3000
+     },
+     "ms": 221,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (yours, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/ana/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursHave a guest\n\nYou keep the order of removals in Oak. Choose who keeps it after you, then leave: \nBo\nKim\nHand it on\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nWho you have over\nMax, until Thursday 11:05 AM. Stop ends the visit now: what you lend stops opening to Max, and everyone in Oak sees it ended. Stop Max’s visit\nVisiting now\nMax, Ana’s guest, until Thursday 11:05 AM\nJo, Kim’s guest, until Tuesday 5:05 PM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\n\nYou lend nothing yet.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55241/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55241/"
+    }
+   ],
+   "url": "http://svrngs.localhost:55241/",
+   "errors": [],
+   "logs": [],
+   "started": 1792519663.603
+  },
+  "7-kim": {
+   "who": "kim",
+   "do": "steps",
+   "ms": 224,
+   "done": [
+    {
+     "step": {
+      "poll": "http://svrngs.localhost:55277/",
+      "re": "Have a guest|Leave",
+      "within": 30000,
+      "every": 3000
+     },
+     "ms": 221,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/kim/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursHave a guest\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nWho you have over\nJo, until Tuesday 5:05 PM. Stop ends the visit now: what you lend stops opening to Jo, and everyone in Oak sees it ended. Stop Jo’s visit\nVisiting now\nMax, Ana’s guest, until Thursday 11:05 AM\nJo, Kim’s guest, until Tuesday 5:05 PM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 0 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55277/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/"
+    }
+   ],
+   "url": "http://svrngs.localhost:55277/",
+   "errors": [],
+   "logs": [],
+   "started": 1792519663.826
+  },
+  "7-bo": {
+   "who": "bo",
+   "do": "steps",
+   "ms": 21,
+   "done": [
+    {
+     "step": {
+      "poll": "http://svrngs.localhost:55308/",
+      "re": "Have a guest|Leave",
+      "within": 30000,
+      "every": 3000
+     },
+     "ms": 20,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\nasking…\nKim\nasking…\nBo\nasking…\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/bo/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursHave a guest\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nVisiting now\nMax, Ana’s guest, until Thursday 11:05 AM\nJo, Kim’s guest, until Tuesday 5:05 PM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nAsking each computer in the group what it lends…\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 0 using it now. How many people at once: Let in this manyStop lending\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55308/"
+    }
+   ],
+   "url": "http://svrngs.localhost:55308/",
+   "errors": [],
+   "logs": [],
+   "started": 1792519664.052
+  },
+  "7-sam": {
+   "who": "sam",
+   "do": "steps",
+   "ms": 883,
+   "done": [
+    {
+     "step": {
+      "goto": "http://09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr.localhost:55233/"
+     },
+     "ms": 874,
+     "text": "Kim ended your visit.",
+     "url": "http://09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr.localhost:55233/"
+    },
+    {
+     "step": {
+      "wait": "\\S",
+      "within": 60000
+     },
+     "ms": 881,
+     "text": "Kim ended your visit.",
+     "url": "http://09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr.localhost:55233/"
+    },
+    {
+     "step": {
+      "read": true
+     },
+     "ms": 882,
+     "text": "Kim ended your visit.",
+     "url": "http://09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr.localhost:55233/"
+    }
+   ],
+   "url": "http://09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr.localhost:55233/",
+   "errors": [],
+   "logs": [],
+   "started": 1792519664.073
+  },
+  "9": {
+   "who": "kim",
+   "do": "steps",
+   "ms": 493,
+   "done": [
+    {
+     "step": {
+      "goto": "http://svrngs.localhost:55277/"
+     },
+     "ms": 11,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nReading your groups…\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/"
+    },
+    {
+     "step": {
+      "wait": "Have a guest"
+     },
+     "ms": 219,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/kim/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursHave a guest\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nWho you have over\nJo, until Tuesday 5:05 PM. Stop ends the visit now: what you lend stops opening to Jo, and everyone in Oak sees it ended. Stop Jo’s visit\nVisiting now\nMax, Ana’s guest, until Thursday 11:05 AM\nJo, Kim’s guest, until Tuesday 5:05 PM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 0 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55277/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/"
+    },
+    {
+     "step": {
+      "click": "Have a guest",
+      "until": "For how long"
+     },
+     "ms": 265,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/kim/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursFor how long, from when they open the link: \n48 hours\n24 hours\n6 hours\nMake a link for your guest\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nWho you have over\nJo, until Tuesday 5:05 PM. Stop ends the visit now: what you lend stops opening to Jo, and everyone in Oak sees it ended. Stop Jo’s visit\nVisiting now\nMax, Ana’s guest, until Thursday 11:05 AM\nJo, Kim’s guest, until Tuesday 5:05 PM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 0 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55277/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/"
+    },
+    {
+     "step": {
+      "options": "label:has-text('For how long') select"
+     },
+     "ms": 276,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/kim/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursFor how long, from when they open the link: \n48 hours\n24 hours\n6 hours\nMake a link for your guest\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nWho you have over\nJo, until Tuesday 5:05 PM. Stop ends the visit now: what you lend stops opening to Jo, and everyone in Oak sees it ended. Stop Jo’s visit\nVisiting now\nMax, Ana’s guest, until Thursday 11:05 AM\nJo, Kim’s guest, until Tuesday 5:05 PM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 0 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55277/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/",
+     "value": {
+      "chosen": "48 hours",
+      "offered": [
+       "48 hours",
+       "24 hours",
+       "6 hours"
+      ]
+     }
+    },
+    {
+     "step": {
+      "click": "Make a link for your guest",
+      "until": "Send this link to your guest"
+     },
+     "ms": 491,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/kim/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursFor how long, from when they open the link: \n48 hours\n24 hours\n6 hours\nMake a link for your guest\n\nSend this link to your guest, in any chat: http://localhost:55233/#visit=<the token> They open it in a browser and give their name. For 48 hours from then they can open what you lend, and everyone in Oak sees they are your guest. It lets one guest in, once, within a day, while this computer is on. Copy the link\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nWho you have over\nJo, until Tuesday 5:05 PM. Stop ends the visit now: what you lend stops opening to Jo, and everyone in Oak sees it ended. Stop Jo’s visit\nVisiting now\nMax, Ana’s guest, until Thursday 11:05 AM\nJo, Kim’s guest, until Tuesday 5:05 PM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 0 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55277/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/"
+    },
+    {
+     "step": {
+      "text": "p.link code"
+     },
+     "ms": 493,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\non now\nKim\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/kim/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursFor how long, from when they open the link: \n48 hours\n24 hours\n6 hours\nMake a link for your guest\n\nSend this link to your guest, in any chat: http://localhost:55233/#visit=<the token> They open it in a browser and give their name. For 48 hours from then they can open what you lend, and everyone in Oak sees they are your guest. It lets one guest in, once, within a day, while this computer is on. Copy the link\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nWho you have over\nJo, until Tuesday 5:05 PM. Stop ends the visit now: what you lend stops opening to Jo, and everyone in Oak sees it ended. Stop Jo’s visit\nVisiting now\nMax, Ana’s guest, until Thursday 11:05 AM\nJo, Kim’s guest, until Tuesday 5:05 PM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nOpen Kim’s jellyfin\tjellyfin\tKim\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 0 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55277/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/",
+     "value": "http://localhost:55233/#visit=<the token>"
+    }
+   ],
+   "url": "http://svrngs.localhost:55277/",
+   "errors": [],
+   "logs": [],
+   "started": 1792519664.957
+  },
+  "9-visit": {
+   "who": "lee",
+   "do": "visit",
+   "ms": 1440,
+   "asked": true,
+   "askedAgain": false,
+   "status": "You’re Kim’s guest until 10/22/2026, 11:07:46 AM",
+   "listed": [
+    "Kim’s jellyfin"
+   ],
+   "text": "You’re Kim’s guest until 10/22/2026, 11:07:46 AM\nKim’s jellyfin",
+   "url": "http://localhost:55233/#visit=<the token>",
+   "errors": [],
+   "logs": [
+    "error: Refused to apply style from 'http://localhost:55233/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "debug: PAGE: asking the person's name to join the group you’re visiting",
+    "debug: LAYER parse: ok — issuer b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ba5f7a17aa0dc15626ae50f1ca2d249e4aa1b49664c8dc1908e4f31caadc4cda",
+    "debug: LAYER parse: ok — relay https://usw1-1.relay.n0.iroh.link/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ba5f7a17aa0dc15626ae50f1ca2d249e4aa1b49664c8dc1908e4f31caadc4cda bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay: dialing b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89 on the Redeem protocol through a relay…",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89 on the Redeem protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"svrngs/redeem/0\"",
+    "debug: JOIN: asking the issuer what the link is for, as ba5f7a17aa0dc15626ae50f1ca2d249e4aa1b49664c8dc1908e4f31caadc4cda",
+    "debug: HTTP: POST /visit — a bi-stream opened",
+    "debug: HTTP: POST /visit answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: POST /visit — the stream is done",
+    "debug: STORE: the sealing key absent: making one",
+    "debug: PAGE: a guest of Kim until 1792692466, opening jellyfin"
+   ],
+   "started": 1792519665.452
+  },
+  "9-watch": {
+   "who": "lee",
+   "do": "watch",
+   "ms": 1673,
+   "opened": 816,
+   "played": {
+    "ms": 850,
+    "at": 0.25653
+   },
+   "text": "",
+   "url": "http://09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr.localhost:55233/",
+   "errors": [],
+   "logs": [
+    "debug: PAGE: opening 09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr at http://09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr.localhost:55233/open.html?v=3646130c003a, a pass to 1 lend(s) until 1792735666",
+    "debug: RUNTIME: this run of the worker begins",
+    "debug: RUNTIME: the page handed over the pass for 09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr, 1 lend(s)",
+    "debug: RUNTIME: opening the endpoint as the pass's holder",
+    "debug: RUNTIME: dialling b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89 as the pass's holder",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key 74efb36a6fa11ca7bcb4d052737b386111b9f9b154302a68e2a12461ab156e14",
+    "debug: LAYER parse: ok — relay https://usw1-1.relay.n0.iroh.link/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 74efb36a6fa11ca7bcb4d052737b386111b9f9b154302a68e2a12461ab156e14 bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: ok — b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89's group names its relay https://usw1-1.relay.n0.iroh.link/",
+    "debug: LAYER tls/alpn+relay: dialing b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89 on the Lend protocol through a relay…",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89 on the Lend protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"svrngs/lend/0\"",
+    "debug: HTTP: GET /lend/09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr/ — a bi-stream opened",
+    "debug: HTTP: GET /lend/09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr/ answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /lend/09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr/ — the stream is done",
+    "debug: RUNTIME: bytes=0- for video runs on: asked as a part of 262144 bytes",
+    "debug: RANGE 1: asked /lend/09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr/title.mp4 bytes=0- for video, 0 ms",
+    "debug: HTTP: GET /lend/09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr/title.mp4 — a bi-stream opened",
+    "debug: HTTP: GET /lend/09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr/title.mp4 answered 206",
+    "debug: RANGE 1: answered 206 bytes 0-262143/29197117, 154 ms",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /lend/09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr/title.mp4 — the stream is done",
+    "debug: RANGE 1: read whole, 262144 bytes, 694 ms",
+    "debug: RUNTIME: bytes=262144- for video runs on: asked as a part of 524288 bytes",
+    "debug: RANGE 2: asked /lend/09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr/title.mp4 bytes=262144- for video, 0 ms",
+    "debug: HTTP: GET /lend/09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr/title.mp4 — a bi-stream opened",
+    "debug: HTTP: GET /lend/09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr/title.mp4 answered 206",
+    "debug: RANGE 2: answered 206 bytes 262144-786431/29197117, 74 ms"
+   ],
+   "started": 1792519666.892
+  },
+  "9-leave": {
+   "who": "kim",
+   "do": "steps",
+   "ms": 244,
+   "done": [
+    {
+     "step": {
+      "goto": "http://svrngs.localhost:55277/"
+     },
+     "ms": 10,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/"
+    },
+    {
+     "step": {
+      "wait": "Leave Oak"
+     },
+     "ms": 14,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\nasking…\nKim\nasking…\nBo\nasking…\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/kim/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursHave a guest\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nWho you have over\nLee, until Thursday 11:07 AM. Stop ends the visit now: what you lend stops opening to Lee, and everyone in Oak sees it ended. Stop Lee’s visit\nJo, until Tuesday 5:05 PM. Stop ends the visit now: what you lend stops opening to Jo, and everyone in Oak sees it ended. Stop Jo’s visit\nVisiting now\nMax, Ana’s guest, until Thursday 11:05 AM\nLee, Kim’s guest, until Thursday 11:07 AM\nJo, Kim’s guest, until Tuesday 5:05 PM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nAsking each computer in the group what it lends…\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 1 using it now. How many people at once: Let in this manyStop lending\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/"
+    },
+    {
+     "step": {
+      "click": "Leave Oak",
+      "until": "You left Oak"
+     },
+     "ms": 243,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nYou left Oak. Rejoining needs a new invitation, and this computer can’t rejoin yet.\n\nGroups you left\n\nOak (Ana’s, since 20 Oct): what you have of it stays on this computer, its folder at /tmp/oak-run/kim/svrngs/Oak, and nothing new of it reaches you.\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 1 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55277/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55277/?left=Oak"
+    }
+   ],
+   "url": "http://svrngs.localhost:55277/?left=Oak",
+   "errors": [],
+   "logs": [],
+   "started": 1792519668.574
+  },
+  "9-ana": {
+   "who": "ana",
+   "do": "steps",
+   "ms": 218,
+   "done": [
+    {
+     "step": {
+      "poll": "http://svrngs.localhost:55241/",
+      "re": "Have a guest|Leave",
+      "within": 30000,
+      "every": 3000
+     },
+     "ms": 217,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (yours, since 20 Oct)\nAna\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/ana/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursHave a guest\n\nYou keep the order of removals in Oak. Choose who keeps it after you, then leave: \nBo\nHand it on\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nKim left on Oct 20, 2026, 11:07 AM\nWho you have over\nMax, until Thursday 11:05 AM. Stop ends the visit now: what you lend stops opening to Max, and everyone in Oak sees it ended. Stop Max’s visit\nVisiting now\nMax, Ana’s guest, until Thursday 11:05 AM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\n\nYou lend nothing yet.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55241/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55241/"
+    }
+   ],
+   "url": "http://svrngs.localhost:55241/",
+   "errors": [],
+   "logs": [],
+   "started": 1792519668.853
+  },
+  "9-bo": {
+   "who": "bo",
+   "do": "steps",
+   "ms": 226,
+   "done": [
+    {
+     "step": {
+      "poll": "http://svrngs.localhost:55308/",
+      "re": "Have a guest|Leave",
+      "within": 30000,
+      "every": 3000
+     },
+     "ms": 225,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nOak (Ana’s, since 20 Oct)\nAna\non now\nBo\non now\n\nShow Oak on a screen\n\nOak’s folder is on this computer at /tmp/oak-run/bo/svrngs/Oak\n\nOpen this folder\n\nMake a link to invite someone to OakMake a link to add your phone or another computer of yoursHave a guest\n\nLeaving Oak stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Oak\n\nKim left on Oct 20, 2026, 11:07 AM\nVisiting now\nMax, Ana’s guest, until Thursday 11:05 AM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen Bo’s jellyfin\tjellyfin\tBo\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Oak opens it on their own computer or phone, while any computer in Oak is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Oak\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\njellyfin: everyone in your groups at once, 0 using it now. How many people at once: Let in this manyStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:55308/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:55308/"
+    }
+   ],
+   "url": "http://svrngs.localhost:55308/",
+   "errors": [],
+   "logs": [],
+   "started": 1792519669.073
+  },
+  "9-lee": {
+   "who": "lee",
+   "do": "steps",
+   "ms": 131,
+   "done": [
+    {
+     "step": {
+      "goto": "http://09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr.localhost:55233/"
+     },
+     "ms": 127,
+     "text": "Kim is no longer a member, so your visit ended.",
+     "url": "http://09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr.localhost:55233/"
+    },
+    {
+     "step": {
+      "wait": "\\S",
+      "within": 60000
+     },
+     "ms": 130,
+     "text": "Kim is no longer a member, so your visit ended.",
+     "url": "http://09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr.localhost:55233/"
+    },
+    {
+     "step": {
+      "read": true
+     },
+     "ms": 130,
+     "text": "Kim is no longer a member, so your visit ended.",
+     "url": "http://09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr.localhost:55233/"
+    }
+   ],
+   "url": "http://09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr.localhost:55233/",
+   "errors": [],
+   "logs": [
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /lend/09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr/title.mp4 — the stream is done",
+    "debug: RANGE 2: read whole, 524288 bytes, 291 ms",
+    "debug: RUNTIME: bytes=786432- for video runs on: asked as a part of 1048576 bytes",
+    "debug: RANGE 3: asked /lend/09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr/title.mp4 bytes=786432- for video, 0 ms",
+    "debug: HTTP: GET /lend/09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr/title.mp4 — a bi-stream opened",
+    "debug: HTTP: GET /lend/09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr/title.mp4 answered 403",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /lend/09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr/title.mp4 — the stream is done",
+    "debug: RANGE 3: answered 403 , 77 ms",
+    "debug: RANGE 3: read whole, 73 bytes, 78 ms",
+    "error: Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "debug: HTTP: GET /lend/09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr/ — a bi-stream opened",
+    "debug: HTTP: GET /lend/09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr/ answered 403",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /lend/09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr/ — the stream is done",
+    "error: Failed to load resource: the server responded with a status of 403 (Forbidden)"
+   ],
+   "started": 1792519669.301
+  }
+ },
+ "link_1": {
+  "on_page": true,
+  "length": {
+   "chosen": "48 hours",
+   "offered": [
+    "48 hours",
+    "24 hours",
+    "6 hours"
+   ]
+  }
+ },
+ "sam": {
+  "film_ms": 4113,
+  "in_ms": 1453,
+  "opened_ms": 1035,
+  "played": {
+   "ms": 1625,
+   "at": 0.2723524163173096
+  },
+  "film": "http://09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr.localhost:55233/",
+  "visit": {
+   "guest": "Sam",
+   "host": "Kim",
+   "id": "e935785bd91b80b7774efe945f0912f4cc01c589a6542a11e4373c47b059167d",
+   "until": 1792692292,
+   "yours": true,
+   "at": 1792519492
+  },
+  "visiting": {
+   "ana": [],
+   "kim": [
+    {
+     "guest": "Sam",
+     "host": "Kim",
+     "id": "e935785bd91b80b7774efe945f0912f4cc01c589a6542a11e4373c47b059167d",
+     "until": 1792692292,
+     "yours": true
+    }
+   ],
+   "bo": []
+  },
+  "until_on": {
+   "ana": 1792692292,
+   "kim": 1792692292,
+   "bo": 1792692292
+  }
+ },
+ "bo_holds_sam_ms": 47764,
+ "bo_from_sam": [],
+ "home_4_ms": 54165,
+ "jo": {
+  "film": "http://09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr.localhost:55233/",
+  "played": {
+   "ms": 794,
+   "at": 0.321707
+  },
+  "visit": {
+   "guest": "Jo",
+   "host": "Kim",
+   "id": "d1f516bd334e1b507536946113c5061854caae4f5ab74dc0c05c4ec061d8fa55",
+   "until": 1792541148,
+   "yours": true,
+   "at": 1792519548
+  },
+  "in": 1792519548.734
+ },
+ "ana_holds_jo_ms": 3,
+ "max": {
+  "written": {
+   "key": "5cff26e498b891a31a906b8b4650f1db57d3c2f3caf7989c76498383b7c35d47",
+   "id": "d6b88f23e3d624a232834e281e7ff4d6ec7998965df9826d5b6b130a991d7551",
+   "until": "1792692355",
+   "counted": "true"
+  },
+  "held": {
+   "ana": 10,
+   "kim": 47320,
+   "bo": 7102
+  },
+  "visiting": {
+   "ana": [
+    "Jo",
+    "Max",
+    "Sam"
+   ],
+   "kim": [
+    "Jo",
+    "Max",
+    "Sam"
+   ],
+   "bo": [
+    "Jo",
+    "Max",
+    "Sam"
+   ]
+  },
+  "visiting_end": {
+   "ana": [
+    "Max"
+   ],
+   "bo": [
+    "Max"
+   ]
+  }
+ },
+ "stop_7": {
+  "ana": {
+   "ms": 52364,
+   "on": [
+    "Jo",
+    "Max"
+   ]
+  },
+  "kim": {
+   "ms": 4,
+   "on": [
+    "Jo",
+    "Max"
+   ]
+  },
+  "bo": {
+   "ms": 2,
+   "on": [
+    "Jo",
+    "Max"
+   ]
+  }
+ },
+ "tonight": {
+  "until": 1792541148,
+  "ran": false
+ },
+ "lee": {
+  "film": "http://09gqh7pnf9s6n6p986rbzn716lszamtak40b5641gjx3cs3sdvftbbq3n1prdr.localhost:55233/",
+  "played": {
+   "ms": 850,
+   "at": 0.25653
+  },
+  "visit": {
+   "guest": "Lee",
+   "host": "Kim",
+   "id": "1e56dfac7b40fe7f82f33936075037368f9c9a8510e502e0be0c5168a2682992",
+   "until": 1792692466,
+   "yours": true,
+   "at": 1792519666
+  },
+  "visiting": {
+   "ana": [
+    "Jo",
+    "Max"
+   ],
+   "kim": [
+    "Jo",
+    "Lee",
+    "Max"
+   ],
+   "bo": [
+    "Jo",
+    "Max"
+   ]
+  }
+ },
+ "leave_9": {
+  "ana": {
+   "ms": 5,
+   "on": [
+    "Max"
+   ]
+  },
+  "bo": {
+   "ms": 3,
+   "on": [
+    "Max"
+   ]
+  }
+ },
+ "visits_written": {
+  "ana": [
+   {
+    "key": "5cff26e498b891a31a906b8b4650f1db57d3c2f3caf7989c76498383b7c35d47",
+    "id": "d6b88f23e3d624a232834e281e7ff4d6ec7998965df9826d5b6b130a991d7551",
+    "until": "1792692355",
+    "counted": "true"
+   }
+  ],
+  "kim": [
+   {
+    "key": "e4be27fe9194c4574f1699e2e1b3f833089246d73f1d8cd350d52ac1b973aeb3",
+    "id": "e935785bd91b80b7774efe945f0912f4cc01c589a6542a11e4373c47b059167d",
+    "until": "1792692292",
+    "counted": "true"
+   },
+   {
+    "key": "84a2007b256d29b39f655896e39e9092e7a76f64f27cd65188e639c71380dd80",
+    "id": "d1f516bd334e1b507536946113c5061854caae4f5ab74dc0c05c4ec061d8fa55",
+    "until": "1792541148",
+    "counted": "true"
+   },
+   {
+    "key": "ba5f7a17aa0dc15626ae50f1ca2d249e4aa1b49664c8dc1908e4f31caadc4cda",
+    "id": "1e56dfac7b40fe7f82f33936075037368f9c9a8510e502e0be0c5168a2682992",
+    "until": "1792692466",
+    "counted": "true"
+   }
+  ],
+  "bo": []
+ },
+ "end_record": {
+  "ana": {
+   "ops": {
+    "121cf6ed054a0f33558511f042a0845dbbbd3e3957570d64e3d741ae6e69a507": 1792519483,
+    "8bff24f3af1e7fde39094757f0fb44f9626e4846a3a5ca54584eac9503d6b825": 1792519484,
+    "a9998d6eecdcf967aa25415b161f6953a94f0c6e2247e93a7e8b95aa076c7899": 1792519486,
+    "afabf49f33c390f248136db7d596130cf05c7d0f7d94b6c1c47340895552a2f5": 1792519490,
+    "45fb4b9682e5e81f33fcfa116c3d7449e3c06d705c9e1abe0cde32eab8db7c8a": 1792519491,
+    "d6b88f23e3d624a232834e281e7ff4d6ec7998965df9826d5b6b130a991d7551": 1792519555,
+    "e829ea591526d38990d6fe325adfa94faf050514f4cd45e31800661ee01077a1": 1792519668
+   },
+   "gaps": [
+    {
+     "actor": "b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89",
+     "from": 4,
+     "gap": "sequence_hole",
+     "message": "an op from b7cad3758b27… has not reached this node yet (#4)",
+     "to": 4
+    },
+    {
+     "actor": "b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89",
+     "gap": "removed",
+     "id": "4243ff97b4a32db0fc65dc394ff4672c0f4fef9f414035ab7cade2bb3f6a2ff7",
+     "message": "an act by b7cad3758b27… after they were removed from the group does not count"
+    },
+    {
+     "actor": "b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89",
+     "gap": "removed",
+     "id": "8ee08f2e2c426dd7e1ced084c6db869ff59eb925bd7e563a593c388703ef271e",
+     "message": "an act by b7cad3758b27… after they were removed from the group does not count"
+    },
+    {
+     "actor": "b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89",
+     "gap": "removed",
+     "id": "d1f516bd334e1b507536946113c5061854caae4f5ab74dc0c05c4ec061d8fa55",
+     "message": "an act by b7cad3758b27… after they were removed from the group does not count"
+    },
+    {
+     "actor": "b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89",
+     "gap": "removed",
+     "id": "e935785bd91b80b7774efe945f0912f4cc01c589a6542a11e4373c47b059167d",
+     "message": "an act by b7cad3758b27… after they were removed from the group does not count"
+    },
+    {
+     "by": "e829ea591526d38990d6fe325adfa94faf050514f4cd45e31800661ee01077a1",
+     "gap": "unheld_cut",
+     "message": "a removal names an act (1e56dfac7b40…) this node does not hold yet",
+     "missing": "1e56dfac7b40fe7f82f33936075037368f9c9a8510e502e0be0c5168a2682992"
+    }
+   ]
+  },
+  "kim": {
+   "ops": {
+    "121cf6ed054a0f33558511f042a0845dbbbd3e3957570d64e3d741ae6e69a507": 1792519483,
+    "8bff24f3af1e7fde39094757f0fb44f9626e4846a3a5ca54584eac9503d6b825": 1792519484,
+    "a9998d6eecdcf967aa25415b161f6953a94f0c6e2247e93a7e8b95aa076c7899": 1792519486,
+    "8ee08f2e2c426dd7e1ced084c6db869ff59eb925bd7e563a593c388703ef271e": 1792519487,
+    "afabf49f33c390f248136db7d596130cf05c7d0f7d94b6c1c47340895552a2f5": 1792519490,
+    "45fb4b9682e5e81f33fcfa116c3d7449e3c06d705c9e1abe0cde32eab8db7c8a": 1792519491,
+    "e935785bd91b80b7774efe945f0912f4cc01c589a6542a11e4373c47b059167d": 1792519492,
+    "d1f516bd334e1b507536946113c5061854caae4f5ab74dc0c05c4ec061d8fa55": 1792519548,
+    "d6b88f23e3d624a232834e281e7ff4d6ec7998965df9826d5b6b130a991d7551": 1792519555,
+    "4243ff97b4a32db0fc65dc394ff4672c0f4fef9f414035ab7cade2bb3f6a2ff7": 1792519611,
+    "1e56dfac7b40fe7f82f33936075037368f9c9a8510e502e0be0c5168a2682992": 1792519666,
+    "e829ea591526d38990d6fe325adfa94faf050514f4cd45e31800661ee01077a1": 1792519668
+   },
+   "gaps": []
+  },
+  "bo": {
+   "ops": {
+    "121cf6ed054a0f33558511f042a0845dbbbd3e3957570d64e3d741ae6e69a507": 1792519483,
+    "8bff24f3af1e7fde39094757f0fb44f9626e4846a3a5ca54584eac9503d6b825": 1792519484,
+    "a9998d6eecdcf967aa25415b161f6953a94f0c6e2247e93a7e8b95aa076c7899": 1792519486,
+    "afabf49f33c390f248136db7d596130cf05c7d0f7d94b6c1c47340895552a2f5": 1792519490,
+    "45fb4b9682e5e81f33fcfa116c3d7449e3c06d705c9e1abe0cde32eab8db7c8a": 1792519491,
+    "d6b88f23e3d624a232834e281e7ff4d6ec7998965df9826d5b6b130a991d7551": 1792519555,
+    "e829ea591526d38990d6fe325adfa94faf050514f4cd45e31800661ee01077a1": 1792519668
+   },
+   "gaps": [
+    {
+     "actor": "b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89",
+     "from": 4,
+     "gap": "sequence_hole",
+     "message": "an op from b7cad3758b27… has not reached this node yet (#4)",
+     "to": 4
+    },
+    {
+     "actor": "b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89",
+     "gap": "removed",
+     "id": "4243ff97b4a32db0fc65dc394ff4672c0f4fef9f414035ab7cade2bb3f6a2ff7",
+     "message": "an act by b7cad3758b27… after they were removed from the group does not count"
+    },
+    {
+     "actor": "b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89",
+     "gap": "removed",
+     "id": "8ee08f2e2c426dd7e1ced084c6db869ff59eb925bd7e563a593c388703ef271e",
+     "message": "an act by b7cad3758b27… after they were removed from the group does not count"
+    },
+    {
+     "actor": "b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89",
+     "gap": "removed",
+     "id": "d1f516bd334e1b507536946113c5061854caae4f5ab74dc0c05c4ec061d8fa55",
+     "message": "an act by b7cad3758b27… after they were removed from the group does not count"
+    },
+    {
+     "actor": "b7cad3758b27dfc5f19ff71c1aafb7e25f502a0046ac1df35729e9913f2f1c89",
+     "gap": "removed",
+     "id": "e935785bd91b80b7774efe945f0912f4cc01c589a6542a11e4373c47b059167d",
+     "message": "an act by b7cad3758b27… after they were removed from the group does not count"
+    },
+    {
+     "by": "e829ea591526d38990d6fe325adfa94faf050514f4cd45e31800661ee01077a1",
+     "gap": "unheld_cut",
+     "message": "a removal names an act (1e56dfac7b40…) this node does not hold yet",
+     "missing": "1e56dfac7b40fe7f82f33936075037368f9c9a8510e502e0be0c5168a2682992"
+    }
+   ]
+  }
+ },
+ "end_load": 3.8,
+ "heads": {
+  "kim": [
+   {
+    "t": 1792519493.84,
+    "path": "/",
+    "range": null,
+    "x-svrngs-person": "Sam (Kim's guest)",
+    "x-svrngs-key": "e4be27fe9194c4574f1699e2e1b3f833089246d73f1d8cd350d52ac1b973aeb3",
+    "x-svrngs-user": "Sam-e4be27fe9194c457.guest"
+   },
+   {
+    "t": 1792519493.942,
+    "path": "/title.mp4",
+    "range": "bytes=0-1",
+    "x-svrngs-person": "Sam (Kim's guest)",
+    "x-svrngs-key": "e4be27fe9194c4574f1699e2e1b3f833089246d73f1d8cd350d52ac1b973aeb3",
+    "x-svrngs-user": "Sam-e4be27fe9194c457.guest"
+   },
+   {
+    "t": 1792519494.02,
+    "path": "/title.mp4",
+    "range": "bytes=0-2097151",
+    "x-svrngs-person": "Sam (Kim's guest)",
+    "x-svrngs-key": "e4be27fe9194c4574f1699e2e1b3f833089246d73f1d8cd350d52ac1b973aeb3",
+    "x-svrngs-user": "Sam-e4be27fe9194c457.guest"
+   },
+   {
+    "t": 1792519495.188,
+    "path": "/title.mp4",
+    "range": "bytes=2097152-4194303",
+    "x-svrngs-person": "Sam (Kim's guest)",
+    "x-svrngs-key": "e4be27fe9194c4574f1699e2e1b3f833089246d73f1d8cd350d52ac1b973aeb3",
+    "x-svrngs-user": "Sam-e4be27fe9194c457.guest"
+   },
+   {
+    "t": 1792519496.045,
+    "path": "/title.mp4",
+    "range": "bytes=4194304-6291455",
+    "x-svrngs-person": "Sam (Kim's guest)",
+    "x-svrngs-key": "e4be27fe9194c4574f1699e2e1b3f833089246d73f1d8cd350d52ac1b973aeb3",
+    "x-svrngs-user": "Sam-e4be27fe9194c457.guest"
+   },
+   {
+    "t": 1792519497.769,
+    "path": "/title.mp4",
+    "range": "bytes=6291456-8388607",
+    "x-svrngs-person": "Sam (Kim's guest)",
+    "x-svrngs-key": "e4be27fe9194c4574f1699e2e1b3f833089246d73f1d8cd350d52ac1b973aeb3",
+    "x-svrngs-user": "Sam-e4be27fe9194c457.guest"
+   },
+   {
+    "t": 1792519499.869,
+    "path": "/title.mp4",
+    "range": "bytes=8388608-10485759",
+    "x-svrngs-person": "Sam (Kim's guest)",
+    "x-svrngs-key": "e4be27fe9194c4574f1699e2e1b3f833089246d73f1d8cd350d52ac1b973aeb3",
+    "x-svrngs-user": "Sam-e4be27fe9194c457.guest"
+   },
+   {
+    "t": 1792519501.954,
+    "path": "/title.mp4",
+    "range": "bytes=10485760-12582911",
+    "x-svrngs-person": "Sam (Kim's guest)",
+    "x-svrngs-key": "e4be27fe9194c4574f1699e2e1b3f833089246d73f1d8cd350d52ac1b973aeb3",
+    "x-svrngs-user": "Sam-e4be27fe9194c457.guest"
+   },
+   {
+    "t": 1792519504.069,
+    "path": "/title.mp4",
+    "range": "bytes=12582912-14680063",
+    "x-svrngs-person": "Sam (Kim's guest)",
+    "x-svrngs-key": "e4be27fe9194c4574f1699e2e1b3f833089246d73f1d8cd350d52ac1b973aeb3",
+    "x-svrngs-user": "Sam-e4be27fe9194c457.guest"
+   },
+   {
+    "t": 1792519506.154,
+    "path": "/title.mp4",
+    "range": "bytes=14680064-16777215",
+    "x-svrngs-person": "Sam (Kim's guest)",
+    "x-svrngs-key": "e4be27fe9194c4574f1699e2e1b3f833089246d73f1d8cd350d52ac1b973aeb3",
+    "x-svrngs-user": "Sam-e4be27fe9194c457.guest"
+   },
+   {
+    "t": 1792519508.272,
+    "path": "/title.mp4",
+    "range": "bytes=16777216-18874367",
+    "x-svrngs-person": "Sam (Kim's guest)",
+    "x-svrngs-key": "e4be27fe9194c4574f1699e2e1b3f833089246d73f1d8cd350d52ac1b973aeb3",
+    "x-svrngs-user": "Sam-e4be27fe9194c457.guest"
+   },
+   {
+    "t": 1792519510.371,
+    "path": "/title.mp4",
+    "range": "bytes=18874368-20971519",
+    "x-svrngs-person": "Sam (Kim's guest)",
+    "x-svrngs-key": "e4be27fe9194c4574f1699e2e1b3f833089246d73f1d8cd350d52ac1b973aeb3",
+    "x-svrngs-user": "Sam-e4be27fe9194c457.guest"
+   },
+   {
+    "t": 1792519512.471,
+    "path": "/title.mp4",
+    "range": "bytes=20971520-23068671",
+    "x-svrngs-person": "Sam (Kim's guest)",
+    "x-svrngs-key": "e4be27fe9194c4574f1699e2e1b3f833089246d73f1d8cd350d52ac1b973aeb3",
+    "x-svrngs-user": "Sam-e4be27fe9194c457.guest"
+   },
+   {
+    "t": 1792519514.593,
+    "path": "/title.mp4",
+    "range": "bytes=23068672-25165823",
+    "x-svrngs-person": "Sam (Kim's guest)",
+    "x-svrngs-key": "e4be27fe9194c4574f1699e2e1b3f833089246d73f1d8cd350d52ac1b973aeb3",
+    "x-svrngs-user": "Sam-e4be27fe9194c457.guest"
+   },
+   {
+    "t": 1792519516.674,
+    "path": "/title.mp4",
+    "range": "bytes=25165824-27262975",
+    "x-svrngs-person": "Sam (Kim's guest)",
+    "x-svrngs-key": "e4be27fe9194c4574f1699e2e1b3f833089246d73f1d8cd350d52ac1b973aeb3",
+    "x-svrngs-user": "Sam-e4be27fe9194c457.guest"
+   },
+   {
+    "t": 1792519518.933,
+    "path": "/title.mp4",
+    "range": "bytes=27262976-29197116",
+    "x-svrngs-person": "Sam (Kim's guest)",
+    "x-svrngs-key": "e4be27fe9194c4574f1699e2e1b3f833089246d73f1d8cd350d52ac1b973aeb3",
+    "x-svrngs-user": "Sam-e4be27fe9194c457.guest"
+   },
+   {
+    "t": 1792519549.56,
+    "path": "/",
+    "range": null,
+    "x-svrngs-person": "Jo (Kim's guest)",
+    "x-svrngs-key": "84a2007b256d29b39f655896e39e9092e7a76f64f27cd65188e639c71380dd80",
+    "x-svrngs-user": "Jo-84a2007b256d29b3.guest"
+   },
+   {
+    "t": 1792519549.638,
+    "path": "/title.mp4",
+    "range": "bytes=0-262143",
+    "x-svrngs-person": "Jo (Kim's guest)",
+    "x-svrngs-key": "84a2007b256d29b39f655896e39e9092e7a76f64f27cd65188e639c71380dd80",
+    "x-svrngs-user": "Jo-84a2007b256d29b3.guest"
+   },
+   {
+    "t": 1792519550.375,
+    "path": "/title.mp4",
+    "range": "bytes=262144-786431",
+    "x-svrngs-person": "Jo (Kim's guest)",
+    "x-svrngs-key": "84a2007b256d29b39f655896e39e9092e7a76f64f27cd65188e639c71380dd80",
+    "x-svrngs-user": "Jo-84a2007b256d29b3.guest"
+   },
+   {
+    "t": 1792519550.898,
+    "path": "/title.mp4",
+    "range": "bytes=786432-1835007",
+    "x-svrngs-person": "Jo (Kim's guest)",
+    "x-svrngs-key": "84a2007b256d29b39f655896e39e9092e7a76f64f27cd65188e639c71380dd80",
+    "x-svrngs-user": "Jo-84a2007b256d29b3.guest"
+   },
+   {
+    "t": 1792519551.287,
+    "path": "/title.mp4",
+    "range": "bytes=1835008-3932159",
+    "x-svrngs-person": "Jo (Kim's guest)",
+    "x-svrngs-key": "84a2007b256d29b39f655896e39e9092e7a76f64f27cd65188e639c71380dd80",
+    "x-svrngs-user": "Jo-84a2007b256d29b3.guest"
+   },
+   {
+    "t": 1792519551.99,
+    "path": "/title.mp4",
+    "range": "bytes=3932160-6029311",
+    "x-svrngs-person": "Jo (Kim's guest)",
+    "x-svrngs-key": "84a2007b256d29b39f655896e39e9092e7a76f64f27cd65188e639c71380dd80",
+    "x-svrngs-user": "Jo-84a2007b256d29b3.guest"
+   },
+   {
+    "t": 1792519553.309,
+    "path": "/title.mp4",
+    "range": "bytes=6029312-8126463",
+    "x-svrngs-person": "Jo (Kim's guest)",
+    "x-svrngs-key": "84a2007b256d29b39f655896e39e9092e7a76f64f27cd65188e639c71380dd80",
+    "x-svrngs-user": "Jo-84a2007b256d29b3.guest"
+   },
+   {
+    "t": 1792519555.437,
+    "path": "/title.mp4",
+    "range": "bytes=8126464-10223615",
+    "x-svrngs-person": "Jo (Kim's guest)",
+    "x-svrngs-key": "84a2007b256d29b39f655896e39e9092e7a76f64f27cd65188e639c71380dd80",
+    "x-svrngs-user": "Jo-84a2007b256d29b3.guest"
+   },
+   {
+    "t": 1792519557.681,
+    "path": "/title.mp4",
+    "range": "bytes=10223616-12320767",
+    "x-svrngs-person": "Jo (Kim's guest)",
+    "x-svrngs-key": "84a2007b256d29b39f655896e39e9092e7a76f64f27cd65188e639c71380dd80",
+    "x-svrngs-user": "Jo-84a2007b256d29b3.guest"
+   },
+   {
+    "t": 1792519562.045,
+    "path": "/title.mp4",
+    "range": "bytes=12320768-14417919",
+    "x-svrngs-person": "Jo (Kim's guest)",
+    "x-svrngs-key": "84a2007b256d29b39f655896e39e9092e7a76f64f27cd65188e639c71380dd80",
+    "x-svrngs-user": "Jo-84a2007b256d29b3.guest"
+   },
+   {
+    "t": 1792519565.096,
+    "path": "/title.mp4",
+    "range": "bytes=14417920-16515071",
+    "x-svrngs-person": "Jo (Kim's guest)",
+    "x-svrngs-key": "84a2007b256d29b39f655896e39e9092e7a76f64f27cd65188e639c71380dd80",
+    "x-svrngs-user": "Jo-84a2007b256d29b3.guest"
+   },
+   {
+    "t": 1792519567.754,
+    "path": "/title.mp4",
+    "range": "bytes=16515072-18612223",
+    "x-svrngs-person": "Jo (Kim's guest)",
+    "x-svrngs-key": "84a2007b256d29b39f655896e39e9092e7a76f64f27cd65188e639c71380dd80",
+    "x-svrngs-user": "Jo-84a2007b256d29b3.guest"
+   },
+   {
+    "t": 1792519572.744,
+    "path": "/title.mp4",
+    "range": "bytes=18612224-20709375",
+    "x-svrngs-person": "Jo (Kim's guest)",
+    "x-svrngs-key": "84a2007b256d29b39f655896e39e9092e7a76f64f27cd65188e639c71380dd80",
+    "x-svrngs-user": "Jo-84a2007b256d29b3.guest"
+   },
+   {
+    "t": 1792519575.507,
+    "path": "/title.mp4",
+    "range": "bytes=20709376-22806527",
+    "x-svrngs-person": "Jo (Kim's guest)",
+    "x-svrngs-key": "84a2007b256d29b39f655896e39e9092e7a76f64f27cd65188e639c71380dd80",
+    "x-svrngs-user": "Jo-84a2007b256d29b3.guest"
+   },
+   {
+    "t": 1792519580.482,
+    "path": "/title.mp4",
+    "range": "bytes=22806528-24903679",
+    "x-svrngs-person": "Jo (Kim's guest)",
+    "x-svrngs-key": "84a2007b256d29b39f655896e39e9092e7a76f64f27cd65188e639c71380dd80",
+    "x-svrngs-user": "Jo-84a2007b256d29b3.guest"
+   },
+   {
+    "t": 1792519585.496,
+    "path": "/title.mp4",
+    "range": "bytes=24903680-27000831",
+    "x-svrngs-person": "Jo (Kim's guest)",
+    "x-svrngs-key": "84a2007b256d29b39f655896e39e9092e7a76f64f27cd65188e639c71380dd80",
+    "x-svrngs-user": "Jo-84a2007b256d29b3.guest"
+   },
+   {
+    "t": 1792519588.123,
+    "path": "/title.mp4",
+    "range": "bytes=27000832-29097983",
+    "x-svrngs-person": "Jo (Kim's guest)",
+    "x-svrngs-key": "84a2007b256d29b39f655896e39e9092e7a76f64f27cd65188e639c71380dd80",
+    "x-svrngs-user": "Jo-84a2007b256d29b3.guest"
+   },
+   {
+    "t": 1792519593.053,
+    "path": "/title.mp4",
+    "range": "bytes=29097984-31195135",
+    "x-svrngs-person": "Jo (Kim's guest)",
+    "x-svrngs-key": "84a2007b256d29b39f655896e39e9092e7a76f64f27cd65188e639c71380dd80",
+    "x-svrngs-user": "Jo-84a2007b256d29b3.guest"
+   },
+   {
+    "t": 1792519667.636,
+    "path": "/",
+    "range": null,
+    "x-svrngs-person": "Lee (Kim's guest)",
+    "x-svrngs-key": "ba5f7a17aa0dc15626ae50f1ca2d249e4aa1b49664c8dc1908e4f31caadc4cda",
+    "x-svrngs-user": "Lee-ba5f7a17aa0dc156.guest"
+   },
+   {
+    "t": 1792519667.819,
+    "path": "/title.mp4",
+    "range": "bytes=0-262143",
+    "x-svrngs-person": "Lee (Kim's guest)",
+    "x-svrngs-key": "ba5f7a17aa0dc15626ae50f1ca2d249e4aa1b49664c8dc1908e4f31caadc4cda",
+    "x-svrngs-user": "Lee-ba5f7a17aa0dc156.guest"
+   },
+   {
+    "t": 1792519668.478,
+    "path": "/title.mp4",
+    "range": "bytes=262144-786431",
+    "x-svrngs-person": "Lee (Kim's guest)",
+    "x-svrngs-key": "ba5f7a17aa0dc15626ae50f1ca2d249e4aa1b49664c8dc1908e4f31caadc4cda",
+    "x-svrngs-user": "Lee-ba5f7a17aa0dc156.guest"
+   }
+  ],
+  "bo": []
+ }
+}
