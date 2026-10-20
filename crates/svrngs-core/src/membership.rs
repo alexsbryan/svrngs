@@ -59,7 +59,7 @@
 //! [`InviteFault`], and binds nothing. An `Admit` naming no `Invite` keeps
 //! the rule above.
 //!
-//! An issuer has one open link (u2-4b, DESIGN §8 "A new link closes the old
+//! An issuer has one open link (u2-4b, DESIGN §6 "A new link closes the old
 //! one"): their newest counting `Invite` at a place in the walk. A
 //! redemption under an older one of theirs, after the newer, is refused
 //! [`InviteFault::Closed`]; what the older link admitted before keeps its

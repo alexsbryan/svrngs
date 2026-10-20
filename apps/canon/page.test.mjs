@@ -91,10 +91,10 @@ for (const engine of ['chromium', 'webkit']) {
 
       await as('ana');
       assert.match(await text(), /How does your house decide its rules\?/);
-      assert.match(await text(), /Most of you agree: 3 of the 4 of you\./);
+      assert.match(await text(), /Most of you agree\. A rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them\./);
       await page.check('input[name=way][value=most]');
       await press('Make this how your house decides');
-      assert.match(await text(), /A rule holds once 3 of you agree, whoever proposed it among them, and 2 objections stop it\./);
+      assert.match(await text(), /How your house decides\n+A rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them\./);
       await page.fill('#rule', 'Quiet hours are 10pm to 7am');
       await press('Propose this rule to everyone in your house');
       assert.match(await page.innerText('ul.proposed'), /Quiet hours are 10pm to 7am\n+You proposed it on/);

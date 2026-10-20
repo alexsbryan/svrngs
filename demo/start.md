@@ -75,6 +75,15 @@ where the group's folder is on this computer.
 
 ![Sam's home page, the group made](runs/start/2026-10-13-story/data/shots/sam-home-made.png)
 
+Under Lab, below the table of what's lent, the home page shows **Bring
+things to the table**: Money, Events and House rules, which come with
+svrngs, each ticked. This walk doesn't need them, so leave them. Pressing
+**Bring the ticked ones to Lab** brings them, and everyone in Lab can open
+them. House rules is where a group agrees on its rules: someone proposes, the
+rest agree or object, and canon, the library under it, decides when a rule
+holds (`../RELEASES.md`, "Next"). (Not in the run, which came before House
+rules.)
+
 Press **Make a link to invite someone to Lab**. The page says *"Send this
 link to the person you are inviting: …"* with **Copy the link**. Send it
 to Bo however you two talk — a chat, a message, an email. It works for a
@@ -221,7 +230,7 @@ do.
 
 ## Serving the page from a checkout
 
-`https://group.svrnme.sh/` serves the published build (V1, de8923f7, 16 Oct
+`https://group.svrnme.sh/` serves the published build (V1.1.2, aacb3fe5, 18 Oct
 2026). To try a build of your own checkout instead, serve the page from it,
 on the computer Sam and Bo can reach, as the run did:
 
@@ -266,7 +275,7 @@ makes the group, so Lab's folder is put in Sam's home folder, not yours).
 
 Written 2026-10-13 for anyone getting started (the operator: "nail down
 the svrn / llama-server on svrngs story and make it part of an early demo
-document for anyone getting started"). DESIGN §8 names this demo.
+document for anyone getting started"). PLAN §4 names this demo.
 
 Gate (the seat's proposal, the operator's to set): **Sam**, with no link,
 from the group's page to the model lent within five minutes, the founder's

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! The holes U7 closes in the core (DESIGN §6: "forks void nothing",
 //! "Removal has one decider", "A removal names the removed key's acts by
-//! hash", "U7 also closes two holes"), each planted red at u7-removal's base.
+//! hash", "A grow-only set, linked like git"), each planted red at u7-removal's base.
 use super::*;
 use crate::tests_support::{after, applied, key, record, signed, standing, NS};
 use crate::{actor_of, admit, Admission, Ed25519Verifier, RailGap};
@@ -125,7 +125,7 @@ fn a_backdated_act_does_not_slip_under_a_removal() {
 }
 
 /// **An act refused inside its author's chain is reported as what it is,
-/// not a hole** (DESIGN §6, "U7 also closes two holes"). Alex's seq 1
+/// not a hole** (DESIGN §6, "A grow-only set, linked like git"). Alex's seq 1
 /// redeems a link this copy does not hold, so it is refused; seq 0 and 2
 /// count. The one gap is the refusal. At the base the per-actor audit
 /// counted admitted acts only, so seq 1 was also a `SequenceHole` and the

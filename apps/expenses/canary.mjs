@@ -1,4 +1,4 @@
-// The Expenses canary (DESIGN §8 "The canaries"): two computers hold one
+// The Expenses canary (DESIGN §5 "The canaries"): two computers hold one
 // group's record; everyone writes through the record's loopback API, a
 // correction voids, and both copies fold, with `init` and `reduce`, to the
 // same balances — the ones the acts say. It uses only what DESIGN §3 says an

@@ -578,3 +578,119 @@ async fn a_new_version_runs_as_each_person_only_after_their_yes(engine: Engine) 
     assert_eq!(phone["after"], changed, "{phone:#}");
     drop((ada, kim));
 }
+
+in_both_engines!(
+    /// **The phone goes on to a computer that answers** (canon-fix (c),
+    /// #205; demo/runs/canon/2026-10-17-house, take 2's step 7-dee): bo's
+    /// phone holds cy's link and opens house through cy's computer, which
+    /// lists ada's pad; ada's computer carries House rules. Cy leaves. Her
+    /// computer still runs svrngs and answers the dial, but its
+    /// `/people/lends` fails; ada's is on. Opened once more, the page lists
+    /// House rules through ada's computer, with the page not opened again.
+    /// The run met it as a race, so here cy's computer answers first: ada's
+    /// relay is reached through a way that holds each new connection 2 s.
+    /// Red at canon-fix (a): "This browser could not open the page." (web/
+    /// app.js `failed`). Planted: the first computer's failure ending the
+    /// reach, as before (d).
+    the_phone_goes_on_to_a_computer_that_answers
+);
+async fn the_phone_goes_on_to_a_computer_that_answers(engine: Engine) {
+    use svrngs_node::removal::{LeaveAsk, Outcome, LEAVES_ROUTE};
+    let (near, far) = (relay().await, relay().await);
+    let bo = signing(7);
+    let dirs: Vec<_> = (0..3).map(|_| tempfile::tempdir().unwrap()).collect();
+    let slow = slow_way(&far, Duration::from_secs(2)).await;
+    let ada = computer_on(dirs[0].path(), slow, &bo, 1, "ada").await;
+    let cy = joined(dirs[1].path(), &near, &ada, 2, "cy").await;
+    let folder = dirs[0].path().join("house");
+    std::fs::create_dir(&folder).unwrap();
+    keep_folder(&ada, &folder).await;
+    let canon = repo().join("apps/canon");
+    let rules = folder.join("apps/House-rules");
+    std::fs::create_dir_all(rules.join("vendor")).unwrap();
+    for f in [
+        "index.html",
+        "index.js",
+        "house.js",
+        "vendor/call.mjs",
+        "vendor/canon.js",
+    ] {
+        std::fs::copy(canon.join(f), rules.join(f)).unwrap();
+    }
+    carried_at(&ada, "House-rules").await;
+    lend(
+        dirs[0].path(),
+        "pad",
+        page_origin("<!doctype html>").await.port(),
+    );
+    // Cy's computer lists ada's pad, so the phone keeps ada's computer to
+    // reach the group through.
+    let http = reqwest::Client::builder().no_proxy().build().unwrap();
+    let ada_key = actor_of(&signing(1));
+    let mut listed = false;
+    for _ in 0..60 {
+        let url = format!("http://{}/v1/lends?namespace={NS}", cy.api_addr());
+        let lends: Value = http.get(url).send().await.unwrap().json().await.unwrap();
+        let mut lent = lends["lent"].as_array().into_iter().flatten();
+        listed = lent.any(|l| l["key"] == ada_key);
+        if listed {
+            break;
+        }
+        for computer in [&ada, &cy] {
+            let _ = tokio::time::timeout(Duration::from_secs(10), computer.round()).await;
+        }
+        tokio::time::sleep(Duration::from_millis(500)).await;
+    }
+    assert!(listed, "cy's computer lists ada's lends");
+    let ready = dirs[2].path().join("ready");
+    let (go, release) = tokio::sync::oneshot::channel();
+    let args = json!({
+        "site": site(),
+        "key": hex::encode(bo.to_bytes()),
+        "token": token(&signing(2), &near),
+        "ready": ready,
+    });
+    let phone = tokio::spawn(drive(engine, "reach.mjs", args, Some(release)));
+    tokio::time::timeout(Duration::from_secs(120), async {
+        while !ready.exists() {
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+    })
+    .await
+    .expect("the phone opens the group through cy's computer");
+    let leave = http.post(format!("http://{}{LEAVES_ROUTE}", cy.api_addr()));
+    let left = leave.json(&LeaveAsk { group: NS.into() }).send().await;
+    assert_eq!(
+        left.unwrap().json::<Outcome>().await.unwrap(),
+        Outcome::Left
+    );
+    let cy_key = actor_of(&signing(2));
+    let mut out = false;
+    for _ in 0..60 {
+        out = ada.rail().standing_anywhere(&cy_key).is_none();
+        if out {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(500)).await;
+    }
+    assert!(out, "cy's leave reaches ada's computer");
+    go.send(()).unwrap();
+    let seen = phone.await.unwrap();
+    eprintln!("the phone's run: {seen:#}");
+    assert_eq!(
+        seen["first"]["status"], "You’re in house, as bo",
+        "{seen:#}"
+    );
+    let listed = &seen["listed"];
+    assert_eq!(
+        listed["status"], "You’re in house, as bo, through ada’s computer",
+        "{seen:#}"
+    );
+    assert!(
+        listed["lent"]
+            .as_array()
+            .is_some_and(|l| l.iter().any(|b| b == "House rules")),
+        "{seen:#}"
+    );
+    drop((ada, cy));
+}

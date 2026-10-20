@@ -24,7 +24,7 @@
 // synchronously (iroh-1.0.2/src/tls/resolver.rs:92-95), and the issuer lets
 // in only the key that dials it. So storage holds only ciphertext, and the
 // page's own code can still unseal it — why a group trusts the origin it
-// names with this page's code (DESIGN §11, risk 5). One key per person per
+// names with this page's code (DESIGN §8, risk 5). One key per person per
 // group (DESIGN §6). Version 1 held one key unsealed (u4-3's dial, before a
 // phone could join), never a person's: the upgrade drops it.
 const DB = 'svrngs';

@@ -1,0 +1,206 @@
+{
+ "founder": {
+  "Priya": {
+   "window": null,
+   "lend": 2.77
+  },
+  "Aiko": {
+   "window": 3.82,
+   "lend": 0.37
+  },
+  "Bo": {
+   "window": 4.41,
+   "lend": 0.98
+  },
+  "Cy": {
+   "window": 4.0,
+   "lend": 0.66
+  },
+  "Dev": {
+   "window": 3.58,
+   "lend": 1.38
+  },
+  "Femi": {
+   "window": 4.29,
+   "lend": 0.96
+  },
+  "Gus": {
+   "window": 3.88,
+   "lend": 0.54
+  },
+  "Hana": {
+   "window": 4.47,
+   "lend": 1.14
+  },
+  "Ife": {
+   "window": 4.06,
+   "lend": 0.62
+  },
+  "Jun": {
+   "window": 4.65,
+   "lend": 1.12
+  },
+  "Lena": {
+   "window": 3.82,
+   "lend": 0.49
+  },
+  "Kit": {
+   "window": 4.23,
+   "lend": 0.81
+  },
+  "Luz": {
+   "window": 4.45,
+   "lend": 1.12
+  },
+  "Mara": {
+   "window": 4.04,
+   "lend": 0.71
+  },
+  "Max": {
+   "window": 4.41,
+   "lend": 1.08
+  },
+  "Nell": {
+   "window": 4.0,
+   "lend": 0.67
+  },
+  "Noor": {
+   "window": 3.58,
+   "lend": 1.16
+  },
+  "Oren": {
+   "window": 4.18,
+   "lend": 0.85
+  },
+  "Pia": {
+   "window": 3.76,
+   "lend": 0.44
+  },
+  "Ravi": {
+   "window": 4.61,
+   "lend": 1.18
+  },
+  "Rosa": {
+   "window": 4.2,
+   "lend": 0.77
+  },
+  "Sam": {
+   "window": 4.54,
+   "lend": 0.9
+  },
+  "Saul": {
+   "window": 4.12,
+   "lend": 0.79
+  },
+  "Theo": {
+   "window": 3.71,
+   "lend": 0.38
+  },
+  "Wren": {
+   "window": 4.32,
+   "lend": 0.99
+  }
+ },
+ "member": {
+  "Aiko": {
+   "window": 5.67,
+   "lend": 2.23
+  },
+  "Bo": {
+   "window": 5.26,
+   "lend": 1.82
+  },
+  "Cy": {
+   "window": 4.84,
+   "lend": 1.51
+  },
+  "Dev": {
+   "window": 4.43,
+   "lend": 1.09
+  },
+  "Femi": {
+   "window": 4.01,
+   "lend": 0.68
+  },
+  "Priya": {
+   "window": null,
+   "lend": 16.51
+  },
+  "Gus": {
+   "window": 4.64,
+   "lend": 1.3
+  },
+  "Hana": {
+   "window": 4.22,
+   "lend": 0.89
+  },
+  "Ife": {
+   "window": 4.82,
+   "lend": 1.38
+  },
+  "Jun": {
+   "window": 4.4,
+   "lend": 0.87
+  },
+  "Kit": {
+   "window": 3.98,
+   "lend": 0.56
+  },
+  "Lena": {
+   "window": 4.58,
+   "lend": 1.25
+  },
+  "Luz": {
+   "window": 4.16,
+   "lend": 0.83
+  },
+  "Mara": {
+   "window": 3.75,
+   "lend": 0.42
+  },
+  "Nell": {
+   "window": 4.0,
+   "lend": 0.67
+  },
+  "Max": {
+   "window": 4.41,
+   "lend": 1.09
+  },
+  "Noor": {
+   "window": 4.34,
+   "lend": 0.91
+  },
+  "Oren": {
+   "window": 3.92,
+   "lend": 0.6
+  },
+  "Pia": {
+   "window": 5.03,
+   "lend": 1.71
+  },
+  "Ravi": {
+   "window": 4.62,
+   "lend": 1.18
+  },
+  "Rosa": {
+   "window": 4.2,
+   "lend": 0.77
+  },
+  "Sam": {
+   "window": 4.56,
+   "lend": 0.92
+  },
+  "Saul": {
+   "window": 4.14,
+   "lend": 0.81
+  },
+  "Theo": {
+   "window": 4.78,
+   "lend": 1.45
+  },
+  "Wren": {
+   "window": 4.36,
+   "lend": 1.03
+  }
+ }
+}

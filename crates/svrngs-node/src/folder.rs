@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! A group's folders' bytes (gf-1, group folders' second spike, kept for
-//! sy-1's synced folder; DESIGN §9). A synced folder is one group's
+//! sy-1's synced folder; PLAN §2). A synced folder is one group's
 //! (syp-4): its files go into this computer's iroh-blobs store, and its
 //! acts, written in that group alone, name them by hash
 //! ([`svrngs_core::SyncFolder`]). The provider serves a hash to a dialer

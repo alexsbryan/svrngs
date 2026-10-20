@@ -27,6 +27,13 @@ Every line and every button: [`demo/start.md`](demo/start.md).
   gives it to the group. If you'd rather type: `svrngs share <port> --kind <name>`.
 - **Split it, plan it.** Money and Events come with svrngs. Bring them to a
   group in one tap. They keep going when you close your laptop.
+- **Agree on your house's rules.** House rules comes with svrngs too. Someone
+  proposes, the rest of you agree or object, and the page says when it
+  holds. [canon](https://github.com/alexsbryan/canon) decides; svrngs only
+  shows it. See [`demo/house-rules.md`](demo/house-rules.md).
+- **Put your group on a screen.** Your home page opens any group on a TV
+  or a projector: who's on now, what each lends, and who arrived since it
+  opened.
 - **Ask a friend of a friend.** The grapevine carries an ask from one group
   to another, through someone who's in both. See [`demo/grapevine.md`](demo/grapevine.md).
 - **Leave.** Whenever you like. What you already have stays yours.
@@ -71,7 +78,8 @@ Every step passes, or it isn't done.
 
 The rest of the map:
 - [`NORTH_STAR.md`](NORTH_STAR.md): what we answer to.
-- [`docs/DESIGN.md`](docs/DESIGN.md): how we build, and in what order.
+- [`docs/DESIGN.md`](docs/DESIGN.md): what svrngs is, and how we build it.
+- [`docs/PLAN.md`](docs/PLAN.md): what we build next, and in what order.
 - [`ARCHITECTURE.md`](ARCHITECTURE.md): what exists today.
 - [`AGENTS.md`](AGENTS.md): how agents work here.
 

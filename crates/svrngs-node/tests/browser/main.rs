@@ -1,4 +1,4 @@
-//! The page in a browser (DESIGN §3, "Joining"; §8, U4): the built page,
+//! The page in a browser (DESIGN §3, "Joining"; PLAN §4, U4): the built page,
 //! in Playwright's headless Chromium and in its WebKit as an iPhone (u4-7),
 //! each test once in each, dials a node by key as a person who stands in
 //! its group. Everything runs on this computer: iroh's relay
@@ -101,11 +101,22 @@ async fn computer(
     me: u8,
     founder: &str,
 ) -> Node {
+    computer_on(dir, relay_url(relay), admitted, me, founder).await
+}
+
+/// [`computer`], its relay reached at `relay`, a URL.
+async fn computer_on(
+    dir: &Path,
+    relay: String,
+    admitted: &SigningKey,
+    me: u8,
+    founder: &str,
+) -> Node {
     let node = Node::start(
         dir.to_path_buf(),
         signing(me),
         &RelayConfig {
-            relay_urls: vec![relay_url(relay)],
+            relay_urls: vec![relay],
             n0_services: false,
             loopback_only: true,
         },
@@ -2783,6 +2794,82 @@ async fn the_door_draws_who_is_on_now(engine: Engine) {
     drop((ada, cy));
 }
 
+in_both_engines!(
+    /// **A group on a screen** (the operator, "Wall is approved", of the
+    /// Draft 2 canvas's frames 8-10). Ada's home page opened as the group's
+    /// screen, `/?screen=<group>`: cy lent `radio` before it opened, so it
+    /// is in cy's window and no line says it arrived; bo's computer never
+    /// answers. Once the screen has drawn, ada lends `shelf` from the page,
+    /// and the screen, reading again by itself, says "ada lent shelf" under
+    /// "Since this screen opened", marked new there and in ada's window,
+    /// the only marks; `shelf` opens in a tab; and its count says three
+    /// people, two on now, two things lent. Ada's window comes first, as
+    /// she started the group. Planted, watched failing: the page at
+    /// b7be71c3, which answers `/?screen=` with the home page; and the
+    /// page at 7a385472, which drew ada's window second: its order read
+    /// `'started'.at`, which is a string's method, not a time.
+    the_screen_shows_what_is_lent_after_it_opened
+);
+async fn the_screen_shows_what_is_lent_after_it_opened(engine: Engine) {
+    let relay = relay().await;
+    let (ada_dir, cy_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let ada = node(ada_dir.path(), &relay, &signing(7)).await;
+    let cy = joined(cy_dir.path(), &relay, &ada, 2, "cy").await;
+    let radio = page_origin("<!doctype html><title>cy's radio</title>").await;
+    let shelf = page_origin("<!doctype html><title>ada's shelf</title>").await;
+    lend(cy_dir.path(), "radio", radio.port());
+    let at = format!(
+        "http://svrngs.localhost:{}/?screen={NS}",
+        ada.api_addr().port()
+    );
+    let lent = json!({ "port": shelf.port(), "name": "shelf", "kind": "k" });
+    let args = json!({ "at": at, "lend": lent, "says": "ada lent shelf" });
+    let seen = drive(engine, "screen.mjs", args, None).await;
+    eprintln!("the screen's run: {seen:#}");
+    assert_eq!(seen["lent"], 200, "{seen:#}");
+    assert_eq!(seen["opened"]["since"], json!([]), "{seen:#}");
+    let after = &seen["after"];
+    let words = |w: &Value| [&w["class"], &w["words"]].map(|s| s.as_str().unwrap().to_string());
+    let mut windows: Vec<_> = after["windows"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(words)
+        .collect();
+    // Ada started the group, so her window comes first: people are drawn in
+    // the order they joined (question.js `people`).
+    assert_eq!(windows[0][1], "ada shelf new on now", "{seen:#}");
+    windows.sort_by(|a, b| a[1].cmp(&b[1]));
+    let want = [
+        ["on", "ada shelf new on now"],
+        ["off", "bo did not answer"],
+        ["on", "cy radio on now"],
+    ];
+    assert_eq!(windows, want, "{seen:#}");
+    let since = after["since"].as_array().unwrap();
+    assert_eq!(since.len(), 1, "{seen:#}");
+    assert!(
+        since[0].as_str().unwrap().ends_with(" ada lent shelf new"),
+        "{seen:#}"
+    );
+    let marks = after["marks"].as_array().unwrap();
+    assert_eq!(marks.len(), 2, "{seen:#}");
+    let links = after["windows"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .flat_map(|w| w["links"].as_array().unwrap());
+    assert!(
+        links.clone().all(|l| l[2] == "_blank") && links.count() == 2,
+        "{seen:#}"
+    );
+    assert_eq!(
+        after["count"], "3 people · 2 on now · 2 things lent",
+        "{seen:#}"
+    );
+    drop((ada, cy, radio, shelf));
+}
+
 /// Each of `words`, or its plural, that `text` holds as a whole word.
 fn words_said<'a>(text: &str, words: &[&'a str]) -> Vec<&'a str> {
     let said: BTreeSet<&str> = text
@@ -3295,6 +3382,26 @@ async fn a_computer_that_did_not_answer_is_named_by_its_person(engine: Engine) {
         !text.contains(&host) && !text.contains("127.0.0.1"),
         "no word on the page names the relay, {host}:\n{seen:#}"
     );
+}
+
+/// A way to `relay` that holds each new connection `by` before passing it
+/// on, so a dial through it lands that much after one through the relay
+/// itself: which computer answers first, made so rather than raced.
+async fn slow_way(relay: &Server, by: Duration) -> String {
+    let to = relay.http_addr().expect("the relay serves HTTP");
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let at = listener.local_addr().unwrap();
+    tokio::spawn(async move {
+        while let Ok((mut near, _)) = listener.accept().await {
+            tokio::spawn(async move {
+                tokio::time::sleep(by).await;
+                if let Ok(mut far) = tokio::net::TcpStream::connect(to).await {
+                    let _ = tokio::io::copy_bidirectional(&mut near, &mut far).await;
+                }
+            });
+        }
+    });
+    format!("http://{at}/")
 }
 
 /// One test at a time holds 8096, Jellyfin's, on this host: the bar's

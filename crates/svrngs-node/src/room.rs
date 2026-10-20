@@ -9,7 +9,7 @@
 //! the room is this person's own, and no lend is carried for anyone else.
 //!
 //! New, in the shape of upstream's LAN door and address picker, not their
-//! code (DESIGN §8, U6's inventory): "the door names the PORT, this machine
+//! code (PLAN §4, U6's inventory): "the door names the PORT, this machine
 //! names the ADDRESS" (`sovereign-cli-mesh/src/mesh_guest_link.rs:10-12`
 //! at `e1a43bcd2`), and a listener that lives only while it is wanted
 //! (`sovereign-daemon/src/guest_door.rs:429-431`) — here bound on the
@@ -63,7 +63,7 @@ pub fn route() -> Option<IpAddr> {
 }
 
 /// The port the room serves `label` at: the same on every run, so a
-/// device is typed the address once (DESIGN §8, U6's inventory), and below
+/// device is typed the address once (PLAN §4, U6's inventory), and below
 /// macOS's ephemeral range. One that is taken is refused by name.
 pub fn port_of(label: &Label) -> u16 {
     let h = label

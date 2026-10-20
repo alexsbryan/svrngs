@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! The member door (DESIGN §3; §8 U3's inventory): a route on the members'
+//! The member door (DESIGN §3; PLAN §4, U3's inventory): a route on the members'
 //! protocol that carries a request for a lend to its service on this
 //! computer's loopback, and the answer back.
 //!
@@ -17,7 +17,7 @@
 //! secret ([`crate::declared`]). Exactly one of each reaches the service, and
 //! it is the door's. The rules are upstream's, the code is not: upstream
 //! rewrote request heads on a byte splice, and here hyper has parsed the
-//! request before the door sees it (DESIGN §8, U1's inventory).
+//! request before the door sees it (PLAN §4, U1's inventory).
 //!
 //! **Bodies stream both ways**, neither buffered: a request's body is read
 //! as the service reads it, a response's as the member reads it, so a large
@@ -44,7 +44,7 @@
 //! refused, `502`, never carried unsigned: as the lend not answering when
 //! the sign-in or the lend's port did not answer, else as a sign-in's no.
 //!
-//! **How many at once, and each one's share** (u3-6; DESIGN §8, "Many
+//! **How many at once, and each one's share** (u3-6; DESIGN §3, "Many
 //! people, one library"): before a request is carried, the door asks
 //! [`limit`] whether its person is let in — counted while a request of
 //! theirs is in flight or within [`limit::WINDOW`] of one, a viewer whose
@@ -58,7 +58,7 @@
 //! RTT and whether it is relayed — so a watcher of the lender's log reads
 //! every share without the debug level.
 //!
-//! **What it lends, asked** (u3-5; DESIGN §8, "Lends are asked, not
+//! **What it lends, asked** (u3-5; DESIGN §3, "Lends are asked, not
 //! stored"): `GET /lends` answers a dialer standing in a group this
 //! computer holds every lend declared here now, read from the declarations
 //! at each ask, each with how many people use it now ([`Using`]): the
@@ -182,7 +182,7 @@ pub const PAGES_HEADER: &str = "x-svrngs-pages";
 
 /// A person's share of the upload a lend declares, in bits a second, on
 /// each request through the door and its answer: a declared figure, as the
-/// name says (DESIGN §8, "The upload is declared"), never a measured one.
+/// name says (DESIGN §3, "The upload is declared"), never a measured one.
 pub const SHARE_HEADER: &str = "x-svrngs-declared-share-bps";
 
 /// The pass a holder presents with every request on the pass holders'
@@ -867,14 +867,17 @@ async fn through_pass(
     via: Option<Extension<Via>>,
     req: Request,
 ) -> Result<Response, Response> {
-    let Some(Extension(dialer)) = dialer else {
-        tracing::warn!(target: "door", "door: refused — no verified dialer, so the request did not come on an iroh stream");
-        return Err(LendRefusal::Closed.say(
-            StatusCode::FORBIDDEN,
-            "you can open this only through your group",
-        ));
-    };
+    let dialer = dialed(dialer, "you can open this only through your group")?;
     lend_for(&door, Who::Holder(dialer), via.map(|Extension(v)| v), req).await
+}
+
+/// The key a request was dialled with, which only an iroh stream carries;
+/// without one it is refused in `words`, the protocol's own.
+fn dialed(dialer: Option<Extension<Dialer>>, words: &str) -> Result<Dialer, Response> {
+    dialer.map(|Extension(d)| d).ok_or_else(|| {
+        tracing::warn!(target: "door", "door: refused — no verified dialer, so the request did not come on an iroh stream");
+        LendRefusal::Closed.say(StatusCode::FORBIDDEN, words)
+    })
 }
 
 /// The lend `raw` names here: by its name, or by its label when that names
@@ -1033,13 +1036,10 @@ async fn through(
     via: Option<Extension<Via>>,
     req: Request,
 ) -> Result<Response, Response> {
-    let Some(Extension(dialer)) = dialer else {
-        tracing::warn!(target: "door", "door: refused — no verified dialer, so the request did not come on an iroh stream");
-        return Err(LendRefusal::Closed.say(
-            StatusCode::FORBIDDEN,
-            "you can open this only from a computer in its group",
-        ));
-    };
+    let dialer = dialed(
+        dialer,
+        "you can open this only from a computer in its group",
+    )?;
     lend_for(&door, Who::Member(dialer), via.map(|Extension(v)| v), req).await
 }
 
@@ -1188,7 +1188,7 @@ struct Told {
 /// The refusal of a newcomer past `lend`'s `limit`, `using` people counted:
 /// the reason, in a person's words — the number its lender's choice, which
 /// they can change (bash-limit) — and the figures, for an app to turn into
-/// a choice (DESIGN §8, "Too many at once").
+/// a choice (DESIGN §3, "Too many at once").
 fn busy(lend: &Lend, using: u32, limit: std::num::NonZeroU16) -> Response {
     let people = |n: u32| if n == 1 { "person" } else { "people" };
     let limit = limit.get();

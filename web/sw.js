@@ -5,7 +5,7 @@
 // the origin that holds each person's key, sealed in its store, so no lent
 // app's page may run here: until u5-2 every lend had an address under this
 // worker's scope, `<scope>l/<lender>/<lend>/`, and a script in a lent page
-// unsealed the key of whoever opened it (DESIGN §11, risk 5). Each lend now
+// unsealed the key of whoever opened it (DESIGN §8, risk 5). Each lend now
 // opens at an origin of its own, whose worker (lend.js) dials with a pass
 // the page signs for it, never the key; the runtime, its trace with it,
 // moved there.

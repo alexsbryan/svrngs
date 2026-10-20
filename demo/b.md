@@ -4,7 +4,7 @@ Gate: four of five newcomers get from the link to the film on the TV within
 three minutes, unassisted.
 Shown after U6: five friends at Dee's, Sam's library across town, the film
 on Dee's TV in Jellyfin's own app, reached through Dee's computer
-(DESIGN §8; §3, "The room").
+(PLAN §4, "Demo B"; DESIGN §3, "The room").
 
 **Before the evening**, each set up once and not timed. Sam, at home across
 town: a computer running Jellyfin with at least three films, lent as

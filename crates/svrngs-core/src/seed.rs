@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! A group's seed and its id (DESIGN §8, U2's inventory, the
+//! A group's seed and its id (PLAN §4, U2's inventory, the
 //! `valid_namespace` row). A group's id was a name the caller typed, so two
 //! groups called House on one computer were one directory. Now the id is
 //! the hash of the seed — the founder's key, the name the founder goes by,

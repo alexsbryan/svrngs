@@ -1,5 +1,171 @@
 # svrngs releases
 
+## Next, not released yet
+
+The next release brings House rules: your house writes down what it
+agrees, and how it agrees it. It's in this repository, and not yet in the
+build at `group.svrnme.sh`.
+
+**House rules.** On your home page, under **Bring things to the table**,
+tick House rules and press **Bring the ticked ones to** your group. The
+first person to open it answers one question, "How does your house decide
+its rules?", with one of three answers: anyone proposes a rule and it holds
+after two days unless someone objects; most of you agree; or everyone
+agrees. Then anyone writes a rule and presses **Propose this rule to
+everyone in your house**. The rest of you press **Agree**, or **Object** and
+say why, and the page says when it has become your house's rule. You change
+how your house decides the same way you agree to anything else.
+- Everyone in the group has a say, from the day they joined until the day
+  they left. "Most" and "everyone" count the people in your house when the
+  rule was proposed, so a rule agreed last month stays agreed when someone
+  joins or leaves today.
+- When people leave, the rest of you still decide, including how you
+  decide.
+- An agreement made from a phone says whose computer it went through:
+  "Agreed: Dee, through Ana’s computer."
+- It runs on every computer and phone in your group. Nobody keeps a server
+  on, and nobody keeps the book.
+
+[`demo/house-rules.md`](demo/house-rules.md) walks through it on one
+computer, with three people each on a computer of their own.
+
+**canon decides, svrngs shows.** House rules is built on
+[canon](https://github.com/alexsbryan/canon), a library for a group's
+rules, at its release 0.5.0. canon decides every answer the page gives:
+what is a rule, what is still waiting, who has a say. svrngs carries what
+each of you wrote and vouches for who wrote it. It never reads a rule and
+never enforces one. If your house agrees on quiet hours from 10pm, nothing
+in svrngs stops a party at 11; you do.
+
+**Its files run as you only after your yes.** House rules is on the table
+like Money and Events, so V1.1's rule holds for it too. If someone in the
+group changes its files, your page asks "Open the new version?", and the
+version you have keeps working until you press **Yes, use the new version
+of House rules**.
+
+**In the run.** A house of four, three on computers and one on a phone,
+chose "most of you agree" and agreed on quiet hours over one objection.
+Then one person left, and the house changed to "everyone agrees". Another
+left, and the two still there changed it back. Each person was a program, and everything ran on one
+computer. The scene took 91.2 s. House rules' 5.7 MB reached the other
+two computers within 1.2 s of being brought, in each of three takes. Once
+the third person agreed, every computer and the phone listed the rule
+within 6.1 s. The phone took 4.5 to 4.8 s to open House rules, through
+n0's relays. Nobody has used House rules in a real house yet
+(`demo/runs/canon/2026-10-17-house/README.md`).
+
+**What House rules doesn't do yet.**
+- canon can also draw people by lot, take turns with a shared thing, and
+  let a smaller group decide its own corner. The page offers none of these
+  yet. In canon 0.5.0 they would count the house itself among its people,
+  so they wait for a canon that counts only people.
+- Right after the agreement that changes how your house decides, your page
+  can show the old way, with nothing proposed, for about a second. Open it
+  again and it shows the new one (#206).
+- After someone leaves, a phone can reach that person's computer first and
+  say "This browser could not open the page.", while other computers in the
+  group are on. Open the page again (#205).
+
+**If you build apps.** A carried app's `svrngs/acts` now says each person's
+time in the group, `spans`, those who left included, so an app can count a
+past entry with whoever was in the group when it was written.
+[`docs/DESIGN.md`](docs/DESIGN.md) §3 has it.
+
+## V1.1.2, 18 October 2026
+
+V1.1.2 puts your group on a screen. On your home page, each group has
+**Show** your group **on a screen**. It opens a page for a TV, a spare
+laptop or a projector:
+- everyone in the group, lit while their computer answers;
+- what each person lends, inside their window, each opening in a tab as you;
+- who joined and what they lent since the screen opened, newest first, the
+  newest marked.
+
+The page reads your group again once a second. The list lives on that
+screen only, and starts over when you open the screen again. It never
+says when someone went off: their window just stops being lit.
+
+Your home page now lists people in the order they joined, whoever started
+the group first, and so does the group's page on a phone. Before, the
+order came from their keys.
+
+That's the trade: a screen left open asks every computer in your group
+what it lends, once a second. With 25 computers on one machine, the one
+showing the screen spent at most a tenth of a core on it, and each
+person's window lit about 4 seconds after they began to join, most of it
+their wait for n0's relay. When the computer that started the group
+stopped answering, another person's screen drew it "did not answer" 3.5
+seconds later, and everything else still opened
+(`demo/runs/screen/2026-10-18/`, `demo/runs/v1.1.2/2026-10-18/`).
+
+Everything else is V1.1.1's. House rules is still for the next release.
+
+V1.1.2 is the build at `group.svrnme.sh`, from commit `aacb3fe5`, tagged
+`v1.1.2`.
+
+## V1.1.1, 18 October 2026
+
+V1.1.1 stops a Linux computer from holding on to memory. Each time a page
+asked it what everyone in your group lends, it kept the memory that answer
+used and never gave it back: about 20 KiB each time in a group of 25. A
+home page left open, which asks once a second, grew by about 300 MB an
+hour. If you run svrngs on Linux, run the install line again; it updates
+in place. On a Mac nothing changes, since macOS gives the memory back.
+
+The Linux build now uses mimalloc to hand out memory, in place of the one
+that came with the toolchain that builds it. With 25 computers on one
+Linux machine, a computer asked back to back kept 0.43 KiB each time
+instead of 21, and asked once a second for half an hour it stayed flat.
+
+That's the trade: a Linux computer starts out using about 15 to 35 MB
+more memory, and the first time it asks everyone in a group of 25 at
+once, it spends about half a second more CPU doing it. After that, asking
+costs it no more than before. Those numbers are from one 32-core machine,
+and nobody has measured a laptop yet (`demo/runs/v1.1.1/2026-10-18/`).
+
+Everything else is V1.1's. House rules is still for the next release.
+
+V1.1.1 was built from commit `6db0cccf`, tagged `v1.1.1`.
+
+## V1.1, 17 October 2026
+
+V1.1 closes a way for one person in a group to act as everyone else, and
+fixes what an audit of V1 found. If you installed svrngs before 17
+October, run the install line again; it updates in place.
+
+**An app runs as your group brought it.** Before, anyone in a group could
+change the files of an app the group had brought, such as Money or Events,
+and everyone else's browser ran the change as them, writing in their name.
+Now each computer serves an app as it was brought. When someone changes
+it, your home page says who and asks, "Open the new version?" The new
+version runs for you only after you press **Yes, use the new version**. The
+old one keeps working until then.
+
+**The group's page can't reach programs on your computer.** The published
+page allowed connections to your own computer, left over from testing. It
+never needed them, and now it can't make them.
+
+**What the audit fixed:**
+- A link pasted on your home page, or an app's request to send you
+  somewhere, stays inside the app it came from. A crafted link could open
+  another website.
+- A member can't make every computer in the group use gigabytes of
+  memory, or hang, with one entry numbered far ahead of their last.
+- A forged copy of an entry that arrives first can't hide the real one.
+- If your computer loses power while it writes, the next entry it writes is
+  no longer lost.
+- When you leave a group, your computer keeps telling the others until
+  each one answers, so a computer that was off at the time hears it once
+  it's back.
+- A computer whose clock runs fast can't make every invite link look
+  expired.
+- A computer whose clock reads before 1970 doesn't let anyone into a lent
+  app after their access has run out.
+
+Everything under "What V1 doesn't do yet" still holds.
+
+V1.1 was built from commit `a555a225`.
+
 ## V1, 16 October 2026
 
 svrngs keeps what your group shares on your own computers: the money you
@@ -177,5 +343,5 @@ audit, even with leaving and the grapevine added:
 - **Connections.** A computer reaches another directly over its encrypted
   connection, with no local port in between.
 
-V1 is the build at `group.svrnme.sh`, from commit `de8923f7`. svrngs is open
-software under the AGPL, version 3 or later.
+V1 was built from commit `de8923f7`. svrngs is open software under the AGPL,
+version 3 or later.

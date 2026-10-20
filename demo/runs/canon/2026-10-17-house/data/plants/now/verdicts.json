@@ -1,0 +1,103 @@
+{
+ "1": {
+  "verdict": "passed",
+  "said_ms": 225,
+  "listed": {
+   "ana": {
+    "listed": true,
+    "ms": 518
+   },
+   "bo": {
+    "listed": true,
+    "ms": 521
+   },
+   "cy": {
+    "listed": true,
+    "ms": 523
+   }
+  },
+  "build": {
+   "bytes": 5679979,
+   "bo": {
+    "held": true,
+    "ms": 1092
+   },
+   "cy": {
+    "held": true,
+    "ms": 1096
+   }
+  }
+ },
+ "2": {
+  "verdict": "passed",
+  "ms": 220
+ },
+ "3": {
+  "verdict": "passed",
+  "ms": 220,
+  "reached_ms": {
+   "bo": 5,
+   "cy": 2
+  }
+ },
+ "4": {
+  "verdict": "passed",
+  "through": "Ana",
+  "drawn_ms": 4660,
+  "listed_ms": 820
+ },
+ "5": {
+  "verdict": "passed",
+  "ms": 235,
+  "reached_ms": {
+   "ana": 6,
+   "bo": 3
+  }
+ },
+ "6": {
+  "verdict": "passed",
+  "reached_ms": {
+   "ana": 3,
+   "cy": 3
+  },
+  "every_page_ms": 5672,
+  "phone_listed_ms": 871
+ },
+ "7": {
+  "verdict": "failed",
+  "why": "7-ana: the quiet hours under Not adopted"
+ },
+ "8": {
+  "verdict": "passed",
+  "proposed_ms": 228,
+  "agreed_to_read_ms": 383,
+  "right_after_agree": "House rules\nHow your house decides\n\nA rule holds once everyone in your house when it was proposed agrees, and one objection stops it."
+ },
+ "9": {
+  "verdict": "failed",
+  "why": "not under everyone agrees"
+ },
+ "10": {
+  "verdict": "passed",
+  "phone_listed_ms": 61796,
+  "after_press_ms": 256,
+  "right_after_agree": "House rules\nHow your house decides\n\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them."
+ },
+ "11": {
+  "verdict": "passed",
+  "asked_ms": 5588,
+  "changed_ms": 514
+ },
+ "12": {
+  "verdict": "passed",
+  "read": 86
+ },
+ "13": {
+  "verdict": "passed",
+  "steps": 26
+ },
+ "14": {
+  "verdict": "never-ran",
+  "why": "a house with real people, a second host and a phone on cellular are the operator's"
+ }
+}

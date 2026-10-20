@@ -7,8 +7,8 @@
 // /diary to everyone who reaches the lend, and carries an ask only from an
 // app its person said yes to and has not stopped (DESIGN §3, "What an app
 // gets"). Who may rank, beyond that, is this program's: its owner, until a
-// lend its lender's person alone reaches (DESIGN §9). Every line is marked
-// by su-0's rule (§4).
+// lend its lender's person alone reaches (PLAN §4, "Then"). Every line is
+// marked by su-0's rule (§4).
 //
 //   node taste.mjs <port> <dir>
 //
@@ -75,7 +75,7 @@ function refuse(res, kind, words, who) {
 }
 
 // su: enforce owner — the asker is Ana: the key the door verified is one of
-// hers. svrngs names no person across devices (DESIGN §9), so her keys
+// hers. svrngs names no person across devices (PLAN §4, "Then"), so her keys
 // are listed here, read on each ask.
 const owners = () => fs.readFileSync(at('owners'), 'utf8').split(/\s+/).filter(Boolean);
 const owned = (key) => owners().includes(key);

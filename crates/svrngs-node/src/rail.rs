@@ -14,7 +14,7 @@
 //! the other (ARCH §10.6). What is deliberately NOT mirrored is the guest
 //! half: there are no grants and no sessions here (loopback IS the auth),
 //! so the namespace is always named explicitly.
-//! (svrngs: append, log and the live lane came over, DESIGN §8, U3's
+//! (svrngs: append, log and the live lane came over, PLAN §4, U3's
 //! inventory; the sync doors and `attest` stay behind — one process per
 //! computer reads its own journals.)
 //!
@@ -23,7 +23,7 @@
 //! the daemon's dir, and the daemon's journals migrate in fp-54's commit, so
 //! there is no dual-writer window). The signer is THIS process's node key.
 //! (svrngs: upstream's census of rails' and the daemon's two keys went with
-//! the mesh; a node here has one key, DESIGN §8, "One key signs and dials".)
+//! the mesh; a node here has one key, PLAN §4, U1's "One key signs and dials".)
 //!
 //! **The live lane is the drain half only.** The daemon's `live_push` fans
 //! each payload out to every online peer over sovereign-mesh's fabric,
@@ -63,7 +63,7 @@ use svrngs_core::{Append, AppendRefusal, Refused as CommitRefused};
 /// after an append ([`crate::ring_sync::append`]), and the live lane's
 /// buffer, which the live route fills ([`crate::ring_routes::ring_live`]).
 /// (Upstream's handlers read them from `RailsDaemon`, which did not come
-/// over, DESIGN §8.)
+/// over, PLAN §4, U1's inventory.)
 #[derive(Clone)]
 pub struct RailApi {
     pub rail: Arc<RingRail>,
@@ -100,7 +100,7 @@ pub(crate) fn namespace_of(q: &RailQuery) -> Result<String, Response> {
 /// (svrngs: then the register is asked, before the journal is opened, so a
 /// group this computer does not hold leaves no trace: it is refused
 /// `kind: "not_held"`, and a group held with no seed `kind: "no_seed"`,
-/// since nobody can be shown to stand in it — DESIGN §8, U3's inventory,
+/// since nobody can be shown to stand in it — PLAN §4, U3's inventory,
 /// "the roster becomes the register". Upstream opened any namespace that
 /// was a name.)
 fn group_of(rail: &RingRail, namespace: &str) -> Result<(), Response> {
@@ -195,7 +195,7 @@ pub(crate) fn standing_json(s: &BTreeMap<String, Member>) -> serde_json::Value {
 /// and from the core in core-0.
 /// Here an app serving someone else names them, and the act is signed as
 /// this computer with `on_behalf_of` naming that person — whom the member
-/// door verified (DESIGN §3, §8 "Localhost is the trust boundary"). The
+/// door verified (DESIGN §3, "Localhost is the trust boundary"). The
 /// name must parse as a person and be a person standing in the group;
 /// anything else is refused and nothing is written, never dropped.)
 pub(crate) async fn append_act(

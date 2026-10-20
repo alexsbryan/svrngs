@@ -1,0 +1,221 @@
+{
+ "cond": "ix-fix",
+ "n": 25,
+ "log": "error",
+ "env": [],
+ "b_secs": 60,
+ "bin": "/home/alexbryan/svf/fix-bin/svrngs",
+ "probe": false,
+ "b_every": 0.0,
+ "started": 1792304749.9205153,
+ "cores": 32,
+ "shared": 24,
+ "phases": {
+  "A": [
+   1792304769.548,
+   1792304889.548
+  ],
+  "B": [
+   1792304889.548,
+   1792304949.55
+  ],
+  "C": [
+   1792304949.551,
+   1792305009.551
+  ],
+  "D": [
+   1792305009.551,
+   1792305069.551
+  ],
+  "E": [
+   1792305069.552,
+   1792305129.552
+  ]
+ },
+ "result": {
+  "A": {
+   "secs": 119.0,
+   "rss_kib": [
+    99800,
+    97456
+   ],
+   "anon_kib": [
+    75220,
+    72752
+   ],
+   "hwm_kib": 97508,
+   "grew_kib": -2344,
+   "anon_grew_kib": -2468,
+   "reads": 0,
+   "errors": 0,
+   "kib_per_read": null,
+   "anon_kib_per_read": null,
+   "cpu_pct": 1.3,
+   "threads": [
+    66,
+    66
+   ],
+   "fds": [
+    20,
+    20
+   ],
+   "log_bytes": [
+    0,
+    0
+   ],
+   "aiko_rss_kib": [
+    72984,
+    82856
+   ]
+  },
+  "B": {
+   "secs": 59.0,
+   "rss_kib": [
+    98908,
+    112048
+   ],
+   "anon_kib": [
+    74096,
+    87212
+   ],
+   "hwm_kib": 112048,
+   "grew_kib": 13140,
+   "anon_grew_kib": 13116,
+   "reads": 33423,
+   "errors": 0,
+   "kib_per_read": 0.39,
+   "anon_kib_per_read": 0.39,
+   "cpu_pct": 210.0,
+   "threads": [
+    66,
+    66
+   ],
+   "fds": [
+    20,
+    20
+   ],
+   "log_bytes": [
+    0,
+    0
+   ],
+   "aiko_rss_kib": [
+    82856,
+    80048
+   ],
+   "kib_per_read_first_third": 0.59,
+   "kib_per_read_last_third": 0.14
+  },
+  "C": {
+   "secs": 59.0,
+   "rss_kib": [
+    112448,
+    114144
+   ],
+   "anon_kib": [
+    87612,
+    89308
+   ],
+   "hwm_kib": 114144,
+   "grew_kib": 1696,
+   "anon_grew_kib": 1696,
+   "reads": 0,
+   "errors": 0,
+   "kib_per_read": null,
+   "anon_kib_per_read": null,
+   "cpu_pct": 1.0,
+   "threads": [
+    66,
+    66
+   ],
+   "fds": [
+    19,
+    21
+   ],
+   "log_bytes": [
+    0,
+    0
+   ],
+   "aiko_rss_kib": [
+    80104,
+    81256
+   ]
+  },
+  "D": {
+   "secs": 59.0,
+   "rss_kib": [
+    113972,
+    110024
+   ],
+   "anon_kib": [
+    89136,
+    85820
+   ],
+   "hwm_kib": 110768,
+   "grew_kib": -3948,
+   "anon_grew_kib": -3316,
+   "reads": 236387,
+   "errors": 0,
+   "kib_per_read": -0.02,
+   "anon_kib_per_read": -0.01,
+   "cpu_pct": 33.1,
+   "threads": [
+    66,
+    66
+   ],
+   "fds": [
+    19,
+    20
+   ],
+   "log_bytes": [
+    0,
+    0
+   ],
+   "aiko_rss_kib": [
+    81256,
+    82772
+   ],
+   "kib_per_read_first_third": -0.07,
+   "kib_per_read_last_third": -0.0
+  },
+  "E": {
+   "secs": 59.0,
+   "rss_kib": [
+    112996,
+    109508
+   ],
+   "anon_kib": [
+    88728,
+    85116
+   ],
+   "hwm_kib": 110768,
+   "grew_kib": -3488,
+   "anon_grew_kib": -3612,
+   "reads": 0,
+   "errors": 0,
+   "kib_per_read": null,
+   "anon_kib_per_read": null,
+   "cpu_pct": 0.8,
+   "threads": [
+    66,
+    66
+   ],
+   "fds": [
+    20,
+    20
+   ],
+   "log_bytes": [
+    0,
+    0
+   ],
+   "aiko_rss_kib": [
+    82772,
+    81592
+   ]
+  }
+ },
+ "verdict": "ran",
+ "ended": 1792305131.0541003,
+ "stopped": "{\"keepers\": {\"found\": \"stopped\", \"start\": \"stopped\"}, \"killed_after\": []}",
+ "founder_log_bytes": 0,
+ "cleaned": "{\"removed\": \"/home/alexbryan/svf/demo/runs/leak/2026-10-17/w-ix-fix\"}"
+}

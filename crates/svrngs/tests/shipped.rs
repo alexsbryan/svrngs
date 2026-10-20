@@ -1,6 +1,6 @@
 //! Where the command as shipped meets its groups: at n0's relays and
 //! address lookup, chosen, until the operator flips the switch to svrngs's
-//! relay (relay-park (b); DESIGN §9, §10, the operator, 2026-10-13). A
+//! relay (relay-park (b); PLAN §2, §3, the operator, 2026-10-13). A
 //! group that keeps no relay is met at n0's; a group that keeps its own
 //! (`new --relay`) is met there, and once the computer holds a group that
 //! keeps none, n0's relays are named beside it, so that group still

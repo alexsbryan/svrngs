@@ -31,7 +31,7 @@
 //! - Peer iroh socket addresses come from the [`Contact`] or an explicitly
 //!   seeded map ([`IrohTransport::add_known_peer`]); a bare key with neither
 //!   is not dialled. (svrngs: unless the endpoint has an address lookup,
-//!   which resolves it — DESIGN §8, "Four facts".)
+//!   which resolves it — PLAN §4, U1's "A bare key is dialled".)
 
 use std::collections::HashMap;
 use std::future::Future;
@@ -96,7 +96,7 @@ pub struct Contact {
 
 impl Contact {
     /// A peer known by its key alone, no hint: how svrngs dials a member,
-    /// since nothing gossips addresses (DESIGN §8, "A bare key is dialled").
+    /// since nothing gossips addresses (PLAN §4, U1's "A bare key is dialled").
     pub fn by_key(key: PublicKey) -> Self {
         Self {
             key,
@@ -205,7 +205,7 @@ impl IrohTransport {
     /// refused every bare key, since its mesh gossiped addresses; with no
     /// gossip a member is dialled by key and the relay its group names,
     /// relay-in-record, else the endpoint's own lookup — n0's DNS under
-    /// `RelayConfig::n0_services` — finds it, DESIGN §8, "Four facts".)
+    /// `RelayConfig::n0_services` — finds it, PLAN §4, U1's "A bare key is dialled".)
     pub(crate) fn endpoint_addr_for(&self, peer: &Contact) -> Option<iroh::EndpointAddr> {
         let mut ea = iroh::EndpointAddr::new(peer.key);
         let mut has_path = false;
@@ -432,7 +432,7 @@ pub struct Via(iroh::endpoint::Connection);
 
 /// What a connection's selected path looks like now, as iroh's
 /// `Connection::paths()` and `PathStats` report it: use, never capacity
-/// (DESIGN §8, U3's inventory, its iroh_path row).
+/// (PLAN §4, U3's inventory, its iroh_path row).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Observed {
     /// The address the path ends at, `None` when it rides a relay.

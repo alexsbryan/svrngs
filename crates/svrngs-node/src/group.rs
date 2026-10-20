@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! A group's seed kept on this computer (DESIGN §8, U2's inventory, the
+//! A group's seed kept on this computer (PLAN §4, U2's inventory, the
 //! `valid_namespace` row). The seed, its id — the hash that names the
 //! group's directory — and the belief in a seed an issuer answers are
 //! svrngs-core's since u4-5 (`svrngs_core::seed`), so a browser's page
@@ -310,7 +310,7 @@ fn called(seed: &Seed, name: &str) -> bool {
 /// The relay a joiner keeps from its link's `carried`, where it meets the
 /// group from then on: at n0's (`n0`), none when it is one of n0's relays —
 /// where the issuer's build met its groups, not the group's own, which kept
-/// would outlast the operator's switch (DESIGN §10, 2026-10-13). At
+/// would outlast the operator's switch (PLAN §3, 2026-10-13). At
 /// svrngs's every relay is kept, n0's list never built there.
 pub fn kept_relay(carried: Option<RelayUrl>, n0: bool) -> Option<RelayUrl> {
     let n0 = n0 && carried.as_ref().is_some_and(|r| n0_relays().contains(r));

@@ -1,0 +1,230 @@
+{
+ "cond": "vi-zig-src-probe",
+ "n": 25,
+ "log": "error",
+ "env": [],
+ "b_secs": 60,
+ "bin": "/home/alexbryan/twentyfive/leak/src/target-zig/x86_64-unknown-linux-musl/release/svrngs",
+ "probe": true,
+ "started": 1792288772.0554233,
+ "cores": 32,
+ "shared": 24,
+ "phases": {
+  "A": [
+   1792288791.481,
+   1792288911.481
+  ],
+  "B": [
+   1792288911.482,
+   1792288971.484
+  ],
+  "C": [
+   1792288971.485,
+   1792289031.485
+  ],
+  "D": [
+   1792289031.485,
+   1792289091.485
+  ],
+  "E": [
+   1792289091.485,
+   1792289151.485
+  ]
+ },
+ "result": {
+  "A": {
+   "secs": 118.0,
+   "rss_kib": [
+    67308,
+    69528
+   ],
+   "anon_kib": [
+    43300,
+    45520
+   ],
+   "hwm_kib": 69528,
+   "grew_kib": 2220,
+   "reads": 0,
+   "errors": 0,
+   "kib_per_read": null,
+   "cpu_pct": 1.3,
+   "threads": [
+    67,
+    67
+   ],
+   "fds": [
+    21,
+    21
+   ],
+   "log_bytes": [
+    0,
+    0
+   ],
+   "aiko_rss_kib": [
+    36660,
+    50988
+   ],
+   "alive_tasks": [
+    121,
+    123
+   ]
+  },
+  "B": {
+   "secs": 59.0,
+   "rss_kib": [
+    70252,
+    721288
+   ],
+   "anon_kib": [
+    46344,
+    697284
+   ],
+   "hwm_kib": 721288,
+   "grew_kib": 651036,
+   "reads": 33486,
+   "errors": 0,
+   "kib_per_read": 19.44,
+   "cpu_pct": 202.5,
+   "threads": [
+    67,
+    67
+   ],
+   "fds": [
+    22,
+    21
+   ],
+   "log_bytes": [
+    0,
+    0
+   ],
+   "aiko_rss_kib": [
+    51112,
+    56292
+   ],
+   "kib_per_read_first_third": 25.31,
+   "kib_per_read_last_third": 15.7,
+   "alive_tasks": [
+    120,
+    167
+   ]
+  },
+  "C": {
+   "secs": 59.0,
+   "rss_kib": [
+    726960,
+    727340
+   ],
+   "anon_kib": [
+    702952,
+    703332
+   ],
+   "hwm_kib": 727340,
+   "grew_kib": 380,
+   "reads": 0,
+   "errors": 0,
+   "kib_per_read": null,
+   "cpu_pct": 1.0,
+   "threads": [
+    67,
+    67
+   ],
+   "fds": [
+    20,
+    20
+   ],
+   "log_bytes": [
+    0,
+    0
+   ],
+   "aiko_rss_kib": [
+    56412,
+    57864
+   ],
+   "alive_tasks": [
+    118,
+    118
+   ]
+  },
+  "D": {
+   "secs": 59.0,
+   "rss_kib": [
+    727416,
+    727792
+   ],
+   "anon_kib": [
+    703408,
+    703784
+   ],
+   "hwm_kib": 727792,
+   "grew_kib": 376,
+   "reads": 209560,
+   "errors": 0,
+   "kib_per_read": 0.0,
+   "cpu_pct": 38.2,
+   "threads": [
+    67,
+    67
+   ],
+   "fds": [
+    21,
+    21
+   ],
+   "log_bytes": [
+    0,
+    0
+   ],
+   "aiko_rss_kib": [
+    57868,
+    59168
+   ],
+   "kib_per_read_first_third": 0.0,
+   "kib_per_read_last_third": 0.0,
+   "alive_tasks": [
+    119,
+    119
+   ]
+  },
+  "E": {
+   "secs": 59.0,
+   "rss_kib": [
+    727872,
+    727968
+   ],
+   "anon_kib": [
+    703864,
+    703960
+   ],
+   "hwm_kib": 727968,
+   "grew_kib": 96,
+   "reads": 0,
+   "errors": 0,
+   "kib_per_read": null,
+   "cpu_pct": 1.0,
+   "threads": [
+    67,
+    67
+   ],
+   "fds": [
+    21,
+    21
+   ],
+   "log_bytes": [
+    0,
+    0
+   ],
+   "aiko_rss_kib": [
+    59172,
+    60424
+   ],
+   "alive_tasks": [
+    119,
+    119
+   ]
+  }
+ },
+ "verdict": "ran",
+ "ended": 1792289152.9911118,
+ "stopped": "{\"keepers\": {\"found\": \"stopped\", \"start\": \"stopped\"}, \"killed_after\": []}",
+ "founder_log_bytes": 0,
+ "cleaned": "{\"removed\": \"/home/alexbryan/twentyfive/leak/w-vi-zig-src-probe\"}"
+}

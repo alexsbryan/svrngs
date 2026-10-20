@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! Lend a service, u3-5's bar (DESIGN §8, U3): Sam shares a service on
+//! Lend a service, u3-5's bar (PLAN §4, U3): Sam shares a service on
 //! Sam's computer; Alex, in Sam's group, runs the bare command and reads
 //! "Sam's <name>" with an address on Alex's own computer, and a request
 //! there reaches Sam's service as Alex, with Sam's password added and none

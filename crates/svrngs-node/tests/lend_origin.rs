@@ -375,7 +375,7 @@ async fn judged(
 }
 
 /// **A computer's origin names the app asking, and keeps a page to its
-/// reads** (sup-1; DESIGN §3, "Lent apps", call 7, and its table). Alex
+/// reads** (sup-1; DESIGN §3, "Lent apps", call 6, and its table). Alex
 /// lends a page, `night`, reading kind `media`, a `telly` of it and a
 /// `diary`; Sam a `films` and a `notes`. At Alex's computer, each row of
 /// the table: a program (no `Sec-Fetch-*`), a typed address, a navigation

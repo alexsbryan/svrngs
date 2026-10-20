@@ -3,7 +3,7 @@
 //! DESIGN §3, "Lent apps", call 1): `http://<label>.localhost:<port>/`, on
 //! the record API's listener and behind its one check, the port its own.
 //! New: upstream reached every lend of a lender through one bridge port
-//! (DESIGN §8, U5's inventory), so one lent page could read every other's
+//! (PLAN §4, U5's inventory), so one lent page could read every other's
 //! cookies and storage. A browser resolves `*.localhost` to loopback and
 //! keeps each host's cookies, storage and workers apart — Chromium, WebKit
 //! and Safari alike (`demo/runs/u5/2026-10-05-localhost/`).
@@ -65,7 +65,7 @@ fn at(host: &str) -> Option<(Label, Option<String>)> {
     Some((Label::parse(name.strip_suffix(LOCALHOST)?)?, port))
 }
 
-/// The app asking for the lend `host` names, by DESIGN §3's table, from
+/// The app asking for the lend `host` names, by DESIGN §3, "Lent apps", call 6, from
 /// what the browser says of the page asking: a navigation, a typed address
 /// or a request from the lend's own origin is its own page's; one from
 /// another lend's page is that page's, by its `Origin` at this listener's
@@ -75,7 +75,7 @@ fn at(host: &str) -> Option<(Label, Option<String>)> {
 /// sends a mode alone (start-measure, `demo/runs/start/2026-10-13/` §3 (a)
 /// 4), as the record reads a page by it too (`crate::api`'s
 /// `not_from_a_page`) — and is the lend's own, as loopback is trusted
-/// (DESIGN §9).
+/// (PLAN §2).
 fn app_of(headers: &HeaderMap, host: &Label) -> Option<Label> {
     let ([site, mode, origin, at_host], own) = fetch(headers);
     if site.is_none() {

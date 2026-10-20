@@ -35,6 +35,11 @@ tokio = { version = "1", features = ["rt-multi-thread", "macros", "signal", "tim
 tracing = { workspace = true }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
+# Linux's allocator (main.rs): the malloc of musl as zig builds it keeps
+# what the command frees (demo/runs/leak/2026-10-17/README.md).
+[target.'cfg(target_env = "musl")'.dependencies]
+mimalloc = { version = "0.1.52", default-features = false }
+
 [dev-dependencies]
 tempfile = "3"
 # join_by_link.rs dials as a stranger, as svrngs-node's own tests do.

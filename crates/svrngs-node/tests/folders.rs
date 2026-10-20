@@ -1,4 +1,4 @@
-//! A folder synced both ways (sy-1, the mesh-Dropbox spike; DESIGN §9):
+//! A folder synced both ways (sy-1, the mesh-Dropbox spike; PLAN §2):
 //! Ana, Ben and Cy in one group, each change reaching the others' disks,
 //! and the bytes served to members alone. Three nodes in one process, no
 //! relay, each reached by the addresses seeded in the others' lookup.

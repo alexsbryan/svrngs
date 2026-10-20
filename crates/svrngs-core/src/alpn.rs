@@ -3,10 +3,10 @@
 //! The protocols a node's endpoint speaks. Upstream named five here, one per
 //! class of traffic (`RPC_ALPN`, `CLIENT_ALPN`, `GUEST_ALPN`, `OFFER_ALPN`
 //! beside this one); svrngs carries two, the enum this file promised when a
-//! second protocol came (docs/DESIGN.md §8, U2's inventory, the acceptor
+//! second protocol came (docs/PLAN.md §4, U2's inventory, the acceptor
 //! row): the members' protocol, and the one a key standing in no group may
 //! speak, to redeem a link. It lives in svrngs-core since u4-2, so a page
-//! dialling from a browser spells each name as the node does (DESIGN §8,
+//! dialling from a browser spells each name as the node does (PLAN §4,
 //! U4's inventory, the `kernel-types/src/alpn.rs` row).
 
 /// A protocol the node speaks, by the ALPN its connection negotiated.

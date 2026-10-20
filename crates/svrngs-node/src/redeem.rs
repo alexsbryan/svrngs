@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! Redeeming a link (DESIGN §6, "A link admits each person once"; §8, U2's
+//! Redeeming a link (DESIGN §6, "A link admits each person once"; PLAN §4, U2's
 //! inventory, its found/join/internal and acceptor rows). New code, in the
 //! shape of upstream's mesh join (`commonwealth/crates/commonwealth-rails/src/
 //! join.rs:116-229` and `internal.rs:222-295` at `e1a43bcd2`): the joiner

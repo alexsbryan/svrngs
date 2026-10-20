@@ -265,7 +265,7 @@ const choose = (as) =>
  * and said so, whose Host is not this server's own address, whose Origin
  * is another's, or that writes with anything but a JSON body. A request
  * with no Origin is a program on this computer, which is the person's
- * (DESIGN §8, "Localhost is the trust boundary").
+ * (DESIGN §3, "Localhost is the trust boundary").
  */
 function guard(req) {
   const own = `127.0.0.1:${server.address().port}`;

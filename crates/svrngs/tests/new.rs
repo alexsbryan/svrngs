@@ -1,4 +1,4 @@
-//! `svrngs new` and `svrngs link` (DESIGN §8, U2): a group made, its seed
+//! `svrngs new` and `svrngs link` (PLAN §4, U2): a group made, its seed
 //! written beside its record, an `Invite` appended through its door, and a
 //! short link printed whose key the `Invite` names (u2-8). One node in one
 //! process, no relay.

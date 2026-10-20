@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! HTTP over the dial (DESIGN §8, U4's inventory, the u4-4 row): the client
+//! HTTP over the dial (PLAN §4, U4's inventory, the u4-4 row): the client
 //! a page speaks to a computer's door, one request per bi-stream of the
 //! connection the dial made.
 //!

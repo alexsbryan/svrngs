@@ -1,0 +1,221 @@
+{
+ "cond": "mac-i-error",
+ "n": 25,
+ "log": "error",
+ "env": [],
+ "b_secs": 60,
+ "bin": "/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/bb17e709-0dcd-4285-9662-14f7287f9f8d/scratchpad/stage/demo/runs/twentyfive/2026-10-17/bin/darwin-aarch64/svrngs",
+ "probe": false,
+ "b_every": 0.0,
+ "started": 1792303044.917763,
+ "cores": 12,
+ "shared": 24,
+ "phases": {
+  "A": [
+   1792303064.509,
+   1792303184.509
+  ],
+  "B": [
+   1792303184.51,
+   1792303244.51
+  ],
+  "C": [
+   1792303244.511,
+   1792303304.521
+  ],
+  "D": [
+   1792303304.521,
+   1792303364.522
+  ],
+  "E": [
+   1792303364.522,
+   1792303424.522
+  ]
+ },
+ "result": {
+  "A": {
+   "secs": 118.7,
+   "rss_kib": [
+    44992,
+    45456
+   ],
+   "anon_kib": [
+    21504,
+    21504
+   ],
+   "hwm_kib": null,
+   "grew_kib": 464,
+   "anon_grew_kib": 0,
+   "reads": 0,
+   "errors": 0,
+   "kib_per_read": null,
+   "anon_kib_per_read": null,
+   "cpu_pct": 6.4,
+   "threads": [
+    27,
+    27
+   ],
+   "fds": [
+    22,
+    22
+   ],
+   "log_bytes": [
+    182,
+    182
+   ],
+   "aiko_rss_kib": [
+    37632,
+    42272
+   ]
+  },
+  "B": {
+   "secs": 58.3,
+   "rss_kib": [
+    45776,
+    45840
+   ],
+   "anon_kib": [
+    21504,
+    21504
+   ],
+   "hwm_kib": null,
+   "grew_kib": 64,
+   "anon_grew_kib": 0,
+   "reads": 10263,
+   "errors": 0,
+   "kib_per_read": 0.01,
+   "anon_kib_per_read": 0.0,
+   "cpu_pct": 181.2,
+   "threads": [
+    27,
+    27
+   ],
+   "fds": [
+    23,
+    22
+   ],
+   "log_bytes": [
+    182,
+    182
+   ],
+   "aiko_rss_kib": [
+    42384,
+    42512
+   ],
+   "kib_per_read_first_third": 0.02,
+   "kib_per_read_last_third": 0.0
+  },
+  "C": {
+   "secs": 59.4,
+   "rss_kib": [
+    46096,
+    46128
+   ],
+   "anon_kib": [
+    22528,
+    22528
+   ],
+   "hwm_kib": null,
+   "grew_kib": 32,
+   "anon_grew_kib": 0,
+   "reads": 0,
+   "errors": 0,
+   "kib_per_read": null,
+   "anon_kib_per_read": null,
+   "cpu_pct": 6.8,
+   "threads": [
+    27,
+    27
+   ],
+   "fds": [
+    21,
+    21
+   ],
+   "log_bytes": [
+    182,
+    182
+   ],
+   "aiko_rss_kib": [
+    42512,
+    42560
+   ]
+  },
+  "D": {
+   "secs": 59.4,
+   "rss_kib": [
+    46176,
+    46352
+   ],
+   "anon_kib": [
+    22528,
+    22528
+   ],
+   "hwm_kib": null,
+   "grew_kib": 176,
+   "anon_grew_kib": 0,
+   "reads": 218528,
+   "errors": 0,
+   "kib_per_read": 0.0,
+   "anon_kib_per_read": 0.0,
+   "cpu_pct": 48.0,
+   "threads": [
+    27,
+    27
+   ],
+   "fds": [
+    22,
+    22
+   ],
+   "log_bytes": [
+    182,
+    182
+   ],
+   "aiko_rss_kib": [
+    42560,
+    42720
+   ],
+   "kib_per_read_first_third": 0.0,
+   "kib_per_read_last_third": 0.0
+  },
+  "E": {
+   "secs": 58.4,
+   "rss_kib": [
+    46352,
+    46384
+   ],
+   "anon_kib": [
+    22528,
+    21504
+   ],
+   "hwm_kib": null,
+   "grew_kib": 32,
+   "anon_grew_kib": -1024,
+   "reads": 0,
+   "errors": 0,
+   "kib_per_read": null,
+   "anon_kib_per_read": null,
+   "cpu_pct": 5.9,
+   "threads": [
+    27,
+    27
+   ],
+   "fds": [
+    22,
+    22
+   ],
+   "log_bytes": [
+    182,
+    392
+   ],
+   "aiko_rss_kib": [
+    42720,
+    42944
+   ]
+  }
+ },
+ "verdict": "ran",
+ "ended": 1792303426.031997,
+ "stopped": "{\"keepers\": {\"found\": \"stopped\", \"start\": \"stopped\"}, \"killed_after\": []}",
+ "founder_log_bytes": 392,
+ "cleaned": "{\"removed\": \"/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/bb17e709-0dcd-4285-9662-14f7287f9f8d/scratchpad/stage/demo/runs/leak/2026-10-17/w-mac-i-error\"}"
+}

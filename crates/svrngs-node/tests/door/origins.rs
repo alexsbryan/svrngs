@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // `picky_origin`: ported from commonwealth-ai commonwealth/crates/commonwealth-rails/tests/two_daemons.rs@e1a43bcd2
 // `byte_at`, `parse_range`, `serve_http`: ported from commonwealth-ai commonwealth/crates/commonwealth-transport/examples/media_bridge_bench.rs@e1a43bcd2
-//! The services the door's tests lend: upstream's two fixtures (DESIGN §8,
+//! The services the door's tests lend: upstream's two fixtures (PLAN §4,
 //! U3's inventory, its fixture row), and two of the door's own.
 //!
 //! Edits to upstream's: `picky_origin` (two_daemons.rs:208-255) kept but for

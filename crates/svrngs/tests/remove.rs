@@ -1,5 +1,5 @@
 //! `svrngs remove` and `svrngs handover` (U7; DESIGN §6 "Removal has one
-//! decider"; §10, 2026-10-09: removing someone stays in the command), asked
+//! decider"; PLAN §3, 2026-10-09: removing someone stays in the command), asked
 //! of svrngs running here as `share --folder` is.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]

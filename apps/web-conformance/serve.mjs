@@ -1,4 +1,4 @@
-// The conformance canary (DESIGN §8, "The canaries"; u5-2): a localhost
+// The conformance canary (DESIGN §5, "The canaries"; u5-2): a localhost
 // service with one route per thing a self-hosted app leans on, which the
 // infra must carry whole to whoever opens it — on a computer, and on a
 // phone at an address of its own or under one for every app (DESIGN §7).

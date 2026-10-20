@@ -1,4 +1,4 @@
-//! Joining from a phone (DESIGN §3, "Joining"; §8, U4; u4-5): Sam makes a
+//! Joining from a phone (DESIGN §3, "Joining"; PLAN §4, U4; u4-5): Sam makes a
 //! group whose links open a page on an origin, `svrngs new --origin`, and
 //! lends a service. A phone opens the https link printed, in Playwright's
 //! headless Chromium and in its WebKit as an iPhone (u4-7): the page asks the person's name, makes their

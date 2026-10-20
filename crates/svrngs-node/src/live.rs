@@ -24,7 +24,7 @@
 //! node's own doors are rail.rs's, [`crate::rail`]. The walk of the mesh's
 //! Online members that chose the peers went with the mesh, and the caller
 //! names them, [`LivePeer`]: the push door, [`crate::rail`], names the keys
-//! standing in the group but this node's. DESIGN §8, U3's inventory.)
+//! standing in the group but this node's. PLAN §4, U3's inventory.)
 
 use crate::iroh::{Contact, IrohTransport};
 

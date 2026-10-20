@@ -1,0 +1,128 @@
+--- leak.py as conditions i-viii ran it
++++ leak.py here
+@@ -1,11 +1,16 @@
+ #!/usr/bin/env python3
+ """The founder's memory under the wall's reads (PREDICTIONS.md here),
+-on one Linux machine: a group of N computers brought up by the kit's
+-fleet.py (`found`, then `start`), then the founder's loopback API driven in
+-timed phases while its /proc is read each second. Stdlib only.
++on one machine: a group of N computers brought up by the 25-computer kit's
++fleet.py (`demo/runs/twentyfive/2026-10-17/`, `found`, then `start`), then
++the founder's loopback API driven in timed phases while its memory is read
++each second: /proc on Linux; ps, footprint and lsof on macOS. Stdlib only.
+ 
+-    leak.py run --cond NAME [--n 25] [--log FILTER] [--b-secs 60] [--env K=V ...]
++    leak.py run --cond NAME [--n 25] [--log FILTER] [--b-secs 60] [--b-every S]
++                [--bin PATH] [--env K=V ...] [--probe]
+ 
++The binary is the kit's V1.1 for this machine (`bin/<os>-<arch>/svrngs`
++there, fetched as its README says) unless `--bin` names another.
++
+ Each condition runs in w-NAME (a fleet work dir, removed at the end) and
+ leaves data-NAME/: samples.jsonl, one line a second, and summary.json.
+ Phases: A idle 120 s; B /v1/lends back to back; C idle 60 s;
+@@ -16,6 +21,8 @@
+ import argparse
+ import json
+ import os
++import platform
++import re
+ import subprocess
+ import sys
+ import threading
+@@ -24,12 +31,14 @@
+ from pathlib import Path
+ 
+ HERE = Path(__file__).resolve().parent
+-KIT = HERE.parent
+-BIN = KIT / "svrngs"
++KIT = HERE.parent.parent / "twentyfive" / "2026-10-17"
++DARWIN = sys.platform == "darwin"
++MACHINE = "mac" if DARWIN else "linux"  # the plan's label for this machine (fleet.py `start --machine`)
++BIN = KIT / "bin" / f"{'darwin' if DARWIN else 'linux'}-{platform.machine().replace('arm64', 'aarch64')}" / "svrngs"
+ NAMES = ["Priya", "Aiko", "Bo", "Cy", "Dev", "Femi", "Gus", "Hana", "Ife", "Jun", "Kit", "Lena", "Luz",
+          "Mara", "Max", "Nell", "Noor", "Oren", "Pia", "Ravi", "Rosa", "Sam", "Saul", "Theo", "Wren"]
+ UP_WITHIN = 150  # s for every joiner to have shared, or never-ran
+-TICK = os.sysconf("SC_CLK_TCK")
++TICK = os.sysconf("SC_CLK_TCK")  # CPU ticks a second; macOS's ps seconds are read in them too
+ PAGE_KIB = os.sysconf("SC_PAGE_SIZE") // 1024
+ 
+ 
+@@ -45,8 +54,34 @@
+     return out
+ 
+ 
++def seconds(cpu):
++    """ps's CPU time as macOS writes it (`m:ss.cc`, `h:mm:ss.cc`), in seconds."""
++    s = 0.0
++    for x in cpu.split(":"):
++        s = s * 60 + float(x)
++    return s
++
++
++def proc_darwin(pid):
++    """One reading of `pid` on macOS. `rss` is ps's resident size; `anon`
++    is footprint's, the dirty memory the process owns, which is what
++    macOS's malloc gives back when it frees (its MADV_FREE'd pages can
++    stay resident in `rss` until the machine needs them)."""
++    run = lambda *argv: subprocess.run(argv, capture_output=True, text=True, timeout=10).stdout  # noqa: E731
++    bits = run("ps", "-o", "rss=,time=", "-p", str(pid)).split()
++    m = re.search(r"Footprint: ([\d.]+) (KB|MB|GB)", run("footprint", "-p", str(pid)))
++    foot = round(float(m[1]) * {"KB": 1, "MB": 1024, "GB": 1024 * 1024}[m[2]]) if m else None
++    lines = run("ps", "-M", "-p", str(pid)).splitlines()
++    fds = sum(1 for l in run("lsof", "-p", str(pid), "-Ff").splitlines() if l.startswith("f"))
++    return {"rss": int(bits[0]) if bits else None, "hwm": None, "anon": foot,
++            "threads": len(lines) - 1 if len(lines) > 1 else None, "fds": fds or None,
++            "ticks": round(seconds(bits[1]) * TICK) if len(bits) > 1 else None}
++
++
+ def proc(pid):
+     """One reading of `pid`: memory in KiB, threads, fds, CPU ticks."""
++    if DARWIN:
++        return proc_darwin(pid)
+     s = kv(f"/proc/{pid}/status", {"VmRSS", "VmHWM", "Threads", "RssAnon"})
+     r = kv(f"/proc/{pid}/smaps_rollup", {"Rss", "Anonymous"})
+     try:
+@@ -122,14 +157,16 @@
+             continue
+         a, b = rows[0], rows[-1]
+         d = b["Priya"]["rss"] - a["Priya"]["rss"]
++        anon = [a["Priya"]["anon"], b["Priya"]["anon"]]
+         n = b["reads"] - a["reads"]
+         cpu = None
+         if a["Priya"]["ticks"] is not None and b["Priya"]["ticks"] is not None:
+             cpu = round(100 * (b["Priya"]["ticks"] - a["Priya"]["ticks"]) / TICK / (b["t"] - a["t"]), 1)
+         row = {"secs": round(b["t"] - a["t"], 1), "rss_kib": [a["Priya"]["rss"], b["Priya"]["rss"]],
+                "anon_kib": [a["Priya"]["anon"], b["Priya"]["anon"]], "hwm_kib": b["Priya"]["hwm"],
+-               "grew_kib": d, "reads": n, "errors": b["errors"] - a["errors"],
+-               "kib_per_read": round(d / n, 2) if n else None, "cpu_pct": cpu,
++               "grew_kib": d, "anon_grew_kib": anon[1] - anon[0] if None not in anon else None, "reads": n, "errors": b["errors"] - a["errors"],
++               "kib_per_read": round(d / n, 2) if n else None,
++               "anon_kib_per_read": round((anon[1] - anon[0]) / n, 2) if n and None not in anon else None, "cpu_pct": cpu,
+                "threads": [a["Priya"]["threads"], b["Priya"]["threads"]],
+                "fds": [a["Priya"]["fds"], b["Priya"]["fds"]],
+                "log_bytes": [a["log_bytes"], b["log_bytes"]]}
+@@ -169,7 +206,7 @@
+     save()
+     names = NAMES[: a.n]
+     w.mkdir()
+-    (w / "plan-found.json").write_text(json.dumps({"people": [{"name": names[0], "machine": "linux", "founder": True, "at": 0}]}))
++    (w / "plan-found.json").write_text(json.dumps({"people": [{"name": names[0], "machine": MACHINE, "founder": True, "at": 0}]}))
+     keepers = [fleet("found", "--bin", binary, "--w", w, "--plan", w / "plan-found.json", "--group", "House", env=env_found, wait=False)]
+     try:
+         end = time.time() + 90
+@@ -181,11 +218,11 @@
+             summary["why"] = "the founder did not found the group within 90 s"
+             return
+         t0 = time.time() + 3
+-        people = [{"name": names[0], "machine": "linux", "founder": True, "at": 0}]
++        people = [{"name": names[0], "machine": MACHINE, "founder": True, "at": 0}]
+         for i, name in enumerate(names[1:]):
+-            people.append({"name": name, "machine": "linux", "at": round(t0 + i * 10 / max(1, len(names) - 1), 3)})
++            people.append({"name": name, "machine": MACHINE, "at": round(t0 + i * 10 / max(1, len(names) - 1), 3)})
+         (w / "plan.json").write_text(json.dumps({"people": people}))
+-        keepers.append(fleet("start", "--bin", binary, "--w", w, "--plan", w / "plan.json", "--machine", "linux",
++        keepers.append(fleet("start", "--bin", binary, "--w", w, "--plan", w / "plan.json", "--machine", MACHINE,
+                              "--link", founded["link"], "--gid", founded["gid"], env=env, wait=False))
+         end = time.time() + UP_WITHIN
+         shared = 0

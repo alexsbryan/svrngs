@@ -12,7 +12,7 @@
 //! certificate needs Let's Encrypt's `shortlived` profile, and
 //! tokio-rustls-acme 0.9.1, iroh-relay's ACME client, orders names alone —
 //! its `Identifier` is `Dns` only and its order names no profile
-//! (`acme.rs:129-130`, `:301-303`); DESIGN §9 keeps the row.
+//! (`acme.rs:129-130`, `:301-303`); PLAN §2 keeps the row.
 //!
 //! Who it lets through is decided per connection
 //! (`AccessControl::on_connect`): by default a computer or phone standing

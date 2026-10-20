@@ -4,7 +4,7 @@
 //! for, the issuer's answer to it ([`Asked`], here since u4-5, so a page
 //! reads it as the command does), and the [`RedeemRequest`] that presents
 //! the redemption. Moved from
-//! `svrngs-node`'s `redeem.rs` (u4-2; DESIGN §10, call 5), so the command
+//! `svrngs-node`'s `redeem.rs` (u4-2; DESIGN §3, "Joining", call 5), so the command
 //! and a browser's page sign them, and the issuer's node checks them, with
 //! one body: keys and text in, bytes and hex out. The routes that answer
 //! them, and every check that reads a journal, stay the node's.

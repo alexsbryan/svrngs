@@ -63,7 +63,7 @@
 # Each step but `trio` stays inside ten minutes on this host. svrngs built first:
 # cargo build -p svrngs. Nothing of Jellyfin outlives `down` but what is
 # under <out>; the secrets stay in <scratch>/secrets. scripts/check.sh runs
-# none of this: it needs Jellyfin (DESIGN §8, U5).
+# none of this: it needs Jellyfin (PLAN §4, U5).
 set -euo pipefail
 STEP="$1"; R="$2"; OUT="$3"
 HERE="$(cd "$(dirname "$0")" && pwd)"; REPO="$(cd "$HERE/../../.." && pwd)"

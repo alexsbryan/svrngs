@@ -1,0 +1,40 @@
+demo/house-rules.md at c5d29109: 6 blocks, 9 lines
+[copy] $ cargo build -p svrngs
+[copy] exit 0    Compiling svrngs-node v0.1.0 (/Users/alexsbryan/dev/svrngs/crates/svrngs-node)
+   Compiling svrngs v0.1.0 (/Users/alexsbryan/dev/svrngs/crates/svrngs)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 13.18s
+
+[ana] $ export HOME=/tmp/house/ana; mkdir -p $HOME
+[ana] $ target/debug/svrngs new "Elm" --as Ana &
+[ana] printed a link
+[bo] $ export HOME=/tmp/house/bo; mkdir -p $HOME
+[bo] $ target/debug/svrngs join 'svrngs://join/<the token>' --as Bo &
+[bo] said: You're in Elm, as Bo.
+[cy] $ export HOME=/tmp/house/cy; mkdir -p $HOME
+[cy] $ target/debug/svrngs join 'svrngs://join/<the token>' --as Cy &
+[cy] said: You're in Elm, as Cy.
+[ana] $ sed 's/127.0.0.1/svrngs.localhost/' $HOME/.svrngs/api
+[ana] home page: http://svrngs.localhost:59761/
+[bo] $ sed 's/127.0.0.1/svrngs.localhost/' $HOME/.svrngs/api
+[bo] home page: http://svrngs.localhost:59785/
+[cy] $ sed 's/127.0.0.1/svrngs.localhost/' $HOME/.svrngs/api
+[cy] home page: http://svrngs.localhost:59802/
+[ana] step 5: ok (567 ms)
+[ana] step 6, the link: ok (215 ms)
+[ana] step 6: ok (552 ms)
+[ana] step 7: ok (235 ms)
+[cy] step 8, the link: ok (228 ms)
+[cy] step 8: ok (571 ms)
+[bo] step 9, the link: ok (228 ms)
+[bo] step 9: ok (544 ms)
+[ana] step 9, Ana's: ok (255 ms)
+[bo] step 10: ok (291 ms)
+[ana] step 10, Ana's: ok (257 ms)
+[ana] $ kill %1
+[bo] $ kill %1
+[cy] $ kill %1
+[ana] $ rm -rf /tmp/house
+[ana] window closed, exit 0; processes left: 0
+[bo] window closed, exit 0; processes left: 0
+[cy] window closed, exit 0; processes left: 0
+/tmp/house there after: False; 36.5 s from the first window

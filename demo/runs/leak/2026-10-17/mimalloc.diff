@@ -1,0 +1,23 @@
+--- src/crates/svrngs/Cargo.toml	2026-10-16 21:00:14.000000000 -0700
++++ src-mi/crates/svrngs/Cargo.toml	2026-10-17 19:07:14.102672000 -0700
+@@ -8,6 +8,7 @@
+ description = "The svrngs command: a computer's device key, a group's link, and the verbs that make a group, mint its link and run the node. The device key is forked from commonwealth-ai's commonwealth-transport identity.rs; the link's token is svrngs-core's, and the command draws its secret."
+ 
+ [dependencies]
++mimalloc = { version = "0.1", default-features = false }
+ svrngs-node = { workspace = true }
+ base64 = "0.22"
+ blake3 = { workspace = true }
+--- src/crates/svrngs/src/main.rs	2026-10-17 18:29:45.587505033 -0700
++++ src-mi/crates/svrngs/src/main.rs	2026-10-17 19:07:14.102812515 -0700
+@@ -5,6 +5,10 @@
+ 
+ use std::process::ExitCode;
+ 
++// leak diagnosis only (scratch copy): the fix under test.
++#[global_allocator]
++static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
++
+ use svrngs::cli;
+ 
+ fn main() -> ExitCode {

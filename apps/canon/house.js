@@ -17,13 +17,13 @@
 // record: the house grants itself ROOT, then grants each person ROOT at their
 // `joined` and withdraws them at their `left`. A grant takes on its writer's
 // seat and never waits on a rule (canon fold.rs:739-776, :1597-1641), and only
-// `human:` actors count in a tally (ratify.rs:669), so the house gives its
+// `human:` actors count in a tally (ratify.rs:1031-1033), so the house gives its
 // people a say and has none itself.
 //
 // **The house's acts come first.** The house's own grant is at HOUSE_AT and a
 // founder's at FOUNDED_AT, strictly before every recorded act and every
 // joiner's grant, so the house's grant is the only one canon takes on an open
-// seat (ratify.rs:554-566: only grants strictly before an act count for it).
+// seat (ratify.rs:896-908: only grants strictly before an act count for it).
 // A record dated at or before FOUNDED_AT is not counted. The times are
 // constants, never a computer's clock or a span's `joined`, so a person
 // joining later never moves when the house began, and a past rule keeps the
@@ -53,7 +53,7 @@ const HOUSE_AT = 0;
 const FOUNDED_AT = 1;
 /** The only kinds of canon act the page writes (OFFERS): a rule proposed, a
  * position on one, how the house decides. No draw, rotation or subsidiarity,
- * whose pools canon 0.3.0 counts the house among (draw.rs:179-183,
+ * whose pools canon 0.5.0 counts the house among (draw.rs:179-183,
  * allot.rs:200-205, policy.rs:537-552), and no grant, which membership alone
  * gives. */
 export const OFFERS = Object.freeze(['assert', 'position', 'ratification']);
@@ -117,26 +117,31 @@ export function recorded(read, ours = new Set()) {
 }
 
 /** The first question, "How does your house decide its rules?" (CANON_IN_SVRNGS
- * §3), each answer a canon rule for a house of `n` people. "Most of you" and
- * "everyone" are counts, threshold's, of the house's size when it chose,
- * never `joint`'s names: canon counts only a person who has a say when they
- * speak (ratify.rs:723), so a named person who left would hold a joint rule
- * open for ever. "Most" is refused once it can no longer be reached. */
+ * §3), each answer a canon rule. "Most of you" and "everyone" are canon's
+ * share of the house, more than half of it and all of it, counted against
+ * whoever had a say when each proposal was written: a later joiner never
+ * moves the count, and once the share can no longer be reached, because
+ * enough of them objected or left, the proposal is refused, so a house that
+ * shrinks still decides, a change of its rule included (canon
+ * ratify.rs:1291-1303). canon spells those two shares `majority` and
+ * `unanimous`, its one spelling of `share:>1/2` and `share:100%`
+ * (ratify.rs:345-350, :525-528). Never a count of the house on the day it
+ * chose, which outlives the house when it shrinks. */
 export const CHOICES = Object.freeze({
-  consent: { words: 'Anyone proposes a rule, and it holds after two days unless someone objects', rule: () => ({ rule: 'consent', days: 2 }) },
-  most: { words: 'Most of you agree', rule: (n) => ({ rule: 'threshold', approve: Math.floor(n / 2) + 1, block: n - Math.floor(n / 2) }) },
-  everyone: { words: 'Everyone agrees', rule: (n) => ({ rule: 'threshold', approve: n, block: 1 }) },
+  consent: { words: 'Anyone proposes a rule, and it holds after two days unless someone objects', rule: { rule: 'consent', days: 2 } },
+  most: { words: 'Most of you agree', rule: { rule: 'majority' } },
+  everyone: { words: 'Everyone agrees', rule: { rule: 'unanimous' } },
 });
 
-/** The act that says how the house decides, chosen as `choice` by a house of
- * `n` people: the whole house's rule, written with no scope, since a rule for
- * a scope never reaches a rule proposed with none (ratify.rs:471-475), and
- * itself a rule the house can change, judged by the rule it replaces. There
- * is no default: until someone answers, the page asks. */
-export function decide(choice, n) {
+/** The act that says how the house decides, chosen as `choice`: the whole
+ * house's rule, written with no scope, since a rule for a scope never
+ * reaches a rule proposed with none (ratify.rs:812-816), and itself a rule
+ * the house can change, judged by the rule it replaces. There is no
+ * default: until someone answers, the page asks. */
+export function decide(choice) {
   const c = CHOICES[choice];
-  if (!c || !(n > 0)) throw new Error(`no way to decide called ${choice} for ${n} people`);
-  return { op: 'ratification', text: `${c.words}.`, rule: c.rule(n) };
+  if (!c) throw new Error(`no way to decide called ${choice}`);
+  return { op: 'ratification', text: `${c.words}.`, rule: { ...c.rule } };
 }
 
 /** A rule proposed, `text` its words. */
@@ -154,10 +159,15 @@ export function payload(act) {
   return { kind: 'act', app: 'canon', act };
 }
 
-/** Everything the page shows, canon's answers read at `now` from what
- * `svrngs/acts` answered (`read`): `{unsettled}` when svrngs cannot say who
- * stood when (#124), never an empty house. */
-export function fold(call, read, now) {
+/** Everything the page shows, canon's answers read from what `svrngs/acts`
+ * answered (`read`) at `asked`, or at the newest act handed to canon when
+ * that is later: svrngs times a new act after every act it holds
+ * (crates/svrngs-core/src/command.rs:243-250), so one written in the second
+ * of another is ahead of the browser's clock, and canon asked before it
+ * says it passed a change yet keeps the old rule (#206). One answer, one
+ * clock. `{unsettled}` when svrngs cannot say who stood when (#124), never
+ * an empty house. */
+export function fold(call, read, asked) {
   if (!Array.isArray(read.spans)) return { unsettled: true };
   const members = membership(call, read.group, read.spans);
   const ours = new Set(members.map((l) => JSON.parse(l).id));
@@ -176,6 +186,7 @@ export function fold(call, read, now) {
     lines.push(line);
   }
   const acts = [...members, ...lines].join('\n');
+  const now = Math.max(asked, ...[...members, ...lines].map((l) => JSON.parse(l).ts_unix));
   // canon leaves an empty list out of its answer.
   const canon = { commitments: [], ratifications: [], positions: [], unattended: [], bootstrap: [], ungoverned: [], ...call({ call: 'derive', acts, now }) };
   const whose = (id) => who[id] ?? null;

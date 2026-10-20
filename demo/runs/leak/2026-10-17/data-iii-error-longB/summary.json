@@ -1,0 +1,209 @@
+{
+ "cond": "iii-error-longB",
+ "n": 25,
+ "log": "error",
+ "env": [],
+ "b_secs": 300.0,
+ "bin": "/home/alexbryan/twentyfive/svrngs",
+ "started": 1792286873.0700016,
+ "cores": 32,
+ "shared": 24,
+ "phases": {
+  "A": [
+   1792286892.49,
+   1792287012.49
+  ],
+  "B": [
+   1792287012.49,
+   1792287312.491
+  ],
+  "C": [
+   1792287312.491,
+   1792287372.491
+  ],
+  "D": [
+   1792287372.492,
+   1792287432.492
+  ],
+  "E": [
+   1792287432.492,
+   1792287492.492
+  ]
+ },
+ "result": {
+  "A": {
+   "secs": 119.0,
+   "rss_kib": [
+    66572,
+    68312
+   ],
+   "anon_kib": [
+    42640,
+    44380
+   ],
+   "hwm_kib": 68312,
+   "grew_kib": 1740,
+   "reads": 0,
+   "errors": 0,
+   "kib_per_read": null,
+   "cpu_pct": 1.0,
+   "threads": [
+    66,
+    66
+   ],
+   "fds": [
+    20,
+    20
+   ],
+   "log_bytes": [
+    0,
+    0
+   ],
+   "aiko_rss_kib": [
+    37416,
+    50572
+   ]
+  },
+  "B": {
+   "secs": 299.0,
+   "rss_kib": [
+    68716,
+    3422160
+   ],
+   "anon_kib": [
+    44820,
+    3398228
+   ],
+   "hwm_kib": 3422160,
+   "grew_kib": 3353444,
+   "reads": 290188,
+   "errors": 0,
+   "kib_per_read": 11.56,
+   "cpu_pct": 205.4,
+   "threads": [
+    66,
+    66
+   ],
+   "fds": [
+    21,
+    21
+   ],
+   "log_bytes": [
+    0,
+    0
+   ],
+   "aiko_rss_kib": [
+    50656,
+    73784
+   ],
+   "kib_per_read_first_third": 13.08,
+   "kib_per_read_last_third": 9.56
+  },
+  "C": {
+   "secs": 59.0,
+   "rss_kib": [
+    3436180,
+    3436356
+   ],
+   "anon_kib": [
+    3412248,
+    3412424
+   ],
+   "hwm_kib": 3436356,
+   "grew_kib": 176,
+   "reads": 0,
+   "errors": 0,
+   "kib_per_read": null,
+   "cpu_pct": 0.7,
+   "threads": [
+    66,
+    66
+   ],
+   "fds": [
+    20,
+    19
+   ],
+   "log_bytes": [
+    0,
+    0
+   ],
+   "aiko_rss_kib": [
+    73800,
+    74364
+   ]
+  },
+  "D": {
+   "secs": 59.0,
+   "rss_kib": [
+    3436396,
+    3436576
+   ],
+   "anon_kib": [
+    3412464,
+    3412644
+   ],
+   "hwm_kib": 3436576,
+   "grew_kib": 180,
+   "reads": 448060,
+   "errors": 0,
+   "kib_per_read": 0.0,
+   "cpu_pct": 37.9,
+   "threads": [
+    66,
+    66
+   ],
+   "fds": [
+    19,
+    20
+   ],
+   "log_bytes": [
+    0,
+    0
+   ],
+   "aiko_rss_kib": [
+    74380,
+    74892
+   ],
+   "kib_per_read_first_third": 0.0,
+   "kib_per_read_last_third": 0.0
+  },
+  "E": {
+   "secs": 59.0,
+   "rss_kib": [
+    3436660,
+    3436744
+   ],
+   "anon_kib": [
+    3412728,
+    3412812
+   ],
+   "hwm_kib": 3436744,
+   "grew_kib": 84,
+   "reads": 0,
+   "errors": 0,
+   "kib_per_read": null,
+   "cpu_pct": 0.9,
+   "threads": [
+    66,
+    66
+   ],
+   "fds": [
+    19,
+    20
+   ],
+   "log_bytes": [
+    0,
+    0
+   ],
+   "aiko_rss_kib": [
+    74892,
+    75684
+   ]
+  }
+ },
+ "verdict": "ran",
+ "ended": 1792287493.9951427,
+ "stopped": "{\"keepers\": {\"found\": \"stopped\", \"start\": \"stopped\"}, \"killed_after\": []}",
+ "founder_log_bytes": 0,
+ "cleaned": "{\"removed\": \"/home/alexbryan/twentyfive/leak/w-iii-error-longB\"}"
+}

@@ -1,4 +1,4 @@
-//! The conformance canary (DESIGN §8, "The canaries"; the u5-2 row): the
+//! The conformance canary (DESIGN §5, "The canaries"; the u5-2 row): the
 //! web carried whole to whoever opens a lend, every way a group opens one.
 //! Sam's computer founds the group, and Bo's and Alex's are in it; Sam and
 //! Bo each lend the canary (`apps/web-conformance`), each with a secret of
@@ -700,7 +700,7 @@ const LENDERS: &str = "sams-key-to-its-accounts-43";
 
 in_both_engines!(
     /// A second app on a lend's sign-in, no line of the door's knowing it
-    /// (mwp-4; DESIGN §3, "The room", call 6, bar 4). Sam lends the canary
+    /// (mwp-4; DESIGN §3, "The room", call 6; PLAN §4, "The sign-in made production", bar 4). Sam lends the canary
     /// with accounts as `accounts`, its sign-in `answer.mjs`; Alex opens it
     /// from Alex's phone and Bo from Bo's computer. Each is signed in as
     /// themselves with nothing typed: the canary's page names its person's

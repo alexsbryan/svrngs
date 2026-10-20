@@ -7,6 +7,15 @@ use std::process::ExitCode;
 
 use svrngs::cli;
 
+// Linux's release is musl as zig builds it (scripts/build-release.sh), and
+// that malloc kept about 20 KiB of each read of what a 25-computer group
+// lends, 90 KiB at one read a second, and gave none back: 67 to 682 MiB in
+// a minute of reads. glibc, rustc's own musl and macOS kept under 0.2 KiB a
+// read, and zig's musl under mimalloc none (demo/runs/leak/2026-10-17/).
+#[cfg(target_env = "musl")]
+#[global_allocator]
+static ALLOCATOR: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 fn main() -> ExitCode {
     // `error` by default: what a person reads is the command's own words,
     // and a trace may use any (DESIGN §1). RUST_LOG=debug shows every

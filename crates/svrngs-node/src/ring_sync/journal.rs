@@ -28,7 +28,7 @@ pub struct RoundMembers {
 impl RoundMembers {
     /// The members a round dials, each a `(name, contact)`: its key and
     /// the relay its group names (relay-in-record). With no presence
-    /// (DESIGN §8, "Four facts") none is skipped as offline: an offline
+    /// (PLAN §4, U1's "No presence") none is skipped as offline: an offline
     /// member costs its dial.
     pub fn of(members: Vec<(String, Contact)>) -> Self {
         let exchanged_with = members.iter().map(|(name, _)| name.clone()).collect();

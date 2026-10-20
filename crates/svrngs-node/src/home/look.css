@@ -110,3 +110,34 @@ p.bad:empty { display: none; }
 form { display: grid; gap: 0.5rem; justify-items: start; }
 #lent button { width: 100%; text-align: left; }
 #line { user-select: all; }
+
+/* A group on a screen (home.js `screen`), read across a room: the group's
+   band across the top with its count, its door down the left two thirds,
+   what arrived since the screen opened down the last third, the legend
+   under both (the Draft 2 canvas's frames 8-10). Sized by the screen, so a
+   TV, a laptop and a projector each fill theirs. */
+body.screen { max-width: none; height: 100vh; margin: 0; padding: 0; overflow: hidden; font-size: 1.4vw; }
+body.screen #intro, body.screen #terminal { display: none; }
+body.screen main, body.screen section { height: 100%; }
+body.screen section { display: grid; grid-template: "name count" auto "door since" minmax(0, 1fr) "foot foot" auto / 2fr 1fr; padding: 0; border: 0; }
+body.screen section > h2 { grid-area: name; margin: 0; padding: 1.4vw 2vw 1vw; border: 0; border-bottom: var(--rule); font-size: 5.5vw; line-height: 0.85; letter-spacing: -0.055em; }
+body.screen section > h2 small { font-size: 1.1vw; }
+body.screen section > p { grid-area: count; display: flex; align-items: flex-end; max-width: none; margin: 0; padding: 1.4vw 2vw 1.2vw; border-bottom: var(--rule); background: var(--group); color: var(--on-colour); font-family: var(--mono); font-size: 1.3vw; }
+body.screen section > div { grid-area: door; overflow: hidden; padding: 1.2vw 1.4vw; border-right: var(--rule); }
+body.screen ul.door { grid-template-columns: repeat(5, minmax(0, 1fr)); grid-auto-rows: 7.4vw; gap: 0.6vw; margin: 0; }
+body.screen ul.door li { position: relative; overflow: hidden; padding: 0.5vw 0.6vw; border-width: 3px; font-size: 1.25vw; line-height: 1.2; }
+body.screen ul.door li strong { display: block; margin-bottom: 0.3vw; font-size: 1.75vw; font-weight: 800; line-height: 1; letter-spacing: -0.02em; }
+body.screen ul.door li a { margin-right: 0.4vw; font-weight: 600; }
+body.screen ul.door li.on a { color: var(--on-colour); }
+body.screen ul.door li small { position: absolute; bottom: 0.5vw; left: 0.6vw; font-family: var(--mono); font-size: 0.85vw; }
+body.screen aside { grid-area: since; overflow: hidden; padding: 1.2vw 1.4vw; }
+body.screen aside h2 { margin: 0 0 0.3vw; font-size: 2.1vw; }
+body.screen aside > p, body.screen footer { font-family: var(--mono); font-size: 0.85vw; }
+body.screen aside ol { margin: 0.4vw 0 0; padding: 0; list-style: none; border-top: var(--rule); }
+body.screen aside li { padding: 0.25vw 0; font-size: 1.3vw; }
+body.screen aside ol + p { font-family: var(--face); font-size: 1.35vw; }
+body.screen aside ol:not(:empty) + p { display: none; }
+body.screen time { display: inline-block; min-width: 4.6em; font-family: var(--mono); font-size: 0.8em; }
+body.screen mark { padding: 0 0.3em; background: hotpink; color: var(--on-colour); font-family: var(--mono); font-size: 0.65em; font-weight: 400; vertical-align: 0.2em; }
+body.screen footer { grid-area: foot; display: flex; justify-content: space-between; gap: 2vw; padding: 0.6vw 2vw; border-top: var(--rule); }
+body.screen footer p { max-width: none; margin: 0; }

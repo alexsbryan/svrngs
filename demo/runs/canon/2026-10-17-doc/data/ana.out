@@ -1,0 +1,9 @@
+Made Elm, with you as Ana.
+Send this link to the people you want in it. It works for a day, while this computer is on:
+
+  svrngs://join/<the token>
+
+Elm's folder is /tmp/house/ana/svrngs/Elm: what anyone in Elm puts there reaches this computer, and what you put there reaches theirs.
+
+Leave this running; Ctrl-C stops it.
+http://svrngs.localhost:59761

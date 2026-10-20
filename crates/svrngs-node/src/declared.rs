@@ -3,7 +3,7 @@
 //! Headers this node adds to requests reaching a service it lends: the
 //! lender's own credential for its own service, which the member door
 //! injects after it has set who is asking, and which never leaves this
-//! computer (DESIGN §3, §8 U3's inventory, its declared.rs row). It is never
+//! computer (DESIGN §3; PLAN §4, U3's inventory, its declared.rs row). It is never
 //! logged, and never in the record: the record is copied to every member.
 //!
 //! Layout, one directory per lend, under the data dir

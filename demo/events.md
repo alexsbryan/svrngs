@@ -315,7 +315,7 @@ keep it up (the run's README, finding 4); not run.
 ## The demo: bars, proposed
 
 Written 2026-10-14 for the launch story (the operator: "so many stories
-start with an event, who was invited and who actually came"). DESIGN §8
+start with an event, who was invited and who actually came"). PLAN §4
 names this demo.
 
 Gate (the seat's proposal, the operator's to set): **Sam**, with the app

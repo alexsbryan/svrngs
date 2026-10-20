@@ -1,0 +1,13 @@
+The wall, from the Mac: ssh -N -L 46083:127.0.0.1:46083 alexbryan@fedora
+  then open http://svrngs.localhost:46083/
+0. preconditions        passed           {}
+1. every join in        failed           {"in": 24, "of": 24, "not_in": [], "median_s": 3.32, "max_s": 3.43}
+2. lit on the wall      passed           {"never_lit": [], "median_s": 3.79, "max_s": 4.24}
+3. lend on the wall     passed           {"never_listed": [], "share_failed": [], "median_s": 0.48, "max_s": 1.47}
+4. wall settles         passed           {"after_last_join_s": 3.33, "bound_s": 30}
+5. wall reads settled   passed           {"reads": 20, "p50_ms": 2, "p95_ms": 3, "max_ms": 7, "all_reads": 40, "p50_ms_whole_run": 2}
+6. matrix whole         passed           {"after_last_share_s": 27.07, "rounds": 1}
+7. greetings right      passed           {"visits": 75, "wanted": 75, "right": 75, "same_p50_ms": 1, "far_p50_ms": null}
+8. cpu and memory       passed           {"founder_steady_pct": 0.0, "other_steady_max_pct": 0.0, "founder_burst_pct": 10.0, "rss_max_mib": 65.5, "load_max": {"linux": 9.43310546875}}
+9. mac to fedora        never-ran        {"why": "one machine only: no pair across two"}
+exit 0

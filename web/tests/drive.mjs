@@ -1,4 +1,4 @@
-// The browser half of crates/svrngs-node/tests/browser (DESIGN §8, U4): it
+// The browser half of crates/svrngs-node/tests/browser (PLAN §4, U4): it
 // serves the built page on 127.0.0.1, opens it in Playwright's headless
 // `engine` (page.mjs), and prints what the page did as one JSON line. The
 // Rust half owns the relay and the node, so every byte stays on this

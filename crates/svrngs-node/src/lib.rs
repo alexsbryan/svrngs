@@ -32,7 +32,7 @@
 
 pub use svrngs_runtime::*;
 
-// The dialling half of sync, forked in U1 (docs/DESIGN.md §8, U1's
+// The dialling half of sync, forked in U1 (docs/PLAN.md §4, U1's
 // inventory): the sync bodies (`sovereign-peer-wire`), the one ALPN, the
 // relayed endpoint (`mesh-reach::guest`; its loopback bridge cut, arch-peer), and the
 // client side of the dial-by-key transport (`commonwealth-transport::iroh`).
@@ -48,7 +48,7 @@ pub mod peer_wire;
 // Every relay URL without the DNS root's dot, so WebKit reaches it (u4-9).
 pub mod relay;
 
-// Ring sync and its route, forked in U1 (docs/DESIGN.md §8, U1's inventory):
+// Ring sync and its route, forked in U1 (docs/PLAN.md §4, U1's inventory):
 // the round and the exchange (`commonwealth-rails`' `ring_sync`), and the sync
 // route (`ring_routes.rs`), which a caller serves as an `axum::Router`.
 pub mod ring_routes;
@@ -61,7 +61,7 @@ pub mod ring_sync;
 // second ALPN, and the joiner's call to it.
 pub mod redeem;
 
-// The record over loopback, U3's (docs/DESIGN.md §8, U3's inventory): the
+// The record over loopback, U3's (docs/PLAN.md §4, U3's inventory): the
 // rail's append, log and live doors (`commonwealth-rails`' `rail.rs`), on a
 // listener that refuses any address but loopback (its `api.rs`), and the
 // live lane's fan-out (`sovereign-daemon`'s `routes_rail_live.rs`).
@@ -83,7 +83,7 @@ pub mod room;
 // What a lend is decided from: the probe, the well-known table (v1ui-lend (a)).
 pub mod share;
 
-// The member door, U3's (docs/DESIGN.md §8, U3's inventory): the route that
+// The member door, U3's (docs/PLAN.md §4, U3's inventory): the route that
 // carries a member's request to a lend's service, the lend's declaration,
 // and the lender's secret for its own service, kept on its own computer
 // (`commonwealth-media`'s `declared.rs`).
@@ -91,7 +91,7 @@ pub mod declared;
 pub mod door;
 pub mod lend;
 
-// The node, U1's (docs/DESIGN.md §8): the rail, the endpoint, the accept loop
+// The node, U1's (docs/PLAN.md §4): the rail, the endpoint, the accept loop
 // serving the sync route and the round, in place of upstream's `RailsDaemon`.
 pub mod folder;
 // A group's seed kept on this computer, and the group kept (start-group).

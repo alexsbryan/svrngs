@@ -6,7 +6,7 @@
 //! `GET /internal/ring/checkpoint/{ns}` — what the daemon's
 //! `routes_internal::{ring_sync, ring_live, ring_checkpoint}` answer today, so
 //! the flip turns nothing off. (svrngs: the sync route came over in U1 and
-//! the live route in U3; the checkpoint route waits, DESIGN §8 and §9.)
+//! the live route in U3; the checkpoint route waits, PLAN §4 and §2.)
 //!
 //! Upstream mounted them on the internal listener beside gossip and join,
 //! under the standing `/internal/ring` prefix the endpoint registers for
@@ -20,12 +20,12 @@
 //! upstream asked whether the ring's seed named the key,
 //! `ring_sync::roster_names`; a ring this node does not hold is refused in
 //! the same words, before anything is opened, so the answer never says which
-//! rings a node holds — DESIGN §8, U1.) A request
+//! rings a node holds — PLAN §4, U1.) A request
 //! with no [`Dialer`] did not come on an iroh stream, and is refused: the
 //! route is served only there. (Upstream read the key from an
 //! `X-Mesh-Pubkey` header its acceptor stamped, and served a request with
 //! none as a process on its machine; svrngs has no loopback listener for
-//! such a process to reach, DESIGN §8, U1's inventory.)
+//! such a process to reach, PLAN §4, U1's inventory.)
 
 use std::sync::Arc;
 
@@ -44,7 +44,7 @@ use crate::register::{Member, Standing};
 use crate::ring_sync::answer;
 use crate::{RailAct, RingRail};
 
-// rail.rs's refusal body, forked with the route (DESIGN §8, U1's inventory);
+// rail.rs's refusal body, forked with the route (PLAN §4, U1's inventory);
 // each one traced, so a refusal its route does not trace still leaves one
 // (#149).
 pub(crate) fn err(status: StatusCode, msg: impl Into<String>) -> Response {

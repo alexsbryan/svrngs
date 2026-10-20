@@ -28,17 +28,19 @@ const list = (names) => (names.length < 2 ? names.join('') : `${names.slice(0, -
 // How a way of deciding reads, from the rule canon says is in force.
 function how(rule) {
   if (rule.rule === 'consent') return `Anyone proposes a rule, and it holds after ${rule.days === 1 ? 'a day' : `${rule.days} days`} unless someone objects.`;
+  if (rule.rule === 'majority') return 'A rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.';
+  if (rule.rule === 'unanimous') return 'A rule holds once everyone in your house when it was proposed agrees, and one objection stops it.';
+  if (rule.rule === 'share') return `A rule holds once ${rule.more_than ? 'more than' : 'at least'} ${rule.numerator} in ${rule.denominator} of the people in your house when it was proposed agree, whoever proposed it among them.`;
   if (rule.rule === 'threshold') return `A rule holds once ${rule.approve} of you agree, whoever proposed it among them, and ${rule.block === 1 ? 'one objection stops it' : `${rule.block} objections stop it`}.`;
   if (rule.rule === 'standing') return 'Anyone in your house makes a rule at once.';
   return 'Your house decides in a way this page can’t say yet.';
 }
 
-// The ways to decide, each with what it means for a house of `n`, to tick.
-function ways(n, name) {
+// The ways to decide, each with what it means, to tick.
+function ways(name) {
   return Object.keys(CHOICES).map((choice) => {
-    const r = decide(choice, n).rule;
-    const count = choice === 'consent' ? '' : `: ${r.approve === n ? `all ${n}` : `${r.approve} of the ${n}`} of you`;
-    return el('p', '', el('label', '', Object.assign(el('input'), { type: 'radio', name, value: choice }), ` ${CHOICES[choice].words}${count}.`));
+    const more = choice === 'consent' ? '' : ` ${how(decide(choice).rule)}`;
+    return el('p', '', el('label', '', Object.assign(el('input'), { type: 'radio', name, value: choice }), ` ${CHOICES[choice].words}.${more}`));
   });
 }
 
@@ -54,7 +56,6 @@ async function show() {
   }
   if (view.unsettled) return app.replaceChildren(el('h1', 'House rules'), el('p', 'This computer can’t yet say who is in your house, so it can’t say what your house agreed. Open this page again in a minute.'));
   const { you } = read;
-  const n = read.spans.filter((s) => s.left == null).length;
   const said = Object.assign(el('p'), { id: 'said' });
   const who = (by, via) => {
     const name = by === you ? 'you' : by;
@@ -88,8 +89,8 @@ async function show() {
       el('h1', 'House rules'),
       el('h2', 'How does your house decide its rules?'),
       el('p', 'Choose how a proposal becomes your house’s rule. Everyone in your house sees what you chose, and your house can change it later the way it decides anything.'),
-      ...ways(n, 'way'),
-      el('p', '', button('Make this how your house decides', () => (ticked('way') ? send(decide(ticked('way'), n)) : said.replaceChildren('Choose one first.')))),
+      ...ways('way'),
+      el('p', '', button('Make this how your house decides', () => (ticked('way') ? send(decide(ticked('way'))) : said.replaceChildren('Choose one first.')))),
       said,
       people,
       notes,
@@ -117,10 +118,17 @@ async function show() {
     ...view.rules.filter((c) => c.status.status === 'proposed').map((c) => el('li', '', el('p', '', el('strong', c.text)), ...voices(c))),
     ...view.changes.filter((c) => c.verdict.verdict === 'proposed').map((c) => el('li', '', el('p', '', el('strong', `Change how your house decides: ${how(c.rule)}`)), ...voices(c))),
   ];
+  // One person's objection stops it, or, under a share of the house, too
+  // many objected or left for it to be agreed; canon says which by `by`.
+  const stopped = (p, s) => {
+    if (s.by) return `${cap(who(s.by.replace(/^human:/, ''), null))} objected: “${s.why}”`;
+    const against = p.said.filter((x) => !x.agrees).map((x) => `${cap(who(x.by, x.via))}: “${x.why}”`);
+    return `Too many of you objected or left for it to be agreed.${against.length ? ` ${against.join(' ')}` : ''}`;
+  };
   const refused = [
-    ...view.rules.filter((c) => c.status.status === 'refused').map((c) => [c.text, c.status]),
-    ...view.changes.filter((c) => c.verdict.verdict === 'refused').map((c) => [`Change how your house decides: ${how(c.rule)}`, c.verdict]),
-  ].map(([text, s]) => el('li', `${text} ${s.by.replace(/^human:/, '') === you ? 'You' : s.by.replace(/^human:/, '')} objected: “${s.why}”`));
+    ...view.rules.filter((c) => c.status.status === 'refused').map((c) => [c.text, c, c.status]),
+    ...view.changes.filter((c) => c.verdict.verdict === 'refused').map((c) => [`Change how your house decides: ${how(c.rule)}`, c, c.verdict]),
+  ].map(([text, p, s]) => el('li', `${text} ${stopped(p, s)}`));
   app.replaceChildren(
     el('h1', 'House rules'),
     el('h2', 'How your house decides'),
@@ -136,7 +144,7 @@ async function show() {
       return text ? send(propose(text)) : said.replaceChildren('Write the rule first.');
     })),
     said,
-    el('details', '', el('summary', 'Change how your house decides'), el('p', 'Your house agrees to a change the way it agrees to a rule now.'), ...ways(n, 'change'), el('p', '', button('Propose this change to everyone in your house', () => (ticked('change') ? send(decide(ticked('change'), n)) : said.replaceChildren('Choose one first.'))))),
+    el('details', '', el('summary', 'Change how your house decides'), el('p', 'Your house agrees to a change the way it agrees to a rule now.'), ...ways('change'), el('p', '', button('Propose this change to everyone in your house', () => (ticked('change') ? send(decide(ticked('change'))) : said.replaceChildren('Choose one first.'))))),
     people,
     notes,
   );

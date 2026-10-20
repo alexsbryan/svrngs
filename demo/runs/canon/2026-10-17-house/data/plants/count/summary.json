@@ -1,0 +1,1151 @@
+{
+ "dee_join": {
+  "ms": 2813,
+  "asked": true,
+  "status": "You’re in Elm (Ana’s, since 17 Oct), as Dee",
+  "errors": [],
+  "logs": [
+   "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+   "debug: LAYER key: ok — the key 0aab052f0f1aa4bfa094808f155389f6ba81ae64cc534bab8f0e7b6b1508270a",
+   "debug: LAYER parse: ok — relay https://usw1-1.relay.n0.iroh.link/",
+   "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…",
+   "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 0aab052f0f1aa4bfa094808f155389f6ba81ae64cc534bab8f0e7b6b1508270a bound",
+   "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+   "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+   "debug: LAYER parse: the group names no relay for 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742, so it is dialled through the link's",
+   "debug: LAYER tls/alpn+relay: dialing 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742 on the Redeem protocol through a relay…",
+   "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742 on the Redeem protocol",
+   "debug: LAYER tls/alpn: negotiated ALPN = \"svrngs/redeem/0\"",
+   "debug: JOIN: asking the issuer what the link is for, as 0aab052f0f1aa4bfa094808f155389f6ba81ae64cc534bab8f0e7b6b1508270a",
+   "debug: HTTP: POST /ask — a bi-stream opened",
+   "debug: HTTP: POST /ask answered 200",
+   "debug: HTTP: the response has ended; finishing the request's send half",
+   "debug: HTTP: POST /ask — the stream is done",
+   "debug: JOIN: the answer is believed — the group 0b15c741832b1fc84a9bd1f2cced9efc63edc5a24d75e9db005b46ba44b839cb, a device link of None",
+   "debug: PAGE: asking the person's name to join Elm",
+   "debug: JOIN: redeeming the link as \"Dee\", 0aab052f0f1aa4bfa094808f155389f6ba81ae64cc534bab8f0e7b6b1508270a, a browser's key",
+   "debug: LAYER parse: ok — issuer 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742",
+   "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+   "debug: LAYER key: ok — the key 0aab052f0f1aa4bfa094808f155389f6ba81ae64cc534bab8f0e7b6b1508270a",
+   "debug: LAYER parse: ok — relay https://usw1-1.relay.n0.iroh.link/",
+   "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…",
+   "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 0aab052f0f1aa4bfa094808f155389f6ba81ae64cc534bab8f0e7b6b1508270a bound",
+   "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+   "error: WebSocket connection to 'wss://usw1-1.relay.n0.iroh.link/relay' failed: The operation couldn’t be completed. Socket is not connected",
+   "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+   "debug: LAYER parse: the group names no relay for 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742, so it is dialled through the link's",
+   "debug: LAYER tls/alpn+relay: dialing 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742 on the Redeem protocol through a relay…",
+   "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742 on the Redeem protocol",
+   "debug: LAYER tls/alpn: negotiated ALPN = \"svrngs/redeem/0\"",
+   "debug: HTTP: POST /redeem — a bi-stream opened",
+   "debug: HTTP: POST /redeem answered 200",
+   "debug: HTTP: the response has ended; finishing the request's send half",
+   "debug: HTTP: POST /redeem — the stream is done",
+   "debug: STORE: the sealing key absent: making one",
+   "debug: PAGE: joined 0b15c741832b1fc84a9bd1f2cced9efc63edc5a24d75e9db005b46ba44b839cb as Dee; the key is kept sealed",
+   "debug: PAGE: this tab holds 0b15c741832b1fc84a9bd1f2cced9efc63edc5a24d75e9db005b46ba44b839cb",
+   "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+   "debug: PAGE: dialling the link's computer and 0 other computer(s) at once",
+   "debug: LAYER parse: ok — issuer 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742",
+   "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+   "debug: LAYER key: ok — the key 0aab052f0f1aa4bfa094808f155389f6ba81ae64cc534bab8f0e7b6b1508270a",
+   "debug: LAYER parse: ok — relay https://usw1-1.relay.n0.iroh.link/",
+   "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+   "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 0aab052f0f1aa4bfa094808f155389f6ba81ae64cc534bab8f0e7b6b1508270a bound",
+   "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+   "error: WebSocket connection to 'wss://usw1-1.relay.n0.iroh.link/relay' failed: The operation couldn’t be completed. Socket is not connected",
+   "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+   "debug: LAYER parse: the group names no relay for 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742, so it is dialled through the link's",
+   "debug: LAYER tls/alpn+relay: dialing 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742 on the Member protocol through a relay…",
+   "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742 on the Member protocol",
+   "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+   "debug: PAGE: reached Elm through the link's computer",
+   "debug: HTTP: GET /people/lends — a bi-stream opened",
+   "debug: HTTP: GET /people/lends answered 200",
+   "debug: HTTP: the response has ended; finishing the request's send half",
+   "debug: HTTP: GET /people/lends — the stream is done",
+   "debug: PAGE: /people/lends answered, at version 1"
+  ],
+  "started": 1792284402.912
+ },
+ "group": "0b15c741832b1fc84a9bd1f2cced9efc63edc5a24d75e9db005b46ba44b839cb",
+ "computers": {
+  "Ana": "24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742",
+  "Bo": "3bf76805239701d6beebffdd5d5f34388c3945d90c97ebe73de3301d7ad7689b",
+  "Cy": "98a9f0a811f5911fb6de57f5d119eb72c6e87a5fc8758d213e6eaf2e8830296f"
+ },
+ "steps": {
+  "1": {
+   "who": "ana",
+   "ms": 617,
+   "errors": [],
+   "logs": [],
+   "started": 1792284405.73,
+   "done": [
+    {
+     "step": "{\"goto\": \"http://svrngs.localhost:49507/\"}",
+     "ms": 79,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nReading your groups…\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:49507/"
+    },
+    {
+     "step": "{\"wait\": \"Bring the ticked ones to Elm\"}",
+     "ms": 302,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nElm (yours, since 17 Oct)\nDee\nin from a phone\nAna\non now\nBo\non now\nCy\non now\n\nElm’s folder is on this computer at /tmp/elm-run/ana/svrngs/Elm\n\nOpen this folder\n\nMake a link to invite someone to ElmMake a link to add your phone or another computer of yours\n\nYou keep the order of removals in Elm. Choose who keeps it after you, then leave: \nBo\nCy\nHand it on\n\nLeaving Elm stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Elm\n\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nNobody lends anything here yet.\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Elm opens it on their own computer or phone, while any computer in Elm is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Elm\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\n\nYou lend nothing yet.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:49507/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:49507/"
+    },
+    {
+     "step": "{\"uncheck\": \"#home label:has-text('Money') input\"}",
+     "ms": 372,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nElm (yours, since 17 Oct)\nDee\nin from a phone\nAna\non now\nBo\non now\nCy\non now\n\nElm’s folder is on this computer at /tmp/elm-run/ana/svrngs/Elm\n\nOpen this folder\n\nMake a link to invite someone to ElmMake a link to add your phone or another computer of yours\n\nYou keep the order of removals in Elm. Choose who keeps it after you, then leave: \nBo\nCy\nHand it on\n\nLeaving Elm stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Elm\n\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nNobody lends anything here yet.\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Elm opens it on their own computer or phone, while any computer in Elm is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Elm\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\n\nYou lend nothing yet.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:49507/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:49507/"
+    },
+    {
+     "step": "{\"uncheck\": \"#home label:has-text('Events') input\"}",
+     "ms": 387,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nElm (yours, since 17 Oct)\nDee\nin from a phone\nAna\non now\nBo\non now\nCy\non now\n\nElm’s folder is on this computer at /tmp/elm-run/ana/svrngs/Elm\n\nOpen this folder\n\nMake a link to invite someone to ElmMake a link to add your phone or another computer of yours\n\nYou keep the order of removals in Elm. Choose who keeps it after you, then leave: \nBo\nCy\nHand it on\n\nLeaving Elm stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Elm\n\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nNobody lends anything here yet.\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in Elm opens it on their own computer or phone, while any computer in Elm is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Elm\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\n\nYou lend nothing yet.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:49507/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:49507/"
+    },
+    {
+     "step": "{\"click\": \"Bring the ticked ones to Elm\", \"until\": \"You brought|Nothing was brought|already\"}",
+     "ms": 616,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nElm (yours, since 17 Oct)\nDee\nin from a phone\nAna\non now\nBo\non now\nCy\non now\n\nElm’s folder is on this computer at /tmp/elm-run/ana/svrngs/Elm\n\nOpen this folder\n\nMake a link to invite someone to ElmMake a link to add your phone or another computer of yours\n\nYou keep the order of removals in Elm. Choose who keeps it after you, then leave: \nBo\nCy\nHand it on\n\nLeaving Elm stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Elm\n\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nNobody lends anything here yet.\nBring things to the table\n\nYou brought House rules to Elm: everyone in it can open it in a few seconds.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to Elm\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\n\nYou lend nothing yet.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:49507/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:49507/"
+    }
+   ]
+  },
+  "2": {
+   "who": "ana",
+   "ms": 573,
+   "errors": [],
+   "logs": [],
+   "started": 1792284406.953,
+   "done": [
+    {
+     "step": "{\"goto\": \"http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/\"}",
+     "ms": 115,
+     "text": "House rules\n\nReading your house’s rules…",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    },
+    {
+     "step": "{\"wait\": \"How your house decides\\\\n|How does your house decide its rules\\\\?\", \"within\": 60000}",
+     "ms": 318,
+     "text": "House rules\nHow does your house decide its rules?\n\nChoose how a proposal becomes your house’s rule. Everyone in your house sees what you chose, and your house can change it later the way it decides anything.\n\n Anyone proposes a rule, and it holds after two days unless someone objects.\n\n Most of you agree. A rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\n Everyone agrees. A rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nMake this how your house decides\n\nWho has a say\n\nEveryone in your house has a say: Dee, you, Bo and Cy.\n\nDee joined on 17 Oct.\n\nBo joined on 17 Oct.\n\nCy joined on 17 Oct.",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    },
+    {
+     "step": "{\"count\": \"input[name=way]\"}",
+     "ms": 329,
+     "text": "House rules\nHow does your house decide its rules?\n\nChoose how a proposal becomes your house’s rule. Everyone in your house sees what you chose, and your house can change it later the way it decides anything.\n\n Anyone proposes a rule, and it holds after two days unless someone objects.\n\n Most of you agree. A rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\n Everyone agrees. A rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nMake this how your house decides\n\nWho has a say\n\nEveryone in your house has a say: Dee, you, Bo and Cy.\n\nDee joined on 17 Oct.\n\nBo joined on 17 Oct.\n\nCy joined on 17 Oct.",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/",
+     "value": 3
+    },
+    {
+     "step": "{\"count\": \"input[name=way]:checked\"}",
+     "ms": 330,
+     "text": "House rules\nHow does your house decide its rules?\n\nChoose how a proposal becomes your house’s rule. Everyone in your house sees what you chose, and your house can change it later the way it decides anything.\n\n Anyone proposes a rule, and it holds after two days unless someone objects.\n\n Most of you agree. A rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\n Everyone agrees. A rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nMake this how your house decides\n\nWho has a say\n\nEveryone in your house has a say: Dee, you, Bo and Cy.\n\nDee joined on 17 Oct.\n\nBo joined on 17 Oct.\n\nCy joined on 17 Oct.",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/",
+     "value": 0
+    },
+    {
+     "step": "{\"check\": \"input[name=way][value=most]\"}",
+     "ms": 356,
+     "text": "House rules\nHow does your house decide its rules?\n\nChoose how a proposal becomes your house’s rule. Everyone in your house sees what you chose, and your house can change it later the way it decides anything.\n\n Anyone proposes a rule, and it holds after two days unless someone objects.\n\n Most of you agree. A rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\n Everyone agrees. A rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nMake this how your house decides\n\nWho has a say\n\nEveryone in your house has a say: Dee, you, Bo and Cy.\n\nDee joined on 17 Oct.\n\nBo joined on 17 Oct.\n\nCy joined on 17 Oct.",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    },
+    {
+     "step": "{\"click\": \"Make this how your house decides\", \"until\": \"How your house decides\\\\n\"}",
+     "ms": 573,
+     "text": "House rules\nHow your house decides\n\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYour house’s rules\n\nYour house has no rules yet.\n\nWhat’s proposed\n\nNothing is waiting on anyone.\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee, you, Bo and Cy.\n\nDee joined on 17 Oct.\n\nBo joined on 17 Oct.\n\nCy joined on 17 Oct.",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    }
+   ]
+  },
+  "3": {
+   "who": "ana",
+   "ms": 228,
+   "errors": [],
+   "logs": [],
+   "started": 1792284407.526,
+   "done": [
+    {
+     "step": "{\"fill\": \"#rule\", \"value\": \"Quiet hours are 10pm to 7am\"}",
+     "ms": 8,
+     "text": "House rules\nHow your house decides\n\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYour house’s rules\n\nYour house has no rules yet.\n\nWhat’s proposed\n\nNothing is waiting on anyone.\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee, you, Bo and Cy.\n\nDee joined on 17 Oct.\n\nBo joined on 17 Oct.\n\nCy joined on 17 Oct.",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    },
+    {
+     "step": "{\"click\": \"Propose this rule to everyone in your house\", \"until\": \"You proposed it on\"}",
+     "ms": 227,
+     "text": "House rules\nHow your house decides\n\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYour house’s rules\n\nYour house has no rules yet.\n\nWhat’s proposed\n\nQuiet hours are 10pm to 7am\n\nYou proposed it on 17 Oct.\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee, you, Bo and Cy.\n\nDee joined on 17 Oct.\n\nBo joined on 17 Oct.\n\nCy joined on 17 Oct.",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    }
+   ]
+  },
+  "4": {
+   "who": "dee",
+   "ms": 5533,
+   "errors": [],
+   "logs": [
+    "error: Did not parse stylesheet at 'http://localhost:49501/look.css?v=a876cbf5153c' because non CSS MIME types are not allowed in strict mode.",
+    "debug: PAGE: this tab holds 0b15c741832b1fc84a9bd1f2cced9efc63edc5a24d75e9db005b46ba44b839cb",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: PAGE: dialling the link's computer and 0 other computer(s) at once",
+    "debug: LAYER parse: ok — issuer 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key 0aab052f0f1aa4bfa094808f155389f6ba81ae64cc534bab8f0e7b6b1508270a",
+    "debug: LAYER parse: ok — relay https://usw1-1.relay.n0.iroh.link/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 0aab052f0f1aa4bfa094808f155389f6ba81ae64cc534bab8f0e7b6b1508270a bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay: dialing 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742 on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742 on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: PAGE: reached Elm through the link's computer",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: /people/lends answered, at version 1",
+    "debug: PAGE: opening ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5 at http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49501/open.html?v=a876cbf5153c, a pass to 1 lend(s) until 1792327608"
+   ],
+   "started": 1792284407.763,
+   "done": [
+    {
+     "step": "{\"poll\": \"http://localhost:49501/\", \"re\": \"House rules\\tHouse rules\", \"within\": 240000, \"every\": 10000}",
+     "ms": 824,
+     "text": "You’re in Elm (Ana’s, since 17 Oct), as Dee\n\nDee in from a phone\nAna on now\nBo on now\nCy on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nHouse rules\tHouse rules\tElm\tHere, in this tab\ton\nBring things to the table\n\nHouse rules is on the table.\n\nThese come with svrngs. Bring one, and everyone in Elm opens it on their own computer or phone, while any computer in Elm is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to Elm\n\n",
+     "url": "http://localhost:49501/"
+    },
+    {
+     "step": "{\"lent\": \"House rules\", \"until\": \"How your house decides\\\\n|How does your house decide its rules\\\\?\"}",
+     "ms": 5300,
+     "text": "House rules\n\nHow your house decides\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYour house’s rules\nYour house has no rules yet.\n\nWhat’s proposed\nQuiet hours are 10pm to 7am\n\nAna proposed it on 17 Oct.\n\nAgree Object\n\nPropose a rule\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\nEveryone in your house has a say: you, Ana, Bo and Cy.\n\nYou joined on 17 Oct.\n\nBo joined on 17 Oct.\n\nCy joined on 17 Oct.\n\n",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49501/"
+    },
+    {
+     "step": "{\"click\": \"Agree\", \"in\": \"Quiet hours are 10pm to 7am\", \"until\": \"Agreed: \"}",
+     "ms": 5533,
+     "text": "House rules\n\nHow your house decides\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYour house’s rules\nYour house has no rules yet.\n\nWhat’s proposed\nQuiet hours are 10pm to 7am\n\nAna proposed it on 17 Oct. Agreed: you, through Ana’s computer.\n\nPropose a rule\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\nEveryone in your house has a say: you, Ana, Bo and Cy.\n\nYou joined on 17 Oct.\n\nBo joined on 17 Oct.\n\nCy joined on 17 Oct.\n\n",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49501/"
+    }
+   ]
+  },
+  "5": {
+   "who": "cy",
+   "ms": 554,
+   "errors": [],
+   "logs": [],
+   "started": 1792284413.308,
+   "done": [
+    {
+     "step": "{\"goto\": \"http://wcx9bmau80ku9q08m947chsnrndrt8v93b424kl8q41v7cbtgg1tggxztlk1j5.localhost:49558/\"}",
+     "ms": 67,
+     "text": "House rules\n\nReading your house’s rules…",
+     "url": "http://wcx9bmau80ku9q08m947chsnrndrt8v93b424kl8q41v7cbtgg1tggxztlk1j5.localhost:49558/"
+    },
+    {
+     "step": "{\"wait\": \"How your house decides\\\\n|How does your house decide its rules\\\\?\", \"within\": 60000}",
+     "ms": 270,
+     "text": "House rules\nHow your house decides\n\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYour house’s rules\n\nYour house has no rules yet.\n\nWhat’s proposed\n\nQuiet hours are 10pm to 7am\n\nAna proposed it on 17 Oct. Agreed: Dee, through Ana’s computer.\n\nAgree Object\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee, Ana, Bo and you.\n\nDee joined on 17 Oct.\n\nBo joined on 17 Oct.\n\nYou joined on 17 Oct.",
+     "url": "http://wcx9bmau80ku9q08m947chsnrndrt8v93b424kl8q41v7cbtgg1tggxztlk1j5.localhost:49558/"
+    },
+    {
+     "step": "{\"read\": true}",
+     "ms": 271,
+     "text": "House rules\nHow your house decides\n\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYour house’s rules\n\nYour house has no rules yet.\n\nWhat’s proposed\n\nQuiet hours are 10pm to 7am\n\nAna proposed it on 17 Oct. Agreed: Dee, through Ana’s computer.\n\nAgree Object\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee, Ana, Bo and you.\n\nDee joined on 17 Oct.\n\nBo joined on 17 Oct.\n\nYou joined on 17 Oct.",
+     "url": "http://wcx9bmau80ku9q08m947chsnrndrt8v93b424kl8q41v7cbtgg1tggxztlk1j5.localhost:49558/"
+    },
+    {
+     "step": "{\"click\": \"Object\", \"in\": \"Quiet hours are 10pm to 7am\", \"until\": \"Why do you object\"}",
+     "ms": 314,
+     "text": "House rules\nHow your house decides\n\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYour house’s rules\n\nYour house has no rules yet.\n\nWhat’s proposed\n\nQuiet hours are 10pm to 7am\n\nAna proposed it on 17 Oct. Agreed: Dee, through Ana’s computer.\n\nAgree Object\n\nWhy do you object?  Send your objection\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee, Ana, Bo and you.\n\nDee joined on 17 Oct.\n\nBo joined on 17 Oct.\n\nYou joined on 17 Oct.",
+     "url": "http://wcx9bmau80ku9q08m947chsnrndrt8v93b424kl8q41v7cbtgg1tggxztlk1j5.localhost:49558/"
+    },
+    {
+     "step": "{\"fill\": \"input.why\", \"value\": \"I work late on Fridays\"}",
+     "ms": 316,
+     "text": "House rules\nHow your house decides\n\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYour house’s rules\n\nYour house has no rules yet.\n\nWhat’s proposed\n\nQuiet hours are 10pm to 7am\n\nAna proposed it on 17 Oct. Agreed: Dee, through Ana’s computer.\n\nAgree Object\n\nWhy do you object?  Send your objection\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee, Ana, Bo and you.\n\nDee joined on 17 Oct.\n\nBo joined on 17 Oct.\n\nYou joined on 17 Oct.",
+     "url": "http://wcx9bmau80ku9q08m947chsnrndrt8v93b424kl8q41v7cbtgg1tggxztlk1j5.localhost:49558/"
+    },
+    {
+     "step": "{\"click\": \"Send your objection\", \"until\": \"You object\"}",
+     "ms": 553,
+     "text": "House rules\nHow your house decides\n\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYour house’s rules\n\nYour house has no rules yet.\n\nWhat’s proposed\n\nQuiet hours are 10pm to 7am\n\nAna proposed it on 17 Oct. Agreed: Dee, through Ana’s computer.\n\nYou object: “I work late on Fridays”\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee, Ana, Bo and you.\n\nDee joined on 17 Oct.\n\nBo joined on 17 Oct.\n\nYou joined on 17 Oct.",
+     "url": "http://wcx9bmau80ku9q08m947chsnrndrt8v93b424kl8q41v7cbtgg1tggxztlk1j5.localhost:49558/"
+    }
+   ]
+  },
+  "6": {
+   "who": "bo",
+   "ms": 520,
+   "errors": [],
+   "logs": [],
+   "started": 1792284413.873,
+   "done": [
+    {
+     "step": "{\"goto\": \"http://js50tbldv6a7qs1n99rz413xjchdvur3bvn813376p2b4801qcqtggxztlk1j5.localhost:49542/\"}",
+     "ms": 60,
+     "text": "House rules\n\nReading your house’s rules…",
+     "url": "http://js50tbldv6a7qs1n99rz413xjchdvur3bvn813376p2b4801qcqtggxztlk1j5.localhost:49542/"
+    },
+    {
+     "step": "{\"wait\": \"How your house decides\\\\n|How does your house decide its rules\\\\?\", \"within\": 60000}",
+     "ms": 264,
+     "text": "House rules\nHow your house decides\n\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYour house’s rules\n\nYour house has no rules yet.\n\nWhat’s proposed\n\nQuiet hours are 10pm to 7am\n\nAna proposed it on 17 Oct. Agreed: Dee, through Ana’s computer.\n\nCy objects: “I work late on Fridays”\n\nAgree Object\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee, Ana, you and Cy.\n\nDee joined on 17 Oct.\n\nYou joined on 17 Oct.\n\nCy joined on 17 Oct.",
+     "url": "http://js50tbldv6a7qs1n99rz413xjchdvur3bvn813376p2b4801qcqtggxztlk1j5.localhost:49542/"
+    },
+    {
+     "step": "{\"read\": true}",
+     "ms": 264,
+     "text": "House rules\nHow your house decides\n\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYour house’s rules\n\nYour house has no rules yet.\n\nWhat’s proposed\n\nQuiet hours are 10pm to 7am\n\nAna proposed it on 17 Oct. Agreed: Dee, through Ana’s computer.\n\nCy objects: “I work late on Fridays”\n\nAgree Object\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee, Ana, you and Cy.\n\nDee joined on 17 Oct.\n\nYou joined on 17 Oct.\n\nCy joined on 17 Oct.",
+     "url": "http://js50tbldv6a7qs1n99rz413xjchdvur3bvn813376p2b4801qcqtggxztlk1j5.localhost:49542/"
+    },
+    {
+     "step": "{\"click\": \"Agree\", \"in\": \"Quiet hours are 10pm to 7am\", \"until\": \"Your house\\u2019s rules\\n+Quiet hours are 10pm to 7am\"}",
+     "ms": 519,
+     "text": "House rules\nHow your house decides\n\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (Ana proposed it on 17 Oct)\nWhat’s proposed\n\nNothing is waiting on anyone.\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee, Ana, you and Cy.\n\nDee joined on 17 Oct.\n\nYou joined on 17 Oct.\n\nCy joined on 17 Oct.",
+     "url": "http://js50tbldv6a7qs1n99rz413xjchdvur3bvn813376p2b4801qcqtggxztlk1j5.localhost:49542/"
+    }
+   ]
+  },
+  "6-ana": {
+   "who": "ana",
+   "ms": 257,
+   "errors": [],
+   "logs": [],
+   "started": 1792284414.401,
+   "done": [
+    {
+     "step": "{\"goto\": \"http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/\"}",
+     "ms": 52,
+     "text": "House rules\n\nReading your house’s rules…",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    },
+    {
+     "step": "{\"wait\": \"How your house decides\\\\n|How does your house decide its rules\\\\?\", \"within\": 60000}",
+     "ms": 256,
+     "text": "House rules\nHow your house decides\n\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (you proposed it on 17 Oct)\nWhat’s proposed\n\nNothing is waiting on anyone.\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee, you, Bo and Cy.\n\nDee joined on 17 Oct.\n\nBo joined on 17 Oct.\n\nCy joined on 17 Oct.",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    }
+   ]
+  },
+  "6-cy": {
+   "who": "cy",
+   "ms": 286,
+   "errors": [],
+   "logs": [],
+   "started": 1792284414.658,
+   "done": [
+    {
+     "step": "{\"goto\": \"http://wcx9bmau80ku9q08m947chsnrndrt8v93b424kl8q41v7cbtgg1tggxztlk1j5.localhost:49558/\"}",
+     "ms": 54,
+     "text": "House rules\n\nReading your house’s rules…",
+     "url": "http://wcx9bmau80ku9q08m947chsnrndrt8v93b424kl8q41v7cbtgg1tggxztlk1j5.localhost:49558/"
+    },
+    {
+     "step": "{\"wait\": \"How your house decides\\\\n|How does your house decide its rules\\\\?\", \"within\": 60000}",
+     "ms": 282,
+     "text": "House rules\nHow your house decides\n\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (Ana proposed it on 17 Oct)\nWhat’s proposed\n\nNothing is waiting on anyone.\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee, Ana, Bo and you.\n\nDee joined on 17 Oct.\n\nBo joined on 17 Oct.\n\nYou joined on 17 Oct.",
+     "url": "http://wcx9bmau80ku9q08m947chsnrndrt8v93b424kl8q41v7cbtgg1tggxztlk1j5.localhost:49558/"
+    }
+   ]
+  },
+  "6-dee": {
+   "who": "dee",
+   "ms": 5222,
+   "errors": [],
+   "logs": [
+    "error: Did not parse stylesheet at 'http://localhost:49501/look.css?v=a876cbf5153c' because non CSS MIME types are not allowed in strict mode.",
+    "debug: PAGE: this tab holds 0b15c741832b1fc84a9bd1f2cced9efc63edc5a24d75e9db005b46ba44b839cb",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: PAGE: dialling the link's computer and 2 other computer(s) at once",
+    "debug: LAYER parse: ok — issuer 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key 0aab052f0f1aa4bfa094808f155389f6ba81ae64cc534bab8f0e7b6b1508270a",
+    "debug: LAYER parse: ok — relay https://usw1-1.relay.n0.iroh.link/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 0aab052f0f1aa4bfa094808f155389f6ba81ae64cc534bab8f0e7b6b1508270a bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay: dialing 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742 on the Member protocol through a relay…",
+    "debug: LAYER parse: ok — 3bf76805239701d6beebffdd5d5f34388c3945d90c97ebe73de3301d7ad7689b's group names its relay https://usw1-1.relay.n0.iroh.link/",
+    "debug: LAYER tls/alpn+relay: dialing 3bf76805239701d6beebffdd5d5f34388c3945d90c97ebe73de3301d7ad7689b on the Member protocol through a relay…",
+    "debug: LAYER parse: ok — 98a9f0a811f5911fb6de57f5d119eb72c6e87a5fc8758d213e6eaf2e8830296f's group names its relay https://usw1-1.relay.n0.iroh.link/",
+    "debug: LAYER tls/alpn+relay: dialing 98a9f0a811f5911fb6de57f5d119eb72c6e87a5fc8758d213e6eaf2e8830296f on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 3bf76805239701d6beebffdd5d5f34388c3945d90c97ebe73de3301d7ad7689b on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: PAGE: reached Elm through Bo's computer",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742 on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: PAGE: a computer answered late, so closed",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 98a9f0a811f5911fb6de57f5d119eb72c6e87a5fc8758d213e6eaf2e8830296f on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: PAGE: a computer answered late, so closed",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: /people/lends answered, at version 1",
+    "debug: PAGE: opening ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5 at http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49501/open.html?v=a876cbf5153c, a pass to 1 lend(s) until 1792327615"
+   ],
+   "started": 1792284414.945,
+   "done": [
+    {
+     "step": "{\"poll\": \"http://localhost:49501/\", \"re\": \"House rules\\tHouse rules\", \"within\": 240000, \"every\": 10000}",
+     "ms": 869,
+     "text": "You’re in Elm (Ana’s, since 17 Oct), as Dee, through Bo’s computer\n\nDee in from a phone\nAna on now\nBo on now\nCy on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nHouse rules\tHouse rules\tElm\tHere, in this tab\ton\nBring things to the table\n\nHouse rules is on the table.\n\nThese come with svrngs. Bring one, and everyone in Elm opens it on their own computer or phone, while any computer in Elm is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to Elm\n\n",
+     "url": "http://localhost:49501/"
+    },
+    {
+     "step": "{\"lent\": \"House rules\", \"until\": \"How your house decides\\\\n|How does your house decide its rules\\\\?\"}",
+     "ms": 5221,
+     "text": "House rules\n\nHow your house decides\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (Ana proposed it on 17 Oct)\nWhat’s proposed\nNothing is waiting on anyone.\n\nPropose a rule\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\nEveryone in your house has a say: you, Ana, Bo and Cy.\n\nYou joined on 17 Oct.\n\nBo joined on 17 Oct.\n\nCy joined on 17 Oct.\n\n",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49501/"
+    }
+   ]
+  },
+  "7": {
+   "who": "bo",
+   "ms": 514,
+   "errors": [],
+   "logs": [],
+   "started": 1792284420.168,
+   "done": [
+    {
+     "step": "{\"goto\": \"http://svrngs.localhost:49542/\"}",
+     "ms": 70,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nReading your groups…\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:49542/"
+    },
+    {
+     "step": "{\"wait\": \"Leave Elm\"}",
+     "ms": 277,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nElm (Ana’s, since 17 Oct)\nDee\nin from a phone\nAna\non now\nBo\non now\nCy\non now\n\nElm’s folder is on this computer at /tmp/elm-run/bo/svrngs/Elm\n\nOpen this folder\n\nMake a link to invite someone to ElmMake a link to add your phone or another computer of yours\n\nLeaving Elm stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Elm\n\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen House rules\tHouse rules\tElm\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nHouse rules is on the table.\n\nThese come with svrngs. Bring one, and everyone in Elm opens it on their own computer or phone, while any computer in Elm is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to Elm\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\n\nYou lend nothing yet.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:49542/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:49542/"
+    },
+    {
+     "step": "{\"click\": \"Leave Elm\", \"until\": \"You left Elm\"}",
+     "ms": 512,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nYou left Elm. Rejoining needs a new invitation, and this computer can’t rejoin yet.\n\nGroups you left\n\nElm (Ana’s, since 17 Oct): what you have of it stays on this computer, its folder at /tmp/elm-run/bo/svrngs/Elm, and nothing new of it reaches you.\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\n\nYou lend nothing yet.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:49542/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:49542/?left=Elm"
+    }
+   ]
+  },
+  "7-ana": {
+   "who": "ana",
+   "ms": 261,
+   "errors": [],
+   "logs": [],
+   "started": 1792284422.768,
+   "done": [
+    {
+     "step": "{\"goto\": \"http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/\"}",
+     "ms": 56,
+     "text": "House rules\n\nReading your house’s rules…",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    },
+    {
+     "step": "{\"wait\": \"How your house decides\\\\n|How does your house decide its rules\\\\?\", \"within\": 60000}",
+     "ms": 260,
+     "text": "House rules\nHow your house decides\n\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (you proposed it on 17 Oct)\nWhat’s proposed\n\nNothing is waiting on anyone.\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee, you and Cy.\n\nDee joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nCy joined on 17 Oct.",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    }
+   ]
+  },
+  "7-cy": {
+   "who": "cy",
+   "ms": 261,
+   "errors": [],
+   "logs": [],
+   "started": 1792284423.031,
+   "done": [
+    {
+     "step": "{\"goto\": \"http://wcx9bmau80ku9q08m947chsnrndrt8v93b424kl8q41v7cbtgg1tggxztlk1j5.localhost:49558/\"}",
+     "ms": 55,
+     "text": "House rules\n\nReading your house’s rules…",
+     "url": "http://wcx9bmau80ku9q08m947chsnrndrt8v93b424kl8q41v7cbtgg1tggxztlk1j5.localhost:49558/"
+    },
+    {
+     "step": "{\"wait\": \"How your house decides\\\\n|How does your house decide its rules\\\\?\", \"within\": 60000}",
+     "ms": 260,
+     "text": "House rules\nHow your house decides\n\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (Ana proposed it on 17 Oct)\nWhat’s proposed\n\nNothing is waiting on anyone.\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee, Ana and you.\n\nDee joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nYou joined on 17 Oct.",
+     "url": "http://wcx9bmau80ku9q08m947chsnrndrt8v93b424kl8q41v7cbtgg1tggxztlk1j5.localhost:49558/"
+    }
+   ]
+  },
+  "7-dee": {
+   "who": "dee",
+   "ms": 4824,
+   "errors": [],
+   "logs": [
+    "error: Did not parse stylesheet at 'http://localhost:49501/look.css?v=a876cbf5153c' because non CSS MIME types are not allowed in strict mode.",
+    "debug: PAGE: this tab holds 0b15c741832b1fc84a9bd1f2cced9efc63edc5a24d75e9db005b46ba44b839cb",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: PAGE: dialling the link's computer and 2 other computer(s) at once",
+    "debug: LAYER parse: ok — issuer 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key 0aab052f0f1aa4bfa094808f155389f6ba81ae64cc534bab8f0e7b6b1508270a",
+    "debug: LAYER parse: ok — relay https://usw1-1.relay.n0.iroh.link/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 0aab052f0f1aa4bfa094808f155389f6ba81ae64cc534bab8f0e7b6b1508270a bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay: dialing 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742 on the Member protocol through a relay…",
+    "debug: LAYER parse: ok — 3bf76805239701d6beebffdd5d5f34388c3945d90c97ebe73de3301d7ad7689b's group names its relay https://usw1-1.relay.n0.iroh.link/",
+    "debug: LAYER tls/alpn+relay: dialing 3bf76805239701d6beebffdd5d5f34388c3945d90c97ebe73de3301d7ad7689b on the Member protocol through a relay…",
+    "debug: LAYER parse: ok — 98a9f0a811f5911fb6de57f5d119eb72c6e87a5fc8758d213e6eaf2e8830296f's group names its relay https://usw1-1.relay.n0.iroh.link/",
+    "debug: LAYER tls/alpn+relay: dialing 98a9f0a811f5911fb6de57f5d119eb72c6e87a5fc8758d213e6eaf2e8830296f on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742 on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: PAGE: reached Elm through the link's computer",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 3bf76805239701d6beebffdd5d5f34388c3945d90c97ebe73de3301d7ad7689b on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: PAGE: a computer answered late, so closed",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 98a9f0a811f5911fb6de57f5d119eb72c6e87a5fc8758d213e6eaf2e8830296f on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: PAGE: a computer answered late, so closed",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: /people/lends answered, at version 1",
+    "debug: PAGE: opening ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5 at http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49501/open.html?v=a876cbf5153c, a pass to 1 lend(s) until 1792327624"
+   ],
+   "started": 1792284423.293,
+   "done": [
+    {
+     "step": "{\"poll\": \"http://localhost:49501/\", \"re\": \"House rules\\tHouse rules\", \"within\": 240000, \"every\": 10000}",
+     "ms": 682,
+     "text": "You’re in Elm (Ana’s, since 17 Oct), as Dee\n\nDee in from a phone\nAna on now\nCy on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nHouse rules\tHouse rules\tElm\tHere, in this tab\ton\nBring things to the table\n\nHouse rules is on the table.\n\nThese come with svrngs. Bring one, and everyone in Elm opens it on their own computer or phone, while any computer in Elm is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to Elm\n\nBo left on Oct 17, 2026 at 5:47 PM\n",
+     "url": "http://localhost:49501/"
+    },
+    {
+     "step": "{\"lent\": \"House rules\", \"until\": \"How your house decides\\\\n|How does your house decide its rules\\\\?\"}",
+     "ms": 4822,
+     "text": "House rules\n\nHow your house decides\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (Ana proposed it on 17 Oct)\nWhat’s proposed\nNothing is waiting on anyone.\n\nPropose a rule\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\nEveryone in your house has a say: you, Ana and Cy.\n\nYou joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nCy joined on 17 Oct.\n\n",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49501/"
+    }
+   ]
+  },
+  "8": {
+   "who": "cy",
+   "ms": 30381,
+   "failed": true,
+   "errors": [],
+   "logs": [],
+   "started": 1792284428.118,
+   "done": [
+    {
+     "step": "{\"goto\": \"http://wcx9bmau80ku9q08m947chsnrndrt8v93b424kl8q41v7cbtgg1tggxztlk1j5.localhost:49558/\"}",
+     "ms": 53,
+     "text": "House rules\n\nReading your house’s rules…",
+     "url": "http://wcx9bmau80ku9q08m947chsnrndrt8v93b424kl8q41v7cbtgg1tggxztlk1j5.localhost:49558/"
+    },
+    {
+     "step": "{\"wait\": \"How your house decides\\\\n|How does your house decide its rules\\\\?\", \"within\": 60000}",
+     "ms": 256,
+     "text": "House rules\nHow your house decides\n\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (Ana proposed it on 17 Oct)\nWhat’s proposed\n\nNothing is waiting on anyone.\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee, Ana and you.\n\nDee joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nYou joined on 17 Oct.",
+     "url": "http://wcx9bmau80ku9q08m947chsnrndrt8v93b424kl8q41v7cbtgg1tggxztlk1j5.localhost:49558/"
+    },
+    {
+     "step": "{\"summary\": \"Change how your house decides\"}",
+     "ms": 279,
+     "text": "House rules\nHow your house decides\n\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (Ana proposed it on 17 Oct)\nWhat’s proposed\n\nNothing is waiting on anyone.\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\n\nYour house agrees to a change the way it agrees to a rule now.\n\n Anyone proposes a rule, and it holds after two days unless someone objects.\n\n Most of you agree. A rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\n Everyone agrees. A rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nPropose this change to everyone in your house\n\nWho has a say\n\nEveryone in your house has a say: Dee, Ana and you.\n\nDee joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nYou joined on 17 Oct.",
+     "url": "http://wcx9bmau80ku9q08m947chsnrndrt8v93b424kl8q41v7cbtgg1tggxztlk1j5.localhost:49558/"
+    },
+    {
+     "step": "{\"check\": \"input[name=change][value=everyone]\"}",
+     "ms": 301,
+     "text": "House rules\nHow your house decides\n\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (Ana proposed it on 17 Oct)\nWhat’s proposed\n\nNothing is waiting on anyone.\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\n\nYour house agrees to a change the way it agrees to a rule now.\n\n Anyone proposes a rule, and it holds after two days unless someone objects.\n\n Most of you agree. A rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\n Everyone agrees. A rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nPropose this change to everyone in your house\n\nWho has a say\n\nEveryone in your house has a say: Dee, Ana and you.\n\nDee joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nYou joined on 17 Oct.",
+     "url": "http://wcx9bmau80ku9q08m947chsnrndrt8v93b424kl8q41v7cbtgg1tggxztlk1j5.localhost:49558/"
+    },
+    {
+     "step": "{\"click\": \"Propose this change to everyone in your house\", \"until\": \"Change how your house decides: A rule holds once everyone\"}",
+     "ms": 30380,
+     "error": "Error: the page never said Change how your house decides: A rule holds once everyone within 30000 ms",
+     "text": "House rules\nHow your house decides\n\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (Ana proposed it on 17 Oct)\nWhat’s proposed\n\nChange how your house decides: A rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nYou proposed it on 17 Oct.\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee, Ana and you.\n\nDee joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nYou joined on 17 Oct.",
+     "url": "http://wcx9bmau80ku9q08m947chsnrndrt8v93b424kl8q41v7cbtgg1tggxztlk1j5.localhost:49558/"
+    }
+   ]
+  },
+  "8-ana": {
+   "who": "ana",
+   "ms": 31866,
+   "failed": true,
+   "errors": [],
+   "logs": [],
+   "started": 1792284458.507,
+   "done": [
+    {
+     "step": "{\"goto\": \"http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/\"}",
+     "ms": 54,
+     "text": "House rules\n\nReading your house’s rules…",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    },
+    {
+     "step": "{\"wait\": \"How your house decides\\\\n|How does your house decide its rules\\\\?\", \"within\": 60000}",
+     "ms": 286,
+     "text": "House rules\nHow your house decides\n\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (you proposed it on 17 Oct)\nWhat’s proposed\n\nChange how your house decides: A rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nCy proposed it on 17 Oct.\n\nAgree Object\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee, you and Cy.\n\nDee joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nCy joined on 17 Oct.",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    },
+    {
+     "step": "{\"read\": true}",
+     "ms": 287,
+     "text": "House rules\nHow your house decides\n\nA rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (you proposed it on 17 Oct)\nWhat’s proposed\n\nChange how your house decides: A rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nCy proposed it on 17 Oct.\n\nAgree Object\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee, you and Cy.\n\nDee joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nCy joined on 17 Oct.",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    },
+    {
+     "step": "{\"click\": \"Agree\", \"in\": \"Change how your house decides\"}",
+     "ms": 426,
+     "text": "House rules\nHow your house decides\n\nA rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (you proposed it on 17 Oct)\nWhat’s proposed\n\nNothing is waiting on anyone.\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee, you and Cy.\n\nDee joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nCy joined on 17 Oct.",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    },
+    {
+     "step": "{\"poll\": \"http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/\", \"re\": \"How your house decides\\\\n+A rule holds once everyone\", \"within\": 30000, \"every\": 2000}",
+     "ms": 31865,
+     "error": "Error: http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/ never said How your house decides\\n+A rule holds once everyone within 30000 ms",
+     "text": "House rules\nHow your house decides\n\nA rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (you proposed it on 17 Oct)\nWhat’s proposed\n\nNothing is waiting on anyone.\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee, you and Cy.\n\nDee joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nCy joined on 17 Oct.",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    }
+   ]
+  },
+  "8-cy": {
+   "who": "cy",
+   "ms": 282,
+   "errors": [],
+   "logs": [],
+   "started": 1792284490.388,
+   "done": [
+    {
+     "step": "{\"goto\": \"http://wcx9bmau80ku9q08m947chsnrndrt8v93b424kl8q41v7cbtgg1tggxztlk1j5.localhost:49558/\"}",
+     "ms": 55,
+     "text": "House rules\n\nReading your house’s rules…",
+     "url": "http://wcx9bmau80ku9q08m947chsnrndrt8v93b424kl8q41v7cbtgg1tggxztlk1j5.localhost:49558/"
+    },
+    {
+     "step": "{\"wait\": \"How your house decides\\\\n|How does your house decide its rules\\\\?\", \"within\": 60000}",
+     "ms": 281,
+     "text": "House rules\nHow your house decides\n\nA rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (Ana proposed it on 17 Oct)\nWhat’s proposed\n\nNothing is waiting on anyone.\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee, Ana and you.\n\nDee joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nYou joined on 17 Oct.",
+     "url": "http://wcx9bmau80ku9q08m947chsnrndrt8v93b424kl8q41v7cbtgg1tggxztlk1j5.localhost:49558/"
+    }
+   ]
+  },
+  "9": {
+   "who": "cy",
+   "ms": 523,
+   "errors": [],
+   "logs": [],
+   "started": 1792284490.671,
+   "done": [
+    {
+     "step": "{\"goto\": \"http://svrngs.localhost:49558/\"}",
+     "ms": 67,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nReading your groups…\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:49558/"
+    },
+    {
+     "step": "{\"wait\": \"Leave Elm\"}",
+     "ms": 274,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nElm (Ana’s, since 17 Oct)\nDee\nin from a phone\nAna\non now\nCy\non now\n\nElm’s folder is on this computer at /tmp/elm-run/cy/svrngs/Elm\n\nOpen this folder\n\nMake a link to invite someone to ElmMake a link to add your phone or another computer of yours\n\nLeaving Elm stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Elm\n\nBo left on Oct 17, 2026, 5:47 PM\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nOpen House rules\tHouse rules\tElm\tIn a tab. Copy its address for a program\ton\nBring things to the table\n\nHouse rules is on the table.\n\nThese come with svrngs. Bring one, and everyone in Elm opens it on their own computer or phone, while any computer in Elm is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to Elm\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\n\nYou lend nothing yet.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:49558/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:49558/"
+    },
+    {
+     "step": "{\"click\": \"Leave Elm\", \"until\": \"You left Elm\"}",
+     "ms": 522,
+     "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it. Here you see your groups and who in them is on now, open what they lend you, invite people, and lend what runs on this computer.\n\nA link you make works for a day, while this computer is on. When you make a new one, your last one lets nobody new in; everyone it let in stays.\n\nA program on this computer, such as a chat app, can use what is lent to you too: press “Copy its address for a program” beside it, then paste that where the program asks for an address.\n\nYou left Elm. Rejoining needs a new invitation, and this computer can’t rejoin yet.\n\nGroups you left\n\nElm (Ana’s, since 17 Oct): what you have of it stays on this computer, its folder at /tmp/elm-run/cy/svrngs/Elm, and nothing new of it reaches you.\n\nOpen a link from your group\n\nThe link: Open it\n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nAlready running here\n\nThis page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.\n\nLook for programs running on this computer\n\nWhat you lend\n\nYou lend nothing yet.\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:49558/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>",
+     "url": "http://svrngs.localhost:49558/?left=Elm"
+    }
+   ]
+  },
+  "9-ana": {
+   "who": "ana",
+   "ms": 284,
+   "errors": [],
+   "logs": [],
+   "started": 1792284493.27,
+   "done": [
+    {
+     "step": "{\"goto\": \"http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/\"}",
+     "ms": 59,
+     "text": "House rules\n\nReading your house’s rules…",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    },
+    {
+     "step": "{\"wait\": \"How your house decides\\\\n|How does your house decide its rules\\\\?\", \"within\": 60000}",
+     "ms": 283,
+     "text": "House rules\nHow your house decides\n\nA rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (you proposed it on 17 Oct)\nWhat’s proposed\n\nNothing is waiting on anyone.\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee and you.\n\nDee joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nCy had a say from 17 Oct until 17 Oct, when they left.",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    }
+   ]
+  },
+  "10": {
+   "who": "dee",
+   "ms": 5615,
+   "errors": [],
+   "logs": [
+    "error: Did not parse stylesheet at 'http://localhost:49501/look.css?v=a876cbf5153c' because non CSS MIME types are not allowed in strict mode.",
+    "debug: PAGE: this tab holds 0b15c741832b1fc84a9bd1f2cced9efc63edc5a24d75e9db005b46ba44b839cb",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: PAGE: dialling the link's computer and 1 other computer(s) at once",
+    "debug: LAYER parse: ok — issuer 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key 0aab052f0f1aa4bfa094808f155389f6ba81ae64cc534bab8f0e7b6b1508270a",
+    "debug: LAYER parse: ok — relay https://usw1-1.relay.n0.iroh.link/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 0aab052f0f1aa4bfa094808f155389f6ba81ae64cc534bab8f0e7b6b1508270a bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay: dialing 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742 on the Member protocol through a relay…",
+    "debug: LAYER parse: ok — 98a9f0a811f5911fb6de57f5d119eb72c6e87a5fc8758d213e6eaf2e8830296f's group names its relay https://usw1-1.relay.n0.iroh.link/",
+    "debug: LAYER tls/alpn+relay: dialing 98a9f0a811f5911fb6de57f5d119eb72c6e87a5fc8758d213e6eaf2e8830296f on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742 on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: PAGE: reached Elm through the link's computer",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 98a9f0a811f5911fb6de57f5d119eb72c6e87a5fc8758d213e6eaf2e8830296f on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: PAGE: a computer answered late, so closed",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: /people/lends answered, at version 1",
+    "debug: PAGE: opening ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5 at http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49501/open.html?v=a876cbf5153c, a pass to 1 lend(s) until 1792327694"
+   ],
+   "started": 1792284493.555,
+   "done": [
+    {
+     "step": "{\"poll\": \"http://localhost:49501/\", \"re\": \"House rules\\tHouse rules\", \"within\": 240000, \"every\": 10000}",
+     "ms": 868,
+     "text": "You’re in Elm (Ana’s, since 17 Oct), as Dee\n\nDee in from a phone\nAna on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nHouse rules\tHouse rules\tElm\tHere, in this tab\ton\nBring things to the table\n\nHouse rules is on the table.\n\nThese come with svrngs. Bring one, and everyone in Elm opens it on their own computer or phone, while any computer in Elm is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to Elm\n\nBo left on Oct 17, 2026 at 5:47 PM\nCy left on Oct 17, 2026 at 5:48 PM\n",
+     "url": "http://localhost:49501/"
+    },
+    {
+     "step": "{\"lent\": \"House rules\", \"until\": \"How your house decides\\\\n|How does your house decide its rules\\\\?\"}",
+     "ms": 5090,
+     "text": "House rules\n\nHow your house decides\nA rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (Ana proposed it on 17 Oct)\nWhat’s proposed\nNothing is waiting on anyone.\n\nPropose a rule\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\nEveryone in your house has a say: you and Ana.\n\nYou joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nCy had a say from 17 Oct until 17 Oct, when they left.\n\n",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49501/"
+    },
+    {
+     "step": "{\"summary\": \"Change how your house decides\"}",
+     "ms": 5142,
+     "text": "House rules\n\nHow your house decides\nA rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (Ana proposed it on 17 Oct)\nWhat’s proposed\nNothing is waiting on anyone.\n\nPropose a rule\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nYour house agrees to a change the way it agrees to a rule now.\n\n Anyone proposes a rule, and it holds after two days unless someone objects.\n\n Most of you agree. A rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\n Everyone agrees. A rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nPropose this change to everyone in your house\n\nWho has a say\nEveryone in your house has a say: you and Ana.\n\nYou joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nCy had a say from 17 Oct until 17 Oct, when they left.\n\n",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49501/"
+    },
+    {
+     "step": "{\"check\": \"input[name=change][value=most]\"}",
+     "ms": 5175,
+     "text": "House rules\n\nHow your house decides\nA rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (Ana proposed it on 17 Oct)\nWhat’s proposed\nNothing is waiting on anyone.\n\nPropose a rule\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nYour house agrees to a change the way it agrees to a rule now.\n\n Anyone proposes a rule, and it holds after two days unless someone objects.\n\n Most of you agree. A rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\n Everyone agrees. A rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nPropose this change to everyone in your house\n\nWho has a say\nEveryone in your house has a say: you and Ana.\n\nYou joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nCy had a say from 17 Oct until 17 Oct, when they left.\n\n",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49501/"
+    },
+    {
+     "step": "{\"click\": \"Propose this change to everyone in your house\", \"until\": \"Change how your house decides: A rule holds once more than half\"}",
+     "ms": 5613,
+     "text": "House rules\n\nHow your house decides\nA rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (Ana proposed it on 17 Oct)\nWhat’s proposed\nChange how your house decides: A rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYou, through Ana’s computer proposed it on 17 Oct.\n\nPropose a rule\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\nEveryone in your house has a say: you and Ana.\n\nYou joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nCy had a say from 17 Oct until 17 Oct, when they left.\n\n",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49501/"
+    }
+   ]
+  },
+  "10-ana": {
+   "who": "ana",
+   "ms": 31906,
+   "failed": true,
+   "errors": [],
+   "logs": [],
+   "started": 1792284499.175,
+   "done": [
+    {
+     "step": "{\"goto\": \"http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/\"}",
+     "ms": 52,
+     "text": "House rules\n\nReading your house’s rules…",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    },
+    {
+     "step": "{\"wait\": \"How your house decides\\\\n|How does your house decide its rules\\\\?\", \"within\": 60000}",
+     "ms": 256,
+     "text": "House rules\nHow your house decides\n\nA rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (you proposed it on 17 Oct)\nWhat’s proposed\n\nChange how your house decides: A rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nDee, through your computer proposed it on 17 Oct.\n\nAgree Object\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee and you.\n\nDee joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nCy had a say from 17 Oct until 17 Oct, when they left.",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    },
+    {
+     "step": "{\"read\": true}",
+     "ms": 257,
+     "text": "House rules\nHow your house decides\n\nA rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (you proposed it on 17 Oct)\nWhat’s proposed\n\nChange how your house decides: A rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nDee, through your computer proposed it on 17 Oct.\n\nAgree Object\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee and you.\n\nDee joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nCy had a say from 17 Oct until 17 Oct, when they left.",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    },
+    {
+     "step": "{\"click\": \"Agree\", \"in\": \"Change how your house decides\"}",
+     "ms": 397,
+     "text": "House rules\nHow your house decides\n\nA rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (you proposed it on 17 Oct)\nWhat’s proposed\n\nChange how your house decides: A rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nDee, through your computer proposed it on 17 Oct. Agreed: you.\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee and you.\n\nDee joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nCy had a say from 17 Oct until 17 Oct, when they left.",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    },
+    {
+     "step": "{\"poll\": \"http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/\", \"re\": \"How your house decides\\\\n+A rule holds once more than half\", \"within\": 30000, \"every\": 2000}",
+     "ms": 31905,
+     "error": "Error: http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/ never said How your house decides\\n+A rule holds once more than half within 30000 ms",
+     "text": "House rules\nHow your house decides\n\nA rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (you proposed it on 17 Oct)\nWhat’s proposed\n\nChange how your house decides: A rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nDee, through your computer proposed it on 17 Oct. Agreed: you.\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee and you.\n\nDee joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nCy had a say from 17 Oct until 17 Oct, when they left.",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    }
+   ]
+  },
+  "10-dee": {
+   "who": "dee",
+   "ms": 5224,
+   "errors": [],
+   "logs": [
+    "error: Did not parse stylesheet at 'http://localhost:49501/look.css?v=a876cbf5153c' because non CSS MIME types are not allowed in strict mode.",
+    "debug: PAGE: this tab holds 0b15c741832b1fc84a9bd1f2cced9efc63edc5a24d75e9db005b46ba44b839cb",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: PAGE: dialling the link's computer and 0 other computer(s) at once",
+    "debug: LAYER parse: ok — issuer 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key 0aab052f0f1aa4bfa094808f155389f6ba81ae64cc534bab8f0e7b6b1508270a",
+    "debug: LAYER parse: ok — relay https://usw1-1.relay.n0.iroh.link/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 0aab052f0f1aa4bfa094808f155389f6ba81ae64cc534bab8f0e7b6b1508270a bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay: dialing 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742 on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742 on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: PAGE: reached Elm through the link's computer",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: /people/lends answered, at version 1",
+    "debug: PAGE: opening ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5 at http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49501/open.html?v=a876cbf5153c, a pass to 1 lend(s) until 1792327731"
+   ],
+   "started": 1792284531.082,
+   "done": [
+    {
+     "step": "{\"poll\": \"http://localhost:49501/\", \"re\": \"House rules\\tHouse rules\", \"within\": 240000, \"every\": 10000}",
+     "ms": 860,
+     "text": "You’re in Elm (Ana’s, since 17 Oct), as Dee\n\nDee in from a phone\nAna on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nHouse rules\tHouse rules\tElm\tHere, in this tab\ton\nBring things to the table\n\nHouse rules is on the table.\n\nThese come with svrngs. Bring one, and everyone in Elm opens it on their own computer or phone, while any computer in Elm is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to Elm\n\nBo left on Oct 17, 2026 at 5:47 PM\nCy left on Oct 17, 2026 at 5:48 PM\n",
+     "url": "http://localhost:49501/"
+    },
+    {
+     "step": "{\"lent\": \"House rules\", \"until\": \"How your house decides\\\\n|How does your house decide its rules\\\\?\"}",
+     "ms": 5224,
+     "text": "House rules\n\nHow your house decides\nA rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (Ana proposed it on 17 Oct)\nWhat’s proposed\nChange how your house decides: A rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYou, through Ana’s computer proposed it on 17 Oct. Agreed: Ana.\n\nPropose a rule\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\nEveryone in your house has a say: you and Ana.\n\nYou joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nCy had a say from 17 Oct until 17 Oct, when they left.\n\n",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49501/"
+    }
+   ]
+  },
+  "11-propose": {
+   "who": "ana",
+   "ms": 514,
+   "errors": [],
+   "logs": [],
+   "started": 1792284536.307,
+   "done": [
+    {
+     "step": "{\"goto\": \"http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/\"}",
+     "ms": 50,
+     "text": "House rules\n\nReading your house’s rules…",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    },
+    {
+     "step": "{\"wait\": \"How your house decides\\\\n|How does your house decide its rules\\\\?\", \"within\": 60000}",
+     "ms": 254,
+     "text": "House rules\nHow your house decides\n\nA rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (you proposed it on 17 Oct)\nWhat’s proposed\n\nChange how your house decides: A rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nDee, through your computer proposed it on 17 Oct. Agreed: you.\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee and you.\n\nDee joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nCy had a say from 17 Oct until 17 Oct, when they left.",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    },
+    {
+     "step": "{\"fill\": \"#rule\", \"value\": \"Ana keeps the big room\"}",
+     "ms": 291,
+     "text": "House rules\nHow your house decides\n\nA rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (you proposed it on 17 Oct)\nWhat’s proposed\n\nChange how your house decides: A rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nDee, through your computer proposed it on 17 Oct. Agreed: you.\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee and you.\n\nDee joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nCy had a say from 17 Oct until 17 Oct, when they left.",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    },
+    {
+     "step": "{\"click\": \"Propose this rule to everyone in your house\", \"until\": \"Ana keeps the big room\"}",
+     "ms": 513,
+     "text": "House rules\nHow your house decides\n\nA rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (you proposed it on 17 Oct)\nWhat’s proposed\n\nAna keeps the big room\n\nYou proposed it on 17 Oct.\n\nChange how your house decides: A rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nDee, through your computer proposed it on 17 Oct. Agreed: you.\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee and you.\n\nDee joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nCy had a say from 17 Oct until 17 Oct, when they left.",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    }
+   ]
+  },
+  "11-dee": {
+   "who": "dee",
+   "ms": 5089,
+   "errors": [],
+   "logs": [
+    "error: Did not parse stylesheet at 'http://localhost:49501/look.css?v=a876cbf5153c' because non CSS MIME types are not allowed in strict mode.",
+    "debug: PAGE: this tab holds 0b15c741832b1fc84a9bd1f2cced9efc63edc5a24d75e9db005b46ba44b839cb",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: PAGE: dialling the link's computer and 0 other computer(s) at once",
+    "debug: LAYER parse: ok — issuer 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key 0aab052f0f1aa4bfa094808f155389f6ba81ae64cc534bab8f0e7b6b1508270a",
+    "debug: LAYER parse: ok — relay https://usw1-1.relay.n0.iroh.link/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 0aab052f0f1aa4bfa094808f155389f6ba81ae64cc534bab8f0e7b6b1508270a bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay: dialing 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742 on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742 on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: PAGE: reached Elm through the link's computer",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: /people/lends answered, at version 1",
+    "debug: PAGE: opening ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5 at http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49501/open.html?v=a876cbf5153c, a pass to 1 lend(s) until 1792327738"
+   ],
+   "started": 1792284537.405,
+   "done": [
+    {
+     "step": "{\"poll\": \"http://localhost:49501/\", \"re\": \"Open the new version\\\\?\", \"within\": 60000}",
+     "ms": 860,
+     "text": "You’re in Elm (Ana’s, since 17 Oct), as Dee\n\nDee in from a phone\nAna on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nHouse rules\tHouse rules\tElm\tHere, in this tab\ton\nBring things to the table\n\nHouse rules is on the table.\n\nThese come with svrngs. Bring one, and everyone in Elm opens it on their own computer or phone, while any computer in Elm is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to Elm\n\nAna changed House rules’s files on 17 Oct. Open the new version? Yes, use the new version of House rules\n\nBo left on Oct 17, 2026 at 5:47 PM\nCy left on Oct 17, 2026 at 5:48 PM\n",
+     "url": "http://localhost:49501/"
+    },
+    {
+     "step": "{\"read\": true}",
+     "ms": 861,
+     "text": "You’re in Elm (Ana’s, since 17 Oct), as Dee\n\nDee in from a phone\nAna on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nHouse rules\tHouse rules\tElm\tHere, in this tab\ton\nBring things to the table\n\nHouse rules is on the table.\n\nThese come with svrngs. Bring one, and everyone in Elm opens it on their own computer or phone, while any computer in Elm is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to Elm\n\nAna changed House rules’s files on 17 Oct. Open the new version? Yes, use the new version of House rules\n\nBo left on Oct 17, 2026 at 5:47 PM\nCy left on Oct 17, 2026 at 5:48 PM\n",
+     "url": "http://localhost:49501/"
+    },
+    {
+     "step": "{\"lent\": \"House rules\", \"until\": \"How your house decides\\\\n|How does your house decide its rules\\\\?\"}",
+     "ms": 5088,
+     "text": "House rules\n\nHow your house decides\nA rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (Ana proposed it on 17 Oct)\nWhat’s proposed\nAna keeps the big room\n\nAna proposed it on 17 Oct.\n\nAgree Object\n\nChange how your house decides: A rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYou, through Ana’s computer proposed it on 17 Oct. Agreed: Ana.\n\nPropose a rule\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\nEveryone in your house has a say: you and Ana.\n\nYou joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nCy had a say from 17 Oct until 17 Oct, when they left.\n\n",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49501/"
+    }
+   ]
+  },
+  "11-ana": {
+   "who": "ana",
+   "ms": 258,
+   "errors": [],
+   "logs": [],
+   "started": 1792284542.495,
+   "done": [
+    {
+     "step": "{\"goto\": \"http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/\"}",
+     "ms": 54,
+     "text": "House rules\n\nReading your house’s rules…",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    },
+    {
+     "step": "{\"wait\": \"How your house decides\\\\n|How does your house decide its rules\\\\?\", \"within\": 60000}",
+     "ms": 258,
+     "text": "House rules\nHow your house decides\n\nA rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (you proposed it on 17 Oct)\nWhat’s proposed\n\nAna keeps the big room\n\nYou proposed it on 17 Oct.\n\nChange how your house decides: A rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nDee, through your computer proposed it on 17 Oct. Agreed: you.\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee and you.\n\nDee joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nCy had a say from 17 Oct until 17 Oct, when they left.",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    }
+   ]
+  },
+  "11-yes": {
+   "who": "dee",
+   "ms": 5871,
+   "errors": [],
+   "logs": [
+    "error: Did not parse stylesheet at 'http://localhost:49501/look.css?v=a876cbf5153c' because non CSS MIME types are not allowed in strict mode.",
+    "debug: PAGE: this tab holds 0b15c741832b1fc84a9bd1f2cced9efc63edc5a24d75e9db005b46ba44b839cb",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: PAGE: dialling the link's computer and 0 other computer(s) at once",
+    "debug: LAYER parse: ok — issuer 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key 0aab052f0f1aa4bfa094808f155389f6ba81ae64cc534bab8f0e7b6b1508270a",
+    "debug: LAYER parse: ok — relay https://usw1-1.relay.n0.iroh.link/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 0aab052f0f1aa4bfa094808f155389f6ba81ae64cc534bab8f0e7b6b1508270a bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay: dialing 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742 on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742 on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: PAGE: reached Elm through the link's computer",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: /people/lends answered, at version 1",
+    "debug: PAGE: dialling the link's computer and 0 other computer(s) at once",
+    "debug: LAYER parse: the group names no relay for 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay: dialing 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742 on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742 on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: PAGE: reached Elm through the link's computer",
+    "debug: HTTP: POST /runs — a bi-stream opened",
+    "debug: HTTP: POST /runs answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: POST /runs — the stream is done",
+    "error: Did not parse stylesheet at 'http://localhost:49501/look.css?v=a876cbf5153c' because non CSS MIME types are not allowed in strict mode.",
+    "debug: PAGE: this tab holds 0b15c741832b1fc84a9bd1f2cced9efc63edc5a24d75e9db005b46ba44b839cb",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: PAGE: dialling the link's computer and 0 other computer(s) at once",
+    "debug: LAYER parse: ok — issuer 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key 0aab052f0f1aa4bfa094808f155389f6ba81ae64cc534bab8f0e7b6b1508270a",
+    "debug: LAYER parse: ok — relay https://usw1-1.relay.n0.iroh.link/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 0aab052f0f1aa4bfa094808f155389f6ba81ae64cc534bab8f0e7b6b1508270a bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay: dialing 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742 on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 24394256cb10a837072f824f0421ad7817cf8bc11503ddd9677efa92bf594742 on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: PAGE: reached Elm through the link's computer",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: /people/lends answered, at version 1",
+    "debug: PAGE: opening ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5 at http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49501/open.html?v=a876cbf5153c, a pass to 1 lend(s) until 1792327744"
+   ],
+   "started": 1792284542.753,
+   "done": [
+    {
+     "step": "{\"poll\": \"http://localhost:49501/\", \"re\": \"House rules\\tHouse rules\", \"within\": 240000, \"every\": 10000}",
+     "ms": 659,
+     "text": "You’re in Elm (Ana’s, since 17 Oct), as Dee\n\nDee in from a phone\nAna on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nHouse rules\tHouse rules\tElm\tHere, in this tab\ton\nBring things to the table\n\nHouse rules is on the table.\n\nThese come with svrngs. Bring one, and everyone in Elm opens it on their own computer or phone, while any computer in Elm is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to Elm\n\nAna changed House rules’s files on 17 Oct. Open the new version? Yes, use the new version of House rules\n\nBo left on Oct 17, 2026 at 5:47 PM\nCy left on Oct 17, 2026 at 5:48 PM\n",
+     "url": "http://localhost:49501/"
+    },
+    {
+     "step": "{\"wait\": \"Yes, use the new version of House rules\", \"within\": 60000}",
+     "ms": 659,
+     "text": "You’re in Elm (Ana’s, since 17 Oct), as Dee\n\nDee in from a phone\nAna on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nHouse rules\tHouse rules\tElm\tHere, in this tab\ton\nBring things to the table\n\nHouse rules is on the table.\n\nThese come with svrngs. Bring one, and everyone in Elm opens it on their own computer or phone, while any computer in Elm is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to Elm\n\nAna changed House rules’s files on 17 Oct. Open the new version? Yes, use the new version of House rules\n\nBo left on Oct 17, 2026 at 5:47 PM\nCy left on Oct 17, 2026 at 5:48 PM\n",
+     "url": "http://localhost:49501/"
+    },
+    {
+     "step": "{\"click\": \"Yes, use the new version of House rules\", \"until\": \"opens at its new version for you now\", \"within\": 60000}",
+     "ms": 1110,
+     "text": "You’re in Elm (Ana’s, since 17 Oct), as Dee\n\nDee in from a phone\nAna on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nHouse rules\tHouse rules\tElm\tHere, in this tab\ton\nBring things to the table\n\nHouse rules is on the table.\n\nThese come with svrngs. Bring one, and everyone in Elm opens it on their own computer or phone, while any computer in Elm is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to Elm\n\nHouse rules opens at its new version for you now.\n\nBo left on Oct 17, 2026 at 5:47 PM\nCy left on Oct 17, 2026 at 5:48 PM\n",
+     "url": "http://localhost:49501/"
+    },
+    {
+     "step": "{\"poll\": \"http://localhost:49501/\", \"re\": \"House rules\\tHouse rules\", \"within\": 240000, \"every\": 10000}",
+     "ms": 1736,
+     "text": "You’re in Elm (Ana’s, since 17 Oct), as Dee\n\nDee in from a phone\nAna on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nHouse rules\tHouse rules\tElm\tHere, in this tab\ton\nBring things to the table\n\nHouse rules is on the table.\n\nThese come with svrngs. Bring one, and everyone in Elm opens it on their own computer or phone, while any computer in Elm is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\nBring the ticked ones to Elm\n\nBo left on Oct 17, 2026 at 5:47 PM\nCy left on Oct 17, 2026 at 5:48 PM\n",
+     "url": "http://localhost:49501/"
+    },
+    {
+     "step": "{\"lent\": \"House rules\", \"until\": \"How your house decides\\\\n|How does your house decide its rules\\\\?\"}",
+     "ms": 5870,
+     "text": "House rules\n\nHow your house decides\nA rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (Ana proposed it on 17 Oct)\nAna keeps the big room (Ana proposed it on 17 Oct)\nWhat’s proposed\nChange how your house decides: A rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nYou, through Ana’s computer proposed it on 17 Oct. Agreed: Ana.\n\nPropose a rule\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\nEveryone in your house has a say: you and Ana.\n\nYou joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nCy had a say from 17 Oct until 17 Oct, when they left.\n\n",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49501/"
+    }
+   ]
+  },
+  "11-ana-after": {
+   "who": "ana",
+   "ms": 257,
+   "errors": [],
+   "logs": [],
+   "started": 1792284548.624,
+   "done": [
+    {
+     "step": "{\"goto\": \"http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/\"}",
+     "ms": 53,
+     "text": "House rules\n\nReading your house’s rules…",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    },
+    {
+     "step": "{\"wait\": \"How your house decides\\\\n|How does your house decide its rules\\\\?\", \"within\": 60000}",
+     "ms": 256,
+     "text": "House rules\nHow your house decides\n\nA rule holds once 3 of you agree, whoever proposed it among them, and one objection stops it.\n\nYour house’s rules\nQuiet hours are 10pm to 7am (you proposed it on 17 Oct)\nWhat’s proposed\n\nAna keeps the big room\n\nYou proposed it on 17 Oct.\n\nChange how your house decides: A rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them.\n\nDee, through your computer proposed it on 17 Oct. Agreed: you.\n\nPropose a rule\n\nYour rule:  Propose this rule to everyone in your house\n\nChange how your house decides\nWho has a say\n\nEveryone in your house has a say: Dee and you.\n\nDee joined on 17 Oct.\n\nBo had a say from 17 Oct until 17 Oct, when they left.\n\nCy had a say from 17 Oct until 17 Oct, when they left.",
+     "url": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/"
+    }
+   ]
+  }
+ },
+ "listed": {
+  "ana": {
+   "listed": true,
+   "ms": 620
+  },
+  "bo": {
+   "listed": true,
+   "ms": 622
+  },
+  "cy": {
+   "listed": true,
+   "ms": 624
+  }
+ },
+ "build": {
+  "bytes": 5679979,
+  "bo": {
+   "held": true,
+   "ms": 1213
+  },
+  "cy": {
+   "held": true,
+   "ms": 1216
+  }
+ },
+ "kinds": [
+  "House-rules"
+ ],
+ "addresses": {
+  "ana": "http://ft6xfz0nccxdrb3stljtkkqqsan69c8bcxb750njs57lgs43k7baggxztlk1j5.localhost:49507/",
+  "bo": "http://js50tbldv6a7qs1n99rz413xjchdvur3bvn813376p2b4801qcqtggxztlk1j5.localhost:49542/",
+  "cy": "http://wcx9bmau80ku9q08m947chsnrndrt8v93b424kl8q41v7cbtgg1tggxztlk1j5.localhost:49558/"
+ },
+ "reached_3": {
+  "bo": 5,
+  "cy": 2
+ },
+ "dee_act": {
+  "id": "bb213dde8e98734112265db0f2f4c9d124dcb7d931b124b937d54784ce7eeac6",
+  "person": "Ana",
+  "on_behalf_of": "Dee",
+  "ts_unix": 1792284413
+ },
+ "reached_4": {
+  "ana": 2,
+  "bo": 2,
+  "cy": 2
+ },
+ "reached_5": {
+  "ana": 7,
+  "bo": 3
+ },
+ "reached_6": {
+  "ana": 5,
+  "cy": 3
+ },
+ "held_6_ms": 5776,
+ "held_out_7": {
+  "ana": {
+   "out": true,
+   "ms": 528
+  },
+  "cy": {
+   "out": true,
+   "ms": 529
+  }
+ },
+ "reached_8": 5,
+ "reached_8_ana": 16,
+ "held_out_9": {
+  "ana": {
+   "out": true,
+   "ms": 527
+  }
+ },
+ "reached_10": 4,
+ "changed": {
+  "ana_lists": [
+   {
+    "app": "House-rules",
+    "at": 1792284537,
+    "by": "Ana",
+    "group": "0b15c741832b1fc84a9bd1f2cced9efc63edc5a24d75e9db005b46ba44b839cb"
+   }
+  ],
+  "ms": 579
+ },
+ "asked_11_ms": 5669,
+ "end_load": 5.3
+}

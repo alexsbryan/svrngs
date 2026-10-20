@@ -19,7 +19,7 @@
 //! upload it may use (u3-6); the secret is apart, in
 //! [`crate::declared`]'s store, so the file a person may show someone
 //! carries none of it. Neither enters the record: what a computer lends is
-//! asked of it, never stored (DESIGN §8, "Lends are asked, not stored"), and
+//! asked of it, never stored (DESIGN §3, "Lends are asked, not stored"), and
 //! [`Offered`] is its answer.
 
 use std::num::{NonZeroU16, NonZeroU32, NonZeroU64};
@@ -147,7 +147,7 @@ fn comparable(path: &str) -> String {
 }
 
 /// The upload a lend's lender says it may use, in bits a second: stated,
-/// never measured (DESIGN §8, "The upload is declared"), so the share the
+/// never measured (DESIGN §3, "The upload is declared"), so the share the
 /// door tells each request is a declared figure and says so.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(transparent)]
@@ -196,7 +196,7 @@ pub struct Lend {
     pub name: LendName,
     pub source: Source,
     pub kind: Kind,
-    /// How many people may use it at once (DESIGN §8, "Too many at once"):
+    /// How many people may use it at once (DESIGN §3, "Too many at once"):
     /// none when its lender names no number, and then everyone in its groups
     /// (bash-limit; the operator, 2026-10-12).
     pub limit: Option<NonZeroU16>,
