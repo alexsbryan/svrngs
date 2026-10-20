@@ -97,9 +97,15 @@ const possessive = (name) => `${name}’s`;
 function named() {
   el("title").textContent = lender ? `${possessive(lender)} doc` : "Doc";
   document.title = el("title").textContent;
-  el("night-title").textContent = lender ? `Goodnight from ${possessive(lender)} doc` : "Goodnight from this doc";
-  const who = lender ? `${possessive(lender)} computer` : "The computer lending it";
-  el("night-words").textContent = `${who} isn’t answering right now. You can keep writing: what you write stays in this browser, and joins everyone’s writing when ${lender ? who : "it"} answers again.`;
+  // The goodnight's heading and last line are svrngs's own for a lend whose
+  // computer did not answer (crates/svrngs-node/src/home/away.html, V1.1.3:
+  // "☾ {whose} window is dark" … "Goodnight from {whose}."), as is its look
+  // (index.html). Its middle is the doc's: the doc stays open, and writing
+  // goes on in it.
+  const whose = lender ? possessive(lender) : null;
+  el("night-title").textContent = whose ? `☾ ${whose} window is dark` : "☾ This window is dark";
+  el("night-words").textContent = `${whose ? `${whose} computer` : "The computer lending this doc"} didn’t answer. You can keep writing: what you write stays in this browser, and joins everyone’s writing once that computer answers.`;
+  el("night-bye").textContent = whose ? `Goodnight from ${whose}.` : "Goodnight.";
   if (you === undefined) return;
   el("you").textContent = you
     ? `You’re ${you}. Everyone here writes in it at once.`

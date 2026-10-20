@@ -36,10 +36,14 @@
         #editor .tiptap > * { padding-bottom: 1.05rem; }
       }
       .fine { font-size: 0.8rem; }
-      /* Goodnight: the lender's computer is not answering. */
-      #night { margin: 1rem 0; padding: 0.75rem 1rem 0.5rem; border: var(--rule); background: lavender; color: black; }
-      #night h2 { margin: 0 0 0.4rem; font-size: 1.6rem; font-weight: 900; line-height: 1.1; letter-spacing: -0.02em; }
-      #night .moon { font-size: 2.4rem; vertical-align: -0.2rem; }
+      /* Goodnight: the lender's computer is not answering. Its look is
+         svrngs's own for a lend whose computer did not answer
+         (crates/svrngs-node/src/home/away.html, V1.1.3): midnight blue,
+         lavender words, a gold heading, the system's type. */
+      #night { margin: 1rem 0; padding: 1.25rem 1.25rem 0.5rem; background: midnightblue; color: lavender; font-family: system-ui, sans-serif; }
+      #night h2 { margin: 0 0 1rem; color: gold; font-size: clamp(2rem, 9vw, 3.5rem); font-weight: 800; line-height: 0.95; letter-spacing: -0.04em; }
+      #night p { margin: 0 0 0.75rem; }
+      #kept:empty { display: none; }
       #back { margin: 1rem 0; padding: 0.5rem 1rem; border: var(--rule); background: palegreen; color: black; }
       #err { color: tomato; }
       /* ?wall: the doc on a projector, read across a room. */
@@ -57,9 +61,10 @@
       <p class="sub" id="you"></p>
       <p class="sub" id="here"></p>
       <section id="night" hidden role="status">
-        <h2><span class="moon" aria-hidden="true">☾</span> <span id="night-title">Goodnight from this doc</span></h2>
+        <h2 id="night-title">☾ This window is dark</h2>
         <p id="night-words"></p>
         <p id="kept"></p>
+        <p id="night-bye">Goodnight.</p>
       </section>
       <p id="back" hidden role="status"></p>
       <div class="docwrap">
