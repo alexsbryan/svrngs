@@ -1,0 +1,7 @@
+without round 0 0 <p>Friday</p><p>page 0 brings something</p><p>page 2 brings something<img class="ProseMirror-separator" alt=""><br class="ProseMirror-trailingBreak"></p><p>page 1 brings something<img class="ProseMirror-separator" alt=""><br class="ProseMirror-trailingBreak"></p>
+without round 1 0 <p><br class="ProseMirror-trailingBreak"></p><p>page 1 brings somethingFriday</p><p>page 0 brings somethingpage 2 rings somethingb</p><p><br class="ProseMirror-trailingBreak"></p>
+without round 2 0 <p>Friday</p><p>page 0 brings something</p><p>page 2 brings somethingpage 1 brings something</p><p><br class="ProseMirror-trailingBreak"></p>
+without round 3 0 <p><br class="ProseMirror-trailingBreak"></p><p>page 1 brings somethingFriday</p><p>page 0 brings something</p><p>page 2 brings something<img class="ProseMirror-separator" alt=""><br class="ProseMirror-trailingBreak"></p>
+without round 4 0 <p>Friday</p><p>page 2 brings somethingpage 1 brings something</p><p>page 0 brings something</p><p><br class="ProseMirror-trailingBreak"></p>
+without round 5 0 <p>Friday</p><p>page 2 brings something<img class="ProseMirror-separator" alt=""><br class="ProseMirror-trailingBreak"></p><p>page 0 brings something</p><p>page 1 brings something<img class="ProseMirror-separator" alt=""><br class="ProseMirror-trailingBreak"></p>
+without 0 hard break(s) in 6 rounds
