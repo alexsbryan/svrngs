@@ -119,7 +119,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # left under svrngs-core's ceiling, 90 under the repository's. guests-door
 # (b), a visit's key let in at its host's own lends as their guest, raised
 # the repository's 66, to one past where it landed: 24 left under its ceiling.
-BUDGET = {"crates/svrngs-core": 3069, ".": 16704}
+# guests-link (b), a visit made by a link in any chat and the guest's page,
+# raised svrngs-core 7 and the repository 143, to one past where it landed,
+# within the operator's "Cover both rows", at most 16,905 and 3,076
+# (2026-10-20; demo/runs/guests/2026-10-19-link/NEEDS_HUMAN.md): none left
+# under svrngs-core's ceiling, 58 under the repository's.
+BUDGET = {"crates/svrngs-core": 3076, ".": 16847}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
