@@ -143,3 +143,15 @@ Before that, `tests` failed on one test, `svrngs-node --test kept`
 cores then, from another session's release build. Run alone twice right
 after, `cargo test -p svrngs-node --test kept` passed both times (8.23 s and
 3.06 s). The close runs again under `ralph-result await`.
+
+`scripts/check.sh` again, under `ralph-result await`, begun 12:51 with the
+`doc` commits landing in the same checkout while it ran: never-ran. `tests`
+and `browser` failed: `a_page_speaks_http_through_the_door_streaming_both_ways`
+in both engines, in both runs, its 9 MB range past its 60 s
+(`crates/svrngs-node/tests/browser/main.rs:582`), and once
+`the_home_page_lends_what_runs_here::chromium` (`main.rs:3529`). Its log
+stopped at 13:18 after `joining in a browser`; the `conformance canary`
+then gave no line until the run was gone at 15:41, with no exit status.
+Run alone at f3b2faa9 right after, the four browser tests passed in 28.44 s
+(load 16.8) and the conformance canary passed in 88.56 s (load 17.0). The
+close runs a third time under `ralph-result await`.
