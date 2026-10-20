@@ -1,0 +1,22 @@
+/private/tmp/guests-econ-scratch/crates/svrngs-core/src/command.rs:40: type `Reads` is more private than the item `Command::READS`
+/private/tmp/guests-econ-scratch/crates/svrngs-core/src/lib.rs:130: unused import: `command::Reads`
+/private/tmp/guests-econ-scratch/crates/svrngs-core/src/lib.rs:143: unused import: `payload::PayloadError`
+/private/tmp/guests-econ-scratch/crates/svrngs-core/src/lib.rs:158: unused import: `sig::act_id`
+/private/tmp/guests-econ-scratch/crates/svrngs-core/src/lib.rs:162: unused import: `sig::redemption_message`
+/private/tmp/guests-econ-scratch/crates/svrngs-core/src/lib.rs:163: unused import: `sig::ring_op_message`
+/private/tmp/guests-econ-scratch/crates/svrngs-core/src/lib.rs:166: unused import: `sig::sign_ring_op`
+/private/tmp/guests-econ-scratch/crates/svrngs-core/src/lib.rs:171: unused import: `sync::NO_BUDGET`
+/private/tmp/guests-econ-scratch/crates/svrngs-core/src/lib.rs:175: unused import: `synced::NotASyncPath`
+/private/tmp/guests-econ-scratch/crates/svrngs-core/src/lib.rs:182: unused import: `view::DIGEST_V`
+/private/tmp/guests-econ-scratch/crates/svrngs-core/src/lib.rs:368: type `Payload` is more private than the item `RailAct::Record::payload`
+/private/tmp/guests-econ-scratch/crates/svrngs-core/src/lib.rs:377: type `Payload` is more private than the item `RailAct::Correct::replacement`
+/private/tmp/guests-econ-scratch/crates/svrngs-core/src/lib.rs:412: type `Redemption` is more private than the item `RailAct::Admit::invite`
+/private/tmp/guests-econ-scratch/crates/svrngs-core/src/record.rs:29: type `Reads` is more private than the item `<Append as Command>::READS`
+/private/tmp/guests-econ-scratch/crates/svrngs-core/src/register.rs:130: type `Reads` is more private than the item `<MintInvite as Command>::READS`
+/private/tmp/guests-econ-scratch/crates/svrngs-core/src/register.rs:173: type `Reads` is more private than the item `<Removal as Command>::READS`
+/private/tmp/guests-econ-scratch/crates/svrngs-core/src/register.rs:213: type `Reads` is more private than the item `<Leave as Command>::READS`
+/private/tmp/guests-econ-scratch/crates/svrngs-core/src/register.rs:278: type `Reads` is more private than the item `<HandOnTo as Command>::READS`
+/private/tmp/guests-econ-scratch/crates/svrngs-core/src/register.rs:305: type `Reads` is more private than the item `<RelayAt as Command>::READS`
+/private/tmp/guests-econ-scratch/crates/svrngs-core/src/register.rs:56: type `Reads` is more private than the item `<Redeem as Command>::READS`
+/private/tmp/guests-econ-scratch/crates/svrngs-core/src/synced.rs:131: type `Reads` is more private than the item `<SyncFolder as Command>::READS`
+build-finished success: True

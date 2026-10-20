@@ -1,0 +1,16 @@
+warning: sovereign-cli-dev binary is 27s older than the binary exec'ing it — if you changed its code, rebuild: cargo build -p sovereign-cli-dev  (silence: SOVEREIGN_NO_STALE_WARN=1)
+dry_report: loaded 66 distinct code symbols (of 1459) in 0.1s
+dry_report: exact tier found 0 clone group(s) from source (SCIP, un-deduped)
+dry_report: near pass starting — O(n²) over 66 reps on 12 threads; minutes-scale, longer under CPU load
+dry_report: near pass 6/66 rows (0s elapsed)
+dry_report: near pass 36/66 rows (0s elapsed)
+dry_report: near pass 42/66 rows (0s elapsed)
+dry_report: near pass 18/66 rows (0s elapsed)
+dry_report: near pass 30/66 rows (0s elapsed)
+dry_report: near pass 12/66 rows (0s elapsed)
+dry_report: near pass 24/66 rows (0s elapsed)
+dry_report: near pass 48/66 rows (0s elapsed)
+dry_report: near pass 54/66 rows (0s elapsed)
+dry_report: near pass 60/66 rows (0s elapsed)
+dry_report: near pass 66/66 rows (0s elapsed)
+dry_report: near pass over 66 reps → 0 edges in 0.0s (12 threads)
