@@ -123,8 +123,10 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # raised svrngs-core 7 and the repository 143, to one past where it landed,
 # within the operator's "Cover both rows", at most 16,905 and 3,076
 # (2026-10-20; demo/runs/guests/2026-10-19-link/NEEDS_HUMAN.md): none left
-# under svrngs-core's ceiling, 58 under the repository's.
-BUDGET = {"crates/svrngs-core": 3076, ".": 16847}
+# under svrngs-core's ceiling, 58 under the repository's. guests-pages (a),
+# who is visiting on the home page and its host's Stop, raised the
+# repository's 34, to one past where it landed: 24 left under its ceiling.
+BUDGET = {"crates/svrngs-core": 3076, ".": 16881}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
