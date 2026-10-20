@@ -98,8 +98,10 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # write's one way, and lowered it to one past where that landed. The screen,
 # a group on a TV or a projector (home.js `screen`), raised it by 23 to one
 # past where it landed, within the operator's "Yes, up to +30" (2026-10-18),
-# and its founder drawn first by 1 more, 24 of the 30.
-BUDGET = {"crates/svrngs-core": 3017, ".": 16577}
+# and its founder drawn first by 1 more, 24 of the 30. V1.1.3 carries
+# canon-fix (d), the page asking the next computer to answer when one's
+# answer fails (#205), and the 3 lines the operator gave it on main.
+BUDGET = {"crates/svrngs-core": 3017, ".": 16580}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
