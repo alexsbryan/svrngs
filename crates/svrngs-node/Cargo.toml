@@ -35,6 +35,11 @@ tokio = { version = "1", features = ["net", "rt", "sync", "time", "io-util", "ma
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
 hex = { workspace = true }
 rand = "0.9"
+# The lender's sign-in key: ES256 through `ring`, already in the lock
+# through rustls (SIGN_IN_WITH_SVRNGS §8 3); and base64url for the JWKS'
+# x and y. Neither is a new crate here.
+ring = "0.17"
+base64 = "0.22"
 # The serving half (U1): hyper serves the caller's axum Router on each
 # accepted iroh stream; tower's `oneshot` calls the router per request.
 axum = "0.8"
@@ -86,8 +91,6 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # The scale instrument (tests/scale.rs) reads its own processor time with
 # `getrusage`, which std does not offer; libc is already in the lock.
 libc = "0.2"
-# A door test writes a pass of the shape before sup-1 as a page then would.
-base64 = "0.22"
 
 [lints.clippy]
 empty_line_after_doc_comments = "allow"

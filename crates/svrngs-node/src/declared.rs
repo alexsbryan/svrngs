@@ -107,22 +107,41 @@ pub fn write_declared_in(dir: &Path, name: &str, value: &str) -> std::io::Result
     // as stored (ARCH 6). The file is created owner-only, so the value is
     // never in a wider file even for a moment; a file already there with
     // wider modes is narrowed after the write.
+    secret_dir(dir)?;
+    write_secret(&path, value.trim().as_bytes()).map_err(|(_, e)| e)
+}
+
+/// `dir` made, and kept 0700: the one place this node makes a secret's
+/// directory.
+pub(crate) fn secret_dir(dir: &Path) -> std::io::Result<()> {
     std::fs::create_dir_all(dir)?;
-    harden(dir, 0o700)?;
-    write_owner_only(&path, value.trim())?;
-    harden(&path, 0o600)
+    harden(dir, 0o700)
+}
+
+/// `bytes` at `path`, owner-only and whole: written to a `.<name>.partial`
+/// created 0600 and renamed into place, so no reader sees half of it, nor a
+/// value another user can read — the one way this node writes a secret
+/// (a lend's declaration, and the sign-in key). An error names the file
+/// that failed, the partial or `path`.
+pub(crate) fn write_secret(path: &Path, bytes: &[u8]) -> Result<(), (PathBuf, std::io::Error)> {
+    let name = path.file_name().unwrap_or_default().to_string_lossy();
+    let partial = path.with_file_name(format!(".{name}.partial"));
+    write_owner_only(&partial, bytes).map_err(|e| (partial.clone(), e))?;
+    harden(&partial, 0o600).map_err(|e| (partial.clone(), e))?;
+    std::fs::rename(&partial, path).map_err(|e| (path.to_path_buf(), e))?;
+    harden(path, 0o600).map_err(|e| (path.to_path_buf(), e))
 }
 
 /// `value` at `path`, the file created owner-only (0600) where the system
 /// has modes. (svrngs, lean-4: upstream wrote this, and each `harden`, once
 /// per `cfg`.)
-fn write_owner_only(path: &Path, value: &str) -> std::io::Result<()> {
+fn write_owner_only(path: &Path, value: &[u8]) -> std::io::Result<()> {
     use std::io::Write;
     let mut open = std::fs::OpenOptions::new();
     open.write(true).create(true).truncate(true);
     #[cfg(unix)]
     std::os::unix::fs::OpenOptionsExt::mode(&mut open, 0o600);
-    open.open(path)?.write_all(value.as_bytes())
+    open.open(path)?.write_all(value)
 }
 
 /// `bytes` at `path`, whole: written to `.<its name>.partial` beside it and

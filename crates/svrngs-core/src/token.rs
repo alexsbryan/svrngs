@@ -70,16 +70,7 @@ impl Claims {
         lifetime: i64,
     ) -> Self {
         let expires = issued_at.saturating_add(lifetime);
-        tracing::debug!(
-            target: "oidc",
-            iss = issuer,
-            sub = subject,
-            aud = audience,
-            group = ?group,
-            iat = issued_at,
-            exp = expires,
-            "oidc: the claims a token will carry"
-        );
+        tracing::debug!(target: "oidc", iss = issuer, sub = subject, aud = audience, ?group, iat = issued_at, exp = expires, "oidc: the claims a token will carry");
         Self {
             iss: issuer.into(),
             sub: subject.into(),
@@ -90,11 +81,6 @@ impl Claims {
             preferred_username: username.into(),
             groups: [group],
         }
-    }
-
-    /// The claims as the payload's JSON, in declaration order.
-    pub fn json(&self) -> String {
-        serde_json::to_string(self).expect("claims of strings and integers serialize")
     }
 }
 
@@ -126,30 +112,27 @@ impl Token {
         }
     }
 
-    /// The header's JSON: `{"alg":"ES256","typ":"JWT","kid":…}`.
-    pub fn header_json(&self) -> String {
-        serde_json::to_string(&Header {
+    /// `base64url(header) || "." || base64url(claims)`: what the key signs.
+    /// The header is `{"alg":"ES256","typ":"JWT","kid":…}`, In declaration
+    /// order, so a client sees the key the JWKS lists.
+    pub fn signing_input(&self) -> String {
+        let header = Header {
             alg: "ES256",
             typ: "JWT",
             kid: &self.kid,
-        })
-        .expect("a header of strings serializes")
-    }
-
-    /// `base64url(header) || "." || base64url(claims)`: what the key signs.
-    pub fn signing_input(&self) -> String {
-        let header = URL_SAFE_NO_PAD.encode(self.header_json());
-        let payload = URL_SAFE_NO_PAD.encode(self.claims.json());
+        };
+        let header = URL_SAFE_NO_PAD
+            .encode(serde_json::to_string(&header).expect("a header of strings serializes"));
+        let payload = URL_SAFE_NO_PAD.encode(
+            serde_json::to_string(&self.claims).expect("claims of strings and integers serialize"),
+        );
         alloc::format!("{header}.{payload}")
     }
 
     /// The token, with the ES256 signature over [`Self::signing_input`].
     pub fn signed(&self, signature: &[u8]) -> String {
-        alloc::format!(
-            "{}.{}",
-            self.signing_input(),
-            URL_SAFE_NO_PAD.encode(signature)
-        )
+        let input = self.signing_input();
+        alloc::format!("{input}.{}", URL_SAFE_NO_PAD.encode(signature))
     }
 }
 

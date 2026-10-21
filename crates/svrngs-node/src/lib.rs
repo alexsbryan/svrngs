@@ -100,6 +100,8 @@ pub mod invite;
 // Joining a group by its link (arch-command (a)).
 pub mod join;
 pub mod node;
+// Sign in with svrngs: the lender's ES256 key and the tokens it signs.
+pub mod oidc;
 // Removal as this computer's person asks it (U7, DESIGN §6).
 pub mod removal;
 // This build's version, which every answer a page reads carries, and the
