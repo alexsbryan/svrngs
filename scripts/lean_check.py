@@ -139,7 +139,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # one past where it landed: the operator's +24, none left.
 # V1.1.3's economizing pass, the page's possessive written in away.html, cut
 # 4 and lowered it to one past where the cut landed.
-BUDGET = {"crates/svrngs-core": 3076, ".": 16907}
+# leave-economize cut `Membership::visiting`, which only a test called,
+# and lowered both to one past where the cut landed
+# (demo/runs/economize/2026-10-21-leave/SURVEY.md). The leave rows have at
+# most +25 over that and none in svrngs-core (the operator, 2026-10-21,
+# "Pass first, then raise"): at most 16,929, svrngs-core 3,073.
+BUDGET = {"crates/svrngs-core": 3073, ".": 16904}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
