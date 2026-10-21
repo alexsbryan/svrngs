@@ -13,11 +13,15 @@ session_timeout = 5400
 # 2026-10-16: audits at the queue's end). Eight units, so a cadence of 9 never
 # comes due inside it, and ralph adds the closing audit at the end.
 audit_every = 9
+# Bare ids run through this bin; the models below are provider/model pairs,
+# so the loop runs them through opencode instead (ralph.py `model_client`).
 worker_bin = "/Users/alexsbryan/dev/commonwealth-ai/scripts/ralph-claude-shim.sh"
 settings = "ralph/claude-settings.json"
 
 [models]
-worker = "claude-opus-5-5"
-review = "claude-opus-5-5"
-resolve = "claude-opus-5-5"
+# A `provider/model` pair runs through opencode (ralph.py `model_client`), not
+# the claude shim: the operator, 2026-10-21, "Use deepseek flash".
+worker = "deepseek/deepseek-flash"
+review = "deepseek/deepseek-flash"
+resolve = "deepseek/deepseek-flash"
 variant = "high"
