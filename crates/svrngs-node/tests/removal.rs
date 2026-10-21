@@ -106,14 +106,22 @@ async fn three(dirs: &[tempfile::TempDir; 3]) -> [Node; 3] {
         start(2, &dirs[1]).await,
         start(3, &dirs[2]).await,
     ];
-    for n in &nodes {
-        n.rail().set_seed(NS, &sams()).unwrap();
+    knit(&nodes, NS, &sams(), [("ana", 2), ("bo", 3)]).await;
+    nodes
+}
+
+/// `nodes` made one group, `ns`: `seed` its seed on every copy, `admitted`
+/// admitted on the first's, each node reaching the others by address, and
+/// the others holding the group by one round each.
+async fn knit(nodes: &[Node; 3], ns: &str, seed: &Roster, admitted: [(&str, u8); 2]) {
+    for n in nodes {
+        n.rail().set_seed(ns, seed).unwrap();
     }
     let fixture = |act| svrngs_core::tests_support::Batch(vec![act]);
-    for (person, k) in [("ana", 2), ("bo", 3)] {
+    for (person, k) in admitted {
         nodes[0]
             .rail()
-            .commit(NS, &fixture(admit(person, k)))
+            .commit(ns, &fixture(admit(person, k)))
             .unwrap()
             .unwrap();
     }
@@ -130,7 +138,6 @@ async fn three(dirs: &[tempfile::TempDir; 3]) -> [Node; 3] {
             .await
             .unwrap();
     }
-    nodes
 }
 
 /// **Only the person who decides makes a removal count, and the removed
@@ -400,34 +407,7 @@ mod leave_race {
         ];
         let seed =
             Roster::new([(Person::parse("ana").unwrap(), vec![actor_of(&signing(1))])].into());
-        for n in &nodes {
-            n.rail().set_seed(NS, &seed).unwrap();
-        }
-        for (person, k) in [("kim", 2u8), ("bo", 3)] {
-            let admit = RailAct::Admit {
-                person: Person::parse(person).unwrap(),
-                key: actor_of(&signing(k)),
-                invite: None,
-            };
-            nodes[0]
-                .rail()
-                .commit(NS, &Batch(vec![admit]))
-                .unwrap()
-                .unwrap();
-        }
-        for (i, n) in nodes.iter().enumerate() {
-            for (j, m) in nodes.iter().enumerate() {
-                if i != j {
-                    n.transport()
-                        .add_known_peer(key(j as u8 + 1), loopback_sockets(m.endpoint()));
-                }
-            }
-        }
-        for n in &nodes[1..] {
-            tokio::time::timeout(Duration::from_secs(30), n.round())
-                .await
-                .unwrap();
-        }
+        knit(&nodes, NS, &seed, [("kim", 2), ("bo", 3)]).await;
         nodes
     }
 
