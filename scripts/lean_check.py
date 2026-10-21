@@ -146,7 +146,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # "Pass first, then raise"): at most 16,929, svrngs-core 3,073.
 # leave-told (b), a cut told with what it covers (#211), raised the
 # repository's 24, to one past where it landed: 1 left under the ceiling.
-BUDGET = {"crates/svrngs-core": 3073, ".": 16928}
+# oidc-economize found no cut and the operator set the oidc ceiling at +800
+# repository and +80 svrngs-core over where it left them, at most 17,728 and
+# 3,153 (CHARTER.md, 2026-10-21; demo/runs/economize/2026-10-21-oidc/
+# SURVEY.md, 4239bc7c). oidc-token's token, its key and its JWKS raised both
+# to one past where they landed: svrngs-core 3,152, the repository 17,110.
+BUDGET = {"crates/svrngs-core": 3153, ".": 17111}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
