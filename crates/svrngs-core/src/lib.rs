@@ -99,9 +99,9 @@ mod register;
 pub mod relay;
 pub mod seed;
 mod sig;
-pub mod token;
 mod sync;
 mod synced;
+pub mod token;
 mod view;
 
 use alloc::collections::{BTreeMap, BTreeSet};
