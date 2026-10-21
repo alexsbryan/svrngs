@@ -416,6 +416,19 @@ first 64 KiB. Such a page goes `no-store`, without `ETag` or
 script goes without `If-None-Match` and `If-Modified-Since`. A lend with no
 sign-in is carried as before.
 
+Beside the hook, sign in with svrngs (SIGN_IN_WITH_SVRNGS §5, §6; DESIGN §3,
+"The room", call 6): `crates/svrngs-core/src/token.rs` makes an app's claims
+from the door's identity headers — `sub` the person's key,
+`preferred_username` their account, `name` their name, `groups` `["member"]`
+or `["guest"]`, with `iss`, `aud`, `exp` and `iat`, and no `email` — their
+JSON, the `{"alg":"ES256","typ":"JWT","kid":…}` header and the base64url
+signing input, pure and `no_std`. `crates/svrngs-node/src/oidc.rs` keeps one
+ES256 key per lender's computer at `<data dir>/oidc/key.pk8`, 0600 through
+`declared::write_secret`, signs that input through `ring`, and answers the
+JWKS from the same key pair: the key a client verifies is the key that
+signed. The key is never in the record and never synced; a token is on no
+wire but the app's.
+
 A lend may ask (sup-2; DESIGN §3, "What an app gets"): `asks` in its
 declaration, its lender's words, set by `svrngs share --ask`, carried in
 `lend::Offered.asks` on every list and never read. `door/choices.rs` holds

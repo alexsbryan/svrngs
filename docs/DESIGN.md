@@ -316,7 +316,8 @@ alike:**
   one; `svrngs unshare` takes the choices with the lend.
 - *Reach for the devices in a room* ("The room").
 - *Each person signed in as themselves with nothing typed*, for a lend
-  whose lender declares a sign-in ("The room", call 6).
+  whose lender declares a sign-in, or one signed in with svrngs ("The
+  room", call 6).
 
 An app that needs anything else is a decision, not a convenience.
 
@@ -677,7 +678,13 @@ nothing more.
    out of every answer; a script first in a page — are the door's, as one
    hook a lend declares over HTTP, its *sign-in*. An app's program keeps
    only its own nouns, as the sign-in's answerer beside the service
-   (`crates/svrngs-node/src/door/sign_in.rs`):
+   (`crates/svrngs-node/src/door/sign_in.rs`). Beside the hook is
+   **sign-in with svrngs**: an app that speaks OpenID Connect names the
+   lender's svrngs once in its own settings, and the door answers it with
+   the person it already tells the app in its headers — no program per app.
+   The claims and the signing input are `svrngs_core::token`'s; the
+   lender's one ES256 key and its JWKS are `oidc.rs`'s, at
+   `<data dir>/oidc/key.pk8`, 0600, never synced.
    - *Declared by `share`.* `svrngs share <port> --sign-in <its port>` names
      a program on this computer that answers for the lend who each person is
      to it. It is kept in the lend's declaration; a node that does not know
@@ -816,9 +823,9 @@ behind — is each unit's inventory, PLAN §4. How a piece comes over:
 
 | Crate | What it is | State |
 |---|---|---|
-| `svrngs-core` | the record: acts, admission into one order, membership, the sync digest; and everything a browser's page must spell as the command and the node do — a link's token, the ask and the redemption, the protocols' names, a relay's URL, a lend's label, the pass. `no_std`, so the compiler refuses filesystem, clock, network and threads; time and keys are arguments | none |
+| `svrngs-core` | the record: acts, admission into one order, membership, the sync digest; and everything a browser's page must spell as the command and the node do — a link's token, the ask and the redemption, the protocols' names, a relay's URL, a lend's label, the pass, and a sign-in token's claims and signing input. `no_std`, so the compiler refuses filesystem, clock, network and threads; time and keys are arguments | none |
 | `svrngs-runtime` | the only owner of each group's journal on disk, its projections and its writes: the journal and its write index, the open-journal map, the register's standing | the journals |
-| `svrngs-node` | the adapters: sync and its route over iroh; redemption; the loopback record API and its live lane; the member door, its limit and shares, its sign-in and each person's choices; the list of what members lend; each lend's origin on this computer; the room door; the home page | each lend's declaration and secret, and each person's choices for it; who is using each lend now; each person's sign-in answer, in memory |
+| `svrngs-node` | the adapters: sync and its route over iroh; redemption; the loopback record API and its live lane; the member door, its limit and shares, its sign-in and each person's choices; the list of what members lend; each lend's origin on this computer; the room door; the home page; the lender's sign-in key and its JWKS | each lend's declaration and secret, and each person's choices for it; who is using each lend now; each person's sign-in answer, in memory; each lender's sign-in key |
 | `svrngs-web` | the page's dial, wasm only, in `web/` with its static shell and a workspace of its own: a browser's endpoint dialling a group's computer by key over a relay, HTTP over the dial, joining, and the worker that serves each lend at its own origin with a pass | none: the page's store holds the key, sealed; a lend's origin's store holds its pass and its cookies |
 | `svrngs` | the command and the process: `new`, `join`, `link`, `share`, `unshare`, `room`, `remove`, `handover`, `leave` and `relay`; the bare command runs the node for every group this computer holds and prints where the home page opens | a device's keys; each group's seed |
 
