@@ -1111,7 +1111,7 @@ from the journal waits in PLAN §2.
   copy, and nothing refuses it. A visit binds nothing, so a guest's key
   never stands. It ends at its `until`, at the host's `Correct` of it,
   their Stop, which another's `Correct` is not, or when the host's key is
-  cut; the act stays counted, seen (`Membership::visiting`). The lender's
+  cut; the act stays counted, seen (`Guest::live`). The lender's
   door, on the pass holders' protocol, lets in a pass a visit's key signed
   as the guest, only while the fold says the visit is live and it names
   this lend, which is the host's own, this computer's and never a carried

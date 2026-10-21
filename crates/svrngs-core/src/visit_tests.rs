@@ -41,8 +41,9 @@ fn visit(host: u8, guest: &str, fresh: u8, until: i64) -> RailAct {
 /// Who the fold says is visiting at `at`: each guest's name, their host's
 /// key and until when.
 fn visiting(a: &Admission, at: i64) -> Vec<(String, String, i64)> {
-    (a.membership().visiting(at))
-        .map(|(_, g)| (g.visit.guest.to_string(), g.host.clone(), g.visit.until))
+    let m = a.membership();
+    (m.visits.values().filter(|g| g.live(&m.cut, at)))
+        .map(|g| (g.visit.guest.to_string(), g.host.clone(), g.visit.until))
         .collect()
 }
 

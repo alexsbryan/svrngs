@@ -95,7 +95,7 @@
 //! [`GUESTS_PER_HOST`]. Otherwise it counts nowhere, on every copy, and
 //! nothing has to refuse it. A visit ends at its `until`, at its host's
 //! counting `Correct` of it, their Stop, or when the host's key is cut.
-//! [`Membership::visiting`] answers who is visiting when.
+//! [`Guest::live`] answers whether a visit is on when.
 
 use alloc::collections::{BTreeMap, BTreeSet};
 use alloc::string::String;
@@ -231,8 +231,8 @@ pub struct Membership {
     /// Cumulative as [`Self::bindings`] is; ask [`Self::relay`].
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub relays: BTreeMap<String, String>,
-    /// Each `Visit` that is one, by its id (guests-visit); ask
-    /// [`Self::visiting`]. Skipped when empty.
+    /// Each `Visit` that is one, by its id (guests-visit); ask each
+    /// [`Guest::live`] whether it is on. Skipped when empty.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub visits: BTreeMap<OpId, Guest>,
 }
@@ -382,11 +382,6 @@ impl Membership {
         let said = self.relays.get(key).filter(|_| self.standing.contains(key));
         tracing::debug!(target: "rail:membership", key, ?said, "membership: the relay the record names for a standing key");
         crate::relay::parse(said?).ok()
-    }
-
-    /// Who is visiting at `at`, each by their visit's id.
-    pub fn visiting(&self, at: i64) -> impl Iterator<Item = (&OpId, &Guest)> {
-        (self.visits.iter()).filter(move |(_, g)| g.live(&self.cut, at))
     }
 
     /// What holds `key`, if it stands now; `None` if it does not.
