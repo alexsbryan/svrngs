@@ -4,7 +4,6 @@
 use super::*;
 
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
-use base64::Engine as _;
 
 /// The person's key as the record spells an actor: 64 lowercase hex.
 const SUB: &str = "9f2c0a1b3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8";
@@ -54,12 +53,24 @@ fn the_claims_are_what_the_door_already_sends() {
     assert_eq!(payload["groups"], serde_json::json!(["member"]));
     assert!(payload.get("email").is_none(), "svrngs has no email");
 
-    let mut keys: Vec<&str> = payload.as_object().unwrap().keys().map(String::as_str).collect();
+    let mut keys: Vec<&str> = payload
+        .as_object()
+        .unwrap()
+        .keys()
+        .map(String::as_str)
+        .collect();
     keys.sort_unstable();
     assert_eq!(
         keys,
         [
-            "aud", "exp", "groups", "iat", "iss", "name", "preferred_username", "sub"
+            "aud",
+            "exp",
+            "groups",
+            "iat",
+            "iss",
+            "name",
+            "preferred_username",
+            "sub"
         ],
         "the claims are exactly what the door already sends, and nothing it does not"
     );
@@ -69,7 +80,8 @@ fn the_claims_are_what_the_door_already_sends() {
 #[test]
 fn a_guest_is_a_guest() {
     let token = Token::new(claims(Group::Guest), "a-kid");
-    let (_, payload) = token.signing_input().split_once('.').unwrap();
+    let input = token.signing_input();
+    let (_, payload) = input.split_once('.').unwrap();
     let payload = decoded(payload);
     assert_eq!(payload["groups"], serde_json::json!(["guest"]));
     assert_eq!(payload["sub"], SUB);
