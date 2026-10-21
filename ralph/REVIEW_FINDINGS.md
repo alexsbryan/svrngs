@@ -11500,7 +11500,7 @@ at each):
 | commit | the repository's cap | svrngs-core's | for |
 |---|---|---|---|
 | 34d6e287, range start | 16,564 | 3,009 | |
-| 61a06614, b7be71c3 | → 16,559 | 3,009 | mimalloc's lines and the home page's one reader, each a cut ratcheted |
+| 61a06614, b7be71c3 | → 16,559 | 3,009 | the door's one dialer guard (23c182ae, −3) less mimalloc's one line, then the home page's one reader, each ratcheted |
 | 7a385472, 2bebba22 | → 16,583 | 3,009 | a group on a screen, its founder first |
 | 50071696, guests-economize (c) | → 16,578 | 3,009 | the cut, ratcheted |
 | d31f39e1, guests-visit (b) | → 16,638 | → 3,069 | a visit folded beside membership |
