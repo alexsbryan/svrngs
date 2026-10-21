@@ -11679,3 +11679,186 @@ is V1.1.3's tests and two crates' drivers, a move larger than this row.
 | I1 | 7 | `code converge noun` | Still one line early: lib.rs:439 for :440, membership.rs:242 for :243, door.rs:285 for :286, cli.rs:537 for :538. |
 | I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)". web/'s, scripts/' and apps/' exact tiers could not judge, and `converge noun` sees no JS class (`Peer`). |
 | I32 | 7 | dry-report's near tier, nested spans | Still present: three of the three clusters with a side in this range are neighbours padded to overlap. |
+
+## REVIEW-audit-leave-auto-1 (2026-10-21, range e5fdc353..123ba07b)
+
+The previous `REVIEW-audit-` row is REVIEW-audit-guests-auto-1, its hash
+e5fdc353 (ralph/next/guests/STATE.md:72); none ran in this queue before
+this one. The range ends at 123ba07b, the commit that made this row:
+`git rev-list --count e5fdc353..123ba07b` is 16, none a merge
+(`--merges`: 0). Its first commit, db1ab12e, is the loop's `done` for
+that row and touches only its state file; blame and windows below are
+taken against db1ab12e, which holds the same code. The range is the leave
+queue alone: the survey of #211 (503b891c), leave-economize and
+leave-told. The row reads `docs/ARCH_PRINCIPLES.md`, which is
+docs/principles/ARCH_PRINCIPLES.md, and `target/debug/sovereign-cli`,
+which is ~/dev/commonwealth-ai/target/debug/sovereign-cli, sha256
+22c48619… (`shasum -a 256`), rebuilt since guests-auto-1's 7b86f7bf….
+The state file is left as it is; the loop owns the row. Every file named
+/tmp/ below is under /tmp/leaveaudit/.
+
+This audit's own commit before this section: d1ab28b9, the removal
+tests' two three-node starters made one (below, "Fixed here").
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' --no-merges
+e5fdc353..123ba07b` (ledger.raw), summed by guests-auto-1's ledger.py
+with this range's units (scripts/ledger.py; each commit's unit in
+ledger.commits). The survey's scope `leave` is its own row; the queue's
+draft (39f39a59), naming no unit, counts toward leave-economize. Raw
+lines, comments and blanks in:
+
+| unit | commits | src + | src − | src net | test + | test − | test net | markup net | apps | scripts net |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| REVIEW-audit-guests-auto-1 (its `done`) | 1 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 |
+| survey (leave) | 1 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 |
+| leave-economize | 6 | 4 | 9 | **−5** | 3 | 2 | +1 | 0 | 0 | +5 (+6 −1) |
+| leave-told | 7 | 99 | 56 | **+43** | 355 | 19 | +336 | 0 | 0 | +2 (+3 −1) |
+| REVIEW-audit-leave-auto-1 (its row) | 1 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 |
+| total | 16 | 103 | 65 | **+38** | 358 | 21 | +337 | 0 | 0 | +7 (+9 −2) |
+
+leave-economize's src is `Membership::visiting` cut (membership.rs +3
+−8, lib.rs's doc link); leave-told's is removal.rs +61 −36 (`tell`,
+`told`), ring_routes.rs +32 −18 (`told_with`, `told_cut`) and
+ring_sync.rs +6 −2 (`leave_told`'s doc and call) (`git diff --numstat
+153ce69d..747744ee -- crates`). The survey's .rs files are under
+demo/runs/, outside product code.
+
+What the budget counts, by HEAD's scripts/lean_check.py over a `git
+archive` tree of each end and each unit's last commit (lean-<hash>.out):
+
+| at | svrngs-core | repository | counted net |
+|---|---:|---:|---:|
+| db1ab12e, range start | 3075 | 16906 | |
+| 153ce69d, leave-economize done | 3072 | 16903 | −3 |
+| 747744ee, leave-told done | 3072 | 16927 | +24 |
+| 123ba07b, range end | **3072** | **16927** | **+21** |
+
+The caps (`git log e5fdc353..123ba07b -- scripts/lean_check.py`, BUDGET
+at each):
+
+| commit | the repository's cap | svrngs-core's | for |
+|---|---|---|---|
+| e5fdc353, range start | 16,907 | 3,076 | |
+| 00f8a82d, leave-economize (c) | → 16,904 | → 3,073 | the cut, ratcheted |
+| 62945f12, leave-told (b) | → 16,928 | 3,073 | #211's fix, +24 over the pass's cap |
+
+The raise is +24 of the charter's +25 (CHARTER.md, "Pass first, then
+raise") and svrngs-core's cap unchanged, as fence 7 asks. The range
+closes at 16,927 / 16,928 and 3,072 / 3,073: no counted line left under
+either cap (lean_check.py:217, `n >= cap`). d1ab28b9 is test code and
+moves no counted line (`lean_check.py` after it: 16927 and 3072).
+
+### The instrument
+
+The corpus is 123ba07b's crates/, scripts/, Cargo.toml and Cargo.lock by
+`git archive` (200 files). The range touched nothing in web/ or apps/
+(`git diff --stat e5fdc353 123ba07b -- web apps`: empty), so they are
+left out.
+- `code index . --corpus-id leave-123ba07b`: 3090 chunks in 271 s
+  (index.out), the embedder the daemon on 127.0.0.1:9741.
+- `refresh`, in the corpus: rust 18575 symbols and 108114 edges;
+  typescript and python "skipped (export failed)" (I4) (refresh.out).
+
+### (2) Clones (`code dry-report`)
+
+The range touched crates/svrngs-core, crates/svrngs-node and scripts/
+(`git diff --stat e5fdc353 123ba07b -- crates web scripts apps`). Each
+was reported at 0.95 and 0.90 (clean-*.md). Whether a side was added in
+the range is `git blame -s db1ab12e..123ba07b` over each side's lines,
+a line before the range carrying `^` (38 sides, cluster-sides.txt;
+blame-clusters.out). Its controls in the same run: removal.rs:267-272
+(`told`, c599547e) 6 of 6 lines new; api.rs:1-6 0 of 6.
+
+| scope | exact | near 0.95 | near 0.90 | with a side added in the range |
+|---|---|---:|---:|---|
+| crates/svrngs-core/ | 4 | 0 | 11 | 0 |
+| crates/svrngs-node/ | 1 | 1 | 8 | 0 |
+| scripts/ | could-not-judge (I4) | 0 | 0 | — |
+
+No side of `tell`, `told`, `told_with`, `told_cut` or `leave_told` is in
+any cluster; every side blames to a commit before the range.
+
+**The line-window pass.** canon-auto-1's windows.py over every code
+file at 123ba07b, vendor/ and node_modules/ apart (321 files,
+windows.files): **228 window hits, 57 spans, 1 new** (windows.spans;
+windows.verdicts, newspans.sh's blame against db1ab12e; 56 old). Its
+positive control, the old span apps/events/store.mjs:17-100 ==
+apps/grapevine/store.mjs:17-100, is among the 56.
+
+| new span | read |
+|---|---|
+| crates/svrngs-node/tests/removal.rs:117-133 == :415-431 | leave-told (a)'s `oak` (4220c342, the survey's test) seeds, admits, wires and rounds three nodes as the file's `three` does. **Fixed in d1ab28b9.** |
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git log -p --no-merges e5fdc353..123ba07b -- crates
+apps web scripts`, matched against `(struct|enum|trait|type|class)
++[A-Z]\w*` (types-diff.out): **none**. Over the whole range, demo/
+included (types-all.out), every hit is a line of
+demo/runs/economize/2026-10-21-leave/data/demoted.diff, the pass's
+record of `pub` demoted and rebuilt, not a type the range defines. So no
+noun is run. The instrument still answers (nouns-control.out): `Said`, 2
+definitions, crates/svrngs/src/cli.rs:1073 and door/choices.rs:42, both
+older (u2-auto-2's list, :484 above), and `Digest`, 1, view.rs:108;
+each one line early (I1: :1074, :43, :109).
+
+### Reading the range
+
+leave-told's src was read hunk by hunk (`git diff e5fdc353 123ba07b --
+crates/svrngs-node/src crates/svrngs-core/src`), against the charter's
+fences and principles 1, 6 and 8.
+
+- **A cut told late to a removed computer counts through the keeper's
+  later `Remove`s** (fence 4; CHARTER.md "anything beyond the record";
+  DESIGN §6). Ran a scratch test (below), with its control. #218.
+- **One decider** (principle 8, fence 3). `told_with` (ring_routes.rs:137)
+  is the one selection; `told` (removal.rs:285) and `told_cut`
+  (ring_routes.rs:163) call it, and nothing else retains a cut's chain
+  (`git grep -n "ops.retain" -- crates/svrngs-node/src`: ring_routes.rs:141
+  alone).
+- **Never silently substitute** (principle 6, fence 5). `told` returns
+  an `Err` for an unreadable digest, an unread lack and a digest that
+  did not move, and `tell` says each at warn, "asked again, never sent the
+  cut alone" (removal.rs:251); `leave_told` keeps only the computers that
+  answered `Ok` (ring_sync.rs:443-448). A refusal is `Ok("it refused this
+  computer")`, an answer, as #190 asked.
+- **Glassbox** (principle 1). Each pass of `told`'s loop traces at debug
+  (`sent`), its two ends by `tell`'s `how`; `told_with` traces its `seq`
+  and `more`; `told_cut` its asker and signer.
+- `told_with` is `pub` (ring_routes.rs:137) though only svrngs-node calls
+  it (`git grep -n told_with -- '*.rs'`: removal.rs and ring_routes.rs,
+  tests in comments only), where leave-economize's survey demoted such
+  items. As `pub(crate)` rustfmt wraps its signature to 5 lines: tried,
+  `lean_check.py` 16931 / 16928, so reverted. Not a finding; it costs
+  lines the cap does not have.
+
+### Fixed here
+
+- d1ab28b9: the removal tests' `three` and leave_race's `oak` seed, admit,
+  wire and round through one `knit`, copies 2 → 1. `cargo test -q -p
+  svrngs-node --test removal`, 9 passed (knit-green.out); red on a plant
+  (`knit` admitting only the first of the two), 5 failed, two through
+  `three` (removal.rs:154, :259) and three through `oak` (:422, :527,
+  :576) (knit-plant.out). The window pass over the file after: 0 spans.
+
+Not fixed here: #218 changes what a removed computer is sent, counted
+code with one line left under its cap, and its fix is a choice the
+charter leaves to the operator ("anything beyond the record").
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 218 | 6; fence 4 | crates/svrngs-node/src/ring_routes.rs:139 (`told_with`: the signer's **highest** `Remove`), :161-163 (`told_cut` finds the `Remove` naming the asker, then passes only its signer); at e5fdc353 ring_routes.rs:146-149 (`told_cut` counted through the `Remove` naming the asker) | not fixed (what a removed computer is sent; the charter's "anything beyond the record" is the operator's) | **Run, with its control.** A scratch test beside leave_race (then removed): Oak, Ana keeping it; Ana's computer cannot reach Kim's, so Kim's is off as far as Ana can tell. Ana removes Kim, writes `ana-after-kims-cut`, then removes Bo. Kim's round asks; Kim's copy holds "key 2 cut: true, key 3 cut: true, entries ["ana-after-kims-cut"]". Without Bo's removal (the control): "key 2 cut: true, key 3 cut: false, entries []" (scratch-later-remove.out). So a computer told its cut late takes the keeper's acts after its cut, through the keeper's latest `Remove` of anyone, and the record of who was removed after it, DESIGN §6 says that selection as the code makes it, "the signer's acts through its highest `Remove`" (docs/DESIGN.md:999-1000), so the doc and the code agree; what they disagree with is the charter, which sends a removal "with only the keeper's acts before it and the hand-ons" (fence 4) and leaves "any act sent that is not the cut's signer's before it, or a hand-on" to the operator, and `told_cut` before c599547e, which counted through the `Remove` naming the asker. The leave case `told_with`'s `.max()` was chosen for (a person's other computer told the signing key's leave, which `Leave` writes last in one batch, tests/removal.rs:614-625) does not need a later batch's `Remove`; the bound that serves both is the operator's to choose. The at-once tell meets it only if the keeper writes a later `Remove` while `told` is still sending (removal.rs:267-290, `ops_missing_from_within` read again each pass, :284); a leave never, since the leaver signs nothing after it. |
+| 80 | — | scripts/lean_check.py:149 BUDGET, :217 `n >= cap` | not fixed (operator's) | 16,927 / 16,928 and 3,072 / 3,073 after this audit: +21 and −3 over the range, leave-told's +24 the raise of 62945f12. |
+| 211 | 6 | as recorded | fixed in c599547e | Not judged again; #218 is a reach of its fix this range adds. |
+| 212-217 | as recorded | as recorded | as recorded | Open since guests-auto-1; this range adds nothing to them. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Still one line early: cli.rs:1073 for :1074, choices.rs:42 for :43, view.rs:108 for :109. |
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)"; scripts/' exact tier could not judge. |
