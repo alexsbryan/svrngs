@@ -33,6 +33,17 @@ charter disagree, they win, and the decision says so.
 - **Podman, never Docker** (2026-10-20: "We never use docker. Podman and
   open code only").
 
+## What the operator decided, 2026-10-21, of the ceiling
+
+The economizing pass (`oidc-economize`) found no cut and estimated the
+provider's part at +800 repository and +80 svrngs-core
+(`demo/runs/economize/2026-10-21-oidc/SURVEY.md`, 4239bc7c). Asked, the
+operator chose the survey's number: at most **+800** repository lines and
+**+80** svrngs-core over the caps the pass leaves (16,928 and 3,073, since
+it cut nothing), so **17,728** and **3,153**. Each row raises only what it
+needs, one past where its commit lands, in its own commit. Past these is
+NEEDS_HUMAN.md again.
+
 ## Why
 
 The app already knows who the person is: the door sends `x-svrngs-key`,
@@ -65,8 +76,8 @@ yourself, saying both in the commit, and keep going.
 
 Write `NEEDS_HUMAN.md` and stop for:
 
-- **the budget:** past the ceiling asked after `oidc-economize`, or a raise
-  without the pass first;
+- **the budget:** past 17,728 for the repository or 3,153 for svrngs-core
+  (2026-10-21), or a raise without the pass first;
 - **the trust floor:** any widening of a page's policy or a listener;
 - **a new crate** in the svrngs workspace;
 - **an app-specific tweak:** serving an app whose stock client needs code
