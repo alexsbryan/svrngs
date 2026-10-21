@@ -1,0 +1,51 @@
+
+running 4 tests
+Ana, keeping, removed Kim:
+  Ana's copy (every act) visiting []; records applied ["kim-early", "kim-newest"]; gaps []; complete true
+  Bo's copy (no newest)  visiting []; records applied []; gaps ["removed", "unheld_cut"]; complete false
+.the run's story, at the end (after Kim's leave):
+  Kim's copy (every act) visiting []; records applied ["kim-paid-40"]; gaps ["not_a_member"]; complete false
+  Ana's copy (no Lee)    visiting ["Max (ana's guest)"]; records applied ["bo-typo"]; gaps ["sequence_hole", "removed", "removed", "removed", "removed", "removed", "unheld_cut"]; complete false
+  Ana's, Lee's arrived   visiting []; records applied ["kim-paid-40"]; gaps ["not_a_member"]; complete false
+.Kim admitted Dee, then left:
+  Kim's copy (every act) visiting []; records applied ["dee-paid", "kim-last"]; gaps []; complete true
+  Ana's copy (no last)   visiting []; records applied []; gaps ["unknown_signer", "sequence_hole", "removed", "unheld_cut"]; complete false
+.Bo hosts Pat between Kim's last act and her leave:
+  Kim's copy (every act) visiting []; records applied []; gaps ["not_a_member"]; complete false
+  Ana's copy (no Lee)    visiting ["Pat (bo's guest)"]; records applied []; gaps ["sequence_hole", "removed", "unheld_cut"]; complete false
+.
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 3 tests
+after Ana removed Kim and three rounds of every computer:
+  Ana  entries ["kim-seen"]; complete true; gaps []
+  Bo   entries ["kim-seen"]; complete true; gaps []
+  Kim  entries ["kim-seen"]; complete true; gaps ["an act by 8139770ea87d… after they were removed from the group does not count"]
+.before Ana's round with Bo:
+  Ana  entries []; complete false; gaps ["an op from 8139770ea87d… has not reached this node yet (#1)", "an act by 8139770ea87d… after they were removed from the group does not count", "a removal names an act (866646238d22…) this node does not hold yet"]
+after it:
+  Ana  entries ["kim-paid", "kim-last"]; complete true; gaps []
+  Kim  entries ["kim-paid", "kim-last"]; complete true; gaps []
+.after Kim's leave and three rounds of every computer:
+  Kim  entries ["kim-paid", "kim-last"]; complete true; gaps []
+  Ana  entries []; complete false; gaps ["an op from 8139770ea87d… has not reached this node yet (#1)", "an act by 8139770ea87d… after they were removed from the group does not count", "a removal names an act (866646238d22…) this node does not hold yet"]
+  Bo   entries []; complete false; gaps ["an op from 8139770ea87d… has not reached this node yet (#1)", "an act by 8139770ea87d… after they were removed from the group does not count", "a removal names an act (866646238d22…) this node does not hold yet"]
+
+thread 'a_leave_reaches_every_copy_with_the_acts_it_covers' (74161184) panicked at crates/svrngs-node/tests/leave_race_node.rs:179:5:
+assertion `left == right` failed: Ana's copy agrees with Kim's
+  left: []
+ right: ["kim-paid", "kim-last"]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+ 2/3
+a_leave_reaches_every_copy_with_the_acts_it_covers --- FAILED
+
+failures:
+
+failures:
+    a_leave_reaches_every_copy_with_the_acts_it_covers
+
+test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.74s
+
+error: test failed, to rerun pass `-p svrngs-node --test leave_race_node`
+exit 101
