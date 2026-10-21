@@ -47,3 +47,7 @@ rate       WebKit seeks back to back (u5-11): way, lend; through the lend and st
            wildcard	bo	360	passed	4152	passed
            of 2064 here since 2026-10-07T01:30:06Z: 193 missed 5 s through a lend, 331 straight; 1560 ended at a load above 12 cores
 passed     app laws
+
+$ python3 scripts/lean_check.py   (at a6c0a428, beside the close)
+crates/svrngs-core     3072 / 3073 lines
+.                     16927 / 16928 lines
