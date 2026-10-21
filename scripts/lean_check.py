@@ -144,7 +144,9 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # (demo/runs/economize/2026-10-21-leave/SURVEY.md). The leave rows have at
 # most +25 over that and none in svrngs-core (the operator, 2026-10-21,
 # "Pass first, then raise"): at most 16,929, svrngs-core 3,073.
-BUDGET = {"crates/svrngs-core": 3073, ".": 16904}
+# leave-told (b), a cut told with what it covers (#211), raised the
+# repository's 24, to one past where it landed: 1 left under the ceiling.
+BUDGET = {"crates/svrngs-core": 3073, ".": 16928}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
