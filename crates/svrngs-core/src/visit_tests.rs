@@ -65,6 +65,30 @@ fn kim_hosts_sam_until_sunday_and_the_fold_says_so() {
     );
 }
 
+/// **A visit begins when its act is written** (guests-first, #214): Kim's
+/// visit is timed as far past Kim's clock as svrngs times a new act, one
+/// past a line [`crate::command::AHEAD_SECS`] ahead, and the fold says Sam
+/// is visiting at Kim's clock; a visit timed one further is not begun, so
+/// no clock far ahead lengthens a visit past its 48 hours. Planted: the
+/// visit begun only at its own time (red at Kim's clock); begun at any time
+/// (red one further).
+#[test]
+fn a_visit_is_on_from_when_its_act_is_written_and_no_earlier() {
+    let ahead = crate::command::AHEAD_SECS + 1;
+    let ops = run(&key(2), FRI + ahead, [visit(2, "sam", 9, SUNDAY)]);
+    let a = folded(&ops);
+    assert_eq!(
+        visiting(&a, FRI).len(),
+        1,
+        "on at Kim's clock: {:?}",
+        a.gaps()
+    );
+    assert!(
+        visiting(&a, FRI - 1).is_empty(),
+        "begun before it was written"
+    );
+}
+
 /// A house of six, so the per-host bound is met before the members' is:
 /// alex keeps it; kim, bo, cy, dee and eve.
 fn six() -> Roster {

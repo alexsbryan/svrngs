@@ -101,7 +101,7 @@ use alloc::collections::{BTreeMap, BTreeSet};
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use crate::op::Op;
+use crate::{command::AHEAD_SECS, op::Op};
 
 use crate::{Device, OpId, Person, RailAct, Redemption, Roster, SignedOp, Visit};
 
@@ -250,11 +250,16 @@ pub struct Guest {
 
 impl Guest {
     /// Whether the visit is on at `at`: begun, and before its `until`, its
-    /// host's Stop and the cut of its host's key, as `cut` holds them.
+    /// host's Stop and the cut of its host's key, as `cut` holds them. It
+    /// begins when its act is written: a new act is timed at most one past
+    /// a line [`AHEAD_SECS`] ahead of its writer's clock (`command.rs`
+    /// `sign_lines`), so a visit timed that far past `at` is begun
+    /// (guests-first, #214). The walk sorts by time ([`membership`]), so the
+    /// fold, asking at a later Visit's time, counts as it did.
     pub fn live(&self, cut: &BTreeMap<String, Cut>, at: i64) -> bool {
         let cut = cut.get(&self.host).map(|c| c.at);
         let ends = [Some(self.visit.until), self.stopped, cut];
-        self.at <= at && ends.into_iter().flatten().all(|end| at < end)
+        self.at <= at.saturating_add(AHEAD_SECS + 1) && ends.iter().flatten().all(|&e| at < e)
     }
 }
 
