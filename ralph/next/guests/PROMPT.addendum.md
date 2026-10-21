@@ -39,8 +39,9 @@ Fences the rows keep:
 8. *The house voice* (svrn-docs `VOICE.md`): second person, active, present.
 9. *The computer is the main flow.* The home page comes first, then the
    phone's page.
-10. *The budget:* at most 16,905 for the repository and 3,076 for
-    svrngs-core (the operator, 2026-10-20, "Cover both rows"; CHARTER.md).
+10. *The budget:* at most 16,925 for the repository and 3,076 for
+    svrngs-core (the operator, 2026-10-20, "Cover both rows", carried over
+    V1.1.3's own +20; CHARTER.md).
     The economizing pass goes first. Each row raises only what it needs, in its own commit.
     `apps/` is not counted.
 11. *Nothing outward-facing.* Every computer and phone runs on this host.

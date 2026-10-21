@@ -60,6 +60,12 @@ guests rows' ceiling is now at most **16,905** for the repository and
 past where its commit lands, in its own commit. Past these is
 NEEDS_HUMAN.md again.
 
+**2026-10-20, later.** V1.1.3's fixes on main raised the repository's cap
+by 20 for themselves, 16,887 to 16,907 after their own economizing pass
+(32398138, 423d28c5, a620548e), not the guests rows'. The guests rows had
+19 left under 16,905 (16,886 after guests-pages), so their ceiling is now
+**16,925** for the repository and still **3,076** for svrngs-core.
+
 ## Why
 
 The operator: "the main thing svrngs must do is to never violate the trust
@@ -88,7 +94,7 @@ yourself, saying both in the commit, and keep going.
 
 Write `NEEDS_HUMAN.md` and stop for:
 
-- **the budget:** past 16,905 for the repository or 3,076 for svrngs-core
+- **the budget:** past 16,925 for the repository or 3,076 for svrngs-core
   (2026-10-20), or a raise without the pass first;
 - **a wait built early:** the welcome, `GuestRules`, House rules' say over
   it, the grapevine's path, or the words for people (STATE.md, "Waits");
