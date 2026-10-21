@@ -106,14 +106,10 @@ async fn computer(
     computer_on(dir, relay_url(relay), admitted, me, founder).await
 }
 
-/// [`computer`], its relay reached at `relay`, a URL.
-async fn computer_on(
-    dir: &Path,
-    relay: String,
-    admitted: &SigningKey,
-    me: u8,
-    founder: &str,
-) -> Node {
+/// A node of key `signing(me)`, its one relay `relay`, a URL, listening on
+/// 127.0.0.1 alone, its group seeded with `founder` holding
+/// `signing(founder_key)`.
+async fn seeded(dir: &Path, relay: String, me: u8, founder: &str, founder_key: u8) -> Node {
     let node = Node::start(
         dir.to_path_buf(),
         signing(me),
@@ -130,12 +126,24 @@ async fn computer_on(
     let seed = Roster::new(
         [(
             Person::parse(founder).unwrap(),
-            vec![actor_of(&signing(me))],
+            vec![actor_of(&signing(founder_key))],
         )]
         .into_iter()
         .collect(),
     );
     node.rail().set_seed(NS, &seed).unwrap();
+    node
+}
+
+/// [`computer`], its relay reached at `relay`, a URL.
+async fn computer_on(
+    dir: &Path,
+    relay: String,
+    admitted: &SigningKey,
+    me: u8,
+    founder: &str,
+) -> Node {
+    let node = seeded(dir, relay, me, founder, me).await;
     let fixture = svrngs_core::tests_support::Fixture {
         act: RailAct::Admit {
             person: Person::parse("bo").unwrap(),
@@ -195,25 +203,7 @@ async fn standing_on(
     person: &str,
     founder: &str,
 ) -> Node {
-    let node = Node::start(
-        dir.to_path_buf(),
-        signing(me),
-        &RelayConfig {
-            relay_urls: vec![relay],
-            n0_services: false,
-            loopback_only: true,
-        },
-        no_seed,
-        "127.0.0.1:0".parse().unwrap(),
-    )
-    .await
-    .expect("a node starts");
-    let seed = Roster::new(
-        [(Person::parse(founder).unwrap(), vec![actor_of(&signing(1))])]
-            .into_iter()
-            .collect(),
-    );
-    node.rail().set_seed(NS, &seed).unwrap();
+    let node = seeded(dir, relay, me, founder, 1).await;
     tokio::time::timeout(Duration::from_secs(20), node.endpoint().online())
         .await
         .expect("the node reaches the relay on 127.0.0.1");
