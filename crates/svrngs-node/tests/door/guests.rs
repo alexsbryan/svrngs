@@ -131,6 +131,42 @@ async fn sam_opens_kims_jellyfin_as_kims_guest() {
     house.close().await;
 }
 
+/// **A guest's first request** (guests-first; #214): Kim's computer holds
+/// an act of Bo's timed a minute ahead of its clock, as a computer whose
+/// clock runs fast writes one, within the AHEAD_SECS a new act follows
+/// (`svrngs_core::command`), so Kim's `Visit` is timed after it, ahead of
+/// the clock too. Sam asks at once and is let in. Red at bb0f1a1f: the
+/// door asked whether the visit was live at its own now, before the
+/// visit's time, and refused Sam `ended`, "its time is up".
+#[tokio::test]
+async fn sam_is_let_in_at_once_though_kims_visit_is_timed_ahead_of_the_clock() {
+    let (said, _heard) = common::heard("door=debug");
+    let house = House::new().await;
+    let (jellyfin, _heads) = origins::head_origin().await;
+    lends_on(house.dirs[0].path(), "jellyfin", jellyfin.port());
+    let ahead = svrngs_core::tests_support::signed_in(
+        NS,
+        &signing(2),
+        unix_now() + 60,
+        0,
+        svrngs_core::tests_support::record("a minute fast"),
+    );
+    house.kim.rail().ingest_all(NS, &[ahead]).unwrap();
+    house.visit(unix_now() + 24 * 3600, &[(&house.kim, "jellyfin")]);
+
+    let opened = as_sam(&house.kim, "jellyfin").await;
+    let trace = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
+    let door = trace.lines().filter(|l| l.contains("a visit's key"));
+    assert_eq!(
+        opened.status,
+        200,
+        "{}\nthe door: {:#?}",
+        opened.text,
+        door.collect::<Vec<_>>()
+    );
+    house.close().await;
+}
+
 /// That `reply` is svrngs's refusal `kind`, 403, in `words`.
 fn refused(reply: &Reply, kind: &str, words: &str) {
     assert_eq!(reply.status, 403, "{}", reply.text);
