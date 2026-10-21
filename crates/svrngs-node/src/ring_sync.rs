@@ -416,7 +416,11 @@ pub type LeavesTold = std::collections::BTreeSet<(String, String)>;
 /// A group this computer left stands for nobody here, so no exchange
 /// carries its leave: told, each round, from the standing the round read,
 /// to each computer the copy says stands and has not answered (#190), at
-/// once with the round's dials; `None` with nobody, or nothing, to tell.
+/// once with the round's dials, with the leaver's acts before it that each
+/// lacks (`removal.rs` `tell`, #211); `None` with nobody, or nothing, to
+/// tell. A computer is answered once its digest covers the leave, or it
+/// refuses this one, so a chain past one exchange's budget is told again
+/// until it all arrives, never taken for told.
 fn leave_told<'a>(
     host: &'a Host,
     ns: &'a str,
@@ -436,7 +440,7 @@ fn leave_told<'a>(
     debug!(namespace = ns, untold = computers.len(), lines = lines.len(), "ring sync: a group this computer left — its leave told to each computer standing that has not answered; none when it was removed");
     let due = !computers.is_empty() && !lines.is_empty();
     due.then_some(async move {
-        let answered = crate::removal::tell(host, ns, computers, &lines).await;
+        let answered = crate::removal::tell(host, ns, computers).await;
         answered
             .into_iter()
             .map(|actor| (ns.to_string(), actor))

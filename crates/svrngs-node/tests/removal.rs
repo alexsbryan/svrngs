@@ -136,7 +136,7 @@ async fn three(dirs: &[tempfile::TempDir; 3]) -> [Node; 3] {
 /// **Only the person who decides makes a removal count, and the removed
 /// computer is told** (U7 (e)). Ana asks to remove Bo: written, Bo stands,
 /// the answer names Sam as who decides. Sam asks the same: Bo is out, and
-/// Bo's own computer, told the cut alone, holds Bo out too; then Bo's
+/// Bo's own computer, told the cut, holds Bo out too; then Bo's
 /// removal of Ana is refused there, as Bo is not in the group. Red with the
 /// fold's keeper check out (membership.rs, `let keeps = true`): Ana's ask
 /// is the cut.
@@ -527,14 +527,15 @@ mod leave_race {
         entries
     }
 
-    /// **A leave reaches every copy with the acts it covers** — what a fix must
-    /// make true; red at HEAD. Kim's first entry reaches everyone by a round;
-    /// her last is written with no round, and she leaves. Her leave reaches
-    /// Ana's and Bo's copies by her round's telling, the `Remove` alone
-    /// (removal.rs `tell`; ring_sync.rs `leave_told`), and nothing after it
-    /// carries her last entry: her round tells only the leave, nobody dials a
-    /// key cut (ring_sync.rs, `standing.names`), and the sync route takes none
-    /// of a cut asker's acts (ring_routes.rs `told_cut`).
+    /// **A leave reaches every copy with the acts it covers** (#211). Kim's
+    /// first entry reaches everyone by a round; her last is written with no
+    /// round, and she leaves. Only her leave's telling can carry that entry:
+    /// after it her round tells only the leave, nobody dials a key cut
+    /// (ring_sync.rs, `standing.names`), and the sync route takes none of a
+    /// cut asker's acts (ring_routes.rs `told_cut`). Red at 153ce69d, the
+    /// leave told as its `Remove` alone (removal.rs `tell`): Ana's and Bo's
+    /// copies applied `[]` for good. Planted with the tell's acts the leave's
+    /// lines alone, or `told_with` keeping only the `Remove`s: red here.
     #[tokio::test]
     async fn a_leave_reaches_every_copy_with_the_acts_it_covers() {
         let dirs = [(); 3].map(|_| tempfile::tempdir().unwrap());
@@ -556,9 +557,13 @@ mod leave_race {
         assert_eq!(bos, kims, "Bo's copy agrees with Kim's");
     }
 
-    /// **It heals when a copy that stands holds the act** (HEAD; passes). Bo's
-    /// copy took Kim's last entry before her leave; Ana's did not. Ana's next
-    /// round with Bo carries it (sync.rs: author-blind), so Ana's copy agrees.
+    /// **It heals when a copy that stands holds the act** (passes before
+    /// #211's fix and after). Bo's copy took Kim's last entry before her
+    /// leave; Ana's did not. After Ana's round with Bo (sync.rs:
+    /// author-blind), Ana's copy agrees with Kim's. Before #211's fix the
+    /// round was what healed it, Kim's entries counting nowhere on Ana's copy
+    /// until then; with it the leave reaches Ana with them, so the copy is
+    /// not read between.
     #[tokio::test]
     async fn a_leave_heals_where_a_standing_copy_holds_its_last_act() {
         let dirs = [(); 3].map(|_| tempfile::tempdir().unwrap());
@@ -569,14 +574,8 @@ mod leave_race {
         bo.rail().ingest_all(NS, &last).unwrap();
         assert_eq!(leaves(&kim).await, Outcome::Left);
         assert!(holds_cut(&ana, 2).await, "the leave reached Ana");
-        eprintln!("before Ana's round with Bo:");
-        let before = says("Ana", &ana).await;
-        assert!(
-            before.is_empty(),
-            "Kim's entries count nowhere on Ana's copy"
-        );
         rounds(&[&ana]).await;
-        eprintln!("after it:");
+        eprintln!("after Ana's round with Bo:");
         assert_eq!(says("Ana", &ana).await, ["kim-paid", "kim-last"]);
         assert_eq!(says("Kim", &kim).await, ["kim-paid", "kim-last"]);
     }
@@ -603,5 +602,99 @@ mod leave_race {
         for (name, node) in [("Ana", &ana), ("Bo", &bo), ("Kim", &kim)] {
             assert_eq!(says(name, node).await, ["kim-seen"], "{name}'s copy");
         }
+    }
+
+    /// **The leaver's computer takes nothing more of the group** (#211;
+    /// LEAVING.md §3.4, "no round, no sync"). Bo writes an entry with no
+    /// round; Kim leaves. Her tell asks each computer's digest first, and
+    /// Bo's answer carries Bo's entry: Kim's copy must not hold it, while
+    /// Ana's and Bo's hold Kim's entry. Red with the tell keeping the first
+    /// answer's acts (removal.rs `told`, `ingest_all` of the answer).
+    #[tokio::test]
+    async fn a_leave_takes_nothing_more_of_the_group() {
+        let dirs = [(); 3].map(|_| tempfile::tempdir().unwrap());
+        let [ana, kim, bo] = oak(&dirs).await;
+        writes(&kim, "kim-last");
+        writes(&bo, "bo-unsent");
+        assert_eq!(leaves(&kim).await, Outcome::Left);
+        assert!(
+            holds_cut(&ana, 2).await && holds_cut(&bo, 2).await,
+            "the leave reached both"
+        );
+        eprintln!("after Kim's leave:");
+        assert_eq!(
+            says("Kim", &kim).await,
+            ["kim-last"],
+            "Kim's copy takes nothing of Bo's"
+        );
+        assert_eq!(says("Ana", &ana).await, ["kim-last"]);
+        assert_eq!(says("Bo", &bo).await, ["kim-last", "bo-unsent"]);
+    }
+
+    /// **A person's other computer is told the leave of the key that signed
+    /// it** (#179, #211). Kim stands on two computers (keys 2 and 4, one seed
+    /// row); the first cannot reach the second, so the second, off as far as
+    /// the first can tell, hears the leave when it asks Ana to sync
+    /// (ring_routes.rs `told_cut`). `Leave` writes the second's `Remove`
+    /// before the signing key's own (svrngs-core register.rs `Leave`), so the
+    /// second must be told through the signer's highest `Remove`: its copy
+    /// holds both keys cut. Red with the selection naming the signer's first
+    /// `Remove` (ring_routes.rs `told_with`, `.min()` for `.max()`): key 2
+    /// stands on the second computer's copy.
+    #[tokio::test]
+    async fn a_persons_other_computer_is_told_the_signing_keys_leave() {
+        let dirs = [(); 4].map(|_| tempfile::tempdir().unwrap());
+        let mut nodes = Vec::new();
+        for (i, dir) in dirs.iter().enumerate() {
+            nodes.push(start(i as u8 + 1, dir).await);
+        }
+        // Kim's two keys are one person's, as a seed row's keys are.
+        let kim = vec![actor_of(&signing(2)), actor_of(&signing(4))];
+        let ana = vec![actor_of(&signing(1))];
+        let rows = [("ana", ana), ("kim", kim)].map(|(p, k)| (Person::parse(p).unwrap(), k));
+        for n in &nodes {
+            n.rail()
+                .set_seed(NS, &Roster::new(rows.clone().into()))
+                .unwrap();
+        }
+        let bo = Batch(vec![admit("bo", 3)]);
+        nodes[0].rail().commit(NS, &bo).unwrap().unwrap();
+        for (i, n) in nodes.iter().enumerate() {
+            for (j, m) in nodes.iter().enumerate() {
+                // Kim's first computer (index 1) never reaches her second (3).
+                if i != j && (i, j) != (1, 3) {
+                    n.transport()
+                        .add_known_peer(key(j as u8 + 1), loopback_sockets(m.endpoint()));
+                }
+            }
+        }
+        for n in &nodes[1..] {
+            tokio::time::timeout(Duration::from_secs(30), n.round())
+                .await
+                .unwrap();
+        }
+        let (ana, kim, other) = (&nodes[0], &nodes[1], &nodes[3]);
+        assert_eq!(leaves(kim).await, Outcome::Left);
+        assert!(
+            holds_cut(ana, 2).await && holds_cut(ana, 4).await,
+            "the leave reached Ana"
+        );
+        assert!(
+            !holds_cut(other, 4).await,
+            "the first computer did not reach the second"
+        );
+        tokio::time::timeout(Duration::from_secs(30), other.round())
+            .await
+            .unwrap();
+        let cut = |seed| {
+            other
+                .rail()
+                .register(NS)
+                .unwrap()
+                .removed
+                .contains_key(&actor_of(&signing(seed)))
+        };
+        assert!(cut(4), "the second computer reads itself out");
+        assert!(cut(2), "and the key that signed the leave");
     }
 }

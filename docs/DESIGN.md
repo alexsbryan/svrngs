@@ -993,15 +993,19 @@ from the journal waits in PLAN §2.
   anyone but the keeper it is an ask, and the words name who decides. A
   `Removal` the fold would read as the signer's own leave is refused
   (`Own`). The cut is
-  told at once to the removed person's computers, the cut alone, and each
-  removal or hand-on wakes the round, so every other computer holds it at
-  once. From then on each computer answers a removed key only with
+  told at once to the removed person's computers with what it covers, and
+  each removal or hand-on wakes the round, so every other computer holds it
+  at once. A cut is told with one selection, wherever it is told
+  (`ring_routes.rs` `told_with`): of what the computer lacks, the signer's
+  acts through its highest `Remove`, and every `HandOn`, how the fold reads
+  a keeper the seed did not name. So no copy holds a cut ahead of an act it
+  covers, and copies that hold the same cut agree (#211). From then on each computer answers a removed key only with
   `removed`, "You are no longer in this group", and refuses a pass it
   signed the same; their pages say they are no longer in the group, and a
   synced folder serves them nothing new. **What they already hold stays
   theirs**: removal deletes nothing on their disk and sends nothing back. A
   removed computer that was off as the cut landed is told by the first
-  computer it asks to sync, with every `HandOn` it lacks, and nothing else.
+  computer it asks to sync, by that selection, and nothing else.
   Everyone in the group sees every removal and every ask to remove — who of
   whom, and when — on both pages, read from the register and written nowhere
   new (`Register::removals`).
@@ -1014,7 +1018,12 @@ from the journal waits in PLAN §2.
   and every copy stays with whoever held it. `svrngs leave <group>`, or the
   home page, commits the leave and tells it at once to the leaver's other
   computers; every other computer standing in the group is told it by the
-  leaver's round, each round until it answers, and the leave alone is sent.
+  leaver's round, each round until it answers. A leave goes with the
+  leaver's own acts before it that the computer lacks, and nobody else's
+  (the operator, 2026-10-21): each computer is asked its digest, the acts
+  its answer carries never taken, then sent what it lacks, one budget at a
+  time, until its digest covers the leave; one whose digest stops moving is
+  asked again next round, never sent the leave alone.
   From then on, on the leaver's computer, nobody stands in the group
   (`Standing::Left`, for any group whose register cut this computer's own
   key, left or removed): no round, sync or lend reaches it, and the record

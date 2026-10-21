@@ -1,0 +1,24 @@
+
+running 5 tests
+... 3/5
+leave_race::a_leave_takes_nothing_more_of_the_group --- FAILED
+.
+failures:
+
+---- leave_race::a_leave_takes_nothing_more_of_the_group stdout ----
+after Kim's leave:
+  Kim  entries ["kim-last", "bo-unsent"]; complete true; gaps []
+
+thread 'leave_race::a_leave_takes_nothing_more_of_the_group' (74519736) panicked at crates/svrngs-node/tests/removal.rs:624:9:
+assertion `left == right` failed: Kim's copy takes nothing of Bo's
+  left: ["kim-last", "bo-unsent"]
+ right: ["kim-last"]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    leave_race::a_leave_takes_nothing_more_of_the_group
+
+test result: FAILED. 4 passed; 1 failed; 0 ignored; 0 measured; 4 filtered out; finished in 11.48s
+
+error: test failed, to rerun pass `-p svrngs-node --test removal`

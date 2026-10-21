@@ -472,7 +472,8 @@ synced folder or an app placed in a group it stands in. Removal as the command a
 /v1/handovers` its `HandOnTo`, each answering an `Outcome` the command
 words; each written wakes the round (`AskRound::wake`), so every
 computer of the group holds it now, and a cut is told to the computers it
-cut once, one sync request carrying the cut alone (`removal::tell`). `POST
+cut once, with the signer's acts before it and the hand-ons each lacks,
+until each one's digest covers it (`removal::tell`, `ring_routes::told_with`, #211). `POST
 /v1/leaves` commits `Leave`, the person's own `Remove` of each of their
 keys, as `svrngs leave` and the home page's "Leave this group" ask it;
 from then on this computer stands in the group for nobody, and its round

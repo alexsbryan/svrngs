@@ -42,7 +42,7 @@ use crate::peer_wire::{
 use crate::rail::{Live, LiveBuffer, LIVE_PAYLOAD_MAX_BYTES};
 use crate::register::{Member, Standing};
 use crate::ring_sync::answer;
-use crate::{RailAct, RingRail};
+use crate::{ops_missing_from_within, Op, RailAct, RingRail, SignedOp};
 
 // rail.rs's refusal body, forked with the route (PLAN §4, U1's inventory);
 // each one traced, so a refusal its route does not trace still leaves one
@@ -126,28 +126,42 @@ pub(crate) fn standing_asker(
     }
 }
 
-/// To an asker that does not stand in the group, the first `Remove` naming
-/// it which its digest says it lacks, with the acts before it of the
-/// computer that signed it and every `HandOn` it lacks, and nothing else;
-/// none of the asker's are taken (#179). The hand-ons are how the fold
-/// reads a keeper the seed did not name as keeping (membership.rs
-/// `HandOn`), so a cut by one made while the asker was off is read as the
-/// cut, not an ask (#184). So a computer off as its cut landed, by a leave
-/// or a removal, reads itself out once it asks, never shown the group while
-/// every lender refuses it. The digest answered is the asker's own, so it
-/// sends nothing back. `None` where it lacks no `Remove` naming it, or
-/// what it lacks cannot be read here, said at warn.
+/// What a cut is told with (#179, #211), the one selection both the at-once
+/// tell (`removal.rs` `told`) and [`told_cut`] make: of `ops`, what a
+/// computer lacks, `by`'s acts through its highest `Remove`, so a leave goes
+/// with the signing key's own, which svrngs-core's `Leave` writes last, and
+/// every `HandOn`, how the fold reads a keeper the seed did not name
+/// (membership.rs `HandOn`, #184). One budget of them, by actor and seq, so a
+/// cut never lands ahead of the acts it covers (DESIGN §6). `None` where it
+/// lacks no `Remove` by `by`, which each caller traces.
+pub fn told_with(mut ops: Vec<Op<SignedOp>>, by: &str, ns: &str) -> Option<Vec<Op<SignedOp>>> {
+    let cut = |op: &&Op<SignedOp>| op.actor == by && matches!(op.kind.act, RailAct::Remove { .. });
+    let seq = ops.iter().filter(cut).map(|op| op.kind.seq).max()?;
+    let keeping = |act: &RailAct| matches!(act, RailAct::HandOn { .. });
+    ops.retain(|op| op.actor == by && op.kind.seq <= seq || keeping(&op.kind.act));
+    let (none, verify) = (crate::Digest::default(), &crate::Ed25519Verifier);
+    let (ops, more) = ops_missing_from_within(&ops, ns, verify, &none, RING_SYNC_OPS_BUDGET_BYTES);
+    tracing::debug!(target: "rails", namespace = ns, by, seq, told = ops.len(), more, "ring sync: a cut told with its signer's acts through its highest Remove and the hand-ons lacked, one budget of them");
+    Some(ops)
+}
+
+/// To an asker that does not stand in the group, a `Remove` naming it which
+/// its digest says it lacks, told with what it covers ([`told_with`]), and
+/// nothing else; none of the asker's are taken. So a computer off as its
+/// cut landed, by a leave or a removal, reads itself out once it asks,
+/// never shown the group while every lender refuses it. The digest answered
+/// is the asker's own, so it sends nothing back. `None` where it lacks no
+/// `Remove` naming it, or what it lacks cannot be read here, said at warn.
 fn told_cut(rail: &RingRail, req: &RingSyncRequest, asker: Option<&str>) -> Option<Response> {
     let (ns, digest, asker) = (req.namespace.clone(), req.digest.clone(), asker?);
-    let lacks = rail.ops_missing_from_within(&ns, &digest, RING_SYNC_OPS_BUDGET_BYTES);
-    let (mut ops, _) = lacks
+    let lacks = rail.ops_missing_from_within(&ns, &digest, crate::NO_BUDGET);
+    let (ops, _) = lacks
         .inspect_err(|e| tracing::warn!(target: "rails", namespace = ns, asker, error = %e, "ring sync: what an asker not standing lacks cannot be read here, so no cut is told it"))
         .ok()?;
     let cut = ops.iter().find(|op| op.kind.act.names() == Some(asker));
-    let (by, seq) = cut.map(|op| (op.actor.clone(), op.kind.seq))?;
-    let keeping = |act: &RailAct| matches!(act, RailAct::HandOn { .. });
-    ops.retain(|op| op.actor == by && op.kind.seq <= seq || keeping(&op.kind.act));
-    tracing::debug!(target: "rails", namespace = ns, asker, by, seq, told = ops.len(), "ring sync: an asker not standing, told the Remove naming it, its signer's acts before it and the hand-ons it lacks");
+    let by = cut.map(|op| op.actor.clone())?;
+    let ops = told_with(ops, &by, &ns)?;
+    tracing::debug!(target: "rails", namespace = ns, asker, by, told = ops.len(), "ring sync: an asker not standing, told a Remove naming it with what it covers");
     let told = crate::peer_wire::RingSyncResponse {
         namespace: ns,
         digest,
