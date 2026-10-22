@@ -534,7 +534,14 @@ calls:
    whoever opened it, and a shared path prefix carried none of five
    self-hosted apps, each asking for its own root. A group that does not
    trust our host runs on any static host that answers every name under it
-   (§7).
+   (§7). The service is still asked at its own address
+   (`Host: localhost:<port>`), and the door tells it the browser's origin
+   as a reverse proxy does: `X-Forwarded-Host` the host the browser asked,
+   `X-Forwarded-Proto` `http` for a `*.localhost` host and `https`
+   otherwise, and any of either the client typed displaced
+   (`door::tell_origin`). An app that trusts its proxy builds its pages on
+   the lend's own origin, as Jellyfin's SSO plugin does once the lender
+   sets its stock `KnownProxies` (`demo/runs/oidc/2026-10-21-jellyfin-2/`).
 2. *Jellyfin as it comes.* A lend serves stock jellyfin-web from the
    lender's Jellyfin; nothing in svrngs renders a library of its own.
 3. *The infra learns no Jellyfin.* Anything that knows an app's API lives
@@ -685,10 +692,13 @@ nothing more.
      answers it itself, after the asker is known and before the lend's
      refusals and its limit, and never carries it to the app. So a
      stranger or a removed member is refused before any code. It checks
-     `response_type=code`, the lend's client, the app's own redirect, the
-     scope, `state`, `nonce` and PKCE, and mints a one-time code bound to
-     that person, the client, the redirect, the challenge and the nonce.
-     A guest's code names the guest, never their host.
+     `response_type=code`, the lend's client, the app's own redirect — its
+     `http://localhost:<lend port>` when it does not trust a proxy's
+     headers, or the lend's own origin when it does trust the door's
+     `X-Forwarded-Host` and `-Proto` — the scope, `state`, `nonce` and PKCE,
+     and mints a one-time code bound to that person, the client, the
+     redirect, the challenge and the nonce. A guest's code names the guest,
+     never their host.
    - *The back channel* is the record API's listener, which answers only
      this computer: discovery, the keys, the token and userinfo, behind the
      guard that lets no page ask it. No listener is added and the trust

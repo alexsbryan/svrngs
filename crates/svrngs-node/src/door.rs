@@ -745,6 +745,54 @@ fn own_address(port: NonZeroU16) -> HeaderValue {
     HeaderValue::from_str(&format!("localhost:{port}")).expect("a host and a port are a header")
 }
 
+/// The scheme the browser reached a lend with, from the `Host` it asked:
+/// `http` for a `*.localhost` host (and `localhost` itself, a viewer on this
+/// computer), `https` otherwise. It is what the door tells a service as
+/// `X-Forwarded-Proto` ([`tell_origin`]) and what the front channel reads
+/// back as the lend's own origin (oidc-jellyfin).
+pub(crate) fn scheme_of(host: &str) -> &'static str {
+    let name = host.rsplit_once(':').map_or(host, |(name, _)| name);
+    let name = name.to_ascii_lowercase();
+    if name == "localhost" || name.ends_with(".localhost") {
+        "http"
+    } else {
+        "https"
+    }
+}
+
+/// Tell the service the origin the browser used, as a reverse proxy does
+/// (oidc-jellyfin): `X-Forwarded-Host` is the `Host` the browser asked and
+/// `X-Forwarded-Proto` its scheme ([`scheme_of`]). Any of either a client
+/// typed is displaced, so only the door's reach the service. The service is
+/// still asked at its own address ([`own_address`]); this is the one fact
+/// it may need to build a page on the lend's own origin, as the Jellyfin
+/// SSO plugin's callback does when `KnownProxies` names this computer
+/// (`demo/runs/oidc/2026-10-21-jellyfin-2/`).
+fn tell_origin(headers: &mut HeaderMap) {
+    let (forwarded_host, forwarded_proto) = (
+        HeaderName::from_static("x-forwarded-host"),
+        HeaderName::from_static("x-forwarded-proto"),
+    );
+    headers.remove(&forwarded_host);
+    headers.remove(&forwarded_proto);
+    let Some(host) = headers
+        .get(header::HOST)
+        .and_then(|h| h.to_str().ok())
+        .map(str::to_owned)
+    else {
+        tracing::debug!(target: "door", "door: the browser's Host cannot be read, so the service is told no forwarded origin");
+        return;
+    };
+    let Ok(value) = HeaderValue::from_str(&host) else {
+        return;
+    };
+    let scheme = scheme_of(&host);
+    tracing::debug!(target: "door", forwarded_host = %host, forwarded_proto = scheme,
+        "door: the browser's origin, told to the service as a proxy's forwarded headers");
+    headers.insert(forwarded_host, value);
+    headers.insert(forwarded_proto, HeaderValue::from_static(scheme));
+}
+
 /// An `Origin` that is the lend's own — its first name the lend's label, as
 /// every lend's is (DESIGN §7) — told to the service
 /// as its own address, as the Host is ([`own_address`]), so an app that
@@ -1198,11 +1246,17 @@ pub(crate) async fn lend_for(
         };
         tracing::debug!(target: "door", actor, lend = %lend.name, ?group,
             "door: the authorize path on the lend's own origin, answered by the door and never carried");
+        let browser = req
+            .headers()
+            .get(header::HOST)
+            .and_then(|h| h.to_str().ok())
+            .map(|host| format!("{}://{host}", scheme_of(host)));
         return Ok(crate::oidc::authorize(
             &door.oidc,
             &lend,
             client,
             port,
+            browser.as_deref(),
             who,
             req.uri().query(),
         ));
@@ -1495,6 +1549,7 @@ async fn forward(
         tracing::info!(target: "door", actor, lend = %lend.name, displaced,
             "door: dropped headers the client typed in the door's or the secret's name before setting them");
     }
+    tell_origin(&mut parts.headers);
     parts.headers.insert(header::HOST, own_address(port));
     own_origin(&mut parts.headers, &label, (lend, port));
     if let Some(protocol) = upgrade.clone() {

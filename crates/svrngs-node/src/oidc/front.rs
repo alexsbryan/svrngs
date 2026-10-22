@@ -6,13 +6,15 @@
 //! **The door answers it**, after the asker is known and before the lend's
 //! path refusals and the limit, and never carries it to the service. It
 //! checks the stock ask — `response_type=code`, the declaration's client,
-//! a redirect on the lend's own `http://localhost:<port>`, `openid` in the
-//! scope, and PKCE S256 when a challenge is sent — refusing each in a
-//! person's words and at debug. It mints a one-time code for the person
-//! [`crate::door`] resolved (a guest as a guest), bound to the client, the
-//! redirect, the challenge and the nonce, and answers a relative
-//! `Location` back to the app's callback, so each viewer's browser resolves
-//! it on its own address for the lend.
+//! a redirect on the app's own `http://localhost:<port>` or on the lend's
+//! own origin (the browser's `scheme://host`, which the door tells the app
+//! as `X-Forwarded-Host`/`-Proto`), `openid` in the scope, and PKCE S256
+//! when a challenge is sent — refusing each in a person's words and at
+//! debug. It mints a one-time code for the person [`crate::door`] resolved
+//! (a guest as a guest), bound to the client, the redirect, the challenge
+//! and the nonce, and answers a relative `Location` back to the app's
+//! callback, so each viewer's browser resolves it on its own address for
+//! the lend.
 
 use std::collections::BTreeMap;
 use std::num::NonZeroU16;
@@ -39,6 +41,7 @@ pub(crate) fn authorize(
     lend: &Lend,
     client: &SignInWithSvrngs,
     port: NonZeroU16,
+    browser: Option<&str>,
     who: Signer,
     query: Option<&str>,
 ) -> Response {
@@ -60,9 +63,14 @@ pub(crate) fn authorize(
         return refused(lend, "no redirect_uri was sent");
     };
     let own = format!("http://localhost:{port}");
-    let Some(rest) = redirect
-        .strip_prefix(&own)
-        .filter(|r| r.is_empty() || r.starts_with('/'))
+    let Some(rest) = [Some(own.as_str()), browser]
+        .into_iter()
+        .flatten()
+        .find_map(|origin| {
+            redirect
+                .strip_prefix(origin)
+                .filter(|r| r.is_empty() || r.starts_with(['/', '?', '#']))
+        })
     else {
         return refused(lend, "the redirect_uri is not on this lend's own address");
     };

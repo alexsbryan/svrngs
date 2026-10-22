@@ -400,7 +400,12 @@ userinfo on the record API's listener, its one-time codes kept in this run's
 memory and bound to the person, the client, the redirect, the PKCE challenge
 and the nonce; `oidc/front.rs` and `door::lend_for` answer the authorize
 path on the lend's own origin, after the asker is known and never carried to
-the service. The key is never in the record and never synced; a token is on
+the service, accepting the app's redirect on its own `http://localhost:<port>`
+or on the lend's own origin (the browser's `X-Forwarded-Host`/`-Proto`). The
+door asks a lend's service at the service's own `Host` but tells it the
+browser's origin in those two headers (`door::tell_origin`), displacing any a
+client typed, so a proxy-trusting app builds its pages on the lend's origin.
+The key is never in the record and never synced; a token is on
 no wire but the app's. The sign-in hook a lender's program once answered is
 gone: `apps/jellyfin/mw/` and the well-known table's `helper jellyfin` row
 stay only until `oidc-retire` removes them with the Jellyfin trial.
