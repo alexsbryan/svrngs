@@ -113,3 +113,84 @@ fn the_token_subs_the_person_not_a_device() {
     assert_eq!(payload["sub"], SUB, "sub is the person's key");
     assert_ne!(payload["sub"], DEVICE, "sub is the device's key");
 }
+
+/// The front channel's answer to an ask whose `redirect_uri` is `redirect`
+/// (form-encoded into the query here, as a client sends it), for Ana at a
+/// lend on port 8096, the browser on `browser`: its status and `Location`.
+fn authorized(redirect: &str, browser: Option<&str>) -> (u16, Option<String>) {
+    let dir = tempfile::tempdir().unwrap();
+    let provider = Provider::new(dir.path().to_path_buf(), 1).unwrap();
+    let lend = crate::lend::Lend::carried("media", "0123456789abcdef").unwrap();
+    let client = SignInWithSvrngs {
+        client_id: "svrngs-media".into(),
+        client_secret: None,
+    };
+    let who = svrngs_core::token::Subject {
+        sub: SUB.into(),
+        name: "Ana".into(),
+        username: "Ana-9f2c0a1b3d4e5f60".into(),
+        group: svrngs_core::token::Group::Member,
+    };
+    let redirect: String = form_urlencoded::byte_serialize(redirect.as_bytes()).collect();
+    let query =
+        format!("response_type=code&client_id=svrngs-media&redirect_uri={redirect}&scope=openid");
+    let port = std::num::NonZeroU16::new(8096).unwrap();
+    let answer = authorize(&provider, &lend, &client, port, browser, who, Some(&query));
+    let location = (answer.headers().get(axum::http::header::LOCATION))
+        .map(|l| String::from_utf8_lossy(l.as_bytes()).into_owned());
+    (answer.status().as_u16(), location)
+}
+
+/// A redirect a browser would read as another host's is refused 400 at the
+/// authorize path, and no code is answered: `//` after the lend's own
+/// address, on the service's or the browser's origin, or `\`, which a
+/// browser reads as `/`. Red at 3f313267: each answered 302 with
+/// `Location: //evil.example/cb?code=…`, or `/\evil.example/cb?code=…`, a
+/// protocol-relative URL off the lend's origin (front.rs:59-69, 88).
+#[test]
+fn a_redirect_a_browser_reads_as_another_hosts_is_refused() {
+    const BROWSER: &str = "http://umfrj1nx.localhost:6473";
+    for (redirect, browser) in [
+        ("http://localhost:8096//evil.example/cb", None),
+        ("http://localhost:8096/\\evil.example/cb", None),
+        (
+            "http://umfrj1nx.localhost:6473//evil.example/cb",
+            Some(BROWSER),
+        ),
+    ] {
+        let (status, location) = authorized(redirect, browser);
+        assert_eq!((status, location.as_deref()), (400, None), "{redirect}");
+    }
+}
+
+/// A control byte in the redirect, `%0A` in the ask, is refused 400, not a
+/// panic of the request's task. Red at 3f313267: it panicked at
+/// front.rs:103-104's `expect`, "a path and a URL-safe code are a header".
+#[test]
+fn a_control_byte_in_the_redirect_is_refused_not_a_panic() {
+    let (status, location) = authorized("http://localhost:8096/cb\n", None);
+    assert_eq!((status, location.as_deref()), (400, None));
+}
+
+/// The service's own address is the door's one set of hosts, `localhost`,
+/// `127.0.0.1` and `[::1]`, case ignored, as a `Location` the door makes a
+/// path reads it: a redirect on any is answered relative to the lend's
+/// origin. Red at 3f313267: front.rs:59 took `http://localhost:<port>`
+/// alone, exact, and refused each of these 400.
+#[test]
+fn the_services_own_address_is_the_doors_one_set_of_hosts() {
+    for redirect in [
+        "http://127.0.0.1:8096/cb",
+        "http://[::1]:8096/cb",
+        "HTTP://LocalHost:8096/cb",
+    ] {
+        let (status, location) = authorized(redirect, None);
+        assert_eq!(status, 302, "{redirect}: {location:?}");
+        assert!(
+            location
+                .as_deref()
+                .is_some_and(|l| l.starts_with("/cb?code=")),
+            "{redirect}: {location:?}"
+        );
+    }
+}

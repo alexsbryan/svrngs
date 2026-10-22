@@ -1355,6 +1355,34 @@ async fn the_service_is_asked_on_its_own_address_and_its_redirect_comes_back_a_p
     pair.close().await;
 }
 
+/// A redirect from the service that a browser would read as another
+/// host's — `//` or `/\` after the service's own address — is left as the
+/// service sent it, never answered as a path, which would send the browser
+/// off the lend's origin. Red at 3f313267: the door answered
+/// `Location: //evil.example/cb` and `/\evil.example/cb` (door.rs:817-834,
+/// `as_path`).
+#[tokio::test]
+async fn a_services_redirect_off_its_own_origin_is_never_made_a_path() {
+    let pair = Pair::new().await;
+    let port = origins::host_origin().await.port();
+    pair.lend("guarded", port, &[]);
+    for (path, sent) in [
+        ("/lend/guarded/away", "//evil.example/cb"),
+        ("/lend/guarded/away-back", "/\\evil.example/cb"),
+    ] {
+        let reply = pair.get(path, "").await;
+        assert_eq!(reply.status, 302, "{path}: {}", reply.text);
+        let left = format!("http://localhost:{port}{sent}");
+        assert_eq!(
+            header_values(&reply.text, "location"),
+            vec![left.as_str()],
+            "{path}: {}",
+            reply.text
+        );
+    }
+    pair.close().await;
+}
+
 /// The browser's own origin is told to the service as a reverse proxy tells
 /// it (oidc-jellyfin): `X-Forwarded-Host` is the `Host` the browser asked,
 /// and `X-Forwarded-Proto` is `http` for a `*.localhost` host and `https`
