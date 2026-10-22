@@ -11862,3 +11862,206 @@ charter leaves to the operator ("anything beyond the record").
 |---|---|---|---|
 | I1 | 7 | `code converge noun` | Still one line early: cli.rs:1073 for :1074, choices.rs:42 for :43, view.rs:108 for :109. |
 | I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)"; scripts/' exact tier could not judge. |
+
+## REVIEW-audit-oidc-auto-1 (2026-10-21, range 718e08f2e..4daea9eb)
+
+The previous `REVIEW-audit-` row is REVIEW-audit-leave-auto-1, its hash
+718e08f2e (ralph/next/leave/STATE.md:20); none ran in this queue before
+this one. The range ends at 4daea9eb, the commit that made this row:
+`git rev-list --count 718e08f2e..4daea9eb` is 72, none a merge
+(`--merges`: 0). Its first commit, cefff1b5, is the loop's `done` for
+that row and touches only its state file. The range is the oidc queue:
+its setup, the economizing pass and the nine units. The row reads
+`docs/ARCH_PRINCIPLES.md`, which is docs/principles/ARCH_PRINCIPLES.md,
+and `target/debug/sovereign-cli`, which is
+~/dev/commonwealth-ai/target/debug/sovereign-cli, sha256
+22c48619… (`shasum -a 256`). The corpus is `svrngs`, last indexed at
+b404da38 (`scip_meta`), the code HEAD after the range's last code commit
+337a7c63; rust and python exported, typescript skipped (I4, I34). The
+state file is left as it is; the loop owns the row. Every file named
+/tmp/ below is under /tmp/oidcaudit/.
+
+This audit's own commit before this section: dd4b8ef2, the sign-in
+token's and its key error's names made one (below, "Fixed here").
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%s' --no-merges
+718e08f2e..4daea9eb` (log.txt), summed by unit id (ledger.py). Product
+code is the lean_check.py definition: `.rs`, `.js`, `.mjs`, `.ts`,
+`.py` and `.sh` under `crates/`, `web/` and `scripts/`, tests apart
+(`*/tests/*`, `*_tests.rs`, `tests_support.rs`, `*.test.mjs`). `apps/`
+(charter fence 9), `demo/runs/` (recorded drivers), `ralph/`, `docs/`,
+the lockfiles and the `.opencode/` config are out. Raw lines, comments
+and blanks in:
+
+| unit | commits | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| queue (state and charter) | 4 | 0 | 0 | **0** | 0 | 0 | 0 |
+| oidc-setup | 3 | 0 | 0 | **0** | 0 | 0 | 0 |
+| oidc-economize | 3 | 0 | 0 | **0** | 0 | 0 | 0 |
+| oidc-token | 7 | 348 | 40 | **+308** | 223 | 4 | +219 |
+| oidc-provider | 8 | 618 | 19 | **+599** | 625 | 44 | +581 |
+| oidc-authorize | 5 | 195 | 4 | **+191** | 471 | 19 | +452 |
+| oidc-hook-cut | 4 | 64 | 802 | **−738** | 91 | 1296 | −1205 |
+| oidc-turn-on | 6 | 266 | 40 | **+226** | 297 | 6 | +291 |
+| oidc-jellyfin | 17 | 96 | 22 | **+74** | 169 | 4 | +165 |
+| oidc-forgejo | 8 | 0 | 0 | **0** | 0 | 0 | 0 |
+| oidc-retire | 6 | 12 | 12 | **0** | 34 | 10 | +24 |
+| REVIEW-audit-oidc-auto-1 (its row) | 1 | 0 | 0 | **0** | 0 | 0 | 0 |
+| total | 72 | 1599 | 939 | **+660** | 1910 | 1383 | +527 |
+
+The six units with no product line are their demo data, recorded run
+drivers and state/charter edits; oidc-retire's −1,106 lines of
+`apps/jellyfin/mw/` are `apps/`, outside the budget, and its product
+change is share.rs's helper row and well_known.txt's line. oidc-hook-cut
+is the operator-authorized retirement of the sign-in hook (CHARTER.md,
+2026-10-21), its 523 counted lines and its 1,028 test lines going.
+
+What lean_check.py counts, HEAD's script over a `git archive` tree of
+each end:
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 718e08f2e, range start | 3072 | 16927 |
+| 4daea9eb, range end | **3152** | **17418** |
+| net | **+80** | **+491** |
+
+The operator's ceiling was +800 and +80 over the pass's 16,928 and 3,073
+(CHARTER.md, 2026-10-21): 309 of the repository's raise is unspent, and
+svrngs-core is at the line (3,152 / 3,153). oidc-retire's cut lowered the
+repository's cap to 17,419, one past where it landed. This audit's
+rename moves no counted line (17,418 / 17,419 and 3,152 / 3,153 after
+dd4b8ef2).
+
+### (2) Clones (`code dry-report`)
+
+The range touched crates/svrngs-core, crates/svrngs-node, crates/svrngs
+and web/ (`git diff --stat 718e08f2e 4daea9eb -- crates web`). Each was
+reported at 0.95 and 0.90 (dry-*.md). Whether a side was added in the
+range is `git blame --porcelain` over each side's lines (blame_sides.py;
+a line's commit in `git rev-list 718e08f2e..4daea9eb` is new). Its
+controls in the same run: token.rs:39-50 (`Claims`) 12 of 12 lines new
+(7b9b4ad2); removal.rs:267-272 (`told`, c599547e) 0 of 6.
+
+| scope | exact | near 0.95 | near 0.90 | with a side added in the range |
+|---|---|---:|---:|---|
+| crates/svrngs-core/ | 4 | 0 | 12 | 0 |
+| crates/svrngs-node/ | 1 | 0 | 8 | 0 |
+| crates/svrngs/ | 0 | 0 | 0 | 0 |
+| web/ | could-not-judge (I34) | 0 | 1 | 0 |
+
+No side of any clone is new: every side blames to a commit before
+718e08f2e, except the node's `of`/`forget` pair, which is in
+`door/sign_in.rs`, deleted by this range (d78ec302) and still in the
+graph (I35). The exact clones are `as_str` (link.rs:186, synced.rs:67),
+`lines` (command.rs:87, :105), `signed_by_link` (joining.rs:56, :148),
+`is_empty` (act_set.rs:40, command.rs:109) and `addr` (api.rs:212, :228),
+all older. The near 0.90 clusters are the older test and helper pairs in
+removal/register/membership tests, origin.rs/surface.rs, synced.rs,
+redeem.rs, choices.rs, rail.rs, lend.rs and web/lend.js.
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git diff 718e08f2e..4daea9eb -- crates web`,
+matched against `(struct|enum|trait|type) +[A-Z]\w*`: 14 definitions
+(types-diff). Each noun, as the corpus at b404da38 answers:
+
+| noun | definitions | site(s) | after |
+|---|---:|---|---|
+| Group | 3 | token.rs:28; two `demo/runs/perf/*/run.py` drivers | one product noun; the demo pair is recorded drivers, not product |
+| Claims | 1 | token.rs:38 | — |
+| Header | 1 | token.rs:94 | — |
+| Token | **2** | link.rs:85, token.rs:104 | **1**, token.rs's is `Jwt` (dd4b8ef2) |
+| SignInWithSvrngs | 1 | lend.rs:299 | — |
+| KeyError | **2** | svrngs/src/identity.rs:79, oidc.rs:61 | **1**, oidc.rs's is `KeyFailure` (dd4b8ef2) |
+| Key | 1 | oidc.rs:73 | — |
+| Signer | 1 | oidc/front.rs:30 | — |
+| Provider | 1 | oidc/provider.rs:81 | — |
+| Code | 1 | oidc/provider.rs:152 | — |
+| Codes | 1 | oidc/provider.rs:206 | — |
+| TokenForm | 1 | oidc/provider.rs:286 | — |
+| House | 0 | test-only (tests/door/oidc.rs:438, tests/*/…) | — |
+| Sharing | 1 | svrngs/src/cli.rs:1082 | — |
+
+The two nouns with more than one product definition, as the tool printed
+them (before dd4b8ef2):
+
+```
+noun: Token
+definitions (2), first-party production:
+  svrngs-core                    crates/svrngs-core/src/link.rs:85
+  svrngs-core                    crates/svrngs-core/src/token.rs:104
+
+noun: KeyError
+definitions (2), first-party production:
+  svrngs                         crates/svrngs/src/identity.rs:79
+  svrngs-node                    crates/svrngs-node/src/oidc.rs:61
+```
+
+`Token`'s two are a join link's token and a sign-in JWT; `KeyError`'s are
+this computer's identity key file and the sign-in key. Both are distinct
+concepts under one name (ARCH_PRINCIPLES §8), so the later definition of
+each takes its own name. `Group`'s third and fourth definitions are in
+recorded run drivers under `demo/runs/perf/` (`run.py:81` and `:68`),
+data outside the budget, and `House` is defined only in test code; the
+tool's line numbers are one early (I1).
+
+### Reading the range
+
+The OIDC code was read hunk by hunk (`git diff 718e08f2e 4daea9eb --
+crates/svrngs-core/src crates/svrngs-node/src web/src`), against the
+charter's fences and principles 1, 6 and 8.
+
+- **One issuer, one key, one client** (fence 7). `provider::issuer` is
+  the one string discovery, the token and userinfo call
+  (provider.rs:63); `Key::jwks` and `Key::token` read the same pair
+  (oidc.rs:160-201); the client comes from the declaration's
+  `SignInWithSvrngs` (lend.rs:299), not a second copy. `told_as`
+  (door.rs:158) is one helper for the headers and the claims.
+- **Nothing leaves the lender's computer** (fence 3). The key is
+  written through `declared::write_secret` (oidc.rs:101-104); the code
+  store is `Codes`' map in memory (provider.rs:206-246); no token is
+  written or traced. `verified` checks the signature, `iss`, `aud` and
+  `exp` (oidc.rs:143-190).
+- **Only people the door would carry** (fence 4). The authorize branch
+  sits after the asker is resolved and before the path refusals and the
+  limit (door.rs:1225), and a removed member is refused before it. A
+  stopped app is not, though; #221.
+- **Glassbox** (principle 1). Every refusal in `front::authorize`,
+  `Provider::declared`, `token`, `userinfo` and `Codes` traces at debug
+  with the fact; the success paths do too. The one silent branch is
+  #220's RNG.
+- **The clock has two homes** (principle 8): `door::unix_now`
+  (door.rs:972) refuses a pre-1970 clock and warns; `provider::now`
+  (provider.rs:72) reads the same clock and returns 0. #219.
+
+### Fixed here
+
+- dd4b8ef2: `Token` → `Jwt` (crates/svrngs-core/src/token.rs:105) and
+  `KeyError` → `KeyFailure` (crates/svrngs-node/src/oidc.rs:62), with
+  their references in the core's token test and oidc.rs, provider.rs,
+  node.rs and cli.rs. Behaviour kept: the JSON, the wire forms, the
+  error text and every test are unchanged; `cargo test -p svrngs-core
+  --test token` 4 passed and `cargo test -p svrngs-node --lib oidc` 4
+  passed.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 219 | 6, 8 | crates/svrngs-node/src/oidc/provider.rs:72-77 (`now`: `unwrap_or(0)`); crates/svrngs-node/src/door.rs:972-985 (`unix_now`/`unix_secs`: `None`, said at warn) | not fixed (the fix propagates `None` through `Code::new`, `token` and `userinfo`; the repository has 1 line left under 17,419) | **Read.** The provider is a second home of the clock, and it silently substitutes 0 for a time before 1970 where the door refuses and warns — the exact shape #203 fixed at door.rs. A code then expires at 60 and a token is minted `iat=0, exp=600`, already lapsed: safe in direction, but an absence defaulted, never reported (AGENTS.md 6). One reader, one verdict, would be `unix_now`'s. |
+| 220 | 6 | crates/svrngs-node/src/oidc/provider.rs:227 (`let _ = self.rng.fill(&mut bytes)`); the good twin at crates/svrngs-node/src/oidc.rs:43 (`map_err(KeyFailure::Random)`) | not fixed (a `Result` from `mint` reaches `front::authorize` and adds lines; the cap has 1) | **Read.** The code store swallows the system RNG's failure, leaving `bytes` all zero: every mint then inserts the same 43-character code, so a client that presents it redeems the last minted person's code. The key's draw maps the same failure to a refusal; the code's does not. A failure that cannot happen on this platform is still an `Err` collapsed into a value (principle 6), and the value is predictable. |
+| 221 | 8; fence 4 | crates/svrngs-node/src/door.rs:1225-1256 (the authorize branch returns before `own_app` at :1262 and `choices::check` at :1265); crates/svrngs-node/src/door/choices.rs:17-18 ("A stop refuses every request the door receives after it"), :126-160 (`check`) | not fixed (the front channel's ask names no app, so the per-app choice cannot be asked; giving the sign-in the app's identity or a per-lend choice is the design's and the operator's) | **Run.** A scratch test beside tests/door/oidc.rs (then removed; /tmp/oidcaudit/scratch-stop.out): bo stops `media` for the app's label — `POST /choices/media` 200, body `{"app":"umfr…","choice":{"at":…,"said":"stop"}}` — and the authorize ask with that app's pass still answers `302 … Location: /signin-oidc?code=…`. A lend that asks refuses the same app's ordinary page `stopped` (tests/door/choices.rs:146-160), but the sign-in still mints a code, so the door's one choice decider does not reach the front channel. A stop is not one of the design's path refusals (SIGN_IN_WITH_SVRNGS §5), and the app's authorize request on a computer carries no app label; that is why the branch cannot simply move below `choices::check`. |
+| 80 | — | scripts/lean_check.py:149 BUDGET, :217 `n >= cap` | not fixed (operator's) | 17,418 / 17,419 and 3,152 / 3,153 after this audit: +491 and +80 over the range, inside the operator's +800 and +80; 309 of the repository's raise unspent, none of svrngs-core's. oidc-retire's cut lowered the repository's cap to one past where it landed. |
+| 211-218 | as recorded | as recorded | as recorded | Open since the leave and guests queues; this range adds nothing to them. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun`, dry-report spans | Still one line early: Token at link.rs:85 for :86 and token.rs:104 for :105; KeyError at identity.rs:79 for :80 and oidc.rs:61 for :62; Group at token.rs:28 for :29. |
+| I4 | 6 | `refresh` | Still present: typescript "skipped (export failed)"; web/'s, scripts/' and apps/' exact tiers could not judge. |
+| I8 | 6 | dry-report scope | Still present: the core's removal_tests.rs, register_tests.rs, membership_invite_tests.rs, tests_support.rs and node's ring_sync/tests.rs are reported as production clones. |
+| I34 | 6 | `converge noun`, `refresh` | Still present: a Rust crate outside the Cargo workspace is not exported, so `web`'s Rust (`web/src/join.rs:52`'s `Group`, `http.rs`) is absent; web/'s exact tier could-not-judge. |
+| I35 | 6 | `refresh`, SCIP graph | New: a file deleted in the range is still in the graph. `door/sign_in.rs` went at d78ec302, the meta's `last_indexed_head` is b404da38 (after it) and `stale_files` is empty, but `scip_graph.db` still holds 591-line `sign_in.rs` symbols, and dry-report reports `of`/`forget` at door/sign_in.rs:336 and :353 as a near clone. A cluster in deleted code reads as live until the corpus is rebuilt. |
