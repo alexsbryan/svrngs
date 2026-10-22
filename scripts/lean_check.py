@@ -163,7 +163,10 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # 2026-10-21): its file and wiring, the helper's steps and the page's
 # signs_in, 523 counted lines, and lowered the repository's to one past where
 # it landed: 17,203. svrngs-core is unchanged at one past its 3,152.
-BUDGET = {"crates/svrngs-core": 3153, ".": 17203}
+# oidc-turn-on's switch, its client and its one secret raised the repository
+# 172 to one past where they landed: 17,375 (17,728 is the operator's
+# ceiling). svrngs-core is unchanged at 3,152 under its 3,153.
+BUDGET = {"crates/svrngs-core": 3153, ".": 17375}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
