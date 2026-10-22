@@ -205,7 +205,7 @@ pub struct Node {
     routes: axum::Router,
     _acceptor: IrohAcceptor,
     _round: RingSyncHandle,
-    /// The room's one owner ([`crate::room::spawn`]), stopped with the node.
+    /// The room's one owner ([`crate::room::owner::spawn`]), stopped with the node.
     _room: n0_future::task::AbortOnDropHandle<()>,
 }
 
@@ -315,7 +315,7 @@ impl Node {
             folders: folders.clone(),
             oidc: oidc.clone(),
         };
-        let (room, owner) = crate::room::Room::new();
+        let (room, owner) = crate::room::owner::Room::new();
         let asking = Asking {
             host: host.clone(),
             door,
@@ -324,7 +324,7 @@ impl Node {
             oidc,
             room,
         };
-        let room = crate::room::spawn(asking.clone(), owner);
+        let room = crate::room::owner::spawn(asking.clone(), owner);
         // The record, and beside it what an app asks of this computer (u5-1).
         let rail_api = RailApi {
             rail: rail.clone(),
@@ -338,7 +338,7 @@ impl Node {
                 .merge(asking.oidc.clone().router())
                 .merge(crate::folder::router(folders.clone()))
                 .merge(crate::removal::router(asking.clone()))
-                .merge(crate::room::router(asking.clone())),
+                .merge(crate::room::route::router(asking.clone())),
             crate::home::router(asking.clone(), rail_api),
         );
         let api = crate::api::serve(routes.clone(), api);
@@ -815,7 +815,7 @@ pub(crate) struct Asking {
     pub(crate) seeds: SeedText,
     pub(crate) oidc: crate::oidc::Provider,
     /// The room's handle: its turns, and what it serves now ([`crate::room`]).
-    pub(crate) room: crate::room::Room,
+    pub(crate) room: crate::room::owner::Room,
 }
 
 fn people_router(asking: Asking) -> axum::Router {

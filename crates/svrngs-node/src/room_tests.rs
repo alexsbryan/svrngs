@@ -9,7 +9,9 @@ use axum::extract::ConnectInfo;
 use axum::http::{Request, StatusCode};
 use tower::ServiceExt;
 
-use super::{from_this_network, pick, serves, Network, Served};
+use super::owner::from_this_network;
+use super::{serves, Served};
+use crate::network::{pick, Network};
 
 fn ips(raw: &[&str]) -> Vec<IpAddr> {
     raw.iter().map(|a| a.parse().unwrap()).collect()

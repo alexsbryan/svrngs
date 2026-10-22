@@ -146,7 +146,7 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
         )
         .merge(crate::surface::router(at.clone()))
         .merge(crate::removal::router(at.clone()))
-        .merge(crate::room::router(at.clone()))
+        .merge(crate::room::route::router(at.clone()))
         .layer(axum::middleware::from_fn_with_state(
             at.clone(),
             only_itself,

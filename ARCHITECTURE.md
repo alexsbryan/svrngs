@@ -512,11 +512,12 @@ in one group, in one process with no relay, and runs each canary of DESIGN
 as its own step, and a canary that cannot start fails.
 The room (`room.rs`, u6-1, new code in the shape of upstream's LAN door
 and `advertised_base`, PLAN §4, U6's inventory) is the running node's:
-one task owns it (`room::spawn`), told by messages from `/v1/room`
-(`room::router`, in the record's routes and the home page's), where the
+one task owns it (`room/owner.rs`, `owner::spawn`), told by messages
+from `/v1/room` (`room/route.rs`, `route::router`, in the record's routes
+and the home page's, translating and deciding nothing), where the
 home page's button and `svrngs room` turn a lend on or off, a name
 resolved among the lends offered now and those on already. It keeps the
-lends on in `<data dir>/room.json`, by key and name, with the network each
+lends on in `<data dir>/room.json` (`room/kept.rs`), by key and name, with the network each
 was turned on at (one that cannot be read answers `/v1/room` 500 with why,
 serving nothing, until a turn writes it over; none there is an empty room), and every 5 s and at each turn reads the network
 (`network::look`: netdev's default-route interface, its router's hardware
