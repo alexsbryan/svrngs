@@ -404,6 +404,14 @@ the service. The key is never in the record and never synced; a token is on
 no wire but the app's. The sign-in hook a lender's program once answered is
 gone: `apps/jellyfin/mw/` and the well-known table's `helper jellyfin` row
 stay only until `oidc-retire` removes them with the Jellyfin trial.
+Turning it on is the lender's: the home page's `/lent` (its `POST` with
+`to: sign-in`) makes a client id and secret with `oidc::client`, checks
+them against `lend::client_alphabet` (`[A-Za-z0-9-._~]` only), and keeps
+them in the lend's declaration at 0600 through `lend::declare`; the answer
+names the one issuer string and the deviations once, and `GET /lent` says
+only that the lend signs people in. `svrngs share --sign-in-with-svrngs`
+does the same for scripts. A lend declares its own password or this, never
+both.
 
 A lend may ask (sup-2; DESIGN §3, "What an app gets"): `asks` in its
 declaration, its lender's words, set by `svrngs share --ask`, carried in

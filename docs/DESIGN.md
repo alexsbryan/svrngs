@@ -710,7 +710,8 @@ nothing more.
      ES256, no email yet). A lend declares its one secret or its sign-in
      with svrngs, never two; a declaration's unknown field is refused,
      never ignored. The client id and secret are made from
-     `[A-Za-z0-9-._~]` only.
+     `[A-Za-z0-9-._~]` only, the declaration holding the secret is written
+     0600, and the page shows it once (`lend::declare`, `oidc::client`).
    - An app whose page script navigates to the authorize address itself is
      not served (SIGN_IN_WITH_SVRNGS §8 10): the address would be the
      viewer's own machine. `apps/jellyfin/mw/` stays only until
