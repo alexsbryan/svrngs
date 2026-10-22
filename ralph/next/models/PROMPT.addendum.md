@@ -1,7 +1,10 @@
 <!-- section: models after=intro -->
-This queue builds the pantry's lean v0: a person lends a model with one
-command, and another finds which friend has which model and gets one
-address for it, or every candidate named with why not. Before a row, read
+This queue builds the pantry's lean v0, built for two jobs: a screenshot
+sent to a strong code model that cannot see, and voice in and out of a
+person's own model interface. It also opens the MCP tool world to a group. A
+person lends a model or a tool with one command. Another points their
+interface at one local address, which reaches whichever friend lends what
+each request needs, or names every candidate with why not. Before a row, read
 this queue's `CHARTER.md` and `STATE.md`'s opening, and svrn-docs
 `rings/current/MODELS_ON_THE_RING.md` whole. What STATE.md lists under
 "Waits" is not built here.
@@ -34,3 +37,8 @@ Fences the rows keep:
    the pantry's output and README say what to do, in second person.
 9. *One host, one run of each:* not a rate (AGENTS.md 7). A run that could
    not finish is could-not-judge, never a pass.
+10. *Adopt protocols; add none* (the operator, 2026-10-22: "the right
+    protocol adoption and simple machinery"). Models speak OpenAI's HTTP;
+    tools speak MCP over Streamable HTTP. The pantry passes `tools` through
+    untouched and never runs an agent loop. A quiet step, such as the vision
+    bridge, is named in the response's headers.

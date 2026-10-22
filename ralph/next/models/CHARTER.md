@@ -15,12 +15,19 @@ charter disagree, they win, and the decision says so.
 - **A lean lens on priority and scope.** "I want to get this planned out and
   scheduled in rows, but with a lean startup lens applied to the product
   priority and scope."
-- **Scope the design's six needs first, then choose.** "Is there a way to do
-  #3 but very lean? How elaborate are the runtime differences? I'd like to
-  at least try to scope out #3, but if it's too messy we can fall back to
-  #1." Here #3 is the design's six needs (code, embed, image, transcribe,
-  tool search, video), and #1 is LLMs alone (chat and code). The first row
-  measures each runtime and stops; the operator chooses the kinds.
+- **Scope first, then choose.** "Is there a way to do #3 but very lean? How
+  elaborate are the runtime differences? I'd like to at least try to scope
+  out #3, but if it's too messy we can fall back to #1." The first row
+  measures and stops; the operator chooses what v0 adopts.
+- **Two jobs, and tools.** "take screenshot of UI, send it to local model,
+  local model does code to fix (the problem is some very strong local
+  models don't have built in multimodal so this would have to be quietly
+  orchaestrated)"; "the person who does a voice to text I/O to their model
+  interface"; and of tools, "opening as much of the open source world as
+  possible for people, but just through the right protocol adoption and
+  simple machinery". These are what v0 is for. "this can totally be pro
+  mode stuff we can defer" was said of the jobs. The scope's verdict
+  decides whether they stay in v0, and the operator chooses.
 - **No Ollama, anywhere; fully open, high-integrity software only.** "We
   don't work with ollama. Let's cut that from any plan. Fully open and high
   integrity software only." Runtimes are the ggml family (llama.cpp,
@@ -43,18 +50,32 @@ three runtimes. This queue builds less:
   `/v1/lends` already carries (the design's §6, "The zero-platform v0").
   A runtime's routes that change the lender's computer are kept back by the
   recipe's `svrngs share --refuse`, which exists.
-- **No need acts.** A need is the consumer's flags on `pantry use`. A
-  standing need in the record earns its place when a person asks the group
-  for a model nobody lends.
-- **No router, no page, no spread.** v0 prints the lend's stable origin.
-  The order is this computer's own lends, then by the lender's name.
-- **The kinds the scope finds clean.** LLMs alone is the floor.
+- **No need acts.** A need is the request itself: the model it names, the
+  path it asks. A standing need in the record earns its place when a person
+  asks the group for a model nobody lends.
+- **One local address, for the two jobs.** The design's v1 router, built
+  early because both jobs need it, and kept small. `pantry serve` routes
+  OpenAI requests by path and model, and swaps an image for a vision lend's
+  description when the model cannot see, naming both hops. No page, no
+  spread. The order is this computer's own lends, then by the lender's
+  name.
+- **Tools are MCP, and the pantry is not an agent.** Tools speak MCP over
+  Streamable HTTP, lent like any app; a stdio server goes behind an open
+  bridge. The person's interface runs the agent loop and pastes a tool's
+  address. The pantry passes `tools` through untouched and lists each tool
+  lend's tools and effects from MCP's own annotations. There is no
+  registry, aggregator or OpenAPI shim. Search is a tool, not a kind of its
+  own.
+- **Four kinds and tools:** code, vision, transcription and speech. Image
+  generation, embeddings, rerank and video wait, each reachable today at a
+  lend's own address.
 
 Lending a model already works without any of this: `llama-server` is a
 known kind with its keep-backs (`crates/svrngs-node/src/well_known.txt`),
 and a stock client reads `/v1/models` from the address it is given. What v0
-adds is one command for a provider, and for a consumer, which friend has
-which model and one address for it, or every candidate named with why not.
+adds is one command for a provider. For a consumer, it adds one address for
+the interface they already use, which reaches whichever friend lends what
+the request needs, or names every candidate with why not.
 
 ## The budget
 
@@ -81,8 +102,9 @@ yourself, saying both in the commit, and keep going.
 
 Write `NEEDS_HUMAN.md` and stop for:
 
-- **the kinds:** models-scope ends here every time; the operator chooses
-  which kinds v0 covers;
+- **what v0 adopts:** models-scope ends here every time. The operator
+  chooses the runtimes, the front, the speech server, the MCP bridge, and
+  whether the vision bridge is worth building;
 - **a platform line:** any change counted by `scripts/lean_check.py`;
 - **the trust floor:** any widening of a page's policy or a listener;
 - **a runtime or tool** that is not fully open and of high integrity, or
