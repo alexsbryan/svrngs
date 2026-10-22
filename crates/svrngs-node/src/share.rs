@@ -24,9 +24,9 @@
 //!
 //! oidc-hook-cut: the sign-in a lender ran itself is gone, and with it
 //! `--sign-in`, a helper's port and its steps; sign-in with svrngs is the
-//! door's own (SIGN_IN_WITH_SVRNGS §5). A `helper` row the table still
-//! holds is kept for `oidc-retire`, which removes it with its app, and no
-//! reader here takes one.
+//! door's own (SIGN_IN_WITH_SVRNGS §5). oidc-retire removed the last
+//! `helper` row with its app, so a row is a kind at a port or by its name
+//! alone, and nothing names a program beside a lend.
 //!
 //! start-llama: a kind the table says keeps paths back ([`kept_of`]) is lent
 //! without them, its lender typing none; and a kind known by its lender's
@@ -59,14 +59,12 @@ pub enum Signs {
 }
 
 /// What [`WELL_KNOWN`]'s first column says a row is (REVIEW_FINDINGS #169):
-/// a kind at its well-known port; a kind known by its lender's word alone
-/// (`-`); or a kind's sign-in helper (`helper`), which nothing reads now and
-/// `oidc-retire` removes with its app.
+/// a kind at its well-known port, or a kind known by its lender's word
+/// alone (`-`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum At {
     Port(NonZeroU16),
     Named,
-    Helper,
 }
 
 /// [`WELL_KNOWN`]'s rows: the first column ([`At`]) and the kind, each
@@ -84,7 +82,6 @@ pub fn rows() -> impl Iterator<Item = (At, Kind, &'static str)> {
             let (kind, how) = rest.split_once(char::is_whitespace).unwrap_or((rest, ""));
             let at = match port {
                 "-" => At::Named,
-                "helper" => At::Helper,
                 p => At::Port(p.parse().ok()?),
             };
             Some((at, Kind::parse(kind).ok()?, how.trim()))
@@ -128,7 +125,6 @@ pub fn well_known_kind(port: NonZeroU16) -> Option<Kind> {
 /// The kinds [`WELL_KNOWN`] names, for a lender asked to say which.
 fn known_kinds() -> String {
     rows()
-        .filter(|(at, ..)| *at != At::Helper)
         .map(|(_, kind, _)| kind.to_string())
         .collect::<Vec<_>>()
         .join(", ")
@@ -138,7 +134,7 @@ fn known_kinds() -> String {
 /// first `:` and the rest — the one reader of that clause, for
 /// [`accounts_of`] and [`kept_of`].
 fn says(kind: &Kind) -> Option<(&'static str, &'static str)> {
-    let (_, _, how) = rows().find(|(at, k, _)| k == kind && *at != At::Helper)?;
+    let (_, _, how) = rows().find(|(_, k, _)| k == kind)?;
     how.split_once(':').map(|(what, rest)| (what, rest.trim()))
 }
 

@@ -158,6 +158,17 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
     let page = ask(api, "GET", &home, "/", typed, "").await;
     assert_eq!(page.status, 200, "{}", page.body);
     assert!(page.body.contains(r#"src="/home.js""#), "{}", page.body);
+    // oidc-retire: the kind-keyed sign-in helper route is gone, so Jellyfin
+    // answers as any kind with none (SIGN_IN_WITH_SVRNGS §7 3). A planted
+    // `/helper/{kind}` route made this red before it passed.
+    let jellyfin = ask(api, "GET", &home, "/helper/jellyfin", typed, "").await;
+    let any = ask(api, "GET", &home, "/helper/unheard-of", typed, "").await;
+    assert_eq!(jellyfin.status, 404, "{}", jellyfin.body);
+    assert_eq!(
+        jellyfin.status, any.status,
+        "a helper is no kind of its own: {} / {}",
+        jellyfin.body, any.body
+    );
     for got in [
         &page,
         &ask(api, "GET", &home, "/v1/groups", &from_night, "").await,

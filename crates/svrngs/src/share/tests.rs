@@ -53,10 +53,9 @@ fn share(p: u16) -> Share {
     }
 }
 
-/// Every line of the table is a port, or `-` for none, or `helper`, and a
-/// kind; the one listed by a port is found by it, a helper's is still a
-/// helper row nothing reads, and every row's kind is read, its kept paths
-/// each a path (`kept_of` panics on one that is not).
+/// Every line of the table is a port or `-` for none, and a kind; the one
+/// listed by a port is found by it, and every row's kind is read, its kept
+/// paths each a path (`kept_of` panics on one that is not).
 #[test]
 fn the_well_known_table_reads_whole() {
     let rows: Vec<&str> = WELL_KNOWN
@@ -70,12 +69,7 @@ fn the_well_known_table_reads_whole() {
         let kind = Kind::parse(rest.split_whitespace().next().unwrap()).expect(row);
         assert!(super::rows().any(|(_, k, _)| k == kind), "{row}");
         let _ = kept_of(&kind);
-        if p == "helper" {
-            assert!(
-                super::rows().any(|(at, k, _)| at == At::Helper && k == kind),
-                "{row}"
-            );
-        } else if p != "-" {
+        if p != "-" {
             assert!(
                 well_known_kind(port(p.parse().expect(row))).is_some(),
                 "{row}"
@@ -89,6 +83,25 @@ fn the_well_known_table_reads_whole() {
         "a TLS port is not shared by number"
     );
     assert_eq!(well_known_kind(port(5000)), None);
+}
+
+/// oidc-retire (SIGN_IN_WITH_SVRNGS §7 3): the table names no sign-in
+/// helper, and the port the one row held names no kind. Red at HEAD, where
+/// the table still carried the helper row for the app that retired; green
+/// after the row and the app went.
+#[test]
+fn the_table_names_no_sign_in_helper() {
+    let helpers: Vec<&str> = WELL_KNOWN
+        .lines()
+        .map(|l| l.split('#').next().unwrap_or("").trim())
+        .filter(|l| l.starts_with("helper "))
+        .collect();
+    assert!(helpers.is_empty(), "a helper row survives: {helpers:?}");
+    assert_eq!(
+        well_known_kind(port(8097)),
+        None,
+        "the retired helper's port names no kind"
+    );
 }
 
 /// The kind is the one given, else the port's; the name, else the kind;

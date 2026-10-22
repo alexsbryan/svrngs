@@ -407,8 +407,9 @@ browser's origin in those two headers (`door::tell_origin`), displacing any a
 client typed, so a proxy-trusting app builds its pages on the lend's origin.
 The key is never in the record and never synced; a token is on
 no wire but the app's. The sign-in hook a lender's program once answered is
-gone: `apps/jellyfin/mw/` and the well-known table's `helper jellyfin` row
-stay only until `oidc-retire` removes them with the Jellyfin trial.
+gone, and no program per app stands beside a lend: the well-known table's
+one `helper` row went with the app it named (`oidc-retire`), and a kind is
+a port or its lender's word, never a program to run.
 Turning it on is the lender's: the home page's `/lent` (its `POST` with
 `to: sign-in`) makes a client id and secret with `oidc::client`, checks
 them against `lend::client_alphabet` (`[A-Za-z0-9-._~]` only), and keeps

@@ -22,12 +22,6 @@
 # the user menu, Dashboard, Users, the + titled "Add User"; its name and
 # password, and its libraries, none ticked until the lender ticks them.
 8096 jellyfin accounts: your picture at the top right, then Dashboard, Users and +; give it a name and a password, tick the libraries they may watch, and Save
-#
-# Jellyfin's helper row stays until `oidc-retire` removes it with
-# apps/jellyfin/mw, after the Jellyfin trial, so a failed trial is reverted
-# with git rather than bought again. Nothing reads it now: the sign-in hook
-# is gone and sign-in with svrngs is the door's own (SIGN_IN_WITH_SVRNGS §5).
-helper jellyfin 8097 apps/jellyfin/README.md
 
 # Navidrome's port (its default, `ND_PORT`). ExtAuth's two settings, as
 # Navidrome 0.64.2 took them in Demo C's dry run (demo/runs/c/dry-2026-10-12/,

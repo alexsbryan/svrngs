@@ -724,9 +724,9 @@ nothing more.
      0600, and the page shows it once (`lend::declare`, `oidc::client`).
    - An app whose page script navigates to the authorize address itself is
      not served (SIGN_IN_WITH_SVRNGS §8 10): the address would be the
-     viewer's own machine. `apps/jellyfin/mw/` stays only until
-     `oidc-retire` removes it with the Jellyfin trial, so a failed trial is
-     reverted with git, not bought again.
+     viewer's own machine. No program per app stands beside a lend: the one
+     the well-known table named retired with its row (`oidc-retire`), so a
+     kind is a port or its lender's word alone.
 
 **A chat's door is the group's link.** A person posts the link where they
 talk, as they post any link, and it opens the same from Discord, iMessage,
