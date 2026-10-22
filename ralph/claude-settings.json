@@ -3,6 +3,7 @@
   "permissions": {
     "defaultMode": "auto",
     "additionalDirectories": ["/tmp", "/Users/alexsbryan/Library/Application Support/jellyfin"],
+    "additionalDirectories": ["/tmp", "/Users/alexsbryan/Library/Application Support/jellyfin"],
     "allow": [
       "Read", "Edit", "Write", "MultiEdit", "Glob", "Grep", "TodoWrite",
       "Bash(git status*)", "Bash(git diff*)", "Bash(git log*)", "Bash(git show*)",
@@ -24,7 +25,8 @@
       "Bash(podman run *)", "Bash(podman ps*)", "Bash(podman logs *)", "Bash(podman inspect *)",
       "Bash(podman exec *)", "Bash(podman stop *)", "Bash(podman rm *)", "Bash(podman pod *)",
       "Bash(podman kube *)", "Bash(podman volume *)", "Bash(podman network *)", "Bash(podman port *)",
-      "Bash(podman compose *)", "Bash(podman-compose *)"
+      "Bash(podman compose *)", "Bash(podman-compose *)",
+      "Bash(codesign *)", "Bash(shasum *)", "Bash(unzip *)", "Bash(tar *)"
     ],
     "deny": [
       "Agent", "WebFetch", "WebSearch",
