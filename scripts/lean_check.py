@@ -167,9 +167,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # 172 to one past where they landed: 17,375 (17,728 is the operator's
 # ceiling). svrngs-core is unchanged at 3,152 under its 3,153.
 # oidc-jellyfin's forwarded origin and its lend-origin redirect raised the
-# repository 46 to one past where they landed: 17,421, inside 17,728.
-# svrngs-core is unchanged at 3,152 under its 3,153.
-BUDGET = {"crates/svrngs-core": 3153, ".": 17421}
+# repository 46 to one past where they landed: 17,421, inside 17,728. Its
+# phone worker naming the browser's host (the run found it) raised it 2
+# more, to one past where the row closes: 17,423. svrngs-core is unchanged
+# at 3,152 under its 3,153.
+BUDGET = {"crates/svrngs-core": 3153, ".": 17423}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
