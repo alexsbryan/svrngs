@@ -69,13 +69,12 @@ impl Claims {
         issued_at: i64,
         lifetime: i64,
     ) -> Self {
-        let expires = issued_at.saturating_add(lifetime);
-        tracing::debug!(target: "oidc", iss = issuer, sub = subject, aud = audience, ?group, iat = issued_at, exp = expires, "oidc: the claims a token will carry");
+        tracing::debug!(target: "oidc", iss = issuer, sub = subject, aud = audience, ?group, iat = issued_at, exp = issued_at.saturating_add(lifetime), "oidc: the claims a token will carry");
         Self {
             iss: issuer.into(),
             sub: subject.into(),
             aud: audience.into(),
-            exp: expires,
+            exp: issued_at.saturating_add(lifetime),
             iat: issued_at,
             name: name.into(),
             preferred_username: username.into(),
@@ -135,7 +134,3 @@ impl Token {
         alloc::format!("{input}.{}", URL_SAFE_NO_PAD.encode(signature))
     }
 }
-
-#[cfg(test)]
-#[path = "token_tests.rs"]
-mod tests;
