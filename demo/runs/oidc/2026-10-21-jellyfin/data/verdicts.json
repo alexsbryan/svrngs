@@ -1,0 +1,22 @@
+{
+  "alex": {
+    "verdict": "failed",
+    "why": "no sign-in: page.waitForFunction: Timeout 60000ms exceeded.; the page says: Logging in...; the account is None, not Alex-*; the film did not play: None"
+  },
+  "bo": {
+    "verdict": "failed",
+    "why": "no sign-in: page.waitForFunction: Timeout 60000ms exceeded.; the page says: Logging in... ; the account is None, not Bo-*; the film did not play: None"
+  },
+  "apart": {
+    "verdict": "failed",
+    "why": "Alex None (None by token), Bo None (None by token); distinct users False, distinct tokens False"
+  },
+  "removed": {
+    "verdict": "passed",
+    "why": "refused in the door's words: 'You are no longer in this group, so nothing of it is open to you.'; no Cy- user; code minted: False"
+  },
+  "planted": {
+    "verdict": "passed",
+    "why": "the code named 'Bo-c4b05374b122cfa9' ('Bo'), not Alex; a second redemption answered 400 invalid_grant"
+  }
+}
