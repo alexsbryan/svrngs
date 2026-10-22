@@ -766,7 +766,7 @@ fn room_asks_svrngs_running_here_and_keeps_it_across_a_restart() {
     let argv = ["share", port.as_str(), "--kind", "pad"];
     let mut running = Program::start(dir.path(), &logs.path().join("share"), &argv, "pads\n");
     running.until("Leave this running");
-    let told = "Whenever svrngs runs here, anyone on this computer's WiFi can open these as you; nobody off it can.";
+    let told = "Whenever svrngs runs here, anyone on this computer's WiFi can open these as you; nobody off it can. Each stays on the WiFi where you turned it on, until you close it to this WiFi on your home page.";
 
     let (code, said) =
         Program::start(dir.path(), &logs.path().join("room"), &["room", "pad"], "").ends();

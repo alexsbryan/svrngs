@@ -2669,19 +2669,21 @@ async fn the_home_page_copies_a_lend_s_address_for_a_program(engine: Engine) {
 }
 
 in_both_engines!(
-    /// **The home page shows a lend on a TV here, and turns it off** (the
+    /// **The home page opens a lend to this WiFi, and closes it** (the
     /// room's report, 4: nothing on the page put a group-mate's lend on a
-    /// TV). Ada lends `shelf`; its row in her page's index says what its
-    /// button does, and whom it lets in, before it is pressed; pressed, it
-    /// says the address to type into the TV's app, where the room then
-    /// serves the shelf to this host's network. Opened again, the row says
-    /// it is on, and pressed again it says it is off, and the address
-    /// refuses. Each engine's ada has a key of her own, so each shelf's
-    /// port is its own. Planted, watched failing: the page as e01c070a
-    /// left it, with no such button.
-    the_home_page_shows_a_lend_on_a_tv_and_turns_it_off
+    /// TV; the operator, 2026-10-22: any device, any lend, the words
+    /// assuming no screen). Ada lends `shelf`; its row in her page's index
+    /// says what its button does, and whom it lets in, before it is
+    /// pressed; pressed, it says the address to type into a device's app or
+    /// browser, where the room then serves the shelf to this host's
+    /// network. Opened again, the row says it is open, "On this WiFi" says
+    /// who can open it, and pressed again the row says it is closed, and the
+    /// address refuses. Each engine's ada has a key of her own, so each
+    /// shelf's port is its own. Planted, watched failing: the page as
+    /// a9e82b9a left it, its words a TV's.
+    the_home_page_opens_a_lend_to_this_wifi_and_closes_it
 );
-async fn the_home_page_shows_a_lend_on_a_tv_and_turns_it_off(engine: Engine) {
+async fn the_home_page_opens_a_lend_to_this_wifi_and_closes_it(engine: Engine) {
     let ip = match svrngs_node::network::route() {
         Some(std::net::IpAddr::V4(v4)) if v4.is_private() => v4,
         other => panic!(
@@ -2704,14 +2706,13 @@ async fn the_home_page_shows_a_lend_on_a_tv_and_turns_it_off(engine: Engine) {
     let seen = home_page(
         engine,
         &ada,
-        json!({ "all": row, "do": [press("Show it on a TV here")] }),
+        json!({ "all": row, "do": [press("Open it to this WiFi")] }),
     )
     .await;
     eprintln!("the home page's run: {seen:#}");
-    let offered =
-        "Show it on a TV here, and anyone on this WiFi can open it as you while svrngs runs.";
+    let offered = "Open it to this WiFi, and anyone on it can open it as you while svrngs runs.";
     assert!(seen["all"].to_string().contains(offered), "{seen:#}");
-    let on = format!("On for your TV: type http://{at}/ into its app. Anyone on this WiFi can open it there as you.");
+    let on = format!("Open to this WiFi: type http://{at}/ into an app or a browser on a device here, such as your TV, a phone or another computer. Anyone on this WiFi can open it there as you.");
     assert!(seen["after"][0].to_string().contains(&on), "{seen:#}");
     let served = reqwest::Client::builder().no_proxy().build().unwrap();
     let page = served.get(format!("http://{at}/")).send().await.unwrap();
@@ -2720,13 +2721,17 @@ async fn the_home_page_shows_a_lend_on_a_tv_and_turns_it_off(engine: Engine) {
     let seen = home_page(
         engine,
         &ada,
-        json!({ "all": row, "do": [press("Turn it off for the TV")] }),
+        json!({ "all": row, "do": [press("Close it to this WiFi")], "text": true }),
     )
     .await;
     eprintln!("the home page's second run: {seen:#}");
     assert!(seen["all"].to_string().contains(&on), "{seen:#}");
-    let off = "Turned off for the TV: nobody on this WiFi can open it through this computer now.";
+    let off = "Closed to this WiFi: nobody on it can open it through this computer now.";
     assert!(seen["after"][0].to_string().contains(off), "{seen:#}");
+    let text = seen["text"].as_str().unwrap_or_default();
+    assert!(text.contains("On this WiFi\n"), "{text}");
+    let line = "Anyone on this WiFi can open these as you while svrngs runs: your TV, a phone, another computer. Each stays on the WiFi where you turned it on.";
+    assert!(text.contains(line), "{text}");
     let refused = tokio::time::timeout(Duration::from_secs(30), async {
         while tokio::net::TcpStream::connect(at).await.is_ok() {
             tokio::time::sleep(Duration::from_millis(50)).await;
@@ -2739,11 +2744,12 @@ async fn the_home_page_shows_a_lend_on_a_tv_and_turns_it_off(engine: Engine) {
 
 in_both_engines!(
     /// **The home page says a room it cannot read** (AGENTS.md 6): ada's
-    /// room.json holds what is not a list of lends; her page's "On your TV"
-    /// says what is on for the TV cannot be read, and why, and that turning
-    /// a lend on again starts it over, and the shelf's row still offers
-    /// "Show it on a TV here". Planted, watched failing: the page as
-    /// c0b0bf59 left it, which read the room as empty and said nothing.
+    /// room.json holds what is not a list of lends; her page's "On this
+    /// WiFi" says what is open to it cannot be read, and why, and that
+    /// opening a lend again starts it over, and the shelf's row still
+    /// offers "Open it to this WiFi". Planted, watched failing: the page as
+    /// c0b0bf59 left it, which read the room as empty and said nothing;
+    /// then as a9e82b9a left it, its words a TV's.
     the_home_page_says_a_room_it_cannot_read
 );
 async fn the_home_page_says_a_room_it_cannot_read(engine: Engine) {
@@ -2759,13 +2765,13 @@ async fn the_home_page_says_a_room_it_cannot_read(engine: Engine) {
     lend(dir.path(), "shelf", shelf.port());
     let seen = home_page(engine, &ada, json!({ "text": true })).await;
     let text = seen["text"].as_str().unwrap_or_default();
-    assert!(text.contains("On your TV"), "{seen:#}");
+    assert!(text.contains("On this WiFi"), "{seen:#}");
     assert!(
-        text.contains("This computer cannot read what you turned on for your TV (")
-            && text.contains("Turn a lend on for your TV again, and it starts over from that one."),
+        text.contains("This computer cannot read what you opened to this WiFi (")
+            && text.contains("Open a lend to this WiFi again, and it starts over from that one."),
         "{text}"
     );
-    assert!(text.contains("Show it on a TV here"), "{text}");
+    assert!(text.contains("Open it to this WiFi"), "{text}");
     drop(ada);
 }
 

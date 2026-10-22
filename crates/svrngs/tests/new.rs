@@ -656,7 +656,7 @@ fn room_names_lends_and_says_who_can_open_them() {
     let said = cli::Said::Room(vec![on]).to_string();
     assert!(
         said.contains(
-            "sam's jellyfin: On for your TV: type http://192.168.1.4:45053/ into its app."
+            "sam's jellyfin: Open to this WiFi: type http://192.168.1.4:45053/ into an app or a browser on a device here"
         ),
         "{said}"
     );

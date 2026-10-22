@@ -270,7 +270,7 @@ async fn a_lend_turned_on_is_served_to_this_network_until_it_is_turned_off() {
     assert_eq!(bare(&turned), want);
     assert_eq!(
         turned[0]["said"],
-        format!("On for your TV: type http://{at}/ into its app. Anyone on this WiFi can open it there as you.")
+        format!("Open to this WiFi: type http://{at}/ into an app or a browser on a device here, such as your TV, a phone or another computer. Anyone on this WiFi can open it there as you.")
     );
     assert_eq!(bare(&on(&alex).await), want);
     let loopback = SocketAddr::new(Ipv4Addr::LOCALHOST.into(), at.port());
@@ -484,7 +484,7 @@ async fn a_lend_on_at_another_network_is_not_served_and_says_why() {
     assert_eq!(bare(&room), json!([sams(SAM, "app", json!("elsewhere"))]));
     assert_eq!(
         room[0]["said"],
-        "Off for now: this computer is on another WiFi than the one where you turned it on. It comes back on when you are there again."
+        "Closed for now: this computer is on another WiFi than the one where you turned it on. It opens again when you are there again."
     );
     assert!(!listens(at).await, "served on another network: {at}");
     alex.endpoint().close().await;
@@ -492,7 +492,7 @@ async fn a_lend_on_at_another_network_is_not_served_and_says_why() {
 
 /// **A room that cannot be read is said, never read as empty** (AGENTS.md
 /// 6). Alex's room.json holds what is not a list of lends; his computer
-/// starts: `/v1/room` answers that what is on for the TV cannot be read,
+/// starts: `/v1/room` answers that what is open to this WiFi cannot be read,
 /// and why, and serves nothing from a guess. Turning Sam's `app` on again
 /// writes the room over, and it is served and kept. A room never turned
 /// on, with no room.json, is empty, which is true. Planted, watched
@@ -515,8 +515,8 @@ async fn a_room_that_cannot_be_read_is_said_until_a_lend_is_turned_on_again() {
     let said: Value = unread.json().await.unwrap();
     let words = said["error"].as_str().unwrap_or_default();
     assert!(
-        words.starts_with("This computer cannot read what you turned on for your TV (")
-            && words.ends_with("), so it shows nothing on your TV now. Turn a lend on for your TV again, and it starts over from that one."),
+        words.starts_with("This computer cannot read what you opened to this WiFi (")
+            && words.ends_with("), so nothing is open to it now. Open a lend to this WiFi again, and it starts over from that one."),
         "{said}"
     );
     assert!(!listens(at).await, "served from a guess: {at}");
