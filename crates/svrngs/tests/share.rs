@@ -730,6 +730,98 @@ fn share_runs_when_svrngs_does_not_and_leaves_when_it_does() {
     drop((first, second));
 }
 
+/// What svrngs running over `dir` answers `GET /v1/room`, at the API it
+/// wrote, as the home page reads it.
+fn room_of(dir: &Path) -> serde_json::Value {
+    let api = std::fs::read_to_string(dir.join("api")).unwrap();
+    let mut sock = std::net::TcpStream::connect(api.trim().trim_start_matches("http://")).unwrap();
+    sock.write_all(b"GET /v1/room HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n")
+        .unwrap();
+    let mut answer = String::new();
+    sock.read_to_string(&mut answer).unwrap();
+    let body = answer.split("\r\n\r\n").nth(1).unwrap_or_default();
+    serde_json::from_str(body).unwrap_or_else(|_| panic!("the room said {answer:?}"))
+}
+
+/// **`svrngs room` asks the svrngs running here, and the room stays on
+/// across a restart** (the room's report, 1 and 2: on a computer
+/// install.sh set up, its LaunchAgent runs svrngs and holds the data dir,
+/// so `room` refused, Busy; and the room lived only while `room` ran).
+/// With `svrngs share` running and lending `pad`, `svrngs room pad` turns
+/// it on there, says who can open it and where, and leaves, exit 0,
+/// running nothing. That svrngs stops, and the bare command starts over
+/// the same data, as login starts it: asked nothing, its room serves `pad`
+/// where it said, on the same network (`/v1/room`, and its address takes a
+/// connection). With nothing running, `svrngs room pad` runs svrngs and
+/// says the same. Planted, watched failing: cli.rs as e01c070a left it,
+/// which claimed the data dir first and refused, "svrngs is already
+/// running on this computer".
+#[cfg(unix)]
+#[test]
+fn room_asks_svrngs_running_here_and_keeps_it_across_a_restart() {
+    let dir = tempfile::tempdir().unwrap();
+    let logs = tempfile::tempdir().unwrap();
+    let pad = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = pad.local_addr().unwrap().port().to_string();
+    let argv = ["share", port.as_str(), "--kind", "pad"];
+    let mut running = Program::start(dir.path(), &logs.path().join("share"), &argv, "pads\n");
+    running.until("Leave this running");
+    let told = "Whenever svrngs runs here, anyone on this computer's WiFi can open these as you; nobody off it can.";
+
+    let (code, said) =
+        Program::start(dir.path(), &logs.path().join("room"), &["room", "pad"], "").ends();
+    eprintln!("svrngs room pad, svrngs running: {said:#?}");
+    assert_eq!(code, 0, "{said:?}");
+    assert!(said.iter().any(|l| l.starts_with(told)), "{said:?}");
+    let line = said
+        .iter()
+        .find(|l| l.starts_with("pad: "))
+        .expect("pad said");
+    assert!(
+        !said.iter().any(|l| l.contains("Leave this running")),
+        "{said:?}"
+    );
+    let room = room_of(dir.path());
+    assert_eq!(room[0]["name"], "pad", "{room}");
+    assert_eq!(&room[0]["said"], &line["pad: ".len()..], "{room}");
+    let _ = running.child.kill();
+    running.ends();
+
+    let mut again = Program::start(dir.path(), &logs.path().join("again"), &[], "");
+    again.until("Leave this running");
+    // Its owner reads the network as it starts, the moment after.
+    let mut kept = room_of(dir.path());
+    for _ in 0..50 {
+        if kept[0]["served"] == room[0]["served"] {
+            break;
+        }
+        std::thread::sleep(Duration::from_millis(100));
+        kept = room_of(dir.path());
+    }
+    assert_eq!(kept[0]["served"], room[0]["served"], "{kept}");
+    if let Some(at) = room[0]["served"]["at"].as_str() {
+        let at: std::net::SocketAddr = at.parse().unwrap();
+        assert!(
+            std::net::TcpStream::connect_timeout(&at, Duration::from_secs(5)).is_ok(),
+            "not served again at {at}"
+        );
+    }
+    let _ = again.child.kill();
+    again.ends();
+
+    let mut alone = Program::start(dir.path(), &logs.path().join("alone"), &["room", "pad"], "");
+    alone.until("Leave this running");
+    assert!(
+        alone.seen.iter().any(|l| l.starts_with(told)),
+        "{:?}",
+        alone.seen
+    );
+    assert!(alone.seen.iter().any(|l| l == line), "{:?}", alone.seen);
+    let _ = alone.child.kill();
+    alone.ends();
+    drop(pad);
+}
+
 /// **`share --sign-in-with-svrngs` turns it on for scripts** (SIGN_IN_WITH_
 /// SVRNGS §5 "Turning it on", §8 9): the command makes a client id and
 /// secret from the allowed alphabet, keeps them in the lend's declaration

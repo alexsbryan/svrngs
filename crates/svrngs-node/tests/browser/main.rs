@@ -2669,6 +2669,75 @@ async fn the_home_page_copies_a_lend_s_address_for_a_program(engine: Engine) {
 }
 
 in_both_engines!(
+    /// **The home page shows a lend on a TV here, and turns it off** (the
+    /// room's report, 4: nothing on the page put a group-mate's lend on a
+    /// TV). Ada lends `shelf`; its row in her page's index says what its
+    /// button does, and whom it lets in, before it is pressed; pressed, it
+    /// says the address to type into the TV's app, where the room then
+    /// serves the shelf to this host's network. Opened again, the row says
+    /// it is on, and pressed again it says it is off, and the address
+    /// refuses. Each engine's ada has a key of her own, so each shelf's
+    /// port is its own. Planted, watched failing: the page as e01c070a
+    /// left it, with no such button.
+    the_home_page_shows_a_lend_on_a_tv_and_turns_it_off
+);
+async fn the_home_page_shows_a_lend_on_a_tv_and_turns_it_off(engine: Engine) {
+    let ip = match svrngs_node::room::route() {
+        Some(std::net::IpAddr::V4(v4)) if v4.is_private() => v4,
+        other => panic!(
+            "could not judge: this host's route leaves by {other:?}, no private address to serve a room on"
+        ),
+    };
+    let me = match engine {
+        Engine::Chromium => 40,
+        Engine::Webkit => 41,
+    };
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let ada = computer(dir.path(), &relay, &signing(7), me, "ada").await;
+    let shelf = page_origin("<!doctype html><title>ada's shelf</title>").await;
+    lend(dir.path(), "shelf", shelf.port());
+    let label = svrngs_core::pass::Label::of(signing(me).verifying_key().as_bytes(), "shelf");
+    let at = std::net::SocketAddr::new(ip.into(), svrngs_node::room::port_of(&label));
+    let row = "#home table.index td";
+    let press = |words: &str| json!([format!("{row} button:has-text('{words}')"), null, true]);
+    let seen = home_page(
+        engine,
+        &ada,
+        json!({ "all": row, "do": [press("Show it on a TV here")] }),
+    )
+    .await;
+    eprintln!("the home page's run: {seen:#}");
+    let offered =
+        "Show it on a TV here, and anyone on this WiFi can open it as you while svrngs runs.";
+    assert!(seen["all"].to_string().contains(offered), "{seen:#}");
+    let on = format!("On for your TV: type http://{at}/ into its app. Anyone on this WiFi can open it there as you.");
+    assert!(seen["after"][0].to_string().contains(&on), "{seen:#}");
+    let served = reqwest::Client::builder().no_proxy().build().unwrap();
+    let page = served.get(format!("http://{at}/")).send().await.unwrap();
+    assert!(page.text().await.unwrap().contains("ada's shelf"));
+
+    let seen = home_page(
+        engine,
+        &ada,
+        json!({ "all": row, "do": [press("Turn it off for the TV")] }),
+    )
+    .await;
+    eprintln!("the home page's second run: {seen:#}");
+    assert!(seen["all"].to_string().contains(&on), "{seen:#}");
+    let off = "Turned off for the TV: nobody on this WiFi can open it through this computer now.";
+    assert!(seen["after"][0].to_string().contains(off), "{seen:#}");
+    let refused = tokio::time::timeout(Duration::from_secs(30), async {
+        while tokio::net::TcpStream::connect(at).await.is_ok() {
+            tokio::time::sleep(Duration::from_millis(50)).await;
+        }
+    })
+    .await;
+    assert!(refused.is_ok(), "still served once off: {at}");
+    drop(ada);
+}
+
+in_both_engines!(
     /// **Each thing lent opens by a link saying what it opens and whose**
     /// (start-home, from start-measure's ranked row 7: "Sam’s llama" read
     /// as a riddle, `demo/runs/start/2026-10-13/README.md` §3 (c)). Ada
