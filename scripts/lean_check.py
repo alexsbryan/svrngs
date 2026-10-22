@@ -184,7 +184,10 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # home.rs, node.rs and group.rs, finding no dead item, and install.sh's
 # PATH line spent 4: the repository's cap lowered to one past where they
 # land, 17,331. svrngs-core is unchanged at 3,149 under its 3,150.
-BUDGET = {"crates/svrngs-core": 3150, ".": 17331}
+# The room, the running node's, on per lend on its network (the operator,
+# 2026-10-22, after that pass): raised 231, to one past where it lands,
+# 17,562. svrngs-core is unchanged at 3,149 under its 3,150.
+BUDGET = {"crates/svrngs-core": 3150, ".": 17562}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
