@@ -537,9 +537,9 @@ calls:
    (§7). The service is still asked at its own address
    (`Host: localhost:<port>`), and the door tells it the browser's origin
    as a reverse proxy does: `X-Forwarded-Host` the host the browser asked,
-   `X-Forwarded-Proto` `http` for a `*.localhost` host and `https`
-   otherwise, and any of either the client typed displaced
-   (`door::tell_origin`). An app that trusts its proxy builds its pages on
+   `X-Forwarded-Proto` `http` for a `*.localhost` host or an address (the
+   room's, "The room", call 3) and `https` for a page host's name, and any
+   of either the client typed displaced (`door::tell_origin`). An app that trusts its proxy builds its pages on
    the lend's own origin, as Jellyfin's SSO plugin does once the lender
    sets its stock `KnownProxies` (`demo/runs/oidc/2026-10-21-jellyfin-2/`).
 2. *Jellyfin as it comes.* A lend serves stock jellyfin-web from the

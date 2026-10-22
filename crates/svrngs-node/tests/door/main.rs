@@ -1385,7 +1385,8 @@ async fn a_services_redirect_off_its_own_origin_is_never_made_a_path() {
 
 /// The browser's own origin is told to the service as a reverse proxy tells
 /// it (oidc-jellyfin): `X-Forwarded-Host` is the `Host` the browser asked,
-/// and `X-Forwarded-Proto` is `http` for a `*.localhost` host and `https`
+/// and `X-Forwarded-Proto` is `http` for a `*.localhost` host (or an
+/// address, `the_scheme_told_is_the_one_the_browser_used`) and `https`
 /// otherwise; a value the client typed is displaced, and `Host` is still the
 /// service's own address. Planted: the door before this row, which sent
 /// neither and let a client's through.

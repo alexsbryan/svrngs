@@ -746,12 +746,21 @@ fn own_address(port: NonZeroU16) -> HeaderValue {
 }
 
 /// The scheme the browser reached a lend with, from the `Host` it asked:
-/// `http` for a `*.localhost` host, `https` otherwise. It is what the door
-/// tells a service as `X-Forwarded-Proto` ([`tell_origin`]) and what the
-/// front channel reads back as the lend's own origin (oidc-jellyfin).
+/// `http` for a `*.localhost` host or an address, `https` for any other
+/// name. svrngs serves a lend itself only in plain http: at
+/// `<label>.localhost` on a computer ([`crate::origin`]) and at the room's
+/// `http://<private address>:<port>/`, the device's `Host` passed through
+/// ([`crate::room`]). https reaches a lend only at a page host, a name
+/// (`web/store.js`, `lendOrigin`). It is what the door tells a service as
+/// `X-Forwarded-Proto` ([`tell_origin`]) and what the front channel reads
+/// back as the lend's own origin (oidc-jellyfin).
 pub(crate) fn scheme_of(host: &str) -> &'static str {
-    let name = host.rsplit_once(':').map_or(host, |(name, _)| name);
-    if name.to_ascii_lowercase().ends_with(".localhost") {
+    // The host without its `:<port>`, which an IPv6 address's last colon,
+    // inside its `[]`, never is.
+    let unported = host.trim_end_matches(|c: char| c.is_ascii_digit());
+    let name = unported.strip_suffix(':').unwrap_or(host);
+    let address = name.trim_matches(['[', ']']).parse::<std::net::IpAddr>();
+    if address.is_ok() || name.to_ascii_lowercase().ends_with(".localhost") {
         "http"
     } else {
         "https"
