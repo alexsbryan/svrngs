@@ -20,7 +20,7 @@ use svrngs_core::pass::Label;
 use tokio::sync::{mpsc, oneshot};
 
 use super::{kept, port_of, serves, InRoom, On, Served, Turn, ROOM_FILE};
-use crate::network::{guess, look, pick, route, Whereabouts};
+use crate::network::{guess, Unread, Whereabouts};
 use crate::node::Asking;
 
 /// How often the room reads which network this computer is on: the
@@ -76,17 +76,9 @@ pub(crate) fn spawn(at: Asking, mut asked: Asks) -> AbortOnDropHandle<()> {
                     let Some((turn, done)) = turned else { return };
                     // A turn, not a read, writes the room over: one that
                     // could not be read too.
-                    if !matches!(&turn, Turn::On(lends) if lends.is_empty()) {
-                        let mut list = on.as_mut().map_or(Vec::new(), std::mem::take);
-                        match turn {
-                            Turn::On(lends) => lends.into_iter().for_each(|l| {
-                                list.retain(|o| (&o.key, &o.name) != (&l.key, &l.name));
-                                list.push(l);
-                            }),
-                            Turn::Off(key, name) => list.retain(|o| o.key != key || o.name != name),
-                        }
-                        kept::write(&file, &list);
-                        on = Ok(list);
+                    if let Some(made) = turn.made(on.as_deref().unwrap_or_default()) {
+                        kept::write(&file, &made);
+                        on = Ok(made);
                     }
                     Some(done)
                 }
@@ -103,11 +95,8 @@ pub(crate) fn spawn(at: Asking, mut asked: Asks) -> AbortOnDropHandle<()> {
 /// the room as it stands.
 async fn serve(at: &Asking, on: &[On], listening: &mut Listening) -> Vec<InRoom> {
     let (network, address) = match on.is_empty() {
-        true => (None, None),
-        false => {
-            let (network, listed) = tokio::task::spawn_blocking(look).await.unwrap_or_default();
-            (network, pick(&listed, route()))
-        }
+        true => (Err(Unread::NoRouter), None),
+        false => crate::network::now().await,
     };
     let (mut was, rail) = (std::mem::take(listening), &at.host.rail);
     let mut room = Vec::new();

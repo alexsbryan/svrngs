@@ -6,9 +6,12 @@
 //! - [`Network`]: a network told apart by its router's hardware address,
 //!   as macOS's own network signature tells it, so a café whose router
 //!   gives this computer the same private address is not home.
-//! - [`look`], the edge and the one read of the world here: the network
-//!   this computer is on and its addresses there, per platform
-//!   ([`routers`]); [`hardware_in`] reads what that finds, pure.
+//! - [`HardwareAddress`], parsed from what each platform prints, and
+//!   [`Unread`], why a network cannot be read, so a caller can say which.
+//! - [`here`], the edge and the one read of the world here: the network
+//!   this computer is on, per platform ([`routers`]), and its address
+//!   there; [`hardware_in`] reads what that finds, pure; [`now`], off the
+//!   async runtime.
 //! - [`pick`] and [`route`]: this computer's address for the devices beside
 //!   it.
 //! - [`guess`]: whether a caller's address is on this computer's network,
@@ -25,26 +28,85 @@ use std::net::{IpAddr, Ipv4Addr};
 
 use serde::{Deserialize, Serialize};
 
+/// A device's hardware (MAC) address: six bytes, said as six pairs of hex
+/// digits, `e4:f4:c6:0a:5e:a1`, and kept so.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(into = "String", try_from = "String")]
+pub struct HardwareAddress([u8; 6]);
+
+impl HardwareAddress {
+    /// `text` as one: six octets in hex between colons, one digit or two
+    /// (macOS writes `a` for `0a`); `None` for anything else, and for all
+    /// zeros, which an ARP table writes for one it has not resolved.
+    pub fn parse(text: &str) -> Option<Self> {
+        let octets = text.split(':').map(|o| u8::from_str_radix(o, 16).ok());
+        let octets: [u8; 6] = octets.collect::<Option<Vec<u8>>>()?.try_into().ok()?;
+        (octets != [0; 6]).then_some(Self(octets))
+    }
+}
+
+impl std::fmt::Display for HardwareAddress {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let [a, b, c, d, e, g] = self.0;
+        write!(f, "{a:02x}:{b:02x}:{c:02x}:{d:02x}:{e:02x}:{g:02x}")
+    }
+}
+
+impl From<HardwareAddress> for String {
+    fn from(address: HardwareAddress) -> String {
+        address.to_string()
+    }
+}
+
+impl TryFrom<String> for HardwareAddress {
+    type Error = String;
+    fn try_from(text: String) -> Result<Self, String> {
+        Self::parse(&text).ok_or(text)
+    }
+}
+
 /// A network, by its router's hardware address: what tells home from a
 /// café whose router gives this computer the same private address.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Network(pub(crate) String);
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct Network(pub HardwareAddress);
 
-/// The network this computer is on, by its router's hardware address, and
-/// its addresses there, for [`pick`]: read from its default route's
-/// interface (netdev), the router's hardware address from where this
-/// computer keeps it ([`routers`], [`hardware_in`]). No network when any of
-/// it cannot be read, never a guess.
-pub fn look() -> (Option<Network>, Vec<IpAddr>) {
+/// Why the network this computer is on cannot be read: a closed set
+/// (AGENTS 9), so a caller can say which.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Unread {
+    /// No default route, or no router on it.
+    NoRouter,
+    /// The router's hardware address is not kept here, or not resolved.
+    NoHardwareAddress,
+    /// The read stopped before it answered.
+    Stopped,
+}
+
+/// Where this computer is now: the network it is on, or why that cannot be
+/// read, and its address there for the devices beside it ([`pick`]): read
+/// from its default route's interface (netdev), its router's hardware
+/// address from where this computer keeps it ([`routers`],
+/// [`hardware_in`]). The one read of the world here; never a guess.
+pub fn here() -> (Result<Network, Unread>, Option<Ipv4Addr>) {
     let iface = netdev::get_default_interface();
     let router = (iface.as_ref().ok()).and_then(|i| i.gateway.as_ref()?.ipv4.first().copied());
     let addrs = |i: &netdev::Interface| i.ipv4.iter().map(|n| IpAddr::V4(n.addr())).collect();
-    let listed = iface.as_ref().map_or(Vec::new(), addrs);
-    let network = router
-        .and_then(|r| hardware_in(&routers()?, r))
-        .map(Network);
-    tracing::debug!(target: "room", error = ?iface.err(), ?router, ?network, ?listed, "room: the network read by its router's hardware address, none when any of it is unread");
-    (network, listed)
+    let listed: Vec<IpAddr> = iface.as_ref().map_or(Vec::new(), addrs);
+    let network = match router {
+        None => Err(Unread::NoRouter),
+        Some(r) => (routers().and_then(|t| hardware_in(&t, r)).map(Network))
+            .ok_or(Unread::NoHardwareAddress),
+    };
+    tracing::debug!(target: "network", error = ?iface.err(), ?router, ?network, ?listed, "network: read by its router's hardware address, or why not");
+    (network, pick(&listed, route()))
+}
+
+/// [`here`], read off the async runtime, as its callers ask it.
+pub async fn now() -> (Result<Network, Unread>, Option<Ipv4Addr>) {
+    tokio::task::spawn_blocking(here)
+        .await
+        .unwrap_or((Err(Unread::Stopped), None))
 }
 
 /// Where this computer keeps its router's hardware address: on macOS, the
@@ -79,9 +141,8 @@ fn routers() -> Option<String> {
 
 /// The hardware address of `router` in `text`, as [`routers`] reads it:
 /// configd's `ARPResolvedHardwareAddress` line (macOS), or the router's row
-/// of the ARP table (Linux); as six octets in two hex digits each, `None`
-/// when absent or incomplete (all zeros).
-pub fn hardware_in(text: &str, router: Ipv4Addr) -> Option<String> {
+/// of the ARP table (Linux); `None` when absent or incomplete (all zeros).
+pub fn hardware_in(text: &str, router: Ipv4Addr) -> Option<HardwareAddress> {
     let router = router.to_string();
     let word = text
         .lines()
@@ -90,10 +151,7 @@ pub fn hardware_in(text: &str, router: Ipv4Addr) -> Option<String> {
             [ip, _, _, mac, ..] if ip == router => Some(mac),
             _ => None,
         })?;
-    let octets = word.split(':').map(|o| u8::from_str_radix(o, 16).ok());
-    let octets: Vec<u8> = octets.collect::<Option<_>>()?;
-    let hex: Vec<String> = octets.iter().map(|o| format!("{o:02x}")).collect();
-    (octets.len() == 6 && octets.iter().any(|o| *o != 0)).then(|| hex.join(":"))
+    HardwareAddress::parse(word)
 }
 
 /// The address a room's devices reach this computer at, from the
@@ -116,7 +174,7 @@ pub fn pick(listed: &[IpAddr], route: Option<IpAddr>) -> Option<Ipv4Addr> {
         [one] => Some(one),
         _ => None,
     });
-    tracing::debug!(target: "room", ?listed, ?route, ?private, ?picked, "room: the address picked — the route's if private and listed, else the one private, else none");
+    tracing::debug!(target: "network", ?listed, ?route, ?private, ?picked, "network: the address picked — the route's if private and listed, else the one private, else none");
     picked
 }
 

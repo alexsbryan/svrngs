@@ -43,7 +43,7 @@ use serde::{Deserialize, Serialize};
 use svrngs_core::pass::Label;
 
 use crate::lend::LendName;
-use crate::network::Network;
+use crate::network::{Network, Unread};
 use crate::Person;
 
 mod kept;
@@ -101,12 +101,17 @@ impl Served {
 /// computer on `now` at `at` ([`pick`]): only on the network it was turned
 /// on at, never on one that cannot be read. Pure, so each answer is judged
 /// with values (`room_tests.rs`).
-pub fn serves(kept: &Network, now: Option<&Network>, at: Option<Ipv4Addr>, port: u16) -> Served {
+pub fn serves(
+    kept: &Network,
+    now: Result<&Network, &Unread>,
+    at: Option<Ipv4Addr>,
+    port: u16,
+) -> Served {
     let served = match (now, at) {
-        (None, _) => Served::Unread,
-        (Some(now), _) if now != kept => Served::Elsewhere,
-        (Some(_), None) => Served::NoAddress,
-        (Some(_), Some(at)) => Served::At(SocketAddr::new(at.into(), port)),
+        (Err(_), _) => Served::Unread,
+        (Ok(now), _) if now != kept => Served::Elsewhere,
+        (Ok(_), None) => Served::NoAddress,
+        (Ok(_), Some(at)) => Served::At(SocketAddr::new(at.into(), port)),
     };
     tracing::debug!(target: "room", ?kept, ?now, ?at, ?served, "room: served only on the network it was turned on at, and only one read");
     served
@@ -147,11 +152,29 @@ pub enum RoomAsk {
     Off { key: String, name: LendName },
 }
 
-/// A change to the room, sent to its owner: these on, none to read it
-/// alone, or this one off.
+/// A change to the room, sent to its owner: these on, this one off, or
+/// none, to read it.
 pub(crate) enum Turn {
     On(Vec<On>),
     Off(String, LendName),
+    Read,
+}
+
+impl Turn {
+    /// The lends `on` once turned, each lend on once; `None` for a read,
+    /// which changes nothing.
+    fn made(self, on: &[On]) -> Option<Vec<On>> {
+        let mut on = on.to_vec();
+        match self {
+            Turn::On(lends) => lends.into_iter().for_each(|l| {
+                on.retain(|o| (&o.key, &o.name) != (&l.key, &l.name));
+                on.push(l);
+            }),
+            Turn::Off(key, name) => on.retain(|o| o.key != key || o.name != name),
+            Turn::Read => return None,
+        }
+        Some(on)
+    }
 }
 
 #[cfg(test)]

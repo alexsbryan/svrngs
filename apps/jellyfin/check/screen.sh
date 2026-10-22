@@ -66,7 +66,7 @@ up() {
 # as `share` named it; its log kept across a bounce.
 room_up() {
   : >"$R/dee/room.out"
-  SVRNGS_DIR="$R/dee" NO_COLOR=1 RUST_LOG=info,room=debug,door=debug nohup "$B" room jellyfin >"$R/dee/room.out" 2>>"$R/dee/room.log" &
+  SVRNGS_DIR="$R/dee" NO_COLOR=1 RUST_LOG=info,room=debug,network=debug,door=debug nohup "$B" room jellyfin >"$R/dee/room.out" 2>>"$R/dee/room.log" &
   echo $! >"$R/dee.pid"
   for _ in $(seq 1 60); do grep -q 'http://' "$R/dee/room.out" 2>/dev/null && break; sleep 1; done
   ROOM="$(grep -o 'http://[0-9.]*:[0-9]*/' "$R/dee/room.out" | head -1)"

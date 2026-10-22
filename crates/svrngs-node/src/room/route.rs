@@ -16,7 +16,6 @@ use svrngs_core::pass::Label;
 use super::{On, RoomAsk, Turn, ROUTE};
 use crate::door::LendRefusal;
 use crate::lend::LendName;
-use crate::network::look;
 use crate::node::Asking;
 
 /// The routes, for [`crate::api::router`] and the home page to serve.
@@ -28,7 +27,7 @@ pub(crate) fn router(asking: Asking) -> Router {
 
 /// `GET /v1/room`: each lend on for the room, where it is served or why not.
 async fn listed(State(at): State<Asking>) -> Response {
-    turned(&at, Turn::On(Vec::new())).await
+    turned(&at, Turn::Read).await
 }
 
 /// `POST /v1/room`: `ask` turned on or off, and the room as it stands then
@@ -43,14 +42,14 @@ async fn turn(State(at): State<Asking>, Json(ask): Json<RoomAsk>) -> Response {
         .ok_or_else(|| "That is not something lent in your groups.".to_string()),
         RoomAsk::Names(names) => named(&at, &names).await,
     };
-    let (network, _) = tokio::task::spawn_blocking(look).await.unwrap_or_default();
+    let (network, _) = crate::network::now().await;
     tracing::debug!(target: "room", ?lends, ?network, "room: turned on at the network read now, or refused");
     let refused = |words: &str| LendRefusal::Closed.say(StatusCode::CONFLICT, words);
     match (lends, network) {
         (Err(words), _) => refused(&words),
-        (_, None) => refused("This computer cannot tell which WiFi it is on, so nothing was turned on for your TV: try again once it is on one."),
-        (Ok(lends), Some(network)) => {
-            let on = |(key, name)| On { key, name, network: network.clone() };
+        (_, Err(_)) => refused("This computer cannot tell which WiFi it is on, so nothing was turned on for your TV: try again once it is on one."),
+        (Ok(lends), Ok(network)) => {
+            let on = |(key, name)| On { key, name, network };
             turned(&at, Turn::On(lends.into_iter().map(on).collect())).await
         }
     }
@@ -79,11 +78,7 @@ async fn named(at: &Asking, names: &[LendName]) -> Result<Vec<(String, LendName)
     let own = own.into_iter().map(|o| (at.host.actor.clone(), o.name));
     let others = at.host.lends_in(&groups, None).await.lent;
     let others = others.into_iter().map(|l| (l.key, l.offered.name));
-    let on = at
-        .room
-        .turn(Turn::On(Vec::new()))
-        .await
-        .and_then(Result::ok);
+    let on = at.room.turn(Turn::Read).await.and_then(Result::ok);
     let on = on.unwrap_or_default();
     let on = on.into_iter().map(|r| (r.key, r.name));
     let found: Vec<_> = own
