@@ -49,7 +49,6 @@ fn share_of(origin: SocketAddr, kind: &str) -> Share {
         refused: Vec::new(),
         upload: None,
         reads: Vec::new(),
-        sign_in: None,
         asks: None,
     }
 }
@@ -181,13 +180,8 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
     // ── Sam shares the service on its port, as `svrngs share <port> --kind pad`.
     let (origin, heads) = service().await;
     let asked = share_of(origin, "pad");
-    let lend = share::lend_of(
-        &asked,
-        share::listens,
-        share::well_known_kind(asked.port),
-        &[],
-    )
-    .expect("something listens there, and its kind is given");
+    let lend = share::lend_of(&asked, share::listens, share::well_known_kind(asked.port))
+        .expect("something listens there, and its kind is given");
     cli::share_lend(sam.dir.path(), &lend, Some(SECRET)).unwrap();
     let mut said = vec![Said::Shared {
         lend: lend.clone(),
@@ -301,13 +295,8 @@ async fn llama_server_lent_by_its_kind_keeps_back_what_shows_one_person_s_chats(
 
     let (origin, heads) = service().await;
     let asked = share_of(origin, "llama-server");
-    let lend = share::lend_of(
-        &asked,
-        share::listens,
-        share::well_known_kind(asked.port),
-        &[],
-    )
-    .expect("something listens there, and its kind is given");
+    let lend = share::lend_of(&asked, share::listens, share::well_known_kind(asked.port))
+        .expect("something listens there, and its kind is given");
     cli::share_lend(sam.dir.path(), &lend, None).unwrap();
     let shared = Said::Shared {
         lend: lend.clone(),
@@ -457,12 +446,7 @@ fn share_takes_no_password_on_the_command_line() {
     assert_eq!(reads, ["films", "music"]);
     assert!(cli::parse(argv(&["share", "8096", "--reads", "a/b"])).is_err());
     assert!(cli::parse(argv(&["new", "x", "--reads", "films"])).is_err());
-    // Its sign-in's port (mwp-1), a port as the lend's is.
-    let Ok(Verb::Share(asked)) = cli::parse(argv(&["share", "8096", "--sign-in", "9000"])) else {
-        panic!("share parses a sign-in");
-    };
-    assert_eq!(asked.sign_in.map(|p| p.get()), Some(9000));
-    assert!(cli::parse(argv(&["share", "8096", "--sign-in", "0"])).is_err());
+    // The hook's `--sign-in` is gone; `share_refuses_a_sign_in_the_lender_ran_itself` holds it.
     assert!(cli::parse(argv(&["room", "x", "--sign-in", "9000"])).is_err());
 }
 
@@ -521,7 +505,7 @@ fn a_lend_that_asks_keeps_its_lender_s_words() {
     }
     assert!(cli::parse(argv(&["link", "x", "--ask", words])).is_err());
     let dir = tempfile::tempdir().unwrap();
-    let lend = share::lend_of(&asked, |_| true, Some(Kind::parse("taste").unwrap()), &[]).unwrap();
+    let lend = share::lend_of(&asked, |_| true, Some(Kind::parse("taste").unwrap())).unwrap();
     cli::share_lend(dir.path(), &lend, None).unwrap();
     let name = LendName::parse("taste").unwrap();
     let read = svrngs_node::lend::read(dir.path(), &name).unwrap().unwrap();
@@ -844,55 +828,6 @@ fn share_4533_alone_lends_navidrome_asking_nothing_and_says_what_to_set() {
     );
     plain(&seen);
     drop(stand_in);
-}
-
-/// **A sign-in is never lent by the command** (arch-helper (b);
-/// REVIEW_FINDINGS #174): `share 8097`, the port the table
-/// names jellyfin's helper at, and `share <port>` of a port a lend here
-/// names its sign-in, are each refused, saying why, declaring nothing, and
-/// traced. Red at 2ab2522, the plant: 8097 refused only as not answering,
-/// and the other lent. Nothing listens at 8097
-/// here: the table refuses it whether or not its helper runs, and the
-/// tests beside this one lend jellyfin with nothing there.
-#[cfg(unix)]
-#[test]
-fn share_refuses_a_port_that_signs_people_in_to_a_lend() {
-    let (dir, logs) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let signer = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
-    let port = signer.local_addr().unwrap().port();
-    let lends = dir.path().join("lends");
-    std::fs::create_dir_all(&lends).unwrap();
-    let shelf = serde_json::json!({ "port": 1, "kind": "k", "sign_in": port });
-    std::fs::write(lends.join("shelf.json"), shelf.to_string()).unwrap();
-    for asked in [8097, port] {
-        let log = logs.path().join(asked.to_string());
-        let args = ["share", &asked.to_string(), "--kind", "helper"];
-        let mut running = Program::start(dir.path(), &log, &args, "\n");
-        let deadline = std::time::Instant::now() + Duration::from_secs(30);
-        let code = loop {
-            match running.child.try_wait().unwrap() {
-                Some(status) => break status.code(),
-                None if std::time::Instant::now() > deadline => {
-                    let _ = running.child.kill();
-                    break None;
-                }
-                None => std::thread::sleep(Duration::from_millis(100)),
-            }
-        };
-        let log = std::fs::read_to_string(&log).unwrap();
-        let said: Vec<&str> = log.lines().filter(|l| l.starts_with("svrngs: ")).collect();
-        let why = format!("svrngs: port {asked} signs people in to something you lend, and only svrngs on this computer asks it: lend what it signs them in to instead");
-        assert_eq!(
-            (code, said, lends.join("helper.json").exists()),
-            (Some(1), vec![why.as_str()], false),
-            "share {asked}: {:?}",
-            running.seen
-        );
-        assert!(
-            log.contains("share: whether the port signs people in to a lend"),
-            "traced: {log}"
-        );
-    }
 }
 
 /// **A folder is synced by asking svrngs running here, in one group**

@@ -12,7 +12,7 @@
 //! svrngs join <link> [--as N] [--no-run]   join a group by its link, run
 //! svrngs link <group> [--origin U]
 //!                                          a new link to a group, print it, run
-//! svrngs share <port> [--name N] [--kind K] [--limit L] [--refuse P]... [--upload M] [--reads K]... [--sign-in S] [--ask W]
+//! svrngs share <port> [--name N] [--kind K] [--limit L] [--refuse P]... [--upload M] [--reads K]... [--ask W]
 //!                                          lend a service on this computer
 //! svrngs unshare <name>                    stop lending it
 //! svrngs share --folder <dir> --group <group> keep a folder the same on every member's disk,
@@ -46,8 +46,7 @@
 //! is lent with none, and its lender told how to make each person one
 //! (u5-4, [`share::accounts_of`]); one that takes each person from the
 //! door's header, none, and its lender told what to set in it
-//! (bash-person (d)); one with a sign-in, none either, each person signed
-//! in by it (mwp-1). The bare command prints what the people
+//! (bash-person (d)). The bare command prints what the people
 //! of this computer's groups lend, asked of their computers as it starts.
 //!
 //! `room` serves the lends it names to this computer's own network while
@@ -145,7 +144,7 @@ svrngs — keep what your group shares on your own computers.
       --device makes it a link for another computer or phone of yours: it
       joins as you, asked no name.
 
-  svrngs share <port> [--name <name>] [--kind <kind>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <kind>]... [--sign-in <port>] [--ask <words>]
+  svrngs share <port> [--name <name>] [--kind <kind>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <kind>]... [--ask <words>]
       Lend what runs on <port> on this computer to everyone in your groups:
       each reaches it through this computer, as themselves. It asks for the
       password the service takes on each request, if any; that stays on
@@ -162,9 +161,7 @@ svrngs — keep what your group shares on your own computers.
       for more. --upload is this computer's upload, in Mbit/s, as a speed
       test states it: each person using it is told their share of it.
       --reads lets it open, as whoever opens it, what your groups lend of
-      <kind>; say it again for more. --sign-in names the port of your
-      program that signs each person in to it as themselves; then no
-      password is asked, and nobody types one. --ask says, in your words,
+      <kind>; say it again for more. --ask says, in your words,
       what an app receives from it: then an app uses it only once the
       person it acts for says yes, on their own home page, and stops when
       they say stop.
@@ -335,7 +332,6 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let (mut name, mut kind, mut limit, mut refused) = (None, None, None, Vec::new());
     let mut upload = None;
     let mut reads = Vec::new();
-    let mut sign_in = None;
     let (mut folder, mut group) = (None, None);
     let mut asks = None;
     let mut run = true;
@@ -389,8 +385,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             }
             "--reads" => reads.push(Kind::parse(&raw).map_err(|_| not(A_KIND))?),
             "--sign-in" => {
-                sign_in =
-                    Some(share::resolve_target(&raw).map_err(|why| format!("--sign-in {why}"))?)
+                return Err("--sign-in is gone: svrngs no longer runs a program of yours to sign people in; sign-in with svrngs is the door's own".into())
             }
             "--folder" => folder = Some(raw),
             "--group" => group = Some(raw),
@@ -424,12 +419,11 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         || !refused.is_empty()
         || upload.is_some()
         || !reads.is_empty()
-        || sign_in.is_some()
         || asks.is_some())
         && verb != "share"
     {
         return Err(
-            "--name, --kind, --limit, --refuse, --upload, --reads, --sign-in and --ask are `share` flags"
+            "--name, --kind, --limit, --refuse, --upload, --reads and --ask are `share` flags"
                 .into(),
         );
     }
@@ -502,7 +496,6 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 refused,
                 upload,
                 reads,
-                sign_in,
                 asks,
             }))
         }
@@ -793,16 +786,10 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
             return Ok(());
         }
         Verb::Share(asked) => {
-            let lent = lend::all(&root).map_err(Refusal::Lends)?;
-            let (known, lent) = (share::well_known_kind(asked.port), lent.into_iter());
-            let lent: Vec<_> = lent.flatten().collect();
-            let lend = share::lend_of(&asked, share::listens, known, &lent)?;
-            let accounts = share::accounts_of(&lend.kind).filter(|_| lend.sign_in.is_none());
+            let known = share::well_known_kind(asked.port);
+            let lend = share::lend_of(&asked, share::listens, known)?;
+            let accounts = share::accounts_of(&lend.kind);
             let secret = match accounts {
-                _ if lend.sign_in.is_some() => {
-                    tracing::debug!(target: "cli", lend = %lend.name, "cli: share — no password asked: its sign-in signs each person in");
-                    None
-                }
                 Some(share::Signs::Accounts(_)) => {
                     tracing::debug!(target: "cli", lend = %lend.name, "cli: share — no password asked: its people sign in to it once, with accounts its lender makes");
                     None
@@ -1236,12 +1223,6 @@ impl std::fmt::Display for Said {
                         lend.name, lend.kind
                     )?,
                     None => {}
-                }
-                if let Some(port) = lend.sign_in {
-                    writeln!(
-                        f,
-                        "Each person is signed in to it as themselves by what answers on port {port}, with nothing typed."
-                    )?;
                 }
                 let table = share::kept_of(&lend.kind);
                 let (kept, typed): (Vec<_>, Vec<_>) = lend.refused.iter().partition(|p| table.contains(p));

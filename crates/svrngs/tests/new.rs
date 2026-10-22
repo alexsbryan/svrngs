@@ -645,7 +645,7 @@ fn room_names_lends_and_says_who_can_open_them() {
     }
     let offered = serde_json::from_value(serde_json::json!({
         "name": "jellyfin", "kind": "jellyfin", "limit": 3, "using": 0, "upload_bps": null,
-        "reads": [], "signs_in": false
+        "reads": []
     }))
     .unwrap();
     let lent = svrngs_node::node::Lent {

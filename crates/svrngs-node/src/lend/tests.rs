@@ -94,7 +94,6 @@ fn lend(name: &str, port: u16) -> Lend {
         refused: vec![refused("/admin")],
         upload: None,
         reads: Vec::new(),
-        sign_in: None,
         sign_in_with_svrngs: None,
         asks: None,
     }
@@ -215,30 +214,4 @@ fn a_limit_declared_is_kept_and_one_absent_is_none() {
     assert!(matches!(fourth(before), Verdict::Full { using: 3, .. }));
     let unnamed = r#"{"port": 8096, "kind": "k", "refused": []}"#;
     assert!(matches!(fourth(unnamed), Verdict::In { .. }));
-}
-
-/// **A lender's computer that says nothing of signing in is not read as
-/// no** (v1ui-findings (a); #159; arch-version (b)): a lend with no
-/// `signs_in` is no lend at all, never one read as `false`; one that says
-/// no is kept as no. A computer that says nothing runs an older svrngs, and
-/// is named so by the one version check (`node.rs` `answered`), where
-/// v1ui-findings (a) carried the absence on to the pages as `null`.
-/// Planted, watched failing: `#[serde(default)]` back on `signs_in`, a
-/// bool, which read the absence as no.
-#[test]
-fn a_lend_whose_computer_says_nothing_of_signing_in_is_not_read_as_no() {
-    let read = |signs_in: Option<bool>| {
-        let mut answer = serde_json::json!({
-            "name": "shelf", "kind": "k", "limit": null, "using": 0, "upload_bps": null, "reads": [],
-        });
-        if let Some(s) = signs_in {
-            answer["signs_in"] = s.into();
-        }
-        serde_json::from_value::<Offered>(answer)
-            .ok()
-            .map(|o| o.signs_in)
-    };
-    assert_eq!(read(None), None);
-    assert_eq!(read(Some(false)), Some(false));
-    assert_eq!(read(Some(true)), Some(true));
 }

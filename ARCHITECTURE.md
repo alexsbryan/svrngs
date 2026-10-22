@@ -385,49 +385,25 @@ declarations at each ask, and how many people use each now: `door::Using`,
 a task owning `limit::Counts` and the clock, told by messages, the answer's
 body holding a use until it ends.
 
-A lend may declare a sign-in instead of a secret (mwp-1; DESIGN §3, "The
-room", call 6): `sign_in` in its declaration, the port of a program of the
-lender's, set by `svrngs share --sign-in <port>`; `lend::declare` refuses a
-secret beside it. `door/sign_in.rs` holds it. `SignIns`, one task the door
-holds as it holds `Using`, keeps each person's answer by lend, port and key
-in memory, and on a person's first request asks `POST /` at the sign-in
-with the two identity headers alone, one ask at a time, within 30 s. The
-answer is `200` and `{secret, headers, script}`, every field required and
-none other (`Answer::parse`): a secret of 16 to 512 unreserved bytes; no
-header under `x-svrngs-`, hop-by-hop or `host`; a script holding neither
-the secret nor `</script`. Anything else refuses the request, `502` with
-`kind: "sign-in"`, the reason at warn, and nothing is carried. The answer's
-headers then stand where the one secret would (`rewrite_headers`); the
-stand-in `svrngs-stand-in` in the query and in each header becomes the
-asker's secret; `Accept-Encoding` goes. Outward, every secret held for the
-lend becomes the stand-in in each header, and in a textual body
-(`textual`: text, JSON, XML, a playlist, JavaScript, or no type) as it
-streams (`Swapping`, holding back one byte fewer than the longest secret),
-its length dropped; a textual answer compressed anyway is refused, `502`.
-A `401` to a request signed with a kept answer forgets it. A person's
-script (mwp-2) goes first in each `200` `text/html` answer to their `GET`:
-`tag` wraps it in a `<script>` carrying the nonce of the answer's
-`Content-Security-Policy` when it names one, saying at warn when the policy
-runs no inline script; `Swapping` holds the page back until `first_in`
-finds the place — after the first `<head…>`, else `<html…>`, else
-`<!doctype…>`, else the start, as `web/lend.js` puts its shim — within its
-first 64 KiB. Such a page goes `no-store`, without `ETag` or
-`Last-Modified`, and a request accepting `text/html` from a person with a
-script goes without `If-None-Match` and `If-Modified-Since`. A lend with no
-sign-in is carried as before.
-
-Beside the hook, sign in with svrngs (SIGN_IN_WITH_SVRNGS §5, §6; DESIGN §3,
-"The room", call 6): `crates/svrngs-core/src/token.rs` makes an app's claims
-from the door's identity headers — `sub` the person's key,
-`preferred_username` their account, `name` their name, `groups` `["member"]`
-or `["guest"]`, with `iss`, `aud`, `exp` and `iat`, and no `email` — their
-JSON, the `{"alg":"ES256","typ":"JWT","kid":…}` header and the base64url
-signing input, pure and `no_std`. `crates/svrngs-node/src/oidc.rs` keeps one
-ES256 key per lender's computer at `<data dir>/oidc/key.pk8`, 0600 through
+Sign in with svrngs (SIGN_IN_WITH_SVRNGS §5, §6; DESIGN §3, "The room",
+call 6): `crates/svrngs-core/src/token.rs` makes an app's claims from the
+door's identity headers — `sub` the person's key, `preferred_username` their
+account, `name` their name, `groups` `["member"]` or `["guest"]`, with
+`iss`, `aud`, `exp` and `iat`, and no `email` — their JSON, the
+`{"alg":"ES256","typ":"JWT","kid":…}` header and the base64url signing
+input, pure and `no_std`. `crates/svrngs-node/src/oidc.rs` keeps one ES256
+key per lender's computer at `<data dir>/oidc/key.pk8`, 0600 through
 `declared::write_secret`, signs that input through `ring`, and answers the
 JWKS from the same key pair: the key a client verifies is the key that
-signed. The key is never in the record and never synced; a token is on no
-wire but the app's.
+signed. `oidc/provider.rs` answers discovery, the keys, the token and
+userinfo on the record API's listener, its one-time codes kept in this run's
+memory and bound to the person, the client, the redirect, the PKCE challenge
+and the nonce; `oidc/front.rs` and `door::lend_for` answer the authorize
+path on the lend's own origin, after the asker is known and never carried to
+the service. The key is never in the record and never synced; a token is on
+no wire but the app's. The sign-in hook a lender's program once answered is
+gone: `apps/jellyfin/mw/` and the well-known table's `helper jellyfin` row
+stay only until `oidc-retire` removes them with the Jellyfin trial.
 
 A lend may ask (sup-2; DESIGN §3, "What an app gets"): `asks` in its
 declaration, its lender's words, set by `svrngs share --ask`, carried in
@@ -440,7 +416,7 @@ lend asking nobody and its own pages, and refuses `unasked` or `stopped`.
 `POST /choices/<lend>` on the members' protocol takes the dialler's person's
 `{app, said}`; with a pass, on either protocol, only `{said: "stop"}` (the
 type `Stopping`). `GET /choices/<lend>` answers the dialler's own. Every
-choice, sign-in answer and count of who uses a lend is keyed by
+choice and count of who uses a lend is keyed by
 `door::PersonKey`, which only the door makes, from the register's person
 key, so a person's devices are one person to each. `lend::withdraw` removes them with the lend.
 
@@ -709,13 +685,12 @@ self-hosted app leans on, and the checks its page runs (`checks.js`).
 from a computer and from a phone, each at an address of its own (DESIGN
 §7), through `web/tests/conformance.mjs`, and keeps each route's verdict in
 `target/conformance/`, which `scripts/check.sh` prints. Given the lender's
-key, `serve.mjs` keeps accounts, a token each, and `answer.mjs` is the
-lend's sign-in that answers each person's (mwp-4): a second app, after
-Jellyfin's, on the door's sign-in (DESIGN §3, "The room", call 6).
+key, `serve.mjs` keeps accounts and a token each.
 
 **`apps/jellyfin/`**: whatever knows Jellyfin's API (DESIGN §3, "Lent apps",
-call 3): its `nouns.txt`, the sign-in program a lender runs beside it (`mw/`,
-its README), and the drivers of its measured runs (`check/`, `folders/`).
+call 3): its `nouns.txt`, the program the retired sign-in hook ran (`mw/`,
+its README), kept until `oidc-retire` removes it, and the drivers of its
+measured runs (`check/`, `folders/`).
 **`apps/tap/`**: only Tap's `nouns.txt`. Tap is a canary PLAN §4 plans,
 after U3, and is not built: nothing runs it (#196).
 

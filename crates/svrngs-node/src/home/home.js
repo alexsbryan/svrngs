@@ -161,11 +161,7 @@ async function uses(lent) {
 
 // What a lend needs first, as /running says from svrngs's table, in a
 // sentence each: its own accounts, a setting, or what svrngs keeps back.
-const needs = (r) => [r.helper ? 'Its helper is running on this computer, so everyone is let in as themselves, with no account to make.' : r.signs?.accounts && `It keeps its own accounts, so make each person one in it: ${r.signs.accounts}.`, r.signs?.header && `Before it knows who is who, set this in it: ${r.signs.header}.`, r.keeps?.length && `svrngs keeps these parts of it from everyone: ${r.keeps.join(', ')}.`].filter(Boolean).join(' ');
-
-// The steps to start a kind's helper (/helper), when it has one that does
-// not answer: started before lending, it lets everyone in with no account.
-const helps = (r) => (r.helper === false ? [Object.assign(el('a', 'Or start its helper first, and nobody needs an account: here is how'), { href: `/helper/${r.kind}`, target: '_blank' }), '. '] : []);
+const needs = (r) => [r.signs?.accounts && `It keeps its own accounts, so make each person one in it: ${r.signs.accounts}.`, r.signs?.header && `Before it knows who is who, set this in it: ${r.signs.header}.`, r.keeps?.length && `svrngs keeps these parts of it from everyone: ${r.keeps.join(', ')}.`].filter(Boolean).join(' ');
 
 // What runs on this computer and is not lent yet (/running, v1ui-lend
 // (b)), looked for only when the person presses Look, as often as they
@@ -183,16 +179,14 @@ function running() {
     ul.replaceChildren();
     const answer = await get('/running').catch((e) => e);
     if (answer instanceof Error) return said.replaceChildren(`You looked, and what runs on this computer cannot be read: ${answer.message}`);
-    const { running: found, named, signing } = answer;
-    // A sign-in is never offered, and said once (arch-helper (b)).
-    const left = signing.length ? ` What runs at ${signing.map((p) => `http://localhost:${p}`).join(' and ')} is not listed: it signs people in to something you lend, and only svrngs on this computer asks it.` : '';
-    said.replaceChildren((found.length ? 'You looked just now: the programs running on this computer, each at its address. Lend one, and everyone in your groups opens it in their browser, as themselves, while this computer is on. You can stop lending it below at any time.' : 'You looked just now: nothing else on this computer is running at an address. Start a program, then look again.') + left);
+    const { running: found, named } = answer;
+    said.replaceChildren(found.length ? 'You looked just now: the programs running on this computer, each at its address. Lend one, and everyone in your groups opens it in their browser, as themselves, while this computer is on. You can stop lending it below at any time.' : 'You looked just now: nothing else on this computer is running at an address. Start a program, then look again.');
     for (const r of found) {
       const at = `http://localhost:${r.port}`;
-      const li = ul.appendChild(el('li', r.kind ? `${r.kind}, at ${at}. ${needs(r)} ` : `Something at ${at}. To lend it, give it a name and say what it is, each one word${named.length ? `; if it is ${named.join(' or ')}, say that` : ''}. `, ...helps(r)));
+      const li = ul.appendChild(el('li', r.kind ? `${r.kind}, at ${at}. ${needs(r)} ` : `Something at ${at}. To lend it, give it a name and say what it is, each one word${named.length ? `; if it is ${named.join(' or ')}, say that` : ''}. `));
       const [name, kind] = r.kind ? [] : [['name', 'Its name: '], ['kind', 'What it is: ']].map(([n, w]) => li.appendChild(el('label', w, Object.assign(el('input'), { name: n }))));
       const typed = (l) => l?.lastChild.value.trim() || null;
-      li.append(button(`Lend ${r.kind ?? 'it'} to everyone in your groups`, () => post('/running', { port: r.port, name: typed(name), kind: typed(kind) }).then((l) => { li.replaceChildren(`You lent ${l.name}, at ${at}: everyone in your groups can open it now. ${needs(l)} `, ...helps(l)); return lending(); }, (e) => li.append(` ${e.message}`))));
+      li.append(button(`Lend ${r.kind ?? 'it'} to everyone in your groups`, () => post('/running', { port: r.port, name: typed(name), kind: typed(kind) }).then((l) => { li.replaceChildren(`You lent ${l.name}, at ${at}: everyone in your groups can open it now. ${needs(l)} `); return lending(); }, (e) => li.append(` ${e.message}`))));
     }
   }
 }

@@ -24,7 +24,6 @@ fn shelf(upload: Option<u64>) -> Lend {
         // Read as a declaration's `upload_bps` is.
         upload: upload.map(|b| serde_json::from_value(serde_json::json!(b)).unwrap()),
         reads: Vec::new(),
-        sign_in: None,
         sign_in_with_svrngs: None,
         asks: None,
     }

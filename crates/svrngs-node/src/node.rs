@@ -313,7 +313,6 @@ impl Node {
             key: endpoint.id().as_bytes().to_owned(),
             data_dir: data_dir.clone(),
             using: crate::door::Using::spawn(),
-            sign_ins: crate::door::sign_in::SignIns::spawn(),
             choices: crate::door::choices::Choices::spawn(),
             folders: folders.clone(),
             oidc: oidc.clone(),

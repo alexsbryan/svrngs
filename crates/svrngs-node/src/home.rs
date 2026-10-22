@@ -37,8 +37,7 @@
 //! (`POST /runs`; canon-pin (c)), each in the group's folder or record; and
 //! **what runs on this computer lent** (`POST /running`, v1ui-lend (b)),
 //! decided as `svrngs share` decides a lend ([`crate::share`]) from what
-//! `GET /running` offers, every port that answers here and is not lent,
-//! nor signs people in to a lend ([`share::signs_in`], said once why).
+//! `GET /running` offers, every port that answers here and is not lent.
 //! The person's yes and stop are
 //! kept by this computer's door for its own lend, else dialled to the
 //! lender's door on the members' protocol as this computer's key
@@ -130,7 +129,6 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
         .route("/choices", get(choices).post(choose))
         .route("/lent", get(lent).post(change))
         .route("/running", get(running).post(lend_one))
-        .route("/helper/{kind}", get(steps))
         .route("/link", axum::routing::post(link))
         .route("/visits", axum::routing::post(stop))
         .route("/folder", axum::routing::post(open))
@@ -252,22 +250,11 @@ async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Response {
 }
 
 /// A port as the page shows it ([`share::listening`]): the kind the table
-/// knows, how that kind signs each person in and the paths svrngs keeps
-/// back of it, whether its helper answers, if it has one, and its name
-/// once lent.
+/// knows, how that kind signs each person in, the paths svrngs keeps back
+/// of it, and its name once lent.
 fn shown(port: NonZeroU16, kind: Option<&Kind>, name: Option<&LendName>) -> serde_json::Value {
     let (signs, keeps) = (kind.and_then(share::accounts_of), kind.map(share::kept_of));
-    let helper = kind.and_then(share::helper_of).map(share::listens); // whether it answers
-    serde_json::json!({ "port": port, "kind": kind, "name": name, "signs": signs, "keeps": keeps, "helper": helper })
-}
-
-/// `GET /helper/<kind>`: the steps to start the kind's sign-in helper, as
-/// the table names them ([`share::HELPERS`]), for the page to link.
-async fn steps(axum::extract::Path(kind): axum::extract::Path<String>) -> Response {
-    let none = || LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "svrngs knows no helper for that");
-    let steps = share::HELPERS.iter().find(|(k, _)| *k == kind);
-    tracing::debug!(target: "home", kind, found = steps.is_some(), "home: a kind's helper's steps asked, refused where svrngs knows none");
-    steps.map_or_else(none, |(_, s)| s.into_response())
+    serde_json::json!({ "port": port, "kind": kind, "name": name, "signs": signs, "keeps": keeps })
 }
 
 /// Which read failed, said, and traced with its error (#160).
@@ -289,17 +276,15 @@ async fn running(State(at): State<Asking>) -> Response {
     let lent: Vec<_> = all.into_iter().flatten().collect();
     let taken =
         |p: &NonZeroU16| p.get() == at.host.api_port || lent.iter().any(|l| l.source == Port(*p));
-    // A sign-in is left out, the page saying once why (arch-helper (b)).
-    let (signing, found): (Vec<_>, Vec<_>) =
-        (found.into_iter().filter(|p| !taken(p))).partition(|p| share::signs_in(*p, &lent));
     let rows: Vec<_> = (found.into_iter())
+        .filter(|p| !taken(p))
         .map(|p| shown(p, share::well_known_kind(p).as_ref(), None))
         .collect();
     let named: Vec<Kind> = (share::rows().filter(|(at, ..)| *at == share::At::Named))
         .map(|(_, kind, _)| kind)
         .collect();
-    tracing::debug!(target: "home", offered = rows.len(), lent = lent.len(), ?signing, "home: what runs here, offered to lend, sign-ins left out");
-    Json(serde_json::json!({ "running": rows, "named": named, "signing": signing })).into_response()
+    tracing::debug!(target: "home", offered = rows.len(), lent = lent.len(), "home: what runs here, offered to lend");
+    Json(serde_json::json!({ "running": rows, "named": named })).into_response()
 }
 
 /// What the person lends from the page: a port, and for one the table
@@ -339,8 +324,6 @@ async fn lend_one(
     let kind = kind.as_deref().map(Kind::parse).transpose();
     let kind = kind.map_err(|e| refused(&format!("Say what it is in {one}"), &e))?;
     let (known, dir) = (share::well_known_kind(port), &at.door.data_dir);
-    let lent = lend::all(dir).map_err(|e| unread("it cannot read what you lend already", &e))?;
-    let lent: Vec<_> = lent.into_iter().flatten().collect();
     tracing::debug!(target: "home", port, ?known, ?name, ?kind, "home: asked to lend what runs here");
     let unknown = "Give it a name and say what it is first: svrngs does not know what runs there.";
     if known.is_none() && (name.is_none() || kind.is_none()) {
@@ -354,19 +337,14 @@ async fn lend_one(
         refused: Vec::new(),
         upload: None,
         reads: Vec::new(),
-        sign_in: None,
         asks: None,
     };
     // Each of the lend's refusals in a person's words: a kind is known or
-    // given above, and no sign-in asked, so `NoKind` and `NoSignIn` are not met here.
+    // given above, so `NoKind` is not met here.
     let silent = format!("Nothing answers at http://localhost:{port} now: start it, then lend it.");
-    let no_sign_in = "Nothing answers at its sign-in now: start it, then lend it.";
-    let signs = "It signs people in to something you lend, and only svrngs on this computer asks it: lend what it signs them in to instead.";
-    let lend = share::lend_of(&asked, share::listens, known, &lent).map_err(|e| match e {
-        ShareRefusal::SignsIn(_) => refused(signs, &e),
+    let lend = share::lend_of(&asked, share::listens, known).map_err(|e| match e {
         ShareRefusal::NothingListens(_) => refused(&silent, &e),
         ShareRefusal::NoKind(_) => refused(unknown, &e),
-        ShareRefusal::NoSignIn(_) => refused(no_sign_in, &e),
     })?;
     let stands = lend::read(dir, &lend.name).map(|had| had.is_some());
     tracing::debug!(target: "home", lend = %lend.name, ?stands, "home: lent from the page unless a lend of its name stands");

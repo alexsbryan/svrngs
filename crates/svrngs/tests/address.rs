@@ -175,10 +175,9 @@ fn the_home_page_and_a_lend_answer_at_one_address_across_a_restart() {
         refused: Vec::new(),
         upload: None,
         reads: Vec::new(),
-        sign_in: None,
         asks: None,
     };
-    let lend = share::lend_of(&asked, share::listens, None, &[]).expect("pad listens");
+    let lend = share::lend_of(&asked, share::listens, None).expect("pad listens");
     cli::share_lend(dir.path(), &lend, None).unwrap();
 
     let new = ["new", "Lab", "--as", "Sam"];

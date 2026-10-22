@@ -289,7 +289,7 @@ alike:**
 - *svrngs's word told from the lend's*: every answer svrngs makes in a
   lend's place — the door's refusals, the lend's worker's and the
   computer's — carries `x-svrngs-refused`, naming which (`away`, `pass`,
-  `closed`, `unlent`, `path`, `full`, `sign-in`, `fault`, `unasked`,
+  `closed`, `unlent`, `path`, `full`, `fault`, `unasked`,
   `stopped`, `removed`, `ended`), and a lend's own answer never does (`door::LendRefusal`). Any
   of svrngs's refusals to a browser's tab, which asks `Accept: text/html`, is
   drawn as a page of its words; a program is given the JSON. A lend whose
@@ -316,8 +316,7 @@ alike:**
   one; `svrngs unshare` takes the choices with the lend.
 - *Reach for the devices in a room* ("The room").
 - *Each person signed in as themselves with nothing typed*, for a lend
-  whose lender declares a sign-in, or one signed in with svrngs ("The
-  room", call 6).
+  signed in with svrngs ("The room", call 6).
 
 An app that needs anything else is a decision, not a convenience.
 
@@ -543,15 +542,14 @@ calls:
    infra (§5), and what the door gains for it is general: any app. An app's
    words and paths are the well-known table's alone
    (`crates/svrngs-node/src/well_known.txt`).
-4. *Sign in once, or none through a program the lender runs.* Lent as it
-   comes, a lend carries no secret and each person signs in once with an
-   account the lender made: `svrngs share` asks no password for a kind its
-   table says keeps its own accounts, and prints how to make each person one
-   (`share::accounts_of`); for a kind that takes the person from
-   `x-svrngs-user`, it prints what to set. Zero sign-in is the lender's to
-   choose, outside the infra: a program beside the service answers the
-   door's sign-in for it ("The room", call 6), as `apps/jellyfin/mw/` does,
-   making each person who comes a Jellyfin user of their own.
+4. *Sign in once, or none.* Lent as it comes, a lend carries no secret and
+   each person signs in once with an account the lender made: `svrngs share`
+   asks no password for a kind its table says keeps its own accounts, and
+   prints how to make each person one (`share::accounts_of`); for a kind
+   that takes the person from `x-svrngs-user`, it prints what to set. Zero
+   sign-in is the lender's to choose, outside the infra: an app that speaks
+   OpenID Connect names svrngs once in its own settings, and the door signs
+   each person in as themselves ("The room", call 6).
 5. *Measured before built.* What a stock app does through the door — its
    sign-in, its live socket, two people's plays through one lend, whether
    any byte carries a secret the lend holds — is measured before anything is
@@ -670,73 +668,54 @@ nothing more.
 5. *The lender's door counts the room as one person*, and guesses its path
    as it does any other. Who in the room asked is the app's to know, by its
    own sign-in.
-6. *A sign-in the lend declares; middleware is the lender's.* A lender may
-   run a program beside a service on their own computer, listening on a
-   port; svrngs ships no runtime or SDK for it and never starts, supervises
-   or lends one. The pieces every app's middleware would write — a
-   credential per person, made on their first request; that credential kept
-   out of every answer; a script first in a page — are the door's, as one
-   hook a lend declares over HTTP, its *sign-in*. An app's program keeps
-   only its own nouns, as the sign-in's answerer beside the service
-   (`crates/svrngs-node/src/door/sign_in.rs`). Beside the hook is
-   **sign-in with svrngs**: an app that speaks OpenID Connect names the
-   lender's svrngs once in its own settings, and the door answers it with
-   the person it already tells the app in its headers — no program per app.
-   The claims and the signing input are `svrngs_core::token`'s; the
-   lender's one ES256 key and its JWKS are `oidc.rs`'s, at
-   `<data dir>/oidc/key.pk8`, 0600, never synced.
-   - *Declared by `share`.* `svrngs share <port> --sign-in <its port>` names
-     a program on this computer that answers for the lend who each person is
-     to it. It is kept in the lend's declaration; a node that does not know
-     the field refuses the declaration, never ignores it. A lend declares its
-     one secret or a sign-in, never both. A kind whose helper the well-known
-     table names (`helper <kind> <port> <steps>`) is lent signed in by it when
-     it answers, from the home page and by `share` alike; not answering, the
-     page offers its steps (`/helper/<kind>`). A port a helper or a sign-in
-     holds is refused as a lend's port.
-   - *What the door sends.* On a device's first request through the lend,
-     before carrying it, the door asks `POST /` at `127.0.0.1:<its port>`
-     with that request's identity headers and `x-svrngs-stand-in`, nothing
-     else: no client header, no body. Each device is asked apart, so one
-     slow sign-in holds nobody else's request.
-   - *What comes back.* `200` and a JSON object, every field required and an
-     unknown one refused: `secret`, the person's secret, 16 to 512 bytes of
-     letters, digits, `-`, `_`, `.` and `~`, which a query, a header and a
-     JSON string carry unescaped; `headers`, set on each of the person's
-     requests, displacing the client's of the same name as the one secret does,
-     none under `x-svrngs-`, none hop-by-hop, no `host`, `{}` for none; and
-     `script`, JavaScript for the lend's pages to that person, or `null`.
-     Anything else — another status, no answer in 30 s, a field malformed, a
-     script holding the secret or `</script` — refuses the request, `502`,
-     `{"error": "<lend> could not sign you in", "kind": "sign-in"}`, the
-     reason traced on the lender's side and never sent to the person; the
-     next request asks again. A sign-in that does not answer, or answers
-     while the lend's own port takes none, is the lend not answering, not a
-     no: `away`, "<lender>’s <lend> is not answering now: try again later".
-   - *What it keeps, and when it asks again.* Each answer, in the door's
-     memory for this run: never logged, never in the record, never on disk,
-     never on the wire but to the service. It asks again after a restart, and
-     when the service answers `401` to a request signed in with a kept
-     answer.
-   - *The swap.* One stand-in, `svrngs-stand-in`, spelled once, in the door
-     (`STAND_IN`). Inward, the stand-in in a request's query and in each
-     header's value becomes the asker's secret; a path and a body go as
-     sent. Outward, every secret the door holds for the lend becomes the
-     stand-in in every textual answer, header and body, streamed, a secret
-     split across two chunks found. Every request through a lend with a
-     sign-in goes without its `Accept-Encoding`, and a textual answer
-     compressed anyway is refused, never sent on unread.
-   - *The script* goes first in `<head>` of every `200` `text/html` answer to
-     a `GET` of that person's, so it runs before every script of the page's
-     own; on a phone the lend's worker puts its shim before it. Under a
-     `Content-Security-Policy` naming a nonce it carries the nonce; under a
-     policy that runs no inline script it does not run, traced and not worked
-     around. Such a page goes with `Cache-Control: no-store` and no
-     validators, so no copy kept from before the script is answered.
-
-   Past the door, a sign-in's answerer believes loopback: a process on the
-   lender's computer asking it for a person is answered as them, and is the
-   lender's own ("Localhost is the trust boundary").
+6. *Sign-in with svrngs; the door's own.* An app that speaks OpenID
+   Connect names the lender's svrngs once in its own settings, and the door
+   answers it with the person it already tells the app in its headers — no
+   program per app, and no consent screen. Nothing is typed, because the
+   claims are the door's own: `sub` the person's key, `preferred_username`
+   their account, `name` their name, and `groups` `["member"]` or
+   `["guest"]`. There is no `email` until mail is real (§ "Sign in once").
+   - *One issuer string, exact*: `http://127.0.0.1:<api port>/oidc/<lend>`,
+     with no trailing slash, byte-equal in discovery and in every ID
+     token's `iss`. It is plain http on the lender's loopback: the traffic
+     never leaves the computer, and a certificate for a loopback name would
+     need a centre (north star 3).
+   - *The front channel* is the lend's own origin,
+     `http://localhost:<lend port>/.svrngs/oidc/authorize`. The door
+     answers it itself, after the asker is known and before the lend's
+     refusals and its limit, and never carries it to the app. So a
+     stranger or a removed member is refused before any code. It checks
+     `response_type=code`, the lend's client, the app's own redirect, the
+     scope, `state`, `nonce` and PKCE, and mints a one-time code bound to
+     that person, the client, the redirect, the challenge and the nonce.
+     A guest's code names the guest, never their host.
+   - *The back channel* is the record API's listener, which answers only
+     this computer: discovery, the keys, the token and userinfo, behind the
+     guard that lets no page ask it. No listener is added and the trust
+     floor is unchanged. `client_secret_basic`, `client_secret_post` and a
+     public client with no secret are accepted; PKCE S256 is checked when
+     sent and not required; a nonce is echoed when sent and omitted
+     otherwise; no PAR endpoint is listed.
+   - *What is signed* is ES256 through `ring`, already in the lock: one key
+     per lender's computer at `<data dir>/oidc/key.pk8`, 0600, never in the
+     record and never synced, the same across a restart so the apps' cached
+     keys hold. The JWKS answers the same `kid` that signed, so the key a
+     client verifies is the key that signed.
+   - *Nothing leaves the lender's computer.* The key stays in the data dir,
+     each code in this run's memory and used once, and a token is on no
+     wire but the app's and in no record.
+   - *Turning it on* is the lender's: the home page, or `svrngs share`,
+     prints the issuer, a client id and a secret for the app's form, and
+     the deviations in the lender's words (plain http on this computer,
+     ES256, no email yet). A lend declares its one secret or its sign-in
+     with svrngs, never two; a declaration's unknown field is refused,
+     never ignored. The client id and secret are made from
+     `[A-Za-z0-9-._~]` only.
+   - An app whose page script navigates to the authorize address itself is
+     not served (SIGN_IN_WITH_SVRNGS §8 10): the address would be the
+     viewer's own machine. `apps/jellyfin/mw/` stays only until
+     `oidc-retire` removes it with the Jellyfin trial, so a failed trial is
+     reverted with git, not bought again.
 
 **A chat's door is the group's link.** A person posts the link where they
 talk, as they post any link, and it opens the same from Discord, iMessage,
@@ -825,7 +804,7 @@ behind — is each unit's inventory, PLAN §4. How a piece comes over:
 |---|---|---|
 | `svrngs-core` | the record: acts, admission into one order, membership, the sync digest; and everything a browser's page must spell as the command and the node do — a link's token, the ask and the redemption, the protocols' names, a relay's URL, a lend's label, the pass, and a sign-in token's claims and signing input. `no_std`, so the compiler refuses filesystem, clock, network and threads; time and keys are arguments | none |
 | `svrngs-runtime` | the only owner of each group's journal on disk, its projections and its writes: the journal and its write index, the open-journal map, the register's standing | the journals |
-| `svrngs-node` | the adapters: sync and its route over iroh; redemption; the loopback record API and its live lane; the member door, its limit and shares, its sign-in and each person's choices; the list of what members lend; each lend's origin on this computer; the room door; the home page; the lender's sign-in key and its JWKS | each lend's declaration and secret, and each person's choices for it; who is using each lend now; each person's sign-in answer, in memory; each lender's sign-in key |
+| `svrngs-node` | the adapters: sync and its route over iroh; redemption; the loopback record API and its live lane; the member door, its limit and shares, its sign-in with svrngs and each person's choices; the list of what members lend; each lend's origin on this computer; the room door; the home page; the lender's sign-in key and its JWKS | each lend's declaration and secret, and each person's choices for it; who is using each lend now; each lender's sign-in key |
 | `svrngs-web` | the page's dial, wasm only, in `web/` with its static shell and a workspace of its own: a browser's endpoint dialling a group's computer by key over a relay, HTTP over the dial, joining, and the worker that serves each lend at its own origin with a pass | none: the page's store holds the key, sealed; a lend's origin's store holds its pass and its cookies |
 | `svrngs` | the command and the process: `new`, `join`, `link`, `share`, `unshare`, `room`, `remove`, `handover`, `leave` and `relay`; the bare command runs the node for every group this computer holds and prints where the home page opens | a device's keys; each group's seed |
 
@@ -888,8 +867,7 @@ number:
   address, a film sought twenty times — lent by two computers at once and
   opened from a computer and a phone, in Chromium and in WebKit as an iPhone.
   Neither lend's cookie reaches the other's requests, no byte holds either
-  secret, and a lent page finds no key it could unseal. It is the sign-in's
-  second app too (`answer.mjs`), so every build keeps the sign-in general.
+  secret, and a lent page finds no key it could unseal.
 - *The ceiling*, a Rust test (`an_idle_round_is_under_the_ceiling`): at 25
   members and 10,000 acts an idle round costs under 0.1 s of processor. The
   round's digest, its signatures and the register are each folded from the

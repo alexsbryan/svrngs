@@ -22,7 +22,6 @@ mod limit;
 mod newcomer;
 mod oidc;
 mod origins;
-mod sign_in;
 
 use std::net::SocketAddr;
 use std::time::Duration;

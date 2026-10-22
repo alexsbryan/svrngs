@@ -23,13 +23,10 @@
 # password, and its libraries, none ticked until the lender ticks them.
 8096 jellyfin accounts: your picture at the top right, then Dashboard, Users and +; give it a name and a password, tick the libraries they may watch, and Save
 #
-# A kind's sign-in helper, where svrngs knows one (v1ui-polish (d)):
-# `helper <kind> <port> <steps>`, the port it listens on as its steps run it,
-# and its steps, a file of this repository build.rs embeds for the home page
-# to link (/helper/<kind>). A kind lent while its helper answers is signed in
-# by it, from the page and by `share` alike, as `svrngs share <port>
-# --sign-in <its port>` lends it (share.rs, `helper_of`); svrngs neither
-# builds, starts nor stops it. Jellyfin's is apps/jellyfin/mw, on 8097.
+# Jellyfin's helper row stays until `oidc-retire` removes it with
+# apps/jellyfin/mw, after the Jellyfin trial, so a failed trial is reverted
+# with git rather than bought again. Nothing reads it now: the sign-in hook
+# is gone and sign-in with svrngs is the door's own (SIGN_IN_WITH_SVRNGS §5).
 helper jellyfin 8097 apps/jellyfin/README.md
 
 # Navidrome's port (its default, `ND_PORT`). ExtAuth's two settings, as

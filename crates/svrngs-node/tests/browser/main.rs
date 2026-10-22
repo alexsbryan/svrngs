@@ -469,17 +469,14 @@ fn the_index_s_row_is_judged_once_for_both_pages() {
         }
         assert!(text.contains("opens(l, "), "{page} draws no row by `opens`");
     }
-    let full = json!({ "person": "cy", "limit": 1, "using": 1, "signs_in": true });
-    let open = json!({ "person": "cy", "limit": null, "using": 4, "signs_in": false });
+    let full = json!({ "person": "cy", "limit": 1, "using": 1 });
+    let open = json!({ "person": "cy", "limit": null, "using": 4 });
     assert_eq!(
         in_question(
             "args.map((l) => q.opens(l, 'In a tab'))",
             json!([full, open])
         ),
-        json!([
-            ["In a tab, signing you in once", "full"],
-            ["In a tab", "on"]
-        ])
+        json!([["In a tab", "full"], ["In a tab", "on"]])
     );
 }
 
@@ -3532,9 +3529,6 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
         first.contains("jellyfin") && first.contains("Dashboard, Users"),
         "jellyfin named, with how to make each person an account first:\n{seen:#}"
     );
-    // Its helper not running here, the page offers its steps (v1ui-polish (d)).
-    let helps = "Or start its helper first, and nobody needs an account: here is how.";
-    assert!(first.contains(helps), "{seen:#}");
     assert!(said(found, chores.port()).contains("Its name"), "{seen:#}");
     let quiet = |p: u16| std::net::TcpStream::connect(("127.0.0.1", p)).is_err();
     for port in [gone, ada.api_addr().port()]
@@ -3589,60 +3583,6 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
         "bo opens ada's jellyfin in a tab:\n{opened:#}"
     );
     drop((ada, bo));
-}
-
-in_both_engines!(
-    /// **The page never offers a sign-in helper** (arch-helper (b);
-    /// REVIEW_FINDINGS #174). A stand-in answers on 8097, the port the
-    /// table names jellyfin's helper at. Ada's page looks for what runs
-    /// here: no row offers it, and the page says once why, in a person's
-    /// words. Planted, watched failing: the page as at 2ab2522, offering it
-    /// as something to lend.
-    the_home_page_never_offers_a_sign_in_helper
-);
-async fn the_home_page_never_offers_a_sign_in_helper(engine: Engine) {
-    let _held = JELLYFIN.lock().await;
-    // The other engine's run lets 8097 go as its runtime ends, after the lock.
-    let mut bound = tokio::net::TcpListener::bind("127.0.0.1:8097").await;
-    for _ in 0..50 {
-        if bound.is_ok() {
-            break;
-        }
-        tokio::time::sleep(Duration::from_millis(100)).await;
-        bound = tokio::net::TcpListener::bind("127.0.0.1:8097").await;
-    }
-    let Ok(helper) = bound else {
-        return could_not_judge(&format!(
-            "the_home_page_never_offers_a_sign_in_helper::{}: something on this host holds 8097, jellyfin's helper's",
-            engine.as_str()
-        ));
-    };
-    kept_at(helper, "<!doctype html><title>helper</title>");
-    let relay = relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let ada = node(dir.path(), &relay, &signing(7)).await;
-    let look = json!(["#running button:has-text('Look for programs')", null, true]);
-    let seen = home_page(
-        engine,
-        &ada,
-        json!({ "read": "#running h2", "all": "#running li, #running p", "do": [look] }),
-    )
-    .await;
-    let found = seen["after"][0].as_array().cloned().unwrap_or_default();
-    let found: Vec<&str> = found.iter().filter_map(Value::as_str).collect();
-    let why = "What runs at http://localhost:8097 is not listed: it signs people in to something you lend, and only svrngs on this computer asks it.";
-    assert_eq!(
-        (
-            found
-                .iter()
-                .filter(|l| l.contains("Something at http://localhost:8097."))
-                .count(),
-            found.iter().map(|l| l.matches(why).count()).sum::<usize>(),
-        ),
-        (0, 1),
-        "the helper offered, or not said once why:\n{seen:#}"
-    );
-    drop(ada);
 }
 
 /// A stand-in for llama-server's chat page (`demo/runs/start/

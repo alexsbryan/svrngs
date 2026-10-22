@@ -166,7 +166,7 @@ export function table(g, lends, bring, yes) {
 
 // How lend `l` opens, `where`, and whether it is full now: the index's row
 // as both pages judge it, so a change to either lands on both (#158).
-export const opens = (l, where) => [`${where}${l.signs_in ? ', signing you in once' : ''}`, l.limit && l.using >= l.limit ? 'full' : 'on'];
+export const opens = (l, where) => [where, l.limit && l.using >= l.limit ? 'full' : 'on'];
 
 // A row of the index; `tag` th for its head.
 export const row = (cells, tag = 'td') => el('tr', '', ...cells.map((c) => el(tag, '', c)));

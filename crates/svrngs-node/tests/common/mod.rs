@@ -36,9 +36,8 @@ pub fn never_answers() -> (std::net::UdpSocket, Vec<SocketAddr>) {
 }
 
 /// A port nothing listens on, as a stopped program's: bound, read and let
-/// go, so a connection to it is refused. One copy, where home.rs, door's
-/// sign_in.rs (twice) and lend_origin.rs each wrote it out
-/// (REVIEW-audit-v1ui-auto-3).
+/// go, so a connection to it is refused. One copy, where home.rs and
+/// lend_origin.rs each wrote it out (REVIEW-audit-v1ui-auto-3).
 #[allow(
     dead_code,
     reason = "each test binary compiles this file; only some stop a program"

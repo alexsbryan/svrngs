@@ -208,10 +208,6 @@ pub struct Lend {
     /// a phone's page passes whoever opens it to the group's lends of each
     /// kind too, as that person (DESIGN §3, "Lent apps", call 6).
     pub reads: Vec<Kind>,
-    /// The port on 127.0.0.1 of the lender's program that signs each person
-    /// in (mwp-1, `svrngs share --sign-in`; `crate::door::sign_in`): a lend
-    /// declares it or a secret, never both.
-    pub sign_in: Option<NonZeroU16>,
     /// Its sign-in with svrngs when it says so (SIGN_IN_WITH_SVRNGS §5,
     /// "Turning it on"): the client id and secret its lender copies into
     /// the app's own settings form. This is the one place the provider
@@ -244,7 +240,6 @@ impl Lend {
             refused: Vec::new(),
             upload: None,
             reads: Vec::new(),
-            sign_in: None,
             sign_in_with_svrngs: None,
             asks: None,
         })
@@ -278,8 +273,6 @@ struct LendFile {
     upload: Option<Upload>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     reads: Vec<Kind>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    sign_in: Option<NonZeroU16>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     sign_in_with_svrngs: Option<SignInWithSvrngs>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -326,11 +319,6 @@ pub struct Offered {
     /// absent when it asks nobody.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub asks: Option<String>,
-    /// Whether its lender's program signs each person in, once (mwp-1,
-    /// `sign_in`): the pages say so of how it opens (v1ui-door (c)). A
-    /// computer that does not say runs an older svrngs, and its lends are
-    /// not read at all ([`crate::version`]).
-    pub signs_in: bool,
     /// The group that carries it, when its group's folder does (v1ui-shelf
     /// (a)): lent to that group alone, and one copy of it shown, whichever
     /// computer answers. Absent for a port's.
@@ -375,8 +363,6 @@ pub enum LendError {
         path: PathBuf,
         source: serde_json::Error,
     },
-    #[error("{0} declares a secret and a sign-in: a lend declares one or the other")]
-    SecretAndSignIn(LendName),
     #[error("{0} is carried in its group's folder, never declared")]
     Carried(LendName),
     #[error("{path} cannot be written: {source}")]
@@ -430,7 +416,6 @@ pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError>
         refused,
         upload: file.upload,
         reads: file.reads,
-        sign_in: file.sign_in,
         sign_in_with_svrngs: file.sign_in_with_svrngs,
         asks: file.asks,
     }))
@@ -467,16 +452,12 @@ pub fn all(data_dir: &Path) -> Result<Vec<Result<Lend, LendError>>, LendError> {
 /// then the declaration, through a file renamed into place, so the door
 /// never reads half of one, nor a new one before its secret. A lend
 /// declared again replaces the last, its secret too: none given removes
-/// the one kept. A secret beside a sign-in is refused, nothing written.
+/// the one kept.
 pub fn declare(
     data_dir: &Path,
     lend: &Lend,
     secret: Option<(&str, &str)>,
 ) -> Result<(), LendError> {
-    if secret.is_some() && lend.sign_in.is_some() {
-        tracing::debug!(target: "lend", lend = %lend.name, "lend: refused — a secret and a sign-in both");
-        return Err(LendError::SecretAndSignIn(lend.name.clone()));
-    }
     let secrets = secret_dir(data_dir, &lend.name);
     let unwritable = |path: &Path| {
         let path = path.to_path_buf();
@@ -492,7 +473,7 @@ pub fn declare(
     write(data_dir, lend)?;
     tracing::debug!(target: "lend", lend = %lend.name, source = ?lend.source, kind = %lend.kind,
         limit = ?lend.limit, refused = lend.refused.len(), upload = ?lend.upload.map(Upload::bps),
-        secret = secret.is_some(), sign_in = ?lend.sign_in, asks = lend.asks.is_some(),
+        secret = secret.is_some(), asks = lend.asks.is_some(),
         "lend: declared");
     Ok(())
 }
@@ -531,7 +512,6 @@ fn write(data_dir: &Path, lend: &Lend) -> Result<(), LendError> {
         refused: lend.refused.iter().map(|r| r.0.clone()).collect(),
         upload: lend.upload,
         reads: lend.reads.clone(),
-        sign_in: lend.sign_in,
         sign_in_with_svrngs: lend.sign_in_with_svrngs.clone(),
         asks: lend.asks.clone(),
     };

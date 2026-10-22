@@ -14,12 +14,8 @@
 //! other's requests; Bo's door names Alex's key; no byte Alex receives
 //! holds either secret; a lent page finds no group whose key it could
 //! unseal; and on a computer a lent page's post to the record API writes
-//! nothing. And a second app on a lend's sign-in (mwp-4): Sam lends the
-//! canary with accounts of its own, its sign-in the canary's answerer, and
-//! Alex's phone and Bo's computer are each signed in as themselves with
-//! nothing typed (`two_people_signed_in`). Everything runs on this
-//! computer: iroh's relay on 127.0.0.1, three nodes on it, the canaries
-//! and the page.
+//! nothing. Everything runs on this computer: iroh's relay on 127.0.0.1,
+//! three nodes on it, the canaries and the page.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 #[path = "browser/harness.rs"]
@@ -138,7 +134,8 @@ struct Group {
     bo: Node,
     alex: Node,
     canaries: (Canary, Canary),
-    dirs: Vec<tempfile::TempDir>,
+    /// Held so the nodes' data dirs outlive the group, never read.
+    _dirs: Vec<tempfile::TempDir>,
 }
 
 async fn group(relay: &Server) -> Group {
@@ -195,7 +192,7 @@ async fn group(relay: &Server) -> Group {
         bo,
         alex,
         canaries,
-        dirs,
+        _dirs: dirs,
     }
 }
 
@@ -693,124 +690,6 @@ in_both_engines!(
 );
 async fn on_a_phone_with_the_wildcard(engine: Engine) {
     conformance(Way::Wildcard, engine).await
-}
-
-/// The lender's key to the canary's accounts (`serve.mjs`).
-const LENDERS: &str = "sams-key-to-its-accounts-43";
-
-in_both_engines!(
-    /// A second app on a lend's sign-in, no line of the door's knowing it
-    /// (mwp-4; DESIGN §3, "The room", call 6; PLAN §4, "The sign-in made production", bar 4). Sam lends the canary
-    /// with accounts as `accounts`, its sign-in `answer.mjs`; Alex opens it
-    /// from Alex's phone and Bo from Bo's computer. Each is signed in as
-    /// themselves with nothing typed: the canary's page names its person's
-    /// account — the door's `x-svrngs-user`, unique by their key — by the
-    /// token the sign-in's script stored, by the door's bearer and by a
-    /// redirect; every request the canary took through the door is signed
-    /// as the person who asked; and no byte either browser receives holds
-    /// either person's token or the lender's key. Its plant,
-    /// `CANARY_PLANT=one-account`, answers Alex's account for Bo too.
-    two_people_signed_in
-);
-async fn two_people_signed_in(engine: Engine) {
-    let relay = relay().await;
-    let g = group(&relay).await;
-    let accounts = canary("serve.mjs", &["sam", LENDERS]).await;
-    let answerer = canary("answer.mjs", &[&accounts.port.to_string(), LENDERS]).await;
-    let body =
-        json!({ "port": accounts.port, "kind": "app", "limit": 3, "sign_in": answerer.port });
-    let at = lend::lends_dir(g.dirs[0].path());
-    std::fs::write(at.join("accounts.json"), body.to_string()).unwrap();
-    // Each person's token, asked of the canary as its lender: what no byte
-    // either browser receives may hold.
-    let http = reqwest::Client::builder().no_proxy().build().unwrap();
-    let mut secrets = vec![LENDERS.to_string()];
-    let user = |name: &str, key: u8| {
-        svrngs_node::door::user_name(&Person::parse(name).unwrap(), &actor_of(&signing(key)))
-    };
-    let users = [user("alex", PHONE), user("bo", BO)];
-    for name in &users {
-        let made: Value = http
-            .post(format!("http://127.0.0.1:{}/accounts", accounts.port))
-            .bearer_auth(LENDERS)
-            .json(&json!({ "name": name }))
-            .send()
-            .await
-            .unwrap()
-            .json()
-            .await
-            .unwrap();
-        secrets.push(made["token"].as_str().unwrap().to_string());
-    }
-    let label = Label::of(g.sam.endpoint().id().as_bytes(), "accounts").to_string();
-    let mut table = String::new();
-    let mut failed = Vec::new();
-    for ((who, way, node), user) in [
-        ("alex", Way::Wildcard, &g.alex),
-        ("bo", Way::Computer, &g.bo),
-    ]
-    .into_iter()
-    .zip(&users)
-    {
-        let mut args = browser_args(way, engine, &g, &relay).await;
-        let api = node.api_addr();
-        if way == Way::Computer {
-            args["api"] = json!(format!("http://{api}"));
-        }
-        args["lends"] = json!([{ "who": "accounts", "button": "sam’s accounts", "label": label,
-            "origin": format!("http://{label}.localhost:{}/", api.port()) }]);
-        args["secrets"] = json!(secrets);
-        args["routes"] = json!(["account"]);
-        let ran = browse(&args).await;
-        let account = &ran["lends"]["accounts"]["account"];
-        let ok = account["ok"] == json!(true)
-            && account["who"] == json!(user)
-            && ran["leaked"] == json!([]);
-        println!("{who}'s page saw {}", account["saw"]);
-        let verdict = if ok { "passed" } else { "failed" };
-        let line = verdict_line(
-            way,
-            engine,
-            who,
-            "signed in by the lend, as themselves",
-            verdict,
-        );
-        table.push_str(&format!("{line}\n"));
-        if !ok {
-            failed.push(format!("{line}: {account}; leaked {}", ran["leaked"]));
-        }
-    }
-    print!("{table}");
-    let kept = repo().join("target/conformance");
-    std::fs::create_dir_all(&kept).unwrap();
-    std::fs::write(
-        kept.join(format!("sign-in-{}.txt", engine.as_str())),
-        &table,
-    )
-    .unwrap();
-    assert!(
-        failed.is_empty(),
-        "not signed in as themselves:\n{}",
-        failed.join("\n")
-    );
-    // Every request the canary took through the door, signed in as the
-    // account the door names.
-    let mut asked = seen(&accounts).await;
-    asked.retain(|s| s["key"] != json!(""));
-    for who in ["alex", "bo"] {
-        assert!(
-            asked.iter().any(|s| s["person"] == json!(who)),
-            "{who} asked nothing: {asked:?}"
-        );
-    }
-    let unsigned: Vec<&Value> = asked.iter().filter(|s| s["signed"] != s["user"]).collect();
-    assert!(
-        unsigned.is_empty(),
-        "requests signed in as another: {unsigned:?}"
-    );
-    for n in [g.sam, g.bo, g.alex] {
-        n.endpoint().close().await;
-    }
 }
 
 /// The most, in MB, a WebKit content process may hold through the tries
