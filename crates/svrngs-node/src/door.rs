@@ -746,14 +746,12 @@ fn own_address(port: NonZeroU16) -> HeaderValue {
 }
 
 /// The scheme the browser reached a lend with, from the `Host` it asked:
-/// `http` for a `*.localhost` host (and `localhost` itself, a viewer on this
-/// computer), `https` otherwise. It is what the door tells a service as
-/// `X-Forwarded-Proto` ([`tell_origin`]) and what the front channel reads
-/// back as the lend's own origin (oidc-jellyfin).
+/// `http` for a `*.localhost` host, `https` otherwise. It is what the door
+/// tells a service as `X-Forwarded-Proto` ([`tell_origin`]) and what the
+/// front channel reads back as the lend's own origin (oidc-jellyfin).
 pub(crate) fn scheme_of(host: &str) -> &'static str {
     let name = host.rsplit_once(':').map_or(host, |(name, _)| name);
-    let name = name.to_ascii_lowercase();
-    if name == "localhost" || name.ends_with(".localhost") {
+    if name.to_ascii_lowercase().ends_with(".localhost") {
         "http"
     } else {
         "https"
