@@ -592,7 +592,16 @@ impl Program {
         while let Ok(l) = self.lines.recv_timeout(Duration::from_secs(5)) {
             self.seen.push(l);
         }
-        (status.code().unwrap_or(-1), self.seen)
+        (status.code().unwrap_or(-1), std::mem::take(&mut self.seen))
+    }
+}
+
+/// Dropped, the program is stopped: a test that fails before it stops one
+/// would otherwise leave it running, orphaned, holding its port.
+impl Drop for Program {
+    fn drop(&mut self) {
+        let _ = self.child.kill();
+        let _ = self.child.wait();
     }
 }
 

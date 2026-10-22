@@ -67,8 +67,12 @@ impl Program {
             }
         }
     }
+}
 
-    fn stop(mut self) {
+/// Dropped, the program is stopped: a test that fails before it stops one
+/// would otherwise leave it running, orphaned, holding its port.
+impl Drop for Program {
+    fn drop(&mut self) {
         let _ = self.child.kill();
         let _ = self.child.wait();
     }
@@ -184,7 +188,7 @@ fn the_home_page_and_a_lend_answer_at_one_address_across_a_restart() {
     let new = ["new", "Lab", "--as", "Sam"];
     let mut made = Program::start(dir.path(), &logs.path().join("new"), &new);
     made.until("Leave this running");
-    made.stop();
+    drop(made);
 
     let mut at = Vec::new();
     for run in ["first", "again"] {
@@ -200,7 +204,7 @@ fn the_home_page_and_a_lend_answer_at_one_address_across_a_restart() {
         let (status, body) = get(&lent, "/", false);
         assert!(status.ends_with("200 OK"), "{run}: {lent} {status}");
         assert_eq!(body, "ok", "{run}: {lent}");
-        svrngs.stop();
+        drop(svrngs);
         at.push((home, lent));
     }
     assert_eq!(at[0], at[1], "the addresses moved across a restart");
@@ -217,7 +221,7 @@ fn another_program_holding_the_address_is_said_and_svrngs_stops() {
     let logs = tempfile::tempdir().unwrap();
     let mut first = Program::start(dir.path(), &logs.path().join("first"), &[]);
     let home = address_in(&first.until("//svrngs.localhost:"));
-    first.stop();
+    drop(first);
     let port = home.trim_end_matches('/').rsplit_once(':').unwrap().1;
     let held = TcpListener::bind(format!("127.0.0.1:{port}"))
         .unwrap_or_else(|e| panic!("the test cannot hold {port}: {e}"));
