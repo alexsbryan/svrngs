@@ -184,10 +184,10 @@ svrngs — keep what your group shares on your own computers.
       takes it.
 
   svrngs room <name>...
-      Open what your groups lend as <name> to this computer's WiFi: anyone
-      on it can open it as you, from a TV, a phone or another computer,
-      while svrngs runs here on that WiFi, until you close it on your home
-      page, and says its address. Asked of svrngs running here, else it runs.
+      Open the lends named <name> to this computer's WiFi, so a TV, a phone
+      or another computer here can open them as you. They stay open on that
+      WiFi until you close them on your home page. Works whether or not
+      svrngs is already running.
 
   svrngs remove <name> --group <group> [--joined <when>]
       Remove <name> from <group>: every computer and phone of theirs. One
