@@ -6,10 +6,15 @@ the TV. Measured on one computer, a browser standing in for the TV
 next run's.
 
 **The TV, once.** On a computer in the room, on the TV's WiFi, in the
-group: `svrngs room jellyfin`. It prints the address the room opens
-Jellyfin at, such as `http://192.168.1.4:48719/`, the same each time it
-runs. On the TV, install Jellyfin's own app from its store and type that
-address into it, once. Leave the command running while the TV plays.
+group: open your home page, find Jellyfin in your group's list, and press
+**Show it on a TV here**. The row then says the address to type into the
+TV's app, such as `http://192.168.1.4:48719/`, the same each time. (In a
+terminal, `svrngs room jellyfin` does the same.) On the TV, install
+Jellyfin's own app from its store and type that address into it, once.
+While it's on, anyone on this WiFi can open Jellyfin there as you. It
+stays on whenever svrngs runs on this computer and it is on this WiFi,
+also after a restart; on another WiFi it is off. Turn it off on the same
+row.
 
 **The TV signed in, with nothing typed on its remote.** On the TV, "Use
 Quick Connect": it shows a code. On your phone, open the group's link,

@@ -3,13 +3,13 @@
 //! cannot show, and the caller let in or refused. The listeners themselves
 //! are judged in `tests/room.rs`.
 
-use std::net::{IpAddr, SocketAddr};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 use axum::extract::ConnectInfo;
 use axum::http::{Request, StatusCode};
 use tower::ServiceExt;
 
-use super::{from_this_network, pick};
+use super::{from_this_network, hardware_in, pick, serves, Network, Served};
 
 fn ips(raw: &[&str]) -> Vec<IpAddr> {
     raw.iter().map(|a| a.parse().unwrap()).collect()
@@ -103,4 +103,58 @@ async fn a_caller_off_this_network_is_refused() {
     }
     assert_eq!(answered(None).await, StatusCode::FORBIDDEN, "no address");
     assert_eq!(answered(Some("192.168.1.9:5000")).await, StatusCode::OK);
+}
+
+/// **Served only on the network it was turned on at, and one read** (the
+/// operator: kept across restarts, on the home network alone). Turned on
+/// at home's router: on home's, with an address, served there at its port;
+/// on a café's router, though this computer has the same address there,
+/// not served, `Elsewhere`; with the network unread, not served, `Unread`
+/// (AGENTS 6: never a guess); at home with no private address,
+/// `NoAddress`. Each said in a person's words, the one wording the page
+/// and the command say. Planted, each watched failing: the network not
+/// compared (`now != kept` dropped), and an unread one read as home's.
+#[test]
+fn served_only_on_the_network_it_was_turned_on_at() {
+    let home = Network("e4:f4:c6:0a:5e:a1".into());
+    let cafe = Network("02:00:5e:00:53:01".into());
+    let at: Ipv4Addr = "192.168.1.4".parse().unwrap();
+    let served = SocketAddr::new(at.into(), 41_234);
+    assert_eq!(
+        serves(&home, Some(&home), Some(at), 41_234),
+        Served::At(served)
+    );
+    assert_eq!(
+        serves(&home, Some(&cafe), Some(at), 41_234),
+        Served::Elsewhere
+    );
+    assert_eq!(serves(&home, None, Some(at), 41_234), Served::Unread);
+    assert_eq!(serves(&home, Some(&home), None, 41_234), Served::NoAddress);
+    assert!(Served::Elsewhere.said().contains("another WiFi"));
+    assert!(Served::Unread.said().contains("cannot tell which WiFi"));
+    assert!(Served::At(served)
+        .said()
+        .contains("http://192.168.1.4:41234/"));
+}
+
+/// **The router's hardware address, as each platform keeps it** (`look`):
+/// configd's state for the primary service on macOS, as `scutil` prints
+/// it, and Linux's `/proc/net/arp`, its octets read to one spelling; the
+/// router absent, or its address incomplete (all zeros), none. Planted,
+/// watched failing: the octets kept as printed, `a` apart from `0a`.
+#[test]
+fn the_routers_hardware_address_is_read_as_each_platform_keeps_it() {
+    let router: Ipv4Addr = "192.168.1.1".parse().unwrap();
+    let mac = "<dictionary> {\n  ARPResolvedHardwareAddress : e4:f4:c6:a:5e:a1\n  \
+               ARPResolvedIPAddress : 192.168.1.1\n  Router : 192.168.1.1\n}\n";
+    let linux = "IP address       HW type     Flags       HW address            Mask     Device\n\
+                 192.168.1.7      0x1         0x2         11:22:33:44:55:66     *        wlan0\n\
+                 192.168.1.1      0x1         0x2         e4:f4:c6:0a:5e:a1     *        wlan0\n";
+    let want = Some("e4:f4:c6:0a:5e:a1".to_string());
+    assert_eq!(hardware_in(mac, router), want);
+    assert_eq!(hardware_in(linux, router), want);
+    let zeros = "192.168.1.1 0x1 0x0 00:00:00:00:00:00 * wlan0\n";
+    assert_eq!(hardware_in(zeros, router), None);
+    assert_eq!(hardware_in(linux, "192.168.1.9".parse().unwrap()), None);
+    assert_eq!(hardware_in("<dictionary> {\n}\n", router), None);
 }

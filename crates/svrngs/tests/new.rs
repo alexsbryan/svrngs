@@ -626,7 +626,8 @@ async fn a_page_origin_says_where_its_apps_open_or_is_refused() {
 
 /// **`room` names lends, and says who can open them in a person's words**
 /// (u6-1): one name or more, each a lend's; with none, or one that is not
-/// a name, an error. What it prints and its refusals use no word DESIGN §1
+/// a name, an error. Each lend on is said with where the room serves it,
+/// in the one wording the home page says too (room.rs `Served::said`). What it prints and its refusals use no word DESIGN §1
 /// keeps from people.
 #[test]
 fn room_names_lends_and_says_who_can_open_them() {
@@ -643,27 +644,26 @@ fn room_names_lends_and_says_who_can_open_them() {
     ] {
         assert!(cli::parse(argv(wrong)).is_err(), "{wrong}");
     }
-    let offered = serde_json::from_value(serde_json::json!({
-        "name": "jellyfin", "kind": "jellyfin", "limit": 3, "using": 0, "upload_bps": null,
-        "reads": []
-    }))
-    .unwrap();
-    let lent = svrngs_node::node::Lent {
-        person: svrngs_node::Person::parse("sam").unwrap(),
+    let served: svrngs_node::room::Served =
+        serde_json::from_value(serde_json::json!({ "at": "192.168.1.4:45053" })).unwrap();
+    let on = svrngs_node::room::InRoom {
+        person: Some(svrngs_node::Person::parse("sam").unwrap()),
         key: "ab".repeat(32),
-        offered,
-        address: "http://x.localhost:1/".into(),
+        name: lend("jellyfin"),
+        served,
+        said: served.said(),
     };
-    let said = cli::Said::Room(vec![(lent, "192.168.1.4:45053".parse().unwrap())]).to_string();
+    let said = cli::Said::Room(vec![on]).to_string();
     assert!(
-        said.contains("sam's jellyfin: http://192.168.1.4:45053/"),
+        said.contains(
+            "sam's jellyfin: On for your TV: type http://192.168.1.4:45053/ into its app."
+        ),
         "{said}"
     );
     println!("{said}");
-    let refusals = [
-        Refusal::NoRoomAddress,
-        Refusal::Room(svrngs_node::room::RoomError::NotLent(lend("jellyfin"))),
-    ];
+    let refusals = [Refusal::Room(
+        "nobody in your groups lends jellyfin to this computer now".into(),
+    )];
     for line in refusals.iter().map(ToString::to_string).chain([said]) {
         let lower = line.to_lowercase();
         for word in ["ring", "member", "key", "sync", "journal", "node", "relay"] {

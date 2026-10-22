@@ -196,7 +196,7 @@ pub enum NodeError {
 /// A running node. Dropping it stops its round and its accept loop.
 pub struct Node {
     host: Arc<Host>,
-    /// What the room door reaches its lends through ([`crate::room::open`]).
+    /// The state its routers ask, kept for what only a test asks.
     pub(crate) asking: Asking,
     api: crate::api::Serving,
     /// What [`Self::api`] serves, kept so a test can ask it as a caller
@@ -205,6 +205,8 @@ pub struct Node {
     routes: axum::Router,
     _acceptor: IrohAcceptor,
     _round: RingSyncHandle,
+    /// The room's one owner ([`crate::room::spawn`]), stopped with the node.
+    _room: n0_future::task::AbortOnDropHandle<()>,
 }
 
 /// What the round reads: the journals, the endpoint's transport, and the key
@@ -226,9 +228,6 @@ pub struct Host {
     pub(crate) relay: RelayConfig,
     /// The record API's port, where each lend has its origin (u5-2).
     pub(crate) api_port: u16,
-    /// Each lend the room door serves, and where (u6-1, [`crate::room`]):
-    /// written by the room alone, read by `/v1/lends`.
-    pub(crate) room: tokio::sync::watch::Sender<BTreeMap<Label, SocketAddr>>,
 }
 
 impl Node {
@@ -297,7 +296,6 @@ impl Node {
             relayed: relay.n0_services || !relay.relay_urls.is_empty(),
             relay: relay.clone(),
             api_port: api.addr().port(),
-            room: tokio::sync::watch::Sender::new(BTreeMap::new()),
         });
         let (folders, blobs) =
             crate::folder::Folders::start(&data_dir, host.clone(), nudge.clone())
@@ -317,13 +315,16 @@ impl Node {
             folders: folders.clone(),
             oidc: oidc.clone(),
         };
+        let (room, owner) = crate::room::Room::new();
         let asking = Asking {
             host: host.clone(),
             door,
             folders: folders.clone(),
             seeds,
             oidc,
+            room,
         };
+        let room = crate::room::spawn(asking.clone(), owner);
         // The record, and beside it what an app asks of this computer (u5-1).
         let rail_api = RailApi {
             rail: rail.clone(),
@@ -336,7 +337,8 @@ impl Node {
             crate::surface::router(asking.clone())
                 .merge(asking.oidc.clone().router())
                 .merge(crate::folder::router(folders.clone()))
-                .merge(crate::removal::router(asking.clone())),
+                .merge(crate::removal::router(asking.clone()))
+                .merge(crate::room::router(asking.clone())),
             crate::home::router(asking.clone(), rail_api),
         );
         let api = crate::api::serve(routes.clone(), api);
@@ -356,7 +358,7 @@ impl Node {
         // what this computer lends (u3-4), and what the people of a
         // member's groups lend (u4-5).
         let holders = crate::door::holders_router(asking.door.clone());
-        let room = asking.clone();
+        let kept = asking.clone();
         let inbound = RingInbound {
             rail: rail.clone(),
             live,
@@ -366,7 +368,7 @@ impl Node {
             .merge(crate::door::router(asking.door.clone()))
             .merge(people_router(asking))
             .merge(crate::folder::members_router(folders));
-        let redeem = crate::redeem::router(room.clone());
+        let redeem = crate::redeem::router(kept.clone());
         // A dialer the keeper cut, on the members' protocol, is told so in
         // words on every route (U7), and served nothing else but the lines
         // that cut it, where it asks to sync (#179; ring_routes.rs `told_cut`).
@@ -390,12 +392,13 @@ impl Node {
         let round = spawn_ring_sync_loop(host.clone(), every, nudge, rounds);
         Ok(Self {
             host,
-            asking: room,
+            asking: kept,
             api,
             #[cfg(any(test, feature = "test-support"))]
             routes,
             _acceptor: acceptor,
             _round: round,
+            _room: room,
         })
     }
 
@@ -527,13 +530,6 @@ impl Host {
         Some(crate::origin::origin(&label, self.api_port))
     }
 
-    /// Where the room reaches the lend `name` of `lender`, while the room
-    /// door serves it (u6-1).
-    pub(crate) fn room_address(&self, lender: &str, name: &str) -> Option<String> {
-        let at = *self.room.borrow().get(&Label::of_hex(lender, name)?)?;
-        Some(format!("http://{at}/"))
-    }
-
     /// This round's members, or `None` when the node has none to round
     /// with: every computer's key standing in a group this node holds, but
     /// this node's. A group whose register is unreadable adds nobody, as the
@@ -621,7 +617,7 @@ impl Host {
     /// `asker`'s, which knows its own, each computer asked now and all at
     /// once, each for at most [`ANSWER_WITHIN`], and where this computer
     /// reaches each lend. Nothing is kept between asks.
-    async fn lends_in(
+    pub(crate) async fn lends_in(
         &self,
         groups: &[(String, BTreeMap<String, Member>)],
         asker: Option<&str>,
@@ -818,6 +814,8 @@ pub(crate) struct Asking {
     pub(crate) folders: crate::folder::Folders,
     pub(crate) seeds: SeedText,
     pub(crate) oidc: crate::oidc::Provider,
+    /// The room's handle: its turns, and what it serves now ([`crate::room`]).
+    pub(crate) room: crate::room::Room,
 }
 
 fn people_router(asking: Asking) -> axum::Router {

@@ -510,23 +510,36 @@ forked as fixtures. `tests/canaries.rs` stands up Sam's computer and Alex's
 in one group, in one process with no relay, and runs each canary of DESIGN
 §5 under Node against their loopback record APIs; `scripts/check.sh` runs it
 as its own step, and a canary that cannot start fails.
-The room door (`room.rs`, u6-1, new code in the shape of upstream's LAN
-door and `advertised_base`, PLAN §4, U6's inventory) serves the lends a
-person names to this computer's network while the command runs:
-`room::open` asks `Node::lends`, refuses a name nobody lends, and binds
-each named lend alone at `<private address>:<room::port_of(label)>`, a
-port the label decides so it is the same every run, its router the
+The room (`room.rs`, u6-1, new code in the shape of upstream's LAN door
+and `advertised_base`, PLAN §4, U6's inventory) is the running node's:
+one task owns it (`room::spawn`), told by messages from `/v1/room`
+(`room::router`, in the record's routes and the home page's), where the
+home page's button and `svrngs room` turn a lend on or off, a name
+resolved among the lends offered now and those on already. It keeps the
+lends on in `<data dir>/room.json`, by key and name, with the network each
+was turned on at, and every 5 s and at each turn reads the network
+(`room::look`: netdev's default-route interface, its router's hardware
+address from configd's state on macOS, `scutil`, since a program not let
+find devices on the network is shown no ARP table there, or from
+`/proc/net/arp` on Linux, `room::hardware_in`) and decides each lend in `room::serves`, pure: at
+`<private address>:<room::port_of(label)>` only on the network it was
+turned on at, else `Elsewhere`, `Unread` or `NoAddress`; `Taken` when the
+bind fails. A listener is bound by the label alone, its router the
 origin's body (`origin::reach`, as this computer's person) behind
-`from_this_network`, whose predicate is the door's `limit::guess`. The
-address is `room::pick`'s, over the endpoint's listed addresses and the
-outward route's (`room::route`, a UDP socket connected, nothing sent):
-the route's when private and listed, else the one private one, else
-none. Each served lend's address sits in `Host`'s `room`, a `watch` the
-room alone writes, which `/v1/lends` answers as `room`; dropping the
-`Room` aborts its listeners and clears it. `src/room_tests.rs` plants
-the picker's interface lists and a caller off the network;
-`tests/room.rs` runs Sam's canary through Alex's room door from this
-host's private address.
+`from_this_network`, whose predicate is the door's `limit::guess`, and
+dropped when the decision changes or the node stops. The address is
+`room::pick`'s, over the interface's addresses and the outward route's
+(`room::route`, a UDP socket connected, nothing sent): the route's when
+private and listed, else the one private one, else none. `/v1/room`
+answers each lend on with where it is served or why not, and
+`Served::said`, the one wording the page and the command show.
+`src/room_tests.rs` plants the picker's interface lists, the networks,
+configd's state and Linux's ARP table, and a caller off the
+network; `tests/room.rs` runs Sam's
+canary through Alex's room from this host's private address, with Sam
+away and back, and on another network; `crates/svrngs/tests/share.rs`
+runs `svrngs room` against svrngs running, then the bare command again
+over the same data, the room open as it starts.
 
 **`crates/svrngs`**: the command (DESIGN §5), the one crate with a binary.
 `identity.rs` is the device key, commonwealth-transport's `identity.rs`
@@ -587,10 +600,10 @@ and decides the lend in `lend_of`, which touches
 nothing; `cli` reads the password from a prompt, never argv, declares the
 lend through `svrngs_node::lend::declare`, and runs the node unless the
 data dir's lock is held, when it says svrngs is running already and
-leaves. `unshare <name>` withdraws one. `room <name>...` picks this
-computer's private address (`svrngs_node::room::pick`), refusing with
-none (exit 3), opens the room door for the lends named, says who can
-open them and where, and holds it until Ctrl-C. What a verb prints is a
+leaves. `unshare <name>` withdraws one. `room <name>...` asks
+`/v1/room` of svrngs running here to turn the lends named on, as `remove`
+asks, or of the one it starts when none runs, and says who can open them
+and where each is served or why not. What a verb prints is a
 closed `Said`, and refusals a closed `Refusal`, both in a person's words,
 exit 1 for a refusal and 3 for a precondition absent. `tests/new.rs` runs
 one node in process; `tests/join_by_link.rs`, U2's bar, runs Sam and six

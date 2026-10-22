@@ -26,6 +26,10 @@ iroh = "=1.0.2"
 # The stream an address lookup answers with, as iroh names it (src/relay.rs):
 # iroh's own, at the version the lock already holds.
 n0-future = "0.3"
+# The room's network (room.rs `look`): the default route's interface, its
+# addresses and its router's, as iroh's netwatch reads them, at the version
+# the lock already holds through it, so no new crate.
+netdev = "=0.45.0"
 # A synced directory's changes as the OS reports them (FSEvents, inotify),
 # so a step looks only at what changed (perf-2 f; the operator's yes,
 # 2026-10-10, ralph/next/syp/CHARTER.md).

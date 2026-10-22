@@ -37,7 +37,9 @@
 //! (`POST /runs`; canon-pin (c)), each in the group's folder or record; and
 //! **what runs on this computer lent** (`POST /running`, v1ui-lend (b)),
 //! decided as `svrngs share` decides a lend ([`crate::share`]) from what
-//! `GET /running` offers, every port that answers here and is not lent.
+//! `GET /running` offers, every port that answers here and is not lent;
+//! and **a lend shown on a TV here, or not** (`POST /v1/room`, the room's
+//! one route, [`crate::room`], which `svrngs room` asks too).
 //! The person's yes and stop are
 //! kept by this computer's door for its own lend, else dialled to the
 //! lender's door on the members' protocol as this computer's key
@@ -144,6 +146,7 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
         )
         .merge(crate::surface::router(at.clone()))
         .merge(crate::removal::router(at.clone()))
+        .merge(crate::room::router(at.clone()))
         .layer(axum::middleware::from_fn_with_state(
             at.clone(),
             only_itself,

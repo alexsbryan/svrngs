@@ -17,7 +17,8 @@
 //! svrngs unshare <name>                    stop lending it
 //! svrngs share --folder <dir> --group <group> keep a folder the same on every member's disk,
 //!                                          asked of svrngs running here
-//! svrngs room <name>...                    serve lends to this computer's network, run
+//! svrngs room <name>...                    turn lends on for a TV on this computer's WiFi,
+//!                                          asked of svrngs running here, else run
 //! svrngs remove <name> --group <group> [--joined W]
 //!                                          remove someone from a group, or ask it,
 //!                                          asked of svrngs running here
@@ -49,11 +50,12 @@
 //! (bash-person (d)). The bare command prints what the people
 //! of this computer's groups lend, asked of their computers as it starts.
 //!
-//! `room` serves the lends it names to this computer's own network while
-//! it runs, as this computer's person (u6-1, `svrngs_node::room`), so a
-//! device in the room reaches each with the lend's own app: it says who
-//! can open them, and
-//! refuses when this computer has no private address to serve them on.
+//! `room` turns the lends it names on for the room, served to this
+//! computer's own network as this computer's person by svrngs running
+//! here, which keeps them on across restarts on that network
+//! (`svrngs_node::room`): asked as the home page asks it, of svrngs running
+//! here, else of the svrngs it starts, so the room has one decider. It says
+//! who can open them, and where each is served or why not.
 //!
 //! `new` and `link` always print the client's link, `svrngs://join/<token>`
 //! (u2-8): nothing depends on a hosted page. A group may keep a page
@@ -97,7 +99,7 @@ use svrngs_node::join::{Entered, NotJoined};
 use svrngs_node::lend::{
     self, Kind, Lend, LendName, RefusedPath, SignInWithSvrngs, Source, Upload,
 };
-use svrngs_node::node::{Lends, Lent, Node, NodeError};
+use svrngs_node::node::{Lends, Node, NodeError};
 use svrngs_node::relay::n0_relays;
 use svrngs_node::removal::{
     LeaveAsk, Outcome, RemovalAsk, HANDOVERS_ROUTE, LEAVES_ROUTE, REMOVALS_ROUTE,
@@ -182,8 +184,10 @@ svrngs — keep what your group shares on your own computers.
       takes it.
 
   svrngs room <name>...
-      Let anyone on this computer's network (its WiFi) open what your groups
-      lend as <name>, as you, while this runs.
+      Show what your groups lend as <name> on a TV here: anyone on this
+      computer's WiFi can open it, as you, whenever svrngs runs here on that
+      WiFi, until you turn it off on your home page. It says the address to
+      type into the TV's app. Asked of svrngs running here, else it runs.
 
   svrngs remove <name> --group <group> [--joined <when>]
       Remove <name> from <group>: every computer and phone of theirs. One
@@ -591,10 +595,9 @@ pub enum Refusal {
     NotLent { name: LendName, lent: Vec<LendName> },
     #[error("{0} gives each app no address of its own, so on a phone every app would open where your group's page keeps who each person is. Use a host that serves your page at every name under it, as group.svrnme.sh does")]
     NoAppAddress(String),
-    #[error("this computer has no address on a home network, so nothing near it can reach it: join its WiFi or plug it in, then run this again")]
-    NoRoomAddress,
-    #[error(transparent)]
-    Room(#[from] svrngs_node::room::RoomError),
+    /// `room` refused by svrngs running here, in its words.
+    #[error("{0}")]
+    Room(String),
     #[error("svrngs is not running on this computer, and only it syncs a folder: start it, then run this again")]
     NotRunning,
     #[error("the folder was refused: {0}")]
@@ -664,7 +667,6 @@ impl Refusal {
             | Refusal::SignIn(_)
             | Refusal::Lends(_)
             | Refusal::CannotCheck(_)
-            | Refusal::NoRoomAddress
             | Refusal::NotRunning
             | Refusal::NoClient(_)
             | Refusal::Unchanged(_)
@@ -814,6 +816,14 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
             );
             return Ok(());
         }
+        Verb::Room(names) => match claim(&root) {
+            Err(Refusal::Busy(lock)) => {
+                tracing::debug!(target: "cli", lock = %lock.display(), "cli: room — svrngs runs here already, so it is asked");
+                print!("{}", room(&root, names).await?);
+                return Ok(());
+            }
+            claimed => return start(Verb::Room(names), root, relay, claimed?, None).await,
+        },
         Verb::Share(asked) => {
             let known = share::well_known_kind(asked.port);
             let mut lend = share::lend_of(&asked, share::listens, known)?;
@@ -868,6 +878,20 @@ async fn folder(root: &Path, dir: PathBuf, reference: &str) -> Result<String, Re
     let (ok, text) = ask_running(root, "/v1/folders", &asked).await?;
     tracing::debug!(target: "cli", ?asked, ok, "cli: the folder's ask answered");
     ok.then_some(text.clone()).ok_or(Refusal::Folder(text))
+}
+
+/// `svrngs room`: the lends `names` names turned on for the room by
+/// svrngs running here, asked as its home page asks it
+/// ([`room::ROUTE`]), and the room as it stands then; else its refusal,
+/// in its words.
+async fn room(root: &Path, names: Vec<LendName>) -> Result<Said, Refusal> {
+    let (ok, text) = ask_running(root, room::ROUTE, &room::RoomAsk::Names(names)).await?;
+    let on = serde_json::from_str(&text).ok().filter(|_| ok);
+    tracing::debug!(target: "cli", ok, text, "cli: room — svrngs running here answered");
+    let refused = serde_json::from_str::<serde_json::Value>(&text).ok();
+    let refused = refused.and_then(|r| Some(r["error"].as_str()?.to_string()));
+    on.map(Said::Room)
+        .ok_or(Refusal::Room(refused.unwrap_or(text)))
 }
 
 /// What svrngs running here answered a removal, hand-on or leave in the
@@ -1140,8 +1164,8 @@ pub enum Said {
     },
     /// `unshare`: no longer lent.
     Unshared(LendName),
-    /// `room`: each lend served to this computer's network, and where.
-    Room(Vec<(Lent, SocketAddr)>),
+    /// `room`: each lend on for the room, and where it is served or why not.
+    Room(Vec<room::InRoom>),
     /// `remove` or `handover` (U7): what happened to `person` in `group`.
     Removal {
         group: Name,
@@ -1341,10 +1365,11 @@ impl std::fmt::Display for Said {
                 // Fault, and what the leave route never answers.
                 _ => writeln!(f, "{group} cannot be changed on this computer (RUST_LOG=debug says why)"),
             },
-            Said::Room(served) => {
-                writeln!(f, "Anyone on this computer's network (its WiFi) can open these, as you, while this runs; nobody off it can:")?;
-                for (lent, at) in served {
-                    writeln!(f, "{}'s {}: http://{at}/", lent.person, lent.offered.name)?;
+            Said::Room(on) => {
+                writeln!(f, "Whenever svrngs runs here, anyone on this computer's WiFi can open these as you; nobody off it can. Each stays on the WiFi where you turned it on, until you turn it off on your home page.")?;
+                for l in on {
+                    let whose = l.person.as_ref().map_or(String::new(), |p| format!("{p}'s "));
+                    writeln!(f, "{whose}{}: {}", l.name, l.said)?;
                 }
                 Ok(())
             }
@@ -1481,7 +1506,6 @@ async fn serve(
     key: &SigningKey,
     relay: &RelayConfig,
 ) -> Result<(), Refusal> {
-    let _room;
     let stays = !matches!(command, Verb::Join { run: false, .. });
     let said = match command {
         Verb::New {
@@ -1535,12 +1559,7 @@ async fn serve(
             Said::Linked { seed, link, device }
         }
         Verb::Run => running(root, node).await,
-        Verb::Room(names) => {
-            let listed: Vec<_> = node.endpoint().addr().ip_addrs().map(|a| a.ip()).collect();
-            let at = room::pick(&listed, room::route()).ok_or(Refusal::NoRoomAddress)?;
-            _room = room::open(node, at, &names).await?;
-            Said::Room(_room.served.clone())
-        }
+        Verb::Room(names) => room(root, names).await?,
         Verb::Help
         | Verb::Share(_)
         | Verb::Unshare(_)

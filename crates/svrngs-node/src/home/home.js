@@ -13,7 +13,8 @@
 // (/visits, guests-pages),
 // a folder opened (/folder), a group made (/group, start-group), one
 // joined from a link (/join, arch-command (c)), the shelf's apps brought
-// (/shelf) and a yes to a carried app's new version (/runs, canon-pin (c)). Its words are
+// (/shelf), a yes to a carried app's new version (/runs, canon-pin (c)) and
+// a lend shown on a TV here or not (/v1/room, room.rs). Its words are
 // DESIGN §1's: groups, people, what they lend, computer; its question and
 // what apps use and its removals are question.js's, the group's page's too.
 import { door, el, named, namesakes, once, opens, owner, question, removal, row, table, unlent, until, uses as used, visiting, whose } from './question.js';
@@ -48,6 +49,18 @@ const label = (l) => new URL(l.origin).hostname.split('.')[0];
 const lentIn = (g) => (g.removed === false ? get(`/v1/lends?namespace=${encodeURIComponent(g.id)}`).then((l) => l.lent, () => []) : []);
 
 
+// A lend on a TV here, or not (DESIGN §3, "The room"): said as /v1/room
+// says it (room.rs `Served::said`), its button turning it on or off there,
+// then drawn again in place from the room's answer, or its refusal said.
+// `room` is null when what is on cannot be read here: never read as none.
+function tv(l, room, was, p = el('span')) {
+  if (!room) return Object.assign(p, { textContent: ' This computer cannot say whether it is on for your TV now.' });
+  const on = room.find((r) => r.key === l.key && r.name === l.name);
+  const turn = () => post('/v1/room', { [on ? 'off' : 'on']: { key: l.key, name: l.name } }).then((now) => p.replaceWith(tv(l, now, on)), (e) => p.append(` ${e.message}`));
+  p.replaceChildren(` ${on?.said ?? `${was ? 'Turned off for the TV: nobody on this WiFi can open it through this computer now. ' : ''}Show it on a TV here, and anyone on this WiFi can open it as you while svrngs runs.`} `, button(on ? 'Turn it off for the TV' : 'Show it on a TV here', turn));
+  return p;
+}
+
 // Each group's section, headed by its name and, so two of one name are
 // told apart, who made it and since when (#138); in its colour, derived
 // from its id (look.css `data-colour`; the operator, "Derived from the
@@ -62,7 +75,7 @@ function section(g) {
 // read, then what its people lend once each computer has answered or not,
 // so a computer that does not answer holds back that list alone
 // (start-home). Answers what they lend.
-async function show(g, s) {
+async function show(g, s, room) {
   if (g.removed === null) return s.append(el('p', `This computer could not read who is in ${g.name ?? 'this group'}.`));
   if (g.removed) return s.append(el('p', `You are no longer in ${g.name ?? 'this group'}. What you already have stays on this computer; nothing new reaches it.`));
   const ns = encodeURIComponent(g.id);
@@ -130,7 +143,7 @@ async function show(g, s) {
     for (const l of once(lends.lent)) {
       const [opened, now] = opens(l, 'In a tab');
       const how = el('td', `${opened}. `, button('Copy its address for a program', () => Promise.resolve().then(() => navigator.clipboard.writeText(l.origin)).then(() => how.append(` Copied: ${l.origin}`), () => how.append(` Copy it from here: ${l.origin}`))));
-      if (l.room) how.append(` On your TV too, at ${l.room}`);
+      how.append(tv(l, room));
       body.append(el('tr', '', el('td', '', Object.assign(el('a', `Open ${named(l)}`), { href: l.origin, target: '_blank' })), el('td', l.group ? named(l) : l.kind), el('td', owner(l, g)), how, el('td', now)));
     }
     // Each computer that did not say, by how (bash-first-minute (c)), a row
@@ -296,7 +309,11 @@ try {
     if (q.has('left')) main.append(el('p', `You left ${q.get('left')}. Rejoining needs a new invitation, and this computer can’t rejoin yet.`));
     // With no group, how to make one or join one (start-home; start-group).
     if (!groups.length) main.append(Object.assign(el('p', 'You’re in no group yet. Make one below, or join one from a link someone sent you.'), { className: 'none' }));
-    const lent = Promise.all(groups.filter((g) => !g.left).map((g) => show(g, section(g))));
+    // What is on for a TV here (room.rs), each said in its lend's row and
+    // all of it in a section of its own, a lend whose lender is away too.
+    const room = await get('/v1/room').catch(() => null);
+    const lent = Promise.all(groups.filter((g) => !g.left).map((g) => show(g, section(g), room)));
+    if (room?.length) main.append(Object.assign(el('section', '', el('h2', 'On your TV'), el('p', 'While svrngs runs here, anyone on this WiFi can open these as you. Each stays on the WiFi where you turned it on.'), el('ul', '', ...room.map((r) => el('li', `${r.person ? `${r.person}’s ` : ''}${r.name}:`, tv(r, room))))), { id: 'room' }));
     // The groups you left (groups-leave), with what stays of each here.
     const gone = groups.filter((g) => g.left).map((g) => el('p', `${g.name ?? 'A group'}${g.made ? ` (${whose(g.made)})` : ''}: what you have of it stays on this computer${g.folders?.length ? `, its folder at ${g.folders.join(' and ')}` : ''}, and nothing new of it reaches you.`));
     if (gone.length) main.append(Object.assign(el('section', '', el('h2', 'Groups you left'), ...gone), { id: 'left' }));

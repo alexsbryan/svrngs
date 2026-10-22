@@ -355,7 +355,7 @@ derived from its id, nothing to choose. Under it:
   by its link; what it is, in its lender's word, never one of svrngs's own
   (`scripts/vocab_check.py` reads the pages' scripts too); whose; how it
   opens (in a tab, signing you in once when its lender's program does; its
-  address for a program; on the TV while the room door serves it); and on
+  address for a program; on a TV here, turned on and off there); and on
   or full now. A computer that did not say what it lends is a row of its
   own, by why, so nothing is stale and nobody is left out — among them one
   running an older svrngs, whose answer is not read field by field
@@ -653,20 +653,34 @@ nothing more.
    and not from a public address per lend. Its hop to the library is
    computer to computer over iroh, which can go direct, where a browser's is
    relay-only.
-3. *The room door.* `svrngs room <name>...` serves the lends its person names
-   to its own network while it runs (`crates/svrngs-node/src/room.rs`): each
-   at a port of its own on this computer's private address, decided by its
-   label so it is the same every run, its root its own, in one body with the
-   lends' origins on loopback, not a second. It reaches each lend as this
-   computer's person, as this computer's own browser does: the screen is
-   this person's own device, and no computer proxies a lend for anyone else.
-   It carries what the origins carry: Range, both bodies streaming, a
-   WebSocket. The address is the private one the outward route leaves from,
-   else the one private address listed, else none, said so — never
-   loopback, a wildcard, tailscale's or a public address. Anyone on that
-   network reaches the named lends as this person while it runs, which the
-   command says when it starts; a request from off the network is refused.
-   `/v1/lends` answers a served lend's room address beside its `origin`.
+3. *The room is the running node's, turned on per lend.* Its person turns
+   a lend on or off for the room with the button in that lend's row on the
+   home page, or with `svrngs room <name>...`, which asks the svrngs running
+   here, else the one it starts, at the same loopback route (`/v1/room`):
+   the room has one decider (`crates/svrngs-node/src/room.rs`). Each lend on
+   is served at a port of its own on this computer's private address,
+   decided by its label so it is the same every run, its root its own, in
+   one body with the lends' origins on loopback, not a second. It reaches
+   each lend as this computer's person, as this computer's own browser
+   does: the screen is this person's own device, and no computer proxies a
+   lend for anyone else. It carries what the origins carry: Range, both
+   bodies streaming, a WebSocket. The address is the private one the
+   outward route leaves from, else the one private address listed, else
+   none, said so — never loopback, a wildcard, tailscale's or a public
+   address. A lend is kept on across restarts, by its lender's key and its
+   name, with the network it was turned on at, told apart by that
+   network's router's hardware address; it is served only while this
+   computer is on that network, read again every few seconds. On another
+   network, or one that cannot be read, it stays closed and says why, and
+   opens again on the network it was turned on at. Its listener is bound
+   by its label alone, so the room opens as svrngs starts, before any
+   lender answers; a lend whose lender is away keeps its address, answered
+   "did not answer" within the dial's cap, and serves once they are back.
+   Anyone on that network reaches the lends on as this person, which the
+   page says beside its button and the command when it turns one on; a
+   request from off the network is refused. `/v1/room` answers each lend
+   on, where it is served or why not, in the one wording the page and the
+   command show.
 4. *Measured, then told.* What an app's own client for a screen needs
    through the room door is measured before any of it is written. What the
    lender sets lives in `apps/<app>/` (`apps/jellyfin/ROOM.md`), never in
@@ -820,7 +834,7 @@ behind — is each unit's inventory, PLAN §4. How a piece comes over:
 |---|---|---|
 | `svrngs-core` | the record: acts, admission into one order, membership, the sync digest; and everything a browser's page must spell as the command and the node do — a link's token, the ask and the redemption, the protocols' names, a relay's URL, a lend's label, the pass, and a sign-in token's claims and signing input. `no_std`, so the compiler refuses filesystem, clock, network and threads; time and keys are arguments | none |
 | `svrngs-runtime` | the only owner of each group's journal on disk, its projections and its writes: the journal and its write index, the open-journal map, the register's standing | the journals |
-| `svrngs-node` | the adapters: sync and its route over iroh; redemption; the loopback record API and its live lane; the member door, its limit and shares, its sign-in with svrngs and each person's choices; the list of what members lend; each lend's origin on this computer; the room door; the home page; the lender's sign-in key and its JWKS | each lend's declaration and secret, and each person's choices for it; who is using each lend now; each lender's sign-in key |
+| `svrngs-node` | the adapters: sync and its route over iroh; redemption; the loopback record API and its live lane; the member door, its limit and shares, its sign-in with svrngs and each person's choices; the list of what members lend; each lend's origin on this computer; the room, each lend on it served on the network it was turned on at; the home page; the lender's sign-in key and its JWKS | each lend's declaration and secret, and each person's choices for it; who is using each lend now; each lender's sign-in key; the lends on for the room, and the network each was turned on at |
 | `svrngs-web` | the page's dial, wasm only, in `web/` with its static shell and a workspace of its own: a browser's endpoint dialling a group's computer by key over a relay, HTTP over the dial, joining, and the worker that serves each lend at its own origin with a pass | none: the page's store holds the key, sealed; a lend's origin's store holds its pass and its cookies |
 | `svrngs` | the command and the process: `new`, `join`, `link`, `share`, `unshare`, `room`, `remove`, `handover`, `leave` and `relay`; the bare command runs the node for every group this computer holds and prints where the home page opens | a device's keys; each group's seed |
 

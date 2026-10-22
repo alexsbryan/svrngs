@@ -77,8 +77,8 @@ pub mod surface;
 /// The home page at `svrngs.localhost` (sup-2).
 pub mod home;
 pub mod origin;
-// The room door, u6-1's (docs/DESIGN.md §3, "The room"): the lends a
-// person names, served to this computer's network while the command runs.
+// The room, u6-1's (docs/DESIGN.md §3, "The room"): the lends a person
+// turns on, served by the running node on the network each was turned on at.
 pub mod room;
 // What a lend is decided from: the probe, the well-known table (v1ui-lend (a)).
 pub mod share;
