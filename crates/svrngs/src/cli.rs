@@ -783,7 +783,24 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
                 RemoveKind::Remove => REMOVALS_ROUTE,
                 RemoveKind::Handover => HANDOVERS_ROUTE,
             };
-            print!("{}", removal(&root, route, person, joined, &group).await?);
+            // Asked of svrngs running here at `route`, for the group named
+            // as `link` names it: what happened, in a person's words.
+            let seed = group_named(&root, &group)?;
+            let asked = RemovalAsk {
+                group: seed.id(),
+                person: person.as_str().to_string(),
+                joined,
+            };
+            let (_, text) = ask_running(&root, route, &asked).await?;
+            let group = seed.name().clone();
+            print!(
+                "{}",
+                said(&seed, &text, |outcome| Said::Removal {
+                    group,
+                    person,
+                    outcome
+                })?
+            );
             return Ok(());
         }
         Verb::Leave(group) => {
@@ -825,19 +842,15 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
                 accounts,
                 client,
             };
-            let claimed = match claim(&root) {
+            return match claim(&root) {
                 Err(Refusal::Busy(lock)) => {
                     tracing::debug!(target: "cli", lock = %lock.display(), "cli: share — svrngs runs here already, and reads the lend from its declaration");
-                    None
+                    let api = svrngs_node::api::kept_address(&root)?.ok_or(Refusal::NotRunning)?;
+                    print!("{}", sharing.said(api));
+                    Ok(())
                 }
-                claimed => Some(claimed?),
+                claimed => start(Verb::Run, root, relay, claimed?, Some(sharing)).await,
             };
-            let Some(claimed) = claimed else {
-                let api = svrngs_node::api::kept_address(&root)?.ok_or(Refusal::NotRunning)?;
-                print!("{}", sharing.said(api));
-                return Ok(());
-            };
-            return start(Verb::Run, root, relay, claimed, Some(sharing)).await;
         }
         other => other,
     };
@@ -855,31 +868,6 @@ async fn folder(root: &Path, dir: PathBuf, reference: &str) -> Result<String, Re
     let (ok, text) = ask_running(root, "/v1/folders", &asked).await?;
     tracing::debug!(target: "cli", ?asked, ok, "cli: the folder's ask answered");
     ok.then_some(text.clone()).ok_or(Refusal::Folder(text))
-}
-
-/// `remove` and `handover` (U7), asked of svrngs running here at `route`
-/// for the group `reference` names, as `link` names it: what happened, in
-/// a person's words, or the refusal.
-async fn removal(
-    root: &Path,
-    route: &str,
-    person: Name,
-    joined: Option<Joined>,
-    reference: &str,
-) -> Result<Said, Refusal> {
-    let seed = group_named(root, reference)?;
-    let asked = RemovalAsk {
-        group: seed.id(),
-        person: person.as_str().to_string(),
-        joined,
-    };
-    let (_, text) = ask_running(root, route, &asked).await?;
-    let group = seed.name().clone();
-    said(&seed, &text, |outcome| Said::Removal {
-        group,
-        person,
-        outcome,
-    })
 }
 
 /// What svrngs running here answered a removal, hand-on or leave in the
@@ -909,9 +897,7 @@ async fn ask_running(
     let api = std::fs::read_to_string(root.join(svrngs_node::api::API_FILE)).unwrap_or_default();
     let body = serde_json::to_string(body).expect("an ask is JSON");
     let to = format!("{}{route}", api.trim());
-    let client = http()
-        .and_then(|b| b.build().map_err(|e| e.to_string()))
-        .map_err(|error| {
+    let client = http().map_err(|error| {
             tracing::debug!(target: "cli", error, "cli: refused — no client to ask svrngs running here with");
             Refusal::NoClient(error)
         })?;
@@ -929,7 +915,7 @@ async fn ask_running(
 /// The command's one HTTP client, iroh's reqwest 0.13: its
 /// `rustls-no-provider` brings no TLS provider, and a client built without
 /// one panics, so its TLS is given ring and this computer's verifier here.
-fn http() -> Result<reqwest13::ClientBuilder, String> {
+fn http() -> Result<reqwest13::Client, String> {
     let ring = std::sync::Arc::new(rustls::crypto::ring::default_provider());
     rustls::ClientConfig::builder_with_provider(ring)
         .with_safe_default_protocol_versions()
@@ -938,6 +924,7 @@ fn http() -> Result<reqwest13::ClientBuilder, String> {
             reqwest13::Client::builder().tls_backend_preconfigured(tls.with_no_client_auth())
         })
         .map_err(|e| e.to_string())
+        .and_then(|b| b.build().map_err(|e| e.to_string()))
 }
 
 /// Start the node over the data dir `claimed` holds, do the verb, and run
@@ -1006,19 +993,15 @@ pub async fn checked_page(page: Origin) -> Result<Origin, Refusal> {
         return Err(no());
     };
     let unjudged = || Refusal::CannotCheck(page.as_str().into());
-    let client = http()
-        .and_then(|b| {
-            let b = b.timeout(std::time::Duration::from_secs(10));
-            b.build().map_err(|e| e.to_string())
-        })
-        .map_err(|error| {
+    let client = http().map_err(|error| {
             tracing::debug!(target: "cli", error, "cli: not judged — no client to ask the page's host with");
             unjudged()
         })?;
     let get = |url: String| {
         let client = &client;
         async move {
-            let got = match client.get(&url).send().await {
+            let ask = client.get(&url).timeout(Duration::from_secs(10));
+            let got = match ask.send().await {
                 Ok(r) if r.status().is_success() => r.bytes().await.map_err(|e| format!("{e:?}")),
                 Ok(r) => Err(r.status().to_string()),
                 Err(e) => Err(format!("{e:?}")),
@@ -1200,24 +1183,18 @@ impl std::fmt::Display for Said {
             Said::AlreadyIn(seed) => {
                 writeln!(f, "You're in {} already, on this computer.", seed.name())
             }
-            Said::Folder {
-                group,
-                dir,
-                placed: Ok(()),
-            } => writeln!(
-                f,
-                "{group}'s folder is {}: what anyone in {group} puts there reaches this computer, and what you put there reaches theirs.",
-                dir.display()
-            ),
-            Said::Folder {
-                group,
-                dir,
-                placed: Err(why),
-            } => writeln!(
-                f,
-                "{group}'s folder is not at {}: {why}. `svrngs share --folder <dir> --group {group}` keeps it where you choose.",
-                dir.display()
-            ),
+            Said::Folder { group, dir, placed } => match placed {
+                Ok(()) => writeln!(
+                    f,
+                    "{group}'s folder is {}: what anyone in {group} puts there reaches this computer, and what you put there reaches theirs.",
+                    dir.display()
+                ),
+                Err(why) => writeln!(
+                    f,
+                    "{group}'s folder is not at {}: {why}. `svrngs share --folder <dir> --group {group}` keeps it where you choose.",
+                    dir.display()
+                ),
+            },
             Said::Running { groups, api, lends } => {
                 if groups.is_empty() {
                     writeln!(
@@ -1513,10 +1490,9 @@ async fn serve(
             origin,
             relay: kept,
         } => {
-            let person = match person {
-                Some(p) => p,
-                None => user_name().ok_or_else(|| Refusal::NoName(name.clone()))?,
-            };
+            let person = person
+                .or_else(user_name)
+                .ok_or_else(|| Refusal::NoName(name.clone()))?;
             let page = match origin {
                 Some(page) => Some(checked_page(page).await?),
                 None => None,
@@ -1538,10 +1514,7 @@ async fn serve(
             folder_at_join(node, &seed)
         }
         Verb::Join { link, person, .. } => {
-            let person = match person {
-                Some(p) => p,
-                None => user_name().ok_or(Refusal::NoNameToJoin)?,
-            };
+            let person = person.or_else(user_name).ok_or(Refusal::NoNameToJoin)?;
             let joined = join_group(node, key, &link, &person).await?;
             print!("{joined}");
             let (Said::Joined { seed, .. } | Said::AlreadyIn(seed)) = joined else {
