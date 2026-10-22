@@ -71,7 +71,17 @@ async function jfSignIn(p, at, { link, name } = {}) {
       } catch { return false; }
     }, null, { timeout: 60_000 });
     t.signed_in_ms = Date.now() - pressed;
-    const s = (await stored(p.page)).Servers?.[0] ?? {};
+    // The callback page writes the app's stored sign-in, then replaces the
+    // page at its `/web/`. Read it there, after that navigation: reading it
+    // on the callback page can land in a context the replace has destroyed
+    // (the second take's first attempt: "Execution context was destroyed,
+    // most likely because of a navigation", with the film playing).
+    await p.page.waitForURL((u) => u.pathname.startsWith('/web/'), { timeout: 30_000 }).catch(() => {});
+    let s = {};
+    for (let i = 0; i < 50 && !s.AccessToken; i++) {
+      s = (await stored(p.page).catch(() => ({}))).Servers?.[0] ?? {};
+      if (!s.AccessToken) await p.page.waitForTimeout(100);
+    }
     t.user_id = s.UserId ?? null;
     t.token = s.AccessToken ?? null;
     t.address = s.ManualAddress ?? null;
