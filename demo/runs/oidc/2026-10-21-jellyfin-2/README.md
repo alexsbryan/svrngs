@@ -55,9 +55,13 @@ W=/tmp/oidc-run bash demo/runs/oidc/2026-10-21-jellyfin-2/run.sh
 
 ## The data, and every number above
 
-- `data/raw.json`: the engines, each step's ms, the two users and tokens,
-  the film's play, Cy's words and the users before and after, the planted
-  ask and its claims, and each browser's log.
+- `data/raw.json`: the engines, each step's ms, the two users and their
+  `/Users/Me` answers, the film's play, Cy's words and the users before and
+  after, the planted ask and its claims, and each browser's log. The two
+  access tokens the driver held to read `/Users/Me` are redacted
+  (`"redacted"` in the file): a token stays in the lender's svrngs and on
+  the wire only to the app (SIGN_IN_WITH_SVRNGS §3 4), and the answer each
+  read is kept in `people.<who>.me`.
 - `data/verdicts.json`: the judge's four verdicts for the five bars.
 - `data/network.xml`: the lender's `KnownProxies` =
   `<string>127.0.0.1</string>`, read back from Jellyfin's config.
