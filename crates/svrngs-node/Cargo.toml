@@ -108,3 +108,17 @@ useless_vec = "allow"
 # Upstream's workspace allowance (commonwealth-ai Cargo.toml:312 at
 # e1a43bcd2), kept for rail.rs's doors, which refuse with a `Response`.
 result_large_err = "allow"
+
+# Run once each, by name, in scripts/check.sh's own steps: a plain `cargo
+# test` skips them, so the gate does not run them twice.
+[[test]]
+name = "canaries"
+test = false
+
+[[test]]
+name = "browser"
+test = false
+
+[[test]]
+name = "conformance"
+test = false

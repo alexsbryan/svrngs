@@ -57,3 +57,9 @@ empty_line_after_doc_comments = "allow"
 cloned_ref_to_slice_refs = "allow"
 explicit_auto_deref = "allow"
 useless_vec = "allow"
+
+# Run once, by name, in scripts/check.sh's own step: a plain `cargo test`
+# skips it, so the gate does not run it twice.
+[[test]]
+name = "join_page"
+test = false

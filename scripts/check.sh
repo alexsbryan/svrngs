@@ -26,12 +26,17 @@ step "app nouns gate"   python3 scripts/vocab_check.py --self-test
 step "app nouns"        python3 scripts/vocab_check.py
 if [ -f Cargo.toml ]; then
   step "rustfmt"  cargo fmt --all --check
-  step "clippy"   cargo clippy --quiet --all-targets -- -D warnings
-  # What the browser tests could not judge, either run's (the tests' and the
-  # browser's below), printed after the browser's: kept from this check alone.
+  # Then the test targets `cargo test` skips (`test = false`), which
+  # --all-targets leaves out and a glob of names reaches.
+  step "clippy"   sh -c "cargo clippy --quiet --all-targets -- -D warnings && cargo clippy --quiet --workspace --test '*' -- -D warnings"
+  # What the browser tests could not judge, printed after the browser's step:
+  # kept from this check alone.
   rm -rf target/could-not-judge
+  # The canaries, browser, joining and conformance targets are `test = false`
+  # (crates/svrngs-node/Cargo.toml, crates/svrngs/Cargo.toml), so each runs
+  # once, in its own step below, and not again here.
   step "tests"    cargo test --quiet
-  # The canaries (DESIGN §5) again, by name: the apps that keep the infra general.
+  # The canaries (DESIGN §5), by name: the apps that keep the infra general.
   step "canaries" cargo test --quiet -p svrngs-node --test canaries
   # The ceiling's canary (DESIGN §5, "The canaries"; PLAN §4, "The ceiling";
   # ceiling-4), the one scale number held here: at 25 members and 10,000 acts
@@ -41,7 +46,7 @@ if [ -f Cargo.toml ]; then
   grep -h '^CEILING' /tmp/svrngs-check.$$ | sed 's/^/           /'
   # The page (PLAN §4, U4): its crate is a workspace of its own, for wasm.
   step "web rustfmt and clippy" scripts/build-web.sh --lint
-  # The page in a browser, again by name: it builds the page, runs a relay
+  # The page in a browser, by name: it builds the page, runs a relay
   # and a node on 127.0.0.1 and drives Playwright's Chromium, and its
   # WebKit as an iPhone, each test in both (u4-7). Without Playwright or its
   # browsers it fails naming the install command; it never skips.
