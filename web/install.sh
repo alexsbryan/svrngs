@@ -17,7 +17,8 @@
 #
 # It gets svrngs for this computer from the page's address the link names
 # (else $SVRNGS_FROM), refuses it unless it matches SHA256SUMS there, puts
-# it in ~/.local/bin with no sudo, joins the link as `svrngs join` does
+# it in ~/.local/bin with no sudo, and on the PATH of the person's login
+# shell when it is zsh or bash, joins the link as `svrngs join` does
 # when there is one, keeps the page it came from in the data dir (where a
 # group made on the home page keeps it, for its https links), keeps
 # svrngs running whenever this person logs in (a LaunchAgent on
@@ -105,10 +106,21 @@ chmod 755 "$tmp/svrngs"
 if [ -e "$bin/svrngs" ]; then done="Updated"; else done="Installed"; fi
 mv -f "$tmp/svrngs" "$bin/svrngs"
 say "$done svrngs in $bin."
-case ":$PATH:" in
+# Where the person's terminal looks for programs gets $bin, once: the profile
+# their login shell ($SHELL) reads in a new window, as rustup and uv add
+# theirs; any other shell is told the whole path. A `|` keeps $SHELL's part
+# apart from $PATH's.
+case "${SHELL:-}|$os|:$PATH:" in
   *":$bin:"*) ;;
+  */zsh\|*) profile="$HOME/.zshrc" ;;
+  */bash\|darwin\|*) profile="$HOME/.bash_profile" ;;
+  */bash\|*) profile="$HOME/.bashrc" ;;
   *) say "To run svrngs yourself, type $bin/svrngs: your terminal does not look in $bin. Nothing else needs it." ;;
 esac
+again="Open a new terminal window, and svrngs runs there by name."
+if [ -z "${profile:-}" ]; then :
+elif grep -qF "$bin:" "$profile" 2>/dev/null; then say "$profile already adds $bin to where your terminal looks for programs. $again"
+else printf '\nexport PATH="%s:$PATH"\n' "$bin" >>"$profile" && say "Added $bin to where your terminal looks for programs, in $profile. $again"; fi
 
 if [ -n "$relay" ] && [ "$os" = linux ]; then
   say "A relay takes ports 80 and 443, which on Linux only the system gives a program. As root, put this in /etc/systemd/system/svrngs-relay.service, then run systemctl enable --now svrngs-relay:"

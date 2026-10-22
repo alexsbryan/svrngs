@@ -1209,7 +1209,9 @@ fetched from anywhere else. `install.sh`, POSIX `sh`:
 - names the platform and refuses any other;
 - fetches the tarball and the sums from the address the link names, and
   refuses a mismatch;
-- installs into `~/.local/bin`, never with `sudo`;
+- installs into `~/.local/bin`, never with `sudo`, and puts it on the PATH
+  of the person's login shell when that is zsh or bash, once, in the
+  profile a new terminal window reads, and says so;
 - joins the link as `svrngs join` does, and keeps the page it came from in
   `<data dir>/origin`, so a group made on the home page gets https links;
 - keeps svrngs running at login as the person (a LaunchAgent on macOS, a
