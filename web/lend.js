@@ -308,6 +308,12 @@ async function lent(request, url, where) {
     request.destination,
     where.path,
   );
+  // A browser never shows a worker the `Host` it asked, and a page's
+  // `fetch` cannot name one. The door tells the lender's service the
+  // browser's origin as a proxy does (`X-Forwarded-Host`, oidc-jellyfin),
+  // so the worker names the address the browser asked here.
+  const host = new URL(request.url).host;
+  if (host) headers.push(['host', host]);
   const cookie = cookieFor(jar, where.path, false);
   if (cookie) headers.push(['cookie', cookie]);
   headers.push(['x-svrngs-pass', h.pass]);

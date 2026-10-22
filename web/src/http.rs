@@ -125,8 +125,10 @@ fn frame(chunk: Result<JsValue, JsValue>) -> Result<Frame<Bytes>, BodyError> {
     Ok(Frame::data(Bytes::from(bytes.to_vec())))
 }
 
-/// The `Host` a request is asked with when the page names none: HTTP/1.1
-/// asks for one, and the door passes it to the service as is.
+/// The `Host` a request is asked with when the page names none. The lend's
+/// worker names the browser's host (`web/lend.js`), so a proxy-trusting
+/// service is told the browser's origin (oidc-jellyfin); this is the
+/// fallback for a request that names none.
 const UNNAMED_HOST: &str = "svrngs";
 
 /// Hand `each` every `[name, value]` pair of `headers`, as named and in
