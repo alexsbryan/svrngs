@@ -2,6 +2,7 @@
   "_comment": "Permission contract for a ralph worker in svrngs, run as `claude -p` by commonwealth-ai's scripts/ralph-claude-shim.sh. The deny list is commonwealth-ai ralph/claude-settings.json's: never push, never --no-verify, never rewrite history, never stage everything, never delegate. The allow list is svrngs' own checks and tools.",
   "permissions": {
     "defaultMode": "auto",
+    "additionalDirectories": ["/tmp", "/Users/alexsbryan/Library/Application Support/jellyfin"],
     "allow": [
       "Read", "Edit", "Write", "MultiEdit", "Glob", "Grep", "TodoWrite",
       "Bash(git status*)", "Bash(git diff*)", "Bash(git log*)", "Bash(git show*)",
