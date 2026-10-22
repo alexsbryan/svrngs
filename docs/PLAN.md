@@ -75,19 +75,22 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   Then a run on one host, and the queue stops for a visit with real people,
   whose bars the operator sets before it. GUESTS's later parts wait in §2.
 - then the models queue (`ralph/next/models/`, written and held for the
-  operator's launch, 2026-10-22: "Write rows, hold"): the pantry's lean v0
-  from svrn-docs `rings/current/MODELS_ON_THE_RING.md`, an app in
-  `apps/pantry/` and no platform line, built for two jobs the operator
-  named: a screenshot sent to a strong code model that cannot see, and voice
-  in and out of a person's own interface. It also opens the MCP tool world to
-  a group, by "the right protocol adoption and simple machinery". Its first
-  row measures the jobs' fully open runtimes here and stops for the operator
-  to choose. Then `pantry up` lends a model or a tool with one command.
-  `pantry serve` gives one local address that routes each request to the
-  friend who lends it, quietly bridging an image through a vision model.
-  Then a run on one host. No Ollama ("Fully open and high integrity software
-  only"). What waits is in that queue's STATE.md, and lands in §2 at its
-  run.
+  operator's launch, 2026-10-22: "still held"): the pantry's minimum, from
+  svrn-docs `rings/current/MODELS_ON_THE_RING.md` and far smaller, an app
+  in `apps/pantry/` and no platform line. The operator: "What is the
+  absolute minimum we can offer that makes it near obvious for the
+  community to extend and add what they want near trivially to the
+  architecture? That's the main point for this." A lend that speaks OpenAI's
+  API is a model and one that speaks MCP is a tool. `pantry list` shows them,
+  and `pantry serve` gives one local address that routes each request by
+  its `model` to the friend who lends it. Behaviour beyond that is an
+  OpenAI-in, OpenAI-out adapter; the vision bridge is the worked example.
+  Its first row measures the story's open servers here and stops for the
+  operator to choose. Its story, "Your friends' local AI, in the app you
+  already use", is a screenshot fixed by a coder that cannot see, voice in
+  and out, and a friend's tool, run on one host against bars C1 to C7. No
+  Ollama ("Fully open and high integrity software only"). What waits is in
+  that queue's STATE.md, and lands in §2 at its run.
 
 The operator's switch stands apart from that order: when they flip
 `SHIPPED` to svrngs's relay for production (§2; DESIGN §7), #134 and #135
