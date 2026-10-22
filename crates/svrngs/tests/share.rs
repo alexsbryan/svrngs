@@ -466,6 +466,36 @@ fn share_takes_no_password_on_the_command_line() {
     assert!(cli::parse(argv(&["room", "x", "--sign-in", "9000"])).is_err());
 }
 
+/// **A sign-in of the lender's own is refused** (oidc-hook-cut; the
+/// operator, 2026-10-21): `share --sign-in <port>` named the hook a lend
+/// declared, which sign-in with svrngs makes userless. It is refused in a
+/// person's words, and the flag still reads its value, so `--sign-in` alone
+/// says it wants one. Red at HEAD, where it lent the port. Planted: the arm
+/// removed, so the flag is unknown rather than gone.
+#[test]
+fn share_refuses_a_sign_in_the_lender_ran_itself() {
+    let argv = |rest: &[&str]| {
+        std::iter::once("svrngs".to_string())
+            .chain(rest.iter().map(|s| s.to_string()))
+            .collect::<Vec<_>>()
+    };
+    let gone = "--sign-in is gone: svrngs no longer runs a program of yours to sign people in; sign-in with svrngs is the door's own";
+    assert_eq!(
+        cli::parse(argv(&["share", "8096", "--sign-in", "9000"])).err(),
+        Some(gone.to_string())
+    );
+    assert_eq!(
+        cli::parse(argv(&["share", "8096", "--sign-in"])).err(),
+        Some("--sign-in wants a value".to_string()),
+        "the retired flag still reads its value"
+    );
+    assert_eq!(
+        cli::parse(argv(&["share", "8096", "--sign-in", "0"])).err(),
+        Some(gone.to_string()),
+        "the value is never read as a port"
+    );
+}
+
 /// **A lend that asks** (sup-2 (a)): `share --ask "<words>"` keeps its
 /// lender's words in the declaration, read back whole, and says them;
 /// words that are none, or a control character, are refused, and `--ask`
