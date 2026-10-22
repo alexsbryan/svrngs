@@ -1,0 +1,4 @@
+Anyone on this computer's network (its WiFi) can open these, as you, while this runs; nobody off it can:
+Sam's jellyfin: http://192.168.1.11:43900/
+
+Leave this running; Ctrl-C stops it.

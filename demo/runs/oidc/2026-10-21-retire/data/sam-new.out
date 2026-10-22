@@ -1,0 +1,14 @@
+Made House, with you as Sam.
+Send this link to the people you want in it. It works for a day, while this computer is on:
+
+  svrngs://join/<the link>
+
+or, to open it in a browser:
+
+  http://localhost:58984/#<the link>
+
+On a phone, each app opens at an address of its own under localhost:58984, which can see which app is opened.
+
+House's folder is /Users/alexsbryan/svrngs/House-816493b6: what anyone in House puts there reaches this computer, and what you put there reaches theirs.
+
+Leave this running; Ctrl-C stops it.

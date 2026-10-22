@@ -1,0 +1,909 @@
+2026-10-22T06:29:10.939643Z  INFO svrngs::identity: node_key: generated + persisted identity key (first boot) node_pubkey=a4f9a10143bb6b471787eb8485ac7a89b44e1708cf10a1f681dba57df0ee03c6
+2026-10-22T06:29:10.941250Z  INFO transport: iroh egress posture (no relay named is n0's with n0_services, none without it; n0_services=false severs all n0 contact) n0_services=true loopback_only=false relays=["https://aps1-1.relay.n0.iroh.link/", "https://euc1-1.relay.n0.iroh.link/", "https://use1-1.relay.n0.iroh.link/", "https://usw1-1.relay.n0.iroh.link/"]
+2026-10-22T06:29:11.023071Z  INFO folder: folder: the store is open untagged=0
+2026-10-22T06:29:11.027560Z  INFO rails: api: serving the record to this computer's apps addr=127.0.0.1:58994
+2026-10-22T06:29:11.028091Z  INFO node: node: endpoint bound with the signing key actor="a4f9a10143bb6b471787eb8485ac7a89b44e1708cf10a1f681dba57df0ee03c6" data_dir=/tmp/oidc-retire-2026-10-21/sam dial=Some("a4f9a10143bb6b471787eb8485ac7a89b44e1708cf10a1f681dba57df0ee03c6@192.168.1.11:51852") api=127.0.0.1:58994
+2026-10-22T06:29:11.028900Z  INFO svrngs_node::ring_sync: ring sync: loop started interval_secs=60
+2026-10-22T06:29:11.356055Z  INFO endpoint{id=a4f9a10143}:relay-actor: iroh::socket::transports::relay::actor: home is now relay https://usw1-1.relay.n0.iroh.link/, was None
+2026-10-22T06:29:11.498488Z  INFO folder: synced: the directory kept in step with the group's folder namespace="816493b61ecdad9223c36b65b94207c47ab0b8a213ddc738428f8fd18a7a58d5" folder="House-816493b6" dir=/Users/alexsbryan/svrngs/House-816493b6
+2026-10-22T06:29:13.003558Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Alex/7b5a4c1e"] skipped_offline=[]
+2026-10-22T06:29:13.039009Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Alex/7b5a4c1e"] skipped_offline=[]
+2026-10-22T06:29:13.214669Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:14.311310Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:15.346534Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:16.394073Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:17.505791Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:18.603326Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:19.700585Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:20.439806Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Alex/7b5a4c1e", "Dee/da2a77c1"] skipped_offline=[]
+2026-10-22T06:29:20.475248Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Alex/7b5a4c1e", "Dee/da2a77c1"] skipped_offline=[]
+2026-10-22T06:29:20.848706Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:21.925155Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:22.971026Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:24.094752Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:25.198029Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:26.314290Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:26.724881Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.725138Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.728738Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.728915Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.737782Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.737987Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.738479Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.738696Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.742377Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.742403Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.742380Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.742803Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.742831Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.742940Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.743944Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.744178Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.746372Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.746608Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.750901Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.751111Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.751518Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.751892Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.752005Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.752038Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.752359Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.752377Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.754683Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.754947Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.757974Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.758461Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.758467Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.758599Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.758609Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.758670Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.758837Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.758885Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.758943Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.759000Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.759491Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.759739Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.763029Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.763285Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.763579Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.763807Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.767396Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.767716Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.769598Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.769741Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.769777Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.769957Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.770006Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.770155Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.770393Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.770635Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.771111Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.771323Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.771900Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.772127Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.774071Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.774331Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.774356Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.774487Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.774597Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.774815Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.775432Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.775579Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.775724Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.776133Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.776657Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.776888Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.827510Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.827701Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.828123Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.828340Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.860629Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.861186Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.861226Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.861517Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.861530Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.861573Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.861825Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.861883Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.862363Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.862568Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.863210Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.863444Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.877411Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.877585Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.883274Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.883472Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.891270Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.891383Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.891626Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.891792Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.891924Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.891984Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.892273Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.892371Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.892411Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.892456Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.892516Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.892694Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.894773Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.895047Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.895242Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.895614Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.897951Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.898178Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.900174Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.900378Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.900442Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.900668Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.904877Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.904917Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.904933Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.905220Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.905259Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.905329Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.905630Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.905862Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.907452Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.907696Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.909085Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.909413Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.910711Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.910712Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.911047Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.911121Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.911621Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.911952Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.912135Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.912369Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.914093Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.914297Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.914605Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.914829Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.914863Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.915126Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.915328Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.915731Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.915768Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.916011Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.925531Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.925595Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.926001Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.926166Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.926194Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.926243Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.926569Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.926574Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.926599Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.926898Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.926923Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.927158Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.928543Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.928724Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.929195Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.929355Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.932646Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.932853Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.933016Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.933246Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.946104Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.946299Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.973052Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.973601Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.973789Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.974032Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.974368Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.974514Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.974675Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.974887Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.974935Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.975105Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.975301Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.976285Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.982125Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.985619Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.991423Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.991740Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.992141Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.997713Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.998282Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.998521Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:26.999023Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:26.999320Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:27.000018Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:27.003827Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:27.004387Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:27.008594Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:27.009267Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:27.013335Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:27.013870Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:27.018587Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:27.019405Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:27.019761Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:27.020033Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:27.020213Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:27.020315Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:27.020349Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:27.020490Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:27.020698Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:27.133050Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:27.133337Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:27.140943Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:27.141203Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:27.141357Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:27.141592Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:27.150759Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:27.151155Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:27.151517Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:27.151558Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:27.152019Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:27.152105Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:27.152538Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:27.152550Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:27.152654Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:27.152900Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:27.152961Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:27.152989Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:27.155295Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:27.155843Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:27.163583Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:27.163884Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:27.163960Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:27.164262Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:27.164378Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:27.164434Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:27.164533Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:27.164699Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:27.167599Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:27.167844Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:27.167887Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:27.168088Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:27.176416Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:27.176607Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:27.186985Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:27.187168Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:27.428974Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:28.309031Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.309700Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.523457Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:28.781846Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.782151Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.878127Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.878338Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.878854Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.879058Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.879107Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.879295Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.890145Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.890347Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.894010Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.894186Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.908797Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.908932Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.909051Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.909177Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.909235Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.909429Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.911743Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.911959Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.913830Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.914027Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.915308Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.915667Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.915840Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.916070Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.917389Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.917591Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.918424Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.918655Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.920639Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.920888Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.942974Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.943431Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.943447Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.943482Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.943506Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.943525Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.943741Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.943756Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.943820Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.943869Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.943925Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.944131Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.946190Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.946375Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.947658Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.947830Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.964179Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.964549Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.964595Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.964819Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.964906Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.964972Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.965011Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.965276Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.965503Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.965798Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.965839Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.966037Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:28.967850Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:28.968021Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.001083Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.001366Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.001557Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.001608Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.001748Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.001796Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.001838Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.002015Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.003923Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.004174Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.011995Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.012115Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.012194Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.012296Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.092101Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.092278Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.096972Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.097256Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.097517Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.097530Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.097817Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.098010Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.098052Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.098248Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.098279Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.098534Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.099811Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.100045Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.101494Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.101693Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.101745Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.101922Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.107407Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.107604Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.123641Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.123833Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.188214Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.188441Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.204943Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.205138Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.214806Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.215002Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.221720Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.221894Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.240542Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.240716Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.269635Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.269817Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.449885Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.450101Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.466170Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.466385Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.531474Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.531610Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.531703Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.531826Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.536273Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.536460Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.609556Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:29.785256Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.785466Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.845895Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.846496Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.853426Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.853718Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.866849Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.867307Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:29.877130Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:29.877492Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:30.100759Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:30.101022Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:30.479059Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:30.479300Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:30.482282Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:30.482455Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:30.505868Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:30.506148Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:30.646523Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:31.777214Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:32.840315Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:33.862003Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:33.862227Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:33.895516Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:33.895847Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:33.910587Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:34.905521Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:34.905801Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:34.919523Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:34.919757Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:34.921440Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:34.939043Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:34.939222Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:34.967070Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:34.967239Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:35.986823Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:37.095312Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:37.233658Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:37.233896Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:37.258464Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:37.258740Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:38.134620Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:39.137225Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:40.186755Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:41.323447Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:42.465763Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:43.098125Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.098375Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.101652Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.101828Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.109412Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.109702Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.109750Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.109965Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.114493Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.114719Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.114917Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.115055Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.115280Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.115346Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.115504Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.115542Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.115725Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.115972Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.120697Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.121043Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.122643Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.123245Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.124197Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.124693Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.124894Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.125229Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.125468Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.125637Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.126804Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.127065Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.128016Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.128266Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.129722Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.129955Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.132716Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.132934Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.133759Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.133807Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.134078Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.134126Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.134767Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.135023Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.137976Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.138311Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.138816Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.139077Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.139114Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.139353Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.141011Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.141310Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.142978Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.143285Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.143638Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.143662Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.143770Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.143883Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.144020Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.144074Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.144162Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.144295Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.144845Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.145051Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.147487Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.147543Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.148011Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.148012Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.148185Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.148448Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.148707Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.148919Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.200218Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.200589Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.200719Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.200917Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.232367Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.232672Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.232934Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.232940Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.233237Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.233349Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.233516Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.233768Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.234276Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.234553Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.235119Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.235320Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.248555Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.248743Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.254314Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.254511Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.261948Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.262193Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.262240Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.262512Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.262666Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.262907Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.263153Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.263279Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.263440Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.263541Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.263668Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.263874Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.267154Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.267742Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.268200Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.268200Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.268451Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.268476Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.268728Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.268940Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.269375Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.269587Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.272786Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.273037Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.274386Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.274971Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.275399Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.275556Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.275804Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.275936Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.275970Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.276194Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.278211Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.278425Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.280699Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.281085Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.282205Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.282206Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.282525Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.282680Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.283083Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.283294Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.284831Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.284914Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.285128Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.285200Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.285416Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.285701Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.285839Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.286091Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.286119Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.286309Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.295954Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.296291Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.296549Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.296657Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.296756Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.296829Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.297112Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.297119Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.297288Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.297329Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.297366Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.297527Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.299042Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.299288Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.300793Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.301106Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.301325Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.301335Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.301541Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.301570Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.342840Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.343120Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.343516Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.343653Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.343919Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.344001Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.344013Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.343937Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.344137Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.344519Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.344585Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.344615Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.345638Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.350083Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.359757Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.364300Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.364889Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.365149Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.365321Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.365396Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.369512Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.365714Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.375357Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.370053Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.369766Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.381455Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.382870Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.387304Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.387860Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.388380Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.389164Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.389362Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.389407Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.389514Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.389590Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.389783Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.390260Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.390474Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.391513Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.391799Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.508469Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.508769Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.516358Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.516618Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.517032Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.517319Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.528889Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.529230Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.529239Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.529293Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.529642Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.529745Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.531224Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.531515Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.531689Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.531756Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.531962Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.532030Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.533811Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.534111Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.543892Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.544280Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.544327Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.544362Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.544488Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.544528Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.544611Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.544764Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.547930Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.548222Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.548356Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.548565Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.556932Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.557130Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:43.563335Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:43.567827Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:43.568001Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:44.638161Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:44.676693Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:44.677171Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:45.136809Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:45.137077Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:45.734774Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:46.315620Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:46.316044Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:46.829902Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:47.918263Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:48.713651Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:48.714087Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:49.000672Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:50.096685Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:50.299533Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:50.300116Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:51.183455Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:52.237410Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:52.255255Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:52.255780Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:53.355429Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:54.446955Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:55.299672Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:55.300181Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:55.538358Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:56.627526Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:57.503025Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:29:57.503868Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:29:57.763187Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:58.859243Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:59.948043Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:00.295584Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:30:00.296055Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:30:01.020239Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:02.092640Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:03.204645Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:04.305407Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:05.260182Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:30:05.260755Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:30:05.265610Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:30:05.266081Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:30:05.390501Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:06.462357Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:07.568503Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:08.647317Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:09.745186Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:10.303059Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:30:10.303660Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:30:10.822821Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:11.915537Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:13.011240Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:14.161790Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:15.239238Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:15.263824Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:30:15.264431Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:30:16.329327Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:16.933313Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:30:16.933950Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:30:17.412023Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:18.496387Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:19.587649Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:20.261650Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:30:20.262110Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:30:20.487428Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Alex/7b5a4c1e", "Dee/da2a77c1"] skipped_offline=[]
+2026-10-22T06:30:20.684029Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:21.774673Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:22.867390Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:24.013469Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:25.089977Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:25.292538Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:30:25.293042Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:30:26.191589Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:27.282363Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:28.364271Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:29.457285Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:30.288230Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:30:30.289127Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:30:30.543645Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:31.623149Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:32.718339Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:33.807326Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:34.285093Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:30:34.285891Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:30:34.895858Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:35.307037Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:30:35.307715Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:30:35.980713Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:37.074293Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:38.155001Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:39.239743Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:40.304876Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:30:40.305539Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:30:40.338075Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:41.415898Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:42.514157Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:43.544356Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:44.673821Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:45.305546Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:30:45.306182Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:30:45.686158Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:46.795336Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:47.884177Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:48.975639Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:50.057859Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:50.298911Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:30:50.299442Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:30:51.117811Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:52.237337Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:53.330875Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:54.413499Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:55.298332Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:30:55.299003Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:30:55.472231Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:56.587619Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:57.614261Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:58.675316Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:59.788956Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:00.243095Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:31:00.243830Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:31:00.245018Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:31:00.245581Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:31:00.872581Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:01.960298Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:03.059865Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:04.192555Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:05.291379Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:31:05.291981Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:31:05.295695Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:06.378410Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:07.460496Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:08.557621Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:09.630110Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:10.304664Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:31:10.305273Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:31:10.739228Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:11.796391Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:12.914163Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:13.975917Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:15.091055Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:15.298850Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:31:15.299729Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:31:16.172877Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:17.265345Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:18.347825Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:19.430851Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:20.292233Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:31:20.292805Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:31:20.497262Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Alex/7b5a4c1e", "Dee/da2a77c1"] skipped_offline=[]
+2026-10-22T06:31:20.528143Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:21.576258Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:22.699946Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:23.785178Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:24.878091Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:25.288671Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:31:25.289220Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:31:25.971106Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:27.056051Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:28.145940Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:29.226598Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:30.290234Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:31:30.290780Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:31:30.308797Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:31.386442Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:32.496858Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:33.581024Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:34.609200Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:35.189845Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:31:35.190447Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:31:35.699450Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:36.759277Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:37.865838Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:38.954162Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:39.049241Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:31:39.050062Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:31:40.034458Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:40.300696Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:31:40.301242Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:31:41.132180Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:42.229667Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:43.376984Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:44.462630Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:45.306768Z  INFO door: door: guessed in this computer's home — the path ends at a private address — so not counted and told no share person="Dee" lend=jellyfin addr=Some(192.168.1.11)
+2026-10-22T06:31:45.307365Z  INFO door: door: dropped headers the client typed in the door's or the secret's name before setting them actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" lend=jellyfin displaced=1
+2026-10-22T06:31:45.547719Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:46.638464Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:47.732457Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:48.868490Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:49.970996Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:51.035508Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:52.137539Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:53.229399Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:54.319723Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:55.410204Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:56.498945Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:57.573694Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:58.663943Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:59.753356Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:00.804936Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:01.904815Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:03.007996Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:04.032456Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:05.130784Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:06.219230Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:07.243554Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:08.336011Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:09.413562Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:10.508706Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:11.601140Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:12.677442Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:13.778222Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:14.782378Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:15.880812Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:16.950206Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:18.048780Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:19.130858Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:20.236210Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:20.505694Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Alex/7b5a4c1e", "Dee/da2a77c1"] skipped_offline=[]
+2026-10-22T06:32:21.329251Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:22.417552Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:23.500356Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:24.593508Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:25.664569Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:26.761138Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:27.777068Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:28.873378Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:29.949055Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:31.058106Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:32.143772Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:33.229512Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:34.317150Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:35.404352Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:36.422267Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:37.519146Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:38.598229Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:39.695160Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:40.778574Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
