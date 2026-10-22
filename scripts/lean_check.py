@@ -159,7 +159,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # it landed: 17,725, after its first draft was cut by 31 counted lines (the
 # ask's map, the PKCE test and the inlined own-address check). svrngs-core
 # stays 3,152 under its 3,153. 2 remain under the operator's 17,728.
-BUDGET = {"crates/svrngs-core": 3153, ".": 17726}
+# oidc-hook-cut retired the sign-in hook the operator authorized (CHARTER.md,
+# 2026-10-21): its file and wiring, the helper's steps and the page's
+# signs_in, 523 counted lines, and lowered the repository's to one past where
+# it landed: 17,203. svrngs-core is unchanged at one past its 3,152.
+BUDGET = {"crates/svrngs-core": 3153, ".": 17203}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
