@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! The token's claims are exactly the door's headers (SIGN_IN_WITH_SVRNGS
 //! §5; §8 1, 4), and a guest is a guest (§8 6).
-use super::*;
-
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+use base64::Engine as _;
+use svrngs_core::token::{Claims, Group, Token};
 
 /// The person's key as the record spells an actor: 64 lowercase hex.
 const SUB: &str = "9f2c0a1b3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8";
@@ -97,4 +97,25 @@ fn the_signature_completes_the_signing_input() {
     let (head, got) = signed.rsplit_once('.').unwrap();
     assert_eq!(head, input);
     assert_eq!(URL_SAFE_NO_PAD.decode(got).unwrap(), signature);
+}
+
+/// A client's nonce is an ID token's own: echoed when sent, and absent
+/// when none was (SIGN_IN_WITH_SVRNGS §5a, "Echo a nonce if one is sent,
+/// and omit it otherwise").
+#[test]
+fn a_nonce_is_echoed_when_sent_and_omitted_otherwise() {
+    let mut claims = claims(Group::Member);
+    let plain = Token::new(claims.clone(), "a-kid").signing_input();
+    let (_, payload) = plain.split_once('.').unwrap();
+    let payload = decoded(payload);
+    assert!(
+        payload.get("nonce").is_none(),
+        "a nonce nobody sent: {payload:#}"
+    );
+
+    claims.nonce = Some("n-0S6_WzA2Mj".into());
+    let sent = Token::new(claims, "a-kid").signing_input();
+    let (_, payload) = sent.split_once('.').unwrap();
+    let payload = decoded(payload);
+    assert_eq!(payload["nonce"], "n-0S6_WzA2Mj");
 }

@@ -5,9 +5,11 @@
 //! The claims are the door's identity headers and nothing else: `sub` the
 //! person's key, `preferred_username` their account, `name` their name,
 //! `groups` `["member"]` or `["guest"]`, and the token's own `iss`, `aud`,
-//! `exp` and `iat`. There is no `email`: svrngs has none (§8 4). The
-//! issuer is handed in as one string, so every token of a lender's is
-//! byte-equal in `iss` to discovery (§5a, "One issuer string, exact").
+//! `exp` and `iat`; and the client's `nonce`, when it sent one, which is an
+//! ID token's own (§5a, "Echo a nonce if one is sent, and omit it
+//! otherwise"). There is no `email`: svrngs has none (§8 4). The issuer is
+//! handed in as one string, so every token of a lender's is byte-equal in
+//! `iss` to discovery (§5a, "One issuer string, exact").
 //!
 //! Pure and synchronous (RUST_ARCH §2): this module spells the header, the
 //! claims and the signing input. The node signs the input with the
@@ -51,6 +53,10 @@ pub struct Claims {
     pub preferred_username: String,
     /// One group: `["member"]` or `["guest"]`.
     pub groups: [Group; 1],
+    /// The client's nonce, echoed in an ID token when one was sent, and
+    /// absent otherwise.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub nonce: Option<String>,
 }
 
 impl Claims {
@@ -79,6 +85,7 @@ impl Claims {
             name: name.into(),
             preferred_username: username.into(),
             groups: [group],
+            nonce: None,
         }
     }
 }
