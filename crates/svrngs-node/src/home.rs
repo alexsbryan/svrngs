@@ -67,6 +67,9 @@ use crate::share::{self, Share, ShareRefusal};
 /// The home page's host, before its port.
 const HOST: &str = "svrngs.localhost";
 
+/// What a lend's change that could not be written says.
+const UNCHANGED: &str = "that cannot be changed on this computer";
+
 const POLICY: &str = "default-src 'self'; frame-ancestors 'none'";
 
 /// When a person joined, as the page says it (home.js `people`) and
@@ -76,18 +79,15 @@ const POLICY: &str = "default-src 'self'; frame-ancestors 'none'";
 /// it by hand.
 pub const WHEN: &str = "%Y-%m-%d %H:%M:%S %z";
 
+/// A script's type, as the page's module and its question are served.
+const JS: [(header::HeaderName, &str); 1] = [(header::CONTENT_TYPE, "text/javascript")];
+
 /// The home page's one module.
-const MODULE: ([(header::HeaderName, &str); 1], &str) = (
-    [(header::CONTENT_TYPE, "text/javascript")],
-    include_str!("home/home.js"),
-);
+const MODULE: ([(header::HeaderName, &str); 1], &str) = (JS, include_str!("home/home.js"));
 
 /// svrngs's question and what apps use, in the one wording the group's page
 /// loads too (`scripts/build-web.sh` gives it the same file).
-const QUESTION: ([(header::HeaderName, &str); 1], &str) = (
-    [(header::CONTENT_TYPE, "text/javascript")],
-    include_str!("home/question.js"),
-);
+const QUESTION: ([(header::HeaderName, &str); 1], &str) = (JS, include_str!("home/question.js"));
 
 /// Its look, svrngs's one look, a file of its own since its policy runs no
 /// inline style; the group's page is given the same file (`scripts/build-web.sh`).
@@ -245,13 +245,10 @@ async fn lent(State(at): State<Asking>) -> Response {
 /// `POST /lent`: the person's change, written to the lend's declaration.
 async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Response {
     let dir = &at.door.data_dir;
-    if matches!(c.to, LendChange::SignIn) {
-        return sign_in(&at, &c.lend).await;
-    }
     let done = match c.to {
         LendChange::Limit(limit) => lend::limit(dir, &c.lend, limit),
         LendChange::Stop => lend::withdraw(dir, &c.lend),
-        LendChange::SignIn => unreachable!("answered above"),
+        LendChange::SignIn => return sign_in(&at, &c.lend).await,
     };
     tracing::debug!(target: "home", lend = %c.lend, to = ?c.to, done = ?done.as_ref().ok(), "home: the person changed a lend");
     match done {
@@ -261,10 +258,7 @@ async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Response {
         }
         Err(e) => {
             tracing::warn!(target: "home", lend = %c.lend, error = %e, "home: refused — the lend's declaration cannot be changed");
-            LendRefusal::Fault.say(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "that cannot be changed on this computer",
-            )
+            LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, UNCHANGED)
         }
     }
 }
@@ -283,10 +277,7 @@ async fn sign_in(at: &Asking, name: &LendName) -> Response {
         }
         Err(e) => {
             tracing::warn!(target: "home", lend = %name, error = %e, "home: refused — its declaration cannot be read");
-            return LendRefusal::Fault.say(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "that cannot be changed on this computer",
-            );
+            return LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, UNCHANGED);
         }
     };
     if lend.sign_in_with_svrngs.is_some() {
@@ -309,10 +300,7 @@ async fn sign_in(at: &Asking, name: &LendName) -> Response {
     lend.sign_in_with_svrngs = Some(client.clone());
     if let Err(e) = lend::declare(dir, &lend, None) {
         tracing::warn!(target: "home", lend = %name, error = %e, "home: refused — its declaration cannot be changed");
-        return LendRefusal::Fault.say(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "that cannot be changed on this computer",
-        );
+        return LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, UNCHANGED);
     }
     let issuer = crate::oidc::issuer(at.host.api_port, name.as_str());
     tracing::debug!(target: "home", lend = %name, %issuer, "home: it signs people in with svrngs now");
