@@ -3,7 +3,7 @@
 //! §5; §8 1, 4), and a guest is a guest (§8 6).
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use base64::Engine as _;
-use svrngs_core::token::{Claims, Group, Jwt};
+use svrngs_core::token::{Claims, Group, Jwt, Subject};
 
 /// The person's key as the record spells an actor: 64 lowercase hex.
 const SUB: &str = "9f2c0a1b3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8";
@@ -11,16 +11,13 @@ const ISSUER: &str = "http://127.0.0.1:51234/oidc/jellyfin";
 const CLIENT: &str = "svrngs-jellyfin";
 
 fn claims(group: Group) -> Claims {
-    Claims::new(
-        ISSUER,
-        SUB,
-        CLIENT,
-        "Ana",
-        "Ana-9f2c0a1b3d4e5f60",
+    let who = Subject {
+        sub: SUB.into(),
+        name: "Ana".into(),
+        username: "Ana-9f2c0a1b3d4e5f60".into(),
         group,
-        1_767_000_000,
-        600,
-    )
+    };
+    Claims::new(ISSUER, CLIENT, who, 1_767_000_000, 600)
 }
 
 fn decoded(part: &str) -> serde_json::Value {

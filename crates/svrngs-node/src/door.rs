@@ -1236,7 +1236,7 @@ pub(crate) async fn lend_for(
         } else {
             Group::Member
         };
-        let who = crate::oidc::Signer {
+        let who = svrngs_core::token::Subject {
             sub: actor.to_string(),
             name,
             username,

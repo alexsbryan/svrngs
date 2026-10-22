@@ -39,7 +39,7 @@ use base64::engine::general_purpose::{STANDARD, URL_SAFE_NO_PAD};
 use base64::Engine as _;
 use ring::rand::SystemRandom;
 use serde::Deserialize;
-use svrngs_core::token::{Claims, Group};
+use svrngs_core::token::{Claims, Subject};
 
 use crate::lend::{self, Lend, LendName, SignInWithSvrngs, Source};
 
@@ -151,61 +151,52 @@ impl Provider {
 /// and the PKCE challenge it is bound to, and the nonce to echo.
 #[derive(Debug, Clone)]
 pub(crate) struct Code {
-    pub(crate) lend: String,
+    pub(crate) lend: LendName,
     pub(crate) client: String,
-    pub(crate) sub: String,
-    pub(crate) name: String,
-    pub(crate) username: String,
-    pub(crate) group: Group,
+    pub(crate) who: Subject,
     pub(crate) redirect: String,
-    pub(crate) challenge: Option<String>,
-    pub(crate) method: Option<String>,
+    pub(crate) challenge: Option<S256Challenge>,
     pub(crate) nonce: Option<String>,
-    expires: i64,
-    used: bool,
 }
 
-impl Code {
-    /// A code for `lend`'s client and the person, bound to `redirect`, the
-    /// PKCE `challenge` and the `nonce`, expiring after [`CODE_LIFETIME`].
-    #[allow(clippy::too_many_arguments)]
-    pub(crate) fn new(
-        lend: &str,
-        client: &str,
-        sub: &str,
-        name: &str,
-        username: &str,
-        group: Group,
-        redirect: &str,
+/// A PKCE challenge, S256's: the only method the provider answers
+/// (discovery's `code_challenge_methods_supported`), so a code holds no
+/// method to check again.
+#[derive(Debug, Clone)]
+pub(crate) struct S256Challenge(String);
+
+impl S256Challenge {
+    /// The challenge an ask sent, or none when it sent neither challenge
+    /// nor method; refused when one comes without the other or the method
+    /// is not S256.
+    pub(crate) fn parse(
         challenge: Option<&str>,
         method: Option<&str>,
-        nonce: Option<&str>,
-    ) -> Self {
-        Self {
-            lend: lend.into(),
-            client: client.into(),
-            sub: sub.into(),
-            name: name.into(),
-            username: username.into(),
-            group,
-            redirect: redirect.into(),
-            challenge: challenge.map(Into::into),
-            method: method.map(Into::into),
-            nonce: nonce.map(Into::into),
-            expires: now() + CODE_LIFETIME,
-            used: false,
+    ) -> Result<Option<Self>, &'static str> {
+        match (challenge, method) {
+            (None, None) => Ok(None),
+            (Some(challenge), Some("S256")) => Ok(Some(Self(challenge.into()))),
+            _ => Err("the PKCE method does not answer the challenge"),
         }
+    }
+
+    /// Whether `verifier` answers this challenge: base64url of its SHA-256.
+    fn answers(&self, verifier: &str) -> bool {
+        let digest = ring::digest::digest(&ring::digest::SHA256, verifier.as_bytes());
+        URL_SAFE_NO_PAD.encode(digest.as_ref()) == self.0
     }
 }
 
-/// The codes this run has minted, in memory and nowhere else: one use, and
-/// expired ones dropped on each mint and redemption.
+/// The codes this run has minted, in memory and nowhere else, each with
+/// when it lapses, [`CODE_LIFETIME`] after it was minted, and whether it
+/// was redeemed: one use, and expired ones dropped on each mint and
+/// redemption.
 #[expect(
     clippy::disallowed_types,
     reason = "the code store is one process's map, read and written by its own routes"
 )]
 struct Codes {
-    inner: Mutex<HashMap<String, Code>>,
+    inner: Mutex<HashMap<String, (Code, i64, bool)>>,
     rng: SystemRandom,
 }
 
@@ -228,21 +219,21 @@ impl Codes {
         let text = URL_SAFE_NO_PAD.encode(bytes);
         tracing::debug!(target: "oidc", lend = %code.lend, client = %code.client, "oidc: minted a one-time code");
         let mut codes = self.inner.lock().expect("the code store's lock");
-        codes.retain(|_, c| c.expires > now());
-        codes.insert(text.clone(), code);
+        codes.retain(|_, (_, expires, _)| *expires > now());
+        codes.insert(text.clone(), (code, now() + CODE_LIFETIME, false));
         text
     }
 
     fn redeem(&self, text: &str) -> Result<Code, &'static str> {
         let mut codes = self.inner.lock().expect("the code store's lock");
-        codes.retain(|_, c| c.expires > now());
-        let Some(code) = codes.get_mut(text) else {
+        codes.retain(|_, (_, expires, _)| *expires > now());
+        let Some((code, _, used)) = codes.get_mut(text) else {
             return Err("no code was minted with that value, or it lapsed");
         };
-        if code.used {
+        if *used {
             return Err("that code was already redeemed");
         }
-        code.used = true;
+        *used = true;
         Ok(code.clone())
     }
 }
@@ -339,7 +330,7 @@ async fn token(
         Ok(code) => code,
         Err(why) => return refuse(StatusCode::BAD_REQUEST, "invalid_grant", why),
     };
-    if code.lend != name.as_str() {
+    if code.lend != name {
         return refuse(
             StatusCode::BAD_REQUEST,
             "invalid_grant",
@@ -360,13 +351,6 @@ async fn token(
             "the redirect does not match the one the code was minted for",
         );
     }
-    if code.challenge.is_some() && code.method.as_deref() != Some("S256") {
-        return refuse(
-            StatusCode::BAD_REQUEST,
-            "invalid_grant",
-            "the code's PKCE method is not S256",
-        );
-    }
     if let Some(challenge) = &code.challenge {
         let Some(verifier) = form.code_verifier.as_deref() else {
             return refuse(
@@ -375,7 +359,7 @@ async fn token(
                 "the code was minted with a PKCE challenge and no verifier was sent",
             );
         };
-        if !verifier_matches(challenge, verifier) {
+        if !challenge.answers(verifier) {
             return refuse(
                 StatusCode::BAD_REQUEST,
                 "invalid_grant",
@@ -384,16 +368,8 @@ async fn token(
         }
     }
     let issuer = issuer(p.port, name.as_str());
-    let mut claims = Claims::new(
-        &issuer,
-        &code.sub,
-        &client_id,
-        &code.name,
-        &code.username,
-        code.group,
-        now(),
-        TOKEN_LIFETIME,
-    );
+    let sub = code.who.sub.clone();
+    let mut claims = Claims::new(&issuer, &client_id, code.who, now(), TOKEN_LIFETIME);
     claims.nonce = code.nonce;
     let signed = match p.key.token(claims) {
         Ok(signed) => signed,
@@ -406,7 +382,7 @@ async fn token(
             );
         }
     };
-    tracing::debug!(target: "oidc", %issuer, client = %client_id, sub = %code.sub, "oidc: issued a token");
+    tracing::debug!(target: "oidc", %issuer, client = %client_id, sub = %sub, "oidc: issued a token");
     Json(serde_json::json!({ "access_token": signed, "token_type": "Bearer", "expires_in": TOKEN_LIFETIME, "id_token": signed }))
         .into_response()
 }
@@ -476,12 +452,6 @@ fn secret_ok(declared: Option<&str>, presented: Option<&str>) -> bool {
 /// mismatch costs the same wherever it is.
 fn same(a: &[u8], b: &[u8]) -> bool {
     a.len() == b.len() && a.iter().zip(b).fold(0, |acc, (x, y)| acc | (x ^ y)) == 0
-}
-
-/// Whether `verifier` answers the S256 `challenge` the code was bound to.
-fn verifier_matches(challenge: &str, verifier: &str) -> bool {
-    let digest = ring::digest::digest(&ring::digest::SHA256, verifier.as_bytes());
-    URL_SAFE_NO_PAD.encode(digest.as_ref()) == challenge
 }
 
 /// The Bearer token from a userinfo request's `Authorization`, or why none.

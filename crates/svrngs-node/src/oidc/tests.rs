@@ -11,16 +11,13 @@ const SUB: &str = "9f2c0a1b3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d
 const ISSUER: &str = "http://127.0.0.1:51234/oidc/jellyfin";
 
 fn claims() -> Claims {
-    Claims::new(
-        ISSUER,
-        SUB,
-        "svrngs-jellyfin",
-        "Ana",
-        "Ana-9f2c0a1b3d4e5f60",
-        svrngs_core::token::Group::Member,
-        1_767_000_000,
-        600,
-    )
+    let who = svrngs_core::token::Subject {
+        sub: SUB.into(),
+        name: "Ana".into(),
+        username: "Ana-9f2c0a1b3d4e5f60".into(),
+        group: svrngs_core::token::Group::Member,
+    };
+    Claims::new(ISSUER, "svrngs-jellyfin", who, 1_767_000_000, 600)
 }
 
 /// `token`'s signature verifies over its signing input under `point`.

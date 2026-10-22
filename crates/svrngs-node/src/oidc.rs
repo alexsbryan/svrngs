@@ -208,7 +208,7 @@ fn url(bytes: &[u8]) -> String {
 pub(crate) mod front;
 pub(crate) mod provider;
 
-pub(crate) use front::{authorize, Signer};
+pub(crate) use front::authorize;
 pub(crate) use provider::Code;
 pub use provider::Provider;
 /// The reserved authorize path on a lend's own origin, where the door

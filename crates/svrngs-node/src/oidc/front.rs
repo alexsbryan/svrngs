@@ -21,28 +21,22 @@ use std::num::NonZeroU16;
 
 use axum::http::{header, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
-use svrngs_core::token::Group;
+use svrngs_core::token::Subject;
 
+use super::provider::S256Challenge;
 use super::{Code, Provider};
 use crate::door::LendRefusal;
 use crate::lend::{Lend, SignInWithSvrngs};
 
-/// The person a code is minted for: the door's asker, never the ask.
-pub(crate) struct Signer {
-    pub(crate) sub: String,
-    pub(crate) name: String,
-    pub(crate) username: String,
-    pub(crate) group: Group,
-}
-
-/// Answer the person's browser at the authorize path, or refuse the ask.
+/// Answer the person's browser at the authorize path, or refuse the ask;
+/// the code is minted for `who`, the door's asker, never the ask.
 pub(crate) fn authorize(
     provider: &Provider,
     lend: &Lend,
     client: &SignInWithSvrngs,
     port: NonZeroU16,
     browser: Option<&str>,
-    who: Signer,
+    who: Subject,
     query: Option<&str>,
 ) -> Response {
     let asked = match asked(query) {
@@ -77,22 +71,20 @@ pub(crate) fn authorize(
     if !asked("scope").is_some_and(|s| s.split_whitespace().any(|part| part == "openid")) {
         return refused(lend, "the scope does not ask for openid");
     }
-    let (challenge, method) = (asked("code_challenge"), asked("code_challenge_method"));
-    if challenge.is_some() != method.is_some() || method.is_some_and(|m| m != "S256") {
-        return refused(lend, "the PKCE method does not answer the challenge");
-    }
-    let code = provider.mint(Code::new(
-        lend.name.as_str(),
-        &client.client_id,
-        &who.sub,
-        &who.name,
-        &who.username,
-        who.group,
-        redirect,
+    let challenge =
+        match S256Challenge::parse(asked("code_challenge"), asked("code_challenge_method")) {
+            Ok(challenge) => challenge,
+            Err(why) => return refused(lend, why),
+        };
+    let (sub, pkce) = (who.sub.clone(), challenge.is_some());
+    let code = provider.mint(Code {
+        lend: lend.name.clone(),
+        client: client.client_id.clone(),
+        who,
+        redirect: redirect.into(),
         challenge,
-        method,
-        asked("nonce"),
-    ));
+        nonce: asked("nonce").map(Into::into),
+    });
     let mut location = if rest.is_empty() { "/" } else { rest }.to_string();
     location.push(if location.contains('?') { '&' } else { '?' });
     location.push_str("code=");
@@ -102,8 +94,8 @@ pub(crate) fn authorize(
         location.push_str("&state=");
         location.push_str(&state);
     }
-    tracing::debug!(target: "oidc", lend = %lend.name, client = %client.client_id, sub = %who.sub,
-        pkce = challenge.is_some(), "oidc: the authorize path answered the app's ask with a one-time code, relative to the lend's own origin");
+    tracing::debug!(target: "oidc", lend = %lend.name, client = %client.client_id, sub = %sub,
+        pkce, "oidc: the authorize path answered the app's ask with a one-time code, relative to the lend's own origin");
     (
         StatusCode::FOUND,
         [(

@@ -30,7 +30,11 @@ impl Node {
 
     /// A one-time code the door's authorize path would mint, for `lend`'s
     /// client and the person, with its redirect, PKCE challenge and nonce:
-    /// a test's way to the token route before the door's path exists.
+    /// a test's way to the token route before the door's path exists. The
+    /// challenge and method are read as the door reads them
+    /// ([`crate::oidc::provider::S256Challenge::parse`]): for a pair the
+    /// door refuses, such as a method other than S256, no code is minted,
+    /// and what is answered is a value the token route never minted.
     #[allow(clippy::too_many_arguments)]
     pub fn oidc_code(
         &self,
@@ -45,9 +49,23 @@ impl Node {
         method: Option<&str>,
         nonce: Option<&str>,
     ) -> String {
-        self.asking.oidc.mint(crate::oidc::Code::new(
-            lend, client, sub, name, username, group, redirect, challenge, method, nonce,
-        ))
+        let Ok(challenge) = crate::oidc::provider::S256Challenge::parse(challenge, method) else {
+            return "no-code-the-door-refuses-this-pkce-method".into();
+        };
+        let who = svrngs_core::token::Subject {
+            sub: sub.into(),
+            name: name.into(),
+            username: username.into(),
+            group,
+        };
+        self.asking.oidc.mint(crate::oidc::Code {
+            lend: crate::lend::LendName::parse(lend).expect("a test's lend name"),
+            client: client.into(),
+            who,
+            redirect: redirect.into(),
+            challenge,
+            nonce: nonce.map(Into::into),
+        })
     }
 
     /// Run one round now, beside the interval's, and say what it moved.

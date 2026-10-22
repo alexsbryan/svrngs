@@ -387,7 +387,8 @@ body holding a use until it ends.
 
 Sign in with svrngs (SIGN_IN_WITH_SVRNGS §5, §6; DESIGN §3, "The room",
 call 6): `crates/svrngs-core/src/token.rs` makes an app's claims from the
-door's identity headers — `sub` the person's key, `preferred_username` their
+door's identity headers, one `token::Subject` that the one-time code holds
+too — `sub` the person's key, `preferred_username` their
 account, `name` their name, `groups` `["member"]` or `["guest"]`, with
 `iss`, `aud`, `exp` and `iat`, and no `email` — their JSON, the
 `{"alg":"ES256","typ":"JWT","kid":…}` header and the base64url signing
@@ -398,7 +399,8 @@ JWKS from the same key pair: the key a client verifies is the key that
 signed. `oidc/provider.rs` answers discovery, the keys, the token and
 userinfo on the record API's listener, its one-time codes kept in this run's
 memory and bound to the person, the client, the redirect, the PKCE challenge
-and the nonce; `oidc/front.rs` and `door::lend_for` answer the authorize
+(S256's alone, its `S256Challenge`, so no method is checked twice) and the
+nonce; `oidc/front.rs` and `door::lend_for` answer the authorize
 path on the lend's own origin, after the asker is known and never carried to
 the service, accepting the app's redirect on its own `http://localhost:<port>`
 or on the lend's own origin (the browser's `X-Forwarded-Host`/`-Proto`). The

@@ -33,8 +33,24 @@ pub enum Group {
     Guest,
 }
 
+/// The person a token is about, as the door resolved them: their key, the
+/// name it shows, the account an app makes for them, and their group. The
+/// one spelling of the person a code is minted for and a token is made for
+/// (`Subject`, not `Person`: [`crate::Person`] is a name in the record).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Subject {
+    /// The person's key, the same from every device: `x-svrngs-key`.
+    pub sub: String,
+    /// Their name: `x-svrngs-person`.
+    pub name: String,
+    /// Their account, unique by key: `x-svrngs-user`.
+    pub username: String,
+    /// A member, or a visit's guest.
+    pub group: Group,
+}
+
 /// What a sign-in token says about the person, by the claims' own names.
-/// Built only by [`Claims::new`], which takes the door's `Asker` fields.
+/// Built only by [`Claims::new`], from the door's [`Subject`].
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Claims {
     /// The lender's one issuer string, exact.
@@ -60,31 +76,22 @@ pub struct Claims {
 }
 
 impl Claims {
-    /// The claims for the person `subject`, account `username` and name
-    /// `name`, made by `issuer` for `audience` at `issued_at`, live for
-    /// `lifetime` seconds. Nothing else is added, so an app is told no more
-    /// than the door already sends it.
-    #[allow(clippy::too_many_arguments)]
-    pub fn new(
-        issuer: &str,
-        subject: &str,
-        audience: &str,
-        name: &str,
-        username: &str,
-        group: Group,
-        issued_at: i64,
-        lifetime: i64,
-    ) -> Self {
-        tracing::debug!(target: "oidc", iss = issuer, sub = subject, aud = audience, ?group, iat = issued_at, exp = issued_at.saturating_add(lifetime), "oidc: the claims a token will carry");
+    /// The claims for `who`, made by `issuer` for `audience` at `issued_at`,
+    /// live for `lifetime` seconds. Nothing else is added, so an app is told
+    /// no more than the door already sends it. The person's fields are
+    /// copied in, not a flattened [`Subject`], which would move `sub` after
+    /// `iat` in the token's JSON.
+    pub fn new(issuer: &str, audience: &str, who: Subject, issued_at: i64, lifetime: i64) -> Self {
+        tracing::debug!(target: "oidc", iss = issuer, sub = who.sub, aud = audience, group = ?who.group, iat = issued_at, exp = issued_at.saturating_add(lifetime), "oidc: the claims a token will carry");
         Self {
             iss: issuer.into(),
-            sub: subject.into(),
+            sub: who.sub,
             aud: audience.into(),
             exp: issued_at.saturating_add(lifetime),
             iat: issued_at,
-            name: name.into(),
-            preferred_username: username.into(),
-            groups: [group],
+            name: who.name,
+            preferred_username: who.username,
+            groups: [who.group],
             nonce: None,
         }
     }
