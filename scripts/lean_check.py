@@ -155,7 +155,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # the code's PKCE method raised the repository 466 to one past where they
 # landed: 17,576 (svrngs-core within the 3,153 it left, its nonce bought by a
 # move that kept behaviour: 0e6257cf). 151 remain under the operator's 17,728.
-BUDGET = {"crates/svrngs-core": 3153, ".": 17577}
+# oidc-authorize's front channel raised the repository 149 to one past where
+# it landed: 17,725, after its first draft was cut by 31 counted lines (the
+# ask's map, the PKCE test and the inlined own-address check). svrngs-core
+# stays 3,152 under its 3,153. 2 remain under the operator's 17,728.
+BUDGET = {"crates/svrngs-core": 3153, ".": 17726}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
