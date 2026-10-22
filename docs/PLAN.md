@@ -74,6 +74,16 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   at their host's own lends, and every home page shows who's visiting.
   Then a run on one host, and the queue stops for a visit with real people,
   whose bars the operator sets before it. GUESTS's later parts wait in §2.
+- then the models queue (`ralph/next/models/`, written and held for the
+  operator's launch, 2026-10-22: "Write rows, hold"): the pantry's lean v0
+  from svrn-docs `rings/current/MODELS_ON_THE_RING.md`, an app in
+  `apps/pantry/` and no platform line. Its first row measures each kind's
+  fully open runtime here and stops for the operator to choose the kinds
+  ("try to scope out #3, but if it's too messy we can fall back to #1");
+  then `pantry up` lends a model with one command, `pantry use` gives one
+  address or names every candidate and why not, and a run on one host. No
+  Ollama ("Fully open and high integrity software only"). What waits is
+  in that queue's STATE.md, and lands in §2 at its run.
 
 The operator's switch stands apart from that order: when they flip
 `SHIPPED` to svrngs's relay for production (§2; DESIGN §7), #134 and #135
