@@ -171,7 +171,7 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # phone worker naming the browser's host (the run found it) raised it 2
 # more, to one past where the row closes: 17,423. svrngs-core is unchanged
 # at 3,152 under its 3,153.
-# oidc-retire removed apps/jellyfin/mw/ with the table's helper row and
+# oidc-retire removed the program per app with the table's helper row and
 # share::At::Helper (the row and enum were counted; apps/ is not): 3 counted
 # lines, and lowered the repository's to one past where the cut landed:
 # 17,419. svrngs-core is unchanged at 3,152 under its 3,153.
