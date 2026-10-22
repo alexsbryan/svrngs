@@ -676,6 +676,9 @@ nothing more.
    by its label alone, so the room opens as svrngs starts, before any
    lender answers; a lend whose lender is away keeps its address, answered
    "did not answer" within the dial's cap, and serves once they are back.
+   What is on, when it cannot be read, is said, never taken for nothing:
+   the room serves nothing and the page says why until a lend is turned on
+   again, which writes it over.
    Anyone on that network reaches the lends on as this person, which the
    page says beside its button and the command when it turns one on; a
    request from off the network is refused. `/v1/room` answers each lend

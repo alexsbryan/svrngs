@@ -52,10 +52,10 @@ const lentIn = (g) => (g.removed === false ? get(`/v1/lends?namespace=${encodeUR
 // A lend on a TV here, or not (DESIGN §3, "The room"): said as /v1/room
 // says it (room.rs `Served::said`), its button turning it on or off there,
 // then drawn again in place from the room's answer, or its refusal said.
-// `room` is null when what is on cannot be read here: never read as none.
+// `room` is the error when what is on cannot be read here, said once in
+// "On your TV" and never read as none; the button then writes it over.
 function tv(l, room, was, p = el('span')) {
-  if (!room) return Object.assign(p, { textContent: ' This computer cannot say whether it is on for your TV now.' });
-  const on = room.find((r) => r.key === l.key && r.name === l.name);
+  const on = room.find?.((r) => r.key === l.key && r.name === l.name);
   const turn = () => post('/v1/room', { [on ? 'off' : 'on']: { key: l.key, name: l.name } }).then((now) => p.replaceWith(tv(l, now, on)), (e) => p.append(` ${e.message}`));
   p.replaceChildren(` ${on?.said ?? `${was ? 'Turned off for the TV: nobody on this WiFi can open it through this computer now. ' : ''}Show it on a TV here, and anyone on this WiFi can open it as you while svrngs runs.`} `, button(on ? 'Turn it off for the TV' : 'Show it on a TV here', turn));
   return p;
@@ -311,9 +311,9 @@ try {
     if (!groups.length) main.append(Object.assign(el('p', 'You’re in no group yet. Make one below, or join one from a link someone sent you.'), { className: 'none' }));
     // What is on for a TV here (room.rs), each said in its lend's row and
     // all of it in a section of its own, a lend whose lender is away too.
-    const room = await get('/v1/room').catch(() => null);
+    const room = await get('/v1/room').catch((e) => e);
     const lent = Promise.all(groups.filter((g) => !g.left).map((g) => show(g, section(g), room)));
-    if (room?.length) main.append(Object.assign(el('section', '', el('h2', 'On your TV'), el('p', 'While svrngs runs here, anyone on this WiFi can open these as you. Each stays on the WiFi where you turned it on.'), el('ul', '', ...room.map((r) => el('li', `${r.person ? `${r.person}’s ` : ''}${r.name}:`, tv(r, room))))), { id: 'room' }));
+    if (room.length || room.message) main.append(Object.assign(el('section', '', el('h2', 'On your TV'), el('p', room.message ?? 'While svrngs runs here, anyone on this WiFi can open these as you. Each stays on the WiFi where you turned it on.'), el('ul', '', ...(room.map?.((r) => el('li', `${r.person ? `${r.person}’s ` : ''}${r.name}:`, tv(r, room))) ?? []))), { id: 'room' }));
     // The groups you left (groups-leave), with what stays of each here.
     const gone = groups.filter((g) => g.left).map((g) => el('p', `${g.name ?? 'A group'}${g.made ? ` (${whose(g.made)})` : ''}: what you have of it stays on this computer${g.folders?.length ? `, its folder at ${g.folders.join(' and ')}` : ''}, and nothing new of it reaches you.`));
     if (gone.length) main.append(Object.assign(el('section', '', el('h2', 'Groups you left'), ...gone), { id: 'left' }));

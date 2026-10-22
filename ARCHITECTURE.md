@@ -517,7 +517,8 @@ one task owns it (`room::spawn`), told by messages from `/v1/room`
 home page's button and `svrngs room` turn a lend on or off, a name
 resolved among the lends offered now and those on already. It keeps the
 lends on in `<data dir>/room.json`, by key and name, with the network each
-was turned on at, and every 5 s and at each turn reads the network
+was turned on at (one that cannot be read answers `/v1/room` 500 with why,
+serving nothing, until a turn writes it over; none there is an empty room), and every 5 s and at each turn reads the network
 (`room::look`: netdev's default-route interface, its router's hardware
 address from configd's state on macOS, `scutil`, since a program not let
 find devices on the network is shown no ARP table there, or from

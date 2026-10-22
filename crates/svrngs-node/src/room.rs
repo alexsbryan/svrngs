@@ -15,7 +15,9 @@
 //! and the lend's name, so the room opens again as svrngs starts, before
 //! any lender answers: a listener is bound by the lend's label alone
 //! ([`port_of`]), and a request to a lend whose lender is away is answered
-//! as [`crate::origin::reach`] answers one, within its dial's cap.
+//! as [`crate::origin::reach`] answers one, within its dial's cap. A file
+//! that cannot be read is said, never read as none: the room serves
+//! nothing and says why until a turn writes it over (AGENTS.md 6).
 //!
 //! **Only on the network it was turned on at** ([`serves`]): each lend
 //! keeps the network it was turned on at, told apart by its router's
@@ -266,8 +268,12 @@ pub(crate) enum Turn {
     Off(String, LendName),
 }
 
-/// A turn, and where its owner answers the room as it stands after it.
-type Asked = (Turn, oneshot::Sender<Vec<InRoom>>);
+/// A turn, and where its owner answers the room as it stands after it, or
+/// why what is on cannot be read.
+type Asked = (Turn, oneshot::Sender<Result<Vec<InRoom>, String>>);
+
+/// What the room's owner reads its asks from.
+type Asks = mpsc::UnboundedReceiver<Asked>;
 
 /// Each lend served, by its label: where, and its listener.
 type Listening = BTreeMap<Label, (SocketAddr, AbortOnDropHandle<()>)>;
@@ -278,14 +284,14 @@ pub(crate) struct Room(mpsc::UnboundedSender<Asked>);
 
 impl Room {
     /// A room, and what its owner takes.
-    pub(crate) fn new() -> (Self, mpsc::UnboundedReceiver<Asked>) {
+    pub(crate) fn new() -> (Self, Asks) {
         let (room, asked) = mpsc::unbounded_channel();
         (Room(room), asked)
     }
 
-    /// `turn` made by the room's owner, and the room as it stands then;
-    /// `None` once it has stopped.
-    async fn turn(&self, turn: Turn) -> Option<Vec<InRoom>> {
+    /// `turn` made by the room's owner, and the room as it stands then, or
+    /// why it cannot be read; `None` once it has stopped.
+    async fn turn(&self, turn: Turn) -> Option<Result<Vec<InRoom>, String>> {
         let (done, made) = oneshot::channel();
         self.0.send((turn, done)).ok()?;
         made.await.ok()
@@ -295,15 +301,15 @@ impl Room {
 /// The room's one owner, for as long as the node runs: the lends on, read
 /// from [`ROOM_FILE`] as it starts and written there at each turn, each
 /// served as [`serve`] decides every [`LOOK_EVERY`] and at each ask.
-pub(crate) fn spawn(
-    at: Asking,
-    mut asked: mpsc::UnboundedReceiver<Asked>,
-) -> AbortOnDropHandle<()> {
+pub(crate) fn spawn(at: Asking, mut asked: Asks) -> AbortOnDropHandle<()> {
     let file = at.door.data_dir.join(ROOM_FILE);
-    let read = std::fs::read(&file).map_err(|e| e.to_string());
-    let read = read.and_then(|b| serde_json::from_slice(&b).map_err(|e| e.to_string()));
-    tracing::debug!(target: "room", file = %file.display(), error = ?read.as_ref().err(), "room: the lends on, as kept; none before the first, nor when unread");
-    let (mut on, mut listening): (Vec<On>, Listening) = (read.unwrap_or_default(), BTreeMap::new());
+    let on = match std::fs::read(&file) {
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Vec::new()),
+        read => (read.map_err(|e| e.to_string()))
+            .and_then(|b| serde_json::from_slice(&b).map_err(|e| e.to_string())),
+    };
+    tracing::debug!(target: "room", file = %file.display(), error = ?on.as_ref().err(), "room: the lends on, as kept: none before the first, and one unread said, serving nothing");
+    let (mut on, mut listening): (Result<Vec<On>, String>, Listening) = (on, BTreeMap::new());
     AbortOnDropHandle::new(tokio::spawn(async move {
         let mut every = tokio::time::interval(LOOK_EVERY);
         loop {
@@ -311,22 +317,27 @@ pub(crate) fn spawn(
                 _ = every.tick() => None,
                 turned = asked.recv() => {
                     let Some((turn, done)) = turned else { return };
-                    let read = matches!(&turn, Turn::On(lends) if lends.is_empty());
-                    match turn {
-                        Turn::On(lends) => lends.into_iter().for_each(|l| {
-                            on.retain(|o| (&o.key, &o.name) != (&l.key, &l.name));
-                            on.push(l);
-                        }),
-                        Turn::Off(key, name) => on.retain(|o| o.key != key || o.name != name),
+                    // A turn, not a read, writes the room over: one that
+                    // could not be read too.
+                    if !matches!(&turn, Turn::On(lends) if lends.is_empty()) {
+                        let mut list = on.as_mut().map_or(Vec::new(), std::mem::take);
+                        match turn {
+                            Turn::On(lends) => lends.into_iter().for_each(|l| {
+                                list.retain(|o| (&o.key, &o.name) != (&l.key, &l.name));
+                                list.push(l);
+                            }),
+                            Turn::Off(key, name) => list.retain(|o| o.key != key || o.name != name),
+                        }
+                        let bytes = serde_json::to_vec(&list).expect("the room is JSON");
+                        let kept = crate::declared::write_whole(&file, &bytes);
+                        tracing::debug!(target: "room", on = list.len(), ?kept, "room: turned, and kept so it opens again as svrngs starts");
+                        on = Ok(list);
                     }
-                    let bytes = serde_json::to_vec(&on).expect("the room is JSON");
-                    let kept = (!read).then(|| crate::declared::write_whole(&file, &bytes));
-                    tracing::debug!(target: "room", on = on.len(), read, ?kept, "room: asked, and a turn kept so it opens again as svrngs starts");
                     Some(done)
                 }
             };
-            let room = serve(&at, &on, &mut listening).await;
-            done.map(|d| d.send(room));
+            let room = serve(&at, on.as_deref().unwrap_or_default(), &mut listening).await;
+            done.map(|d| d.send(on.as_ref().map(|_| room).map_err(String::clone)));
         }
     }))
 }
@@ -432,17 +443,16 @@ async fn turn(State(at): State<Asking>, Json(ask): Json<RoomAsk>) -> Response {
     }
 }
 
-/// `turn` made by the room's owner, and the room as it stands then;
-/// refused when its owner has stopped.
+/// `turn` made by the room's owner, and the room as it stands then; why
+/// what is on cannot be read, which serves nothing until a turn writes it
+/// over; or refused when its owner has stopped.
 async fn turned(at: &Asking, turn: Turn) -> Response {
     let room = at.room.turn(turn).await;
-    tracing::debug!(target: "room", made = room.is_some(), "room: asked of its owner, or refused as it has stopped");
+    tracing::debug!(target: "room", made = room.is_some(), unread = ?room.as_ref().and_then(|r| r.as_ref().err()), "room: asked of its owner: the room, why it cannot be read, or refused as it has stopped");
     match room {
-        Some(room) => Json(room).into_response(),
-        None => LendRefusal::Fault.say(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "the room cannot be changed on this computer now",
-        ),
+        Some(Ok(room)) => Json(room).into_response(),
+        Some(Err(why)) => LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, format!("This computer cannot read what you turned on for your TV ({why}), so it shows nothing on your TV now. Turn a lend on for your TV again, and it starts over from that one.")),
+        None => LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, "the room cannot be changed on this computer now"),
     }
 }
 
@@ -456,7 +466,12 @@ async fn named(at: &Asking, names: &[LendName]) -> Result<Vec<(String, LendName)
     let own = own.into_iter().map(|o| (at.host.actor.clone(), o.name));
     let others = at.host.lends_in(&groups, None).await.lent;
     let others = others.into_iter().map(|l| (l.key, l.offered.name));
-    let on = at.room.turn(Turn::On(Vec::new())).await.unwrap_or_default();
+    let on = at
+        .room
+        .turn(Turn::On(Vec::new()))
+        .await
+        .and_then(Result::ok);
+    let on = on.unwrap_or_default();
     let on = on.into_iter().map(|r| (r.key, r.name));
     let found: Vec<_> = own
         .chain(others)

@@ -186,8 +186,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # land, 17,331. svrngs-core is unchanged at 3,149 under its 3,150.
 # The room, the running node's, on per lend on its network (the operator,
 # 2026-10-22, after that pass): raised 231, to one past where it lands,
-# 17,562. svrngs-core is unchanged at 3,149 under its 3,150.
-BUDGET = {"crates/svrngs-core": 3150, ".": 17562}
+# 17,562. svrngs-core is unchanged at 3,149 under its 3,150. Within that
+# landing (the operator, 2026-10-22: room.json unread said, never read as
+# empty), a room that cannot be read said and serving nothing raised it 6,
+# to one past where it lands: 17,568.
+BUDGET = {"crates/svrngs-core": 3150, ".": 17568}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
