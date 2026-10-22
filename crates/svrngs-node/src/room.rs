@@ -88,11 +88,11 @@ impl Served {
     /// What the home page and `svrngs room` say of it, the one wording.
     pub fn said(&self) -> String {
         match self {
-            Served::At(at) => format!("On for your TV: type http://{at}/ into its app. Anyone on this WiFi can open it there as you."),
-            Served::Elsewhere => "Off for now: this computer is on another WiFi than the one where you turned it on. It comes back on when you are there again.".into(),
-            Served::Unread => "Off for now: this computer cannot tell which WiFi it is on, so it shows it to nobody.".into(),
-            Served::NoAddress => "Off for now: this computer is on no WiFi or home network. Join one, or plug it in.".into(),
-            Served::Taken => "Off for now: another program on this computer holds the port it needs. Stop that program, and it comes back on.".into(),
+            Served::At(at) => format!("Open to this WiFi: type http://{at}/ into an app or a browser on a device here, such as your TV, a phone or another computer. Anyone on this WiFi can open it there as you."),
+            Served::Elsewhere => "Closed for now: this computer is on another WiFi than the one where you turned it on. It opens again when you are there again.".into(),
+            Served::Unread => "Closed for now: this computer cannot tell which WiFi it is on, so it opens it to nobody.".into(),
+            Served::NoAddress => "Closed for now: this computer is on no WiFi or home network. Join one, or plug it in.".into(),
+            Served::Taken => "Closed for now: another program on this computer holds the port it needs. Stop that program, and it opens again.".into(),
         }
     }
 }

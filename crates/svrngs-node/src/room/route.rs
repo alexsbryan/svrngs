@@ -47,7 +47,7 @@ async fn turn(State(at): State<Asking>, Json(ask): Json<RoomAsk>) -> Response {
     let refused = |words: &str| LendRefusal::Closed.say(StatusCode::CONFLICT, words);
     match (lends, network) {
         (Err(words), _) => refused(&words),
-        (_, Err(_)) => refused("This computer cannot tell which WiFi it is on, so nothing was turned on for your TV: try again once it is on one."),
+        (_, Err(_)) => refused("This computer cannot tell which WiFi it is on, so nothing was opened to it: try again once it is on one."),
         (Ok(lends), Ok(network)) => {
             let on = |(key, name)| On { key, name, network };
             turned(&at, Turn::On(lends.into_iter().map(on).collect())).await
@@ -63,7 +63,7 @@ async fn turned(at: &Asking, turn: Turn) -> Response {
     tracing::debug!(target: "room", made = room.is_some(), unread = ?room.as_ref().and_then(|r| r.as_ref().err()), "room: asked of its owner: the room, why it cannot be read, or refused as it has stopped");
     match room {
         Some(Ok(room)) => Json(room).into_response(),
-        Some(Err(why)) => LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, format!("This computer cannot read what you turned on for your TV ({why}), so it shows nothing on your TV now. Turn a lend on for your TV again, and it starts over from that one.")),
+        Some(Err(why)) => LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, format!("This computer cannot read what you opened to this WiFi ({why}), so nothing is open to it now. Open a lend to this WiFi again, and it starts over from that one.")),
         None => LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, "the room cannot be changed on this computer now"),
     }
 }

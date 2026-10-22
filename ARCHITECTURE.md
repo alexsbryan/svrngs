@@ -529,7 +529,8 @@ the origin's body (`origin::reach`, as this computer's person) behind
 `from_this_network`, whose predicate is `network::guess`, dropped when the
 decision changes or the node stops; and `room/route.rs`, `/v1/room`
 (`route::router`, in the record's routes and the home page's), where the
-home page's button and `svrngs room` turn a lend on or off, which
+home page's button and `svrngs room` open a lend to this WiFi or close it
+("Open it to this WiFi", for every lend, any app on a port), which
 translates and decides nothing: a name to the lends of it offered now or
 on already, the network read now to a lend turned on there, the owner's
 answer to JSON or a refusal in its words. `src/room_tests.rs` plants the

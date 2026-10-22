@@ -355,7 +355,7 @@ derived from its id, nothing to choose. Under it:
   by its link; what it is, in its lender's word, never one of svrngs's own
   (`scripts/vocab_check.py` reads the pages' scripts too); whose; how it
   opens (in a tab, signing you in once when its lender's program does; its
-  address for a program; on a TV here, turned on and off there); and on
+  address for a program; opened to this WiFi, or closed, there); and on
   or full now. A computer that did not say what it lends is a row of its
   own, by why, so nothing is stale and nobody is left out — among them one
   running an older svrngs, whose answer is not read field by field
@@ -640,29 +640,33 @@ in three homes on Sam's library at once is the normal evening.
 - *The same room* counts as one person, whoever holds the remote ("The
   room").
 
-**The room: the screen is the app's own client.** A film from a library
-across town plays on the TV in the room, and svrngs gives the room reach and
-nothing more.
-1. *The screen is the app's own client; svrngs gives it reach.* A TV plays a
+**The room: a lend opened to this WiFi, for any device's own app.** A film
+from a library across town plays on the TV in the room, a phone there opens
+a friend's llama-server, and svrngs gives the devices on this WiFi reach and
+nothing more. Every lend can be opened to it, any app on a port; its words
+assume no screen, a TV one device among others.
+1. *A device's own app is the client; svrngs gives it reach.* A TV plays a
    lend through the app's own client for it — Jellyfin's own TV app —
-   pointed at an address on the TV's network; a phone as the remote is the
-   app's own. Nothing in svrngs knows AirPlay, Cast, DLNA, a TV, a player or
-   what a lend serves. Old TV browsers are not supported.
+   pointed at an address on this WiFi; a phone as the remote is the app's
+   own, and a browser on any device is a client too. Nothing in svrngs knows
+   AirPlay, Cast, DLNA, a TV, a player or what a lend serves. Old TV
+   browsers are not supported.
 2. *A computer in the room.* The address comes from a member's computer on
-   the screen's network: not from a phone, since a browser cannot listen,
+   the devices' network: not from a phone, since a browser cannot listen,
    and not from a public address per lend. Its hop to the library is
    computer to computer over iroh, which can go direct, where a browser's is
    relay-only.
-3. *The room is the running node's, turned on per lend.* Its person turns
-   a lend on or off for the room with the button in that lend's row on the
-   home page, or with `svrngs room <name>...`, which asks the svrngs running
+3. *The room is the running node's, turned on per lend.* Its person opens
+   a lend to this WiFi or closes it with the button in that lend's row on
+   the home page ("Open it to this WiFi", "Close it to this WiFi"; "On this
+   WiFi" lists what is open), or opens it with `svrngs room <name>...`, which asks the svrngs running
    here, else the one it starts, at the same loopback route (`/v1/room`):
    the room has one decider (`crates/svrngs-node/src/room.rs`). Each lend on
    is served at a port of its own on this computer's private address,
    decided by its label so it is the same every run, its root its own, in
    one body with the lends' origins on loopback, not a second. It reaches
    each lend as this computer's person, as this computer's own browser
-   does: the screen is this person's own device, and no computer proxies a
+   does: a device on this WiFi is this person's own, and no computer proxies a
    lend for anyone else. It carries what the origins carry: Range, both
    bodies streaming, a WebSocket. The address is the private one the
    outward route leaves from, else the one private address listed, else

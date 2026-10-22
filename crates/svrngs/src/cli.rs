@@ -17,7 +17,7 @@
 //! svrngs unshare <name>                    stop lending it
 //! svrngs share --folder <dir> --group <group> keep a folder the same on every member's disk,
 //!                                          asked of svrngs running here
-//! svrngs room <name>...                    turn lends on for a TV on this computer's WiFi,
+//! svrngs room <name>...                    open lends to this computer's WiFi,
 //!                                          asked of svrngs running here, else run
 //! svrngs remove <name> --group <group> [--joined W]
 //!                                          remove someone from a group, or ask it,
@@ -184,10 +184,10 @@ svrngs — keep what your group shares on your own computers.
       takes it.
 
   svrngs room <name>...
-      Show what your groups lend as <name> on a TV here: anyone on this
-      computer's WiFi can open it, as you, whenever svrngs runs here on that
-      WiFi, until you turn it off on your home page. It says the address to
-      type into the TV's app. Asked of svrngs running here, else it runs.
+      Open what your groups lend as <name> to this computer's WiFi: anyone
+      on it can open it as you, from a TV, a phone or another computer,
+      while svrngs runs here on that WiFi, until you close it on your home
+      page, and says its address. Asked of svrngs running here, else it runs.
 
   svrngs remove <name> --group <group> [--joined <when>]
       Remove <name> from <group>: every computer and phone of theirs. One
@@ -1366,7 +1366,7 @@ impl std::fmt::Display for Said {
                 _ => writeln!(f, "{group} cannot be changed on this computer (RUST_LOG=debug says why)"),
             },
             Said::Room(on) => {
-                writeln!(f, "Whenever svrngs runs here, anyone on this computer's WiFi can open these as you; nobody off it can. Each stays on the WiFi where you turned it on, until you turn it off on your home page.")?;
+                writeln!(f, "Whenever svrngs runs here, anyone on this computer's WiFi can open these as you; nobody off it can. Each stays on the WiFi where you turned it on, until you close it to this WiFi on your home page.")?;
                 for l in on {
                     let whose = l.person.as_ref().map_or(String::new(), |p| format!("{p}'s "));
                     writeln!(f, "{whose}{}: {}", l.name, l.said)?;

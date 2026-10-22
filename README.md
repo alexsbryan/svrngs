@@ -31,6 +31,9 @@ Every line and every button: [`demo/start.md`](demo/start.md).
   proposes, the rest of you agree or object, and the page says when it
   holds. [canon](https://github.com/alexsbryan/canon) decides; svrngs only
   shows it. See [`demo/house-rules.md`](demo/house-rules.md).
+- **Open it to your WiFi.** A lend's row on your home page opens it to the
+  devices on your WiFi, as you: your TV's own app, a phone, another
+  computer. It stays open on that WiFi alone, until you close it.
 - **Put your group on a screen.** Your home page opens any group on a TV
   or a projector: who's on now, what each lends, and who arrived since it
   opened.
