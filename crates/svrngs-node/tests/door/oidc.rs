@@ -52,7 +52,12 @@ fn quoted(u: &str) -> String {
 /// The authorize request's query for `port`'s client, with `extra` appended
 /// as whole `&k=v` pairs.
 fn ask(port: u16, client: &str, extra: &str) -> String {
-    let redirect = quoted(&format!("http://localhost:{port}{PATH}"));
+    ask_to(&format!("http://localhost:{port}{PATH}"), client, extra)
+}
+
+/// The authorize request's query with `redirect` its `redirect_uri`.
+fn ask_to(redirect: &str, client: &str, extra: &str) -> String {
+    let redirect = quoted(redirect);
     format!(
         "response_type=code&client_id={client}&redirect_uri={redirect}\
          &scope=openid%20profile&state={STATE}\
@@ -60,13 +65,19 @@ fn ask(port: u16, client: &str, extra: &str) -> String {
     )
 }
 
-/// `path` asked through `bridge`, with `headers` on the request.
-async fn get(bridge: SocketAddr, path: &str, headers: &str) -> Reply {
+/// `path` asked through `bridge` as the browser at `host`, with `headers` on
+/// the request.
+async fn get_at(bridge: SocketAddr, host: &str, path: &str, headers: &str) -> Reply {
     raw_to(
         bridge,
-        format!("GET {path} HTTP/1.1\r\nHost: local\r\n{headers}Connection: close\r\n\r\n"),
+        format!("GET {path} HTTP/1.1\r\nHost: {host}\r\n{headers}Connection: close\r\n\r\n"),
     )
     .await
+}
+
+/// `path` asked through `bridge`, with `headers` on the request.
+async fn get(bridge: SocketAddr, path: &str, headers: &str) -> Reply {
+    get_at(bridge, "local", path, headers).await
 }
 
 /// The `Location` an answer carries, or none.
@@ -304,6 +315,110 @@ async fn a_members_authorize_answers_a_code_the_token_route_redeems() {
         "a removed member was answered a code: {}",
         refused.text
     );
+    assert!(
+        heads.lock().unwrap().is_empty(),
+        "the service was asked: {:?}",
+        heads.lock().unwrap()
+    );
+
+    pair.close().await;
+}
+
+/// Given a lend signing people in with svrngs, when the app built its
+/// callback on the lend's own origin — the browser's host and scheme, which
+/// the door tells it as `X-Forwarded-Host`/`-Proto` (oidc-jellyfin) — then
+/// the authorize path accepts that redirect beside the app's own
+/// `http://localhost:<port>`, answers a relative `Location`, and the code
+/// redeems for it. Planted: the front channel before this row, which
+/// accepted only `http://localhost:<port>` (red with "the redirect_uri is
+/// not on this lend's own address"); a redirect on another lend's origin,
+/// or on the lender's host with another scheme, refused.
+#[tokio::test]
+async fn the_authorize_path_accepts_the_lends_own_origin_as_the_redirect() {
+    let pair = Pair::new().await;
+    let (origin, heads) = origins::head_origin().await;
+    let port = origin.port();
+    signs_in(&pair, LEND, port, CLIENT, SECRET);
+    signs_in(&pair, OTHER, port, OTHER_CLIENT, OTHER_SECRET);
+    let label = Label::of(pair.a.endpoint().id().as_bytes(), LEND);
+    let other = Label::of(pair.a.endpoint().id().as_bytes(), OTHER);
+    let api = pair.a.api_addr().port();
+    let bo = actor_of(&signing(2));
+
+    // A computer's browser is at <label>.localhost:<its door's port>;
+    // a phone's is at <label>.<page host>, read as https.
+    for (browser, scheme) in [
+        (format!("{label}.localhost:{api}"), "http"),
+        (format!("{label}.svrngs.example"), "https"),
+    ] {
+        let redirect = format!("{scheme}://{browser}{PATH}");
+        let reply = get_at(
+            pair.bridge,
+            &browser,
+            &format!(
+                "/lend/{LEND}/.svrngs/oidc/authorize?{}",
+                ask_to(&redirect, CLIENT, "")
+            ),
+            "",
+        )
+        .await;
+        assert_eq!(reply.status, 302, "on {browser}: {}", reply.text);
+        let loc = location(&reply).expect("a Location");
+        assert!(
+            loc.starts_with(PATH),
+            "the redirect is not relative to the lend's origin: {loc}"
+        );
+        let code = pairs(loc.split_once('?').expect("a query").1)
+            .remove("code")
+            .expect("a code");
+        assert!(
+            heads.lock().unwrap().is_empty(),
+            "the authorize ask reached the app's service: {:?}",
+            heads.lock().unwrap()
+        );
+        let (status, answer) = token(
+            &pair.a,
+            LEND,
+            CLIENT,
+            SECRET,
+            &[
+                ("grant_type", "authorization_code"),
+                ("code", &code),
+                ("redirect_uri", &redirect),
+                ("code_verifier", VERIFIER),
+            ],
+        )
+        .await;
+        assert_eq!(status, 200, "on {browser}: {answer:#}");
+        let claims = claims(answer["id_token"].as_str().expect("an id token"));
+        assert_eq!(claims["sub"], bo, "on {browser}: {claims:#}");
+    }
+
+    // Another lend's origin, and the lend's own label on a host that is not
+    // the browser's, and the browser's host with the other scheme: refused.
+    let host = format!("{label}.localhost:{api}");
+    for redirect in [
+        format!("http://{other}.localhost:{api}{PATH}"),
+        format!("http://{label}.other.example{PATH}"),
+        format!("https://{host}{PATH}"),
+    ] {
+        let reply = get_at(
+            pair.bridge,
+            &host,
+            &format!(
+                "/lend/{LEND}/.svrngs/oidc/authorize?{}",
+                ask_to(&redirect, CLIENT, "")
+            ),
+            "",
+        )
+        .await;
+        assert_eq!(reply.status, 400, "on {redirect}: {}", reply.text);
+        assert!(
+            location(&reply).is_none(),
+            "a redirect off the lend's origin was answered a code: {}",
+            reply.text
+        );
+    }
     assert!(
         heads.lock().unwrap().is_empty(),
         "the service was asked: {:?}",

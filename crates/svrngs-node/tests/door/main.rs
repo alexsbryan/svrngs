@@ -1355,6 +1355,56 @@ async fn the_service_is_asked_on_its_own_address_and_its_redirect_comes_back_a_p
     pair.close().await;
 }
 
+/// The browser's own origin is told to the service as a reverse proxy tells
+/// it (oidc-jellyfin): `X-Forwarded-Host` is the `Host` the browser asked,
+/// and `X-Forwarded-Proto` is `http` for a `*.localhost` host and `https`
+/// otherwise; a value the client typed is displaced, and `Host` is still the
+/// service's own address. Planted: the door before this row, which sent
+/// neither and let a client's through.
+#[tokio::test]
+async fn the_browser_origin_is_told_to_the_service_as_forwarded_headers() {
+    use svrngs_core::pass::Label;
+
+    let pair = Pair::new().await;
+    let (origin, heads) = origins::head_origin().await;
+    pair.lend("shelf", origin.port(), &[]);
+    let own = format!("localhost:{}", origin.port());
+    let label = Label::of(pair.a.endpoint().id().as_bytes(), "shelf");
+    for (host, proto) in [
+        (format!("{label}.localhost:6473"), "http"),
+        (format!("{label}.svrngs.example"), "https"),
+    ] {
+        let reply = pair
+            .raw(
+                format!(
+                    "GET /lend/shelf/whoami HTTP/1.1\r\nHost: {host}\r\n\
+                     x-forwarded-host: evil.example\r\nX-Forwarded-Proto: https\r\n\
+                     Connection: close\r\n\r\n"
+                )
+                .as_bytes(),
+            )
+            .await;
+        assert_eq!(reply.status, 200, "{}", reply.text);
+        let head = last(&heads);
+        assert_eq!(
+            header_values(&head, "x-forwarded-host"),
+            vec![host.as_str()],
+            "the browser's host is not the one the service is told: {head}"
+        );
+        assert_eq!(
+            header_values(&head, "x-forwarded-proto"),
+            vec![proto],
+            "the scheme is not the browser's: {head}"
+        );
+        assert_eq!(
+            header_values(&head, "host"),
+            vec![own.as_str()],
+            "the service's own Host changed: {head}"
+        );
+    }
+    pair.close().await;
+}
+
 /// **A removed person is refused as removed, by pass and by dial** (U7
 /// (e); DESIGN §6; demo/c.md, "Removed"). Ada keeps the group and removes
 /// bo. A pass bo signed for `shelf`, presented by its holder, and bo's own
