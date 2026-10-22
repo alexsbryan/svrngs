@@ -149,7 +149,7 @@ impl Key {
         issuer: &str,
         client: &str,
         at: i64,
-    ) -> Result<serde_json::Value, &'static str> {
+    ) -> Result<Claims, &'static str> {
         let (input, signature) = token
             .rsplit_once('.')
             .ok_or("the token is not three parts")?;
@@ -165,15 +165,15 @@ impl Key {
         let payload = URL_SAFE_NO_PAD
             .decode(payload)
             .map_err(|_| "the token's claims are not base64url")?;
-        let claims: serde_json::Value =
-            serde_json::from_slice(&payload).map_err(|_| "the token's claims are not JSON")?;
-        if claims["iss"] != issuer {
+        let claims: Claims = serde_json::from_slice(&payload)
+            .map_err(|_| "the token's claims are not a sign-in's")?;
+        if claims.iss != issuer {
             return Err("the token is another issuer's");
         }
-        if claims["aud"] != client {
+        if claims.aud != client {
             return Err("the token is another client's");
         }
-        if claims["exp"].as_i64().is_none_or(|exp| exp <= at) {
+        if claims.exp <= at {
             return Err("the token has expired");
         }
         tracing::debug!(target: "oidc", kid = %self.kid, "oidc: a token verified under this computer's key");

@@ -20,11 +20,11 @@ use alloc::string::String;
 
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use base64::Engine as _;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 /// The group a person's token names: the door's closed set
 /// (SIGN_IN_WITH_SVRNGS §8 6).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Group {
     /// A person of the group.
@@ -49,9 +49,11 @@ pub struct Subject {
     pub group: Group,
 }
 
-/// What a sign-in token says about the person, by the claims' own names.
-/// Built only by [`Claims::new`], from the door's [`Subject`].
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+/// What a sign-in token says about the person, by the claims' own names:
+/// the one home of the token's format, written by [`Jwt::signing_input`]
+/// and read back by the node's key when it verifies one. Built only by
+/// [`Claims::new`], from the door's [`Subject`].
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Claims {
     /// The lender's one issuer string, exact.
     pub iss: String,

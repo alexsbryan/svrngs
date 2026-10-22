@@ -406,9 +406,7 @@ async fn userinfo(
         Ok(claims) => claims,
         Err(why) => return refuse(StatusCode::UNAUTHORIZED, "invalid_token", why),
     };
-    if let Some(object) = claims.as_object_mut() {
-        object.remove("nonce");
-    }
+    claims.nonce = None;
     tracing::debug!(target: "oidc", %issuer, client = %config.client_id, "oidc: userinfo answered");
     Json(claims).into_response()
 }
