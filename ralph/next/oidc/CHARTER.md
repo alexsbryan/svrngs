@@ -55,6 +55,20 @@ remaining rows are expected to fit: the front channel and the switch are
 the node's, the runs are `demo/runs/`, and the retirement cuts. The
 retirement's cut lowers the caps to where it lands.
 
+## What the operator decided, 2026-10-21, of the sign-in hook
+
+Asked at the budget wall, the operator authorized the cut the survey
+named: `crates/svrngs-node/src/door/sign_in.rs` and its wiring retire (the
+survey's 420 counted lines, `demo/runs/economize/2026-10-21-oidc/SURVEY.md`,
+4239bc7c), because sign-in with svrngs makes the hook userless and the
+queue has no room beside it. It lands in `oidc-hook-cut`, its own commit
+before `oidc-turn-on` adds a line; `apps/jellyfin/mw/` and the
+`helper jellyfin` row stay for `oidc-retire`, which removes them after the
+Jellyfin trial, so a failed trial is reverted with git, not re-bought.
+DESIGN §3 "The room" call 6 is rewritten in place: the hook is gone, and
+sign-in with svrngs is the door's own. A lend declaration holding the old
+field is refused as unknown, never ignored.
+
 ## Why
 
 The app already knows who the person is: the door sends `x-svrngs-key`,
