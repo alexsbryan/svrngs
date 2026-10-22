@@ -1,5 +1,15 @@
 # Needs the operator — Forgejo cannot auto-register without an email
 
+## Decided (director, 2026-10-22)
+
+Forgejo waits on `MAIL.md`. The charter's §8 4 resolution ("no `email`
+until mail is real") is the operator's and is not reopened, and a
+synthesized address is refused by §8 4 and by the queue's fence 6. So
+Forgejo joins Grafana, Open WebUI and Mealie in the waits, and the row
+closes there. `oidc-retire` is Jellyfin's retirement (the operator's
+reason), not Forgejo work, and it proceeds. The run's verdicts stand:
+bar 1 failed, not could-not-judge.
+
 **Question.** Forgejo 17.0.0's stock OIDC client creates an account only
 when the OIDC user carries an `email` claim; svrngs sends none by design.
 Does Forgejo wait on `MAIL.md` (the trial's second app is not served, and
