@@ -584,7 +584,7 @@ pub enum Refusal {
     #[error("cannot keep {0} on this computer (RUST_LOG=debug says why)")]
     KeepLend(LendName),
     #[error("cannot make a sign-in for it on this computer: {0}")]
-    SignIn(#[from] svrngs_node::oidc::KeyError),
+    SignIn(#[from] svrngs_node::oidc::KeyFailure),
     #[error("cannot read what you lend on this computer: {0}")]
     Lends(lend::LendError),
     #[error("you lend nothing called {name} from this computer{}", lent_now(.lent))]

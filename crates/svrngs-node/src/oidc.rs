@@ -19,7 +19,7 @@ use ring::signature::{
     EcdsaKeyPair, KeyPair, UnparsedPublicKey, ECDSA_P256_SHA256_FIXED,
     ECDSA_P256_SHA256_FIXED_SIGNING,
 };
-use svrngs_core::token::{Claims, Token};
+use svrngs_core::token::{Claims, Jwt};
 
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use base64::Engine as _;
@@ -38,9 +38,9 @@ pub const DEVIATIONS: &str = "It is plain http on this computer, not https; it s
 /// A fresh client id and secret for a lend's sign-in, made from
 /// [`crate::lend::client_alphabet`]'s characters only (§5a, because
 /// clients disagree on how Basic credentials are encoded), drawn this run.
-pub fn client() -> Result<SignInWithSvrngs, KeyError> {
+pub fn client() -> Result<SignInWithSvrngs, KeyFailure> {
     let rng = SystemRandom::new();
-    let draw = |bytes: &mut [u8]| rng.fill(bytes).map_err(KeyError::Random);
+    let draw = |bytes: &mut [u8]| rng.fill(bytes).map_err(KeyFailure::Random);
     let (mut id, mut secret) = ([0u8; 24], [0u8; 32]);
     draw(&mut id)?;
     draw(&mut secret)?;
@@ -59,7 +59,7 @@ pub fn key_dir(data_dir: &Path) -> PathBuf {
 
 /// Why a token could not be made.
 #[derive(Debug, thiserror::Error)]
-pub enum KeyError {
+pub enum KeyFailure {
     #[error("cannot keep the sign-in key at {0}: {1}")]
     Store(PathBuf, std::io::Error),
     #[error("the sign-in key at {0} is not an ES256 key: {1}")]
@@ -87,7 +87,7 @@ impl std::fmt::Debug for Key {
 
 /// The key at `data_dir`, made and kept owner-only if this computer has
 /// none yet, else the one it kept; the same across a restart.
-pub fn load_or_create(data_dir: &Path) -> Result<Key, KeyError> {
+pub fn load_or_create(data_dir: &Path) -> Result<Key, KeyFailure> {
     let dir = key_dir(data_dir);
     let path = dir.join(KEY_FILE);
     let rng = SystemRandom::new();
@@ -98,17 +98,17 @@ pub fn load_or_create(data_dir: &Path) -> Result<Key, KeyError> {
         }
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
             let document = EcdsaKeyPair::generate_pkcs8(&ECDSA_P256_SHA256_FIXED_SIGNING, &rng)
-                .map_err(KeyError::Random)?;
-            crate::declared::secret_dir(&dir).map_err(|e| KeyError::Store(dir.clone(), e))?;
+                .map_err(KeyFailure::Random)?;
+            crate::declared::secret_dir(&dir).map_err(|e| KeyFailure::Store(dir.clone(), e))?;
             crate::declared::write_secret(&path, document.as_ref())
-                .map_err(|(at, e)| KeyError::Store(at, e))?;
+                .map_err(|(at, e)| KeyFailure::Store(at, e))?;
             tracing::debug!(target: "oidc", path = %path.display(), "oidc: made one sign-in key for this computer, once, owner-only");
             document.as_ref().to_vec()
         }
-        Err(e) => return Err(KeyError::Store(path, e)),
+        Err(e) => return Err(KeyFailure::Store(path, e)),
     };
     let pair = EcdsaKeyPair::from_pkcs8(&ECDSA_P256_SHA256_FIXED_SIGNING, &bytes, &rng)
-        .map_err(|e| KeyError::Rejected(path.clone(), e))?;
+        .map_err(|e| KeyFailure::Rejected(path.clone(), e))?;
     let point = pair.public_key().as_ref().to_vec();
     let kid = kid_of(&point);
     tracing::debug!(target: "oidc", kid, "oidc: the sign-in key is ready");
@@ -128,12 +128,12 @@ impl Key {
     }
 
     /// The token the core spells, signed with this key.
-    pub fn token(&self, claims: Claims) -> Result<String, KeyError> {
-        let token = Token::new(claims, &self.kid);
+    pub fn token(&self, claims: Claims) -> Result<String, KeyFailure> {
+        let token = Jwt::new(claims, &self.kid);
         let signature = self
             .pair
             .sign(&self.rng, token.signing_input().as_bytes())
-            .map_err(KeyError::Sign)?;
+            .map_err(KeyFailure::Sign)?;
         let signed = token.signed(signature.as_ref());
         tracing::debug!(target: "oidc", kid = %self.kid, sub = %token.claims.sub, aud = %token.claims.aud, "oidc: signed a token");
         Ok(signed)

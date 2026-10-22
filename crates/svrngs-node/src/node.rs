@@ -190,7 +190,7 @@ pub enum NodeError {
     #[error(transparent)]
     Api(#[from] crate::api::ApiError),
     #[error(transparent)]
-    Oidc(#[from] crate::oidc::KeyError),
+    Oidc(#[from] crate::oidc::KeyFailure),
 }
 
 /// A running node. Dropping it stops its round and its accept loop.

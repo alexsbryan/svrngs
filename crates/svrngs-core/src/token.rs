@@ -13,7 +13,7 @@
 //!
 //! Pure and synchronous (RUST_ARCH §2): this module spells the header, the
 //! claims and the signing input. The node signs the input with the
-//! lender's ES256 key ([`Token::signed`]), and the core links no signature
+//! lender's ES256 key ([`Jwt::signed`]), and the core links no signature
 //! crate.
 
 use alloc::string::String;
@@ -102,13 +102,13 @@ struct Header<'a> {
 /// verify it. [`Self::signing_input`] is the bytes the node's ES256 key
 /// signs, and [`Self::signed`] is the token an app receives.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Token {
+pub struct Jwt {
     /// What the app is told about the person.
     pub claims: Claims,
     kid: String,
 }
 
-impl Token {
+impl Jwt {
     /// The claims, to be signed by the key `kid` names.
     pub fn new(claims: Claims, kid: &str) -> Self {
         tracing::debug!(target: "oidc", kid, sub = %claims.sub, aud = %claims.aud, "oidc: a token, before its signature");

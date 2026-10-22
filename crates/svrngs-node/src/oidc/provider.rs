@@ -43,7 +43,7 @@ use svrngs_core::token::{Claims, Group};
 
 use crate::lend::{self, Lend, LendName, SignInWithSvrngs, Source};
 
-use super::{Key, KeyError};
+use super::{Key, KeyFailure};
 
 /// Where the person's browser is sent to sign in: on the lend's own origin,
 /// which the door answers for every lend (SIGN_IN_WITH_SVRNGS §5 "The front
@@ -89,7 +89,7 @@ pub struct Provider {
 impl Provider {
     /// The provider for the API at `port`, with the lender's key read or
     /// made once in `data_dir` (the key's one home).
-    pub fn new(data_dir: PathBuf, port: u16) -> Result<Self, KeyError> {
+    pub fn new(data_dir: PathBuf, port: u16) -> Result<Self, KeyFailure> {
         let key = super::load_or_create(&data_dir)?;
         tracing::debug!(target: "oidc", port, "oidc: the provider's back channel is ready");
         Ok(Self {

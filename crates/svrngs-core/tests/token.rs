@@ -3,7 +3,7 @@
 //! §5; §8 1, 4), and a guest is a guest (§8 6).
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use base64::Engine as _;
-use svrngs_core::token::{Claims, Group, Token};
+use svrngs_core::token::{Claims, Group, Jwt};
 
 /// The person's key as the record spells an actor: 64 lowercase hex.
 const SUB: &str = "9f2c0a1b3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8";
@@ -33,7 +33,7 @@ fn decoded(part: &str) -> serde_json::Value {
 /// own fields — no email, and group membership as sent.
 #[test]
 fn the_claims_are_what_the_door_already_sends() {
-    let token = Token::new(claims(Group::Member), "a-kid");
+    let token = Jwt::new(claims(Group::Member), "a-kid");
     let input = token.signing_input();
     let (header, payload) = input.split_once('.').expect("header.payload");
 
@@ -79,7 +79,7 @@ fn the_claims_are_what_the_door_already_sends() {
 /// A guest's token names the guest, never their host.
 #[test]
 fn a_guest_is_a_guest() {
-    let token = Token::new(claims(Group::Guest), "a-kid");
+    let token = Jwt::new(claims(Group::Guest), "a-kid");
     let input = token.signing_input();
     let (_, payload) = input.split_once('.').unwrap();
     let payload = decoded(payload);
@@ -90,7 +90,7 @@ fn a_guest_is_a_guest() {
 /// The signature is the third base64url part of the input it signed.
 #[test]
 fn the_signature_completes_the_signing_input() {
-    let token = Token::new(claims(Group::Member), "a-kid");
+    let token = Jwt::new(claims(Group::Member), "a-kid");
     let input = token.signing_input();
     let signature = [7u8; 64];
     let signed = token.signed(&signature);
@@ -105,7 +105,7 @@ fn the_signature_completes_the_signing_input() {
 #[test]
 fn a_nonce_is_echoed_when_sent_and_omitted_otherwise() {
     let mut claims = claims(Group::Member);
-    let plain = Token::new(claims.clone(), "a-kid").signing_input();
+    let plain = Jwt::new(claims.clone(), "a-kid").signing_input();
     let (_, payload) = plain.split_once('.').unwrap();
     let payload = decoded(payload);
     assert!(
@@ -114,7 +114,7 @@ fn a_nonce_is_echoed_when_sent_and_omitted_otherwise() {
     );
 
     claims.nonce = Some("n-0S6_WzA2Mj".into());
-    let sent = Token::new(claims, "a-kid").signing_input();
+    let sent = Jwt::new(claims, "a-kid").signing_input();
     let (_, payload) = sent.split_once('.').unwrap();
     let payload = decoded(payload);
     assert_eq!(payload["nonce"], "n-0S6_WzA2Mj");
