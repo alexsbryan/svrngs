@@ -13,7 +13,8 @@
 //! `--relay` (relay-verb (c)) it keeps `svrngs relay` running beside
 //! svrngs on macOS, and on Linux prints the system unit, installing none;
 //! a relay's agent is recorded by the stub, never run, since it would take
-//! this computer's ports 80 and 443.
+//! this computer's ports 80 and 443. Run where `$SHELL` names zsh or bash,
+//! it puts `~/.local/bin` on that shell's PATH, once.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 #[path = "../../svrngs-node/tests/browser/harness.rs"]
@@ -185,18 +186,34 @@ async fn paste(port: u16, link: &str, home: &Path, uname: Option<&str>) -> Outpu
 
 /// The line with `more` after the link.
 async fn paste_more(port: u16, link: &str, more: &str, home: &Path, uname: Option<&str>) -> Output {
+    paste_in(port, link, more, home, uname, None).await
+}
+
+/// The line pasted in a terminal whose login shell is `shell`, as `$SHELL`
+/// names it; with none, a terminal that names none.
+async fn paste_in(
+    port: u16,
+    link: &str,
+    more: &str,
+    home: &Path,
+    uname: Option<&str>,
+    shell: Option<&str>,
+) -> Output {
     let line = format!("curl -fsSL http://127.0.0.1:{port}/install.sh | sh -s -- '{link}'{more}");
     let path = format!(
         "{}:/usr/bin:/bin:/usr/sbin:/sbin",
         stubs(home, uname).display()
     );
-    let out = tokio::process::Command::new("/bin/sh")
-        .args(["-c", &line])
+    let mut sh = tokio::process::Command::new("/bin/sh");
+    sh.args(["-c", &line])
         .env_clear()
         .env("HOME", home)
         .env("PATH", path)
-        .env("USER", "Alex")
-        .output();
+        .env("USER", "Alex");
+    if let Some(shell) = shell {
+        sh.env("SHELL", shell);
+    }
+    let out = sh.output();
     let out = tokio::time::timeout(Duration::from_secs(120), out)
         .await
         .expect("the line ends within two minutes")
@@ -432,6 +449,66 @@ async fn a_founder_s_line_installs_keeps_svrngs_at_login_and_opens_the_home_page
         // install.sh spells the file in shell, so it is pinned here.
         let origin = std::fs::read_to_string(data.join(ORIGIN_FILE)).unwrap();
         assert_eq!(origin, page, "the page svrngs came from, kept");
+    }
+}
+
+/// **svrngs on the login shell's PATH** (the room's report, 3: a person
+/// could not run `svrngs` by name after install.sh). A founder's line, run
+/// twice in a terminal that does not look in `~/.local/bin`: for zsh it
+/// adds that directory to `~/.zshrc`, for bash on Linux to `~/.bashrc`
+/// and on macOS to `~/.bash_profile`, as rustup and uv add theirs; it says
+/// what it changed and that a new terminal window picks it up, and the
+/// second run adds no second line and says it is there already. What the
+/// profile held before stays. Planted, watched failing: install.sh as
+/// e01c070a left it, which only printed where svrngs is.
+#[tokio::test(flavor = "multi_thread")]
+async fn the_line_puts_svrngs_on_the_login_shell_s_path() {
+    let site = site(None);
+    as_linux(site.path());
+    let port = host(site.path().to_path_buf()).await;
+    let page = format!("http://127.0.0.1:{port}/");
+    let mac = cfg!(target_os = "macos");
+    let mut runs = vec![("/bin/bash", Some("Linux x86_64"), ".bashrc")];
+    if mac {
+        runs.push(("/bin/zsh", None, ".zshrc"));
+        runs.push(("/bin/bash", None, ".bash_profile"));
+    } else {
+        runs.push(("/usr/bin/zsh", Some("Linux x86_64"), ".zshrc"));
+    }
+    for (shell, uname, file) in runs {
+        let home = tempfile::tempdir().unwrap();
+        let _started = Started(home.path().to_path_buf());
+        let profile = home.path().join(file);
+        std::fs::write(&profile, "alias ll='ls -l'\n").unwrap();
+        let bin = home.path().join(".local/bin");
+        let line = format!("export PATH=\"{}:$PATH\"", bin.display());
+        let first = paste_in(port, &page, "", home.path(), uname, Some(shell)).await;
+        let said = String::from_utf8_lossy(&first.stdout);
+        assert!(first.status.success(), "{shell} {uname:?}: {said}");
+        let added = format!(
+            "Added {} to where your terminal looks for programs, in {}. Open a new terminal window, and svrngs runs there by name.",
+            bin.display(),
+            profile.display()
+        );
+        assert!(
+            said.contains(&added),
+            "{shell} {uname:?}: not said: {added}\n{said}"
+        );
+        let again = paste_in(port, &page, "", home.path(), uname, Some(shell)).await;
+        let said = String::from_utf8_lossy(&again.stdout);
+        assert!(again.status.success(), "{shell} {uname:?}: {said}");
+        let there = format!(
+            "{} already adds {} to where your terminal looks for programs. Open a new terminal window, and svrngs runs there by name.",
+            profile.display(),
+            bin.display()
+        );
+        assert!(
+            said.contains(&there),
+            "{shell} {uname:?}: not said: {there}\n{said}"
+        );
+        let held = std::fs::read_to_string(&profile).unwrap();
+        assert!(held.starts_with("alias ll='ls -l'\n"), "{held}");
+        assert_eq!(held.matches(&line).count(), 1, "{shell} {uname:?}: {held}");
     }
 }
 
