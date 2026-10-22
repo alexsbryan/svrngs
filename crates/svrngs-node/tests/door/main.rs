@@ -20,6 +20,7 @@ mod common;
 mod guests;
 mod limit;
 mod newcomer;
+mod oidc;
 mod origins;
 mod sign_in;
 
