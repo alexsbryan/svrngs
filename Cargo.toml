@@ -19,6 +19,12 @@ serde_json = "1"
 thiserror = "2"
 tracing = "0.1"
 
+# Debug info is line tables only: a backtrace keeps its files and lines, and
+# target/debug sheds the variable info, most of its bytes, that a debugger
+# would read; svrngs is debugged by its traces (AGENTS.md 1).
+[profile.dev]
+debug = "line-tables-only"
+
 # Dependencies are built optimised in dev and test builds; the workspace's own
 # crates stay unoptimised.
 [profile.dev.package."*"]

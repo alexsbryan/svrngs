@@ -37,34 +37,34 @@ if [ -f Cargo.toml ]; then
   # once, in its own step below, and not again here.
   step "tests"    cargo test --quiet
   # The canaries (DESIGN §5), by name: the apps that keep the infra general.
-  step "canaries" cargo test --quiet -p svrngs-node --test canaries
+  step "canaries" cargo test --quiet --workspace --test canaries
   # The ceiling's canary (DESIGN §5, "The canaries"; PLAN §4, "The ceiling";
   # ceiling-4), the one scale number held here: at 25 members and 10,000 acts
   # an idle round under 0.1 s of processor, in release, by name from the
   # ignored instrument. Its reading is printed, passed or failed.
   step "ceiling canary" cargo test --release --quiet -p svrngs-node --test scale -- --ignored --exact an_idle_round_is_under_the_ceiling --nocapture
-  grep -h '^CEILING' /tmp/svrngs-check.$$ | sed 's/^/           /'
+  grep -h '^CEILING' /tmp/svrngs-check.$$ | sed 's/^/           /' | grep . || { echo "never-ran  ceiling canary: no CEILING reading, so no test of that name ran"; failed=1; }
   # The page (PLAN §4, U4): its crate is a workspace of its own, for wasm.
   step "web rustfmt and clippy" scripts/build-web.sh --lint
   # The page in a browser, by name: it builds the page, runs a relay
   # and a node on 127.0.0.1 and drives Playwright's Chromium, and its
   # WebKit as an iPhone, each test in both (u4-7). Without Playwright or its
   # browsers it fails naming the install command; it never skips.
-  step "browser" cargo test --quiet -p svrngs-node --test browser
+  step "browser" cargo test --quiet --workspace --test browser
   # The film's seeks on a host past the seek bar's load bar (bash-film-load;
   # crates/svrngs-node/tests/browser/load.rs, conformance's too): said apart,
   # never a pass.
   sed 's/^/could-not-judge /' target/could-not-judge/browser.txt 2>/dev/null
   # A phone joining by the link `svrngs new --origin` prints (u4-5), in
   # both engines.
-  step "joining in a browser" cargo test --quiet -p svrngs --test join_page
+  step "joining in a browser" cargo test --quiet --workspace --test join_page
   # The conformance canary (DESIGN §5; u5-2): apps/web-conformance, lent by
   # two computers, opened from a computer and from a phone, each app at an
   # address of its own (DESIGN §7), in both engines; and, with accounts of its
   # own, two people signed in through a lend's sign-in (mwp-4). Each route's
   # verdict per way is printed, once for every engine and lender that agree.
   rm -rf target/conformance
-  step "conformance canary" cargo test --quiet -p svrngs-node --test conformance
+  step "conformance canary" cargo test --quiet --workspace --test conformance
   cat target/conformance/*.txt 2>/dev/null | grep -v could-not-judge | cut -c1-10,25- | sort -u | sed 's/^/           /'
   # Chromium's seeks on a host past its load bar (chk-1; tests/browser/load.rs): said apart, never a pass.
   grep -h could-not-judge target/conformance/*.txt 2>/dev/null | sed 's/^/could-not-judge /'
