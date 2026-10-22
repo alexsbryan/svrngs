@@ -108,8 +108,8 @@ no-email rule is §8 4 (`rings/current/SIGN_IN_WITH_SVRNGS.md:306-313`).
 
 ## The close
 
-The run's data, README and driver are committed. `scripts/check.sh` runs
-at this close under `ralph-result await`; the tree has no product change
-from this row (`demo/runs/` only). The trust floor is unchanged, and
-`scripts/lean_check.py` reads svrngs-core 3,152 of 3,153 and the
-repository 17,421 of 17,423 (`data/lean.txt`).
+The run's data, README and driver are committed. `scripts/check.sh` passed
+at this tree: exit 0 in 781.64 s, every gate `passed` (`data/check.txt`).
+The tree has no product change from this row (`demo/runs/` only). The trust
+floor is unchanged, and `scripts/lean_check.py` reads svrngs-core 3,152 of
+3,153 and the repository 17,421 of 17,423 (`data/lean.txt`).

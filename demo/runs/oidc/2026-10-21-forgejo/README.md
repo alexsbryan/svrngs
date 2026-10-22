@@ -109,9 +109,9 @@ svrngs**; the driver now follows that address, which types nothing.
 - **`scripts/lean_check.py`**: svrngs-core **3,152 of 3,153**, the
   repository **17,421 of 17,423** (`data/lean.txt`), both inside the
   operator's 17,728 and 3,153.
-- **`scripts/check.sh`** runs at this close under `ralph-result await`;
-  its log is the session's `oidc-forgejo-*.await.log`. The run adds no
-  product code, only `demo/runs/`, which the budget excludes.
+- **`scripts/check.sh` passed at this tree**: exit 0 in 781.64 s, every gate
+  `passed` (`data/check.txt`). The run adds no product code, only
+  `demo/runs/`, which the budget excludes.
 
 ## What the operator has to decide
 
