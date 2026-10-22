@@ -428,6 +428,48 @@ async fn the_authorize_path_accepts_the_lends_own_origin_as_the_redirect() {
     pair.close().await;
 }
 
+/// Given a lend signing people in with svrngs, when a device in the room
+/// reaches it at the room's address, `http://<private address>:<port>/`
+/// (DESIGN §3 "The room", call 3; room.rs), plain http, then the service is
+/// told that scheme, and the authorize path takes a redirect on that
+/// `http://` origin as the lend's own. Red at dd7721c7: the door told the
+/// service `X-Forwarded-Proto: https` (door.rs `scheme_of`, which read
+/// every host but `*.localhost` as https), and refused the redirect 400,
+/// "the redirect_uri is not on this lend's own address".
+#[tokio::test]
+async fn a_rooms_address_is_told_http_and_its_origin_passes_authorize() {
+    let pair = Pair::new().await;
+    let (origin, heads) = origins::head_origin().await;
+    signs_in(&pair, LEND, origin.port(), CLIENT, SECRET);
+    let room = "192.168.1.20:7123";
+
+    let reply = get_at(pair.bridge, room, &format!("/lend/{LEND}/whoami"), "").await;
+    assert_eq!(reply.status, 200, "{}", reply.text);
+    let head = last(&heads);
+    assert_eq!(
+        header_values(&head, "x-forwarded-proto"),
+        vec!["http"],
+        "the room's scheme is not the one its browser used: {head}"
+    );
+
+    let redirect = format!("http://{room}{PATH}");
+    let reply = get_at(
+        pair.bridge,
+        room,
+        &format!(
+            "/lend/{LEND}/.svrngs/oidc/authorize?{}",
+            ask_to(&redirect, CLIENT, "")
+        ),
+        "",
+    )
+    .await;
+    assert_eq!(reply.status, 302, "{}", reply.text);
+    let loc = location(&reply).expect("a Location");
+    assert!(loc.starts_with(&format!("{PATH}?code=")), "{loc}");
+
+    pair.close().await;
+}
+
 /// Sam's visit key, which Sam's page makes fresh for this visit.
 const SAM: u8 = 9;
 /// The key a lend's origin on Sam's page dials with, holding Sam's pass.

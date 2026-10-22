@@ -173,3 +173,22 @@ fn a_clock_before_1970_is_no_time() {
         Some(7)
     );
 }
+
+/// The scheme a lend's service is told is the one the browser used:
+/// plain http where svrngs serves the lend itself — a `*.localhost` origin
+/// on a computer, and an address, as the room serves each lend at
+/// `http://<private address>:<port>/` (room.rs) — and https at a page
+/// host's name, where a phone opens it. Red at dd7721c7: both addresses
+/// were told `https`.
+#[test]
+fn the_scheme_told_is_the_one_the_browser_used() {
+    for (host, scheme) in [
+        ("umfrj1nx.localhost:6473", "http"),
+        ("192.168.1.20:7123", "http"),
+        ("[fd12:3456::20]:7123", "http"),
+        ("umfrj1nx.svrnme.sh", "https"),
+        ("umfrj1nx.group.example:8443", "https"),
+    ] {
+        assert_eq!(scheme_of(host), scheme, "{host}");
+    }
+}
