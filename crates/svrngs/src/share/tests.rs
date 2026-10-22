@@ -191,7 +191,8 @@ fn navidrome_and_calibre_web_take_the_person_from_the_door_s_header() {
 )]
 fn a_lend_shared_with_no_limit_lets_a_fourth_in_at_once() {
     use std::time::Instant;
-    use svrngs_node::door::limit::{Counts, Verdict, Whereabouts};
+    use svrngs_node::door::limit::{Counts, Verdict};
+    use svrngs_node::network::Whereabouts;
     let jf = Kind::parse("jellyfin").unwrap();
     let lend = lend_of(&share(8096), |_| true, Some(jf)).unwrap();
     let (mut counts, now) = (Counts::default(), Instant::now());

@@ -21,7 +21,7 @@
 //!
 //! **Only on the network it was turned on at** ([`serves`]): each lend
 //! keeps the network it was turned on at, told apart by its router's
-//! hardware address ([`look`]), and is served only while this computer is
+//! hardware address ([`crate::network`]), and is served only while this computer is
 //! on that network, read again every [`LOOK_EVERY`]. On another network, or
 //! one that cannot be read, it is not served, and the room says why.
 //!
@@ -32,7 +32,7 @@
 //! address and by network.
 
 use std::collections::BTreeMap;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::net::{Ipv4Addr, SocketAddr};
 use std::time::Duration;
 
 use axum::extract::{ConnectInfo, Request, State};
@@ -46,9 +46,9 @@ use serde::{Deserialize, Serialize};
 use svrngs_core::pass::Label;
 use tokio::sync::{mpsc, oneshot};
 
-use crate::door::limit::{guess, Whereabouts};
 use crate::door::LendRefusal;
 use crate::lend::LendName;
+use crate::network::{guess, look, pick, route, Network, Whereabouts};
 use crate::node::Asking;
 use crate::Person;
 
@@ -66,110 +66,6 @@ pub const ROOM_FILE: &str = "room.json";
 /// and routing tables (5-9 ms here, netdev's) and configd's state (5 ms a
 /// `scutil`), and sends nothing; nothing is read while nothing is on.
 const LOOK_EVERY: Duration = Duration::from_secs(5);
-
-/// A network, by its router's hardware address: what tells home from a
-/// café whose router gives this computer the same private address.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Network(String);
-
-/// The network this computer is on, by its router's hardware address, and
-/// its addresses there, for [`pick`]: read from its default route's
-/// interface (netdev), the router's hardware address from where this
-/// computer keeps it ([`routers`], [`hardware_in`]). No network when any of
-/// it cannot be read, never a guess.
-pub fn look() -> (Option<Network>, Vec<IpAddr>) {
-    let iface = netdev::get_default_interface();
-    let router = (iface.as_ref().ok()).and_then(|i| i.gateway.as_ref()?.ipv4.first().copied());
-    let addrs = |i: &netdev::Interface| i.ipv4.iter().map(|n| IpAddr::V4(n.addr())).collect();
-    let listed = iface.as_ref().map_or(Vec::new(), addrs);
-    let network = router
-        .and_then(|r| hardware_in(&routers()?, r))
-        .map(Network);
-    tracing::debug!(target: "room", error = ?iface.err(), ?router, ?network, ?listed, "room: the network read by its router's hardware address, none when any of it is unread");
-    (network, listed)
-}
-
-/// Where this computer keeps its router's hardware address: on macOS, the
-/// primary network service's state in configd (`scutil`), as macOS
-/// resolved it for the network's own signature, since the ARP table is
-/// hidden from a program not let find devices on the network (`arp -n`
-/// answered "no entry" to the tests' process here, and its full answer to a
-/// terminal); on Linux, the ARP table, `/proc/net/arp`.
-#[cfg(target_os = "macos")]
-fn routers() -> Option<String> {
-    use std::process::{Command, Stdio};
-    let show = |key: &str| {
-        let mut scutil = Command::new("/usr/sbin/scutil");
-        let mut scutil = (scutil.stdin(Stdio::piped()).stdout(Stdio::piped()).spawn()).ok()?;
-        std::io::Write::write_all(
-            &mut scutil.stdin.take()?,
-            format!("show {key}\n").as_bytes(),
-        )
-        .ok()?;
-        String::from_utf8(scutil.wait_with_output().ok()?.stdout).ok()
-    };
-    let global = show("State:/Network/Global/IPv4")?;
-    let service = global
-        .lines()
-        .find_map(|l| l.trim().strip_prefix("PrimaryService : "))?;
-    show(&format!("State:/Network/Service/{service}/IPv4"))
-}
-#[cfg(not(target_os = "macos"))]
-fn routers() -> Option<String> {
-    std::fs::read_to_string("/proc/net/arp").ok()
-}
-
-/// The hardware address of `router` in `text`, as [`routers`] reads it:
-/// configd's `ARPResolvedHardwareAddress` line (macOS), or the router's row
-/// of the ARP table (Linux); as six octets in two hex digits each, `None`
-/// when absent or incomplete (all zeros).
-pub fn hardware_in(text: &str, router: Ipv4Addr) -> Option<String> {
-    let router = router.to_string();
-    let word = text
-        .lines()
-        .find_map(|l| match l.split_whitespace().collect::<Vec<_>>()[..] {
-            ["ARPResolvedHardwareAddress", ":", mac] => Some(mac),
-            [ip, _, _, mac, ..] if ip == router => Some(mac),
-            _ => None,
-        })?;
-    let octets = word.split(':').map(|o| u8::from_str_radix(o, 16).ok());
-    let octets: Vec<u8> = octets.collect::<Option<_>>()?;
-    let hex: Vec<String> = octets.iter().map(|o| format!("{o:02x}")).collect();
-    (octets.len() == 6 && octets.iter().any(|o| *o != 0)).then(|| hex.join(":"))
-}
-
-/// The address a room's devices reach this computer at, from the
-/// addresses its default route's interface lists ([`look`]) and the one
-/// its outward route leaves from ([`route`]): that one when it is a
-/// private IPv4 address listed; else the one private IPv4 address listed;
-/// else `None`, absence, said so by the caller. Never loopback, a wildcard,
-/// link-local, tailscale's 100.64/10 — a device on the room's WiFi cannot
-/// reach it, so "the LAN before tailscale" upstream measured is "instead
-/// of" here — or a public address. A container's bridge is private too,
-/// and is told from the LAN only by the route, which does not leave by it.
-pub fn pick(listed: &[IpAddr], route: Option<IpAddr>) -> Option<Ipv4Addr> {
-    let v4 = |a: &IpAddr| match a.to_canonical() {
-        IpAddr::V4(v4) if v4.is_private() => Some(v4),
-        _ => None,
-    };
-    let private: Vec<Ipv4Addr> = listed.iter().filter_map(v4).collect();
-    let routed = route.as_ref().and_then(v4).filter(|r| private.contains(r));
-    let picked = routed.or(match private[..] {
-        [one] => Some(one),
-        _ => None,
-    });
-    tracing::debug!(target: "room", ?listed, ?route, ?private, ?picked, "room: the address picked — the route's if private and listed, else the one private, else none");
-    picked
-}
-
-/// The address this computer's outward route leaves from: a UDP socket
-/// connected to a public address, which sends nothing (upstream's
-/// fallback, `commonwealth-discovery/src/mesh_discovery.rs:290-298`).
-pub fn route() -> Option<IpAddr> {
-    let probe = std::net::UdpSocket::bind("0.0.0.0:0").ok()?;
-    probe.connect("1.1.1.1:80").ok()?;
-    probe.local_addr().ok().map(|a| a.ip())
-}
 
 /// The port the room serves `label` at: the same on every run, so a
 /// device is typed the address once (PLAN §4, U6's inventory), and below

@@ -2682,7 +2682,7 @@ in_both_engines!(
     the_home_page_shows_a_lend_on_a_tv_and_turns_it_off
 );
 async fn the_home_page_shows_a_lend_on_a_tv_and_turns_it_off(engine: Engine) {
-    let ip = match svrngs_node::room::route() {
+    let ip = match svrngs_node::network::route() {
         Some(std::net::IpAddr::V4(v4)) if v4.is_private() => v4,
         other => panic!(
             "could not judge: this host's route leaves by {other:?}, no private address to serve a room on"

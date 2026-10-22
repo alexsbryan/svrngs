@@ -77,6 +77,9 @@ pub mod surface;
 /// The home page at `svrngs.localhost` (sup-2).
 pub mod home;
 pub mod origin;
+// Where this computer is, and on which network: the router's hardware
+// address, this computer's address there, a caller's (the room; the door).
+pub mod network;
 // The room, u6-1's (docs/DESIGN.md §3, "The room"): the lends a person
 // turns on, served by the running node on the network each was turned on at.
 pub mod room;

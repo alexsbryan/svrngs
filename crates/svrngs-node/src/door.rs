@@ -95,9 +95,10 @@ use tokio::sync::{mpsc, oneshot};
 use crate::declared::read_declared_in;
 use crate::iroh::{Dialer, Via};
 use crate::lend::{self, Lend, LendName, Offered, Source};
+use crate::network::Whereabouts;
 use crate::ring_routes::err;
 use crate::{register::Visiting, Person, RingRail};
-use limit::{Counts, Verdict, Whereabouts};
+use limit::{Counts, Verdict};
 use svrngs_core::pass::{Label, Pass};
 use svrngs_core::token::Group;
 
@@ -1332,7 +1333,7 @@ pub(crate) async fn lend_for(
     if observed.is_none() {
         tracing::debug!(target: "door", actor, lend = %lend.name, "door: no path observed, so the person is taken to be away");
     }
-    let whereabouts = limit::guess(observed.and_then(|o| o.addr));
+    let whereabouts = crate::network::guess(observed.and_then(|o| o.addr));
     let Some((verdict, held)) = door.using.ask(&lend, actor, whereabouts).await else {
         tracing::warn!(target: "door", lend = %lend.name, "door: refused — no count of who uses the lend, so none can be let in");
         return Err(LendRefusal::Fault.say(

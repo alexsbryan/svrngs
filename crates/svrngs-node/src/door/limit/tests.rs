@@ -10,6 +10,7 @@ use std::time::{Duration, Instant};
 
 use super::*;
 use crate::lend::{Kind, Lend, LendName};
+use crate::network::guess;
 
 const AWAY: Whereabouts = Whereabouts::Away;
 

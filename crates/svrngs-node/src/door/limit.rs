@@ -22,48 +22,21 @@
 //! **Who is not**: a viewer whose path ends at a private, link-local or
 //! unique-local address is taken to be in the lender's home, where the
 //! lender's upload is not spent (DESIGN §3, "The local network is guessed").
-//! iroh says nothing of homes; [`guess`] is a guess, and the door traces it
+//! iroh says nothing of homes; [`crate::network::guess`] is a guess, and the door traces it
 //! as one. A viewer guessed home is let in, uncounted, and told no share:
 //! their path is not the upload.
 
 use std::collections::BTreeMap;
-use std::net::IpAddr;
 use std::num::{NonZeroU16, NonZeroU32};
 use std::time::{Duration, Instant};
 
 use crate::lend::{Lend, LendName, Upload};
+use crate::network::Whereabouts;
 
 /// How long a person whose last request ended is still counted on a lend:
 /// a player fetches the next part of a stream every few seconds, and
 /// between two fetches its person is still watching.
 pub const WINDOW: Duration = Duration::from_secs(30);
-
-/// Where the door guesses a viewer is, from their path's address.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Whereabouts {
-    /// In the lender's home: a private, link-local or unique-local address.
-    Home,
-    /// Anywhere else — a public address, a relayed path, or no path seen.
-    Away,
-}
-
-/// `addr`, the address a viewer's path ends at, or `None` when it ends at a
-/// relay or none was seen: home when it is private (10/8, 172.16/12,
-/// 192.168/16), link-local (169.254/16, fe80::/10) or unique-local
-/// (fc00::/7), an IPv4 address written as IPv6 read as IPv4; else away.
-/// Loopback is away: no other computer reaches this one over it.
-pub fn guess(addr: Option<IpAddr>) -> Whereabouts {
-    let home = match addr.map(|a| a.to_canonical()) {
-        Some(IpAddr::V4(v4)) => v4.is_private() || v4.is_link_local(),
-        Some(IpAddr::V6(v6)) => v6.is_unique_local() || v6.is_unicast_link_local(),
-        None => false,
-    };
-    if home {
-        Whereabouts::Home
-    } else {
-        Whereabouts::Away
-    }
-}
 
 /// The door's answer to a person asking for a lend.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

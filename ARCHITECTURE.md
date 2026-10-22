@@ -519,28 +519,40 @@ resolved among the lends offered now and those on already. It keeps the
 lends on in `<data dir>/room.json`, by key and name, with the network each
 was turned on at (one that cannot be read answers `/v1/room` 500 with why,
 serving nothing, until a turn writes it over; none there is an empty room), and every 5 s and at each turn reads the network
-(`room::look`: netdev's default-route interface, its router's hardware
+(`network::look`: netdev's default-route interface, its router's hardware
 address from configd's state on macOS, `scutil`, since a program not let
 find devices on the network is shown no ARP table there, or from
-`/proc/net/arp` on Linux, `room::hardware_in`) and decides each lend in `room::serves`, pure: at
+`/proc/net/arp` on Linux, `network::hardware_in`) and decides each lend in `room::serves`, pure: at
 `<private address>:<room::port_of(label)>` only on the network it was
 turned on at, else `Elsewhere`, `Unread` or `NoAddress`; `Taken` when the
 bind fails. A listener is bound by the label alone, its router the
 origin's body (`origin::reach`, as this computer's person) behind
-`from_this_network`, whose predicate is the door's `limit::guess`, and
+`from_this_network`, whose predicate is `network::guess`, and
 dropped when the decision changes or the node stops. The address is
-`room::pick`'s, over the interface's addresses and the outward route's
-(`room::route`, a UDP socket connected, nothing sent): the route's when
+`network::pick`'s, over the interface's addresses and the outward route's
+(`network::route`, a UDP socket connected, nothing sent): the route's when
 private and listed, else the one private one, else none. `/v1/room`
 answers each lend on with where it is served or why not, and
 `Served::said`, the one wording the page and the command show.
-`src/room_tests.rs` plants the picker's interface lists, the networks,
-configd's state and Linux's ARP table, and a caller off the
-network; `tests/room.rs` runs Sam's
+`src/room_tests.rs` plants the picker's interface lists, the networks
+and a caller off the network; `tests/room.rs` runs Sam's
 canary through Alex's room from this host's private address, with Sam
 away and back, and on another network; `crates/svrngs/tests/share.rs`
 runs `svrngs room` against svrngs running, then the bare command again
 over the same data, the room open as it starts.
+
+Where this computer is, and on which network, is `network.rs`, beside
+the room and the door: a network told apart by its router's hardware
+address, `network::Network`; `network::look`, the one read of the world,
+netdev's default-route interface and the router's hardware address from
+configd's state on macOS, `scutil`, since a program not let find devices
+on the network is shown no ARP table there, or from `/proc/net/arp` on
+Linux (`network::hardware_in`, pure); the address for the devices beside
+this computer, `network::pick`'s, over the interface's addresses and the
+outward route's (`network::route`, a UDP socket connected, nothing sent);
+and `network::guess`, a caller's address home or away, for the door's
+count and the room's listeners. `src/network_tests.rs` plants configd's
+state and Linux's ARP table.
 
 **`crates/svrngs`**: the command (DESIGN §5), the one crate with a binary.
 `identity.rs` is the device key, commonwealth-transport's `identity.rs`

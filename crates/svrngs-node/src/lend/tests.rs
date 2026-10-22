@@ -196,7 +196,8 @@ fn an_upload_is_declared_or_absent_never_defaulted() {
 /// held as itself, never as a number.
 #[test]
 fn a_limit_declared_is_kept_and_one_absent_is_none() {
-    use crate::door::limit::{Counts, Verdict, Whereabouts};
+    use crate::door::limit::{Counts, Verdict};
+    use crate::network::Whereabouts;
     #[expect(
         clippy::disallowed_methods,
         reason = "the time is the counts' argument"

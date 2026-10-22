@@ -65,7 +65,7 @@ async fn start(seed: u8, dir: &Path) -> Node {
 /// This host's private address, where the room serves; could-not-judge
 /// on a host with none.
 fn here() -> Ipv4Addr {
-    match room::route() {
+    match svrngs_node::network::route() {
         Some(IpAddr::V4(v4)) if v4.is_private() => v4,
         other => panic!(
             "could not judge: this host's route leaves by {other:?}, no private address to serve a room on"

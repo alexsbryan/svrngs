@@ -9,7 +9,7 @@ use axum::extract::ConnectInfo;
 use axum::http::{Request, StatusCode};
 use tower::ServiceExt;
 
-use super::{from_this_network, hardware_in, pick, serves, Network, Served};
+use super::{from_this_network, pick, serves, Network, Served};
 
 fn ips(raw: &[&str]) -> Vec<IpAddr> {
     raw.iter().map(|a| a.parse().unwrap()).collect()
@@ -135,26 +135,4 @@ fn served_only_on_the_network_it_was_turned_on_at() {
     assert!(Served::At(served)
         .said()
         .contains("http://192.168.1.4:41234/"));
-}
-
-/// **The router's hardware address, as each platform keeps it** (`look`):
-/// configd's state for the primary service on macOS, as `scutil` prints
-/// it, and Linux's `/proc/net/arp`, its octets read to one spelling; the
-/// router absent, or its address incomplete (all zeros), none. Planted,
-/// watched failing: the octets kept as printed, `a` apart from `0a`.
-#[test]
-fn the_routers_hardware_address_is_read_as_each_platform_keeps_it() {
-    let router: Ipv4Addr = "192.168.1.1".parse().unwrap();
-    let mac = "<dictionary> {\n  ARPResolvedHardwareAddress : e4:f4:c6:a:5e:a1\n  \
-               ARPResolvedIPAddress : 192.168.1.1\n  Router : 192.168.1.1\n}\n";
-    let linux = "IP address       HW type     Flags       HW address            Mask     Device\n\
-                 192.168.1.7      0x1         0x2         11:22:33:44:55:66     *        wlan0\n\
-                 192.168.1.1      0x1         0x2         e4:f4:c6:0a:5e:a1     *        wlan0\n";
-    let want = Some("e4:f4:c6:0a:5e:a1".to_string());
-    assert_eq!(hardware_in(mac, router), want);
-    assert_eq!(hardware_in(linux, router), want);
-    let zeros = "192.168.1.1 0x1 0x0 00:00:00:00:00:00 * wlan0\n";
-    assert_eq!(hardware_in(zeros, router), None);
-    assert_eq!(hardware_in(linux, "192.168.1.9".parse().unwrap()), None);
-    assert_eq!(hardware_in("<dictionary> {\n}\n", router), None);
 }
