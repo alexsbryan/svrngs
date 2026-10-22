@@ -175,7 +175,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # share::At::Helper (the row and enum were counted; apps/ is not): 3 counted
 # lines, and lowered the repository's to one past where the cut landed:
 # 17,419. svrngs-core is unchanged at 3,152 under its 3,153.
-BUDGET = {"crates/svrngs-core": 3153, ".": 17419}
+# The operator's three oidc fixes (2026-10-22): one typed person and code
+# (token::Subject, S256Challenge) and the token read back as `Claims` cut
+# 50, the redirect's one type (door::LendPath) spent 5, and the room's
+# scheme 2. Both caps lowered to one past where they landed: 17,376, and
+# svrngs-core's 3,150 over its 3,149.
+BUDGET = {"crates/svrngs-core": 3150, ".": 17376}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
