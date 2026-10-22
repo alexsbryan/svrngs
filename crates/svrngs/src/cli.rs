@@ -12,7 +12,7 @@
 //! svrngs join <link> [--as N] [--no-run]   join a group by its link, run
 //! svrngs link <group> [--origin U]
 //!                                          a new link to a group, print it, run
-//! svrngs share <port> [--name N] [--kind K] [--limit L] [--refuse P]... [--upload M] [--reads K]... [--ask W]
+//! svrngs share <port> [--name N] [--kind K] [--limit L] [--refuse P]... [--upload M] [--reads K]... [--ask W] [--sign-in-with-svrngs]
 //!                                          lend a service on this computer
 //! svrngs unshare <name>                    stop lending it
 //! svrngs share --folder <dir> --group <group> keep a folder the same on every member's disk,
@@ -94,7 +94,9 @@ use svrngs_node::home::WHEN;
 use svrngs_node::invite::{Linked, Unminted};
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
 use svrngs_node::join::{Entered, NotJoined};
-use svrngs_node::lend::{self, Kind, Lend, LendName, RefusedPath, Source, Upload};
+use svrngs_node::lend::{
+    self, Kind, Lend, LendName, RefusedPath, SignInWithSvrngs, Source, Upload,
+};
 use svrngs_node::node::{Lends, Lent, Node, NodeError};
 use svrngs_node::relay::n0_relays;
 use svrngs_node::removal::{
@@ -144,7 +146,7 @@ svrngs — keep what your group shares on your own computers.
       --device makes it a link for another computer or phone of yours: it
       joins as you, asked no name.
 
-  svrngs share <port> [--name <name>] [--kind <kind>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <kind>]... [--ask <words>]
+  svrngs share <port> [--name <name>] [--kind <kind>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <kind>]... [--ask <words>] [--sign-in-with-svrngs]
       Lend what runs on <port> on this computer to everyone in your groups:
       each reaches it through this computer, as themselves. It asks for the
       password the service takes on each request, if any; that stays on
@@ -164,7 +166,10 @@ svrngs — keep what your group shares on your own computers.
       <kind>; say it again for more. --ask says, in your words,
       what an app receives from it: then an app uses it only once the
       person it acts for says yes, on their own home page, and stops when
-      they say stop.
+      they say stop. --sign-in-with-svrngs lets an app that speaks OpenID
+      Connect sign each person in as themselves, with nothing typed: it
+      prints the issuer, a client id and a secret for the app's own
+      settings, and keeps the secret on this computer.
 
   svrngs unshare <name>
       Stop lending <name>.
@@ -334,6 +339,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let mut reads = Vec::new();
     let (mut folder, mut group) = (None, None);
     let mut asks = None;
+    let mut sign_in = false;
     let mut run = true;
     let mut device = false;
     let (mut open, mut staging) = (false, false);
@@ -398,6 +404,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             "--joined" if valued => joined = Some(joined_of(&raw)?),
             "--no-run" if verb == "join" => run = false,
             "--device" if verb == "link" => device = true,
+            "--sign-in-with-svrngs" if verb == "share" => sign_in = true,
             "--open" if verb == "relay" => open = true,
             "--staging" if verb == "relay" => staging = true,
             "-h" | "--help" => return Ok(Verb::Help),
@@ -419,11 +426,12 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         || !refused.is_empty()
         || upload.is_some()
         || !reads.is_empty()
-        || asks.is_some())
+        || asks.is_some()
+        || sign_in)
         && verb != "share"
     {
         return Err(
-            "--name, --kind, --limit, --refuse, --upload, --reads and --ask are `share` flags"
+            "--name, --kind, --limit, --refuse, --upload, --reads, --ask and --sign-in-with-svrngs are `share` flags"
                 .into(),
         );
     }
@@ -497,6 +505,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 upload,
                 reads,
                 asks,
+                sign_in,
             }))
         }
         "leave" => Ok(Verb::Leave(
@@ -574,6 +583,8 @@ pub enum Refusal {
     Prompt(std::io::Error),
     #[error("cannot keep {0} on this computer (RUST_LOG=debug says why)")]
     KeepLend(LendName),
+    #[error("cannot make a sign-in for it on this computer: {0}")]
+    SignIn(#[from] svrngs_node::oidc::KeyError),
     #[error("cannot read what you lend on this computer: {0}")]
     Lends(lend::LendError),
     #[error("you lend nothing called {name} from this computer{}", lent_now(.lent))]
@@ -650,6 +661,7 @@ impl Refusal {
             | Refusal::IssuerAway
             | Refusal::Prompt(_)
             | Refusal::KeepLend(_)
+            | Refusal::SignIn(_)
             | Refusal::Lends(_)
             | Refusal::CannotCheck(_)
             | Refusal::NoRoomAddress
@@ -787,20 +799,32 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
         }
         Verb::Share(asked) => {
             let known = share::well_known_kind(asked.port);
-            let lend = share::lend_of(&asked, share::listens, known)?;
+            let mut lend = share::lend_of(&asked, share::listens, known)?;
             let accounts = share::accounts_of(&lend.kind);
-            let secret = match accounts {
-                Some(share::Signs::Accounts(_)) => {
+            let client = asked.sign_in.then(svrngs_node::oidc::client).transpose()?;
+            if let Some(client) = &client {
+                tracing::debug!(target: "cli", lend = %lend.name, "cli: share — it signs people in with svrngs: a client id and secret made for its app form");
+                lend.sign_in_with_svrngs = Some(client.clone());
+            }
+            let secret = match (client.is_some(), accounts) {
+                (true, _) => None,
+                (false, Some(share::Signs::Accounts(_))) => {
                     tracing::debug!(target: "cli", lend = %lend.name, "cli: share — no password asked: its people sign in to it once, with accounts its lender makes");
                     None
                 }
-                Some(share::Signs::Header(_)) => {
+                (false, Some(share::Signs::Header(_))) => {
                     tracing::debug!(target: "cli", lend = %lend.name, "cli: share — no password asked: it takes each person from the door's header");
                     None
                 }
-                None => prompt_secret(&lend.name)?,
+                (false, None) => prompt_secret(&lend.name)?,
             };
             share_lend(&root, &lend, secret.as_deref())?;
+            let sharing = Sharing {
+                lend,
+                secret: secret.is_some(),
+                accounts,
+                client,
+            };
             let claimed = match claim(&root) {
                 Err(Refusal::Busy(lock)) => {
                     tracing::debug!(target: "cli", lock = %lock.display(), "cli: share — svrngs runs here already, and reads the lend from its declaration");
@@ -808,25 +832,17 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
                 }
                 claimed => Some(claimed?),
             };
-            print!(
-                "{}",
-                Said::Shared {
-                    lend,
-                    secret: secret.is_some(),
-                    accounts,
-                    running: claimed.is_none()
-                }
-            );
             let Some(claimed) = claimed else {
+                let api = svrngs_node::api::kept_address(&root)?.ok_or(Refusal::NotRunning)?;
+                print!("{}", sharing.said(api));
                 return Ok(());
             };
-            println!();
-            return start(Verb::Run, root, relay, claimed).await;
+            return start(Verb::Run, root, relay, claimed, Some(sharing)).await;
         }
         other => other,
     };
     let claimed = claim(&root)?;
-    start(command, root, relay, claimed).await
+    start(command, root, relay, claimed, None).await
 }
 
 /// `share --folder --group`, asked of the node running here
@@ -931,6 +947,7 @@ async fn start(
     root: PathBuf,
     relay: &RelayConfig,
     _claimed: File,
+    sharing: Option<Sharing>,
 ) -> Result<(), Refusal> {
     let key = identity::load_or_generate_node_key(&root)?;
     // Where the API, the home page and each lend's address here listened
@@ -947,6 +964,10 @@ async fn start(
                 _ => Refusal::Start,
             }
         })?;
+    if let Some(sharing) = sharing {
+        print!("{}", sharing.said(node.api_addr()));
+        println!();
+    }
     let ran = serve(command, &root, &node, &key, relay).await;
     // iroh says at error when an endpoint is dropped open, so it is closed
     // first, on a refusal as on Ctrl-C.
@@ -1056,6 +1077,34 @@ impl std::fmt::Display for Printed {
     }
 }
 
+/// What `share` says once the node it started knows where its API listens:
+/// the lend it declared and the sign-in it made, if any
+/// (SIGN_IN_WITH_SVRNGS §5 "Turning it on").
+struct Sharing {
+    lend: Lend,
+    secret: bool,
+    accounts: Option<share::Signs>,
+    client: Option<SignInWithSvrngs>,
+}
+
+impl Sharing {
+    /// The words for the API at `api`: the one issuer string is made from
+    /// its port, the same string the door and discovery say.
+    fn said(&self, api: SocketAddr) -> Said {
+        Said::Shared {
+            lend: self.lend.clone(),
+            secret: self.secret,
+            accounts: self.accounts,
+            running: true,
+            issuer: self
+                .client
+                .as_ref()
+                .map(|_| svrngs_node::oidc::issuer(api.port(), self.lend.name.as_str())),
+            client: self.client.clone(),
+        }
+    }
+}
+
 /// What a verb tells the person, in DESIGN §1's words alone.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Said {
@@ -1100,6 +1149,11 @@ pub enum Said {
         secret: bool,
         accounts: Option<share::Signs>,
         running: bool,
+        /// The client its lender copies into the app's form, when it signs
+        /// people in with svrngs: shown once, then never again.
+        client: Option<SignInWithSvrngs>,
+        /// The issuer that client names, when it has one.
+        issuer: Option<String>,
     },
     /// `unshare`: no longer lent.
     Unshared(LendName),
@@ -1200,6 +1254,8 @@ impl std::fmt::Display for Said {
                 secret,
                 accounts,
                 running,
+                client,
+                issuer,
             } => {
                 // `share` lends a port; a group's folder carries an app.
                 let (name, Source::Port(port)) = (&lend.name, &lend.source) else {
@@ -1257,6 +1313,11 @@ impl std::fmt::Display for Said {
                         f,
                         "Its password stays on this computer; nobody you lend it to receives it."
                     )?;
+                }
+                if let (Some(client), Some(issuer)) = (client, issuer) {
+                    writeln!(f, "It signs people in with svrngs. In the app's own settings, choose OpenID Connect, and fill in: issuer {issuer}, client id {}, client secret {}.",
+                        client.client_id, client.client_secret.as_deref().unwrap_or_default())?;
+                    writeln!(f, "{} Copy the secret now: it is not shown again.", svrngs_node::oidc::DEVIATIONS)?;
                 }
                 if *running {
                     writeln!(

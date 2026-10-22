@@ -191,17 +191,24 @@ function running() {
   }
 }
 
+// What a lend's app form is filled with, the one time its lender turns
+// signing people in with svrngs on: the issuer, the client and its secret,
+// and the deviations in their words. The secret is shown here and nowhere
+// again (SIGN_IN_WITH_SVRNGS §5 "Turning it on").
+const signed = (c) => el('p', 'Signing people in with svrngs. In the app’s own settings, choose OpenID Connect, and fill in: issuer ', el('code', c.issuer), ', client id ', el('code', c.client_id), ', client secret ', el('code', c.client_secret), `. ${c.deviations} Copy the secret now: it is not shown again. `);
+
 // What this computer lends, each with how many it lets in at once — its
-// person's choice, a number or everyone in their groups — to set, clear or
-// stop here, taken by the door at its next request; drawn again in place
-// once something running here is lent.
+// person's choice, a number or everyone in their groups — to set, clear,
+// sign people in to or stop here, taken by the door at its next request;
+// drawn again in place once something running here is lent.
 async function lending() {
   const s = document.getElementById('lent') ?? main.appendChild(Object.assign(el('section'), { id: 'lent' }));
   s.replaceChildren(el('h2', 'What you lend'));
-  let lent;
+  let lent, signing;
   try {
     // An app a group carries is the group's, not this computer's to change.
-    lent = (await get('/lent')).lent.filter((l) => !l.group);
+    ({ lent, signing } = await get('/lent'));
+    lent = lent.filter((l) => !l.group);
   } catch (e) {
     return s.append(el('p', `This computer cannot read what you lend: ${e.message}`));
   }
@@ -214,6 +221,8 @@ async function lending() {
     const many = Object.assign(el('input'), { type: 'number', min: 1, value: n ?? '' });
     li.append(el('label', 'How many people at once: ', many), button('Let in this many', () => (/^[1-9][0-9]*$/.test(many.value) ? change({ limit: Number(many.value) }) : li.append('Say how many: 1 or more. '))));
     if (n) li.append(button('Let everyone in', () => change({ limit: null })));
+    if (signing?.includes(l.name)) li.append('Signs people in with svrngs. ');
+    else li.append(button('Sign people in with svrngs', () => post('/lent', { lend: l.name, to: 'sign-in' }).then((c) => li.append(signed(c)), (e) => li.append(` ${e.message}`))));
     li.append(button('Stop lending', () => change('stop')));
     ul.append(li);
   }

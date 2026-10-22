@@ -214,24 +214,44 @@ struct Changing {
 #[serde(rename_all = "lowercase")]
 enum LendChange {
     Limit(Option<NonZeroU16>),
+    /// The lender turns on signing people in with svrngs for it.
+    #[serde(rename = "sign-in")]
+    SignIn,
     Stop,
 }
 
 /// `GET /lent`: what this computer lends, each with how many it lets in at
-/// once and how many use it now, as a member asking is told it.
+/// once and how many use it now, as a member asking is told it, and the
+/// lends that sign people in with svrngs: their secret is never in this
+/// answer (SIGN_IN_WITH_SVRNGS §5, "Turning it on").
 async fn lent(State(at): State<Asking>) -> Response {
-    match crate::door::offered(&at.door).await {
-        Ok(lent) => Json(serde_json::json!({ "lent": lent })).into_response(),
-        Err(refused) => refused,
-    }
+    let (lent, all) = match (
+        crate::door::offered(&at.door).await,
+        lend::all(&at.door.data_dir),
+    ) {
+        (Ok(lent), Ok(all)) => (lent, all),
+        (Err(refused), _) => return refused,
+        (_, Err(e)) => return unread("it cannot read what you lend already", &e),
+    };
+    let signing: Vec<String> = all
+        .into_iter()
+        .flatten()
+        .filter(|l| l.sign_in_with_svrngs.is_some())
+        .map(|l| l.name.to_string())
+        .collect();
+    Json(serde_json::json!({ "lent": lent, "signing": signing })).into_response()
 }
 
 /// `POST /lent`: the person's change, written to the lend's declaration.
 async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Response {
     let dir = &at.door.data_dir;
+    if matches!(c.to, LendChange::SignIn) {
+        return sign_in(&at, &c.lend).await;
+    }
     let done = match c.to {
         LendChange::Limit(limit) => lend::limit(dir, &c.lend, limit),
         LendChange::Stop => lend::withdraw(dir, &c.lend),
+        LendChange::SignIn => unreachable!("answered above"),
     };
     tracing::debug!(target: "home", lend = %c.lend, to = ?c.to, done = ?done.as_ref().ok(), "home: the person changed a lend");
     match done {
@@ -247,6 +267,62 @@ async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Response {
             )
         }
     }
+}
+
+/// `POST /lent` with `to: "sign-in"`: a client id and secret for `name`,
+/// kept in its declaration at 0600, answered with the issuer and the
+/// deviations once (SIGN_IN_WITH_SVRNGS §5 "Turning it on", §8 9). The
+/// page shows them the once; `GET /lent` says only that it signs people in.
+async fn sign_in(at: &Asking, name: &LendName) -> Response {
+    let dir = &at.door.data_dir;
+    let mut lend = match lend::read(dir, name) {
+        Ok(Some(lend)) => lend,
+        Ok(None) => {
+            tracing::debug!(target: "home", lend = %name, "home: refused — nothing is lent by that name");
+            return LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "you lend nothing by that name");
+        }
+        Err(e) => {
+            tracing::warn!(target: "home", lend = %name, error = %e, "home: refused — its declaration cannot be read");
+            return LendRefusal::Fault.say(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "that cannot be changed on this computer",
+            );
+        }
+    };
+    if lend.sign_in_with_svrngs.is_some() {
+        tracing::debug!(target: "home", lend = %name, "home: refused — it signs people in with svrngs already");
+        return LendRefusal::Closed.say(
+            StatusCode::CONFLICT,
+            format!("{name} already signs people in with svrngs: make a new secret with `svrngs share <port> --sign-in-with-svrngs`."),
+        );
+    }
+    let client = match crate::oidc::client() {
+        Ok(client) => client,
+        Err(e) => {
+            tracing::warn!(target: "home", lend = %name, error = %e, "home: refused — no sign-in client can be made");
+            return LendRefusal::Fault.say(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "this computer cannot make a sign-in for it",
+            );
+        }
+    };
+    lend.sign_in_with_svrngs = Some(client.clone());
+    if let Err(e) = lend::declare(dir, &lend, None) {
+        tracing::warn!(target: "home", lend = %name, error = %e, "home: refused — its declaration cannot be changed");
+        return LendRefusal::Fault.say(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "that cannot be changed on this computer",
+        );
+    }
+    let issuer = crate::oidc::issuer(at.host.api_port, name.as_str());
+    tracing::debug!(target: "home", lend = %name, %issuer, "home: it signs people in with svrngs now");
+    Json(serde_json::json!({
+        "issuer": issuer,
+        "client_id": client.client_id,
+        "client_secret": client.client_secret,
+        "deviations": crate::oidc::DEVIATIONS,
+    }))
+    .into_response()
 }
 
 /// A port as the page shows it ([`share::listening`]): the kind the table
@@ -338,6 +414,7 @@ async fn lend_one(
         upload: None,
         reads: Vec::new(),
         asks: None,
+        sign_in: false,
     };
     // Each of the lend's refusals in a person's words: a kind is known or
     // given above, so `NoKind` is not met here.

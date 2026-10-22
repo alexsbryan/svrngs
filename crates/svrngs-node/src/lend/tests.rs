@@ -147,10 +147,15 @@ fn an_old_declaration_s_sign_in_is_refused_not_ignored() {
     let name = LendName::parse("signed").unwrap();
     std::fs::create_dir_all(lends_dir(root.path())).unwrap();
     let file = lends_dir(root.path()).join("signed.json");
-    std::fs::write(&file, r#"{"port": 8096, "kind": "k", "sign_in": 9000}"#).unwrap();
-    match read(root.path(), &name) {
-        Err(LendError::Malformed { .. }) => {}
-        other => panic!("a declaration holding sign_in is read: {other:?}"),
+    for unknown in [
+        r#"{"port": 8096, "kind": "k", "sign_in": 9000}"#,
+        r#"{"port": 8096, "kind": "k", "sign_in_with_svrngs": {}, "bogus": true}"#,
+    ] {
+        std::fs::write(&file, unknown).unwrap();
+        match read(root.path(), &name) {
+            Err(LendError::Malformed { .. }) => {}
+            other => panic!("a declaration holding an unknown field is read: {other:?}"),
+        }
     }
 }
 
@@ -214,4 +219,46 @@ fn a_limit_declared_is_kept_and_one_absent_is_none() {
     assert!(matches!(fourth(before), Verdict::Full { using: 3, .. }));
     let unnamed = r#"{"port": 8096, "kind": "k", "refused": []}"#;
     assert!(matches!(fourth(unnamed), Verdict::In { .. }));
+}
+
+/// A sign-in client is made from the allowed characters, kept in the
+/// declaration at 0600, refused on read when it is not, and never kept
+/// beside a lend's own password (SIGN_IN_WITH_SVRNGS §5 "Turning it on").
+#[cfg(unix)]
+#[test]
+fn a_sign_in_client_is_checked_written_owner_only_and_never_both() {
+    use std::os::unix::fs::PermissionsExt;
+    let root = tempfile::tempdir().unwrap();
+    let mut shelf = lend("shelf", 8096);
+    let client = SignInWithSvrngs {
+        client_id: "abc.DEF-1_~".into(),
+        client_secret: Some("s3cret-._~".into()),
+    };
+    shelf.sign_in_with_svrngs = Some(client.clone());
+    declare(root.path(), &shelf, None).unwrap();
+    assert_eq!(read(root.path(), &shelf.name).unwrap(), Some(shelf.clone()));
+    let file = lends_dir(root.path()).join("shelf.json");
+    assert_eq!(
+        std::fs::metadata(&file).unwrap().permissions().mode() & 0o777,
+        0o600,
+        "the declaration holding a secret is owner-only"
+    );
+
+    std::fs::write(
+        &file,
+        r#"{"port":8096,"kind":"k","sign_in_with_svrngs":{"client_id":"a b","client_secret":"x"}}"#,
+    )
+    .unwrap();
+    assert!(
+        matches!(read(root.path(), &shelf.name), Err(LendError::NotAClient)),
+        "a client outside the alphabet is refused, never repaired"
+    );
+
+    assert!(
+        matches!(
+            declare(root.path(), &shelf, Some(("authorization", "s3cret"))),
+            Err(LendError::TwoSecrets)
+        ),
+        "a lend declares its own password or a sign-in, never both"
+    );
 }

@@ -50,6 +50,7 @@ fn share_of(origin: SocketAddr, kind: &str) -> Share {
         upload: None,
         reads: Vec::new(),
         asks: None,
+        sign_in: false,
     }
 }
 
@@ -188,6 +189,8 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
         secret: true,
         accounts: None,
         running: true,
+        client: None,
+        issuer: None,
     }
     .to_string()];
 
@@ -303,6 +306,8 @@ async fn llama_server_lent_by_its_kind_keeps_back_what_shows_one_person_s_chats(
         secret: false,
         accounts: None,
         running: true,
+        client: None,
+        issuer: None,
     }
     .to_string();
 
@@ -519,6 +524,8 @@ fn a_lend_that_asks_keeps_its_lender_s_words() {
         secret: false,
         accounts: None,
         running: false,
+        client: None,
+        issuer: None,
     };
     assert!(said.to_string().contains(words), "{said}");
     cli::unshare(dir.path(), &name).unwrap();

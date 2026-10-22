@@ -14,7 +14,7 @@
 
 use std::path::{Path, PathBuf};
 
-use ring::rand::SystemRandom;
+use ring::rand::{SecureRandom, SystemRandom};
 use ring::signature::{
     EcdsaKeyPair, KeyPair, UnparsedPublicKey, ECDSA_P256_SHA256_FIXED,
     ECDSA_P256_SHA256_FIXED_SIGNING,
@@ -24,8 +24,33 @@ use svrngs_core::token::{Claims, Token};
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use base64::Engine as _;
 
+use crate::lend::SignInWithSvrngs;
+
 /// The key's file under [`key_dir`], an unencrypted PKCS#8 document.
 pub const KEY_FILE: &str = "key.pk8";
+
+/// The deviations from OpenID Connect's usual shape, in the lender's words
+/// (SIGN_IN_WITH_SVRNGS §8 2-4, §5 "Turning it on"): plain http on this
+/// computer, ES256 alone, and no email. The home page and `svrngs share`
+/// say this one string.
+pub const DEVIATIONS: &str = "It is plain http on this computer, so only this computer can reach it; it signs tokens with ES256; and it tells the app no email address, because svrngs has none.";
+
+/// A fresh client id and secret for a lend's sign-in, made from
+/// [`crate::lend::client_alphabet`]'s characters only (§5a, because
+/// clients disagree on how Basic credentials are encoded), drawn this run.
+pub fn client() -> Result<SignInWithSvrngs, KeyError> {
+    let rng = SystemRandom::new();
+    let draw = |bytes: &mut [u8]| rng.fill(bytes).map_err(KeyError::Random);
+    let (mut id, mut secret) = ([0u8; 24], [0u8; 32]);
+    draw(&mut id)?;
+    draw(&mut secret)?;
+    let client = SignInWithSvrngs {
+        client_id: URL_SAFE_NO_PAD.encode(id),
+        client_secret: Some(URL_SAFE_NO_PAD.encode(secret)),
+    };
+    tracing::debug!(target: "oidc", "oidc: made a client id and secret for a lend's sign-in");
+    Ok(client.checked().expect("base64url is the client alphabet"))
+}
 
 /// Where this computer keeps its sign-in key: `<data dir>/oidc`.
 pub fn key_dir(data_dir: &Path) -> PathBuf {
@@ -188,7 +213,7 @@ pub(crate) use provider::Code;
 pub use provider::Provider;
 /// The reserved authorize path on a lend's own origin, where the door
 /// answers the front channel.
-pub use provider::AUTHORIZE_PATH;
+pub use provider::{issuer, AUTHORIZE_PATH};
 
 #[cfg(test)]
 #[path = "oidc/tests.rs"]

@@ -176,6 +176,7 @@ fn the_home_page_and_a_lend_answer_at_one_address_across_a_restart() {
         upload: None,
         reads: Vec::new(),
         asks: None,
+        sign_in: false,
     };
     let lend = share::lend_of(&asked, share::listens, None).expect("pad listens");
     cli::share_lend(dir.path(), &lend, None).unwrap();

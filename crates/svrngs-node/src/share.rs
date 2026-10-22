@@ -106,6 +106,9 @@ pub struct Share {
     pub reads: Vec<Kind>,
     /// What an app receives of it, in its lender's words (sup-2).
     pub asks: Option<String>,
+    /// `--sign-in-with-svrngs`: it signs each person in as themselves, with
+    /// nothing typed (SIGN_IN_WITH_SVRNGS §5 "Turning it on").
+    pub sign_in: bool,
 }
 
 /// Why a lend could not be decided, in a person's words.

@@ -279,6 +279,17 @@ struct LendFile {
     asks: Option<String>,
 }
 
+/// The characters a sign-in client's id and secret may be made of
+/// (SIGN_IN_WITH_SVRNGS §5a, "Make the client id and secret from
+/// `[A-Za-z0-9-._~]` only, because clients disagree on encoding Basic
+/// credentials"): RFC 3986's unreserved set, and no others.
+pub fn client_alphabet(raw: &str) -> bool {
+    !raw.is_empty()
+        && raw
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b"-._~".contains(&b))
+}
+
 /// A lend's OpenID Connect client, as its lender's declaration keeps it
 /// (SIGN_IN_WITH_SVRNGS §5 "Turning it on", §8 9): the id and secret the
 /// lender copies into the app's form. A client with no secret asks as a
@@ -290,6 +301,22 @@ pub struct SignInWithSvrngs {
     pub client_id: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub client_secret: Option<String>,
+}
+
+impl SignInWithSvrngs {
+    /// The client, when its id and secret are made from
+    /// [`client_alphabet`]'s characters: a declaration hand-edited to
+    /// another spelling is refused, never repaired.
+    pub fn checked(self) -> Result<Self, LendError> {
+        let ok = client_alphabet(&self.client_id)
+            && self.client_secret.as_deref().is_none_or(client_alphabet);
+        if ok {
+            Ok(self)
+        } else {
+            tracing::debug!(target: "lend", "lend: refused — a sign-in client is not made from letters, digits, - . _ and ~");
+            Err(LendError::NotAClient)
+        }
+    }
 }
 
 /// A lend as its lender's computer answers a member who asks what it
@@ -365,6 +392,10 @@ pub enum LendError {
     },
     #[error("{0} is carried in its group's folder, never declared")]
     Carried(LendName),
+    #[error("a sign-in client's id and secret are made of letters, digits, - . _ and ~ only")]
+    NotAClient,
+    #[error("a lend declares its own password or a sign-in with svrngs, never both")]
+    TwoSecrets,
     #[error("{path} cannot be written: {source}")]
     Unwritable {
         path: PathBuf,
@@ -408,6 +439,10 @@ pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError>
         .iter()
         .map(|r| RefusedPath::parse(r))
         .collect::<Result<_, _>>()?;
+    let sign_in_with_svrngs = file
+        .sign_in_with_svrngs
+        .map(SignInWithSvrngs::checked)
+        .transpose()?;
     Ok(Some(Lend {
         name: name.clone(),
         source: Source::Port(file.port),
@@ -416,7 +451,7 @@ pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError>
         refused,
         upload: file.upload,
         reads: file.reads,
-        sign_in_with_svrngs: file.sign_in_with_svrngs,
+        sign_in_with_svrngs,
         asks: file.asks,
     }))
 }
@@ -458,6 +493,11 @@ pub fn declare(
     lend: &Lend,
     secret: Option<(&str, &str)>,
 ) -> Result<(), LendError> {
+    if secret.is_some() && lend.sign_in_with_svrngs.is_some() {
+        tracing::debug!(target: "lend", lend = %lend.name,
+            "lend: refused — a lend declares its own password or a sign-in with svrngs, never both");
+        return Err(LendError::TwoSecrets);
+    }
     let secrets = secret_dir(data_dir, &lend.name);
     let unwritable = |path: &Path| {
         let path = path.to_path_buf();
@@ -516,8 +556,16 @@ fn write(data_dir: &Path, lend: &Lend) -> Result<(), LendError> {
         asks: lend.asks.clone(),
     };
     let text = serde_json::to_string_pretty(&file).expect("a declaration always serializes");
-    crate::declared::write_whole(&dir.join(format!("{}.json", lend.name)), text.as_bytes())
-        .map_err(|(path, source)| LendError::Unwritable { path, source })
+    let path = dir.join(format!("{}.json", lend.name));
+    // A declaration holding the client secret is written the way this node
+    // writes a secret: 0600, and whole (SIGN_IN_WITH_SVRNGS §5, "Turning it
+    // on"). One with none keeps the ordinary whole write.
+    let write = if lend.sign_in_with_svrngs.is_some() {
+        crate::declared::write_secret(&path, text.as_bytes())
+    } else {
+        crate::declared::write_whole(&path, text.as_bytes())
+    };
+    write.map_err(|(path, source)| LendError::Unwritable { path, source })
 }
 
 /// Take back the lend `name`: its declaration, then its choices, then its
