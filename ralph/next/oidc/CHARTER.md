@@ -44,6 +44,17 @@ it cut nothing), so **17,728** and **3,153**. Each row raises only what it
 needs, one past where its commit lands, in its own commit. Past these is
 NEEDS_HUMAN.md again.
 
+## What the operator decided, 2026-10-21, of more code
+
+"The budget was already generous. I'm not likely to approve anymore
+code." So there is no raise past 17,728 and 3,153. A row that cannot land
+within them finds its lines by a cut first (AGENTS.md "Done": a pass
+before a raise), and only when no cut exists does it write
+`NEEDS_HUMAN.md`, saying what it would need and what it tried. The
+remaining rows are expected to fit: the front channel and the switch are
+the node's, the runs are `demo/runs/`, and the retirement cuts. The
+retirement's cut lowers the caps to where it lands.
+
 ## Why
 
 The app already knows who the person is: the door sends `x-svrngs-key`,
@@ -77,7 +88,8 @@ yourself, saying both in the commit, and keep going.
 Write `NEEDS_HUMAN.md` and stop for:
 
 - **the budget:** past 17,728 for the repository or 3,153 for svrngs-core
-  (2026-10-21), or a raise without the pass first;
+  (2026-10-21), and the operator is not likely to raise: find the lines by
+  a cut first, and only with no cut left write the ask;
 - **the trust floor:** any widening of a page's policy or a listener;
 - **a new crate** in the svrngs workspace;
 - **an app-specific tweak:** serving an app whose stock client needs code
