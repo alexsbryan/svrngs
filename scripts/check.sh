@@ -13,9 +13,9 @@ ulimit -Sn 10240 2>/dev/null || ulimit -Sn "$(ulimit -Hn)"
 echo "note       open files: $soft, raised to $(ulimit -n)"
 failed=0
 step() {  # step <name> <command...>
-  local name=$1; shift
-  if "$@" >/tmp/svrngs-check.$$ 2>&1; then echo "passed     $name"
-  else echo "failed     $name"; sed 's/^/           /' /tmp/svrngs-check.$$; failed=1; fi
+  local name=$1 began=$SECONDS; shift
+  if "$@" >/tmp/svrngs-check.$$ 2>&1; then echo "passed     $name ($((SECONDS - began)) s)"
+  else echo "failed     $name ($((SECONDS - began)) s)"; sed 's/^/           /' /tmp/svrngs-check.$$; failed=1; fi
 }
 step "principles pinned"  python3 scripts/principles_check.py
 step "lean and RUST_ARCH" python3 scripts/lean_check.py
@@ -76,5 +76,5 @@ fi
 tests=$(find apps -name '*.test.mjs' 2>/dev/null)
 if [ -n "$tests" ]; then step "app laws" node --test $tests
 else echo "never-ran  app tests: none yet"; failed=1; fi
-rm -f /tmp/svrngs-check.$$
+rm -f /tmp/svrngs-check.$$; echo "note       took $SECONDS s in all"
 exit $failed
