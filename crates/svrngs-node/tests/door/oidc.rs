@@ -225,7 +225,35 @@ async fn a_members_authorize_answers_a_code_the_token_route_redeems() {
     .await;
     assert_eq!(status, 400, "another lend redeemed the code: {answer:#}");
 
-    // A third code, redeemed with a redirect it was not minted for.
+    // Another login attempt's verifier does not answer the code's challenge.
+    let reply = get(
+        pair.bridge,
+        &format!(
+            "/lend/{LEND}/.svrngs/oidc/authorize?{}",
+            ask(port, CLIENT, "")
+        ),
+        "",
+    )
+    .await;
+    let (status, answer) = token(
+        &pair.a,
+        LEND,
+        CLIENT,
+        SECRET,
+        &[
+            ("grant_type", "authorization_code"),
+            ("code", &fresh(&reply)),
+            ("redirect_uri", &redirect),
+            (
+                "code_verifier",
+                "another-login-attempt-s-verifier-43-characters",
+            ),
+        ],
+    )
+    .await;
+    assert_eq!(status, 400, "another login redeemed the code: {answer:#}");
+
+    // A fourth code, redeemed with a redirect it was not minted for.
     let reply = get(
         pair.bridge,
         &format!(
