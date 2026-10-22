@@ -74,6 +74,7 @@ async fn sam_through_a_relay_on_this_computer() {
         upload: None,
         reads: Vec::new(),
         sign_in: None,
+        sign_in_with_svrngs: None,
         asks: None,
     };
     lend::declare(&sam_dir, &film, None).unwrap();

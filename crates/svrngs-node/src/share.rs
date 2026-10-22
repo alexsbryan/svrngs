@@ -288,6 +288,7 @@ pub fn lend_of(
         upload: share.upload,
         reads: share.reads.clone(),
         sign_in,
+        sign_in_with_svrngs: None,
         asks: share.asks.clone(),
     })
 }

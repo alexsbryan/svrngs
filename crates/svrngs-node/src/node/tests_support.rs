@@ -28,6 +28,27 @@ impl Node {
         [self.host.contact(actor).and_then(|c| c.relay_url), round]
     }
 
+    /// A one-time code the door's authorize path would mint, for `lend`'s
+    /// client and the person, with its redirect, PKCE challenge and nonce:
+    /// a test's way to the token route before the door's path exists.
+    #[allow(clippy::too_many_arguments)]
+    pub fn oidc_code(
+        &self,
+        lend: &str,
+        client: &str,
+        sub: &str,
+        name: &str,
+        username: &str,
+        group: svrngs_core::token::Group,
+        redirect: &str,
+        challenge: Option<&str>,
+        nonce: Option<&str>,
+    ) -> String {
+        self.asking.oidc.mint(crate::oidc::Code::new(
+            lend, client, sub, name, username, group, redirect, challenge, nonce,
+        ))
+    }
+
     /// Run one round now, beside the interval's, and say what it moved.
     pub async fn round(&self) -> crate::ring_sync::RoundOutcome {
         crate::ring_sync::run_one_round(self.host.as_ref(), &|| {}, &mut Default::default()).await

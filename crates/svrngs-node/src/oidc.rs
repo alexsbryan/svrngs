@@ -15,8 +15,14 @@
 use std::path::{Path, PathBuf};
 
 use ring::rand::SystemRandom;
-use ring::signature::{EcdsaKeyPair, KeyPair, ECDSA_P256_SHA256_FIXED_SIGNING};
+use ring::signature::{
+    EcdsaKeyPair, KeyPair, UnparsedPublicKey, ECDSA_P256_SHA256_FIXED,
+    ECDSA_P256_SHA256_FIXED_SIGNING,
+};
 use svrngs_core::token::{Claims, Token};
+
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+use base64::Engine as _;
 
 /// The key's file under [`key_dir`], an unencrypted PKCS#8 document.
 pub const KEY_FILE: &str = "key.pk8";
@@ -108,6 +114,47 @@ impl Key {
         Ok(signed)
     }
 
+    /// The claims of `token` when this key signed it, for `issuer` and
+    /// `client`, and it is not expired at `at`; or the fact that refused it.
+    /// The access token is the signed token itself, so this is userinfo's
+    /// one check.
+    pub fn verified(
+        &self,
+        token: &str,
+        issuer: &str,
+        client: &str,
+        at: i64,
+    ) -> Result<serde_json::Value, &'static str> {
+        let (input, signature) = token
+            .rsplit_once('.')
+            .ok_or("the token is not three parts")?;
+        let signature = URL_SAFE_NO_PAD
+            .decode(signature)
+            .map_err(|_| "the token's signature is not base64url")?;
+        UnparsedPublicKey::new(&ECDSA_P256_SHA256_FIXED, &self.point)
+            .verify(input.as_bytes(), &signature)
+            .map_err(|_| "another key signed the token")?;
+        let (_, payload) = input
+            .split_once('.')
+            .ok_or("the token is not three parts")?;
+        let payload = URL_SAFE_NO_PAD
+            .decode(payload)
+            .map_err(|_| "the token's claims are not base64url")?;
+        let claims: serde_json::Value =
+            serde_json::from_slice(&payload).map_err(|_| "the token's claims are not JSON")?;
+        if claims["iss"] != issuer {
+            return Err("the token is another issuer's");
+        }
+        if claims["aud"] != client {
+            return Err("the token is another client's");
+        }
+        if claims["exp"].as_i64().is_none_or(|exp| exp <= at) {
+            return Err("the token has expired");
+        }
+        tracing::debug!(target: "oidc", kid = %self.kid, "oidc: a token verified under this computer's key");
+        Ok(claims)
+    }
+
     /// The JWKS an app fetches: this key alone, `EC` on `P-256`, its `x` and
     /// `y` the public point's halves, and the `kid` the header names.
     pub fn jwks(&self) -> String {
@@ -130,10 +177,13 @@ fn kid_of(point: &[u8]) -> String {
 
 /// `bytes` base64url, unpadded: how a JWK spells `x` and `y`.
 fn url(bytes: &[u8]) -> String {
-    use base64::engine::general_purpose::URL_SAFE_NO_PAD;
-    use base64::Engine as _;
     URL_SAFE_NO_PAD.encode(bytes)
 }
+
+pub(crate) mod provider;
+
+pub(crate) use provider::Code;
+pub use provider::Provider;
 
 #[cfg(test)]
 #[path = "oidc/tests.rs"]

@@ -189,6 +189,8 @@ pub enum NodeError {
     Endpoint(String),
     #[error(transparent)]
     Api(#[from] crate::api::ApiError),
+    #[error(transparent)]
+    Oidc(#[from] crate::oidc::KeyError),
 }
 
 /// A running node. Dropping it stops its round and its accept loop.
@@ -317,6 +319,7 @@ impl Node {
             door,
             folders: folders.clone(),
             seeds,
+            oidc: crate::oidc::Provider::new(data_dir.clone(), host.api_port)?,
         };
         // The record, and beside it what an app asks of this computer (u5-1).
         let rail_api = RailApi {
@@ -328,6 +331,7 @@ impl Node {
         let routes = crate::api::router(
             rail_api.clone(),
             crate::surface::router(asking.clone())
+                .merge(asking.oidc.clone().router())
                 .merge(crate::folder::router(folders.clone()))
                 .merge(crate::removal::router(asking.clone())),
             crate::home::router(asking.clone(), rail_api),
@@ -810,6 +814,7 @@ pub(crate) struct Asking {
     pub(crate) door: crate::door::Door,
     pub(crate) folders: crate::folder::Folders,
     pub(crate) seeds: SeedText,
+    pub(crate) oidc: crate::oidc::Provider,
 }
 
 fn people_router(asking: Asking) -> axum::Router {

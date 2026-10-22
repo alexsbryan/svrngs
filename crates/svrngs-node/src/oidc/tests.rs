@@ -5,7 +5,6 @@
 use super::*;
 
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
-use base64::Engine as _;
 use ring::signature::{UnparsedPublicKey, ECDSA_P256_SHA256_FIXED};
 
 const SUB: &str = "9f2c0a1b3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8";

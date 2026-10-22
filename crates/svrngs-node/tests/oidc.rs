@@ -71,15 +71,15 @@ fn http() -> reqwest::Client {
 }
 
 async fn get(node: &Node, path: &str) -> (u16, Value) {
-    let answer = tokio::time::timeout(
-        Duration::from_secs(30),
-        http()
-            .get(format!("http://{}{path}", node.api_addr()))
-            .send(),
-    )
-    .await
-    .expect("the ask finishes")
-    .unwrap();
+    get_url(&format!("http://{}{path}", node.api_addr())).await
+}
+
+/// `url` asked as the client asks discovery's own addresses.
+async fn get_url(url: &str) -> (u16, Value) {
+    let answer = tokio::time::timeout(Duration::from_secs(30), http().get(url).send())
+        .await
+        .expect("the ask finishes")
+        .unwrap();
     let status = answer.status().as_u16();
     (status, answer.json().await.unwrap_or(Value::Null))
 }
@@ -102,7 +102,17 @@ async fn get_with(node: &Node, path: &str, header: (&str, &str)) -> u16 {
 /// `application/x-www-form-urlencoded`, and Basic credentials when `basic`
 /// is named.
 async fn token(node: &Node, basic: Option<(&str, &str)>, form: &[(&str, &str)]) -> (u16, Value) {
-    let mut request = http().post(format!("http://{}/oidc/{LEND}/token", node.api_addr()));
+    token_at(node, LEND, basic, form).await
+}
+
+/// The token route of the lend `lend`.
+async fn token_at(
+    node: &Node,
+    lend: &str,
+    basic: Option<(&str, &str)>,
+    form: &[(&str, &str)],
+) -> (u16, Value) {
+    let mut request = http().post(format!("http://{}/oidc/{lend}/token", node.api_addr()));
     if let Some((id, secret)) = basic {
         request = request.basic_auth(id, Some(secret));
     }
@@ -180,7 +190,11 @@ async fn discovery_the_keys_the_token_and_userinfo_as_a_stock_client_reads_them(
     let api = node.api_addr().port();
     let issuer = format!("http://127.0.0.1:{api}/oidc/{LEND}");
 
-    let (status, discovery) = get(&node, &format!("/oidc/{LEND}/.well-known/openid-configuration")).await;
+    let (status, discovery) = get(
+        &node,
+        &format!("/oidc/{LEND}/.well-known/openid-configuration"),
+    )
+    .await;
     assert_eq!(status, 200, "discovery: {discovery:#}");
     assert_eq!(discovery["issuer"], issuer, "one issuer string, exact");
     assert!(
@@ -188,8 +202,7 @@ async fn discovery_the_keys_the_token_and_userinfo_as_a_stock_client_reads_them(
         "the issuer has a trailing slash: {discovery:#}"
     );
     assert_eq!(
-        discovery["authorization_endpoint"],
-        "http://localhost:8096/.svrngs/oidc/authorize",
+        discovery["authorization_endpoint"], "http://localhost:8096/.svrngs/oidc/authorize",
         "the authorize address is the lend's own"
     );
     assert_eq!(discovery["token_endpoint"], format!("{issuer}/token"));
@@ -205,7 +218,10 @@ async fn discovery_the_keys_the_token_and_userinfo_as_a_stock_client_reads_them(
         "discovery lists RS256: {discovery:#}"
     );
     assert!(
-        !discovery.to_string().to_lowercase().contains("pushed_authorization"),
+        !discovery
+            .to_string()
+            .to_lowercase()
+            .contains("pushed_authorization"),
         "discovery lists a PAR endpoint: {discovery:#}"
     );
     assert_eq!(
@@ -223,7 +239,7 @@ async fn discovery_the_keys_the_token_and_userinfo_as_a_stock_client_reads_them(
         );
     }
 
-    let (status, jwks) = get(&node, discovery["jwks_uri"].as_str().unwrap()).await;
+    let (status, jwks) = get_url(discovery["jwks_uri"].as_str().unwrap()).await;
     assert_eq!(status, 200, "the keys: {jwks:#}");
     assert_eq!(jwks["keys"].as_array().unwrap().len(), 1, "{jwks:#}");
     assert_eq!(jwks["keys"][0]["kty"], "EC");
@@ -231,7 +247,17 @@ async fn discovery_the_keys_the_token_and_userinfo_as_a_stock_client_reads_them(
 
     // The stock exchange: a code with an S256 challenge and a nonce, redeemed
     // by the client that asked for it, with its verifier.
-    let code = node.oidc_code(LEND, CLIENT, SUB, NAME, USER, Group::Member, REDIRECT, Some(CHALLENGE), Some(NONCE));
+    let code = node.oidc_code(
+        LEND,
+        CLIENT,
+        SUB,
+        NAME,
+        USER,
+        Group::Member,
+        REDIRECT,
+        Some(CHALLENGE),
+        Some(NONCE),
+    );
     let (status, answer) = token(
         &node,
         Some((CLIENT, SECRET)),
@@ -247,9 +273,15 @@ async fn discovery_the_keys_the_token_and_userinfo_as_a_stock_client_reads_them(
     assert_eq!(answer["token_type"], "Bearer");
     let id_token = answer["id_token"].as_str().expect("an id token");
     let access = answer["access_token"].as_str().expect("an access token");
-    assert!(verifies(&jwks, id_token), "the JWKS does not verify the ID token");
+    assert!(
+        verifies(&jwks, id_token),
+        "the JWKS does not verify the ID token"
+    );
     let claims = payload(id_token);
-    assert_eq!(claims["iss"], discovery["issuer"], "the ID token's iss is discovery's, byte for byte");
+    assert_eq!(
+        claims["iss"], discovery["issuer"],
+        "the ID token's iss is discovery's, byte for byte"
+    );
     assert_eq!(claims["aud"], CLIENT);
     assert_eq!(claims["sub"], SUB);
     assert_eq!(claims["name"], NAME);
@@ -260,10 +292,25 @@ async fn discovery_the_keys_the_token_and_userinfo_as_a_stock_client_reads_them(
 
     let (status, info) = userinfo(&node, access).await;
     assert_eq!(status, 200, "userinfo: {info:#}");
-    for claim in ["sub", "iss", "aud", "exp", "iat", "name", "preferred_username", "groups"] {
-        assert_eq!(info[claim], claims[claim], "userinfo is missing {claim}: {info:#}");
+    for claim in [
+        "sub",
+        "iss",
+        "aud",
+        "exp",
+        "iat",
+        "name",
+        "preferred_username",
+        "groups",
+    ] {
+        assert_eq!(
+            info[claim], claims[claim],
+            "userinfo is missing {claim}: {info:#}"
+        );
     }
-    assert!(info.get("nonce").is_none(), "userinfo carries the nonce: {info:#}");
+    assert!(
+        info.get("nonce").is_none(),
+        "userinfo carries the nonce: {info:#}"
+    );
 
     // A code is used once: the very same code again is refused.
     let (status, again) = token(
@@ -281,10 +328,20 @@ async fn discovery_the_keys_the_token_and_userinfo_as_a_stock_client_reads_them(
     assert_eq!(again["error"], "invalid_grant", "{again:#}");
 
     // A code minted for this lend's client is not another client's.
-    let foreign = node.oidc_code(LEND, CLIENT, SUB, NAME, USER, Group::Member, REDIRECT, None, None);
+    let foreign = node.oidc_code(
+        LEND,
+        "svrngs-another",
+        SUB,
+        NAME,
+        USER,
+        Group::Member,
+        REDIRECT,
+        None,
+        None,
+    );
     let (status, answer) = token(
         &node,
-        Some((PUBLIC_CLIENT, "")),
+        Some((CLIENT, SECRET)),
         &[
             ("grant_type", "authorization_code"),
             ("code", &foreign),
@@ -295,7 +352,17 @@ async fn discovery_the_keys_the_token_and_userinfo_as_a_stock_client_reads_them(
     assert_eq!(status, 400, "another client redeemed the code: {answer:#}");
 
     // A bound challenge is checked: the wrong verifier is refused.
-    let bound = node.oidc_code(LEND, CLIENT, SUB, NAME, USER, Group::Member, REDIRECT, Some(CHALLENGE), None);
+    let bound = node.oidc_code(
+        LEND,
+        CLIENT,
+        SUB,
+        NAME,
+        USER,
+        Group::Member,
+        REDIRECT,
+        Some(CHALLENGE),
+        None,
+    );
     let (status, answer) = token(
         &node,
         Some((CLIENT, SECRET)),
@@ -303,14 +370,27 @@ async fn discovery_the_keys_the_token_and_userinfo_as_a_stock_client_reads_them(
             ("grant_type", "authorization_code"),
             ("code", &bound),
             ("redirect_uri", REDIRECT),
-            ("code_verifier", "the-wrong-verifier-at-least-43-characters-long"),
+            (
+                "code_verifier",
+                "the-wrong-verifier-at-least-43-characters-long",
+            ),
         ],
     )
     .await;
     assert_eq!(status, 400, "a wrong verifier passed: {answer:#}");
 
     // A nonce is echoed when sent, and omitted otherwise.
-    let plain = node.oidc_code(LEND, CLIENT, SUB, NAME, USER, Group::Member, REDIRECT, None, None);
+    let plain = node.oidc_code(
+        LEND,
+        CLIENT,
+        SUB,
+        NAME,
+        USER,
+        Group::Member,
+        REDIRECT,
+        None,
+        None,
+    );
     let (status, answer) = token(
         &node,
         Some((CLIENT, SECRET)),
@@ -323,10 +403,23 @@ async fn discovery_the_keys_the_token_and_userinfo_as_a_stock_client_reads_them(
     .await;
     assert_eq!(status, 200, "{answer:#}");
     let claims = payload(answer["id_token"].as_str().unwrap());
-    assert!(claims.get("nonce").is_none(), "a nonce nobody sent is echoed: {claims:#}");
+    assert!(
+        claims.get("nonce").is_none(),
+        "a nonce nobody sent is echoed: {claims:#}"
+    );
 
     // `client_secret_post` is a stock method too.
-    let posted = node.oidc_code(LEND, CLIENT, SUB, NAME, USER, Group::Member, REDIRECT, None, None);
+    let posted = node.oidc_code(
+        LEND,
+        CLIENT,
+        SUB,
+        NAME,
+        USER,
+        Group::Member,
+        REDIRECT,
+        None,
+        None,
+    );
     let (status, answer) = token(
         &node,
         None,
@@ -342,9 +435,20 @@ async fn discovery_the_keys_the_token_and_userinfo_as_a_stock_client_reads_them(
     assert_eq!(status, 200, "client_secret_post: {answer:#}");
 
     // A public client asks with no secret.
-    let public_code = node.oidc_code(PUBLIC, PUBLIC_CLIENT, SUB, NAME, USER, Group::Member, REDIRECT, None, None);
-    let (status, answer) = token(
+    let public_code = node.oidc_code(
+        PUBLIC,
+        PUBLIC_CLIENT,
+        SUB,
+        NAME,
+        USER,
+        Group::Member,
+        REDIRECT,
+        None,
+        None,
+    );
+    let (status, answer) = token_at(
         &node,
+        PUBLIC,
         None,
         &[
             ("grant_type", "authorization_code"),
@@ -357,27 +461,38 @@ async fn discovery_the_keys_the_token_and_userinfo_as_a_stock_client_reads_them(
     assert_eq!(status, 200, "a public client: {answer:#}");
 
     // A page in a browser is refused, as every route on this listener is.
-    let status = get_with(&node, &format!("/oidc/{LEND}/.well-known/openid-configuration"), ("origin", "http://elsewhere.example")).await;
+    let status = get_with(
+        &node,
+        &format!("/oidc/{LEND}/.well-known/openid-configuration"),
+        ("origin", "http://elsewhere.example"),
+    )
+    .await;
     assert_eq!(status, 403, "a page's request was answered");
 
     // And a caller off this computer is refused before any route runs.
     {
         use tower::ServiceExt;
         let port = node.api_addr().port();
-        let request = axum::http::Request::get(format!("/oidc/{LEND}/.well-known/openid-configuration"))
-            .header("host", format!("127.0.0.1:{port}"))
-            .body(axum::body::Body::empty())
-            .unwrap();
+        let request =
+            axum::http::Request::get(format!("/oidc/{LEND}/.well-known/openid-configuration"))
+                .header("host", format!("127.0.0.1:{port}"))
+                .body(axum::body::Body::empty())
+                .unwrap();
         let mut request = request;
         let caller: SocketAddr = "10.0.0.9:50000".parse().unwrap();
         request
             .extensions_mut()
             .insert(axum::extract::ConnectInfo(caller));
-        let answer = tokio::time::timeout(Duration::from_secs(30), node.api_routes().oneshot(request))
-            .await
-            .expect("the ask finishes")
-            .unwrap();
-        assert_eq!(answer.status().as_u16(), 403, "a caller off this computer was answered");
+        let answer =
+            tokio::time::timeout(Duration::from_secs(30), node.api_routes().oneshot(request))
+                .await
+                .expect("the ask finishes")
+                .unwrap();
+        assert_eq!(
+            answer.status().as_u16(),
+            403,
+            "a caller off this computer was answered"
+        );
     }
 
     node.endpoint().close().await;

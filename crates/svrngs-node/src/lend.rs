@@ -212,6 +212,11 @@ pub struct Lend {
     /// in (mwp-1, `svrngs share --sign-in`; `crate::door::sign_in`): a lend
     /// declares it or a secret, never both.
     pub sign_in: Option<NonZeroU16>,
+    /// Its sign-in with svrngs when it says so (SIGN_IN_WITH_SVRNGS §5,
+    /// "Turning it on"): the client id and secret its lender copies into
+    /// the app's own settings form. This is the one place the provider
+    /// reads them.
+    pub sign_in_with_svrngs: Option<SignInWithSvrngs>,
     /// What an app receives of it, in its lender's words (sup-2, `svrngs
     /// share --ask`): a lend that asks lets an app in only on its person's
     /// yes ([`crate::door::choices`]). svrngs carries the words to every
@@ -240,6 +245,7 @@ impl Lend {
             upload: None,
             reads: Vec::new(),
             sign_in: None,
+            sign_in_with_svrngs: None,
             asks: None,
         })
     }
@@ -275,7 +281,22 @@ struct LendFile {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     sign_in: Option<NonZeroU16>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    sign_in_with_svrngs: Option<SignInWithSvrngs>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     asks: Option<String>,
+}
+
+/// A lend's OpenID Connect client, as its lender's declaration keeps it
+/// (SIGN_IN_WITH_SVRNGS §5 "Turning it on", §8 9): the id and secret the
+/// lender copies into the app's form. A client with no secret asks as a
+/// public client. A field it does not know is refused, as the declaration
+/// refuses one.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SignInWithSvrngs {
+    pub client_id: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_secret: Option<String>,
 }
 
 /// A lend as its lender's computer answers a member who asks what it
@@ -410,6 +431,7 @@ pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError>
         upload: file.upload,
         reads: file.reads,
         sign_in: file.sign_in,
+        sign_in_with_svrngs: file.sign_in_with_svrngs,
         asks: file.asks,
     }))
 }
@@ -510,6 +532,7 @@ fn write(data_dir: &Path, lend: &Lend) -> Result<(), LendError> {
         upload: lend.upload,
         reads: lend.reads.clone(),
         sign_in: lend.sign_in,
+        sign_in_with_svrngs: lend.sign_in_with_svrngs.clone(),
         asks: lend.asks.clone(),
     };
     let text = serde_json::to_string_pretty(&file).expect("a declaration always serializes");

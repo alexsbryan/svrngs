@@ -109,6 +109,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
         upload: None,
         reads: Vec::new(),
         sign_in: None,
+        sign_in_with_svrngs: None,
         asks: None,
     };
     lend::declare(dir.path(), &shelf, None).unwrap();
