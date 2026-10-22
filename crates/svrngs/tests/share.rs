@@ -723,6 +723,73 @@ fn share_runs_when_svrngs_does_not_and_leaves_when_it_does() {
     drop((first, second));
 }
 
+/// **`share --sign-in-with-svrngs` turns it on for scripts** (SIGN_IN_WITH_
+/// SVRNGS §5 "Turning it on", §8 9): the command makes a client id and
+/// secret from the allowed alphabet, keeps them in the lend's declaration
+/// at 0600, prints the issuer, the client and the deviations once, and
+/// asks no password. Planted, watched failing: the flag not known.
+#[cfg(unix)]
+#[test]
+fn share_turns_on_signing_people_in_with_svrngs() {
+    let dir = tempfile::tempdir().unwrap();
+    let logs = tempfile::tempdir().unwrap();
+    let stand_in = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = stand_in.local_addr().unwrap().port().to_string();
+    let argv = [
+        "share",
+        port.as_str(),
+        "--kind",
+        "pad",
+        "--sign-in-with-svrngs",
+    ];
+    let mut running = Program::start(dir.path(), &logs.path().join("share"), &argv, "");
+    running.until("Leave this running");
+    let _ = running.child.kill();
+    let (_, seen) = running.ends();
+
+    let name = LendName::parse("pad").unwrap();
+    let declared = svrngs_node::lend::read(dir.path(), &name).unwrap().unwrap();
+    let client = declared
+        .sign_in_with_svrngs
+        .expect("the declaration holds the client");
+    let id = client.client_id;
+    let secret = client.client_secret.expect("a secret");
+    for made in [&id, &secret] {
+        assert!(
+            made.bytes()
+                .all(|b| b.is_ascii_alphanumeric() || b"-._~".contains(&b)),
+            "{made:?} is made from the allowed alphabet"
+        );
+    }
+    let wrote = seen
+        .iter()
+        .find(|l| l.contains("issuer http://127.0.0.1:") && l.contains("/oidc/pad"))
+        .unwrap_or_else(|| panic!("the issuer is not printed: {seen:?}"));
+    assert!(wrote.contains(&id) && wrote.contains(&secret), "{wrote}");
+    assert!(
+        seen.iter()
+            .any(|l| l.contains("plain http") && l.contains("ES256") && l.contains("no email")),
+        "the deviations are in the lender's words: {seen:?}"
+    );
+    assert!(
+        !seen.iter().any(|l| l.contains("Its password stays")),
+        "no password was asked: {seen:?}"
+    );
+    let file = dir.path().join("lends/pad.json");
+    assert_eq!(mode(&file), 0o600, "the declaration holding a secret");
+    assert_eq!(
+        holding(dir.path(), secret.as_bytes(), &file),
+        Vec::<String>::new(),
+        "the secret is in no file but its declaration"
+    );
+    assert_eq!(
+        holding(logs.path(), secret.as_bytes(), Path::new("")),
+        Vec::<String>::new(),
+        "the secret is in no log line"
+    );
+    drop(stand_in);
+}
+
 /// A service that keeps its own accounts, on a port of a stand-in (u5-4;
 /// DESIGN §3, "Lent apps", call 4): `share` asks no password, keeps none
 /// though one is typed, and tells its lender how to make each person an

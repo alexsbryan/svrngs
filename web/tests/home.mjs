@@ -5,6 +5,10 @@
 //
 //   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>?, <stays>?], ...], "timed"?: [<selector>, ...], "drawn"?: "<selector>", "text"?: true, "open"?: "<a link's words>", "opens"?: ["<link>", ...], "older"?: true}'
 //
+// It also answers `sent`, every request the page made (method, URL and
+// body), and each link's `href`: a page never sends a secret it is shown
+// anywhere but to the person reading it (oidc-turn-on).
+//
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
 import { launch } from './page.mjs';
@@ -38,6 +42,8 @@ if (args.opens) await context.addInitScript(() => Object.assign(window, { opened
 try {
   const page = await context.newPage();
   page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
+  const sent = [];
+  page.on('request', (r) => sent.push([r.method(), r.url(), r.postData() ?? '']));
   // With `timed`, selectors: how long after the page was asked for each
   // first showed (start-home: a group shown before its slowest computer).
   const t0 = Date.now();
@@ -110,9 +116,9 @@ try {
   if (args.text) await page.locator('#lent h2 ~ *').first().waitFor({ timeout: 30_000 });
   const text = args.text ? await page.locator('body').innerText() : null;
   // Every link on the page, its words and where it opens (start-home).
-  const links = await page.locator('a').evaluateAll((as) => as.map((a) => ({ text: a.textContent, target: a.target })));
+  const links = await page.locator('a').evaluateAll((as) => as.map((a) => ({ text: a.textContent, target: a.target, href: a.href })));
   const timed = Object.fromEntries(await timing);
-  console.log(JSON.stringify({ heading, read, all, after, clipboard, links, timed, drawn, text, opened, opens, logs }));
+  console.log(JSON.stringify({ heading, read, all, after, clipboard, links, timed, drawn, text, opened, opens, sent, logs }));
 } catch (e) {
   console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);
   process.exitCode = 1;

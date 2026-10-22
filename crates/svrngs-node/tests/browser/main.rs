@@ -1907,6 +1907,85 @@ async fn the_home_page_changes_a_lend_s_limit_in_place(engine: Engine) {
 }
 
 in_both_engines!(
+    /// **The home page turns on signing people in with svrngs, once**
+    /// (SIGN_IN_WITH_SVRNGS §5 "Turning it on", §8 9). Ada lends `shelf`
+    /// with no sign-in; her page's row offers "Sign people in with svrngs",
+    /// says what it does before she presses it, then shows the issuer, a
+    /// client id and a secret and the deviations in her words. The secret
+    /// leaves the page for no address and no link, and read again the page
+    /// says the lend signs people in without showing it. Planted, watched
+    /// failing: a page offering the sign-in while the declaration holds
+    /// none.
+    the_home_page_turns_on_signing_people_in_with_svrngs
+);
+async fn the_home_page_turns_on_signing_people_in_with_svrngs(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &signing(7)).await;
+    let shelf = page_origin("<!doctype html><title>ada's shelf</title>").await;
+    let lends = svrngs_node::lend::lends_dir(dir.path());
+    std::fs::create_dir_all(&lends).unwrap();
+    let body = json!({ "port": shelf.port(), "kind": "books" });
+    std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
+    let seen = home_page(
+        engine,
+        &ada,
+        json!({
+            "all": "#lent li",
+            "do": [["#lent button:has-text('Sign people in with svrngs')", null, true]],
+        }),
+    )
+    .await;
+    let before = seen["all"][0].as_str().unwrap_or_default();
+    assert!(
+        before.contains("Sign people in with svrngs"),
+        "the button says what it does first: {seen:#}"
+    );
+    let after = seen["after"][0]
+        .as_array()
+        .expect("the row after the press");
+    let words = (after.iter().filter_map(Value::as_str))
+        .collect::<Vec<_>>()
+        .join("\n");
+    let name = svrngs_node::lend::LendName::parse("shelf").unwrap();
+    let secret = svrngs_node::lend::read(dir.path(), &name)
+        .unwrap()
+        .unwrap()
+        .sign_in_with_svrngs
+        .expect("the declaration holds the client")
+        .client_secret
+        .expect("a secret");
+    assert!(words.contains("issuer http://127.0.0.1:"), "{seen:#}");
+    assert!(
+        words.contains("client id ") && words.contains("client secret "),
+        "{seen:#}"
+    );
+    assert!(words.contains(&secret), "shown once: {seen:#}");
+    for deviation in ["plain http", "ES256", "no email"] {
+        assert!(words.contains(deviation), "{seen:#}");
+    }
+    let sent = seen["sent"].to_string();
+    assert!(
+        !sent.contains(&secret),
+        "the secret goes to no address: {sent}"
+    );
+    let links = seen["links"].to_string();
+    assert!(!links.contains(&secret), "no link carries it: {links}");
+    let again = home_page(engine, &ada, json!({ "all": "#lent li" })).await;
+    let repeated = again["all"][0].as_str().unwrap_or_default();
+    assert!(!repeated.contains(&secret), "not shown again: {again:#}");
+    assert!(
+        !repeated.contains("Sign people in with svrngs"),
+        "it is on, so the button is gone: {again:#}"
+    );
+    assert!(
+        repeated.contains("Signs people in with svrngs."),
+        "{again:#}"
+    );
+    drop(ada);
+}
+
+in_both_engines!(
     /// **A removed person's phone is told so in a person's words** (U7
     /// (e); DESIGN §6). Ada removes bo through her computer's
     /// `/v1/removals`; the page holding bo's key opens the group's link,

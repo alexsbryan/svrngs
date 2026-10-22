@@ -486,6 +486,89 @@ async fn a_lend_s_limit_is_changed_on_the_home_page_and_the_door_takes_it() {
     alex.endpoint().close().await;
 }
 
+/// **A lender turns on signing people in with svrngs from the home page**
+/// (SIGN_IN_WITH_SVRNGS §5 "Turning it on", §8 9). Alex lends `shelf` with
+/// no sign-in. `GET /lent` says so; `POST /lent` with `to: sign-in` makes a
+/// client id and secret from the allowed alphabet, keeps them in the
+/// declaration at 0600, and answers the issuer, the client and the
+/// deviations in words once. After that `GET /lent` says the lend signs
+/// people in, and never shows the secret again. Planted, watched failing:
+/// the page's answer offering a client while the declaration holds none.
+#[cfg(unix)]
+#[tokio::test]
+async fn a_lend_is_signed_in_with_svrngs_from_the_home_page() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    let alex = start(1, dir.path()).await;
+    let (shelf_at, _kept) = origins::head_origin().await;
+    let lends = lend::lends_dir(dir.path());
+    std::fs::create_dir_all(&lends).unwrap();
+    let body = serde_json::json!({ "port": shelf_at.port(), "kind": "books" });
+    std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
+    let name = lend::LendName::parse("shelf").unwrap();
+    let api = alex.api_addr();
+    let home = format!("svrngs.localhost:{}", api.port());
+    let own =
+        format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{home}\r\n");
+    let alphabet = |s: &str| {
+        !s.is_empty()
+            && s.bytes()
+                .all(|b| b.is_ascii_alphanumeric() || b"-._~".contains(&b))
+    };
+
+    let before = ask(api, "GET", &home, "/lent", &own, "").await.json();
+    assert_eq!(
+        before["signing"],
+        serde_json::json!([]),
+        "nothing signs people in yet: {before:#}"
+    );
+
+    let turned = ask(
+        api,
+        "POST",
+        &home,
+        "/lent",
+        &own,
+        r#"{"lend":"shelf","to":"sign-in"}"#,
+    )
+    .await;
+    assert_eq!(turned.status, 200, "turning it on: {}", turned.body);
+    let shown = turned.json();
+    let issuer = format!("http://127.0.0.1:{}/oidc/shelf", api.port());
+    assert_eq!(shown["issuer"], issuer.as_str(), "{shown:#}");
+    let id = shown["client_id"].as_str().expect("a client id");
+    let secret = shown["client_secret"].as_str().expect("a secret");
+    assert!(
+        alphabet(id) && alphabet(secret),
+        "the client is made from the allowed alphabet: {shown:#}"
+    );
+    let deviations = shown["deviations"].as_str().expect("the deviations");
+    for word in ["plain http", "ES256", "no email"] {
+        assert!(deviations.contains(word), "{deviations}");
+    }
+
+    let declared = lend::read(dir.path(), &name).unwrap().unwrap();
+    let client = declared
+        .sign_in_with_svrngs
+        .expect("the declaration holds the client");
+    assert_eq!(client.client_id, id);
+    assert_eq!(client.client_secret.as_deref(), Some(secret));
+    let file = lends.join("shelf.json");
+    assert_eq!(
+        std::fs::metadata(&file).unwrap().permissions().mode() & 0o777,
+        0o600,
+        "the declaration holding a secret is owner-only"
+    );
+
+    let after = ask(api, "GET", &home, "/lent", &own, "").await.json();
+    assert_eq!(after["signing"], serde_json::json!(["shelf"]), "{after:#}");
+    assert!(
+        !after.to_string().contains(secret),
+        "the secret is never shown again: {after:#}"
+    );
+    alex.endpoint().close().await;
+}
+
 /// **Groups that cannot be read are said so** (ralph/REVIEW_FINDINGS.md
 /// #103): with Alex's groups unlistable, a lent page's `/svrngs-reads` is
 /// svrngs's `fault`, never "nothing is lent here". Watched failing first,
