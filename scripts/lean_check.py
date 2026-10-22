@@ -151,11 +151,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # 3,153 (CHARTER.md, 2026-10-21; demo/runs/economize/2026-10-21-oidc/
 # SURVEY.md, 4239bc7c). oidc-token's token, its key and its JWKS raised both
 # to one past where they landed: svrngs-core 3,152, the repository 17,110.
-# oidc-provider's back channel, its code store and the declaration's client
-# raised the repository 456 to one past where they landed: 17,566 (svrngs-core
-# within the 3,153 it left, its nonce bought by a move that kept behaviour:
-# 0e6257cf). 161 remain under the operator's 17,728.
-BUDGET = {"crates/svrngs-core": 3153, ".": 17567}
+# oidc-provider's back channel, its code store, the declaration's client and
+# the code's PKCE method raised the repository 466 to one past where they
+# landed: 17,576 (svrngs-core within the 3,153 it left, its nonce bought by a
+# move that kept behaviour: 0e6257cf). 151 remain under the operator's 17,728.
+BUDGET = {"crates/svrngs-core": 3153, ".": 17577}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
