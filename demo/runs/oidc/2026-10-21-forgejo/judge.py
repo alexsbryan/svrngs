@@ -53,8 +53,13 @@ bar("bo", *member("bo", "bo", engine="webkit"))
 
 apart = raw.get("bars", {}).get("apart")
 users = raw.get("forgejo", {}).get("users")
+alex_login = (people.get("alex", {}).get("user") or {}).get("login")
+bo_login = (people.get("bo", {}).get("user") or {}).get("login")
 if not apart or not isinstance(users, list):
     bar("apart", "could-not-judge", "no two-person evidence in the data")
+elif not (alex_login and bo_login):
+    bar("apart", "could-not-judge",
+        f"two accounts did not happen: Alex {alex_login!r}, Bo {bo_login!r}")
 else:
     logins = {u.get("login") for u in users}
     good = (

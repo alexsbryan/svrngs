@@ -65,16 +65,39 @@ async function open(p, at, { link, name } = {}) {
       t.lend_ms = Date.now() - opened;
     }
     t.lend_origin = new URL(p.page.url()).origin;
+    // Forgejo's landing page carries "Sign in"; its login page carries the
+    // lender's OIDC source. The first take read the landing page as the
+    // login page (data-first-take/raw.json); the person presses Sign in
+    // first, which types nothing. The phone's worker sometimes hands the
+    // landing page over after the click, so wait for either link and fall
+    // back to the landing page's own `/user/login` address.
+    const sso = p.page.locator('a[href*="/user/oauth2/svrngs"], button[formaction*="/user/oauth2/svrngs"]').first();
+    const signIn = p.page.locator('a[href="/user/login"], a[href*="/user/login"]').first();
+    t.presses = 0;
+    await Promise.race([
+      sso.waitFor({ timeout: 60_000 }).catch(() => {}),
+      signIn.waitFor({ timeout: 60_000 }).catch(() => {}),
+    ]);
+    if (await sso.count() === 0) {
+      // Follow the address the landing page's own Sign in link names: a
+      // press, without a click the phone's worker can leave unactionable.
+      const to = new URL('/user/login?redirect_to=%2f', p.page.url()).href;
+      t.sign_in_seen = await signIn.count() > 0;
+      await p.page.goto(to);
+      t.pressed = `the landing page’s Sign in address ${to}`;
+      t.sign_in_press_ms = Date.now();
+      t.presses = 1;
+    }
     // Forgejo's login page, with the lender's OIDC source on it.
-    const button = p.page.locator('a[href*="/user/oauth2/svrngs"], button[formaction*="/user/oauth2/svrngs"]').first();
     const offered = Date.now();
-    await button.waitFor({ timeout: 60_000 });
+    await sso.waitFor({ timeout: 60_000 });
     t.login_page_ms = Date.now() - offered;
     t.sso_offered = true;
     t.form_visible = await p.page.locator('#user_name:visible, input[name="user_name"]:visible').count() > 0;
     t.typed = false;
+    t.presses += 1;
     const pressed = Date.now();
-    await button.click();
+    await sso.click();
     for (let i = 0; i < 300; i++) {
       const who = await me(p);
       if (who?.login) { t.signed_in_ms = Date.now() - pressed; t.user = who; break; }
