@@ -489,3 +489,51 @@ async fn a_lend_on_at_another_network_is_not_served_and_says_why() {
     assert!(!listens(at).await, "served on another network: {at}");
     alex.endpoint().close().await;
 }
+
+/// **A room that cannot be read is said, never read as empty** (AGENTS.md
+/// 6). Alex's room.json holds what is not a list of lends; his computer
+/// starts: `/v1/room` answers that what is on for the TV cannot be read,
+/// and why, and serves nothing from a guess. Turning Sam's `app` on again
+/// writes the room over, and it is served and kept. A room never turned
+/// on, with no room.json, is empty, which is true. Planted, watched
+/// failing: room.rs as c0b0bf59 left it, which read it as empty and said
+/// so at debug alone.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_room_that_cannot_be_read_is_said_until_a_lend_is_turned_on_again() {
+    const SAM: u8 = 66;
+    let at = served_at(SAM, "app");
+    let (alex_dir, never) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let kept = alex_dir.path().join("room.json");
+    std::fs::write(&kept, r#"{"on": "a TV"}"#).unwrap();
+    let alex = alex(alex_dir.path(), SAM).await;
+    let unread = http()
+        .get(format!("http://{}/v1/room", alex.api_addr()))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(unread.status(), 500);
+    let said: Value = unread.json().await.unwrap();
+    let words = said["error"].as_str().unwrap_or_default();
+    assert!(
+        words.starts_with("This computer cannot read what you turned on for your TV (")
+            && words.ends_with("), so it shows nothing on your TV now. Turn a lend on for your TV again, and it starts over from that one."),
+        "{said}"
+    );
+    assert!(!listens(at).await, "served from a guess: {at}");
+
+    let on_app = json!({ "on": { "key": actor_of(&signing(SAM)), "name": "app" } });
+    let (status, turned) = asked(&alex, on_app).await;
+    assert_eq!(status, 200, "{turned}");
+    assert_eq!(
+        bare(&turned),
+        json!([sams(SAM, "app", json!({ "at": at.to_string() }))])
+    );
+    assert_eq!(bare(&on(&alex).await), bare(&turned));
+    let written: Value = serde_json::from_slice(&std::fs::read(&kept).unwrap()).unwrap();
+    assert_eq!(written[0]["name"], "app", "{written}");
+
+    let empty = start(67, never.path()).await;
+    assert_eq!(on(&empty).await, json!([]), "a room never turned on");
+    empty.endpoint().close().await;
+    alex.endpoint().close().await;
+}

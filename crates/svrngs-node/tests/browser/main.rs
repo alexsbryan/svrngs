@@ -2738,6 +2738,38 @@ async fn the_home_page_shows_a_lend_on_a_tv_and_turns_it_off(engine: Engine) {
 }
 
 in_both_engines!(
+    /// **The home page says a room it cannot read** (AGENTS.md 6): ada's
+    /// room.json holds what is not a list of lends; her page's "On your TV"
+    /// says what is on for the TV cannot be read, and why, and that turning
+    /// a lend on again starts it over, and the shelf's row still offers
+    /// "Show it on a TV here". Planted, watched failing: the page as
+    /// c0b0bf59 left it, which read the room as empty and said nothing.
+    the_home_page_says_a_room_it_cannot_read
+);
+async fn the_home_page_says_a_room_it_cannot_read(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    std::fs::write(dir.path().join("room.json"), r#"{"on": "a TV"}"#).unwrap();
+    let me = match engine {
+        Engine::Chromium => 42,
+        Engine::Webkit => 43,
+    };
+    let ada = computer(dir.path(), &relay, &signing(7), me, "ada").await;
+    let shelf = page_origin("<!doctype html><title>ada's shelf</title>").await;
+    lend(dir.path(), "shelf", shelf.port());
+    let seen = home_page(engine, &ada, json!({ "text": true })).await;
+    let text = seen["text"].as_str().unwrap_or_default();
+    assert!(text.contains("On your TV"), "{seen:#}");
+    assert!(
+        text.contains("This computer cannot read what you turned on for your TV (")
+            && text.contains("Turn a lend on for your TV again, and it starts over from that one."),
+        "{text}"
+    );
+    assert!(text.contains("Show it on a TV here"), "{text}");
+    drop(ada);
+}
+
+in_both_engines!(
     /// **Each thing lent opens by a link saying what it opens and whose**
     /// (start-home, from start-measure's ranked row 7: "Sam’s llama" read
     /// as a riddle, `demo/runs/start/2026-10-13/README.md` §3 (c)). Ada
