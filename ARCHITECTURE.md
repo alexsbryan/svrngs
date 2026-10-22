@@ -402,8 +402,13 @@ memory and bound to the person, the client, the redirect, the PKCE challenge
 (S256's alone, its `S256Challenge`, so no method is checked twice) and the
 nonce; `oidc/front.rs` and `door::lend_for` answer the authorize
 path on the lend's own origin, after the asker is known and never carried to
-the service, accepting the app's redirect on its own `http://localhost:<port>`
-or on the lend's own origin (the browser's `X-Forwarded-Host`/`-Proto`). The
+the service, accepting the app's redirect on its own address or on the
+lend's own origin (the browser's `X-Forwarded-Host`/`-Proto`). What the
+redirect leaves after that origin is a `door::LendPath`, the one parse the
+door's rewrite of a service's own `Location` reads too: the service's hosts
+are `door::OWN_HOSTS` (`localhost`, `127.0.0.1`, `[::1]`), and a rest a
+browser would read as another host's (`//`, `\`) or holding a control byte
+is refused, so the `Location` built from it is a header by construction. The
 door asks a lend's service at the service's own `Host` but tells it the
 browser's origin in those two headers (`door::tell_origin`), displacing any a
 client typed, so a proxy-trusting app builds its pages on the lend's origin.

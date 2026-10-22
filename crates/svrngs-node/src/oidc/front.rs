@@ -6,10 +6,12 @@
 //! **The door answers it**, after the asker is known and before the lend's
 //! path refusals and the limit, and never carries it to the service. It
 //! checks the stock ask — `response_type=code`, the declaration's client,
-//! a redirect on the app's own `http://localhost:<port>` or on the lend's
-//! own origin (the browser's `scheme://host`, which the door tells the app
-//! as `X-Forwarded-Host`/`-Proto`), `openid` in the scope, and PKCE S256
-//! when a challenge is sent — refusing each in a person's words and at
+//! a redirect on the app's own address (`http://localhost:<port>`, or the
+//! door's other own hosts) or on the lend's own origin (the browser's
+//! `scheme://host`, which the door tells the app as
+//! `X-Forwarded-Host`/`-Proto`), read as a [`LendPath`] so none a browser
+//! would read as another host's passes, `openid` in the scope, and PKCE
+//! S256 when a challenge is sent — refusing each in a person's words and at
 //! debug. It mints a one-time code for the person [`crate::door`] resolved
 //! (a guest as a guest), bound to the client, the redirect, the challenge
 //! and the nonce, and answers a relative `Location` back to the app's
@@ -19,13 +21,13 @@
 use std::collections::BTreeMap;
 use std::num::NonZeroU16;
 
-use axum::http::{header, HeaderValue, StatusCode};
+use axum::http::{header, StatusCode};
 use axum::response::{IntoResponse, Response};
 use svrngs_core::token::Subject;
 
 use super::provider::S256Challenge;
 use super::{Code, Provider};
-use crate::door::LendRefusal;
+use crate::door::{LendPath, LendRefusal};
 use crate::lend::{Lend, SignInWithSvrngs};
 
 /// Answer the person's browser at the authorize path, or refuse the ask;
@@ -56,17 +58,9 @@ pub(crate) fn authorize(
     let Some(redirect) = asked("redirect_uri") else {
         return refused(lend, "no redirect_uri was sent");
     };
-    let own = format!("http://localhost:{port}");
-    let Some(rest) = [Some(own.as_str()), browser]
-        .into_iter()
-        .flatten()
-        .find_map(|origin| {
-            redirect
-                .strip_prefix(origin)
-                .filter(|r| r.is_empty() || r.starts_with(['/', '?', '#']))
-        })
-    else {
-        return refused(lend, "the redirect_uri is not on this lend's own address");
+    let back = match LendPath::parse(redirect, port, browser) {
+        Ok(back) => back,
+        Err(why) => return refused(lend, &format!("the redirect_uri {why}")),
     };
     if !asked("scope").is_some_and(|s| s.split_whitespace().any(|part| part == "openid")) {
         return refused(lend, "the scope does not ask for openid");
@@ -85,27 +79,11 @@ pub(crate) fn authorize(
         challenge,
         nonce: asked("nonce").map(Into::into),
     });
-    let mut location = if rest.is_empty() { "/" } else { rest }.to_string();
-    location.push(if location.contains('?') { '&' } else { '?' });
-    location.push_str("code=");
-    location.push_str(&code);
-    if let Some(state) = asked("state") {
-        let state: String = form_urlencoded::byte_serialize(state.as_bytes()).collect();
-        location.push_str("&state=");
-        location.push_str(&state);
-    }
+    let query = [("code", code.as_str())].into_iter();
+    let location = back.location(query.chain(asked("state").map(|state| ("state", state))));
     tracing::debug!(target: "oidc", lend = %lend.name, client = %client.client_id, sub = %sub,
         pkce, "oidc: the authorize path answered the app's ask with a one-time code, relative to the lend's own origin");
-    (
-        StatusCode::FOUND,
-        [(
-            header::LOCATION,
-            HeaderValue::from_bytes(location.as_bytes())
-                .expect("a path and a URL-safe code are a header"),
-        )],
-        (),
-    )
-        .into_response()
+    (StatusCode::FOUND, [(header::LOCATION, location)], ()).into_response()
 }
 
 /// The query's parameters, refusing a second one of a name.

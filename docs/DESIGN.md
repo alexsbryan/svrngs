@@ -692,13 +692,18 @@ nothing more.
      answers it itself, after the asker is known and before the lend's
      refusals and its limit, and never carries it to the app. So a
      stranger or a removed member is refused before any code. It checks
-     `response_type=code`, the lend's client, the app's own redirect — its
-     `http://localhost:<lend port>` when it does not trust a proxy's
-     headers, or the lend's own origin when it does trust the door's
-     `X-Forwarded-Host` and `-Proto` — the scope, `state`, `nonce` and PKCE,
-     and mints a one-time code bound to that person, the client, the
-     redirect, the challenge and the nonce. A guest's code names the guest,
-     never their host.
+     `response_type=code`, the lend's client, the app's own redirect — on
+     its own address, `http://localhost:<lend port>` (or `127.0.0.1` or
+     `[::1]`, the hosts by which the door also turns a service's redirect
+     into a path), when it does not trust a proxy's headers, or on the
+     lend's own origin when it does trust the door's `X-Forwarded-Host` and
+     `-Proto` — the scope, `state`, `nonce` and PKCE, and mints a one-time
+     code bound to that person, the client, the redirect, the challenge and
+     the nonce. A guest's code names the guest, never their host. A
+     redirect a browser would read as another host's, `//` or a `\` after
+     the origin, or one holding a control character, is refused, as the
+     door never makes such a service's redirect a path either: both read
+     it through one type (`door::LendPath`).
    - *The back channel* is the record API's listener, which answers only
      this computer: discovery, the keys, the token and userinfo, behind the
      guard that lets no page ask it. No listener is added and the trust

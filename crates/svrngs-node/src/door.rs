@@ -736,7 +736,7 @@ fn secret_headers(door: &Door, lend: &LendName) -> Vec<(HeaderName, HeaderValue)
 /// `localhost:<its port>` (u5-2). Every lend has an origin of its own, which
 /// the service cannot know, so an app that refuses a `Host` it does not
 /// know — as one guarding against DNS rebinding does — answers as it would
-/// its lender on that computer; and [`as_path`] turns a redirect to this
+/// its lender on that computer; and [`LendPath`] turns a redirect to this
 /// address back into a path the browser reads on the lend's origin. Until
 /// u5-2 the door passed the browser's `Host`, so the service built its
 /// links for the address the browser used, one `<lender's bridge>/lend/<name>/`
@@ -814,22 +814,67 @@ fn own_origin(headers: &mut HeaderMap, label: &Label, (lend, port): (&Lend, NonZ
     headers.insert(header::ORIGIN, own);
 }
 
-/// `location` with the service's own address taken off, so `http://localhost:<port>/x`
-/// is `/x`, read on whatever origin the asker reached the lend at; `None`
-/// when it points anywhere else, which is left as it is.
-fn as_path(location: &str, port: NonZeroU16) -> Option<String> {
-    let rest = ["localhost", "127.0.0.1", "[::1]"]
-        .iter()
-        .find_map(|host| {
-            let own = format!("http://{host}:{port}");
-            let head = location.get(..own.len())?;
-            head.eq_ignore_ascii_case(&own)
-                .then(|| &location[own.len()..])
-        })?;
-    match rest.chars().next() {
-        None => Some("/".into()),
-        Some('/' | '?' | '#') => Some(rest.into()),
-        Some(_) => None,
+/// The hosts a service answers at on its own computer: the one set by which
+/// a URL on the service's own address is read as a path on the lend
+/// ([`LendPath`]).
+const OWN_HOSTS: [&str; 3] = ["localhost", "127.0.0.1", "[::1]"];
+
+/// A path on a lend's own origin: what is left of a URL on the service's
+/// own address (`http://<one of OWN_HOSTS>:<port>`) or on the browser's
+/// origin for the lend once that is taken off, case ignored, `/` for
+/// nothing. Parsed once, so a `Location` built from it is read on whatever
+/// origin the browser reached the lend at, and never as another host's: it
+/// starts with `/`, `?` or `#` but not `//`, and holds no `\`, which a
+/// browser reads as `/`. It holds no control byte either, so it is a
+/// header. The door's answer to a service's redirect ([`lend_for`]) and the
+/// front channel's to an app's ([`crate::oidc::authorize`]) are built from
+/// one.
+pub(crate) struct LendPath(String);
+
+impl LendPath {
+    /// `url` as a path on the lend whose service is at `port`, its browser
+    /// at the origin `browser`; else why not, to follow "the address ".
+    pub(crate) fn parse(
+        url: &str,
+        port: NonZeroU16,
+        browser: Option<&str>,
+    ) -> Result<Self, &'static str> {
+        let own = OWN_HOSTS.map(|host| format!("http://{host}:{port}"));
+        let rest = (own.iter().map(String::as_str).chain(browser))
+            .find_map(|origin| {
+                let rest = url
+                    .get(..origin.len())?
+                    .eq_ignore_ascii_case(origin)
+                    .then(|| &url[origin.len()..])?;
+                (rest.is_empty() || rest.starts_with(['/', '?', '#'])).then_some(rest)
+            })
+            .ok_or("is not on this lend's own address")?;
+        if rest.starts_with("//") || rest.contains('\\') {
+            return Err("would send you to another address");
+        }
+        if rest.contains(|c: char| c.is_ascii_control()) {
+            return Err("holds a character no address holds");
+        }
+        Ok(Self(if rest.is_empty() { "/" } else { rest }.into()))
+    }
+
+    /// The `Location` that sends the browser here, `query`'s pairs added
+    /// form-encoded. It is a header by construction: the path holds no
+    /// control byte, the only bytes a header refuses, and form-encoding
+    /// writes none.
+    pub(crate) fn location<'a>(
+        mut self,
+        query: impl IntoIterator<Item = (&'a str, &'a str)>,
+    ) -> HeaderValue {
+        let pairs = form_urlencoded::Serializer::new(String::new())
+            .extend_pairs(query)
+            .finish();
+        if !pairs.is_empty() {
+            self.0.push(if self.0.contains('?') { '&' } else { '?' });
+            self.0.push_str(&pairs);
+        }
+        HeaderValue::from_str(&self.0)
+            .expect("a path with no control byte, and form-encoded pairs, are a header")
     }
 }
 
@@ -1594,14 +1639,17 @@ async fn forward(
         }
         _ => held,
     };
-    let own = parts
-        .headers
-        .get(header::LOCATION)
-        .and_then(|l| l.to_str().ok())
-        .and_then(|l| as_path(l, port));
-    if let Some(path) = own.and_then(|p| HeaderValue::from_str(&p).ok()) {
-        tracing::debug!(target: "door", lend = %lend.name, ?path, "door: a redirect to the service's own address, answered as a path");
-        parts.headers.insert(header::LOCATION, path);
+    let sent = (parts.headers.get(header::LOCATION)).and_then(|l| l.to_str().ok());
+    match sent.map(|l| LendPath::parse(l, port, None)) {
+        Some(Ok(path)) => {
+            let path = path.location([]);
+            tracing::debug!(target: "door", lend = %lend.name, ?path, "door: a redirect to the service's own address, answered as a path");
+            parts.headers.insert(header::LOCATION, path);
+        }
+        Some(Err(why)) => {
+            tracing::debug!(target: "door", lend = %lend.name, location = sent, why, "door: the service's redirect, left as it sent it: the address")
+        }
+        None => {}
     }
     // The share on the answer is the door's, and so is a refusal's mark: a
     // service's own of either is displaced.
