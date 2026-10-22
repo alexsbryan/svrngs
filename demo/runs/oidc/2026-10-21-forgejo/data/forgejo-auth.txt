@@ -1,0 +1,2 @@
+ID	Name	Type	Enabled
+1	svrngs	OAuth2	true

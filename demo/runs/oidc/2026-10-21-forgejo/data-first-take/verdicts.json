@@ -1,0 +1,22 @@
+{
+  "alex": {
+    "verdict": "failed",
+    "why": "the login page did not offer the lender's svrngs source; no sign-in: locator.waitFor: Timeout 60000ms exceeded.; the page says: Explore Help Register Sign in Forgejo A painless, self-hosted Git service Easy to install Simply run the binary for your platform, ship it with Docker, or get it packaged. Cross-platform Forgejo is confirmed to run on libre operating systems like Linux and FreeBSD, as well as different CPU architectures. Choose the one you love! Lightweight Forgejo has low minimal requirements and can run on ; the account is '', not alex-<16 hex>; the local sign-in form was used (0 posts)"
+  },
+  "bo": {
+    "verdict": "failed",
+    "why": "the login page did not offer the lender's svrngs source; no sign-in: locator.waitFor: Timeout 60000ms exceeded.; the page says:  Forgejo A painless, self-hosted Git service Easy to install Simply run the binary for your platform, ship it with Docker, or get it packaged. Cross-platform Forgejo is confirmed to run on libre operating systems like Linux and FreeBSD, as well as different CPU architectures. Choose the one you love! Lightweight Forgejo has low minimal requirements and can run on an inexpensive Raspberry Pi. ; the account is '', not bo-<16 hex>; the local sign-in form was used (0 posts)"
+  },
+  "apart": {
+    "verdict": "failed",
+    "why": "Alex None, Bo None; distinct users False, distinct logins False; Forgejo's own list holds both: ['kim']"
+  },
+  "removed": {
+    "verdict": "passed",
+    "why": "refused in the door's words: 'You are no longer in this group, so nothing of it is open to you.'; no Cy- user; code minted: False"
+  },
+  "planted": {
+    "verdict": "passed",
+    "why": "the code named 'Bo-8e977ba81fe0ec86' ('Bo'), not Alex; a second redemption answered 400 invalid_grant"
+  }
+}

@@ -1,0 +1,121 @@
+{
+  "at": "2026-10-22T05:48:32.377Z",
+  "people": {
+    "alex": {
+      "lend_ms": 88,
+      "lend_origin": "http://h2vwr129uwpwfxp4xlmvc0wwlzg7nxkbwb65g5n2dlaw6js32a8agsfwmgffg8.localhost:64797",
+      "stopped": "locator.waitFor: Timeout 60000ms exceeded.; the page says: Explore Help Register Sign in Forgejo A painless, self-hosted Git service Easy to install Simply run the binary for your platform, ship it with Docker, or get it packaged. Cross-platform Forgejo is confirmed to run on libre operating systems like Linux and FreeBSD, as well as different CPU architectures. Choose the one you love! Lightweight Forgejo has low minimal requirements and can run on ",
+      "url": "http://h2vwr129uwpwfxp4xlmvc0wwlzg7nxkbwb65g5n2dlaw6js32a8agsfwmgffg8.localhost:64797/",
+      "stayed": true,
+      "navigations": [
+        "http://h2vwr129uwpwfxp4xlmvc0wwlzg7nxkbwb65g5n2dlaw6js32a8agsfwmgffg8.localhost:64797/"
+      ],
+      "local_login_posts": 0,
+      "engine": "chromium 147.0.7727.15",
+      "logs": []
+    },
+    "bo": {
+      "joined_ms": 2146,
+      "listed": [
+        "Kim’s forgejo"
+      ],
+      "lend_ms": 2304,
+      "lend_origin": "http://h2vwr129uwpwfxp4xlmvc0wwlzg7nxkbwb65g5n2dlaw6js32a8agsfwmgffg8.localhost:64774",
+      "stopped": "locator.waitFor: Timeout 60000ms exceeded.; the page says:  Forgejo A painless, self-hosted Git service Easy to install Simply run the binary for your platform, ship it with Docker, or get it packaged. Cross-platform Forgejo is confirmed to run on libre operating systems like Linux and FreeBSD, as well as different CPU architectures. Choose the one you love! Lightweight Forgejo has low minimal requirements and can run on an inexpensive Raspberry Pi. ",
+      "url": "http://h2vwr129uwpwfxp4xlmvc0wwlzg7nxkbwb65g5n2dlaw6js32a8agsfwmgffg8.localhost:64774/",
+      "stayed": true,
+      "navigations": [
+        "http://localhost:64774/#Ao6Xe6gf4OyGd86Cw9lA1AsM7eLNTiqeRE6ysxFG_hGqc3N9Xj8nQNgtd4Mei8TAxmh0dHBzOi8vdXN3MS0xLnJlbGF5Lm4wLmlyb2gubGluay8",
+        "http://h2vwr129uwpwfxp4xlmvc0wwlzg7nxkbwb65g5n2dlaw6js32a8agsfwmgffg8.localhost:64774/open.html?v=ccbe6e38ba88#eyJsYWJlbCI6ImgydndyMTI5dXdwd2Z4cDR4bG12YzB3d2x6ZzdueGtid2I2NWc1bjJkbGF3NmpzMzJhOGFnc2Z3bWdmZmc4IiwibGVuZHMiOlt7ImxhYmVsIjoiaDJ2d3IxMjl1d3B3ZnhwNHhsbXZjMHd3bHpnN254a2J3YjY1ZzVuMmRsYXc2anMzMmE4YWdzZndtZ2ZmZzgiLCJrZXkiOiIzNjI1Mzc1ZjFmOGNkOTMyNTE5YWEyNTUyMTVhNzM0ZDRiZDVkMTAxOTg3OWIyZWQ3ODFhNDEzZTFkZjljMDNjIiwicmVsYXkiOiJodHRwczovL3VzdzEtMS5yZWxheS5uMC5pcm9oLmxpbmsvIiwibmFtZSI6ImZvcmdlam8iLCJraW5kIjoiZm9yZ2VqbyIsInBlcnNvbiI6IktpbSJ9XSwicGFzcyI6ImV5SndaWEp6YjI0aU9pSm1aRFE1TkRjNE9UZGpZbUpsTW1VMU9ESXdaalptT0dVNVpERXpZV1prWmpZM01HWXlNbUk1TlRrM01UaGpOVE14WXpBeE5UWXhNemMxWlROa01tTm1JaXdpYUc5c1pHVnlJam9pTmpVMlpEZzJZelUyTkRabVpUUXlPV1JqTXpNMk0ySmhPRE01WlRCa01UQmpPREkxWlRBM05EVmhNVEJtT0dNMFlqTTVZbUkxTnpnMU16QTJZakUzWXlJc0ltRndjQ0k2SW1neWRuZHlNVEk1ZFhkd2QyWjRjRFI0YkcxMll6QjNkMng2WnpkdWVHdGlkMkkyTldjMWJqSmtiR0YzTm1wek16SmhPR0ZuYzJaM2JXZG1abWM0SWl3aWNtVmhaSE1pT2x0ZExDSjFiblJwYkNJNk1UYzVNalk1TVRNM05Td2ljMmxuSWpvaU9UQmhZVEkxTnpGak1tRXpaV1V3TURsaVltVmhOV1JrTUdOak1HRmpPVEE0WW1JMVpHTTNNRFV6TURRNVl6QXpNMlUxTTJFNFpXRTJOV1prWmpSbE56Vm1Nekl6Wm1RNFlUVXpOVGRoTXpNellUa3pObUkyTmpWaVlUWXdaRGsxTTJVNE1ESXdabVUwWW1abE5UVmlZVEZqWWpBM1pXWm1OV1ExTkRCa01HRWlmUSIsImhvbGRlciI6IjZmNjUzN2RkNmQ5YjEwYjk4NjY1MWE1YzNkYjZlM2VkODk0ODJkM2IwYzA2ZmQ3NzFlMjc4NTY2Y2I5M2FjYWQiLCJyZWxheSI6Imh0dHBzOi8vdXN3MS0xLnJlbGF5Lm4wLmlyb2gubGluay8iLCJwYWdlIjoiaHR0cDovL2xvY2FsaG9zdDo2NDc3NC8iLCJ1bmFuc3dlcmVkIjpbXX0",
+        "http://h2vwr129uwpwfxp4xlmvc0wwlzg7nxkbwb65g5n2dlaw6js32a8agsfwmgffg8.localhost:64774/open.html?v=ccbe6e38ba88",
+        "http://h2vwr129uwpwfxp4xlmvc0wwlzg7nxkbwb65g5n2dlaw6js32a8agsfwmgffg8.localhost:64774/",
+        "http://h2vwr129uwpwfxp4xlmvc0wwlzg7nxkbwb65g5n2dlaw6js32a8agsfwmgffg8.localhost:64812/planted-callback?code=<redacted>&state=planted"
+      ],
+      "local_login_posts": 0,
+      "engine": "webkit 26.4",
+      "logs": [
+        "console: Did not parse stylesheet at 'http://localhost:64774/look.css?v=ccbe6e38ba88' because non CSS MIME types are not allowed in strict mode.",
+        "failed: https://usw1-1.relay.n0.iroh.link/ping: cancelled",
+        "console: WebSocket connection to 'wss://usw1-1.relay.n0.iroh.link/relay' failed: The operation couldn’t be completed. Socket is not connected",
+        "console: WebSocket connection to 'wss://usw1-1.relay.n0.iroh.link/relay' failed: The operation couldn’t be completed. Socket is not connected",
+        "http 404 GET http://h2vwr129uwpwfxp4xlmvc0wwlzg7nxkbwb65g5n2dlaw6js32a8agsfwmgffg8.localhost:64812/planted-callback?code=<redacted>&state=pl",
+        "console: Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ]
+    },
+    "cy": {
+      "open_ms": 5,
+      "words": "You are no longer in this group, so nothing of it is open to you.",
+      "url": "http://h2vwr129uwpwfxp4xlmvc0wwlzg7nxkbwb65g5n2dlaw6js32a8agsfwmgffg8.localhost:64825/",
+      "sso_offered": false,
+      "logs": [
+        "http 403 GET http://h2vwr129uwpwfxp4xlmvc0wwlzg7nxkbwb65g5n2dlaw6js32a8agsfwmgffg8.localhost:64825/",
+        "console: Failed to load resource: the server responded with a status of 403 (Forbidden)"
+      ],
+      "forgejo_users_after": [
+        {
+          "id": 1,
+          "login": "kim",
+          "email": "kim@example.invalid"
+        }
+      ],
+      "new_users": [],
+      "kim_authorize_answers_after": 0
+    }
+  },
+  "forgejo": {
+    "users": [
+      {
+        "id": 1,
+        "login": "kim",
+        "email": "kim@example.invalid"
+      }
+    ]
+  },
+  "bars": {
+    "apart": {
+      "distinct_users": false,
+      "distinct_logins": false,
+      "alex": null,
+      "bo": null
+    },
+    "planted": {
+      "ask": "http://h2vwr129uwpwfxp4xlmvc0wwlzg7nxkbwb65g5n2dlaw6js32a8agsfwmgffg8.localhost:64812/.svrngs/oidc/authorize?response_type=code&client_id=zXgDvFq0DOd1NwGnzA9ju481ibUNVmqN&redirect_uri=http%3A%2F%2Flocalhost%3A18097%2Fplanted-callback&scope=openid%20profile&state=planted&nonce=n-planted&sub=alex",
+      "forged": {
+        "key": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "person": "alex"
+      },
+      "status": 404,
+      "url": "http://h2vwr129uwpwfxp4xlmvc0wwlzg7nxkbwb65g5n2dlaw6js32a8agsfwmgffg8.localhost:64812/planted-callback?code=<redacted>&state=planted",
+      "body": " 404 The page you are trying to reach either does not exist, has been removed or you are not authorized to view it. Forgejo version: 17.0.0 Powered by Forgejo Version: 17.0.0 Page: 1ms Template: 1ms English Licenses API",
+      "captured": null,
+      "code": "<redacted>",
+      "first_status": 200,
+      "claims": {
+        "iss": "http://127.0.0.1:64776/oidc/forgejo",
+        "sub": "8e977ba81fe0ec8677ce82c3d940d40b0cede2cd4e2a9e444eb2b31146fe11aa",
+        "aud": "zXgDvFq0DOd1NwGnzA9ju481ibUNVmqN",
+        "exp": 1792648837,
+        "iat": 1792648237,
+        "name": "Bo",
+        "preferred_username": "Bo-8e977ba81fe0ec86",
+        "groups": [
+          "member"
+        ],
+        "nonce": "n-planted"
+      },
+      "second_status": 400,
+      "second_error": "invalid_grant"
+    }
+  },
+  "cy_before": {
+    "users": [
+      {
+        "id": 1,
+        "login": "kim",
+        "email": "kim@example.invalid"
+      }
+    ],
+    "kim_authorize_answers": 0
+  },
+  "cy_removed": true
+}

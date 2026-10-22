@@ -1,0 +1,16 @@
+{
+  "forgejo": {
+    "version": "forgejo version 17.0.0 (release name 17.0.0) built with GNU Make 3.81, go1.27.2 : bindata, sqlite, sqlite_unlock_notify",
+    "install": "Homebrew bottle forgejo--17.0.0.arm64_golden_gate.bottle.tar.gz",
+    "bottle_sha256": "d997331b207cf62e274ab7d15cf668c242152d1146292491360f8053f48238f6",
+    "binary_sha256": "fb508a2fcf4411e7792284224f7be8ae9c41fa6f550926912b22b0aff33404f1",
+    "root_url": "http://localhost:18097/"
+  },
+  "container": {
+    "used": false,
+    "why": "the row's Podman premise on a Mac; data/podman-probe.txt"
+  },
+  "trust_floor": "unchanged",
+  "lean": "crates/svrngs-core     3152 / 3153 lines\n.                     17421 / 17423 lines\n",
+  "podman_probe": "# The row's Podman premise on this Mac, 2026-10-21\n# A probe answer on this Mac's 127.0.0.1, asked three ways.\n\n## this Mac: curl http://127.0.0.1:18779/\nprobe\n\n## podman --network=host: its 127.0.0.1 is the Podman machine's, not this Mac's\nwget: can't connect to remote host (127.0.0.1): Connection refused\nrefused\n\n## podman, bridged: host.containers.internal reaches this Mac's loopback\nprobe\n\n# The provider's one issuer string is http://127.0.0.1:<api port>/oidc/<lend>\n# (crates/svrngs-node/src/oidc/provider.rs:62-65), which a container's\n# 127.0.0.1 cannot name, so Forgejo runs outside a container, as\n# SIGN_IN_WITH_SVRNGS \u00a78 8 says a Mac's app does.\n\n## the API itself, from podman --network=host at 127.0.0.1:<api>\nwget: can't connect to remote host (127.0.0.1): Connection refused\nrefused\n\n## the API itself, bridged, by host.containers.internal:<api>\n{\"authorization_endpoint\":\"http://localhost:18097/.svrngs/oidc/authorize\",\"claims_supported\":[\"sub\",\"iss\",\"aud\",\"exp\",\"iat\",\"name\",\"preferred_username\",\"groups\"],\"code_challenge_methods_supported\":[\"S256\"],\"grant_types_supported\":[\"authorization_code\"],\"id_token_signing_alg_values_supported\":[\"ES256\"],\"issuer\":\"http://127.0.0.1:51314/oidc/forgejo\",\"jwks_uri\":\"http://127.0.0.1:51314/oidc/forgejo/keys\",\"response_types_supported\":[\"code\"],\"scopes_supported\":[\"openid\",\"profile\",\"groups\"],\"subject_types_supported\":[\"public\"],\"token_endpoint\":\"http://127.0.0.1:51314/oidc/forgejo/token\",\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"none\"],\"userinfo_endpoint\":\"http://127.0.0.1:51314/oidc/forgejo/userinfo\"}"
+}

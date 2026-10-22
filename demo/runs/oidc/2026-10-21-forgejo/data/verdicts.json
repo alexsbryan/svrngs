@@ -1,0 +1,22 @@
+{
+  "alex": {
+    "verdict": "failed",
+    "why": "no sign-in: no signed-in answer; the page says: Explore Help Sign in This Forgejo instance is configured to be served on \"http://localhost:18097/\". You are currently viewing Forgejo through a different URL, which may cause parts of the application to break. The canonical URL is controlled by Forgejo admins via the ROOT_URL setting in the app.ini. Register new account Link to an existing account Complete new account Username Email address Comple; the account is '', not alex-<16 hex>"
+  },
+  "bo": {
+    "verdict": "failed",
+    "why": "no sign-in: no signed-in answer; the page says:  This Forgejo instance is configured to be served on \"http://localhost:18097/\". You are currently viewing Forgejo through a different URL, which may cause parts of the application to break. The canonical URL is controlled by Forgejo admins via the ROOT_URL setting in the app.ini. Register new account Complete new account Username Email address Complete account Powered by Forgejo Version: 17.0.; the account is '', not bo-<16 hex>"
+  },
+  "apart": {
+    "verdict": "could-not-judge",
+    "why": "two accounts did not happen: Alex None, Bo None"
+  },
+  "removed": {
+    "verdict": "passed",
+    "why": "refused in the door's words: 'You are no longer in this group, so nothing of it is open to you.'; no Cy- user; code minted: False"
+  },
+  "planted": {
+    "verdict": "passed",
+    "why": "the code named 'Bo-db4c8c751d306c70' ('Bo'), not Alex; a second redemption answered 400 invalid_grant"
+  }
+}

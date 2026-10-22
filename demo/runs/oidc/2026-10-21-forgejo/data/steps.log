@@ -1,0 +1,25 @@
+05:57:01 host: arm64 27.0.1, load load averages: 2.25 2.33 3.81
+05:57:02 pinned: forgejo version 17.0.0 (release name 17.0.0) built with GNU Make 3.81, go1.27.2 : bindata, sqlite, sqlite_unlock_notify, sha256 fb508a2fcf4411e7792284224f7be8ae9c41fa6f550926912b22b0aff33404f1 (bottle d997331b207cf62e274ab7d15cf668c242152d1146292491360f8053f48238f6)
+05:57:02 svrngs 0759a282, 2026-10-21 22:37:48
+05:57:06 forgejo up: {"version":"17.0.0"}
+05:57:11 the page: http://localhost:51312/
+05:57:12 kim: On a phone, each app opens at an address of its own under localhost:51312, which can see which app is opened.
+05:57:13 Alex: 2026-10-22T05:57:12.631123Z  INFO svrngs::identity: node_key: generated + persisted identity key (first boot) node_pubkey=2f534fbe41d12cd1ea17195a7872e47d06ee0e2eec36f4e1318a37ac483dcb84
+05:57:14 Bo: 2026-10-22T05:57:13.811311Z  INFO svrngs::identity: node_key: generated + persisted identity key (first boot) node_pubkey=db4c8c751d306c7019bfd348d46b0bc2ded3cb29a4bc883b525b435ecc3d01df
+05:57:16 Cy: 2026-10-22T05:57:15.008045Z  INFO svrngs::identity: node_key: generated + persisted identity key (first boot) node_pubkey=e7bba7b308e3b06a6c82c9654dcd14dbaa00ec30fefe078ac36bb8bfbab036e1
+05:57:16 kim: You lend forgejo (port 18097) to everyone in your groups, up to 8 people at once.
+05:57:16 the app's settings: issuer http://127.0.0.1:51314/oidc/forgejo, client id X7-pSH_e9oPljOAJ3V-MeZqfn4sYYbfC, a secret of 43 characters
+05:57:16 forgejo's source: 1	svrngs	OAuth2	true
+05:57:16 forgejo's login page offers: Sign in with svrngs
+05:57:18 Alex's computer opens it at http://lc3muk9w2jgapj909726axuhm3hkggu9md58mfnnljxfd1pxhx0tgsfwmgffg8.localhost:51336/
+05:57:19 Cy's computer opens it at http://lc3muk9w2jgapj909726axuhm3hkggu9md58mfnnljxfd1pxhx0tgsfwmgffg8.localhost:51367/
+05:57:21 bo's phone opens http://localhost:51312/#AttMjHUdMGxwGb_TSNRrC8Le08sppLyIO1JbQ17MPQHf4kbQSXNjtSMuAbIUi5ryW2h0dHBzOi8vdXN3MS0xLnJlbGF5Lm4wLmlyb2gubGluay8
+05:57:21 bo's computer's door is at http://lc3muk9w2jgapj909726axuhm3hkggu9md58mfnnljxfd1pxhx0tgsfwmgffg8.localhost:51353/
+05:57:21 load at the drive's start: load averages: 1.88 2.25 3.75
+05:59:52 load at the drive's end: load averages: 1.60 2.03 3.42
+alex     failed           no sign-in: no signed-in answer; the page says: Explore Help Sign in This Forgejo instance is configured to be served on "http://localhost:18097/". You are currently viewing Forgejo through a different URL, which may cause parts of the application to break. The canonical URL is controlled by Forgejo admins via the ROOT_URL setting in the app.ini. Register new account Link to an existing account Complete new account Username Email address Comple; the account is '', not alex-<16 hex>
+bo       failed           no sign-in: no signed-in answer; the page says:  This Forgejo instance is configured to be served on "http://localhost:18097/". You are currently viewing Forgejo through a different URL, which may cause parts of the application to break. The canonical URL is controlled by Forgejo admins via the ROOT_URL setting in the app.ini. Register new account Complete new account Username Email address Complete account Powered by Forgejo Version: 17.0.; the account is '', not bo-<16 hex>
+apart    could-not-judge  two accounts did not happen: Alex None, Bo None
+removed  passed           refused in the door's words: 'You are no longer in this group, so nothing of it is open to you.'; no Cy- user; code minted: False
+planted  passed           the code named 'Bo-db4c8c751d306c70' ('Bo'), not Alex; a second redemption answered 400 invalid_grant
+05:59:52 setup.json: pinned versions, the trust floor unchanged, lean in lean.txt

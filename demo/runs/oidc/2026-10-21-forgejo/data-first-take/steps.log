@@ -1,0 +1,25 @@
+05:47:58 host: arm64 27.0.1, load load averages: 2.62 3.30 5.31
+05:47:59 pinned: forgejo version 17.0.0 (release name 17.0.0) built with GNU Make 3.81, go1.27.2 : bindata, sqlite, sqlite_unlock_notify, sha256 fb508a2fcf4411e7792284224f7be8ae9c41fa6f550926912b22b0aff33404f1 (bottle d997331b207cf62e274ab7d15cf668c242152d1146292491360f8053f48238f6)
+05:47:59 svrngs 0759a282, 2026-10-21 22:37:48
+05:48:03 forgejo up: {"version":"17.0.0"}
+05:48:22 the page: http://localhost:64774/
+05:48:23 kim: On a phone, each app opens at an address of its own under localhost:64774, which can see which app is opened.
+05:48:24 Alex: 2026-10-22T05:48:23.444509Z  INFO svrngs::identity: node_key: generated + persisted identity key (first boot) node_pubkey=482b03b373c41bfb805ac727eeba7e0f70af1b32929283fe3a4137e21ad32747
+05:48:25 Bo: 2026-10-22T05:48:24.636500Z  INFO svrngs::identity: node_key: generated + persisted identity key (first boot) node_pubkey=8e977ba81fe0ec8677ce82c3d940d40b0cede2cd4e2a9e444eb2b31146fe11aa
+05:48:26 Cy: 2026-10-22T05:48:25.823665Z  INFO svrngs::identity: node_key: generated + persisted identity key (first boot) node_pubkey=1e87627ebc6262de36155c65f9b89b2fc523cf49dbb3d6332784b9f172db75a2
+05:48:27 kim: You lend forgejo (port 18097) to everyone in your groups, up to 8 people at once.
+05:48:27 the app's settings: issuer http://127.0.0.1:64776/oidc/forgejo, client id zXgDvFq0DOd1NwGnzA9ju481ibUNVmqN, a secret of 43 characters
+05:48:27 forgejo's source: 1	svrngs	OAuth2	true
+05:48:27 forgejo's login page offers: Sign in with svrngs
+05:48:29 Alex's computer opens it at http://h2vwr129uwpwfxp4xlmvc0wwlzg7nxkbwb65g5n2dlaw6js32a8agsfwmgffg8.localhost:64797/
+05:48:30 Cy's computer opens it at http://h2vwr129uwpwfxp4xlmvc0wwlzg7nxkbwb65g5n2dlaw6js32a8agsfwmgffg8.localhost:64825/
+05:48:32 bo's phone opens http://localhost:64774/#Ao6Xe6gf4OyGd86Cw9lA1AsM7eLNTiqeRE6ysxFG_hGqc3N9Xj8nQNgtd4Mei8TAxmh0dHBzOi8vdXN3MS0xLnJlbGF5Lm4wLmlyb2gubGluay8
+05:48:32 bo's computer's door is at http://h2vwr129uwpwfxp4xlmvc0wwlzg7nxkbwb65g5n2dlaw6js32a8agsfwmgffg8.localhost:64812/
+05:48:32 load at the drive's start: load averages: 4.96 3.82 5.42
+05:50:37 load at the drive's end: load averages: 1.98 2.93 4.83
+alex     failed           the login page did not offer the lender's svrngs source; no sign-in: locator.waitFor: Timeout 60000ms exceeded.; the page says: Explore Help Register Sign in Forgejo A painless, self-hosted Git service Easy to install Simply run the binary for your platform, ship it with Docker, or get it packaged. Cross-platform Forgejo is confirmed to run on libre operating systems like Linux and FreeBSD, as well as different CPU architectures. Choose the one you love! Lightweight Forgejo has low minimal requirements and can run on ; the account is '', not alex-<16 hex>; the local sign-in form was used (0 posts)
+bo       failed           the login page did not offer the lender's svrngs source; no sign-in: locator.waitFor: Timeout 60000ms exceeded.; the page says:  Forgejo A painless, self-hosted Git service Easy to install Simply run the binary for your platform, ship it with Docker, or get it packaged. Cross-platform Forgejo is confirmed to run on libre operating systems like Linux and FreeBSD, as well as different CPU architectures. Choose the one you love! Lightweight Forgejo has low minimal requirements and can run on an inexpensive Raspberry Pi. ; the account is '', not bo-<16 hex>; the local sign-in form was used (0 posts)
+apart    failed           Alex None, Bo None; distinct users False, distinct logins False; Forgejo's own list holds both: ['kim']
+removed  passed           refused in the door's words: 'You are no longer in this group, so nothing of it is open to you.'; no Cy- user; code minted: False
+planted  passed           the code named 'Bo-8e977ba81fe0ec86' ('Bo'), not Alex; a second redemption answered 400 invalid_grant
+05:50:37 setup.json: pinned versions, the trust floor unchanged, lean in lean.txt
