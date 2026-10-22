@@ -190,7 +190,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # landing (the operator, 2026-10-22: room.json unread said, never read as
 # empty), a room that cannot be read said and serving nothing raised it 6,
 # to one past where it lands: 17,568.
-BUDGET = {"crates/svrngs-core": 3150, ".": 17568}
+# The network and the room as domains of their own (the operator,
+# 2026-10-22: "Approve all three, +67"): network.rs's move +5, the room's
+# edges in room/ +24, the network's types and the room's pure turn +38.
+# Raised 67, to one past where the series lands: 17,635. svrngs-core is
+# unchanged at 3,149 under its 3,150.
+BUDGET = {"crates/svrngs-core": 3150, ".": 17635}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
