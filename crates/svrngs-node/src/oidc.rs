@@ -33,7 +33,7 @@ pub const KEY_FILE: &str = "key.pk8";
 /// (SIGN_IN_WITH_SVRNGS §8 2-4, §5 "Turning it on"): plain http on this
 /// computer, ES256 alone, and no email. The home page and `svrngs share`
 /// say this one string.
-pub const DEVIATIONS: &str = "It is plain http on this computer, so only this computer can reach it; it signs tokens with ES256; and it tells the app no email address, because svrngs has none.";
+pub const DEVIATIONS: &str = "It is plain http on this computer, not https; it signs tokens with ES256; and it tells the app no email address, because svrngs has none.";
 
 /// A fresh client id and secret for a lend's sign-in, made from
 /// [`crate::lend::client_alphabet`]'s characters only (§5a, because
