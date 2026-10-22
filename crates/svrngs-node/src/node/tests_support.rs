@@ -42,10 +42,11 @@ impl Node {
         group: svrngs_core::token::Group,
         redirect: &str,
         challenge: Option<&str>,
+        method: Option<&str>,
         nonce: Option<&str>,
     ) -> String {
         self.asking.oidc.mint(crate::oidc::Code::new(
-            lend, client, sub, name, username, group, redirect, challenge, nonce,
+            lend, client, sub, name, username, group, redirect, challenge, method, nonce,
         ))
     }
 

@@ -159,6 +159,7 @@ pub(crate) struct Code {
     pub(crate) group: Group,
     pub(crate) redirect: String,
     pub(crate) challenge: Option<String>,
+    pub(crate) method: Option<String>,
     pub(crate) nonce: Option<String>,
     expires: i64,
     used: bool,
@@ -177,6 +178,7 @@ impl Code {
         group: Group,
         redirect: &str,
         challenge: Option<&str>,
+        method: Option<&str>,
         nonce: Option<&str>,
     ) -> Self {
         Self {
@@ -188,6 +190,7 @@ impl Code {
             group,
             redirect: redirect.into(),
             challenge: challenge.map(Into::into),
+            method: method.map(Into::into),
             nonce: nonce.map(Into::into),
             expires: now() + CODE_LIFETIME,
             used: false,
@@ -355,6 +358,13 @@ async fn token(
             StatusCode::BAD_REQUEST,
             "invalid_grant",
             "the redirect does not match the one the code was minted for",
+        );
+    }
+    if code.challenge.is_some() && code.method.as_deref() != Some("S256") {
+        return refuse(
+            StatusCode::BAD_REQUEST,
+            "invalid_grant",
+            "the code's PKCE method is not S256",
         );
     }
     if let Some(challenge) = &code.challenge {

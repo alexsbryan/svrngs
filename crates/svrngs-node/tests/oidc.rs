@@ -256,6 +256,7 @@ async fn discovery_the_keys_the_token_and_userinfo_as_a_stock_client_reads_them(
         Group::Member,
         REDIRECT,
         Some(CHALLENGE),
+        Some("S256"),
         Some(NONCE),
     );
     let (status, answer) = token(
@@ -338,6 +339,7 @@ async fn discovery_the_keys_the_token_and_userinfo_as_a_stock_client_reads_them(
         REDIRECT,
         None,
         None,
+        None,
     );
     let (status, answer) = token(
         &node,
@@ -361,6 +363,7 @@ async fn discovery_the_keys_the_token_and_userinfo_as_a_stock_client_reads_them(
         Group::Member,
         REDIRECT,
         Some(CHALLENGE),
+        Some("S256"),
         None,
     );
     let (status, answer) = token(
@@ -379,6 +382,36 @@ async fn discovery_the_keys_the_token_and_userinfo_as_a_stock_client_reads_them(
     .await;
     assert_eq!(status, 400, "a wrong verifier passed: {answer:#}");
 
+    // The PKCE method is bound too: a code whose method is not S256 is
+    // refused, even when its verifier answers the challenge.
+    let plain_method = node.oidc_code(
+        LEND,
+        CLIENT,
+        SUB,
+        NAME,
+        USER,
+        Group::Member,
+        REDIRECT,
+        Some(CHALLENGE),
+        Some("plain"),
+        None,
+    );
+    let (status, answer) = token(
+        &node,
+        Some((CLIENT, SECRET)),
+        &[
+            ("grant_type", "authorization_code"),
+            ("code", &plain_method),
+            ("redirect_uri", REDIRECT),
+            ("code_verifier", VERIFIER),
+        ],
+    )
+    .await;
+    assert_eq!(
+        status, 400,
+        "a PKCE method that is not S256 passed: {answer:#}"
+    );
+
     // A nonce is echoed when sent, and omitted otherwise.
     let plain = node.oidc_code(
         LEND,
@@ -388,6 +421,7 @@ async fn discovery_the_keys_the_token_and_userinfo_as_a_stock_client_reads_them(
         USER,
         Group::Member,
         REDIRECT,
+        None,
         None,
         None,
     );
@@ -419,6 +453,7 @@ async fn discovery_the_keys_the_token_and_userinfo_as_a_stock_client_reads_them(
         REDIRECT,
         None,
         None,
+        None,
     );
     let (status, answer) = token(
         &node,
@@ -443,6 +478,7 @@ async fn discovery_the_keys_the_token_and_userinfo_as_a_stock_client_reads_them(
         USER,
         Group::Member,
         REDIRECT,
+        None,
         None,
         None,
     );
