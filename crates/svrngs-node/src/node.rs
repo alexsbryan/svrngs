@@ -903,20 +903,15 @@ impl Asking {
     ) -> Result<(Vec<Lending>, Unlisted), Response> {
         let offered = crate::door::offered(&self.door).await?;
         let others = self.host.lends_in(groups, asker).await;
-        let mut lent: Vec<Lending> = offered
-            .into_iter()
-            .map(|offered| Lending {
-                person: own.clone(),
-                relay: relay_of(groups, &self.host.actor).map(ToString::to_string),
-                key: self.host.actor.clone(),
+        let mine = (offered.into_iter()).map(|o| (own.clone(), self.host.actor.clone(), o));
+        let theirs = (others.lent.into_iter()).map(|l| (l.person, l.key, l.offered));
+        let mut lent: Vec<Lending> = (mine.chain(theirs))
+            .map(|(person, key, offered)| Lending {
+                relay: relay_of(groups, &key).map(ToString::to_string),
+                person,
+                key,
                 offered,
             })
-            .chain(others.lent.into_iter().map(|l| Lending {
-                person: l.person,
-                relay: relay_of(groups, &l.key).map(ToString::to_string),
-                key: l.key,
-                offered: l.offered,
-            }))
             .collect();
         // A carried app only in its own group (COMMUNITY_APPS §7, found
         // 3), each computer's copy listed, so a phone knows every computer

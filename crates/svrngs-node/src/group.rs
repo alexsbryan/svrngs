@@ -169,10 +169,7 @@ impl crate::node::Host {
         let rail = &self.rail;
         let dir = rail.group_dir(&seed.id()).map_err(|e| e.to_string())?;
         write_seed(&dir, seed)
-            .and_then(|()| match origin {
-                Some(origin) => write_origin(&dir, origin),
-                None => Ok(()),
-            })
+            .and_then(|()| origin.map_or(Ok(()), |origin| write_origin(&dir, origin)))
             .and_then(|()| relay.map_or(Ok(()), |relay| write_relay(&dir, relay)))
             .map_err(|e: SeedError| e.to_string())?;
         rail.set_seed(&seed.id(), &seed.roster())
