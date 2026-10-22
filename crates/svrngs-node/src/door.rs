@@ -107,6 +107,7 @@ use crate::ring_routes::err;
 use crate::{register::Visiting, Person, RingRail};
 use limit::{Counts, Verdict, Whereabouts};
 use svrngs_core::pass::{Label, Pass};
+use svrngs_core::token::Group;
 
 pub mod choices;
 pub mod limit;
@@ -158,6 +159,16 @@ pub fn user_name(person: &Person, key: &str) -> String {
         .collect();
     let kept = if kept.is_empty() { "person" } else { &kept };
     format!("{kept}-{}", &key[..key.len().min(16)])
+}
+
+/// The name and account the door tells a lend about `person` asking with
+/// `actor`: a guest as their host's guest, with an account of their own
+/// ([`user_name`], then `.guest`) (GUESTS §3.5). One string beside the
+/// headers and the sign-in with svrngs' claims.
+fn told_as(person: &Person, host: Option<&Person>, actor: &str) -> (String, String) {
+    let told = host.map_or(person.to_string(), |h| format!("{person} ({h}'s guest)"));
+    let user = user_name(person, actor) + if host.is_some() { ".guest" } else { "" };
+    (told, user)
 }
 
 /// The app asking: the label of the pass's `app`, the lend whose pages
@@ -365,6 +376,10 @@ pub struct Door {
     pub choices: choices::Choices,
     /// The groups' folders, which carry apps ([`Source::Carried`]).
     pub folders: crate::folder::Folders,
+    /// The lender's sign-in key and the codes this run minted, shared with
+    /// the provider on the record API ([`crate::oidc`]): one key, one code
+    /// store, whichever channel asks.
+    pub(crate) oidc: crate::oidc::Provider,
 }
 
 /// The door's routes, for the members' protocol's router: a lend, every
@@ -1176,6 +1191,37 @@ pub(crate) async fn lend_for(
             return Ok(opened.await);
         }
     };
+    if service_path == crate::oidc::AUTHORIZE_PATH {
+        let Some(client) = lend.sign_in_with_svrngs.as_ref() else {
+            tracing::debug!(target: "door", actor, lend = %lend.name, "door: refused — the authorize path on a lend that does not sign people in with svrngs");
+            return Err(LendRefusal::Unlent.say(
+                StatusCode::NOT_FOUND,
+                format!("{} does not sign people in with svrngs", lend.name),
+            ));
+        };
+        let (name, username) = told_as(&person, host.as_ref(), actor);
+        let group = if host.is_some() {
+            Group::Guest
+        } else {
+            Group::Member
+        };
+        let who = crate::oidc::Signer {
+            sub: actor.to_string(),
+            name,
+            username,
+            group,
+        };
+        tracing::debug!(target: "door", actor, lend = %lend.name, ?group,
+            "door: the authorize path on the lend's own origin, answered by the door and never carried");
+        return Ok(crate::oidc::authorize(
+            &door.oidc,
+            &lend,
+            client,
+            port,
+            who,
+            req.uri().query(),
+        ));
+    }
     if let Who::Member(dialer) = &who {
         app = own_app(door, dialer, req.headers(), &lend)?;
     }
@@ -1418,8 +1464,7 @@ async fn forward(
     let get = parts.method == axum::http::Method::GET;
     // A guest is told as their host's guest, with an account of their own: a
     // member's ends in 16 hex ([`user_name`]), and `.guest` in none (GUESTS §3.5).
-    let told = host.map_or(person.to_string(), |h| format!("{person} ({h}'s guest)"));
-    let user = user_name(person, actor) + if host.is_some() { ".guest" } else { "" };
+    let (told, user) = told_as(person, host, actor);
     let (Ok(person_value), Ok(key_value), Ok(user_value), Ok(device_value)) = (
         HeaderValue::from_bytes(told.as_bytes()),
         HeaderValue::from_str(actor),

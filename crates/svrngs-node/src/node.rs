@@ -304,6 +304,9 @@ impl Node {
                 .await
                 .map_err(NodeError::Endpoint)?;
         let rounds = Rounds::new(Default::default());
+        // One provider, its key and its code store, shared by the door that
+        // mints a code and the API that redeems it.
+        let oidc = crate::oidc::Provider::new(data_dir.clone(), host.api_port)?;
         let door = crate::door::Door {
             ring: AskRound::new(nudge.clone(), &rounds),
             rail: rail.clone(),
@@ -313,13 +316,14 @@ impl Node {
             sign_ins: crate::door::sign_in::SignIns::spawn(),
             choices: crate::door::choices::Choices::spawn(),
             folders: folders.clone(),
+            oidc: oidc.clone(),
         };
         let asking = Asking {
             host: host.clone(),
             door,
             folders: folders.clone(),
             seeds,
-            oidc: crate::oidc::Provider::new(data_dir.clone(), host.api_port)?,
+            oidc,
         };
         // The record, and beside it what an app asks of this computer (u5-1).
         let rail_api = RailApi {

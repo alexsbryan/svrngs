@@ -40,6 +40,10 @@ rand = "0.9"
 # x and y. Neither is a new crate here.
 ring = "0.17"
 base64 = "0.22"
+# The authorize ask's query, read and its `state` written back: the lock
+# already holds `form_urlencoded` through axum's `Query` and `url`, so this
+# names one home rather than a new crate (front.rs).
+form_urlencoded = "1"
 # The serving half (U1): hyper serves the caller's axum Router on each
 # accepted iroh stream; tower's `oneshot` calls the router per request.
 axum = "0.8"

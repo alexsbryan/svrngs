@@ -180,10 +180,15 @@ fn url(bytes: &[u8]) -> String {
     URL_SAFE_NO_PAD.encode(bytes)
 }
 
+pub(crate) mod front;
 pub(crate) mod provider;
 
+pub(crate) use front::{authorize, Signer};
 pub(crate) use provider::Code;
 pub use provider::Provider;
+/// The reserved authorize path on a lend's own origin, where the door
+/// answers the front channel.
+pub use provider::AUTHORIZE_PATH;
 
 #[cfg(test)]
 #[path = "oidc/tests.rs"]

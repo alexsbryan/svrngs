@@ -176,17 +176,40 @@ async fn a_members_authorize_answers_a_code_the_token_route_redeems() {
     .await;
     assert_eq!(status, 200, "{answer:#}");
     let claims = claims(answer["id_token"].as_str().expect("an id token"));
-    assert_eq!(claims["sub"], bo, "the code is not the door's person: {claims:#}");
+    assert_eq!(
+        claims["sub"], bo,
+        "the code is not the door's person: {claims:#}"
+    );
     assert_ne!(claims["sub"], cy, "the ask chose the person: {claims:#}");
     assert_eq!(claims["name"], "bo");
-    assert_eq!(
-        claims["preferred_username"],
-        format!("bo-{}", &bo[..16])
-    );
+    assert_eq!(claims["preferred_username"], format!("bo-{}", &bo[..16]));
     assert_eq!(claims["groups"], json!(["member"]));
-    assert_eq!(claims["nonce"], NONCE, "the nonce is not echoed: {claims:#}");
+    assert_eq!(
+        claims["nonce"], NONCE,
+        "the nonce is not echoed: {claims:#}"
+    );
 
-    // The same code presented at another lend's token route is refused.
+    // A fresh code, presented at another lend's token route, is refused.
+    let fresh = |reply: &Reply| -> String {
+        pairs(
+            location(reply)
+                .expect("a Location")
+                .split_once('?')
+                .unwrap()
+                .1,
+        )
+        .remove("code")
+        .expect("a code")
+    };
+    let reply = get(
+        pair.bridge,
+        &format!(
+            "/lend/{LEND}/.svrngs/oidc/authorize?{}",
+            ask(port, CLIENT, "")
+        ),
+        "",
+    )
+    .await;
     let (status, answer) = token(
         &pair.a,
         OTHER,
@@ -194,24 +217,24 @@ async fn a_members_authorize_answers_a_code_the_token_route_redeems() {
         OTHER_SECRET,
         &[
             ("grant_type", "authorization_code"),
-            ("code", &code),
+            ("code", &fresh(&reply)),
             ("redirect_uri", &redirect),
+            ("code_verifier", VERIFIER),
         ],
     )
     .await;
     assert_eq!(status, 400, "another lend redeemed the code: {answer:#}");
 
-    // A second code, redeemed with a redirect it was not minted for.
+    // A third code, redeemed with a redirect it was not minted for.
     let reply = get(
         pair.bridge,
-        &format!("/lend/{LEND}/.svrngs/oidc/authorize?{}", ask(port, CLIENT, "")),
+        &format!(
+            "/lend/{LEND}/.svrngs/oidc/authorize?{}",
+            ask(port, CLIENT, "")
+        ),
         "",
     )
     .await;
-    let loc = location(&reply).expect("a Location");
-    let code = pairs(loc.split_once('?').unwrap().1)
-        .remove("code")
-        .expect("a code");
     let (status, answer) = token(
         &pair.a,
         LEND,
@@ -219,8 +242,9 @@ async fn a_members_authorize_answers_a_code_the_token_route_redeems() {
         SECRET,
         &[
             ("grant_type", "authorization_code"),
-            ("code", &code),
+            ("code", &fresh(&reply)),
             ("redirect_uri", "http://localhost:8096/elsewhere"),
+            ("code_verifier", VERIFIER),
         ],
     )
     .await;
@@ -239,7 +263,10 @@ async fn a_members_authorize_answers_a_code_the_token_route_redeems() {
     let gone = bridge_as(&signing(2), &pair.a, Alpn::Member).await;
     let refused = get(
         gone.local_addr(),
-        &format!("/lend/{LEND}/.svrngs/oidc/authorize?{}", ask(port, CLIENT, "")),
+        &format!(
+            "/lend/{LEND}/.svrngs/oidc/authorize?{}",
+            ask(port, CLIENT, "")
+        ),
         "",
     )
     .await;
@@ -291,7 +318,10 @@ impl House {
     /// Kim has Sam over until `until`, opening Kim's `lend`.
     fn visit(&self, until: i64, lend: &str) -> OpId {
         let mut opens = std::collections::BTreeMap::new();
-        opens.insert(actor_of(self.kim.rail().signer()), [lend.to_string()].into());
+        opens.insert(
+            actor_of(self.kim.rail().signer()),
+            [lend.to_string()].into(),
+        );
         let act = RailAct::Visit(Visit {
             guest: Person::parse("Sam").unwrap(),
             key: actor_of(&signing(SAM)),
@@ -378,9 +408,15 @@ async fn a_guests_code_names_the_guest_never_the_host() {
     assert_eq!(claims["sub"], sam, "{claims:#}");
     assert_ne!(claims["sub"], kim, "the guest's code names Kim: {claims:#}");
     assert_eq!(claims["name"], "Sam (Kim's guest)");
-    assert_eq!(claims["preferred_username"], format!("Sam-{}.guest", &sam[..16]));
+    assert_eq!(
+        claims["preferred_username"],
+        format!("Sam-{}.guest", &sam[..16])
+    );
     assert_eq!(claims["groups"], json!(["guest"]));
-    assert!(!answer.to_string().contains(&kim), "Kim's key reached the app");
+    assert!(
+        !answer.to_string().contains(&kim),
+        "Kim's key reached the app"
+    );
 
     house.kim.endpoint().close().await;
     house.bo.endpoint().close().await;
