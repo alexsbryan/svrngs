@@ -1,0 +1,28 @@
+04:54:28 host: arm64 27.0.1, load load averages: 2.31 2.55 2.62
+04:54:28 svrngs 6b8374b2, ffmpeg version 9.0.2 Copyright (c) 2000-2026 the FFmpeg developers
+04:54:30 pinned: Jellyfin.Server 10.11.11.0, SSO-Auth 4.0.0.4
+04:54:37 jellyfin up: 10.11.11, 7b72dc6a7caa49f7a802a821d7c71cde
+04:54:41 jellyfin's KnownProxies:     <string>127.0.0.1</string>  
+04:54:41 film: 4a20130f18706d8b336c728a8df00127
+04:54:41 the plugin's key: made
+04:54:46 the page: http://localhost:51674/
+04:54:47 kim: On a phone, each app opens at an address of its own under localhost:51674, which can see which app is opened.
+04:54:48 Alex: 2026-10-22T04:54:47.800451Z  INFO svrngs::identity: node_key: generated + persisted identity key (first boot) node_pubkey=57a5060242a2e5fccbc0f22c6ac3a309e61241b670fe066dcc13510e02fde479
+04:54:50 Bo: 2026-10-22T04:54:48.981424Z  INFO svrngs::identity: node_key: generated + persisted identity key (first boot) node_pubkey=c6b4506b0b341c4b40b64ac2e46a73afc161ae806f90f638e8992fbf5bd4f076
+04:54:51 Cy: 2026-10-22T04:54:50.164586Z  INFO svrngs::identity: node_key: generated + persisted identity key (first boot) node_pubkey=debacd92b67cf0d0c571cbfc53d79f02b87bf11a8c17ebee7214424e1f505dfd
+04:54:51 kim: You lend jellyfin (port 18096) to everyone in your groups, up to 8 people at once.
+04:54:51 the app's settings: issuer http://127.0.0.1:51675/oidc/jellyfin, client id _t6ytzNOllAo64NqDiu7B2Y20JVIWuv4, a secret of 43 characters
+04:54:52 Alex's computer opens it at http://4lwzpguzva1jhtq43pakan4pcm6jnn1hb56ng09h67830quk6sbabbq3n1prdr.localhost:51702/
+04:54:54 Cy's computer opens it at http://4lwzpguzva1jhtq43pakan4pcm6jnn1hb56ng09h67830quk6sbabbq3n1prdr.localhost:51732/
+04:54:55 bo's phone opens http://localhost:51674/#Asa0UGsLNBxLQLZKwuRqc6_BYa6Ab5D2OOiZL79b1PB2sW5kcMJLHx4lKIJg4z0ab2h0dHBzOi8vdXN3MS0xLnJlbGF5Lm4wLmlyb2gubGluay8
+04:54:55 bo's computer's door is at http://4lwzpguzva1jhtq43pakan4pcm6jnn1hb56ng09h67830quk6sbabbq3n1prdr.localhost:51716/
+04:54:56 the plugin is told: {"svrngs":{"OidEndpoint":"http://127.0.0.1:51675/oidc/jellyfin","OidClientId":"_t6ytzNOllAo64NqDiu7B2Y20JVIWuv4","OidSecret":"9shQnGZxn0OGKdTqvGPlThMyQ3BOxC2qFV86jtE8hwQ","Enabled":true,"EnableAuthorization":true,"EnableAllFolders":true,"EnabledFolders":[],"AdminRoles":[],"Roles":[],"EnableFolderRol
+04:54:56 jellyfin's login page offers: Sign in with SSO
+04:54:56 load at the drive's start: load averages: 3.00 2.69 2.67
+04:55:13 load at the drive's end: load averages: 2.78 2.66 2.66
+alex     passed           sign-in 490 ms after the press, no typing, as Alex-57a5060242a2e5fc, film in 1378 ms
+bo       passed           sign-in 876 ms after the press, no typing, as Bo-c6b4506b0b341c4b, film in 4607 ms
+apart    passed           Alex Alex-57a5060242a2e5fc (Alex-57a5060242a2e5fc by token), Bo Bo-c6b4506b0b341c4b (Bo-c6b4506b0b341c4b by token); distinct users True, distinct tokens True
+removed  passed           refused in the door's words: 'You are no longer in this group, so nothing of it is open to you.'; no Cy- user; code minted: False
+planted  passed           the code named 'Bo-c6b4506b0b341c4b' ('Bo'), not Alex; a second redemption answered 400 invalid_grant
+04:55:13 setup.json: pinned versions, the trust floor unchanged, lean in lean.txt

@@ -1,0 +1,150 @@
+{
+  "at": "2026-10-22T04:54:56.137Z",
+  "people": {
+    "alex": {
+      "lend_ms": 130,
+      "login_page_ms": 342,
+      "sso_offered": true,
+      "typed": true,
+      "signed_in_ms": 490,
+      "user_id": "c645cd0b07c24e449bd9981ad3f88c16",
+      "token": "56ea3a83ea624f8184638b0d356e652a",
+      "address": "http://4lwzpguzva1jhtq43pakan4pcm6jnn1hb56ng09h67830quk6sbabbq3n1prdr.localhost:51702",
+      "url": "http://4lwzpguzva1jhtq43pakan4pcm6jnn1hb56ng09h67830quk6sbabbq3n1prdr.localhost:51702/web/index.html",
+      "home": "Home Media Movies User Settings Sign Out Home Favorites My Media Movies Recently Added in Movies Test Pattern 2021",
+      "engine": "chromium 147.0.7727.15",
+      "logs": [
+        "failed: http://4lwzpguzva1jhtq43pakan4pcm6jnn1hb56ng09h67830quk6sbabbq3n1prdr.localhost:51702/Sessions/Capabilities/Full: net::ERR_ABORTED",
+        "failed: http://4lwzpguzva1jhtq43pakan4pcm6jnn1hb56ng09h67830quk6sbabbq3n1prdr.localhost:51702/Sessions/Playing: net::ERR_ABORTED",
+        "failed: http://4lwzpguzva1jhtq43pakan4pcm6jnn1hb56ng09h67830quk6sbabbq3n1prdr.localhost:51702/Sessions/Playing/Progress: net::ERR_ABORTED",
+        "failed: http://4lwzpguzva1jhtq43pakan4pcm6jnn1hb56ng09h67830quk6sbabbq3n1prdr.localhost:51702/Sessions/Playing/Progress: net::ERR_ABORTED"
+      ],
+      "played_ms": 1378,
+      "jellyfin_name": "Alex-57a5060242a2e5fc",
+      "me": "Alex-57a5060242a2e5fc"
+    },
+    "bo": {
+      "joined_ms": 2110,
+      "listed": [
+        "Kim’s jellyfin"
+      ],
+      "lend_ms": 4296,
+      "login_page_ms": 1308,
+      "sso_offered": true,
+      "typed": true,
+      "signed_in_ms": 876,
+      "user_id": "62b4f32be7544ff5ba55d3225d2604c3",
+      "token": "db3fedea23924ad9afbd7ed422d2ca42",
+      "address": "http://4lwzpguzva1jhtq43pakan4pcm6jnn1hb56ng09h67830quk6sbabbq3n1prdr.localhost:51674",
+      "url": "http://4lwzpguzva1jhtq43pakan4pcm6jnn1hb56ng09h67830quk6sbabbq3n1prdr.localhost:51674/web/index.html",
+      "home": "Home Media Movies User Settings Sign Out Home Favorites My Media Movies Recently Added in Movies Test Pattern 2021 ",
+      "engine": "webkit 26.4",
+      "logs": [
+        "console: Did not parse stylesheet at 'http://localhost:51674/look.css?v=ccbe6e38ba88' because non CSS MIME types are not allowed in strict mode.",
+        "failed: https://usw1-1.relay.n0.iroh.link/ping: cancelled",
+        "console: WebSocket connection to 'wss://usw1-1.relay.n0.iroh.link/relay' failed: The operation couldn’t be completed. Socket is not connected",
+        "console: WebSocket connection to 'wss://usw1-1.relay.n0.iroh.link/relay' failed: The operation couldn’t be completed. Socket is not connected",
+        "console: Button failed to load, iconName = invalid-placard, layoutTraits = [MacOSLayoutTraits Inline], src = blob:http://4lwzpguzva1jhtq43pakan4pcm6jnn1hb56ng09h67830quk6sbabbq3n1prdr.localhost:51674/f7cbe637-",
+        "console: Button failed to load, iconName = pip-placard, layoutTraits = [MacOSLayoutTraits Inline], src = blob:http://4lwzpguzva1jhtq43pakan4pcm6jnn1hb56ng09h67830quk6sbabbq3n1prdr.localhost:51674/dc376ee5-f85e",
+        "console: Button failed to load, iconName = pip-placard, layoutTraits = [MacOSLayoutTraits Inline], src = blob:http://4lwzpguzva1jhtq43pakan4pcm6jnn1hb56ng09h67830quk6sbabbq3n1prdr.localhost:51674/dc376ee5-f85e",
+        "console: Button failed to load, iconName = airplay-placard, layoutTraits = [MacOSLayoutTraits Inline], src = blob:http://4lwzpguzva1jhtq43pakan4pcm6jnn1hb56ng09h67830quk6sbabbq3n1prdr.localhost:51674/3ef3d06a-",
+        "failed: http://4lwzpguzva1jhtq43pakan4pcm6jnn1hb56ng09h67830quk6sbabbq3n1prdr.localhost:51674/Videos/4a20130f18706d8b336c728a8df00127/stream.mp4?Static=true&m: cancelled",
+        "failed: http://4lwzpguzva1jhtq43pakan4pcm6jnn1hb56ng09h67830quk6sbabbq3n1prdr.localhost:51674/Videos/4a20130f18706d8b336c728a8df00127/stream.mp4?Static=true&m: cancelled",
+        "failed: http://4lwzpguzva1jhtq43pakan4pcm6jnn1hb56ng09h67830quk6sbabbq3n1prdr.localhost:51674/Videos/4a20130f18706d8b336c728a8df00127/stream.mp4?Static=true&m: cancelled",
+        "failed: http://4lwzpguzva1jhtq43pakan4pcm6jnn1hb56ng09h67830quk6sbabbq3n1prdr.localhost:51674/Videos/4a20130f18706d8b336c728a8df00127/stream.mp4?Static=true&m: cancelled",
+        "failed: http://4lwzpguzva1jhtq43pakan4pcm6jnn1hb56ng09h67830quk6sbabbq3n1prdr.localhost:51674/Videos/4a20130f18706d8b336c728a8df00127/stream.mp4?Static=true&m: cancelled",
+        "failed: http://4lwzpguzva1jhtq43pakan4pcm6jnn1hb56ng09h67830quk6sbabbq3n1prdr.localhost:51674/Sessions/Playing/Stopped: cancelled",
+        "failed: http://4lwzpguzva1jhtq43pakan4pcm6jnn1hb56ng09h67830quk6sbabbq3n1prdr.localhost:51674/Videos/4a20130f18706d8b336c728a8df00127/stream.mp4?Static=true&m: cancelled",
+        "pageerror: Unhandled Promise Rejection: TypeError: Load failed",
+        "http 404 GET http://4lwzpguzva1jhtq43pakan4pcm6jnn1hb56ng09h67830quk6sbabbq3n1prdr.localhost:51716/planted-callback?code=dzm3Xx1SY7AFc8N7B4JtWRsoskLgpaKPNcF6i-16BXs&state=pl",
+        "console: Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "played_ms": 4607,
+      "jellyfin_name": "Bo-c6b4506b0b341c4b",
+      "me": "Bo-c6b4506b0b341c4b"
+    },
+    "cy": {
+      "open_ms": 6,
+      "words": "You are no longer in this group, so nothing of it is open to you.",
+      "url": "http://4lwzpguzva1jhtq43pakan4pcm6jnn1hb56ng09h67830quk6sbabbq3n1prdr.localhost:51732/",
+      "sso_offered": false,
+      "logs": [
+        "http 403 GET http://4lwzpguzva1jhtq43pakan4pcm6jnn1hb56ng09h67830quk6sbabbq3n1prdr.localhost:51732/",
+        "console: Failed to load resource: the server responded with a status of 403 (Forbidden)"
+      ],
+      "jellyfin_users_after": [
+        "Alex-57a5060242a2e5fc",
+        "Bo-c6b4506b0b341c4b",
+        "kim"
+      ],
+      "new_users": [],
+      "kim_log_lines_before": 5284,
+      "kim_log_lines_after": 5327,
+      "kim_authorize_answers_after": 2
+    }
+  },
+  "jellyfin": {
+    "users": [
+      {
+        "id": "c645cd0b07c24e449bd9981ad3f88c16",
+        "name": "Alex-57a5060242a2e5fc"
+      },
+      {
+        "id": "62b4f32be7544ff5ba55d3225d2604c3",
+        "name": "Bo-c6b4506b0b341c4b"
+      },
+      {
+        "id": "7335a96ded674c2b84bda56f0444ae59",
+        "name": "kim"
+      }
+    ]
+  },
+  "bars": {
+    "apart": {
+      "distinct_users": true,
+      "distinct_tokens": true,
+      "alex": "Alex-57a5060242a2e5fc",
+      "bo": "Bo-c6b4506b0b341c4b",
+      "alex_me": "Alex-57a5060242a2e5fc",
+      "bo_me": "Bo-c6b4506b0b341c4b"
+    },
+    "planted": {
+      "ask": "http://4lwzpguzva1jhtq43pakan4pcm6jnn1hb56ng09h67830quk6sbabbq3n1prdr.localhost:51716/.svrngs/oidc/authorize?response_type=code&client_id=_t6ytzNOllAo64NqDiu7B2Y20JVIWuv4&redirect_uri=http%3A%2F%2Flocalhost%3A18096%2Fplanted-callback&scope=openid%20profile&state=planted&nonce=n-planted&sub=alex",
+      "forged": {
+        "key": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "person": "alex"
+      },
+      "status": 404,
+      "url": "http://4lwzpguzva1jhtq43pakan4pcm6jnn1hb56ng09h67830quk6sbabbq3n1prdr.localhost:51716/planted-callback?code=dzm3Xx1SY7AFc8N7B4JtWRsoskLgpaKPNcF6i-16BXs&state=planted",
+      "body": "",
+      "captured": null,
+      "code": "dzm3Xx1SY7AFc8N7B4JtWRsoskLgpaKPNcF6i-16BXs",
+      "first_status": 200,
+      "claims": {
+        "iss": "http://127.0.0.1:51675/oidc/jellyfin",
+        "sub": "c6b4506b0b341c4b40b64ac2e46a73afc161ae806f90f638e8992fbf5bd4f076",
+        "aud": "_t6ytzNOllAo64NqDiu7B2Y20JVIWuv4",
+        "exp": 1792645513,
+        "iat": 1792644913,
+        "name": "Bo",
+        "preferred_username": "Bo-c6b4506b0b341c4b",
+        "groups": [
+          "member"
+        ],
+        "nonce": "n-planted"
+      },
+      "second_status": 400,
+      "second_error": "invalid_grant"
+    }
+  },
+  "cy_before": {
+    "kim_log_lines": 5284,
+    "users": [
+      "Alex-57a5060242a2e5fc",
+      "Bo-c6b4506b0b341c4b",
+      "kim"
+    ],
+    "kim_authorize_answers": 2
+  },
+  "cy_removed": true
+}
