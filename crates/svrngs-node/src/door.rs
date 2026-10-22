@@ -842,7 +842,8 @@ pub(crate) struct LendPath(String);
 
 impl LendPath {
     /// `url` as a path on the lend whose service is at `port`, its browser
-    /// at the origin `browser`; else why not, to follow "the address ".
+    /// at the origin `browser`; else why not, worded to follow the URL's
+    /// name, as the front channel says it: "the redirect_uri {why}".
     pub(crate) fn parse(
         url: &str,
         port: NonZeroU16,
