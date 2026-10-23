@@ -12,7 +12,7 @@
 // no kind list, no card and no matcher.
 
 import http from 'node:http';
-import { readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
@@ -36,6 +36,23 @@ function dataDir(option) {
 export function recordAt() {
   if (process.env.SVRNGS_API) return process.env.SVRNGS_API.replace(/\/+$/, '');
   return readFileSync(join(dataDir(), 'api'), 'utf8').trim().replace(/\/+$/, '');
+}
+
+/// The address the last start took, if one was kept.
+function keptPort(dir) {
+  try {
+    const port = Number(readFileSync(join(dir, 'pantry-port'), 'utf8').trim());
+    return Number.isInteger(port) && port > 0 && port < 65536 ? port : null;
+  } catch {
+    return null;
+  }
+}
+
+/// Keep the address this start took, so the next one takes it again.
+function keepPort(dir, port) {
+  if (!port) return;
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'pantry-port'), `${port}\n`);
 }
 
 /// Glassbox: with PANTRY_LOG=debug, every probe, route and skip is written.
@@ -321,7 +338,9 @@ function rewriteModel(raw, contentType, model) {
 /// `--port` it takes the address it took last time, from the data dir's
 /// `pantry-port`, so the address a person pasted into their interface stays;
 /// another program holding it is said by name, never moved past in silence.
-export async function serve({ record = recordAt(), port = 0, host = '127.0.0.1', clock = Date.now } = {}) {
+export async function serve({ record = recordAt(), port, host = '127.0.0.1', state, clock = Date.now } = {}) {
+  const dir = dataDir(state);
+  const wanted = port === undefined ? (keptPort(dir) ?? 0) : port;
   const server = http.createServer(async (req, res) => {
     try {
       if (req.method === 'GET' && req.url === '/v1/models') {
@@ -397,10 +416,17 @@ export async function serve({ record = recordAt(), port = 0, host = '127.0.0.1',
     }
   });
   await new Promise((resolve, reject) => {
-    server.once('error', reject);
-    server.listen(port, host, resolve);
+    server.once('error', (e) => {
+      if (e.code === 'EADDRINUSE') {
+        reject(new Error(`Another program on this computer holds 127.0.0.1:${wanted}; pantry serve stops rather than move the address`));
+      } else {
+        reject(e);
+      }
+    });
+    server.listen(wanted, host, resolve);
   });
   const actual = server.address().port;
+  if (port === undefined || port > 0) keepPort(dir, actual);
   return {
     port: actual,
     url: `http://${host}:${actual}`,
@@ -417,6 +443,7 @@ async function main(argv) {
   for (let i = 0; i < rest.length; i += 1) {
     if (rest[i] === '--record') options.record = rest[++i];
     else if (rest[i] === '--port') options.port = Number(rest[++i]);
+    else if (rest[i] === '--state') options.state = rest[++i];
     else throw new Error(`unknown option ${rest[i]}`);
   }
   if (verb === 'list') {
@@ -428,7 +455,7 @@ async function main(argv) {
     console.log(`Point your interface at ${at.url}/v1`);
     return;
   }
-  console.error('usage: pantry list | pantry serve [--port N] [--record URL]');
+  console.error('usage: pantry list | pantry serve [--port N] [--record URL] [--state DIR]');
   process.exitCode = 2;
 }
 

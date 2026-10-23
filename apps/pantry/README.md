@@ -21,8 +21,11 @@ one address; keep it running.
 
 The pantry reads this computer's record at `$SVRNGS_DIR/api`, else
 `~/.svrngs/api`. `--record URL` names another record, and `--port N` names
-a port (the default is any free one). It listens on 127.0.0.1 only, so it is
-yours, not your network's.
+another port. Without one, `serve` takes the address it took last time,
+kept in your data dir's `pantry-port`, so the address you pasted into your
+interface keeps working after a restart. If another program holds that
+address, `serve` names it and stops; it never moves in silence. It listens
+on 127.0.0.1 only, so it is yours, not your network's.
 
 ## Point your interface at it
 
