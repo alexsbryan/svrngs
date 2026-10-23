@@ -98,6 +98,23 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   lender's home, and the door's own tests prove it. What the run taught
   waits in §2. The queue now stops for a run with real people, whose bars
   the operator sets before it.
+- then the security queue (`ralph/next/security/`, written and held), as one
+  deliverable after the models work ends (the operator, 2026-10-22: "the
+  security work bundles in as one deliverable after the model work ends"). It
+  closes what svrn-docs `rings/current/WHAT_CAN_ACT_AS_YOU.md` §3 found
+  shipped against DESIGN §1's rule. Each fix is red first and keeps every path
+  a person uses, its pass first, and a release the operator publishes;
+- then the capability work, in that note's §10 order, each its own queue
+  written when the one before it lands:
+  - consent you can see (the open names what an app does and is the yes, and
+    "What acts as you"; about +80 to +150);
+  - authorship by signature with keys everywhere (svrngs-core's act format,
+    about +135 to +255 and +60 to +120 in the core);
+  - sealing, at its §2 trigger.
+
+  The note's §7 is decided (the operator, 2026-10-22). Consent stays as light
+  as the operator asked: "make this as lightweight as possible so it's not
+  onerous friction".
 
 The operator's switch stands apart from that order: when they flip
 `SHIPPED` to svrngs's relay for production (§2; DESIGN §7), #134 and #135
