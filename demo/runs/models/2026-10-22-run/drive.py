@@ -154,28 +154,32 @@ def start(name, argv, who=None, stdin=subprocess.DEVNULL):
     err = open(LOGS / f"{name}.err", "w")
     p = subprocess.Popen(argv, env=env(who) if who else os.environ, stdin=stdin,
                          stdout=out, stderr=err, start_new_session=True)
+    (LOGS / f"{name}.pid").write_text(str(p.pid))
     procs[name] = (p, err)
     return p
 
 
 def stop(name, sig=signal.SIGINT):
     got = procs.pop(name, None)
-    if not got:
-        return
-    p, err = got
-    try:
-        os.killpg(os.getpgid(p.pid), sig)
-    except ProcessLookupError:
-        pass
-    try:
-        p.wait(20)
-    except subprocess.TimeoutExpired:
+    pidfile = LOGS / f"{name}.pid"
+    pid = got[0].pid if got else (int(pidfile.read_text()) if pidfile.exists() else None)
+    if pid is not None:
         try:
-            os.killpg(os.getpgid(p.pid), signal.SIGKILL)
+            os.killpg(os.getpgid(pid), sig)
         except ProcessLookupError:
             pass
-        p.wait()
-    err.close()
+        if got:
+            try:
+                got[0].wait(20)
+            except subprocess.TimeoutExpired:
+                try:
+                    os.killpg(os.getpgid(pid), signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                got[0].wait()
+    if got and got[1]:
+        got[1].close()
+    pidfile.unlink(missing_ok=True)
 
 
 def api(who):
@@ -429,8 +433,8 @@ def story_run():
 
 def main():
     if len(sys.argv) > 1 and sys.argv[1] == "stop":
-        for name in list(procs):
-            stop(name)
+        for pidfile in sorted(LOGS.glob("*.pid")):
+            stop(pidfile.stem)
         subprocess.run(["podman", "rm", "-f", "pantry-run-kokoro"], capture_output=True)
         return
     version()
