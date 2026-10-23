@@ -23,3 +23,5 @@ mod money;
 mod events;
 // House rules (demo/house-rules.md): a rule agreed holds after one leaves.
 mod house_rules;
+// Grapevine (demo/grapevine.md): an ask carried a ring away, sealed replies.
+mod grapevine;

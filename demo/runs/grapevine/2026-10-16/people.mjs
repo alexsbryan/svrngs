@@ -4,7 +4,8 @@
 // own start line printed. It prints `{"ready": true}`, then reads one JSON
 // command a line on stdin and prints one JSON answer a line:
 //
-//   {"do": "open", "who"}                     the person's browser
+//   {"do": "open", "who", "engine"?}          the person's browser, Chromium
+//                                             unless `engine` names another
 //   {"do": "goto", "who", "url"}              open their page
 //   {"do": "press", "who", "within", "fill", "select", "button"}
 //       within the part of the page `within` names, a list of
@@ -50,7 +51,7 @@ const has = (text, words, gone) => words.every((w) => text.includes(w)) && !gone
 async function act(c) {
   const t0 = Date.now();
   if (c.do === 'open') {
-    const { context, close } = await launch('chromium');
+    const { context, close } = await launch(c.engine ?? 'chromium');
     const page = await context.newPage();
     const logs = [];
     page.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`.slice(0, 300)));

@@ -22,7 +22,7 @@ use crate::harness::{relay, relay_url, repo, site, Engine};
 /// The traces each person's svrngs keeps in `svrngs.log` in its `HOME`:
 /// the door's, the record's and the folder's decisions, at debug.
 const TRACED: &str =
-    "info,door=debug,origin=debug,folder=debug,home=debug,removal=debug,transport=warn";
+    "info,door=debug,origin=debug,folder=debug,home=debug,removal=debug,svrngs_node::ring_sync=debug,transport=warn";
 
 /// A scene's place: its relay on 127.0.0.1 and its people's homes, under
 /// `target/scenes/` (scratch stays under `target/`), kept after a failure
@@ -68,6 +68,23 @@ impl Scene {
         let name = who.name.clone();
         who.stop().await;
         self.start(&name, args).await
+    }
+
+    /// `svrngs <args>` in `name`'s home with no svrngs running there, as a
+    /// terminal runs one that exits (`join --no-run`): what it printed.
+    pub async fn once(&self, name: &str, args: &[&str]) -> String {
+        let home = self.dir.join(name.to_lowercase());
+        std::fs::create_dir_all(&home).unwrap();
+        let run = svrngs(&home, name, args).stdin(Stdio::null()).output();
+        let out = tokio::time::timeout(Duration::from_secs(90), run);
+        let out = out.await.expect("the command ends within 90 s").unwrap();
+        let said = String::from_utf8_lossy(&out.stdout).to_string();
+        assert!(
+            out.status.success(),
+            "{name} `svrngs {args:?}` failed: {said}{}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+        said
     }
 
     /// The page, built from this commit (harness.rs `site`) and served on
