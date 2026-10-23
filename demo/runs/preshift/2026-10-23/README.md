@@ -29,7 +29,7 @@ driver (lean_check.py's docstring: demo/runs/ apart). Moving it to
   bold lead, and comma phrases of up to three words. An item with none is
   listed as "not checked".
 - Ceiling: the fence's budget item. It comes in five shapes, `data/census.txt`
-  over all 33 charters:
+  over all 33 queues, 32 with a CHARTER.md (ceiling has none):
   - relative: guests at the park, "+150 repo, +60 core", and leave. It is
     resolved over lean_check's BUDGET at the done economize row's commit.
   - absolute: "past 16,925 for the repository or 3,076 for svrngs-core".
