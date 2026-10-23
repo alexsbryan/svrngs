@@ -200,7 +200,7 @@ async function probe(origin) {
     couldNotJudge = couldNotJudge || timedOut(e);
   }
   try {
-    const tools = await toolsAt(base);
+    const tools = await toolsAt(base, DISCOVERY_TIMEOUT);
     return { protocol: 'tool', tools };
   } catch (e) {
     why.push(`MCP did not answer (${e.message})`);

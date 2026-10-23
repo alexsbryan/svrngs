@@ -3,9 +3,8 @@
 // but the protocol's own answer.
 
 const PROTOCOL = '2025-06-18';
-const TIMEOUT = 4000;
 
-async function post(url, message, { session, version } = {}) {
+async function post(url, message, { session, version, timeout }) {
   const headers = {
     accept: 'application/json, text/event-stream',
     'content-type': 'application/json',
@@ -16,7 +15,7 @@ async function post(url, message, { session, version } = {}) {
     method: 'POST',
     headers,
     body: JSON.stringify(message),
-    signal: AbortSignal.timeout(TIMEOUT),
+    signal: AbortSignal.timeout(timeout),
   });
   const text = await res.text();
   const sessionId = res.headers.get('mcp-session-id') || session;
@@ -48,8 +47,9 @@ function parse(text, contentType) {
 }
 
 /// The tools a Streamable HTTP MCP server at `origin` answers `tools/list`
-/// with, annotations included as the server sent them.
-export async function toolsAt(origin) {
+/// with, annotations included as the server sent them. Each ask waits up to
+/// `timeout` ms, the caller's one probe time.
+export async function toolsAt(origin, timeout) {
   const url = `${origin.replace(/\/+$/, '')}/mcp`;
   const init = await post(url, {
     jsonrpc: '2.0',
@@ -60,15 +60,17 @@ export async function toolsAt(origin) {
       capabilities: {},
       clientInfo: { name: 'pantry', version: '0' },
     },
-  });
+  }, { timeout });
   const version = init.message?.result?.protocolVersion || PROTOCOL;
   await post(url, { jsonrpc: '2.0', method: 'notifications/initialized' }, {
     session: init.session,
     version,
+    timeout,
   });
   const listed = await post(url, { jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} }, {
     session: init.session,
     version,
+    timeout,
   });
   if (listed.message?.error) {
     throw new Error(`MCP tools/list: ${listed.message.error.message || 'refused'}`);
