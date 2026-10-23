@@ -30,6 +30,12 @@ interface keeps working after a restart. If another program holds that
 address, `serve` names it and stops; it never moves in silence. It listens
 on 127.0.0.1 only, so it is yours, not your network's.
 
+The pantry keeps what the record answered for 30 seconds, and what each
+lend answered for 4, so a friend whose computer is asleep costs one ask,
+not one per message. Each answer says how old what it used is: `list` in
+its headings and lines, a routed answer in `x-pantry-looked` and
+`x-pantry-probed`, and a refusal in its message.
+
 ## Point your interface at it
 
 In any OpenAI-compatible interface, set the OpenAI base URL to the address

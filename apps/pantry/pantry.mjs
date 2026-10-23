@@ -18,13 +18,22 @@ import { join } from 'node:path';
 
 import { toolsAt } from './mcp.mjs';
 
-/// How long what discovery found is kept, and how long a probe waits for an
-/// answer: `crates/svrngs-node/src/dial.rs:30`'s 4 s, the slowest working
-/// dial on this host times 3. A friend's computer that did not answer is not
-/// dialled again on every message, and what it said is said with its age.
+/// How long what discovery found is kept in this process: a friend's computer
+/// that did not answer is not dialled again on every message, and what it said
+/// is said with its age.
 export const FOUND_FOR = 4000;
 
-const DISCOVERY_TIMEOUT = FOUND_FOR;
+/// How long the record's `/v1/lends` answer is kept: its fan-out waits up to
+/// `ANSWER_WITHIN` (3 s) on each friend (`crates/svrngs-node/src/node.rs:109`),
+/// the asleep one's dial included, so a friend whose computer is asleep costs
+/// one ask per half minute, not one per message. Named once, and apart from
+/// how long a lend's answer is kept.
+export const LENDS_FOR = 30000;
+
+/// How long one probe waits for a lend's `/v1/models` or MCP answer:
+/// `crates/svrngs-node/src/dial.rs:30`'s 4 s, the slowest working dial on this
+/// host times 3. Its own constant, not how long an answer is kept.
+const DISCOVERY_TIMEOUT = 4000;
 
 /// This computer's data dir: where its record answers and where the pantry
 /// keeps the address a person pasted into their interface.
@@ -73,8 +82,19 @@ async function get(url) {
 /// Every lend this computer's groups hold now, and the people whose
 /// computer did not say what they lend. A person's lend is told apart by the
 /// key their computer is dialled by, so two people of one name keep two ids.
-export async function lendsNow(record) {
+/// The record's answer is kept for [`LENDS_FOR`] in this process, so a friend
+/// asleep is not dialled on every message; `refresh` asks it again before
+/// that time.
+const keptLends = new Map();
+
+export async function lendsNow(record, { clock = Date.now, refresh = false } = {}) {
   const base = record.replace(/\/+$/, '');
+  const now = clock();
+  const kept = keptLends.get(base);
+  if (!refresh && kept && now - kept.at < LENDS_FOR) {
+    note('kept lends', base, `looked ${secondsAgo(kept.at, clock)}s ago`);
+    return { ...kept.seen, at: kept.at, asked: false };
+  }
   const held = await get(`${base}/v1/groups`);
   const groups = Array.isArray(held.groups) ? held.groups : [];
   const lends = [];
@@ -98,7 +118,28 @@ export async function lendsNow(record) {
       for (const person of people || []) unlisted.push({ person, why, group: id });
     }
   }
-  return { lends: handles(lends), unlisted };
+  const found = { lends: handles(lends), unlisted };
+  keptLends.set(base, { at: now, seen: found });
+  note('asked lends', base, `${found.lends.length} lend, ${unlisted.length} unlisted`);
+  return { ...found, at: now, asked: true };
+}
+
+/// Whether the record names this prefix at all: a lend's handle, or a person
+/// whose computer did not answer. A prefix it does not name sends a request
+/// back to the record, in case a lend has appeared since.
+function namesLender({ lends, unlisted }, prefix) {
+  return lends.some((lend) => lend.handle === prefix)
+    || unlisted.some((person) => person.person === prefix);
+}
+
+/// What the record says, from what is kept when it is fresh and names the
+/// prefix; otherwise asked now. A prefix it kept but does not name is asked
+/// again, so a lend that appeared since is found.
+async function lendsFor(record, clock, prefix) {
+  const seen = await lendsNow(record, { clock });
+  if (prefix === undefined || seen.asked || namesLender(seen, prefix)) return seen;
+  note('asked lends again', record, `does not name ${prefix}`);
+  return lendsNow(record, { clock, refresh: true });
 }
 
 /// A readable handle for each lend's person, unique by the key their
@@ -189,7 +230,7 @@ export async function discover(origin, clock = Date.now) {
 
 /// What your groups lend now, each lend asked by its protocol.
 export async function list({ record = recordAt(), clock = Date.now } = {}) {
-  const { lends, unlisted } = await lendsNow(record);
+  const { lends, unlisted, at } = await lendsNow(record, { clock });
   const found = [];
   const used = new Set();
   for (const lend of lends) {
@@ -218,11 +259,13 @@ export async function list({ record = recordAt(), clock = Date.now } = {}) {
       looked: secondsAgo(seen.at, clock),
     });
   }
-  return { lends: found, unlisted };
+  return { lends: found, unlisted, looked: secondsAgo(at, clock) };
 }
 
-export async function formatList({ lends, unlisted }) {
-  const lines = ['What your groups lend now:'];
+export async function formatList({ lends, unlisted, looked: lendsLooked }) {
+  const lines = [lendsLooked === undefined
+    ? 'What your groups lend now:'
+    : `What your groups lend now (the record looked ${lendsLooked}s ago):`];
   for (const lend of lends) {
     const who = `${lend.person}'s computer`;
     const looked = ` — looked ${lend.looked}s ago`;
@@ -245,13 +288,16 @@ export async function formatList({ lends, unlisted }) {
 }
 
 /// The models every lend answers now, each id prefixed by its lender's
-/// handle, and why a lend could not be judged.
-async function modelsNow(record, clock) {
-  const { lends, unlisted } = await lendsNow(record);
+/// handle, and why a lend could not be judged. With `prefix`, only that
+/// lender's lends are asked, so another friend's asleep computer is not
+/// waited on to answer a request that does not name it.
+async function modelsNow(record, clock, prefix) {
+  const { lends, unlisted, at } = await lendsFor(record, clock, prefix);
   const data = [];
   const index = new Map();
   const unjudged = new Map();
   for (const lend of lends) {
+    if (prefix !== undefined && lend.handle !== prefix) continue;
     const seen = await discover(lend.origin, clock);
     if (seen.protocol !== 'model') {
       if (seen.protocol === 'neither') {
@@ -265,11 +311,11 @@ async function modelsNow(record, clock) {
       let id = `${lend.handle}/${model.id}`;
       if (index.has(id)) id = `${lend.handle}/${lend.name}/${model.id}`;
       if (index.has(id)) continue;
-      index.set(id, { lend, model: model.id });
+      index.set(id, { lend, model: model.id, probed: seen.at });
       data.push({ ...model, id, object: model.object || 'model', owned_by: id });
     }
   }
-  return { data, index, unjudged, unlisted };
+  return { data, index, unjudged, unlisted, at };
 }
 
 function unlistedWhy(unlisted, person) {
@@ -344,8 +390,11 @@ export async function serve({ record = recordAt(), port, host = '127.0.0.1', sta
   const server = http.createServer(async (req, res) => {
     try {
       if (req.method === 'GET' && req.url === '/v1/models') {
-        const { data } = await modelsNow(record, clock);
-        res.writeHead(200, { 'content-type': 'application/json' });
+        const { data, at } = await modelsNow(record, clock);
+        res.writeHead(200, {
+          'content-type': 'application/json',
+          'x-pantry-looked': `${secondsAgo(at, clock)}s`,
+        });
         return res.end(JSON.stringify({ object: 'list', data }));
       }
       const raw = await collect(req);
@@ -353,26 +402,28 @@ export async function serve({ record = recordAt(), port, host = '127.0.0.1', sta
       if (!asked) {
         return fault(res, 400, 'a request to the pantry names its model');
       }
-      const { index, unjudged, unlisted } = await modelsNow(record, clock);
+      const prefix = asked.model.split('/')[0];
+      const { index, unjudged, unlisted, at } = await modelsNow(record, clock, prefix);
       const found = index.get(asked.model);
       if (!found) {
-        const prefix = asked.model.split('/')[0];
         const missed = unjudged.get(prefix);
         if (missed?.length) {
-          const { lend, why, at } = missed[0];
+          const { lend, why, at: probed } = missed[0];
           return fault(res, 503,
-            `${lend.person}'s lend ${lend.name} could not be judged (${why}); it was looked ${secondsAgo(at, clock)}s ago, so ${asked.model} cannot be answered`,
-            { model: asked.model, lend: lend.name, why, looked: secondsAgo(at, clock) });
+            `${lend.person}'s lend ${lend.name} could not be judged (${why}); it was looked ${secondsAgo(probed, clock)}s ago, so ${asked.model} cannot be answered`,
+            { model: asked.model, lend: lend.name, why, looked: secondsAgo(probed, clock) });
         }
         const why = unlistedWhy(unlisted, prefix);
+        const looked = secondsAgo(at, clock);
         if (why) {
           return fault(res, 503,
-            `${prefix}'s computer did not answer (${why}), so ${asked.model} cannot be answered`,
-            { model: asked.model, why });
+            `${prefix}'s computer did not answer (${why}) as last looked ${looked}s ago, so ${asked.model} cannot be answered`,
+            { model: asked.model, why, looked });
         }
-        return fault(res, 404, `no lend answers ${asked.model}`, { model: asked.model });
+        return fault(res, 404, `no lend answers ${asked.model} (the record looked ${looked}s ago)`,
+          { model: asked.model, looked });
       }
-      const { lend, model } = found;
+      const { lend, model, probed } = found;
       const written = rewriteModel(raw, req.headers['content-type'], model);
       if (!written) {
         return fault(res, 400, `the body's model cannot be rewritten for ${asked.model}`);
@@ -398,6 +449,8 @@ export async function serve({ record = recordAt(), port, host = '127.0.0.1', sta
           ...answer.headers,
           'x-pantry-person': lend.handle,
           'x-pantry-lend': lend.name,
+          'x-pantry-looked': `${secondsAgo(at, clock)}s`,
+          'x-pantry-probed': `${secondsAgo(probed, clock)}s`,
         });
         answer.pipe(res);
       });
