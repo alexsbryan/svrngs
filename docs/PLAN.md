@@ -98,24 +98,26 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   lender's home, and the door's own tests prove it. What the run taught
   waits in §2. The queue now stops for a run with real people, whose bars
   the operator sets before it.
-- then the security queue (`ralph/next/security/`, written and held), as one
-  deliverable after the models work ends (the operator, 2026-10-22: "the
-  security work bundles in as one deliverable after the model work ends"). It
-  closes what svrn-docs `rings/current/WHAT_CAN_ACT_AS_YOU.md` §3 found
-  shipped against DESIGN §1's rule. Each fix is red first and keeps every path
-  a person uses, its pass first, and a release the operator publishes;
-- then the capability work, in that note's §10 order, each its own queue
-  written when the one before it lands:
-  - consent you can see (the open names what an app does and is the yes, and
-    "What acts as you"; about +80 to +150);
-  - authorship by signature with keys everywhere, bringing svrngs-core's
-    `Grant` for the log side with it (svrngs-core's act format,
-    about +135 to +255 and +60 to +120 in the core);
-  - sealing, at its §2 trigger.
-
-  The note's §7 is decided (the operator, 2026-10-22). Consent stays as light
-  as the operator asked: "make this as lightweight as possible so it's not
-  onerous friction".
+- then the stall queue (`ralph/next/stall/`), alone (the operator,
+  2026-10-23: "Now, alone"). The streaming test's 9 MB range answered 206
+  and then held still in all six of models-fresh's closing gates, a stall
+  that load uncovers; it is found and fixed, so every later gate can be
+  trusted;
+- then the capability queue (`ralph/next/capability/`, written and held),
+  one deliverable and one release (the operator, 2026-10-23: "I'd like to
+  bundle it all in with" svrn-docs `rings/current/WHAT_CAN_ACT_AS_YOU.md`).
+  It holds the security fixes that note found shipped against DESIGN §1's
+  rule (§3); consent you can see (the open names what an app does and is the
+  yes, and "What acts as you"); and authorship by signature with keys
+  everywhere, bringing svrngs-core's `Grant` for the log side (svrngs-core's
+  act format, its design stopped for the operator's yes). The interim
+  version-pin fix is dropped, since authorship closes the same shortfalls at
+  the root in the same release. An economizing pass and one ceiling come
+  first; each fix is red first and keeps every path a person uses; a release
+  the operator publishes ends it. The note's §7 is decided (2026-10-22), and
+  consent stays as light as the operator asked: "make this as lightweight as
+  possible so it's not onerous friction";
+- sealing, at its §2 trigger.
 
 The operator's switch stands apart from that order: when they flip
 `SHIPPED` to svrngs's relay for production (§2; DESIGN §7), #134 and #135

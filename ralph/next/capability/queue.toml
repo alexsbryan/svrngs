@@ -1,0 +1,26 @@
+# svrngs capability — what can act as you, one deliverable: svrn-docs rings/current/WHAT_CAN_ACT_AS_YOU.md's security fixes, consent you can see, and authorship by signature with keys everywhere (the operator, 2026-10-23: "I'd like to bundle it all in with" that note). Held until the stall queue lands; one loop per tree. Launch, from anywhere, once the tree is clean:
+#
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py run --workdir ~/dev/svrngs \
+#     --queue capability --install-launchd --max-stall 3
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py start --workdir ~/dev/svrngs --queue capability
+#
+# The plist the first command writes carries no CARGO_INCREMENTAL=0. Add it
+# under EnvironmentVariables after any reinstall, because the host's disk is
+# shared.
+label = "svrngs-capability"
+session_timeout = 5400
+# One closing audit for the queue, none inside it (the operator, 2026-10-15 and
+# 2026-10-16). Ten rows, so a cadence of 20 never comes due inside it.
+audit_every = 20
+worker_bin = "/Users/alexsbryan/dev/commonwealth-ai/scripts/ralph-claude-shim.sh"
+settings = "ralph/claude-settings.json"
+
+[models]
+# The operator, 2026-10-22: "I want you to run the security rows with opus 5.5
+# medium"; the security rows are this queue's. A bare id runs through
+# `worker_bin`, the claude shim, where `variant` is --effort; `variant` is one
+# setting for every role (ralph.py:2775).
+worker = "claude-opus-5-5"
+review = "claude-opus-5-5"
+resolve = "claude-opus-5-5"
+variant = "medium"
