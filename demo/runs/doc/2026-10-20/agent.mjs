@@ -6,6 +6,9 @@
 // machine's own ~/.svrngs and ~/svrngs are never touched.
 //
 //   node agent.mjs <svrngs binary> <work dir> <apps/doc dir>
+//
+// Run with no arguments, it is browsers alone: `lend`, `cy` and `lid`
+// need all three.
 import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { createInterface } from 'node:readline';
@@ -83,6 +86,13 @@ const commands = {
     await p.close();
     return { opened, has, paragraphs: read.paragraphs, note_lines: read.note_lines };
   },
+  // A browser alone, for a driver that runs its svrngs itself (the
+  // scenes, crates/svrngs/tests/scenes/doc.rs): `person` opens one, `open`,
+  // `join` and `press` are people.mjs's.
+  person: async ({ who, engine, device }) => ((people[who] = await person({ who, engine, device })), {}),
+  open: ({ who, url }) => people[who].open(url),
+  join: ({ who, link, name }) => people[who].join(link, name),
+  press: ({ who, name }) => people[who].press(name),
   type: ({ who, text }) => people[who].type(text),
   has: ({ who, texts, within }) => people[who].has(texts, within),
   shows: ({ who, sel, shown, within }) => people[who].shows(sel, shown, within),

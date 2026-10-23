@@ -375,8 +375,12 @@ impl Browsers {
     /// in place of Events': House rules' (demo/runs/canon/2026-10-17-house/
     /// people.mjs) presses `steps` where Events' presses one button.
     pub async fn driven(driver: &str, engine: Engine, people: &[(&str, Engine)]) -> Browsers {
+        // The doc run's people.mjs imports Playwright by `PLAYWRIGHT`, the
+        // others by their path to web/tests/page.mjs.
+        let playwright = repo().join("web/node_modules/playwright/index.mjs");
         let mut run = Command::new("node")
             .arg(repo().join(driver))
+            .env("PLAYWRIGHT", playwright)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .kill_on_drop(true)

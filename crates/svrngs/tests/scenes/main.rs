@@ -25,3 +25,5 @@ mod events;
 mod house_rules;
 // Grapevine (demo/grapevine.md): an ask carried a ring away, sealed replies.
 mod grapevine;
+// Doc (apps/doc): two editors converge, each line noted as its writer's.
+mod doc;
