@@ -432,6 +432,30 @@ test('two people of one name are told apart by their key and both routed', async
   }
 });
 
+test('one person\'s two lends of one model id are both listed as serve routes them', async (t) => {
+  const first = await modelLend({ id: 'coder', reply: 'first' });
+  const second = await modelLend({ id: 'coder', reply: 'second' });
+  const record = await group([
+    { group: 'g', key: 'aa'.repeat(32), name: 'ana-one', person: 'ana', origin: first.origin, kind: 'x', limit: null, using: 0 },
+    { group: 'g', key: 'aa'.repeat(32), name: 'ana-two', person: 'ana', origin: second.origin, kind: 'x', limit: null, using: 0 },
+  ]);
+  const at = await pantry({ record: record.origin });
+  t.after(() => Promise.all([first.close(), second.close(), record.close(), at.close()]));
+
+  const listed = (await list({ record: record.origin })).lends.flatMap((l) => l.models.map((m) => m.as));
+  const served = (await (await fetch(`${at.url}/v1/models`)).json()).data.map((m) => m.id);
+  assert.deepEqual(listed, ['ana/coder', 'ana/ana-two/coder']);
+  assert.deepEqual(served, listed, 'list shows the ids serve routes by');
+
+  for (const [id, said] of [['ana/coder', 'first'], ['ana/ana-two/coder', 'second']]) {
+    const answer = await (await fetch(`${at.url}/v1/chat/completions`, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ model: id, messages: [{ role: 'user', content: 'hi' }] }),
+    })).json();
+    assert.equal(answer.choices[0].message.content, said, `${id} reaches its own lend`);
+  }
+});
+
 // (0)(iii): discovery is kept for a short time, named once, its age said in
 // list and in each error, so an asleep friend does not cost every message a
 // dial (crates/svrngs-node/src/dial.rs:30).
