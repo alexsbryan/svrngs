@@ -12065,3 +12065,208 @@ charter's fences and principles 1, 6 and 8.
 | I8 | 6 | dry-report scope | Still present: the core's removal_tests.rs, register_tests.rs, membership_invite_tests.rs, tests_support.rs and node's ring_sync/tests.rs are reported as production clones. |
 | I34 | 6 | `converge noun`, `refresh` | Still present: a Rust crate outside the Cargo workspace is not exported, so `web`'s Rust (`web/src/join.rs:52`'s `Group`, `http.rs`) is absent; web/'s exact tier could-not-judge. |
 | I35 | 6 | `refresh`, SCIP graph | New: a file deleted in the range is still in the graph. `door/sign_in.rs` went at d78ec302, the meta's `last_indexed_head` is b404da38 (after it) and `stale_files` is empty, but `scip_graph.db` still holds 591-line `sign_in.rs` symbols, and dry-report reports `of`/`forget` at door/sign_in.rs:336 and :353 as a near clone. A cluster in deleted code reads as live until the corpus is rebuilt. |
+
+## REVIEW-audit-models-auto-1 (2026-10-23, range 29ecf59a..076f057a)
+
+The previous `REVIEW-audit-` row is REVIEW-audit-oidc-auto-1, its hash
+29ecf59a0 (ralph/next/oidc/STATE.md:56), the latest of the 21 rows' hashes
+by commit date; none ran in the models queue before this one. The range
+ends at 076f057a, the commit that made this row: `git rev-list --count
+29ecf59a..076f057a` is 90, none a merge (`--merges`: 0). It holds the oidc
+follow-ups, the room and network work, the check.sh timings, the install
+PATH line and the models queue, most under subjects that name an area,
+not a row id, so the ledger sums by that area. The principles are
+docs/principles/ARCH_PRINCIPLES.md; the instrument is
+~/dev/commonwealth-ai/target/debug/sovereign-cli, sha256 22c48619…
+(130ea275). Every file named /tmp/ below is under /tmp/modelsaudit/.
+
+This audit's own commits before this section: 2783605e, 4f4fd5d9,
+b988beee, 2953e104 and a136834a ("Fixed here").
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%s' --no-merges
+29ecf59a..076f057a` (log.txt), summed by the subject's unit (py/ledger.py).
+Product code is the lean_check.py definition: `.rs`, `.js`, `.mjs`,
+`.ts`, `.py` and `.sh` under `crates/`, `web/` and `scripts/`, tests apart
+(`*/tests/*`, `*_tests.rs`, `tests_support.rs`, `*.test.mjs`). `apps/`
+is outside the budget (CHARTER.md, "The budget") and is given in its own
+columns, since the models queue's code is all there; `demo/runs/`,
+`ralph/`, `docs/` and the lockfiles are out. Raw lines, comments and
+blanks in:
+
+| unit | commits | src + | src − | src net | test + | test − | test net | apps/ net | apps/ test net |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| ralph (loop marks, settings) | 6 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 |
+| oidc | 8 | 322 | 215 | **+107** | 111 | 17 | +94 | 0 | 0 |
+| install | 2 | 14 | 2 | **+12** | 82 | 5 | +77 | 0 | 0 |
+| room | 15 | 1005 | 601 | **+404** | 603 | 174 | +429 | 0 | 0 |
+| network | 2 | 304 | 202 | **+102** | 73 | 34 | +39 | 0 | 0 |
+| check | 3 | 19 | 14 | **+5** | 0 | 0 | 0 | 0 | 0 |
+| queue, plan, design | 23 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 |
+| svrngs (tests' `Program`) | 1 | 0 | 0 | **0** | 18 | 5 | +13 | 0 | 0 |
+| models-scope | 5 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 |
+| models-pantry | 7 | 0 | 0 | **0** | 0 | 0 | 0 | +512 | +441 |
+| models-bridge | 5 | 0 | 0 | **0** | 0 | 0 | 0 | +165 | +249 |
+| models-run | 10 | 0 | 0 | **0** | 0 | 0 | 0 | +132 | +265 |
+| models-fresh | 3 | 0 | 0 | **0** | 0 | 0 | 0 | +53 | +58 |
+| total | 90 | 1664 | 1034 | **+630** | 887 | 235 | +652 | +862 | +1013 |
+
+The models queue moved no counted line, as its charter holds. Room and
+network are the operator's two raises in the range, 3a669f6d (+231) and
+a9e82b9a (+67), each after an economizing pass (68e8424d, dd3baad1).
+
+What lean_check.py counts, HEAD's script over a `git archive` tree of
+each end (tree-*/):
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 29ecf59a, range start | 3152 (cap 3153) | 17418 (cap 17419) |
+| 076f057a, range end | **3149** (cap 3150) | **17634** (cap 17635) |
+| net | **−3** | **+216** |
+
+This audit's commits move no counted line: 3149 / 3150 and 17634 / 17635
+at a136834a. The pantry's two renames and the `modelId` move are in
+`apps/`.
+
+### The instrument
+
+The `svrngs` corpus could not be used: its chunk index is gone (I36), so
+dry-report said "no chunk index … run `svrn project init` first". The
+corpus is a136834a's crates/, scripts/, web/, apps/pantry/, Cargo.toml
+and Cargo.lock by `git archive` (258 files, models-a136834a/).
+- `code index . --corpus-id models-a136834a`: 3572 chunks in 583 s
+  (index3.out).
+- `refresh`, in the corpus: rust 19181 symbols and 111317 references;
+  typescript and python "skipped (export failed)" (I4) (refresh.out).
+
+### (2) Clones (`code dry-report`)
+
+The range touched crates/svrngs-core, crates/svrngs-node, crates/svrngs,
+scripts/, web/ (install.sh) and apps/pantry (`git diff --stat 29ecf59a
+076f057a -- crates web scripts apps`). Each was reported at 0.95 and 0.90
+(dry-*.md). Whether a side was added in the range is `git blame
+--porcelain` over each side's lines at HEAD (blame_sides.py; a line's
+commit in `git rev-list 29ecf59a..HEAD` is new). Its control in the same
+run: room/owner.rs:36-46, 11 of 11 lines new (fe2eb813, a136834a).
+
+| scope | exact | near 0.95 | near 0.90 | with a side added in the range |
+|---|---|---:|---:|---|
+| crates/svrngs-core/ | 4 | 0 | 11 | 0 |
+| crates/svrngs-node/ | 1 | 0 | 8 | 0 |
+| crates/svrngs/ | 0 | 0 | 0 | 0 |
+| scripts/ | could-not-judge (I4) | 0 | 0 | 0 |
+| web/ | could-not-judge (I4, I34) | 0 | 2 | 0 |
+| apps/pantry/ | could-not-judge (I4) | 0 | 0 | 0; `examples/` never judged (I37) |
+
+No side of any clone is new. The exact clones are the older `is_empty`
+(act_set.rs:40, command.rs:109), `lines` (command.rs:87, :105),
+`signed_by_link` (joining.rs:56, :148), `as_str` (link.rs:186,
+synced.rs:67) and `addr` (api.rs:212, :228), each 0 of 3 lines new. One
+near pair has new lines inside older symbols: home.rs `lent` and `change`
+(:227-270), 2 of 44 lines from ea8b1e2a, the room's pass folding the
+`SignIn` return and the `UNCHANGED` text into them; neither symbol was
+added. The rest are the older test pairs (I8), door.rs/surface.rs
+`lends`, home.js, synced.rs, choices.rs, rail.rs, lend.rs and web's
+app.js and lend.js, every one 0 lines new.
+
+What the instrument could not see in apps/pantry was read by hand
+(below): `modelId` and the probe time.
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git diff 29ecf59a 076f057a -- crates web scripts
+apps`, matched against `(struct|enum|trait|type|class) +[A-Z]\w*`: 13
+structs and enums and 4 private aliases (`type Error` is an associated
+type), and in `demo/runs/` 5 Python classes. Each noun, as the corpus
+answers (noun-*.out; the `svrngs` corpus's graph at 76422139 for the
+before, nouns.out):
+
+| noun | definitions | site(s) | after |
+|---|---:|---|---|
+| Subject | 1 | token.rs:40 | — |
+| LendPath | 1 | door.rs:841 | — |
+| HardwareAddress | 1 | network.rs:34 | — |
+| Network | 1 | network.rs:71 | — |
+| Unread | 2 | network.rs:76; demo/runs/canon/2026-10-17-house/judge.py:20 | one product noun; the other is a recorded run's judge |
+| Whereabouts | 1 | network.rs:191 | — |
+| S256Challenge | 1 | oidc/provider.rs:165 | — |
+| Served | **2** | room.rs:73, carried.rs:111 | **1**, carried.rs's is `Given` (2783605e) |
+| On | 1 | room.rs:122 | — |
+| InRoom | 1 | room.rs:132 | — |
+| RoomAsk | 1 | room.rs:143 | — |
+| Turn | 1 | room.rs:156 | — |
+| Room | 1 | room/owner.rs:45 | — |
+| Asked | **2** | svrngs-core joining.rs:64, room/owner.rs:35 | **1**, owner.rs's is `TurnAsk` (a136834a) |
+| Asks | 1 | room/owner.rs:38 | — |
+| Listening | 1 | room/owner.rs:41 | — |
+| Svrngs | 2 | demo/runs/models/2026-10-22-models/drive.py:166, …-scope/drive.py:112 | recorded drivers, not product |
+| MCPClient, H, OAuthTokenAuth | ≤1 | demo/runs/models/ drivers | — |
+
+The two nouns with more than one product definition, as the tool printed
+them before the renames:
+
+```
+noun: Served
+definitions (2), first-party production:
+  svrngs-node                    crates/svrngs-node/src/carried.rs:111
+  svrngs-node                    crates/svrngs-node/src/room.rs:73
+
+noun: Asked
+definitions (2), first-party production:
+  svrngs-core                    crates/svrngs-core/src/joining.rs:64
+  svrngs-node                    crates/svrngs-node/src/room/owner.rs:35
+```
+
+After, in models-a136834a: `Served` 1 (room.rs:73), `Given` 1
+(carried.rs:111), `Asked` 1 (joining.rs:64), `TurnAsk` 1
+(room/owner.rs:35). `Asked` is the shape 0213ebbc fixed in blob.rs, made
+again by the room's owner. Line numbers are one early (I1).
+
+### Reading the range
+
+apps/pantry (pantry.mjs, mcp.mjs, the bridge) was read whole against
+the queue's fences and principles 1, 6 and 8, since the instrument does
+not judge it (I4, I37).
+
+- **One home per threshold** (principle 8). The probe's 4 s lived twice,
+  pantry.mjs:36 and mcp.mjs's own `TIMEOUT`; one now (4f4fd5d9).
+  `FOUND_FOR` and `LENDS_FOR` are named once with their reasons
+  (pantry.mjs:24, :31).
+- **One form of a model's id** (principle 8). `list` and `serve` each
+  wrote `<handle>/<model>` and `<handle>/<lend>/<model>`; a test first
+  (b988beee, its plant named), then one `modelId` (2953e104).
+- **The kept answer outlives nothing for a lend that hangs** (principle 6;
+  models-run (0) (iii)). #222.
+- **Glassbox** (principle 1). Every probe, keep, skip and route is a
+  `note` under `PANTRY_LOG=debug` (pantry.mjs:221, :226, :315).
+
+### Fixed here
+
+- 2783605e: carried.rs's private `Served` → `Given`.
+- 4f4fd5d9: mcp.mjs's `TIMEOUT` → the caller's `DISCOVERY_TIMEOUT`.
+- b988beee, 2953e104: one person's two lends of one model id, tested,
+  then one `modelId` for `list` and `serve`.
+- a136834a: room/owner.rs's private `Asked` → `TurnAsk`.
+
+Behaviour kept: `cargo check -p svrngs-node --tests` and `cargo fmt
+--check` clean; `node --test` over apps/pantry's test files, 19 passed.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 222 | 6; models-run (0) (iii) | apps/pantry/pantry.mjs:218 (`const now = clock()` before the probe), :225 (`discovered.set(origin, { at: now, … })`); :24 (`FOUND_FOR = 4000`) against :182 and :203 (two probes of `DISCOVERY_TIMEOUT`, 4 s each, one after the other) | not fixed (a change of behaviour, red first; a row's) | **Run.** A lend that accepts and never answers is probed for 8 s, and its answer is stamped with the time before the probe, so it is kept already 8 s old against a 4 s `FOUND_FOR`: never reused. Every `/v1/models` waits on it again. scratch/hung2.mjs, one hung lend beside one that answers, two rounds 5 s apart (scratch/hung2.out): `/v1/models 0: 8054 ms`, `/v1/models 1: 8011 ms`, while `chat ana/coder` took 13 and 8 ms. `modelsNow` asks lends one after another (:309), so each such lend adds its 8 s. The could-not-judge is said, but the cost models-fresh removed for an asleep record ask returns for a hung lend. |
+| 80 | — | scripts/lean_check.py:198 BUDGET | not fixed (operator's) | 3149 / 3150 and 17634 / 17635 after this audit: −3 and +216 over the range, both raises the operator's (3a669f6d, a9e82b9a). |
+| 211-221 | as recorded | as recorded | as recorded | Open; this range adds nothing to them. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Still one line early: Asked at owner.rs:35 for :36, Room at :45 for :46, Subject at token.rs:40 for :41. |
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)"; scripts/', web/'s and apps/pantry's exact tiers could not judge. |
+| I8 | 6 | dry-report scope | Still present: removal_tests.rs, register_tests.rs, membership_tests.rs, membership_invite_tests.rs, tests_support.rs and ring_sync/tests.rs reported as production clones. |
+| I34 | 6 | `refresh` | Still present: web's Rust is outside the workspace and not exported. |
+| I36 | 6 | `code index --full` | New: a full rebuild that does not finish leaves no index. This audit's first session ran `code index ~/dev/svrngs --corpus-id svrngs --full` (index2.out); its last line is "Training IVF centroids (~44032 vectors, 753s elapsed)", no completion, the session ended under it. ~/.svrnmesh/indexes/svrngs then held `scip_graph.db`, `documents.lance` and `texts` but no `chunks.lance`, and dry-report errors. The old index went before the new one was whole. |
+| I37 | 6 | dry-report scope | New: the `examples` segment is excluded as non-production, so apps/pantry/examples/bridge, the queue's worked example and code people copy, is never judged; the report says 42 reps for apps/pantry and names no exclusion that hit. |
