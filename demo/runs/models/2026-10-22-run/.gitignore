@@ -1,0 +1,8 @@
+# The run's own machines: HOMEs, svrngs data dirs, logs, the Python venv and
+# Podman's storage are measured here but not committed. The predictions, the
+# driver, the stock clients and every response are.
+data/home/
+data/logs/
+data/venv/
+data/podman/
+data/ui/*.png
