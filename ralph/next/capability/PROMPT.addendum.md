@@ -29,3 +29,6 @@ Fences the rows keep:
 8. *The trust floor* (`scripts/trust_floor.txt`) is only ever narrowed here.
    A widening is NEEDS_HUMAN.md.
 9. *Publishing is the operator's.* The last row prepares a release and stops.
+10. *Scratch stays under `target/`.* A clone, a run's output or a check's
+    log goes under `target/`, never `/tmp`: the settings refuse `rm -rf`
+    outside the tree, and two sessions lost turns to it.
