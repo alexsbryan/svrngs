@@ -10,9 +10,7 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from 'node:f
 import { join } from 'node:path';
 import { test } from 'node:test';
 
-import { formatList, list, serve } from './pantry.mjs';
-
-const FOUND_FOR = 4000;
+import { FOUND_FOR, LENDS_FOR, formatList, list, serve } from './pantry.mjs';
 
 const HERE = new URL('.', import.meta.url).pathname;
 
@@ -469,7 +467,6 @@ test('discovery is kept for a short time and its age is said', async (t) => {
 // waited on (`crates/svrngs-node/src/node.rs:109`), so the stand-in record
 // takes a delay; the requests between refreshes must not pay it.
 test('a lender asleep costs one ask of the record, not every message', async (t) => {
-  const LENDS_FOR = 30000;
   let clock = 1000;
   const now = () => clock;
   const ana = await standin(async () => {});
