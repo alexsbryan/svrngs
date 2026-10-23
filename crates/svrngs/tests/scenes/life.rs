@@ -114,13 +114,11 @@ async fn home_says(browsers: &mut Browsers, who: &Person, words: &str, within: D
 /// A newcomer's three things: the home page lists the group, its folder
 /// and both lends; Sam's films open from it, as `who`; the trip on disk.
 async fn newcomer(browsers: &mut Browsers, who: &Person, trip: &[(String, Vec<u8>)]) {
-    let said = home_says(browsers, who, "Sam’s films", Duration::from_secs(60)).await;
-    for words in [GROUP, "lake-trip’s folder", "Ana’s music"] {
-        assert!(
-            said.contains(words),
-            "{}'s home page lacks {words:?}: {said}",
-            who.name
-        );
+    // Each waited for: the page reads its groups and lends again each
+    // second, and at a load of 155 it listed Sam's films before the
+    // group's folder.
+    for words in ["Sam’s films", GROUP, "lake-trip’s folder", "Ana’s music"] {
+        home_says(browsers, who, words, Duration::from_secs(60)).await;
     }
     let got = browsers
         .tell(json!({ "do": "follow", "who": who.name.to_lowercase(), "link": "Open Sam’s films" }))
