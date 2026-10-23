@@ -4,12 +4,15 @@
 
 import assert from 'node:assert/strict';
 import http from 'node:http';
+import net from 'node:net';
 import { createHash } from 'node:crypto';
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 
-import { list, serve } from './pantry.mjs';
+import { formatList, list, serve } from './pantry.mjs';
+
+const FOUND_FOR = 4000;
 
 const HERE = new URL('.', import.meta.url).pathname;
 
@@ -298,7 +301,14 @@ function hashFiles(dir) {
 // C6: the refusal is the payload, and no other model answers.
 test('an asleep, full or unknown lender is named and never substituted', async (t) => {
   const sam = await modelLend({ id: 'voice' });
-  const full = await modelLend({ id: 'full' });
+  const full = await standin((req, res) => {
+    if (req.url === '/v1/models') return json(res, 200, { object: 'list', data: [{ id: 'full', object: 'model' }] });
+    if (req.url === '/v1/chat/completions') {
+      res.writeHead(429, { 'content-type': 'application/json', 'x-svrngs-refused': 'full' });
+      return res.end(JSON.stringify({ error: 'sam-full is full (1 of 1)', kind: 'full' }));
+    }
+    return json(res, 404, { error: 'not me' });
+  });
   const record = await group([
     { group: 'g', name: 'sam-voice', person: 'sam', origin: sam.origin, kind: 'x', limit: null, using: 0 },
     { group: 'g', name: 'sam-full', person: 'sam', origin: full.origin, kind: 'x', limit: 1, using: 1 },
@@ -327,8 +337,12 @@ test('an asleep, full or unknown lender is named and never substituted', async (
   const limitedBody = await limited.text();
   assert.match(limitedBody, /sam/);
   assert.match(limitedBody, /full/);
-  assert.match(limitedBody, /limit/);
-  assert.equal(full.requests.filter((r) => r.path === '/v1/chat/completions').length, 0);
+  assert.match(limitedBody, /full/);
+  assert.equal(limited.headers.get('x-svrngs-refused'), 'full',
+    'the door refused it, and the pantry passed that through');
+  assert.equal(full.requests.filter((r) => r.path === '/v1/chat/completions').length, 1,
+    'the door decided, not the pantry');
+  assert.equal(sam.requests.filter((r) => r.path === '/v1/chat/completions').length, 0);
 
   const unknown = await fetch(`${at.url}/v1/chat/completions`, {
     method: 'POST', headers: { 'content-type': 'application/json' },
@@ -337,4 +351,255 @@ test('an asleep, full or unknown lender is named and never substituted', async (
   assert.equal(unknown.status, 404);
   assert.match(await unknown.text(), /nobody\/none/);
   assert.equal(sam.requests.filter((r) => r.path === '/v1/chat/completions').length, 0);
+});
+
+function stateDir() {
+  return mkdtempSync(join(process.cwd(), 'target', 'pantry-test-'));
+}
+
+// (0)(i): a lend whose protocol did not answer in time is could-not-judge,
+// absent from /v1/models with its reason in list, and a request naming it is
+// a 503 naming the lend and why, never 404 "no lend answers" (AGENTS.md 6).
+test('a lend that did not answer in time is could-not-judge, absent, and refused by name', async (t) => {
+  let clock = 1000;
+  const now = () => clock;
+  const mute = await standin(async () => {
+    await new Promise((resolve) => {
+      const held = setTimeout(resolve, 4500);
+      held.unref?.();
+    });
+  });
+  const sam = await modelLend({ id: 'voice' });
+  const record = await group([
+    { group: 'g', key: 'ana-key', name: 'ana-coder', person: 'ana', origin: mute.origin, kind: 'x', limit: null, using: 0 },
+    { group: 'g', key: 'sam-key', name: 'sam-voice', person: 'sam', origin: sam.origin, kind: 'x', limit: null, using: 0 },
+  ]);
+  const at = await pantry({ record: record.origin, clock: now });
+  t.after(() => Promise.all([mute.close(), sam.close(), record.close(), at.close()]));
+
+  const models = await (await fetch(`${at.url}/v1/models`)).json();
+  assert.deepEqual(models.data.map((m) => m.id), ['sam/voice'], 'the silent lend is absent');
+
+  const seen = await list({ record: record.origin, clock: now });
+  const ana = seen.lends.find((l) => l.person === 'ana');
+  assert.equal(ana.protocol, 'neither');
+  assert.equal(ana.couldNotJudge, true);
+  assert.match(ana.why, /did not answer/);
+  assert.match(await formatList(seen), /could-not-judge/);
+
+  clock += 1000;
+  const asleep = await fetch(`${at.url}/v1/chat/completions`, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ model: 'ana/coder', messages: [{ role: 'user', content: 'hi' }] }),
+  });
+  assert.equal(asleep.status, 503, 'never 404 "no lend answers"');
+  const body = await asleep.text();
+  assert.match(body, /ana/);
+  assert.match(body, /did not answer|could-not-judge/);
+  assert.match(body, /looked 1s ago/, 'the error says how old the look was');
+  assert.equal(sam.requests.filter((r) => r.path === '/v1/chat/completions').length, 0,
+    'another lend never answers it');
+});
+
+// (0)(ii): ids stay readable but are unique by identity, from the lend's key
+// in /v1/lends, and never one dropped in silence (AGENTS.md 8).
+test('two people of one name are told apart by their key and both routed', async (t) => {
+  const first = await modelLend({ id: 'coder', reply: 'first' });
+  const second = await modelLend({ id: 'coder', reply: 'second' });
+  const record = await group([
+    { group: 'g', key: 'aa'.repeat(32), name: 'sam-one', person: 'sam', origin: first.origin, kind: 'x', limit: null, using: 0 },
+    { group: 'g', key: 'bb'.repeat(32), name: 'sam-two', person: 'sam', origin: second.origin, kind: 'x', limit: null, using: 0 },
+  ]);
+  const at = await pantry({ record: record.origin });
+  t.after(() => Promise.all([first.close(), second.close(), record.close(), at.close()]));
+
+  const models = await (await fetch(`${at.url}/v1/models`)).json();
+  const ids = models.data.map((m) => m.id).sort();
+  assert.equal(ids.length, 2, 'neither one is dropped');
+  assert.notEqual(ids[0], ids[1]);
+  for (const id of ids) assert.match(id, /^sam[~.\-]/);
+  for (const id of ids) assert.match(id, /\/coder$/);
+
+  const chats = (lend) => lend.requests.filter((r) => r.path === '/v1/chat/completions').length;
+  for (const [id, target, spare, said] of [[ids[0], first, second, 'first'], [ids[1], second, first, 'second']]) {
+    const before = chats(spare);
+    const answer = await (await fetch(`${at.url}/v1/chat/completions`, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ model: id, messages: [{ role: 'user', content: 'hi' }] }),
+    })).json();
+    assert.equal(answer.choices[0].message.content, said, `${id} reaches its own computer`);
+    assert.equal(chats(target), 1);
+    assert.equal(chats(spare), before, `${id} reaches no other computer`);
+  }
+});
+
+// (0)(iii): discovery is kept for a short time, named once, its age said in
+// list and in each error, so an asleep friend does not cost every message a
+// dial (crates/svrngs-node/src/dial.rs:30).
+test('discovery is kept for a short time and its age is said', async (t) => {
+  let clock = 1000;
+  const now = () => clock;
+  const ana = await modelLend({ id: 'coder' });
+  const record = await group([
+    { group: 'g', key: 'k', name: 'ana-coder', person: 'ana', origin: ana.origin, kind: 'x', limit: null, using: 0 },
+  ]);
+  const at = await pantry({ record: record.origin, clock: now });
+  t.after(() => Promise.all([ana.close(), record.close(), at.close()]));
+
+  const probes = () => ana.requests.filter((r) => r.path === '/v1/models').length;
+  await fetch(`${at.url}/v1/models`);
+  assert.equal(probes(), 1);
+  await fetch(`${at.url}/v1/models`);
+  assert.equal(probes(), 1, 'the second request does not dial again');
+
+  clock += 1000;
+  await fetch(`${at.url}/v1/models`);
+  assert.equal(probes(), 1, 'still inside the time it is kept');
+  const seen = await list({ record: record.origin, clock: now });
+  assert.match(await formatList(seen), /looked 1s ago/);
+
+  clock += FOUND_FOR;
+  await fetch(`${at.url}/v1/models`);
+  assert.equal(probes(), 2, 'older than FOUND_FOR, it is asked again');
+});
+
+// (0)(iv): the door decides limits. The pantry keeps no `using` check and
+// passes the door's JSON refusal and its refusal header back unchanged
+// (crates/svrngs-node/src/door.rs:254-268; AGENTS.md 8, 12).
+test('the door decides limits: its refusal and header pass through unchanged', async (t) => {
+  const door = await standin((req, res) => {
+    if (req.url === '/v1/models') return json(res, 200, { object: 'list', data: [{ id: 'strong', object: 'model' }] });
+    if (req.url === '/v1/chat/completions') {
+      const refusal = { error: 'sam-strong is full (1 of 1)', kind: 'full' };
+      res.writeHead(429, { 'content-type': 'application/json', 'x-svrngs-refused': 'full' });
+      return res.end(JSON.stringify(refusal));
+    }
+    return json(res, 404, { error: 'not me' });
+  });
+  const record = await group([
+    { group: 'g', key: 'k', name: 'sam-strong', person: 'sam', origin: door.origin, kind: 'x', limit: 1, using: 1 },
+  ]);
+  const at = await pantry({ record: record.origin });
+  t.after(() => Promise.all([door.close(), record.close(), at.close()]));
+
+  const refused = await fetch(`${at.url}/v1/chat/completions`, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ model: 'sam/strong', messages: [{ role: 'user', content: 'hi' }] }),
+  });
+  assert.equal(refused.status, 429);
+  assert.equal(refused.headers.get('x-svrngs-refused'), 'full');
+  assert.deepEqual(await refused.json(), { error: 'sam-strong is full (1 of 1)', kind: 'full' });
+  assert.equal(door.requests.filter((r) => r.path === '/v1/chat/completions').length, 1,
+    'the pantry did not preempt the door');
+});
+
+// (0)(v): glassbox. With PANTRY_LOG=debug every probe and its answer, every
+// route, and every skip is written; a routed answer names whose computer and
+// which lend (AGENTS.md 1).
+test('PANTRY_LOG=debug writes each probe, route and skip, and the answer names both', async (t) => {
+  const written = [];
+  const was = process.stderr.write;
+  const before = process.env.PANTRY_LOG;
+  process.stderr.write = (chunk) => {
+    written.push(String(chunk));
+    return true;
+  };
+  process.env.PANTRY_LOG = 'debug';
+  t.after(() => {
+    process.stderr.write = was;
+    if (before === undefined) delete process.env.PANTRY_LOG;
+    else process.env.PANTRY_LOG = before;
+  });
+
+  const ana = await modelLend({ id: 'coder' });
+  const cy = await silent();
+  const record = await group([
+    { group: 'g', key: 'k1', name: 'ana-coder', person: 'ana', origin: ana.origin, kind: 'x', limit: null, using: 0 },
+    { group: 'g', key: 'k2', name: 'cy-odd', person: 'cy', origin: cy.origin, kind: 'x', limit: null, using: 0 },
+  ]);
+  const at = await pantry({ record: record.origin });
+  t.after(() => Promise.all([ana.close(), cy.close(), record.close(), at.close()]));
+
+  await list({ record: record.origin });
+  const answer = await fetch(`${at.url}/v1/chat/completions`, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ model: 'ana/coder', messages: [{ role: 'user', content: 'hi' }] }),
+  });
+  assert.equal(answer.headers.get('x-pantry-person'), 'ana');
+  assert.equal(answer.headers.get('x-pantry-lend'), 'ana-coder');
+
+  const said = written.join('');
+  assert.match(said, /probed .*\/v1\/models/);
+  assert.match(said, /ana-coder/);
+  assert.match(said, /routed ana\/coder/);
+  assert.match(said, /ana-coder/);
+  assert.match(said, /skipped cy-odd/);
+});
+
+// (0)(vi): Authorization and Cookie are never forwarded to a friend's lend.
+test('a client\'s Authorization and Cookie never reach a friend\'s lend', async (t) => {
+  const ana = await modelLend({ id: 'coder' });
+  const record = await group([
+    { group: 'g', key: 'k', name: 'ana-coder', person: 'ana', origin: ana.origin, kind: 'x', limit: null, using: 0 },
+  ]);
+  const at = await pantry({ record: record.origin });
+  t.after(() => Promise.all([ana.close(), record.close(), at.close()]));
+
+  await fetch(`${at.url}/v1/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      authorization: 'Bearer not-for-ana',
+      cookie: 'svrngs=not-for-ana',
+      'x-keep-me': 'yes',
+    },
+    body: JSON.stringify({ model: 'ana/coder', messages: [{ role: 'user', content: 'hi' }] }),
+  });
+  const heard = ana.requests.find((r) => r.path === '/v1/chat/completions');
+  assert.equal(heard.headers.authorization, undefined);
+  assert.equal(heard.headers.cookie, undefined);
+  assert.equal(heard.headers['x-keep-me'], 'yes', 'everything else still passes');
+});
+
+// The address a person pasted into their interface stays across a restart.
+test('serve answers at the same address across a restart and refuses a held one by name', async (t) => {
+  const state = stateDir();
+  const ana = await modelLend({ id: 'coder' });
+  const record = await group([
+    { group: 'g', key: 'k', name: 'ana-coder', person: 'ana', origin: ana.origin, kind: 'x', limit: null, using: 0 },
+  ]);
+  t.after(() => {
+    rmSync(state, { recursive: true, force: true });
+    return Promise.all([ana.close(), record.close()]);
+  });
+
+  const first = await serve({ record: record.origin, state });
+  const port = first.port;
+  await first.close();
+
+  const again = await serve({ record: record.origin, state });
+  t.after(() => again.close());
+  assert.equal(again.port, port, 'the address moved across a restart');
+  await again.close();
+
+  const held = net.createServer();
+  await new Promise((resolve) => held.listen(port, '127.0.0.1', resolve));
+  t.after(() => held.close());
+  await assert.rejects(serve({ record: record.origin, state }),
+    new RegExp(`holds 127\\.0\\.0\\.1:${port}`), 'silently moved to another port');
+  await new Promise((resolve) => held.close(resolve));
+
+  const free = await new Promise((resolve) => {
+    const probe = net.createServer();
+    probe.listen(0, '127.0.0.1', () => {
+      const chosen = probe.address().port;
+      probe.close(() => resolve(chosen));
+    });
+  });
+  const named = await serve({ record: record.origin, state, port: free });
+  assert.equal(named.port, free, '--port names another');
+  await named.close();
+  const kept = await serve({ record: record.origin, state });
+  t.after(() => kept.close());
+  assert.equal(kept.port, free, 'and what --port named stays the address');
 });
