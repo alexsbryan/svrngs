@@ -14,6 +14,7 @@
 # in Jellyfin's own pages by the line `share` printed (lender.mjs).
 #
 #   check.sh films <dir> <seconds>                 Sam's three films, that long, made in <dir> unless there
+#   check.sh jellyfin <scratch> <out>              Sam's Jellyfin alone, its films and Sam's account; <scratch>/env names them
 #   check.sh up    <scratch> <out>                 all of the above; with MEDIA=<dir>, Sam's library is <dir>'s
 #                                                  films; PEOPLE names who the lender makes accounts for (else
 #                                                  ana ben; empty, nobody); SHARE_FLAGS is what share is given (else --limit 8);
@@ -114,7 +115,9 @@ films() {
   done
 }
 
-up() {
+# Sam's Jellyfin alone, its films and the lender's own account: up's
+# first half, which the films scene runs (crates/svrngs/tests/scenes/films.rs).
+jellyfin() {
   down; rm -rf "$R"; mkdir -p "$R"/jf/{data,config,cache,log,media} "$R"/sam "$R"/alex "$OUT"
   (umask 077; mkdir -p "$SECRETS")
   : >"$OUT/steps.log"
@@ -177,6 +180,10 @@ EOF
   THREE="$(api GET "/Items?Recursive=true&IncludeItemTypes=Movie&SearchTerm=Three" | field '["Items"][0]["Id"]')"
   users >"$OUT/users-before.json"
   say "films: $n; users: $(cat "$OUT/users-before.json")"
+}
+
+up() {
+  jellyfin
 
   # --- the page: a hosted one when PAGE names it, as for real phones (the
   # operator's Demo B, https://group.svrnme.sh/); else web/ served on
@@ -462,6 +469,7 @@ mw2() {
 
 case "$STEP" in
   films) films "$R" "$OUT" ;;
+  jellyfin) jellyfin; printf 'SERVER=%s\nONE=%s\nTWO=%s\nTHREE=%s\n' "$SERVER" "$ONE" "$TWO" "$THREE" >"$R/env" ;;
   up) up ;;
   pair) pair "$4" "$5" ;;
   trio) trio ;;
@@ -470,5 +478,5 @@ case "$STEP" in
   plant) plant "$4" "$5" ;;
   judge) shift 3; python3 "$HERE/scan.py" "$R" "$OUT" >/dev/null; python3 "$HERE/judge.py" "$OUT" "$@" | tee -a "$OUT/steps.log" ;;
   down) TOKEN="$(cat "$SECRETS/admin_token")"; users >"$OUT/users-after.json" 2>/dev/null || true; down ;;
-  *) echo "usage: check.sh films|up|pair|trio|plant|mw|mw2|judge|down <scratch> <out> [way engine | plant engine | run...]" >&2; exit 2 ;;
+  *) echo "usage: check.sh films|jellyfin|up|pair|trio|plant|mw|mw2|judge|down <scratch> <out> [way engine | plant engine | run...]" >&2; exit 2 ;;
 esac
