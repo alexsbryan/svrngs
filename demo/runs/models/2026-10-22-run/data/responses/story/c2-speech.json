@@ -1,0 +1,18 @@
+{
+  "status": 200,
+  "headers": {
+    "date": "Fri, 23 Oct 2026 03:36:54 GMT",
+    "server": "uvicorn",
+    "content-disposition": "attachment; filename=speech.mp3",
+    "x-accel-buffering": "no",
+    "cache-control": "no-cache",
+    "content-type": "audio/mpeg",
+    "transfer-encoding": "chunked",
+    "x-pantry-person": "sam",
+    "x-pantry-lend": "sam-voice",
+    "connection": "keep-alive",
+    "keep-alive": "timeout=5"
+  },
+  "bytes": 25004,
+  "sha256": "92f112f7fb39152722c3c765272df6e13bafdc6d2a1186f98c43727d01268de0"
+}

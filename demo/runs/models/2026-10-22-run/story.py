@@ -9,7 +9,7 @@ answer on stdout; drive.py saves it under data/responses/.
     story.py bridge     --bridge URL --model ana/coder --shot FILE
     story.py tool       --origin http://label.localhost:PORT/
     story.py asleep     --pantry URL --model sam/whisper-1
-    story.py limit      --pantry URL --model sam/kokoro
+    story.py limit-chat --pantry URL --model ana/coder
     story.py dee        --dee URL
 """
 import argparse
@@ -30,13 +30,19 @@ def headers(res):
     return {k.lower(): v for k, v in dict(res.headers).items()}
 
 
+# Qwen3's template thinks first; these calls ask it not to, so the answer is
+# in `content` rather than a token-budget of `reasoning_content` (llama.cpp
+# passes chat_template_kwargs to the model's template).
+THINK = {"chat_template_kwargs": {"enable_thinking": False}}
+
+
 def chat(args):
     c = client(args.pantry)
     parts, text = [], ""
     stream = c.chat.completions.create(
         model=args.model,
         messages=[{"role": "user", "content": args.prompt or "Reply with the single word: ok"}],
-        stream=True, max_tokens=args.max_tokens,
+        stream=True, max_tokens=args.max_tokens, extra_body=THINK,
     )
     for chunk in stream:
         parts.append(chunk.model_dump(mode="json"))
@@ -50,9 +56,10 @@ def once(args):
     said = c.chat.completions.create(
         model=args.model,
         messages=[{"role": "user", "content": args.prompt or "Reply with the single word: ok"}],
-        max_tokens=args.max_tokens, stream=False,
+        max_tokens=args.max_tokens, stream=False, extra_body=THINK,
     )
-    return {"status": 200, "body": said.model_dump(mode="json")}
+    body = said.model_dump(mode="json")
+    return {"status": 200, "body": body}
 
 
 def transcribe(args):
@@ -82,10 +89,11 @@ def bridge(args):
             {"type": "text", "text": "This page is broken. Say what is wrong and give the fix."},
             {"type": "image_url", "image_url": {"url": "data:image/png;base64," + shot}},
         ]}],
-        max_tokens=600, stream=False,
+        max_tokens=1200, stream=False, extra_body=THINK,
     )
     said = res.parse()
     return {"status": res.status_code, "headers": headers(res),
+            "input_sha256": hashlib.sha256(base64.b64decode(shot)).hexdigest(),
             "body": said.model_dump(mode="json")}
 
 
@@ -121,16 +129,17 @@ def asleep(args):
                 "body": getattr(e, "body", None), "text": str(e)}
 
 
-def limit(args):
+def limit_chat(args):
     import threading
     out = [None, None]
 
     def ask(i):
         c = client(args.pantry)
         try:
-            res = c.audio.speech.with_raw_response.create(
-                model=args.model, voice=args.voice, input=args.input, response_format="mp3")
-            out[i] = {"status": res.status_code, "headers": headers(res), "bytes": len(res.content)}
+            res = c.chat.completions.with_raw_response.create(
+                model=args.model, max_tokens=800, extra_body=THINK,
+                messages=[{"role": "user", "content": f"Say the word number {i}."}], stream=False)
+            out[i] = {"status": res.status_code, "headers": headers(res), "body": res.parse().model_dump(mode="json")}
         except Exception as e:
             res = getattr(e, "response", None)
             out[i] = {"status": getattr(e, "status_code", None),
@@ -159,7 +168,7 @@ def main():
     a = sub.add_parser("bridge"); a.add_argument("--bridge"); a.add_argument("--model", default="ana/coder"); a.add_argument("--shot", required=True); a.set_defaults(fn=bridge)
     a = sub.add_parser("tool"); a.add_argument("--origin", required=True); a.set_defaults(fn=tool)
     a = sub.add_parser("asleep"); a.add_argument("--pantry"); a.add_argument("--model", default="sam/whisper-1"); a.set_defaults(fn=asleep)
-    a = sub.add_parser("limit"); a.add_argument("--pantry"); a.add_argument("--model", default="sam/kokoro"); a.add_argument("--voice", default="af_heart"); a.add_argument("--input", default="The pantry is open. " * 20); a.set_defaults(fn=limit)
+    a = sub.add_parser("limit-chat"); a.add_argument("--pantry"); a.add_argument("--model", default="ana/coder"); a.set_defaults(fn=limit_chat)
     a = sub.add_parser("dee"); a.add_argument("--dee", required=True); a.set_defaults(fn=dee)
     args = p.parse_args()
     json.dump(args.fn(args), sys.stdout, indent=2, default=str, ensure_ascii=False)

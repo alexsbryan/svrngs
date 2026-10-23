@@ -1,0 +1,52 @@
+{
+  "when": "2026-10-22T20:34:26-0700",
+  "host": {
+    "sw_vers": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0.1\nBuildVersion:\t\t26A434",
+    "uname": "Darwin Alexs-MacBook-Pro-4.local 27.0.0 Darwin Kernel Version 27.0.0: Tue Aug 11 21:20:40 PDT 2026; root:xnu-13432.1.9~1/RELEASE_ARM64_T6020 arm64",
+    "node": "v20.20.2",
+    "llama-server": "version: 10180 (11b068d06)\nbuilt with AppleClang 21.0.0.21000101 for Darwin arm64",
+    "whisper-server": "load_backend: loaded BLAS backend from /opt/homebrew/Cellar/ggml/0.27.0/libexec/libggml-blas.so\nggml_metal_device_init: tensor API disabled for pre-M5 and pre-A19 devices\nggml_metal_library_init: using embedded metal library\nggml_metal_library_compile_all: compiled 'fa_aux' library in 0.007 sec\nggml_metal_library_compile_all: compiled 'fa_f16' library in 0.087 sec\nggml_metal_library_compile_all: compiled 'fa_f32' library in 0.044 sec\nggml_metal_library_compile_all: compiled 'fa_q4_0' library in 0.014 sec\nggml_metal_library_compile_all: compiled 'fa_q4_1' library in 0.069 sec\nggml_metal_library_compile_all: compiled 'fa_q5_0' library in 0.033 sec\nggml_metal_library_compile_all: compiled 'fa_q5_1' library in 0.014 sec\nggml_metal_library_compile_all: compiled 'fa_q8_0' library in 0.016 sec\nggml_metal_library_compile_all: compiled 'fa_tensor' library in 0.020 sec\nggml_metal_library_compile_all: compiled 'fa_vec_f16' library in 0.025 sec\nggml_metal_library_compile_all: compiled 'fa_vec_f32' library in 0.085 sec\nggml_metal_library_compile_all: compiled 'fa_vec_q4_0' library in 0.015 sec\nggml_metal_library_compile_all: compiled 'fa_vec_q4_1' library in 0.058 sec\nggml_metal_library_compile_all: compiled 'fa_vec_q5_0' library in 0.046 sec\nggml_metal_library_compile_all: compiled 'fa_vec_q5_1' library in 0.005 sec\nggml_metal_library_compile_all: compiled 'fa_vec_q8_0' library in 0.035 sec\nggml_metal_library_compile_all: compiled 'mul_mv' library in 0.023 sec\nggml_metal_library_compile_all: compiled 'mul_mv_mma' library in 0.070 sec\nggml_metal_library_compile_all: compiled 'mul_mm' library in 0.075 sec\nggml_metal_library_compile_all: compiled 'quantize' library in 0.028 sec\nggml_metal_library_compile_all: compiled 'softmax' library in 0.061 sec\nggml_metal_library_compile_all: compiled 'norm' library in 0.026 sec\nggml_metal_library_compile_all: compiled 'unary' library in 0.047 sec\nggml_metal_library_compile_all: compiled 'binbcast' library in 0.047 sec\nggml_metal_library_compi",
+    "podman": "podman version 6.0.1"
+  },
+  "pins": {
+    "coder": {
+      "path": "/Users/alexsbryan/dev/svrngs/target/models/curated/Qwen3.6-35B-A3B-UD-MTP-IQ4_NL.gguf",
+      "pinned": "d0ad78047bd0a583bfcb484e9defc63112c5f1f856e310dcf88dc48f2ebeae5b",
+      "got": "d0ad78047bd0a583bfcb484e9defc63112c5f1f856e310dcf88dc48f2ebeae5b",
+      "ok": true
+    },
+    "vision": {
+      "path": "/Users/alexsbryan/dev/svrngs/target/models/curated/gemma-4-26B-A4B-it-UD-Q6_K_XL.gguf",
+      "pinned": "5cfb7ab424c01388538005f26573f3bd374d3140cc021a1c44249e69928882a4",
+      "got": "5cfb7ab424c01388538005f26573f3bd374d3140cc021a1c44249e69928882a4",
+      "ok": true
+    },
+    "mmproj": {
+      "path": "/Users/alexsbryan/dev/svrngs/target/models/curated/mmproj-gemma-4-26B-A4B-it-F16.gguf",
+      "pinned": "418a6d8723067cd712235facbbc5cba6c8fbbd413fc1292d2aace5a027d5a42f",
+      "got": "418a6d8723067cd712235facbbc5cba6c8fbbd413fc1292d2aace5a027d5a42f",
+      "ok": true
+    },
+    "small": {
+      "path": "/Users/alexsbryan/dev/svrngs/target/models/curated/Qwen3-8B-Q4_K_M.gguf",
+      "pinned": "120307ba529eb2439d6c430d94104dabd578497bc7bfe7e322b5d9933b449bd4",
+      "got": "120307ba529eb2439d6c430d94104dabd578497bc7bfe7e322b5d9933b449bd4",
+      "ok": true
+    },
+    "whisper": {
+      "path": "/Users/alexsbryan/dev/svrngs/target/models/run-whisper/ggml-base.en.bin",
+      "got": "a03779c86df3323075f5e796cb2ce5029f00ec8869eee3fdfb897afe36c6d002"
+    },
+    "llama-swap": {
+      "path": "/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/bin/llama-swap",
+      "got": "5bd81982bb82acf9d60b610959552c3c5b6459d6c6e61b8571e6dc0b20cc5a65"
+    },
+    "kokoro": {
+      "image": "ghcr.io/remsky/kokoro-fastapi-cpu:v0.9.0"
+    }
+  },
+  "pantry": {
+    "pantry.mjs": "c1baa45e43d95bac4aa86c240f57b4d428660e164ea9b052751686759fa50a0d",
+    "mcp.mjs": "d97df2aa8fc7491647ec3276e36ced68e64c9c1ecf44907b208b88991e82d82d"
+  }
+}

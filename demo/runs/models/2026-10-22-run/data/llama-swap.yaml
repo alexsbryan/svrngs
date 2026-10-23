@@ -1,0 +1,4 @@
+models:
+  "cy-model":
+    cmd: |
+      llama-server --port ${PORT} -m /Users/alexsbryan/dev/svrngs/target/models/curated/Qwen3-8B-Q4_K_M.gguf --jinja --alias cy-model --host 127.0.0.1 -c 8192 -ngl 99

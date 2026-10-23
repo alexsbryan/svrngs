@@ -1,0 +1,54 @@
+{
+  "status": 200,
+  "body": {
+    "id": "chatcmpl-TfHgVFGSYmBojBKJHg8MWY9JEpoaeJrx",
+    "choices": [
+      {
+        "finish_reason": "length",
+        "index": 0,
+        "logprobs": null,
+        "message": {
+          "content": "",
+          "refusal": null,
+          "role": "assistant",
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "tool_calls": null,
+          "reasoning_content": "Okay, the user wants me"
+        }
+      }
+    ],
+    "created": 1792726629,
+    "model": "cy-model",
+    "object": "chat.completion",
+    "metadata": null,
+    "moderation": null,
+    "service_tier": null,
+    "system_fingerprint": "b10180-11b068d06",
+    "usage": {
+      "completion_tokens": 8,
+      "prompt_tokens": 15,
+      "total_tokens": 23,
+      "completion_tokens_details": null,
+      "prompt_tokens_details": {
+        "audio_tokens": null,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+      }
+    },
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 15,
+      "prompt_ms": 61.472,
+      "prompt_per_token_ms": 4.098133333333333,
+      "prompt_per_second": 244.01353461738677,
+      "predicted_n": 8,
+      "predicted_ms": 133.868,
+      "predicted_per_token_ms": 16.7335,
+      "predicted_per_second": 59.76036095258016
+    }
+  }
+}

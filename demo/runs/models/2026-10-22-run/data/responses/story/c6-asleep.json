@@ -1,0 +1,12 @@
+{
+  "status": 503,
+  "headers": {
+    "content-type": "application/json",
+    "date": "Fri, 23 Oct 2026 03:38:50 GMT",
+    "connection": "keep-alive",
+    "keep-alive": "timeout=5",
+    "transfer-encoding": "chunked"
+  },
+  "body": "sam's computer did not answer (asleep), so sam/whisper-1 cannot be answered",
+  "text": "Error code: 503 - {'error': \"sam's computer did not answer (asleep), so sam/whisper-1 cannot be answered\", 'model': 'sam/whisper-1', 'why': 'asleep'}"
+}

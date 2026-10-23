@@ -1,0 +1,31 @@
+{
+  "status": 200,
+  "text": "",
+  "chunks": 42,
+  "first": {
+    "id": "chatcmpl-ewqzz3P19t88O6pHdf442Ptync4A3WVp",
+    "choices": [
+      {
+        "delta": {
+          "audio": null,
+          "content": null,
+          "function_call": null,
+          "refusal": null,
+          "role": "assistant",
+          "tool_calls": null
+        },
+        "index": 0,
+        "finish_reason": null,
+        "logprobs": null
+      }
+    ],
+    "created": 1792726612,
+    "model": "coder",
+    "object": "chat.completion.chunk",
+    "moderation": null,
+    "obfuscation": null,
+    "service_tier": null,
+    "system_fingerprint": "b10180-11b068d06",
+    "usage": null
+  }
+}

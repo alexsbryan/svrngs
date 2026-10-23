@@ -1,0 +1,15 @@
+$ share 8207 --kind kokoro --name sam-voice --limit 1 --refuse /docs --refuse /openapi.json
+exit 0
+You lend sam-voice (port 8207) to everyone in your groups, up to 1 person at once.
+They cannot open /docs.
+They cannot open /openapi.json.
+svrngs is running here already, so they can open it now.
+`svrngs unshare sam-voice` stops lending it.
+2026-10-23T03:36:49.428097Z DEBUG cli: cli: data dir from $SVRNGS_DIR dir="/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-run/data/home/Sam/.svrngs"
+2026-10-23T03:36:49.429306Z DEBUG cli: cli: the group keeps no relay — met where the build meets its groups group=220e7d696f14cfcce259d49a15ea8aafb5a5bfbbaa521f89c5a54db09360ea5d at=N0
+2026-10-23T03:36:49.429873Z DEBUG cli: cli: the relays this computer meets its groups at at=N0 unkept=true relay_urls=["https://aps1-1.relay.n0.iroh.link/", "https://euc1-1.relay.n0.iroh.link/", "https://use1-1.relay.n0.iroh.link/", "https://usw1-1.relay.n0.iroh.link/"]
+If sam-voice takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): 
+2026-10-23T03:36:49.430448Z DEBUG cli: cli: share — the password asked for lend=sam-voice given=false terminal=false
+2026-10-23T03:36:49.432843Z DEBUG lend: lend: declared lend=sam-voice source=Port(8207) kind=kokoro limit=Some(1) refused=2 upload=None secret=false asks=false
+2026-10-23T03:36:49.432921Z DEBUG cli: cli: refused — another svrngs holds the data dir lock=/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-run/data/home/Sam/.svrngs/lock error=lock acquisition failed because the operation would block
+2026-10-23T03:36:49.432931Z DEBUG cli: cli: share — svrngs runs here already, and reads the lend from its declaration lock=/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-run/data/home/Sam/.svrngs/lock

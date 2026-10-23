@@ -1,0 +1,7 @@
+What your groups lend now:
+  ana's computer — http://u7wla4aakcbk9b7hbf1cuhpp1bp2pxsbhp69zhmp0bgf59bf352akx5cxwm6m6.localhost:51412/ — model ana/coder — looked 0s ago
+  ana's computer — http://u7wla4aakcbk9b7hbf1cuhpp1bp2pxsbhp69zhmp0bgf59bf352alquv19r39b.localhost:51412/ — model ana/vision — looked 0s ago
+  cy's computer — http://93s6w7pwlwnf7j4zv62rrujwc16607qx19c6kvwjv0832t09v3saxhq61bal9j.localhost:51412/ — model cy/cy-model — looked 0s ago
+  sam's computer — http://uk79kxzjug7pmcvt8ar4glc0svlxvlbhw8ct3hbt7bs4b0tqrxbat6a8lhssjj.localhost:51412/ — model sam/whisper-1 — looked 0s ago
+  sam's computer — http://uk79kxzjug7pmcvt8ar4glc0svlxvlbhw8ct3hbt7bs4b0tqrxbaq4c6ulr444.localhost:51412/ — tool whoami (read-only), erase (destructive) — looked 0s ago
+  sam's computer — http://uk79kxzjug7pmcvt8ar4glc0svlxvlbhw8ct3hbt7bs4b0tqrxbacwd9lk3c0r.localhost:51412/ — model sam/tts-1, sam/tts-1-hd, sam/kokoro, sam/gpt-4o-mini-tts — looked 0s ago

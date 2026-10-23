@@ -301,15 +301,18 @@ def prepare():
     if not WHISPER.exists():
         raise RuntimeError("the pinned whisper ggml-base.en.bin is not here and no download is made")
     # The run's screenshot fixtures, copied so the run holds its own bytes.
-    for shot in ("clip-480.png", "overlap-760.png", "table-1024.png"):
-        s = REPO / "demo/runs/models/2026-10-22-scope/data/ui" / shot
-        if s.exists() and not (UI / shot).exists():
-            shutil.copyfile(s, UI / shot)
+    if not (UI / "clip.png").exists():
+        shutil.copyfile(REPO / "demo/runs/models/2026-10-22-scope/data/ui/clip-480.png",
+                        UI / "clip.png")
+        subprocess.run(["sips", "-Z", "480", str(UI / "clip.png")], capture_output=True)
     if not VENV.exists():
         raise RuntimeError(f"no stock-client venv at {VENV}")
     for key, (path, pinned) in MODELS.items():
         if not path.exists() or sha(path) != pinned:
             raise RuntimeError(f"{key} is not the pinned file: {path}")
+
+
+TIMES = {}
 
 
 def servers():
@@ -318,11 +321,12 @@ def servers():
     mmproj = MODELS["mmproj"][0]
     small = MODELS["small"][0]
 
+    t0 = time.time()
     start("llama-coder", ["llama-server", "-m", str(coder), "--jinja", "--alias", "coder",
                           "--host", "127.0.0.1", "--port", "8201", "-c", "8192", "-ngl", "99"])
     start("llama-vision", ["llama-server", "-m", str(vision), "--mmproj", str(mmproj), "--jinja",
                            "--alias", "vision", "--host", "127.0.0.1", "--port", "8202",
-                           "-c", "8192", "-ngl", "99"])
+                           "-c", "8192", "-ngl", "90", "-ub", "512"])
     start("whisper-server", ["whisper-server", "-m", str(WHISPER), "--host", "127.0.0.1",
                              "--port", "8206", "-l", "en"])
     start("whisper-wrapper", [NODE, str(REPO / "apps/pantry/examples/whisper/server.mjs"),
@@ -347,6 +351,7 @@ def servers():
         raise RuntimeError(f"kokoro did not start: {r.stdout}{r.stderr}")
 
     wait_for(8201, "/health", bound=600)
+    TIMES["serve_ms"] = round((time.time() - t0) * 1000)
     wait_for(8202, "/health", bound=600)
     wait_for(8206, "/", bound=300)
     wait_for(8210, "/v1/models", bound=120)
@@ -401,15 +406,18 @@ def story_run():
     ana = lends(bo).get("ana-coder")
     slots = through(ana, "GET", "/slots")
     record("story/c7-slots.json", slots)
-    limit = story("limit", "--pantry", base, "--model", "sam/kokoro", timeout=600)
+    limit = story("limit-chat", "--pantry", base, "--model", "ana/coder", timeout=900)
     save("story/c7-limit.json", limit)
+    # Cy's 8B is not needed again; unloading it leaves the two large models
+    # room for the bridge.
+    record("story/cy-unload.json", call(8209, "GET", "/unload"))
 
     # C4: Bo's bridge, Ana's vision describes, Ana's coder answers; both hops named.
     start("bridge", [NODE, str(REPO / "apps/pantry/examples/bridge/server.mjs"),
                      "--upstream", base, "--vision", "ana/vision", "--port", "8281"], who=bo)
     wait_for(8281, "/", bound=60)
     save("story/c4-bridge.json", story("bridge", "--bridge", "http://127.0.0.1:8281",
-                                       "--model", "ana/coder", "--shot", str(UI / "clip-480.png"), timeout=900))
+                                       "--model", "ana/coder", "--shot", str(UI / "clip.png"), timeout=900))
     ana_log = (LOGS / "Ana.err").read_text(errors="replace") if (LOGS / "Ana.err").exists() else ""
     hits = [l for l in ana_log.splitlines() if "door" in l and ("Bo" in l or "bo" in l)]
     save("story/c4-door.txt", "\n".join(hits[-40:]) or "no door line naming Bo in Ana's log")
@@ -443,6 +451,8 @@ def main():
     # a run after a failed one joins the same group again rather than half of
     # two.
     shutil.rmtree(HOMES, ignore_errors=True)
+    shutil.rmtree(RESP, ignore_errors=True)
+    RESP.mkdir(parents=True, exist_ok=True)
     for pidfile in LOGS.glob("*.pid"):
         pidfile.unlink()
     version()
@@ -462,7 +472,7 @@ def main():
         servers()
         lends("Ana")
         # Ana: the code model and the vision model.
-        share("Ana", 8201, "llama-server", "ana-coder",
+        share("Ana", 8201, "llama-server", "ana-coder", limit=1,
               refuse=["/slots", "/v1/stream", "/v1/streams", "/v1/chat/completions/control",
                       "/lora-adapters", "/metrics", "/tools", "/cors-proxy", "/models"])
         share("Ana", 8202, "llama-server", "ana-vision",
@@ -475,7 +485,8 @@ def main():
         # Cy: llama-swap, a server none of the pantry's tests use.
         _, timed = share("Cy", 8209, "llama-swap", "cy-model",
                          refuse=["/ui", "/logs", "/running", "/unload", "/metrics"])
-        save("story/provider-two-lines.json", {"share_ms": timed,
+        save("story/provider-two-lines.json", {"serve_ms": TIMES.get("serve_ms"), "share_ms": timed,
+             "total_ms": (TIMES.get("serve_ms") or 0) + timed,
              "download": "none: every weight was already under target/models/curated/ and its sha256 was checked"})
         story_run()
         save("story/pantry-hashes.json", {f: sha(REPO / "apps/pantry" / f) for f in ["pantry.mjs", "mcp.mjs"]})

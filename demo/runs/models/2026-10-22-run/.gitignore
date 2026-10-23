@@ -5,4 +5,5 @@ data/home/
 data/logs/
 data/venv/
 data/podman/
-data/ui/*.png
+data/ui/*
+!data/ui/clip.png
