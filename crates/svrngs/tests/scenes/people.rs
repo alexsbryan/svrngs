@@ -51,6 +51,14 @@ impl Scene {
         std::fs::write(self.dir.join("never-ran.txt"), why).unwrap();
     }
 
+    /// A bar the scene could not judge, and why, in its place, where the
+    /// gate's "scenes" step reads it as could-not-judge, never a pass, when
+    /// nothing else in the scene failed (scripts/check.sh).
+    pub fn could_not_judge(&self, why: &str) {
+        eprintln!("could-not-judge: {why}");
+        std::fs::write(self.dir.join("could-not-judge.txt"), why).unwrap();
+    }
+
     /// Where its scratch goes, under its place.
     pub fn scratch(&self, name: &str) -> PathBuf {
         self.dir.join(name)

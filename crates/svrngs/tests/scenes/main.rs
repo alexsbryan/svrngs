@@ -15,6 +15,10 @@
 mod harness;
 #[path = "../../../svrngs-node/tests/browser/drive.rs"]
 mod drive;
+// The host's load and the film's seek bar under it, the browser tests' own.
+#[path = "../../../svrngs-node/tests/browser/load.rs"]
+#[allow(dead_code)]
+mod load;
 mod people;
 
 // Money (apps/expenses): a split, a settle, another's correction.

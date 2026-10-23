@@ -23,6 +23,7 @@ use std::time::Duration;
 use serde_json::{json, Value};
 
 use crate::harness::{repo, Engine};
+use crate::load;
 use crate::people::Scene;
 
 /// Where the films check finds Jellyfin (check.sh `JF_APP`).
@@ -215,6 +216,7 @@ async fn films(engine: Engine) {
         ("ADMIN", jf.read("secrets/admin_token")),
         ("DUMP", dump.to_string_lossy().to_string()),
     ];
+    let began = load::load().await;
     let seen = node("drive.mjs", &[&people.to_string()], &env).await;
     eprintln!("what Alex and Bo saw: {seen:#}");
     assert!(seen.get("stopped").is_none(), "{seen:#}");
@@ -230,14 +232,24 @@ async fn films(engine: Engine) {
         seen["devices_apart"], true,
         "Alex and Bo are each a device of their own: {seen:#}"
     );
+    // Demo A's seek bar, each seek playing again within 5 s, judged as the
+    // browser tests judge the film's (load.rs `seeks_judged`): a miss on a
+    // host past `load::BUSY` a core is could-not-judge, never a pass; the
+    // whole gate's scenes once took this host to a load of 155 and Alex's
+    // first seek to 16.6 s, while films alone passed three runs of three.
+    let mut unjudged = Vec::new();
     for phase in ["first_seeks", "then_seeks"] {
         let p = &seen[phase];
-        let seeks = p["seeks"].as_array().map_or(0, Vec::len);
-        assert!(
-            seeks == 3 && p["within_5s"] == 3,
-            "each of {}'s seeks plays again within 5 s: {p:#}",
-            p["seeker"]
-        );
+        let seeks = p["seeks"].as_array().cloned().unwrap_or_default();
+        assert_eq!(seeks.len(), 3, "{}'s three seeks: {p:#}", p["seeker"]);
+        match load::seeks_judged(&seeks, &began, load::cores()) {
+            Ok(None) => {}
+            Ok(Some(why)) => unjudged.push(format!("{}'s seeks, {why}", p["seeker"])),
+            Err(missed) => panic!(
+                "each of {}'s seeks plays again within 5 s, not {missed}: {p:#}",
+                p["seeker"]
+            ),
+        }
         // Judged by the film itself: never started over, never back, never
         // still 5 s. WebKit's watcher at times binds a second <video> while
         // the film plays on, before any of this (demo/runs/si/2026-10-08/
@@ -265,5 +277,8 @@ async fn films(engine: Engine) {
         held.extend(holding(&who.home, password.as_bytes()));
     }
     assert!(held.is_empty(), "Sam's password reached them: {held:?}");
+    if !unjudged.is_empty() {
+        scene.could_not_judge(&unjudged.join("; "));
+    }
     drop((sam, alex, bo, jf));
 }
