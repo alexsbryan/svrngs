@@ -40,3 +40,18 @@ Fences the rows keep:
    state the trust lines plainly.
 10. *One host, one run of each:* not a rate (AGENTS.md 7). A run that could
     not finish is could-not-judge, never a pass.
+11. *Everything stays inside this tree.* Your tools refuse any path outside
+    the workdir (opencode's `external_directory`, auto-rejected), so never
+    reach for `~/.cache`, `~/Library/Caches`, `~/.config` or a sibling
+    repository. Every download, cache, model and server's data lives under
+    `target/models/` here, which git ignores. Set these on every command that
+    pulls or serves:
+    - `LLAMA_CACHE=$PWD/target/models/llama` for `llama-server -hf`;
+    - `HF_HOME=$PWD/target/models/hf` for anything that uses HuggingFace's
+      cache;
+    - `XDG_CACHE_HOME=$PWD/target/models/cache` and
+      `npm_config_cache=$PWD/target/models/npm` for npm, npx and uv;
+    - each server's own model or data path under `target/models/<server>/`.
+    Your own configuration and permissions are never yours to read or
+    change. A refusal you cannot route around this way is NEEDS_HUMAN.md,
+    naming the path and why the row needs it.
