@@ -88,7 +88,7 @@ fn app_of(headers: &HeaderMap, host: &Label) -> Option<Label> {
     }
     let port = at(at_host?)?.1;
     let dest = headers.get("sec-fetch-dest").and_then(|v| v.to_str().ok());
-    let framed = mode == Some("navigate") && dest != Some("document");
+    let framed = mode == Some("navigate") && dest.is_some_and(|d| d != "document");
     // A frame's navigation sends no `Origin`: who framed it says its `Referer`.
     let sent = [header::ORIGIN, header::REFERER][usize::from(framed)].clone();
     let from = (headers.get(sent).and_then(|v| v.to_str().ok()))

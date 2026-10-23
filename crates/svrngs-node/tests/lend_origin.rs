@@ -378,22 +378,27 @@ async fn judged(
 /// reads** (sup-1; DESIGN §3, "Lent apps", call 6, and its table). Alex
 /// lends a page, `night`, reading kind `media`, a `telly` of it and a
 /// `diary`; Sam a `films` and a `notes`. At Alex's computer, each row of
-/// the table: a program (no `Sec-Fetch-*`), a typed address, a navigation
-/// (whatever its `Origin`) and a request from the lend's own origin are the
-/// lend's own page, its service told its own label; a `fetch` from
-/// `night`'s page, by its `Origin`, is `night`'s, at Alex's own `telly` and
-/// at Sam's `films` alike, Sam's door told it from the pass Alex's computer
-/// signs; Sam's page at its origin is Sam's `films` at Sam's door. Refused
-/// `closed`, its service never asked: `night`'s page at `diary` and at
-/// Sam's `notes`, which it does not read; a request from another page with
-/// no `Origin` (an `<img>`); an `Origin` at another port; a site's.
+/// the table: a program (no `Sec-Fetch-*`), a typed address, a link
+/// followed from another page (a navigation with no `Origin`) and a request
+/// from the lend's own origin are the lend's own page, its service told its
+/// own label; a `fetch` from `night`'s page, by its `Origin`, is `night`'s,
+/// at Alex's own `telly` and at Sam's `films` alike, Sam's door told it
+/// from the pass Alex's computer signs, and so are a form `night`'s page
+/// posted, by its `Origin`, and its frame, by its `Referer`
+/// (capability-navigation); Sam's page at its origin is Sam's `films` at
+/// Sam's door. Refused `closed`, its service never asked: `night`'s page at
+/// `diary` and at Sam's `notes`, which it does not read, by a fetch, a form
+/// or a frame; a request from another page with no `Origin` (an `<img>`);
+/// a frame whose `Referer` is withheld; an `Origin` at another port; a
+/// site's.
 /// Node's `fetch` says `Sec-Fetch-Mode: cors` and no `Sec-Fetch-Site`,
 /// which a browser never leaves out (start-address (b); start-measure,
 /// `demo/runs/start/2026-10-13/README.md` §3 (a) 4): a program's.
 /// Planted, each watched failing: the origin taking the `Host` for a
 /// cross-origin `fetch`; a page reaching a lend it does not read; Alex's
 /// computer presenting no pass of its own to Sam's door; a program with a
-/// mode and no site refused (`app_of` as at a39c8d4).
+/// mode and no site refused (`app_of` as at a39c8d4); every navigation the
+/// lend's own page again (`app_of` as at 9fc1d6c4).
 #[tokio::test]
 async fn a_computer_s_origin_names_the_app_and_keeps_a_page_to_its_reads() {
     let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
@@ -416,6 +421,10 @@ async fn a_computer_s_origin_names_the_app_and_keeps_a_page_to_its_reads() {
     let night = label(1, "night");
     let from = |l: &Label| format!("Origin: http://{l}.localhost:{port}\r\n");
     let fetch = "Sec-Fetch-Site: same-site\r\nSec-Fetch-Mode: cors\r\n";
+    let tab =
+        "Sec-Fetch-Site: same-site\r\nSec-Fetch-Mode: navigate\r\nSec-Fetch-Dest: document\r\n";
+    let frame =
+        "Sec-Fetch-Site: same-site\r\nSec-Fetch-Mode: navigate\r\nSec-Fetch-Dest: iframe\r\n";
     let told = |l: &Label| (200, None, Some(vec![l.to_string()]));
     let closed = (403, Some("closed".to_string()), None);
     let rows = [
@@ -435,14 +444,46 @@ async fn a_computer_s_origin_names_the_app_and_keeps_a_page_to_its_reads() {
             told(&night),
         ),
         (
-            "a navigation from another page",
+            "a link followed from another page",
             1,
             "telly",
-            format!(
-                "Sec-Fetch-Site: same-site\r\nSec-Fetch-Mode: navigate\r\n{}",
-                from(&night)
-            ),
+            format!("{tab}Referer: http://{night}.localhost:{port}/\r\n"),
             told(&label(1, "telly")),
+        ),
+        (
+            "a form night's page posted",
+            1,
+            "telly",
+            format!("{tab}{}", from(&night)),
+            told(&night),
+        ),
+        (
+            "night's frame, by its Referer",
+            1,
+            "telly",
+            format!("{frame}Referer: http://{night}.localhost:{port}/at\r\n"),
+            told(&night),
+        ),
+        (
+            "a form night's page posted at Alex's diary, unread",
+            1,
+            "diary",
+            format!("{tab}{}", from(&night)),
+            closed.clone(),
+        ),
+        (
+            "night's frame at Alex's diary, unread",
+            1,
+            "diary",
+            format!("{frame}Referer: http://{night}.localhost:{port}/\r\n"),
+            closed.clone(),
+        ),
+        (
+            "a frame with its Referer withheld",
+            1,
+            "telly",
+            frame.into(),
+            closed.clone(),
         ),
         (
             "its own origin",
