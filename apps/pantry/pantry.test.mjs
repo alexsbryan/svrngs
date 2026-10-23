@@ -44,7 +44,10 @@ async function standin(handler) {
   return {
     origin,
     requests,
-    close: () => new Promise((resolve) => server.close(resolve)),
+    close: () => new Promise((resolve) => {
+      server.close(resolve);
+      server.closeAllConnections?.();
+    }),
   };
 }
 
