@@ -18,13 +18,33 @@ import { join } from 'node:path';
 
 import { toolsAt } from './mcp.mjs';
 
-const DISCOVERY_TIMEOUT = 4000;
+/// How long what discovery found is kept, and how long a probe waits for an
+/// answer: `crates/svrngs-node/src/dial.rs:30`'s 4 s, the slowest working
+/// dial on this host times 3. A friend's computer that did not answer is not
+/// dialled again on every message, and what it said is said with its age.
+export const FOUND_FOR = 4000;
+
+const DISCOVERY_TIMEOUT = FOUND_FOR;
+
+/// This computer's data dir: where its record answers and where the pantry
+/// keeps the address a person pasted into their interface.
+function dataDir(option) {
+  return option || process.env.SVRNGS_DIR || join(homedir(), '.svrngs');
+}
 
 /// Where this computer's record answers, from the data dir's `api` file.
 export function recordAt() {
   if (process.env.SVRNGS_API) return process.env.SVRNGS_API.replace(/\/+$/, '');
-  const dir = process.env.SVRNGS_DIR || join(homedir(), '.svrngs');
-  return readFileSync(join(dir, 'api'), 'utf8').trim().replace(/\/+$/, '');
+  return readFileSync(join(dataDir(), 'api'), 'utf8').trim().replace(/\/+$/, '');
+}
+
+/// Glassbox: with PANTRY_LOG=debug, every probe, route and skip is written.
+function note(...words) {
+  if (process.env.PANTRY_LOG === 'debug') console.error('pantry:', ...words);
+}
+
+function secondsAgo(at, now) {
+  return Math.max(0, Math.round((now() - at) / 1000));
 }
 
 async function get(url) {
@@ -34,7 +54,8 @@ async function get(url) {
 }
 
 /// Every lend this computer's groups hold now, and the people whose
-/// computer did not say what they lend.
+/// computer did not say what they lend. A person's lend is told apart by the
+/// key their computer is dialled by, so two people of one name keep two ids.
 export async function lendsNow(record) {
   const base = record.replace(/\/+$/, '');
   const held = await get(`${base}/v1/groups`);
@@ -46,7 +67,7 @@ export async function lendsNow(record) {
     const id = group.id;
     const body = await get(`${base}/v1/lends?namespace=${encodeURIComponent(id)}`);
     for (const lend of body.lent || []) {
-      const key = `${lend.person}\u0000${lend.name}\u0000${lend.origin}`;
+      const key = `${lend.person}\u0000${lend.key}\u0000${lend.name}\u0000${lend.origin}`;
       if (seen.has(key)) continue;
       seen.add(key);
       lends.push({ ...lend, group: id });
@@ -60,14 +81,43 @@ export async function lendsNow(record) {
       for (const person of people || []) unlisted.push({ person, why, group: id });
     }
   }
-  return { lends, unlisted };
+  return { lends: handles(lends), unlisted };
+}
+
+/// A readable handle for each lend's person, unique by the key their
+/// computer is dialled by: the name alone when it is one person's, else the
+/// name and as much of the key as tells them apart. Never one dropped.
+function handles(lends) {
+  const byName = new Map();
+  for (const lend of lends) {
+    if (!byName.has(lend.person)) byName.set(lend.person, new Set());
+    byName.get(lend.person).add(lend.key || '');
+  }
+  for (const lend of lends) {
+    const keys = [...byName.get(lend.person)];
+    if (keys.length === 1) {
+      lend.handle = lend.person;
+      continue;
+    }
+    const mine = lend.key || lend.name;
+    let width = 8;
+    while (width < mine.length
+      && keys.filter((other) => other.slice(0, width) === mine.slice(0, width)).length > 1) {
+      width += 4;
+    }
+    lend.handle = `${lend.person}~${mine.slice(0, width)}`;
+  }
+  return lends;
 }
 
 /// What a lend answers when it is asked by protocol: a model, a tool, or
 /// neither, with the reasons kept.
-export async function discover(origin) {
+async function probe(origin) {
   const base = origin.replace(/\/+$/, '');
-  let why = [];
+  const why = [];
+  let couldNotJudge = false;
+  const timedOut = (e) => e?.name === 'TimeoutError' || e?.name === 'AbortError'
+    || /abort|timeout/i.test(e?.message || '');
   try {
     const res = await fetch(`${base}/v1/models`, {
       headers: { accept: 'application/json' },
@@ -89,34 +139,66 @@ export async function discover(origin) {
     }
   } catch (e) {
     why.push(`/v1/models did not answer (${e.message})`);
+    couldNotJudge = couldNotJudge || timedOut(e);
   }
   try {
     const tools = await toolsAt(base);
     return { protocol: 'tool', tools };
   } catch (e) {
     why.push(`MCP did not answer (${e.message})`);
+    couldNotJudge = couldNotJudge || timedOut(e);
   }
-  return { protocol: 'neither', why: why.join('; ') };
+  return { protocol: 'neither', why: why.join('; '), couldNotJudge };
+}
+
+/// What discovery found, kept for [`FOUND_FOR`] in this process: a friend
+/// who is asleep is not dialled on every message. Its age is said by `list`
+/// and in each refusal.
+const discovered = new Map();
+
+export async function discover(origin, clock = Date.now) {
+  const now = clock();
+  const kept = discovered.get(origin);
+  if (kept && now - kept.at < FOUND_FOR) {
+    note('kept', origin, `looked ${secondsAgo(kept.at, clock)}s ago`, kept.seen.protocol);
+    return { ...kept.seen, at: kept.at };
+  }
+  const seen = await probe(origin);
+  discovered.set(origin, { at: now, seen });
+  note('probed', origin, '→', seen.protocol,
+    seen.models ? `${seen.models.length} model` : seen.tools ? `${seen.tools.length} tool` : seen.why);
+  return { ...seen, at: now };
 }
 
 /// What your groups lend now, each lend asked by its protocol.
-export async function list({ record = recordAt() } = {}) {
+export async function list({ record = recordAt(), clock = Date.now } = {}) {
   const { lends, unlisted } = await lendsNow(record);
   const found = [];
+  const used = new Set();
   for (const lend of lends) {
-    const seen = await discover(lend.origin);
+    const seen = await discover(lend.origin, clock);
     if (seen.protocol === 'model') {
-      seen.models = seen.models.map((m) => ({ ...m, as: `${lend.person}/${m.id}` }));
+      seen.models = seen.models.map((m) => {
+        let id = `${lend.handle}/${m.id}`;
+        if (used.has(id)) id = `${lend.handle}/${lend.name}/${m.id}`;
+        used.add(id);
+        return { ...m, as: id };
+      });
+    } else {
+      note('skipped', lend.name, seen.why || seen.protocol);
     }
     found.push({
       group: lend.group,
+      key: lend.key,
       name: lend.name,
       person: lend.person,
+      handle: lend.handle,
       origin: lend.origin,
       kind: lend.kind,
       limit: lend.limit,
       using: lend.using,
       ...seen,
+      looked: secondsAgo(seen.at, clock),
     });
   }
   return { lends: found, unlisted };
@@ -126,14 +208,17 @@ export async function formatList({ lends, unlisted }) {
   const lines = ['What your groups lend now:'];
   for (const lend of lends) {
     const who = `${lend.person}'s computer`;
+    const looked = ` — looked ${lend.looked}s ago`;
     if (lend.protocol === 'model') {
-      const models = lend.models.map((m) => `${lend.person}/${m.id}`).join(', ');
-      lines.push(`  ${who} — ${lend.origin} — model ${models}`);
+      const models = lend.models.map((m) => m.as).join(', ');
+      lines.push(`  ${who} — ${lend.origin} — model ${models}${looked}`);
     } else if (lend.protocol === 'tool') {
       const tools = lend.tools.map((t) => `${t.name} (${t.effect})`).join(', ');
-      lines.push(`  ${who} — ${lend.origin} — tool ${tools}`);
+      lines.push(`  ${who} — ${lend.origin} — tool ${tools}${looked}`);
+    } else if (lend.couldNotJudge) {
+      lines.push(`  ${who} — ${lend.origin} — could-not-judge: ${lend.why}${looked}`);
     } else {
-      lines.push(`  ${who} — ${lend.origin} — neither: ${lend.why}`);
+      lines.push(`  ${who} — ${lend.origin} — neither: ${lend.why}${looked}`);
     }
   }
   for (const person of unlisted) {
@@ -142,25 +227,32 @@ export async function formatList({ lends, unlisted }) {
   return lines.join('\n');
 }
 
-/// The models every lend answers now, each id prefixed by its lender.
-async function modelsNow(record) {
+/// The models every lend answers now, each id prefixed by its lender's
+/// handle, and why a lend could not be judged.
+async function modelsNow(record, clock) {
   const { lends, unlisted } = await lendsNow(record);
   const data = [];
   const index = new Map();
+  const unjudged = new Map();
   for (const lend of lends) {
-    const seen = await discover(lend.origin).catch((e) => ({
-      protocol: 'neither',
-      why: e.message,
-    }));
-    if (seen.protocol !== 'model') continue;
+    const seen = await discover(lend.origin, clock);
+    if (seen.protocol !== 'model') {
+      if (seen.protocol === 'neither') {
+        if (!unjudged.has(lend.handle)) unjudged.set(lend.handle, []);
+        unjudged.get(lend.handle).push({ lend, why: seen.why, at: seen.at });
+      }
+      note('skipped', lend.name, seen.why || seen.protocol);
+      continue;
+    }
     for (const model of seen.models) {
-      const id = `${lend.person}/${model.id}`;
+      let id = `${lend.handle}/${model.id}`;
+      if (index.has(id)) id = `${lend.handle}/${lend.name}/${model.id}`;
       if (index.has(id)) continue;
       index.set(id, { lend, model: model.id });
       data.push({ ...model, id, object: model.object || 'model', owned_by: id });
     }
   }
-  return { data, index, unlisted };
+  return { data, index, unjudged, unlisted };
 }
 
 function unlistedWhy(unlisted, person) {
@@ -225,12 +317,15 @@ function rewriteModel(raw, contentType, model) {
   return { body: Buffer.from(JSON.stringify({ ...asked, model })), model: asked.model };
 }
 
-/// One OpenAI-compatible address on 127.0.0.1, routed by `model`.
-export async function serve({ record = recordAt(), port = 0, host = '127.0.0.1' } = {}) {
+/// One OpenAI-compatible address on 127.0.0.1, routed by `model`. Without
+/// `--port` it takes the address it took last time, from the data dir's
+/// `pantry-port`, so the address a person pasted into their interface stays;
+/// another program holding it is said by name, never moved past in silence.
+export async function serve({ record = recordAt(), port = 0, host = '127.0.0.1', clock = Date.now } = {}) {
   const server = http.createServer(async (req, res) => {
     try {
       if (req.method === 'GET' && req.url === '/v1/models') {
-        const { data } = await modelsNow(record);
+        const { data } = await modelsNow(record, clock);
         res.writeHead(200, { 'content-type': 'application/json' });
         return res.end(JSON.stringify({ object: 'list', data }));
       }
@@ -239,24 +334,26 @@ export async function serve({ record = recordAt(), port = 0, host = '127.0.0.1' 
       if (!asked) {
         return fault(res, 400, 'a request to the pantry names its model');
       }
-      const { index, unlisted } = await modelsNow(record);
+      const { index, unjudged, unlisted } = await modelsNow(record, clock);
       const found = index.get(asked.model);
       if (!found) {
-        const person = asked.model.split('/')[0];
-        const why = unlistedWhy(unlisted, person);
+        const prefix = asked.model.split('/')[0];
+        const missed = unjudged.get(prefix);
+        if (missed?.length) {
+          const { lend, why, at } = missed[0];
+          return fault(res, 503,
+            `${lend.person}'s lend ${lend.name} could not be judged (${why}); it was looked ${secondsAgo(at, clock)}s ago, so ${asked.model} cannot be answered`,
+            { model: asked.model, lend: lend.name, why, looked: secondsAgo(at, clock) });
+        }
+        const why = unlistedWhy(unlisted, prefix);
         if (why) {
           return fault(res, 503,
-            `${person}'s computer did not answer (${why}), so ${asked.model} cannot be answered`,
+            `${prefix}'s computer did not answer (${why}), so ${asked.model} cannot be answered`,
             { model: asked.model, why });
         }
         return fault(res, 404, `no lend answers ${asked.model}`, { model: asked.model });
       }
       const { lend, model } = found;
-      if (lend.limit && lend.using >= lend.limit) {
-        return fault(res, 429,
-          `${lend.person}'s lend ${lend.name} is at its limit (${lend.using} of ${lend.limit}), so ${asked.model} cannot be answered`,
-          { model: asked.model, lend: lend.name, why: 'at its limit' });
-      }
       const written = rewriteModel(raw, req.headers['content-type'], model);
       if (!written) {
         return fault(res, 400, `the body's model cannot be rewritten for ${asked.model}`);
@@ -266,7 +363,11 @@ export async function serve({ record = recordAt(), port = 0, host = '127.0.0.1' 
       delete headers.host;
       delete headers.connection;
       delete headers['content-length'];
+      // A friend's lend never receives the person's own credentials.
+      delete headers.authorization;
+      delete headers.cookie;
       headers['content-length'] = String(written.body.length);
+      note('routed', asked.model, '→', lend.handle, lend.name, lend.origin);
       const target = http.request({
         hostname: upstream.hostname,
         port: upstream.port,
@@ -274,7 +375,11 @@ export async function serve({ record = recordAt(), port = 0, host = '127.0.0.1' 
         method: req.method,
         headers,
       }, (answer) => {
-        res.writeHead(answer.statusCode, answer.headers);
+        res.writeHead(answer.statusCode, {
+          ...answer.headers,
+          'x-pantry-person': lend.handle,
+          'x-pantry-lend': lend.name,
+        });
         answer.pipe(res);
       });
       target.on('error', (e) => {
