@@ -69,7 +69,9 @@ async function show() {
     add,
     said,
   );
-  if (state.gaps.length) app.append(el('p', `${state.gaps.length} ${state.gaps.length === 1 ? 'entry' : 'entries'} can’t be read by this version of Money, so ${state.gaps.length === 1 ? 'it isn’t' : 'they aren’t'} counted.`));
+  // Each entry not counted, and why: one this version can't read, or
+  // someone's change to an entry that only its author can change.
+  if (state.gaps.length) app.append(el('p', `${state.gaps.length} ${state.gaps.length === 1 ? 'entry' : 'entries'} can’t be counted: ${state.gaps.map((g) => g.message).join('; ')}.`));
 }
 
 show();

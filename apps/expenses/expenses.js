@@ -4,7 +4,7 @@
 // is the app; the runtime folds its acts and has never heard of an expense.
 //
 // `reduce` folds this app's acts as the record orders them on every copy,
-// with voided ones gone: `actsOf` reads them from the record a member's node
+// with the ones their own author corrected gone: `actsOf` reads them from the record a member's node
 // serves over loopback (`GET /v1/rail/log`, DESIGN §3). Each act is
 // `{id, ts, by, via, op}`: `by` is the person the act speaks for — the person an
 // app named when it wrote for someone the door verified, else the person
@@ -21,6 +21,13 @@
 // **The person is the act's speaker, never a name in the payload.** Whoever
 // wrote the expense paid; whoever wrote a share of it was in on it. No one can
 // write an expense in someone else's name, because the op has nowhere to put one.
+//
+// **A correction counts only from the person whose act it corrects.** The
+// record voids an act whoever corrects it (svrngs-core admit.rs, `voided`), so
+// `actsOf` reads every act, voided ones too, and decides the voids itself, as
+// Events' fold does (apps/events/events.js, `voids`): Sam can fix the amount
+// he paid, and no one else can erase it. Anyone else's correction is a gap,
+// and changes nothing.
 //
 // **The remainder goes to whoever sorts first.** $10.00 three ways is
 // 334/333/333, never 333/333/333 with a penny evaporating. The rule is
@@ -89,6 +96,7 @@ const has = (map, k) => typeof k === 'string' && Object.prototype.hasOwnProperty
  */
 export function validate(state, act) {
   const gap = (code, message) => ({ code, fatal: true, message });
+  if (isObject(act) && isObject(act.uncounted)) return [act.uncounted];
   if (!isObject(act) || !isObject(act.op) || !isKey(act.id) || !Number.isSafeInteger(act.ts)) {
     return [gap('not_an_act', 'an entry with nothing in it')];
   }
@@ -121,18 +129,49 @@ export function validate(state, act) {
 
 /**
  * The acts `reduce` folds, from the record's answer to `GET /v1/rail/log`: its
- * ops in the record's order, less every op a correction voided and every op
- * that carries nothing for an app (the group's own acts, and a correction
- * that only voids). A correction's replacement is an act of its own, under
- * the correction's id. `by` is `on_behalf_of` when the op names one, else
- * its `person`; `via` is the `person` when `on_behalf_of` names another,
- * else null. A log with no list of ops is an error, never an empty book.
+ * ops in the record's order, less every op its own author's correction voided
+ * and every op that carries nothing for an app (the group's own acts, and a
+ * correction that only voids) — the record's `voided` is not read, as it
+ * voids whoever corrects. A correction's replacement is an act of its own,
+ * under the correction's id. A correction that counts for nothing is kept,
+ * carrying as `uncounted` the gap `validate` answers for it, so the page says
+ * so. `by` is `on_behalf_of` when the op names one, else its `person`; `via`
+ * is the `person` when `on_behalf_of` names another, else null. A log with no
+ * list of ops is an error, never an empty book.
  */
 export function actsOf(log) {
   if (!Array.isArray(log?.ops)) throw new Error(`the record answered no list of acts: ${JSON.stringify(log)}`);
-  return log.ops
-    .filter((o) => !o.voided && o.payload != null)
-    .map((o) => ({ id: o.id, ts: o.ts_unix, by: o.on_behalf_of ?? o.person, via: o.on_behalf_of != null && o.on_behalf_of !== o.person ? o.person : null, op: o.payload }));
+  const acts = log.ops
+    .filter((o) => o.payload != null || o.corrects != null)
+    .map((o) => ({ id: o.id, ts: o.ts_unix, by: o.on_behalf_of ?? o.person, via: o.on_behalf_of != null && o.on_behalf_of !== o.person ? o.person : null, op: o.payload ?? null, corrects: o.corrects ?? null }));
+  const { voided, uncounted } = voids(acts);
+  return acts
+    .filter((a) => !has(voided, a.id) && (a.op != null || has(uncounted, a.id)))
+    .map(({ corrects, ...a }) => (has(uncounted, a.id) ? { ...a, uncounted: uncounted[a.id] } : a));
+}
+
+/**
+ * The acts voided, each by its own author's correction, and the corrections
+ * that count for nothing, each with its gap: one by someone else, or of an
+ * act this copy does not hold.
+ */
+function voids(acts) {
+  const byId = {};
+  const voided = {};
+  const uncounted = {};
+  for (const c of acts) {
+    if (isKey(c.id) && !has(byId, c.id)) byId[c.id] = c;
+    if (c.corrects == null) continue;
+    const was = has(byId, c.corrects) ? byId[c.corrects] : null;
+    if (was && was.by === c.by) {
+      voided[c.corrects] = true;
+    } else {
+      uncounted[c.id] = was
+        ? { code: 'not_theirs', fatal: true, message: `${c.by} tried to change ${was.by}’s entry, which only ${was.by} can change` }
+        : { code: 'changes_unheld', fatal: true, message: `${c.by} changed an entry this copy does not hold yet` };
+    }
+  }
+  return { voided, uncounted };
 }
 
 /** The empty book. */
