@@ -33,17 +33,17 @@ pub(super) const LOOK_EVERY: Duration = Duration::from_secs(5);
 
 /// A turn, and where its owner answers the room as it stands after it, or
 /// why what is on cannot be read.
-type Asked = (Turn, oneshot::Sender<Result<Vec<InRoom>, String>>);
+type TurnAsk = (Turn, oneshot::Sender<Result<Vec<InRoom>, String>>);
 
 /// What the room's owner reads its asks from.
-type Asks = mpsc::UnboundedReceiver<Asked>;
+type Asks = mpsc::UnboundedReceiver<TurnAsk>;
 
 /// Each lend served, by its label: where, and its listener.
 type Listening = BTreeMap<Label, (SocketAddr, AbortOnDropHandle<()>)>;
 
 /// The room's owner's handle ([`spawn`]), held by the node's routers.
 #[derive(Clone)]
-pub(crate) struct Room(mpsc::UnboundedSender<Asked>);
+pub(crate) struct Room(mpsc::UnboundedSender<TurnAsk>);
 
 impl Room {
     /// A room, and what its owner takes.
