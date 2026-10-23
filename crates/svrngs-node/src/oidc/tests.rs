@@ -45,7 +45,7 @@ fn the_key_is_owner_only_and_survives_a_restart() {
     assert_eq!(mode(&key_dir(at.path())), 0o700);
     let second = load_or_create(at.path()).unwrap();
     assert_eq!(first.point, second.point, "the same key after a restart");
-    assert_eq!(first.kid(), second.kid());
+    assert_eq!(first.kid, second.kid);
 }
 
 /// A token is signed by this key and by no other: given two lenders'
@@ -71,7 +71,7 @@ fn the_jwks_key_verifies_the_token_it_lists() {
     let token = key.token(claims()).unwrap();
     let jwks: serde_json::Value = serde_json::from_str(&key.jwks()).unwrap();
     let listed = &jwks["keys"][0];
-    assert_eq!(listed["kid"], key.kid());
+    assert_eq!(listed["kid"], key.kid);
     assert_eq!(listed["kty"], "EC");
     assert_eq!(listed["crv"], "P-256");
     let part = |name: &str| {
@@ -96,7 +96,7 @@ fn the_jwks_key_verifies_the_token_it_lists() {
     let (header, _) = token.split_once('.').unwrap();
     let header: serde_json::Value =
         serde_json::from_slice(&URL_SAFE_NO_PAD.decode(header).unwrap()).unwrap();
-    assert_eq!(header["kid"], key.kid(), "the header names another kid");
+    assert_eq!(header["kid"], key.kid, "the header names another kid");
 }
 
 /// One person, one account: the token's `sub` is the door's person key, not

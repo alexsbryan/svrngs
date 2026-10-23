@@ -75,6 +75,8 @@ pub struct Key {
     pair: EcdsaKeyPair,
     /// The uncompressed point `04 || x[32] || y[32]`, from the same pair.
     point: Vec<u8>,
+    /// The `kid` in the token's header and in the JWKS: the first 16 bytes
+    /// of the public point's SHA-256, in hex, so one string names the key.
     kid: String,
     rng: SystemRandom,
 }
@@ -121,12 +123,6 @@ pub fn load_or_create(data_dir: &Path) -> Result<Key, KeyFailure> {
 }
 
 impl Key {
-    /// The `kid` in the token's header and in the JWKS: the first 16 bytes
-    /// of the public point's SHA-256, in hex, so one string names the key.
-    pub fn kid(&self) -> &str {
-        &self.kid
-    }
-
     /// The token the core spells, signed with this key.
     pub fn token(&self, claims: Claims) -> Result<String, KeyFailure> {
         let token = Jwt::new(claims, &self.kid);
