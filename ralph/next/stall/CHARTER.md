@@ -21,6 +21,7 @@ Write `NEEDS_HUMAN.md` and stop for:
   reproduction and the layer;
 - **a fix that is a load bar, a longer limit or a retry:** each hides the
   stall (AGENTS.md 6);
-- **the budget,** past the caps;
+- **the budget,** past +40 repository and +5 svrngs-core over the caps
+  this row's own cuts leave (the operator, 2026-10-23);
 - **any widening of the trust floor**;
 - **publishing**, pushing, history rewrites, `--no-verify`.

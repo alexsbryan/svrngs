@@ -12,5 +12,7 @@ Fences the row keeps:
    saying what its layer waits on.
 4. *The machine is shared.* A planted load is the run's own and ends with it;
    no process from a run is left running (`ps`); caches stay under `target/`.
-5. *The budget.* Tests and `demo/` are not counted; a product line is, and a
-   raise is the operator's.
+5. *The budget.* Tests and `demo/` are not counted; a product line is. Cut
+   first in the files the row touches; then up to +40 repository and +5
+   svrngs-core past what that leaves, without stopping (the operator,
+   2026-10-23: "Pass, then up to +40/+5"). Past that, NEEDS_HUMAN.md.
