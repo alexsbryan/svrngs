@@ -27,3 +27,5 @@ mod house_rules;
 mod grapevine;
 // Doc (apps/doc): two editors converge, each line noted as its writer's.
 mod doc;
+// The group's life (demo/c.md): a link, a phone, a removal, a lid shut.
+mod life;
