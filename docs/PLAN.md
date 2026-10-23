@@ -98,11 +98,13 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   lender's home, and the door's own tests prove it. What the run taught
   waits in §2. The queue now stops for a run with real people, whose bars
   the operator sets before it.
-- then the stall queue (`ralph/next/stall/`), alone (the operator,
-  2026-10-23: "Now, alone"). The streaming test's 9 MB range answered 206
-  and then held still in all six of models-fresh's closing gates, a stall
-  that load uncovers; it is found and fixed, so every later gate can be
-  trusted;
+- the stall queue (`ralph/next/stall/`), run alone (the operator,
+  2026-10-23: "Now, alone"), closed on evidence the same day: the streaming
+  test's 9 MB range held still after its 206 in all six of models-fresh's
+  closing gates, and made no red in a battery of 13 runs nor in the gate's own
+  command, under loads to 132, so load does not make it. The cause is
+  could-not-judge; a step that times out now says what its body had drained
+  (54844461), and the row reopens at the next red in a gate;
 - then the capability queue (`ralph/next/capability/`, written and held),
   one deliverable and one release (the operator, 2026-10-23: "I'd like to
   bundle it all in with" svrn-docs `rings/current/WHAT_CAN_ACT_AS_YOU.md`).
