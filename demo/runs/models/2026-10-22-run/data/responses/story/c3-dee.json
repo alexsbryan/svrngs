@@ -1,25 +1,24 @@
 {
   "status": 200,
   "body": {
-    "id": "chatcmpl-JoxBOsAjXYzc0SF8pmivr2Edpy5QgAm7",
+    "id": "chatcmpl-hxl7BfPBUtewrUCyCdJvPyFp6PoGWqiw",
     "choices": [
       {
-        "finish_reason": "length",
+        "finish_reason": "stop",
         "index": 0,
         "logprobs": null,
         "message": {
-          "content": "",
+          "content": "It taught me to be concise and direct, as Dee advised.",
           "refusal": null,
           "role": "assistant",
           "annotations": null,
           "audio": null,
           "function_call": null,
-          "tool_calls": null,
-          "reasoning_content": "Here's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Question:** \"Say what this adapter taught you.\"\n   - **Constraint:** \"Answer in one short sentence, as Dee taught.\"\n   - **Key Elements:** \n     - Needs to be one short sentence\n     - Must follow the style/teaching of \"Dee\" (likely"
+          "tool_calls": null
         }
       }
     ],
-    "created": 1792726635,
+    "created": 1792726963,
     "model": "coder",
     "object": "chat.completion",
     "metadata": null,
@@ -27,9 +26,9 @@
     "service_tier": null,
     "system_fingerprint": "b10180-11b068d06",
     "usage": {
-      "completion_tokens": 80,
-      "prompt_tokens": 32,
-      "total_tokens": 112,
+      "completion_tokens": 14,
+      "prompt_tokens": 34,
+      "total_tokens": 48,
       "completion_tokens_details": null,
       "prompt_tokens_details": {
         "audio_tokens": null,
@@ -41,14 +40,14 @@
     },
     "timings": {
       "cache_n": 0,
-      "prompt_n": 32,
-      "prompt_ms": 395.456,
-      "prompt_per_token_ms": 12.358,
-      "prompt_per_second": 80.9192425958893,
-      "predicted_n": 80,
-      "predicted_ms": 1767.052,
-      "predicted_per_token_ms": 22.08815,
-      "predicted_per_second": 45.27314419722793
+      "prompt_n": 34,
+      "prompt_ms": 265.066,
+      "prompt_per_token_ms": 7.796058823529411,
+      "prompt_per_second": 128.26994031675133,
+      "predicted_n": 14,
+      "predicted_ms": 260.346,
+      "predicted_per_token_ms": 18.59614285714286,
+      "predicted_per_second": 53.7745922733593
     }
   }
 }

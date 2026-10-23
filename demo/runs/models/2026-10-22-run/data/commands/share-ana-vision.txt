@@ -4,11 +4,11 @@ You lend ana-vision (port 8202) to everyone in your groups, as many at once as w
 They cannot open /slots, /v1/stream, /v1/streams, /v1/chat/completions/control, /lora-adapters, /metrics, /tools, /cors-proxy, /models: svrngs keeps these back whenever a llama-server is lent, since they show one person's use of it to the others or change it for everyone.
 svrngs is running here already, so they can open it now.
 `svrngs unshare ana-vision` stops lending it.
-2026-10-23T03:36:48.971028Z DEBUG cli: cli: data dir from $SVRNGS_DIR dir="/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-run/data/home/Ana/.svrngs"
-2026-10-23T03:36:48.971445Z DEBUG cli: cli: the group keeps no relay — met where the build meets its groups group=220e7d696f14cfcce259d49a15ea8aafb5a5bfbbaa521f89c5a54db09360ea5d at=N0
-2026-10-23T03:36:48.971641Z DEBUG cli: cli: the relays this computer meets its groups at at=N0 unkept=true relay_urls=["https://aps1-1.relay.n0.iroh.link/", "https://euc1-1.relay.n0.iroh.link/", "https://use1-1.relay.n0.iroh.link/", "https://usw1-1.relay.n0.iroh.link/"]
+2026-10-23T03:42:20.415009Z DEBUG cli: cli: data dir from $SVRNGS_DIR dir="/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-run/data/home/Ana/.svrngs"
+2026-10-23T03:42:20.415736Z DEBUG cli: cli: the group keeps no relay — met where the build meets its groups group=773006e38847a95392eb07fb90b431679c09dbaa13bb8243df6b5b4e0b474396 at=N0
+2026-10-23T03:42:20.415936Z DEBUG cli: cli: the relays this computer meets its groups at at=N0 unkept=true relay_urls=["https://aps1-1.relay.n0.iroh.link/", "https://euc1-1.relay.n0.iroh.link/", "https://use1-1.relay.n0.iroh.link/", "https://usw1-1.relay.n0.iroh.link/"]
 If ana-vision takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): 
-2026-10-23T03:36:48.972012Z DEBUG cli: cli: share — the password asked for lend=ana-vision given=false terminal=false
-2026-10-23T03:36:48.972330Z DEBUG lend: lend: declared lend=ana-vision source=Port(8202) kind=llama-server limit=None refused=9 upload=None secret=false asks=false
-2026-10-23T03:36:48.972386Z DEBUG cli: cli: refused — another svrngs holds the data dir lock=/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-run/data/home/Ana/.svrngs/lock error=lock acquisition failed because the operation would block
-2026-10-23T03:36:48.972397Z DEBUG cli: cli: share — svrngs runs here already, and reads the lend from its declaration lock=/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-run/data/home/Ana/.svrngs/lock
+2026-10-23T03:42:20.416335Z DEBUG cli: cli: share — the password asked for lend=ana-vision given=false terminal=false
+2026-10-23T03:42:20.416663Z DEBUG lend: lend: declared lend=ana-vision source=Port(8202) kind=llama-server limit=None refused=9 upload=None secret=false asks=false
+2026-10-23T03:42:20.416712Z DEBUG cli: cli: refused — another svrngs holds the data dir lock=/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-run/data/home/Ana/.svrngs/lock error=lock acquisition failed because the operation would block
+2026-10-23T03:42:20.416722Z DEBUG cli: cli: share — svrngs runs here already, and reads the lend from its declaration lock=/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-run/data/home/Ana/.svrngs/lock

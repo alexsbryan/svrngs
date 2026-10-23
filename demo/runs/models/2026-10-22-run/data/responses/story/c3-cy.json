@@ -1,25 +1,24 @@
 {
   "status": 200,
   "body": {
-    "id": "chatcmpl-TfHgVFGSYmBojBKJHg8MWY9JEpoaeJrx",
+    "id": "chatcmpl-Bdw0lV6LcnJgG0R8L0fpjrdPZGgeUqLs",
     "choices": [
       {
-        "finish_reason": "length",
+        "finish_reason": "stop",
         "index": 0,
         "logprobs": null,
         "message": {
-          "content": "",
+          "content": "cy",
           "refusal": null,
           "role": "assistant",
           "annotations": null,
           "audio": null,
           "function_call": null,
-          "tool_calls": null,
-          "reasoning_content": "Okay, the user wants me"
+          "tool_calls": null
         }
       }
     ],
-    "created": 1792726629,
+    "created": 1792726959,
     "model": "cy-model",
     "object": "chat.completion",
     "metadata": null,
@@ -27,9 +26,9 @@
     "service_tier": null,
     "system_fingerprint": "b10180-11b068d06",
     "usage": {
-      "completion_tokens": 8,
-      "prompt_tokens": 15,
-      "total_tokens": 23,
+      "completion_tokens": 2,
+      "prompt_tokens": 19,
+      "total_tokens": 21,
       "completion_tokens_details": null,
       "prompt_tokens_details": {
         "audio_tokens": null,
@@ -41,14 +40,14 @@
     },
     "timings": {
       "cache_n": 0,
-      "prompt_n": 15,
-      "prompt_ms": 61.472,
-      "prompt_per_token_ms": 4.098133333333333,
-      "prompt_per_second": 244.01353461738677,
-      "predicted_n": 8,
-      "predicted_ms": 133.868,
-      "predicted_per_token_ms": 16.7335,
-      "predicted_per_second": 59.76036095258016
+      "prompt_n": 19,
+      "prompt_ms": 928.101,
+      "prompt_per_token_ms": 48.84742105263158,
+      "prompt_per_second": 20.471909846018914,
+      "predicted_n": 2,
+      "predicted_ms": 20.924,
+      "predicted_per_token_ms": 10.462,
+      "predicted_per_second": 95.58401835213152
     }
   }
 }

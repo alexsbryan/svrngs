@@ -3,36 +3,130 @@
     {
       "status": 200,
       "headers": {
-        "date": "Fri, 23 Oct 2026 03:37:18 GMT",
-        "server": "uvicorn",
-        "content-disposition": "attachment; filename=speech.mp3",
-        "x-accel-buffering": "no",
-        "cache-control": "no-cache",
-        "content-type": "audio/mpeg",
-        "transfer-encoding": "chunked",
-        "x-pantry-person": "sam",
-        "x-pantry-lend": "sam-voice",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "613",
+        "server": "llama.cpp",
+        "access-control-allow-origin": "",
+        "date": "Fri, 23 Oct 2026 03:42:47 GMT",
+        "x-pantry-person": "ana",
+        "x-pantry-lend": "ana-coder",
         "connection": "keep-alive",
         "keep-alive": "timeout=5"
       },
-      "bytes": 465452
+      "body": {
+        "id": "chatcmpl-kQtIvX1huDV8jXnQU8XCJtckBZwR7Llm",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "zero",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 1792726967,
+        "model": "coder",
+        "object": "chat.completion",
+        "metadata": null,
+        "moderation": null,
+        "service_tier": null,
+        "system_fingerprint": "b10180-11b068d06",
+        "usage": {
+          "completion_tokens": 2,
+          "prompt_tokens": 19,
+          "total_tokens": 21,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": {
+            "audio_tokens": null,
+            "cache_write_tokens": null,
+            "cached_tokens": 0,
+            "image_tokens": null,
+            "text_tokens": null
+          }
+        },
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 19,
+          "prompt_ms": 857.703,
+          "prompt_per_token_ms": 45.14226315789474,
+          "prompt_per_second": 22.152190210364193,
+          "predicted_n": 2,
+          "predicted_ms": 181.555,
+          "predicted_per_token_ms": 90.7775,
+          "predicted_per_second": 11.015945581228829
+        }
+      }
     },
     {
       "status": 200,
       "headers": {
-        "date": "Fri, 23 Oct 2026 03:37:18 GMT",
-        "server": "uvicorn",
-        "content-disposition": "attachment; filename=speech.mp3",
-        "x-accel-buffering": "no",
-        "cache-control": "no-cache",
-        "content-type": "audio/mpeg",
-        "transfer-encoding": "chunked",
-        "x-pantry-person": "sam",
-        "x-pantry-lend": "sam-voice",
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "608",
+        "server": "llama.cpp",
+        "access-control-allow-origin": "",
+        "date": "Fri, 23 Oct 2026 03:42:47 GMT",
+        "x-pantry-person": "ana",
+        "x-pantry-lend": "ana-coder",
         "connection": "keep-alive",
         "keep-alive": "timeout=5"
       },
-      "bytes": 465452
+      "body": {
+        "id": "chatcmpl-C1PdQbuFAQt6L0QLZlUuhaZeFTfQmKzp",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "1",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 1792726967,
+        "model": "coder",
+        "object": "chat.completion",
+        "metadata": null,
+        "moderation": null,
+        "service_tier": null,
+        "system_fingerprint": "b10180-11b068d06",
+        "usage": {
+          "completion_tokens": 2,
+          "prompt_tokens": 19,
+          "total_tokens": 21,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": {
+            "audio_tokens": null,
+            "cache_write_tokens": null,
+            "cached_tokens": 0,
+            "image_tokens": null,
+            "text_tokens": null
+          }
+        },
+        "timings": {
+          "cache_n": 0,
+          "prompt_n": 19,
+          "prompt_ms": 858.903,
+          "prompt_per_token_ms": 45.20542105263158,
+          "prompt_per_second": 22.121240698891494,
+          "predicted_n": 2,
+          "predicted_ms": 181.244,
+          "predicted_per_token_ms": 90.622,
+          "predicted_per_second": 11.03484805014235
+        }
+      }
     }
   ]
 }

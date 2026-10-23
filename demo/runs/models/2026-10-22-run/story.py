@@ -22,8 +22,9 @@ import sys
 from openai import OpenAI
 
 
-def client(base):
-    return OpenAI(base_url=base.rstrip("/") + "/v1", api_key="the-pantry-needs-no-key")
+def client(base, host=None):
+    return OpenAI(base_url=base.rstrip("/") + "/v1", api_key="the-pantry-needs-no-key",
+                  default_headers={"Host": host} if host else None)
 
 
 def headers(res):
@@ -134,11 +135,15 @@ def limit_chat(args):
     out = [None, None]
 
     def ask(i):
-        c = client(args.pantry)
+        # Bo goes through Bo's pantry; Dee asks the same lend at Dee's own
+        # origin, so the door counts two people, not one twice.
+        c = (client(args.pantry) if i == 0
+             else client(f"http://127.0.0.1:{args.other_port}", args.other_host))
         try:
             res = c.chat.completions.with_raw_response.create(
-                model=args.model, max_tokens=800, extra_body=THINK,
-                messages=[{"role": "user", "content": f"Say the word number {i}."}], stream=False)
+                model=args.model if i == 0 else args.other_model,
+                max_tokens=800, extra_body=THINK, stream=False,
+                messages=[{"role": "user", "content": "Count from 1 to 400, one number per line."}])
             out[i] = {"status": res.status_code, "headers": headers(res), "body": res.parse().model_dump(mode="json")}
         except Exception as e:
             res = getattr(e, "response", None)
@@ -168,7 +173,7 @@ def main():
     a = sub.add_parser("bridge"); a.add_argument("--bridge"); a.add_argument("--model", default="ana/coder"); a.add_argument("--shot", required=True); a.set_defaults(fn=bridge)
     a = sub.add_parser("tool"); a.add_argument("--origin", required=True); a.set_defaults(fn=tool)
     a = sub.add_parser("asleep"); a.add_argument("--pantry"); a.add_argument("--model", default="sam/whisper-1"); a.set_defaults(fn=asleep)
-    a = sub.add_parser("limit-chat"); a.add_argument("--pantry"); a.add_argument("--model", default="ana/coder"); a.set_defaults(fn=limit_chat)
+    a = sub.add_parser("limit-chat"); a.add_argument("--pantry"); a.add_argument("--model", default="ana/coder"); a.add_argument("--other-port", required=True); a.add_argument("--other-host", required=True); a.add_argument("--other-model", default="coder"); a.set_defaults(fn=limit_chat)
     a = sub.add_parser("dee"); a.add_argument("--dee", required=True); a.set_defaults(fn=dee)
     args = p.parse_args()
     json.dump(args.fn(args), sys.stdout, indent=2, default=str, ensure_ascii=False)

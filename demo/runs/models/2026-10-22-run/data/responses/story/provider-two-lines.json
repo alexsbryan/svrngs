@@ -1,4 +1,6 @@
 {
-  "share_ms": 29,
+  "serve_ms": 18130,
+  "share_ms": 11,
+  "total_ms": 18141,
   "download": "none: every weight was already under target/models/curated/ and its sha256 was checked"
 }

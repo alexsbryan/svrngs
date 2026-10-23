@@ -406,7 +406,11 @@ def story_run():
     ana = lends(bo).get("ana-coder")
     slots = through(ana, "GET", "/slots")
     record("story/c7-slots.json", slots)
-    limit = story("limit-chat", "--pantry", base, "--model", "ana/coder", timeout=900)
+    dee_ana = lends("Dee").get("ana-coder")
+    other_port, other_host = origin_of(dee_ana)
+    limit = story("limit-chat", "--pantry", base, "--model", "ana/coder",
+                  "--other-port", str(other_port), "--other-host", other_host,
+                  "--other-model", "coder", timeout=900)
     save("story/c7-limit.json", limit)
     # Cy's 8B is not needed again; unloading it leaves the two large models
     # room for the bridge.

@@ -1,10 +1,10 @@
 {
   "ana-coder": {
-    "key": "8f6690680040828f87a6092e28998cb8598651e13339fa994cb04a4dfc24cef0",
+    "key": "37e1f0b1974f736e0fe3a389a0987f357712abc1f34b6fb1b43661eb041ea5e6",
     "kind": "llama-server",
-    "limit": null,
+    "limit": 1,
     "name": "ana-coder",
-    "origin": "http://u7wla4aakcbk9b7hbf1cuhpp1bp2pxsbhp69zhmp0bgf59bf352akx5cxwm6m6.localhost:51412/",
+    "origin": "http://h9t9bpp1l7306d9dxrf4bhd9hz5ugm8b8qg09pqxh3t80ba8x1wakx5cxwm6m6.localhost:52715/",
     "person": "ana",
     "reads": [],
     "relay": "https://usw1-1.relay.n0.iroh.link/",
@@ -12,11 +12,11 @@
     "using": 0
   },
   "ana-vision": {
-    "key": "8f6690680040828f87a6092e28998cb8598651e13339fa994cb04a4dfc24cef0",
+    "key": "37e1f0b1974f736e0fe3a389a0987f357712abc1f34b6fb1b43661eb041ea5e6",
     "kind": "llama-server",
     "limit": null,
     "name": "ana-vision",
-    "origin": "http://u7wla4aakcbk9b7hbf1cuhpp1bp2pxsbhp69zhmp0bgf59bf352alquv19r39b.localhost:51412/",
+    "origin": "http://h9t9bpp1l7306d9dxrf4bhd9hz5ugm8b8qg09pqxh3t80ba8x1walquv19r39b.localhost:52715/",
     "person": "ana",
     "reads": [],
     "relay": "https://usw1-1.relay.n0.iroh.link/",
@@ -24,11 +24,11 @@
     "using": 0
   },
   "cy-model": {
-    "key": "fe5fc9f5934cd64e9f559730e744f315f9cb75b4bfc5c44a6795bd9c42df965e",
+    "key": "753f6de9efad63ea6b79248b1dd47c2f341313802d024943630f9158dca45bb3",
     "kind": "llama-swap",
     "limit": null,
     "name": "cy-model",
-    "origin": "http://93s6w7pwlwnf7j4zv62rrujwc16607qx19c6kvwjv0832t09v3saxhq61bal9j.localhost:51412/",
+    "origin": "http://rx9054sszzu8x453fvgu5zd6g64bhf6agxbfvt5db8kzu1gfnr3txhq61bal9j.localhost:52715/",
     "person": "cy",
     "reads": [],
     "relay": "https://usw1-1.relay.n0.iroh.link/",

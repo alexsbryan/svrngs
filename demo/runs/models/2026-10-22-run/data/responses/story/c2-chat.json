@@ -1,9 +1,9 @@
 {
   "status": 200,
-  "text": "",
-  "chunks": 42,
+  "text": "ok",
+  "chunks": 3,
   "first": {
-    "id": "chatcmpl-ewqzz3P19t88O6pHdf442Ptync4A3WVp",
+    "id": "chatcmpl-hyb1fVOxba4039fP6HCTniXsOniiOOQg",
     "choices": [
       {
         "delta": {
@@ -19,7 +19,7 @@
         "logprobs": null
       }
     ],
-    "created": 1792726612,
+    "created": 1792726943,
     "model": "coder",
     "object": "chat.completion.chunk",
     "moderation": null,
