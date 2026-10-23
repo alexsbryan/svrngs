@@ -58,6 +58,17 @@ if [ -f Cargo.toml ]; then
   # A phone joining by the link `svrngs new --origin` prints (u4-5), in
   # both engines.
   step "joining in a browser" cargo test --quiet --workspace --test join_page
+  # The demo scenes, played (capability-scenes; crates/svrngs/tests/
+  # scenes): each scene end to end, every person this build's svrngs with
+  # a HOME of their own, in both engines, the scenes in parallel; each
+  # scene's verdict on its own line. A scene whose third-party app is not
+  # installed here says never-ran and why (target/scenes/never-ran/), and
+  # the gate fails on it.
+  rm -rf target/scenes/never-ran
+  step "scenes" cargo test -p svrngs --test scenes
+  awk '/^test .* \.\.\. / {split($2, n, "::"); v = $NF == "ok" ? "passed" : "failed"; e[n[1]] = e[n[1]] (e[n[1]] ? ", " : "") n[3]; if (!(n[1] in s) || v == "failed") s[n[1]] = v}
+    END {for (k in s) printf "%-10s scene %s (%s)\n", s[k], k, e[k]}' /tmp/svrngs-check.$$ | sort -k3
+  for f in target/scenes/never-ran/*.txt; do [ -f "$f" ] || continue; echo "never-ran  scene $(basename "$f" .txt): $(cat "$f")"; failed=1; done
   # The conformance canary (DESIGN §5; u5-2): apps/web-conformance, lent by
   # two computers, opened from a computer and from a phone, each app at an
   # address of its own (DESIGN §7), in both engines; and, with accounts of its
