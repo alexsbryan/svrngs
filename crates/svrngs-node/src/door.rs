@@ -1532,11 +1532,10 @@ async fn forward(
     (whose, device, person, app): (&PersonKey, &DeviceKey, &Person, Option<&Label>),
     host: Option<&Person>,
     path: String,
-    req: Request,
+    mut req: Request,
     Told { share, held }: Told,
 ) -> Result<Response, Response> {
     let actor = whose.as_str();
-    let mut req = req;
     let range = req.headers().get(header::RANGE);
     let mut carriage = Carriage {
         lend: lend.name.to_string(),
@@ -1626,12 +1625,11 @@ async fn forward(
     // The use began when the person was let in, and lasts until the member
     // has the whole answer or leaves it: the answer's body holds it.
 
-    let Some(answer) = send_to(origin, request, lend.name.as_str()).await else {
+    let Some(mut answer) = send_to(origin, request, lend.name.as_str()).await else {
         let unanswered = unanswered();
         carriage.answered = Some((unanswered.status().as_u16(), None));
         return Err(unanswered);
     };
-    let mut answer = answer;
     let switched =
         upgrade_of(answer.headers()).filter(|_| answer.status() == StatusCode::SWITCHING_PROTOCOLS);
     let service_side = switched.as_ref().map(|_| hyper::upgrade::on(&mut answer));

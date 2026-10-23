@@ -204,7 +204,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # (2026-10-23, "+265 / +3 now"): at most 17,884 and 3,153, each row raising only
 # what it lands, to one past. capability-navigation, a frame's and a form's
 # navigation judged as its page's fetch in origin.rs's app_of, +4: 17,623.
-BUDGET = {"crates/svrngs-core": 3150, ".": 17623}
+# capability-scenes' "scenes" step in check.sh (f15184ce) was counted, +5,
+# and broke the budget at 17,627; it was folded to two lines, the
+# conformance canary's emptying joined to could-not-judge's, and door.rs's
+# two rebindings of a parameter and an answer made `mut` where bound, -6:
+# 17,621, the cap lowered to one past.
+BUDGET = {"crates/svrngs-core": 3150, ".": 17622}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
