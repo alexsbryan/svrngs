@@ -109,7 +109,7 @@ fn traced(group: &str, refused: Withheld, why: &dyn std::fmt::Display) -> Withhe
 }
 
 /// A carried app's answer, or why the door gives its own.
-type Served = Result<Response, Withheld>;
+type Given = Result<Response, Withheld>;
 
 /// The shelf (V1_UI_BUILD §3.4; v1ui-shelf (c)): svrngs's own reference
 /// apps, which ship with it, and nothing else — nothing on it is a
@@ -147,7 +147,7 @@ pub(crate) async fn bring(at: State<Asking>, by: Option<Extension<Dialer>>, a: T
 /// `asker`, who stands in it: a folder `apps/<name>/` of its files, never
 /// over one there already, which the folder then carries to the group as
 /// it carries any file. Each said, and whether it was there already.
-fn brought(at: &Asking, group: &str, asker: &str, apps: &[String]) -> Served {
+fn brought(at: &Asking, group: &str, asker: &str, apps: &[String]) -> Given {
     let stands = at.host.rail.standing(group).is_ok_and(|s| s.names(asker));
     stands.then_some(()).ok_or(NOT_IN)?;
     let dirs = dirs_of(&at.folders.data_dir, group).map_err(|e| traced(group, NO_FOLDER, &e))?;
@@ -282,7 +282,7 @@ impl Folders {
     /// for a directory's, as the app runs as `asker`'s person
     /// ([`svrngs_core::Runs::of`]), from this computer's store, else
     /// fetched from a computer that stands in the group.
-    async fn file(&self, group: &str, kind: &Kind, path: &str, asker: &Member) -> Served {
+    async fn file(&self, group: &str, kind: &Kind, path: &str, asker: &Member) -> Given {
         let path = format!("apps/{kind}{path}");
         let path = (path.strip_suffix('/')).map_or(path.clone(), |dir| format!("{dir}/index.html"));
         let read = self.layout(group).map_err(|e| traced(group, UNREAD, &e))?;
@@ -305,7 +305,7 @@ impl Folders {
     /// The app `kind`'s route in `group`, for the key `key` of `people`:
     /// its own acts read, or one written as that key's person (the module
     /// docs).
-    async fn acts(&self, app: (&Kind, &str), asker: (&People, &str), req: Request) -> Served {
+    async fn acts(&self, app: (&Kind, &str), asker: (&People, &str), req: Request) -> Given {
         let ((kind, group), (people, key)) = (app, asker);
         let (prefix, rail, person) = (format!("{kind}/"), &self.host.rail, &people[key].person);
         let admission = rail.admission(group).ok();
