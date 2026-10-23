@@ -43,11 +43,22 @@ async function httpChecks(a) {
   const ep = await m.endpoint(key, a.token);
   const d = await ep.dial_link();
   const hex = (b) => [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join('');
+  // What the body being drained has handed the page so far, and when its
+  // last chunk came in the step's time, so a step that times out says where
+  // its body stopped (streaming-stall (a)).
+  let drained = null;
+  let stepAt = 0;
   // A body to its end: how many chunks, the largest, the bytes, the SHA-256.
   async function drain(res) {
     const chunks = [];
+    drained = { chunks: 0, bytes: 0, lastMs: null };
     const reader = res.body.getReader();
-    for (let r = await reader.read(); !r.done; r = await reader.read()) chunks.push(r.value);
+    for (let r = await reader.read(); !r.done; r = await reader.read()) {
+      chunks.push(r.value);
+      drained.chunks += 1;
+      drained.bytes += r.value.length;
+      drained.lastMs = Math.round(performance.now() - stepAt);
+    }
     const whole = new Uint8Array(chunks.reduce((n, c) => n + c.length, 0));
     chunks.reduce((at, c) => (whole.set(c, at), at + c.length), 0);
     const sha = hex(await crypto.subtle.digest('SHA-256', whole));
@@ -61,11 +72,17 @@ async function httpChecks(a) {
   // Each step's answer, or why it failed or hung: one step's failure never
   // keeps the next from being judged. Each with its time, `ms`, so a run
   // shows how near its 60 s it came (v1ui-lend-ask (b)).
-  const step = (run, t = performance.now()) =>
+  // A step whose body began and never ended says what it had drained.
+  const step = (run, t = performance.now()) => (
+    (drained = null),
+    (stepAt = t),
     Promise.race([
       run(),
       new Promise((_, no) => setTimeout(() => no(new Error('no answer within 60 s')), 60_000)),
-    ]).catch((e) => ({ error: String(e) })).then((r) => ({ ...r, ms: Math.round(performance.now() - t) }));
+    ])
+      .catch((e) => ({ error: String(e), ...(drained && { drained: { ...drained } }) }))
+      .then((r) => ({ ...r, ms: Math.round(performance.now() - t) }))
+  );
   const out = {};
   out.range = await step(async () => answer(await d.fetch('GET', a.range.path, [['range', a.range.header]], null)));
   out.past = await step(async () => answer(await d.fetch('GET', a.past.path, [['range', a.past.header]], null)));
