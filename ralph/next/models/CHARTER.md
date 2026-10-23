@@ -40,18 +40,38 @@ charter disagree, they win, and the decision says so.
 
 Asked by the scope (`demo/runs/models/2026-10-22-scope/NEEDS_HUMAN.md`,
 068d0439):
-- **The models are the operator's own.** "Please tell me we're leveraging
-  the models here /Users/alexsbryan/dev/commonwealth-ai/sovereign/models".
-  The scope's Qwen2.5-Coder-7B and its 3B vision model are not v0's.
-  - Six candidates are hard-linked under `target/models/sovereign/` in this
-    tree, sharing their bytes, so fence 11 holds and nothing was copied:
-    `Qwen3.8-27B-UD-Q6_K_XL`, `Qwen3.6-35B-A3B-UD-MTP-IQ4_NL`,
-    `Qwopus3.5-9B-Coder-MTP-Q6_K` and `Qwen3-8B-Q4_K_M` to code;
-    `gemma-4-26B-A4B-it-UD-Q6_K_XL` and `gemma-4-E4B-it-Q5_K_M` to see.
-  - A Gemma 4's vision projector (`mmproj`) is fetched into `LLAMA_CACHE`
-    from its own HuggingFace repository.
-  - The host has 64 GB. Pull another model only when none of these does the
-    job, and say why.
+- **The models: a curated shortlist, with this host's copies for testing.**
+  The operator: "Please tell me we're leveraging the models here
+  …"; then, "This is a
+  universal tool used by 10s of thousands -- we shouldn't be linking my
+  gitignored directory"; then, "I meant more that we can use them for
+  testing / basic curation". So:
+  - Everything committed names a model by its public HuggingFace repo, file
+    and sha256, so anyone pulls the same bytes. Nothing committed names a
+    person's own directory.
+  - The curated shortlist is official models from reputable quantizers:
+    - `unsloth/Qwen3.6-35B-A3B-MTP-GGUF` `Qwen3.6-35B-A3B-UD-MTP-IQ4_NL.gguf`
+      (sha256 d0ad78047bd0a583bfcb484e9defc63112c5f1f856e310dcf88dc48f2ebeae5b),
+      to code;
+    - `unsloth/Qwen3-8B-GGUF` `Qwen3-8B-Q4_K_M.gguf`
+      (120307ba529eb2439d6c430d94104dabd578497bc7bfe7e322b5d9933b449bd4), to
+      code, the small one;
+    - `unsloth/gemma-4-E4B-it-GGUF` `gemma-4-E4B-it-Q5_K_M.gguf`
+      (8022e25d4417ec60d3b70918341e29444f253fe5b0322a0ce2e7cf9479ebe510), to
+      see, with its repository's `mmproj`;
+    - `unsloth/gemma-4-26B-A4B-it-GGUF` `gemma-4-26B-A4B-it-UD-Q6_K_XL.gguf`
+      (5cfb7ab424c01388538005f26573f3bd374d3140cc021a1c44249e69928882a4), to
+      see, the strong one, with its `mmproj`.
+
+    Pin each one's revision from HuggingFace's API by its sha256. Distills of
+    another lab's model, abliterated models, and files whose origin cannot
+    be traced are not curated.
+  - On this host, the operator's session seeded `target/models/curated/`
+    (ignored, .gitignore:1) with these four files under their public names,
+    to spare the downloads. Check each sha256 before serving it, so a run is
+    the one anyone reproduces with a plain pull. Pull a projector, or
+    anything not seeded, into `LLAMA_CACHE`. The scope's Qwen2.5-Coder-7B
+    and its 3B vision model are not v0's.
 - **Speech to text: a small wrapper recipe** ("A small wrapper recipe").
   - It is an OpenAI-in, OpenAI-out server of about 40 lines, in front of
     whisper.cpp's server, answering `/v1/models` and
