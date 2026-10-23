@@ -14,10 +14,10 @@ use std::time::Duration;
 
 use iroh_relay::server::Server;
 use serde_json::{json, Value};
-use tokio::io::AsyncBufReadExt;
+use tokio::io::{AsyncBufReadExt, AsyncWriteExt};
 use tokio::process::{Child, Command};
 
-use crate::harness::{relay, relay_url, repo, Engine};
+use crate::harness::{relay, relay_url, repo, site, Engine};
 
 /// The traces each person's svrngs keeps in `svrngs.log` in its `HOME`:
 /// the door's, the record's and the folder's decisions, at debug.
@@ -62,23 +62,76 @@ impl Scene {
         person
     }
 
+    /// `who`'s svrngs stopped, then `svrngs <args>` there: a second group
+    /// made, as `svrngs new` is refused while svrngs runs.
+    pub async fn again(&self, who: Person, args: &[&str]) -> Person {
+        let name = who.name.clone();
+        who.stop().await;
+        self.start(&name, args).await
+    }
+
+    /// The page, built from this commit (harness.rs `site`) and served on
+    /// `localhost` by web/tests/serve.mjs, as the Events run served it
+    /// (demo/runs/events/2026-10-14/run.py): where a phone joins and opens
+    /// what its group lends. Its address, and the server, killed on drop.
+    pub async fn page(&self) -> (String, Child) {
+        let mut served = Command::new("node")
+            .arg(repo().join("web/tests/serve.mjs"))
+            .arg(site())
+            .stdout(Stdio::piped())
+            .kill_on_drop(true)
+            .spawn()
+            .expect("node runs");
+        let mut lines = tokio::io::BufReader::new(served.stdout.take().unwrap()).lines();
+        let port = lines
+            .next_line()
+            .await
+            .unwrap()
+            .expect("serve.mjs prints its port");
+        let port = port.strip_prefix("port ").expect("`port <n>`").to_string();
+        tokio::spawn(async move { while let Ok(Some(_)) = lines.next_line().await {} });
+        (format!("http://localhost:{port}/"), served)
+    }
+
+    /// `svrngs <args>` in `who`'s home beside the svrngs running there,
+    /// `typed` on its stdin, as a terminal there runs it: what it printed,
+    /// once it exits.
+    pub async fn command(&self, who: &Person, args: &[&str], typed: &str) -> String {
+        let mut run = svrngs(&who.home, &who.name, args)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap();
+        let mut stdin = run.stdin.take().unwrap();
+        stdin.write_all(typed.as_bytes()).await.unwrap();
+        drop(stdin);
+        let out = tokio::time::timeout(Duration::from_secs(60), run.wait_with_output());
+        let out = out.await.expect("the command ends within 60 s").unwrap();
+        let said = String::from_utf8_lossy(&out.stdout).to_string();
+        assert!(
+            out.status.success(),
+            "{} `svrngs {args:?}` failed: {said}{}",
+            who.name,
+            String::from_utf8_lossy(&out.stderr)
+        );
+        said
+    }
+
     /// `svrngs <args>` in `name`'s home, returned once its API answers.
-    async fn start(&self, name: &str, args: &[&str]) -> Person {
+    pub async fn start(&self, name: &str, args: &[&str]) -> Person {
         let home = self.dir.join(name.to_lowercase());
         std::fs::create_dir_all(&home).unwrap();
-        let log = std::fs::File::create(home.join("svrngs.log")).unwrap();
-        let child = Command::new(env!("CARGO_BIN_EXE_svrngs"))
-            .args(args)
-            .env_clear()
-            .env("HOME", &home)
-            .env("USER", name.to_lowercase())
-            .env("PATH", std::env::var_os("PATH").unwrap_or_default())
-            .env("RUST_LOG", TRACED)
-            .env("NO_COLOR", "1")
+        // Appended to, so a person started again keeps what it traced.
+        let log = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(home.join("svrngs.log"))
+            .unwrap();
+        let child = svrngs(&home, name, args)
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(log)
-            .kill_on_drop(true)
             .spawn()
             .expect("this build's svrngs runs");
         let mut child = child;
@@ -119,12 +172,27 @@ impl Scene {
         Person {
             name: name.into(),
             home,
-            _running: child,
+            running: child,
             api,
             page,
             http,
         }
     }
+}
+
+/// `svrngs <args>`, this build's, in `home`, with nothing else of this
+/// computer's environment but its `PATH`.
+fn svrngs(home: &std::path::Path, name: &str, args: &[&str]) -> Command {
+    let mut c = Command::new(env!("CARGO_BIN_EXE_svrngs"));
+    c.args(args)
+        .env_clear()
+        .env("HOME", home)
+        .env("USER", name.to_lowercase())
+        .env("PATH", std::env::var_os("PATH").unwrap_or_default())
+        .env("RUST_LOG", TRACED)
+        .env("NO_COLOR", "1")
+        .kill_on_drop(true);
+    c
 }
 
 /// One person's computer, its svrngs running until this is dropped or
@@ -133,7 +201,7 @@ pub struct Person {
     pub name: String,
     pub home: PathBuf,
     /// Its svrngs, killed when this is dropped.
-    _running: Child,
+    running: Child,
     api: SocketAddr,
     page: String,
     http: reqwest::Client,
@@ -143,6 +211,11 @@ impl Person {
     /// The home page's address, as a browser opens it.
     pub fn home_page(&self) -> String {
         format!("http://{}/", self.page)
+    }
+
+    /// Its svrngs stopped, and gone once this returns.
+    pub async fn stop(mut self) {
+        let _ = self.running.kill().await;
     }
 
     /// Where its traces are.
@@ -201,7 +274,7 @@ impl Person {
     }
 
     /// The id of the group called `name` it stands in, within 60 s.
-    async fn group_named(&self, name: &str) -> String {
+    pub async fn group_named(&self, name: &str) -> String {
         for _ in 0..300 {
             let groups = self.get("/v1/groups").await;
             let held = groups["groups"].as_array().into_iter().flatten();
@@ -215,6 +288,27 @@ impl Person {
         }
         panic!(
             "{} never stands in {name}; its log is {}",
+            self.name,
+            self.log().display()
+        )
+    }
+
+    /// Where its browser opens the lend `name` of `person` in `group`,
+    /// once it lists it, within 60 s.
+    pub async fn lent_by(&self, group: &str, person: &str, name: &str) -> String {
+        for _ in 0..120 {
+            let lends = self.get(&format!("/v1/lends?namespace={group}")).await;
+            let listed = lends["lent"].as_array().into_iter().flatten();
+            if let Some(l) = listed
+                .into_iter()
+                .find(|l| l["person"] == person && l["name"] == name)
+            {
+                return l["origin"].as_str().unwrap().to_string();
+            }
+            tokio::time::sleep(Duration::from_millis(500)).await;
+        }
+        panic!(
+            "{} never lists {person}'s {name}; its log is {}",
             self.name,
             self.log().display()
         )
@@ -242,4 +336,61 @@ impl Person {
 /// The JSON line the browser half `script` printed, run in `engine`.
 pub async fn sees(engine: Engine, script: &str, args: Value) -> Value {
     crate::drive::drive(engine, script, args, None).await
+}
+
+/// Each person's browser, kept for the whole scene so what a phone keeps
+/// stays: the recorded Events run's driver,
+/// demo/runs/events/2026-10-14/people.mjs, one JSON command a line.
+pub struct Browsers {
+    run: Child,
+    said: tokio::io::Lines<tokio::io::BufReader<tokio::process::ChildStdout>>,
+}
+
+impl Browsers {
+    /// people.mjs started, and each of `people` given a browser: a
+    /// computer's Chromium, a phone's WebKit as an iPhone, or every one in
+    /// `engine` when the scene is played in WebKit.
+    pub async fn open(engine: Engine, people: &[(&str, Engine)]) -> Browsers {
+        let mut run = Command::new("node")
+            .arg(repo().join("demo/runs/events/2026-10-14/people.mjs"))
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .kill_on_drop(true)
+            .spawn()
+            .expect("node runs");
+        let mut said = tokio::io::BufReader::new(run.stdout.take().unwrap()).lines();
+        let ready = said.next_line().await.unwrap().unwrap_or_default();
+        assert!(ready.contains("ready"), "people.mjs did not start: {ready}");
+        let mut browsers = Browsers { run, said };
+        for (who, theirs) in people {
+            let engine = match engine {
+                Engine::Webkit => Engine::Webkit,
+                Engine::Chromium => *theirs,
+            };
+            browsers
+                .tell(json!({ "do": "open", "who": who, "engine": engine.as_str() }))
+                .await;
+        }
+        browsers
+    }
+
+    /// One command, and its answer; an error the driver caught fails the
+    /// scene, its words and the page's console with it.
+    pub async fn tell(&mut self, command: Value) -> Value {
+        let stdin = self.run.stdin.as_mut().unwrap();
+        stdin
+            .write_all(format!("{command}\n").as_bytes())
+            .await
+            .unwrap();
+        stdin.flush().await.unwrap();
+        let line = self
+            .said
+            .next_line()
+            .await
+            .unwrap()
+            .expect("people.mjs answers");
+        let got: Value = serde_json::from_str(&line).unwrap();
+        assert!(got.get("error").is_none(), "{command}: {got:#}");
+        got
+    }
 }

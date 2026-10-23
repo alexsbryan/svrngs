@@ -19,3 +19,5 @@ mod people;
 
 // Money (apps/expenses): a split, a settle, another's correction.
 mod money;
+// Events (demo/events.md): a dinner for two groups, each its own answers.
+mod events;
