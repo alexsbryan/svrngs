@@ -54,13 +54,14 @@ async function standin(handler) {
   };
 }
 
-async function group(lends, unlisted = {}) {
-  return standin((req, res) => {
+async function group(lends, unlisted = {}, { delay = 0 } = {}) {
+  return standin(async (req, res) => {
     if (req.url === '/v1/groups') {
       return json(res, 200, { groups: [...new Set(lends.map((l) => l.group))].map((id) => ({ id, name: id })) });
     }
     const at = new URL(req.url, 'http://record');
     if (at.pathname === '/v1/lends') {
+      if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
       const namespace = at.searchParams.get('namespace');
       fsLends(res, lends.filter((l) => l.group === namespace), unlisted);
       return;
@@ -461,6 +462,66 @@ test('discovery is kept for a short time and its age is said', async (t) => {
   clock += FOUND_FOR;
   await fetch(`${at.url}/v1/models`);
   assert.equal(probes(), 2, 'older than FOUND_FOR, it is asked again');
+});
+
+// models-fresh (a): one friend asleep costs one ask of the record, not one
+// per message. The record's `/v1/lends` is where an asleep friend's dial is
+// waited on (`crates/svrngs-node/src/node.rs:109`), so the stand-in record
+// takes a delay; the requests between refreshes must not pay it.
+test('a lender asleep costs one ask of the record, not every message', async (t) => {
+  const LENDS_FOR = 30000;
+  let clock = 1000;
+  const now = () => clock;
+  const ana = await standin(async () => {});
+  const sam = await modelLend({ id: 'voice' });
+  const record = await group([
+    { group: 'g', key: 'sam-key', name: 'sam-voice', person: 'sam', origin: sam.origin, kind: 'x', limit: null, using: 0 },
+  ], { unanswered: ['ana'] }, { delay: 600 });
+  const at = await pantry({ record: record.origin, clock: now });
+  t.after(() => Promise.all([ana.close(), sam.close(), record.close(), at.close()]));
+
+  const lendsAsked = () => record.requests.filter((r) => r.path.startsWith('/v1/lends')).length;
+  const chat = async () => {
+    const began = Date.now();
+    const answer = await fetch(`${at.url}/v1/chat/completions`, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ model: 'sam/voice', messages: [{ role: 'user', content: 'hi' }] }),
+    });
+    return { status: answer.status, body: await answer.text(), elapsed: Date.now() - began };
+  };
+
+  const first = await chat();
+  assert.equal(first.status, 200);
+  assert.equal(lendsAsked(), 1, 'the first request asks the record');
+
+  for (let i = 0; i < 3; i += 1) {
+    clock += FOUND_FOR + 1000;
+    const again = await chat();
+    assert.equal(again.status, 200);
+    assert.ok(again.elapsed < 500,
+      `request ${i + 2} waited ${again.elapsed} ms on the asleep friend`);
+  }
+  assert.equal(lendsAsked(), 1, 'the record is asked once while its answer is kept');
+
+  clock += 1000;
+  const began = Date.now();
+  const asleep = await fetch(`${at.url}/v1/chat/completions`, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ model: 'ana/whisper-1', messages: [{ role: 'user', content: 'hi' }] }),
+  });
+  const asleepBody = await asleep.text();
+  const asleepElapsed = Date.now() - began;
+  assert.equal(asleep.status, 503, 'the asleep lender is named, never answered by another');
+  assert.match(asleepBody, /ana/);
+  assert.match(asleepBody, /asleep|did not answer/);
+  assert.match(asleepBody, /looked \d+s ago/, 'the refusal says the age of what it used');
+  assert.ok(asleepElapsed < 500, `the refusal waited ${asleepElapsed} ms on the asleep friend`);
+  assert.equal(lendsAsked(), 1, 'the asleep lender is kept too, so asking for it asks nothing again');
+
+  clock = 1000 + LENDS_FOR;
+  const older = await chat();
+  assert.equal(older.status, 200);
+  assert.equal(lendsAsked(), 2, 'the record is asked again once its answer outlives its time');
 });
 
 // (0)(iv): the door decides limits. The pantry keeps no `using` check and
