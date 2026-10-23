@@ -34,3 +34,6 @@ Fences the rows keep:
 10. *Scratch stays under `target/`.* A clone, a run's output or a check's
     log goes under `target/`, never `/tmp`: the settings refuse `rm -rf`
     outside the tree, and two sessions lost turns to it.
+11. *A gate's result needs no commit of its own.* The await log keeps it;
+    cite that log in the row's last commit or a run's README. The settings
+    refuse `git commit --allow-empty`.
