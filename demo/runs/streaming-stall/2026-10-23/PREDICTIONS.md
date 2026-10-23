@@ -53,3 +53,17 @@ Each run keeps its output, the relay's and doors' debug log and the load.
 5. **The upload's 36-40 s**: slowness of a loaded host, not a second stall:
    in the suite runs webkit's upload 25-45 s, and alone under burn24 within
    arch-stream's 18-31 s. Falsified by an upload over 45 s in a green run.
+
+## Battery 2 (`battery-2.sh`), written after battery 1 and before this one
+
+Battery 1 made no red in 13 runs (`README.md`). Battery 2 is one cell,
+**gate-burn24**: scripts/check.sh:53's own `cargo test --quiet --workspace
+--test browser` (with `--nocapture`), under 24 `yes` of its own, five runs.
+
+6. **The gate's command under load makes it**: webkit's range red in at
+   least 3 of 5, and the suite at least 250 s. Falsified by 2 or fewer reds;
+   then, if the suite ran 250 s or more, load and the workspace build
+   together do not make it, and the next battery looks at what the gates'
+   trees held besides; if it ran under 250 s, the planted load was not the
+   gates' and the next battery plants more.
+7. Predictions 3 and 4 stand for any red here.
