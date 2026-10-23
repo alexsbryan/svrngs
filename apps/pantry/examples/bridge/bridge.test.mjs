@@ -183,16 +183,18 @@ test('a screenshot reaches a blind model as the vision model\'s description, too
     'each image is swapped for its own description');
   assert.ok(!JSON.stringify(asked).includes('image_url'), 'the blind model is sent no image');
 
-  assert.equal(vision.requests.length, images.length, 'one describe per image');
-  const described = JSON.parse(vision.requests[0].body);
+  const describes = vision.requests.filter((r) => r.path === '/v1/chat/completions');
+  assert.equal(describes.length, images.length, 'one describe per image');
+  const described = JSON.parse(describes[0].body);
   assert.equal(described.model, 'vision');
   assert.equal(described.stream, false);
   assert.deepEqual(described.messages[0].content[0], { type: 'text', text: PROMPT });
   assert.equal(described.messages[0].content[1].image_url.url, images[0]);
 
-  assert.deepEqual(coder.requests.map((r) => r.headers['x-svrngs-person']), ['bo']);
-  assert.deepEqual(vision.requests.map((r) => r.headers['x-svrngs-person']), ['bo', 'bo'],
-    'the door counts the person running the bridge, never the name a client claims');
+  for (const seen of [...coder.requests, ...vision.requests]) {
+    assert.equal(seen.headers['x-svrngs-person'], 'bo',
+      'the door counts the person running the bridge, never the name a client claims');
+  }
 });
 
 test('a request with no image passes through untouched, and the vision model is never asked', async (t) => {
@@ -216,9 +218,10 @@ test('a request with no image passes through untouched, and the vision model is 
   assert.equal(res.headers.get('x-pantry-model'), null);
   assert.equal(res.headers.get('x-pantry-bridged-by'), null);
 
-  const asked = JSON.parse(coder.requests[0].body);
+  const chat = coder.requests.find((r) => r.path === '/v1/chat/completions');
+  const asked = JSON.parse(chat.body);
   assert.deepEqual(asked, { model: 'coder', messages: [{ role: 'user', content: 'hello' }], tools });
-  assert.equal(vision.requests.length, 0);
+  assert.equal(vision.requests.filter((r) => r.path === '/v1/chat/completions').length, 0);
 });
 
 test('the pantry\'s own files do not change for the bridge', async (t) => {
