@@ -1,0 +1,124 @@
+{
+  "key": "qwen36-35b",
+  "role": "code",
+  "when": "2026-10-22T18:30:05-0700",
+  "repo": "unsloth/Qwen3.6-35B-A3B-MTP-GGUF",
+  "revision": "5bc3e238d916f48a861bac2f8a1990a0e9b7e98d",
+  "file": "Qwen3.6-35B-A3B-UD-IQ4_NL.gguf",
+  "local": "Qwen3.6-35B-A3B-UD-MTP-IQ4_NL.gguf",
+  "expected_sha256": "d0ad78047bd0a583bfcb484e9defc63112c5f1f856e310dcf88dc48f2ebeae5b",
+  "port": 8201,
+  "alias": "ana/coder",
+  "sha256": "d0ad78047bd0a583bfcb484e9defc63112c5f1f856e310dcf88dc48f2ebeae5b",
+  "sha256_ok": true,
+  "serve": [
+    "llama-server",
+    "-m",
+    "/Users/alexsbryan/dev/svrngs/target/models/curated/Qwen3.6-35B-A3B-UD-MTP-IQ4_NL.gguf",
+    "--jinja",
+    "--alias",
+    "ana/coder",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "8201",
+    "-c",
+    "8192",
+    "-ngl",
+    "99",
+    "--metrics"
+  ],
+  "load_seconds": 3.4,
+  "models_direct": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json; charset=utf-8",
+      "Keep-Alive": "timeout=5, max=100",
+      "Server": "llama.cpp",
+      "Access-Control-Allow-Origin": "",
+      "Content-Length": "596"
+    },
+    "body": "{\"models\":[{\"name\":\"ana/coder\",\"model\":\"ana/coder\",\"modified_at\":\"\",\"size\":\"\",\"digest\":\"\",\"type\":\"model\",\"description\":\"\",\"tags\":[\"\"],\"capabilities\":[\"completion\"],\"parameters\":\"\",\"details\":{\"parent_model\":\"\",\"format\":\"gguf\",\"family\":\"\",\"families\":[\"\"],\"parameter_size\":\"\",\"quantization_level\":\"\"}}],\"object\":\"list\",\"data\":[{\"id\":\"ana/coder\",\"aliases\":[\"ana/coder\"],\"tags\":[],\"object\":\"model\",\"created\":1792719024,\"owned_by\":\"llamacpp\",\"meta\":{\"vocab_type\":2,\"n_vocab\":248320,\"n_ctx\":8192,\"n_ctx_train\":262144,\"n_embd\":2048,\"n_params\":35505251456,\"size\":18525200896,\"ftype\":\"IQ4_NL - 4.5 bpw\"}}]}"
+  },
+  "props_direct": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json; charset=utf-8",
+      "Keep-Alive": "timeout=5, max=100",
+      "Server": "llama.cpp",
+      "Access-Control-Allow-Origin": "",
+      "Content-Length": "10145"
+    },
+    "body": "{\"default_generation_settings\":{\"params\":{\"seed\":4294967295,\"temperature\":1.0,\"dynatemp_range\":0.0,\"dynatemp_exponent\":1.0,\"top_k\":20,\"top_p\":0.949999988079071,\"min_p\":0.05000000074505806,\"top_n_sigma\":-1.0,\"xtc_probability\":0.0,\"xtc_threshold\":0.10000000149011612,\"typical_p\":1.0,\"repeat_last_n\":64,\"repeat_penalty\":1.0,\"presence_penalty\":0.0,\"frequency_penalty\":0.0,\"dry_multiplier\":0.0,\"dry_base\":1.75,\"dry_allowed_length\":2,\"dry_penalty_last_n\":-1,\"mirostat\":0,\"mirostat_tau\":5.0,\"mirostat_eta\":0.10000000149011612,\"adaptive_target\":-1.0,\"adaptive_decay\":0.8999999761581421,\"max_tokens\":-1,\"n_predict\":-1,\"n_keep\":0,\"n_discard\":0,\"ignore_eos\":false,\"stream\":false,\"n_probs\":0,\"min_keep\":0,\"chat_format\":\"Content-only\",\"reasoning_format\":\"none\",\"reasoning_in_content\":false,\"generation_prompt\":\"\",\"samplers\":[\"penalties\",\"dry\",\"top_n_sigma\",\"top_k\",\"typ_p\",\"top_p\",\"min_p\",\"xtc\",\"temperature\"],\"speculative.types\":\"none\",\"timings_per_token\":false,\"post_sampling_probs\":false,\"backend_sampling\":false,\"lora\":[]},\"n_ctx\":8192},\"total_slots\":4,\"model_alias\":\"ana/coder\",\"model_ftype\":\"IQ4_NL - 4.5 bpw\",\"model_path\":\"/Users/alexsbryan/dev/svrngs/target/models/curated/Qwen3.6-35B-A3B-UD-MTP-IQ4_NL.gguf\",\"modalities\":{\"vision\":false,\"video\":false,\"audio\":false},\"media_marker\":\"<__media_fM9Fsp5HCLAtK6eZO6YMdE9L5MREHW4c__>\",\"endpoint_slots\":true,\"endpoint_props\":false,\"endpoint_metrics\":true,\"ui\":true,\"ui_settings\":{},\"chat_template\":\"{%- set image_count = namespace(value=0) %}\\n{%- set video_count = namespace(value=0) %}\\n{%- macro render_content(content, do_vision_count, is_system_content=false) %}\\n    {%- if content is string %}\\n        {{- content }}\\n    {%- elif content is iterable and content is not mapping %}\\n        {%- for item in content %}\\n            {%- if 'image' in item or 'image_url' in item or item.type == 'image' %}\\n                {%- if is_system_content %}\\n                    {{- raise_exception('System message cannot contain images.') }}\\n                {%- endif %}\\n                {%- if do_vision_count %}\\n                    {%- set image_count.value = image_count.value + 1 %}\\n                {%- endif %}\\n                {%- if add_vision_id %}\\n                    {{- 'Picture ' ~ image_count.value ~ ': ' }}\\n                {%- endif %}\\n                {{- '<|vision_start|><|image_pad|><|vision_end|>' }}\\n            {%- elif 'video' in item or item.type == 'video' %}\\n                {%- if is_system_content %}\\n                    {{- raise_exception('System message cannot contain videos.') }}\\n                {%- endif %}\\n                {%- if do_vision_count %}\\n                    {%- set video_count.value = video_count.value + 1 %}\\n                {%- endif %}\\n                {%- if add_vision_id %}\\n                    {{- 'Video ' ~ video_count.value ~ ': ' }}\\n                {%- endif %}\\n                {{- '<|vision_start|><|video_pad|><|vision_end|>' }}\\n            {%- elif 'text' in item %}\\n                {{- item.text }}\\n            {%- else %}\\n                {{- raise_exception('Unexpected item type in content.') }}\\n            {%- endif %}\\n        {%- endfor %}\\n    {%- elif content is none or content is undefined %}\\n        {{- '' }}\\n    {%- else %}\\n        {{- raise_exception('Unexpected content type.') }}\\n    {%- endif %}\\n{%- endmacro %}\\n{%- if not messages %}\\n    {{- raise_exception('No messages provided.') }}\\n{%- endif %}\\n{%- set num_sys = 0 %}\\n{%- set merged_system = '' %}\\n{%- if messages[0].role == 'system' or messages[0].role == 'developer' %}\\n    {%- set first = render_content(messages[0].content, false, true)|trim %}\\n    {%- if messages|length > 1 and (messages[1].role == 'system' or messages[1].role == 'developer') %}\\n        {%- set second = render_content(messages[1].content, false, true)|trim %}\\n        {%- set merged_system = first + '\\\\n' + second %}\\n        {%- set num_sys = 2 %}\\n    {%- else %}\\n        {%- set merged_system = first %}\\n        {%- set num_sys = 1 %}\\n    {%- endif %}\\n{%- endif %}\\n{%- if tools and tools is iterable and tools is not mapping %}\\n    {{- '<|im_start|>system\\\\n' }}\\n    {{- \\\"# Tools\\\\n\\\\nYou have access to the following functions:\\\\n\\\\n<tools>\\\" }}\\n    {%- for tool in tools %}\\n        {{- \\\"\\\\n\\\" }}\\n        {{- tool | tojson }}\\n    {%- endfor %}\\n    {{- \\\"\\\\n</tools>\\\" }}\\n    {{- '\\\\n\\\\nIf you choose to call a function ONLY reply in the following format with NO suffix:\\\\n\\\\n<tool_call>\\\\n<function=example_function_name>\\\\n<parameter=example_parameter_1>\\\\nvalue_1\\\\n</parameter>\\\\n<parameter=example_parameter_2>\\\\nThis is the value for the second parameter\\\\nthat can span\\\\nmultiple lines\\\\n</parameter>\\\\n</function>\\\\n</tool_call>\\\\n\\\\n<IMPORTANT>\\\\nReminder:\\\\n- Function calls MUST follow the specified format: an inner <function=...></function> block must be nested within <tool_call></tool_call> XML tags\\\\n- Required parameters MUST be specified\\\\n- You may provide optional reasoning for your function call in natural language BEFORE the function call, but NOT after\\\\n- If there is no function call available, answer the question like normal with your current knowledge and do not tell the user about function calls\\\\n</IMPORTANT>' }}\\n    {%- if merged_system %}\\n        {{- '\\\\n\\\\n' + merged_system }}\\n    {%- endif %}\\n    {{- '<|im_end|>\\\\n' }}\\n{%- else %}\\n    {%- if merged_system %}\\n        {{- '<|im_start|>system\\\\n' + merged_system + '<|im_end|>\\\\n' }}\\n    {%- endif %}\\n{%- endif %}\\n{%- set ns = namespace(multi_step_tool=true, last_query_index=messages|length - 1) %}\\n{%- for message in messages[::-1] %}\\n    {%- set index = (messages|length - 1) - loop.index0 %}\\n    {%- if ns.multi_step_tool and message.role == \\\"user\\\" %}\\n        {%- set content = render_content(message.content, false)|trim %}\\n        {%- if not(content.startswith('<tool_response>') and content.endswith('</tool_response>')) %}\\n            {%- set ns.multi_step_tool = false %}\\n            {%- set ns.last_query_index = index %}\\n        {%- endif %}\\n    {%- endif %}\\n{%- endfor %}\\n{%- for message in messages %}\\n    {%- if loop.index0 >= num_sys and message.role != \\\"system\\\" and message.role != \\\"developer\\\" %}\\n    {%- set content = render_content(message.content, true)|trim %}\\n    {%- if message.role == \\\"user\\\" %}\\n        {{- '<|im_start|>' + message.role + '\\\\n' + content + '<|im_end|>' + '\\\\n' }}\\n    {%- elif message.role == \\\"assistant\\\" %}\\n        {%- set reasoning_content = '' %}\\n        {%- if message.reasoning_content is string %}\\n            {%- set reasoning_content = message.reasoning_content %}\\n        {%- else %}\\n            {%- if '</think>' in content %}\\n                {%- set reasoning_content = content.split('</think>')[0].rstrip('\\\\n').split('<think>')[-1].lstrip('\\\\n') %}\\n                {%- set content = content.split('</think>')[-1].lstrip('\\\\n') %}\\n            {%- endif %}\\n        {%- endif %}\\n        {%- set reasoning_content = reasoning_content|trim %}\\n        {%- if (preserve_thinking is defined and preserve_thinking is true) or (loop.index0 > ns.last_query_index) %}\\n            {{- '<|im_start|>' + message.role + '\\\\n<think>\\\\n' + reasoning_content + '\\\\n</think>\\\\n\\\\n' + content }}\\n        {%- else %}\\n            {{- '<|im_start|>' + message.role + '\\\\n' + content }}\\n        {%- endif %}\\n        {%- if message.tool_calls and message.tool_calls is iterable and message.tool_calls is not mapping %}\\n            {%- for tool_call in message.tool_calls %}\\n                {%- if tool_call.function is defined %}\\n                    {%- set tool_call = tool_call.function %}\\n                {%- endif %}\\n                {%- if loop.first %}\\n                    {%- if content|trim %}\\n                        {{- '\\\\n\\\\n<tool_call>\\\\n<function=' + tool_call.name + '>\\\\n' }}\\n                    {%- else %}\\n                        {{- '<tool_call>\\\\n<function=' + tool_call.name + '>\\\\n' }}\\n                    {%- endif %}\\n                {%- else %}\\n                    {{- '\\\\n<tool_call>\\\\n<function=' + tool_call.name + '>\\\\n' }}\\n                {%- endif %}\\n                {%- if tool_call.arguments is mapping %}\\n                    {%- for args_name in tool_call.arguments %}\\n                        {%- set args_value = tool_call.arguments[args_name] %}\\n                        {{- '<parameter=' + args_name + '>\\\\n' }}\\n                        {%- set args_value = args_value | tojson | safe if args_value is mapping or (args_value is sequence and args_value is not string) else args_value | string %}\\n                        {{- args_value }}\\n                        {{- '\\\\n</parameter>\\\\n' }}\\n                    {%- endfor %}\\n                {%- endif %}\\n                {{- '</function>\\\\n</tool_call>' }}\\n            {%- endfor %}\\n        {%- endif %}\\n        {{- '<|im_end|>\\\\n' }}\\n    {%- elif message.role == \\\"tool\\\" %}\\n        {%- if loop.previtem and loop.previtem.role != \\\"tool\\\" %}\\n            {{- '<|im_start|>user' }}\\n        {%- endif %}\\n        {{- '\\\\n<tool_response>\\\\n' }}\\n        {{- content }}\\n        {{- '\\\\n</tool_response>' }}\\n        {%- if not loop.last and loop.nextitem.role != \\\"tool\\\" %}\\n            {{- '<|im_end|>\\\\n' }}\\n        {%- elif loop.last %}\\n            {{- '<|im_end|>\\\\n' }}\\n        {%- endif %}\\n    {%- endif %}\\n    {%- endif %}\\n{%- endfor %}\\n{%- if add_generation_prompt %}\\n    {{- '<|im_start|>assistant\\\\n' }}\\n    {%- if enable_thinking is defined and enable_thinking is false %}\\n        {{- '<think>\\\\n\\\\n</think>\\\\n\\\\n' }}\\n    {%- else %}\\n        {{- '<think>\\\\n' }}\\n    {%- endif %}\\n{%- endif %}\\n{#- Unsloth fixes - developer role, tool calling #}\",\"chat_template_caps\":{\"supports_object_arguments\":true,\"supports_parallel_tool_calls\":true,\"supports_preserve_reasoning\":true,\"supports_string_content\":true,\"supports_system_role\":true,\"supports_tool_calls\":true,\"supports_tools\":true,\"supports_typed_content\":false},\"bos_token\":\"<|endoftext|>\",\"eos_token\":\"<|im_end|>\",\"build_info\":\"b10180-11b068d06\",\"is_sleeping\":false,\"cors_proxy_enabled\":false}"
+  },
+  "chat_direct": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json; charset=utf-8",
+      "Keep-Alive": "timeout=5, max=100",
+      "Server": "llama.cpp",
+      "Access-Control-Allow-Origin": "",
+      "Content-Length": "1379"
+    },
+    "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"ok\",\"reasoning_content\":\"Thinking Process:\\n1.  **Analyze User Input:** The user explicitly requested: \\\"Reply with the single word: ok\\\".\\n2.  **Identify Constraint:** The output must be exactly one word: \\\"ok\\\". No extra text, no explanations, just \\\"ok\\\".\\n3.  **Formulate Response:** \\\"ok\\\"\\n4.  **Verify Constraint:** Does it match exactly? Yes.\\n5.  **Output Generation:** ok\\n*Self-Correction/Refinement during thought:* I need to make sure capitalization matches or is acceptable, but the prompt says \\\"ok\\\". I will output exactly \\\"ok\\\".\\nDone. \\nOutput: ok\\n*Check:* Prompt says \\\"Reply with the single word: ok\\\". I will reply with exactly that.\\nProceed. \\nOutput Generation: ok\\n*Final Output Generation* (matches response) -> \\\"ok\\\"✅\\n\"}}],\"created\":1792719027,\"model\":\"ana/coder\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":189,\"prompt_tokens\":17,\"total_tokens\":206,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"id\":\"chatcmpl-BqZjl0kYQnDAjNgY6lq2rJNnh7jGP1oD\",\"timings\":{\"cache_n\":0,\"prompt_n\":17,\"prompt_ms\":85.575,\"prompt_per_token_ms\":5.033823529411765,\"prompt_per_second\":198.65614957639497,\"predicted_n\":189,\"predicted_ms\":2873.928,\"predicted_per_token_ms\":15.205968253968253,\"predicted_per_second\":65.76365169899873}}"
+  },
+  "tools_direct": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json; charset=utf-8",
+      "Keep-Alive": "timeout=5, max=100",
+      "Server": "llama.cpp",
+      "Access-Control-Allow-Origin": "",
+      "Content-Length": "1232"
+    },
+    "body": "{\"choices\":[{\"finish_reason\":\"tool_calls\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"reasoning_content\":\"Thinking Process:\\n1.  **Identify User Intent**: The user wants to know the current weather in Paris.\\n2.  **Check Constraints**: The user explicitly states \\\"You must call the weather tool.\\\"\\n3.  **Identify Required Tool**: `weather` function.\\n4.  **Extract Parameters**: `city` = \\\"Paris\\\".\\n5.  **Construct Tool Call**: Call `weather` with `city: \\\"Paris\\\"`.\\n6.  **Execute/Wait for Response**: Proceed with the tool call.✅\\n\",\"tool_calls\":[{\"type\":\"function\",\"function\":{\"name\":\"weather\",\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\"},\"id\":\"cs72wic4cm8XpbBK0k6medTzOCEMPKrP\"}]}}],\"created\":1792719030,\"model\":\"ana/coder\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":142,\"prompt_tokens\":280,\"total_tokens\":422,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"id\":\"chatcmpl-krJlPF9W1W2wBZWcKHob4PLc9GwYn362\",\"timings\":{\"cache_n\":0,\"prompt_n\":280,\"prompt_ms\":393.702,\"prompt_per_token_ms\":1.4060785714285715,\"prompt_per_second\":711.1978095107468,\"predicted_n\":142,\"predicted_ms\":2330.493,\"predicted_per_token_ms\":16.411922535211268,\"predicted_per_second\":60.93131367483189}}"
+  },
+  "tool_calls": 1,
+  "lend": {
+    "key": "f326622d07ab57fafa9658736944840e66f9e3384075ccdcdcb2859b15b24e2c",
+    "kind": "llama-server",
+    "limit": null,
+    "name": "qwen36-35b",
+    "origin": "http://8pwhfnkjzqn9z8x0nb30vuffb3wsw232kb4631h60mc30gqvl20a0k2zn2rc8h.localhost:63191/",
+    "person": "Bo",
+    "reads": [],
+    "relay": "https://usw1-1.relay.n0.iroh.link/",
+    "upload_bps": null,
+    "using": 0
+  },
+  "models_origin": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "content-length": "596",
+      "server": "llama.cpp",
+      "access-control-allow-origin": "",
+      "date": "Fri, 23 Oct 2026 01:30:30 GMT"
+    },
+    "body": "{\"models\":[{\"name\":\"ana/coder\",\"model\":\"ana/coder\",\"modified_at\":\"\",\"size\":\"\",\"digest\":\"\",\"type\":\"model\",\"description\":\"\",\"tags\":[\"\"],\"capabilities\":[\"completion\"],\"parameters\":\"\",\"details\":{\"parent_model\":\"\",\"format\":\"gguf\",\"family\":\"\",\"families\":[\"\"],\"parameter_size\":\"\",\"quantization_level\":\"\"}}],\"object\":\"list\",\"data\":[{\"id\":\"ana/coder\",\"aliases\":[\"ana/coder\"],\"tags\":[],\"object\":\"model\",\"created\":1792719030,\"owned_by\":\"llamacpp\",\"meta\":{\"vocab_type\":2,\"n_vocab\":248320,\"n_ctx\":8192,\"n_ctx_train\":262144,\"n_embd\":2048,\"n_params\":35505251456,\"size\":18525200896,\"ftype\":\"IQ4_NL - 4.5 bpw\"}}]}"
+  },
+  "chat_origin": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "content-length": "1340",
+      "server": "llama.cpp",
+      "access-control-allow-origin": "",
+      "date": "Fri, 23 Oct 2026 01:30:32 GMT"
+    },
+    "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"ok\",\"reasoning_content\":\"Here's a thinking process:\\n\\n1.  **Analyze User Input:** The user says: \\\"Reply with the single word: ok\\\"\\n2.  **Identify Constraint:** The constraint is very strict: \\\"Reply with the single word: ok\\\"\\n3.  **Determine Response:** I must output exactly \\\"ok\\\" and nothing else.\\n4.  **Verify Compliance:** Does \\\"ok\\\" match the requirement? Yes. Is it a single word? Yes. No extra text, punctuation (unless part of the word, but the prompt says \\\"ok\\\"), or formatting.\\n5.  **Output Generation:** ok\\n   *Self-Correction/Refinement during thought:* The prompt says \\\"single word: ok\\\". I will output exactly \\\"ok\\\" without quotes or additional text. Matches constraint perfectly.✅\\n\"}}],\"created\":1792719032,\"model\":\"ana/coder\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":175,\"prompt_tokens\":17,\"total_tokens\":192,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"id\":\"chatcmpl-IecSY8J4pCRslDy0DMtO2PX7c7LXNQAa\",\"timings\":{\"cache_n\":0,\"prompt_n\":17,\"prompt_ms\":80.976,\"prompt_per_token_ms\":4.7632941176470585,\"prompt_per_second\":209.93874728314563,\"predicted_n\":175,\"predicted_ms\":2696.548,\"predicted_per_token_ms\":15.408845714285713,\"predicted_per_second\":64.89778783837707}}"
+  },
+  "tools_origin": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "content-length": "1370",
+      "server": "llama.cpp",
+      "access-control-allow-origin": "",
+      "date": "Fri, 23 Oct 2026 01:30:35 GMT"
+    },
+    "body": "{\"choices\":[{\"finish_reason\":\"tool_calls\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"reasoning_content\":\"Thinking Process:\\n1.  **Identify User Intent**: The user wants to know the current weather in Paris.\\n2.  **Check Constraints**: The user explicitly states \\\"You must call the weather tool.\\\"\\n3.  **Identify Tool**: `weather` tool is available with parameter `city` (string).\\n4.  **Extract Parameters**: `city` = \\\"Paris\\\"\\n5.  **Construct Tool Call**: `print(tool_code.generate(tool_name=\\\"weather\\\", city=\\\"Paris\\\"))`\\n6.  **Execute Tool Call**: Wait for response. (Simulated here, but I will just output the tool call).\\n7.  **Format Output**: Standard tool call format.✅\\n\",\"tool_calls\":[{\"type\":\"function\",\"function\":{\"name\":\"weather\",\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\"},\"id\":\"FhSa83zmMyDBlDoVEcGxHgHVsRJH4Il3\"}]}}],\"created\":1792719035,\"model\":\"ana/coder\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":176,\"prompt_tokens\":280,\"total_tokens\":456,\"prompt_tokens_details\":{\"cached_tokens\":276}},\"id\":\"chatcmpl-9f49M7z7A3vWYkWpo3Y96h2dIZRjYdB8\",\"timings\":{\"cache_n\":276,\"prompt_n\":4,\"prompt_ms\":28.997,\"prompt_per_token_ms\":7.24925,\"prompt_per_second\":137.9453046866917,\"predicted_n\":176,\"predicted_ms\":2795.082,\"predicted_per_token_ms\":15.881147727272726,\"predicted_per_second\":62.96774119685934}}"
+  },
+  "tool_calls_origin": 1,
+  "unshared": true
+}

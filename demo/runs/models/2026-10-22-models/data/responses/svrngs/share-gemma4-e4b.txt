@@ -1,0 +1,17 @@
+$ share 8204 --kind llama-server --name gemma4-e4b
+exit 0
+You lend gemma4-e4b (port 8204) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 8204 --limit <number>`.
+They cannot open /slots, /v1/stream, /v1/streams, /v1/chat/completions/control, /lora-adapters, /metrics, /tools, /cors-proxy, /models: svrngs keeps these back whenever a llama-server is lent, since they show one person's use of it to the others or change it for everyone.
+svrngs is running here already, so they can open it now.
+`svrngs unshare gemma4-e4b` stops lending it.
+2026-10-23T01:31:40.847260Z DEBUG cli: cli: data dir from $SVRNGS_DIR dir="/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-models/data/svrngs"
+2026-10-23T01:31:40.848386Z DEBUG cli: cli: the group keeps no relay — met where the build meets its groups group=0b9b258918b2703480f880dc2583daaf73b6c583e45c88366e80a62706e0f391 at=N0
+2026-10-23T01:31:40.848425Z DEBUG cli: cli: the group keeps no relay — met where the build meets its groups group=10038dbaec95e07b61d2dc2fe1e6717345b5ad297aa4e3411a0275985cea54b4 at=N0
+2026-10-23T01:31:40.848445Z DEBUG cli: cli: the group keeps no relay — met where the build meets its groups group=3f4a547a4b7983489a09255e3c4dbca56cfc8a72c8e4e7bbb912f29e30cb17c3 at=N0
+2026-10-23T01:31:40.848465Z DEBUG cli: cli: the group keeps no relay — met where the build meets its groups group=d290001162765fb55214d0736fd253d7bf9ce3842b2c127bba0643cc4b3197a4 at=N0
+2026-10-23T01:31:40.848799Z DEBUG cli: cli: the relays this computer meets its groups at at=N0 unkept=true relay_urls=["https://aps1-1.relay.n0.iroh.link/", "https://euc1-1.relay.n0.iroh.link/", "https://use1-1.relay.n0.iroh.link/", "https://usw1-1.relay.n0.iroh.link/"]
+If gemma4-e4b takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): 
+2026-10-23T01:31:40.849508Z DEBUG cli: cli: share — the password asked for lend=gemma4-e4b given=false terminal=false
+2026-10-23T01:31:40.850378Z DEBUG lend: lend: declared lend=gemma4-e4b source=Port(8204) kind=llama-server limit=None refused=9 upload=None secret=false asks=false
+2026-10-23T01:31:40.850610Z DEBUG cli: cli: refused — another svrngs holds the data dir lock=/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-models/data/svrngs/lock error=lock acquisition failed because the operation would block
+2026-10-23T01:31:40.850714Z DEBUG cli: cli: share — svrngs runs here already, and reads the lend from its declaration lock=/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-models/data/svrngs/lock

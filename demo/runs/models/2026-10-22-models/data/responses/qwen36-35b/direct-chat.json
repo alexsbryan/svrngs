@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "headers": {
+    "Content-Type": "application/json; charset=utf-8",
+    "Keep-Alive": "timeout=5, max=100",
+    "Server": "llama.cpp",
+    "Access-Control-Allow-Origin": "",
+    "Content-Length": "1379"
+  },
+  "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"ok\",\"reasoning_content\":\"Thinking Process:\\n1.  **Analyze User Input:** The user explicitly requested: \\\"Reply with the single word: ok\\\".\\n2.  **Identify Constraint:** The output must be exactly one word: \\\"ok\\\". No extra text, no explanations, just \\\"ok\\\".\\n3.  **Formulate Response:** \\\"ok\\\"\\n4.  **Verify Constraint:** Does it match exactly? Yes.\\n5.  **Output Generation:** ok\\n*Self-Correction/Refinement during thought:* I need to make sure capitalization matches or is acceptable, but the prompt says \\\"ok\\\". I will output exactly \\\"ok\\\".\\nDone. \\nOutput: ok\\n*Check:* Prompt says \\\"Reply with the single word: ok\\\". I will reply with exactly that.\\nProceed. \\nOutput Generation: ok\\n*Final Output Generation* (matches response) -> \\\"ok\\\"✅\\n\"}}],\"created\":1792719027,\"model\":\"ana/coder\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":189,\"prompt_tokens\":17,\"total_tokens\":206,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"id\":\"chatcmpl-BqZjl0kYQnDAjNgY6lq2rJNnh7jGP1oD\",\"timings\":{\"cache_n\":0,\"prompt_n\":17,\"prompt_ms\":85.575,\"prompt_per_token_ms\":5.033823529411765,\"prompt_per_second\":198.65614957639497,\"predicted_n\":189,\"predicted_ms\":2873.928,\"predicted_per_token_ms\":15.205968253968253,\"predicted_per_second\":65.76365169899873}}"
+}

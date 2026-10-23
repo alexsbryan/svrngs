@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "headers": {
+    "content-type": "application/json; charset=utf-8",
+    "content-length": "944",
+    "server": "llama.cpp",
+    "access-control-allow-origin": "",
+    "date": "Fri, 23 Oct 2026 01:31:25 GMT"
+  },
+  "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"ok\",\"reasoning_content\":\"*   User input: \\\"Reply with the single word: ok\\\"\\n    *   Instruction: Reply with exactly one word: \\\"ok\\\".\\n\\n    *   The user is asking for a specific, minimal response.\\n    *   Constraint: Single word \\\"ok\\\".\\n\\n    *   Target word: \\\"ok\\\".\\n\\n    *   Does it meet the constraint? Yes.\"}}],\"created\":1792719085,\"model\":\"ana/vision\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":83,\"prompt_tokens\":23,\"total_tokens\":106,\"prompt_tokens_details\":{\"cached_tokens\":18}},\"id\":\"chatcmpl-2HKbgHtw2lxVHf3SskymhwtHE8aJJbOk\",\"timings\":{\"cache_n\":18,\"prompt_n\":5,\"prompt_ms\":77.155,\"prompt_per_token_ms\":15.431000000000001,\"prompt_per_second\":64.8046140885231,\"predicted_n\":83,\"predicted_ms\":1577.566,\"predicted_per_token_ms\":19.006819277108434,\"predicted_per_second\":52.612695760430945}}"
+}

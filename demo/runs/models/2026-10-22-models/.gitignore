@@ -1,0 +1,6 @@
+# The run's own data. Models are pulled into target/models/curated/ (ignored
+# by the repository); HOMEs, svrngs data dirs and logs are measured here but
+# not committed. Responses and the driver are.
+data/home/
+data/svrngs/
+data/logs/
