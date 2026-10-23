@@ -195,7 +195,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # edges in room/ +24, the network's types and the room's pure turn +38.
 # Raised 67, to one past where the series lands: 17,635. svrngs-core is
 # unchanged at 3,149 under its 3,150.
-BUDGET = {"crates/svrngs-core": 3150, ".": 17635}
+# capability-economize cut 16 by four folds of a thing said twice (oidc's
+# Key::kid only tests called, the door's Connection names, the page's
+# IndexedDB opener and its computer's key) and lowered the repository's to
+# one past where they land, 17,619; svrngs-core's it left at one past
+# (demo/runs/economize/2026-10-23-capability/SURVEY.md).
+BUDGET = {"crates/svrngs-core": 3150, ".": 17619}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
