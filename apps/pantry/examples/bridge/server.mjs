@@ -32,25 +32,17 @@ function json(res, status, value) {
   res.end(JSON.stringify(value));
 }
 
-/// The request's headers with its own length: the body is ours now.
-function headersFor(req, length) {
+/// One request to the person's pantry, its answer streamed back as it came.
+function relay(req, res, base, raw, extra = {}) {
+  const at = new URL(req.url, base);
   const headers = { ...req.headers };
   delete headers.host;
   delete headers.connection;
   delete headers['content-length'];
-  headers['content-length'] = String(length);
-  return headers;
-}
-
-/// One request to the person's pantry, its answer streamed back as it came.
-function relay(req, res, base, raw, extra = {}) {
-  const at = new URL(req.url, base);
+  headers['content-length'] = String(raw.length);
   const target = http.request({
-    hostname: at.hostname,
-    port: at.port,
-    path: `${at.pathname}${at.search}`,
-    method: req.method,
-    headers: headersFor(req, raw.length),
+    hostname: at.hostname, port: at.port, path: `${at.pathname}${at.search}`,
+    method: req.method, headers,
   }, (answer) => {
     res.writeHead(answer.statusCode, { ...answer.headers, ...extra });
     answer.pipe(res);
@@ -60,15 +52,6 @@ function relay(req, res, base, raw, extra = {}) {
     json(res, 502, { error: `the pantry did not answer: ${e.message}` });
   });
   target.end(raw);
-}
-
-function imagesIn(messages) {
-  const found = [];
-  for (const message of Array.isArray(messages) ? messages : []) {
-    if (!Array.isArray(message?.content)) continue;
-    for (const part of message.content) if (part?.type === 'image_url') found.push(part);
-  }
-  return found;
 }
 
 /// The vision model's description of one image, asked through the pantry.
@@ -92,6 +75,7 @@ async function describe(base, vision, part) {
   return text;
 }
 
+/// Every message as it came, each image part replaced by its description.
 async function withSight(messages, look) {
   const out = [];
   for (const message of messages) {
@@ -108,6 +92,10 @@ async function withSight(messages, look) {
   return out;
 }
 
+const imageParts = (messages) => (Array.isArray(messages) ? messages : [])
+  .flatMap((m) => (Array.isArray(m?.content) ? m.content : []))
+  .filter((part) => part?.type === 'image_url');
+
 export async function start({ upstream, vision, port = 8120, host = '127.0.0.1' } = {}) {
   if (!upstream) throw new Error('the bridge needs the person\'s pantry as --upstream');
   if (!vision) throw new Error('the bridge needs the seeing model as --vision');
@@ -115,14 +103,15 @@ export async function start({ upstream, vision, port = 8120, host = '127.0.0.1' 
   const server = http.createServer(async (req, res) => {
     try {
       const raw = await collect(req);
-      const chat = req.method === 'POST' && req.url.split('?')[0] === '/v1/chat/completions';
-      let asked;
-      try {
-        asked = chat ? JSON.parse(raw.toString('utf8')) : null;
-      } catch {
-        asked = null;
+      let asked = null;
+      if (req.method === 'POST' && req.url.split('?')[0] === '/v1/chat/completions') {
+        try {
+          asked = JSON.parse(raw.toString('utf8'));
+        } catch {
+          asked = null;
+        }
       }
-      const images = imagesIn(asked?.messages);
+      const images = imageParts(asked?.messages);
       if (typeof asked?.model !== 'string' || !images.length) {
         return relay(req, res, base, raw);
       }
@@ -167,11 +156,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     return i > 0 ? process.argv[i + 1] : fallback;
   };
   const vision = arg('--vision');
-  start({
-    upstream: arg('--upstream'),
-    vision,
-    port: Number(arg('--port', '8120')),
-  }).then((at) => console.log(`Point your interface at ${at.url}/v1 — screenshots are described by ${vision} through your pantry`))
+  start({ upstream: arg('--upstream'), vision, port: Number(arg('--port', '8120')) })
+    .then((at) => console.log(`Point your interface at ${at.url}/v1 — screenshots are described by ${vision} through your pantry`))
     .catch((e) => {
       console.error(`bridge: ${e.message}`);
       process.exitCode = 1;
