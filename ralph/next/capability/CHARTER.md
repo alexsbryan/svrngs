@@ -25,6 +25,10 @@ charter disagree, they win, and the decision says so.
   note. Sealing waits for its trigger ("Out, keep its trigger"); the interim
   version-pin fix is dropped for authorship ("Drop it"); an app declaring
   what it needs waits ("Wait, with a trigger").
+- **The phone's pass key** (2026-10-23, on capability-pass-key's measured
+  trade-off): "K now, H with signed". The key stays readable to a lend's
+  own pages, said in DESIGN §3 under §5's trust; the uncopyable key and
+  chained pass land with capability-signed.
 
 ## Decide
 
