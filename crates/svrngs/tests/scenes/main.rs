@@ -33,3 +33,5 @@ mod life;
 mod films;
 // Movie night (demo/b.md): a newcomer from the link to the film on a TV.
 mod night;
+// The pantry (apps/pantry): friends' models and tools, found by protocol.
+mod pantry;
