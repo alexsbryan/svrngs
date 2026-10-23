@@ -608,13 +608,7 @@ fn split_lend(path: &str) -> Option<(&str, String)> {
 /// Remove the hop-by-hop headers from `headers`, and any its `Connection`
 /// names; answer how many went.
 pub(crate) fn strip_hop_by_hop(headers: &mut HeaderMap) -> usize {
-    let named: Vec<String> = headers
-        .get_all(header::CONNECTION)
-        .iter()
-        .filter_map(|v| v.to_str().ok())
-        .flat_map(|v| v.split(','))
-        .map(compare_name)
-        .collect();
+    let named: Vec<String> = connection(headers).collect();
     remove_counted(headers, |name| {
         HOP_BY_HOP.contains(&name) || named.iter().any(|n| n == name)
     })
@@ -641,13 +635,15 @@ fn remove_counted(headers: &mut HeaderMap, goes: impl Fn(&str) -> bool) -> usize
 /// headers go, so the door carries a WebSocket's upgrade (u5-2), where it
 /// stripped `Upgrade` with the rest.
 pub(crate) fn upgrade_of(headers: &HeaderMap) -> Option<HeaderValue> {
-    let named = headers
-        .get_all(header::CONNECTION)
-        .iter()
-        .filter_map(|v| v.to_str().ok())
-        .flat_map(|v| v.split(','))
-        .any(|t| compare_name(t) == "upgrade");
+    let named = connection(headers).any(|t| t == "upgrade");
     named.then(|| headers.get(header::UPGRADE).cloned())?
+}
+
+/// Each name a message's `Connection` lists, as [`compare_name`] reads it.
+fn connection(headers: &HeaderMap) -> impl Iterator<Item = String> + '_ {
+    let values = headers.get_all(header::CONNECTION).iter();
+    let tokens = values.filter_map(|v| v.to_str().ok());
+    tokens.flat_map(|v| v.split(',')).map(compare_name)
 }
 
 /// Ask for `protocol` again on a head whose hop-by-hop headers went.
