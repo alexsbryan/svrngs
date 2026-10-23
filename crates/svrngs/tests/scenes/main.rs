@@ -29,3 +29,5 @@ mod grapevine;
 mod doc;
 // The group's life (demo/c.md): a link, a phone, a removal, a lid shut.
 mod life;
+// Films (demo/a.md): two people play and seek Sam's lent Jellyfin at once.
+mod films;

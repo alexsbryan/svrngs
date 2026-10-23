@@ -44,6 +44,18 @@ impl Scene {
         }
     }
 
+    /// The scene not played, and why, in its place, where the gate's
+    /// "scenes" step reads it as never-ran (scripts/check.sh).
+    pub fn never_ran(&self, why: &str) {
+        eprintln!("never ran: {why}");
+        std::fs::write(self.dir.join("never-ran.txt"), why).unwrap();
+    }
+
+    /// Where its scratch goes, under its place.
+    pub fn scratch(&self, name: &str) -> PathBuf {
+        self.dir.join(name)
+    }
+
     /// `name`'s computer makes `group`, as `svrngs new <group> --as <name>
     /// --relay <the scene's>` does, and runs on as that command does.
     pub async fn founds(&self, name: &str, group: &str) -> (Person, String) {

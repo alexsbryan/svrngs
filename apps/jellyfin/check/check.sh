@@ -70,7 +70,9 @@ STEP="$1"; R="$2"; OUT="$3"
 HERE="$(cd "$(dirname "$0")" && pwd)"; REPO="$(cd "$HERE/../../.." && pwd)"
 B="$REPO/target/debug/svrngs"
 JF_APP="${JF_APP:-/Applications/Jellyfin.app/Contents}"
-O=http://127.0.0.1:8096
+# Jellyfin's port: its own, unless JF_PORT names another (each engine's
+# films scene runs a Jellyfin of its own at once).
+JF_PORT="${JF_PORT:-8096}"; O="http://127.0.0.1:$JF_PORT"
 SECRETS="$R/secrets"; [ "$STEP" = films ] || mkdir -p "$OUT"
 # Who the lender makes accounts for, and what share is told: u5-4's pair
 # unless a run says otherwise (Demo A's, `trio`).
@@ -131,9 +133,10 @@ jellyfin() {
     "$ff" -v error -y -f lavfi -i "testsrc2=size=640x360:rate=24" -t 20 -c:v libx264 -preset veryfast \
       -pix_fmt yuv420p "$R/jf/kept/Picnic.mp4"
   fi
-  cat >"$R/jf/config/network.xml" <<'EOF'
+  cat >"$R/jf/config/network.xml" <<EOF
 <?xml version="1.0" encoding="utf-8"?>
 <NetworkConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <InternalHttpPort>$JF_PORT</InternalHttpPort>
   <EnableIPv6>false</EnableIPv6>
   <LocalNetworkAddresses><string>127.0.0.1</string></LocalNetworkAddresses>
   <EnableRemoteAccess>false</EnableRemoteAccess>
