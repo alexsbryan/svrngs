@@ -66,11 +66,15 @@ fn at(host: &str) -> Option<(Label, Option<String>)> {
 }
 
 /// The app asking for the lend `host` names, by DESIGN §3, "Lent apps", call 6, from
-/// what the browser says of the page asking: a navigation, a typed address
-/// or a request from the lend's own origin is its own page's; one from
-/// another lend's page is that page's, by its `Origin` at this listener's
-/// port; one from another page with no `Origin` (an `<img>`) is nobody's,
-/// `None`. A request with no `Sec-Fetch-Site` is a program's, not a page's
+/// what the browser says of the page asking: a typed address or a request
+/// from the lend's own origin is its own page's, and so is a navigation of
+/// the whole tab, a link the person follows, unless its `Origin` names
+/// another lend (a form that page posted); one from another lend's page is
+/// that page's, by its `Origin` at this listener's port, or a frame's, which
+/// sends none, by its `Referer`; one from another page naming no lend (an
+/// `<img>`, a frame with its `Referer` withheld) is nobody's, `None`. So a
+/// page's frame or form is held to what its fetch is (capability-navigation).
+/// A request with no `Sec-Fetch-Site` is a program's, not a page's
 /// — a browser that sends any `Sec-Fetch-*` sends it, and Node's `fetch`
 /// sends a mode alone (start-measure, `demo/runs/start/2026-10-13/` §3 (a)
 /// 4), as the record reads a page by it too (`crate::api`'s
@@ -82,18 +86,23 @@ fn app_of(headers: &HeaderMap, host: &Label) -> Option<Label> {
         tracing::debug!(target: "origin", %host, ?mode, "origin: no Sec-Fetch-Site, a program on this computer, so the lend's own");
         return Some(host.clone());
     }
-    if own {
-        tracing::debug!(target: "origin", %host, ?site, ?mode, "origin: a navigation, a typed address or its own origin, so the lend's own page");
-        return Some(host.clone());
-    }
     let port = at(at_host?)?.1;
-    let from = origin
-        .and_then(|o| o.strip_prefix("http://"))
+    let dest = headers.get("sec-fetch-dest").and_then(|v| v.to_str().ok());
+    let framed = mode == Some("navigate") && dest != Some("document");
+    // A frame's navigation sends no `Origin`: who framed it says its `Referer`.
+    let sent = [header::ORIGIN, header::REFERER][usize::from(framed)].clone();
+    let from = (headers.get(sent).and_then(|v| v.to_str().ok()))
+        .and_then(|o| o.strip_prefix("http://")?.split('/').next())
         .and_then(at)
         .filter(|(_, p)| *p == port)
         .map(|(label, _)| label);
-    tracing::debug!(target: "origin", %host, ?site, ?mode, ?origin, app = ?from.as_ref().map(Label::as_str),
-        "origin: from another page, so the app its Origin names, or none");
+    let another = from.as_ref().is_some_and(|l| l != host);
+    if own && (matches!(site, Some("none" | "same-origin")) || !(framed || another)) {
+        tracing::debug!(target: "origin", %host, ?site, ?mode, ?dest, "origin: a typed address, its own origin, or the whole tab going there that no other lend's page sent, so the lend's own page");
+        return Some(host.clone());
+    }
+    tracing::debug!(target: "origin", %host, ?site, ?mode, ?dest, ?origin, app = ?from.as_ref().map(Label::as_str),
+        "origin: from another page, a fetch, a frame or a form, so the app its Origin names (a frame's, its Referer), or none");
     from
 }
 

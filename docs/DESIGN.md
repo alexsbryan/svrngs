@@ -610,10 +610,13 @@ Seven calls:
 
    On a computer, the lend's origin names the app asking from what the
    browser says of the page, which no script can set
-   (`crates/svrngs-node/src/origin.rs`, `app_of`): a navigation, a typed
-   address or a request from the lend's own origin is the lend's own page;
-   a request from another lend's page is that page's, by its `Origin`; one
-   with no `Origin` from another page, an `<img>`, is refused `closed`; one
+   (`crates/svrngs-node/src/origin.rs`, `app_of`): a typed address or a
+   request from the lend's own origin is the lend's own page, and so is the
+   whole tab going there, a link the person follows, unless its `Origin`
+   names another lend; a request from another lend's page is that page's,
+   by its `Origin`, a frame's by its `Referer`, so a page's frame or form is
+   held to what its fetch is; one from another page naming no lend, an
+   `<img>`, is refused `closed`; one
    with no `Sec-Fetch-Site`, as a program sends, is the lend's own, as
    loopback is trusted. A page reaches its own lend and the kinds its lender
    declared it reads, in a group both lenders and this computer stand in,

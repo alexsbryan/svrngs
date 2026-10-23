@@ -200,7 +200,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # IndexedDB opener and its computer's key) and lowered the repository's to
 # one past where they land, 17,619; svrngs-core's it left at one past
 # (demo/runs/economize/2026-10-23-capability/SURVEY.md).
-BUDGET = {"crates/svrngs-core": 3150, ".": 17619}
+# The operator's ceiling for capability-navigation through capability-what-acts
+# (2026-10-23, "+265 / +3 now"): at most 17,884 and 3,153, each row raising only
+# what it lands, to one past. capability-navigation, a frame's and a form's
+# navigation judged as its page's fetch in origin.rs's app_of, +4: 17,623.
+BUDGET = {"crates/svrngs-core": 3150, ".": 17623}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 

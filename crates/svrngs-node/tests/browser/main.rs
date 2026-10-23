@@ -33,6 +33,8 @@ mod carried;
 mod tabs;
 // A visit made with a link (guests-link).
 mod guests;
+// A navigation into a lend, judged as a fetch is (capability-navigation).
+mod navigations;
 
 use std::collections::BTreeSet;
 use std::path::Path;
