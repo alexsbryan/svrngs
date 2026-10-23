@@ -41,6 +41,8 @@ WHISPER = REPO / "target/models/run-whisper/ggml-base.en.bin"
 VENV = REPO / "target/models/run-venv/bin/python"
 SWAP = REPO / "demo/runs/models/2026-10-22-scope/data/bin/llama-swap"
 KOKORO = "ghcr.io/remsky/kokoro-fastapi-cpu:v0.9.0"
+# The name each group knows a person by, as the story writes it.
+PEOPLE = {"Ana": "ana", "Sam": "sam", "Bo": "bo", "Cy": "cy", "Dee": "dee"}
 LOG = "info,cli=debug,door=debug,surface=debug,origin=debug,lend=debug"
 
 MODELS = {
@@ -212,7 +214,7 @@ def lends(who):
 
 def start_person(who, *args):
     start(who, [str(BIN), *args], who=who)
-    got = wait(api, 120, 0.5)
+    got = wait(lambda: api(who), 120, 0.5)
     if not got:
         raise RuntimeError(f"{who}: no api file")
     wait(lambda: group(who), 120)
@@ -220,7 +222,7 @@ def start_person(who, *args):
 
 
 def join(who, link):
-    start_person(who, "join", link, "--as", who)
+    start_person(who, "join", link, "--as", PEOPLE[who])
 
 
 def share(who, port, kind, name, refuse=(), limit=None):
@@ -437,10 +439,16 @@ def main():
             stop(pidfile.stem)
         subprocess.run(["podman", "rm", "-f", "pantry-run-kokoro"], capture_output=True)
         return
+    # A full run is fresh: each person's HOME and svrngs dir start empty, so
+    # a run after a failed one joins the same group again rather than half of
+    # two.
+    shutil.rmtree(HOMES, ignore_errors=True)
+    for pidfile in LOGS.glob("*.pid"):
+        pidfile.unlink()
     version()
     prepare()
     try:
-        ana = start_person("Ana", "new", "Pantry Run", "--as", "Ana")
+        ana = start_person("Ana", "new", "Pantry Run", "--as", PEOPLE["Ana"])
         link = wait(lambda: re.search(r"svrngs://join/(\S+)",
                                       (LOGS / "Ana.out").read_text(errors="replace")), 120)
         if not link:
