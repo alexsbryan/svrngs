@@ -40,8 +40,12 @@ charter disagree, they win, and the decision says so.
 ## Leave for the operator
 
 Write `NEEDS_HUMAN.md` and stop for:
-- **the budget:** one ceiling for the bundle, asked after the economizing
-  pass, and anything past it;
+- **the budget:** past the operator's ceiling (2026-10-23, "+265 / +3
+  now"): at most 17,884 repository and 3,153 svrngs-core through
+  capability-what-acts, each row raising only what it lands; a row past its
+  estimate's range (`demo/runs/economize/2026-10-23-capability/SURVEY.md`
+  §6) stops. capability-signed's and capability-keys' ceiling is asked
+  beside capability-authorship's design;
 - **a change to what an act is:** capability-authorship's design, before any
   product code changes the format;
 - **a fix that would break a path a person uses today**, or add a step that
