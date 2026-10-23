@@ -318,10 +318,10 @@ def servers():
     mmproj = MODELS["mmproj"][0]
     small = MODELS["small"][0]
 
-    start("llama-coder", ["llama-server", "-m", str(coder), "--jinja", "--alias", "ana/coder",
+    start("llama-coder", ["llama-server", "-m", str(coder), "--jinja", "--alias", "coder",
                           "--host", "127.0.0.1", "--port", "8201", "-c", "8192", "-ngl", "99"])
     start("llama-vision", ["llama-server", "-m", str(vision), "--mmproj", str(mmproj), "--jinja",
-                           "--alias", "ana/vision", "--host", "127.0.0.1", "--port", "8202",
+                           "--alias", "vision", "--host", "127.0.0.1", "--port", "8202",
                            "-c", "8192", "-ngl", "99"])
     start("whisper-server", ["whisper-server", "-m", str(WHISPER), "--host", "127.0.0.1",
                              "--port", "8206", "-l", "en"])

@@ -66,7 +66,7 @@ def speak(args):
     c = client(args.pantry)
     res = c.audio.speech.with_raw_response.create(
         model=args.model, voice=args.voice, input=args.input, response_format="mp3")
-    data = res.read()
+    data = res.content
     if args.save:
         open(args.save, "wb").write(data)
     return {"status": res.status_code, "headers": headers(res),
@@ -130,7 +130,7 @@ def limit(args):
         try:
             res = c.audio.speech.with_raw_response.create(
                 model=args.model, voice=args.voice, input=args.input, response_format="mp3")
-            out[i] = {"status": res.status_code, "headers": headers(res), "bytes": len(res.read())}
+            out[i] = {"status": res.status_code, "headers": headers(res), "bytes": len(res.content)}
         except Exception as e:
             res = getattr(e, "response", None)
             out[i] = {"status": getattr(e, "status_code", None),
