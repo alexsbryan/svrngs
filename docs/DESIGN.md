@@ -28,7 +28,7 @@ one, reach an endpoint) is a capability that someone's key granted.
 Every rule below follows from that. An entry's author is its signer;
 replicas only carry. Sealing is not built yet (PLAN §2). Where today's code
 falls short is svrn-docs `rings/current/WHAT_CAN_ACT_AS_YOU.md`, and its
-fixes are `ralph/next/security/`.
+fixes are `ralph/next/capability/`.
 
 **For people:** *keep talking where you talk; keep what your group owns —
 money, plans, files, the library — on your own computers, not a platform's.*
