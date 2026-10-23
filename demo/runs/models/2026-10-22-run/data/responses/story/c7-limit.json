@@ -4,24 +4,24 @@
       "status": 200,
       "headers": {
         "content-type": "application/json; charset=utf-8",
-        "content-length": "613",
+        "content-length": "1649",
         "server": "llama.cpp",
         "access-control-allow-origin": "",
-        "date": "Fri, 23 Oct 2026 03:42:47 GMT",
+        "date": "Fri, 23 Oct 2026 03:48:43 GMT",
         "x-pantry-person": "ana",
         "x-pantry-lend": "ana-coder",
         "connection": "keep-alive",
         "keep-alive": "timeout=5"
       },
       "body": {
-        "id": "chatcmpl-kQtIvX1huDV8jXnQU8XCJtckBZwR7Llm",
+        "id": "chatcmpl-hjJOFTu9WVLToTpb4CgZCcaSpfuzH2aI",
         "choices": [
           {
-            "finish_reason": "stop",
+            "finish_reason": "length",
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "zero",
+              "content": "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n47\n48\n49\n50\n51\n52\n53\n54\n55\n56\n57\n58\n59\n60\n61\n62\n63\n64\n65\n66\n67\n68\n69\n70\n71\n72\n73\n74\n75\n76\n77\n78\n79\n80\n81\n82\n83\n84\n85\n86\n87\n88\n89\n90\n91\n92\n93\n94\n95\n96\n97\n98\n99\n100\n101\n102\n103\n104\n105\n106\n107\n108\n109\n110\n111\n112\n113\n114\n115\n116\n117\n118\n119\n120\n121\n122\n123\n124\n125\n126\n127\n128\n129\n130\n131\n132\n133\n134\n135\n136\n137\n138\n139\n140\n141\n142\n143\n144\n145\n146\n147\n148\n149\n150\n151\n152\n153\n154\n155\n156\n157\n158\n159\n160\n161\n162\n163\n164\n165\n166\n167\n168\n169\n170\n171\n172\n173\n174\n175\n176\n177\n178\n179\n180\n181\n182\n183\n184\n185\n186\n187\n188\n189\n190\n191\n192\n193\n194\n195\n196\n197\n198\n199\n200\n201\n202\n203\n204\n205\n206\n207\n208\n209\n210\n211\n212\n213\n214\n215\n216\n217\n218\n219\n220\n221\n222\n223\n224\n225\n226\n227\n",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -31,7 +31,7 @@
             }
           }
         ],
-        "created": 1792726967,
+        "created": 1792727323,
         "model": "coder",
         "object": "chat.completion",
         "metadata": null,
@@ -39,9 +39,9 @@
         "service_tier": null,
         "system_fingerprint": "b10180-11b068d06",
         "usage": {
-          "completion_tokens": 2,
-          "prompt_tokens": 19,
-          "total_tokens": 21,
+          "completion_tokens": 800,
+          "prompt_tokens": 27,
+          "total_tokens": 827,
           "completion_tokens_details": null,
           "prompt_tokens_details": {
             "audio_tokens": null,
@@ -53,14 +53,14 @@
         },
         "timings": {
           "cache_n": 0,
-          "prompt_n": 19,
-          "prompt_ms": 857.703,
-          "prompt_per_token_ms": 45.14226315789474,
-          "prompt_per_second": 22.152190210364193,
-          "predicted_n": 2,
-          "predicted_ms": 181.555,
-          "predicted_per_token_ms": 90.7775,
-          "predicted_per_second": 11.015945581228829
+          "prompt_n": 27,
+          "prompt_ms": 2571.108,
+          "prompt_per_token_ms": 95.22622222222223,
+          "prompt_per_second": 10.501309163209013,
+          "predicted_n": 800,
+          "predicted_ms": 20860.117,
+          "predicted_per_token_ms": 26.07514625,
+          "predicted_per_second": 38.35069573195587
         }
       }
     },
@@ -68,24 +68,20 @@
       "status": 200,
       "headers": {
         "content-type": "application/json; charset=utf-8",
-        "content-length": "608",
+        "content-length": "1656",
         "server": "llama.cpp",
         "access-control-allow-origin": "",
-        "date": "Fri, 23 Oct 2026 03:42:47 GMT",
-        "x-pantry-person": "ana",
-        "x-pantry-lend": "ana-coder",
-        "connection": "keep-alive",
-        "keep-alive": "timeout=5"
+        "date": "Fri, 23 Oct 2026 03:48:43 GMT"
       },
       "body": {
-        "id": "chatcmpl-C1PdQbuFAQt6L0QLZlUuhaZeFTfQmKzp",
+        "id": "chatcmpl-Aiqr8Ga736qwYR7kaDebkDbUMk1eqhWZ",
         "choices": [
           {
-            "finish_reason": "stop",
+            "finish_reason": "length",
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "1",
+              "content": "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n47\n48\n49\n50\n51\n52\n53\n54\n55\n56\n57\n58\n59\n60\n61\n62\n63\n64\n65\n66\n67\n68\n69\n70\n71\n72\n73\n74\n75\n76\n77\n78\n79\n80\n81\n82\n83\n84\n85\n86\n87\n88\n89\n90\n91\n92\n93\n94\n95\n96\n97\n98\n99\n100\n101\n102\n103\n104\n105\n106\n107\n108\n109\n110\n111\n112\n113\n114\n115\n116\n117\n118\n119\n120\n121\n122\n123\n124\n125\n126\n127\n128\n129\n130\n131\n132\n133\n134\n135\n136\n137\n138\n139\n140\n141\n142\n143\n144\n145\n146\n147\n148\n149\n150\n151\n152\n153\n154\n155\n156\n157\n158\n159\n160\n161\n162\n163\n164\n165\n166\n167\n168\n169\n170\n171\n172\n173\n174\n175\n176\n177\n178\n179\n180\n181\n182\n183\n184\n185\n186\n187\n188\n189\n190\n191\n192\n193\n194\n195\n196\n197\n198\n199\n200\n201\n202\n203\n204\n205\n206\n207\n208\n209\n210\n211\n212\n213\n214\n215\n216\n217\n218\n219\n220\n221\n222\n223\n224\n225\n226\n227\n",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -95,7 +91,7 @@
             }
           }
         ],
-        "created": 1792726967,
+        "created": 1792727323,
         "model": "coder",
         "object": "chat.completion",
         "metadata": null,
@@ -103,9 +99,9 @@
         "service_tier": null,
         "system_fingerprint": "b10180-11b068d06",
         "usage": {
-          "completion_tokens": 2,
-          "prompt_tokens": 19,
-          "total_tokens": 21,
+          "completion_tokens": 800,
+          "prompt_tokens": 27,
+          "total_tokens": 827,
           "completion_tokens_details": null,
           "prompt_tokens_details": {
             "audio_tokens": null,
@@ -117,14 +113,14 @@
         },
         "timings": {
           "cache_n": 0,
-          "prompt_n": 19,
-          "prompt_ms": 858.903,
-          "prompt_per_token_ms": 45.20542105263158,
-          "prompt_per_second": 22.121240698891494,
-          "predicted_n": 2,
-          "predicted_ms": 181.244,
-          "predicted_per_token_ms": 90.622,
-          "predicted_per_second": 11.03484805014235
+          "prompt_n": 27,
+          "prompt_ms": 2571.701,
+          "prompt_per_token_ms": 95.24818518518519,
+          "prompt_per_second": 10.498887701175216,
+          "predicted_n": 800,
+          "predicted_ms": 20861.884,
+          "predicted_per_token_ms": 26.077354999999997,
+          "predicted_per_second": 38.34744743092235
         }
       }
     }

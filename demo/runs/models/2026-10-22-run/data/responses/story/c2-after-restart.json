@@ -1,7 +1,7 @@
 {
   "status": 200,
   "body": {
-    "id": "chatcmpl-GQemv2QPvsace7cto3Z7kLaUcVuK4Jt8",
+    "id": "chatcmpl-LCnl76PsCpN8lO2z1hZe0rNiJub9hf1P",
     "choices": [
       {
         "finish_reason": "stop",
@@ -18,7 +18,7 @@
         }
       }
     ],
-    "created": 1792726948,
+    "created": 1792727282,
     "model": "coder",
     "object": "chat.completion",
     "metadata": null,
@@ -41,13 +41,13 @@
     "timings": {
       "cache_n": 0,
       "prompt_n": 19,
-      "prompt_ms": 216.488,
-      "prompt_per_token_ms": 11.394105263157895,
-      "prompt_per_second": 87.76467979749455,
+      "prompt_ms": 255.351,
+      "prompt_per_token_ms": 13.439526315789474,
+      "prompt_per_second": 74.40738434546957,
       "predicted_n": 2,
-      "predicted_ms": 17.734,
-      "predicted_per_token_ms": 8.867,
-      "predicted_per_second": 112.77771512349159
+      "predicted_ms": 17.02,
+      "predicted_per_token_ms": 8.51,
+      "predicted_per_second": 117.50881316098707
     }
   }
 }

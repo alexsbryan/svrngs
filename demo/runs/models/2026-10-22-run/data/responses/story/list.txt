@@ -1,7 +1,7 @@
 What your groups lend now:
-  ana's computer — http://h9t9bpp1l7306d9dxrf4bhd9hz5ugm8b8qg09pqxh3t80ba8x1wakx5cxwm6m6.localhost:52715/ — model ana/coder — looked 0s ago
-  ana's computer — http://h9t9bpp1l7306d9dxrf4bhd9hz5ugm8b8qg09pqxh3t80ba8x1walquv19r39b.localhost:52715/ — model ana/vision — looked 0s ago
-  cy's computer — http://rx9054sszzu8x453fvgu5zd6g64bhf6agxbfvt5db8kzu1gfnr3txhq61bal9j.localhost:52715/ — model cy/cy-model — looked 0s ago
-  sam's computer — http://3rfsf6p6j1nzvczrmxu82cvc7v2slpfwqgntffqg3lhus4vmd0utt6a8lhssjj.localhost:52715/ — model sam/whisper-1 — looked 0s ago
-  sam's computer — http://3rfsf6p6j1nzvczrmxu82cvc7v2slpfwqgntffqg3lhus4vmd0utq4c6ulr444.localhost:52715/ — tool whoami (read-only), erase (destructive) — looked 0s ago
-  sam's computer — http://3rfsf6p6j1nzvczrmxu82cvc7v2slpfwqgntffqg3lhus4vmd0utcwd9lk3c0r.localhost:52715/ — model sam/tts-1, sam/tts-1-hd, sam/kokoro, sam/gpt-4o-mini-tts — looked 0s ago
+  ana's computer — http://9nsuf568nju8r2np7lfmbl92ak4bd8jbjshvprlwhujnwnwwtjrtkx5cxwm6m6.localhost:54638/ — model ana/coder — looked 0s ago
+  ana's computer — http://9nsuf568nju8r2np7lfmbl92ak4bd8jbjshvprlwhujnwnwwtjrtlquv19r39b.localhost:54638/ — model ana/vision — looked 0s ago
+  cy's computer — http://1mgt52j20gdpa3ad2nxf3duz10uczmwscvzl8mjl12n2j90pf8gtxhq61bal9j.localhost:54638/ — model cy/cy-model — looked 0s ago
+  sam's computer — http://4t3mgkm514gs2uw6blj166tgduhrac7swjxv7rhk0kl3z8pthc5tt6a8lhssjj.localhost:54638/ — model sam/whisper-1 — looked 0s ago
+  sam's computer — http://4t3mgkm514gs2uw6blj166tgduhrac7swjxv7rhk0kl3z8pthc5tq4c6ulr444.localhost:54638/ — tool whoami (read-only), erase (destructive) — looked 0s ago
+  sam's computer — http://4t3mgkm514gs2uw6blj166tgduhrac7swjxv7rhk0kl3z8pthc5tcwd9lk3c0r.localhost:54638/ — model sam/tts-1, sam/tts-1-hd, sam/kokoro, sam/gpt-4o-mini-tts — looked 0s ago

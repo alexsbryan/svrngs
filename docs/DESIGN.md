@@ -538,8 +538,21 @@ or change the server for everyone (`/slots`, `/v1/stream`, `/v1/streams`,
 `/v1/chat/completions/control`, `/lora-adapters`, `/metrics`, `/tools`,
 `/cors-proxy`, `/models`). The door refuses a path for every method alike,
 and never changes an answer: llama-server's `/props`, which its chat page
-reads, shows everyone where the model's file is on the lender's disk. Seven
-calls:
+reads, shows everyone where the model's file is on the lender's disk.
+
+**A model or a tool is lent like any app.** A server that answers OpenAI's
+`/v1/models` is a model, and one that answers MCP's `initialize` over
+Streamable HTTP is a tool. `apps/pantry/`, an app on the person's own
+computer, asks each lend its protocol, lists them with whose computer lends
+them and the address to paste, and gives one OpenAI-compatible address that
+routes each request by its `model` to the friend who lends it; nothing is
+registered, and the pantry keeps no kind list. Behaviour is another app on
+the consumer's computer — an OpenAI-in, OpenAI-out adapter that calls the
+pantry — so every lend it reaches is reached as that person; the vision
+bridge in `apps/pantry/examples/` is the worked example
+(`demo/runs/models/2026-10-22-run/`).
+
+Seven calls:
 1. *Each lend at an origin of its own.* A computer serves every lend at
    `http://<label>.localhost:<port>/`; a phone opens it at
    `https://<label>.<page host>/`. Each lend's root and storage are its own,

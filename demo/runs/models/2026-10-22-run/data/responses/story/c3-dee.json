@@ -1,14 +1,14 @@
 {
   "status": 200,
   "body": {
-    "id": "chatcmpl-hxl7BfPBUtewrUCyCdJvPyFp6PoGWqiw",
+    "id": "chatcmpl-Gh4qXpCQIMGA7cpKTKQiw7wNpz84WmMF",
     "choices": [
       {
         "finish_reason": "stop",
         "index": 0,
         "logprobs": null,
         "message": {
-          "content": "It taught me to be concise and direct, as Dee advised.",
+          "content": "I am not an adapter.",
           "refusal": null,
           "role": "assistant",
           "annotations": null,
@@ -18,7 +18,7 @@
         }
       }
     ],
-    "created": 1792726963,
+    "created": 1792727298,
     "model": "coder",
     "object": "chat.completion",
     "metadata": null,
@@ -26,9 +26,9 @@
     "service_tier": null,
     "system_fingerprint": "b10180-11b068d06",
     "usage": {
-      "completion_tokens": 14,
+      "completion_tokens": 7,
       "prompt_tokens": 34,
-      "total_tokens": 48,
+      "total_tokens": 41,
       "completion_tokens_details": null,
       "prompt_tokens_details": {
         "audio_tokens": null,
@@ -41,13 +41,13 @@
     "timings": {
       "cache_n": 0,
       "prompt_n": 34,
-      "prompt_ms": 265.066,
-      "prompt_per_token_ms": 7.796058823529411,
-      "prompt_per_second": 128.26994031675133,
-      "predicted_n": 14,
-      "predicted_ms": 260.346,
-      "predicted_per_token_ms": 18.59614285714286,
-      "predicted_per_second": 53.7745922733593
+      "prompt_ms": 580.371,
+      "prompt_per_token_ms": 17.069735294117645,
+      "prompt_per_second": 58.58321659765908,
+      "predicted_n": 7,
+      "predicted_ms": 126.335,
+      "predicted_per_token_ms": 18.047857142857143,
+      "predicted_per_second": 55.408239996833814
     }
   }
 }

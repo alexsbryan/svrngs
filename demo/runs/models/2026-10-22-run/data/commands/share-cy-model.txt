@@ -8,11 +8,11 @@ They cannot open /unload.
 They cannot open /metrics.
 svrngs is running here already, so they can open it now.
 `svrngs unshare cy-model` stops lending it.
-2026-10-23T03:42:20.737117Z DEBUG cli: cli: data dir from $SVRNGS_DIR dir="/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-run/data/home/Cy/.svrngs"
-2026-10-23T03:42:20.737709Z DEBUG cli: cli: the group keeps no relay — met where the build meets its groups group=773006e38847a95392eb07fb90b431679c09dbaa13bb8243df6b5b4e0b474396 at=N0
-2026-10-23T03:42:20.737931Z DEBUG cli: cli: the relays this computer meets its groups at at=N0 unkept=true relay_urls=["https://aps1-1.relay.n0.iroh.link/", "https://euc1-1.relay.n0.iroh.link/", "https://use1-1.relay.n0.iroh.link/", "https://usw1-1.relay.n0.iroh.link/"]
+2026-10-23T03:47:54.619987Z DEBUG cli: cli: data dir from $SVRNGS_DIR dir="/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-run/data/home/Cy/.svrngs"
+2026-10-23T03:47:54.620773Z DEBUG cli: cli: the group keeps no relay — met where the build meets its groups group=46fcfc6cd91e7e30866aebf8ddac92a56311fbed38ae180eac6b587e78662ffb at=N0
+2026-10-23T03:47:54.620971Z DEBUG cli: cli: the relays this computer meets its groups at at=N0 unkept=true relay_urls=["https://aps1-1.relay.n0.iroh.link/", "https://euc1-1.relay.n0.iroh.link/", "https://use1-1.relay.n0.iroh.link/", "https://usw1-1.relay.n0.iroh.link/"]
 If cy-model takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): 
-2026-10-23T03:42:20.738249Z DEBUG cli: cli: share — the password asked for lend=cy-model given=false terminal=false
-2026-10-23T03:42:20.738625Z DEBUG lend: lend: declared lend=cy-model source=Port(8209) kind=llama-swap limit=None refused=5 upload=None secret=false asks=false
-2026-10-23T03:42:20.738678Z DEBUG cli: cli: refused — another svrngs holds the data dir lock=/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-run/data/home/Cy/.svrngs/lock error=lock acquisition failed because the operation would block
-2026-10-23T03:42:20.738689Z DEBUG cli: cli: share — svrngs runs here already, and reads the lend from its declaration lock=/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-run/data/home/Cy/.svrngs/lock
+2026-10-23T03:47:54.621362Z DEBUG cli: cli: share — the password asked for lend=cy-model given=false terminal=false
+2026-10-23T03:47:54.621825Z DEBUG lend: lend: declared lend=cy-model source=Port(8209) kind=llama-swap limit=None refused=5 upload=None secret=false asks=false
+2026-10-23T03:47:54.621887Z DEBUG cli: cli: refused — another svrngs holds the data dir lock=/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-run/data/home/Cy/.svrngs/lock error=lock acquisition failed because the operation would block
+2026-10-23T03:47:54.621898Z DEBUG cli: cli: share — svrngs runs here already, and reads the lend from its declaration lock=/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-run/data/home/Cy/.svrngs/lock

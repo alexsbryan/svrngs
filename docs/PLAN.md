@@ -89,8 +89,15 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   operator to choose. Its story, "Your friends' local AI, in the app you
   already use", is a screenshot fixed by a coder that cannot see, voice in
   and out, and a friend's tool, run on one host against bars C1 to C7. No
-  Ollama ("Fully open and high integrity software only"). What waits is in
-  that queue's STATE.md, and lands in §2 at its run.
+  Ollama ("Fully open and high integrity software only"). The queue landed:
+  `apps/pantry/` lists every lend that answers `/v1/models` or MCP's
+  `initialize`, and `pantry serve` gives one OpenAI-compatible address
+  routed by `model`, with the vision bridge as the worked example of an
+  adapter. Its run (`demo/runs/models/2026-10-22-run/`) met C1 to C7 on one
+  host; C7's limit is could-not-judge there because every path ends in the
+  lender's home, and the door's own tests prove it. What the run taught
+  waits in §2. The queue now stops for a run with real people, whose bars
+  the operator sets before it.
 
 The operator's switch stands apart from that order: when they flip
 `SHIPPED` to svrngs's relay for production (§2; DESIGN §7), #134 and #135
@@ -145,6 +152,23 @@ The grapevine's standing carries are a row after V1 too (GRAPEVINE_DEMO
 | a page whose film never starts once its relay socket breaks: in bash-devices-1's `scripts/check.sh` WebKit's film played nothing in 45 s in its first browser (`crates/svrngs-node/tests/browser/main.rs`, "the film must play"), its group's page having logged "WebSocket connection to … /relay failed … Socket is not connected" before it opened the lend, and played in 0.6 s once the browser was opened again; the film's worker, whose console Playwright cannot read, logged nothing. Not seen in 29 runs an engine at loads to 19 a core (`demo/runs/film-load/2026-10-12/`), so whether it was the harness or a worker that stops for good is not known; every browser run keeps the relay's and the doors' lines in `target/traces/browser.log` since bash-film-load | the film fails to play again in a `scripts/check.sh` run, read with that trace; or a phone's page stops answering after its relay socket breaks in a recorded run |
 | the floor: every app under `/l/<label>/` of one address apart from the page's, on any static host, the link carrying that address after its token (a second address given to `svrngs new`, u5-2; dropped by u6-00). Its cost was one origin for every app, so a lent page could read what another kept and use another's pass while it lasted, and its every app lost its root: the catalogue run lent five self-hosted apps on it in Chromium and WebKit and none got past its sign-in, each asking for `/`-absolute paths the floor's host answered 404, and Paperless's post refused by its own origin check (`demo/runs/catalogue/2026-10-05/RESULTS.md`, "The floor"; `003e0d5`) | a group whose host answers no name nobody made asks for an app that keeps to relative paths, counted |
 | nextest for `scripts/check.sh`'s `tests` step, each test its own process and the binaries at once, as commonwealth-ai runs its suite (its `scripts/sovereign-test.sh:52-62`, `.config/nextest.toml`; test execution 90.5 s to about 19 s over 178 binaries, its `ci.yml:465`). Here the step is about 200 s of serial running and 70 s of compiling (`8142dc03`); 40-70 s of running is an estimate, door's 34 s binary its floor. What it needs, read and not run (the survey of 2026-10-22): browser, conformance and join_page stay on `cargo test`, as their own steps (browser's `JELLYFIN` lock on port 8096 and its `PATH_SET`, `crates/svrngs-node/tests/browser/main.rs:3364`, `:3608-3651`; the harness's `site()` would rebuild `target/web/site` once per test; `traced()` truncates its log once per test); a test group of one thread for peer, leave_page and home_group, which drive Playwright through `web/tests/*.mjs`, as commonwealth-ai's `daemon-boot` group; home.rs's `/running` test alone, since `share::listening()` connects to every port from 1024 to 49151 (`crates/svrngs-node/src/share.rs:196`); a step of its own for the doctests, which nextest does not run and svrngs-core's `compile_fail` proofs need (`admit.rs:365`, `command.rs:28`); `--no-tests=fail`, and never-ran when nextest is missing, never `cargo test` in its place; a `slow-timeout` from the slowest test measured, so a hang is a named failure. On Linux the room's ports (40000-48999, `room.rs` `port_of`) sit inside the ephemeral range, where another test's socket can take one. No retries: a retry that passes is a substituted verdict. Two timed runs before and two after, so the gain is a measured one | `scripts/check.sh` is the longest wait in a row's close, or a row skips it for its time, counted; or the operator moves it in (2026-10-22: "We can put the nextest ideas in some TODO doc") |
+
+| `pantry up`, one command to serve and lend | a provider asks for one after the run, counted |
+| the design's card, facts and matcher (MODELS_ON_THE_RING §3, §6) | a person cannot choose among their friends' lends by the model picker alone, counted |
+| need acts, standing in the record (§2 of that design) | a person asks the group for a model nobody lends, counted |
+| one MCP address gathering every friend's tools | a person adds more than a handful of tool lends and asks for one, counted |
+| several models behind one lend through llama-swap (MIT; measured clean at models-scope, but it writes a file path as `model` and adds a supervisor) | a provider wants several models behind one address, counted |
+| a stdio MCP server that knows who is calling: `mcp-proxy` passes none of the door's headers, so a bridge that maps them is needed (`demo/runs/models/2026-10-22-scope/data/responses/mcp/stdio-through-door.txt`) | a lent stdio tool must act per person, counted |
+| per-person permission on a tool beyond the door's who and how many | a lender asks to let one friend use a tool that writes and not another, counted |
+| a pipeline lent to others, reaching lends on someone else's behalf | the operator, since it crosses DESIGN §3, "The room" |
+| phones: the pantry's address is on the person's loopback; a phone reaches it through the room or a carried page | a person asks, counted |
+| a pantry page on the home page | a provider or consumer who does not use a terminal asks, counted |
+| the deterministic spread by the person's key (MODELS_ON_THE_RING §3, 5) | two consumers' loads collide on one provider while another sits idle, counted |
+| a wire other than OpenAI's or MCP's (ComfyUI's, SearXNG's own): reachable today at its lend's own address | through the pantry when one is asked for, counted |
+| weights over the ring, budgets, A2A, card signatures, and the rest of MODELS_ON_THE_RING §12 | each with its trigger there |
+| a view of what is lent as last seen, with when, so freshness has one decider (lends are live-only, so a routing app pays a dial per friend) | a second app must show a lend that is asleep without dialling every friend, counted |
+| a readable handle that tells two people of one name apart, so apps stop inventing one (the pantry's `handles` is private to `apps/pantry/`) | a second app must name a person whose name is not unique, counted |
+| a server app carried from group to group as a pinned recipe, run on a person's computer only after their yes, never supervised by svrngs ("how will we solve the distribution problem if say someone writes a cool app for their neighborhood"; v1 is to clone and run it) | a group asks for a second app that runs as each of its people, counted |
 
 ## 3. Decisions
 

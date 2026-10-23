@@ -1,3 +1,3 @@
 $ podman run -d --name pantry-run-kokoro -p 127.0.0.1:8207:8880 ghcr.io/remsky/kokoro-fastapi-cpu:v0.9.0
 exit 0
-f095978a9d56a05c24e2c81f0931ba47f3fb5c5e3be8ca84cb5301af3244f485
+aa62ef0e95413d631fc9323849f3d00d72c828d738f02ef2f87ee27922047b0e

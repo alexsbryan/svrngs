@@ -269,6 +269,15 @@ def story(step, *args, timeout=900):
         return {"couldNotJudge": (r.stdout + r.stderr)[-3000:], "exit": r.returncode}
 
 
+RUNNING = re.compile(r"target/debug/svrngs (new|join)|llama-server --port 820|whisper-server|llama-swap|tool\.py|pantry\.mjs|bridge/server|dee\.mjs")
+
+
+def running():
+    """The run's own processes, if any are left; nothing else on the host."""
+    out = subprocess.run(["ps", "-o", "pid,command", "-ax"], capture_output=True, text=True).stdout
+    return "\n".join(l for l in out.splitlines() if RUNNING.search(l)) + "\n"
+
+
 def version():
     out = {"when": now(), "host": {}, "pins": {}}
     for key, c in {"sw_vers": ["sw_vers"], "uname": ["uname", "-a"], "node": ["node", "--version"],
@@ -441,8 +450,7 @@ def story_run():
     save("story/c6-asleep.json", story("asleep", "--pantry", base, "--model", "sam/whisper-1", timeout=120))
 
     save("story/c6-lends.txt", json.dumps(lends(bo), indent=2)[:4000])
-    save("story/ps.txt", subprocess.run(["ps", "-o", "pid,command", "-ax"], capture_output=True,
-                                        text=True).stdout)
+    save("story/ps.txt", running())
 
 
 def main():
@@ -501,8 +509,7 @@ def main():
         for name in list(procs):
             stop(name)
         subprocess.run(["podman", "rm", "-f", "pantry-run-kokoro"], capture_output=True)
-        save("story/ps-after.txt", subprocess.run(["ps", "-o", "pid,command", "-ax"],
-                                                  capture_output=True, text=True).stdout)
+        save("story/ps-after.txt", running())
 
 
 if __name__ == "__main__":
