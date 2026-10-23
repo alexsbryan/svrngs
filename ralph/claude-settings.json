@@ -2,8 +2,13 @@
   "_comment": "Permission contract for a ralph worker in svrngs, run as `claude -p` by commonwealth-ai's scripts/ralph-claude-shim.sh. The deny list is commonwealth-ai ralph/claude-settings.json's: never push, never --no-verify, never rewrite history, never stage everything, never delegate. The allow list is svrngs' own checks and tools.",
   "permissions": {
     "defaultMode": "auto",
-    "additionalDirectories": ["/tmp", "/Users/alexsbryan/Library/Application Support/jellyfin"],
-    "additionalDirectories": ["/tmp", "/Users/alexsbryan/Library/Application Support/jellyfin"],
+    "additionalDirectories": [
+      "/tmp",
+      "/Users/alexsbryan/Library/Application Support/jellyfin",
+      "/Users/alexsbryan/.cache/huggingface",
+      "/Users/alexsbryan/.cache/llama.cpp",
+      "/Users/alexsbryan/.config/opencode"
+    ],
     "allow": [
       "Read", "Edit", "Write", "MultiEdit", "Glob", "Grep", "TodoWrite",
       "Bash(git status*)", "Bash(git diff*)", "Bash(git log*)", "Bash(git show*)",
@@ -17,6 +22,13 @@
       "Bash(cargo build*)", "Bash(cargo check*)", "Bash(cargo test*)", "Bash(cargo fmt*)",
       "Bash(cargo clippy*)", "Bash(cargo add *)", "Bash(cargo tree*)", "Bash(cargo metadata*)",
       "Bash(node *)", "Bash(npm *)", "Bash(npx *)",
+      "Bash(curl *)", "Bash(uv *)", "Bash(python3 *)", "Bash(python *)",
+      "Bash(llama-server *)", "Bash(whisper-server *)", "Bash(mcp-proxy *)",
+      "Bash(ps *)", "Bash(lsof *)", "Bash(pgrep *)", "Bash(kill *)", "Bash(sleep *)",
+      "Bash(ffmpeg *)", "Bash(sox *)", "Bash(play *)", "Bash(open *)",
+      "Bash(brew list*)", "Bash(brew info *)", "Bash(brew --version*)",
+      "Bash(uname *)", "Bash(sw_vers*)", "Bash(df *)", "Bash(du *)", "Bash(stat *)",
+      "Bash(cksum *)", "Bash(sha256sum *)",
       "Bash(ls *)", "Bash(cat *)", "Bash(head *)", "Bash(tail *)", "Bash(wc *)", "Bash(grep *)",
       "Bash(rg *)", "Bash(sed *)", "Bash(awk *)", "Bash(sort *)", "Bash(uniq *)", "Bash(diff *)",
       "Bash(find *)", "Bash(echo *)", "Bash(printf *)", "Bash(test *)", "Bash(which *)",
