@@ -20,6 +20,9 @@ settings = "ralph/claude-settings.json"
 # medium"; the security rows are this queue's. A bare id runs through
 # `worker_bin`, the claude shim, where `variant` is --effort; `variant` is one
 # setting for every role (ralph.py:2775).
+# Medium through capability-what-acts, then high from capability-authorship
+# (the operator, 2026-10-23: "On row 7 switch to high; but before that medium
+# is fine"): the HUMAN-effort-high row stops the loop there for the switch.
 worker = "claude-opus-5-5"
 review = "claude-opus-5-5"
 resolve = "claude-opus-5-5"
