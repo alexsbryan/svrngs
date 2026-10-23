@@ -1,0 +1,11 @@
+{
+  "status": 400,
+  "headers": {
+    "Connection": "close",
+    "Content-Type": "application/json; charset=utf-8",
+    "Server": "llama.cpp",
+    "Access-Control-Allow-Origin": "",
+    "Content-Length": "97"
+  },
+  "body": "{\"error\":{\"code\":400,\"message\":\"Missing conversation id in path\",\"type\":\"invalid_request_error\"}}"
+}

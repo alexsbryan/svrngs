@@ -1,0 +1,8 @@
+# The run's own data. Weights, virtualenvs, HOMEs and svrngs data dirs are
+# measured here but not committed; responses/, commands/ and SHA256SUMS are.
+data/weights/
+data/venv/
+data/home/
+data/svrngs/
+data/podman/
+data/logs/

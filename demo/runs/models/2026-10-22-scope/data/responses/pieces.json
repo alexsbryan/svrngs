@@ -1,0 +1,603 @@
+{
+  "coder": {
+    "piece": "llama-coder",
+    "serve": [
+      "llama-server",
+      "-m",
+      "/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/weights/qwen2.5-coder-7b-instruct-q4_k_m-00001-of-00002.gguf",
+      "--jinja",
+      "--alias",
+      "ana/coder",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "8101",
+      "-c",
+      "4096",
+      "-ngl",
+      "99"
+    ],
+    "port": 8101,
+    "alias": "ana/coder",
+    "when": "2026-10-22T17:33:52-0700",
+    "models_direct": {
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json; charset=utf-8",
+        "Keep-Alive": "timeout=5, max=100",
+        "Server": "llama.cpp",
+        "Access-Control-Allow-Origin": "",
+        "Content-Length": "591"
+      },
+      "body": "{\"models\":[{\"name\":\"ana/coder\",\"model\":\"ana/coder\",\"modified_at\":\"\",\"size\":\"\",\"digest\":\"\",\"type\":\"model\",\"description\":\"\",\"tags\":[\"\"],\"capabilities\":[\"completion\"],\"parameters\":\"\",\"details\":{\"parent_model\":\"\",\"format\":\"gguf\",\"family\":\"\",\"families\":[\"\"],\"parameter_size\":\"\",\"quantization_level\":\"\"}}],\"object\":\"list\",\"data\":[{\"id\":\"ana/coder\",\"aliases\":[\"ana/coder\"],\"tags\":[],\"object\":\"model\",\"created\":1792715634,\"owned_by\":\"llamacpp\",\"meta\":{\"vocab_type\":2,\"n_vocab\":152064,\"n_ctx\":4096,\"n_ctx_train\":131072,\"n_embd\":3584,\"n_params\":7615616512,\"size\":4677120000,\"ftype\":\"Q4_K - Medium\"}}]}"
+    },
+    "props_direct": {
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json; charset=utf-8",
+        "Keep-Alive": "timeout=5, max=100",
+        "Server": "llama.cpp",
+        "Access-Control-Allow-Origin": "",
+        "Content-Length": "4520"
+      },
+      "body": "{\"default_generation_settings\":{\"params\":{\"seed\":4294967295,\"temperature\":0.800000011920929,\"dynatemp_range\":0.0,\"dynatemp_exponent\":1.0,\"top_k\":40,\"top_p\":0.949999988079071,\"min_p\":0.05000000074505806,\"top_n_sigma\":-1.0,\"xtc_probability\":0.0,\"xtc_threshold\":0.10000000149011612,\"typical_p\":1.0,\"repeat_last_n\":64,\"repeat_penalty\":1.0,\"presence_penalty\":0.0,\"frequency_penalty\":0.0,\"dry_multiplier\":0.0,\"dry_base\":1.75,\"dry_allowed_length\":2,\"dry_penalty_last_n\":-1,\"mirostat\":0,\"mirostat_tau\":5.0,\"mirostat_eta\":0.10000000149011612,\"adaptive_target\":-1.0,\"adaptive_decay\":0.8999999761581421,\"max_tokens\":-1,\"n_predict\":-1,\"n_keep\":0,\"n_discard\":0,\"ignore_eos\":false,\"stream\":false,\"n_probs\":0,\"min_keep\":0,\"chat_format\":\"Content-only\",\"reasoning_format\":\"none\",\"reasoning_in_content\":false,\"generation_prompt\":\"\",\"samplers\":[\"penalties\",\"dry\",\"top_n_sigma\",\"top_k\",\"typ_p\",\"top_p\",\"min_p\",\"xtc\",\"temperature\"],\"speculative.types\":\"none\",\"timings_per_token\":false,\"post_sampling_probs\":false,\"backend_sampling\":false,\"lora\":[]},\"n_ctx\":4096},\"total_slots\":4,\"model_alias\":\"ana/coder\",\"model_ftype\":\"Q4_K - Medium\",\"model_path\":\"/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/weights/qwen2.5-coder-7b-instruct-q4_k_m-00001-of-00002.gguf\",\"modalities\":{\"vision\":false,\"video\":false,\"audio\":false},\"media_marker\":\"<__media_aDtdM3tLFvFUPQPFk5xVcixfUGR6k03c__>\",\"endpoint_slots\":true,\"endpoint_props\":false,\"endpoint_metrics\":false,\"ui\":true,\"ui_settings\":{},\"chat_template\":\"{%- if tools %}\\n    {{- '<|im_start|>system\\\\n' }}\\n    {%- if messages[0]['role'] == 'system' %}\\n        {{- messages[0]['content'] }}\\n    {%- else %}\\n        {{- 'You are Qwen, created by Alibaba Cloud. You are a helpful assistant.' }}\\n    {%- endif %}\\n    {{- \\\"\\\\n\\\\n# Tools\\\\n\\\\nYou may call one or more functions to assist with the user query.\\\\n\\\\nYou are provided with function signatures within <tools></tools> XML tags:\\\\n<tools>\\\" }}\\n    {%- for tool in tools %}\\n        {{- \\\"\\\\n\\\" }}\\n        {{- tool | tojson }}\\n    {%- endfor %}\\n    {{- \\\"\\\\n</tools>\\\\n\\\\nFor each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:\\\\n<tool_call>\\\\n{{\\\\\\\"name\\\\\\\": <function-name>, \\\\\\\"arguments\\\\\\\": <args-json-object>}}\\\\n</tool_call><|im_end|>\\\\n\\\" }}\\n{%- else %}\\n    {%- if messages[0]['role'] == 'system' %}\\n        {{- '<|im_start|>system\\\\n' + messages[0]['content'] + '<|im_end|>\\\\n' }}\\n    {%- else %}\\n        {{- '<|im_start|>system\\\\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\\\\n' }}\\n    {%- endif %}\\n{%- endif %}\\n{%- for message in messages %}\\n    {%- if (message.role == \\\"user\\\") or (message.role == \\\"system\\\" and not loop.first) or (message.role == \\\"assistant\\\" and not message.tool_calls) %}\\n        {{- '<|im_start|>' + message.role + '\\\\n' + message.content + '<|im_end|>' + '\\\\n' }}\\n    {%- elif message.role == \\\"assistant\\\" %}\\n        {{- '<|im_start|>' + message.role }}\\n        {%- if message.content %}\\n            {{- '\\\\n' + message.content }}\\n        {%- endif %}\\n        {%- for tool_call in message.tool_calls %}\\n            {%- if tool_call.function is defined %}\\n                {%- set tool_call = tool_call.function %}\\n            {%- endif %}\\n            {{- '\\\\n<tool_call>\\\\n{\\\"name\\\": \\\"' }}\\n            {{- tool_call.name }}\\n            {{- '\\\", \\\"arguments\\\": ' }}\\n            {{- tool_call.arguments | tojson }}\\n            {{- '}\\\\n</tool_call>' }}\\n        {%- endfor %}\\n        {{- '<|im_end|>\\\\n' }}\\n    {%- elif message.role == \\\"tool\\\" %}\\n        {%- if (loop.index0 == 0) or (messages[loop.index0 - 1].role != \\\"tool\\\") %}\\n            {{- '<|im_start|>user' }}\\n        {%- endif %}\\n        {{- '\\\\n<tool_response>\\\\n' }}\\n        {{- message.content }}\\n        {{- '\\\\n</tool_response>' }}\\n        {%- if loop.last or (messages[loop.index0 + 1].role != \\\"tool\\\") %}\\n            {{- '<|im_end|>\\\\n' }}\\n        {%- endif %}\\n    {%- endif %}\\n{%- endfor %}\\n{%- if add_generation_prompt %}\\n    {{- '<|im_start|>assistant\\\\n' }}\\n{%- endif %}\",\"chat_template_caps\":{\"supports_object_arguments\":true,\"supports_parallel_tool_calls\":true,\"supports_preserve_reasoning\":false,\"supports_string_content\":true,\"supports_system_role\":true,\"supports_tool_calls\":true,\"supports_tools\":true,\"supports_typed_content\":false},\"bos_token\":\"<|endoftext|>\",\"eos_token\":\"<|im_end|>\",\"build_info\":\"b10180-11b068d06\",\"is_sleeping\":false,\"cors_proxy_enabled\":false}"
+    },
+    "admin_direct": {
+      "/slots": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json; charset=utf-8",
+          "Keep-Alive": "timeout=5, max=100",
+          "Server": "llama.cpp",
+          "Access-Control-Allow-Origin": "",
+          "Content-Length": "257"
+        },
+        "body": "[{\"id\":0,\"n_ctx\":4096,\"speculative\":false,\"is_processing\":false},{\"id\":1,\"n_ctx\":4096,\"speculative\":false,\"is_processing\":false},{\"id\":2,\"n_ctx\":4096,\"speculative\":false,\"is_processing\":false},{\"id\":3,\"n_ctx\":4096,\"speculative\":false,\"is_processing\":false}]"
+      },
+      "/v1/stream": {
+        "status": 400,
+        "headers": {
+          "Connection": "close",
+          "Content-Type": "application/json; charset=utf-8",
+          "Server": "llama.cpp",
+          "Access-Control-Allow-Origin": "",
+          "Content-Length": "97"
+        },
+        "body": "{\"error\":{\"code\":400,\"message\":\"Missing conversation id in path\",\"type\":\"invalid_request_error\"}}"
+      },
+      "/v1/streams": {
+        "status": 404,
+        "headers": {
+          "Connection": "close",
+          "Content-Type": "application/json; charset=utf-8",
+          "Server": "llama.cpp",
+          "Access-Control-Allow-Origin": "",
+          "Content-Length": "74"
+        },
+        "body": "{\"error\":{\"message\":\"File Not Found\",\"type\":\"not_found_error\",\"code\":404}}"
+      },
+      "/v1/chat/completions/control": {
+        "status": 404,
+        "headers": {
+          "Connection": "close",
+          "Content-Type": "application/json; charset=utf-8",
+          "Server": "llama.cpp",
+          "Access-Control-Allow-Origin": "",
+          "Content-Length": "74"
+        },
+        "body": "{\"error\":{\"message\":\"File Not Found\",\"type\":\"not_found_error\",\"code\":404}}"
+      },
+      "/lora-adapters": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json; charset=utf-8",
+          "Keep-Alive": "timeout=5, max=100",
+          "Server": "llama.cpp",
+          "Access-Control-Allow-Origin": "",
+          "Content-Length": "2"
+        },
+        "body": "[]"
+      },
+      "/metrics": {
+        "status": 501,
+        "headers": {
+          "Connection": "close",
+          "Content-Type": "application/json; charset=utf-8",
+          "Server": "llama.cpp",
+          "Access-Control-Allow-Origin": "",
+          "Content-Length": "136"
+        },
+        "body": "{\"error\":{\"code\":501,\"message\":\"This server does not support metrics endpoint. Start it with `--metrics`\",\"type\":\"not_supported_error\"}}"
+      },
+      "/tools": {
+        "status": 403,
+        "headers": {
+          "Connection": "close",
+          "Content-Type": "application/json; charset=utf-8",
+          "Server": "llama.cpp",
+          "Access-Control-Allow-Origin": "",
+          "Content-Length": "74"
+        },
+        "body": "{\"error\":{\"message\":\"this feature is disabled\",\"type\":\"feature_disabled\"}}"
+      },
+      "/cors-proxy": {
+        "status": 403,
+        "headers": {
+          "Connection": "close",
+          "Content-Type": "application/json; charset=utf-8",
+          "Server": "llama.cpp",
+          "Access-Control-Allow-Origin": "",
+          "Content-Length": "74"
+        },
+        "body": "{\"error\":{\"message\":\"this feature is disabled\",\"type\":\"feature_disabled\"}}"
+      },
+      "/models": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json; charset=utf-8",
+          "Keep-Alive": "timeout=5, max=100",
+          "Server": "llama.cpp",
+          "Access-Control-Allow-Origin": "",
+          "Content-Length": "591"
+        },
+        "body": "{\"models\":[{\"name\":\"ana/coder\",\"model\":\"ana/coder\",\"modified_at\":\"\",\"size\":\"\",\"digest\":\"\",\"type\":\"model\",\"description\":\"\",\"tags\":[\"\"],\"capabilities\":[\"completion\"],\"parameters\":\"\",\"details\":{\"parent_model\":\"\",\"format\":\"gguf\",\"family\":\"\",\"families\":[\"\"],\"parameter_size\":\"\",\"quantization_level\":\"\"}}],\"object\":\"list\",\"data\":[{\"id\":\"ana/coder\",\"aliases\":[\"ana/coder\"],\"tags\":[],\"object\":\"model\",\"created\":1792715634,\"owned_by\":\"llamacpp\",\"meta\":{\"vocab_type\":2,\"n_vocab\":152064,\"n_ctx\":4096,\"n_ctx_train\":131072,\"n_embd\":3584,\"n_params\":7615616512,\"size\":4677120000,\"ftype\":\"Q4_K - Medium\"}}]}"
+      }
+    },
+    "lend": {
+      "key": "9307c56b78082b74707d83bf79dd582203da84e0857e3d8a93d31b261bb71422",
+      "kind": "llama-server",
+      "limit": null,
+      "name": "ana-coder",
+      "origin": "http://vpd6m452baz1k6d7tr91w1m2fkb7zbjatz9d5cxw4pqvph71ctuakx5cxwm6m6.localhost:61373/",
+      "person": "Bo",
+      "reads": [],
+      "relay": "https://usw1-1.relay.n0.iroh.link/",
+      "upload_bps": null,
+      "using": 0
+    },
+    "models_origin": {
+      "status": 200,
+      "headers": {
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "591",
+        "server": "llama.cpp",
+        "access-control-allow-origin": "",
+        "date": "Fri, 23 Oct 2026 00:33:54 GMT"
+      },
+      "body": "{\"models\":[{\"name\":\"ana/coder\",\"model\":\"ana/coder\",\"modified_at\":\"\",\"size\":\"\",\"digest\":\"\",\"type\":\"model\",\"description\":\"\",\"tags\":[\"\"],\"capabilities\":[\"completion\"],\"parameters\":\"\",\"details\":{\"parent_model\":\"\",\"format\":\"gguf\",\"family\":\"\",\"families\":[\"\"],\"parameter_size\":\"\",\"quantization_level\":\"\"}}],\"object\":\"list\",\"data\":[{\"id\":\"ana/coder\",\"aliases\":[\"ana/coder\"],\"tags\":[],\"object\":\"model\",\"created\":1792715634,\"owned_by\":\"llamacpp\",\"meta\":{\"vocab_type\":2,\"n_vocab\":152064,\"n_ctx\":4096,\"n_ctx_train\":131072,\"n_embd\":3584,\"n_params\":7615616512,\"size\":4677120000,\"ftype\":\"Q4_K - Medium\"}}]}"
+    },
+    "props_origin": {
+      "status": 200,
+      "headers": {
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "4520",
+        "server": "llama.cpp",
+        "access-control-allow-origin": "",
+        "date": "Fri, 23 Oct 2026 00:33:54 GMT"
+      },
+      "body": "{\"default_generation_settings\":{\"params\":{\"seed\":4294967295,\"temperature\":0.800000011920929,\"dynatemp_range\":0.0,\"dynatemp_exponent\":1.0,\"top_k\":40,\"top_p\":0.949999988079071,\"min_p\":0.05000000074505806,\"top_n_sigma\":-1.0,\"xtc_probability\":0.0,\"xtc_threshold\":0.10000000149011612,\"typical_p\":1.0,\"repeat_last_n\":64,\"repeat_penalty\":1.0,\"presence_penalty\":0.0,\"frequency_penalty\":0.0,\"dry_multiplier\":0.0,\"dry_base\":1.75,\"dry_allowed_length\":2,\"dry_penalty_last_n\":-1,\"mirostat\":0,\"mirostat_tau\":5.0,\"mirostat_eta\":0.10000000149011612,\"adaptive_target\":-1.0,\"adaptive_decay\":0.8999999761581421,\"max_tokens\":-1,\"n_predict\":-1,\"n_keep\":0,\"n_discard\":0,\"ignore_eos\":false,\"stream\":false,\"n_probs\":0,\"min_keep\":0,\"chat_format\":\"Content-only\",\"reasoning_format\":\"none\",\"reasoning_in_content\":false,\"generation_prompt\":\"\",\"samplers\":[\"penalties\",\"dry\",\"top_n_sigma\",\"top_k\",\"typ_p\",\"top_p\",\"min_p\",\"xtc\",\"temperature\"],\"speculative.types\":\"none\",\"timings_per_token\":false,\"post_sampling_probs\":false,\"backend_sampling\":false,\"lora\":[]},\"n_ctx\":4096},\"total_slots\":4,\"model_alias\":\"ana/coder\",\"model_ftype\":\"Q4_K - Medium\",\"model_path\":\"/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/weights/qwen2.5-coder-7b-instruct-q4_k_m-00001-of-00002.gguf\",\"modalities\":{\"vision\":false,\"video\":false,\"audio\":false},\"media_marker\":\"<__media_aDtdM3tLFvFUPQPFk5xVcixfUGR6k03c__>\",\"endpoint_slots\":true,\"endpoint_props\":false,\"endpoint_metrics\":false,\"ui\":true,\"ui_settings\":{},\"chat_template\":\"{%- if tools %}\\n    {{- '<|im_start|>system\\\\n' }}\\n    {%- if messages[0]['role'] == 'system' %}\\n        {{- messages[0]['content'] }}\\n    {%- else %}\\n        {{- 'You are Qwen, created by Alibaba Cloud. You are a helpful assistant.' }}\\n    {%- endif %}\\n    {{- \\\"\\\\n\\\\n# Tools\\\\n\\\\nYou may call one or more functions to assist with the user query.\\\\n\\\\nYou are provided with function signatures within <tools></tools> XML tags:\\\\n<tools>\\\" }}\\n    {%- for tool in tools %}\\n        {{- \\\"\\\\n\\\" }}\\n        {{- tool | tojson }}\\n    {%- endfor %}\\n    {{- \\\"\\\\n</tools>\\\\n\\\\nFor each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:\\\\n<tool_call>\\\\n{{\\\\\\\"name\\\\\\\": <function-name>, \\\\\\\"arguments\\\\\\\": <args-json-object>}}\\\\n</tool_call><|im_end|>\\\\n\\\" }}\\n{%- else %}\\n    {%- if messages[0]['role'] == 'system' %}\\n        {{- '<|im_start|>system\\\\n' + messages[0]['content'] + '<|im_end|>\\\\n' }}\\n    {%- else %}\\n        {{- '<|im_start|>system\\\\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\\\\n' }}\\n    {%- endif %}\\n{%- endif %}\\n{%- for message in messages %}\\n    {%- if (message.role == \\\"user\\\") or (message.role == \\\"system\\\" and not loop.first) or (message.role == \\\"assistant\\\" and not message.tool_calls) %}\\n        {{- '<|im_start|>' + message.role + '\\\\n' + message.content + '<|im_end|>' + '\\\\n' }}\\n    {%- elif message.role == \\\"assistant\\\" %}\\n        {{- '<|im_start|>' + message.role }}\\n        {%- if message.content %}\\n            {{- '\\\\n' + message.content }}\\n        {%- endif %}\\n        {%- for tool_call in message.tool_calls %}\\n            {%- if tool_call.function is defined %}\\n                {%- set tool_call = tool_call.function %}\\n            {%- endif %}\\n            {{- '\\\\n<tool_call>\\\\n{\\\"name\\\": \\\"' }}\\n            {{- tool_call.name }}\\n            {{- '\\\", \\\"arguments\\\": ' }}\\n            {{- tool_call.arguments | tojson }}\\n            {{- '}\\\\n</tool_call>' }}\\n        {%- endfor %}\\n        {{- '<|im_end|>\\\\n' }}\\n    {%- elif message.role == \\\"tool\\\" %}\\n        {%- if (loop.index0 == 0) or (messages[loop.index0 - 1].role != \\\"tool\\\") %}\\n            {{- '<|im_start|>user' }}\\n        {%- endif %}\\n        {{- '\\\\n<tool_response>\\\\n' }}\\n        {{- message.content }}\\n        {{- '\\\\n</tool_response>' }}\\n        {%- if loop.last or (messages[loop.index0 + 1].role != \\\"tool\\\") %}\\n            {{- '<|im_end|>\\\\n' }}\\n        {%- endif %}\\n    {%- endif %}\\n{%- endfor %}\\n{%- if add_generation_prompt %}\\n    {{- '<|im_start|>assistant\\\\n' }}\\n{%- endif %}\",\"chat_template_caps\":{\"supports_object_arguments\":true,\"supports_parallel_tool_calls\":true,\"supports_preserve_reasoning\":false,\"supports_string_content\":true,\"supports_system_role\":true,\"supports_tool_calls\":true,\"supports_tools\":true,\"supports_typed_content\":false},\"bos_token\":\"<|endoftext|>\",\"eos_token\":\"<|im_end|>\",\"build_info\":\"b10180-11b068d06\",\"is_sleeping\":false,\"cors_proxy_enabled\":false}"
+    },
+    "admin_origin": {
+      "/slots": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json",
+          "x-svrngs-refused": "path",
+          "content-length": "58",
+          "date": "Fri, 23 Oct 2026 00:33:54 GMT"
+        },
+        "body": "{\"error\":\"ana-coder is lent without /slots\",\"kind\":\"path\"}"
+      },
+      "/v1/stream": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json",
+          "x-svrngs-refused": "path",
+          "content-length": "62",
+          "date": "Fri, 23 Oct 2026 00:33:54 GMT"
+        },
+        "body": "{\"error\":\"ana-coder is lent without /v1/stream\",\"kind\":\"path\"}"
+      },
+      "/v1/streams": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json",
+          "x-svrngs-refused": "path",
+          "content-length": "63",
+          "date": "Fri, 23 Oct 2026 00:33:54 GMT"
+        },
+        "body": "{\"error\":\"ana-coder is lent without /v1/streams\",\"kind\":\"path\"}"
+      },
+      "/v1/chat/completions/control": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json",
+          "x-svrngs-refused": "path",
+          "content-length": "80",
+          "date": "Fri, 23 Oct 2026 00:33:54 GMT"
+        },
+        "body": "{\"error\":\"ana-coder is lent without /v1/chat/completions/control\",\"kind\":\"path\"}"
+      },
+      "/lora-adapters": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json",
+          "x-svrngs-refused": "path",
+          "content-length": "66",
+          "date": "Fri, 23 Oct 2026 00:33:54 GMT"
+        },
+        "body": "{\"error\":\"ana-coder is lent without /lora-adapters\",\"kind\":\"path\"}"
+      },
+      "/metrics": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json",
+          "x-svrngs-refused": "path",
+          "content-length": "60",
+          "date": "Fri, 23 Oct 2026 00:33:54 GMT"
+        },
+        "body": "{\"error\":\"ana-coder is lent without /metrics\",\"kind\":\"path\"}"
+      },
+      "/tools": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json",
+          "x-svrngs-refused": "path",
+          "content-length": "58",
+          "date": "Fri, 23 Oct 2026 00:33:54 GMT"
+        },
+        "body": "{\"error\":\"ana-coder is lent without /tools\",\"kind\":\"path\"}"
+      },
+      "/cors-proxy": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json",
+          "x-svrngs-refused": "path",
+          "content-length": "63",
+          "date": "Fri, 23 Oct 2026 00:33:54 GMT"
+        },
+        "body": "{\"error\":\"ana-coder is lent without /cors-proxy\",\"kind\":\"path\"}"
+      },
+      "/models": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json",
+          "x-svrngs-refused": "path",
+          "content-length": "59",
+          "date": "Fri, 23 Oct 2026 00:33:54 GMT"
+        },
+        "body": "{\"error\":\"ana-coder is lent without /models\",\"kind\":\"path\"}"
+      }
+    },
+    "chat_origin": {
+      "status": 200,
+      "headers": {
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "612",
+        "server": "llama.cpp",
+        "access-control-allow-origin": "",
+        "date": "Fri, 23 Oct 2026 00:33:54 GMT"
+      },
+      "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"ok\"}}],\"created\":1792715634,\"model\":\"ana/coder\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":2,\"prompt_tokens\":36,\"total_tokens\":38,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"id\":\"chatcmpl-LwT1cpe6Rx3jlp7q1WnwDgv0CmgZ4v4R\",\"timings\":{\"cache_n\":0,\"prompt_n\":36,\"prompt_ms\":303.898,\"prompt_per_token_ms\":8.441611111111111,\"prompt_per_second\":118.46079934714936,\"predicted_n\":2,\"predicted_ms\":17.184,\"predicted_per_token_ms\":8.592,\"predicted_per_second\":116.38733705772812}}"
+    },
+    "chat_wrong_model_origin": {
+      "status": 200,
+      "headers": {
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "600",
+        "server": "llama.cpp",
+        "access-control-allow-origin": "",
+        "date": "Fri, 23 Oct 2026 00:33:54 GMT"
+      },
+      "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"ok\"}}],\"created\":1792715634,\"model\":\"ana/coder\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":2,\"prompt_tokens\":36,\"total_tokens\":38,\"prompt_tokens_details\":{\"cached_tokens\":35}},\"id\":\"chatcmpl-UGYbupLXeTJMlxJmV0u6TfizqZ0ARnV9\",\"timings\":{\"cache_n\":35,\"prompt_n\":1,\"prompt_ms\":16.533,\"prompt_per_token_ms\":16.533,\"prompt_per_second\":60.48509042521018,\"predicted_n\":2,\"predicted_ms\":15.862,\"predicted_per_token_ms\":7.931,\"predicted_per_second\":126.08750472828143}}"
+    },
+    "tools_origin": {
+      "status": 200,
+      "headers": {
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "732",
+        "server": "llama.cpp",
+        "access-control-allow-origin": "",
+        "date": "Fri, 23 Oct 2026 00:33:55 GMT"
+      },
+      "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"<tools>\\n  {\\n    \\\"name\\\": \\\"weather\\\",\\n    \\\"arguments\\\": {\\n      \\\"city\\\": \\\"Paris\\\"\\n    }\\n  }\\n</tools>\"}}],\"created\":1792715635,\"model\":\"ana/coder\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":32,\"prompt_tokens\":174,\"total_tokens\":206,\"prompt_tokens_details\":{\"cached_tokens\":18}},\"id\":\"chatcmpl-t11MFc2ntVwBPoairo8jo50x9lure3Ay\",\"timings\":{\"cache_n\":18,\"prompt_n\":156,\"prompt_ms\":255.655,\"prompt_per_token_ms\":1.6388141025641025,\"prompt_per_second\":610.197336253936,\"predicted_n\":32,\"predicted_ms\":495.446,\"predicted_per_token_ms\":15.4826875,\"predicted_per_second\":64.58826996282137}}"
+    },
+    "unshared": true
+  },
+  "vision": {
+    "piece": "llama-vision",
+    "serve": [
+      "llama-server",
+      "-m",
+      "/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/weights/Qwen2.5-VL-3B-Instruct-Q4_K_M.gguf",
+      "--mmproj",
+      "/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/weights/mmproj-Qwen2.5-VL-3B-Instruct-f16.gguf",
+      "--jinja",
+      "--alias",
+      "ana/vision",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "8102",
+      "-c",
+      "4096",
+      "-ngl",
+      "99"
+    ],
+    "port": 8102,
+    "alias": "ana/vision",
+    "when": "2026-10-22T17:33:55-0700",
+    "models_direct": {
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json; charset=utf-8",
+        "Keep-Alive": "timeout=5, max=100",
+        "Server": "llama.cpp",
+        "Access-Control-Allow-Origin": "",
+        "Content-Length": "608"
+      },
+      "body": "{\"models\":[{\"name\":\"ana/vision\",\"model\":\"ana/vision\",\"modified_at\":\"\",\"size\":\"\",\"digest\":\"\",\"type\":\"model\",\"description\":\"\",\"tags\":[\"\"],\"capabilities\":[\"completion\",\"multimodal\"],\"parameters\":\"\",\"details\":{\"parent_model\":\"\",\"format\":\"gguf\",\"family\":\"\",\"families\":[\"\"],\"parameter_size\":\"\",\"quantization_level\":\"\"}}],\"object\":\"list\",\"data\":[{\"id\":\"ana/vision\",\"aliases\":[\"ana/vision\"],\"tags\":[],\"object\":\"model\",\"created\":1792715637,\"owned_by\":\"llamacpp\",\"meta\":{\"vocab_type\":2,\"n_vocab\":151936,\"n_ctx\":4096,\"n_ctx_train\":128000,\"n_embd\":2048,\"n_params\":3085938688,\"size\":1923946496,\"ftype\":\"Q4_K - Medium\"}}]}"
+    },
+    "props_direct": {
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json; charset=utf-8",
+        "Keep-Alive": "timeout=5, max=100",
+        "Server": "llama.cpp",
+        "Access-Control-Allow-Origin": "",
+        "Content-Length": "2901"
+      },
+      "body": "{\"default_generation_settings\":{\"params\":{\"seed\":4294967295,\"temperature\":0.800000011920929,\"dynatemp_range\":0.0,\"dynatemp_exponent\":1.0,\"top_k\":40,\"top_p\":0.949999988079071,\"min_p\":0.05000000074505806,\"top_n_sigma\":-1.0,\"xtc_probability\":0.0,\"xtc_threshold\":0.10000000149011612,\"typical_p\":1.0,\"repeat_last_n\":64,\"repeat_penalty\":1.0,\"presence_penalty\":0.0,\"frequency_penalty\":0.0,\"dry_multiplier\":0.0,\"dry_base\":1.75,\"dry_allowed_length\":2,\"dry_penalty_last_n\":-1,\"mirostat\":0,\"mirostat_tau\":5.0,\"mirostat_eta\":0.10000000149011612,\"adaptive_target\":-1.0,\"adaptive_decay\":0.8999999761581421,\"max_tokens\":-1,\"n_predict\":-1,\"n_keep\":0,\"n_discard\":0,\"ignore_eos\":false,\"stream\":false,\"n_probs\":0,\"min_keep\":0,\"chat_format\":\"Content-only\",\"reasoning_format\":\"none\",\"reasoning_in_content\":false,\"generation_prompt\":\"\",\"samplers\":[\"penalties\",\"dry\",\"top_n_sigma\",\"top_k\",\"typ_p\",\"top_p\",\"min_p\",\"xtc\",\"temperature\"],\"speculative.types\":\"none\",\"timings_per_token\":false,\"post_sampling_probs\":false,\"backend_sampling\":false,\"lora\":[]},\"n_ctx\":4096},\"total_slots\":4,\"model_alias\":\"ana/vision\",\"model_ftype\":\"Q4_K - Medium\",\"model_path\":\"/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/weights/Qwen2.5-VL-3B-Instruct-Q4_K_M.gguf\",\"modalities\":{\"vision\":true,\"video\":true,\"audio\":false},\"media_marker\":\"<__media_q5fID1RchoVR2vkF28MmwJ5SH1sBqZjU__>\",\"endpoint_slots\":true,\"endpoint_props\":false,\"endpoint_metrics\":false,\"ui\":true,\"ui_settings\":{},\"chat_template\":\"{% set image_count = namespace(value=0) %}{% set video_count = namespace(value=0) %}{% for message in messages %}{% if loop.first and message['role'] != 'system' %}<|im_start|>system\\nYou are a helpful assistant.<|im_end|>\\n{% endif %}<|im_start|>{{ message['role'] }}\\n{% if message['content'] is string %}{{ message['content'] }}<|im_end|>\\n{% else %}{% for content in message['content'] %}{% if content['type'] == 'image' or 'image' in content or 'image_url' in content %}{% set image_count.value = image_count.value + 1 %}{% if add_vision_id %}Picture {{ image_count.value }}: {% endif %}<|vision_start|><|image_pad|><|vision_end|>{% elif content['type'] == 'video' or 'video' in content %}{% set video_count.value = video_count.value + 1 %}{% if add_vision_id %}Video {{ video_count.value }}: {% endif %}<|vision_start|><|video_pad|><|vision_end|>{% elif 'text' in content %}{{ content['text'] }}{% endif %}{% endfor %}<|im_end|>\\n{% endif %}{% endfor %}{% if add_generation_prompt %}<|im_start|>assistant\\n{% endif %}\",\"chat_template_caps\":{\"supports_object_arguments\":false,\"supports_parallel_tool_calls\":false,\"supports_preserve_reasoning\":false,\"supports_string_content\":true,\"supports_system_role\":true,\"supports_tool_calls\":false,\"supports_tools\":false,\"supports_typed_content\":false},\"bos_token\":\"<|endoftext|>\",\"eos_token\":\"<|im_end|>\",\"build_info\":\"b10180-11b068d06\",\"is_sleeping\":false,\"cors_proxy_enabled\":false}"
+    },
+    "admin_direct": {
+      "/slots": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json; charset=utf-8",
+          "Keep-Alive": "timeout=5, max=100",
+          "Server": "llama.cpp",
+          "Access-Control-Allow-Origin": "",
+          "Content-Length": "257"
+        },
+        "body": "[{\"id\":0,\"n_ctx\":4096,\"speculative\":false,\"is_processing\":false},{\"id\":1,\"n_ctx\":4096,\"speculative\":false,\"is_processing\":false},{\"id\":2,\"n_ctx\":4096,\"speculative\":false,\"is_processing\":false},{\"id\":3,\"n_ctx\":4096,\"speculative\":false,\"is_processing\":false}]"
+      },
+      "/v1/stream": {
+        "status": 400,
+        "headers": {
+          "Connection": "close",
+          "Content-Type": "application/json; charset=utf-8",
+          "Server": "llama.cpp",
+          "Access-Control-Allow-Origin": "",
+          "Content-Length": "97"
+        },
+        "body": "{\"error\":{\"code\":400,\"message\":\"Missing conversation id in path\",\"type\":\"invalid_request_error\"}}"
+      },
+      "/v1/streams": {
+        "status": 404,
+        "headers": {
+          "Connection": "close",
+          "Content-Type": "application/json; charset=utf-8",
+          "Server": "llama.cpp",
+          "Access-Control-Allow-Origin": "",
+          "Content-Length": "74"
+        },
+        "body": "{\"error\":{\"message\":\"File Not Found\",\"type\":\"not_found_error\",\"code\":404}}"
+      },
+      "/v1/chat/completions/control": {
+        "status": 404,
+        "headers": {
+          "Connection": "close",
+          "Content-Type": "application/json; charset=utf-8",
+          "Server": "llama.cpp",
+          "Access-Control-Allow-Origin": "",
+          "Content-Length": "74"
+        },
+        "body": "{\"error\":{\"message\":\"File Not Found\",\"type\":\"not_found_error\",\"code\":404}}"
+      },
+      "/lora-adapters": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json; charset=utf-8",
+          "Keep-Alive": "timeout=5, max=100",
+          "Server": "llama.cpp",
+          "Access-Control-Allow-Origin": "",
+          "Content-Length": "2"
+        },
+        "body": "[]"
+      },
+      "/metrics": {
+        "status": 501,
+        "headers": {
+          "Connection": "close",
+          "Content-Type": "application/json; charset=utf-8",
+          "Server": "llama.cpp",
+          "Access-Control-Allow-Origin": "",
+          "Content-Length": "136"
+        },
+        "body": "{\"error\":{\"code\":501,\"message\":\"This server does not support metrics endpoint. Start it with `--metrics`\",\"type\":\"not_supported_error\"}}"
+      },
+      "/tools": {
+        "status": 403,
+        "headers": {
+          "Connection": "close",
+          "Content-Type": "application/json; charset=utf-8",
+          "Server": "llama.cpp",
+          "Access-Control-Allow-Origin": "",
+          "Content-Length": "74"
+        },
+        "body": "{\"error\":{\"message\":\"this feature is disabled\",\"type\":\"feature_disabled\"}}"
+      },
+      "/cors-proxy": {
+        "status": 403,
+        "headers": {
+          "Connection": "close",
+          "Content-Type": "application/json; charset=utf-8",
+          "Server": "llama.cpp",
+          "Access-Control-Allow-Origin": "",
+          "Content-Length": "74"
+        },
+        "body": "{\"error\":{\"message\":\"this feature is disabled\",\"type\":\"feature_disabled\"}}"
+      },
+      "/models": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json; charset=utf-8",
+          "Keep-Alive": "timeout=5, max=100",
+          "Server": "llama.cpp",
+          "Access-Control-Allow-Origin": "",
+          "Content-Length": "608"
+        },
+        "body": "{\"models\":[{\"name\":\"ana/vision\",\"model\":\"ana/vision\",\"modified_at\":\"\",\"size\":\"\",\"digest\":\"\",\"type\":\"model\",\"description\":\"\",\"tags\":[\"\"],\"capabilities\":[\"completion\",\"multimodal\"],\"parameters\":\"\",\"details\":{\"parent_model\":\"\",\"format\":\"gguf\",\"family\":\"\",\"families\":[\"\"],\"parameter_size\":\"\",\"quantization_level\":\"\"}}],\"object\":\"list\",\"data\":[{\"id\":\"ana/vision\",\"aliases\":[\"ana/vision\"],\"tags\":[],\"object\":\"model\",\"created\":1792715637,\"owned_by\":\"llamacpp\",\"meta\":{\"vocab_type\":2,\"n_vocab\":151936,\"n_ctx\":4096,\"n_ctx_train\":128000,\"n_embd\":2048,\"n_params\":3085938688,\"size\":1923946496,\"ftype\":\"Q4_K - Medium\"}}]}"
+      }
+    },
+    "lend": {
+      "key": "9307c56b78082b74707d83bf79dd582203da84e0857e3d8a93d31b261bb71422",
+      "kind": "llama-server",
+      "limit": null,
+      "name": "ana-vision",
+      "origin": "http://vpd6m452baz1k6d7tr91w1m2fkb7zbjatz9d5cxw4pqvph71ctualquv19r39b.localhost:61373/",
+      "person": "Bo",
+      "reads": [],
+      "relay": "https://usw1-1.relay.n0.iroh.link/",
+      "upload_bps": null,
+      "using": 0
+    },
+    "models_origin": {
+      "status": 200,
+      "headers": {
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "608",
+        "server": "llama.cpp",
+        "access-control-allow-origin": "",
+        "date": "Fri, 23 Oct 2026 00:33:57 GMT"
+      },
+      "body": "{\"models\":[{\"name\":\"ana/vision\",\"model\":\"ana/vision\",\"modified_at\":\"\",\"size\":\"\",\"digest\":\"\",\"type\":\"model\",\"description\":\"\",\"tags\":[\"\"],\"capabilities\":[\"completion\",\"multimodal\"],\"parameters\":\"\",\"details\":{\"parent_model\":\"\",\"format\":\"gguf\",\"family\":\"\",\"families\":[\"\"],\"parameter_size\":\"\",\"quantization_level\":\"\"}}],\"object\":\"list\",\"data\":[{\"id\":\"ana/vision\",\"aliases\":[\"ana/vision\"],\"tags\":[],\"object\":\"model\",\"created\":1792715637,\"owned_by\":\"llamacpp\",\"meta\":{\"vocab_type\":2,\"n_vocab\":151936,\"n_ctx\":4096,\"n_ctx_train\":128000,\"n_embd\":2048,\"n_params\":3085938688,\"size\":1923946496,\"ftype\":\"Q4_K - Medium\"}}]}"
+    },
+    "props_origin": {
+      "status": 200,
+      "headers": {
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "2901",
+        "server": "llama.cpp",
+        "access-control-allow-origin": "",
+        "date": "Fri, 23 Oct 2026 00:33:57 GMT"
+      },
+      "body": "{\"default_generation_settings\":{\"params\":{\"seed\":4294967295,\"temperature\":0.800000011920929,\"dynatemp_range\":0.0,\"dynatemp_exponent\":1.0,\"top_k\":40,\"top_p\":0.949999988079071,\"min_p\":0.05000000074505806,\"top_n_sigma\":-1.0,\"xtc_probability\":0.0,\"xtc_threshold\":0.10000000149011612,\"typical_p\":1.0,\"repeat_last_n\":64,\"repeat_penalty\":1.0,\"presence_penalty\":0.0,\"frequency_penalty\":0.0,\"dry_multiplier\":0.0,\"dry_base\":1.75,\"dry_allowed_length\":2,\"dry_penalty_last_n\":-1,\"mirostat\":0,\"mirostat_tau\":5.0,\"mirostat_eta\":0.10000000149011612,\"adaptive_target\":-1.0,\"adaptive_decay\":0.8999999761581421,\"max_tokens\":-1,\"n_predict\":-1,\"n_keep\":0,\"n_discard\":0,\"ignore_eos\":false,\"stream\":false,\"n_probs\":0,\"min_keep\":0,\"chat_format\":\"Content-only\",\"reasoning_format\":\"none\",\"reasoning_in_content\":false,\"generation_prompt\":\"\",\"samplers\":[\"penalties\",\"dry\",\"top_n_sigma\",\"top_k\",\"typ_p\",\"top_p\",\"min_p\",\"xtc\",\"temperature\"],\"speculative.types\":\"none\",\"timings_per_token\":false,\"post_sampling_probs\":false,\"backend_sampling\":false,\"lora\":[]},\"n_ctx\":4096},\"total_slots\":4,\"model_alias\":\"ana/vision\",\"model_ftype\":\"Q4_K - Medium\",\"model_path\":\"/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/weights/Qwen2.5-VL-3B-Instruct-Q4_K_M.gguf\",\"modalities\":{\"vision\":true,\"video\":true,\"audio\":false},\"media_marker\":\"<__media_q5fID1RchoVR2vkF28MmwJ5SH1sBqZjU__>\",\"endpoint_slots\":true,\"endpoint_props\":false,\"endpoint_metrics\":false,\"ui\":true,\"ui_settings\":{},\"chat_template\":\"{% set image_count = namespace(value=0) %}{% set video_count = namespace(value=0) %}{% for message in messages %}{% if loop.first and message['role'] != 'system' %}<|im_start|>system\\nYou are a helpful assistant.<|im_end|>\\n{% endif %}<|im_start|>{{ message['role'] }}\\n{% if message['content'] is string %}{{ message['content'] }}<|im_end|>\\n{% else %}{% for content in message['content'] %}{% if content['type'] == 'image' or 'image' in content or 'image_url' in content %}{% set image_count.value = image_count.value + 1 %}{% if add_vision_id %}Picture {{ image_count.value }}: {% endif %}<|vision_start|><|image_pad|><|vision_end|>{% elif content['type'] == 'video' or 'video' in content %}{% set video_count.value = video_count.value + 1 %}{% if add_vision_id %}Video {{ video_count.value }}: {% endif %}<|vision_start|><|video_pad|><|vision_end|>{% elif 'text' in content %}{{ content['text'] }}{% endif %}{% endfor %}<|im_end|>\\n{% endif %}{% endfor %}{% if add_generation_prompt %}<|im_start|>assistant\\n{% endif %}\",\"chat_template_caps\":{\"supports_object_arguments\":false,\"supports_parallel_tool_calls\":false,\"supports_preserve_reasoning\":false,\"supports_string_content\":true,\"supports_system_role\":true,\"supports_tool_calls\":false,\"supports_tools\":false,\"supports_typed_content\":false},\"bos_token\":\"<|endoftext|>\",\"eos_token\":\"<|im_end|>\",\"build_info\":\"b10180-11b068d06\",\"is_sleeping\":false,\"cors_proxy_enabled\":false}"
+    },
+    "admin_origin": {
+      "/slots": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json",
+          "x-svrngs-refused": "path",
+          "content-length": "59",
+          "date": "Fri, 23 Oct 2026 00:33:57 GMT"
+        },
+        "body": "{\"error\":\"ana-vision is lent without /slots\",\"kind\":\"path\"}"
+      },
+      "/v1/stream": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json",
+          "x-svrngs-refused": "path",
+          "content-length": "63",
+          "date": "Fri, 23 Oct 2026 00:33:57 GMT"
+        },
+        "body": "{\"error\":\"ana-vision is lent without /v1/stream\",\"kind\":\"path\"}"
+      },
+      "/v1/streams": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json",
+          "x-svrngs-refused": "path",
+          "content-length": "64",
+          "date": "Fri, 23 Oct 2026 00:33:57 GMT"
+        },
+        "body": "{\"error\":\"ana-vision is lent without /v1/streams\",\"kind\":\"path\"}"
+      },
+      "/v1/chat/completions/control": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json",
+          "x-svrngs-refused": "path",
+          "content-length": "81",
+          "date": "Fri, 23 Oct 2026 00:33:57 GMT"
+        },
+        "body": "{\"error\":\"ana-vision is lent without /v1/chat/completions/control\",\"kind\":\"path\"}"
+      },
+      "/lora-adapters": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json",
+          "x-svrngs-refused": "path",
+          "content-length": "67",
+          "date": "Fri, 23 Oct 2026 00:33:57 GMT"
+        },
+        "body": "{\"error\":\"ana-vision is lent without /lora-adapters\",\"kind\":\"path\"}"
+      },
+      "/metrics": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json",
+          "x-svrngs-refused": "path",
+          "content-length": "61",
+          "date": "Fri, 23 Oct 2026 00:33:57 GMT"
+        },
+        "body": "{\"error\":\"ana-vision is lent without /metrics\",\"kind\":\"path\"}"
+      },
+      "/tools": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json",
+          "x-svrngs-refused": "path",
+          "content-length": "59",
+          "date": "Fri, 23 Oct 2026 00:33:57 GMT"
+        },
+        "body": "{\"error\":\"ana-vision is lent without /tools\",\"kind\":\"path\"}"
+      },
+      "/cors-proxy": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json",
+          "x-svrngs-refused": "path",
+          "content-length": "64",
+          "date": "Fri, 23 Oct 2026 00:33:57 GMT"
+        },
+        "body": "{\"error\":\"ana-vision is lent without /cors-proxy\",\"kind\":\"path\"}"
+      },
+      "/models": {
+        "status": 403,
+        "headers": {
+          "content-type": "application/json",
+          "x-svrngs-refused": "path",
+          "content-length": "60",
+          "date": "Fri, 23 Oct 2026 00:33:57 GMT"
+        },
+        "body": "{\"error\":\"ana-vision is lent without /models\",\"kind\":\"path\"}"
+      }
+    },
+    "chat_origin": {
+      "status": 200,
+      "headers": {
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "614",
+        "server": "llama.cpp",
+        "access-control-allow-origin": "",
+        "date": "Fri, 23 Oct 2026 00:33:58 GMT"
+      },
+      "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"ok\"}}],\"created\":1792715638,\"model\":\"ana/vision\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":2,\"prompt_tokens\":26,\"total_tokens\":28,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"id\":\"chatcmpl-2AEexeFrfXTajM1i9LnsacOcv9GQNIjj\",\"timings\":{\"cache_n\":0,\"prompt_n\":26,\"prompt_ms\":167.333,\"prompt_per_token_ms\":6.435884615384615,\"prompt_per_second\":155.37879557528998,\"predicted_n\":2,\"predicted_ms\":10.483,\"predicted_per_token_ms\":5.2415,\"predicted_per_second\":190.78508060669654}}"
+    },
+    "chat_wrong_model_origin": {
+      "status": 200,
+      "headers": {
+        "content-type": "application/json; charset=utf-8",
+        "content-length": "600",
+        "server": "llama.cpp",
+        "access-control-allow-origin": "",
+        "date": "Fri, 23 Oct 2026 00:33:58 GMT"
+      },
+      "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"ok\"}}],\"created\":1792715638,\"model\":\"ana/vision\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":2,\"prompt_tokens\":26,\"total_tokens\":28,\"prompt_tokens_details\":{\"cached_tokens\":25}},\"id\":\"chatcmpl-KxtIPQ2vTXpTy1y7BrNoyCSCL0Ho0WcG\",\"timings\":{\"cache_n\":25,\"prompt_n\":1,\"prompt_ms\":8.952,\"prompt_per_token_ms\":8.952,\"prompt_per_second\":111.70688114387846,\"predicted_n\":2,\"predicted_ms\":8.355,\"predicted_per_token_ms\":4.1775,\"predicted_per_second\":239.37761819269898}}"
+    },
+    "unshared": true
+  }
+}
