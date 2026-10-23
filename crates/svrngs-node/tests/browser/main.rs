@@ -27,6 +27,7 @@ mod common;
 mod harness;
 // The host's load and the seek bar's, the conformance canary's too.
 mod load;
+use load::seeks_judged;
 // An app the group carries (v1ui-shelf).
 mod carried;
 // The group's page in two tabs (groups-tabs).
@@ -767,25 +768,6 @@ fn stopped_and_ran_again(seen: &Value, shown: &Value) {
         runs[stop..].contains(&"running"),
         "the worker must run again after it was stopped:\n{shown:#}"
     );
-}
-
-/// Demo A's seek bar on the film's seeks, each playing again within five
-/// seconds, judged as the conformance canary judges it (`load`): `Ok(None)`
-/// when each did; when one missed, on a host whose load at the run's start
-/// was past `load::BUSY` a core, `Ok(Some(could-not-judge …))`, never a
-/// pass; and on a host under it, `Err` naming the misses, which fails.
-fn seeks_judged(seeks: &[Value], load: &str, cores: usize) -> Result<Option<String>, String> {
-    let missed: Vec<String> = seeks
-        .iter()
-        .filter(|s| s["ms"].as_u64().is_none_or(|ms| ms > 5_000))
-        .map(Value::to_string)
-        .collect();
-    if missed.is_empty() {
-        return Ok(None);
-    }
-    load::past_busy(load, cores)
-        .map(Some)
-        .ok_or_else(|| missed.join(", "))
 }
 
 /// A check this test could not judge, said on its output and added to

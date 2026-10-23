@@ -23,6 +23,7 @@
 mod harness;
 // The host's load and the seek bar's, the browser tests' too.
 #[path = "browser/load.rs"]
+#[allow(dead_code)]
 mod load;
 
 use std::path::Path;
