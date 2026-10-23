@@ -79,6 +79,14 @@ struct Bound {
     relay: RelayUrl,
 }
 
+/// The computer whose key is `bytes`, refused where they name no key.
+fn computer(bytes: &[u8; 32]) -> Result<iroh::PublicKey, JsError> {
+    match iroh::PublicKey::from_bytes(bytes) {
+        Ok(p) => Ok(p),
+        Err(e) => refuse!("LAYER parse: REFUSED — node id is not a valid public key: {e}"),
+    }
+}
+
 /// [`bind`] for the group whose link's token is `token`: its issuer, and
 /// its relay, refused when it carries none — from a computer that reached
 /// no relay, with n0's lookup or without it (`cli::link_relay`, relay-park
@@ -87,12 +95,7 @@ async fn bind_for(key: Vec<u8>, token: &str, held: bool) -> Result<Bound, JsErro
     let Some(link) = Token::decode(token) else {
         refuse!("LAYER parse: REFUSED — the fragment is not a link's token: {token}")
     };
-    let issuer = match iroh::PublicKey::from_bytes(link.issuer.as_bytes()) {
-        Ok(p) => p,
-        Err(e) => {
-            refuse!("LAYER parse: REFUSED — node id is not a valid public key: {e}")
-        }
-    };
+    let issuer = computer(link.issuer.as_bytes())?;
     t!("LAYER parse: ok — issuer {issuer}");
     let Some(relay) = link.relay else {
         refuse!("LAYER parse: REFUSED — the link names no relay, and the page asks n0's lookup for none")
@@ -177,12 +180,7 @@ async fn reach(
             None => refuse!("LAYER parse: REFUSED — no computer named to dial"),
         },
         Some(to) => match <[u8; 32]>::try_from(hex::decode(&to).unwrap_or_default().as_slice()) {
-            Ok(bytes) => match iroh::PublicKey::from_bytes(&bytes) {
-                Ok(p) => p,
-                Err(e) => {
-                    refuse!("LAYER parse: REFUSED — node id is not a valid public key: {e}")
-                }
-            },
+            Ok(bytes) => computer(&bytes)?,
             Err(_) => refuse!("LAYER parse: REFUSED — {to:?} is not a computer's key"),
         },
     };
