@@ -1,0 +1,223 @@
+2026-10-23T17:47:34.629344Z DEBUG iroh_relay::server: Starting Relay server
+2026-10-23T17:47:34.629350Z DEBUG iroh_relay::server: Starting Relay server
+2026-10-23T17:47:34.629732Z  INFO iroh_relay::server::http_server: [HTTP/WS] relay: serving on 127.0.0.1:54144
+2026-10-23T17:47:34.630047Z  INFO iroh_relay::server::http_server: [HTTP/WS] relay: serving on 127.0.0.1:54145
+2026-10-23T17:47:34.630266Z  INFO transport: iroh egress posture (no relay named is n0's with n0_services, none without it; n0_services=false severs all n0 contact) n0_services=false loopback_only=true relays=["http://127.0.0.1:54145/"]
+2026-10-23T17:47:34.630267Z  INFO transport: iroh egress posture (no relay named is n0's with n0_services, none without it; n0_services=false severs all n0 contact) n0_services=false loopback_only=true relays=["http://127.0.0.1:54144/"]
+2026-10-23T17:47:34.896377Z DEBUG transport: transport: the group names no relay for this computer — its key alone, which only an address lookup finds peer=ea4a6c63e2
+2026-10-23T17:47:34.898421Z DEBUG transport: iroh: a request on the connection kept to it, else on one dialled (#178) peer=ea4a6c63e2 alpn=Member kept=false
+2026-10-23T17:47:34.898505Z DEBUG transport: iroh: dialled by key, iroh holding these addresses for it peer=ea4a6c63e2 alpn=Member known=[]
+2026-10-23T17:47:34.898548Z DEBUG transport: iroh: a bare key — dialled through the endpoint's address lookup when it has one transport="iroh" peer=ea4a6c63 lookup=false
+2026-10-23T17:47:34.930705Z DEBUG transport: transport: the group names no relay for this computer — its key alone, which only an address lookup finds peer=ea4a6c63e2
+2026-10-23T17:47:34.930972Z DEBUG transport: iroh: a request on the connection kept to it, else on one dialled (#178) peer=ea4a6c63e2 alpn=Member kept=false
+2026-10-23T17:47:34.931016Z DEBUG transport: iroh: dialled by key, iroh holding these addresses for it peer=ea4a6c63e2 alpn=Member known=[]
+2026-10-23T17:47:34.931040Z DEBUG transport: iroh: a bare key — dialled through the endpoint's address lookup when it has one transport="iroh" peer=ea4a6c63 lookup=false
+2026-10-23T17:47:34.986219Z DEBUG relay-http-serve: iroh_relay::server::http_server: connection opened from 127.0.0.1:54152
+2026-10-23T17:47:34.986300Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54152}: iroh_relay::server::http_server: HTTP: serve connection
+2026-10-23T17:47:34.986243Z DEBUG relay-http-serve: iroh_relay::server::http_server: connection opened from 127.0.0.1:54153
+2026-10-23T17:47:34.990362Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54153}: iroh_relay::server::http_server: HTTP: serve connection
+2026-10-23T17:47:35.095116Z DEBUG relay-http-serve: iroh_relay::server::http_server: connection opened from 127.0.0.1:54157
+2026-10-23T17:47:35.095212Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54157}: iroh_relay::server::http_server: HTTP: serve connection
+2026-10-23T17:47:35.099098Z DEBUG relay-http-serve: iroh_relay::server::http_server: connection opened from 127.0.0.1:54156
+2026-10-23T17:47:35.110568Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54156}: iroh_relay::server::http_server: HTTP: serve connection
+2026-10-23T17:47:35.183975Z DEBUG relay-http-serve: iroh_relay::server::http_server: connection opened from 127.0.0.1:54160
+2026-10-23T17:47:35.184080Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54160}: iroh_relay::server::http_server: HTTP: serve connection
+2026-10-23T17:47:35.189062Z DEBUG relay-http-serve: iroh_relay::server::http_server: connection opened from 127.0.0.1:54159
+2026-10-23T17:47:35.189131Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54159}: iroh_relay::server::http_server: HTTP: serve connection
+2026-10-23T17:47:37.778625Z DEBUG iroh_relay::client: Dialing relay by websocket dial_url=ws://127.0.0.1:54144/relay
+2026-10-23T17:47:37.778623Z DEBUG iroh_relay::client: Dialing relay by websocket dial_url=ws://127.0.0.1:54145/relay
+2026-10-23T17:47:37.779834Z DEBUG relay-http-serve: iroh_relay::server::http_server: connection opened from 127.0.0.1:54169
+2026-10-23T17:47:37.779896Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54169}: iroh_relay::server::http_server: HTTP: serve connection
+2026-10-23T17:47:37.779965Z DEBUG iroh_relay::client::tls: TCP stream connected server_addr=Ok(127.0.0.1:54144) local_addr=127.0.0.1:54169
+2026-10-23T17:47:37.780769Z DEBUG relay-http-serve: iroh_relay::server::http_server: connection opened from 127.0.0.1:54170
+2026-10-23T17:47:37.780811Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54170}: iroh_relay::server::http_server: HTTP: serve connection
+2026-10-23T17:47:37.780846Z DEBUG iroh_relay::client::tls: TCP stream connected server_addr=Ok(127.0.0.1:54145) local_addr=127.0.0.1:54170
+2026-10-23T17:47:37.780947Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54169}:handler: iroh_relay::server::http_server: relay_connection upgraded
+2026-10-23T17:47:37.783938Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54170}:handler: iroh_relay::server::http_server: relay_connection upgraded
+2026-10-23T17:47:37.784205Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54169}:handler: iroh_relay::server::http_server: upgraded connection completed
+2026-10-23T17:47:37.784846Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54170}:handler: iroh_relay::server::http_server: upgraded connection completed
+2026-10-23T17:47:37.785814Z DEBUG iroh_relay::ping_tracker: Sending ping to relay server. data=[49, 171, 247, 0, 12, 146, 166, 173]
+2026-10-23T17:47:37.789008Z DEBUG iroh_relay::ping_tracker: Sending ping to relay server. data=[239, 122, 143, 212, 156, 181, 61, 159]
+2026-10-23T17:47:37.789465Z DEBUG iroh_relay::ping_tracker: Pong received from relay server data=[49, 171, 247, 0, 12, 146, 166, 173] rtt=3.652041ms
+2026-10-23T17:47:37.796500Z DEBUG iroh_relay::ping_tracker: Pong received from relay server data=[239, 122, 143, 212, 156, 181, 61, 159] rtt=7.492666ms
+2026-10-23T17:47:46.023618Z DEBUG relay-http-serve: iroh_relay::server::http_server: connection opened from 127.0.0.1:54203
+2026-10-23T17:47:46.023701Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54203}: iroh_relay::server::http_server: HTTP: serve connection
+2026-10-23T17:47:46.148974Z DEBUG relay-http-serve: iroh_relay::server::http_server: connection opened from 127.0.0.1:54204
+2026-10-23T17:47:46.149103Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54204}: iroh_relay::server::http_server: HTTP: serve connection
+2026-10-23T17:47:46.149766Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54204}:handler: iroh_relay::server::http_server: relay_connection upgraded
+2026-10-23T17:47:46.180518Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54204}:handler: iroh_relay::server::http_server: upgraded connection completed
+2026-10-23T17:47:46.287772Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c
+2026-10-23T17:47:46.337701Z DEBUG transport: transport: the group names no relay for this computer — its key alone, which only an address lookup finds peer=8139770ea8
+2026-10-23T17:47:46.337803Z DEBUG transport: transport: the group names no relay for this computer — its key alone, which only an address lookup finds peer=ea4a6c63e2
+2026-10-23T17:47:46.337919Z DEBUG transport: iroh: a request on the connection kept to it, else on one dialled (#178) peer=8139770ea8 alpn=Member kept=false
+2026-10-23T17:47:46.337959Z DEBUG transport: iroh: dialled by key, iroh holding these addresses for it peer=8139770ea8 alpn=Member known=[]
+2026-10-23T17:47:46.337985Z DEBUG transport: iroh: a bare key — dialled through the endpoint's address lookup when it has one transport="iroh" peer=8139770e lookup=false
+2026-10-23T17:47:47.042691Z DEBUG relay-http-serve: iroh_relay::server::http_server: connection opened from 127.0.0.1:54211
+2026-10-23T17:47:47.042830Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54211}: iroh_relay::server::http_server: HTTP: serve connection
+2026-10-23T17:47:47.043045Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54211}:handler: iroh_relay::server::http_server: relay_connection upgraded
+2026-10-23T17:47:47.047568Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54211}:handler: iroh_relay::server::http_server: upgraded connection completed
+2026-10-23T17:47:47.059410Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394
+2026-10-23T17:47:47.059826Z DEBUG door: door: the person the key is key="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" person_key="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394"
+2026-10-23T17:47:47.059978Z DEBUG door: door: the person's choice for the app, judged lend=shelf person=8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 app=None asks=false choice=None judged=Ok(())
+2026-10-23T17:47:47.060039Z  INFO door: door: let in, and told their share of the declared upload person="cy" lend=shelf people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(6) sent=Some(4040) received=Some(3835)
+2026-10-23T17:47:47.060057Z DEBUG door: door: the lend declares no upload, so no share is told lend=shelf
+2026-10-23T17:47:47.060093Z DEBUG door: door: carrying a request to the lend's service, the app the pass's or none, a guest's host's or none actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" person="cy" host=None group="house" lend=shelf app=None method=GET path="/title.bin"
+2026-10-23T17:47:47.060141Z DEBUG carriage: door: asked actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" lend=shelf range=Some("bytes=1000-8999999")
+2026-10-23T17:47:47.060188Z DEBUG door: door: the account the lend is told actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" user="cy-8139770ea87d175f"
+2026-10-23T17:47:47.060355Z DEBUG door: door: the lend's lender, by whom a refusal names it; none here names this computer, so "Its lender" actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" lender=Some("ada")
+2026-10-23T17:47:47.060511Z DEBUG door: door: whether the device stands in a group, for its page; an unreadable register tells none group="house" read=true
+2026-10-23T17:47:47.060542Z DEBUG door: door: the pages of the groups the device stands in, none told when one cannot be a header device="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" told=["house=none"] header=true
+2026-10-23T17:47:47.060568Z DEBUG door: door: the browser's origin, told to the service as a proxy's forwarded headers forwarded_host=svrngs forwarded_proto="https"
+2026-10-23T17:47:47.060977Z DEBUG door: door: the lend's service answered; streaming it back actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" lend=shelf status=206
+2026-10-23T17:47:47.060998Z DEBUG carriage: door: answered lend=shelf range=Some("bytes=1000-8999999") status=206 content_range=Some("bytes 1000-8999999/67108864") ms=0
+2026-10-23T17:47:47.482864Z DEBUG relay-http-serve: iroh_relay::server::http_server: connection opened from 127.0.0.1:54216
+2026-10-23T17:47:47.482948Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54216}: iroh_relay::server::http_server: HTTP: serve connection
+2026-10-23T17:47:47.507531Z DEBUG relay-http-serve: iroh_relay::server::http_server: connection opened from 127.0.0.1:54217
+2026-10-23T17:47:47.507673Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54217}: iroh_relay::server::http_server: HTTP: serve connection
+2026-10-23T17:47:47.507908Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54217}:handler: iroh_relay::server::http_server: relay_connection upgraded
+2026-10-23T17:47:47.527246Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54217}:handler: iroh_relay::server::http_server: upgraded connection completed
+2026-10-23T17:47:47.552454Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c
+2026-10-23T17:47:47.553627Z DEBUG transport: transport: the group names no relay for this computer — its key alone, which only an address lookup finds peer=8139770ea8
+2026-10-23T17:47:47.553656Z DEBUG transport: transport: the group names no relay for this computer — its key alone, which only an address lookup finds peer=ea4a6c63e2
+2026-10-23T17:47:47.553709Z DEBUG transport: iroh: a request on the connection kept to it, else on one dialled (#178) peer=8139770ea8 alpn=Member kept=false
+2026-10-23T17:47:47.553726Z DEBUG transport: iroh: dialled by key, iroh holding these addresses for it peer=8139770ea8 alpn=Member known=[]
+2026-10-23T17:47:47.553740Z DEBUG transport: iroh: a bare key — dialled through the endpoint's address lookup when it has one transport="iroh" peer=8139770e lookup=false
+2026-10-23T17:47:47.892322Z DEBUG relay-http-serve: iroh_relay::server::http_server: connection opened from 127.0.0.1:54219
+2026-10-23T17:47:47.892476Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54219}: iroh_relay::server::http_server: HTTP: serve connection
+2026-10-23T17:47:47.892620Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54219}:handler: iroh_relay::server::http_server: relay_connection upgraded
+2026-10-23T17:47:47.897894Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54219}:handler: iroh_relay::server::http_server: upgraded connection completed
+2026-10-23T17:47:47.954382Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394
+2026-10-23T17:47:47.967036Z DEBUG door: door: the person the key is key="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" person_key="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394"
+2026-10-23T17:47:47.967179Z DEBUG door: door: the person's choice for the app, judged lend=shelf person=8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 app=None asks=false choice=None judged=Ok(())
+2026-10-23T17:47:47.967272Z  INFO door: door: let in, and told their share of the declared upload person="cy" lend=shelf people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(50) sent=Some(4010) received=Some(3837)
+2026-10-23T17:47:47.967300Z DEBUG door: door: the lend declares no upload, so no share is told lend=shelf
+2026-10-23T17:47:47.967312Z DEBUG door: door: carrying a request to the lend's service, the app the pass's or none, a guest's host's or none actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" person="cy" host=None group="house" lend=shelf app=None method=GET path="/title.bin"
+2026-10-23T17:47:47.967337Z DEBUG carriage: door: asked actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" lend=shelf range=Some("bytes=1000-8999999")
+2026-10-23T17:47:47.967364Z DEBUG door: door: the account the lend is told actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" user="cy-8139770ea87d175f"
+2026-10-23T17:47:47.967554Z DEBUG door: door: the lend's lender, by whom a refusal names it; none here names this computer, so "Its lender" actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" lender=Some("ada")
+2026-10-23T17:47:47.967783Z DEBUG door: door: whether the device stands in a group, for its page; an unreadable register tells none group="house" read=true
+2026-10-23T17:47:47.967828Z DEBUG door: door: the pages of the groups the device stands in, none told when one cannot be a header device="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" told=["house=none"] header=true
+2026-10-23T17:47:47.967861Z DEBUG door: door: the browser's origin, told to the service as a proxy's forwarded headers forwarded_host=svrngs forwarded_proto="https"
+2026-10-23T17:47:47.968689Z DEBUG door: door: the lend's service answered; streaming it back actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" lend=shelf status=206
+2026-10-23T17:47:47.968749Z DEBUG carriage: door: answered lend=shelf range=Some("bytes=1000-8999999") status=206 content_range=Some("bytes 1000-8999999/67108864") ms=1
+2026-10-23T17:47:59.571131Z DEBUG carriage: door: the answer sent to its end lend="shelf" range=Some("bytes=1000-8999999") status=206 sent=8999000 length=Some(8999000) ms=12510
+2026-10-23T17:48:01.451293Z DEBUG door: door: the person the key is key="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" person_key="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394"
+2026-10-23T17:48:01.451406Z DEBUG door: door: the person's choice for the app, judged lend=shelf person=8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 app=None asks=false choice=None judged=Ok(())
+2026-10-23T17:48:01.451480Z  INFO door: door: let in, and told their share of the declared upload person="cy" lend=shelf people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(926) sent=Some(9219236) received=Some(126161)
+2026-10-23T17:48:01.451499Z DEBUG door: door: the lend declares no upload, so no share is told lend=shelf
+2026-10-23T17:48:01.451510Z DEBUG door: door: carrying a request to the lend's service, the app the pass's or none, a guest's host's or none actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" person="cy" host=None group="house" lend=shelf app=None method=GET path="/title.bin"
+2026-10-23T17:48:01.451528Z DEBUG carriage: door: asked actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" lend=shelf range=Some("bytes=67108864-")
+2026-10-23T17:48:01.451552Z DEBUG door: door: the account the lend is told actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" user="cy-8139770ea87d175f"
+2026-10-23T17:48:01.451668Z DEBUG door: door: the lend's lender, by whom a refusal names it; none here names this computer, so "Its lender" actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" lender=Some("ada")
+2026-10-23T17:48:01.451794Z DEBUG door: door: whether the device stands in a group, for its page; an unreadable register tells none group="house" read=true
+2026-10-23T17:48:01.451818Z DEBUG door: door: the pages of the groups the device stands in, none told when one cannot be a header device="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" told=["house=none"] header=true
+2026-10-23T17:48:01.451842Z DEBUG door: door: the browser's origin, told to the service as a proxy's forwarded headers forwarded_host=svrngs forwarded_proto="https"
+2026-10-23T17:48:01.452363Z DEBUG door: door: the lend's service answered; streaming it back actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" lend=shelf status=416
+2026-10-23T17:48:01.452427Z DEBUG carriage: door: answered lend=shelf range=Some("bytes=67108864-") status=416 content_range=Some("bytes */67108864") ms=0
+2026-10-23T17:48:01.452496Z DEBUG carriage: door: the answer sent to its end lend="shelf" range=Some("bytes=67108864-") status=416 sent=0 length=Some(0) ms=0
+2026-10-23T17:48:01.614740Z DEBUG door: door: the person the key is key="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" person_key="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394"
+2026-10-23T17:48:01.615071Z DEBUG door: door: the person's choice for the app, judged lend=tap person=8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 app=None asks=false choice=None judged=Ok(())
+2026-10-23T17:48:01.615155Z  INFO door: door: let in, and told their share of the declared upload person="cy" lend=tap people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(830) sent=Some(9219457) received=Some(126304)
+2026-10-23T17:48:01.615180Z DEBUG door: door: the lend declares no upload, so no share is told lend=tap
+2026-10-23T17:48:01.615193Z DEBUG door: door: carrying a request to the lend's service, the app the pass's or none, a guest's host's or none actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" person="cy" host=None group="house" lend=tap app=None method=GET path="/stream"
+2026-10-23T17:48:01.615213Z DEBUG carriage: door: asked actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" lend=tap range=None
+2026-10-23T17:48:01.615230Z DEBUG door: door: the account the lend is told actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" user="cy-8139770ea87d175f"
+2026-10-23T17:48:01.615418Z DEBUG door: door: the lend's lender, by whom a refusal names it; none here names this computer, so "Its lender" actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" lender=Some("ada")
+2026-10-23T17:48:01.615567Z DEBUG door: door: whether the device stands in a group, for its page; an unreadable register tells none group="house" read=true
+2026-10-23T17:48:01.615592Z DEBUG door: door: the pages of the groups the device stands in, none told when one cannot be a header device="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" told=["house=none"] header=true
+2026-10-23T17:48:01.615617Z DEBUG door: door: the browser's origin, told to the service as a proxy's forwarded headers forwarded_host=svrngs forwarded_proto="https"
+2026-10-23T17:48:01.616167Z DEBUG door: door: the lend's service answered; streaming it back actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" lend=tap status=200
+2026-10-23T17:48:01.616230Z DEBUG carriage: door: answered lend=tap range=None status=200 content_range=None ms=1
+2026-10-23T17:48:01.739095Z DEBUG carriage: door: the answer sent to its end lend="tap" range=None status=200 sent=15 length=None ms=123
+2026-10-23T17:48:01.739172Z DEBUG transport: iroh acceptor: a stream's HTTP connection ended in error dialer=8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 error=connection closed before message completed
+2026-10-23T17:48:01.742188Z DEBUG door: door: the person the key is key="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" person_key="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394"
+2026-10-23T17:48:01.742443Z DEBUG door: door: the person's choice for the app, judged lend=sink person=8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 app=None asks=false choice=None judged=Ok(())
+2026-10-23T17:48:01.742520Z  INFO door: door: let in, and told their share of the declared upload person="cy" lend=sink people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(645) sent=Some(9219826) received=Some(135256)
+2026-10-23T17:48:01.742586Z DEBUG door: door: the lend declares no upload, so no share is told lend=sink
+2026-10-23T17:48:01.742612Z DEBUG door: door: carrying a request to the lend's service, the app the pass's or none, a guest's host's or none actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" person="cy" host=None group="house" lend=sink app=None method=POST path="/up"
+2026-10-23T17:48:01.742647Z DEBUG carriage: door: asked actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" lend=sink range=None
+2026-10-23T17:48:01.742684Z DEBUG door: door: the account the lend is told actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" user="cy-8139770ea87d175f"
+2026-10-23T17:48:01.742971Z DEBUG door: door: the lend's lender, by whom a refusal names it; none here names this computer, so "Its lender" actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" lender=Some("ada")
+2026-10-23T17:48:01.743128Z DEBUG door: door: whether the device stands in a group, for its page; an unreadable register tells none group="house" read=true
+2026-10-23T17:48:01.743153Z DEBUG door: door: the pages of the groups the device stands in, none told when one cannot be a header device="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" told=["house=none"] header=true
+2026-10-23T17:48:01.743175Z DEBUG door: door: the browser's origin, told to the service as a proxy's forwarded headers forwarded_host=svrngs forwarded_proto="https"
+2026-10-23T17:48:03.903679Z  WARN relay-http-serve:conn{peer=127.0.0.1:54217}:handler:client-connection-actor{remote_endpoint=ea4a6c63e2 connection_id=4}: iroh_relay::server::client: actor errored Stream terminated, exiting
+2026-10-23T17:48:03.904713Z DEBUG relay-http-serve: iroh_relay::server::http_server: connection opened from 127.0.0.1:54279
+2026-10-23T17:48:03.904797Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54279}: iroh_relay::server::http_server: HTTP: serve connection
+2026-10-23T17:48:03.904895Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54279}:handler: iroh_relay::server::http_server: relay_connection upgraded
+2026-10-23T17:48:06.480467Z DEBUG carriage: door: the answer sent to its end lend="shelf" range=Some("bytes=1000-8999999") status=206 sent=8999000 length=Some(8999000) ms=18513
+2026-10-23T17:48:06.848923Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54279}:handler: iroh_relay::server::http_server: upgraded connection completed
+2026-10-23T17:48:09.362472Z DEBUG door: door: the person the key is key="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" person_key="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394"
+2026-10-23T17:48:09.362706Z DEBUG door: door: the person's choice for the app, judged lend=shelf person=8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 app=None asks=false choice=None judged=Ok(())
+2026-10-23T17:48:09.362765Z  INFO door: door: let in, and told their share of the declared upload person="cy" lend=shelf people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(2541) sent=Some(9219038) received=Some(128145)
+2026-10-23T17:48:09.362784Z DEBUG door: door: the lend declares no upload, so no share is told lend=shelf
+2026-10-23T17:48:09.362795Z DEBUG door: door: carrying a request to the lend's service, the app the pass's or none, a guest's host's or none actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" person="cy" host=None group="house" lend=shelf app=None method=GET path="/title.bin"
+2026-10-23T17:48:09.362811Z DEBUG carriage: door: asked actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" lend=shelf range=Some("bytes=67108864-")
+2026-10-23T17:48:09.362830Z DEBUG door: door: the account the lend is told actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" user="cy-8139770ea87d175f"
+2026-10-23T17:48:09.362951Z DEBUG door: door: the lend's lender, by whom a refusal names it; none here names this computer, so "Its lender" actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" lender=Some("ada")
+2026-10-23T17:48:09.363074Z DEBUG door: door: whether the device stands in a group, for its page; an unreadable register tells none group="house" read=true
+2026-10-23T17:48:09.363098Z DEBUG door: door: the pages of the groups the device stands in, none told when one cannot be a header device="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" told=["house=none"] header=true
+2026-10-23T17:48:09.363116Z DEBUG door: door: the browser's origin, told to the service as a proxy's forwarded headers forwarded_host=svrngs forwarded_proto="https"
+2026-10-23T17:48:09.363558Z DEBUG door: door: the lend's service answered; streaming it back actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" lend=shelf status=416
+2026-10-23T17:48:09.363621Z DEBUG carriage: door: answered lend=shelf range=Some("bytes=67108864-") status=416 content_range=Some("bytes */67108864") ms=0
+2026-10-23T17:48:09.363698Z DEBUG carriage: door: the answer sent to its end lend="shelf" range=Some("bytes=67108864-") status=416 sent=0 length=Some(0) ms=0
+2026-10-23T17:48:09.394926Z DEBUG door: door: the person the key is key="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" person_key="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394"
+2026-10-23T17:48:09.395226Z DEBUG door: door: the person's choice for the app, judged lend=tap person=8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 app=None asks=false choice=None judged=Ok(())
+2026-10-23T17:48:09.395272Z  INFO door: door: let in, and told their share of the declared upload person="cy" lend=tap people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(2227) sent=Some(9219259) received=Some(128288)
+2026-10-23T17:48:09.395287Z DEBUG door: door: the lend declares no upload, so no share is told lend=tap
+2026-10-23T17:48:09.395299Z DEBUG door: door: carrying a request to the lend's service, the app the pass's or none, a guest's host's or none actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" person="cy" host=None group="house" lend=tap app=None method=GET path="/stream"
+2026-10-23T17:48:09.395325Z DEBUG carriage: door: asked actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" lend=tap range=None
+2026-10-23T17:48:09.395343Z DEBUG door: door: the account the lend is told actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" user="cy-8139770ea87d175f"
+2026-10-23T17:48:09.395475Z DEBUG door: door: the lend's lender, by whom a refusal names it; none here names this computer, so "Its lender" actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" lender=Some("ada")
+2026-10-23T17:48:09.395603Z DEBUG door: door: whether the device stands in a group, for its page; an unreadable register tells none group="house" read=true
+2026-10-23T17:48:09.395625Z DEBUG door: door: the pages of the groups the device stands in, none told when one cannot be a header device="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" told=["house=none"] header=true
+2026-10-23T17:48:09.395642Z DEBUG door: door: the browser's origin, told to the service as a proxy's forwarded headers forwarded_host=svrngs forwarded_proto="https"
+2026-10-23T17:48:09.395966Z DEBUG door: door: the lend's service answered; streaming it back actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" lend=tap status=200
+2026-10-23T17:48:09.395981Z DEBUG carriage: door: answered lend=tap range=None status=200 content_range=None ms=0
+2026-10-23T17:48:09.529635Z DEBUG carriage: door: the answer sent to its end lend="tap" range=None status=200 sent=15 length=None ms=134
+2026-10-23T17:48:09.529691Z DEBUG transport: iroh acceptor: a stream's HTTP connection ended in error dialer=8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 error=connection closed before message completed
+2026-10-23T17:48:09.530038Z DEBUG door: door: the person the key is key="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" person_key="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394"
+2026-10-23T17:48:09.530292Z DEBUG door: door: the person's choice for the app, judged lend=sink person=8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 app=None asks=false choice=None judged=Ok(())
+2026-10-23T17:48:09.530345Z  INFO door: door: let in, and told their share of the declared upload person="cy" lend=sink people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(1707) sent=Some(9219562) received=Some(131432)
+2026-10-23T17:48:09.530359Z DEBUG door: door: the lend declares no upload, so no share is told lend=sink
+2026-10-23T17:48:09.530370Z DEBUG door: door: carrying a request to the lend's service, the app the pass's or none, a guest's host's or none actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" person="cy" host=None group="house" lend=sink app=None method=POST path="/up"
+2026-10-23T17:48:09.530386Z DEBUG carriage: door: asked actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" lend=sink range=None
+2026-10-23T17:48:09.530405Z DEBUG door: door: the account the lend is told actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" user="cy-8139770ea87d175f"
+2026-10-23T17:48:09.530588Z DEBUG door: door: the lend's lender, by whom a refusal names it; none here names this computer, so "Its lender" actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" lender=Some("ada")
+2026-10-23T17:48:09.530775Z DEBUG door: door: whether the device stands in a group, for its page; an unreadable register tells none group="house" read=true
+2026-10-23T17:48:09.530893Z DEBUG door: door: the pages of the groups the device stands in, none told when one cannot be a header device="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" told=["house=none"] header=true
+2026-10-23T17:48:09.531008Z DEBUG door: door: the browser's origin, told to the service as a proxy's forwarded headers forwarded_host=svrngs forwarded_proto="https"
+2026-10-23T17:48:15.611013Z DEBUG door: door: the lend's service answered; streaming it back actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" lend=sink status=200
+2026-10-23T17:48:15.611110Z DEBUG carriage: door: answered lend=sink range=None status=200 content_range=None ms=13868
+2026-10-23T17:48:15.611181Z DEBUG carriage: door: the answer sent to its end lend="sink" range=None status=200 sent=72 length=Some(72) ms=13868
+2026-10-23T17:48:16.026485Z ERROR relay-http-serve:conn{peer=127.0.0.1:54203}: iroh_relay::server::http_server: failed to handle connection error=Connection did not reach established state within timeout
+2026-10-23T17:48:16.429159Z  WARN relay-http-serve:conn{peer=127.0.0.1:54211}:handler:client-connection-actor{remote_endpoint=8139770ea8 connection_id=3}: iroh_relay::server::client: actor errored Stream terminated, exiting
+2026-10-23T17:48:16.542083Z  WARN relay-http-serve:conn{peer=127.0.0.1:54204}:handler:client-connection-actor{remote_endpoint=ea4a6c63e2 connection_id=2}: iroh_relay::server::client: actor errored Stream terminated, exiting
+2026-10-23T17:48:17.505319Z ERROR relay-http-serve:conn{peer=127.0.0.1:54216}: iroh_relay::server::http_server: failed to handle connection error=Connection did not reach established state within timeout
+2026-10-23T17:48:26.066321Z DEBUG relay-http-serve: iroh_relay::server::http_server: connection opened from 127.0.0.1:54330
+2026-10-23T17:48:26.066560Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54330}: iroh_relay::server::http_server: HTTP: serve connection
+2026-10-23T17:48:26.168694Z DEBUG relay-http-serve: iroh_relay::server::http_server: connection opened from 127.0.0.1:54331
+2026-10-23T17:48:26.168845Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54331}: iroh_relay::server::http_server: HTTP: serve connection
+2026-10-23T17:48:26.279736Z DEBUG relay-http-serve: iroh_relay::server::http_server: connection opened from 127.0.0.1:54333
+2026-10-23T17:48:26.279877Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54333}: iroh_relay::server::http_server: HTTP: serve connection
+2026-10-23T17:48:26.363785Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54279}:handler:client-connection-actor{remote_endpoint=ea4a6c63e2 connection_id=6}: iroh_relay::ping_tracker: Sending ping to relay server. data=[152, 111, 24, 2, 20, 198, 93, 149]
+2026-10-23T17:48:29.097131Z DEBUG relay-http-serve: iroh_relay::server::http_server: connection opened from 127.0.0.1:54341
+2026-10-23T17:48:29.097267Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54341}: iroh_relay::server::http_server: HTTP: serve connection
+2026-10-23T17:48:29.100587Z  WARN relay-http-serve:conn{peer=127.0.0.1:54279}:handler:client-connection-actor{remote_endpoint=ea4a6c63e2 connection_id=6}: iroh_relay::server::client: actor errored Stream terminated, exiting
+2026-10-23T17:48:29.101902Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54341}:handler: iroh_relay::server::http_server: relay_connection upgraded
+2026-10-23T17:48:29.396445Z DEBUG relay-http-serve: iroh_relay::server::http_server: connection opened from 127.0.0.1:54342
+2026-10-23T17:48:29.396534Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54342}: iroh_relay::server::http_server: HTTP: serve connection
+2026-10-23T17:48:32.151232Z DEBUG relay-http-serve:conn{peer=127.0.0.1:54341}:handler: iroh_relay::server::http_server: upgraded connection completed
+2026-10-23T17:48:34.368809Z DEBUG door: door: the lend's service answered; streaming it back actor="8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394" lend=sink status=200
+2026-10-23T17:48:34.368867Z DEBUG carriage: door: answered lend=sink range=None status=200 content_range=None ms=24838
+2026-10-23T17:48:34.368922Z DEBUG carriage: door: the answer sent to its end lend="sink" range=None status=200 sent=72 length=Some(72) ms=24838
+2026-10-23T17:48:34.915733Z DEBUG transport: transport: the group names no relay for this computer — its key alone, which only an address lookup finds peer=8139770ea8
+2026-10-23T17:48:34.915789Z DEBUG transport: transport: the group names no relay for this computer — its key alone, which only an address lookup finds peer=ea4a6c63e2
+2026-10-23T17:48:34.915982Z DEBUG transport: iroh: a request on the connection kept to it, else on one dialled (#178) peer=8139770ea8 alpn=Member kept=false
+2026-10-23T17:48:34.916055Z DEBUG transport: iroh: a request on the connection kept to it, else on one dialled (#178) peer=ea4a6c63e2 alpn=Member kept=false
+2026-10-23T17:48:34.916097Z DEBUG transport: iroh: dialled by key, iroh holding these addresses for it peer=ea4a6c63e2 alpn=Member known=["Relay(http://127.0.0.1:54144/) Active"]
+2026-10-23T17:48:34.916122Z DEBUG transport: iroh: a bare key — dialled through the endpoint's address lookup when it has one transport="iroh" peer=ea4a6c63 lookup=false
+2026-10-23T17:48:34.916153Z DEBUG transport: iroh: dialled by key, iroh holding these addresses for it peer=8139770ea8 alpn=Member known=["Relay(http://127.0.0.1:54144/) Active"]
+2026-10-23T17:48:34.916174Z DEBUG transport: iroh: a bare key — dialled through the endpoint's address lookup when it has one transport="iroh" peer=8139770e lookup=false
+2026-10-23T17:48:35.072673Z  WARN relay-http-serve:conn{peer=127.0.0.1:54219}:handler:client-connection-actor{remote_endpoint=8139770ea8 connection_id=5}: iroh_relay::server::client: actor errored Stream terminated, exiting
+2026-10-23T17:48:35.094119Z  WARN relay-http-serve:conn{peer=127.0.0.1:54341}:handler:client-connection-actor{remote_endpoint=ea4a6c63e2 connection_id=7}: iroh_relay::server::client: actor errored Stream terminated, exiting
