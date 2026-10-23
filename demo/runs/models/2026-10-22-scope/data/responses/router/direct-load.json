@@ -1,0 +1,11 @@
+{
+  "status": 400,
+  "headers": {
+    "Connection": "close",
+    "Content-Type": "application/json; charset=utf-8",
+    "Server": "llama.cpp",
+    "Access-Control-Allow-Origin": "",
+    "Content-Length": "127"
+  },
+  "body": "{\"error\":{\"code\":400,\"message\":\"model 'Qwen/Qwen2.5-0.5B-Instruct-GGUF:Q4_K_M' already exists\",\"type\":\"invalid_request_error\"}}"
+}

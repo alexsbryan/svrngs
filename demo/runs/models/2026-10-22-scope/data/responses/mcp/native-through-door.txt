@@ -1,0 +1,173 @@
+$ mcp_client http://<lend-host>:62076/mcp
+exit 0
+{
+  "initialize": {
+    "meta": null,
+    "protocolVersion": "2025-11-25",
+    "capabilities": {
+      "experimental": {},
+      "logging": null,
+      "prompts": {
+        "listChanged": false
+      },
+      "resources": {
+        "subscribe": false,
+        "listChanged": false
+      },
+      "tools": {
+        "listChanged": false
+      },
+      "completions": null,
+      "tasks": null
+    },
+    "serverInfo": {
+      "name": "scope-echo",
+      "title": null,
+      "version": "1.30.0",
+      "websiteUrl": null,
+      "icons": null
+    },
+    "instructions": null
+  },
+  "tools_list": {
+    "meta": null,
+    "nextCursor": null,
+    "tools": [
+      {
+        "name": "whoami",
+        "title": null,
+        "description": "",
+        "inputSchema": {
+          "properties": {},
+          "title": "whoamiArguments",
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "result": {
+              "title": "Result",
+              "type": "string"
+            }
+          },
+          "required": [
+            "result"
+          ],
+          "title": "whoamiOutput",
+          "type": "object"
+        },
+        "icons": null,
+        "annotations": {
+          "title": null,
+          "readOnlyHint": true,
+          "destructiveHint": null,
+          "idempotentHint": null,
+          "openWorldHint": null
+        },
+        "meta": null,
+        "execution": null
+      },
+      {
+        "name": "add",
+        "title": null,
+        "description": "",
+        "inputSchema": {
+          "properties": {
+            "a": {
+              "title": "A",
+              "type": "integer"
+            },
+            "b": {
+              "title": "B",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "a",
+            "b"
+          ],
+          "title": "addArguments",
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "result": {
+              "title": "Result",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "result"
+          ],
+          "title": "addOutput",
+          "type": "object"
+        },
+        "icons": null,
+        "annotations": {
+          "title": null,
+          "readOnlyHint": true,
+          "destructiveHint": null,
+          "idempotentHint": null,
+          "openWorldHint": null
+        },
+        "meta": null,
+        "execution": null
+      },
+      {
+        "name": "erase",
+        "title": null,
+        "description": "",
+        "inputSchema": {
+          "properties": {
+            "name": {
+              "title": "Name",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "title": "eraseArguments",
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "result": {
+              "title": "Result",
+              "type": "string"
+            }
+          },
+          "required": [
+            "result"
+          ],
+          "title": "eraseOutput",
+          "type": "object"
+        },
+        "icons": null,
+        "annotations": {
+          "title": null,
+          "readOnlyHint": null,
+          "destructiveHint": true,
+          "idempotentHint": null,
+          "openWorldHint": null
+        },
+        "meta": null,
+        "execution": null
+      }
+    ]
+  },
+  "whoami": {
+    "meta": null,
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"env\": {}, \"headers\": {\"accept\": \"application/json, text/event-stream\", \"accept-encoding\": \"gzip, deflate\", \"content-length\": \"88\", \"content-type\": \"application/json\", \"host\": \"localhost:8108\", \"mcp-protocol-version\": \"2025-11-25\", \"mcp-session-id\": \"ee40eda80f0a425e9a76258b3ce206c6\", \"user-agent\": \"python-httpx/0.28.1\", \"x-forwarded-host\": \"vpd6m452baz1k6d7tr91w1m2fkb7zbjatz9d5cxw4pqvph71ctuaq4c6ulr444.localhost:62076\", \"x-forwarded-proto\": \"http\", \"x-svrngs-app\": \"vpd6m452baz1k6d7tr91w1m2fkb7zbjatz9d5cxw4pqvph71ctuaq4c6ulr444\", \"x-svrngs-device\": \"9307c56b78082b74707d83bf79dd582203da84e0857e3d8a93d31b261bb71422\", \"x-svrngs-key\": \"9307c56b78082b74707d83bf79dd582203da84e0857e3d8a93d31b261bb71422\", \"x-svrngs-label\": \"vpd6m452baz1k6d7tr91w1m2fkb7zbjatz9d5cxw4pqvph71ctuaq4c6ulr444\", \"x-svrngs-pages\": \"168528d0a67bc9774e1313394b2f557aaddae79101e583d01b8fee1a64b2585e=none 309bb54e3c8e600f00a2346b372da2e9dd09a494315af1e3edcbc09d84412545=none\", \"x-svrngs-person\": \"Bo\", \"x-svrngs-user\": \"Bo-9307c56b78082b74\"}}",
+        "annotations": null,
+        "meta": null
+      }
+    ],
+    "structuredContent": {
+      "result": "{\"env\": {}, \"headers\": {\"accept\": \"application/json, text/event-stream\", \"accept-encoding\": \"gzip, deflate\", \"content-length\": \"88\", \"content-type\": \"application/json\", \"host\": \"localhost:8108\", \"mcp-protocol-version\": \"2025-11-25\", \"mcp-session-id\": \"ee40eda80f0a425e9a76258b3ce206c6\", \"user-agent\": \"python-httpx/0.28.1\", \"x-forwarded-host\": \"vpd6m452baz1k6d7tr91w1m2fkb7zbjatz9d5cxw4pqvph71ctuaq4c6ulr444.localhost:62076\", \"x-forwarded-proto\": \"http\", \"x-svrngs-app\": \"vpd6m452baz1k6d7tr91w1m2fkb7zbjatz9d5cxw4pqvph71ctuaq4c6ulr444\", \"x-svrngs-device\": \"9307c56b78082b74707d83bf79dd582203da84e0857e3d8a93d31b261bb71422\", \"x-svrngs-key\": \"9307c56b78082b74707d83bf79dd582203da84e0857e3d8a93d31b261bb71422\", \"x-svrngs-label\": \"vpd6m452baz1k6d7tr91w1m2fkb7zbjatz9d5cxw4pqvph71ctuaq4c6ulr444\", \"x-svrngs-pages\": \"168528d0a67bc9774e1313394b2f557aaddae79101e583d01b8fee1a64b2585e=none 309bb54e3c8e600f00a2346b372da2e9dd09a494315af1e3edcbc09d84412545=none\", \"x-svrngs-person\": \"Bo\", \"x-svrngs-user\": \"Bo-9307c56b78082b74\"}}"
+    },
+    "isError": false
+  }
+}

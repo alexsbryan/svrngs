@@ -1,0 +1,10 @@
+{
+  "status": 200,
+  "headers": {
+    "Content-Length": "739",
+    "Content-Type": "application/json; charset=utf-8",
+    "Server": "llama.cpp",
+    "Date": "Fri, 23 Oct 2026 00:39:55 GMT"
+  },
+  "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Yes.\"}}],\"created\":1792715995,\"model\":\"/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/weights/router/qwen2.5-coder-0.5b-instruct-q4_k_m.gguf\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":3,\"prompt_tokens\":36,\"total_tokens\":39,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"id\":\"chatcmpl-RnR6Y2aGN6fKHo5oiNB8mCPwseSVJgkt\",\"timings\":{\"cache_n\":0,\"prompt_n\":36,\"prompt_ms\":145.817,\"prompt_per_token_ms\":4.050472222222222,\"prompt_per_second\":246.88479395406569,\"predicted_n\":3,\"predicted_ms\":8.732,\"predicted_per_token_ms\":2.9106666666666663,\"predicted_per_second\":343.56390288593684}}"
+}

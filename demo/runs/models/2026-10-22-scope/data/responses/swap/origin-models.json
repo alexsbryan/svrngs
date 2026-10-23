@@ -1,0 +1,9 @@
+{
+  "status": 200,
+  "headers": {
+    "content-type": "application/json",
+    "date": "Fri, 23 Oct 2026 00:39:55 GMT",
+    "content-length": "573"
+  },
+  "body": "{\"data\":[{\"id\":\"tiny-0.5b\",\"object\":\"model\",\"created\":1792715995,\"owned_by\":\"llama-swap\",\"architecture\":{\"input_modalities\":[\"text\"],\"modality\":\"text-\\u003etext\",\"output_modalities\":[\"text\"]},\"capabilities\":{\"function_calling\":true},\"supported_parameters\":[\"tools\",\"tool_choice\"],\"context_length\":2048,\"context_window\":2048,\"meta\":{\"llamaswap\":{\"type\":\"model\"},\"n_ctx\":2048},\"status\":{\"value\":\"unloaded\"}},{\"id\":\"tiny-1.5b\",\"object\":\"model\",\"created\":1792715995,\"owned_by\":\"llama-swap\",\"meta\":{\"llamaswap\":{\"type\":\"model\"}},\"status\":{\"value\":\"unloaded\"}}],\"object\":\"list\"}\n"
+}

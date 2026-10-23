@@ -1,0 +1,11 @@
+{
+  "status": 400,
+  "headers": {
+    "content-length": "103",
+    "content-type": "application/json; charset=utf-8",
+    "server": "llama.cpp",
+    "access-control-allow-origin": "",
+    "date": "Fri, 23 Oct 2026 00:39:52 GMT"
+  },
+  "body": "{\"error\":{\"code\":400,\"message\":\"model name=not/a-model is not running\",\"type\":\"invalid_request_error\"}}"
+}

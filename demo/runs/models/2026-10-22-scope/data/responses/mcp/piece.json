@@ -1,0 +1,52 @@
+{
+  "piece": "mcp",
+  "when": "2026-10-22T17:42:42-0700",
+  "python": "/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/venv/mcp/bin/python",
+  "native_serve": [
+    "/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/venv/mcp/bin/python",
+    "/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/src/mcp_echo.py"
+  ],
+  "native_lend": {
+    "key": "9307c56b78082b74707d83bf79dd582203da84e0857e3d8a93d31b261bb71422",
+    "kind": "mcp",
+    "limit": null,
+    "name": "sam-tools",
+    "origin": "http://vpd6m452baz1k6d7tr91w1m2fkb7zbjatz9d5cxw4pqvph71ctuaq4c6ulr444.localhost:62076/",
+    "person": "Bo",
+    "reads": [],
+    "relay": "https://usw1-1.relay.n0.iroh.link/",
+    "upload_bps": null,
+    "using": 1
+  },
+  "native_through_door": {
+    "exit": 0
+  },
+  "native_unshared": true,
+  "proxy_serve": [
+    "mcp-proxy",
+    "--transport",
+    "streamablehttp",
+    "--port",
+    "8109",
+    "--",
+    "/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/venv/mcp/bin/python",
+    "/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/src/mcp_echo.py",
+    "--stdio"
+  ],
+  "proxy_lend": {
+    "key": "9307c56b78082b74707d83bf79dd582203da84e0857e3d8a93d31b261bb71422",
+    "kind": "mcp",
+    "limit": null,
+    "name": "sam-stdio-tools",
+    "origin": "http://vpd6m452baz1k6d7tr91w1m2fkb7zbjatz9d5cxw4pqvph71ctualxxcttl8j1.localhost:62076/",
+    "person": "Bo",
+    "reads": [],
+    "relay": "https://usw1-1.relay.n0.iroh.link/",
+    "upload_bps": null,
+    "using": 1
+  },
+  "stdio_through_door": {
+    "exit": 0
+  },
+  "proxy_unshared": true
+}

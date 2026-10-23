@@ -1,0 +1,12 @@
+{
+  "status": 404,
+  "headers": {
+    "access-control-allow-origin": "*",
+    "content-length": "41",
+    "content-type": "text/plain",
+    "access-control-allow-headers": "content-type, authorization",
+    "server": "whisper.cpp",
+    "date": "Fri, 23 Oct 2026 00:40:03 GMT"
+  },
+  "body": "File Not Found (/v1/audio/transcriptions)"
+}

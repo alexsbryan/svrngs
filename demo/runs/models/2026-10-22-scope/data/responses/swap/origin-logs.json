@@ -1,0 +1,10 @@
+{
+  "status": 403,
+  "headers": {
+    "content-type": "application/json",
+    "x-svrngs-refused": "path",
+    "content-length": "56",
+    "date": "Fri, 23 Oct 2026 00:39:56 GMT"
+  },
+  "body": "{\"error\":\"sam-swap is lent without /logs\",\"kind\":\"path\"}"
+}

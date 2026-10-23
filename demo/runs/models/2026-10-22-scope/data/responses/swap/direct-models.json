@@ -1,0 +1,9 @@
+{
+  "status": 200,
+  "headers": {
+    "Content-Type": "application/json",
+    "Date": "Fri, 23 Oct 2026 00:39:53 GMT",
+    "Content-Length": "325"
+  },
+  "body": "{\"data\":[{\"id\":\"tiny-0.5b\",\"object\":\"model\",\"created\":1792715993,\"owned_by\":\"llama-swap\",\"meta\":{\"llamaswap\":{\"type\":\"model\"}},\"status\":{\"value\":\"unloaded\"}},{\"id\":\"tiny-1.5b\",\"object\":\"model\",\"created\":1792715993,\"owned_by\":\"llama-swap\",\"meta\":{\"llamaswap\":{\"type\":\"model\"}},\"status\":{\"value\":\"unloaded\"}}],\"object\":\"list\"}\n"
+}

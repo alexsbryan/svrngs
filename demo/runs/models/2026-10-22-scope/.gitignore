@@ -6,3 +6,5 @@ data/home/
 data/svrngs/
 data/podman/
 data/logs/
+data/bin/
+data/src/

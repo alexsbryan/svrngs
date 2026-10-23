@@ -1,0 +1,185 @@
+{
+  "piece": "llama-swap",
+  "serve": [
+    "/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/bin/llama-swap",
+    "--config",
+    "/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/llama-swap.yaml",
+    "--listen",
+    "127.0.0.1:8105"
+  ],
+  "config": "models:\n  \"tiny-1.5b\":\n    cmd: |\n      llama-server --port ${PORT} -m /Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/weights/router/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf --jinja --host 127.0.0.1 -c 2048 -ngl 99\n  \"tiny-0.5b\":\n    cmd: |\n      llama-server --port ${PORT} -m /Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/weights/router/qwen2.5-coder-0.5b-instruct-q4_k_m.gguf --jinja --host 127.0.0.1 -c 2048 -ngl 99\n",
+  "port": 8105,
+  "when": "2026-10-22T17:39:53-0700",
+  "models_direct": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json",
+      "Date": "Fri, 23 Oct 2026 00:39:53 GMT",
+      "Content-Length": "325"
+    },
+    "body": "{\"data\":[{\"id\":\"tiny-0.5b\",\"object\":\"model\",\"created\":1792715993,\"owned_by\":\"llama-swap\",\"meta\":{\"llamaswap\":{\"type\":\"model\"}},\"status\":{\"value\":\"unloaded\"}},{\"id\":\"tiny-1.5b\",\"object\":\"model\",\"created\":1792715993,\"owned_by\":\"llama-swap\",\"meta\":{\"llamaswap\":{\"type\":\"model\"}},\"status\":{\"value\":\"unloaded\"}}],\"object\":\"list\"}\n"
+  },
+  "ids": [
+    "tiny-0.5b",
+    "tiny-1.5b"
+  ],
+  "chat_direct": {
+    "status": 200,
+    "headers": {
+      "Content-Length": "739",
+      "Content-Type": "application/json; charset=utf-8",
+      "Server": "llama.cpp",
+      "Date": "Fri, 23 Oct 2026 00:39:55 GMT"
+    },
+    "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Yes.\"}}],\"created\":1792715995,\"model\":\"/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/weights/router/qwen2.5-coder-0.5b-instruct-q4_k_m.gguf\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":3,\"prompt_tokens\":36,\"total_tokens\":39,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"id\":\"chatcmpl-RnR6Y2aGN6fKHo5oiNB8mCPwseSVJgkt\",\"timings\":{\"cache_n\":0,\"prompt_n\":36,\"prompt_ms\":145.817,\"prompt_per_token_ms\":4.050472222222222,\"prompt_per_second\":246.88479395406569,\"predicted_n\":3,\"predicted_ms\":8.732,\"predicted_per_token_ms\":2.9106666666666663,\"predicted_per_second\":343.56390288593684}}"
+  },
+  "chat_unknown_direct": {
+    "status": 404,
+    "headers": {
+      "Content-Type": "application/json",
+      "Date": "Fri, 23 Oct 2026 00:39:55 GMT",
+      "Content-Length": "135"
+    },
+    "body": "{\"src\":\"llama-swap\",\"error\":{\"message\":\"no router for requested model\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":\"not_found\"}}"
+  },
+  "admin_direct": {
+    "/ui": {
+      "status": 308,
+      "headers": {
+        "Location": "ui/",
+        "Date": "Fri, 23 Oct 2026 00:39:55 GMT",
+        "Content-Length": "0"
+      },
+      "body": ""
+    },
+    "/logs": {
+      "status": 200,
+      "headers": {
+        "Content-Type": "text/plain",
+        "Date": "Fri, 23 Oct 2026 00:39:55 GMT",
+        "Content-Length": "252"
+      },
+      "body": "[INFO] llama-swap listening on http://127.0.0.1:8105\n[INFO] using ioreg for GPU monitoring\n[INFO] <tiny-0.5b> Health check passed on http://localhost:5800/health\n[WARN] non-200 response, recording partial metrics: status=404, path=/v1/chat/completions\n"
+    },
+    "/running": {
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json",
+        "Date": "Fri, 23 Oct 2026 00:39:55 GMT",
+        "Content-Length": "321"
+      },
+      "body": "{\"running\":[{\"model\":\"tiny-0.5b\",\"state\":\"ready\",\"cmd\":\"llama-server --port 5800 -m /Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/weights/router/qwen2.5-coder-0.5b-instruct-q4_k_m.gguf --jinja --host 127.0.0.1 -c 2048 -ngl 99\\n\",\"proxy\":\"http://localhost:5800\",\"ttl\":0,\"name\":\"\",\"description\":\"\"}]}\n"
+    },
+    "/unload": {
+      "status": 200,
+      "headers": {
+        "Date": "Fri, 23 Oct 2026 00:39:55 GMT",
+        "Content-Length": "2",
+        "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "OK"
+    },
+    "/metrics": {
+      "status": 200,
+      "headers": {
+        "Content-Type": "text/plain; version=0.0.4; charset=utf-8",
+        "Date": "Fri, 23 Oct 2026 00:39:55 GMT",
+        "Content-Length": "0"
+      },
+      "body": ""
+    },
+    "/health": {
+      "status": 200,
+      "headers": {
+        "Date": "Fri, 23 Oct 2026 00:39:55 GMT",
+        "Content-Length": "2",
+        "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "OK"
+    }
+  },
+  "lend": {
+    "key": "9307c56b78082b74707d83bf79dd582203da84e0857e3d8a93d31b261bb71422",
+    "kind": "llama-swap",
+    "limit": null,
+    "name": "sam-swap",
+    "origin": "http://vpd6m452baz1k6d7tr91w1m2fkb7zbjatz9d5cxw4pqvph71ctuax9br7agsv2.localhost:62076/",
+    "person": "Bo",
+    "reads": [],
+    "relay": "https://usw1-1.relay.n0.iroh.link/",
+    "upload_bps": null,
+    "using": 0
+  },
+  "models_origin": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "date": "Fri, 23 Oct 2026 00:39:55 GMT",
+      "content-length": "573"
+    },
+    "body": "{\"data\":[{\"id\":\"tiny-0.5b\",\"object\":\"model\",\"created\":1792715995,\"owned_by\":\"llama-swap\",\"architecture\":{\"input_modalities\":[\"text\"],\"modality\":\"text-\\u003etext\",\"output_modalities\":[\"text\"]},\"capabilities\":{\"function_calling\":true},\"supported_parameters\":[\"tools\",\"tool_choice\"],\"context_length\":2048,\"context_window\":2048,\"meta\":{\"llamaswap\":{\"type\":\"model\"},\"n_ctx\":2048},\"status\":{\"value\":\"unloaded\"}},{\"id\":\"tiny-1.5b\",\"object\":\"model\",\"created\":1792715995,\"owned_by\":\"llama-swap\",\"meta\":{\"llamaswap\":{\"type\":\"model\"}},\"status\":{\"value\":\"unloaded\"}}],\"object\":\"list\"}\n"
+  },
+  "chat_origin": {
+    "status": 200,
+    "headers": {
+      "content-length": "725",
+      "content-type": "application/json; charset=utf-8",
+      "server": "llama.cpp",
+      "date": "Fri, 23 Oct 2026 00:39:56 GMT"
+    },
+    "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"OK\"}}],\"created\":1792715996,\"model\":\"/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/weights/router/qwen2.5-coder-0.5b-instruct-q4_k_m.gguf\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":2,\"prompt_tokens\":36,\"total_tokens\":38,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"id\":\"chatcmpl-9UBYBbeoViOyTZNqQ3lSoQwGUtLj7b9Z\",\"timings\":{\"cache_n\":0,\"prompt_n\":36,\"prompt_ms\":31.532,\"prompt_per_token_ms\":0.8758888888888889,\"prompt_per_second\":1141.697323354053,\"predicted_n\":2,\"predicted_ms\":10.003,\"predicted_per_token_ms\":5.0015,\"predicted_per_second\":199.94001799460162}}"
+  },
+  "admin_origin": {
+    "/ui": {
+      "status": 403,
+      "headers": {
+        "content-type": "application/json",
+        "x-svrngs-refused": "path",
+        "content-length": "54",
+        "date": "Fri, 23 Oct 2026 00:39:56 GMT"
+      },
+      "body": "{\"error\":\"sam-swap is lent without /ui\",\"kind\":\"path\"}"
+    },
+    "/logs": {
+      "status": 403,
+      "headers": {
+        "content-type": "application/json",
+        "x-svrngs-refused": "path",
+        "content-length": "56",
+        "date": "Fri, 23 Oct 2026 00:39:56 GMT"
+      },
+      "body": "{\"error\":\"sam-swap is lent without /logs\",\"kind\":\"path\"}"
+    },
+    "/running": {
+      "status": 403,
+      "headers": {
+        "content-type": "application/json",
+        "x-svrngs-refused": "path",
+        "content-length": "59",
+        "date": "Fri, 23 Oct 2026 00:39:56 GMT"
+      },
+      "body": "{\"error\":\"sam-swap is lent without /running\",\"kind\":\"path\"}"
+    },
+    "/unload": {
+      "status": 403,
+      "headers": {
+        "content-type": "application/json",
+        "x-svrngs-refused": "path",
+        "content-length": "58",
+        "date": "Fri, 23 Oct 2026 00:39:56 GMT"
+      },
+      "body": "{\"error\":\"sam-swap is lent without /unload\",\"kind\":\"path\"}"
+    },
+    "/metrics": {
+      "status": 403,
+      "headers": {
+        "content-type": "application/json",
+        "x-svrngs-refused": "path",
+        "content-length": "59",
+        "date": "Fri, 23 Oct 2026 00:39:56 GMT"
+      },
+      "body": "{\"error\":\"sam-swap is lent without /metrics\",\"kind\":\"path\"}"
+    }
+  },
+  "unshared": true
+}

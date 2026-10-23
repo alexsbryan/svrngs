@@ -1,0 +1,29 @@
+{
+  "when": "2026-10-22T17:57:55-0700",
+  "api_file": false,
+  "processes_left": [],
+  "lends_before": {
+    "changed": [],
+    "lent": [],
+    "namespace": "168528d0a67bc9774e1313394b2f557aaddae79101e583d01b8fee1a64b2585e",
+    "older": [],
+    "refused": [],
+    "shelf": [
+      {
+        "name": "Money",
+        "words": "who paid for what, and who owes whom."
+      },
+      {
+        "name": "Events",
+        "words": "post a get-together, and see who\u2019s coming."
+      },
+      {
+        "name": "House-rules",
+        "words": "the rules your house agrees, and how you agree them."
+      }
+    ],
+    "unanswered": [],
+    "unheard": []
+  },
+  "podman": ""
+}
