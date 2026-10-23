@@ -34,7 +34,7 @@ There are ten rows:
 
 **Waits, each with its trigger** (PLAN §2):
 - sealing an entry to some keys: two apps need the same seal (lending, Tap;
-  the note's §10, 5);
+  the note's §10, 4);
 - an app declaring what it needs, so the lender only agrees in place of
   typing `--reads` (§11): the first app outside svrngs's own that needs
   `--reads` (the operator, 2026-10-23: "Wait, with a trigger");
