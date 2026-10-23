@@ -16,6 +16,20 @@
 
 ## 1. What svrngs is
 
+**The architecture, in one breath:** a mesh of nodes addressed by their
+keys, where any node can play any of a few roles: a replica of a group's
+log, a lender of an endpoint, a client, or a relay. Only two things cross a
+connection: entries in a group's log, gossiped among its replicas and sealed
+to some keys when they're private, and requests to a node's endpoint with
+the asker's key attached. Every shared state is each replica folding the same
+log, and anything a node or code does for someone (read an entry, append
+one, reach an endpoint) is a capability that someone's key granted.
+
+Every rule below follows from that. An entry's author is its signer;
+replicas only carry. Sealing is not built yet (PLAN §2). Where today's code
+falls short is svrn-docs `rings/current/WHAT_CAN_ACT_AS_YOU.md`, and its
+fixes are `ralph/next/security/`.
+
 **For people:** *keep talking where you talk; keep what your group owns —
 money, plans, files, the library — on your own computers, not a platform's.*
 A group is a house, a team, a party: about twenty-five people who already
