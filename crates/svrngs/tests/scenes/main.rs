@@ -31,3 +31,5 @@ mod doc;
 mod life;
 // Films (demo/a.md): two people play and seek Sam's lent Jellyfin at once.
 mod films;
+// Movie night (demo/b.md): a newcomer from the link to the film on a TV.
+mod night;

@@ -187,8 +187,11 @@ export async function enter(p, run) {
       await page.waitForFunction(
         () => !document.getElementById('join').hidden || /good|bad/.test(document.getElementById('status').className),
         null, { timeout: 120_000 });
-      await page.fill('#name', p.name);
-      await page.click('#join button');
+      // A link for a person's own devices asks no name (web/app.js `join`).
+      if (await page.locator('#join').isVisible()) {
+        await page.fill('#name', p.name);
+        await page.click('#join button');
+      }
       await page.waitForSelector('#status.good', { timeout: 120_000 });
     });
     if (person.list_ms === null) return person;

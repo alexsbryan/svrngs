@@ -26,7 +26,7 @@ use crate::harness::{repo, Engine};
 use crate::people::Scene;
 
 /// Where the films check finds Jellyfin (check.sh `JF_APP`).
-const JELLYFIN: &str = "/Applications/Jellyfin.app/Contents/MacOS/jellyfin";
+pub const JELLYFIN: &str = "/Applications/Jellyfin.app/Contents/MacOS/jellyfin";
 
 /// check.sh `<step> <scratch> <out>`, with Jellyfin on `port`.
 async fn check(step: &str, scratch: &Path, port: u16) -> std::process::Output {
@@ -45,13 +45,13 @@ async fn check(step: &str, scratch: &Path, port: u16) -> std::process::Output {
 
 /// Sam's scratch Jellyfin, its films and his account, up on `port`;
 /// stopped by check.sh `down` when dropped.
-struct Jellyfin {
-    scratch: PathBuf,
-    port: u16,
+pub struct Jellyfin {
+    pub scratch: PathBuf,
+    pub port: u16,
 }
 
 impl Jellyfin {
-    async fn up(scratch: PathBuf) -> Jellyfin {
+    pub async fn up(scratch: PathBuf) -> Jellyfin {
         // Its library's path as Jellyfin keeps it, with no `..` in it: a
         // library at `crates/svrngs/../../target/…` scans to no films.
         std::fs::create_dir_all(&scratch).unwrap();
@@ -70,17 +70,17 @@ impl Jellyfin {
         jf
     }
 
-    fn at(&self) -> String {
+    pub fn at(&self) -> String {
         format!("http://127.0.0.1:{}", self.port)
     }
 
     /// What check.sh wrote to `<scratch>/r/<file>`.
-    fn read(&self, file: &str) -> String {
+    pub fn read(&self, file: &str) -> String {
         std::fs::read_to_string(self.scratch.join("r").join(file)).unwrap()
     }
 
     /// `key` of the films and the server check.sh found (its env).
-    fn env(&self, key: &str) -> String {
+    pub fn env(&self, key: &str) -> String {
         let env = self.read("env");
         let line = env.lines().find_map(|l| l.strip_prefix(&format!("{key}=")));
         line.unwrap_or_else(|| panic!("check.sh's env lacks {key}: {env}"))
@@ -103,7 +103,7 @@ impl Drop for Jellyfin {
 }
 
 /// `node <script> <args>` of the films check, `env` given: its last line.
-async fn node(script: &str, args: &[&str], env: &[(&str, String)]) -> Value {
+pub async fn node(script: &str, args: &[&str], env: &[(&str, String)]) -> Value {
     let mut run = tokio::process::Command::new("node");
     run.arg(repo().join("apps/jellyfin/check").join(script))
         .args(args);
@@ -123,7 +123,7 @@ async fn node(script: &str, args: &[&str], env: &[(&str, String)]) -> Value {
 }
 
 /// Every file under `dir` that holds `secret`.
-fn holding(dir: &Path, secret: &[u8]) -> Vec<PathBuf> {
+pub fn holding(dir: &Path, secret: &[u8]) -> Vec<PathBuf> {
     let mut found = vec![];
     for entry in std::fs::read_dir(dir).into_iter().flatten().flatten() {
         let path = entry.path();
