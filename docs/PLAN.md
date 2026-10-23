@@ -106,6 +106,9 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   a person uses, its pass first, and a release the operator publishes;
 - then the capability work, in that note's §10 order, each its own queue
   written when the one before it lands:
+  - the capability core: one `Grant` type and one pure decider, `may`, in
+    svrngs-core, that every edge asks, landed as a move with behaviour kept
+    (approved 2026-10-22; its size being measured);
   - consent you can see (the open names what an app does and is the yes, and
     "What acts as you"; about +80 to +150);
   - authorship by signature with keys everywhere (svrngs-core's act format,
