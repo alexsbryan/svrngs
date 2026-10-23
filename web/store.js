@@ -32,7 +32,7 @@ const DB = 'svrngs';
 const VERSION = 2;
 
 function open() {
-  return opened(DB, VERSION, (db) => {
+  return openDb(DB, VERSION, (db) => {
     for (const name of [...db.objectStoreNames]) db.deleteObjectStore(name);
     db.createObjectStore('seal');
     db.createObjectStore('groups', { keyPath: 'id' });
@@ -40,7 +40,7 @@ function open() {
 }
 
 // The database `name` at `version`, `upgrade` given it when it is new or older.
-function opened(name, version, upgrade) {
+function openDb(name, version, upgrade) {
   return new Promise((done, fail) => {
     const req = indexedDB.open(name, version);
     req.onupgradeneeded = () => upgrade(req.result);
@@ -173,7 +173,7 @@ export function handOver(worker, message, wait = 5_000) {
 // own worker (`worker <label>`), and the worker's trace (`trace <label>`,
 // lend.js). Never the person's key.
 function lendDb() {
-  return opened('svrngs-lend', 1, (db) => db.createObjectStore('kept'));
+  return openDb('svrngs-lend', 1, (db) => db.createObjectStore('kept'));
 }
 
 export const lendKept = (name) => run('kept', 'readonly', (s) => s.get(name), lendDb);
