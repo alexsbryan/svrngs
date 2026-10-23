@@ -33,3 +33,25 @@ What the suite here did not have that the gates had: the gate's own command,
 `run.sh`'s suite cell ran `-p svrngs-node` (the workspace's features unify
 differently, so the binary can differ), and a load that held the suite to
 272–311 s. Battery 2 plants both.
+
+## Battery 2 (`battery-2.sh`, gate-burn24)
+
+The gate's own command, `cargo test --quiet --workspace --test browser`,
+under 24 `yes` of the run's own, five runs (`data/gate-burn24/`; the
+summary is the end of the row's await log).
+
+- 5 of 5 green, 121 passed each, the suite 368–415 s, at loads 146 to 175.
+- WebKit's range 206 in 24.3–46.1 s and Chromium's in 18.7–34.1 s; no step
+  near its 60 s.
+6. *The gate's command under load makes it* (at least 3 of 5):
+   **falsified**, 0 of 5, with the suite past 250 s. Load and the workspace
+   build together do not make it.
+
+## The close
+
+The operator, asked whether the hunt still paid, said "Go ahead" to closing
+it here (2026-10-23): 0 red in 18 runs across both batteries, so what the
+six gates had besides load is not something a planted load makes, and that
+night's host is gone. The cause is could-not-judge. The instrument stays
+(54844461): the next red in a gate says what the page had drained and when,
+and the row reopens from that.
