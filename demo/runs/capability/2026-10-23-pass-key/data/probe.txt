@@ -1,0 +1,2 @@
+chromium 147.0.7727.15 {"made":true,"keptAndRead":true,"signsAfterRead":64,"exportRaw":"refused: InvalidAccessError","exportJwk":"refused: InvalidAccessError","pub":32,"signsInWorker":64}
+webkit 26.4 {"made":true,"keptAndRead":true,"signsAfterRead":64,"exportRaw":"refused: InvalidAccessError","exportJwk":"refused: InvalidAccessError","pub":32,"signsInWorker":64}
