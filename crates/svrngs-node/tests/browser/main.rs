@@ -35,12 +35,16 @@ mod tabs;
 mod guests;
 // A navigation into a lend, judged as a fetch is (capability-navigation).
 mod navigations;
+// A browser half run and its JSON read: the demo scenes' too
+// (crates/svrngs/tests/scenes).
+mod drive;
 
 use std::collections::BTreeSet;
 use std::path::Path;
 use std::time::Duration;
 
 use common::bridge_as;
+use drive::drive;
 use harness::{relay, relay_url, repo, site, Engine};
 use iroh_relay::server::Server;
 use serde_json::{json, Value};
@@ -253,53 +257,6 @@ async fn keep_folder(at: &Node, folder: &Path) {
         .await
         .unwrap();
     assert!(kept.status().is_success(), "{:?}", kept.text().await);
-}
-
-/// Run the browser half `web/tests/<script>` in `engine` on `args`, and
-/// read the JSON line it printed. When `release` fires, the browser half is told `go`
-/// (its upload's tail, u4-4).
-async fn drive(
-    engine: Engine,
-    script: &str,
-    mut args: Value,
-    release: Option<tokio::sync::oneshot::Receiver<()>>,
-) -> Value {
-    args["engine"] = json!(engine.as_str());
-    let mut child = tokio::process::Command::new("node")
-        .arg(repo().join("web/tests").join(script))
-        .arg(args.to_string())
-        .stdin(std::process::Stdio::piped())
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped())
-        .kill_on_drop(true)
-        .spawn()
-        .expect("node runs: the browser tests need Node 18 or later");
-    let mut stdin = child.stdin.take().expect("stdin is piped");
-    let told = tokio::spawn(async move {
-        if let Some(Ok(())) = match release {
-            Some(release) => Some(release.await),
-            None => None,
-        } {
-            let _ = stdin.write_all(b"go\n").await;
-            let _ = stdin.flush().await;
-        }
-        // Held open until the browser half is done: it reads stdin.
-        std::future::pending::<()>().await;
-    });
-    let out = child
-        .wait_with_output()
-        .await
-        .expect("the browser half ran");
-    told.abort();
-    assert!(
-        out.status.success(),
-        "the browser half failed ({}):\n{}",
-        out.status,
-        String::from_utf8_lossy(&out.stderr)
-    );
-    let stdout = String::from_utf8_lossy(&out.stdout);
-    let line = stdout.lines().last().expect("the browser half printed");
-    serde_json::from_str(line).expect("the browser half printed JSON")
 }
 
 in_both_engines!(
