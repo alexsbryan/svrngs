@@ -17,9 +17,15 @@ worker_bin = "/Users/alexsbryan/dev/commonwealth-ai/scripts/ralph-claude-shim.sh
 settings = "ralph/claude-settings.json"
 
 [models]
-# As the oidc queue ran (the operator, 2026-10-21, "Use deepseek flash"); a
-# `provider/model` pair runs through opencode (ralph.py `model_client`).
-worker = "deepseek/deepseek-flash"
-review = "deepseek/deepseek-flash"
-resolve = "deepseek/deepseek-flash"
-variant = "high"
+# The operator, 2026-10-22: "I want glm-flash for the workers then opus 5.5
+# medium for the review / audit". A `provider/model` pair runs through
+# opencode (ralph.py `model_client`); a bare id runs through `worker_bin`, the
+# claude shim, where `variant` is --effort. The id is the one commonwealth-ai's
+# five-programs queue ran on the zai plan (its queue.toml). `variant` is one
+# setting for every role (ralph.py:2775), so the workers carry "medium" too.
+# The director (`resolve`) decides forks in the operator's place, closer to an
+# audit than to a unit of work, so it runs on Opus with the review.
+worker = "zai-coding-plan/glm-5.3-flash"
+review = "claude-opus-5-5"
+resolve = "claude-opus-5-5"
+variant = "medium"
