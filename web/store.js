@@ -32,14 +32,18 @@ const DB = 'svrngs';
 const VERSION = 2;
 
 function open() {
+  return opened(DB, VERSION, (db) => {
+    for (const name of [...db.objectStoreNames]) db.deleteObjectStore(name);
+    db.createObjectStore('seal');
+    db.createObjectStore('groups', { keyPath: 'id' });
+  });
+}
+
+// The database `name` at `version`, `upgrade` given it when it is new or older.
+function opened(name, version, upgrade) {
   return new Promise((done, fail) => {
-    const req = indexedDB.open(DB, VERSION);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      for (const name of [...db.objectStoreNames]) db.deleteObjectStore(name);
-      db.createObjectStore('seal');
-      db.createObjectStore('groups', { keyPath: 'id' });
-    };
+    const req = indexedDB.open(name, version);
+    req.onupgradeneeded = () => upgrade(req.result);
     req.onsuccess = () => done(req.result);
     req.onerror = () => fail(req.error);
   });
@@ -169,12 +173,7 @@ export function handOver(worker, message, wait = 5_000) {
 // own worker (`worker <label>`), and the worker's trace (`trace <label>`,
 // lend.js). Never the person's key.
 function lendDb() {
-  return new Promise((done, fail) => {
-    const req = indexedDB.open('svrngs-lend', 1);
-    req.onupgradeneeded = () => req.result.createObjectStore('kept');
-    req.onsuccess = () => done(req.result);
-    req.onerror = () => fail(req.error);
-  });
+  return opened('svrngs-lend', 1, (db) => db.createObjectStore('kept'));
 }
 
 export const lendKept = (name) => run('kept', 'readonly', (s) => s.get(name), lendDb);
