@@ -137,7 +137,7 @@ touches or beside one, and each is cut:
 | Cut | Where | Lines | Commit |
 |---|---|---:|---|
 | a message's `Connection` names, read once | door.rs:612 and :645, `strip_hop_by_hop` and `upgrade_of` | 6 | caf15672 |
-| the page's IndexedDB opened one way | web/store.js:43 and :175, `open` and `lendDb` | 3 | cda6851f |
+| the page's IndexedDB opened one way | web/store.js:43 and :175, `open` and `lendDb` | 3 | cda6851f, its helper renamed `openDb` in b6faecbf |
 | a computer's key parsed once, with its one refusal | web/src/lib.rs:91 and :181, `bind_for` and `dial` | 4 | 93a90fd7 |
 
 Read and not cut, each for its net:
@@ -243,6 +243,14 @@ body names the store cut "7d…", which is cda6851f). The plant at the
 lowered caps, one counted line in scripts/ and one in svrngs-core,
 refused both, exit 1, and the tree passed again with them removed
 (`data/ratchet-plant.txt`).
+
+The row's close: the first `scripts/check.sh` failed the browser,
+joining and conformance steps, because cda6851f named its helper
+`opened`, which store.js:135 exports already, so the module did not parse
+(`data/check-close-1.txt`:211, :227). b6faecbf named it `openDb`; the
+second run passed every step, exit 0, in 530 s (`data/check-close.txt`).
+No test was renamed or removed by any cut: the four cut commits and the
+fix touch only `oidc/tests.rs`'s three assertions among test files.
 
 The number to ask with: **+520 repository and +123 svrngs-core over the
 caps this pass leaves**, at most 18,139 and 3,273, each row raising only
