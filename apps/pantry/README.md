@@ -71,6 +71,41 @@ person.
 | A tool | Run any MCP Streamable HTTP server on 127.0.0.1, then `svrngs share <port> --kind <anything> --name <name>`. `list` shows its tools and annotations. |
 | Behaviour: vision bridging, a voice pipeline, retrieval, guardrails | Write a small OpenAI-in, OpenAI-out server that calls your own pantry's address, and point your interface at it. The vision bridge in `examples/bridge/` is the worked example. |
 
+## Write an adapter
+
+An adapter is a small server you run on your own computer, in front of your
+own pantry: OpenAI in, OpenAI out. Your interface points at the adapter, and
+the adapter calls the pantry at the address `serve` printed. It holds no
+friend's address of its own, so every lend it reaches is reached as you, and
+the friend's door counts you.
+
+`examples/bridge/` is the worked example, the vision bridge. A strong coder
+that cannot see still gets a screenshot:
+
+    pantry serve --port 8787
+    node apps/pantry/examples/bridge/server.mjs \
+      --upstream http://127.0.0.1:8787 --vision ana/vision --port 8120
+
+Point your interface at `http://127.0.0.1:8120/v1`. Every request passes
+through untouched unless it is a chat that carries an image. Each image is
+sent to `ana/vision` with the bridge's one prompt — the layout, every
+visible string, the element hierarchy, and any defect — and the description
+takes the image's place before the request goes on to the model you named,
+with `tools` intact. The answer streams back, and `x-pantry-model` and
+`x-pantry-bridged-by` name both hops.
+
+It is a small thing to copy, not a promise. In the measured run the vision
+model missed a clipped badge and a cut-off table column, and the coder
+proposed selectors that did not exist (`demo/runs/models/2026-10-22-scope/SCOPE.md`
+§1.7). Try your own screenshots before you rely on it. The screenshot is
+sent to the friend who lends the vision model, as everything else you send
+is.
+
+To write your own, copy the shape: read the request, change only what needs
+changing, forward it to `--upstream`, and pipe the answer back. Leave the
+model id an id, `tools` and the other fields as they came, and name the
+lends you used in the response's headers.
+
 ## The trust lines
 
 A lent tool acts on the lender's computer with the lender's permissions.
