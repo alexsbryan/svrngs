@@ -228,6 +228,15 @@ export async function discover(origin, clock = Date.now) {
   return { ...seen, at: now };
 }
 
+/// The id a lend's model is listed and routed by: its lender's handle and
+/// the model's own id, and the lend's name between them when another lend
+/// of that person's already took it. The one home of the form `list` shows
+/// and `serve` routes by.
+function modelId(lend, model, taken) {
+  const id = `${lend.handle}/${model}`;
+  return taken.has(id) ? `${lend.handle}/${lend.name}/${model}` : id;
+}
+
 /// What your groups lend now, each lend asked by its protocol.
 export async function list({ record = recordAt(), clock = Date.now } = {}) {
   const { lends, unlisted, at } = await lendsNow(record, { clock });
@@ -237,8 +246,7 @@ export async function list({ record = recordAt(), clock = Date.now } = {}) {
     const seen = await discover(lend.origin, clock);
     if (seen.protocol === 'model') {
       seen.models = seen.models.map((m) => {
-        let id = `${lend.handle}/${m.id}`;
-        if (used.has(id)) id = `${lend.handle}/${lend.name}/${m.id}`;
+        const id = modelId(lend, m.id, used);
         used.add(id);
         return { ...m, as: id };
       });
@@ -308,8 +316,7 @@ async function modelsNow(record, clock, prefix) {
       continue;
     }
     for (const model of seen.models) {
-      let id = `${lend.handle}/${model.id}`;
-      if (index.has(id)) id = `${lend.handle}/${lend.name}/${model.id}`;
+      const id = modelId(lend, model.id, index);
       if (index.has(id)) continue;
       index.set(id, { lend, model: model.id, probed: seen.at });
       data.push({ ...model, id, object: model.object || 'model', owned_by: id });
