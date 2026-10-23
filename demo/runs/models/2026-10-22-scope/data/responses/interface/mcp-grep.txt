@@ -1,0 +1,15 @@
+exit 0
+/app/backend/open_webui/main.py
+/app/backend/open_webui/utils/mcp/client.py
+/app/backend/open_webui/env.py
+/app/backend/open_webui/main.py
+/app/backend/open_webui/models/files.py
+/app/backend/open_webui/routers/auths.py
+/app/backend/open_webui/routers/configs.py
+/app/backend/open_webui/routers/tools.py
+/app/backend/open_webui/static/swagger-ui/swagger-ui.css
+/app/backend/open_webui/utils/mcp/client.py
+/app/backend/open_webui/utils/middleware.py
+/app/backend/open_webui/utils/misc.py
+/app/backend/open_webui/utils/oauth.py
+/app/backend/open_webui/utils/tools.py

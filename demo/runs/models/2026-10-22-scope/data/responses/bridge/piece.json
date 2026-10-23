@@ -1,0 +1,69 @@
+{
+  "piece": "bridge",
+  "when": "2026-10-22T17:44:45-0700",
+  "prompt_vision": "You are describing a screenshot of a web page to a programmer who cannot see it. Describe the layout, every visible string, the element hierarchy, and any visual defects: clipping, overlap, cut-off content, or errors. Name the exact element and what is wrong with it. Be concrete.",
+  "prompt_coder": "A vision model described a screenshot of a web page. Write the smallest HTML/CSS change that fixes the defect it names. Reply with the CSS rule or HTML change only, and name the element it applies to. If the description names no defect, say so.",
+  "pages": [
+    {
+      "name": "clip",
+      "width": 480
+    },
+    {
+      "name": "overlap",
+      "width": 760
+    },
+    {
+      "name": "table",
+      "width": 1024
+    }
+  ],
+  "serve": {
+    "vision": [
+      "llama-server",
+      "/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/weights/Qwen2.5-VL-3B-Instruct-Q4_K_M.gguf",
+      "--mmproj",
+      "/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/weights/mmproj-Qwen2.5-VL-3B-Instruct-f16.gguf"
+    ],
+    "coder": [
+      "llama-server",
+      "/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/weights/qwen2.5-coder-7b-instruct-q4_k_m-00001-of-00002.gguf"
+    ],
+    "ui": "python3 -m http.server 8112 (cwd data/ui)"
+  },
+  "results": [
+    {
+      "page": {
+        "name": "clip",
+        "width": 480
+      },
+      "screenshot": "ui/clip-480.png",
+      "vision_status": 200,
+      "vision": "The screenshot shows a web page with a navigation bar at the top, containing links to \"The house,\" \"Rings,\" \"Pantry,\" and \"People.\" Below the navigation bar, there is a section titled \"Garden room\" with a description indicating that it has been booked by Ana for Saturday. The room is listed in the pantry. There are two buttons below this description: \"Open the room\" and \"Invite someone.\"\n\nBelow this section, there is another section titled \"What the group keeps,\" which displays a table with three rows. The table has three columns: \"Thing,\" \"Kept by,\" and \"Updated.\" The first row of the table shows \"Garden room\" in the \"Thing\" column, \"Ana\" in the \"Kept by\" column, and \"Thursday\" in the \"Updated\" column. The second row shows \"Album\" in the \"Thing\" column, \"Sam\" in the \"Kept by\" column, and \"Wednesday\" in the \"Updated\" column. The third row shows \"Money owed\" in the \"Thing\" column, \"Bo\" in the \"Kept by\" column, and \"Monday\" in the \"Updated\" column.\n\nThere are no visible visual defects such as clipping, overlap, cut-off content, or errors in the layout.",
+      "coder_status": 200,
+      "coder": "No visible visual defects were identified in the provided description. Therefore, no changes are needed."
+    },
+    {
+      "page": {
+        "name": "overlap",
+        "width": 760
+      },
+      "screenshot": "ui/overlap-760.png",
+      "vision_status": 200,
+      "vision": "### Layout and Elements\n\n1. **Header Section:**\n   - The header contains a navigation bar with links to \"The house,\" \"Rings,\" \"Pantry,\" and \"People.\"\n\n2. **Main Content Area:**\n   - The main content area is divided into two sections.\n\n3. **First Section:**\n   - **Title:** \"Garden room\"\n   - **Description:** \"Booked by Ana for Saturday. The room before it is listed is in the pantry.\"\n   - **Buttons:**\n     - **\"Open the room\"** (button)\n     - **\"Invite someone\"** (button)\n\n4. **Second Section:**\n   - **Title:** \"What the group keeps\"\n   - **Table:**\n     - **Columns:**\n       - **\"Thing\"**\n       - **\"Kept by\"**\n       - **\"Updated\"**\n     - **Rows:**\n       - **\"Garden room\"**\n         - **\"Kept by\"**: Ana\n         - **\"Updated\"**: Thursday\n       - **\"Album\"**\n         - **\"Kept by\"**: Sam\n         - **\"Updated\"**: Wednesday\n       - **\"Money owed\"**\n         - **\"Kept by\"**: Bo\n         - **\"Updated\"**: Monday\n\n### Visual Defects and Issues\n\n1. **Clipping:**\n   - The \"Garden room\" section is partially cut off at the top, making it appear as if there is more content below it.\n\n2. **Overlap:**\n   - The \"Garden room\" section and the \"What the group keeps\" section overlap slightly, making it difficult to distinguish between the two sections clearly.\n\n3. **Cut-off Content:**\n   - The \"Garden room\" section is cut off at the top, making it appear as if there is more content below it.\n\n4. **Errors:**\n   - The \"Garden room\" section is not properly aligned with the \"What the group keeps\" section, causing a visual imbalance.\n\n### Element Hierarchy\n\n1. **Header:**\n   - **\"The house\"**\n   - **\"Rings\"**\n   - **\"Pantry\"**\n   - **\"People\"**\n\n2. **Main Content Area:**\n   - **\"Garden room\"**\n     - **Title**\n     - **Description**\n     - **Buttons:**\n      ",
+      "coder_status": 200,
+      "coder": "```css\n.main-content {\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  justify-content: space-between;\n  height: 100vh;\n}\n\n.first-section, .second-section {\n  width: 80%;\n  margin: 10px;\n  padding: 20px;\n  border: 1px solid #ccc;\n  border-radius: 5px;\n  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);\n}\n```"
+    },
+    {
+      "page": {
+        "name": "table",
+        "width": 1024
+      },
+      "screenshot": "ui/table-1024.png",
+      "vision_status": 200,
+      "vision": "### Layout and Elements\n\n1. **Header Section:**\n   - The header contains a navigation bar with the following links: \"The house,\" \"Rings,\" \"Pantry,\" and \"People.\"\n\n2. **Main Content Area:**\n   - The main content area is divided into two sections.\n   - **First Section:**\n     - **Title:** \"Garden room\"\n     - **Description:** \"Booked by Ana for Saturday. The room before it is listed in the pantry.\"\n     - **Buttons:**\n       - \"Open the room\"\n       - \"Invite someone\"\n   - **Second Section:**\n     - **Title:** \"What the group keeps\"\n     - **Table:**\n       - **Columns:**\n         - **Thing**\n         - **Kept by**\n         - **Updated**\n       - **Rows:**\n         - **Garden room**\n           - **Kept by:** Ana\n           - **Updated:** Thursday\n         - **Album**\n           - **Kept by:** Sam\n           - **Updated:** Wednesday\n         - **Money owed**\n           - **Kept by:** Bo\n           - **Updated:** Monday\n\n### Visual Defects and Issues\n\n1. **Clipping:**\n   - The description of the \"Garden room\" section is partially cut off, making it difficult to read the full message.\n\n2. **Overlap:**\n   - The \"Open the room\" and \"Invite someone\" buttons are placed very close to each other, which might cause confusion or overlap in user interaction.\n\n3. **Cut-off Content:**\n   - The description of the \"Garden room\" section is cut off, making it impossible to fully understand the context or the booking details.\n\n4. **Errors:**\n   - The table is not properly formatted. The \"Updated\" column should be aligned with the \"Kept by\" column, and the table should have borders to make it more visually appealing and easier to read.\n\n### Element Hierarchy\n\n1. **Header:**\n   - Navigation bar\n   - Main content area\n\n2. **Main Content Area:**\n   - First Section:\n     - Title: \"Garden room\"\n     - Description: \"Booked by Ana for Saturday. The room before it is listed in the pantry.\"\n     - Buttons: \"Open the room\" and \"Invite someone\"\n   - Second Section:\n     - Title: \"What the group keeps\"\n    ",
+      "coder_status": 200,
+      "coder": "### CSS Change\n\n```css\n/* Apply to the description of the \"Garden room\" section */\n.first-section .description {\n  white-space: pre-wrap; /* Allows text to wrap to the next line */\n  overflow-wrap: break-word; /* Ensures long words or URLs are broken at word boundaries */\n}\n```\n\n### HTML Change\n\n```html\n<!-- Apply to the \"Open the room\" and \"Invite someone\" buttons -->\n<div class=\"buttons\">\n  <button class=\"open-room\">Open the room</button>\n  <button class=\"invite-someone\">Invite someone</button>\n</div>\n```\n\n### Explanation\n\n1. **Clipping and Cut-off Content:**\n   - The `white-space: pre-wrap;` and `overflow-wrap: break-word;` CSS properties ensure that the description text wraps to the next line and breaks at word boundaries, preventing it from being cut off.\n\n2. **Overlap:**\n   - Wrapping the buttons in a `div` with a class name and applying appropriate spacing or margin can help prevent overlap and improve user interaction.\n\n3. **Cut-off Content:**\n   - The same CSS properties as above (`white-space: pre-wrap;` and `overflow-wrap: break-word;`) will ensure that the description text is fully visible and not cut off.\n\n4. **Errors:**\n   - The table can be improved by adding borders and aligning the columns properly. However, since the description of the \"Garden room\" section is the main issue, the CSS change above will address that."
+    }
+  ],
+  "rubric": "bug found: the vision answer names the planted element and its symptom; fix runs: the coder answer gives a concrete CSS/HTML change for that element, and applying it to a copy of the page removes the symptom in a fresh screenshot."
+}
