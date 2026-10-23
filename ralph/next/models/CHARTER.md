@@ -36,6 +36,43 @@ charter disagree, they win, and the decision says so.
   Podman's, never Docker (2026-10-20).
 - **Written, held.** The operator launches the loop.
 
+## What the operator decided at models-scope, 2026-10-22
+
+Asked by the scope (`demo/runs/models/2026-10-22-scope/NEEDS_HUMAN.md`,
+068d0439):
+- **The models are the operator's own.** "Please tell me we're leveraging
+  the models here /Users/alexsbryan/dev/commonwealth-ai/sovereign/models".
+  The scope's Qwen2.5-Coder-7B and its 3B vision model are not v0's.
+  - Six candidates are hard-linked under `target/models/sovereign/` in this
+    tree, sharing their bytes, so fence 11 holds and nothing was copied:
+    `Qwen3.8-27B-UD-Q6_K_XL`, `Qwen3.6-35B-A3B-UD-MTP-IQ4_NL`,
+    `Qwopus3.5-9B-Coder-MTP-Q6_K` and `Qwen3-8B-Q4_K_M` to code;
+    `gemma-4-26B-A4B-it-UD-Q6_K_XL` and `gemma-4-E4B-it-Q5_K_M` to see.
+  - A Gemma 4's vision projector (`mmproj`) is fetched into `LLAMA_CACHE`
+    from its own HuggingFace repository.
+  - The host has 64 GB. Pull another model only when none of these does the
+    job, and say why.
+- **Speech to text: a small wrapper recipe** ("A small wrapper recipe").
+  - It is an OpenAI-in, OpenAI-out server of about 40 lines, in front of
+    whisper.cpp's server, answering `/v1/models` and
+    `/v1/audio/transcriptions`. Try whisper-server's `--inference-path`
+    first.
+  - It is lent as the transcription model, and lives with the recipes. It is
+    the extension pattern on the provider's side, and the pantry learns
+    nothing of it.
+- **The interface is the community's** ("Leave it to the community"). The
+  README says how to point any OpenAI-compatible interface at the address,
+  and names none as ours. The runs use stock SDK clients.
+- **The bridge ships, its limits stated** ("Ship it, limits stated").
+- **Shown with the ask as recommendations, and not challenged:**
+  - one lend per model, with llama-swap waiting in STATE.md, since llama.cpp's
+    router mode is out;
+  - Kokoro v0.9.0, pinned by digest, for speech;
+  - native MCP over Streamable HTTP for tools;
+  - the stdio bridge left out of the recipes and named in the README with
+    its limit: a stdio tool behind `mcp-proxy` cannot tell who is calling
+    (`data/responses/mcp/stdio-through-door.txt`).
+
 ## The minimum: two protocols, discovery, one address
 
 The pantry has no API of its own. Everything beyond it is a server that
