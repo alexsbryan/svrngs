@@ -14,7 +14,9 @@ Fences the rows keep:
    keeps: opening a lend from the home page or the group page; a lend's own
    page moving within itself; a phone's yes through the group page; Events'
    and Money's own corrections by their authors; a newcomer opening Money
-   and Notes answering no question.
+   and Notes answering no question. Once capability-scenes lands, the
+   gate's "scenes" step holds every demo scene too: a row that breaks one
+   does not close.
 3. *Capabilities, not buckets.* A rule says what code can do as a person,
    never what kind of app it is.
 4. *The decider is one place* (AGENTS.md 8). A check lives where the decision
