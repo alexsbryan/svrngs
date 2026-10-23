@@ -1,0 +1,96 @@
+{
+  "queue": "capability",
+  "state": "ralph/next/capability/STATE.md",
+  "charter": "ralph/next/capability/CHARTER.md",
+  "queue_findings": [
+    {
+      "kind": "ceiling-unknown",
+      "group": "could-not-judge",
+      "say": "ralph/next/capability/CHARTER.md:43's budget item has no ceiling this sweep can read: \"**the budget:** one ceiling for the bundle, asked after the economizing pass, and anything past it;\"",
+      "evidence": [
+        "ralph/next/capability/CHARTER.md:43"
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "id": "capability-economize",
+      "line": 46,
+      "in_flight": false,
+      "group": "ask-now",
+      "findings": [
+        {
+          "kind": "planned-park",
+          "group": "ask-now",
+          "say": "plans to stop for you: \"then NEEDS_HUMAN.md asking the operator for one ceiling for the whole bundle, and stop\"",
+          "evidence": [
+            "ralph/next/capability/STATE.md:46"
+          ]
+        },
+        {
+          "kind": "ceiling-unknown",
+          "group": "could-not-judge",
+          "say": "the ceiling is not known: ralph/next/capability/CHARTER.md:43's budget item has no ceiling this sweep can read: \"**the budget:** one ceiling for the bundle, asked after the economizing pass, and anything past it;\"",
+          "evidence": [
+            "ralph/next/capability/STATE.md:46"
+          ]
+        }
+      ]
+    }
+  ],
+  "fences": [
+    {
+      "line": 43,
+      "text": "**the budget:** one ceiling for the bundle, asked after the economizing pass, and anything past it;",
+      "terms": [],
+      "checked": "by the ceiling"
+    },
+    {
+      "line": 45,
+      "text": "**a change to what an act is:** capability-authorship's design, before any product code changes the format;",
+      "terms": [
+        "capability-authorship's design"
+      ],
+      "checked": "by its terms"
+    },
+    {
+      "line": 47,
+      "text": "**a fix that would break a path a person uses today**, or add a step that blocks one, with no way around it;",
+      "terms": [],
+      "checked": "not checked: a judgment, no word to match"
+    },
+    {
+      "line": 49,
+      "text": "**any widening of the trust floor**;",
+      "terms": [
+        "trust floor"
+      ],
+      "checked": "by its terms"
+    },
+    {
+      "line": 50,
+      "text": "**publishing**, pushing, history rewrites, `--no-verify`;",
+      "terms": [
+        "--no-verify",
+        "history rewrites",
+        "publishing",
+        "pushing"
+      ],
+      "checked": "by its terms"
+    },
+    {
+      "line": 51,
+      "text": "**anything whose evidence you could not reproduce.**",
+      "terms": [],
+      "checked": "not checked: a judgment, no word to match"
+    }
+  ],
+  "ceiling": {
+    "at": "ralph/next/capability/CHARTER.md:43",
+    "text": "**the budget:** one ceiling for the bundle, asked after the economizing pass, and anything past it;",
+    "qualifier": "",
+    "kind": "unparsed"
+  },
+  "headroom": {},
+  "exit": 3
+}

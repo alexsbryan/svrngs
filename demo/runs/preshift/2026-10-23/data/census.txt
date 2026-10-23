@@ -1,0 +1,33 @@
+arch        fences=9  unchecked=0  ceiling=unparsed  at=ralph/next/arch/CHARTER.md:126 a per-row allowance over the count the row starts at  {}
+bash        fences=11 unchecked=4  ceiling=absolute  at=ralph/next/bash/CHARTER.md:110  QUAL {'.': (15350, -2285), 'crates/svrngs-core': (3000, -150)}
+canon       fences=8  unchecked=1  ceiling=relative  at=ralph/next/canon/CHARTER.md:84 and ralph/next/canon/CHARTER.md:18   {'.': (16564, -1071), 'crates/svrngs-core': (3032, -118)}
+capability  fences=6  unchecked=2  ceiling=unparsed  at=ralph/next/capability/CHARTER.md:43   {}
+ceiling     fences=0  unchecked=0  ceiling=NONE      at=-   {}
+compose     fences=10 unchecked=6  ceiling=absolute  at=ralph/next/compose/CHARTER.md:27   {'.': (14750, -2885), 'crates/svrngs-core': (None, None)}
+events      fences=7  unchecked=1  ceiling=caps      at=ralph/next/events/CHARTER.md:111   {'.': (17635, 0), 'crates/svrngs-core': (3150, 0)}
+folders     fences=10 unchecked=2  ceiling=absolute  at=ralph/next/folders/CHARTER.md:28   {'.': (15200, -2435), 'crates/svrngs-core': (3000, -150)}
+grapevine   fences=7  unchecked=1  ceiling=NONE      at=-   {}
+groups      fences=8  unchecked=1  ceiling=relative  at=ralph/next/groups/CHARTER.md:107 and ralph/next/groups/CHARTER.md:37   {'.': (16336, -1299), 'crates/svrngs-core': (2993, -157)}
+guests      fences=10 unchecked=1  ceiling=absolute  at=ralph/next/guests/CHARTER.md:97   {'.': (16925, -710), 'crates/svrngs-core': (3076, -74)}
+lean        fences=12 unchecked=3  ceiling=absolute  at=ralph/next/lean/CHARTER.md:26   {'.': (15350, -2285), 'crates/svrngs-core': (3000, -150)}
+leave       fences=6  unchecked=1  ceiling=relative  at=ralph/next/leave/CHARTER.md:46   {'.': (16929, -706), 'crates/svrngs-core': (3073, -77)}
+models      fences=9  unchecked=1  ceiling=caps      at=ralph/next/models/CHARTER.md:145   {'.': (17635, 0), 'crates/svrngs-core': (3150, 0)}
+mw          fences=9  unchecked=4  ceiling=caps      at=ralph/next/mw/CHARTER.md:29   {'.': (17635, 0), 'crates/svrngs-core': (3150, 0)}
+mwp         fences=10 unchecked=6  ceiling=absolute  at=ralph/next/mwp/CHARTER.md:26   {'.': (14400, -3235), 'crates/svrngs-core': (None, None)}
+oidc        fences=8  unchecked=2  ceiling=absolute  at=ralph/next/oidc/CHARTER.md:104   {'.': (17728, 93), 'crates/svrngs-core': (3153, 3)}
+onair       fences=10 unchecked=1  ceiling=absolute  at=ralph/next/onair/CHARTER.md:89   {'.': (16340, -1295), 'crates/svrngs-core': (3190, 40)}
+relay       fences=11 unchecked=5  ceiling=absolute  at=ralph/next/relay/CHARTER.md:107   {'.': (15800, -1835), 'crates/svrngs-core': (3130, -20)}
+stall       fences=5  unchecked=0  ceiling=caps      at=ralph/next/stall/CHARTER.md:24   {'.': (17635, 0), 'crates/svrngs-core': (3150, 0)}
+start       fences=11 unchecked=3  ceiling=absolute  at=ralph/next/start/CHARTER.md:107   {'.': (15987, -1648), 'crates/svrngs-core': (3122, -28)}
+sup         fences=12 unchecked=6  ceiling=absolute  at=ralph/next/sup/CHARTER.md:33   {'.': (15350, -2285), 'crates/svrngs-core': (3000, -150)}
+sync        fences=9  unchecked=2  ceiling=absolute  at=ralph/next/sync/CHARTER.md:25   {'.': (15750, -1885), 'crates/svrngs-core': (3000, -150)}
+syp         fences=10 unchecked=4  ceiling=absolute  at=ralph/next/syp/CHARTER.md:27   {'.': (16500, -1135), 'crates/svrngs-core': (3000, -150)}
+u1          fences=6  unchecked=2  ceiling=caps      at=ralph/next/u1/CHARTER.md:15   {'.': (17635, 0), 'crates/svrngs-core': (3150, 0)}
+u2          fences=6  unchecked=2  ceiling=caps      at=ralph/next/u2/CHARTER.md:18   {'.': (17635, 0), 'crates/svrngs-core': (3150, 0)}
+u3          fences=7  unchecked=3  ceiling=caps      at=ralph/next/u3/CHARTER.md:17   {'.': (17635, 0), 'crates/svrngs-core': (3150, 0)}
+u4          fences=7  unchecked=3  ceiling=caps      at=ralph/next/u4/CHARTER.md:17   {'.': (17635, 0), 'crates/svrngs-core': (3150, 0)}
+u5          fences=8  unchecked=3  ceiling=caps      at=ralph/next/u5/CHARTER.md:17   {'.': (17635, 0), 'crates/svrngs-core': (3150, 0)}
+u6          fences=10 unchecked=4  ceiling=caps      at=ralph/next/u6/CHARTER.md:22   {'.': (17635, 0), 'crates/svrngs-core': (3150, 0)}
+v1          fences=11 unchecked=3  ceiling=absolute  at=ralph/next/v1/CHARTER.md:26  QUAL {'.': (15350, -2285), 'crates/svrngs-core': (3000, -150)}
+v1patch     fences=5  unchecked=1  ceiling=NONE      at=-   {}
+v1ui        fences=8  unchecked=2  ceiling=relative  at=ralph/next/v1ui/CHARTER.md:89 and ralph/next/v1ui/CHARTER.md:24   {'.': (16965, -670), 'crates/svrngs-core': (3150, 0)}

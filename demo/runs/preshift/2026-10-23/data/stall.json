@@ -1,0 +1,109 @@
+{
+  "queue": "stall",
+  "state": "ralph/next/stall/STATE.md",
+  "charter": "ralph/next/stall/CHARTER.md",
+  "queue_findings": [],
+  "rows": [
+    {
+      "id": "streaming-stall",
+      "line": 12,
+      "in_flight": false,
+      "group": "could-not-judge",
+      "findings": [
+        {
+          "kind": "conditional-park",
+          "group": "could-not-judge",
+          "say": "parks if its condition holds, known only at the run: \"If the cause is outside svrngs (WebKit, iroh), NEEDS_HUMAN.md with the reproduction and the layer, never a workaround\"",
+          "evidence": [
+            "ralph/next/stall/STATE.md:12"
+          ]
+        },
+        {
+          "kind": "no-estimate",
+          "group": "could-not-judge",
+          "say": "no estimate stated; 0 left under repository's ceiling, 0 left under svrngs-core's ceiling; any line in repository or svrngs-core exceeds it",
+          "evidence": [
+            "ralph/next/stall/STATE.md:12",
+            "python3 scripts/lean_check.py (run now)",
+            "ralph/next/stall/CHARTER.md:24"
+          ]
+        }
+      ]
+    }
+  ],
+  "fences": [
+    {
+      "line": 20,
+      "text": "**a cause outside svrngs** (WebKit, iroh, a browser's fetch), with the reproduction and the layer;",
+      "terms": [
+        "cause outside svrngs"
+      ],
+      "checked": "by its terms"
+    },
+    {
+      "line": 22,
+      "text": "**a fix that is a load bar, a longer limit or a retry:** each hides the stall (AGENTS.md 6);",
+      "terms": [
+        "longer limit",
+        "retry"
+      ],
+      "checked": "by its terms"
+    },
+    {
+      "line": 24,
+      "text": "**the budget,** past the caps;",
+      "terms": [],
+      "checked": "by the ceiling"
+    },
+    {
+      "line": 25,
+      "text": "**any widening of the trust floor**;",
+      "terms": [
+        "trust floor"
+      ],
+      "checked": "by its terms"
+    },
+    {
+      "line": 26,
+      "text": "**publishing**, pushing, history rewrites, `--no-verify`.",
+      "terms": [
+        "--no-verify",
+        "history rewrites",
+        "publishing",
+        "pushing"
+      ],
+      "checked": "by its terms"
+    }
+  ],
+  "ceiling": {
+    "at": "ralph/next/stall/CHARTER.md:24",
+    "text": "**the budget,** past the caps;",
+    "qualifier": "",
+    "kind": "caps"
+  },
+  "headroom": {
+    ".": {
+      "count": 17634,
+      "cap": 17635,
+      "evidence": [
+        "ralph/next/stall/CHARTER.md:24",
+        "python3 scripts/lean_check.py (run now)"
+      ],
+      "ceiling": 17635,
+      "reading": "the caps as they stand",
+      "left": 0
+    },
+    "crates/svrngs-core": {
+      "count": 3149,
+      "cap": 3150,
+      "evidence": [
+        "ralph/next/stall/CHARTER.md:24",
+        "python3 scripts/lean_check.py (run now)"
+      ],
+      "ceiling": 3150,
+      "reading": "the caps as they stand",
+      "left": 0
+    }
+  },
+  "exit": 4
+}

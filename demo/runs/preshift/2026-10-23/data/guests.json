@@ -1,0 +1,132 @@
+{
+  "queue": "guests",
+  "state": "ralph/next/guests/STATE.md",
+  "charter": "ralph/next/guests/CHARTER.md",
+  "queue_findings": [],
+  "rows": [],
+  "fences": [
+    {
+      "line": 97,
+      "text": "**the budget:** past 16,925 for the repository or 3,076 for svrngs-core (2026-10-20), or a raise without the pass first;",
+      "terms": [],
+      "checked": "by the ceiling"
+    },
+    {
+      "line": 99,
+      "text": "**a wait built early:** the welcome, `GuestRules`, House rules' say over it, the grapevine's path, or the words for people (STATE.md, \"Waits\");",
+      "terms": [
+        "GuestRules",
+        "grapevine's path",
+        "wait built early",
+        "welcome"
+      ],
+      "checked": "by its terms"
+    },
+    {
+      "line": 101,
+      "text": "**the trust floor:** any widening of a page's policy or a listener;",
+      "terms": [
+        "listener",
+        "page's policy",
+        "trust floor"
+      ],
+      "checked": "by its terms"
+    },
+    {
+      "line": 102,
+      "text": "**canon's repository:** anything canon-core needs;",
+      "terms": [
+        "anything canon-core needs",
+        "canon's repository"
+      ],
+      "checked": "by its terms"
+    },
+    {
+      "line": 103,
+      "text": "**existing groups:** a change that alters what a computer holds or makes a member someone new;",
+      "terms": [
+        "existing groups"
+      ],
+      "checked": "by its terms"
+    },
+    {
+      "line": 105,
+      "text": "**a new office or policy** in svrngs past GUESTS \u00a73 and \u00a75;",
+      "terms": [
+        "new office",
+        "policy"
+      ],
+      "checked": "by its terms"
+    },
+    {
+      "line": 106,
+      "text": "**dependencies and tools:** a new crate in the svrngs workspace;",
+      "terms": [
+        "dependencies and tools"
+      ],
+      "checked": "by its terms"
+    },
+    {
+      "line": 107,
+      "text": "**outward-facing steps:** publishing, `sudo`, a system service, a port on this host's network;",
+      "terms": [
+        "outward-facing steps",
+        "publishing",
+        "sudo",
+        "system service"
+      ],
+      "checked": "by its terms"
+    },
+    {
+      "line": 109,
+      "text": "**git:** pushing, history rewrites, `--no-verify`;",
+      "terms": [
+        "--no-verify",
+        "history rewrites",
+        "pushing"
+      ],
+      "checked": "by its terms"
+    },
+    {
+      "line": 110,
+      "text": "**anything whose evidence you could not reproduce.**",
+      "terms": [],
+      "checked": "not checked: a judgment, no word to match"
+    }
+  ],
+  "ceiling": {
+    "at": "ralph/next/guests/CHARTER.md:97",
+    "text": "**the budget:** past 16,925 for the repository or 3,076 for svrngs-core (2026-10-20), or a raise without the pass first;",
+    "qualifier": "",
+    "kind": "absolute",
+    "ceiling": {
+      ".": 16925,
+      "crates/svrngs-core": 3076
+    }
+  },
+  "headroom": {
+    ".": {
+      "count": 17634,
+      "cap": 17635,
+      "evidence": [
+        "ralph/next/guests/CHARTER.md:97",
+        "python3 scripts/lean_check.py (run now)"
+      ],
+      "ceiling": 16925,
+      "reading": "the charter's number",
+      "left": -710
+    },
+    "crates/svrngs-core": {
+      "count": 3149,
+      "cap": 3150,
+      "evidence": [
+        "ralph/next/guests/CHARTER.md:97",
+        "python3 scripts/lean_check.py (run now)"
+      ],
+      "ceiling": 3076,
+      "reading": "the charter's number",
+      "left": -74
+    }
+  },
+  "exit": 0
+}
