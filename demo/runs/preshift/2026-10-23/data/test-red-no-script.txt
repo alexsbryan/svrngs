@@ -1,0 +1,92 @@
+test_the_ceiling_is_read_and_its_headroom_is_what_the_park_found (__main__.TheGuestsLinkPark.test_the_ceiling_is_read_and_its_headroom_is_what_the_park_found) ... FAIL
+test_the_row_as_written_is_flagged_no_estimate_never_defaulted (__main__.TheGuestsLinkPark.test_the_row_as_written_is_flagged_no_estimate_never_defaulted) ... FAIL
+test_the_row_with_the_parks_own_measure_will_park (__main__.TheGuestsLinkPark.test_the_row_with_the_parks_own_measure_will_park) ... FAIL
+
+======================================================================
+FAIL: test_the_ceiling_is_read_and_its_headroom_is_what_the_park_found (__main__.TheGuestsLinkPark.test_the_ceiling_is_read_and_its_headroom_is_what_the_park_found)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/alexsbryan/dev/svrngs/demo/runs/preshift/2026-10-23/test_preshift.py", line 40, in sweep
+    return r.returncode, json.loads(r.stdout)
+                         ~~~~~~~~~~^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/decoder.py", line 345, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/decoder.py", line 363, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/alexsbryan/dev/svrngs/demo/runs/preshift/2026-10-23/test_preshift.py", line 58, in test_the_ceiling_is_read_and_its_headroom_is_what_the_park_found
+    _, report = sweep(self.state, self.charter)
+                ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/alexsbryan/dev/svrngs/demo/runs/preshift/2026-10-23/test_preshift.py", line 42, in sweep
+    raise AssertionError(f"exit {r.returncode}, no JSON: {r.stdout[:300]} {r.stderr[-600:]}")
+AssertionError: exit 2, no JSON:  /Library/Frameworks/Python.framework/Versions/3.13/Resources/Python.app/Contents/MacOS/Python: can't open file '/Users/alexsbryan/dev/svrngs/demo/runs/preshift/2026-10-23/preshift.py': [Errno 2] No such file or directory
+
+
+======================================================================
+FAIL: test_the_row_as_written_is_flagged_no_estimate_never_defaulted (__main__.TheGuestsLinkPark.test_the_row_as_written_is_flagged_no_estimate_never_defaulted)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/alexsbryan/dev/svrngs/demo/runs/preshift/2026-10-23/test_preshift.py", line 40, in sweep
+    return r.returncode, json.loads(r.stdout)
+                         ~~~~~~~~~~^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/decoder.py", line 345, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/decoder.py", line 363, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/alexsbryan/dev/svrngs/demo/runs/preshift/2026-10-23/test_preshift.py", line 66, in test_the_row_as_written_is_flagged_no_estimate_never_defaulted
+    code, report = sweep(self.state, self.charter)
+                   ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/alexsbryan/dev/svrngs/demo/runs/preshift/2026-10-23/test_preshift.py", line 42, in sweep
+    raise AssertionError(f"exit {r.returncode}, no JSON: {r.stdout[:300]} {r.stderr[-600:]}")
+AssertionError: exit 2, no JSON:  /Library/Frameworks/Python.framework/Versions/3.13/Resources/Python.app/Contents/MacOS/Python: can't open file '/Users/alexsbryan/dev/svrngs/demo/runs/preshift/2026-10-23/preshift.py': [Errno 2] No such file or directory
+
+
+======================================================================
+FAIL: test_the_row_with_the_parks_own_measure_will_park (__main__.TheGuestsLinkPark.test_the_row_with_the_parks_own_measure_will_park)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/alexsbryan/dev/svrngs/demo/runs/preshift/2026-10-23/test_preshift.py", line 40, in sweep
+    return r.returncode, json.loads(r.stdout)
+                         ~~~~~~~~~~^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/decoder.py", line 345, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/decoder.py", line 363, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/alexsbryan/dev/svrngs/demo/runs/preshift/2026-10-23/test_preshift.py", line 76, in test_the_row_with_the_parks_own_measure_will_park
+    code, report = sweep(planted, self.charter)
+                   ~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/alexsbryan/dev/svrngs/demo/runs/preshift/2026-10-23/test_preshift.py", line 42, in sweep
+    raise AssertionError(f"exit {r.returncode}, no JSON: {r.stdout[:300]} {r.stderr[-600:]}")
+AssertionError: exit 2, no JSON:  /Library/Frameworks/Python.framework/Versions/3.13/Resources/Python.app/Contents/MacOS/Python: can't open file '/Users/alexsbryan/dev/svrngs/demo/runs/preshift/2026-10-23/preshift.py': [Errno 2] No such file or directory
+
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.148s
+
+FAILED (failures=3)
