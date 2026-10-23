@@ -21,3 +21,5 @@ mod people;
 mod money;
 // Events (demo/events.md): a dinner for two groups, each its own answers.
 mod events;
+// House rules (demo/house-rules.md): a rule agreed holds after one leaves.
+mod house_rules;

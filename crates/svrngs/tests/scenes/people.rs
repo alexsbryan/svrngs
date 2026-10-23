@@ -351,8 +351,15 @@ impl Browsers {
     /// computer's Chromium, a phone's WebKit as an iPhone, or every one in
     /// `engine` when the scene is played in WebKit.
     pub async fn open(engine: Engine, people: &[(&str, Engine)]) -> Browsers {
+        Browsers::driven("demo/runs/events/2026-10-14/people.mjs", engine, people).await
+    }
+
+    /// As [`Browsers::open`], with the recorded run's driver at `driver`
+    /// in place of Events': House rules' (demo/runs/canon/2026-10-17-house/
+    /// people.mjs) presses `steps` where Events' presses one button.
+    pub async fn driven(driver: &str, engine: Engine, people: &[(&str, Engine)]) -> Browsers {
         let mut run = Command::new("node")
-            .arg(repo().join("demo/runs/events/2026-10-14/people.mjs"))
+            .arg(repo().join(driver))
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .kill_on_drop(true)
