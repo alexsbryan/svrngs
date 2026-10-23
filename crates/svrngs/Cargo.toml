@@ -63,3 +63,10 @@ useless_vec = "allow"
 [[test]]
 name = "join_page"
 test = false
+
+# The demo scenes, played (capability-scenes): run once, by name, in
+# scripts/check.sh's "scenes" step.
+[[test]]
+name = "scenes"
+path = "tests/scenes/main.rs"
+test = false
