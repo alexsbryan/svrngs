@@ -29,9 +29,9 @@ if [ -f Cargo.toml ]; then
   # Then the test targets `cargo test` skips (`test = false`), which
   # --all-targets leaves out and a glob of names reaches.
   step "clippy"   sh -c "cargo clippy --quiet --all-targets -- -D warnings && cargo clippy --quiet --workspace --test '*' -- -D warnings"
-  # What the browser tests could not judge, printed after the browser's step:
-  # kept from this check alone.
-  rm -rf target/could-not-judge
+  # What the browser tests could not judge, printed after the browser's step,
+  # and the conformance canary's verdicts: kept from this check alone.
+  rm -rf target/could-not-judge target/conformance
   # The canaries, browser, joining and conformance targets are `test = false`
   # (crates/svrngs-node/Cargo.toml, crates/svrngs/Cargo.toml), so each runs
   # once, in its own step below, and not again here.
@@ -61,20 +61,17 @@ if [ -f Cargo.toml ]; then
   # The demo scenes, played (capability-scenes; crates/svrngs/tests/
   # scenes): each scene end to end, every person this build's svrngs with
   # a HOME of their own, in both engines, the scenes in parallel; each
-  # scene's verdict on its own line. A scene whose third-party app is not
-  # installed here says never-ran and why (target/scenes/never-ran/), and
-  # the gate fails on it.
-  rm -rf target/scenes/never-ran
+  # scene's verdict on its own line, in the order they ended. A scene whose
+  # third-party app is not installed here writes never-ran and why in its
+  # place, target/scenes/<scene>-<engine>/never-ran.txt (each place is
+  # emptied as its scene starts), and the gate fails on it.
   step "scenes" cargo test -p svrngs --test scenes
-  awk '/^test .* \.\.\. / {split($2, n, "::"); v = $NF == "ok" ? "passed" : "failed"; e[n[1]] = e[n[1]] (e[n[1]] ? ", " : "") n[3]; if (!(n[1] in s) || v == "failed") s[n[1]] = v}
-    END {for (k in s) printf "%-10s scene %s (%s)\n", s[k], k, e[k]}' /tmp/svrngs-check.$$ | sort -k3
-  for f in target/scenes/never-ran/*.txt; do [ -f "$f" ] || continue; echo "never-ran  scene $(basename "$f" .txt): $(cat "$f")"; failed=1; done
+  awk '/^test .* \.\.\. / {split($2, n, "::"); k = n[1]; if (!(k in s)) o[++m] = k; e[k] = e[k] (e[k] ? ", " : "") n[3]; if (!(k in s) || $NF != "ok") s[k] = $NF == "ok" ? "passed" : "failed"} FILENAME ~ /never-ran/ {k = FILENAME; sub(/.*scenes\//, "", k); sub(/-[a-z]+\/never-ran.txt$/, "", k); if (!(k in s)) o[++m] = k; s[k] = "never-ran"; w[k] = ": " $0; x = 1} END {for (i = 1; i <= m; i++) printf "%-10s scene %s (%s)%s\n", s[o[i]], o[i], e[o[i]], w[o[i]]; exit x}' /tmp/svrngs-check.$$ $(ls target/scenes/*/never-ran.txt 2>/dev/null) || failed=1
   # The conformance canary (DESIGN §5; u5-2): apps/web-conformance, lent by
   # two computers, opened from a computer and from a phone, each app at an
   # address of its own (DESIGN §7), in both engines; and, with accounts of its
   # own, two people signed in through a lend's sign-in (mwp-4). Each route's
   # verdict per way is printed, once for every engine and lender that agree.
-  rm -rf target/conformance
   step "conformance canary" cargo test --quiet --workspace --test conformance
   cat target/conformance/*.txt 2>/dev/null | grep -v could-not-judge | cut -c1-10,25- | sort -u | sed 's/^/           /'
   # Chromium's seeks on a host past its load bar (chk-1; tests/browser/load.rs): said apart, never a pass.
