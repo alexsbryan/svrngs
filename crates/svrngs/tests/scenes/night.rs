@@ -24,6 +24,7 @@
 use std::path::Path;
 
 use serde_json::{json, Value};
+use svrngs_node::room::Served;
 
 use crate::films::{node, Jellyfin, JELLYFIN};
 use crate::harness::{relay_url, Engine};
@@ -52,7 +53,8 @@ async fn users(jf: &Jellyfin) -> Vec<String> {
 in_both_engines!(
     /// Planted, watched failing: a hand edit, the room served on no
     /// network (room.rs `serves` answering `Served::Elsewhere`), reverted
-    /// after.
+    /// after. The network hidden (`serves` answering `Served::Unread`)
+    /// is never-ran, with svrngs's words.
     night
 );
 async fn night(engine: Engine) {
@@ -118,6 +120,17 @@ async fn night(engine: Engine) {
     let hers = json!(format!("{page}#{token}"));
     dee.lent_by(&group, "Sam", "jellyfin").await;
     let said = scene.command(&dee, &["room", "jellyfin"], "").await;
+    // The room is served on the network a computer reads (room.rs
+    // `serves`): on a host whose network cannot be read, or that has no
+    // address on it, the evening cannot be played, and is never-ran.
+    for unserved in [Served::Unread, Served::NoAddress] {
+        if said.contains(&unserved.said()) {
+            return scene.never_ran(&format!(
+                "this host's network cannot be served on: svrngs says {:?}",
+                unserved.said()
+            ));
+        }
+    }
     let line = said.lines().find(|l| l.starts_with("Sam's jellyfin: "));
     let room = line
         .and_then(|l| l.split_whitespace().find(|w| w.starts_with("http://")))
