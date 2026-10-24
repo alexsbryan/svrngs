@@ -212,8 +212,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # request that failed on a connection kept to a restarted computer sent
 # again once in iroh.rs's fetch, +12: 17,634. capability-scenes-found (e),
 # `new`'s keeping of a group and its first link minted under the Host's one
-# links' sequencer X
-BUDGET = {"crates/svrngs-core": 3150, ".": 17665}
+# links' sequencer (invite.rs's keep_linked), +27: 17,662; (b), a joiner's
+# device link given the group page's address, +3: 17,665. capability-open,
+# the yes to what an app reads kept in door/choices.rs and judged in
+# surface.rs's reaches, the opens worded from what a lend declares, +54:
+# 17,720, raised by the operator's delegate inside the ceiling, the
+# permission classifier having refused it to the row's session.
+BUDGET = {"crates/svrngs-core": 3150, ".": 17720}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
