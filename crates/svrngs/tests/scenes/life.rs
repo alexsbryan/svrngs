@@ -234,7 +234,7 @@ async fn life(engine: Engine) {
     let status = cy["status"].as_str().unwrap_or_default();
     assert!(status.contains("in lake-trip"), "Cy's phone joins: {cy:#}");
     let cy = browsers
-        .tell(json!({ "do": "lend", "who": "cy", "button": "Sam’s films" }))
+        .tell(json!({ "do": "lend", "who": "cy", "button": "Open Sam’s films" }))
         .await;
     assert!(
         cy["text"]

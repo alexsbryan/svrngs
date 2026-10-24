@@ -3131,7 +3131,7 @@ async fn the_group_s_page_draws_the_door_and_the_index(engine: Engine) {
         seen["index"],
         json!([
             ["What", "What it is", "Whose", "How it opens", "Now"],
-            ["cy’s shelf (k)", "k", "cy", "Here, in this tab", "on"]
+            ["Open cy’s shelf (k)", "k", "cy", "Here, in this tab", "on"]
         ]),
         "{seen:#}"
     );

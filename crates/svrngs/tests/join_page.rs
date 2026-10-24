@@ -185,7 +185,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
         "a name someone goes by is refused, and another asked (bash-person):\n{seen:#}"
     );
     assert!(in_house(&first["status"], "Pia"), "{seen:#}");
-    assert_eq!(first["lent"], json!(["Sam’s shelf"]), "{seen:#}");
+    assert_eq!(first["lent"], json!(["Open Sam’s shelf"]), "{seen:#}");
 
     // The issuer's journal: one Admit naming a browser's key and that name,
     // and the key the one the page keeps sealed.
@@ -220,7 +220,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
         let o = &seen[again];
         assert_eq!(o["asked"], false, "{again}: asked again:\n{seen:#}");
         assert!(in_house(&o["status"], "Pia"), "{again}:\n{seen:#}");
-        assert_eq!(o["lent"], json!(["Sam’s shelf"]), "{again}:\n{seen:#}");
+        assert_eq!(o["lent"], json!(["Open Sam’s shelf"]), "{again}:\n{seen:#}");
     }
 
     // A lend opens at an origin of its own, `<label>.localhost`, whose
