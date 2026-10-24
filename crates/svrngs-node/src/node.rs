@@ -228,6 +228,13 @@ pub struct Host {
     pub(crate) relay: RelayConfig,
     /// The record API's port, where each lend has its origin (u5-2).
     pub(crate) api_port: u16,
+    /// Held while a link is minted, and across `new`'s keeping of a group
+    /// and its first link ([`Host::keep_linked`]): an issuer's newer link
+    /// closes their last, so the home page's link, made once the group
+    /// shows, is never minted between the two and closed by `new`'s
+    /// (capability-scenes-found (e)).
+    #[expect(clippy::disallowed_types, reason = "the links' sequencer")]
+    pub(crate) minting: std::sync::Mutex<()>,
 }
 
 impl Node {
@@ -296,6 +303,7 @@ impl Node {
             relayed: relay.n0_services || !relay.relay_urls.is_empty(),
             relay: relay.clone(),
             api_port: api.addr().port(),
+            minting: Default::default(),
         });
         let (folders, blobs) =
             crate::folder::Folders::start(&data_dir, host.clone(), nudge.clone())

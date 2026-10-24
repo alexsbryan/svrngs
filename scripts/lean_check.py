@@ -210,8 +210,10 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # two rebindings of a parameter and an answer made `mut` where bound, -6:
 # 17,621, the cap lowered to one past. capability-scenes-found (a), a
 # request that failed on a connection kept to a restarted computer sent
-# again once in iroh.rs's fetch, +12: 17,634.
-BUDGET = {"crates/svrngs-core": 3150, ".": 17634}
+# again once in iroh.rs's fetch, +12: 17,634. capability-scenes-found (e),
+# `new`'s keeping of a group and its first link minted under the Host's one
+# links' sequencer (invite.rs's keep_linked), +21: 17,656.
+BUDGET = {"crates/svrngs-core": 3150, ".": 17656}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 

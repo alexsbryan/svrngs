@@ -168,8 +168,42 @@ impl Host {
     /// `Invite`, so it lets nobody join, and on the group's page alone. Its
     /// relay is the one reached now, with no wait: a running computer has
     /// reached it, the command waits first, or [`carried`] says why.
-    #[expect(clippy::disallowed_methods, reason = "a link's life starts now")]
     pub fn link(
+        &self,
+        group: &str,
+        device: bool,
+        page: Option<&Origin>,
+        visit: Option<i64>,
+    ) -> Result<Linked, Unminted> {
+        let _minting = self
+            .minting
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        self.link_held(group, device, page, visit)
+    }
+
+    /// `seed`'s group kept ([`Host::keep_group`]) and its first link made,
+    /// with no link minted between, `new`'s: a link the home page makes the
+    /// moment the group shows waits for this one, so it is the newer and the
+    /// open one. The keeping's refusal, else the link or why none was made.
+    pub fn keep_linked(
+        &self,
+        seed: &crate::group::Seed,
+        page: Option<&Origin>,
+        relay: Option<&RelayUrl>,
+    ) -> Result<Result<Linked, Unminted>, String> {
+        let _minting = self
+            .minting
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        self.keep_group(seed, page, relay)?;
+        tracing::debug!(target: "link", group = %seed.id(), "link: the group kept; its first link minted before any other");
+        Ok(self.link_held(&seed.id(), false, None, None))
+    }
+
+    /// [`Host::link`], its sequencer held.
+    #[expect(clippy::disallowed_methods, reason = "a link's life starts now")]
+    fn link_held(
         &self,
         group: &str,
         device: bool,

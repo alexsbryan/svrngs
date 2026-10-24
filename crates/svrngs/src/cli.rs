@@ -1678,10 +1678,9 @@ pub async fn new_group(
     wait_online(node, &relay.relay_urls).await;
     let asked = kept.is_some();
     let kept = kept.or_else(|| node.host().made_relay());
-    let keep = node.host().keep_group(&seed, page, kept.as_ref());
-    keep.map_err(|why| keep_refused(&seed, &why))?;
+    let keep = node.host().keep_linked(&seed, page, kept.as_ref());
+    let made = keep.map_err(|why| keep_refused(&seed, &why))?;
     tracing::debug!(target: "cli", group = %id, name = %seed.name(), page = ?page.map(Origin::as_str), ?kept, asked, "cli: group made, keeping the relay asked, else the one the home page's keeps");
-    let made = node.host().link(&id, false, None, None);
     let made = made.map_err(|e| unminted(&seed, e))?;
     Ok((seed, Printed::of(&made)))
 }

@@ -134,6 +134,63 @@ async fn new_twice_with_one_name_makes_two_groups_with_two_ids() {
     assert!(held.iter().all(|s| s.name().as_str() == "house"));
 }
 
+/// **A link made the moment a new group shows lets its joiner in**
+/// (capability-scenes-found (e)): an issuer's newer `Invite` closes their
+/// last (`membership`, "their one open link"), so `new`'s first link,
+/// minted after the group was kept, closed one the home page made in
+/// between, and its joiner was refused "this link lets nobody new in"
+/// (capability-pass-key-4's Grapevine scene). Here the home page's link is
+/// asked with no pause from the instant the group is held, as `new` runs,
+/// for a run of groups: each time, the last link this computer made, the
+/// one its record holds open, is the home page's. Kept: `new`'s own first
+/// link is in the record, for a group nobody pressed Invite in.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn a_link_made_as_soon_as_a_new_group_shows_is_the_open_one() {
+    let dir = tempfile::tempdir().unwrap();
+    let node = start(&dir).await;
+    let runs = 30;
+    tokio::task::block_in_place(|| {
+        for run in 0..runs {
+            let before = node.rail().namespaces().unwrap();
+            let (made, home) = std::thread::scope(|s| {
+                let home = s.spawn(|| loop {
+                    let held = node.rail().namespaces().unwrap();
+                    let Some(id) = held.into_iter().find(|g| !before.contains(g)) else {
+                        continue;
+                    };
+                    if let Ok(linked) = node.host().link(&id, false, None, None) {
+                        break (id, actor_of(&linked.token.key()));
+                    }
+                });
+                let made = tokio::runtime::Handle::current().block_on(cli::new_group(
+                    &node,
+                    name("house"),
+                    name("Sam"),
+                    None,
+                    None,
+                    &no_relay(),
+                ));
+                (made.expect("new makes a group"), home.join().unwrap())
+            });
+            let (seed, printed) = made;
+            assert_eq!(home.0, seed.id());
+            let keys: Vec<String> = invites(&node, &seed.id())
+                .into_iter()
+                .map(|i| i.0)
+                .collect();
+            assert!(
+                keys.contains(&key_of(&printed)),
+                "run {run}: new's own link is kept: {keys:?}"
+            );
+            assert_eq!(
+                keys.last(),
+                Some(&home.1),
+                "run {run}: the home page's link, made once the group showed, is closed by new's: {keys:?}"
+            );
+        }
+    });
+}
+
 /// `link` appends a new `Invite` to the group its name names, in any case,
 /// and prints a link to it; two groups of one name are told apart by the start of
 /// their id, and a name no group has is refused.
