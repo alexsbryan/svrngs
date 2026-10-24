@@ -114,8 +114,10 @@ async fn the_home_page_says_what_acts_as_you_and_its_stop_holds(engine: Engine) 
             "cy’s notes opens your friends’ films as you. Since {}.",
             today()
         ),
-        "Knows who you are\nWhat you open knows your name.",
-        "Can decide for you\nYour group: This computer.",
+        "Knows who you are\n",
+        "What you open knows your name.",
+        "Can decide for you\n",
+        "Your group: This computer.",
     ] {
         assert!(
             before.contains(part),
@@ -209,8 +211,10 @@ async fn the_group_page_says_what_acts_as_you_and_its_stop_holds_at_the_next_pas
             "ada’s page (k) opens your friends’ k as you. Since {}.",
             today()
         ),
-        "Knows who you are\nWhat you open knows your name.",
-        "Can decide for you\nThis phone.",
+        "Knows who you are\n",
+        "What you open knows your name.",
+        "Can decide for you\n",
+        "This phone.",
     ] {
         assert!(
             before.contains(part),

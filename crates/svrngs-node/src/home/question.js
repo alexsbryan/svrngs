@@ -24,7 +24,8 @@ export const named = (l) => (l.group ? spoken(l.kind) : `${l.person}’s ${l.nam
 // the shelf, `shelf`, says it is, else its own part of the group's record;
 // a lend declared to read kinds (`--reads`) opens your friends' lends of
 // them as you. Made from what the lend declares, never its kind of app.
-export const agreed = (l, shelf) => `Open ${named(l)}${l.group ? `. It reads and writes ${shelf.find((a) => a.name === l.kind)?.words ?? 'its own part of the group’s record.'}` : l.reads?.length ? `. It also opens your friends’ ${l.reads.map(spoken).join(' and ')} as you.` : ''}`;
+const does = (kind, shelf) => shelf.find((a) => a.name === kind)?.words ?? 'its own part of the group’s record.';
+export const agreed = (l, shelf) => `Open ${named(l)}${l.group ? `. It reads and writes ${does(l.kind, shelf)}` : l.reads?.length ? `. It also opens your friends’ ${l.reads.map(spoken).join(' and ')} as you.` : ''}`;
 
 // Who is visiting now (guests-pages; GUESTS §5 "The pages"), from the
 // record, as every member's page shows them: each guest, by host, until a
@@ -165,25 +166,52 @@ export function table(g, lends, bring) {
 
 // Each app on group `g`'s table whose files someone changed since the
 // version that runs as you (`lends.changed`; canon-pin (c); svrn-docs
-// WHAT_RUNS_AS_YOU §3): who and when, and a button saying yes to it by
-// `yes(app)`. Until you do, the version you said yes to, or the one
-// brought, runs as you, on your computers and phones alike.
+// WHAT_RUNS_AS_YOU §3), never in the way: one line, "2 apps changed. See
+// what’s new", opening to who and when for each, with a button saying yes
+// to it by `yes(app)`. Until you do, the version you said yes to, or the
+// one brought, runs as you, on your computers and phones alike.
 export function changes(g, lends, yes) {
   if (lends.changed === null) return [el('p', `This computer can’t say whether anyone changed an app in ${g.name ?? 'your group'}.`)];
-  return (lends.changed ?? []).filter((c) => c.group === g.id).map((c) => {
-    const p = el('p', `${c.by === g.person ? 'You' : c.by} changed ${spoken(c.app)}’s files on ${new Date(c.at * 1000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}. Open the new version? `);
-    p.append(Object.assign(el('button', `Yes, use the new version of ${spoken(c.app)}`), { onclick: () => yes(c.app).then(() => p.replaceChildren(`${spoken(c.app)} opens at its new version for you now.`), (e) => p.append(` ${e.message}`)) }));
+  const each = (lends.changed ?? []).filter((c) => c.group === g.id).map((c) => {
+    const p = el('p', `${spoken(c.app)}: ${c.by === g.person ? 'you' : c.by} changed its files on ${day(c.at)}. `);
+    p.append(Object.assign(el('button', 'Open the new version'), { onclick: () => yes(c.app).then(() => p.replaceChildren(`${spoken(c.app)} opens at its new version for you now.`), (e) => p.append(` ${e.message}`)) }));
     return p;
   });
+  return each.length ? [el('details', '', el('summary', `${each.length} ${each.length === 1 ? 'app' : 'apps'} changed. See what’s new`), el('p', 'The version you have keeps running until you open the new one.'), ...each)] : [];
 }
 
 // "What acts as you" (capability-what-acts; svrn-docs WHAT_CAN_ACT_AS_YOU
-// §9): one section on both pages, a part for each of `heads` in its
-// order, each headed only once `add(part, ...lines)` gives it a line.
-export function acts(heads) {
-  const parts = heads.map(() => el('div'));
-  const add = (i, ...lines) => (parts[i].children.length || parts[i].append(el('h3', heads[i])), parts[i].append(...lines));
-  return [Object.assign(el('section', '', el('h2', 'What acts as you'), ...parts), { id: 'acts' }), add];
+// §9): one section on both pages, a part for each thing an app or a
+// device can do as you, in this order, each headed only once `add(part,
+// ...lines)` gives it a line, then `notes[part]`, a page's own words.
+const PARTS = { reads: 'Reads and writes for you', opens: 'Opens friends’ things as you', knows: 'Knows who you are', wifi: 'Open to this WiFi', decides: 'Can decide for you' };
+export function acts(notes) {
+  const parts = Object.fromEntries(Object.keys(PARTS).map((k) => [k, el('div')]));
+  const add = (k, ...lines) => (parts[k].children.length || parts[k].append(el('h3', PARTS[k]), ...(notes[k] ? [el('p', notes[k])] : [])), parts[k].append(...lines));
+  return [Object.assign(el('section', '', el('h2', 'What acts as you'), ...Object.values(parts)), { id: 'acts' }), add];
+}
+
+// An app the group carries, as "What acts as you" says it: what it reads
+// and writes, the shelf's words, and no Stop, as it runs only when opened.
+export const carrying = (kind, shelf) => `${spoken(kind)} reads and writes ${does(kind, shelf).replace(/\.$/, '')}, when you open it.`;
+
+// What the person said, `c`, of lend `l` opening their friends' lends of
+// the kinds it reads as them (capability-open), since or on its day; `l`
+// undefined when it is not lent now.
+export const reading = (l, c) => {
+  const [who, what] = l ? [named(l), `your friends’ ${l.reads.map(spoken).join(' and ')}`] : ['An app not lent now', 'your friends’ things'];
+  return c.said === 'yes' ? `${who} opens ${what} as you. Since ${day(c.at)}. ` : `${who} stopped opening ${what} as you on ${day(c.at)}. Opening it again says yes again.`;
+};
+
+// Who can decide for you (§4): the devices holding a key of the person
+// whose device key is `me`, of the people rows, this one, a `here`, first
+// and nobody else's, a namesake's included, by key, never by name.
+export function deciders(rows, me, here) {
+  const first = rows.find((r) => r.key === me)?.person_key;
+  const own = (d) => rows.filter((r) => r.person_key === first && r.key !== me && r.device === d).length;
+  const said = (n, d, one) => (n ? [`your ${here === d ? 'other ' : ''}${n > 1 ? `${n} ${one}s` : one}`] : []);
+  const all = [`This ${here === 'computer' ? 'computer' : 'phone'}`, ...said(own('computer'), 'computer', 'computer'), ...said(own('browser'), 'browser', 'phone')];
+  return all.join(', ').replace(/, ([^,]*)$/, ', and $1');
 }
 
 // How lend `l` opens, `where`, and whether it is full now: the index's row

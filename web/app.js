@@ -52,7 +52,7 @@ import init, {
   relay_of,
 } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
-import { agreed, changes, door, el, named, once, opens, owner, question, removal, row, table, unlent, uses as used, visiting, whose } from './question.js?v=__VERSION__';
+import { acts, agreed, carrying, changes, deciders, door, el, named, once, opens, owner, question, reading, removal, row, spoken, table, unlent, uses as used, visiting, whose } from './question.js?v=__VERSION__';
 
 const heading = document.getElementById('status');
 const said = document.getElementById('response');
@@ -259,7 +259,11 @@ function open(group, key, lent, unanswered, l, at, until = Math.floor(Date.now()
     return;
   }
   said.textContent = `Opening ${named(l)}…`;
-  const reads = lent.filter((o) => o !== l && (l.reads ?? []).includes(o.kind));
+  // The person's Stop of what it reads as them holds from this pass
+  // (capability-what-acts), the last one lapsing within PASS_LIFE.
+  const stopped = group.reads?.[label(l.key, l.name)]?.said === 'stop';
+  if (stopped) trace(`PAGE: ${l.name}'s reads were stopped here, so its pass names none`);
+  const reads = stopped ? [] : lent.filter((o) => o !== l && (l.reads ?? []).includes(o.kind));
   const lends = [l, ...reads].map((o) => ({ label: label(o.key, o.name), key: o.key, relay: o.relay ?? null, name: o.name, kind: o.kind, person: o.person, asks: o.asks }));
   const holder = crypto.getRandomValues(new Uint8Array(32));
   // Each app at an address of its own under this page's host (DESIGN §7),
@@ -469,18 +473,39 @@ async function enter(group, asked) {
     return JSON.parse(await post(b, path, JSON.stringify([group.id, body]), (_, text) => JSON.parse(text).error).finally(() => b.close()));
   };
   document.getElementById('shelf').replaceChildren(table(group, { lent, shelf }, through('/shelf')));
-  document.getElementById('changes').replaceChildren(...changes(group, { changed }, through('/runs')));
+  // What acts as you, as the home page says it (question.js `acts`). The
+  // yes to a lend opening friends' lends as the person is its open here,
+  // kept with the group, `reads`, which its Stop changes (`saying`).
+  const [acting, add] = acts({ opens: 'A Stop here holds from the next pass this phone signs for the app, within 12 hours.' });
+  document.getElementById('acts').replaceWith(acting);
+  const saying = (l, what) => (l.reads?.length ? store.opened({ ...group, reads: { ...group.reads, [label(l.key, l.name)]: { said: what, at: Math.floor(Date.now() / 1000) } } }).then((g) => (group = g)) : Promise.resolve());
+  for (const l of once(lent).filter((o) => o.group)) add('reads', el('p', carrying(l.kind, shelf)));
+  const news = changes(group, { changed }, through('/runs'));
+  if (news.length) add('reads', ...news);
+  for (const l of lent.filter((o) => o.reads?.length && group.reads?.[label(o.key, o.name)])) {
+    const c = group.reads[label(l.key, l.name)];
+    const p = el('p', reading(l, c));
+    const stop = () => saying(l, 'stop').then(() => p.replaceChildren(`${named(l)} stops opening your friends’ ${l.reads.map(spoken).join(' and ')} as you within 12 hours, when the pass it holds ends.`));
+    if (c.said === 'yes') p.append(Object.assign(el('button', 'Stop'), { onclick: stop }));
+    add('opens', p);
+  }
+  add('knows', el('p', 'What you open knows your name.'));
+  // This phone's key, as the ask a link's issuer is sent names it.
+  add('decides', el('p', `${deciders(people, JSON.parse(ask(key, group.token)).key, 'browser')}.`));
   list.replaceChildren(
     row(['What', 'What it is', 'Whose', 'How it opens', 'Now'], 'th'),
     ...once(lent).map((l) => {
-      const button = Object.assign(el('button', agreed(l, shelf)), { onclick: () => open(group, key, lent, unanswered, l) });
+      const button = Object.assign(el('button', agreed(l, shelf)), { onclick: () => saying(l, 'yes').then(() => open(group, key, lent, unanswered, l)) });
       return row([button, l.group ? named(l) : l.kind, owner(l, group), ...opens(l, 'Here, in this tab')]);
     }),
   );
   const again = asked?.get('open') && lent.find((l) => label(l.key, l.name) === asked.get('open'));
+  // One opened here before its open was kept as the yes is that yes.
+  if (again && !group.reads?.[asked.get('open')]) await saying(again, 'yes');
   if (again) open(group, key, lent, unanswered, again, asked.get('at') ?? '/');
   const using = document.getElementById('uses');
   using.hidden = !lent.some((l) => l.asks);
+  if (!using.hidden) add('opens', using);
   using.ontoggle = () => using.open && uses(lent, dialler, document.getElementById('used'));
   // Each computer that did not say by how (bash-first-minute (c)), and
   // nobody lending said only when every computer did.

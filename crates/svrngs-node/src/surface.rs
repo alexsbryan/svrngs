@@ -12,7 +12,7 @@
 //!   person in it, and whether its keeper removed this computer (U7),
 //!   `null` when its register cannot be read here; and every removal and
 //!   ask to remove in it, who of whom and when (v1-keeper-office (b)),
-//!   `null` likewise.
+//!   `null` likewise; and beside them this computer's key.
 //! - `GET /v1/lends?namespace=<id>` — what the group's people lend now,
 //!   this computer's own lends among them, each with its lender's person
 //!   and key, its name, kind, limit, how many use it and its declared
@@ -180,7 +180,9 @@ async fn groups(State(at): State<Asking>) -> Response {
             visiting,
         });
     }
-    Json(serde_json::json!({ "groups": held })).into_response()
+    // This computer's key, so its home page tells its own devices from
+    // others' among a group's people (capability-what-acts).
+    Json(serde_json::json!({ "groups": held, "key": me })).into_response()
 }
 
 /// `POST /v1/sign?app=<app>`'s query: an app's name, refused unless it is

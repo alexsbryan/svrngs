@@ -215,8 +215,9 @@ name their hashes, and each path under `apps/<kind>/` as the record first
 placed it is the app as it was brought (`svrngs_core::Runs`, folded in
 `crates/svrngs-core/src/synced.rs` alike on every copy). A member's change
 to its files is a new version, by its files' hashes, and runs as nobody
-until they say yes. Both pages ask, under "Bring things to the table": "kim
-changed Money's files on 16 Oct. Open the new version?" The yes (`POST
+until they say yes. Both pages ask without interrupting, under "What acts
+as you": one line, "1 app changed. See what’s new", opening to "Money: kim
+changed its files on 16 Oct." and "Open the new version". The yes (`POST
 /runs`) records a `RailAct::Runs` naming the app's files, as the person's:
 its `on_behalf_of`, else its writer's, so a yes through another member's
 computer is that computer's word for the person. An app brought before the
@@ -649,7 +650,15 @@ Seven calls:
    person declared. An app the group carries says on its open what it reads
    and writes, the shelf's words or "its own part of the group’s record",
    so its first version runs as a person once they open it so named
-   (`question.js`, `agreed`). A lender whose computer did not say what it lends is
+   (`question.js`, `agreed`). Each yes is listed under "What acts as you",
+   on both pages, with since when and a Stop (`question.js`, `acts`, which
+   groups what acts as the person by what it can do: reads and writes,
+   opens friends' things, knows who you are, open to this WiFi, can decide
+   for you, the last only the person's own devices, by key). On a computer
+   the Stop is kept as the yes is, and holds from the app's next request; on
+   a phone it is kept with the group, and the next pass the page signs for
+   the app names nothing it reads, so it holds within 12 hours, as the
+   last pass lapses. A lender whose computer did not say what it lends is
    could-not-judge: `away`, or `unanswered` among the reads, never "nothing
    is lent here". The app is carried to this computer's own lend as the
    door's `Who::Own`, and to another computer's in a pass this computer signs

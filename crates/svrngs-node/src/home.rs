@@ -41,7 +41,9 @@
 //! and **a lend opened to this WiFi, or closed** (`POST /v1/room`, the room's
 //! one route, [`crate::room`], which `svrngs room` asks too); and **an app
 //! opened by its button, which is the person's yes to it reaching their
-//! friends' lends as them** (`POST /reaching`, a form; capability-open).
+//! friends' lends as them** (`POST /reaching`, a form; capability-open),
+//! **or that yes stopped**, each listed under "What acts as you" (`GET
+//! /reaching`; capability-what-acts).
 //! The person's yes and stop are
 //! kept by this computer's door for its own lend, else dialled to the
 //! lender's door on the members' protocol as this computer's key
@@ -131,7 +133,7 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
         .route("/question.js", get(|| async { QUESTION }))
         .route("/look.css", get(|| async { LOOK }))
         .route("/choices", get(choices).post(choose))
-        .route("/reaching", axum::routing::post(reaching))
+        .route("/reaching", get(reached).post(reaching))
         .route("/lent", get(lent).post(change))
         .route("/running", get(running).post(lend_one))
         .route("/link", axum::routing::post(link))
@@ -206,22 +208,47 @@ async fn choose(State(at): State<Asking>, Json(c): Json<Choosing>) -> Response {
     say(&at, &c.lend, c.app, c.said, None).await
 }
 
-/// The app the person opens from its button on this page.
+/// The app the person opens from its button on this page, or stops from
+/// "What acts as you", `said` stop.
 #[derive(Deserialize)]
 struct Opening {
     app: Label,
+    said: Option<Said>,
 }
 
 /// `POST /reaching`, a form the open button posts in a tab of its own:
 /// the person's yes to the app reaching others' lends as them, kept
-/// ([`crate::door::choices::own_reaching`]), then the app's own page.
+/// ([`crate::door::choices::own_reaching`]), then the app's own page; or
+/// its Stop, then this page again, the stop held from the app's next
+/// request ([`crate::surface::reaches`]).
 async fn reaching(State(at): State<Asking>, Form(o): Form<Opening>) -> Response {
-    let kept = crate::door::choices::own_reaching(&at.door, o.app.clone(), Said::Yes).await;
-    tracing::debug!(target: "home", app = %o.app, status = kept.status().as_u16(), "home: an app opened from its button, its yes kept");
+    let said = o.said.unwrap_or(Said::Yes);
+    let kept = crate::door::choices::own_reaching(&at.door, o.app.clone(), said).await;
+    tracing::debug!(target: "home", app = %o.app, ?said, status = kept.status().as_u16(), "home: an app opened from its button or stopped, what was said kept");
     if !kept.status().is_success() {
         return kept;
     }
-    Redirect::to(&crate::origin::origin(&o.app, at.host.api_port)).into_response()
+    let to = match said {
+        Said::Yes => crate::origin::origin(&o.app, at.host.api_port),
+        Said::Stop => "/".into(),
+    };
+    Redirect::to(&to).into_response()
+}
+
+/// `GET /reaching`: what the person said of each app reaching others'
+/// lends as them, and when, for "What acts as you"; nothing on a computer
+/// in no group, which has no person to say it.
+async fn reached(State(at): State<Asking>) -> Response {
+    let kept = crate::door::choices::reachings(&at.door);
+    let answered = match kept {
+        Ok(kept) => Json(kept).into_response(),
+        Err(r) if r.status() == StatusCode::FORBIDDEN => {
+            Json(serde_json::json!({})).into_response()
+        }
+        Err(refused) => refused,
+    };
+    tracing::debug!(target: "home", status = answered.status().as_u16(), "home: what was said of apps reaching others' lends, asked");
+    answered
 }
 
 /// What the person changes of a lend this computer lends.

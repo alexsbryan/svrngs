@@ -21,14 +21,17 @@ const opened = async (page, origin) => {
   await page.waitForFunction((o) => document.title.startsWith(`${o} `), args.open, { timeout: 60_000 }).catch(() => {});
   return page.title();
 };
+// "1 app changed. See what’s new" opened, as a person opens it.
+const unfolded = (page) => page.locator('#acts summary', { hasText: 'See what’s new' }).click({ timeout: 60_000 });
 await driving(args, async ({ page, origin }) => {
   // The section's words once it asks, or as they are when it never does.
-  await page.locator('#acts p', { hasText: 'Open the new version?' }).waitFor({ timeout: 60_000 }).catch(() => {});
+  await unfolded(page).catch(() => {});
   const asked = await page.locator('#acts').innerText();
-  if (!asked.includes('Open the new version?')) return { asked };
+  if (!asked.includes('changed its files on')) return { asked };
   const before = await opened(page, origin);
   await page.goto(origin);
-  await page.locator('#acts button', { hasText: 'Yes, use the new version' }).click({ timeout: 60_000 });
+  await unfolded(page);
+  await page.locator('#acts button', { hasText: 'Open the new version' }).click({ timeout: 60_000 });
   // Said once written, or why not beside the button; read either way.
   await page.waitForFunction(() => document.getElementById('acts').innerText.includes('new version for you now'), null, { timeout: 60_000 }).catch(() => {});
   const said = await page.locator('#acts').innerText();

@@ -141,3 +141,6 @@ body.screen time { display: inline-block; min-width: 4.6em; font-family: var(--m
 body.screen mark { padding: 0 0.3em; background: hotpink; color: var(--on-colour); font-family: var(--mono); font-size: 0.65em; font-weight: 400; vertical-align: 0.2em; }
 body.screen footer { grid-area: foot; display: flex; justify-content: space-between; gap: 2vw; padding: 0.6vw 2vw; border-top: var(--rule); }
 body.screen footer p { max-width: none; margin: 0; }
+
+/* "What acts as you": a Stop beside its line (home.js `reach`). */
+#acts form { display: inline; }

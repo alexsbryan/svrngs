@@ -2680,7 +2680,7 @@ async fn the_home_page_opens_a_lend_to_this_wifi_and_closes_it(engine: Engine) {
     let off = "Closed to this WiFi: nobody on it can open it through this computer now.";
     assert!(seen["after"][0].to_string().contains(off), "{seen:#}");
     let text = seen["text"].as_str().unwrap_or_default();
-    assert!(text.contains("On this WiFi\n"), "{text}");
+    assert!(text.contains("Open to this WiFi\n"), "{text}");
     let line = "Anyone on this WiFi can open these as you while svrngs runs: your TV, a phone, another computer. Each stays on the WiFi where you turned it on.";
     assert!(text.contains(line), "{text}");
     let refused = tokio::time::timeout(Duration::from_secs(30), async {
@@ -2716,7 +2716,7 @@ async fn the_home_page_says_a_room_it_cannot_read(engine: Engine) {
     lend(dir.path(), "shelf", shelf.port());
     let seen = home_page(engine, &ada, json!({ "text": true })).await;
     let text = seen["text"].as_str().unwrap_or_default();
-    assert!(text.contains("On this WiFi"), "{seen:#}");
+    assert!(text.contains("Open to this WiFi"), "{seen:#}");
     assert!(
         text.contains("This computer cannot read what you opened to this WiFi (")
             && text.contains("Open a lend to this WiFi again, and it starts over from that one."),

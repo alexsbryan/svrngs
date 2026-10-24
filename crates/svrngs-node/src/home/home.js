@@ -17,7 +17,7 @@
 // a lend opened to this WiFi or closed (/v1/room, room.rs). Its words are
 // DESIGN §1's: groups, people, what they lend, computer; its question and
 // what apps use and its removals are question.js's, the group's page's too.
-import { acts, agreed, changes, door, el, named, namesakes, once, opens, owner, question, removal, row, table, unlent, until, uses as used, visiting, whose } from './question.js';
+import { acts, agreed, carrying, changes, deciders, door, el, named, namesakes, once, opens, owner, question, reading, removal, row, table, unlent, until, uses as used, visiting, whose } from './question.js';
 
 const main = document.getElementById('home');
 const button = (text, act) => Object.assign(el('button', text), { onclick: act });
@@ -43,10 +43,15 @@ const asked = (path, body, p, name) => fetch(path, sent(body)).then((r) => r.jso
 // The lend's label, the first name of its origin here.
 const label = (l) => new URL(l.origin).hostname.split('.')[0];
 
+// A form posting what the person says of the app labelled `app` reaching
+// friends' lends as them to /reaching (home.rs): its yes, which goes on to
+// the app in a tab of its own (capability-open), or its Stop, which comes
+// back here (capability-what-acts).
+const reach = (app, words, said = 'yes') => Object.assign(el('form', '', ...[['app', app], ['said', said]].map(([name, value]) => Object.assign(el('input'), { type: 'hidden', name, value })), el('button', words)), { method: 'post', action: '/reaching', ...(said === 'yes' && { target: '_blank' }) });
+
 // The open of lend `l`, saying `words` (question.js `agreed`): for one
-// reading friends' lends, a form posting the yes it is to /reaching, which
-// goes on to the app in a tab of its own (capability-open); else a link.
-const opener = (l, words) => (l.reads?.length ? Object.assign(el('form', '', Object.assign(el('input'), { type: 'hidden', name: 'app', value: label(l) }), el('button', words)), { method: 'post', action: '/reaching', target: '_blank' }) : Object.assign(el('a', words), { href: l.origin, target: '_blank' }));
+// reading friends' lends, the form posting its yes; else a link.
+const opener = (l, words) => (l.reads?.length ? reach(label(l), words) : Object.assign(el('a', words), { href: l.origin, target: '_blank' }));
 
 // What the people of group `g` lend, for the ask; none when it cannot be
 // read. `removed` is null when who is in the group cannot be read here:
@@ -80,15 +85,17 @@ function section(g) {
 // Group `g` in its section `s`: its people and folder as soon as they are
 // read, then what its people lend once each computer has answered or not,
 // so a computer that does not answer holds back that list alone
-// (start-home); its apps' changes under "What acts as you", by `add`.
-// Answers what they lend.
-async function show(g, s, room, add) {
+// (start-home). Under "What acts as you", by `add`: who decides for you
+// in it, of its people by this computer's key, `me`; the apps it carries,
+// and their changes. Answers what they lend.
+async function show(g, s, room, add, me) {
   if (g.removed === null) return s.append(el('p', `This computer could not read who is in ${g.name ?? 'this group'}.`));
   if (g.removed) return s.append(el('p', `You are no longer in ${g.name ?? 'this group'}. What you already have stays on this computer; nothing new reaches it.`));
   const ns = encodeURIComponent(g.id);
   try {
     const rows = (await get(`/v1/rail/people?namespace=${ns}`)).people;
     const [people, judge] = door(rows);
+    add('decides', el('p', `${g.name ?? 'Your group'}: ${deciders(rows, me, 'computer')}.`));
     // Its screen, in a tab of its own: for a TV, a spare laptop or a projector.
     s.append(people, el('p', '', Object.assign(el('a', `Show ${g.name ?? 'this group'} on a screen`), { href: `/?screen=${ns}`, target: '_blank' })));
     // Where the group's folder is on this disk (v1-onboarding (d)).
@@ -163,20 +170,25 @@ async function show(g, s, room, add) {
     for (const p of lends.older) said(`${p}'s computer runs an older svrngs, so what they lend is not listed.`);
     if (!body.children.length) said('Nobody lends anything here yet.');
     s.append(table(g, lends, (apps) => post('/shelf', [g.id, apps])));
+    for (const l of once(lends.lent).filter((o) => o.group)) add('reads', el('p', carrying(l.kind, lends.shelf)));
     const changed = changes(g, lends, (app) => post('/runs', [g.id, app]));
-    if (changed.length) add(2, ...changed);
+    if (changed.length) add('reads', ...changed);
     return lends.lent;
   } catch (e) {
     s.append(el('p', `This computer cannot read what ${g.name ?? 'this group'} lends: ${e.message}`));
   }
 }
 
-// What apps use of what the people of your groups lend, asked of each
-// lender now, each with Stop, by `add`: headed only when there is
-// something to say (start-home).
+// Under "What acts as you", by `add`, what opens friends' things as you:
+// each app you said yes to reaching them as you (capability-open), with
+// Stop; then what apps use of what the people of your groups lend, asked
+// of each lender now, each with Stop.
 async function uses(lent, add) {
+  const yeses = await get('/reaching').catch((e) => e);
+  if (yeses instanceof Error) add('opens', el('p', `This computer cannot say which apps open your friends’ things as you: ${yeses.message}`));
+  for (const [app, c] of Object.entries(yeses instanceof Error ? {} : yeses)) add('opens', el('p', reading(lent.find((o) => label(o) === app && o.reads?.length), c), ...(c.said === 'yes' ? [reach(app, 'Stop', 'stop')] : [])));
   const stop = (l, app, line) => said(label(l), app, 'stop').then(() => location.reload(), (e) => line.append(e.message));
-  await used(lent, label, async (l) => (await get(`/choices?lend=${label(l)}`)).choices, (words, p = el('p', words)) => (add(0, p), p), stop);
+  await used(lent, label, async (l) => (await get(`/choices?lend=${label(l)}`)).choices, (words, p = el('p', words)) => (add('opens', p), p), stop);
 }
 
 // What a lend needs first, as /running says from svrngs's table, in a
@@ -301,7 +313,7 @@ function ask(lent, q) {
 }
 
 try {
-  const { groups } = await get('/v1/groups');
+  const { groups, key: me } = await get('/v1/groups');
   main.replaceChildren();
   const q = new URLSearchParams(location.search);
   if (location.pathname === '/ask') ask((await Promise.all(groups.map(lentIn))).flat(), q);
@@ -316,14 +328,15 @@ try {
     if (q.has('left')) main.append(el('p', `You left ${q.get('left')}. Rejoining needs a new invitation, and this computer can’t rejoin yet.`));
     // With no group, how to make one or join one (start-home; start-group).
     if (!groups.length) main.append(Object.assign(el('p', 'You’re in no group yet. Make one below, or join one from a link someone sent you.'), { className: 'none' }));
-    // What acts as you (question.js `acts`): what apps use, what is open
-    // to this WiFi (room.rs), each said in its lend's row and all of it
-    // here, a lend whose lender is away too, and each app's new version.
+    // What acts as you (question.js `acts`): among it what is open to this
+    // WiFi (room.rs), each said in its lend's row and all of it here, a
+    // lend whose lender is away too.
     const room = await get('/v1/room').catch((e) => e);
-    const [acting, add] = acts(['What apps use', 'On this WiFi', 'New versions of the apps in your groups']);
-    const lent = Promise.all(groups.filter((g) => !g.left).map((g) => show(g, section(g), room, add)));
+    const [acting, add] = acts({ opens: 'Each Stop holds from the app’s next request.' });
+    const lent = Promise.all(groups.filter((g) => !g.left).map((g) => show(g, section(g), room, add, me)));
     main.append(acting);
-    if (room.length || room.message) add(1, el('p', room.message ?? 'Anyone on this WiFi can open these as you while svrngs runs: your TV, a phone, another computer. Each stays on the WiFi where you turned it on.'), Object.assign(el('ul', '', ...(room.map?.((r) => el('li', `${r.person ? `${r.person}’s ` : ''}${r.name}:`, wifi(r, room))) ?? [])), { id: 'room' }));
+    add('knows', el('p', 'What you open knows your name.'));
+    if (room.length || room.message) add('wifi', el('p', room.message ?? 'Anyone on this WiFi can open these as you while svrngs runs: your TV, a phone, another computer. Each stays on the WiFi where you turned it on.'), Object.assign(el('ul', '', ...(room.map?.((r) => el('li', `${r.person ? `${r.person}’s ` : ''}${r.name}:`, wifi(r, room))) ?? [])), { id: 'room' }));
     // The groups you left (groups-leave), with what stays of each here.
     const gone = groups.filter((g) => g.left).map((g) => el('p', `${g.name ?? 'A group'}${g.made ? ` (${whose(g.made)})` : ''}: what you have of it stays on this computer${g.folders?.length ? `, its folder at ${g.folders.join(' and ')}` : ''}, and nothing new of it reaches you.`));
     if (gone.length) main.append(Object.assign(el('section', '', el('h2', 'Groups you left'), ...gone), { id: 'left' }));

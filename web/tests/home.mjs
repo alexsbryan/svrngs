@@ -3,7 +3,7 @@
 // `args.ask`, its `/ask?lend=<label>&app=<label>`, it is read for its
 // heading, which the test holds to the one source (question.js).
 //
-//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>?, <stays>?], ...], "timed"?: [<selector>, ...], "drawn"?: "<selector>", "text"?: true, "open"?: "<a link's words>", "opens"?: ["<link>", ...], "older"?: true}'
+//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>?, <stays>?], ...], "timed"?: [<selector>, ...], "drawn"?: "<selector>", "text"?: true, "open"?: "<a link's words>", "opens"?: ["<link>", ...], "older"?: true, "unfold"?: true}'
 //
 // It also answers `sent`, every request the page made (method, URL and
 // body), and each link's `href`: a page never sends a secret it is shown
@@ -59,6 +59,9 @@ try {
   // (v1-keeper-office (b): the removals; REVIEW-audit-v1ui-auto-1: a group's
   // section is drawn before its index, which a loaded host read empty).
   if (args.all) await page.locator('#home p.address').waitFor({ timeout: 30_000 });
+  // With `unfold`, every <details> opened, as a person opens "2 apps
+  // changed. See what’s new" (capability-what-acts).
+  if (args.unfold) await page.evaluate(() => document.querySelectorAll('details').forEach((d) => (d.open = true)));
   const all = args.all ? await page.locator(args.all).allTextContents() : null;
   // With `do`, each [selector, value?, stays?] in turn: filled with the
   // value, else clicked, and `all`'s words read once the page it reloads

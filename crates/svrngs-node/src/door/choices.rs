@@ -346,14 +346,18 @@ fn reaching_path(door: &Door) -> PathBuf {
 /// them, `None` when nothing; a file that cannot be read is svrngs's
 /// refusal, never no yes.
 pub(crate) fn reaching(door: &Door, app: &Label) -> Result<Option<Said>, Response> {
+    Ok(reachings(door)?.remove(app).map(|c| c.said))
+}
+
+/// What this computer's person said of each app reaching others' lends as
+/// them, and when: the home page's "What acts as you" lists them.
+pub(crate) fn reachings(door: &Door) -> Result<BTreeMap<Label, Choice>, Response> {
     let person = own(door)?;
     let mut kept = load(&reaching_path(door)).map_err(|why| {
         tracing::warn!(target: "door", why, "door: the yeses to apps reaching others' lends cannot be read");
         fault("whether you said yes to this app cannot be read on this computer")
     })?;
-    Ok((kept.remove(&person))
-        .and_then(|mut k| k.remove(app))
-        .map(|c| c.said))
+    Ok(kept.remove(&person).unwrap_or_default())
 }
 
 /// This computer's person's `said` of `app` reaching others' lends as

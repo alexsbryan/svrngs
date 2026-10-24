@@ -538,15 +538,16 @@ async fn a_new_version_runs_as_each_person_only_after_their_yes(engine: Engine) 
     let title = |seen: &Value| seen["title"].as_str().unwrap_or_default().to_string();
     let open = || drive(engine, "carried.mjs", json!({ "url": money }), None);
 
-    let yes = json!([["text=Yes, use the new version of Money", null, true]]);
-    let args = json!({ "all": "#home section h3 ~ p", "do": yes });
+    let yes = json!([["text=Open the new version", null, true]]);
+    let args = json!({ "all": "#acts summary, #acts p", "do": yes, "unfold": true });
     let before = open().await;
     let seen = home_page(engine, &ada, args).await;
     let after = open().await;
     eprintln!("ada's home page: {seen:#}\nMoney before: {before:#}\nMoney after: {after:#}");
     let asked = seen["all"].to_string();
     assert!(
-        asked.contains("kim changed Money’s files on") && asked.contains("Open the new version?"),
+        asked.contains("1 app changed. See what’s new")
+            && asked.contains("Money: kim changed its files on"),
         "{seen:#}"
     );
     assert_eq!(
@@ -575,7 +576,10 @@ async fn a_new_version_runs_as_each_person_only_after_their_yes(engine: Engine) 
     let phone = drive(engine, "runs.mjs", args, None).await;
     eprintln!("bo's phone: {phone:#}");
     let asked = phone["asked"].as_str().unwrap_or_default();
-    assert!(asked.contains("kim changed Money’s files on"), "{phone:#}");
+    assert!(
+        asked.contains("Money: kim changed its files on"),
+        "{phone:#}"
+    );
     assert_eq!(
         phone["before"], brought,
         "bo runs Money as brought, whatever ada said: {phone:#}"
