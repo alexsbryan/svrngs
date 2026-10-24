@@ -2930,7 +2930,10 @@ async fn the_door_draws_who_is_on_now(engine: Engine) {
             None => panic!("{missed}, at {start}:\n{seen:#}"),
         }
     }
+    // "What acts as you" is the verb, the heading capability-what-acts
+    // names; "act" guarded below is the record's noun, said nowhere else.
     let page = seen["text"].as_str().unwrap_or_default().to_lowercase();
+    let page = page.replace("what acts as you", "");
     let looked_up = words_said(
         &page,
         &[
