@@ -8,7 +8,7 @@ use super::*;
 /// `files`, each a path under `apps/<app>/` and its bytes, written into
 /// `folder`, a synced folder of house's: the app carried, as the shelf
 /// brings one.
-fn carry(folder: &Path, app: &str, files: &[(&str, String)]) {
+pub(super) fn carry(folder: &Path, app: &str, files: &[(&str, String)]) {
     let dir = folder.join("apps").join(app);
     std::fs::create_dir_all(&dir).unwrap();
     for (path, bytes) in files {
@@ -18,7 +18,7 @@ fn carry(folder: &Path, app: &str, files: &[(&str, String)]) {
 
 /// Where `at`'s browser opens the app `app` house carries, once its
 /// folder has taken the app and `at` lists it, within 30 s.
-async fn carried_at(at: &Node, app: &str) -> String {
+pub(super) async fn carried_at(at: &Node, app: &str) -> String {
     let url = format!("http://{}/v1/lends?namespace={NS}", at.api_addr());
     let http = reqwest::Client::builder().no_proxy().build().unwrap();
     for _ in 0..60 {

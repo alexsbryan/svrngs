@@ -38,6 +38,8 @@ mod guests;
 mod navigations;
 // Opening an app is the yes to what it does as you (capability-open).
 mod opens;
+// What acts as you, and its Stop (capability-what-acts).
+mod acts;
 // A browser half run and its JSON read: the demo scenes' too
 // (crates/svrngs/tests/scenes).
 mod drive;
