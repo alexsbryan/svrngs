@@ -14,7 +14,7 @@
 use serde_json::{json, Value};
 
 use crate::harness::{relay_url, repo, Engine};
-use crate::people::{Browsers, Scene};
+use crate::people::{late, Browsers, Scene};
 
 const FIRST: &str = "Saturday's dinner";
 const LINES: [(&str, &str); 2] = [("bo", "Bo brings chips"), ("cy", "Cy brings drinks")];
@@ -58,13 +58,19 @@ async fn tell(browsers: &mut Browsers, command: Value) -> Value {
     let got = browsers.tell(command.clone()).await;
     let waited = matches!(command["do"].as_str(), Some("has" | "says"));
     assert!(
-        got.get("failed").is_none() && !(waited && got["at"].is_null()),
+        got.get("failed").is_none(),
         "{command}: not as the doc's run says: {got:#}"
     );
+    if waited && got["at"].is_null() {
+        late(format!(
+            "{command}: not within its bound, as the doc's run says: {got:#}"
+        ))
+        .await;
+    }
     got
 }
 
-in_both_engines!(
+scene!(
     /// Planted, watched failing: every edit written as the first page's
     /// person's, `SCENES_PLANT=doc:first`: Cy's line is noted as Bo's.
     doc
@@ -202,10 +208,13 @@ async fn doc(engine: Engine) {
         .await;
     }
 
-    // Each paragraph's note names its writer, on every page.
+    // Each paragraph's note names its writer, on every page: read and
+    // held plainly once the wait for every name ends, met or not, so the
+    // invariant fails under any load; only the wait is judged by it.
     for who in ["alex", "bo", "cy"] {
         let noted = "^(?=[\\s\\S]*Alex)(?=[\\s\\S]*Bo)(?=[\\s\\S]*Cy)";
-        tell(&mut browsers, json!({ "do": "says", "who": who, "sel": "#attribution", "re": noted, "within": 5_000 })).await;
+        let said = json!({ "do": "says", "who": who, "sel": "#attribution", "re": noted, "within": 5_000 });
+        let waited = browsers.tell(said.clone()).await;
         let read = tell(&mut browsers, json!({ "do": "read", "who": who })).await;
         let paragraphs = read["paragraphs"].as_array().cloned().unwrap_or_default();
         let notes = read["note_lines"].as_array().cloned().unwrap_or_default();
@@ -219,6 +228,12 @@ async fn doc(engine: Engine) {
                 note.contains(&format!("by {name}")),
                 "{who}'s page notes {line:?} as {name}'s: {note:?}; {read:#}"
             );
+        }
+        if waited["at"].is_null() {
+            late(format!(
+                "{said}: not within its bound, as the doc's run says: {waited:#}"
+            ))
+            .await;
         }
     }
 

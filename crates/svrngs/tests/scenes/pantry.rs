@@ -25,7 +25,7 @@ use serde_json::{json, Value};
 use tokio::io::AsyncBufReadExt;
 
 use crate::harness::{repo, Engine};
-use crate::people::{Person, Scene};
+use crate::people::{late, Person, Scene};
 
 /// A stand-in server: `model <id> <whose>` answers OpenAI's `/v1/models`
 /// and `/v1/chat/completions`, streamed when asked, saying which id it
@@ -143,7 +143,7 @@ async fn chat(at: &str, model: &str, stream: bool) -> String {
         .collect()
 }
 
-in_both_engines!(
+scene!(
     /// Planted, watched failing: a hand edit, the door telling every lend
     /// "someone" for the person (door.rs, `identity`'s PERSON_HEADER),
     /// reverted after.
@@ -171,7 +171,10 @@ async fn pantry(engine: Engine) {
     // C1: `pantry list` on Bo's computer, each lend by its protocol.
     let listed = pantry_on(&bo, &["list"]).output();
     let listed = tokio::time::timeout(Duration::from_secs(60), listed).await;
-    let listed = listed.expect("pantry list ends within 60 s").unwrap();
+    let Ok(listed) = listed else {
+        late("Bo's `pantry list` does not end within 60 s").await
+    };
+    let listed = listed.unwrap();
     let said = String::from_utf8_lossy(&listed.stdout);
     eprintln!(
         "Bo's pantry list: {said}{}",

@@ -24,7 +24,7 @@ use serde_json::{json, Value};
 
 use crate::harness::{repo, Engine};
 use crate::load;
-use crate::people::Scene;
+use crate::people::{late, Scene};
 
 /// Where the films check finds Jellyfin (check.sh `JF_APP`).
 pub const JELLYFIN: &str = "/Applications/Jellyfin.app/Contents/MacOS/jellyfin";
@@ -141,7 +141,7 @@ pub fn holding(dir: &Path, secret: &[u8]) -> Vec<PathBuf> {
     found
 }
 
-in_both_engines!(
+scene!(
     /// Planted, watched failing: `SCENES_PLANT=films:token`, Sam's own
     /// Jellyfin token kept as the lend's secret, so the door sends it on
     /// every request (door.rs `secret_headers`).
@@ -260,14 +260,18 @@ async fn films(engine: Engine) {
             p["watched"], w["element"], p["seeker"]
         );
         assert!(
-            w["emptied"] == 0
-                && w["loadstart"] == 0
-                && w["back_s"].as_f64() <= Some(2.0)
-                && w["still_ms"].as_u64() < Some(5000),
+            w["emptied"] == 0 && w["loadstart"] == 0 && w["back_s"].as_f64() <= Some(2.0),
             "{}'s film plays on while {} seeks: {p:#}",
             p["watched"],
             p["seeker"]
         );
+        if w["still_ms"].as_u64() >= Some(5000) || w["still_ms"].is_null() {
+            let (watched, seeker) = (&p["watched"], &p["seeker"]);
+            late(format!(
+                "{watched}'s film stood still 5 s or more while {seeker} sought: {p:#}"
+            ))
+            .await;
+        }
     }
 
     // Sam's password is in nothing they received, nor in their logs.

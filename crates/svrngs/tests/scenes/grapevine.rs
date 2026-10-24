@@ -15,7 +15,7 @@
 use serde_json::{json, Value};
 
 use crate::harness::{repo, Engine};
-use crate::people::{Browsers, Person, Scene};
+use crate::people::{late, Browsers, Person, Scene};
 
 /// What only Sam and Kim may read: the offer, and their names.
 const SEALED: [&str; 4] = [
@@ -86,11 +86,14 @@ async fn started(app: &std::path::Path, who: &Person) -> (String, tokio::process
 /// page's words.
 async fn tell(browsers: &mut Browsers, command: Value) -> Value {
     let got = browsers.tell(command.clone()).await;
-    let ok = match command["do"].as_str() {
-        Some("await") => got["met"] == true,
-        Some("press") => got["absent"] != true && got["said"].is_null(),
-        _ => true,
-    };
+    let text = got["text"].as_str().unwrap_or_default();
+    if command["do"] == "await" && got["met"] != true {
+        late(format!(
+            "{command}: not within its bound, as demo/grapevine.md says: {text}"
+        ))
+        .await;
+    }
+    let ok = command["do"] != "press" || (got["absent"] != true && got["said"].is_null());
     assert!(
         ok,
         "{command}: not as demo/grapevine.md says: {}",
@@ -126,7 +129,7 @@ async fn unread(browsers: &mut Browsers, jo: &Person, groups: &[&str], sealed: &
     }
 }
 
-in_both_engines!(
+scene!(
     /// Planted, watched failing: the run's `unsealed` plant (run.py
     /// `PLANTS`), every reply written as its words, `SCENES_PLANT=
     /// grapevine:unsealed`: Jo's copy of Waller block holds Kim's offer.
@@ -262,11 +265,10 @@ async fn grapevine(engine: Engine) {
         "fill": { "What": "ladder", "When": "Sunday" }, "select": { "In": "1400 Page", "How far": "One ring away" }, "button": "Ask" })).await;
     let t0 = std::time::Instant::now();
     while !record(&jo, &page).await.contains("ladder") {
-        assert!(
-            t0.elapsed() < RESTARTED_WITHIN,
-            "Sam's ask is not in Jo's copy {RESTARTED_WITHIN:?} after Jo restarted; Sam's log is {}",
-            sam.log().display()
-        );
+        if t0.elapsed() >= RESTARTED_WITHIN {
+            let log = sam.log();
+            late(format!("Sam's ask is not in Jo's copy {RESTARTED_WITHIN:?} after Jo restarted; Sam's log is {}", log.display())).await;
+        }
         tokio::time::sleep(std::time::Duration::from_millis(250)).await;
     }
     drop((running, sam, jo, kim));

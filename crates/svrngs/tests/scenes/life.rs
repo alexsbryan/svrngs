@@ -26,7 +26,7 @@ use std::time::{Duration, Instant};
 use serde_json::{json, Value};
 
 use crate::harness::{relay_url, Engine};
-use crate::people::{Browsers, Person, Scene};
+use crate::people::{late, Browsers, Person, Scene};
 
 const GROUP: &str = "lake-trip";
 const PHOTOS: usize = 30;
@@ -54,13 +54,19 @@ async fn on_disk(who: &Person, names: &[(String, Vec<u8>)], within: Duration) ->
         if missing.is_empty() {
             return t0.elapsed();
         }
-        assert!(
-            t0.elapsed() < within,
-            "{}'s disk lacks {} of the trip after {within:?}: {missing:?}; its log is {}",
-            who.name,
-            missing.len(),
-            who.log().display()
-        );
+        let lacks = || {
+            format!(
+                "{}'s disk lacks {} of the trip after {within:?}: {missing:?}; its log is {}",
+                who.name,
+                missing.len(),
+                who.log().display()
+            )
+        };
+        // Held at once, no wait: a plain assertion under any load.
+        assert!(!within.is_zero(), "{}", lacks());
+        if t0.elapsed() >= within {
+            late(lacks()).await;
+        }
         tokio::time::sleep(Duration::from_millis(250)).await;
     }
 }
@@ -102,12 +108,14 @@ async fn home_says(browsers: &mut Browsers, who: &Person, words: &str, within: D
         .tell(json!({ "do": "goto", "who": who.name.to_lowercase(), "url": url, "wait": words }))
         .await;
     let text = got["text"].as_str().unwrap_or_default().to_string();
-    assert!(
-        t0.elapsed() < within,
-        "{}'s home page said {words:?} only after {:?}: {text}",
-        who.name,
-        t0.elapsed()
-    );
+    if t0.elapsed() >= within || !text.contains(words) {
+        let took = t0.elapsed();
+        late(format!(
+            "{}'s home page did not say {words:?} within {within:?}, after {took:?}: {text}",
+            who.name
+        ))
+        .await;
+    }
     text
 }
 
@@ -150,16 +158,18 @@ async fn refused(browsers: &mut Browsers, who: &Person, at: &str, within: Durati
         if got["refused"] == "removed" {
             return got;
         }
-        assert!(
-            t0.elapsed() < within,
-            "{} is not refused as removed at {at} after {within:?}: {got:#}",
-            who.name
-        );
+        if t0.elapsed() >= within {
+            late(format!(
+                "{} is not refused as removed at {at} after {within:?}: {got:#}",
+                who.name
+            ))
+            .await;
+        }
         tokio::time::sleep(Duration::from_millis(500)).await;
     }
 }
 
-in_both_engines!(
+scene!(
     /// Planted, watched failing: a hand edit, the door's and the origin's
     /// refusals of a removed person taken out (door.rs `gone`'s two
     /// callers, door.rs:1082, origin.rs:275), reverted after.

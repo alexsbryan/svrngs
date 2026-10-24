@@ -84,7 +84,7 @@ fn sections(view: &Value) -> Vec<(String, Value)> {
     .collect()
 }
 
-in_both_engines!(
+scene!(
     /// Planted, watched failing: the run's `cross` plant (run.py
     /// `PLANTS`), every page given the host's view of every group the
     /// computer holds, `SCENES_PLANT=events:cross`: Bo's page shows dWeb.

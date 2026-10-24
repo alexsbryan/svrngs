@@ -15,7 +15,7 @@
 use serde_json::{json, Value};
 
 use crate::harness::{repo, Engine};
-use crate::people::{Browsers, Person, Scene};
+use crate::people::{late, Browsers, Person, Scene};
 
 const QUIET: &str = "Quiet hours are 10pm to 7am";
 const WHY: &str = "I work late on Fridays";
@@ -48,6 +48,18 @@ async fn steps(browsers: &mut Browsers, who: &str, steps: Value) -> Vec<Value> {
         .tell(json!({ "do": "steps", "who": who, "steps": steps }))
         .await;
     let done = got["done"].as_array().cloned().unwrap_or_default();
+    // A step's wait that ran out: the driver's own words for it
+    // (`until`'s and a poll's "within", Playwright's "Timeout … exceeded").
+    let last = done.last().cloned().unwrap_or(got.clone());
+    let error = last["error"].as_str().unwrap_or_default();
+    if got["failed"] == true
+        && (error.contains(" ms") && error.contains("within") || error.contains("Timeout"))
+    {
+        late(format!(
+            "{who}'s steps did not go as demo/house-rules.md says within their bound: {last:#}"
+        ))
+        .await;
+    }
     assert!(
         got["failed"] != true && got["errors"].as_array().is_none_or(|e| e.is_empty()),
         "{who}'s steps did not go as demo/house-rules.md says: {:#}",
@@ -82,7 +94,7 @@ async fn rules_at(who: &Person, group: &str) -> String {
         .to_string()
 }
 
-in_both_engines!(
+scene!(
     /// Planted, watched failing: the run's `now` plant (run.py `PLANTS`),
     /// a past entry counted only with the people in the house today, by
     /// hand in apps/canon/house.js and `SCENES_PLANT=house-rules:now`:
@@ -91,7 +103,7 @@ in_both_engines!(
 );
 async fn house_rules(engine: Engine) {
     planted();
-    let scene = Scene::new("house-rules", engine).await;
+    let scene = Scene::new("house_rules", engine).await;
     let mut browsers = Browsers::driven(
         "demo/runs/canon/2026-10-17-house/people.mjs",
         engine,

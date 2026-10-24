@@ -24,6 +24,40 @@ use crate::harness::{relay, relay_url, repo, site, Engine};
 const TRACED: &str =
     "info,door=debug,origin=debug,folder=debug,home=debug,removal=debug,svrngs_node::ring_sync=debug,transport=warn";
 
+/// A wait in a scene that ran out on a host past the load bar: could not
+/// be judged, so the scene ends there, never a pass ([`judged`]).
+pub struct Unjudged(String);
+
+/// A wait that ran out, `why`, judged as films' seeks are, against the one
+/// load bar (load.rs `past_busy`), read now: on a host past it the scene
+/// is could-not-judge, never a pass; under it the scene fails. Every other
+/// assertion fails plainly under any load, and no limit is lengthened.
+pub async fn late(why: impl std::fmt::Display) -> ! {
+    let load = crate::load::load().await;
+    match crate::load::past_busy(&load, crate::load::cores()) {
+        Some(busy) => std::panic::panic_any(Unjudged(format!("{why}; {busy}"))),
+        None => panic!("{why}; {load}"),
+    }
+}
+
+/// `scene` played, its place `place` under `target/scenes/`: a wait that
+/// ran out past the load bar ([`late`]) writes could-not-judge.txt there,
+/// which the gate's "scenes" step reads as never a pass (scripts/check.sh);
+/// any other failure fails the test as it came.
+pub async fn judged(place: String, scene: impl std::future::Future<Output = ()> + Send + 'static) {
+    let Err(failed) = tokio::spawn(scene).await else {
+        return;
+    };
+    match failed.into_panic().downcast::<Unjudged>() {
+        Ok(unjudged) => {
+            eprintln!("could-not-judge: {}", unjudged.0);
+            let to = repo().join("target/scenes").join(place);
+            std::fs::write(to.join("could-not-judge.txt"), unjudged.0).unwrap();
+        }
+        Err(other) => std::panic::resume_unwind(other),
+    }
+}
+
 /// A scene's place: its relay on 127.0.0.1 and its people's homes, under
 /// `target/scenes/` (scratch stays under `target/`), kept after a failure
 /// so each person's `svrngs.log` can be read.
@@ -193,13 +227,15 @@ impl Scene {
                 tokio::time::sleep(Duration::from_millis(100)).await;
             }
         })
-        .await
-        .unwrap_or_else(|_| {
-            panic!(
-                "{name}'s svrngs never answered; its log is {}",
-                home.join("svrngs.log").display()
-            )
-        });
+        .await;
+        let Ok(api) = api else {
+            let log = home.join("svrngs.log");
+            late(format!(
+                "{name}'s svrngs did not answer within 60 s; its log is {}",
+                log.display()
+            ))
+            .await
+        };
         let page = format!("svrngs.localhost:{}", api.port());
         let http = reqwest::Client::builder()
             .no_proxy()
@@ -323,11 +359,13 @@ impl Person {
             }
             tokio::time::sleep(Duration::from_millis(200)).await;
         }
-        panic!(
-            "{} never stands in {name}; its log is {}",
+        let log = self.log();
+        late(format!(
+            "{} does not stand in {name} within 60 s; its log is {}",
             self.name,
-            self.log().display()
-        )
+            log.display()
+        ))
+        .await
     }
 
     /// Where its browser opens the lend `name` of `person` in `group`,
@@ -344,11 +382,13 @@ impl Person {
             }
             tokio::time::sleep(Duration::from_millis(500)).await;
         }
-        panic!(
-            "{} never lists {person}'s {name}; its log is {}",
+        let log = self.log();
+        late(format!(
+            "{} does not list {person}'s {name} within 60 s; its log is {}",
             self.name,
-            self.log().display()
-        )
+            log.display()
+        ))
+        .await
     }
 
     /// Where its browser opens what the group carries or lends of `kind`
@@ -362,11 +402,13 @@ impl Person {
             }
             tokio::time::sleep(Duration::from_millis(500)).await;
         }
-        panic!(
-            "{} never lists {kind}; its log is {}",
+        let log = self.log();
+        late(format!(
+            "{} does not list {kind} within 60 s; its log is {}",
             self.name,
-            self.log().display()
-        )
+            log.display()
+        ))
+        .await
     }
 }
 

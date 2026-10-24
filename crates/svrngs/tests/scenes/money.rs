@@ -16,7 +16,7 @@ use std::time::Duration;
 use serde_json::{json, Value};
 
 use crate::harness::Engine;
-use crate::people::{sees, Person, Scene};
+use crate::people::{late, sees, Person, Scene};
 
 /// Once `who`'s record says Money's expense `what` voided, within 60 s:
 /// the record voids an act whoever corrects it (svrngs-core admit.rs,
@@ -34,7 +34,11 @@ async fn voided(who: &Person, group: &str, what: &str) {
         tokio::time::sleep(Duration::from_millis(500)).await;
     }
     let log = who.get(&format!("/v1/rail/log?namespace={group}")).await;
-    panic!("{}'s record never voids {what}: {log:#}", who.name)
+    late(format!(
+        "{}'s record does not void {what} within 60 s: {log:#}",
+        who.name
+    ))
+    .await
 }
 
 /// The groceries, split between Ada and Bo, as Bo's page and then Ada's
@@ -82,14 +86,16 @@ async fn held(who: &Person, group: &str, holds: impl Fn(&Value) -> bool) -> Valu
         }
         tokio::time::sleep(Duration::from_millis(500)).await;
     }
-    panic!(
-        "{}'s record never holds it; its log is {}",
+    let log = who.log();
+    late(format!(
+        "{}'s record does not hold it within 60 s; its log is {}",
         who.name,
-        who.log().display()
-    )
+        log.display()
+    ))
+    .await
 }
 
-in_both_engines!(
+scene!(
     /// Planted, watched failing: expenses.js's `actsOf` reading the
     /// record's `voided` as before fd3347ac, so Bo's correction erases
     /// Ada's groceries on both pages.

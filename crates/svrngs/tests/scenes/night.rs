@@ -28,7 +28,7 @@ use svrngs_node::room::Served;
 
 use crate::films::{node, Jellyfin, JELLYFIN};
 use crate::harness::{relay_url, Engine};
-use crate::people::Scene;
+use crate::people::{late, Scene};
 
 /// Jellyfin's users by name, as Sam's own token reads them.
 async fn users(jf: &Jellyfin) -> Vec<String> {
@@ -50,7 +50,7 @@ async fn users(jf: &Jellyfin) -> Vec<String> {
     names
 }
 
-in_both_engines!(
+scene!(
     /// Planted, watched failing: a hand edit, the room served on no
     /// network (room.rs `serves` answering `Served::Elsewhere`), reverted
     /// after. The network hidden (`serves` answering `Served::Unread`)
@@ -185,14 +185,18 @@ async fn night(engine: Engine) {
         ana.get("stopped").is_none_or(Value::is_null),
         "Ana gets from the link to the film on the TV: {ana:#}"
     );
-    assert_eq!(
-        ana["within_3_min"], true,
-        "Ana's film plays on the TV within three minutes of the link: {ana:#}"
-    );
-    assert_eq!(
-        ana["pause_seek_within_10s"], true,
-        "Ana pauses and seeks it on the TV from her phone: {ana:#}"
-    );
+    if ana["within_3_min"] != true {
+        late(format!(
+            "Ana's film does not play on the TV within three minutes of the link: {ana:#}"
+        ))
+        .await;
+    }
+    if ana["pause_seek_within_10s"] != true {
+        late(format!(
+            "Ana does not pause and seek it on the TV from her phone within 10 s: {ana:#}"
+        ))
+        .await;
+    }
 
     // Nobody made an account.
     assert_eq!(

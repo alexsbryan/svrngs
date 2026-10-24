@@ -21,6 +21,31 @@ mod drive;
 mod load;
 mod people;
 
+/// A scene in Chromium and in WebKit, as `in_both_engines!` plays a
+/// browser test, each judged ([`people::judged`]) in its place,
+/// `target/scenes/<scene>-<engine>`, by the name the gate's "scenes" step
+/// reads its tests by.
+macro_rules! scene {
+    ($(#[$doc:meta])* $test:ident) => {
+        $(#[$doc])*
+        mod $test {
+            use $crate::harness::Engine;
+            async fn judged(engine: Engine) {
+                let place = format!("{}-{}", stringify!($test), engine.as_str());
+                $crate::people::judged(place, super::$test(engine)).await
+            }
+            #[tokio::test(flavor = "multi_thread")]
+            async fn chromium() {
+                judged(Engine::Chromium).await
+            }
+            #[tokio::test(flavor = "multi_thread")]
+            async fn webkit() {
+                judged(Engine::Webkit).await
+            }
+        }
+    };
+}
+
 // Money (apps/expenses): a split, a settle, another's correction.
 mod money;
 // Events (demo/events.md): a dinner for two groups, each its own answers.
