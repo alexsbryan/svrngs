@@ -212,10 +212,12 @@ test('every kind in kinds/ imports nothing: the routing, handles, sealing and ca
 test("a listing is a plain record in its owner's own group, never an ask, so never carried", () => {
   const { w } = scene(APP, KINDS);
   const listing = w.logs.waller.find((o) => o.payload.app === LISTINGS);
+  // Quoted: the id is `a1`, which a random base64 key or handle holds by chance.
+  const named = (x) => JSON.stringify(x).includes(JSON.stringify(listing.id));
   assert.deepEqual(listing.payload, { app: LISTINGS, kind: 'tool', listing: { what: 'tile saw' } });
   for (const who of ['sam', 'jo', 'kim']) {
     const v = w.view(who);
-    assert.ok(!JSON.stringify(v.asks).includes(listing.id) && !JSON.stringify(v.carriable).includes(listing.id), who);
+    assert.ok(!named(v.asks) && !named(v.carriable), who);
     assert.deepEqual(v.gaps, [], `${who} reads the listing as no gap`);
   }
   assert.ok(!Object.values(w.logs).flat().some((o) => o.payload?.type === 'carry' && o.payload.fields?.what === 'tile saw' && o.payload.of === listing.id));
