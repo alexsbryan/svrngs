@@ -1,9 +1,10 @@
 // The browser half of canon-pin (c)'s phone test (crates/svrngs-node/tests/
 // browser, `a_new_version_runs_as_each_person_only_after_their_yes`): the
-// group's page, holding the group joined by `args.token`, says in its shelf
-// that someone changed `args.open`'s files; it opens `args.open` from its
-// list and reads its title; then, on the group's page again, it says yes by
-// the shelf's button, and opens `args.open` again and reads its title.
+// group's page, holding the group joined by `args.token`, says under "What
+// acts as you" that someone changed `args.open`'s files; it opens
+// `args.open` from its list and reads its title; then, on the group's page
+// again, it says yes by its button, and opens `args.open` again and reads
+// its title.
 //
 //   node web/tests/runs.mjs '{"engine": "chromium"|"webkit", "site": ..., "key": ..., "token": ..., "id": "<the group's id>", "open": "<the app's name>"}'
 //
@@ -21,15 +22,15 @@ const opened = async (page, origin) => {
   return page.title();
 };
 await driving(args, async ({ page, origin }) => {
-  // The shelf's words once it asks, or as they are when it never does.
-  await page.locator('#shelf p', { hasText: 'Open the new version?' }).waitFor({ timeout: 60_000 }).catch(() => {});
-  const asked = await page.locator('#shelf').innerText();
+  // The section's words once it asks, or as they are when it never does.
+  await page.locator('#acts p', { hasText: 'Open the new version?' }).waitFor({ timeout: 60_000 }).catch(() => {});
+  const asked = await page.locator('#acts').innerText();
   if (!asked.includes('Open the new version?')) return { asked };
   const before = await opened(page, origin);
   await page.goto(origin);
-  await page.locator('#shelf button', { hasText: 'Yes, use the new version' }).click({ timeout: 60_000 });
+  await page.locator('#acts button', { hasText: 'Yes, use the new version' }).click({ timeout: 60_000 });
   // Said once written, or why not beside the button; read either way.
-  await page.waitForFunction(() => document.getElementById('shelf').innerText.includes('new version for you now'), null, { timeout: 60_000 }).catch(() => {});
-  const said = await page.locator('#shelf').innerText();
+  await page.waitForFunction(() => document.getElementById('acts').innerText.includes('new version for you now'), null, { timeout: 60_000 }).catch(() => {});
+  const said = await page.locator('#acts').innerText();
   return { asked, before, said, after: await opened(page, origin) };
 });

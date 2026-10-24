@@ -4,8 +4,8 @@
 // computer's apps (/v1/groups, /v1/lends, /v1/rail/people), and who was
 // removed or asked to be, from /v1/groups (v1-keeper-office (b)); the ask at
 // /ask; a group on a screen at /?screen=<its id> (`screen`); a link from a
-// group's page opened here; what apps use, each with
-// Stop; and what this computer lends, each
+// group's page opened here; what acts as you, what apps use each with
+// Stop among it (question.js `acts`); and what this computer lends, each
 // with how many it lets in at once, to set, clear or stop (bash-limit). Its
 // only writes are the person's yes and stop, to its own origin's /choices,
 // their change to what this computer lends, to its /lent, what runs here
@@ -17,7 +17,7 @@
 // a lend opened to this WiFi or closed (/v1/room, room.rs). Its words are
 // DESIGN §1's: groups, people, what they lend, computer; its question and
 // what apps use and its removals are question.js's, the group's page's too.
-import { agreed, door, el, named, namesakes, once, opens, owner, question, removal, row, table, unlent, until, uses as used, visiting, whose } from './question.js';
+import { acts, agreed, changes, door, el, named, namesakes, once, opens, owner, question, removal, row, table, unlent, until, uses as used, visiting, whose } from './question.js';
 
 const main = document.getElementById('home');
 const button = (text, act) => Object.assign(el('button', text), { onclick: act });
@@ -80,8 +80,9 @@ function section(g) {
 // Group `g` in its section `s`: its people and folder as soon as they are
 // read, then what its people lend once each computer has answered or not,
 // so a computer that does not answer holds back that list alone
-// (start-home). Answers what they lend.
-async function show(g, s, room) {
+// (start-home); its apps' changes under "What acts as you", by `add`.
+// Answers what they lend.
+async function show(g, s, room, add) {
   if (g.removed === null) return s.append(el('p', `This computer could not read who is in ${g.name ?? 'this group'}.`));
   if (g.removed) return s.append(el('p', `You are no longer in ${g.name ?? 'this group'}. What you already have stays on this computer; nothing new reaches it.`));
   const ns = encodeURIComponent(g.id);
@@ -161,7 +162,9 @@ async function show(g, s, room) {
     for (const p of lends.refused) said(`${p}'s computer answered without saying what they lend, so it is not listed.`);
     for (const p of lends.older) said(`${p}'s computer runs an older svrngs, so what they lend is not listed.`);
     if (!body.children.length) said('Nobody lends anything here yet.');
-    s.append(table(g, lends, (apps) => post('/shelf', [g.id, apps]), (app) => post('/runs', [g.id, app])));
+    s.append(table(g, lends, (apps) => post('/shelf', [g.id, apps])));
+    const changed = changes(g, lends, (app) => post('/runs', [g.id, app]));
+    if (changed.length) add(2, ...changed);
     return lends.lent;
   } catch (e) {
     s.append(el('p', `This computer cannot read what ${g.name ?? 'this group'} lends: ${e.message}`));
@@ -169,13 +172,11 @@ async function show(g, s, room) {
 }
 
 // What apps use of what the people of your groups lend, asked of each
-// lender now, each with Stop.
-async function uses(lent) {
-  const s = el('section', '', el('h2', 'What apps use'));
+// lender now, each with Stop, by `add`: headed only when there is
+// something to say (start-home).
+async function uses(lent, add) {
   const stop = (l, app, line) => said(label(l), app, 'stop').then(() => location.reload(), (e) => line.append(e.message));
-  await used(lent, label, async (l) => (await get(`/choices?lend=${label(l)}`)).choices, (words) => s.appendChild(el('p', words)), stop);
-  // Shown only when there is something to say (start-home).
-  if (s.children.length > 1) main.append(s);
+  await used(lent, label, async (l) => (await get(`/choices?lend=${label(l)}`)).choices, (words, p = el('p', words)) => (add(0, p), p), stop);
 }
 
 // What a lend needs first, as /running says from svrngs's table, in a
@@ -315,11 +316,14 @@ try {
     if (q.has('left')) main.append(el('p', `You left ${q.get('left')}. Rejoining needs a new invitation, and this computer can’t rejoin yet.`));
     // With no group, how to make one or join one (start-home; start-group).
     if (!groups.length) main.append(Object.assign(el('p', 'You’re in no group yet. Make one below, or join one from a link someone sent you.'), { className: 'none' }));
-    // What is open to this WiFi (room.rs), each said in its lend's row and
-    // all of it in a section of its own, a lend whose lender is away too.
+    // What acts as you (question.js `acts`): what apps use, what is open
+    // to this WiFi (room.rs), each said in its lend's row and all of it
+    // here, a lend whose lender is away too, and each app's new version.
     const room = await get('/v1/room').catch((e) => e);
-    const lent = Promise.all(groups.filter((g) => !g.left).map((g) => show(g, section(g), room)));
-    if (room.length || room.message) main.append(Object.assign(el('section', '', el('h2', 'On this WiFi'), el('p', room.message ?? 'Anyone on this WiFi can open these as you while svrngs runs: your TV, a phone, another computer. Each stays on the WiFi where you turned it on.'), el('ul', '', ...(room.map?.((r) => el('li', `${r.person ? `${r.person}’s ` : ''}${r.name}:`, wifi(r, room))) ?? []))), { id: 'room' }));
+    const [acting, add] = acts(['What apps use', 'On this WiFi', 'New versions of the apps in your groups']);
+    const lent = Promise.all(groups.filter((g) => !g.left).map((g) => show(g, section(g), room, add)));
+    main.append(acting);
+    if (room.length || room.message) add(1, el('p', room.message ?? 'Anyone on this WiFi can open these as you while svrngs runs: your TV, a phone, another computer. Each stays on the WiFi where you turned it on.'), Object.assign(el('ul', '', ...(room.map?.((r) => el('li', `${r.person ? `${r.person}’s ` : ''}${r.name}:`, wifi(r, room))) ?? [])), { id: 'room' }));
     // The groups you left (groups-leave), with what stays of each here.
     const gone = groups.filter((g) => g.left).map((g) => el('p', `${g.name ?? 'A group'}${g.made ? ` (${whose(g.made)})` : ''}: what you have of it stays on this computer${g.folders?.length ? `, its folder at ${g.folders.join(' and ')}` : ''}, and nothing new of it reaches you.`));
     if (gone.length) main.append(Object.assign(el('section', '', el('h2', 'Groups you left'), ...gone), { id: 'left' }));
@@ -359,7 +363,7 @@ try {
     main.append(Object.assign(el('section', '', el('h2', 'Join a group from a link'), join, why), { id: 'join' }));
     running();
     await lending();
-    await uses((await lent).flatMap((l) => l ?? []));
+    await uses((await lent).flatMap((l) => l ?? []), add);
     // Said as the command and install.sh say it: it is kept (start-address).
     main.append(Object.assign(el('p', `Your home page, the same address each time svrngs starts: ${location.origin}/`), { className: 'address' }));
   }

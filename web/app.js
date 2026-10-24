@@ -52,7 +52,7 @@ import init, {
   relay_of,
 } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
-import { agreed, door, el, named, once, opens, owner, question, removal, row, table, unlent, uses as used, visiting, whose } from './question.js?v=__VERSION__';
+import { agreed, changes, door, el, named, once, opens, owner, question, removal, row, table, unlent, uses as used, visiting, whose } from './question.js?v=__VERSION__';
 
 const heading = document.getElementById('status');
 const said = document.getElementById('response');
@@ -462,12 +462,14 @@ async function enter(group, asked) {
   judge({ unanswered });
   document.getElementById('door').replaceChildren(drawn);
   // The shelf, brought through the computer the page reaches (v1ui-shelf
-  // (c)), and a yes to an app's new version through it (canon-pin (c)).
+  // (c)), and a yes to an app's new version through it, under "What acts
+  // as you" (canon-pin (c); capability-what-acts).
   const through = (path) => async (body) => {
     const [b] = await reachGroup(group, key, dialler);
     return JSON.parse(await post(b, path, JSON.stringify([group.id, body]), (_, text) => JSON.parse(text).error).finally(() => b.close()));
   };
-  document.getElementById('shelf').replaceChildren(table(group, { lent, shelf, changed }, through('/shelf'), through('/runs')));
+  document.getElementById('shelf').replaceChildren(table(group, { lent, shelf }, through('/shelf')));
+  document.getElementById('changes').replaceChildren(...changes(group, { changed }, through('/runs')));
   list.replaceChildren(
     row(['What', 'What it is', 'Whose', 'How it opens', 'Now'], 'th'),
     ...once(lent).map((l) => {
