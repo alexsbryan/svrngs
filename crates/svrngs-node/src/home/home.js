@@ -17,7 +17,7 @@
 // a lend opened to this WiFi or closed (/v1/room, room.rs). Its words are
 // DESIGN §1's: groups, people, what they lend, computer; its question and
 // what apps use and its removals are question.js's, the group's page's too.
-import { door, el, named, namesakes, once, opens, owner, question, removal, row, table, unlent, until, uses as used, visiting, whose } from './question.js';
+import { agreed, door, el, named, namesakes, once, opens, owner, question, removal, row, table, unlent, until, uses as used, visiting, whose } from './question.js';
 
 const main = document.getElementById('home');
 const button = (text, act) => Object.assign(el('button', text), { onclick: act });
@@ -42,6 +42,11 @@ const asked = (path, body, p, name) => fetch(path, sent(body)).then((r) => r.jso
 
 // The lend's label, the first name of its origin here.
 const label = (l) => new URL(l.origin).hostname.split('.')[0];
+
+// The open of lend `l`, saying `words` (question.js `agreed`): for one
+// reading friends' lends, a form posting the yes it is to /reaching, which
+// goes on to the app in a tab of its own (capability-open); else a link.
+const opener = (l, words) => (l.reads?.length ? Object.assign(el('form', '', Object.assign(el('input'), { type: 'hidden', name: 'app', value: label(l) }), el('button', words)), { method: 'post', action: '/reaching', target: '_blank' }) : Object.assign(el('a', words), { href: l.origin, target: '_blank' }));
 
 // What the people of group `g` lend, for the ask; none when it cannot be
 // read. `removed` is null when who is in the group cannot be read here:
@@ -145,7 +150,7 @@ async function show(g, s, room) {
       const [opened, now] = opens(l, 'In a tab');
       const how = el('td', `${opened}. `, button('Copy its address for a program', () => Promise.resolve().then(() => navigator.clipboard.writeText(l.origin)).then(() => how.append(` Copied: ${l.origin}`), () => how.append(` Copy it from here: ${l.origin}`))));
       how.append(wifi(l, room));
-      body.append(el('tr', '', el('td', '', Object.assign(el('a', `Open ${named(l)}`), { href: l.origin, target: '_blank' })), el('td', l.group ? named(l) : l.kind), el('td', owner(l, g)), how, el('td', now)));
+      body.append(el('tr', '', el('td', '', opener(l, agreed(l, lends.shelf))), el('td', l.group ? named(l) : l.kind), el('td', owner(l, g)), how, el('td', now)));
     }
     // Each computer that did not say, by how (bash-first-minute (c)), a row
     // of its own: what it lends never stale, and never nobody's. One that

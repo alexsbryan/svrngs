@@ -17,6 +17,13 @@
 //! `GET /choices/<lend>` answers the dialler's own. A stop refuses every
 //! request the door receives after it; one it is already carrying, a live
 //! socket included, runs to its end.
+//!
+//! **A yes to an app reaching others' lends as its person** (capability-
+//! open; WHAT_CAN_ACT_AS_YOU §7.1) is kept here too, in the same shape and
+//! through the same task, per person and per app, never per version: on
+//! the computer the person opens it on, beside no lend, since that
+//! computer's door decides the reach ([`crate::surface::reaches`]). Opening
+//! the app from the home page says it ([`own_reaching`]).
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -90,9 +97,14 @@ fn load(path: &Path) -> Result<Kept, String> {
     }
 }
 
+/// Where the choices for `lend` are kept.
+fn file(door: &Door, lend: &Lend) -> PathBuf {
+    choices_path(&door.data_dir, &lend.name)
+}
+
 /// Every choice kept for `lend`, or svrngs's refusal.
 fn read(door: &Door, lend: &Lend) -> Result<Kept, Response> {
-    load(&choices_path(&door.data_dir, &lend.name)).map_err(|why| {
+    load(&file(door, lend)).map_err(|why| {
         tracing::warn!(target: "door", lend = %lend.name, why, "door: the lend's choices cannot be read");
         fault("who said yes to this cannot be read on the computer that lends it")
     })
@@ -199,25 +211,22 @@ pub(super) fn found(door: &Door, raw: &str) -> Result<Lend, Response> {
     }
 }
 
-/// Keep what `person` said of `app` on `lend`.
-async fn keep(door: &Door, lend: &Lend, person: PersonKey, app: Label, said: Said) -> Response {
+/// Keep what `person` said of `app` in the file at `path`.
+async fn keep(door: &Door, path: PathBuf, person: PersonKey, app: Label, said: Said) -> Response {
     let Some(at) = unix_now() else {
         return fault("this computer's clock cannot be read, so the choice is not kept");
     };
     let choice = Choice { said, at };
     let one = [(person.clone(), [(app.clone(), choice.clone())].into())].into();
     let (done, kept) = oneshot::channel();
-    let _ = door
-        .choices
-        .0
-        .send((choices_path(&door.data_dir, &lend.name), one, done));
+    let _ = door.choices.0.send((path.clone(), one, done));
     match kept.await {
         Ok(Ok(())) => {
-            tracing::info!(target: "door", lend = %lend.name, %person, %app, ?choice, "door: a choice kept");
+            tracing::info!(target: "door", at = %path.display(), %person, %app, ?choice, "door: a choice kept");
             Json(serde_json::json!({ "app": app, "choice": choice })).into_response()
         }
         failed => {
-            tracing::warn!(target: "door", lend = %lend.name, ?failed, "door: a choice could not be kept");
+            tracing::warn!(target: "door", at = %path.display(), ?failed, "door: a choice could not be kept");
             fault("this could not be kept on the computer that lends it")
         }
     }
@@ -232,7 +241,7 @@ async fn stop(door: &Door, lend: &Lend, person: PersonKey, app: Label, body: &[u
             "an app may only stop; its person says yes",
         );
     }
-    keep(door, lend, person, app, Said::Stop).await
+    keep(door, file(door, lend), person, app, Said::Stop).await
 }
 
 /// `person`'s own choices on `lend`.
@@ -278,7 +287,7 @@ pub(super) async fn choose(
         return Ok(stop(&door, &lend, person, app, &body).await);
     }
     match serde_json::from_slice::<Saying>(&body) {
-        Ok(Saying { app, said }) => Ok(keep(&door, &lend, person, app, said).await),
+        Ok(Saying { app, said }) => Ok(keep(&door, file(&door, &lend), person, app, said).await),
         Err(e) => {
             tracing::debug!(target: "door", lend = %lend.name, error = %e, "door: refused — not a choice");
             Err(LendRefusal::Path.say(
@@ -322,7 +331,36 @@ pub(super) async fn choices_of(
 /// no dial: the home page's and its origin's ([`crate::home`]).
 pub(crate) async fn own_choose(door: &Door, label: &Label, app: Label, said: Said) -> Response {
     match found(door, label.as_str()).and_then(|lend| Ok((own(door)?, lend))) {
-        Ok((person, lend)) => keep(door, &lend, person, app, said).await,
+        Ok((person, lend)) => keep(door, file(door, &lend), person, app, said).await,
+        Err(refused) => refused,
+    }
+}
+
+/// Where this computer keeps its person's yes to apps reaching others'
+/// lends as them.
+fn reaching_path(door: &Door) -> PathBuf {
+    door.data_dir.join("reaching.json")
+}
+
+/// What this computer's person said of `app` reaching others' lends as
+/// them, `None` when nothing; a file that cannot be read is svrngs's
+/// refusal, never no yes.
+pub(crate) fn reaching(door: &Door, app: &Label) -> Result<Option<Said>, Response> {
+    let person = own(door)?;
+    let mut kept = load(&reaching_path(door)).map_err(|why| {
+        tracing::warn!(target: "door", why, "door: the yeses to apps reaching others' lends cannot be read");
+        fault("whether you said yes to this app cannot be read on this computer")
+    })?;
+    Ok((kept.remove(&person))
+        .and_then(|mut k| k.remove(app))
+        .map(|c| c.said))
+}
+
+/// This computer's person's `said` of `app` reaching others' lends as
+/// them: the home page's, when they open it there ([`crate::home`]).
+pub(crate) async fn own_reaching(door: &Door, app: Label, said: Said) -> Response {
+    match own(door) {
+        Ok(person) => keep(door, reaching_path(door), person, app, said).await,
         Err(refused) => refused,
     }
 }

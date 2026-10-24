@@ -173,9 +173,21 @@ async fn lent(State(at): State<Asking>, req: Request) -> Result<Response, Respon
         return Ok(crate::home::say(&at, &lend, app, crate::door::choices::Said::Stop, pass).await);
     }
     if app != label {
-        crate::surface::reaches(&at, &app, &label).await?;
+        // A page that reads the lend is told its person's yes is missing,
+        // so it can say what to do (capability-open); one that does not
+        // read it is told nothing of it.
         let page = req.headers().get(header::ORIGIN).cloned();
-        return Ok(readable(reach(&at, label, app, req).await, page));
+        let unasked = |r: &Response| {
+            r.headers()
+                .get(REFUSED_HEADER)
+                .is_some_and(|k| k == "unasked")
+        };
+        let reached = match crate::surface::reaches(&at, &app, &label).await {
+            Ok(()) => reach(&at, label, app, req).await,
+            Err(refused) if unasked(&refused) => Err(refused),
+            Err(refused) => return Err(refused),
+        };
+        return Ok(readable(reached, page));
     }
     reach(&at, label, app, req).await
 }

@@ -18,6 +18,14 @@
 export const spoken = (kind) => kind.replaceAll('-', ' ');
 export const named = (l) => (l.group ? spoken(l.kind) : `${l.person}’s ${l.name === l.kind ? l.name : `${l.name} (${l.kind})`}`);
 
+// What opening lend `l` agrees to, said on its open on both pages,
+// pressing which is the yes (capability-open; svrn-docs
+// WHAT_CAN_ACT_AS_YOU §9): an app the group carries reads and writes what
+// the shelf, `shelf`, says it is, else its own part of the group's record;
+// a lend declared to read kinds (`--reads`) opens your friends' lends of
+// them as you. Made from what the lend declares, never its kind of app.
+export const agreed = (l, shelf) => `Open ${named(l)}${l.group ? `. It reads and writes ${shelf.find((a) => a.name === l.kind)?.words ?? 'its own part of the group’s record.'}` : l.reads?.length ? `. It also opens your friends’ ${l.reads.map(spoken).join(' and ')} as you.` : ''}`;
+
 // Who is visiting now (guests-pages; GUESTS §5 "The pages"), from the
 // record, as every member's page shows them: each guest, by host, until a
 // day and an hour.

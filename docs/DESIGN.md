@@ -636,7 +636,20 @@ Seven calls:
    with no `Sec-Fetch-Site`, as a program sends, is the lend's own, as
    loopback is trusted. A page reaches its own lend and the kinds its lender
    declared it reads, in a group both lenders and this computer stand in,
-   else `closed`. A lender whose computer did not say what it lends is
+   else `closed`. Another computer's app reaches them as this computer's
+   person only on that person's yes, else `unasked`, "Say yes on your home
+   page: open this app from there.": per person and per app, never per
+   version, since live code can't be pinned, kept beside the lends' yeses
+   (`door/choices.rs`, `reaching`) and judged where the reach is
+   (`surface.rs`, `reaches`). Opening the app from the home page is the yes:
+   its button says what it agrees to, "Open Sam’s notes. It also opens your
+   friends’ films as you.", and posts it before the app opens. On a phone
+   the group page's open, saying the same, is the yes, as the pass it signs
+   names what the app reads. An app this computer lends reads what its
+   person declared. An app the group carries says on its open what it reads
+   and writes, the shelf's words or "its own part of the group’s record",
+   so its first version runs as a person once they open it so named
+   (`question.js`, `agreed`). A lender whose computer did not say what it lends is
    could-not-judge: `away`, or `unanswered` among the reads, never "nothing
    is lent here". The app is carried to this computer's own lend as the
    door's `Who::Own`, and to another computer's in a pass this computer signs

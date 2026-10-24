@@ -185,10 +185,15 @@ document.title = `Money: ${ops.length} by ${ops.map((o) => o.on_behalf_of).join(
         "{seen:#}"
     );
     // The index draws Money by its own name and as the group's, never by
-    // its lend name or as one person's (v1ui-polish (b)).
-    assert_eq!(listed["lent"], json!(["Money"]), "{seen:#}");
+    // its lend name or as one person's (v1ui-polish (b)), its open saying
+    // what it reads and writes (capability-open).
+    let open = "Open Money. It reads and writes who paid for what, and who owes whom.";
+    assert_eq!(listed["lent"], json!([open]), "{seen:#}");
     let text = listed["text"].as_str().unwrap_or_default();
-    assert!(text.contains("Money\tMoney\thouse\t"), "{seen:#}");
+    assert!(
+        text.contains(&format!("{open}\tMoney\thouse\t")),
+        "{seen:#}"
+    );
     assert!(
         !text.contains("Money-") && !text.contains("ada’s Money"),
         "{seen:#}"
@@ -369,7 +374,10 @@ async fn the_home_page_brings_things_to_the_table(engine: Engine) {
         before.contains("Money: who paid for what, and who owes whom."),
         "{seen:#}"
     );
-    assert!(before.contains("Events: post a get-together"), "{seen:#}");
+    assert!(
+        before.contains("Events: the get-togethers people post"),
+        "{seen:#}"
+    );
     assert!(
         before.contains("House rules: the rules your house agrees"),
         "{seen:#}"
@@ -408,7 +416,9 @@ async fn the_home_page_brings_things_to_the_table(engine: Engine) {
     let index = home_page(engine, &ada, json!({ "all": "#home table.index tr" })).await;
     let rows = index["all"].to_string();
     for app in ["Money", "Events", "House rules"] {
-        let drawn = format!("Open {app}{app}your groupIn a tab");
+        let drawn = format!("{app}your groupIn a tab");
+        let open = format!("Open {app}. It reads and writes ");
+        assert!(rows.contains(&open), "{app}'s open says so: {index:#}");
         assert!(
             rows.contains(&drawn),
             "{app} the group's, by its name: {index:#}"
@@ -687,9 +697,9 @@ async fn the_phone_goes_on_to_a_computer_that_answers(engine: Engine) {
         "{seen:#}"
     );
     assert!(
-        listed["lent"]
-            .as_array()
-            .is_some_and(|l| l.iter().any(|b| b == "House rules")),
+        listed["lent"].as_array().is_some_and(|l| l.iter().any(|b| b
+            .as_str()
+            .is_some_and(|b| b.starts_with("Open House rules.")))),
         "{seen:#}"
     );
     drop((ada, cy));

@@ -41,6 +41,7 @@ use serde::{Deserialize, Serialize};
 use svrngs_core::app::App;
 use svrngs_core::pass::Label;
 
+use crate::door::choices::{self, Said};
 use crate::door::LendRefusal;
 use crate::group::Namesake;
 use crate::node::{Asking, Lending, Unlisted};
@@ -324,12 +325,27 @@ fn named(l: &Lending) -> Option<Label> {
 }
 
 /// Whether the page of the lend `app` may reach the lend `label`
-/// ([`crate::origin`]): `label` among what it reads ([`read_by`]); a lend
-/// whose lender did not say is could-not-judge, refused `away`.
+/// ([`crate::origin`]): `label` among what it reads ([`read_by`]), and,
+/// for another computer's app, its reach the person's yes, which opening
+/// it from the home page says (capability-open; [`choices::reaching`]):
+/// this computer's own app reads what its person declared. A lend whose
+/// lender did not say is could-not-judge, refused `away`.
 pub(crate) async fn reaches(at: &Asking, app: &Label, label: &Label) -> Result<(), Response> {
     let (read, unlisted, silent) = read_by(at, app).await?;
     if read.iter().any(|l| named(l).as_ref() == Some(label)) {
-        tracing::debug!(target: "surface", %app, %label, "surface: the page reads the lend's kind, so it reaches it");
+        let own = app.lender() == at.door.key;
+        let said = if own {
+            None
+        } else {
+            choices::reaching(&at.door, app)?
+        };
+        tracing::debug!(target: "surface", %app, %label, own, ?said, "surface: the page reads the lend's kind; reached when the app is this computer's own or its person said yes to it");
+        if !own && said != Some(Said::Yes) {
+            return Err(LendRefusal::Unasked.say(
+                StatusCode::FORBIDDEN,
+                "Say yes on your home page: open this app from there.",
+            ));
+        }
         return Ok(());
     }
     if silent.contains(&hex::encode(label.lender())) {

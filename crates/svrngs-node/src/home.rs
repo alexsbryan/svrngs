@@ -39,7 +39,9 @@
 //! decided as `svrngs share` decides a lend ([`crate::share`]) from what
 //! `GET /running` offers, every port that answers here and is not lent;
 //! and **a lend opened to this WiFi, or closed** (`POST /v1/room`, the room's
-//! one route, [`crate::room`], which `svrngs room` asks too).
+//! one route, [`crate::room`], which `svrngs room` asks too); and **an app
+//! opened by its button, which is the person's yes to it reaching their
+//! friends' lends as them** (`POST /reaching`, a form; capability-open).
 //! The person's yes and stop are
 //! kept by this computer's door for its own lend, else dialled to the
 //! lender's door on the members' protocol as this computer's key
@@ -50,9 +52,9 @@ use axum::extract::{rejection::JsonRejection, Query, Request, State};
 use axum::http::header::{self, HeaderValue};
 use axum::http::{Method, StatusCode};
 use axum::middleware::Next;
-use axum::response::{IntoResponse, Response};
+use axum::response::{IntoResponse, Redirect, Response};
 use axum::routing::get;
-use axum::{Json, Router};
+use axum::{Form, Json, Router};
 use serde::Deserialize;
 use std::num::NonZeroU16;
 use std::process::Command;
@@ -129,6 +131,7 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
         .route("/question.js", get(|| async { QUESTION }))
         .route("/look.css", get(|| async { LOOK }))
         .route("/choices", get(choices).post(choose))
+        .route("/reaching", axum::routing::post(reaching))
         .route("/lent", get(lent).post(change))
         .route("/running", get(running).post(lend_one))
         .route("/link", axum::routing::post(link))
@@ -201,6 +204,24 @@ struct Choosing {
 /// `POST /choices`: the person's yes or stop, kept by the lend's door.
 async fn choose(State(at): State<Asking>, Json(c): Json<Choosing>) -> Response {
     say(&at, &c.lend, c.app, c.said, None).await
+}
+
+/// The app the person opens from its button on this page.
+#[derive(Deserialize)]
+struct Opening {
+    app: Label,
+}
+
+/// `POST /reaching`, a form the open button posts in a tab of its own:
+/// the person's yes to the app reaching others' lends as them, kept
+/// ([`crate::door::choices::own_reaching`]), then the app's own page.
+async fn reaching(State(at): State<Asking>, Form(o): Form<Opening>) -> Response {
+    let kept = crate::door::choices::own_reaching(&at.door, o.app.clone(), Said::Yes).await;
+    tracing::debug!(target: "home", app = %o.app, status = kept.status().as_u16(), "home: an app opened from its button, its yes kept");
+    if !kept.status().is_success() {
+        return kept;
+    }
+    Redirect::to(&crate::origin::origin(&o.app, at.host.api_port)).into_response()
 }
 
 /// What the person changes of a lend this computer lends.

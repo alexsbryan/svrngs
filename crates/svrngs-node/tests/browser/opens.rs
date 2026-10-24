@@ -78,10 +78,16 @@ async fn opening_an_app_from_the_home_page_is_the_yes_to_what_it_reads(engine: E
     );
     let cells = seen["cells"].as_array().cloned().unwrap_or_default();
     for cell in [words, "Open cy’s plain (k)", "Open cy’s films"] {
-        assert!(cells.contains(&json!(cell)), "the index says {cell:?}:\n{seen:#}");
+        assert!(
+            cells.contains(&json!(cell)),
+            "the index says {cell:?}:\n{seen:#}"
+        );
     }
     assert_eq!(seen["error"], Value::Null, "{seen:#}");
-    assert!(at_origin(&seen["there"]["url"], &label(2, "notes")), "{seen:#}");
+    assert!(
+        at_origin(&seen["there"]["url"], &label(2, "notes")),
+        "{seen:#}"
+    );
     assert!(at_origin(&seen["plain"], &label(2, "plain")), "{seen:#}");
     let on_films = asked(&on_films);
     assert!(
@@ -103,13 +109,16 @@ async fn opening_an_app_from_the_home_page_is_the_yes_to_what_it_reads(engine: E
 /// record", so its first version runs as a person only once they open it
 /// so named; a lend reading other kinds opens your friends' lends of them
 /// as you; one doing neither is opened by its name alone, as before. Both
-/// pages draw their open from question.js's `opening`. Red at HEAD: no
-/// `opening`, and each page's open said the name alone.
+/// pages draw their open from question.js's `agreed`. Red at HEAD: no
+/// `agreed`, and each page's open said the name alone.
 #[test]
 fn the_open_says_what_an_app_does_in_one_wording() {
     for page in ["crates/svrngs-node/src/home/home.js", "web/app.js"] {
         let text = std::fs::read_to_string(repo().join(page)).unwrap();
-        assert!(text.contains("opening(l, "), "{page} draws no open by `opening`");
+        assert!(
+            text.contains("agreed(l, "),
+            "{page} draws no open by `agreed`"
+        );
     }
     let shelf = json!([{ "name": "Money", "words": "who paid for what, and who owes whom." }]);
     let carried = |kind: &str| json!({ "group": "g", "kind": kind, "person": "cy", "name": "x", "reads": [] });
@@ -121,7 +130,7 @@ fn the_open_says_what_an_app_does_in_one_wording() {
     ]);
     assert_eq!(
         in_question(
-            "args[0].map((l) => q.opening(l, args[1]))",
+            "args[0].map((l) => q.agreed(l, args[1]))",
             json!([lends, shelf])
         ),
         json!([

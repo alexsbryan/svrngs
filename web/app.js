@@ -52,7 +52,7 @@ import init, {
   relay_of,
 } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
-import { door, el, named, once, opens, owner, question, removal, row, table, unlent, uses as used, visiting, whose } from './question.js?v=__VERSION__';
+import { agreed, door, el, named, once, opens, owner, question, removal, row, table, unlent, uses as used, visiting, whose } from './question.js?v=__VERSION__';
 
 const heading = document.getElementById('status');
 const said = document.getElementById('response');
@@ -471,7 +471,7 @@ async function enter(group, asked) {
   list.replaceChildren(
     row(['What', 'What it is', 'Whose', 'How it opens', 'Now'], 'th'),
     ...once(lent).map((l) => {
-      const button = Object.assign(el('button', named(l)), { onclick: () => open(group, key, lent, unanswered, l) });
+      const button = Object.assign(el('button', agreed(l, shelf)), { onclick: () => open(group, key, lent, unanswered, l) });
       return row([button, l.group ? named(l) : l.kind, owner(l, group), ...opens(l, 'Here, in this tab')]);
     }),
   );
