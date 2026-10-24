@@ -19,7 +19,11 @@
 //
 // A lend's origin keeps a store of its own, `svrngs-lend` (below): what its
 // worker dials with, never the person's key, which no lend's origin holds
-// (u5-2; DESIGN §3, "Lent apps", call 6).
+// (u5-2; DESIGN §3, "Lent apps", call 6). Its pass and the pass's key are
+// bytes the lend's own pages can read, trusted as the lend's pinned code
+// is, until the pass lapses (DESIGN §8, risk 5): the worker cannot keep
+// them alone, since it shares the origin and comes back through open.html
+// (open.js:46). A key that cannot be copied lands with capability-signed.
 //
 // The key is bytes, never a WebCrypto signing key: iroh signs its handshake
 // synchronously (iroh-1.0.2/src/tls/resolver.rs:92-95), and the issuer lets
