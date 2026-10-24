@@ -5,7 +5,8 @@
 //! one at a time: each home page lists the group, its folder and both
 //! lends, Sam's films open from it, and the trip is on their disk. Cy
 //! joins on a phone, through the group's page, and opens Sam's films
-//! there. Sam removes Bo. Ana's computer stops, as a lid shut; Eve joins
+//! there; Alex, who joined by the client's link, adds his phone from his
+//! home page. Sam removes Bo. Ana's computer stops, as a lid shut; Eve joins
 //! and gets every photo all the same, from whoever holds them.
 //!
 //! Sam's films and Ana's music here are a page each served on a port, not
@@ -186,6 +187,7 @@ async fn life(engine: Engine) {
             ("dee", Engine::Chromium),
             ("eve", Engine::Chromium),
             ("cy", Engine::Webkit),
+            ("alexphone", Engine::Webkit),
         ],
     )
     .await;
@@ -220,6 +222,7 @@ async fn life(engine: Engine) {
 
     // 3. Alex, Bo and Dee, one at a time; Cy on a phone.
     let mut newcomers = vec![];
+    scene.installs_from("Alex", &page);
     for name in ["Alex", "Bo", "Dee"] {
         let who = scene.joins(name, link, GROUP).await;
         newcomer(&mut browsers, &who, &photos).await;
@@ -241,6 +244,23 @@ async fn life(engine: Engine) {
         "Cy's phone opens Sam's films through the group's page: {cy:#}"
     );
     let [alex, bo, dee] = <[Person; 3]>::try_from(newcomers).ok().unwrap();
+    // Alex joined by the client's link, so his computer keeps no page of
+    // lake-trip's, but it came from the group's page by the install line:
+    // he adds his phone from his home page, and it opens the group.
+    let device = json!({ "group": group, "device": true });
+    let his = alex.on_home_page("/link", &device).await;
+    assert!(
+        his["https"].is_string(),
+        "Alex's home page gives a link his phone opens: {his:#}"
+    );
+    let phone = browsers
+        .tell(json!({ "do": "join", "who": "alexphone", "link": his["https"], "name": "Alex" }))
+        .await;
+    let status = phone["status"].as_str().unwrap_or_default();
+    assert!(
+        status.contains("in lake-trip") && status.contains("Alex"),
+        "Alex's phone opens lake-trip as Alex: {phone:#}"
+    );
     let films_at_bo = bo.lent_by(&group, "Sam", "films").await;
     let music_at_bo = bo.lent_by(&group, "Ana", "music").await;
 

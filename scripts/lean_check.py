@@ -213,7 +213,7 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # again once in iroh.rs's fetch, +12: 17,634. capability-scenes-found (e),
 # `new`'s keeping of a group and its first link minted under the Host's one
 # links' sequencer X
-BUDGET = {"crates/svrngs-core": 3150, ".": 17662}
+BUDGET = {"crates/svrngs-core": 3150, ".": 17665}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 

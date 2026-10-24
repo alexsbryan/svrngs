@@ -162,8 +162,9 @@ impl Host {
 
     /// A link to `group`, for the home page (start-home) and `svrngs link`
     /// and `new` alike: the https one on `page`, kept from now on, when
-    /// given (`link --origin`), else on the group's kept page; with
-    /// `device`, a device link, and whose; with `visit`, a guest's link for
+    /// given (`link --origin`), else on the group's kept page, else on this
+    /// computer's; with `device`, a device link, and whose; with `visit`, a
+    /// guest's link for
     /// a visit that long, kept here ([`VisitLink`]) in place of an
     /// `Invite`, so it lets nobody join, and on the group's page alone. Its
     /// relay is the one reached now, with no wait: a running computer has
@@ -222,7 +223,14 @@ impl Host {
             crate::group::write_origin(&dir, given).map_err(|e| unkept(&e))?;
             tracing::debug!(target: "link", group, origin = given.as_str(), "link: the group's origin changed");
         }
-        let page = kept_page(&dir).map_err(|e| unkept(&e))?;
+        // Else the page this computer came from, which install.sh keeps and
+        // the home page's groups keep (Asking::found): a joiner by the
+        // client's link keeps none of the group's, and a phone opens only an
+        // https link (capability-scenes-found (b)).
+        let page = match kept_page(&dir).map_err(|e| unkept(&e))? {
+            None => kept_page(self.rail.root()).map_err(|e| unkept(&e))?,
+            kept => kept,
+        };
         let (key, device) = device.then(|| self.own_person(group)).transpose()?.unzip();
         let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH);
         let now = now.map_err(|e| unkept(&e))?.as_secs() as i64;
@@ -249,7 +257,7 @@ impl Host {
                 token
             }
         };
-        tracing::debug!(target: "link", group, ?device, page = ?page.as_ref().map(Origin::as_str), "link: made, on the group's kept page too when it keeps one");
+        tracing::debug!(target: "link", group, ?device, page = ?page.as_ref().map(Origin::as_str), "link: made, on the group's kept page too, else this computer's, when it keeps one");
         Ok(Linked {
             token,
             page,

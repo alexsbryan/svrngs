@@ -93,6 +93,14 @@ impl Scene {
         std::fs::write(self.dir.join("could-not-judge.txt"), why).unwrap();
     }
 
+    /// `name`'s computer as the one install line leaves it: the page it came
+    /// from kept in its data dir (web/install.sh, by `ORIGIN_FILE`).
+    pub fn installs_from(&self, name: &str, page: &str) {
+        let data = self.dir.join(name.to_lowercase()).join(".svrngs");
+        std::fs::create_dir_all(&data).unwrap();
+        std::fs::write(data.join(svrngs_node::invite::ORIGIN_FILE), page).unwrap();
+    }
+
     /// Where its scratch goes, under its place.
     pub fn scratch(&self, name: &str) -> PathBuf {
         self.dir.join(name)
