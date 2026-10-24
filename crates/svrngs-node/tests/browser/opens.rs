@@ -1,0 +1,134 @@
+//! Opening an app is the yes to what it does as you (capability-open;
+//! svrn-docs `rings/current/WHAT_CAN_ACT_AS_YOU.md` §3 shortfalls 3 and 7,
+//! §7.1 and §7.3, §9 "Opening is the yes"): an app another member lends,
+//! whose lender declared it reads a kind (`--reads`), opens their lends of
+//! that kind as you only once you said yes, and opening it from your home
+//! page, by a button saying so, is that yes. The open of a carried app says
+//! what it reads and writes, as the shelf words it.
+
+use super::*;
+
+/// The first line of each request `heads` kept, its method and path.
+fn asked(heads: &KeptHeads) -> Vec<String> {
+    let heads = heads.lock().unwrap();
+    let firsts = heads.iter().filter_map(|h| h.lines().next());
+    firsts
+        .map(|l| l.rsplit_once(' ').map_or(l, |(at, _)| at).to_string())
+        .collect()
+}
+
+in_both_engines!(
+    /// **A page reaching another member's lend as you waits for your yes,
+    /// and opening it from your home page is the yes** (shortfall 3). Cy
+    /// lends notes, of kind `notes`, declared to read `films`; films; and
+    /// a plain page reading nothing. Ada's browser opens cy's notes by its
+    /// typed address, as a bookmark opens it, and its fetch of cy's films
+    /// is refused, `unasked`, in words ada can act on: before this test it
+    /// reached cy's films as ada, on nobody's yes but cy's `--reads`. On
+    /// her home page the notes' button says what opening it lets it do, "It
+    /// also opens your friends’ films as you"; one tap opens it, answering
+    /// no question, and from then its page reaches the films, in the new
+    /// tab and the bookmarked one alike. Kept: the plain lend opens by its
+    /// link as before, its words unchanged. Planted: `surface::reaches`
+    /// carrying a reach with no yes, and the bookmarked fetch reaches the
+    /// films.
+    opening_an_app_from_the_home_page_is_the_yes_to_what_it_reads
+);
+async fn opening_an_app_from_the_home_page_is_the_yes_to_what_it_reads(engine: Engine) {
+    let relay = relay().await;
+    let (ada_dir, cy_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let ada = node(ada_dir.path(), &relay, &signing(7)).await;
+    let cy = joined(cy_dir.path(), &relay, &ada, 2, "cy").await;
+    let notes = page_origin("<!doctype html><title>cy's notes</title><body>").await;
+    let (films, on_films) = kept_page("<!doctype html><title>cy's films</title><body>").await;
+    let plain = page_origin("<!doctype html><title>cy's plain page</title><body>").await;
+    let lends = svrngs_node::lend::lends_dir(cy_dir.path());
+    std::fs::create_dir_all(&lends).unwrap();
+    for (name, port, kind, reads) in [
+        ("notes", notes.port(), "notes", json!(["films"])),
+        ("films", films.port(), "films", json!([])),
+        ("plain", plain.port(), "k", json!([])),
+    ] {
+        let body = json!({ "port": port, "kind": kind, "limit": 3, "refused": [], "reads": reads });
+        std::fs::write(lends.join(format!("{name}.json")), body.to_string()).unwrap();
+    }
+    let port = ada.api_addr().port();
+    let at = |name: &str| format!("http://{}.localhost:{port}/", label(2, name));
+    let words = "Open cy’s notes. It also opens your friends’ films as you.";
+
+    let seen = drive(
+        engine,
+        "opens.mjs",
+        json!({
+            "home": format!("http://svrngs.localhost:{port}/"),
+            "page": at("notes"),
+            "read": at("films"),
+            "words": words,
+            "plain": "Open cy’s plain (k)",
+        }),
+        None,
+    )
+    .await;
+    eprintln!("the open's run: {seen:#}");
+
+    assert_eq!(
+        seen["bookmark"],
+        json!({ "status": 403, "refused": "unasked", "error": "Say yes on your home page: open this app from there." }),
+        "a page opened another way waits for the person's yes:\n{seen:#}"
+    );
+    let cells = seen["cells"].as_array().cloned().unwrap_or_default();
+    for cell in [words, "Open cy’s plain (k)", "Open cy’s films"] {
+        assert!(cells.contains(&json!(cell)), "the index says {cell:?}:\n{seen:#}");
+    }
+    assert_eq!(seen["error"], Value::Null, "{seen:#}");
+    assert!(at_origin(&seen["there"]["url"], &label(2, "notes")), "{seen:#}");
+    assert!(at_origin(&seen["plain"], &label(2, "plain")), "{seen:#}");
+    let on_films = asked(&on_films);
+    assert!(
+        !on_films.iter().any(|l| l == "GET /bookmark"),
+        "the films are never reached before the yes: {on_films:?}"
+    );
+    for after in ["GET /opened", "GET /after"] {
+        assert!(
+            on_films.iter().any(|l| l == after),
+            "once opened from the home page the notes reach the films, `{after}`: {on_films:?}\n{seen:#}"
+        );
+    }
+    drop((ada, cy));
+}
+
+/// **The open says what an app does, in one wording for both pages**
+/// (shortfall 7; the note's §9): an app the group carries reads and writes
+/// what the shelf says it is, or else "its own part of the group’s
+/// record", so its first version runs as a person only once they open it
+/// so named; a lend reading other kinds opens your friends' lends of them
+/// as you; one doing neither is opened by its name alone, as before. Both
+/// pages draw their open from question.js's `opening`. Red at HEAD: no
+/// `opening`, and each page's open said the name alone.
+#[test]
+fn the_open_says_what_an_app_does_in_one_wording() {
+    for page in ["crates/svrngs-node/src/home/home.js", "web/app.js"] {
+        let text = std::fs::read_to_string(repo().join(page)).unwrap();
+        assert!(text.contains("opening(l, "), "{page} draws no open by `opening`");
+    }
+    let shelf = json!([{ "name": "Money", "words": "who paid for what, and who owes whom." }]);
+    let carried = |kind: &str| json!({ "group": "g", "kind": kind, "person": "cy", "name": "x", "reads": [] });
+    let lends = json!([
+        carried("Money"),
+        carried("Quiz"),
+        { "person": "cy", "name": "notes", "kind": "notes", "reads": ["films", "music"] },
+        { "person": "cy", "name": "shelf", "kind": "k", "reads": [] },
+    ]);
+    assert_eq!(
+        in_question(
+            "args[0].map((l) => q.opening(l, args[1]))",
+            json!([lends, shelf])
+        ),
+        json!([
+            "Open Money. It reads and writes who paid for what, and who owes whom.",
+            "Open Quiz. It reads and writes its own part of the group’s record.",
+            "Open cy’s notes. It also opens your friends’ films and music as you.",
+            "Open cy’s shelf (k)",
+        ])
+    );
+}

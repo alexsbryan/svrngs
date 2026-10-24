@@ -36,6 +36,8 @@ mod tabs;
 mod guests;
 // A navigation into a lend, judged as a fetch is (capability-navigation).
 mod navigations;
+// Opening an app is the yes to what it does as you (capability-open).
+mod opens;
 // A browser half run and its JSON read: the demo scenes' too
 // (crates/svrngs/tests/scenes).
 mod drive;
@@ -1285,7 +1287,9 @@ in_both_engines!(
     /// own origin at that path, its query and fragment kept — through the
     /// group's page, which signs its pass, and its start page, which goes
     /// there — though this phone never opened the shelf, and one Back
-    /// returns to ada's page. Planted: the whole handoff answered (the pass
+    /// returns to ada's page. The phone's open is its yes to the page
+    /// reaching cy's shelf as bo (capability-open), and its button says so
+    /// (red at 392be359: the name alone). Planted: the whole handoff answered (the pass
     /// in it); the unanswered answered none; the start page going to the
     /// lend's root, the path dropped.
     a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path
@@ -1330,6 +1334,10 @@ async fn a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path(engine: 
     eprintln!("the reads' run: {seen:#}");
 
     assert!(at_origin(&seen["opened"], &label(1, "page")), "{seen:#}");
+    assert_eq!(
+        seen["words"], "Open ada’s page (k). It also opens your friends’ k as you.",
+        "the phone's open is its yes, and says so (capability-open):\n{seen:#}"
+    );
     let told = &seen["told"];
     assert_eq!(told["status"], 200, "{seen:#}");
     let body = told["body"].as_str().unwrap();

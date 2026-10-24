@@ -21,7 +21,10 @@ await driving(args, async ({ page, logs }) => {
   const said = await page.evaluate(() => document.getElementById('response').textContent);
   // At the lend's origin, its start page gone.
   const away = (url) => url.hostname.endsWith('.localhost') && !url.pathname.endsWith('/open.html');
-  await Promise.all([page.waitForURL(away, { timeout: 90_000 }), page.locator('#lent button', { hasText: args.open }).click()]);
+  // The open's words (capability-open): what the yes it is says.
+  const button = page.locator('#lent button', { hasText: args.open });
+  const words = await button.textContent({ timeout: 90_000 });
+  await Promise.all([page.waitForURL(away, { timeout: 90_000 }), button.click()]);
   await page.waitForLoadState('load');
   const opened = page.url();
   // What the lend's page is told, and what its origin keeps beside it.
@@ -54,5 +57,5 @@ await driving(args, async ({ page, logs }) => {
     await page.waitForLoadState('load').catch(() => {});
     backAt = page.url();
   }
-  return { said, opened, told, asked, landed, backAt };
+  return { said, words, opened, told, asked, landed, backAt };
 });
