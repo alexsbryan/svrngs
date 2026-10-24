@@ -68,12 +68,13 @@ if [ -f Cargo.toml ]; then
   # passed all it could judge but one bar on a host past load.rs `BUSY` a
   # core (films' seeks) writes could-not-judge.txt there: said so, never a
   # pass, and the gate does not fail on it, as the browser step's film.
-  # One scene at a time: the most that kept this host (12 cores, about 10
-  # of load from elsewhere) under load.rs's bar, 3 a core, while the
-  # scenes played, sampled each 5 s (capability-scenes-found (f), 2026-10-23):
-  # 12 threads 162 s, peak 140, 29 of 32 samples past; 4, 201 s, peak 66,
-  # 28 of 40; 2, 319 s, peak 44, 6 of 63; 1, 560 s, peak 21, none.
-  step "scenes" cargo test -p svrngs --test scenes -- --test-threads=1
+  # Two scenes at a time, the operator's choice (2026-10-23, "2 at a time")
+  # from what capability-scenes-found (f) measured on this host (12 cores,
+  # about 10 of load from elsewhere; load.rs's bar, 3 a core; sampled each
+  # 5 s): 12 threads 162 s, peak 140, 29 of 32 samples past; 4, 201 s, peak
+  # 66, 28 of 40; 2, 319 s, peak 44, 6 of 63; 1, 560 s, peak 21, none. At 2
+  # a timing is now and then could-not-judge, never a false failure.
+  step "scenes" cargo test -p svrngs --test scenes -- --test-threads=2
   awk '/^test .* \.\.\. / {split($2, n, "::"); k = n[1]; if (!(k in s)) o[++m] = k; e[k] = e[k] (e[k] ? ", " : "") n[3]; if (!(k in s) || $NF != "ok") s[k] = $NF == "ok" ? "passed" : "failed"} FILENAME ~ /never-ran/ {k = FILENAME; sub(/.*scenes\//, "", k); sub(/-[a-z]+\/never-ran.txt$/, "", k); if (!(k in s)) o[++m] = k; s[k] = "never-ran"; w[k] = ": " $0; x = 1} FILENAME ~ /could-not-judge/ {k = FILENAME; sub(/.*scenes\//, "", k); sub(/-[a-z]+\/could-not-judge.txt$/, "", k); if (s[k] == "passed") {s[k] = "could-not-judge"; w[k] = ": " $0}} END {for (i = 1; i <= m; i++) printf "%-10s scene %s (%s)%s\n", s[o[i]], o[i], e[o[i]], w[o[i]]; exit x}' /tmp/svrngs-check.$$ $(ls target/scenes/*/never-ran.txt target/scenes/*/could-not-judge.txt 2>/dev/null) || failed=1
   # The conformance canary (DESIGN §5; u5-2): apps/web-conformance, lent by
   # two computers, opened from a computer and from a phone, each app at an
