@@ -675,7 +675,7 @@ pub(crate) async fn post(
     let sent_bytes = payload.len();
     let request = axum::http::Request::post(SYNC_ROUTE)
         .header(axum::http::header::CONTENT_TYPE, "application/json")
-        .body(axum::body::Body::from(payload))
+        .body(payload.into())
         .expect("a fixed route and header");
     let resp = to.0.fetch(to.1, request).await;
     let resp = resp.map_err(|e| ExchangeStop::Failed(e.to_string()))?;

@@ -152,7 +152,7 @@ type Replies = Vec<(String, Result<Holds, String>)>;
 /// `path` asked of the computer at `contact`: what it holds, or why
 /// there is no answer.
 async fn ask(host: &Host, contact: Contact, path: &str) -> Result<Holds, String> {
-    let asked = axum::http::Request::get(path).body(axum::body::Body::empty());
+    let asked = axum::http::Request::get(path).body(Default::default());
     let asked = asked.map_err(|e| format!("the ask: {e}"))?;
     let answer = host.transport.fetch(&contact, asked).await;
     let answer = answer.map_err(|e| format!("the ask: {e}"))?;

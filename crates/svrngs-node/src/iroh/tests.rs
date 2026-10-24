@@ -207,10 +207,8 @@ async fn served(seed: u8, admits: bool) -> (Endpoint, Arc<std::sync::atomic::Ato
     (endpoint, asked)
 }
 
-fn get(path: &str) -> Request {
-    axum::http::Request::get(path)
-        .body(axum::body::Body::empty())
-        .unwrap()
+fn get<B: Default>(path: &str) -> axum::http::Request<B> {
+    axum::http::Request::get(path).body(B::default()).unwrap()
 }
 
 /// **A request on the stream** (arch-peer (b)): [`IrohTransport::fetch`]

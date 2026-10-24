@@ -164,8 +164,7 @@ impl IrohTransport {
         within: Duration,
     ) -> Result<Connection, Unsent> {
         let at = (*peer.key.as_bytes(), alpn.bytes());
-        let kept = self.conns.borrow().get(&at).cloned();
-        let kept = kept.filter(|c| c.close_reason().is_none());
+        let kept = self.open(peer, alpn);
         tracing::debug!(target: "transport", peer = %peer.key.fmt_short(), ?alpn, kept = kept.is_some(), "iroh: a request on the connection kept to it, else on one dialled (#178)");
         if let Some(conn) = kept {
             return Ok(conn);
@@ -181,6 +180,13 @@ impl IrohTransport {
         let conn = dialled(&self.endpoint, to, alpn.bytes(), Some(within)).await?;
         self.conns.send_modify(|m| drop(m.insert(at, conn.clone())));
         Ok(conn)
+    }
+
+    /// The connection kept to `peer` on `alpn`, while it stays open.
+    fn open(&self, peer: &Contact, alpn: Alpn) -> Option<Connection> {
+        let at = (*peer.key.as_bytes(), alpn.bytes());
+        let kept = self.conns.borrow().get(&at).cloned();
+        kept.filter(|c| c.close_reason().is_none())
     }
 
     /// The connection kept to `peer` on `alpn` let go, a request on it
@@ -269,11 +275,27 @@ impl IrohTransport {
         answered
     }
 
-    /// [`Self::send`], its answer read whole within [`ANSWERED_WITHIN`].
-    pub async fn fetch(&self, peer: &Contact, req: Request) -> Result<Whole, Unsent> {
-        whole(self.send(peer, req)).await
+    /// [`Self::send`] of a request held whole, its answer read whole
+    /// within [`ANSWERED_WITHIN`]; sent again once, on a connection dialled
+    /// afresh, when it failed on one kept. A computer that restarted
+    /// leaves the connection kept to its old self open until it has been
+    /// silent for [`crate::dial::DIAL_WITHIN`], and a request on it fails
+    /// then, though the computer answers a fresh dial (capability-scenes'
+    /// Grapevine scene: the next round was a minute away).
+    pub async fn fetch(&self, peer: &Contact, req: Asked) -> Result<Whole, Unsent> {
+        let kept = self.open(peer, Alpn::Member).is_some();
+        let again = kept.then(|| req.clone());
+        let answered = whole(self.send(peer, req.map(Into::into))).await;
+        let (Err(Unsent::Failed(failed)), Some(again)) = (&answered, again) else {
+            return answered;
+        };
+        tracing::debug!(target: "transport", peer = %peer.key.fmt_short(), failed, "iroh: a request failed on the connection kept to it, as one to a computer that restarted does: sent again, once, on one dialled afresh");
+        whole(self.send(peer, again.map(Into::into))).await
     }
 }
+
+/// A request held whole, so it can be sent again.
+pub type Asked = axum::http::Request<axum::body::Bytes>;
 
 /// How long a request read whole waits for its answer, the dial included:
 /// the ten seconds the round's reqwest client was built with

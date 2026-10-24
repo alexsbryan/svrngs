@@ -253,5 +253,30 @@ async fn grapevine(engine: Engine) {
         json!({ "do": "await", "who": "kim", "gone": ["needs: tile saw, Saturday"] }),
     )
     .await;
+
+    // 12. Jo's svrngs restarts, as an upgrade or a crash restarts it, and
+    // Sam asks again at once: the ask reaches Jo's copy within a restart's
+    // bound, not at Sam's next round (`DEFAULT_RING_SYNC_INTERVAL`).
+    let jo = scene.again(jo, &[]).await;
+    tell(&mut browsers, json!({ "do": "press", "who": "sam", "within": [["section", "Ask your groups"], ["div.kind", "tool"]],
+        "fill": { "What": "ladder", "When": "Sunday" }, "select": { "In": "1400 Page", "How far": "One ring away" }, "button": "Ask" })).await;
+    let t0 = std::time::Instant::now();
+    while !record(&jo, &page).await.contains("ladder") {
+        assert!(
+            t0.elapsed() < RESTARTED_WITHIN,
+            "Sam's ask is not in Jo's copy {RESTARTED_WITHIN:?} after Jo restarted; Sam's log is {}",
+            sam.log().display()
+        );
+        tokio::time::sleep(std::time::Duration::from_millis(250)).await;
+    }
     drop((running, sam, jo, kim));
 }
+
+/// How soon an append reaches a member whose svrngs restarted: a request
+/// on the connection kept to its old self fails within `DIAL_WITHIN` of
+/// silence (dial.rs `held`), the one dialled again answers within
+/// `DIAL_WITHIN`, and the exchange on it within `ANSWERED_WITHIN`, well
+/// inside the round's 60 s.
+const RESTARTED_WITHIN: std::time::Duration = std::time::Duration::from_secs(
+    2 * svrngs_node::dial::DIAL_WITHIN.as_secs() + svrngs_node::iroh::ANSWERED_WITHIN.as_secs(),
+);

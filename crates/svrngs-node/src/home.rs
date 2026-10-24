@@ -659,7 +659,7 @@ async fn at_door(
         });
     let ask = ask.method(method).uri(format!("/choices/{lend}"));
     let ask = ask.header(header::CONTENT_TYPE, "application/json");
-    let ask = ask.body(body.map_or_else(axum::body::Body::empty, |b| b.to_string().into()));
+    let ask = ask.body(body.map_or_else(Default::default, |b| b.to_string().into()));
     let answer = match ask {
         Ok(ask) => (at.host.transport.fetch(&contact, ask).await).map_err(|e| e.to_string()),
         Err(e) => Err(e.to_string()),

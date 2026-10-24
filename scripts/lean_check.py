@@ -208,8 +208,10 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # and broke the budget at 17,627; it was folded to two lines, the
 # conformance canary's emptying joined to could-not-judge's, and door.rs's
 # two rebindings of a parameter and an answer made `mut` where bound, -6:
-# 17,621, the cap lowered to one past.
-BUDGET = {"crates/svrngs-core": 3150, ".": 17622}
+# 17,621, the cap lowered to one past. capability-scenes-found (a), a
+# request that failed on a connection kept to a restarted computer sent
+# again once in iroh.rs's fetch, +12: 17,634.
+BUDGET = {"crates/svrngs-core": 3150, ".": 17634}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
