@@ -218,7 +218,10 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # surface.rs's reaches, the opens worded from what a lend declares, +54:
 # 17,720, raised by the operator's delegate inside the ceiling, the
 # permission classifier having refused it to the row's session.
-BUDGET = {"crates/svrngs-core": 3150, ".": 17720}
+# capability-what-acts, "What acts as you" on both pages, each yes with its
+# Stop (question.js `acts`, home.rs's GET /reaching, app.js's `reads`),
+# +70, at the top of its estimate (+30 to +70): 17,790, inside the ceiling.
+BUDGET = {"crates/svrngs-core": 3150, ".": 17790}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
