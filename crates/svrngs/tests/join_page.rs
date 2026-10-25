@@ -19,6 +19,7 @@
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 #[path = "../../svrngs-node/tests/browser/harness.rs"]
 #[macro_use]
+#[allow(unused_macros, dead_code)]
 mod harness;
 mod common;
 
@@ -92,7 +93,7 @@ fn in_house(status: &Value, person: &str) -> bool {
         && status.ends_with(&format!("), as {person}"))
 }
 
-in_both_engines!(
+in_webkit!(
     /// Planted: the key stored unsealed beside its seal (store.js `keep`
     /// writing `raw: key`); a second `Admit` on reopening (app.js joining
     /// anew, with a fresh key, on every opening of a link); a taken name
@@ -120,6 +121,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
     let mut phone = tokio::process::Command::new("node")
         .arg(harness::repo().join("web/tests/join.mjs"))
         .arg(json!({ "engine": engine.as_str(), "site": site }).to_string())
+        .env("SVRNGS_BROWSERS", harness::browsers())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -247,7 +249,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
     sam.endpoint().close().await;
 }
 
-in_both_engines!(
+in_webkit!(
     /// **A phone opening a link Sam's computer made for Sam's devices is
     /// added as Sam, asked no name** (bash-devices (d); `svrngs link house
     /// --device`). It reads "Adding this phone to house as Sam’s…", then
@@ -262,6 +264,7 @@ async fn a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name(engine: 
     let mut phone = tokio::process::Command::new("node")
         .arg(harness::repo().join("web/tests/join.mjs"))
         .arg(json!({ "engine": engine.as_str(), "site": site }).to_string())
+        .env("SVRNGS_BROWSERS", harness::browsers())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())

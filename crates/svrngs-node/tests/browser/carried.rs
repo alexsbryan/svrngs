@@ -32,7 +32,7 @@ pub(super) async fn carried_at(at: &Node, app: &str) -> String {
     panic!("{app} is never listed on the computer");
 }
 
-in_both_engines!(
+in_chromium!(
     /// **A carried page reaches no other host** (V1_UI_BUILD §7, 3.4's
     /// third bar; COMMUNITY_APPS §6.2): Probe, carried in house, opened at
     /// its origin on ada's computer, asks a listener on 127.0.0.1 by a
@@ -106,7 +106,7 @@ Promise.all([
     drop(ada);
 }
 
-in_both_engines!(
+in_webkit!(
     /// **An app one computer brought opens and writes on a phone through
     /// another's, with the first stopped** (V1_UI_BUILD §7, 3.4's first
     /// bar, the phone's half): ada's computer made bo's link and brings
@@ -223,7 +223,7 @@ fn files_of<'a>(dir: &str, fold: &'a str) -> Vec<(&'a str, String)> {
     ["index.html", "index.js", fold].map(read).to_vec()
 }
 
-in_both_engines!(
+in_chromium!(
     /// **Money and Events, static pages on the route, their folds
     /// unchanged** (v1ui-shelf (b)): each carried in house from its files
     /// in `apps/`, opened at its origin on ada's computer. On Money, ada
@@ -284,7 +284,7 @@ async fn money_and_events_open_and_write_at_their_origin(engine: Engine) {
     drop(ada);
 }
 
-in_both_engines!(
+in_chromium!(
     /// **An entry another person's computer wrote says whose** (gv-via
     /// (b); `ralph/FINDING_ON_BEHALF_OF.md`'s scene): ada's computer holds,
     /// before it keeps the group past its cutover, cy's computer's lines as
@@ -392,7 +392,7 @@ async fn an_entry_another_s_computer_wrote_says_whose(engine: Engine) {
     drop((ada, cy));
 }
 
-in_both_engines!(
+in_chromium!(
     /// **Bring things to the table, on the home page** (v1ui-shelf (c);
     /// V1_UI_BUILD §3.4): ada's home page offers Money and Events, both
     /// ticked; one tap brings them, the page says so, and her computer
@@ -480,7 +480,7 @@ async fn the_home_page_brings_things_to_the_table(engine: Engine) {
     drop(ada);
 }
 
-in_both_engines!(
+in_webkit!(
     /// **Bring things to the table, on a phone** (v1ui-shelf (c)): bo's
     /// phone, in house through ada's computer, brings the shelf's two apps
     /// by the one button; the page says so, and ada's computer lists each
@@ -642,7 +642,7 @@ async fn a_new_version_runs_as_each_person_only_after_their_yes(engine: Engine) 
     drop((ada, kim));
 }
 
-in_both_engines!(
+in_webkit!(
     /// **The phone goes on to a computer that answers** (canon-fix (c),
     /// #205; demo/runs/canon/2026-10-17-house, take 2's step 7-dee): bo's
     /// phone holds cy's link and opens house through cy's computer, which

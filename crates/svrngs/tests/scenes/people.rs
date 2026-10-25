@@ -17,7 +17,7 @@ use serde_json::{json, Value};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt};
 use tokio::process::{Child, Command};
 
-use crate::harness::{relay, relay_url, repo, site, Engine};
+use crate::harness::{browsers, relay, relay_url, repo, site, Engine};
 
 /// The traces each person's svrngs keeps in `svrngs.log` in its `HOME`:
 /// the door's, the record's and the folder's decisions, at debug.
@@ -451,6 +451,7 @@ impl Browsers {
         let mut run = Command::new("node")
             .arg(repo().join(driver))
             .env("PLAYWRIGHT", playwright)
+            .env("SVRNGS_BROWSERS", browsers())
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .kill_on_drop(true)

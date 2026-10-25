@@ -8,8 +8,8 @@
 //! with Jellyfin's own seek bar while the other plays on.
 //!
 //! Sam's Jellyfin is a scratch one, the films check's
-//! (apps/jellyfin/check/check.sh `jellyfin`), on a port of its own for
-//! each engine; the scene is never-ran where Jellyfin is not installed.
+//! (apps/jellyfin/check/check.sh `jellyfin`), on a port of its own; the
+//! scene is never-ran where Jellyfin is not installed.
 //! The people's browsers are that check's (drive.mjs, person.mjs).
 //!
 //! The invariant it relies on: **a lend carries nothing of its lender's
@@ -22,7 +22,7 @@ use std::time::Duration;
 
 use serde_json::{json, Value};
 
-use crate::harness::{repo, Engine};
+use crate::harness::{browsers, repo, Engine};
 use crate::load;
 use crate::people::{late, Scene};
 
@@ -107,7 +107,8 @@ impl Drop for Jellyfin {
 pub async fn node(script: &str, args: &[&str], env: &[(&str, String)]) -> Value {
     let mut run = tokio::process::Command::new("node");
     run.arg(repo().join("apps/jellyfin/check").join(script))
-        .args(args);
+        .args(args)
+        .env("SVRNGS_BROWSERS", browsers());
     for (k, v) in env {
         run.env(k, v);
     }

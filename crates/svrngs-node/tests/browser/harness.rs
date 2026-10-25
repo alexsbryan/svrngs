@@ -35,6 +35,39 @@ macro_rules! in_both_engines {
     };
 }
 
+/// `in_chromium!(test)`: a test of a computer's page — the home page, a
+/// lend's or carried app's page opened on a computer — run once, as
+/// `test::chromium`, in the engine a desktop opens it in. Both engines are
+/// for a test whose subject differs between them, `in_both_engines!`; a
+/// phone's page is `in_webkit!`'s (the operator, 2026-10-25: each page in
+/// the engine it stands for, "we can't be so maximalist here").
+macro_rules! in_chromium {
+    ($(#[$doc:meta])* $test:ident) => {
+        $(#[$doc])*
+        mod $test {
+            #[tokio::test(flavor = "multi_thread")]
+            async fn chromium() {
+                super::$test($crate::harness::Engine::Chromium).await
+            }
+        }
+    };
+}
+
+/// `in_webkit!(test)`: a test of a phone's page — the group's page, a
+/// lend opened from it, its worker — run once, as `test::webkit`, in
+/// WebKit as an iPhone opens it, the engine of iOS Safari.
+macro_rules! in_webkit {
+    ($(#[$doc:meta])* $test:ident) => {
+        $(#[$doc])*
+        mod $test {
+            #[tokio::test(flavor = "multi_thread")]
+            async fn webkit() {
+                super::$test($crate::harness::Engine::Webkit).await
+            }
+        }
+    };
+}
+
 impl Engine {
     /// The name the browser halves take in their args' `engine`.
     pub fn as_str(self) -> &'static str {
@@ -43,6 +76,36 @@ impl Engine {
             Engine::Webkit => "webkit",
         }
     }
+}
+
+/// The run's one Chromium and one WebKit, which every driver connects to
+/// for a context of its own (web/tests/browsers.mjs; page.mjs `launch`):
+/// their addresses, as each driver is given them in `SVRNGS_BROWSERS`,
+/// started at the first ask and closed as this binary exits, its pipe to
+/// them closing. A browser a test, some 250 a gate, crashed macOS's
+/// pasteboard daemon, which each browser joins as it starts and leaves as
+/// it quits (`-[_CFPasteboardStore dealloc]`, ~/Library/Logs/
+/// DiagnosticReports/pboard-*.ips, 27 from 2026-10-21 to 25), and with it
+/// every program on the Mac that touched the clipboard.
+pub fn browsers() -> &'static str {
+    static SHARED: OnceLock<(std::process::Child, String)> = OnceLock::new();
+    let (_, said) = SHARED.get_or_init(|| {
+        let mut run = std::process::Command::new("node")
+            .arg(repo().join("web/tests/browsers.mjs"))
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .spawn()
+            .expect("node runs web/tests/browsers.mjs");
+        let mut line = String::new();
+        let out = std::io::BufReader::new(run.stdout.take().unwrap());
+        std::io::BufRead::read_line(&mut { out }, &mut line).expect("browsers.mjs answers");
+        assert!(
+            line.starts_with('{'),
+            "web/tests/browsers.mjs did not start Chromium and WebKit, so no page can be tested: {line:?}; install them with: npm ci --prefix web && npx --prefix web playwright install chromium webkit"
+        );
+        (run, line.trim().to_string())
+    });
+    said
 }
 
 pub fn repo() -> PathBuf {

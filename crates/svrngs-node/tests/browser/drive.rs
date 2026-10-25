@@ -5,7 +5,7 @@
 use serde_json::{json, Value};
 use tokio::io::AsyncWriteExt;
 
-use crate::harness::{repo, Engine};
+use crate::harness::{browsers, repo, Engine};
 
 /// Run the browser half `web/tests/<script>` in `engine` on `args`, and
 /// read the JSON line it printed. When `release` fires, the browser half is told `go`
@@ -20,6 +20,7 @@ pub async fn drive(
     let mut child = tokio::process::Command::new("node")
         .arg(repo().join("web/tests").join(script))
         .arg(args.to_string())
+        .env("SVRNGS_BROWSERS", browsers())
         .stdin(std::process::Stdio::piped())
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())

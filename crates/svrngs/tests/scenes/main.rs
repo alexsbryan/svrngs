@@ -21,26 +21,22 @@ mod drive;
 mod load;
 mod people;
 
-/// A scene in Chromium and in WebKit, as `in_both_engines!` plays a
-/// browser test, each judged ([`people::judged`]) in its place,
-/// `target/scenes/<scene>-<engine>`, by the name the gate's "scenes" step
-/// reads its tests by.
+/// A scene played once, judged ([`people::judged`]) in its place,
+/// `target/scenes/<scene>-chromium`, by the name the gate's "scenes" step
+/// reads its tests by: each person in the engine their device is, a
+/// computer's browser Chromium and a phone WebKit as an iPhone
+/// (`Browsers::driven`, each person's engine). Until 2026-10-25 a scene was
+/// played a second time with every computer in WebKit too; the operator:
+/// each page in the engine it stands for, "we can't be so maximalist here".
 macro_rules! scene {
     ($(#[$doc:meta])* $test:ident) => {
         $(#[$doc])*
         mod $test {
             use $crate::harness::Engine;
-            async fn judged(engine: Engine) {
-                let place = format!("{}-{}", stringify!($test), engine.as_str());
-                $crate::people::judged(place, super::$test(engine)).await
-            }
             #[tokio::test(flavor = "multi_thread")]
             async fn chromium() {
-                judged(Engine::Chromium).await
-            }
-            #[tokio::test(flavor = "multi_thread")]
-            async fn webkit() {
-                judged(Engine::Webkit).await
+                let place = format!("{}-chromium", stringify!($test));
+                $crate::people::judged(place, super::$test(Engine::Chromium)).await
             }
         }
     };

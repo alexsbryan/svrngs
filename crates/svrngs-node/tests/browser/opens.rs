@@ -17,7 +17,7 @@ fn asked(heads: &KeptHeads) -> Vec<String> {
         .collect()
 }
 
-in_both_engines!(
+in_chromium!(
     /// **A page reaching another member's lend as you waits for your yes,
     /// and opening it from your home page is the yes** (shortfall 3). Cy
     /// lends notes, of kind `notes`, declared to read `films`; films; and

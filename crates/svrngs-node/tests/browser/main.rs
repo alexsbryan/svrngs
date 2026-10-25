@@ -258,7 +258,7 @@ async fn keep_folder(at: &Node, folder: &Path) {
     assert!(kept.status().is_success(), "{:?}", kept.text().await);
 }
 
-in_both_engines!(
+in_webkit!(
     /// The page holds bo's key, opens the link, and dials the node by key
     /// through the relay the token carries; the node admits bo on the members'
     /// protocol and answers `GET /people/lends` 200 (u4-5; `GET /lends` until
@@ -318,7 +318,7 @@ async fn a_page_holding_a_standing_key_dials_the_node_and_gets_its_lends(engine:
     drop(node);
 }
 
-in_both_engines!(
+in_webkit!(
     /// A link naming no relay — from a computer that had n0's address
     /// lookup — is refused in a person's words, and the page reaches for
     /// no address off this computer, n0's lookup and relays among them,
@@ -456,7 +456,7 @@ fn at_origin(url: &Value, label: &str) -> bool {
         .is_some_and(|u| u.starts_with(&format!("http://{label}.localhost:")))
 }
 
-in_both_engines!(
+in_webkit!(
     /// HTTP over the dial (u4-4): bo's page speaks hyper's HTTP/1, as cy,
     /// through the node's door to the door's tests' services
     /// (tests/door/origins.rs). A range of a 64 MiB file arrives sha-exact and
@@ -839,7 +839,7 @@ mod film_seeks_by_load {
     }
 }
 
-in_both_engines!(
+in_webkit!(
     /// The runtime (u4-6; DESIGN §3, "Joining", calls 3 and 4): ada's computer
     /// lends a page and a film, an H.264 mp4 from upstream's Range origin, and
     /// cy's, another computer holding bo's key, lends a file. The phone, holding
@@ -1173,7 +1173,7 @@ fn trace_of<'a>(seen: &'a Value, key: &str) -> &'a str {
     seen[key].as_str().unwrap_or_default()
 }
 
-in_both_engines!(
+in_webkit!(
     /// Safari's worker (u4-10; the operator's iPhone, 2026-10-05, in
     /// demo/runs/u4/2026-10-05-phones/): it read nothing its page had kept,
     /// and never dialled. Since u5-2 the worker that dials is the lend's, at
@@ -1269,7 +1269,7 @@ async fn a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_ha
     drop(ada);
 }
 
-in_both_engines!(
+in_webkit!(
     /// A lent page told the lends it reads, and one opened at a path (mnp-2;
     /// DESIGN §3, "Lent apps", call 6). Ada lends a page reading kind `k`,
     /// cy a shelf of it; dee stands in the group and her computer never
@@ -1390,7 +1390,7 @@ async fn a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path(engine: 
     drop((ada, cy));
 }
 
-in_both_engines!(
+in_webkit!(
     /// A lent app writes a link into itself that opens on a phone
     /// (events-links (a); DESIGN §3, "What an app gets"). The door tells
     /// the app its label in `x-svrngs-label` and, in `x-svrngs-pages`, the
@@ -1565,7 +1565,7 @@ async fn linking_app() -> (std::net::SocketAddr, KeptHeads) {
     (addr, heads)
 }
 
-in_both_engines!(
+in_webkit!(
     /// A lent page asks its person through the group's page, and is stopped
     /// (sup-3; DESIGN §3, "What an app gets"). Ada lends a page reading kind
     /// `k`, cy a shelf of it that asks, in cy's words. At its origin ada's
@@ -1729,7 +1729,7 @@ async fn a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped(eng
     drop((ada, cy));
 }
 
-in_both_engines!(
+in_chromium!(
     /// The home page on a computer asks svrngs's question in the one
     /// wording the group's page asks it (lean-4 (c); sup-4's follow-up 2,
     /// `demo/runs/sup/2026-10-10/README.md`). Ada lends a page reading
@@ -1778,7 +1778,7 @@ async fn the_home_page_asks_in_the_one_wording(engine: Engine) {
     drop(ada);
 }
 
-in_both_engines!(
+in_chromium!(
     /// **The home page changes how many a lend lets in at once, in place**
     /// (bash-limit (b)). Ada lends `shelf` to one person at once; her home
     /// page lists it so, and she sets four, then everyone, then stops
@@ -1829,7 +1829,7 @@ async fn the_home_page_changes_a_lend_s_limit_in_place(engine: Engine) {
     drop(ada);
 }
 
-in_both_engines!(
+in_chromium!(
     /// **The home page turns on signing people in with svrngs, once**
     /// (SIGN_IN_WITH_SVRNGS §5 "Turning it on", §8 9). Ada lends `shelf`
     /// with no sign-in; her page's row offers "Sign people in with svrngs",
@@ -1908,7 +1908,7 @@ async fn the_home_page_turns_on_signing_people_in_with_svrngs(engine: Engine) {
     drop(ada);
 }
 
-in_both_engines!(
+in_webkit!(
     /// **A removed person's phone is told so in a person's words** (U7
     /// (e); DESIGN §6). Ada removes bo through her computer's
     /// `/v1/removals`; the page holding bo's key opens the group's link,
@@ -1941,7 +1941,7 @@ async fn the_group_s_page_tells_a_removed_person(engine: Engine) {
     drop(ada);
 }
 
-in_both_engines!(
+in_chromium!(
     /// **A removed person's home page tells them so** (U7 (e)). Ada and
     /// bo's computer are in house; ada removes bo through `/v1/removals`,
     /// which tells bo's computer its cut; bo's home page then says bo is no
@@ -1984,7 +1984,7 @@ async fn the_home_page_tells_a_removed_person(engine: Engine) {
     drop((ada, bo));
 }
 
-in_both_engines!(
+in_chromium!(
     /// **A register that cannot be read is said as itself** (REVIEW_FINDINGS
     /// #123; DESIGN §1). Ada's copy of house's seed is unreadable, so
     /// `/v1/groups` answers `removed: null`; her home page says this
@@ -2009,7 +2009,7 @@ async fn the_home_page_says_an_unreadable_register(engine: Engine) {
     drop(ada);
 }
 
-in_both_engines!(
+in_chromium!(
     /// **The home page says its own address, as the command and install.sh
     /// say it** (start-address (b)): the same each time svrngs starts, since
     /// it is kept (`api::kept_address`). Planted, watched failing: home.js
@@ -2032,7 +2032,7 @@ async fn the_home_page_says_its_address_as_the_command_does(engine: Engine) {
     drop(ada);
 }
 
-in_both_engines!(
+in_chromium!(
     /// **The home page tells two people of one name apart**
     /// (bash-same-name (a)). Ada lets two people into house as cy, a
     /// second apart, each by hand (bash-devices made them two people,
@@ -2104,7 +2104,7 @@ async fn the_home_page_tells_two_people_of_one_name_apart(engine: Engine) {
     drop(ada);
 }
 
-in_both_engines!(
+in_chromium!(
     /// **Two people of one name are told apart, and each is only
     /// themselves** (capability-keys; svrn-docs `rings/current/
     /// WHAT_CAN_ACT_AS_YOU.md` §7.4, §9): ada's computer brings Money and
@@ -2174,7 +2174,7 @@ async fn two_people_of_one_name_are_told_apart_on_the_home_page(engine: Engine) 
     drop(ada);
 }
 
-in_both_engines!(
+in_chromium!(
     /// **Whose computer did not answer, and who asked, by key**
     /// (keys-names): on ada's computer two people are in house as cy, the
     /// first's computer running and the second's never answering, and the
@@ -2295,7 +2295,7 @@ fn removals_said(seen: &Value) -> Vec<String> {
         .collect()
 }
 
-in_both_engines!(
+in_chromium!(
     /// **The home page shows everyone each removal and each ask** (the
     /// operator, 2026-10-12; v1-keeper-office (b)). On ada's computer cy
     /// asks to remove dee and ada removes dee; ada's home page lists both,
@@ -2318,7 +2318,7 @@ async fn the_home_page_shows_every_removal_and_ask(engine: Engine) {
     drop(ada);
 }
 
-in_both_engines!(
+in_webkit!(
     /// **The group's page shows everyone each removal and each ask**
     /// (v1-keeper-office (b)). The same removals on ada's computer; the
     /// page holding bo's key opens the group's link and lists both, as the
@@ -2476,7 +2476,7 @@ async fn the_page_opened_with_no_link_offers_a_founder_s_line(engine: Engine) {
     }
 }
 
-in_both_engines!(
+in_chromium!(
     /// The home page says where the group's folder is on this computer
     /// (v1-onboarding (d)), from `/v1/groups`' `folders`; this node keeps
     /// no seed, so the group is named as the page names a group whose name
@@ -2536,7 +2536,7 @@ async fn unlisted_held(
     (ada, [eve, cy])
 }
 
-in_both_engines!(
+in_chromium!(
     /// **The home page says a refusal as itself** (bash-first-minute (c);
     /// Demo C's dry run, finding 6). On ada's computer, bo's and dee's
     /// computers never answer, eve's has not heard of ada's, and cy's
@@ -2571,7 +2571,7 @@ async fn the_home_page_says_a_refusal_apart_from_no_answer(engine: Engine) {
     drop((ada, others));
 }
 
-in_both_engines!(
+in_webkit!(
     /// **The group's page says a refusal as itself**, as the home page
     /// does: the page holding bo's key opens the group's link, and ada's
     /// computer answers for dee's, eve's and cy's. Planted, watched
@@ -2628,7 +2628,7 @@ async fn alone(dir: &Path, relay: &Server) -> Node {
     .expect("a node starts")
 }
 
-in_both_engines!(
+in_chromium!(
     /// **The home page says at its top what it is for** (start-home, from
     /// start-measure's ranked row 4: with no group, "This computer lends
     /// nothing." and an empty "What apps use" were all it said,
@@ -2662,7 +2662,7 @@ async fn the_home_page_says_what_it_is_for(engine: Engine) {
     drop((ada, dee));
 }
 
-in_both_engines!(
+in_chromium!(
     /// **What the page cannot do is named on it, with the one line to
     /// type** (start-home, from start-measure's ranked row 5: no state's
     /// words named a line, `demo/runs/start/2026-10-13/README.md` §3 (c)
@@ -2691,7 +2691,7 @@ async fn the_home_page_names_what_the_terminal_does(engine: Engine) {
     drop(ada);
 }
 
-in_both_engines!(
+in_chromium!(
     /// **For a program, the address of each thing lent, with a Copy
     /// button** (start-home, from start-measure's ranked row 6: Bo's tools
     /// reached a friend's model only at the address `/v1/lends` gave,
@@ -2731,7 +2731,7 @@ async fn the_home_page_copies_a_lend_s_address_for_a_program(engine: Engine) {
     drop(ada);
 }
 
-in_both_engines!(
+in_chromium!(
     /// **The home page opens a lend to this WiFi, and closes it** (the
     /// room's report, 4: nothing on the page put a group-mate's lend on a
     /// TV; the operator, 2026-10-22: any device, any lend, the words
@@ -2805,7 +2805,7 @@ async fn the_home_page_opens_a_lend_to_this_wifi_and_closes_it(engine: Engine) {
     drop(ada);
 }
 
-in_both_engines!(
+in_chromium!(
     /// **The home page says a room it cannot read** (AGENTS.md 6): ada's
     /// room.json holds what is not a list of lends; her page's "On this
     /// WiFi" says what is open to it cannot be read, and why, and that
@@ -2838,7 +2838,7 @@ async fn the_home_page_says_a_room_it_cannot_read(engine: Engine) {
     drop(ada);
 }
 
-in_both_engines!(
+in_chromium!(
     /// **Each thing lent opens by a link saying what it opens and whose**
     /// (start-home, from start-measure's ranked row 7: "Sam’s llama" read
     /// as a riddle, `demo/runs/start/2026-10-13/README.md` §3 (c)). Ada
@@ -2863,7 +2863,7 @@ async fn the_home_page_s_links_say_what_they_open(engine: Engine) {
     drop(ada);
 }
 
-in_both_engines!(
+in_chromium!(
     /// **Fewer things to puzzle over** (start-home, from start-measure's
     /// ranked row 8, `demo/runs/start/2026-10-13/README.md` §3 (c) 14 and
     /// the words to look up): "What apps use" shown only when an app uses
@@ -2904,7 +2904,7 @@ async fn the_home_page_shows_less_to_puzzle_over(engine: Engine) {
     drop(ada);
 }
 
-in_both_engines!(
+in_chromium!(
     /// **A group is shown as it answers, not held for its slowest
     /// computer** (start-home, from start-measure's ranked row 9: 3.6 s of
     /// "Reading your groups…" with one computer stopped,
@@ -2932,7 +2932,7 @@ async fn the_home_page_shows_a_group_before_its_slowest_computer(engine: Engine)
     drop((ada, silent));
 }
 
-in_both_engines!(
+in_chromium!(
     /// **A link pasted on the home page opens only within its lend**
     /// (#153). Under "Open a link from your group", a link to a lend at a
     /// path opens a tab at that path on the lend's origin; one whose path
@@ -3010,7 +3010,7 @@ fn drew_the_door(seen: &Value) {
     assert_eq!(drawn, want, "{seen:#}");
 }
 
-in_both_engines!(
+in_chromium!(
     /// **The door: who is on now** (v1ui-door (c); V1_UI_BUILD §3.1 and
     /// §7). On ada's computer, cy's computer answers, bo's never does, and
     /// pia is in from a phone: ada's door lights ada and cy, "on now";
@@ -3061,7 +3061,7 @@ async fn the_door_draws_who_is_on_now(engine: Engine) {
     drop((ada, cy));
 }
 
-in_both_engines!(
+in_chromium!(
     /// **A group on a screen** (the operator, "Wall is approved", of the
     /// Draft 2 canvas's frames 8-10). Ada's home page opened as the group's
     /// screen, `/?screen=<group>`: cy lent `radio` before it opened, so it
@@ -3148,7 +3148,7 @@ fn words_said<'a>(text: &str, words: &[&'a str]) -> Vec<&'a str> {
         .collect()
 }
 
-in_both_engines!(
+in_chromium!(
     /// **Two groups of one name told apart** (v1ui-door (c); #138, the
     /// operator's "Allow; tell them apart"). Ada's computer holds two
     /// groups called Trip, one ada made and one sam made: each is headed
@@ -3205,7 +3205,7 @@ async fn the_home_page_tells_two_groups_of_one_name_apart(engine: Engine) {
     drop(ada);
 }
 
-in_both_engines!(
+in_webkit!(
     /// **The door and the index on the group's page** (v1ui-door (d);
     /// V1_UI_BUILD §3.1), as on the computer's: pia's phone opens ada's
     /// group, joined from sam's link a day it keeps. Through ada's
@@ -3337,7 +3337,7 @@ async fn an_older_computer_is_said_as_that_on_both_pages(engine: Engine) {
     drop((ada, cy));
 }
 
-in_both_engines!(
+in_chromium!(
     /// **A link to invite someone, made on the page as `svrngs link` makes
     /// it** (start-home, from start-measure's ranked row 10: the act most
     /// asked of a newcomer's page was a terminal command, refused while
@@ -3404,7 +3404,7 @@ async fn the_home_page_makes_a_link_to_invite_someone(engine: Engine) {
     drop(ada);
 }
 
-in_both_engines!(
+in_chromium!(
     /// **The group's folder opened from the page** (start-home, from
     /// start-measure's ranked row 12: the folder was a path read as words,
     /// `demo/runs/start/2026-10-13/README.md` §3 (c) 14). Ada keeps house's
@@ -3559,7 +3559,7 @@ async fn with_stopped(
     (seen, start, host)
 }
 
-in_both_engines!(
+in_webkit!(
     /// The phone reaches whoever's awake (v1ui-reach (b)-(c); V1_UI_BUILD
     /// §3.3). Ada's computer made bo's link; cy's lends a shelf. Bo's phone
     /// opens the group while ada's answers, then again once ada's is
@@ -3605,7 +3605,7 @@ async fn the_phone_reaches_whoever_s_awake(engine: Engine) {
     }
 }
 
-in_both_engines!(
+in_webkit!(
     /// With the link's computer awake, the phone goes through it (v1ui-race
     /// (a)): bo's phone opens the group while every computer answers, then
     /// again with cy's stopped, dialling ada's and cy's at once, and ada's
@@ -3633,7 +3633,7 @@ async fn the_dials_cost_with_everyone_awake() {
     }
 }
 
-in_both_engines!(
+in_webkit!(
     /// A computer that did not answer is named by its person, never by a
     /// relay's host (v1ui-reach (d)): ada's computer made bo's link and
     /// lends a pad, cy's a shelf, and with both stopped bo's phone says
@@ -3693,7 +3693,7 @@ async fn free_here(from: u16) -> tokio::net::TcpListener {
     panic!("no port free from {from} on this host");
 }
 
-in_both_engines!(
+in_chromium!(
     /// **Lend from the page** (v1ui-lend (b); V1_UI_BUILD §3.2 and §7's
     /// 3.2 bar). On ada's computer a stand-in for Jellyfin listens on
     /// 8096 and something svrngs does not know on a port of its own. Her
@@ -3885,7 +3885,7 @@ async fn gzip_only() -> std::net::SocketAddr {
     addr
 }
 
-in_both_engines!(
+in_webkit!(
     /// **A phone opens a lend that answers only in gzip** (V1.1.3; the
     /// story run's finding, `demo/runs/start/2026-10-13-story/` 9 and §4):
     /// ada lends a stand-in for llama-server's chat page, which answers
@@ -3921,7 +3921,7 @@ async fn a_phone_opens_a_lend_that_answers_only_in_gzip(engine: Engine) {
     drop(ada);
 }
 
-in_both_engines!(
+in_webkit!(
     /// **A phone is shown a lend's computer that did not answer as its
     /// person's window, dark** (V1.1.3; the operator's "a graceful and cute
     /// goodnight state", 2026-10-20). Ada's computer made bo's link; cy's
@@ -4054,7 +4054,7 @@ async fn lid(relay: &Server) -> (String, tokio::sync::watch::Sender<bool>) {
     (format!("http://{at}/"), open)
 }
 
-in_both_engines!(
+in_webkit!(
     /// **A phone's socket opens again once its lender answers again**
     /// (V1.1.3; the doc run's finding, `demo/runs/doc/2026-10-20/found/
     /// lid-45s.jsonl`, 3fee02f4: a phone's sockets never came back after

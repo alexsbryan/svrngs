@@ -20,6 +20,7 @@
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 #[path = "browser/harness.rs"]
 #[macro_use]
+#[allow(unused_macros)]
 mod harness;
 // The host's load and the seek bar's, the browser tests' too.
 #[path = "browser/load.rs"]
@@ -30,7 +31,7 @@ use std::path::Path;
 use std::process::Stdio;
 use std::time::Duration;
 
-use harness::{relay, relay_url, repo, site, Engine};
+use harness::{browsers, relay, relay_url, repo, site, Engine};
 use iroh_relay::server::Server;
 use serde_json::{json, Value};
 use svrngs_core::link::Token;
@@ -430,6 +431,7 @@ async fn rate(way: Way, ran: &Value, began: &str) {
     let out = tokio::process::Command::new("node")
         .arg(repo().join("web/tests/control.mjs"))
         .args(["webkit", "2"])
+        .env("SVRNGS_BROWSERS", browsers())
         .output()
         .await
         .expect("node runs the control");
@@ -515,6 +517,7 @@ async fn browse(args: &Value) -> Value {
     let out = tokio::process::Command::new("node")
         .arg(repo().join("web/tests/conformance.mjs"))
         .arg(args.to_string())
+        .env("SVRNGS_BROWSERS", browsers())
         .output()
         .await
         .expect("node runs: the browser tests need Node 18 or later");

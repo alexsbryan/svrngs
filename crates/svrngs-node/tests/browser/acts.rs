@@ -49,7 +49,7 @@ fn what_acts_as_you_is_said_in_one_wording() {
     );
 }
 
-in_both_engines!(
+in_chromium!(
     /// **The home page says what acts as you, and its Stop holds** (§9).
     /// Cy lends notes, declared to read `films`, and films; ada's computer
     /// carries Money. Ada opens cy's notes from her home page, which is her
@@ -151,7 +151,7 @@ async fn the_home_page_says_what_acts_as_you_and_its_stop_holds(engine: Engine) 
     drop((ada, cy));
 }
 
-in_both_engines!(
+in_webkit!(
     /// **The group page says what acts as you, and its Stop holds at the
     /// next pass** (§9, "On a phone"). Ada lends a page reading kind `k`;
     /// cy lends a shelf of it. Bo's phone opens ada's page from the group

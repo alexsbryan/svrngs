@@ -11,7 +11,7 @@
 //!
 //! The stand-ins are the models story's servers in miniature, a few lines
 //! of node's http each: real weights are the story's run, not the gate's.
-//! No browser takes part, so the scene is the same in both engines.
+//! No browser takes part.
 //!
 //! The invariant it relies on: **a friend's model hears the person who
 //! asked, named by its lender's door**: Ana's model is told Bo, never the

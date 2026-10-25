@@ -12,7 +12,7 @@ const BO: u8 = 7;
 const CY: u8 = 8;
 const OWN: u8 = 9;
 
-in_both_engines!(
+in_webkit!(
     /// **A visit by a link** (guests-link (a)). Kim's computer holds house,
     /// Kim and Bo in it, and lends Kim's Jellyfin, a page and its film; the
     /// group keeps the page's origin, so its links open there. On Kim's home
@@ -55,6 +55,7 @@ async fn sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest(engine:
     let mut half = tokio::process::Command::new("node")
         .arg(repo().join("web/tests/visit.mjs"))
         .arg(json!({ "engine": engine.as_str(), "site": site() }).to_string())
+        .env("SVRNGS_BROWSERS", crate::harness::browsers())
         .stdin(std::process::Stdio::piped())
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())
@@ -228,7 +229,7 @@ async fn sam_visiting(kim_dir: &Path, bo_dir: &Path, relay: &Server) -> (Node, N
 /// Who each home page lists as visiting, and as its own guests.
 const LISTED: &str = "#home .yours li, #home .visiting li";
 
-in_both_engines!(
+in_chromium!(
     /// **Who's visiting, on every home page** (guests-pages (a); GUESTS
     /// §3.2, §5 "The pages", §7 bar 7). Kim hosts Sam until a day and an
     /// hour 40 hours from now. Bo's home page lists Sam visiting, Kim's
@@ -305,7 +306,7 @@ async fn on_anas_phone(engine: Engine, relay: &Server) -> Value {
     seen
 }
 
-in_both_engines!(
+in_chromium!(
     /// **Who's visiting, on the phone's page too** (guests-pages (b);
     /// GUESTS §5 "The pages", §7 bar 7). Kim hosts Sam, as in (a), and Ana
     /// is in house by her phone, whose page reaches Bo's computer: it lists

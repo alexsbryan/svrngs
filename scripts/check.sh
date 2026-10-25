@@ -72,20 +72,25 @@ if [ -f Cargo.toml ]; then
   # The page (PLAN §4, U4): its crate is a workspace of its own, for wasm.
   step "web rustfmt and clippy" scripts/build-web.sh --lint
   # The page in a browser, by name: it builds the page, runs a relay
-  # and a node on 127.0.0.1 and drives Playwright's Chromium, and its
-  # WebKit as an iPhone, each test in both (u4-7). Without Playwright or its
-  # browsers it fails naming the install command; it never skips.
+  # and a node on 127.0.0.1 and drives Playwright, each test in the engine
+  # its page stands for, a computer's page in Chromium and a phone's in
+  # WebKit as an iPhone, and in both only where they differ (harness.rs
+  # `in_chromium!`, `in_webkit!`, `in_both_engines!`); one browser of each
+  # for the step, each test a context of its own (harness.rs `browsers`).
+  # Without Playwright or its browsers it fails naming the install command;
+  # it never skips.
   step "browser" cargo test --quiet --workspace --test browser
   # The film's seeks on a host past the seek bar's load bar (bash-film-load;
   # crates/svrngs-node/tests/browser/load.rs, conformance's too): said apart,
   # never a pass.
   sed 's/^/could-not-judge /' target/could-not-judge/browser.txt 2>/dev/null
   # A phone joining by the link `svrngs new --origin` prints (u4-5), in
-  # both engines.
+  # WebKit as an iPhone.
   step "joining in a browser" cargo test --quiet --workspace --test join_page
   # The demo scenes, played (capability-scenes; crates/svrngs/tests/
   # scenes): each scene end to end, every person this build's svrngs with
-  # a HOME of their own, in both engines; each
+  # a HOME of their own, played once, each person's browser the engine
+  # their device is (scenes/main.rs `scene!`); each
   # scene's verdict on its own line, in the order they ended. A scene whose
   # third-party app is not installed here writes never-ran and why in its
   # place, target/scenes/<scene>-<engine>/never-ran.txt (each place is

@@ -102,7 +102,12 @@ export async function launch(engine, { profile, device: as, args } = {}) {
       const context = await pw[engine].launchPersistentContext(profile, device);
       return { context, close: () => context.close() };
     }
-    const browser = await pw[engine].launch({ args });
+    // The run's browser of `engine`, where its harness started one
+    // (browsers.mjs), and a context of its own in it: a browser a test
+    // crashed macOS's pasteboard daemon (harness.rs `browsers`). Closing
+    // it then closes this context and lets the shared browser be.
+    const shared = !args && JSON.parse(process.env.SVRNGS_BROWSERS ?? '{}')[engine];
+    const browser = await (shared ? pw[engine].connect(shared) : pw[engine].launch({ args }));
     return { context: await browser.newContext(device), close: () => browser.close() };
   } catch (e) {
     console.error(`Playwright's ${engine} cannot start — run: ${INSTALL}\n${e}`);

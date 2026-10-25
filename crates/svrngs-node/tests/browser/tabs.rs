@@ -10,7 +10,7 @@ use super::*;
 /// (demo/runs/stream/2026-10-15/README.md, 1).
 const FOR: u64 = 60_000;
 
-in_both_engines!(
+in_webkit!(
     /// **Two tabs of the group's page reach the group** (#176). Bo opens
     /// house's page, then opens it again in a second tab of the same
     /// browser. For 60 s each tab in turn asks "What apps use" of ada's
