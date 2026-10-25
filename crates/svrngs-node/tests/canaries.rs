@@ -75,31 +75,54 @@ fn admit(sam: &Node, group: &str, person: &str, joining: u8) {
     sam.rail().commit(group, &fixture).unwrap().unwrap();
 }
 
-/// Sam's computer and Alex's, one group: Sam founds it and lets in Alex,
-/// and Bo and Cy, whose keys are on no computer here; Alex's computer holds
-/// the seed, and one round of its own brings it the rest of the register.
-/// Each is told the other's loopback addresses, so a round an append wakes
-/// on either reaches the other.
-async fn two_computers(ds: &tempfile::TempDir, da: &tempfile::TempDir) -> (Node, Node) {
-    let (sam, alex) = (start(1, ds).await, start(2, da).await);
-    sam.rail().set_seed(GROUP, &founded_by_sam()).unwrap();
-    for (person, seed) in [("alex", 2), ("bo", 3), ("cy", 4)] {
-        admit(&sam, GROUP, person, seed);
+/// The people of the group, each by the seed of their own computer's key.
+const PEOPLE: [(&str, u8); 4] = [("sam", 1), ("alex", 2), ("bo", 3), ("cy", 4)];
+
+/// One computer per person, one group: Sam founds it and lets in Alex, Bo
+/// and Cy, each of whom writes on their own computer, since the record API
+/// writes only as its own person (DESIGN §3, `not_yours`). Each holds the
+/// seed, and one round of its own brings it the rest of the register; each
+/// is told every other's loopback addresses, so a round an append wakes on
+/// any reaches the rest.
+async fn computers(dirs: &[tempfile::TempDir; 4]) -> Vec<Node> {
+    let mut nodes = Vec::new();
+    for ((_, seed), dir) in PEOPLE.iter().zip(dirs) {
+        nodes.push(start(*seed, dir).await);
     }
-    alex.rail().set_seed(GROUP, &founded_by_sam()).unwrap();
-    sam.transport()
-        .add_known_peer(key(2), loopback_sockets(alex.endpoint()));
-    alex.transport()
-        .add_known_peer(key(1), loopback_sockets(sam.endpoint()));
-    tokio::time::timeout(Duration::from_secs(30), alex.round())
-        .await
-        .expect("Alex's round finishes");
-    assert_eq!(
-        sam.rail().digest(GROUP).unwrap(),
-        alex.rail().digest(GROUP).unwrap(),
-        "control: Alex's computer holds Sam's register before any app writes"
-    );
-    (sam, alex)
+    nodes[0].rail().set_seed(GROUP, &founded_by_sam()).unwrap();
+    for (person, seed) in &PEOPLE[1..] {
+        admit(&nodes[0], GROUP, person, *seed);
+    }
+    for (n, (_, seed)) in nodes.iter().zip(PEOPLE) {
+        if seed != 1 {
+            n.rail().set_seed(GROUP, &founded_by_sam()).unwrap();
+        }
+        for (other, (_, theirs)) in nodes.iter().zip(PEOPLE) {
+            if theirs != seed {
+                n.transport()
+                    .add_known_peer(key(theirs), loopback_sockets(other.endpoint()));
+            }
+        }
+    }
+    for n in &nodes[1..] {
+        tokio::time::timeout(Duration::from_secs(30), n.round())
+            .await
+            .expect("a round finishes");
+        assert_eq!(
+            nodes[0].rail().digest(GROUP).unwrap(),
+            n.rail().digest(GROUP).unwrap(),
+            "control: each computer holds Sam's register before any app writes"
+        );
+    }
+    nodes
+}
+
+/// Each computer's loopback record API, in `PEOPLE`'s order.
+fn records(nodes: &[Node]) -> Vec<String> {
+    nodes
+        .iter()
+        .map(|n| format!("http://{}", n.api_addr()))
+        .collect()
 }
 
 /// Run `apps/<app>/canary.mjs` under Node with `args`, and fail with what
@@ -129,40 +152,42 @@ async fn canary(app: &str, args: &[String]) {
 }
 
 /// **Expenses** (DESIGN §5, "The canaries"; the u3-7 row): no server, all state in the
-/// record. Apps on Sam's computer and Alex's write — for their own person,
-/// and for Bo and Cy by name — a correction voids, and both copies fold to
-/// the same balances, the ones the acts say (`apps/expenses/canary.mjs`).
+/// record. Apps on each person's own computer write for that person, a
+/// correction voids, and every copy folds to the same balances, the ones the
+/// acts say (`apps/expenses/canary.mjs`).
 #[tokio::test]
 async fn expenses() {
-    let (ds, da) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let (sam, alex) = two_computers(&ds, &da).await;
-    let at = |n: &Node| format!("http://{}", n.api_addr());
-    canary("expenses", &[GROUP.to_string(), at(&sam), at(&alex)]).await;
-    for n in [&sam, &alex] {
+    let dirs = [(); 4].map(|_| tempfile::tempdir().unwrap());
+    let nodes = computers(&dirs).await;
+    let args: Vec<String> = [GROUP.to_string()]
+        .into_iter()
+        .chain(records(&nodes))
+        .collect();
+    canary("expenses", &args).await;
+    for n in &nodes {
         n.endpoint().close().await;
     }
 }
 
-/// **Events** (events-app (c)): the same two computers, and a second group
-/// on Sam's alone, Sam and Di in it. Apps on both write — for their own
-/// person, and for Bo and Cy by name — a correction voids on both copies,
-/// another's correction counts for nothing, and both copies fold to the same
-/// event, who is coming and who came; the second group's record holds the
-/// event and none of the first's answers (`apps/events/canary.mjs`).
+/// **Events** (events-app (c)): the same four computers, and a second group
+/// on Sam's alone, Sam and Di in it. Apps on each write for their own person,
+/// a correction voids on every copy, another's correction counts for
+/// nothing, and every copy folds to the same event, who is coming and who
+/// came; the second group's record holds the event and none of the first's
+/// answers (`apps/events/canary.mjs`).
 #[tokio::test]
 async fn events() {
     const SECOND: &str = "dweb";
-    let (ds, da) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let (sam, alex) = two_computers(&ds, &da).await;
-    sam.rail().set_seed(SECOND, &founded_by_sam()).unwrap();
-    admit(&sam, SECOND, "di", 5);
-    let at = |n: &Node| format!("http://{}", n.api_addr());
-    canary(
-        "events",
-        &[GROUP.to_string(), SECOND.to_string(), at(&sam), at(&alex)],
-    )
-    .await;
-    for n in [&sam, &alex] {
+    let dirs = [(); 4].map(|_| tempfile::tempdir().unwrap());
+    let nodes = computers(&dirs).await;
+    nodes[0].rail().set_seed(SECOND, &founded_by_sam()).unwrap();
+    admit(&nodes[0], SECOND, "di", 5);
+    let args: Vec<String> = [GROUP.to_string(), SECOND.to_string()]
+        .into_iter()
+        .chain(records(&nodes))
+        .collect();
+    canary("events", &args).await;
+    for n in &nodes {
         n.endpoint().close().await;
     }
 }

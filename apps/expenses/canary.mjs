@@ -1,29 +1,31 @@
-// The Expenses canary (DESIGN §5 "The canaries"): two computers hold one
-// group's record; everyone writes through the record's loopback API, a
-// correction voids, and both copies fold, with `init` and `reduce`, to the
-// same balances — the ones the acts say. It uses only what DESIGN §3 says an
+// The Expenses canary (DESIGN §5 "The canaries"): each person's computer
+// holds one group's record; everyone writes through their own computer's
+// loopback API, a correction voids, and every copy folds, with `init` and
+// `reduce`, to the same balances — the ones the acts say. It uses only what DESIGN §3 says an
 // app gets: the people, and the record over loopback.
 //
-//   node apps/expenses/canary.mjs <group> <Sam's record> <Alex's record>
+//   node apps/expenses/canary.mjs <group> <Sam's record> <Alex's> <Bo's> <Cy's>
 //
 // Each record is a member node's loopback API, `http://127.0.0.1:<port>`.
-// The caller (crates/svrngs-node/tests/canaries.rs) stands both up with Sam,
-// Alex, Bo and Cy in the group: Sam's computer, Alex's, and Bo and Cy with
-// none here, whose acts an app on one of the two writes for them, as an app
-// serving someone the door verified does. Exit 0 holds; 1 says what broke,
-// and when the copies differ, names both and what each says.
+// The caller (crates/svrngs-node/tests/canaries.rs) stands up one computer
+// for each of Sam, Alex, Bo and Cy, since a computer writes only as its own
+// person (DESIGN §3, `not_yours`). Exit 0 holds; 1 says what broke, and when
+// the copies differ, names each and what it says.
 
 import { isDeepStrictEqual as same } from 'node:util';
 
 import { EXPENSE, SETTLE, SHARE, actsOf, init, money, reduce } from './expenses.js';
 
-const [group, samAt, alexAt] = process.argv.slice(2);
-if (!alexAt) {
-  console.error("usage: node canary.mjs <group> <Sam's record> <Alex's record>");
+const [group, samAt, alexAt, boAt, cyAt] = process.argv.slice(2);
+if (!cyAt) {
+  console.error("usage: node canary.mjs <group> <Sam's record> <Alex's> <Bo's> <Cy's>");
   process.exit(2);
 }
 const SAM = { name: "Sam's computer", at: samAt };
 const ALEX = { name: "Alex's computer", at: alexAt };
+const BO = { name: "Bo's computer", at: boAt };
+const CY = { name: "Cy's computer", at: cyAt };
+const COMPUTERS = [SAM, ALEX, BO, CY];
 const PEOPLE = ['alex', 'bo', 'cy', 'sam'];
 /** What the acts below say each person is owed (+) or owes (-), in cents. */
 const OWED = { alex: 0, bo: -1500, cy: 0, sam: 1500 };
@@ -42,14 +44,14 @@ async function call(computer, door, body) {
 }
 
 const written = [];
-/** Append `act` on `computer`, for `person` when one is named; answers its id. */
-async function append(computer, act, person) {
-  const { id } = await call(computer, 'append', { ...act, ...(person && { on_behalf_of: person }) });
+/** Append `act` on `computer`, as its own person; answers its id. */
+async function append(computer, act) {
+  const { id } = await call(computer, 'append', act);
   written.push(id);
   return id;
 }
-const record = (computer, op, person) => append(computer, { op: 'record', payload: op }, person);
-const correct = (computer, id, replacement, person) => append(computer, { op: 'correct', corrects: id, replacement }, person);
+const record = (computer, op) => append(computer, { op: 'record', payload: op });
+const correct = (computer, id, replacement) => append(computer, { op: 'correct', corrects: id, replacement });
 
 const log = (computer) => call(computer, 'log');
 
@@ -72,19 +74,19 @@ async function arrived(computer, id) {
 const said = (balances) => PEOPLE.map((p) => `${p} ${p in balances ? money(balances[p]) : 'absent'}`).join(', ');
 
 async function main() {
-  for (const computer of [SAM, ALEX]) {
+  for (const computer of COMPUTERS) {
     const people = (await call(computer, 'people')).people.map((p) => p.person).sort();
     if (!same(people, PEOPLE)) throw new Error(`${computer.name} lists ${people.join(', ')} in ${group}, not ${PEOPLE.join(', ')}`);
   }
 
   // Sam pays for pizza; Alex, Cy and Bo each say they had some.
   const pizza = await record(SAM, { kind: EXPENSE, amount_cents: 6000, description: 'pizza' });
-  await arrived(ALEX, pizza);
-  await record(ALEX, { kind: SHARE, expense: pizza });
-  await record(ALEX, { kind: SHARE, expense: pizza }, 'cy');
-  await record(SAM, { kind: SHARE, expense: pizza }, 'bo');
+  for (const computer of [ALEX, CY, BO]) {
+    await arrived(computer, pizza);
+    await record(computer, { kind: SHARE, expense: pizza });
+  }
   // Cy pays for a cab, and Sam was in it.
-  const cab = await record(ALEX, { kind: EXPENSE, amount_cents: 3000, description: 'cab' }, 'cy');
+  const cab = await record(CY, { kind: EXPENSE, amount_cents: 3000, description: 'cab' });
   await arrived(SAM, cab);
   await record(SAM, { kind: SHARE, expense: cab });
   // Alex pays Sam back $20.00, meaning $15.00, and corrects it.
@@ -92,23 +94,23 @@ async function main() {
   await correct(ALEX, typo, { kind: SETTLE, to: 'sam', amount_cents: 1500 });
 
   const copies = [];
-  for (const computer of [SAM, ALEX]) {
+  for (const computer of COMPUTERS) {
     const missing = await unheld(computer, written);
     const book = actsOf(await log(computer)).reduce(reduce, init());
     copies.push({ computer, missing, book });
   }
-  const [s, a] = copies;
+  const [s] = copies;
   const lines = copies.map(({ computer, missing, book }) =>
     `  ${computer.name}: ${said(book.balances)}` +
     (book.gaps.length ? `; unread: ${JSON.stringify(book.gaps)}` : '') +
     (missing.length ? `; never received ${missing.join(', ')}` : ''));
-  if (!same(s.book.balances, a.book.balances)) {
-    throw new Error(`the two copies of ${group} fold to different balances:\n${lines.join('\n')}`);
+  if (copies.some((c) => !same(c.book.balances, s.book.balances))) {
+    throw new Error(`the copies of ${group} fold to different balances:\n${lines.join('\n')}`);
   }
-  if (!same(s.book.balances, OWED) || s.book.gaps.length || a.book.gaps.length) {
-    throw new Error(`both copies of ${group} agree, but not with what the acts say (${said(OWED)}):\n${lines.join('\n')}`);
+  if (!same(s.book.balances, OWED) || copies.some((c) => c.book.gaps.length)) {
+    throw new Error(`every copy of ${group} agrees, but not with what the acts say (${said(OWED)}):\n${lines.join('\n')}`);
   }
-  console.log(`${SAM.name} and ${ALEX.name} fold ${written.length} acts of ${group} to the same balances: ${said(OWED)}`);
+  console.log(`${COMPUTERS.length} computers fold ${written.length} acts of ${group} to the same balances: ${said(OWED)}`);
 }
 
 main().catch((e) => {

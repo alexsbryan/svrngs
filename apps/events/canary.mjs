@@ -1,32 +1,34 @@
-// The Events canary (DESIGN §5 "The canaries"; events-app (c)): two computers
-// hold one group's record; everyone answers through the record's loopback
-// API, a correction voids, and both copies fold, with events.js, to the same
-// event, who is coming and who came — the ones the acts say; and a second
+// The Events canary (DESIGN §5 "The canaries"; events-app (c)): each
+// person's computer holds one group's record; everyone answers through their
+// own computer's loopback API, a correction voids, and every copy folds, with
+// events.js, to the same event, who is coming and who came — the ones the acts say; and a second
 // group, on Sam's computer alone, holds the same event and none of the
 // first's answers. It uses only what DESIGN §3 says an app gets: the people,
 // and the record over loopback.
 //
-//   node apps/events/canary.mjs <group> <second group> <Sam's record> <Alex's record>
+//   node apps/events/canary.mjs <group> <second group> <Sam's record> <Alex's> <Bo's> <Cy's>
 //
-// The caller (crates/svrngs-node/tests/canaries.rs) stands both up with Sam,
-// Alex, Bo and Cy in the group — Sam's computer and Alex's, Bo and Cy with
-// none here, whose acts an app on one of the two writes for them, as an app
-// serving someone the door verified does — and Sam and Di in the second.
-// Exit 0 holds; 1 says what broke, and when the copies differ, names both
-// and what each says.
+// The caller (crates/svrngs-node/tests/canaries.rs) stands up one computer
+// for each of Sam, Alex, Bo and Cy in the group, since a computer writes only
+// as its own person (DESIGN §3, `not_yours`), and Sam and Di in the second,
+// on Sam's alone. Exit 0 holds; 1 says what broke, and when the copies
+// differ, names each and what it says.
 
 import { randomBytes } from 'node:crypto';
 import { isDeepStrictEqual as same } from 'node:util';
 
 import { CAME, COMING, EVENT, actsOf, fold } from './events.js';
 
-const [group, second, samAt, alexAt] = process.argv.slice(2);
-if (!alexAt) {
-  console.error("usage: node canary.mjs <group> <second group> <Sam's record> <Alex's record>");
+const [group, second, samAt, alexAt, boAt, cyAt] = process.argv.slice(2);
+if (!cyAt) {
+  console.error("usage: node canary.mjs <group> <second group> <Sam's record> <Alex's> <Bo's> <Cy's>");
   process.exit(2);
 }
 const SAM = { name: "Sam's computer", at: samAt };
 const ALEX = { name: "Alex's computer", at: alexAt };
+const BO = { name: "Bo's computer", at: boAt };
+const CY = { name: "Cy's computer", at: cyAt };
+const COMPUTERS = [SAM, ALEX, BO, CY];
 const PEOPLE = { [group]: ['alex', 'bo', 'cy', 'sam'], [second]: ['di', 'sam'] };
 /** How long one copy is given to hold an act the other wrote (apps/expenses/canary.mjs, WAIT_MS). */
 const WAIT_MS = 10_000;
@@ -41,14 +43,14 @@ async function call(computer, door, at, body) {
 }
 
 const written = [];
-/** Append `act` in `at` on `computer`, for `person` when one is named; answers its id. */
-async function append(computer, at, act, person) {
-  const { id } = await call(computer, 'append', at, { ...act, ...(person && { on_behalf_of: person }) });
+/** Append `act` in `at` on `computer`, as its own person; answers its id. */
+async function append(computer, at, act) {
+  const { id } = await call(computer, 'append', at, act);
   if (at === group) written.push(id);
   return id;
 }
-const record = (computer, op, person, at = group) => append(computer, at, { op: 'record', payload: op }, person);
-const correct = (computer, id, replacement, person) => append(computer, group, { op: 'correct', corrects: id, replacement }, person);
+const record = (computer, op, at = group) => append(computer, at, { op: 'record', payload: op });
+const correct = (computer, id, replacement) => append(computer, group, { op: 'correct', corrects: id, replacement });
 const log = (computer, at = group) => call(computer, 'log', at);
 
 /** The ids of `ids` that `computer` does not hold within WAIT_MS. */
@@ -69,7 +71,7 @@ async function arrived(computer, id) {
 
 async function main() {
   for (const [at, people] of Object.entries(PEOPLE)) {
-    for (const computer of at === group ? [SAM, ALEX] : [SAM]) {
+    for (const computer of at === group ? COMPUTERS : [SAM]) {
       const listed = (await call(computer, 'people', at)).people.map((p) => p.person).sort();
       if (!same(listed, people)) throw new Error(`${computer.name} lists ${listed.join(', ')} in ${at}, not ${people.join(', ')}`);
     }
@@ -79,30 +81,28 @@ async function main() {
   const event = randomBytes(8).toString('hex');
   const dinner = { kind: EVENT, event, what: 'dinner', when: 'Friday 7', where: 'the house' };
   const posted = await record(SAM, dinner);
-  await record(SAM, dinner, null, second);
-  await arrived(ALEX, posted);
-  // Alex is coming; Bo is coming with Maya, from Sam's computer; Cy is
-  // coming, from Alex's, and takes it back from Sam's.
+  await record(SAM, dinner, second);
+  for (const computer of [ALEX, BO, CY]) await arrived(computer, posted);
+  // Alex is coming; Bo is coming with Maya; Cy is coming, and takes it back.
   await record(ALEX, { kind: COMING, event });
-  const bo = await record(SAM, { kind: COMING, event, guests: ['Maya'] }, 'bo');
-  const cy = await record(ALEX, { kind: COMING, event }, 'cy');
-  await arrived(SAM, cy);
-  const takenBack = await correct(SAM, cy, null, 'cy');
+  const bo = await record(BO, { kind: COMING, event, guests: ['Maya'] });
+  const cy = await record(CY, { kind: COMING, event });
+  const takenBack = await correct(CY, cy, null);
   // Alex tries to take Bo's back: the record voids it, and the fold does not count it.
   await arrived(ALEX, bo);
   await correct(ALEX, bo, null);
   // Bo came, and says Maya came.
-  await record(ALEX, { kind: CAME, event }, 'bo');
-  await record(ALEX, { kind: CAME, event, guest: 'Maya' }, 'bo');
-  // In the second group, Di is coming.
-  await record(SAM, { kind: COMING, event }, 'di', second);
+  await record(BO, { kind: CAME, event });
+  await record(BO, { kind: CAME, event, guest: 'Maya' });
+  // In the second group, Sam is coming.
+  await record(SAM, { kind: COMING, event }, second);
 
-  // `via`, whose computer wrote each answer for someone else (gv-via): Bo's
-  // coming Sam's, his came and Maya's Alex's; Alex's own and Sam's post none.
-  const via = { host: null, coming: { bo: ['sam'] }, came: { bo: ['alex'] }, guests_came: { bo: { Maya: ['alex'] } } };
+  // `via`, whose computer wrote an answer for someone else (gv-via): none,
+  // since each wrote on their own.
+  const via = { host: null, coming: {}, came: {}, guests_came: {} };
   const want = { host: 'sam', what: 'dinner', when: 'Friday 7', where: 'the house', coming: { alex: [], bo: ['Maya'] }, came: ['bo'], guests_came: { bo: ['Maya'] }, via };
   const copies = [];
-  for (const computer of [SAM, ALEX]) {
+  for (const computer of COMPUTERS) {
     const missing = await unheld(computer, written);
     const ops = (await log(computer)).ops;
     const voided = ops.find((o) => o.id === cy)?.voided;
@@ -113,19 +113,19 @@ async function main() {
   const lines = copies.map((c) =>
     `  ${c.computer.name}: ${JSON.stringify(c.said)}; gaps ${JSON.stringify(c.gaps)}; Cy's coming voided: ${c.voided}` +
     (c.missing.length ? `; never received ${c.missing.join(', ')}` : ''));
-  const [s, a] = copies;
-  if (!same([s.said, s.gaps], [a.said, a.gaps])) throw new Error(`the two copies of ${group} fold to different answers:\n${lines.join('\n')}`);
-  if (!same(s.said, want) || !same(s.gaps, ['not_theirs']) || !s.voided || !a.voided) {
-    throw new Error(`both copies of ${group} agree, but not with what the acts say (${JSON.stringify(want)}; Alex's change of Bo's answer not counted; Cy's ${takenBack} voiding hers on both):\n${lines.join('\n')}`);
+  const [s] = copies;
+  if (copies.some((c) => !same([c.said, c.gaps], [s.said, s.gaps]))) throw new Error(`the copies of ${group} fold to different answers:\n${lines.join('\n')}`);
+  if (!same(s.said, want) || !same(s.gaps, ['not_theirs']) || copies.some((c) => !c.voided)) {
+    throw new Error(`every copy of ${group} agrees, but not with what the acts say (${JSON.stringify(want)}; Alex's change of Bo's answer not counted; Cy's ${takenBack} voiding hers on each):\n${lines.join('\n')}`);
   }
 
   const other = await log(SAM, second);
   const strangers = actsOf(other).filter((x) => !PEOPLE[second].includes(x.by)).map((x) => x.by);
   const there = fold(actsOf(other)).events[event];
-  if (strangers.length || !same(there?.coming, { di: [] }) || there?.host !== 'sam') {
+  if (strangers.length || !same(there?.coming, { sam: [] }) || there?.host !== 'sam') {
     throw new Error(`${second} holds ${group}'s answers, or not its own: acts by ${JSON.stringify(strangers)}; it folds to ${JSON.stringify(there)}`);
   }
-  console.log(`${SAM.name} and ${ALEX.name} fold ${written.length} acts of ${group} to the same answers: ${JSON.stringify(want)}, Cy's taken back on both and Alex's change of Bo's not counted; ${second} holds the event and Di alone`);
+  console.log(`${COMPUTERS.length} computers fold ${written.length} acts of ${group} to the same answers: ${JSON.stringify(want)}, Cy's taken back on each and Alex's change of Bo's not counted; ${second} holds the event and Sam's answer alone`);
 }
 
 main().catch((e) => {
