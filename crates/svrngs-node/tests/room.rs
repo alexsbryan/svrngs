@@ -83,7 +83,6 @@ async fn alex(dir: &Path, sam: u8) -> Node {
             key: actor_of(&signing(sam)),
             invite: None,
         },
-        on_behalf_of: None,
     };
     alex.rail().commit(NS, &admit).unwrap().unwrap();
     alex

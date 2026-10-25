@@ -99,7 +99,6 @@ pub async fn node() {
                     key: actor_of(&signing(i)),
                     invite: None,
                 },
-                on_behalf_of: None,
             };
             node.rail().commit(&id, &admit).unwrap().unwrap();
         }

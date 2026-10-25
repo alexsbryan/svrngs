@@ -54,10 +54,7 @@ impl House {
             opens: named,
             until,
         });
-        let fixture = svrngs_core::tests_support::Fixture {
-            act,
-            on_behalf_of: None,
-        };
+        let fixture = svrngs_core::tests_support::Fixture { act };
         let recorded = self.kim.rail().commit(NS, &fixture).unwrap().unwrap();
         self.bo.rail().ingest_all(NS, recorded.lines()).unwrap();
         recorded.lines()[0].id.clone()
@@ -247,7 +244,6 @@ async fn sams_visit_ends_at_its_time_at_kims_stop_and_at_kims_leave() {
                         corrects: visit,
                         replacement: None,
                     },
-                    on_behalf_of: None,
                 };
                 let stopped = house.kim.rail().commit(NS, &stop).unwrap().unwrap();
                 at_its_time(&stopped).await;

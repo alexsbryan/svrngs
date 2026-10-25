@@ -71,7 +71,6 @@ async fn a_newcomer_s_first_request_through_a_second_lender_is_answered_within_s
             key: actor_of(&signing(7)),
             invite: None,
         },
-        on_behalf_of: None,
     };
     pair.a.rail().commit(NS, &admit).unwrap().unwrap();
     let joined = Instant::now();
@@ -142,7 +141,6 @@ async fn a_newcomer_is_let_in_while_a_computer_of_the_group_sleeps() {
             key: actor_of(&signing(key)),
             invite: None,
         },
-        on_behalf_of: None,
     };
     pair.a.rail().commit(NS, &admit("cy", cy)).unwrap().unwrap();
     let (_asleep, at_cy) = super::common::never_answers();

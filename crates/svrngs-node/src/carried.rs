@@ -358,7 +358,7 @@ impl Folders {
         if act.get("corrects").is_some_and(theirs) {
             return Err(NOT_ITS_OWN);
         }
-        let answer = crate::rail::append_as(rail, group, act, None).await;
+        let answer = crate::rail::append_act(rail, group, act).await;
         tracing::debug!(target: "folder", group, %kind, %person, status = answer.status().as_u16(), "carried: an act written as the person");
         if answer.status().is_success() {
             self.nudge.notify_one();

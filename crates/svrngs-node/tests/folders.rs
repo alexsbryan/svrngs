@@ -326,7 +326,6 @@ async fn a_hash_the_record_stopped_placing_is_refused_at_the_next_get() {
                 base: Some(entry),
             }],
         },
-        on_behalf_of: None,
     };
     group.ana.rail().commit(&ns, &deleted).unwrap().unwrap();
     let second = get(
@@ -992,7 +991,6 @@ impl Asking {
                 key: actor_of(&signing(2)),
                 invite: None,
             },
-            on_behalf_of: None,
         };
         ana.rail().commit(&ns, &admit).unwrap().unwrap();
         let relay = RelayConfig {
@@ -1054,10 +1052,7 @@ impl Asking {
                 base: None,
             }],
         };
-        let written = svrngs_core::tests_support::Fixture {
-            act,
-            on_behalf_of: None,
-        };
+        let written = svrngs_core::tests_support::Fixture { act };
         ana.rail().commit(&ns, &written).unwrap().unwrap();
         Asking {
             ana,

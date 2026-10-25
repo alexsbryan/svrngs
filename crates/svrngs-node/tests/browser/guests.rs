@@ -42,7 +42,6 @@ async fn sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest(engine:
             key: actor_of(&signing(CY)),
             invite: None,
         },
-        on_behalf_of: None,
     };
     kim.rail().commit(NS, &cy).unwrap().unwrap();
     let mp4 = dir.path().join("title.mp4");
@@ -326,7 +325,6 @@ async fn the_phones_page_shows_sam_visiting_and_kims_stop_ends_it(engine: Engine
             key: actor_of(&signing(ANA)),
             invite: None,
         },
-        on_behalf_of: None,
     };
     let (kim, bo, day) = sam_visiting(kim_dir.path(), bo_dir.path(), &relay).await;
     kim.rail().commit(NS, &ana).unwrap().unwrap();

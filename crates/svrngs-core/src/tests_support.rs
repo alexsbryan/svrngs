@@ -269,7 +269,6 @@ impl crate::Store for Memory {
 /// Any act, written as a test's fixture through [`commit`](crate::commit).
 pub struct Fixture {
     pub act: RailAct,
-    pub on_behalf_of: Option<String>,
 }
 
 impl crate::Command for Fixture {
@@ -278,10 +277,6 @@ impl crate::Command for Fixture {
 
     fn decide(&self, _before: &Admission) -> Result<Vec<RailAct>, Self::Refusal> {
         Ok(vec![self.act.clone()])
-    }
-
-    fn on_behalf_of(&self) -> Option<&str> {
-        self.on_behalf_of.as_deref()
     }
 }
 

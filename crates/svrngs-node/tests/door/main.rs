@@ -94,7 +94,6 @@ impl Pair {
                 key: actor_of(&signing(2)),
                 invite: None,
             },
-            on_behalf_of: None,
         };
         a.rail().commit(NS, &fixture).unwrap().unwrap();
         let base = b
@@ -778,7 +777,6 @@ async fn a_member_s_computer_lists_what_is_lent_with_where_to_reach_it() {
             key: actor_of(&signing(9)),
             invite: None,
         },
-        on_behalf_of: None,
     };
     pair.a.rail().commit(NS, &ghost).unwrap().unwrap();
     let seed = Roster::new(
@@ -863,7 +861,6 @@ async fn beside(pair: &Pair, ns: &str, seed: u8, person: &str) -> (Node, tempfil
             key: actor_of(&signing(seed)),
             invite: None,
         },
-        on_behalf_of: None,
     };
     pair.a.rail().commit(ns, &admit).unwrap().unwrap();
     pair.a
@@ -894,7 +891,6 @@ async fn a_member_asks_what_the_group_s_people_lend_each_with_its_lender_s_key()
             key: actor_of(&signing(9)),
             invite: None,
         },
-        on_behalf_of: None,
     };
     pair.a.rail().commit(NS, &ghost).unwrap().unwrap();
     // Ada's relay in the record, with the root's dot (relay-in-record).
@@ -973,7 +969,6 @@ async fn a_key_in_two_groups_that_disagree_is_dialled_and_told_by_one_relay() {
                 key: actor_of(&signing(me)),
                 invite: None,
             },
-            on_behalf_of: None,
         };
         pair.a.rail().commit("work", &admit).unwrap().unwrap();
     }

@@ -71,7 +71,6 @@ pub fn found(name: &str, salt: u8, ana: &Node, others: &[(&Node, u8)]) -> String
                 key: actor_of(&signing(n)),
                 invite: None,
             },
-            on_behalf_of: None,
         };
         ana.rail().commit(&id, &admit).unwrap().unwrap();
     }

@@ -149,7 +149,6 @@ async fn group(relay: &Server) -> Group {
                 key: actor_of(&signing(key)),
                 invite: None,
             },
-            on_behalf_of: None,
         };
         sam.rail().commit(NS, &admit).unwrap().unwrap();
     }

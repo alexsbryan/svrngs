@@ -638,7 +638,6 @@ async fn a_lend_s_computer_asleep_is_said_away_within_the_cap() {
                 key: actor_of(&signing(seed)),
                 invite: None,
             },
-            on_behalf_of: None,
         };
         alex.rail().commit(NS, &admit).unwrap().unwrap();
     }
@@ -781,7 +780,6 @@ async fn a_lend_s_computer_that_did_not_answer_is_shown_to_a_tab_as_its_window_d
             key: actor_of(&signing(3)),
             invite: None,
         },
-        on_behalf_of: None,
     };
     alex.rail().commit(NS, &admit).unwrap().unwrap();
     let api = alex.api_addr();

@@ -46,11 +46,6 @@ pub trait Command {
     fn confirm(&self, _after: &Admission, _written: &[OpId]) -> Result<(), Self::Refusal> {
         Ok(())
     }
-
-    /// The person the acts are written on behalf of, stamped on each line.
-    fn on_behalf_of(&self) -> Option<&str> {
-        None
-    }
 }
 
 /// The adapter's facts: who signs, against which seed, in which group, when.
@@ -172,7 +167,7 @@ fn authored<C: Command>(
             "commit: the decision asks for nothing, so nothing is written");
         return Ok(Vec::new());
     }
-    let lines = sign_lines(held, tip, acts, command.on_behalf_of(), a);
+    let lines = sign_lines(held, tip, acts, a);
     let mut with = held.clone();
     for line in &lines {
         with.insert(line.clone());
@@ -223,7 +218,6 @@ fn sign_lines(
     held: &ActSet,
     tip: Option<Tip>,
     acts: Vec<RailAct>,
-    on_behalf_of: Option<&str>,
     a: &Author<'_>,
 ) -> Vec<Op<SignedOp>> {
     let actor = actor_of(a.signer);
@@ -260,7 +254,7 @@ fn sign_lines(
             seq,
             prev.take(),
             act,
-            on_behalf_of,
+            None,
             None,
             None,
         );

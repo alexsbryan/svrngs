@@ -83,7 +83,6 @@ fn admit_to(node: &Node, ns: &str, person: &str, joining: u8) {
             key: actor_of(&signing(joining)),
             invite: None,
         },
-        on_behalf_of: None,
     };
     node.rail().commit(ns, &fixture).unwrap().unwrap();
 }

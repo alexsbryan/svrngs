@@ -58,7 +58,6 @@ pub async fn alex_lets_sam_in(alex_dir: &Path, sam_dir: &Path) -> (Node, Node) {
             key: actor_of(&signing(2)),
             invite: None,
         },
-        on_behalf_of: None,
     };
     alex.rail().commit(NS, &admit).unwrap().unwrap();
     alex.transport()

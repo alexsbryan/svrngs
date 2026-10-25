@@ -174,14 +174,12 @@ fn the_kept_register_is_the_whole_files_and_folds_again_when_membership_moves() 
     kept_before("an Admit committed", false);
     assert_eq!(step("an Admit committed"), 2);
 
-    other
-        .append(record("x"), &key(2), &ring(), None, &Ed25519Verifier)
-        .unwrap();
+    other.append(record("x"), &key(2), &ring(), &Ed25519Verifier).unwrap();
     kept_before("a record, from another handle", true);
     assert_eq!(step("a record, from another handle"), 2);
 
     let admit_cy = other
-        .append(admit_act("cy", 3), &key(1), &ring(), None, &Ed25519Verifier)
+        .append(admit_act("cy", 3), &key(1), &ring(), &Ed25519Verifier)
         .unwrap();
     kept_before("another handle's Admit, from the tail", false);
     assert_eq!(step("another handle's Admit, from the tail"), 3);

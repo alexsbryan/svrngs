@@ -136,7 +136,6 @@ impl House {
                 key: actor_of(&signing(2)),
                 invite: None,
             },
-            on_behalf_of: None,
         };
         alex.rail().commit(&id, &admit).unwrap().unwrap();
         alex.transport()
@@ -427,7 +426,6 @@ async fn a_lent_page_is_not_held_by_a_computer_that_never_answers() {
             key: actor_of(&signing(3)),
             invite: None,
         },
-        on_behalf_of: None,
     };
     house
         .alex

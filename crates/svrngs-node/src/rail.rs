@@ -214,21 +214,9 @@ pub(crate) async fn append_act(
     namespace: &str,
     body: serde_json::Value,
 ) -> Response {
-    match stamp(rail, namespace, &body) {
-        Ok(()) => append_as(rail, namespace, body, None).await,
-        Err(refusal) => refusal,
+    if let Err(refusal) = stamp(rail, namespace, &body) {
+        return refusal;
     }
-}
-
-/// [`append_act`] for `person`, whom the door resolved: a phone's act in a
-/// carried app, and its yes, which this computer still signs until the
-/// phone signs its own (capability-signed, DESIGN.md §3).
-pub(crate) async fn append_as(
-    rail: &RingRail,
-    namespace: &str,
-    body: serde_json::Value,
-    on_behalf_of: Option<Person>,
-) -> Response {
     // Taken as a `Value` and converted here rather than as `Json<RailAct>`,
     // so a refusal is the rail's own sentence instead of axum's rejection
     // prose (ARCH §10.6).
@@ -238,17 +226,9 @@ pub(crate) async fn append_as(
     };
     // A seal is an act like any other here: `Append` refuses it as not an
     // app's (arch-seal (b); WHO_KNOWS_WHOM §3).
-    let append = Append { act, on_behalf_of };
+    let append = Append { act };
     let appended = match rail.commit_said(namespace, &append) {
         Ok(Ok(recorded)) => Ok(recorded.lines()[0].clone()),
-        Ok(Err(AppendRefusal::NotInGroup(person))) => {
-            tracing::debug!(target: "rails", namespace, %person, "rail: refused — on_behalf_of names nobody in the group");
-            return refused(
-                namespace,
-                "not_in_group",
-                format!("{person} is not in {namespace}"),
-            );
-        }
         Ok(Err(AppendRefusal::NotAnAppAct)) => {
             tracing::debug!(target: "rails", namespace, "rail: refused — the register's acts and a seal are not an app's to write");
             return refused(

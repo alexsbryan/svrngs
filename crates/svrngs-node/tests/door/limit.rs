@@ -56,7 +56,6 @@ impl Crowd {
                     key: actor_of(&signing(key)),
                     invite: None,
                 },
-                on_behalf_of: None,
             };
             a.rail().commit(NS, &admit).unwrap().unwrap();
             let member = start(key, dirs[i + 1].path()).await;

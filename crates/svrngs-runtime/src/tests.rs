@@ -27,7 +27,7 @@ fn whole_then(tail: &str) -> (tempfile::TempDir, RingJournal) {
     let dir = tempfile::tempdir().unwrap();
     let journal = open(dir.path());
     journal
-        .append(record("whole"), &key(1), &ring(), None, &Ed25519Verifier)
+        .append(record("whole"), &key(1), &ring(), &Ed25519Verifier)
         .unwrap();
     let path = journal.dir().join("ring_oplog.jsonl");
     let raw = std::fs::read_to_string(&path).unwrap() + tail;
@@ -87,15 +87,11 @@ fn appending_assigns_contiguous_sequence_numbers_per_actor() {
     let journal = open(dir.path());
     let r = ring();
     for i in 0..3 {
-        let op = journal
-            .append(record("x"), &key(1), &r, None, &Ed25519Verifier)
-            .unwrap();
+        let op = journal.append(record("x"), &key(1), &r, &Ed25519Verifier).unwrap();
         assert_eq!(op.kind.seq, i);
     }
     // A second actor writing to the same journal keeps its OWN counter.
-    let op = journal
-        .append(record("y"), &key(2), &r, None, &Ed25519Verifier)
-        .unwrap();
+    let op = journal.append(record("y"), &key(2), &r, &Ed25519Verifier).unwrap();
     assert_eq!(op.kind.seq, 0);
 
     let f = journal.admit(&r, &Ed25519Verifier).unwrap();
@@ -110,9 +106,7 @@ fn a_journal_line_is_one_flat_object_that_reads_back() {
     let dir = tempfile::tempdir().unwrap();
     let journal = open(dir.path());
     let r = ring();
-    let written = journal
-        .append(record("milk"), &key(1), &r, None, &Ed25519Verifier)
-        .unwrap();
+    let written = journal.append(record("milk"), &key(1), &r, &Ed25519Verifier).unwrap();
 
     let raw = std::fs::read_to_string(journal.dir().join("ring_oplog.jsonl")).unwrap();
     let v: serde_json::Value = serde_json::from_str(raw.trim()).unwrap();
@@ -135,7 +129,7 @@ fn a_journal_line_is_one_flat_object_that_reads_back() {
 fn the_door_refuses_to_author_under_a_key_the_ring_does_not_know() {
     let dir = tempfile::tempdir().unwrap();
     let journal = open(dir.path());
-    let stranger = journal.append(record("x"), &key(42), &ring(), None, &Ed25519Verifier);
+    let stranger = journal.append(record("x"), &key(42), &ring(), &Ed25519Verifier);
     let Err(e @ RailError::NotInRoster { .. }) = stranger else {
         panic!("the door authored an op nobody in the ring can read");
     };
@@ -148,9 +142,7 @@ fn the_door_refuses_to_author_under_a_key_the_ring_does_not_know() {
     assert_eq!(journal.read().unwrap().0.len(), 0, "nothing was written");
 
     // A member writes fine.
-    assert!(journal
-        .append(record("x"), &key(1), &ring(), None, &Ed25519Verifier)
-        .is_ok());
+    assert!(journal.append(record("x"), &key(1), &ring(), &Ed25519Verifier).is_ok());
 }
 
 /// The rail no longer judges what an act MEANS, and that is the trade the
@@ -169,9 +161,7 @@ fn the_door_has_no_opinion_about_what_an_act_says() {
         }))
         .unwrap(),
     };
-    assert!(journal
-        .append(nonsense, &key(1), &ring(), None, &Ed25519Verifier)
-        .is_ok());
+    assert!(journal.append(nonsense, &key(1), &ring(), &Ed25519Verifier).is_ok());
 }
 
 /// A payload with no canonical form never becomes a journal line, and if one
@@ -352,9 +342,8 @@ fn two_partitioned_nodes_converge_on_an_identical_admission() {
     let r = ring();
 
     // Partitioned: neither node can see the other's write.
-    a.append(record("groceries"), &key(1), &r, None, &Ed25519Verifier)
-        .unwrap();
-    b.append(record("beer"), &key(2), &r, None, &Ed25519Verifier).unwrap();
+    a.append(record("groceries"), &key(1), &r, &Ed25519Verifier).unwrap();
+    b.append(record("beer"), &key(2), &r, &Ed25519Verifier).unwrap();
     assert_ne!(
         a.admit(&r, &Ed25519Verifier).unwrap(),
         b.admit(&r, &Ed25519Verifier).unwrap(),
@@ -561,7 +550,7 @@ fn the_views_cost_is_measured_and_bounded() {
 
         let t = std::time::Instant::now();
         let written = journal
-            .append(record("measured"), &key(2), &r, None, &Ed25519Verifier)
+            .append(record("measured"), &key(2), &r, &Ed25519Verifier)
             .unwrap();
         let per_append = t.elapsed();
         let act_bytes = serde_json::to_vec(&written).unwrap().len();
@@ -590,8 +579,8 @@ fn a_half_delivered_peer_is_a_named_hole_not_a_clean_answer() {
     let (dir_a, dir_b) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let (a, b) = (open(dir_a.path()), open(dir_b.path()));
     let r = ring();
-    b.append(record("first"), &key(2), &r, None, &Ed25519Verifier).unwrap();
-    b.append(record("second"), &key(2), &r, None, &Ed25519Verifier).unwrap();
+    b.append(record("first"), &key(2), &r, &Ed25519Verifier).unwrap();
+    b.append(record("second"), &key(2), &r, &Ed25519Verifier).unwrap();
 
     // Only the SECOND op lands — the connection dropped after one of them.
     let all = b.read().unwrap().0;
@@ -670,9 +659,7 @@ fn deleting_a_prefix_makes_holes() {
     let journal = open(dir.path());
     let r = ring();
     for what in ["one", "two", "three", "after"] {
-        journal
-            .append(record(what), &key(1), &r, None, &Ed25519Verifier)
-            .unwrap();
+        journal.append(record(what), &key(1), &r, &Ed25519Verifier).unwrap();
     }
     truncate_by_hand(&journal, 3);
 
@@ -702,16 +689,10 @@ fn the_door_names_its_own_act_and_not_a_forgery_beside_it() {
     let dir = tempfile::tempdir().unwrap();
     let journal = open(dir.path());
     let r = ring();
-    let one = journal
-        .append(record("one"), &key(1), &r, None, &Ed25519Verifier)
-        .unwrap();
-    let two = journal
-        .append(record("two"), &key(1), &r, None, &Ed25519Verifier)
-        .unwrap();
+    let one = journal.append(record("one"), &key(1), &r, &Ed25519Verifier).unwrap();
+    let two = journal.append(record("two"), &key(1), &r, &Ed25519Verifier).unwrap();
     journal.ingest(&forged_as_alex(1, &one)).unwrap();
-    let three = journal
-        .append(record("three"), &key(1), &r, None, &Ed25519Verifier)
-        .unwrap();
+    let three = journal.append(record("three"), &key(1), &r, &Ed25519Verifier).unwrap();
     assert_eq!(three.kind.seq, 2);
     assert_eq!(three.kind.prev.as_ref(), Some(&two.id), "not the forgery");
     let f = journal.admit(&r, &Ed25519Verifier).unwrap();
@@ -730,13 +711,9 @@ fn a_forged_line_above_a_members_newest_never_moves_their_next_seq() {
     let dir = tempfile::tempdir().unwrap();
     let journal = open(dir.path());
     let r = ring();
-    let one = journal
-        .append(record("one"), &key(1), &r, None, &Ed25519Verifier)
-        .unwrap();
+    let one = journal.append(record("one"), &key(1), &r, &Ed25519Verifier).unwrap();
     journal.ingest(&forged_as_alex(5, &one)).unwrap();
-    let two = journal
-        .append(record("two"), &key(1), &r, None, &Ed25519Verifier)
-        .unwrap();
+    let two = journal.append(record("two"), &key(1), &r, &Ed25519Verifier).unwrap();
     assert_eq!(two.kind.seq, 1, "the forgery moved nothing");
     assert_eq!(two.kind.prev.as_ref(), Some(&one.id));
     let f = journal.admit(&r, &Ed25519Verifier).unwrap();
@@ -784,7 +761,7 @@ fn a_peers_act_naming_a_key_arrives_readable_and_changes_no_roster_row() {
     }))
     .unwrap();
     let act = RailAct::Record { payload: says.clone() };
-    let written = b.append(act, &key(2), &r, None, &Ed25519Verifier).unwrap();
+    let written = b.append(act, &key(2), &r, &Ed25519Verifier).unwrap();
 
     // Ring-sync, the way a peer delivers: digest out, missing ops back in.
     let for_me = b.ops_missing_from(&a.digest().unwrap()).unwrap();
@@ -856,9 +833,7 @@ fn a_forged_copy_first_does_not_shadow_the_act() {
 fn an_act_after_a_torn_line_is_whole() {
     let (_dir, journal) = whole_then("{\"id\":\"ring-abc\",\"v\":1,\"ts_un");
     let r = ring();
-    journal
-        .append(record("after"), &key(1), &r, None, &Ed25519Verifier)
-        .unwrap();
+    journal.append(record("after"), &key(1), &r, &Ed25519Verifier).unwrap();
 
     let f = journal.admit(&r, &Ed25519Verifier).unwrap();
     assert_eq!(applied(&f), vec!["whole", "after"], "{:?}", f.gaps());

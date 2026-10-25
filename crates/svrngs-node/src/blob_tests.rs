@@ -72,7 +72,6 @@ async fn ana_and_ben(dirs: [&FsPath; 2]) -> (Node, Node, String) {
             key: actor_of(&signing(2)),
             invite: None,
         },
-        on_behalf_of: None,
     };
     nodes[0].rail().commit(&id, &admit).unwrap().unwrap();
     for node in [&nodes[1], &nodes[0]] {

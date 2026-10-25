@@ -77,10 +77,7 @@ fn hold(node: &Node, ns: &str, founder: u8) {
 
 /// Sign `act` onto `ns` through `node`'s door, against the group's seed.
 fn append(node: &Node, ns: &str, act: RailAct) -> Op<SignedOp> {
-    let fixture = svrngs_core::tests_support::Fixture {
-        act,
-        on_behalf_of: None,
-    };
+    let fixture = svrngs_core::tests_support::Fixture { act };
     node.rail()
         .commit(ns, &fixture)
         .unwrap()

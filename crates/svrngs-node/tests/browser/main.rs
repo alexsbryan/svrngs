@@ -161,7 +161,6 @@ async fn computer_on(
             key: actor_of(admitted),
             invite: None,
         },
-        on_behalf_of: None,
     };
     node.rail().commit(NS, &fixture).unwrap().unwrap();
     tokio::time::timeout(Duration::from_secs(20), node.endpoint().online())
@@ -181,7 +180,6 @@ async fn joined(dir: &Path, relay: &Server, ada: &Node, me: u8, person: &str) ->
             key: actor_of(&signing(me)),
             invite: None,
         },
-        on_behalf_of: None,
     };
     ada.rail().commit(NS, &fixture).unwrap().unwrap();
     standing(dir, relay, ada, me, person).await
@@ -491,7 +489,6 @@ async fn a_page_speaks_http_through_the_door_streaming_both_ways(engine: Engine)
             key: actor_of(&cy),
             invite: None,
         },
-        on_behalf_of: None,
     };
     node.rail().commit(NS, &fixture).unwrap().unwrap();
     let file = dir.path().join("title.bin");
@@ -1310,7 +1307,6 @@ async fn a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path(engine: 
             key: actor_of(&signing(3)),
             invite: None,
         },
-        on_behalf_of: None,
     };
     ada.rail().commit(NS, &dee).unwrap().unwrap();
     let page = page_origin("<!doctype html><title>ada's page</title>").await;
@@ -2082,7 +2078,6 @@ async fn the_home_page_tells_two_people_of_one_name_apart(engine: Engine) {
                 key: actor_of(&signing(me)),
                 invite: None,
             },
-            on_behalf_of: None,
         };
         ada.rail().commit(NS, &fixture).unwrap().unwrap();
         tokio::time::sleep(Duration::from_millis(1_100)).await;
@@ -2144,7 +2139,6 @@ async fn removals_held(ada: &Node) {
                 key: actor_of(&signing(me)),
                 invite: None,
             },
-            on_behalf_of: None,
         };
         ada.rail().commit(NS, &fixture).unwrap().unwrap();
     }
@@ -2408,7 +2402,6 @@ async fn unlisted_held(
                 key: actor_of(&signing(me)),
                 invite: None,
             },
-            on_behalf_of: None,
         };
         ada.rail().commit(NS, &fixture).unwrap().unwrap();
     }
@@ -2848,10 +2841,7 @@ async fn the_home_page_opens_a_link_only_within_its_lend(engine: Engine) {
 /// a link's `Invite`, then its redemption naming a browser (u4-1).
 fn from_a_phone(ada: &Node, person: &str, joining: u8) {
     let commit = |act| {
-        let fixture = svrngs_core::tests_support::Fixture {
-            act,
-            on_behalf_of: None,
-        };
+        let fixture = svrngs_core::tests_support::Fixture { act };
         ada.rail().commit(NS, &fixture).unwrap().unwrap().lines()[0].clone()
     };
     let invite = commit(RailAct::Invite {
@@ -3966,7 +3956,6 @@ async fn a_phone_s_socket_opens_again_once_its_lender_answers_again(engine: Engi
             key: actor_of(&signing(2)),
             invite: None,
         },
-        on_behalf_of: None,
     };
     ada.rail().commit(NS, &fixture).unwrap().unwrap();
     let cy = standing_on(cy_dir.path(), cys, &ada, 2, "cy", "ada").await;

@@ -262,10 +262,7 @@ async fn the_people_door_answers_the_register_with_keys() {
         key: actor_of(&key(3)),
         invite: None,
     };
-    let fixture = svrngs_core::tests_support::Fixture {
-        act: admit_bo,
-        on_behalf_of: None,
-    };
+    let fixture = svrngs_core::tests_support::Fixture { act: admit_bo };
     rail.commit(journal, &fixture).unwrap().unwrap();
     let invite = svrngs_core::tests_support::Fixture {
         act: crate::RailAct::Invite {
@@ -273,7 +270,6 @@ async fn the_people_door_answers_the_register_with_keys() {
             until: i64::MAX,
             device_of: None,
         },
-        on_behalf_of: None,
     };
     let invite = rail.commit(journal, &invite).unwrap().unwrap().lines()[0]
         .id
@@ -290,10 +286,7 @@ async fn the_people_door_answers_the_register_with_keys() {
         person: cy,
         key: actor_of(&key(4)),
     };
-    let fixture = svrngs_core::tests_support::Fixture {
-        act: admit_cy,
-        on_behalf_of: None,
-    };
+    let fixture = svrngs_core::tests_support::Fixture { act: admit_cy };
     rail.commit(journal, &fixture).unwrap().unwrap();
     let out = body_of(super::people_answer(&rail, "ledger")).await;
     // When bo joined: the time on the `Admit` this computer stamped

@@ -1019,10 +1019,7 @@ async fn a_computer_writes_nothing_as_a_phone_s_person() {
     let ana = &nodes[0];
     let group = found("house", 13, ana, &[]);
     let append = |act| {
-        let fixture = svrngs_core::tests_support::Fixture {
-            act,
-            on_behalf_of: None,
-        };
+        let fixture = svrngs_core::tests_support::Fixture { act };
         ana.rail()
             .commit(&group, &fixture)
             .unwrap()

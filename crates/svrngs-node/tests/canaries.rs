@@ -71,7 +71,6 @@ fn admit(sam: &Node, group: &str, person: &str, joining: u8) {
             key: actor_of(&signing(joining)),
             invite: None,
         },
-        on_behalf_of: None,
     };
     sam.rail().commit(group, &fixture).unwrap().unwrap();
 }

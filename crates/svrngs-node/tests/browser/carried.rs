@@ -318,13 +318,27 @@ async fn an_entry_another_s_computer_wrote_says_whose(engine: Engine) {
         let at = format!("http://{}/v1/rail/append?namespace={NS}", cy.api_addr());
         let wrote = http.post(at).json(&act).send().await.unwrap();
         assert_eq!(wrote.status().as_u16(), 422, "a program writes only as cy");
+        // As an older svrngs wrote it: cy's computer's next line, naming bo.
+        let (rail, me) = (cy.rail(), actor_of(cy.rail().signer()));
+        let all = rail.ops_missing_from_within(NS, &Default::default(), usize::MAX);
+        let tip = (all.unwrap().0.into_iter().filter(|o| o.actor == me)).max_by_key(|o| o.kind.seq);
+        let (seq, prev) = tip.map_or((0, None), |o| (o.kind.seq + 1, Some(o.id)));
+        let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH);
         let act = RailAct::from_json(act).unwrap();
-        let older = svrngs_core::Append {
+        let older = svrngs_core::sign_act(
+            rail.signer(),
+            NS,
+            now.unwrap().as_secs() as i64,
+            seq,
+            prev,
             act,
-            on_behalf_of: Some(Person::parse("bo").unwrap()),
-        };
-        assert!(
-            matches!(cy.rail().commit_said(NS, &older), Ok(Ok(_))),
+            Some("bo"),
+            None,
+            None,
+        );
+        assert_eq!(
+            rail.ingest_all(NS, &[older]).unwrap(),
+            1,
             "as an older svrngs wrote it"
         );
     }

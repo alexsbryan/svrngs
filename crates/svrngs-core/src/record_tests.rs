@@ -14,26 +14,21 @@ fn author<'a>(signer: &'a SigningKey, roster: &'a Roster) -> Author<'a> {
     }
 }
 
-fn append(act: RailAct, on_behalf_of: Option<&str>) -> Append {
-    Append {
-        act,
-        on_behalf_of: on_behalf_of.map(p),
-    }
+fn append(act: RailAct) -> Append {
+    Append { act }
 }
 
+/// An app's act is its signer's own: it names no one else
+/// (capability-signed; demo/runs/authorship/2026-10-24/DESIGN.md §5).
 #[test]
-fn an_app_record_is_written_and_stamped_with_whom_it_speaks_for() {
+fn an_app_record_is_written_as_its_signer_s_own() {
     let store = Memory::holding(&[]);
     let (signer, roster) = (key(1), ring());
-    let recorded = commit(
-        &store,
-        &append(record("x"), Some("bo")),
-        &author(&signer, &roster),
-    )
-    .unwrap()
-    .unwrap();
+    let recorded = commit(&store, &append(record("x")), &author(&signer, &roster))
+        .unwrap()
+        .unwrap();
     assert_eq!(recorded.lines().len(), 1);
-    assert_eq!(recorded.lines()[0].kind.on_behalf_of.as_deref(), Some("bo"));
+    assert_eq!(recorded.lines()[0].kind.on_behalf_of, None);
 }
 
 #[test]
@@ -51,28 +46,11 @@ fn an_app_cannot_write_the_registers_acts_or_a_seal() {
     let before = admitted(&[]);
     for act in [invite, admit, RailAct::Seal] {
         assert_eq!(
-            append(act.clone(), None).decide(&before),
+            append(act.clone()).decide(&before),
             Err(AppendRefusal::NotAnAppAct),
             "{act:?}"
         );
     }
-}
-
-#[test]
-fn on_behalf_of_someone_outside_the_group_writes_nothing() {
-    let store = Memory::holding(&[]);
-    let (signer, roster) = (key(1), ring());
-    let refused = commit(
-        &store,
-        &append(record("x"), Some("zed")),
-        &author(&signer, &roster),
-    )
-    .unwrap();
-    assert_eq!(
-        refused,
-        Err(Refused::Command(AppendRefusal::NotInGroup(p("zed"))))
-    );
-    assert!(store.0.borrow().is_empty());
 }
 
 /// **A commit signs no view** (arch-view; svrn-docs A_RECORD_FOR_YEARS §3).
@@ -84,20 +62,12 @@ fn a_commit_signs_no_view() {
     let store = Memory::holding(&[]);
     let roster = ring();
     let (alex, bo) = (key(1), key(2));
-    commit(
-        &store,
-        &append(record("milk"), None),
-        &author(&alex, &roster),
-    )
-    .unwrap()
-    .unwrap();
-    let recorded = commit(
-        &store,
-        &append(record("bread"), None),
-        &author(&bo, &roster),
-    )
-    .unwrap()
-    .unwrap();
+    commit(&store, &append(record("milk")), &author(&alex, &roster))
+        .unwrap()
+        .unwrap();
+    let recorded = commit(&store, &append(record("bread")), &author(&bo, &roster))
+        .unwrap()
+        .unwrap();
     let line = &recorded.lines()[0];
     assert_eq!(line.kind.view, None, "a new act holds no view");
     let wire = serde_json::to_string(line).unwrap();
