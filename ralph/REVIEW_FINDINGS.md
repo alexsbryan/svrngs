@@ -12493,8 +12493,12 @@ Rust, check.sh).
 Behaviour kept: `cargo check -p svrngs-node --tests`, the web crate's
 check for wasm32 and `cargo fmt --check` on both clean; `cargo test -p
 svrngs-node --test carried`, 13 passed; the words of 7ec64382 are the
-same string (`node -e`), which tests/browser/acts.rs:209 and :226 read;
-then `scripts/check.sh` whole (the row's commit).
+same string (`node -e`), which tests/browser/acts.rs:209 and :226 read.
+
+`scripts/check.sh` at 2f51f88e, the audit's close: exit 0 in 16 min 54 s,
+every gate passed, principles pinned through app laws, the nine scenes
+in chromium and webkit among them
+(ralph/next/capability/ctl/log/sessions/REVIEW-audit-capability-auto-1-1.await.log).
 
 ### Findings
 
