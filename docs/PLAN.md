@@ -115,8 +115,9 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   "What acts as you" (36aa173f). Authorship by signature (capability-signed,
   ab98bda1), which built what §2 held as "a phone's write signed by the
   phone's own key", and keys everywhere (capability-keys, c7e81354). Its
-  release is prepared, with House rules, and waits on the operator's publish
-  (`demo/runs/capability/2026-10-24-release/NEEDS_HUMAN.md`); what it left
+  release, with House rules, is V1.2, published 25 October 2026 from
+  `0c9dc094`, tagged `v1.2` (the operator: "Ok release it";
+  `demo/runs/capability/2026-10-24-release/README.md`); what it left
   waits in §2, each with its trigger;
 - then what the capability queue left keyed by name, the first row after
   its release (the operator, 2026-10-25: "Record now, fix after release").

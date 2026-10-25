@@ -1,12 +1,11 @@
 # svrngs releases
 
-## Next, not released yet
+## V1.2, 25 October 2026
 
-The next release brings House rules, where your house writes down what it
+V1.2 brings House rules, where your house writes down what it
 agrees and how it agrees it, and it makes plain what can act as you: an app
 says what it does as you when you open it, and only your own phone or
-computer writes as you. It's in this repository, and not yet in the build
-at `group.svrnme.sh`. Update every computer in your group: until all of
+computer writes as you. Update every computer in your group: until all of
 them are on it, an older one leaves out what your phone writes in an app.
 
 **Opening an app is your yes.** The button that opens an app says what it
@@ -148,10 +147,13 @@ within the kind its lender lent it as. [`docs/DESIGN.md`](docs/DESIGN.md)
 person a program on one computer, in Chromium and WebKit: Money, Events,
 House rules, the grapevine, the doc, the group's life and the pantry, and
 films and movie night where Jellyfin is installed. The last full check
-passed in 838 s. Checking who signed each entry costs a group's 2,000
+passed in 801 s. Checking who signed each entry costs a group's 2,000
 entries about 4 ms more when phones wrote them, on 72 ms
 (`demo/runs/authorship/2026-10-24/COST.md`). Nobody has used this release
 in a real group yet.
+
+V1.2 is the build at `group.svrnme.sh`, from commit `0c9dc094`, tagged
+`v1.2`.
 
 ## V1.1.3, 20 October 2026
 

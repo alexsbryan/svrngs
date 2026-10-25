@@ -76,3 +76,17 @@ what capability-keys left keyed by name (0c9dc094) landed. Publish from
 0c9dc094: `scripts/check.sh` exited 0 there in 801 s, all 25 steps passed
 and none failed or never ran, run by the director with
 `CARGO_INCREMENTAL=0 scripts/check.sh` in the loops' tree on 2026-10-25.
+
+## Published
+
+V1.2, 25 October 2026, at the operator's word ("Ok release it"), by the
+package's steps: a worktree detached at 0c9dc094, `npm ci --prefix web`,
+`git tag v1.2 0c9dc094` (local), `CARGO_INCREMENTAL=0
+scripts/deploy-page.sh` (exit 0; all four platforms built), deployment
+dpl_Eo4QRxtZYCczyxEnJFCtekznSksc aliased to `group.svrnme.sh`. Read back:
+`curl -fsS https://group.svrnme.sh/get/SHA256SUMS` equals the built
+`get/SHA256SUMS`; the live `index.html` and `app.js` hash as built; the
+darwin-aarch64 tarball fetched hashes to its line; the live
+Content-Security-Policy equals `web/vercel.json`'s. `.vercel` and
+`.env.local` removed from the upload directory, the worktree removed.
+Not pushed: main and the tag `v1.2` are the operator's to push.
