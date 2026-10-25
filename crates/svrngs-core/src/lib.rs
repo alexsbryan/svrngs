@@ -890,6 +890,9 @@ mod tests_sealing;
 #[cfg(test)]
 mod tests_grant;
 
+#[cfg(test)]
+mod tests_cutover;
+
 /// The rail's ONE set of op fixtures.
 ///
 /// Public behind `test-support` because the journal tests live in
