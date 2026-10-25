@@ -385,7 +385,7 @@
       "apps/money/index.html": "2f2577c9c4bd3f40f29a253f5fdd7da20f6dc19cb5fea76ec54b78777534f51e"
     },
     "money as cy": {
-      "apps/money/index.html": "70c0d0fae48d2767b96447465b7b77fe3e6a26d0ea7683e1243593cd72b30afb"
+      "apps/money/index.html": "7c141bc242cfe4b10850ad0fdf44daa93c128dbe928cd9d0a9cc6e712a2f4251"
     },
     "said": [
       {
@@ -394,13 +394,6 @@
         },
         "kind": "money",
         "whose": "bo"
-      },
-      {
-        "files": {
-          "apps/money/index.html": "70c0d0fae48d2767b96447465b7b77fe3e6a26d0ea7683e1243593cd72b30afb"
-        },
-        "kind": "money",
-        "whose": "cy"
       }
     ]
   }

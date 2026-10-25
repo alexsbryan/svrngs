@@ -150,8 +150,8 @@ pub struct Runs {
     /// they say yes to it.
     pub brought: BTreeMap<String, Files>,
     /// As each person last said yes to it, by its kind and the person
-    /// ([`crate::RailAct::Runs`]): whose is the act's `on_behalf_of`, else
-    /// its writer's.
+    /// ([`crate::RailAct::Runs`]): signed by that person's own device, and
+    /// naming only files a folder act placed at their paths.
     pub said: BTreeMap<(String, String), Files>,
     /// Who last changed its files, and when (Unix seconds).
     pub changed: BTreeMap<String, (Person, i64)>,
@@ -177,11 +177,16 @@ pub(crate) fn written<'a>(
     acts: impl Iterator<Item = (&'a Person, &'a crate::Op<crate::SignedOp>)>,
 ) -> Written {
     let mut out = Written::default();
+    let (mut yeses, mut put) = (Vec::new(), BTreeSet::new());
     for (person, op) in acts {
         let (key, seq, act) = (op.actor.as_str(), op.kind.seq, &op.kind.act);
         if let crate::RailAct::Runs { app, files } = act {
-            let whose = op.kind.on_behalf_of.as_deref().unwrap_or(person.as_str());
-            (out.2.said).insert((app.clone(), whose.into()), files.clone());
+            // Decide is the person's own devices alone (capability-signed):
+            // a yes naming anyone but its signer's person counts nowhere.
+            let named = op.kind.on_behalf_of.as_deref();
+            let own = named.is_none_or(|n| n == person.as_str());
+            tracing::debug!(target: "rail:folder", app, signer = %person, named, own, "synced: a yes counts only from its person's own device");
+            own.then(|| yeses.push((app, person, files)));
         }
         let crate::RailAct::Synced { folder, changes } = act else {
             continue;
@@ -192,6 +197,7 @@ pub(crate) fn written<'a>(
                 continue;
             };
             let (path, key) = (c.path.clone(), key.into());
+            put.insert((path.clone(), hash));
             if let ["apps", kind, _, ..] = path.as_str().split('/').collect::<Vec<_>>()[..] {
                 let brought = out.2.brought.entry(kind.into()).or_default();
                 brought.entry(path.clone()).or_insert(hash);
@@ -213,6 +219,13 @@ pub(crate) fn written<'a>(
             };
             out.1.push((placed, person.clone()));
         }
+    }
+    // A yes names only bytes a folder act placed at that path (shortfall 8).
+    for (app, person, files) in yeses {
+        let placed = files.iter().all(|(p, h)| put.contains(&(p.clone(), *h)));
+        tracing::debug!(target: "rail:folder", app, %person, placed, "synced: a yes counts only naming bytes a folder act placed at their paths");
+        let whose = (app.clone(), person.as_str().into());
+        placed.then(|| out.2.said.insert(whose, files.clone()));
     }
     out
 }

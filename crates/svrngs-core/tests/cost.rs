@@ -8,6 +8,9 @@
 //!
 //! Run: `cargo test --release -p svrngs-core --test cost -- --ignored --nocapture`.
 
+// An instrument times a fold: the clock is what it reads.
+#![allow(clippy::disallowed_methods)]
+
 use std::collections::BTreeMap;
 use std::time::Instant;
 
