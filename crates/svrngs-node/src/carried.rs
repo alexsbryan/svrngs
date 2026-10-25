@@ -243,7 +243,8 @@ impl Folders {
 
     /// Each app carried in `groups` whose files now are not those that run
     /// as the person of the key `asker` there (canon-pin (c)): its group,
-    /// its kind, who changed its files last and when, and its files now,
+    /// its kind, who changed its files last, by name and first key, and
+    /// when, and its files now,
     /// which a yes names; `null` when a group's record cannot be read here,
     /// said at warn, never as nothing changed.
     pub(crate) fn changed(&self, groups: &[(String, People)], asker: &str) -> Value {
@@ -252,11 +253,11 @@ impl Folders {
             let Ok(read) = self.layout(group).map_err(|e| traced(group, UNREAD, &e)) else {
                 return Value::Null;
             };
-            let person = people[asker].person.as_str();
-            let new = |k: &&str| read.runs.of(k, person) != Some(&now(&read.placed, k));
+            let first = people[asker].person_key.as_str();
+            let new = |k: &&str| read.runs.of(k, first) != Some(&now(&read.placed, k));
             for kind in read.placed.iter().filter_map(app_of).filter(new) {
-                let (by, at) = &read.runs.changed[kind];
-                out.push(json!({ "group": group, "app": kind, "by": by, "at": at }));
+                let (key, by, at) = &read.runs.changed[kind];
+                out.push(json!({ "group": group, "app": kind, "by": by, "by_key": key, "at": at }));
             }
         }
         tracing::debug!(target: "folder", asker, changed = out.len(), "carried: the apps whose files now are not those that run as the asker");
@@ -292,7 +293,7 @@ impl Folders {
         let path = format!("apps/{kind}{path}");
         let path = (path.strip_suffix('/')).map_or(path.clone(), |dir| format!("{dir}/index.html"));
         let read = self.layout(group).map_err(|e| traced(group, UNREAD, &e))?;
-        let files = read.runs.of(kind.as_str(), asker.person.as_str());
+        let files = read.runs.of(kind.as_str(), &asker.person_key);
         let at = SyncPath::parse(&path)
             .ok()
             .and_then(|p| files?.get(&p).copied());

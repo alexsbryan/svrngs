@@ -306,6 +306,12 @@ pub struct AdmittedOp {
     /// refused every key the roster does not know, so an app never has to
     /// render a balance against `node-44a1b3e8`.
     pub person: Person,
+    /// That person's first key ([`crate::Membership::person_of`]), the same
+    /// from each of their devices: who wrote it, where `person` is a name
+    /// two people may share (capability-keys). `None` only in an answer
+    /// from an older svrngs.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub person_key: Option<String>,
     pub seq: u64,
     pub ts_unix: i64,
     /// What this op voids, when it is a correction. The void is **already
@@ -414,6 +420,7 @@ impl Admission {
 /// actually uses.
 struct Candidate<'a> {
     id: OpId,
+    first: String,
     person: Person,
     op: &'a Op<SignedOp>,
 }
@@ -637,7 +644,7 @@ pub fn admit(
     });
     let mut admitted: BTreeMap<OpId, Candidate<'_>> = BTreeMap::new();
     for (id, op) in authentic {
-        let Some((_, person)) = m.person_of(op.stands_as()) else {
+        let Some((first, person)) = m.person_of(op.stands_as()) else {
             gaps.push(RailGap::UnknownSigner {
                 id,
                 actor: op.actor.clone(),
@@ -683,6 +690,7 @@ pub fn admit(
             id.clone(),
             Candidate {
                 id,
+                first: first.into(),
                 person: person.clone(),
                 op,
             },
@@ -784,7 +792,7 @@ pub fn admit(
         ))
     });
 
-    let synced = crate::synced::written(order.iter().map(|a| (&a.person, a.op)));
+    let synced = crate::synced::written(order.iter().map(|a| (a.first.as_str(), &a.person, a.op)));
     let out: Vec<AdmittedOp> = order
         .into_iter()
         .map(|a| {
@@ -801,6 +809,7 @@ pub fn admit(
                 id: a.id.clone(),
                 actor: a.op.actor.clone(),
                 person: a.person.clone(),
+                person_key: Some(a.first.clone()),
                 seq: a.op.kind.seq,
                 ts_unix: a.op.ts_unix,
                 corrects,

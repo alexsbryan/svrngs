@@ -350,7 +350,8 @@ fn the_membership_acts_ship_at_a_bumped_line_version() {
 /// as it did before membership existed. Frozen from this fixture's first
 /// post-landing fold (RFC style — generated once, then pinned); every field
 /// of the Admission is in the string, so any drift in the no-act path is a
-/// diff here rather than an invisible behaviour change.
+/// diff here rather than an invisible behaviour change. Each act's
+/// `person_key` added with capability-keys, its writer's first key.
 #[test]
 fn a_ring_with_no_membership_acts_admits_exactly_as_before() {
     let ops: Vec<Op<SignedOp>> = include_str!("fixtures/rail_ops_before_on_behalf_of.jsonl")
@@ -361,7 +362,7 @@ fn a_ring_with_no_membership_acts_admits_exactly_as_before() {
     let f = admitted(&ops);
     assert_eq!(
         serde_json::to_string(&(&f.ops(), &f.gaps())).unwrap(),
-        r#"[[{"id":"6efe8a46f81d82df03b43ed537f3d50b854c24f8810a4b4aac58c61629d2c840","actor":"8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c","person":"alex","seq":0,"ts_unix":1700000000,"voided":true,"payload":{"kind":"thing","what":"milk"}},{"id":"e754694b85150ea490f4c305099f4d26142f95c8a031134e172500abc1983fc4","actor":"8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394","person":"bo","seq":0,"ts_unix":1700000001,"corrects":"6efe8a46f81d82df03b43ed537f3d50b854c24f8810a4b4aac58c61629d2c840","voided":false},{"id":"0ce63175592c0b3b80fb1cff79983bbd42610fede6f73e3bb2610808f171a711","actor":"ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1","person":"cy","seq":0,"ts_unix":1700000002,"voided":false}],[]]"#,
+        r#"[[{"id":"6efe8a46f81d82df03b43ed537f3d50b854c24f8810a4b4aac58c61629d2c840","actor":"8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c","person":"alex","person_key":"8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c","seq":0,"ts_unix":1700000000,"voided":true,"payload":{"kind":"thing","what":"milk"}},{"id":"e754694b85150ea490f4c305099f4d26142f95c8a031134e172500abc1983fc4","actor":"8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394","person":"bo","person_key":"8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394","seq":0,"ts_unix":1700000001,"corrects":"6efe8a46f81d82df03b43ed537f3d50b854c24f8810a4b4aac58c61629d2c840","voided":false},{"id":"0ce63175592c0b3b80fb1cff79983bbd42610fede6f73e3bb2610808f171a711","actor":"ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1","person":"cy","person_key":"ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1","seq":0,"ts_unix":1700000002,"voided":false}],[]]"#,
         "a ring with no membership act folds byte-identically to the build before"
     );
 }

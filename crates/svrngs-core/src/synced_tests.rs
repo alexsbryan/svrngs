@@ -251,7 +251,7 @@ fn an_app_runs_as_it_was_brought_whoever_changes_it() {
     assert_eq!(runs.brought.len(), 1, "the note is no app's");
 }
 
-/// The yeses `ops` hold, by kind and person, each with whether it names
+/// The yeses `ops` hold, by kind and first key, each with whether it names
 /// `files`; bo's phone (key 4) stands beside his computer.
 fn said(ops: &[Op<SignedOp>], files: &Files) -> Vec<(String, String, bool)> {
     let mut seed = ring().members;
@@ -292,17 +292,19 @@ fn a_yes_another_computer_writes_for_someone_else_counts_nowhere() {
     let alex = ops[2].clone();
     ops.push(after(&key(1), &alex, 1_020, yes(&new)));
     ops.push(signed_for(NS, &key(3), 1_030, 0, yes(&new), Some("bo")));
-    let only = |who: &str| (String::from("Money"), String::from(who), true);
+    let only = |k: u8| (String::from("Money"), actor_of(&key(k)), true);
     assert_eq!(
         said(&ops, &new),
-        [only("alex")],
+        [only(1)],
         "cy's computer said nothing for bo"
     );
 
     // Kept: bo's phone signs his own yes; whichever computer carries the
     // line, it is the phone's person's.
     ops.push(signed_for(NS, &key(4), 1_040, 0, yes(&new), None));
-    assert_eq!(said(&ops, &new), [only("alex"), only("bo")]);
+    let mut both = [only(1), only(2)];
+    both.sort();
+    assert_eq!(said(&ops, &new), both);
 }
 
 /// **A yes names only files a folder act placed** (shortfall 8; `blob.rs`
@@ -320,14 +322,15 @@ fn a_yes_naming_files_no_folder_placed_counts_nowhere() {
     let runs = admitted(&ops).runs().clone();
     assert_eq!(runs.said.len(), 0, "no folder placed cy's script");
     assert_eq!(
-        runs.of("Money", "cy"),
+        runs.of("Money", &actor_of(&key(3))),
         Some(&money([("index.html", 7), ("app.js", 8)]))
     );
 
     let placed = money([("index.html", 7), ("app.js", 9)]);
     ops.pop();
     ops.push(signed(&key(3), 1_030, 0, yes(&placed)));
-    assert_eq!(admitted(&ops).runs().of("Money", "cy"), Some(&placed));
+    let cy = actor_of(&key(3));
+    assert_eq!(admitted(&ops).runs().of("Money", &cy), Some(&placed));
 }
 
 /// **Two people of one name keep their own yes** (capability-keys; svrn-docs

@@ -77,9 +77,22 @@ fn fold(ops: &[Op<SignedOp>]) -> serde_json::Value {
         .map(|((kind, whose), files)| serde_json::json!({ "kind": kind, "whose": whose, "files": files }))
         .collect();
     let changed: BTreeMap<_, _> = (runs.changed.iter())
-        .map(|(kind, (who, at))| (kind, serde_json::json!({ "who": who, "at": at })))
+        .map(|(kind, (whose, who, at))| {
+            (
+                kind,
+                serde_json::json!({ "who": who, "whose": whose, "at": at }),
+            )
+        })
         .collect();
-    let runs_as = |kind: &str, who: &str| serde_json::json!(runs.of(kind, who));
+    // Each person by their first key, standing or cut: one per name here.
+    let m = a.membership();
+    let first = |who: &str| {
+        let mut firsts = (m.bindings.iter()).filter(|(k, _)| !m.devices.contains_key(*k));
+        firsts
+            .find(|(_, p)| p.as_str() == who)
+            .map_or("", |(k, _)| k.as_str())
+    };
+    let runs_as = |kind: &str, who: &str| serde_json::json!(runs.of(kind, first(who)));
     serde_json::json!({
         "ops": a.wire(),
         "gaps": a.gaps().iter().map(ToString::to_string).collect::<Vec<_>>(),
