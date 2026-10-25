@@ -205,8 +205,7 @@ pub(crate) fn written<'a>(
             if let ["apps", kind, _, ..] = path.as_str().split('/').collect::<Vec<_>>()[..] {
                 let brought = out.2.brought.entry(kind.into()).or_default();
                 brought.entry(path.clone()).or_insert(hash);
-                let by = (first.into(), person.clone(), op.ts_unix);
-                (out.2.changed).insert(kind.into(), by);
+                (out.2.changed).insert(kind.into(), (first.into(), person.clone(), op.ts_unix));
             }
             let entry = Entry {
                 key,
