@@ -169,7 +169,7 @@ if (args.older) {
       const body = await json.call(this);
       if (body?.lent && body.unanswered && older === true) delete body.version;
       if (body?.lent && body.unanswered && typeof older === 'string') {
-        body.older = [older];
+        body.older = [{ person: older, person_key: body.people?.find((p) => p.person === older)?.person_key }];
         body.lent = body.lent.filter((l) => l.person !== older);
       }
       return body;

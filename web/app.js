@@ -56,7 +56,7 @@ import init, {
   sign_line,
 } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
-import { acts, agreed, apart, carrying, changes, deciders, door, el, named, once, opens, owner, question, reading, removal, row, spoken, table, unlent, uses as used, visiting, whose } from './question.js?v=__VERSION__';
+import { acts, agreed, apart, called, carrying, changes, deciders, door, el, named, once, opens, owner, question, reading, removal, row, spoken, table, unlent, uses as used, visiting, whose } from './question.js?v=__VERSION__';
 
 const heading = document.getElementById('status');
 const said = document.getElementById('response');
@@ -300,7 +300,8 @@ async function open(group, key, lent, unanswered, l, at, until = Math.floor(Date
     raw,
     relay: relay_of(group.token) ?? null,
     page: `${location.origin}${location.pathname}`,
-    unanswered,
+    // By name, as a computer's /svrngs-reads tells a lent page (surface.rs `reads`).
+    unanswered: unanswered.map((u) => u.person ?? u),
   };
   trace(`PAGE: opening ${handoff.label} at ${start}, a pass to ${lends.length} lend(s) until ${until}`);
   const json = new TextEncoder().encode(JSON.stringify(handoff));
@@ -551,13 +552,11 @@ async function enter(group, asked) {
   if (!using.hidden) add('opens', using);
   using.ontoggle = () => using.open && uses(lent, dialler, document.getElementById('used'));
   // Each computer that did not say by how (bash-first-minute (c)), and
-  // nobody lending said only when every computer did.
-  const unlisted = [
-    ...unanswered.map((p) => `${p}’s computer did not answer, so what they lend is not listed.`),
-    ...unheard.map((p) => `${p}’s computer has not heard of the computer you reached yet, so what they lend is not listed yet.`),
-    ...refused.map((p) => `${p}’s computer answered without saying what they lend, so it is not listed.`),
-    ...behind.map((p) => `${p}’s computer runs an older svrngs, so what they lend is not listed.`),
-  ];
+  // nobody lending said only when every computer did; each person by first
+  // key, told apart as `called` does (keys-names), from a computer at
+  // version 2 by name.
+  const how = [[unanswered, 'did not answer, so what they lend is not listed'], [unheard, 'has not heard of the computer you reached yet, so what they lend is not listed yet'], [refused, 'answered without saying what they lend, so it is not listed'], [behind, 'runs an older svrngs, so what they lend is not listed']];
+  const unlisted = how.flatMap(([ps, why]) => ps.map((p) => `${called(people, p.person_key) ?? p.person ?? p}’s computer ${why}.`));
   said.textContent = (lent.length || unlisted.length ? unlisted : [`Nobody in ${group.name} lends anything yet.`]).join('\n');
   if (asked?.has('ask')) asking(group, key, lent, unanswered, dialler, asked);
 }

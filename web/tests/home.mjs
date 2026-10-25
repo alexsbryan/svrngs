@@ -20,7 +20,8 @@ const { context, close } = await launch(args.engine);
 if (args.engine === 'chromium') await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 // With `older`, every lender's computer in the group's answer as this
 // computer names one running an older svrngs (arch-version; `node.rs`
-// `answered`): in `older`, none of its lends listed. Planted where the
+// `answered`): in `older`, each by name and first key, a computer's key
+// its person's first here, and none of its lends listed. Planted where the
 // page reads the answer: a route's own fetch would lose the page's
 // Sec-Fetch headers, which the home page answers only with.
 if (args.older) {
@@ -28,7 +29,8 @@ if (args.older) {
     const json = Response.prototype.json;
     Response.prototype.json = async function () {
       const body = await json.call(this);
-      if (body?.lent && body.unanswered) [body.older, body.lent] = [[...new Set(body.lent.map((l) => l.person))], []];
+      const lenders = (lent) => [...new Map(lent.map((l) => [l.key, { person: l.person, person_key: l.key }])).values()];
+      if (body?.lent && body.unanswered) [body.older, body.lent] = [lenders(body.lent), []];
       return body;
     };
   });
