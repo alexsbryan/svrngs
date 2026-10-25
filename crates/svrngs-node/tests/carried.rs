@@ -864,6 +864,70 @@ async fn a_line_is_carried_only_signed_by_someone_in_the_group() {
     );
 }
 
+/// **A phone's act in an app is signed on the phone, and any computer
+/// carries it as that phone's person's** (capability-signed; `demo/runs/
+/// authorship/2026-10-24/DESIGN.md` §3, §4): the holder Ben's phone keeps
+/// for Money, its pass on each line, carries a line to Ana's computer by
+/// `/carry` on the holders' protocol, which any key may speak. Kept: the
+/// line is stored unchanged and counts, its actor the holder and its person
+/// Ben. Refused, `not_signed`, and not held: a holder line under a pass a
+/// stranger signed, and one under Ben's pass with its person rewritten to
+/// Ana's key.
+#[tokio::test]
+async fn a_phone_s_line_is_carried_and_counts_as_its_person() {
+    use svrngs_core::pass::{Label, Pass};
+    let (nodes, _dirs) = computers().await;
+    let (ana, ben) = (&nodes[0], &nodes[1]);
+    let group = found("house", 11, ana, &[(ben, 2)]);
+    let holder = signing(9);
+    let bridge = common::bridge_as(&holder, ana, svrngs_core::alpn::Alpn::Lend).await;
+    let carry = |line: &svrngs_core::Op<svrngs_core::SignedOp>| {
+        let at = format!("http://{}/carry", bridge.local_addr());
+        http().post(at).json(&json!([group, line])).send()
+    };
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64
+        + 1;
+    let app = Label::carried(&signing(1).verifying_key().to_bytes(), "Money", &group);
+    let pass = |by: u8| {
+        Pass::sign(
+            &signing(by),
+            &actor_of(&holder),
+            (app.clone(), vec![]),
+            now + 600,
+        )
+    };
+    let act = json!({ "op": "record", "payload": { "kind": "Money/expense", "n": 1 } });
+    let line = |pass: Pass| {
+        let act = RailAct::from_json(act.clone()).unwrap();
+        svrngs_core::sign_act(&holder, &group, now, 0, None, act, None, None, Some(pass))
+    };
+    let mut renamed = pass(2);
+    renamed.person = actor_of(&signing(1));
+    for refused in [line(pass(99)), line(renamed)] {
+        let answer = carry(&refused).await.unwrap();
+        assert_eq!(answer.status(), 422);
+        let said: Value = answer.json().await.unwrap();
+        assert_eq!(said["kind"], "not_signed", "{said}");
+    }
+    let own = line(pass(2));
+    let answer = carry(&own).await.unwrap();
+    assert_eq!(answer.status(), 200);
+    let said: Value = answer.json().await.unwrap();
+    assert_eq!(said["counted"], true, "{said}");
+    let a = ana.rail().admission(&group).unwrap();
+    let ops: Vec<_> = (svrngs_core::tests_support::wire_ops(&a).into_iter())
+        .filter(|o| o.payload.is_some())
+        .collect();
+    assert_eq!(ops.len(), 1, "only Ben's phone's own line is held: {ops:?}");
+    assert_eq!(
+        (ops[0].actor.as_str(), ops[0].person.as_str()),
+        (own.actor.as_str(), "ben")
+    );
+}
+
 /// **A member's home page opens this computer's own copy, and another
 /// computer never writes as them** (capability-signed; DESIGN.md §7 beside
 /// `demo/runs/authorship/2026-10-24/`, the case the scenes found, c7452b2c):
