@@ -242,8 +242,15 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # economizing pass folded `written`'s changer to one line (-1); the rest
 # it lands is struct fields rustfmt sets a line each and one JS line a
 # site. 18,284 and 3,298. REVIEW-audit-capability-auto-1 gave /carry one
-# const and its request one statement (-1): 18,283.
-BUDGET = {"crates/svrngs-core": 3299, ".": 18284}
+# const and its request one statement (-1): 18,283. keys-names, Money and
+# Events by first key (apps/, uncounted), the node's answer naming whom an
+# older act spoke for by key (rail.rs `ops_json`, not the core: the
+# operator, 2026-10-25, "No extra core lines", then "Node"), and the
+# node's lists by key beside the name, +55 and 0; its economizing pass
+# first, chains parenthesized as the house writes them and bindings used
+# once folded, cut 60 in svrngs-core and 31 in the node, so the caps come
+# down to one past where it lands: 18,247 and 3,238.
+BUDGET = {"crates/svrngs-core": 3239, ".": 18248}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
