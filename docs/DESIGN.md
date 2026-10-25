@@ -1054,6 +1054,18 @@ from the journal waits in PLAN §2.
   (`crates/svrngs-core/src/command.rs`), so a member's first act sorts after
   the `Admit` it has seen; writes faster than one a second run the stamps
   ahead of the clock.
+- **A holder writes only what its pass grants.** A line may carry, inside
+  its id, the pass that lets its signer, a holder, act as the person who
+  signed the pass: a phone's act in an app it opened. It counts as that
+  person's, under their standing, only appending its app's own `<kind>/`
+  part, the kind the pass's label names (`Label::carried`), only before the
+  pass lapses, and never deciding: a holder's `Runs`, or any act of the
+  register, counts nowhere. Anything else is `RailGap::Ungranted`, a
+  contradiction, or an absence while what it corrects is not held
+  (`crates/svrngs-core/src/grant.rs`, judged in `admit`, each pass
+  verified once). A cut covers its key's holders as it covers the key, and
+  its `through` names their newest acts. A holder's line ships at line
+  version 12, which an older build names `NewerVersionLine`.
 - **Removal has one decider.** Anyone may ask to remove anyone; the group's
   keeper — one person's key, handed on by an act — sequences each request.
   A removed key cannot remove. There is no recovery inside a group
