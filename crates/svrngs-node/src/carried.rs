@@ -342,6 +342,14 @@ impl Folders {
                 json!({ "you": person, "group": group, "people": all, "spans": spans, "ops": ops });
             return Ok(Json(read).into_response());
         }
+        // Another member's computer cannot sign as them (capability-signed):
+        // a computer writes on its own copy, and a phone, for now, here.
+        let elsewhere = key != self.host.actor && people[key].device.dialled();
+        tracing::debug!(target: "folder", group, %kind, %person, elsewhere, "carried: a write as the person, refused from another member's computer");
+        if elsewhere {
+            let why = format!("Open {kind} from your home page to write in it.");
+            return Ok(Closed.say(StatusCode::FORBIDDEN, why));
+        }
         let body = (to_bytes(req.into_body(), WRITE_MOST).await).map_err(|_| TOO_LARGE)?;
         let mut body: Map<String, Value> = serde_json::from_slice(&body).map_err(|_| NOT_AN_ACT)?;
         let mut op = body.remove("op").ok_or(NOT_AN_ACT)?;

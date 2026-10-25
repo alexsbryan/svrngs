@@ -863,3 +863,72 @@ async fn a_line_is_carried_only_signed_by_someone_in_the_group() {
         "carried unchanged"
     );
 }
+
+/// **A member's home page opens this computer's own copy, and another
+/// computer never writes as them** (capability-signed; DESIGN.md §7 beside
+/// `demo/runs/authorship/2026-10-24/`, the case the scenes found, c7452b2c):
+/// Ana carries Money and it reaches Cy's computer, both on. Cy's list names
+/// both copies, Cy's own first, so the page's one copy (question.js `once`)
+/// is Cy's, whose acts Cy's computer signs. Refused: a write from Cy's
+/// computer reaching Ana's copy, which Ana's computer would sign
+/// `on_behalf_of` Cy: 403, "Open Money from your home page to write in
+/// it.", and nothing written; Ana's copy still answers Cy's reads. Kept:
+/// Cy's write on Cy's own copy is Cy's. Planted: the list sorted by person
+/// alone, as before, and Ana's copy is first.
+#[tokio::test]
+async fn a_member_writes_on_their_own_computer_s_copy_alone() {
+    let (nodes, _dirs) = computers().await;
+    let (ana, ben, cy) = (&nodes[0], &nodes[1], &nodes[2]);
+    let group = found("house", 12, ana, &[(ben, 2), (cy, 3)]);
+    for node in [cy, ben, ana] {
+        round(node).await;
+    }
+    let roots: Vec<_> = (0..2).map(|_| tempfile::tempdir().unwrap()).collect();
+    let at_ana = synced_in(ana, roots[0].path(), &group).await;
+    let at_cy = synced_in(cy, roots[1].path(), &group).await;
+    carry(&at_ana, "Money");
+    let script = at_cy.join("apps/Money/app.js");
+    assert!(
+        until(&[ana, cy], || script.exists()).await,
+        "Money reaches Cy's folder"
+    );
+    let mut listed = lends(cy, &group).await;
+    for _ in 0..30 {
+        if of_kind(&listed, "Money").len() == 2 {
+            break;
+        }
+        round(cy).await;
+        listed = lends(cy, &group).await;
+    }
+    let money = of_kind(&listed, "Money");
+    let keys: Vec<_> = money.iter().map(|m| m["key"].as_str().unwrap()).collect();
+    let (anas, cys) = (actor_of(&signing(1)), actor_of(&signing(3)));
+    assert_eq!(
+        keys,
+        [cys.as_str(), anas.as_str()],
+        "Cy's own copy first:\n{listed:#}"
+    );
+
+    let expense = json!({ "op": { "kind": "expense", "amount_cents": 1 } });
+    let theirs = money[1]["origin"].as_str().unwrap();
+    let wrote = at(cy, theirs, "POST", "/svrngs/acts", Some(expense.clone())).await;
+    assert_eq!(wrote.status(), 403, "Ana's computer writes nothing as Cy");
+    let said: Value = wrote.json().await.unwrap();
+    assert_eq!(
+        said["error"],
+        "Open Money from your home page to write in it."
+    );
+    let read = at(cy, theirs, "GET", "/svrngs/acts", None).await;
+    assert_eq!(read.status(), 200, "Ana's copy still answers Cy's reads");
+    let ops = read.json::<Value>().await.unwrap()["ops"]
+        .as_array()
+        .unwrap()
+        .len();
+    assert_eq!(ops, 0, "nothing written");
+
+    let own = money[0]["origin"].as_str().unwrap();
+    let wrote = at(cy, own, "POST", "/svrngs/acts", Some(expense)).await;
+    assert!(wrote.status().is_success(), "Cy writes on Cy's own copy");
+    let op: Value = wrote.json().await.unwrap();
+    assert_eq!(op["actor"], cys.as_str(), "{op:#}");
+}

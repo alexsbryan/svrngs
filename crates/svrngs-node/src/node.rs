@@ -928,6 +928,10 @@ impl Asking {
         lent.sort_by(|a, b| {
             (a.person.as_str(), &a.offered.name).cmp(&(b.person.as_str(), &b.offered.name))
         });
+        // This computer's own copy of a carried app first, so the one copy
+        // a page opens is the one whose acts this computer signs as its own
+        // person (capability-signed).
+        lent.sort_by_key(|l| l.offered.group.is_some() && l.key != self.host.actor);
         Ok((lent, others.unlisted))
     }
 }
