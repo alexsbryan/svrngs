@@ -117,7 +117,8 @@ There are fourteen rows:
 
     Then stop.
   - **Check:** the scene red on its plant, then green, in the full gate.
-- [ ] give-app-runtime — depends [give-play-scene] — ONE ROW, in `apps/give/` (not counted, reported). The kill clause holds (CHARTER):
+- [ ] HUMAN-give-half — depends [give-play-scene] — the operator, 2026-10-25: "Let's do half the rows." The svrngs half runs (give-economize through give-play-scene), and the loop stops here, before Give's own rows. This row is checked [x] by the operator, or the operator's delegate on the operator's word, once the svrngs half has landed and the operator says Give's half goes.
+- [ ] give-app-runtime — depends [HUMAN-give-half] — ONE ROW, in `apps/give/` (not counted, reported). The kill clause holds (CHARTER):
   - **(a) Tests: A CARD RUNS.** These run against a stand-in card (a small published image whose door is HTTP):
     - A card is the app's `compose.yaml` with an `x-svrngs` block: title, about, door (http, tcp or udp), state, and asks, each ask with its link and the environment its yes sets. Parsing refuses `build:`, `privileged`, custom networks, host networking and any bind mount from the host, each refusal naming its field.
     - `give check <card dir>` passes when the stand-in is pulled by digest, started rootless, healthy by its own `healthcheck`, snapshotted (pause, a reflink copy where the filesystem has one and a plain copy where it does not, unpause), stopped, restored, started again, and healthy again. A plant that breaks the restore fails it, naming the step.
