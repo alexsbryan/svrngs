@@ -352,9 +352,7 @@ pub(crate) async fn carry(
         return err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string());
     }
     at.folders.nudge.notify_one();
-    let counted = rail
-        .admission(&group)
-        .is_ok_and(|a| a.membership().counts(&id));
+    let counted = (rail.admission(&group)).is_ok_and(|a| a.membership().counts(&id));
     Json(serde_json::json!({ "id": id, "counted": counted })).into_response()
 }
 
@@ -532,10 +530,7 @@ impl LiveBuffer {
     /// Take one arrived payload for `namespace`. Evicts that namespace's
     /// oldest when full.
     pub fn push(&self, namespace: &str, payload: Live) {
-        let mut buffers = self
-            .inner
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let mut buffers = (self.inner.lock()).unwrap_or_else(std::sync::PoisonError::into_inner);
         let inner = buffers.entry(namespace.to_string()).or_default();
         if inner.payloads.len() == LIVE_BUFFER_CAPACITY {
             inner.payloads.pop_front();
@@ -555,10 +550,7 @@ impl LiveBuffer {
     /// Empty `namespace`'s buffer, returning what was in it and how many
     /// were lost. Every other namespace's buffer is untouched.
     pub(crate) fn drain(&self, namespace: &str) -> (Vec<Live>, usize) {
-        let mut buffers = self
-            .inner
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let mut buffers = (self.inner.lock()).unwrap_or_else(std::sync::PoisonError::into_inner);
         match buffers.remove(namespace) {
             Some(inner) => (inner.payloads.into(), inner.dropped),
             None => (Vec::new(), 0),

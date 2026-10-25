@@ -166,11 +166,8 @@ async function show(g, s, room, add, me) {
     // of its own: what it lends never stale, and never nobody's. One that
     // answered is never said not to have.
     const said = (words) => body.append(el('tr', '', Object.assign(el('td', words), { colSpan: 5 })));
-    const whose = (p) => called(rows, p.person_key) ?? p.person;
-    for (const p of lends.unanswered) said(`${whose(p)}'s computer did not answer, so what they lend is not listed.`);
-    for (const p of lends.unheard) said(`${whose(p)}'s computer has not heard of yours yet, so what they lend is not listed yet.`);
-    for (const p of lends.refused) said(`${whose(p)}'s computer answered without saying what they lend, so it is not listed.`);
-    for (const p of lends.older) said(`${whose(p)}'s computer runs an older svrngs, so what they lend is not listed.`);
+    const unlisted = { unanswered: 'did not answer, so what they lend is not listed', unheard: 'has not heard of yours yet, so what they lend is not listed yet', refused: 'answered without saying what they lend, so it is not listed', older: 'runs an older svrngs, so what they lend is not listed' };
+    for (const [how, why] of Object.entries(unlisted)) for (const p of lends[how]) said(`${called(rows, p.person_key) ?? p.person}'s computer ${why}.`);
     if (!body.children.length) said('Nobody lends anything here yet.');
     s.append(table(g, lends, (apps) => post('/shelf', [g.id, apps])));
     for (const l of once(lends.lent).filter((o) => o.group)) add('reads', el('p', carrying(l.kind, lends.shelf)));

@@ -183,9 +183,7 @@ impl Unlisted {
     /// say what they lend, by any of the four.
     pub(crate) fn names(&self, first: &str) -> bool {
         let lists = [&self.unanswered, &self.unheard, &self.refused, &self.older];
-        lists
-            .iter()
-            .any(|l| l.iter().any(|n| n.person_key == first))
+        (lists.iter()).any(|l| l.iter().any(|n| n.person_key == first))
     }
 }
 
@@ -645,17 +643,11 @@ impl Host {
                 }
                 let name = format!("{person}/{}", &actor[..8]);
                 tracing::debug!(target: "node", namespace, member = %name, "node: a member stands in the group, to dial");
-                let person_key = standing[actor].person_key.clone();
-                keys.insert(
-                    actor.clone(),
-                    (
-                        Named {
-                            person: person.clone(),
-                            person_key,
-                        },
-                        key,
-                    ),
-                );
+                let named = Named {
+                    person: person.clone(),
+                    person_key: standing[actor].person_key.clone(),
+                };
+                keys.insert(actor.clone(), (named, key));
             }
         }
         keys.into_iter()

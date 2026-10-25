@@ -229,10 +229,7 @@ impl Folders {
         let mut found = BTreeMap::new();
         let syncing = self.syncing.borrow().clone().unwrap_or_default();
         let holds = |group: &String| syncing.keys().any(|(g, _)| g == group);
-        for (group, _) in groups
-            .iter()
-            .filter(|(g, m)| m.contains_key(me) && holds(g))
-        {
+        for (group, _) in (groups.iter()).filter(|(g, m)| m.contains_key(me) && holds(g)) {
             let read = self.layout(group).inspect_err(|why| tracing::warn!(target: "folder", namespace = group, %why, "carried: the group's record cannot be read, so it carries nothing here"));
             let apps = read.iter().flat_map(|r| r.placed.iter().filter_map(app_of));
             let lends = apps.filter_map(|kind| Lend::carried(kind, group));
@@ -295,9 +292,7 @@ impl Folders {
         let path = (path.strip_suffix('/')).map_or(path.clone(), |dir| format!("{dir}/index.html"));
         let read = self.layout(group).map_err(|e| traced(group, UNREAD, &e))?;
         let files = read.runs.of(kind.as_str(), &asker.person_key);
-        let at = SyncPath::parse(&path)
-            .ok()
-            .and_then(|p| files?.get(&p).copied());
+        let at = (SyncPath::parse(&path).ok()).and_then(|p| files?.get(&p).copied());
         let hash = Hash::from(*at.ok_or(NOT_HERE)?.as_bytes());
         let holders: Vec<_> = self.holders(group).into_iter().flatten().collect();
         let fetched = self.hold(hash, &holders).await;
@@ -336,13 +331,10 @@ impl Folders {
             let (all, ops): (BTreeSet<_>, Vec<_>) =
                 (people.values().map(|m| &m.person).collect(), ops.collect());
             // Who stood when is not judged on unsettled cuts (#124): none, never empty.
-            let register = (admission.as_ref())
-                .map(|a| a.membership())
-                .filter(|m| !m.unsettled);
+            let register = (admission.as_ref().map(|a| a.membership())).filter(|m| !m.unsettled);
             let spans = register.map(|m| m.spans());
             tracing::debug!(target: "folder", group, %kind, spans = ?spans.as_ref().map(Vec::len), "carried: each person's time in the group, or none, their standing unsettled");
-            let you_key = &people[key].person_key;
-            let read = json!({ "you": person, "you_key": you_key, "group": group, "people": all, "spans": spans, "ops": ops });
+            let read = json!({ "you": person, "you_key": people[key].person_key, "group": group, "people": all, "spans": spans, "ops": ops });
             return Ok(Json(read).into_response());
         }
         // A write is its person's own device's (capability-signed): this
@@ -374,11 +366,7 @@ impl Folders {
 /// answer alike (capability-signed).
 pub(crate) fn of_kind(ops: &[Value], kind: &str, id: &Value) -> bool {
     let prefix = format!("{kind}/");
-    let own = |o: &Value| {
-        o["payload"]["kind"]
-            .as_str()
-            .is_some_and(|k| k.starts_with(&prefix))
-    };
+    let own = |o: &Value| (o["payload"]["kind"].as_str()).is_some_and(|k| k.starts_with(&prefix));
     ops.iter().any(|o| &o["id"] == id && own(o))
 }
 
