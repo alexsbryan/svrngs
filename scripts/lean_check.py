@@ -249,8 +249,10 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # node's lists by key beside the name, +55 and 0; its economizing pass
 # first, chains parenthesized as the house writes them and bindings used
 # once folded, cut 60 in svrngs-core and 31 in the node, so the caps come
-# down to one past where it lands: 18,247 and 3,238.
-BUDGET = {"crates/svrngs-core": 3239, ".": 18248}
+# down to one past where it lands: 18,247 and 3,238. Its gate's fixes put
+# the phone's four "whose computer did not say" sentences in one table, as
+# the home page's (-5 after +1): 18,243.
+BUDGET = {"crates/svrngs-core": 3239, ".": 18244}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
