@@ -30,8 +30,8 @@ async function show() {
   const { you, you_key, people, spans } = read;
   const me = you_key ?? you;
   const state = actsOf(read).reduce(reduce, init());
-  const said = (p) => (Object.hasOwn(state.names, p) ? state.names[p] : p);
-  const name = (p) => called(spans, p, said(p));
+  const nameOf = (p) => (Object.hasOwn(state.names, p) ? state.names[p] : p);
+  const name = (p) => called(spans, p, nameOf(p));
   const said = Object.assign(el('p'), { id: 'said' });
   // An entry checked as expenses.js would read it, then sent; the page
   // drawn again once it is saved, or why not said.
@@ -44,7 +44,7 @@ async function show() {
   const mine = state.balances[me] ?? 0;
   const owing = transfers(state.balances, state.names);
   // A payment says whom it pays by name, for an older Money, and by key.
-  const paying = (t) => ({ kind: SETTLE, to: said(t.to), ...(t.to !== said(t.to) && { to_key: t.to }), amount_cents: t.cents });
+  const paying = (t) => ({ kind: SETTLE, to: nameOf(t.to), ...(t.to !== nameOf(t.to) && { to_key: t.to }), amount_cents: t.cents });
   const pays = owing.map((t) => {
     const li = el('li', `${t.from === me ? 'You pay' : `${name(t.from)} pays`} ${t.to === me ? 'you' : name(t.to)} ${money(t.cents)}. `);
     if (t.from === me) li.append(button(`Say you paid ${name(t.to)} ${money(t.cents)}`, null, () => send(paying(t))));
