@@ -313,7 +313,14 @@ function ask(lent, q) {
   main.append(s);
 }
 
-try {
+// Drawn from a function the module does not await, as the phone's page is
+// (web/app.js `opening`, e0d44d12): with the page drawn at the module's top,
+// WebKit spun in its module loader at 85-90% of a core for 100 s once the
+// page was left while its module still awaited and opened again, and the
+// page never loaded (the life scene, Alex's home page, check.sh at 2aa50279;
+// /Library/Logs/DiagnosticReports, WebKit's cpu_resource reports, the same
+// frames each, JSModuleLoader::evaluate from a microtask).
+(async () => {
   const { groups, key: me } = await get('/v1/groups');
   main.replaceChildren();
   const q = new URLSearchParams(location.search);
@@ -381,6 +388,4 @@ try {
     // Said as the command and install.sh say it: it is kept (start-address).
     main.append(Object.assign(el('p', `Your home page, the same address each time svrngs starts: ${location.origin}/`), { className: 'address' }));
   }
-} catch (e) {
-  main.replaceChildren(el('p', `This computer cannot read your groups: ${e.message}`));
-}
+})().catch((e) => main.replaceChildren(el('p', `This computer cannot read your groups: ${e.message}`)));
