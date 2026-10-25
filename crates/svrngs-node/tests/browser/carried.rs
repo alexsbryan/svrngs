@@ -286,13 +286,15 @@ async fn money_and_events_open_and_write_at_their_origin(engine: Engine) {
 
 in_both_engines!(
     /// **An entry another person's computer wrote says whose** (gv-via
-    /// (b); `ralph/FINDING_ON_BEHALF_OF.md`'s scene): a script on cy's
-    /// computer writes to its loopback API, in bo's name, "bo paid $400 for
-    /// the rent" in Money, and a dinner bo hosts with bo and Maya coming in
-    /// Events. Ada's computer takes cy's record, and on each page opened at
-    /// its origin there each reads as bo's, through cy's computer, in the
-    /// phone's words (web/app.js). Planted: the label left out, as before
-    /// gv-via, and each page says bo's alone.
+    /// (b); `ralph/FINDING_ON_BEHALF_OF.md`'s scene): cy's computer holds,
+    /// as an older svrngs wrote them in bo's name, "bo paid $400 for the
+    /// rent" in Money, and a dinner bo hosts with bo and Maya coming in
+    /// Events; a script on cy's computer writing them to its loopback API
+    /// now is refused, `not_yours` (capability-signed). Ada's computer
+    /// takes cy's record, and on each page opened at its origin there each
+    /// old entry reads as bo's, through cy's computer, in the phone's words
+    /// (web/app.js). Planted: the label left out, as before gv-via, and
+    /// each page says bo's alone.
     an_entry_another_s_computer_wrote_says_whose
 );
 async fn an_entry_another_s_computer_wrote_says_whose(engine: Engine) {
@@ -315,7 +317,16 @@ async fn an_entry_another_s_computer_wrote_says_whose(engine: Engine) {
         let act = json!({ "op": "record", "payload": payload, "on_behalf_of": "bo" });
         let at = format!("http://{}/v1/rail/append?namespace={NS}", cy.api_addr());
         let wrote = http.post(at).json(&act).send().await.unwrap();
-        assert!(wrote.status().is_success(), "{:?}", wrote.text().await);
+        assert_eq!(wrote.status().as_u16(), 422, "a program writes only as cy");
+        let act = RailAct::from_json(act).unwrap();
+        let older = svrngs_core::Append {
+            act,
+            on_behalf_of: Some(Person::parse("bo").unwrap()),
+        };
+        assert!(
+            matches!(cy.rail().commit_said(NS, &older), Ok(Ok(_))),
+            "as an older svrngs wrote it"
+        );
     }
     let synced = ada.host().sync_with(NS, &cy.endpoint().addr()).await;
     assert!(synced.stop.is_none(), "ada takes cy's record: {synced:?}");

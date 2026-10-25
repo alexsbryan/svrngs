@@ -204,23 +204,31 @@ pub(crate) fn visiting(r: &crate::register::Register, me: &str) -> Option<Vec<se
 /// are all this daemon's to assign; an app that could choose its own sequence
 /// number or actor could write as somebody else.
 ///
-/// (svrngs: upstream dropped a bare `on_behalf_of`, since a caller could
-/// stamp only with a signed `GuestAttestation`, which went with `attest`,
-/// and from the core in core-0.
-/// Here an app serving someone else names them, and the act is signed as
-/// this computer with `on_behalf_of` naming that person — whom the member
-/// door verified (DESIGN §3, "Localhost is the trust boundary"). The
-/// name must parse as a person and be a person standing in the group;
-/// anything else is refused and nothing is written, never dropped.)
+/// (svrngs: a program on this computer writes as this computer's own person,
+/// "your computer is you" (svrn-docs `rings/current/WHAT_CAN_ACT_AS_YOU.md`
+/// §4): a body naming that person in `on_behalf_of` is its own act, the name
+/// dropped, and a body naming anyone else is refused, `not_yours`, since
+/// another person's entry is signed on their own device (capability-signed).)
 pub(crate) async fn append_act(
     rail: &RingRail,
     namespace: &str,
     body: serde_json::Value,
 ) -> Response {
-    let stamp = match stamp(namespace, &body) {
-        Ok(stamp) => stamp,
-        Err(refusal) => return refusal,
-    };
+    match stamp(rail, namespace, &body) {
+        Ok(()) => append_as(rail, namespace, body, None).await,
+        Err(refusal) => refusal,
+    }
+}
+
+/// [`append_act`] for `person`, whom the door resolved: a phone's act in a
+/// carried app, and its yes, which this computer still signs until the
+/// phone signs its own (capability-signed, DESIGN.md §3).
+pub(crate) async fn append_as(
+    rail: &RingRail,
+    namespace: &str,
+    body: serde_json::Value,
+    on_behalf_of: Option<Person>,
+) -> Response {
     // Taken as a `Value` and converted here rather than as `Json<RailAct>`,
     // so a refusal is the rail's own sentence instead of axum's rejection
     // prose (ARCH §10.6).
@@ -230,10 +238,7 @@ pub(crate) async fn append_act(
     };
     // A seal is an act like any other here: `Append` refuses it as not an
     // app's (arch-seal (b); WHO_KNOWS_WHOM §3).
-    let append = Append {
-        act,
-        on_behalf_of: stamp,
-    };
+    let append = Append { act, on_behalf_of };
     let appended = match rail.commit_said(namespace, &append) {
         Ok(Ok(recorded)) => Ok(recorded.lines()[0].clone()),
         Ok(Err(AppendRefusal::NotInGroup(person))) => {
@@ -301,29 +306,33 @@ pub(crate) async fn append_act(
     }
 }
 
-/// The person an append is on behalf of, parsed: `None` when the body names
-/// nobody. Whether that person stands is `Append`'s to decide, under the
-/// write lock.
-fn stamp(namespace: &str, body: &serde_json::Value) -> Result<Option<Person>, Response> {
+/// Whether the body names only this computer's own person, if anyone: a
+/// name that is not one is `not_a_name`, and anyone else's `not_yours`.
+fn stamp(rail: &RingRail, namespace: &str, body: &serde_json::Value) -> Result<(), Response> {
     let raw = match body.get("on_behalf_of") {
-        None | Some(serde_json::Value::Null) => {
-            tracing::debug!(target: "rails", namespace, "rail: the act is this computer's own — it names nobody");
-            return Ok(None);
-        }
+        None | Some(serde_json::Value::Null) => return Ok(()),
         Some(serde_json::Value::String(raw)) => raw,
         Some(other) => {
             tracing::debug!(target: "rails", namespace, named = %other, "rail: refused — on_behalf_of is not text");
-            return Err(refused(
-                namespace,
-                "not_a_name",
-                "on_behalf_of names a person, as text".into(),
-            ));
+            let why = "on_behalf_of names a person, as text".into();
+            return Err(refused(namespace, "not_a_name", why));
         }
     };
-    Person::parse(raw).map(Some).map_err(|why| {
+    let named = Person::parse(raw).map_err(|why| {
         tracing::debug!(target: "rails", namespace, raw, why = %why, "rail: refused — on_behalf_of is not a name");
         refused(namespace, "not_a_name", format!("on_behalf_of is not a name: {why}"))
-    })
+    })?;
+    let read = rail.admission(namespace).ok();
+    let me = actor_of(rail.signer());
+    let own = (read.as_ref()).and_then(|a| Some(a.membership().person_of(&me)?.1.clone()));
+    tracing::debug!(target: "rails", namespace, %named, own = ?own, "rail: a program here writes as this computer's own person, or nobody's");
+    match own {
+        Some(own) if own == named => Ok(()),
+        own => Err(refused(namespace, "not_yours", format!(
+            "This computer writes only as {}. Another person's entry is signed on their own phone or computer.",
+            own.as_ref().map_or("its own person", Person::as_str)
+        ))),
+    }
 }
 
 /// A typed refusal: the sentence, its `kind`, and the group.

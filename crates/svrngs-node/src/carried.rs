@@ -47,7 +47,7 @@ use axum::response::{IntoResponse, Response};
 use axum::{Extension, Json};
 use iroh_blobs::Hash;
 use serde_json::{json, Map, Value};
-use svrngs_core::{Files, Placed, SyncPath};
+use svrngs_core::{Files, Person, Placed, SyncPath};
 
 use super::{blob::People, dirs_of, Folders};
 use crate::door::LendRefusal::{self, Away, Closed, Fault, Path as Malformed, Unlent};
@@ -180,21 +180,24 @@ pub(crate) async fn yes(at: State<Asking>, by: Option<Extension<Dialer>>, a: Yes
     let asker = by.map_or(at.host.actor.to_string(), |Extension(d)| d.actor());
     let act = says(&at, (&group, &app), &asker);
     tracing::debug!(target: "folder", group, asker, app, refused = act.as_ref().err().map(|r| r.2), "carried: a yes to an app's files now, or why not");
-    let act = act.map_err(said)?;
+    let (act, person) = act.map_err(said)?;
     at.folders.nudge.notify_one();
-    Ok(crate::rail::append_act(&at.host.rail, &group, act).await)
+    Ok(crate::rail::append_as(&at.host.rail, &group, act, Some(person)).await)
 }
 
 /// The act that says `asker`'s yes to the files of `app` in `group` now,
-/// on behalf of their person.
-fn says(at: &Asking, (group, app): (&str, &str), asker: &str) -> Result<Value, Withheld> {
+/// and their person.
+fn says(at: &Asking, (group, app): (&str, &str), asker: &str) -> Result<(Value, Person), Withheld> {
     let unread = |e: &dyn std::fmt::Display| traced(group, UNREAD, e);
     let standing = at.host.rail.standing(group).map_err(|e| unread(&e))?;
     let person = &standing.member(asker).ok_or(NOT_IN)?.person;
     let read = at.folders.layout(group).map_err(|e| unread(&e))?;
     let files = now(&read.placed, app);
     (!files.is_empty()).then_some(()).ok_or(NOT_HERE)?;
-    Ok(json!({ "op": "runs", "app": app, "files": files, "on_behalf_of": person }))
+    Ok((
+        json!({ "op": "runs", "app": app, "files": files }),
+        person.clone(),
+    ))
 }
 
 /// The files of the app `kind` that `placed` places now, under its path.
@@ -344,15 +347,14 @@ impl Folders {
             let own_kind = (fields.get("kind").and_then(Value::as_str)).ok_or(NOT_AN_ACT)?;
             fields.insert("kind".into(), format!("{prefix}{own_kind}").into());
         }
-        let mut act = match body.remove("corrects") {
+        let act = match body.remove("corrects") {
             None => json!({ "op": "record", "payload": op }),
             Some(id) if ops.iter().any(|o| o["id"] == id && own(o).is_some()) => {
                 json!({ "op": "correct", "corrects": id, "replacement": op })
             }
             Some(_) => return Err(NOT_ITS_OWN),
         };
-        act["on_behalf_of"] = person.as_str().into();
-        let answer = crate::rail::append_act(rail, group, act).await;
+        let answer = crate::rail::append_as(rail, group, act, Some(person.clone())).await;
         tracing::debug!(target: "folder", group, %kind, %person, status = answer.status().as_u16(), "carried: an act written as the person");
         if answer.status().is_success() {
             self.nudge.notify_one();
