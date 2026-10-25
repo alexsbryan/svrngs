@@ -29,6 +29,11 @@ use svrngs_core::{
 const NS: &str = "golden";
 const JOURNAL: &str = include_str!("fixtures/acts_2026-10-24.jsonl");
 const FOLD: &str = include_str!("fixtures/acts_2026-10-24.fold.json");
+/// The keeper's cutover written past that journal, and acts past it
+/// (capability-signed; DESIGN §1, "An entry's author is its signer"): a
+/// second fixture beside the first, never in place of it.
+const CUTOVER: &str = include_str!("fixtures/acts_2026-10-24.cutover.jsonl");
+const CUTOVER_FOLD: &str = include_str!("fixtures/acts_2026-10-24.cutover.fold.json");
 /// The first act's time; each next act is one second on, so the record's
 /// order is the order written.
 const T: i64 = 1_760_000_000;
@@ -47,7 +52,11 @@ fn seed() -> Roster {
 }
 
 fn journal() -> Vec<(String, Op<SignedOp>)> {
-    (JOURNAL.lines().filter(|l| !l.trim().is_empty()))
+    lines(JOURNAL)
+}
+
+fn lines(of: &str) -> Vec<(String, Op<SignedOp>)> {
+    (of.lines().filter(|l| !l.trim().is_empty()))
         .map(|l| {
             (
                 l.to_string(),
@@ -140,6 +149,66 @@ fn the_frozen_fold_holds_whatever_order_the_lines_arrive_in() {
     assert!(
         fold(&ops) == frozen,
         "the fold moved with the order the lines arrived in"
+    );
+}
+
+/// Given the frozen journal and, past it, the keeper's cutover and four
+/// acts, when a computer reads each new line, then it keeps its bytes, id,
+/// signature and line version, the cutover at version 12.
+#[test]
+fn the_keepers_cutover_and_the_acts_past_it_keep_their_bytes_id_signature_and_version() {
+    let lines = lines(CUTOVER);
+    for (raw, op) in &lines {
+        let at = format!("{} (seq {} of {})", op.id, op.kind.seq, op.actor);
+        assert_eq!(&serde_json::to_string(op).unwrap(), raw, "{at}: its bytes");
+        assert_eq!(derive_id(op, NS), op.id, "{at}: its id");
+        assert!(
+            Ed25519Verifier.verify(&op.actor, &op.id, &op.kind.sig),
+            "{at}: its signature"
+        );
+        assert_eq!(op.kind.line_version(), op.v, "{at}: its line version");
+    }
+    let versions: Vec<u32> = lines.iter().map(|(_, op)| op.v).collect();
+    assert_eq!(versions, [12, 1, 1, 1], "the cutover, then three records");
+}
+
+/// Given the same, when a computer folds the whole, then every act the
+/// frozen journal holds folds as it did (the cutover moves no old act), and
+/// past it alex's computer's record for bo counts nowhere, named
+/// `carried_for_another`, while alex's own and bo's own count: the whole
+/// answer frozen in `cutover.fold.json`.
+#[test]
+fn past_the_keepers_cutover_an_act_for_another_counts_nowhere_and_old_acts_as_before() {
+    let ops: Vec<Op<SignedOp>> = (journal().into_iter().chain(lines(CUTOVER)))
+        .map(|(_, op)| op)
+        .collect();
+    let now = fold(&ops);
+    let before: serde_json::Value = serde_json::from_str(FOLD).unwrap();
+    for old in before["ops"].as_array().unwrap() {
+        assert!(
+            now["ops"].as_array().unwrap().contains(old),
+            "the cutover moved an old act: {old}"
+        );
+    }
+    let gaps = now["gaps"].as_array().unwrap();
+    for old in before["gaps"].as_array().unwrap() {
+        assert!(gaps.contains(old), "the cutover moved an old gap: {old}");
+    }
+    let past = lines(CUTOVER)[1].1.id.clone();
+    let carried = svrngs_core::RailGap::CarriedForAnother {
+        id: past,
+        actor: actor_of(&key(1)),
+        named: "bo".into(),
+    };
+    assert!(
+        gaps.contains(&serde_json::json!(carried.to_string())),
+        "{gaps:?}"
+    );
+    let frozen: serde_json::Value = serde_json::from_str(CUTOVER_FOLD).unwrap();
+    assert!(
+        now == frozen,
+        "the journal past the cutover folds otherwise than frozen; now:\n{}",
+        serde_json::to_string_pretty(&now).unwrap()
     );
 }
 
@@ -328,4 +397,37 @@ fn emit_golden_journal() {
     }
     println!("--");
     println!("{}", serde_json::to_string_pretty(&fold(&ops)).unwrap());
+}
+
+/// The generator for `fixtures/acts_2026-10-24.cutover.jsonl` and its
+/// fold: each chain picked up where the frozen journal leaves it; bo, whom
+/// alex handed the keeping to, writes the cutover naming every key's newest
+/// act, as `register.rs`'s `Cutover` does; then alex's computer writes a
+/// record for bo and one of its own, and bo one naming bo. It prints the new
+/// lines, then `--`, then the fold of the whole.
+#[test]
+#[ignore = "fixture generator — run with --ignored --nocapture"]
+fn emit_cutover_journal() {
+    let old: Vec<Op<SignedOp>> = journal().into_iter().map(|(_, op)| op).collect();
+    let mut c = Chains::default();
+    for op in &old {
+        c.0.insert(op.actor.clone(), (op.kind.seq + 1, Some(op.id.clone())));
+    }
+    let through = c.0.values().filter_map(|(_, at)| at.clone()).collect();
+    let (alex, bo) = (key(1), key(2));
+    let tea = |what| {
+        record(serde_json::json!({ "kind": "money/expense", "what": what, "amount_cents": 300 }))
+    };
+    let new = [
+        c.sign(&bo, 26, RailAct::Signers { through }, None),
+        c.sign(&alex, 27, tea("for bo"), Some("bo")),
+        c.sign(&alex, 28, tea("alex's"), None),
+        c.sign(&bo, 29, tea("bo's"), Some("bo")),
+    ];
+    for op in &new {
+        println!("{}", serde_json::to_string(op).unwrap());
+    }
+    println!("--");
+    let all: Vec<_> = old.into_iter().chain(new).collect();
+    println!("{}", serde_json::to_string_pretty(&fold(&all)).unwrap());
 }

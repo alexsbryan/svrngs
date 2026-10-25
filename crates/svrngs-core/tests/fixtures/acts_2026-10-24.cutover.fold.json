@@ -1,0 +1,442 @@
+{
+  "complete": true,
+  "gaps": [
+    "an entry 8a88e3dd7409… wrote as bo does not count — only their own phone or computer writes as them"
+  ],
+  "layout": [
+    {
+      "beside": false,
+      "entry": {
+        "key": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394",
+        "path": "apps/money/index.html",
+        "seq": 3
+      },
+      "folder": "shared",
+      "hash": "2f2577c9c4bd3f40f29a253f5fdd7da20f6dc19cb5fea76ec54b78777534f51e",
+      "path": "apps/money/index.html",
+      "size": 10
+    }
+  ],
+  "membership": {
+    "admitted_at": {
+      "6e7a1cdd29b0b78fd13af4c5598feff4ef2a97166e3ca6f2e4fbfccd80505bf1": 1760000006,
+      "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394": 1760000001,
+      "ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1": 1760000003
+    },
+    "bindings": {
+      "6e7a1cdd29b0b78fd13af4c5598feff4ef2a97166e3ca6f2e4fbfccd80505bf1": "dee",
+      "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394": "bo",
+      "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c": "alex",
+      "ca93ac1705187071d67b83c7ff0efe8108e8ec4530575d7726879333dbdabe7c": "bo",
+      "ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1": "cy"
+    },
+    "browsers": [
+      "ca93ac1705187071d67b83c7ff0efe8108e8ec4530575d7726879333dbdabe7c"
+    ],
+    "counted": [
+      "1bbdbb83c415e9a202535ae1b50a424347a792da446f454848baf45d36d371f8",
+      "22f8469965589c5965f90902f4cae3d0e4eedca19795d0c9e2d7af0bbfe10b8e",
+      "24d5c7b34d1977d8a3354abdecf789d9007a6befb6696f945e0f7b3652d17e71",
+      "261d803eea025cb87bb43517c8a1140abadf78014b50f40a576fc1ba1536b4fa",
+      "31a5b21620f98568a8696c4aa375330caabffb51b14997a197262579a97d76a2",
+      "32f134e4c56e055f861b82434f10fd4dfe576c1094c3c9b2b95be142b4c678d1",
+      "3d8093ce5f0b52fa7cd4dbf18454502c689a5eb6ac9f4104d56a298309878d95",
+      "448fdfe853684097d21422bec6cf13d8c969fbe347e83cd9f74edeb7a18ec9a0",
+      "4e67ae256f7c2c1a5a415c6a153301d5aae730e47db65f3ad085ad8880a31c1f",
+      "4f2c8dd8eac4948d5ae35d6ff0d0459459b87a89874f2e7194d553b69deb5868",
+      "59325545a16cc8d14588de1a195b4522fabc197e1535b32e3008e16d51749da1",
+      "60ef4d68b51e30f8776d1283703fdc6735a210bd81b62ce11ec2c92766c730f7",
+      "6c0de6dc083ba997c79a1d5249c558d7bced9eda4cad279481e0a96737594b9a",
+      "729f69655accb851ba65283365bef05e122ae0a2e2cf5bf47894c177aee75d35",
+      "74addcab7525db99f6c48bddfc2df378117553433dfa7c73a14a0cbb2ef0feac",
+      "7ef73bf4188074e59a18ead7fac715a45d180c4316fc2081686bfd82beb75d75",
+      "82a2abf014d2422c71f36e8015237975e402dda8d86f54952107f590a9e643fb",
+      "8634d2a8d4aafdfdc663e43227757a5febf2b909439bbc6c4bf7e41f6e829139",
+      "9e6b8412284401ee7a8c257ceb4c057b1614291082e417d3d77cd9fb81dac733",
+      "a387f4f70e04d719b16178601206ebb4cbe4200730c0b94426151bad777a21db",
+      "b8f60780fd32a5155807488d6db62c4fd899f57ca477d1573d93cacb6d89592b",
+      "ba00a911f76c116964c1959c7aa13bac1c50fb0122cab721c694f80508e5c89f",
+      "bc11b7c217cca153a12a3eecaa5be1f28cade9cba7b85ddd29385dc6197d32a9",
+      "c466d53acf7b9cf82a3c932d4b9922c4c5c455443a2aa9b17e0e0e43a6dd9451",
+      "d188ac86eae2aa3b5166e57511d37bd0990092a9ae4d13691eae11291b212858",
+      "de4230a816ce595c676f14fd205f3849fdc88142f61e72b5ad142d4d1bb150d5",
+      "e5724307762acc8224361e335011d61c9117484789ec44efd0fbe9beb0c49efe",
+      "efecd140741dac2764c84d0bb2733ab719083513f807b66eb441c2b5510764a3"
+    ],
+    "cut": {
+      "ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1": {
+        "at": 1760000023,
+        "by": "ba00a911f76c116964c1959c7aa13bac1c50fb0122cab721c694f80508e5c89f"
+      }
+    },
+    "devices": {
+      "ca93ac1705187071d67b83c7ff0efe8108e8ec4530575d7726879333dbdabe7c": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394"
+    },
+    "invites": {
+      "60ef4d68b51e30f8776d1283703fdc6735a210bd81b62ce11ec2c92766c730f7": {
+        "device_of": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394",
+        "issuer": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394",
+        "key": "91a28a0b74381593a4d9469579208926afc8ad82c8839b7644359b9eba9a4b3a",
+        "until": 1760086400
+      },
+      "a387f4f70e04d719b16178601206ebb4cbe4200730c0b94426151bad777a21db": {
+        "issuer": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+        "key": "66be7e332c7a453332bd9d0a7f7db055f5c5ef1a06ada66d98b39fb6810c473a",
+        "until": 1760086400
+      },
+      "de4230a816ce595c676f14fd205f3849fdc88142f61e72b5ad142d4d1bb150d5": {
+        "issuer": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+        "key": "0b513ad9b4924015ca0902ed079044d3ac5dbec2306f06948c10da8eb6e39f2d",
+        "until": 1760086400
+      }
+    },
+    "keeper": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394",
+    "relays": {
+      "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c": "https://relay.example.net/"
+    },
+    "signers": "729f69655accb851ba65283365bef05e122ae0a2e2cf5bf47894c177aee75d35",
+    "standing": [
+      "6e7a1cdd29b0b78fd13af4c5598feff4ef2a97166e3ca6f2e4fbfccd80505bf1",
+      "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394",
+      "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+      "ca93ac1705187071d67b83c7ff0efe8108e8ec4530575d7726879333dbdabe7c"
+    ],
+    "visits": {
+      "31a5b21620f98568a8696c4aa375330caabffb51b14997a197262579a97d76a2": {
+        "at": 1760000019,
+        "host": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+        "stopped": 1760000020,
+        "visit": {
+          "guest": "gil",
+          "key": "8a875fff1eb38451577acd5afee405456568dd7c89e090863a0557bc7af49f17",
+          "opens": {
+            "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c": [
+              "films"
+            ]
+          },
+          "until": 1760003619
+        }
+      }
+    },
+    "voided": [
+      "b1d9db96b2ed5506f35f6ff443d604cee852f1a79bdb7b1d76b0026fc00c5349",
+      "c8866f0959c819467d8b901612c53b9628a1dd84d0f4270bac4054cb29b012d5"
+    ]
+  },
+  "ops": [
+    {
+      "actor": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+      "id": "a387f4f70e04d719b16178601206ebb4cbe4200730c0b94426151bad777a21db",
+      "person": "alex",
+      "seq": 0,
+      "ts_unix": 1760000000,
+      "voided": false
+    },
+    {
+      "actor": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+      "id": "1bbdbb83c415e9a202535ae1b50a424347a792da446f454848baf45d36d371f8",
+      "person": "alex",
+      "seq": 1,
+      "ts_unix": 1760000001,
+      "voided": false
+    },
+    {
+      "actor": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+      "id": "de4230a816ce595c676f14fd205f3849fdc88142f61e72b5ad142d4d1bb150d5",
+      "person": "alex",
+      "seq": 2,
+      "ts_unix": 1760000002,
+      "voided": false
+    },
+    {
+      "actor": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+      "id": "9e6b8412284401ee7a8c257ceb4c057b1614291082e417d3d77cd9fb81dac733",
+      "person": "alex",
+      "seq": 3,
+      "ts_unix": 1760000003,
+      "voided": false
+    },
+    {
+      "actor": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394",
+      "id": "60ef4d68b51e30f8776d1283703fdc6735a210bd81b62ce11ec2c92766c730f7",
+      "person": "bo",
+      "seq": 0,
+      "ts_unix": 1760000004,
+      "voided": false
+    },
+    {
+      "actor": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394",
+      "id": "7ef73bf4188074e59a18ead7fac715a45d180c4316fc2081686bfd82beb75d75",
+      "person": "bo",
+      "seq": 1,
+      "ts_unix": 1760000005,
+      "voided": false
+    },
+    {
+      "actor": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+      "id": "efecd140741dac2764c84d0bb2733ab719083513f807b66eb441c2b5510764a3",
+      "person": "alex",
+      "seq": 4,
+      "ts_unix": 1760000006,
+      "voided": false
+    },
+    {
+      "actor": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+      "id": "b1d9db96b2ed5506f35f6ff443d604cee852f1a79bdb7b1d76b0026fc00c5349",
+      "payload": {
+        "amount_cents": 4000,
+        "kind": "money/expense",
+        "what": "dinner"
+      },
+      "person": "alex",
+      "seq": 5,
+      "ts_unix": 1760000007,
+      "voided": true
+    },
+    {
+      "actor": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+      "id": "24d5c7b34d1977d8a3354abdecf789d9007a6befb6696f945e0f7b3652d17e71",
+      "on_behalf_of": "alex",
+      "payload": {
+        "amount_cents": 250,
+        "kind": "money/expense",
+        "what": "milk"
+      },
+      "person": "alex",
+      "seq": 6,
+      "ts_unix": 1760000008,
+      "voided": false
+    },
+    {
+      "actor": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+      "id": "c8866f0959c819467d8b901612c53b9628a1dd84d0f4270bac4054cb29b012d5",
+      "on_behalf_of": "bo",
+      "payload": {
+        "amount_cents": 90000,
+        "kind": "money/expense",
+        "what": "rent"
+      },
+      "person": "alex",
+      "seq": 7,
+      "ts_unix": 1760000009,
+      "voided": true
+    },
+    {
+      "actor": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394",
+      "corrects": "c8866f0959c819467d8b901612c53b9628a1dd84d0f4270bac4054cb29b012d5",
+      "id": "59325545a16cc8d14588de1a195b4522fabc197e1535b32e3008e16d51749da1",
+      "on_behalf_of": "bo",
+      "payload": {
+        "amount_cents": 95000,
+        "kind": "money/expense",
+        "what": "rent"
+      },
+      "person": "bo",
+      "seq": 2,
+      "ts_unix": 1760000010,
+      "voided": false
+    },
+    {
+      "actor": "ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1",
+      "corrects": "b1d9db96b2ed5506f35f6ff443d604cee852f1a79bdb7b1d76b0026fc00c5349",
+      "id": "c466d53acf7b9cf82a3c932d4b9922c4c5c455443a2aa9b17e0e0e43a6dd9451",
+      "on_behalf_of": "cy",
+      "person": "cy",
+      "seq": 0,
+      "ts_unix": 1760000011,
+      "voided": false
+    },
+    {
+      "actor": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+      "id": "bc11b7c217cca153a12a3eecaa5be1f28cade9cba7b85ddd29385dc6197d32a9",
+      "person": "alex",
+      "seq": 8,
+      "ts_unix": 1760000012,
+      "voided": false
+    },
+    {
+      "actor": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394",
+      "id": "261d803eea025cb87bb43517c8a1140abadf78014b50f40a576fc1ba1536b4fa",
+      "person": "bo",
+      "seq": 3,
+      "ts_unix": 1760000013,
+      "voided": false
+    },
+    {
+      "actor": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+      "id": "e5724307762acc8224361e335011d61c9117484789ec44efd0fbe9beb0c49efe",
+      "on_behalf_of": "bo",
+      "person": "alex",
+      "seq": 9,
+      "ts_unix": 1760000014,
+      "voided": false
+    },
+    {
+      "actor": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394",
+      "id": "3d8093ce5f0b52fa7cd4dbf18454502c689a5eb6ac9f4104d56a298309878d95",
+      "on_behalf_of": "bo",
+      "person": "bo",
+      "seq": 4,
+      "ts_unix": 1760000015,
+      "voided": false
+    },
+    {
+      "actor": "ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1",
+      "id": "4f2c8dd8eac4948d5ae35d6ff0d0459459b87a89874f2e7194d553b69deb5868",
+      "on_behalf_of": "cy",
+      "person": "cy",
+      "seq": 1,
+      "ts_unix": 1760000016,
+      "voided": false
+    },
+    {
+      "actor": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+      "id": "32f134e4c56e055f861b82434f10fd4dfe576c1094c3c9b2b95be142b4c678d1",
+      "person": "alex",
+      "seq": 10,
+      "ts_unix": 1760000017,
+      "voided": false
+    },
+    {
+      "actor": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394",
+      "id": "74addcab7525db99f6c48bddfc2df378117553433dfa7c73a14a0cbb2ef0feac",
+      "person": "bo",
+      "seq": 5,
+      "ts_unix": 1760000018,
+      "voided": false
+    },
+    {
+      "actor": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+      "id": "31a5b21620f98568a8696c4aa375330caabffb51b14997a197262579a97d76a2",
+      "person": "alex",
+      "seq": 11,
+      "ts_unix": 1760000019,
+      "voided": false
+    },
+    {
+      "actor": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+      "corrects": "31a5b21620f98568a8696c4aa375330caabffb51b14997a197262579a97d76a2",
+      "id": "d188ac86eae2aa3b5166e57511d37bd0990092a9ae4d13691eae11291b212858",
+      "person": "alex",
+      "seq": 12,
+      "ts_unix": 1760000020,
+      "voided": false
+    },
+    {
+      "actor": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+      "id": "22f8469965589c5965f90902f4cae3d0e4eedca19795d0c9e2d7af0bbfe10b8e",
+      "person": "alex",
+      "seq": 13,
+      "ts_unix": 1760000021,
+      "voided": false
+    },
+    {
+      "actor": "ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1",
+      "id": "b8f60780fd32a5155807488d6db62c4fd899f57ca477d1573d93cacb6d89592b",
+      "payload": {
+        "amount_cents": 300,
+        "kind": "money/expense",
+        "what": "tea"
+      },
+      "person": "cy",
+      "seq": 2,
+      "ts_unix": 1760000022,
+      "voided": false
+    },
+    {
+      "actor": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+      "id": "ba00a911f76c116964c1959c7aa13bac1c50fb0122cab721c694f80508e5c89f",
+      "person": "alex",
+      "seq": 14,
+      "ts_unix": 1760000023,
+      "voided": false
+    },
+    {
+      "actor": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+      "id": "8634d2a8d4aafdfdc663e43227757a5febf2b909439bbc6c4bf7e41f6e829139",
+      "person": "alex",
+      "seq": 15,
+      "ts_unix": 1760000024,
+      "voided": false
+    },
+    {
+      "actor": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394",
+      "id": "4e67ae256f7c2c1a5a415c6a153301d5aae730e47db65f3ad085ad8880a31c1f",
+      "on_behalf_of": "bo",
+      "payload": {
+        "kind": "events/event",
+        "what": "dinner"
+      },
+      "person": "bo",
+      "seq": 6,
+      "ts_unix": 1760000025,
+      "voided": false
+    },
+    {
+      "actor": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394",
+      "id": "729f69655accb851ba65283365bef05e122ae0a2e2cf5bf47894c177aee75d35",
+      "person": "bo",
+      "seq": 7,
+      "ts_unix": 1760000026,
+      "voided": false
+    },
+    {
+      "actor": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+      "id": "6c0de6dc083ba997c79a1d5249c558d7bced9eda4cad279481e0a96737594b9a",
+      "payload": {
+        "amount_cents": 300,
+        "kind": "money/expense",
+        "what": "alex's"
+      },
+      "person": "alex",
+      "seq": 17,
+      "ts_unix": 1760000028,
+      "voided": false
+    },
+    {
+      "actor": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394",
+      "id": "448fdfe853684097d21422bec6cf13d8c969fbe347e83cd9f74edeb7a18ec9a0",
+      "on_behalf_of": "bo",
+      "payload": {
+        "amount_cents": 300,
+        "kind": "money/expense",
+        "what": "bo's"
+      },
+      "person": "bo",
+      "seq": 8,
+      "ts_unix": 1760000029,
+      "voided": false
+    }
+  ],
+  "runs": {
+    "brought": {
+      "money": {
+        "apps/money/index.html": "7c141bc242cfe4b10850ad0fdf44daa93c128dbe928cd9d0a9cc6e712a2f4251"
+      }
+    },
+    "changed": {
+      "money": {
+        "at": 1760000013,
+        "who": "bo"
+      }
+    },
+    "money as alex": {
+      "apps/money/index.html": "7c141bc242cfe4b10850ad0fdf44daa93c128dbe928cd9d0a9cc6e712a2f4251"
+    },
+    "money as bo": {
+      "apps/money/index.html": "2f2577c9c4bd3f40f29a253f5fdd7da20f6dc19cb5fea76ec54b78777534f51e"
+    },
+    "money as cy": {
+      "apps/money/index.html": "7c141bc242cfe4b10850ad0fdf44daa93c128dbe928cd9d0a9cc6e712a2f4251"
+    },
+    "said": [
+      {
+        "files": {
+          "apps/money/index.html": "2f2577c9c4bd3f40f29a253f5fdd7da20f6dc19cb5fea76ec54b78777534f51e"
+        },
+        "kind": "money",
+        "whose": "bo"
+      }
+    ]
+  }
+}
