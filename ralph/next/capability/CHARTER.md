@@ -29,6 +29,15 @@ charter disagree, they win, and the decision says so.
   trade-off): "K now, H with signed". The key stays readable to a lend's
   own pages, said in DESIGN §3 under §5's trust; the uncopyable key and
   chained pass land with capability-signed.
+- **Authorship by signature** (2026-10-24, on capability-authorship's
+  design, `demo/runs/authorship/2026-10-24/DESIGN.md`, 3e2aba45): yes, as
+  §2-§5 and §9-§10 write it. F1, a lent app writing as the person asking:
+  the person's own device signs what the app names in `x-svrngs-append`,
+  within the lend's declared `--kind` (§6's recommended). F2, the chained
+  pass at a computer on an older svrngs: today's raw-bytes pass for an open
+  that reaches one, its writes waiting until a computer on the new svrngs
+  takes them (§11's recommended). The ceiling for capability-signed and
+  capability-keys: "+535 / +180".
 
 ## Decide
 
@@ -48,8 +57,12 @@ Write `NEEDS_HUMAN.md` and stop for:
   now"): at most 17,884 repository and 3,153 svrngs-core through
   capability-what-acts, each row raising only what it lands; a row past its
   estimate's range (`demo/runs/economize/2026-10-23-capability/SURVEY.md`
-  §6) stops. capability-signed's and capability-keys' ceiling is asked
-  beside capability-authorship's design;
+  §6) stops. Then, for capability-signed through capability-release
+  (2026-10-24, "+535 / +180"): at most 18,325 repository and 3,330
+  svrngs-core, each row raising only what it lands, to one past where it
+  lands; a row past the design's range for it (`demo/runs/authorship/
+  2026-10-24/DESIGN.md` §14, +278 to +534 and +101 to +178 for both rows)
+  stops;
 - **a change to what an act is:** capability-authorship's design, before any
   product code changes the format;
 - **a fix that would break a path a person uses today**, or add a step that
