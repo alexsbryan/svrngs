@@ -365,7 +365,12 @@ impl Node {
         // The members' protocol serves sync and the live lane, the door to
         // what this computer lends (u3-4), and what the people of a
         // member's groups lend (u4-5).
-        let holders = crate::door::holders_router(asking.door.clone());
+        // A holder carries its phone's own lines too (capability-signed).
+        let carry = axum::routing::post(crate::rail::carry);
+        let carry = axum::Router::new()
+            .route("/carry", carry)
+            .with_state(asking.clone());
+        let holders = crate::door::holders_router(asking.door.clone()).merge(carry);
         let kept = asking.clone();
         let inbound = RingInbound {
             rail: rail.clone(),

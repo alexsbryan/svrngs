@@ -339,8 +339,11 @@ fn stamp(rail: &RingRail, namespace: &str, body: &serde_json::Value) -> Result<(
 /// itself, a phone's own act, carried unchanged into this computer's copy
 /// as the round stores a peer's (capability-signed; DESIGN.md §3, "The
 /// computer's part"). It writes no line of its own. Refused, in words, when
-/// the line does not verify or its signer stands nowhere in the group;
-/// answered with whether the fold counts it now.
+/// the line does not verify, or whose standing it counts under
+/// ([`svrngs_core::Op::stands_as`]: its signer's, or a holder's pass's
+/// signer's, that pass theirs and naming the holder) stands nowhere in the
+/// group; answered with whether the fold counts it now. Members' and
+/// holders' protocols both serve it.
 pub(crate) async fn carry(
     State(at): State<crate::node::Asking>,
     by: Option<axum::Extension<crate::iroh::Dialer>>,
@@ -352,9 +355,11 @@ pub(crate) async fn carry(
     let signed =
         id == line.id && svrngs_core::Ed25519Verifier.verify(&line.actor, &id, &line.kind.sig);
     let read = rail.admission(&group).ok();
-    let stands = (read.as_ref()).is_some_and(|a| a.membership().standing.contains(&line.actor));
-    tracing::debug!(target: "rails", group, %id, signer = %line.actor, by = ?by.map(|d| d.actor()), signed, stands, "rail: a line a device signed, carried here unchanged, or why not");
-    if !(signed && stands) {
+    let held = (line.kind.grant.as_ref()).is_none_or(|p| p.holder == line.actor && p.signed());
+    let stands =
+        (read.as_ref()).is_some_and(|a| a.membership().standing.contains(line.stands_as()));
+    tracing::debug!(target: "rails", group, %id, signer = %line.actor, as_ = line.stands_as(), by = ?by.map(|d| d.actor()), signed, held, stands, "rail: a line a device signed, carried here unchanged, or why not");
+    if !(signed && held && stands) {
         let why = format!("This entry was not signed by anyone in {group}.");
         return refused(&group, "not_signed", why);
     }
