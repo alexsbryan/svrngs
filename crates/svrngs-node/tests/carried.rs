@@ -94,14 +94,19 @@ async fn at(
 }
 
 /// The ops of an app's route's answer that a fold counts, each `[by, op]`:
-/// not voided, and stating something.
+/// not voided, and stating something. `by` as the apps read it
+/// (`apps/expenses/expenses.js`): `on_behalf_of` when the op names one,
+/// else its `person`.
 fn live(read: &Value) -> Vec<Value> {
     let ops = read["ops"].as_array().expect("the route answers its ops");
     let counted = ops
         .iter()
         .filter(|o| o["voided"] == false && !o["payload"].is_null());
     counted
-        .map(|o| json!([o["on_behalf_of"], o["payload"]]))
+        .map(|o| {
+            let by = Some(&o["on_behalf_of"]).filter(|b| !b.is_null());
+            json!([by.unwrap_or(&o["person"]), o["payload"]])
+        })
         .collect()
 }
 

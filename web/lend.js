@@ -46,7 +46,7 @@
 // It is kept in this origin's store as it is written, so it outlives the
 // run of the worker that wrote it: each run starts its own lines, after
 // the last runs' (u5-12: a worker WebKit ended took its trace with it).
-import init, { holder_endpoint } from './wasm/svrngs_web.js?v=__VERSION__';
+import init, { app_act, holder_endpoint, sign_line } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
 
 const SCOPE = new URL(self.registration.scope);
@@ -301,6 +301,7 @@ async function lent(request, url, where) {
   }
   const lend = h.lends.find((l) => l.label === where.label);
   if (!lend) return closed();
+  if (request.method === 'POST' && lend.group && where.path === '/svrngs/acts') return writing(request, lend);
   if (where.read && request.mode === 'navigate') return opening(h, where);
   const jar = await jarOf(where.label);
   const headers = bounded(
@@ -388,6 +389,46 @@ async function lent(request, url, where) {
   const at = head ? head.index + head[0].length : 0;
   const page = `${text.slice(0, at)}${shim(where.label, jar, res.headers.get('content-security-policy'))}${text.slice(at)}`;
   return new Response(page, { status: res.status, statusText: res.statusText, headers: headed });
+}
+
+// An app's write is this phone's own (capability-signed; DESIGN §3): shaped
+// as the door shapes one (svrngs-core `app_act`), signed by the pass's
+// holder under the pass as its chain's next line, kept beside the pass
+// before it is sent, so no seq is signed twice, and carried with every line
+// not yet taken to the lend's computer (`/carry`), which writes none of its
+// own. A line not taken waits, the same bytes, for the next write.
+async function writing(request, lend) {
+  loaded ??= init({ module_or_path: store.runtime() });
+  await loaded;
+  const act = app_act(lend.kind, new Uint8Array(await request.arrayBuffer()));
+  if (!act) return Response.json({ error: 'an act is JSON, {op} or {corrects, op}' }, { status: 422 });
+  const at = handed.line ?? { seq: -1, id: null };
+  const holder = Uint8Array.from(handed.holder.match(/../g), (h) => parseInt(h, 16));
+  const line = JSON.parse(sign_line(holder, lend.group, Math.floor(Date.now() / 1000), at.seq + 1, at.id, act, handed.pass));
+  handed = { ...handed, line: { seq: line.seq, id: line.id }, unsent: [...(handed.unsent ?? []), line] };
+  await store.lendKeep(`pass ${OWN}`, handed);
+  trace(`RUNTIME: an act of ${lend.kind} signed as line ${line.seq}, ${handed.unsent.length} to carry`);
+  let res;
+  try {
+    for (const l of handed.unsent) {
+      const body = new TextEncoder().encode(JSON.stringify([lend.group, l]));
+      const headers = [['content-type', 'application/json'], ['content-length', String(body.length)]];
+      res = await (await dialFor(lend.key)).fetch('POST', '/carry', headers, new Blob([body]).stream());
+      trace(`RUNTIME: line ${l.seq} carried to ${lend.person}'s computer, answered ${res.status}`);
+      if (!res.ok) break;
+      handed = { ...handed, unsent: handed.unsent.filter((u) => u.id !== l.id) };
+      await store.lendKeep(`pass ${OWN}`, handed);
+    }
+  } catch (e) {
+    dials.delete(lend.key);
+    trace(`RUNTIME: lines not carried: ${e}`);
+    return Response.json({ error: `${lend.person}’s computer did not answer. It is kept on this phone and goes with your next entry` }, { status: 502 });
+  }
+  // Taken but not counted: the fold refused it (svrngs-core `Grant`), said
+  // to the page, never as saved.
+  const said = res.ok ? await res.json() : null;
+  if (said?.counted === false) return Response.json({ error: 'your group does not count it' }, { status: 409 });
+  return said ? Response.json(said) : res;
 }
 
 // The lend's computer did not answer: a person's tab is shown its person's

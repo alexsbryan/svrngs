@@ -186,12 +186,17 @@ another of the group's computers when this one never held it — and from
   empty. The route answers every act each time, from no cursor, since a
   round may place an act before one already read.
 - `POST {op}` records one act; `{corrects, op}` corrects one of its own,
-  `op` null to void it. svrngs puts the prefix on, and writes
-  `on_behalf_of` as the person the door resolved, never a word of the
-  request's body. A correction of another app's act is refused.
+  `op` null to void it. svrngs puts the prefix on (`grant::app_act`, one
+  copy for the door and the phone) and signs it on the person's own
+  device: a computer's own person's by that computer, and a phone's by the
+  phone's worker, with the pass's holder under the pass, carried to the
+  lend's computer unchanged (`POST /carry`). A computer writes nothing as
+  anyone another device holds. A correction of another app's act is
+  refused. A line the phone signed and no computer took yet is kept beside
+  the pass and goes, the same bytes, with the next write.
 
-Each act stays the writing computer's, signed by its key: its `person` says
-whose computer wrote it and `on_behalf_of` whom it speaks for. Money's,
+Each act stays its signer's: its `person` says whose device wrote it, and
+an older act's `on_behalf_of` whom its computer spoke for. Money's,
 Events' and the grapevine's folds keep both, `by` and `via`, and their pages
 say an entry another person's computer wrote as "bo, through cy’s
 computer". Every answer carries the containment floor's headers: the page

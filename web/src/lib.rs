@@ -389,9 +389,10 @@ pub fn pass(person: Vec<u8>, holder: Vec<u8>, app: String, reads: Vec<String>, u
 }
 
 /// The line the key `key` signs for `act`, JSON, in the group `group`, at
-/// `seq` after the line whose id is `prev`, at `ts` seconds since 1970: a
-/// phone's own act, which any computer carries unchanged (capability-signed;
-/// svrngs-core's `sign_act`, the one place an act is made).
+/// `seq` after the line whose id is `prev`, at `ts` seconds since 1970,
+/// under the pass `grant` when `key` is a holder's: a phone's own act,
+/// which any computer carries unchanged (capability-signed; svrngs-core's
+/// `sign_act`, the one place an act is made).
 #[wasm_bindgen]
 pub fn sign_line(
     key: Vec<u8>,
@@ -400,14 +401,23 @@ pub fn sign_line(
     seq: f64,
     prev: Option<String>,
     act: String,
+    grant: Option<String>,
 ) -> Result<String, JsError> {
     let key = <[u8; 32]>::try_from(key.as_slice()).map_err(|_| JsError::new("a key is 32 bytes"))?;
     let act = svrngs_core::RailAct::from_json(serde_json::from_str(&act)?).map_err(|e| JsError::new(&e.to_string()))?;
     let prev = prev.map(|p| serde_json::from_value(p.into())).transpose()?;
+    let grant = grant.map(|g| Pass::decode(&g).ok_or_else(|| JsError::new("not a pass"))).transpose()?;
     let key = svrngs_core::SigningKey::from_bytes(&key);
     Ok(serde_json::to_string(&svrngs_core::sign_act(
-        &key, &group, ts as i64, seq as u64, prev, act, None, None, None,
+        &key, &group, ts as i64, seq as u64, prev, act, None, None, grant,
     ))?)
+}
+
+/// The act, JSON, an app `kind`'s page asks for with `body`, as the door
+/// shapes it (svrngs-core's `app_act`); none for a body that is not one.
+#[wasm_bindgen]
+pub fn app_act(kind: String, body: Vec<u8>) -> Option<String> {
+    svrngs_core::grant::app_act(&kind, &body).map(|act| act.to_string())
 }
 
 /// A browser endpoint bound with the person's key, online at a relay.

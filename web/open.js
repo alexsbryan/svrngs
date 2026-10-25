@@ -41,6 +41,10 @@ async function start() {
     handed = decode(location.hash.slice(1));
     history.replaceState(null, '', `${location.pathname}${location.search}`);
     if (store.labelOf(location.hostname) !== handed.label) throw new Error(`a pass for ${handed.label} opened at ${location.origin}`);
+    // Lines the last pass's holder signed and no computer took yet go on
+    // with this one (lend.js `writing`), each under the pass it was signed with.
+    const was = await store.lendKept(`pass ${handed.label}`).catch(() => null);
+    if (was?.unsent?.length) handed.unsent = was.unsent;
     await store.lendKeep(`pass ${handed.label}`, handed);
   } else {
     handed = asked.get('for') && (await store.lendKept(`pass ${asked.get('for')}`));

@@ -12,6 +12,8 @@
 //! keeps [`Pass::check`] as its one decider; this is the log side alone.
 //! Pure: the time is an argument.
 
+use alloc::format;
+
 use serde::{Deserialize, Serialize};
 
 use crate::pass::{Label, Pass};
@@ -84,4 +86,21 @@ impl crate::Op<crate::SignedOp> {
     pub fn stands_as(&self) -> &str {
         self.kind.grant.as_ref().map_or(&self.actor, |p| &p.person)
     }
+}
+
+/// The act an app `kind`'s page asks for, its body `{op}` or `{corrects,
+/// op}`, `op` null to void: `op`'s kind put under `<kind>/`. None for a
+/// body naming no `op`, or an `op` with no kind. The door and a phone's
+/// worker shape it here alike, so both say one act (DESIGN §3).
+pub fn app_act(kind: &str, body: &[u8]) -> Option<serde_json::Value> {
+    let mut body: serde_json::Map<_, _> = serde_json::from_slice(body).ok()?;
+    let mut op = body.remove("op")?;
+    if let Some(fields) = op.as_object_mut() {
+        let own = fields.get("kind")?.as_str()?;
+        fields.insert("kind".into(), format!("{kind}/{own}").into());
+    }
+    Some(match body.remove("corrects") {
+        None => serde_json::json!({ "op": "record", "payload": op }),
+        Some(id) => serde_json::json!({ "op": "correct", "corrects": id, "replacement": op }),
+    })
 }

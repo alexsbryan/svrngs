@@ -134,7 +134,7 @@ const wrote = await fetch(acts, { method: 'POST', headers: { 'content-type': 'ap
   body: JSON.stringify({ op: { kind: 'expense', amount_cents: 1200, description: 'the bins' } }) });
 const read = wrote.ok ? await (await fetch(acts)).json() : {};
 const ops = read.ops ?? [];
-document.title = `Money: ${ops.length} by ${ops.map((o) => o.on_behalf_of).join(', ')}`;
+document.title = `Money: ${ops.length} by ${ops.map((o) => o.on_behalf_of ?? o.person).join(', ')}`;
 ";
     let page = "<!doctype html><title>Money</title><script type=module src=money.js></script>";
     carry(

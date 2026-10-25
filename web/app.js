@@ -265,7 +265,7 @@ function open(group, key, lent, unanswered, l, at, until = Math.floor(Date.now()
   const stopped = group.reads?.[label(l.key, l.name)]?.said === 'stop';
   if (stopped) trace(`PAGE: ${l.name}'s reads were stopped here, so its pass names none`);
   const reads = stopped ? [] : lent.filter((o) => o !== l && (l.reads ?? []).includes(o.kind));
-  const lends = [l, ...reads].map((o) => ({ label: label(o.key, o.name), key: o.key, relay: o.relay ?? null, name: o.name, kind: o.kind, person: o.person, asks: o.asks }));
+  const lends = [l, ...reads].map((o) => ({ label: label(o.key, o.name), key: o.key, relay: o.relay ?? null, name: o.name, kind: o.kind, group: o.group ?? null, person: o.person, asks: o.asks }));
   const holder = crypto.getRandomValues(new Uint8Array(32));
   // Each app at an address of its own under this page's host (DESIGN §7),
   // the page's files at its root.

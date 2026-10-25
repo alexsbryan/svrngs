@@ -23,9 +23,10 @@
 //!   svrngs-core's membership (canon-spans), null while who stands is
 //!   unsettled (#124);
 //!   `POST {op}` records an act, and `{corrects, op}` corrects one of its
-//!   own, `op` null to void it, and absent never (#165): the prefix put on its kind, and
-//!   `on_behalf_of` the person the door resolved, never a word of the
-//!   body's.
+//!   own, `op` null to void it, and absent never (#165): the prefix put on its kind
+//!   ([`svrngs_core::grant::app_act`]), signed by this computer as its own
+//!   person, and refused for any other device's, which signs its own and
+//!   carries it (`/carry`, capability-signed).
 //!
 //! The route answers every act each time, from no cursor: a round may
 //! place another computer's act before one already read, and a correction
@@ -46,7 +47,7 @@ use axum::http::{Method, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::{Extension, Json};
 use iroh_blobs::Hash;
-use serde_json::{json, Map, Value};
+use serde_json::{json, Value};
 use svrngs_core::{Files, Placed, SyncPath};
 
 use super::{blob::People, dirs_of, Folders};
@@ -342,29 +343,22 @@ impl Folders {
                 json!({ "you": person, "group": group, "people": all, "spans": spans, "ops": ops });
             return Ok(Json(read).into_response());
         }
-        // Another member's computer cannot sign as them (capability-signed):
-        // a computer writes on its own copy, and a phone, for now, here.
-        let elsewhere = key != self.host.actor && people[key].device.dialled();
-        tracing::debug!(target: "folder", group, %kind, %person, elsewhere, "carried: a write as the person, refused from another member's computer");
+        // A write is its person's own device's (capability-signed): this
+        // computer signs only its own person's, and a phone signs its own
+        // and carries it (`/carry`).
+        let elsewhere = key != self.host.actor;
+        tracing::debug!(target: "folder", group, %kind, %person, elsewhere, "carried: a write as the person, refused from any device but this computer");
         if elsewhere {
             let why = format!("Open {kind} from your home page to write in it.");
             return Ok(Closed.say(StatusCode::FORBIDDEN, why));
         }
         let body = (to_bytes(req.into_body(), WRITE_MOST).await).map_err(|_| TOO_LARGE)?;
-        let mut body: Map<String, Value> = serde_json::from_slice(&body).map_err(|_| NOT_AN_ACT)?;
-        let mut op = body.remove("op").ok_or(NOT_AN_ACT)?;
-        if let Some(fields) = op.as_object_mut() {
-            let own_kind = (fields.get("kind").and_then(Value::as_str)).ok_or(NOT_AN_ACT)?;
-            fields.insert("kind".into(), format!("{prefix}{own_kind}").into());
+        let act = svrngs_core::grant::app_act(kind.as_str(), &body).ok_or(NOT_AN_ACT)?;
+        let theirs = |id: &Value| !ops.iter().any(|o| &o["id"] == id && own(o).is_some());
+        if act.get("corrects").is_some_and(theirs) {
+            return Err(NOT_ITS_OWN);
         }
-        let act = match body.remove("corrects") {
-            None => json!({ "op": "record", "payload": op }),
-            Some(id) if ops.iter().any(|o| o["id"] == id && own(o).is_some()) => {
-                json!({ "op": "correct", "corrects": id, "replacement": op })
-            }
-            Some(_) => return Err(NOT_ITS_OWN),
-        };
-        let answer = crate::rail::append_as(rail, group, act, Some(person.clone())).await;
+        let answer = crate::rail::append_as(rail, group, act, None).await;
         tracing::debug!(target: "folder", group, %kind, %person, status = answer.status().as_u16(), "carried: an act written as the person");
         if answer.status().is_success() {
             self.nudge.notify_one();
