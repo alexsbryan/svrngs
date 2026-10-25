@@ -376,12 +376,10 @@ pub(crate) fn ops_json(admission: &Admission) -> Option<serde_json::Value> {
     let m = admission.membership();
     let mut ops = serde_json::to_value(admission.wire()).ok()?;
     for o in ops.as_array_mut().into_iter().flatten() {
-        let (Some(named), Some(ts)) = (o["on_behalf_of"].as_str(), o["ts_unix"].as_i64()) else {
+        let other = o["on_behalf_of"].as_str().filter(|n| o["person"] != *n);
+        let (Some(named), Some(ts)) = (other, o["ts_unix"].as_i64()) else {
             continue;
         };
-        if o["person"] == named {
-            continue;
-        }
         let firsts =
             (m.bindings.iter()).filter(|(k, p)| p.as_str() == named && !m.devices.contains_key(*k));
         let mut by = firsts.filter(|(k, _)| !matches!(m.joined(k), Joined::At(t) if t > ts));
