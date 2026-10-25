@@ -44,7 +44,7 @@ import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import http from 'node:http';
 
-import { CAME, COMING, EVENT, MAX_WORDS, actsOf, answers, guestName, hosted, init, ownActs, reduce, validate } from './events.js';
+import { CAME, COMING, EVENT, MAX_WORDS, actsOf, answers, called, guestName, hosted, init, ownActs, reduce, validate } from './events.js';
 import { file, record } from './store.mjs';
 
 const config = JSON.parse(readFileSync(process.argv[2], 'utf8'));
@@ -96,7 +96,9 @@ async function standing(group, id) {
 
 /**
  * The groups there are, each with the asker's name in it and who stands in
- * it now: [{id, name, me, people}], `me` null outside it, or `unread`.
+ * it now: [{id, name, me, people}], `me` null outside it, `people` as
+ * `store.people` gives them, or `unread`. The asker is `id` in the fold, as
+ * everyone is (events.js, "A person is their first key").
  */
 async function myGroups(id) {
   const out = [];
@@ -105,7 +107,7 @@ async function myGroups(id) {
       const people = await store.people(g.id);
       const me = people.find((p) => p.id === id)?.name ?? null;
       trace('standing', { group: g.id, asker: id, in: Boolean(me) });
-      out.push({ ...g, me, people: people.map((p) => p.name) });
+      out.push({ ...g, me, people });
     } catch (e) {
       trace('a group could not be read', { group: g.id, error: e.message });
       out.push({ ...g, me: null, unread: e.message });
@@ -212,23 +214,35 @@ async function post(id, form) {
 const through = (vias) => (vias?.length ? `, through ${vias.map((v) => `${esc(v)}'s`).join(' and ')} computer${vias.length > 1 ? 's' : ''}` : '');
 
 /**
+ * Each person of a fold's `names` as a page says them, two of one name told
+ * apart by when each of `people` (`store.people`) joined (events.js
+ * `called`).
+ */
+const sayer = (names, people) => {
+  const spans = people.map((p) => ({ person: p.name, person_key: p.id, joined: p.joined ?? null }));
+  return (k) => called(spans, k, Object.hasOwn(names, k) ? names[k] : (people.find((p) => p.id === k)?.name ?? k));
+};
+
+/**
  * One group's answers to `e`, said: who was invited, who is coming and who
  * came. Invited is whoever stands in the group now, its host aside
  * (EVENTS.md §1): no one keeps a list, and no one is said as anything but
  * invited until they say so themselves. Now, not at posting: the same read
  * decides who may see, answer and be invited, so someone who joins after
  * the post and answers is never shown coming but not invited
- * (demo/runs/events/2026-10-14/README.md, "What invited means").
+ * (demo/runs/events/2026-10-14/README.md, "What invited means"). `say`
+ * names each person, `sayer`'s.
  */
-function said(e, invited) {
-  const asked = [...new Set(invited)].filter((p) => p !== e.host).sort();
-  const people = Object.keys(e.coming).sort();
+function said(e, invited, say) {
+  const by = (a, b) => (say(a) < say(b) ? -1 : say(a) > say(b) ? 1 : 0);
+  const asked = invited.map((p) => p.id).filter((p) => p !== e.host).sort(by);
+  const people = Object.keys(e.coming).sort(by);
   const coming = people.length
-    ? `<ul class="coming">${people.map((p) => `<li>${esc(p)}${e.coming[p].map((g) => ` + ${esc(g)}`).join('')}${through(e.via.coming[p])}</li>`).join('')}</ul>`
+    ? `<ul class="coming">${people.map((p) => `<li>${esc(say(p))}${e.coming[p].map((g) => ` + ${esc(g)}`).join('')}${through(e.via.coming[p])}</li>`).join('')}</ul>`
     : '<p class="quiet">No one has said yet.</p>';
-  const guests = Object.entries(e.guests_came).flatMap(([p, gs]) => gs.map((g) => `${esc(g)}, ${esc(p)}'s guest${through(e.via.guests_came[p]?.[g])}`));
-  const came = [...e.came.map((p) => esc(p) + through(e.via.came[p])), ...guests];
-  const list = asked.length ? `<ul class="invited">${asked.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` : '<p class="quiet">No one else is in this group.</p>';
+  const guests = Object.entries(e.guests_came).flatMap(([p, gs]) => gs.map((g) => `${esc(g)}, ${esc(say(p))}'s guest${through(e.via.guests_came[p]?.[g])}`));
+  const came = [...e.came.map((p) => esc(say(p)) + through(e.via.came[p])), ...guests];
+  const list = asked.length ? `<ul class="invited">${asked.map((p) => `<li>${esc(say(p))}</li>`).join('')}</ul>` : '<p class="quiet">No one else is in this group.</p>';
   return `<h3>Invited</h3>${list}<h3>Coming</h3>${coming}<h3>Came</h3>${came.length ? `<ul class="came">${came.map((c) => `<li>${c}</li>`).join('')}</ul>` : '<p class="quiet">No one yet.</p>'}`;
 }
 
@@ -269,8 +283,9 @@ async function eventPage(id, group, event, lent) {
   const here = await folded(group);
   const e = here.answers.events[event];
   if (!e) throw new Said(404, `This event isn't in ${named(groups, group)}.`);
-  let body = `<h1>${esc(e.what)}</h1><p>${[e.when, e.where].filter(Boolean).map(esc).join(' · ')}</p><p class="quiet">${esc(e.host)}${e.via.host ? `${through([e.via.host])},` : ''} is hosting.</p>`;
-  if (e.host === me) {
+  const say = sayer(here.answers.names, groups.find((x) => x.id === group).people);
+  let body = `<h1>${esc(e.what)}</h1><p>${[e.when, e.where].filter(Boolean).map(esc).join(' · ')}</p><p class="quiet">${esc(say(e.host))}${e.via.host ? `${through([e.via.host])},` : ''} is hosting.</p>`;
+  if (e.host === id) {
     // The host's view: each group this computer holds where they host it.
     const all = [];
     for (const g of groups.filter((x) => x.me || x.unread)) {
@@ -280,7 +295,7 @@ async function eventPage(id, group, event, lent) {
       }
       try {
         const f = g.id === group ? here : await folded(g.id);
-        all.push({ group: g.id, answers: f.answers, me: g.me, complete: f.complete });
+        all.push({ group: g.id, answers: f.answers, me: id, complete: f.complete });
       } catch (err) {
         all.push({ group: g.id, unread: err.message });
       }
@@ -289,22 +304,24 @@ async function eventPage(id, group, event, lent) {
       body += `<section data-group="${esc(g.group)}"><h2>${esc(named(groups, g.group))}</h2>`;
       // Each group's answers said whole or not, never only the path's (#151).
       const complete = all.find((x) => x.group === g.group).complete;
-      body += g.unread ? `<p class="unread">This group's answers can't be read on this computer right now.</p>` : partly(complete, 'answers') + said(g.event, groups.find((x) => x.id === g.group).people) + linkTo(lent, g.group, event, named(groups, g.group));
+      const there = all.find((x) => x.group === g.group);
+      const people = groups.find((x) => x.id === g.group).people;
+      body += g.unread ? `<p class="unread">This group's answers can't be read on this computer right now.</p>` : partly(complete, 'answers') + said(g.event, people, sayer(there.answers.names, people)) + linkTo(lent, g.group, event, named(groups, g.group));
       body += '</section>';
     }
     trace('the host\'s view', { event, asker: me, groups: all.map((g) => g.group), partly: all.filter((g) => g.complete === false).map((g) => g.group) });
   } else {
-    body += `<section data-group="${esc(group)}"><h2>${esc(named(groups, group))}</h2>${partly(here.complete, 'answers')}${said(e, groups.find((x) => x.id === group).people)}</section>`;
+    body += `<section data-group="${esc(group)}"><h2>${esc(named(groups, group))}</h2>${partly(here.complete, 'answers')}${said(e, groups.find((x) => x.id === group).people, say)}</section>`;
     trace('a member\'s view', { event, asker: me, group, complete: here.complete });
   }
   const at = `/g/${encodeURIComponent(group)}/e/${encodeURIComponent(event)}`;
-  const guests = e.coming[me];
+  const guests = Object.hasOwn(e.coming, id) ? e.coming[id] : undefined;
   body += `<section><h2>You</h2>
 <form method="post" action="${at}/coming"><label>Bringing anyone? <input type="text" name="guests" placeholder="Maya, Jo" value="${esc((guests ?? []).join(', '))}"></label>
 <button>${guests ? 'Save' : "I'm coming"}</button></form>`;
   if (guests) body += `<form method="post" action="${at}/not-coming"><button>Take my name off</button></form>`;
-  if (!e.came.includes(me)) body += `<form method="post" action="${at}/came"><button>I came</button></form>`;
-  for (const g of (guests ?? []).filter((x) => !(e.guests_came[me] ?? []).includes(x))) {
+  if (!e.came.includes(id)) body += `<form method="post" action="${at}/came"><button>I came</button></form>`;
+  for (const g of (guests ?? []).filter((x) => !(Object.hasOwn(e.guests_came, id) ? e.guests_came[id] : []).includes(x))) {
     body += `<form method="post" action="${at}/came"><input type="hidden" name="guest" value="${esc(g)}"><button>${esc(g)} came</button></form>`;
   }
   body += `</section><p><a href="/">All events</a></p>`;
@@ -320,14 +337,14 @@ async function answer(id, group, event, verb, form) {
   if (verb === 'coming' || verb === 'not-coming') {
     const names = verb === 'coming' ? String(form.get('guests') ?? '').split(',').map(guestName).filter(Boolean) : null;
     const payload = names && { kind: COMING, event, ...(names.length && { guests: [...new Set(names)] }) };
-    const [newest, ...older] = ownActs(state, me, event, COMING);
+    const [newest, ...older] = ownActs(state, id, event, COMING);
     trace('changing their mind', { group, event, by: me, verb, live: [newest, ...older].filter(Boolean).length });
     for (const old of older) await write(group, { op: 'correct', corrects: old, replacement: null }, me);
     if (newest) await write(group, { op: 'correct', corrects: newest, replacement: payload }, me);
     else if (payload) await write(group, { op: 'record', payload }, me);
   } else {
     const guest = form.get('guest') ? guestName(form.get('guest')) : null;
-    if (ownActs(state, me, event, CAME, guest).length) trace('came already said', { group, event, by: me, guest });
+    if (ownActs(state, id, event, CAME, guest).length) trace('came already said', { group, event, by: me, guest });
     else await write(group, { op: 'record', payload: { kind: CAME, event, ...(guest && { guest }) } }, me);
   }
   return `/g/${encodeURIComponent(group)}/e/${encodeURIComponent(event)}`;

@@ -22,6 +22,12 @@
 // another's name; a guest is a name tied to the member who wrote it, so
 // only that member can say their guest came.
 //
+// **A person is their first key, never their name** (keys-names; svrn-docs
+// rings/current/WHAT_CAN_ACT_AS_YOU.md §7.4): two people called bo come as
+// two, and one person's computer and phone as one. `answers` keys everyone
+// so and says each one's name, `names`; an answer from an older svrngs names
+// no key, and is kept by name, as it always was.
+//
 // **A correction counts only from the person whose act it corrects.** The
 // record voids an act whoever corrects it (svrngs-core admit.rs, `voided`),
 // so this fold reads every act, voided ones too, and decides the voids
@@ -59,6 +65,25 @@ const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v)
 const isKey = (k) => typeof k === 'string' && k.length > 0 && k.length <= 200 && k !== '__proto__';
 const has = (map, k) => typeof k === 'string' && Object.prototype.hasOwnProperty.call(map, k);
 const isWords = (s, max) => typeof s === 'string' && s.length <= max;
+/** Whom an act is by: their first key, else, from an older svrngs, their name. */
+const who = (a) => a.key ?? a.by;
+
+// A day from seconds, "3 Oct", in this computer's time, as svrngs's own
+// pages say it (crates/svrngs-node/src/home/question.js `day`).
+const day = (t, d = new Date(t * 1000)) => `${d.getDate()} ${'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[d.getMonth()]}`;
+
+/**
+ * How a page says the person whose first key is `key`, called `name`: by
+ * name, and where another of `spans` (`svrngs/acts`'s, or the people the
+ * server reads, in that shape) has it too, with when they joined, "bo
+ * (joined 3 Oct)", as svrngs's own pages tell them apart (question.js
+ * `called`). No spans, from an older svrngs, is the name.
+ */
+export function called(spans, key, name) {
+  const same = (spans ?? []).filter((s) => s.person === name);
+  const s = same.find((x) => x.person_key === key);
+  return same.length > 1 && s ? `${name} (${s.joined == null ? 'started the group' : `joined ${day(s.joined)}`})` : name;
+}
 /** A guest's name as a member wrote it, trimmed; null when it is not one. */
 export function guestName(text) {
   if (typeof text !== 'string') return null;
@@ -113,17 +138,19 @@ export function validate(act) {
  * every op that carries an app's act or a correction, in the record's
  * order, **voided ones included** — the record voids whoever corrects, and
  * this fold decides whose correction counts. `by` is `on_behalf_of` when
- * the op names one, else its `person`, and `key` that person's first key
- * when the op names none; `via` is the `person` when
- * `on_behalf_of` names another — whose computer wrote it for them
- * (ralph/FINDING_ON_BEHALF_OF.md) — else null. A log with no list of ops is
- * an error, never a group with no answers.
+ * the op names one, else its `person`, and `key` that person's first key:
+ * the writer's, or, when `on_behalf_of` names another, theirs where the
+ * record could say whose (`on_behalf_of_key`), else null; `via` is the
+ * `person` when `on_behalf_of` names another — whose computer wrote it for
+ * them (ralph/FINDING_ON_BEHALF_OF.md) — else null. A log with no list of
+ * ops is an error, never a group with no answers.
  */
 export function actsOf(log) {
   if (!Array.isArray(log?.ops)) throw new Error(`the record answered no list of acts: ${JSON.stringify(log)}`);
+  const other = (o) => o.on_behalf_of != null && o.on_behalf_of !== o.person;
   return log.ops
     .filter((o) => o.payload != null || o.corrects != null)
-    .map((o) => ({ id: o.id, ts: o.ts_unix, by: o.on_behalf_of ?? o.person, key: o.on_behalf_of == null ? (o.person_key ?? null) : null, via: o.on_behalf_of != null && o.on_behalf_of !== o.person ? o.person : null, op: o.payload ?? null, corrects: o.corrects ?? null }));
+    .map((o) => ({ id: o.id, ts: o.ts_unix, by: o.on_behalf_of ?? o.person, key: (other(o) ? o.on_behalf_of_key : o.person_key) ?? null, via: other(o) ? o.person : null, op: o.payload ?? null, corrects: o.corrects ?? null }));
 }
 
 /** No acts yet. */
@@ -149,34 +176,38 @@ const through = (map, k, via) => {
 
 /**
  * What the acts come to: each event with its host, who is coming (with the
- * guests each brings) and who came (with the guests each says came), and
- * every act not counted, as a gap saying why. Only what someone said is
- * here: no one appears who did not answer. `via` says whose computer wrote
- * the post (`host`) and each answer, where it was someone else's: under
- * `coming`, `came` and `guests_came`, as they are keyed, the computers each
- * came through.
+ * guests each brings) and who came (with the guests each says came), each
+ * person by their first key and said by `names`, and every act not counted,
+ * as a gap saying why. Only what someone said is here: no one appears who
+ * did not answer. `via` says whose computer wrote the post (`host`) and
+ * each answer, where it was someone else's: under `coming`, `came` and
+ * `guests_came`, as they are keyed, the computers each came through.
  */
 export function answers(state) {
   const { voided, uncounted } = voids(state);
   const gaps = [...state.gaps, ...Object.values(uncounted)];
   const gap = (code, id, message) => gaps.push({ code, fatal: true, id, message });
   const events = {};
+  const names = {};
   const live = state.order.filter((id) => !has(voided, id) && !has(uncounted, id) && state.acts[id].op);
+  for (const id of live) names[who(state.acts[id])] = state.acts[id].by;
   for (const id of live) {
     const { by, via, ts, op } = state.acts[id];
     if (op.kind !== EVENT) continue;
     if (!has(events, op.event)) {
       const vias = { host: via, coming: {}, came: {}, guests_came: {} };
-      events[op.event] = { host: by, what: op.what.trim(), when: op.when, where: op.where, at: ts, coming: {}, came: [], guests_came: {}, via: vias };
+      events[op.event] = { host: who(state.acts[id]), what: op.what.trim(), when: op.when, where: op.where, at: ts, coming: {}, came: [], guests_came: {}, via: vias };
     } else {
-      gap(events[op.event].host === by ? 'posted_twice' : 'not_the_host', id, `${by} posted ${op.event} again; ${events[op.event].host} hosts it`);
+      const host = events[op.event].host;
+      gap(host === who(state.acts[id]) ? 'posted_twice' : 'not_the_host', id, `${by} posted ${op.event} again; ${names[host]} hosts it`);
     }
   }
   for (const id of live) {
-    const { by, via, op } = state.acts[id];
+    const { via, op } = state.acts[id];
+    const by = who(state.acts[id]);
     if (op.kind === EVENT) continue;
     if (!has(events, op.event)) {
-      gap('no_event', id, `${by} answered an event this copy does not hold`);
+      gap('no_event', id, `${state.acts[id].by} answered an event this copy does not hold`);
       continue;
     }
     const e = events[op.event];
@@ -194,7 +225,7 @@ export function answers(state) {
       if (via) through((e.via.guests_came[by] ??= {}), guestName(op.guest), via);
     }
   }
-  return { events, gaps };
+  return { events, gaps, names };
 }
 
 /** Fold a group's acts from scratch: what one group's record says. */
@@ -203,9 +234,10 @@ export function fold(acts) {
 }
 
 /**
- * The acts that change `person`'s own answers to `event`, newest first: what
- * a correction names when they change their mind. Their live `coming` acts,
- * or their live `came` acts for themselves (`guest` null) or for one guest.
+ * The acts that change `person`'s own answers to `event`, `person` by their
+ * first key as `answers` keys them, newest first: what a correction names
+ * when they change their mind. Their live `coming` acts, or their live
+ * `came` acts for themselves (`guest` null) or for one guest.
  */
 export function ownActs(state, person, event, kind, guest = null) {
   const { voided } = voids(state);
@@ -213,7 +245,7 @@ export function ownActs(state, person, event, kind, guest = null) {
     .filter((id) => !has(voided, id))
     .filter((id) => {
       const a = state.acts[id];
-      return a.by === person && a.op && a.op.event === event && a.op.kind === kind &&
+      return who(a) === person && a.op && a.op.event === event && a.op.kind === kind &&
         (kind !== CAME || (a.op.guest === undefined ? guest === null : guestName(a.op.guest) === guest));
     })
     .reverse();
@@ -251,8 +283,8 @@ function voids(state) {
 /**
  * The host's view of `event`: each group's answers to it, from the groups
  * the host's computer holds, where the one who asks hosts it there.
- * `groups` is `[{group, answers, me}]`, `me` the asker's name in that
- * group; a group whose answers could not be read is `{group, unread}`, and
+ * `groups` is `[{group, answers, me}]`, `me` the asker in that group by
+ * their first key, as `answers` keys them; a group whose answers could not be read is `{group, unread}`, and
  * is said as that, never as nobody answering. A group where someone else
  * hosts an event of that id, or holds none, adds nothing.
  */

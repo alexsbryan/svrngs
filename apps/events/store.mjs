@@ -4,8 +4,11 @@
 // (events.js) reads either:
 //
 //   groups()                  [{id, name}]: the groups there are
-//   people(group)             [{name, id}]: who stands in the group, `id`
-//                             what the person header names them by
+//   people(group)             [{name, id, joined?}]: who stands in the
+//                             group, `id` what the person header names them
+//                             by, and the fold too (events.js `who`), and
+//                             `joined`, when they did, seconds, or null for
+//                             whoever started it: two of one name told apart
 //   log(group)                {ops, complete}: `ops` as GET /v1/rail/log
 //                             answers them
 //   append(group, act, name)  the act written as `name`'s: {op: 'record',
@@ -47,7 +50,7 @@ export function record(api) {
     async people(group) {
       const out = [];
       for (const p of (await call(at('people', group))).people) {
-        if (!out.some((o) => o.id === p.person_key)) out.push({ name: p.person, id: p.person_key });
+        if (!out.some((o) => o.id === p.person_key)) out.push({ name: p.person, id: p.person_key, joined: p.joined?.at ?? null });
       }
       return out;
     },
