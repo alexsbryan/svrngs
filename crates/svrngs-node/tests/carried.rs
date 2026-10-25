@@ -996,3 +996,87 @@ async fn a_member_writes_on_their_own_computer_s_copy_alone() {
     let op: Value = wrote.json().await.unwrap();
     assert_eq!(op["actor"], cys.as_str(), "{op:#}");
 }
+
+/// **A phone's write in an app is the phone's own: the computer it reaches
+/// writes nothing as its person** (capability-signed; `demo/runs/
+/// authorship/2026-10-24/DESIGN.md` §3, §5): Bo stands in house from a
+/// phone, and Bo's holder, under Bo's pass for Money, posts an expense to
+/// Money's route on Ana's computer, as a phone's worker did before it
+/// signed its own lines. Refused, 403, and nothing written: Ana's computer
+/// would sign it `on_behalf_of` Bo, which no copy can tell from a forgery;
+/// Bo's phone signs its own and carries it (`/carry`). Kept: the holder's
+/// read of the route.
+#[tokio::test]
+async fn a_computer_writes_nothing_as_a_phone_s_person() {
+    use svrngs_core::pass::{Label, Pass};
+    use svrngs_node::{Device, Person, Redemption};
+    let (nodes, _dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 13, ana, &[]);
+    let append = |act| {
+        let fixture = svrngs_core::tests_support::Fixture {
+            act,
+            on_behalf_of: None,
+        };
+        ana.rail()
+            .commit(&group, &fixture)
+            .unwrap()
+            .unwrap()
+            .lines()[0]
+            .clone()
+    };
+    let link = signing(8);
+    let invite = append(RailAct::Invite {
+        key: actor_of(&link),
+        until: i64::MAX,
+        device_of: None,
+    });
+    let bo = Person::parse("bo").unwrap();
+    let redeemed = Redemption::sign(&signing(7), &group, &invite.id, &bo, Device::Browser);
+    append(RailAct::Admit {
+        invite: Some(redeemed),
+        person: bo,
+        key: actor_of(&signing(7)),
+    });
+    let root = tempfile::tempdir().unwrap();
+    let folder = synced_in(ana, root.path(), &group).await;
+    carry(&folder, "Money");
+    let mut origin = None;
+    for _ in 0..30 {
+        let seen = lends(ana, &group).await;
+        origin = (of_kind(&seen, "Money").first()).map(|l| l["origin"].to_string());
+        if origin.is_some() {
+            break;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    }
+    let origin = origin.expect("Money is listed");
+    let label = origin.trim_matches('"').trim_start_matches("http://");
+    let label = label.split('.').next().unwrap();
+    let holder = signing(9);
+    let until = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64
+        + 600;
+    let app = (Label::parse(label).unwrap(), vec![]);
+    let pass = Pass::sign(&signing(7), &actor_of(&holder), app, until).encode();
+    let bridge = common::bridge_as(&holder, ana, svrngs_core::alpn::Alpn::Lend).await;
+    let route = format!("http://{}/lend/{label}/svrngs/acts", bridge.local_addr());
+    let expense = json!({ "op": { "kind": "expense", "amount_cents": 1 } });
+    let wrote = (http().post(&route).header("x-svrngs-pass", &pass))
+        .json(&expense)
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(wrote.status(), 403, "{:?}", wrote.text().await);
+    let read = http()
+        .get(&route)
+        .header("x-svrngs-pass", &pass)
+        .send()
+        .await;
+    let read = read.unwrap();
+    assert_eq!(read.status(), 200, "Bo's phone still reads Money");
+    let read: Value = read.json().await.unwrap();
+    assert_eq!(live(&read), Vec::<Value>::new(), "nothing written as bo");
+}
