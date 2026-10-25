@@ -114,35 +114,38 @@ pub const GUESTS_PER_HOST: usize = 2;
 
 /// Why a redeeming `Admit` does not count — one per condition of the rule
 /// in the module docs.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    serde::Serialize,
+    serde::Deserialize,
+    thiserror::Error,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum InviteFault {
     /// No `Invite` with that id is held here.
+    #[error("this node does not hold its link")]
     Unheld,
     /// The `Admit`'s signer is not the `Invite`'s.
+    #[error("its link was made by someone else")]
     NotIssuer,
     /// The `Admit` is timed at or after the `Invite`'s `until`.
+    #[error("its link had lapsed")]
     Lapsed,
     /// The admitted key's signature over the redemption does not verify.
+    #[error("the joining key did not sign it")]
     BadCosignature,
     /// The `Invite` did not count before the `Admit` in the rail's order.
+    #[error("its link did not count before it")]
     Uncounted,
     /// The issuer's newer `Invite`, `by`, counted before the `Admit` in the
     /// rail's order and closed this one (u2-4b).
+    #[error("its link was closed by a newer one")]
     Closed { by: OpId },
-}
-
-impl core::fmt::Display for InviteFault {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(match self {
-            Self::Unheld => "this node does not hold its link",
-            Self::NotIssuer => "its link was made by someone else",
-            Self::Lapsed => "its link had lapsed",
-            Self::BadCosignature => "the joining key did not sign it",
-            Self::Uncounted => "its link did not count before it",
-            Self::Closed { .. } => "its link was closed by a newer one",
-        })
-    }
 }
 
 /// When a person joined the group (bash-same-name): they started it, a

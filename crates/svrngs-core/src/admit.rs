@@ -78,27 +78,50 @@ use crate::{Person, RailAct, RingVerifier, Roster, SignedOp};
 ///
 /// Ordered and sorted before admission returns, so two nodes holding the same
 /// ops produce a byte-identical report and not merely an equal set of acts.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
+///
+/// Its `Display` is one sentence a person can act on: **the one renderer**
+/// (ARCH §10.6). A gap is shown in three places — the `svrn ring log`
+/// table, a ring app's own page, and the refusal the append door returns —
+/// and each writing its own prose is how three of them end up saying
+/// different things about the same condition. Before this existed the door
+/// returned a serde dump (`{"gap":"bad_signature",…}`) straight at a
+/// housemate.
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    serde::Serialize,
+    serde::Deserialize,
+    thiserror::Error,
+)]
 #[serde(tag = "gap", rename_all = "snake_case")]
 pub enum RailGap {
     /// A journal line this build could not parse. From
     /// [`SkippedLine::Malformed`](crate::op::SkippedLine) — a torn
     /// write, or a payload that has no canonical form (see
     /// [`Payload`](crate::Payload)).
+    #[error("journal line {line} could not be read")]
     MalformedLine { line: u64, error: String },
     /// A journal line written by a NEWER build. Reading it would be guessing;
     /// counting the rest and saying nothing would be worse (ARCH §18.3), so
     /// an un-upgraded node reports that its answer covers a strict subset.
+    #[error("journal line {line} was written by a newer build — upgrade to read it")]
     NewerVersionLine { line: u64, v: u32 },
     /// The signature does not verify under the public key the line names.
     /// The op is not admitted.
+    #[error("an op whose signature does not verify ({})", crate::short_id(&.id.to_string()))]
     BadSignature { id: OpId, actor: String },
     /// The signature verifies, but no one in the roster signs with that key.
     /// Self-certifying is not the same as being a member. Not admitted.
+    #[error("an op signed by {}… — nobody in the roster claims that key", crate::actor_prefix(.actor))]
     UnknownSigner { id: OpId, actor: String },
     /// The `id` on the line is not the id its content derives. Admission uses
     /// the derived id, so this changes no outcome — it is reported because a
     /// peer writing lines whose id has been rewritten is a fact worth seeing.
+    #[error("a journal line whose id ({}) does not match its content", crate::short_id(&.claimed.to_string()))]
     TamperedId { claimed: OpId, derived: OpId },
     /// This actor's ops jump over sequence numbers, `from` to `to` (both
     /// missing). Something they wrote has not reached us — the one condition
@@ -107,11 +130,13 @@ pub enum RailGap {
     /// (arch-seal). One gap a run, not a seq: a seq is what a line claims,
     /// and a gap each let one line far past its chain cost every copy that
     /// many (#187).
+    #[error("{}", hole(.actor, .from, .to))]
     SequenceHole { actor: String, from: u64, to: u64 },
     /// One actor used one sequence number for two different ops. Equivocation
     /// or a lost counter after a restart. Both count, each weighed as itself:
     /// forks void nothing (svrngs, U7; DESIGN §6), since excluding both let an
     /// author take back their own act on every copy by signing a second.
+    #[error("{}… used one sequence number twice (#{seq}) — both acts count", crate::actor_prefix(.actor))]
     SequenceFork {
         actor: String,
         seq: u64,
@@ -125,20 +150,24 @@ pub enum RailGap {
     /// this gap names the exact op to ask for. It is the ask, not silence,
     /// and a typo'd citation must not flip every node's completeness bit
     /// forever (ROOT_CAUSE_FIXES A2).
+    #[error("a correction of {}, which this node does not hold", crate::short_id(&.missing.to_string()))]
     DanglingCorrection { by: OpId, missing: OpId },
     /// The signer is bound in the record but held no standing at this act's
     /// position — before their own [`Admit`](crate::RailAct::Admit) in the
     /// order (an act of a key the keeper cut is [`Self::Removed`]). The act
     /// counts for nothing and is named rather than dropped: it may be real
     /// data under an `Admit` this copy does not hold yet.
+    #[error("an op by actor {actor} was written while they held no standing in the ring")]
     NotAMember { id: OpId, actor: String },
     /// The signer was cut by the group's keeper, and the cut does not cover
     /// this act (svrngs, U7; DESIGN §6): written after the removal, or
     /// beside or above the acts the removal names. Nothing undoes a cut, so
     /// the act is refused for good.
+    #[error("an act by {}… after they were removed from the group does not count", crate::actor_prefix(.actor))]
     Removed { id: OpId, actor: String },
     /// A counting cut names an act of the removed key this copy does not
     /// hold, so the acts it covers cannot all be told yet (U7).
+    #[error("a removal names an act ({}) this node does not hold yet", crate::short_id(&.missing.to_string()))]
     UnheldCut { by: OpId, missing: OpId },
     /// The act's `prev` is not the id of its author's act at `seq − 1`: it
     /// names a parent at seq 0, names none above it, or names one other than
@@ -146,12 +175,14 @@ pub enum RailGap {
     /// admitted — it follows a history this copy does not hold, and may be
     /// real data on another branch. Judged against an act at `seq − 1` only
     /// when one is held; a parent not yet here is the [`Self::SequenceHole`].
+    #[error("an act from {}… does not follow the one before it (#{seq})", crate::actor_prefix(.actor))]
     WrongPrevious { id: OpId, actor: String, seq: u64 },
     /// A standing member's [`Admit`](crate::RailAct::Admit) that redeems an
     /// [`Invite`](crate::RailAct::Invite), refused for the named fault
     /// (svrngs, U2; DESIGN §6 "A link admits each person once"). It gives
     /// its key no standing; it may be real data under an `Invite` this copy
     /// does not yet hold.
+    #[error("a joining by link admitted by {}… does not count — {fault}", crate::actor_prefix(.actor))]
     RefusedRedemption {
         id: OpId,
         actor: String,
@@ -159,16 +190,29 @@ pub enum RailGap {
     },
     /// The keeper's cuts did not settle to one answer (#124): who stands,
     /// and so which acts count, cannot be judged on this copy.
+    #[error("the removals do not come to one answer, so who is in cannot be told")]
     Unsettled,
     /// A holder's line its pass does not grant (capability-signed; DESIGN
     /// §1): written outside its app's own part, after its pass lapsed, as a
     /// decision, or under a pass its person did not sign or that names
     /// another key. It counts as nobody's act.
+    #[error("an entry an app wrote as {}… does not count — {why}", crate::actor_prefix(.actor))]
     Ungranted {
         id: OpId,
         actor: String,
         why: crate::grant::Why,
     },
+}
+
+/// A [`RailGap::SequenceHole`]'s words: one act missing, or a run of them.
+fn hole(actor: &str, from: &u64, to: &u64) -> String {
+    let who = crate::actor_prefix(actor);
+    match from == to {
+        true => alloc::format!("an op from {who}… has not reached this node yet (#{from})"),
+        false => {
+            alloc::format!("ops from {who}… have not reached this node yet (#{from} to #{to})")
+        }
+    }
 }
 
 /// What a gap means for the fold's answer — the one classification (ARCH
@@ -224,95 +268,6 @@ impl RailGap {
             | Self::SequenceFork { .. }
             | Self::Ungranted { .. }
             | Self::Removed { .. } => GapClass::Contradiction,
-        }
-    }
-}
-
-/// One sentence a person can act on.
-///
-/// **The one renderer** (ARCH §10.6). A gap is shown in three places — the
-/// `svrn ring log` table, a ring app's own page, and the refusal the append
-/// door returns — and each writing its own prose is how three of them end up
-/// saying different things about the same condition. Before this existed the
-/// door returned a serde dump (`{"gap":"bad_signature",…}`) straight at a
-/// housemate.
-impl core::fmt::Display for RailGap {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        match self {
-            Self::MalformedLine { line, .. } => {
-                write!(f, "journal line {line} could not be read")
-            }
-            Self::NewerVersionLine { line, .. } => write!(
-                f,
-                "journal line {line} was written by a newer build — upgrade to read it"
-            ),
-            Self::BadSignature { id, .. } => write!(
-                f,
-                "an op whose signature does not verify ({})",
-                crate::short_id(&id.to_string())
-            ),
-            Self::NotAMember { actor, .. } => write!(
-                f,
-                "an op by actor {actor} was written while they held no standing in the ring"
-            ),
-            Self::Removed { actor, .. } => write!(
-                f,
-                "an act by {}… after they were removed from the group does not count",
-                crate::actor_prefix(actor)
-            ),
-            Self::UnheldCut { missing, .. } => write!(
-                f,
-                "a removal names an act ({}) this node does not hold yet",
-                crate::short_id(&missing.to_string())
-            ),
-            Self::UnknownSigner { actor, .. } => write!(
-                f,
-                "an op signed by {}… — nobody in the roster claims that key",
-                crate::actor_prefix(actor)
-            ),
-            Self::TamperedId { claimed, .. } => write!(
-                f,
-                "a journal line whose id ({}) does not match its content",
-                crate::short_id(&claimed.to_string())
-            ),
-            Self::SequenceHole { actor, from, to } if from == to => write!(
-                f,
-                "an op from {}… has not reached this node yet (#{from})",
-                crate::actor_prefix(actor)
-            ),
-            Self::SequenceHole { actor, from, to } => write!(
-                f,
-                "ops from {}… have not reached this node yet (#{from} to #{to})",
-                crate::actor_prefix(actor)
-            ),
-            Self::WrongPrevious { actor, seq, .. } => write!(
-                f,
-                "an act from {}… does not follow the one before it (#{seq})",
-                crate::actor_prefix(actor)
-            ),
-            Self::RefusedRedemption { actor, fault, .. } => write!(
-                f,
-                "a joining by link admitted by {}… does not count — {fault}",
-                crate::actor_prefix(actor)
-            ),
-            Self::SequenceFork { actor, seq, .. } => write!(
-                f,
-                "{}… used one sequence number twice (#{seq}) — both acts count",
-                crate::actor_prefix(actor)
-            ),
-            Self::DanglingCorrection { missing, .. } => write!(
-                f,
-                "a correction of {}, which this node does not hold",
-                crate::short_id(&missing.to_string())
-            ),
-            Self::Unsettled => {
-                f.write_str("the removals do not come to one answer, so who is in cannot be told")
-            }
-            Self::Ungranted { actor, why, .. } => write!(
-                f,
-                "an entry an app wrote as {}… does not count — {why}",
-                crate::actor_prefix(actor)
-            ),
         }
     }
 }
