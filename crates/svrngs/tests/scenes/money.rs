@@ -42,13 +42,13 @@ async fn voided(who: &Person, group: &str, what: &str) {
 }
 
 /// The groceries, split between Ada and Bo, as Bo's page and then Ada's
-/// say it. Bo's home page opens the first computer's copy of Money it
-/// lists, Ada's (DESIGN §3, "Or a folder the group carries": it opens on
-/// any of them, the pages show one; question.js `once`), so his share is
-/// written by her computer, and said so.
+/// say it. Bo's home page opens his own computer's copy of Money, listed
+/// first (node.rs `lent`; question.js `once`), so his share is signed by
+/// his computer and is his alone, no other computer's
+/// (demo/runs/authorship/2026-10-24/DESIGN.md §7).
 const BOTH: [&str; 2] = [
-    "Ada paid $30.00 for the groceries, split between Ada; Bo, through Ada’s computer.",
-    "You paid $30.00 for the groceries, split between Ada; Bo, through your computer.",
+    "Ada paid $30.00 for the groceries, split between Ada, Bo.",
+    "You paid $30.00 for the groceries, split between Ada, Bo.",
 ];
 
 /// The words `who`'s Money says, opened from their home page (fence 2:
