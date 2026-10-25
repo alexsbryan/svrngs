@@ -202,6 +202,15 @@ pub enum RailGap {
         actor: String,
         why: crate::grant::Why,
     },
+    /// An act naming another person than its signer's, `named`, written
+    /// past what the keeper's cutover covers (capability-signed; DESIGN
+    /// §1): a computer's word for someone else, which counts as nobody's.
+    #[error("an entry {}… wrote as {named} does not count — only their own phone or computer writes as them", crate::actor_prefix(.actor))]
+    CarriedForAnother {
+        id: OpId,
+        actor: String,
+        named: String,
+    },
 }
 
 /// A [`RailGap::SequenceHole`]'s words: one act missing, or a run of them.
@@ -267,6 +276,7 @@ impl RailGap {
             | Self::DanglingCorrection { .. }
             | Self::SequenceFork { .. }
             | Self::Ungranted { .. }
+            | Self::CarriedForAnother { .. }
             | Self::Removed { .. } => GapClass::Contradiction,
         }
     }
@@ -607,6 +617,24 @@ pub fn admit(
             .or_default()
             .push(id.clone());
     }
+    // ── the keeper's cutover (capability-signed; DESIGN §1) ──────────
+    //
+    // An act naming another person than its signer's counts only where the
+    // keeper's `Signers` covers it, by ancestry as a cut covers; until the
+    // keeper writes one, as before.
+    let cover = m.signers.as_ref().map(|by| {
+        let mut at = match authentic.get(by).map(|op| &op.kind.act) {
+            Some(RailAct::Signers { through }) => through.clone(),
+            _ => Vec::new(),
+        };
+        let mut seen = BTreeSet::new();
+        while let Some(id) = at.pop() {
+            if let Some(op) = authentic.get(&id).filter(|_| seen.insert(id.clone())) {
+                at.extend(op.kind.prev.clone());
+            }
+        }
+        seen
+    });
     let mut admitted: BTreeMap<OpId, Candidate<'_>> = BTreeMap::new();
     for (id, op) in authentic {
         let Some((_, person)) = m.person_of(op.stands_as()) else {
@@ -631,6 +659,25 @@ pub fn admit(
                 false => RailGap::NotAMember { id, actor },
             });
             continue;
+        }
+        let named = op
+            .kind
+            .on_behalf_of
+            .as_deref()
+            .filter(|n| *n != person.as_str());
+        let past = cover.as_ref().is_some_and(|c| !c.contains(&id));
+        if let Some(named) = named {
+            tracing::debug!(target: "rail:admit", id = %id, actor = %op.actor, named, cutover = cover.is_some(), past,
+                "admit: an act naming another person counts only where the keeper's cutover covers it, and as before until there is one");
+            if past {
+                let actor = op.actor.clone();
+                gaps.push(RailGap::CarriedForAnother {
+                    id,
+                    actor,
+                    named: named.into(),
+                });
+                continue;
+            }
         }
         admitted.insert(
             id.clone(),

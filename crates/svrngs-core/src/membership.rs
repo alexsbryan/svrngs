@@ -238,6 +238,11 @@ pub struct Membership {
     /// [`Guest::live`] whether it is on. Skipped when empty.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub visits: BTreeMap<OpId, Guest>,
+    /// The keeper's first counting [`RailAct::Signers`], the cutover
+    /// (capability-signed): past what it covers, an act naming another
+    /// person than its signer's counts nowhere (`admit`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub signers: Option<OpId>,
 }
 
 /// A guest, as a counting [`RailAct::Visit`] names them, hosted by the key
@@ -585,6 +590,7 @@ fn walk(
     // Each key's hand-ons that moved the keeper so far, which a cut keeps.
     let mut made: BTreeMap<&str, Vec<OpId>> = BTreeMap::new();
     let mut visits: BTreeMap<OpId, Guest> = BTreeMap::new();
+    let mut signers = None;
     for (id, op) in order.iter().copied() {
         let of = |k: &str| String::from(devices.get(k).map_or(k, String::as_str));
         if !live.contains_key(op.stands_as()) {
@@ -721,6 +727,11 @@ fn walk(
                     None => relays.remove(&op.actor),
                 };
             }
+            RailAct::Signers { .. } => {
+                tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor, keeper = ?keeper, keeps, first = signers.is_none(),
+                    "membership: a Signers is the cutover only as the keeper's, the first");
+                signers = signers.or(keeps.then(|| id.clone()));
+            }
             RailAct::Correct { corrects, .. } => {
                 let visit = visits.get_mut(corrects).filter(|g| g.host == op.actor);
                 tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor, %corrects, stops = visit.is_some(), "membership: a Correct is a visit's Stop only by the key that hosts it, and the first counts");
@@ -744,6 +755,7 @@ fn walk(
         unsettled: false,
         relays,
         visits,
+        signers,
     }
 }
 

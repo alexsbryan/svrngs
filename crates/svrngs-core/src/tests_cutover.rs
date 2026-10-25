@@ -7,8 +7,8 @@
 //! settles it, as a cut's `through` does.
 
 use alloc::string::String;
+use alloc::vec;
 use alloc::vec::Vec;
-use alloc::{format, vec};
 
 use crate::tests_support::*;
 use crate::*;
@@ -83,10 +83,5 @@ fn past_the_keepers_cutover_an_act_for_another_person_counts_nowhere() {
     let not_kept = by(&cy, None, 20, RailAct::Signers { through: vec![] }, None);
     let new = by(&alex, Some(&old), 30, record("new"), Some("bo"));
     let theirs = admitted(&[old, not_kept, new]);
-    assert_eq!(
-        says(&theirs),
-        ["old", "new"],
-        "{}",
-        format!("{:?}", theirs.gaps())
-    );
+    assert_eq!(says(&theirs), ["old", "new"], "{:?}", theirs.gaps());
 }
