@@ -834,3 +834,170 @@ async fn a_lend_s_computer_that_did_not_answer_is_shown_to_a_tab_as_its_window_d
     );
     alex.endpoint().close().await;
 }
+
+/// A service that answers every request `303` to `/`, naming in
+/// `x-svrngs-append` the acts the request's `x-test-append` holds: a lent
+/// app that writes as the person asking (`apps/events/server.mjs`).
+async fn appending_origin() -> SocketAddr {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    tokio::spawn(async move {
+        while let Ok((mut sock, _)) = listener.accept().await {
+            tokio::spawn(async move {
+                let Some(head) = origins::read_head(&mut sock).await else {
+                    return;
+                };
+                let acts = header_values(&head, "x-test-append").concat();
+                let answer = format!("HTTP/1.1 303 See Other\r\nLocation: /\r\nx-svrngs-append: {acts}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+                let _ = sock.write_all(answer.as_bytes()).await;
+                let _ = sock.shutdown().await;
+            });
+        }
+    });
+    addr
+}
+
+/// Each act of `node`'s copy of the group: its kind, whose it counts as and
+/// the key that signed it.
+fn written(node: &Node) -> Vec<(String, String, String)> {
+    let read = node.rail().admission(NS).unwrap();
+    let ops = serde_json::to_value(read.wire()).unwrap();
+    let ops = ops.as_array().unwrap().iter();
+    ops.filter_map(|o| {
+        let kind = o["payload"]["kind"]
+            .as_str()
+            .or(o["corrects"].as_str().map(|_| "a correction"))?;
+        Some((
+            kind.to_string(),
+            o["person"].as_str()?.to_string(),
+            o["actor"].as_str()?.to_string(),
+        ))
+    })
+    .collect()
+}
+
+/// **A lent app writes as the person asking only by their own device**
+/// (capability-signed (a), F1; demo/runs/authorship/2026-10-24/DESIGN.md
+/// §6). Sam lends `events`, of kind `events`, an app on a port that names
+/// in its answer, `x-svrngs-append`, the act it writes as whoever asks;
+/// Alex lends one too. Alex, at Sam's lend's origin on Alex's computer,
+/// says he is coming: Alex's computer signs it with its own key, as Alex,
+/// under the lend's kind (`events/coming`), and carries it to Sam's
+/// computer before the answer reaches the page, so Sam's copy holds it
+/// when Sam's app reads next. Kept: Alex at his own lend writes as Alex,
+/// and no carry is needed. Refused, the answer withheld and the refusal in
+/// words, nothing written: a correction of an act outside the lend's kind
+/// (Alex's own `money/paid`), so an app voids nothing of another's part;
+/// an act in a group Alex's computer does not hold. No answer carries the
+/// header on to the page. Red at HEAD: the door passes the header through
+/// to the page and nobody writes the act.
+#[tokio::test]
+async fn a_lent_app_writes_as_the_person_asking_only_by_their_own_device() {
+    let (said, _heard) = common::heard("origin=debug");
+    let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
+    for dir in [alex_dir.path(), sam_dir.path()] {
+        declare(
+            dir,
+            "events",
+            appending_origin().await.port(),
+            "events",
+            &[],
+        );
+    }
+    let api = alex.api_addr();
+    let host = |seed: u8| {
+        let label = Label::of(&signing(seed).verifying_key().to_bytes(), "events");
+        format!("{label}.localhost:{}", api.port())
+    };
+    let post = |acts: serde_json::Value| {
+        format!("POST /e HTTP/1.1\r\nConnection: close\r\nContent-Length: 0\r\nx-test-append: {acts}\r\n")
+    };
+    let (alex_key, sam_key) = (actor_of(&signing(1)), actor_of(&signing(2)));
+    let paid = alex.rail().commit(
+        NS,
+        &svrngs_core::tests_support::Fixture {
+            act: RailAct::from_json(
+                serde_json::json!({ "op": "record", "payload": { "kind": "money/paid" } }),
+            )
+            .unwrap(),
+        },
+    );
+    let paid = paid.unwrap().unwrap().lines()[0].id.clone();
+
+    let coming = serde_json::json!([{ "group": NS, "op": { "kind": "coming", "event": "e1" } }]);
+    let (head, sock) = ask(api, &host(2), &post(coming)).await;
+    body(sock).await;
+    eprintln!("Alex at Sam's events, coming: {head}");
+    assert!(head.starts_with("HTTP/1.1 303"), "{head}");
+    assert!(
+        header_values(&head, "x-svrngs-append").is_empty(),
+        "the page is never shown the act: {head}"
+    );
+    let alex_s = (
+        "events/coming".to_string(),
+        "alex".to_string(),
+        alex_key.clone(),
+    );
+    assert!(
+        written(&sam).contains(&alex_s),
+        "Sam's copy holds Alex's own: {:?}",
+        written(&sam)
+    );
+    assert!(written(&alex).contains(&alex_s), "{:?}", written(&alex));
+
+    let own = serde_json::json!([{ "group": NS, "op": { "kind": "came", "event": "e1" } }]);
+    let (head, sock) = ask(api, &host(1), &post(own)).await;
+    body(sock).await;
+    assert!(
+        head.starts_with("HTTP/1.1 303"),
+        "Alex at his own events: {head}"
+    );
+    let came = (
+        "events/came".to_string(),
+        "alex".to_string(),
+        alex_key.clone(),
+    );
+    assert!(written(&alex).contains(&came), "{:?}", written(&alex));
+
+    let before = (written(&alex), written(&sam));
+    for (row, acts, words) in [
+        (
+            "a correction outside the lend's kind",
+            serde_json::json!([{ "group": NS, "corrects": paid, "op": null }]),
+            "Sam’s events writes only its own part of the group’s record, so it was not saved.",
+        ),
+        (
+            "a group this computer does not hold",
+            serde_json::json!([{ "group": "elsewhere", "op": { "kind": "coming", "event": "e1" } }]),
+            "Sam’s events wrote in a group Sam and you are not both in, so it was not saved.",
+        ),
+    ] {
+        let (head, sock) = ask(api, &host(2), &post(acts)).await;
+        let page = format!("{head}{}", body(sock).await);
+        eprintln!("{row}: {page}");
+        assert!(page.starts_with("HTTP/1.1 403"), "{row}: {page}");
+        assert!(page.contains(words), "{row}: {page}");
+        assert!(
+            header_values(&head, "x-svrngs-append").is_empty(),
+            "{row}: {head}"
+        );
+    }
+    assert_eq!(
+        (written(&alex), written(&sam)),
+        before,
+        "nothing refused is written"
+    );
+    assert!(
+        !written(&sam).iter().any(|(_, _, k)| k == &sam_key),
+        "Sam's computer writes nothing as Alex"
+    );
+    let log = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
+    assert!(
+        log.lines()
+            .any(|l| l.contains("origin: refused — a lent app's act") && l.contains("why=")),
+        "{log}"
+    );
+    sam.endpoint().close().await;
+    alex.endpoint().close().await;
+}
