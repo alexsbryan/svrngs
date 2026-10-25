@@ -221,7 +221,18 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # capability-what-acts, "What acts as you" on both pages, each yes with its
 # Stop (question.js `acts`, home.rs's GET /reaching, app.js's `reads`),
 # +70, at the top of its estimate (+30 to +70): 17,790, inside the ceiling.
-BUDGET = {"crates/svrngs-core": 3150, ".": 17790}
+# The operator's ceiling for capability-signed through capability-release
+# (2026-10-24, "+535 / +180"): at most 18,325 and 3,330, each row raising
+# only what it lands, to one past (demo/runs/authorship/2026-10-24/
+# DESIGN.md §14). capability-signed, each device signing its own acts: a
+# holder's pass on its line and Grant judging it, the keeper's cutover, the
+# chained pass (H), /carry, the phone's worker and group page signing,
+# +472 and +144, inside its estimate (+253 to +479, +96 to +168). Its
+# economizing cut 101 and 75 first: RailGap and InviteFault's words by
+# thiserror (-63 core), Device's serde by derive (-12), the runtime's
+# standing_anywhere and removed_anywhere said as visit_anywhere (-23), the
+# lend worker's wasm wait (-3). 18,263 and 3,295.
+BUDGET = {"crates/svrngs-core": 3295, ".": 18263}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
