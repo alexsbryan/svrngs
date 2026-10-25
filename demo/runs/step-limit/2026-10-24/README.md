@@ -106,3 +106,8 @@ to 16: medians 0.0273, 0.0227, 0.0236, 0.0249 and 0.0469 s, all passed, the
 first round of each at 0.18 to 0.21 s as in every gate here. The 0.376 s
 round did not reproduce, so its cause is not known; it is left to the
 ceiling's own reading, not to this row. The gate was then run once more.
+
+That second gate passed whole in 883 s, inside the same 685 to 1261 s:
+every step in its limit, the ceiling canary in 3 s, the scenes in 331 s,
+`app laws` in 41 s, exit 0
+(`ralph/next/capability/ctl/log/sessions/capability-step-limit-2.await.log`).
