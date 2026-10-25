@@ -36,6 +36,10 @@ async function serve() {
     stdio: ['ignore', 'pipe', 'pipe'],
     env: { ...process.env, GRAPEVINE_DEBUG: '1' },
   });
+  // `launch` exits 3 when a browser cannot start, past this test's `finally`:
+  // the server ends with the process, or it outlives it, as Events' did and
+  // held node --test open (capability-step-limit (a)).
+  process.once('exit', () => child.kill());
   let traced = '';
   child.stderr.on('data', (b) => (traced += b));
   const line = await new Promise((done, fail) => {

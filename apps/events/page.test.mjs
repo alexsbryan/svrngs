@@ -34,6 +34,10 @@ async function serve(ops = {}) {
   }));
   writeFileSync(join(dir, 'config.json'), JSON.stringify({ file: join(dir, 'store.json'), who: WHO }));
   const child = spawn(process.execPath, [new URL('./server.mjs', import.meta.url).pathname, join(dir, 'config.json')], { stdio: ['ignore', 'pipe', 'inherit'] });
+  // `launch` exits 3 when a browser cannot start, past this test's `finally`:
+  // the server ends with the process, or it outlives it, and node --test,
+  // holding its stderr, never exits (capability-step-limit (a)).
+  process.once('exit', () => child.kill());
   const line = await new Promise((done, fail) => {
     child.stdout.once('data', (b) => done(String(b)));
     child.once('exit', (code) => fail(new Error(`the server exited ${code} before it listened`)));
