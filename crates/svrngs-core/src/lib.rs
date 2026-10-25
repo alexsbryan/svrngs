@@ -479,20 +479,20 @@ pub struct Redemption {
     /// reads as [`Device::Computer`]; and skipped for a computer, so a
     /// computer's redemption keeps the bytes, id and signature version 3
     /// gave it (`fixtures/redemption_before_browsers.jsonl`).
-    #[serde(
-        default = "Device::before_browsers",
-        skip_serializing_if = "Device::is_computer"
-    )]
+    #[serde(default, skip_serializing_if = "Device::dialled")]
     pub device: Device,
 }
 
 /// What holds a standing key (u4-1; DESIGN §3 "Joining", call 2): the
 /// register answers it for each standing key ([`Membership::device`]), and
 /// whether the key is dialled is [`Device::dialled`]'s alone.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Device {
-    /// A computer: it holds a copy of the record and is dialled.
+    /// A computer: it holds a copy of the record and is dialled. The
+    /// default, as a key admitted before a redemption could name a device
+    /// was a computer, the only device that could join.
+    #[default]
     Computer,
     /// A browser: it dials and is never dialled. Its endpoint lives only
     /// while its page runs, so a round dialling it would wait out a dial
@@ -502,21 +502,9 @@ pub enum Device {
 
 impl Device {
     /// Whether the round, the live fan-out and the list of what members
-    /// lend dial a key this device holds.
-    pub const fn dialled(self) -> bool {
-        match self {
-            Device::Computer => true,
-            Device::Browser => false,
-        }
-    }
-
-    /// The device of a key admitted before a redemption could name one:
-    /// a computer, the only device that could join.
-    const fn before_browsers() -> Self {
-        Device::Computer
-    }
-
-    const fn is_computer(&self) -> bool {
+    /// lend dial a key this device holds: a computer's, the one a
+    /// redemption's line leaves unwritten.
+    pub const fn dialled(&self) -> bool {
         matches!(self, Device::Computer)
     }
 
