@@ -201,7 +201,10 @@ she opens it, sees herself under Invited, and presses **I'm coming**.
 - **dWeb**: invited Di, Eve; coming Di; came Di.
 
 Eve is under Invited and nowhere else. Every computer holding each group
-gives the same answers (README, prediction 7).
+gives the same answers (README, prediction 7). Each answer is its own
+person's, signed on their own computer or phone as the app on Sam's
+computer named it, so none says it came through Sam's computer; the
+Events scene holds this on every gate (`crates/svrngs/tests/scenes/events.rs`).
 
 ![Sam's page the next morning](runs/events/2026-10-14/data/shots/28-sam-10.png)
 

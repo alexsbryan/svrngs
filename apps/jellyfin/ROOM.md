@@ -7,14 +7,15 @@ next run's.
 
 **The TV, once.** On a computer in the room, on the TV's WiFi, in the
 group: open your home page, find Jellyfin in your group's list, and press
-**Show it on a TV here**. The row then says the address to type into the
+**Open it to this WiFi**. The row then says the address to type into the
 TV's app, such as `http://192.168.1.4:48719/`, the same each time. (In a
 terminal, `svrngs room jellyfin` does the same.) On the TV, install
 Jellyfin's own app from its store and type that address into it, once.
 While it's on, anyone on this WiFi can open Jellyfin there as you. It
 stays on whenever svrngs runs on this computer and it is on this WiFi,
-also after a restart; on another WiFi it is off. Turn it off on the same
-row.
+also after a restart; on another WiFi it is off. **Close it to this
+WiFi** on the same row turns it off. "What acts as you", on your home
+page, lists it under "Open to this WiFi".
 
 **The TV signed in, with nothing typed on its remote.** On the TV, "Use
 Quick Connect": it shows a code. On your phone, open the group's link,

@@ -14,8 +14,9 @@ minutes on a computer, getting svrngs from the link included — one line the
 group's page gives, pasted in a terminal, the only thing typed (the operator,
 2026-10-11: "Pasting one line in the terminal is fine") — and two on a
 phone — unassisted; and on the phone the group opens within ten seconds of
-the link (NORTH_STAR §1's test). Nobody made an account but by a program a
-lender runs, and nothing asked anyone for a key.
+the link (NORTH_STAR §1's test). Nobody made an account but by the app
+itself from what svrngs tells it, Jellyfin's SSO plugin or Navidrome from
+the header, and nothing asked anyone for a key.
 Shown after U7, onboarding and the two-homes run (below): one evening of a
 group of friends who already share a Discord channel — its link posted
 there, joined from there, its library, its music and its photos used,
@@ -47,8 +48,8 @@ parts in order and `scripts/check.sh` once at its close (operator,
 | Sam removing Bo, and only Sam | landed, U7 (u7-removal; DESIGN §6): `svrngs remove Bo --group <name>` on Sam's computer is the cut, anyone else's an ask; every lender refused the removed person 0.048 s after, on one host (`runs/u7/2026-10-11/`) | — |
 | every person in their own home | every number so far on one host, every path direct (the branch `folders`' `demo/runs/perf/2026-10-10/README.md` §9 and `…/2026-10-10-make-it-fast/README.md`) | **two homes**: the library, the folder and a join measured between computers on two networks, through a relay |
 | the trip's photos on every computer, kept while their author sleeps | landed, the branch `folders` merged by the operator (`4475a89`; syp-1 to syp-4, perf-2); in the dry run again, with Ana's computer asleep, all thirty on Eve's disk 9.6 s after Eve was in, `runs/c/dry-2026-10-12-rerun/` | — |
-| Sam's library, each person signed in with nothing typed | landed (`apps/jellyfin/`, `demo/runs/mw/2026-10-08/`, mwp) | — |
-| Ana's music as each person, nothing typed | landed, bash-person: `svrngs share 4533` lends Navidrome and prints its two settings; Navidrome takes the person from `X-Svrngs-User`, an account's name the door makes unique by the person's key, never an account of the lender's; a link lets no one in under a name someone in the group goes by, and tells them how to add a device of theirs instead (bash-devices). In the dry run again, Navidrome 0.64.2 set as `share` printed signed each person in as their own `<name>-<16 hex>`, the same name Jellyfin's middleware gave them, on a computer and on a phone; a second computer whose login is `ana` was refused at the line, and a member opening Ana's Navidrome was not its admin, `runs/c/dry-2026-10-12-rerun/` | — |
+| Sam's library, each person signed in with nothing typed | landed, oidc: Jellyfin's own SSO plugin pointing at Sam's computer, lent with `svrngs share 8096 --sign-in-with-svrngs`, signs each person in as themselves, nothing typed, on a computer and a phone (`apps/jellyfin/README.md`, `demo/runs/oidc/2026-10-21-jellyfin-2/`); the sign-in program the dry runs used in front of Jellyfin is gone (`crates/svrngs-node/src/share.rs`, oidc-hook-cut) | — |
+| Ana's music as each person, nothing typed | landed, bash-person: `svrngs share 4533` lends Navidrome and prints its two settings; Navidrome takes the person from `X-Svrngs-User`, an account's name the door makes unique by the person's key, never an account of the lender's; a link lets no one in under a name someone in the group goes by, and tells them how to add a device of theirs instead (bash-devices). In the dry run again, Navidrome 0.64.2 set as `share` printed signed each person in as their own `<name>-<16 hex>`, the same name the sign-in program then in front of Jellyfin gave them, on a computer and on a phone; a second computer whose login is `ana` was refused at the line, and a member opening Ana's Navidrome was not its admin, `runs/c/dry-2026-10-12-rerun/` | — |
 | a phone in the group within ten seconds | Chromium through n0 joined in 5.4 s (`runs/u4/2026-10-05/README.md`, its finding 4) | — |
 | a person's words for each refusal and each asleep computer | landed ("Cy's computer did not answer, so what they lend is not listed", `runs/supf/2026-10-10/`), and since bash-first-minute (c) a computer that has not heard of the asker, or answered without saying what it lends, said so apart; the removed person's, landed with U7 ("You are no longer in <group>. …", on the home page and the group's page). In the dry run again only Ana's asleep computer was said not to answer, on every look kept, `runs/c/dry-2026-10-12-rerun/` | — |
 | Sam's library open to everyone in one evening | landed, bash-limit: a lend whose lender names no limit lets in everyone in its groups at once, `share` saying so, and its lender sets, changes or clears a limit on the home page, in place. On one host the door counts no computer, so six at once is not judged there (`runs/c/dry-2026-10-12-rerun/`, its row 9) | the two homes |
@@ -73,8 +74,9 @@ still the one the first dry run fetched, until the operator deploys again.
 joins: it keeps a svrngs running, and `svrngs new` refuses while one runs,
 `crates/svrngs/src/cli.rs`, `Refusal::Busy`);
 Jellyfin with at least three
-films, lent as `svrngs share` tells Sam, with the program Sam runs in front
-of it (`apps/jellyfin/`); Jellyfin's list of users exported.
+films and its SSO plugin pointing at Sam's computer, lent with sign-in
+with svrngs on (`apps/jellyfin/README.md`); Jellyfin's list of users
+exported.
 
 **Ana**, at home: svrngs on a computer, likewise; Navidrome with at least
 three albums, lent as `svrngs share 4533`, which asks no password and
@@ -92,7 +94,9 @@ svrngs log is kept.
 
 Nobody is told them. Where a row has not named its command or page yet, the
 step names the row; the run-of-show is rewritten in place when it lands,
-before the first run.
+before the first run. The group's-life scene plays the platform's part of
+them on every gate, each person a program on one host and the two lends a
+page each on a port (`crates/svrngs/tests/scenes/life.rs`).
 
 1. **Sam makes the group and posts its link in the channel.** On Sam's
    computer Sam makes the group, named as the channel is, Sam its keeper:
@@ -161,7 +165,7 @@ Read from the logs, each passed, failed, could-not-judge or never-ran
 - **Apart.** Each person's computer on its own network; each fetch's path
   as iroh selected it, direct or relayed, counted.
 - **No accounts.** Jellyfin's and Navidrome's lists of users against the
-  exports: unchanged, but one each made by a program its lender runs (as
+  exports: unchanged, but one each made by Jellyfin's SSO plugin (as
   Demo A) or by Navidrome from the header, for a person who came.
 
 ## After
