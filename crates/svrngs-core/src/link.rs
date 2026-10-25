@@ -75,9 +75,7 @@ impl Format {
     }
 
     fn of(byte: u8) -> Option<Self> {
-        [Format::Bare, Format::Relayed]
-            .into_iter()
-            .find(|f| f.byte() == byte)
+        ([Format::Bare, Format::Relayed].into_iter()).find(|f| f.byte() == byte)
     }
 }
 

@@ -268,9 +268,7 @@ impl Pass {
 
     /// A pass [`Pass::encode`] wrote, or `None`.
     pub fn decode(raw: &str) -> Option<Self> {
-        let json = base64::engine::general_purpose::URL_SAFE_NO_PAD
-            .decode(raw.trim())
-            .ok()?;
+        let json = (base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(raw.trim())).ok()?;
         serde_json::from_slice(&json).ok()
     }
 }

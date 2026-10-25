@@ -312,9 +312,7 @@ pub fn verify_hex(signer: &str, msg: &[u8], sig_hex: &str) -> bool {
     let Ok(sig_arr) = <[u8; 64]>::try_from(sig_bytes.as_slice()) else {
         return false;
     };
-    verifying
-        .verify(msg, &Signature::from_bytes(&sig_arr))
-        .is_ok()
+    (verifying.verify(msg, &Signature::from_bytes(&sig_arr))).is_ok()
 }
 
 #[cfg(test)]

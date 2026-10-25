@@ -231,8 +231,7 @@ fn sign_lines(
     });
     let reach = a.now.saturating_add(AHEAD_SECS);
     let signed = |op: &Op<SignedOp>| {
-        a.verifier
-            .verify(&op.actor, &derive_id(op, a.namespace), &op.kind.sig)
+        (a.verifier).verify(&op.actor, &derive_id(op, a.namespace), &op.kind.sig)
     };
     let (followed, passed): (Vec<_>, Vec<_>) = (held.iter().filter(|op| op.ts_unix >= a.now))
         .partition(|op| op.ts_unix <= reach && signed(op));

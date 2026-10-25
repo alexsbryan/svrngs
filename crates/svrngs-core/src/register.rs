@@ -57,10 +57,7 @@ impl Command for Redeem {
 
     fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, RedeemRefusal> {
         let register = before.membership();
-        let invite = register
-            .invites
-            .get(&self.invite)
-            .ok_or(RedeemRefusal::NoInvite)?;
+        let invite = (register.invites.get(&self.invite)).ok_or(RedeemRefusal::NoInvite)?;
         if invite.issuer != self.issuer {
             return Err(RedeemRefusal::NotOwn);
         }
@@ -264,20 +261,13 @@ impl Command for Cutover {
         let written = before.membership().signers.is_some();
         tracing::debug!(target: "register", written, "cutover: written once, naming every key's newest acts held");
         let through = before.tips.values().flatten().cloned().collect();
-        Ok(if written {
-            Vec::new()
-        } else {
-            vec![RailAct::Signers { through }]
-        })
+        let signers = (!written).then_some(RailAct::Signers { through });
+        Ok(Vec::from_iter(signers))
     }
 
     fn confirm(&self, after: &Admission, _written: &[OpId]) -> Result<(), HandOnRefusal> {
-        after
-            .membership()
-            .signers
-            .as_ref()
-            .map(|_| ())
-            .ok_or(HandOnRefusal::NotKeeper)
+        let written = after.membership().signers.is_some();
+        written.then_some(()).ok_or(HandOnRefusal::NotKeeper)
     }
 }
 
@@ -353,10 +343,7 @@ impl Command for RelayAt {
         tracing::debug!(target: "register", key = %self.key, ?said, url = ?self.url, writes,
             "relay: the record's relay for this computer against the one it is reached through");
         let url = self.url.as_ref().map(ToString::to_string);
-        Ok(writes
-            .then_some(RailAct::Relay { url })
-            .into_iter()
-            .collect())
+        Ok(Vec::from_iter(writes.then_some(RailAct::Relay { url })))
     }
 }
 

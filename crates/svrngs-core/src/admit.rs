@@ -59,6 +59,7 @@
 //! total with complete confidence, which is the failure ARCH §18.3 names.
 
 use alloc::collections::{BTreeMap, BTreeSet};
+use alloc::format;
 use alloc::string::String;
 use alloc::string::ToString;
 use alloc::vec::Vec;
@@ -217,10 +218,8 @@ pub enum RailGap {
 fn hole(actor: &str, from: &u64, to: &u64) -> String {
     let who = crate::actor_prefix(actor);
     match from == to {
-        true => alloc::format!("an op from {who}… has not reached this node yet (#{from})"),
-        false => {
-            alloc::format!("ops from {who}… have not reached this node yet (#{from} to #{to})")
-        }
+        true => format!("an op from {who}… has not reached this node yet (#{from})"),
+        false => format!("ops from {who}… have not reached this node yet (#{from} to #{to})"),
     }
 }
 
@@ -613,16 +612,9 @@ pub fn admit(
     // chain is held, so it is reported as what it is and never also as a
     // hole (U7; DESIGN §6). Before, the audit counted admitted acts only.
     let mut seqs: BTreeMap<&str, BTreeMap<u64, Vec<OpId>>> = BTreeMap::new();
-    for (id, op) in authentic
-        .iter()
-        .filter(|(_, op)| m.person_of(op.stands_as()).is_some())
-    {
-        let op: &Op<SignedOp> = op;
-        seqs.entry(op.actor.as_str())
-            .or_default()
-            .entry(op.kind.seq)
-            .or_default()
-            .push(id.clone());
+    for (id, op) in (authentic.iter()).filter(|(_, op)| m.person_of(op.stands_as()).is_some()) {
+        let of = seqs.entry(op.actor.as_str()).or_default();
+        of.entry(op.kind.seq).or_default().push(id.clone());
     }
     // ── the keeper's cutover (capability-signed; DESIGN §1) ──────────
     //
@@ -667,11 +659,7 @@ pub fn admit(
             });
             continue;
         }
-        let named = op
-            .kind
-            .on_behalf_of
-            .as_deref()
-            .filter(|n| *n != person.as_str());
+        let named = (op.kind.on_behalf_of.as_deref()).filter(|n| *n != person.as_str());
         let past = cover.as_ref().is_some_and(|c| !c.contains(&id));
         if let Some(named) = named {
             tracing::debug!(target: "rail:admit", id = %id, actor = %op.actor, named, cutover = cover.is_some(), past,
@@ -742,10 +730,7 @@ pub fn admit(
     // nothing (arch-seal; svrn-docs A_RECORD_FOR_YEARS §6 q2): an older
     // build's seal set a floor that hid the holes below it, and here it
     // hides none, so a copy an older build pruned says what it is missing.
-    let seals = admitted
-        .values()
-        .filter(|c| matches!(c.op.kind.act, RailAct::Seal));
-    for c in seals {
+    for c in (admitted.values()).filter(|c| matches!(c.op.kind.act, RailAct::Seal)) {
         tracing::debug!(namespace, id = %c.id, actor = %crate::actor_prefix(&c.op.actor), seq = c.op.kind.seq,
             "ring rail: a seal is held and retires nothing — an older build's act, read as one that does nothing");
     }
@@ -823,13 +808,12 @@ pub fn admit(
     gaps.sort();
     gaps.dedup();
 
-    let applied = out.iter().filter(|o| o.applies()).count();
     tracing::debug!(
         namespace,
         verifier = verifier.name(),
         held = acts.len(),
         admitted = out.len(),
-        applied,
+        applied = out.iter().filter(|o| o.applies()).count(),
         voided = voided.len(),
         gaps = gaps.len(),
         "ring rail: admission"

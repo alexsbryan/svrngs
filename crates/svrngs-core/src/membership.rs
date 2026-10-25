@@ -326,9 +326,7 @@ impl Membership {
     /// `Admit`'s time, else they started the group, as a seed row's person
     /// is the one first key with none.
     pub fn joined(&self, first: &str) -> Joined {
-        self.admitted_at
-            .get(first)
-            .map_or(Joined::Started, |t| Joined::At(*t))
+        (self.admitted_at.get(first)).map_or(Joined::Started, |t| Joined::At(*t))
     }
 
     /// Each person's stretch in the group, by their first key: from when
@@ -379,9 +377,7 @@ impl Membership {
         &'a self,
         person: &'p Person,
     ) -> impl Iterator<Item = &'a String> + use<'a, 'p> {
-        self.standing
-            .iter()
-            .filter(move |k| self.bindings.get(*k) == Some(person))
+        (self.standing.iter()).filter(move |k| self.bindings.get(*k) == Some(person))
     }
 
     /// The relay `key` is reached through, if it stands now and the
@@ -460,12 +456,8 @@ pub fn membership<'a>(
     // id → whether the act is a hand-on or follows one, along its chain.
     let mut handed: BTreeMap<&OpId, (bool, bool)> = BTreeMap::new();
     for (id, op) in &by_chain {
-        let after = op
-            .kind
-            .prev
-            .as_ref()
-            .and_then(|p| handed.get(p))
-            .is_some_and(|(is, after)| *is || *after);
+        let parent = (op.kind.prev.as_ref()).and_then(|p| handed.get(p));
+        let after = parent.is_some_and(|(is, after)| *is || *after);
         handed.insert(*id, (matches!(op.kind.act, RailAct::HandOn { .. }), after));
     }
     let kept: BTreeSet<&OpId> = handed

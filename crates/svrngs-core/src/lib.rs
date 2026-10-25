@@ -571,12 +571,7 @@ impl RailAct {
             let raw = e.to_string();
             // serde appends " at line 0 column 0" to a `from_value` failure,
             // which is a position in a document that does not exist.
-            let cleaned = raw
-                .split(" at line ")
-                .next()
-                .unwrap_or(&raw)
-                .trim()
-                .to_string();
+            let cleaned = String::from(raw.split(" at line ").next().unwrap_or(&raw).trim());
             RailError::Rejected(if cleaned.is_empty() { raw } else { cleaned })
         })
     }
