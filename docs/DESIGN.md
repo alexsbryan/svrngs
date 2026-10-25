@@ -989,10 +989,10 @@ and breaks one fails the build.
 number:
 - *Money* (`apps/expenses/canary.mjs`, run by
   `crates/svrngs-node/tests/canaries.rs`): no server, all state in the
-  record. Two computers, everyone writes, a correction voids, and both fold
-  to the same balances.
+  record. One computer per person, each writing as its own, a correction
+  voids, and every copy folds to the same balances.
 - *Events* (`apps/events/canary.mjs`, the same harness): an event posted to
-  two groups, another's correction counting for nothing; both copies fold
+  two groups, another's correction counting for nothing; every copy folds
   to the same event, and the second group's record holds none of the
   first's answers.
 - *Conformance* (`apps/web-conformance/`, run by
