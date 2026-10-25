@@ -434,6 +434,13 @@ pub enum RailAct {
     /// and the host's [`Self::Correct`] of it is their Stop. It binds
     /// nothing, so a guest's key never stands. Carries no [`Payload`].
     Visit(Visit),
+    /// The keeper's cutover (capability-signed; DESIGN §1, "An entry's
+    /// author is its signer"): each key's newest acts the keeper's computer
+    /// held when it wrote this, so an act naming another person than its
+    /// signer's counts only where this covers it, by ancestry, as a cut
+    /// covers. Counts only as the keeper's, the first. Carries no
+    /// [`Payload`].
+    Signers { through: Vec<OpId> },
 }
 
 /// What a [`RailAct::Visit`] says: the guest's name, the key they made for
@@ -715,9 +722,10 @@ pub const RUNS_LINE_VERSION: u32 = 10;
 pub const VISIT_LINE_VERSION: u32 = 11;
 
 /// The line format version a holder's line ships at (capability-signed): a
-/// [`SignedOp`] carrying a `grant`. A build at [`VISIT_LINE_VERSION`] names
-/// it `NewerVersionLine`, so it counts the line as nobody's, never as the
-/// person of a key that did not sign it.
+/// [`SignedOp`] carrying a `grant`, and the keeper's [`RailAct::Signers`].
+/// A build at [`VISIT_LINE_VERSION`] names it `NewerVersionLine`, so it
+/// counts the line as nobody's, never as the person of a key that did not
+/// sign it, and says its answer covers a subset.
 pub const AUTHORSHIP_LINE_VERSION: u32 = 12;
 
 impl Journaled for SignedOp {
@@ -759,6 +767,7 @@ impl Journaled for SignedOp {
             RailAct::Relay { .. } => RELAY_LINE_VERSION,
             RailAct::Runs { .. } => RUNS_LINE_VERSION,
             RailAct::Visit(_) => VISIT_LINE_VERSION,
+            RailAct::Signers { .. } => AUTHORSHIP_LINE_VERSION,
             _ => Self::VERSION,
         }
     }

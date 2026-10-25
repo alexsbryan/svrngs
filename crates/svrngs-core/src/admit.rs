@@ -741,26 +741,15 @@ pub fn admit(
     let out: Vec<AdmittedOp> = order
         .into_iter()
         .map(|a| {
-            let (corrects, payload) = match &a.op.kind.act {
-                RailAct::Record { payload } => (None, Some(payload.clone())),
-                RailAct::Correct {
-                    corrects,
-                    replacement,
-                } => (Some(corrects.clone()), replacement.clone()),
-                // A seal does nothing (arch-seal): it voids nothing and
-                // carries nothing, so `applies()` is false and no reducer
-                // sees it. Admit/Remove carry meaning to the MEMBERSHIP
-                // function and never to an app (no-re-division).
-                RailAct::Seal
-                | RailAct::Admit { .. }
-                | RailAct::Remove { .. }
-                | RailAct::HandOn { .. }
-                | RailAct::Invite { .. }
-                | RailAct::Synced { .. }
-                | RailAct::Runs { .. }
-                | RailAct::Relay { .. }
-                | RailAct::Visit(_) => (None, None),
+            // Only a record or a correction carries an app's act: a seal
+            // does nothing (arch-seal), so `applies()` is false and no
+            // reducer sees it, and the register's acts carry meaning to
+            // the MEMBERSHIP function and never to an app (no-re-division).
+            let corrects = match &a.op.kind.act {
+                RailAct::Correct { corrects, .. } => Some(corrects.clone()),
+                _ => None,
             };
+            let payload = a.op.kind.act.payload().cloned();
             AdmittedOp {
                 id: a.id.clone(),
                 actor: a.op.actor.clone(),

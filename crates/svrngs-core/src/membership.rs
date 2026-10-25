@@ -759,7 +759,8 @@ impl RailAct {
     /// Whether this act moves membership: it binds (`Admit`), cuts or asks
     /// (`Remove`), hands the keeper on (`HandOn`) or opens a link
     /// (`Invite`); or says where its signer is reached (`Relay`), or who
-    /// is visiting (`Visit`), each of which the register carries beside
+    /// is visiting (`Visit`), or cuts over to each act counting as its
+    /// signer's alone (`Signers`), each of which the register carries beside
     /// the keys. A `Correct` does not, since U7: it voids nothing that
     /// moves membership. [`standing_reads`] keeps these, and the acts
     /// of every key a `Remove` names, so the list has one home beside the
@@ -772,7 +773,8 @@ impl RailAct {
             | RailAct::HandOn { .. }
             | RailAct::Invite { .. }
             | RailAct::Relay { .. }
-            | RailAct::Visit(_) => true,
+            | RailAct::Visit(_)
+            | RailAct::Signers { .. } => true,
             RailAct::Record { .. }
             | RailAct::Correct { .. }
             | RailAct::Seal
