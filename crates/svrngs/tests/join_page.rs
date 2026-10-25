@@ -34,6 +34,10 @@ use svrngs_node::node::Node;
 use svrngs_node::{actor_of, Device, RailAct, SigningKey};
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
 
+/// Sam's shelf as the phone's page offers it: a port lend writes as the
+/// person opening it, and its open says so (svrngs-node home/question.js `agreed`).
+const SHELF: &str = "Open Sam’s shelf. It writes what you say there into house’s record, as you.";
+
 /// A service on 127.0.0.1 answering every request `200 hi`.
 async fn service() -> u16 {
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
@@ -185,7 +189,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
         "a name someone goes by is refused, and another asked (bash-person):\n{seen:#}"
     );
     assert!(in_house(&first["status"], "Pia"), "{seen:#}");
-    assert_eq!(first["lent"], json!(["Open Sam’s shelf"]), "{seen:#}");
+    assert_eq!(first["lent"], json!([SHELF]), "{seen:#}");
 
     // The issuer's journal: one Admit naming a browser's key and that name,
     // and the key the one the page keeps sealed.
@@ -220,7 +224,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
         let o = &seen[again];
         assert_eq!(o["asked"], false, "{again}: asked again:\n{seen:#}");
         assert!(in_house(&o["status"], "Pia"), "{again}:\n{seen:#}");
-        assert_eq!(o["lent"], json!(["Open Sam’s shelf"]), "{again}:\n{seen:#}");
+        assert_eq!(o["lent"], json!([SHELF]), "{again}:\n{seen:#}");
     }
 
     // A lend opens at an origin of its own, `<label>.localhost`, whose
