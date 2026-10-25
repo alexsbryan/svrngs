@@ -8,8 +8,10 @@
 // entry as you, so nothing here names who wrote it. An entry another
 // person's computer wrote in someone's name says so: "bo, through cy’s
 // computer" (gv-via; the phone's own words, web/app.js). Each entry is
-// checked by expenses.js's one validator before it is sent.
-import { EXPENSE, SETTLE, SHARE, actsOf, init, money, parseCents, reduce, transfers, validate } from './expenses.js';
+// checked by expenses.js's one validator before it is sent. Each person is
+// kept by their first key, you by `you_key`, and said by name, two of one
+// name told apart by when each joined (`called`; keys-names).
+import { EXPENSE, SETTLE, SHARE, actsOf, called, init, money, parseCents, reduce, transfers, validate } from './expenses.js';
 
 const ACTS = 'svrngs/acts';
 const app = document.getElementById('app');
@@ -25,33 +27,39 @@ async function show() {
   const r = await fetch(ACTS);
   const read = await r.json().catch(() => ({}));
   if (!r.ok) return app.replaceChildren(el('h1', 'Money'), el('p', `Your group’s money can’t be read just now: ${read.error ?? `it answered ${r.status}`}.`));
-  const { you, people } = read;
+  const { you, you_key, people, spans } = read;
+  const me = you_key ?? you;
   const state = actsOf(read).reduce(reduce, init());
+  const said = (p) => (Object.hasOwn(state.names, p) ? state.names[p] : p);
+  const name = (p) => called(spans, p, said(p));
   const said = Object.assign(el('p'), { id: 'said' });
   // An entry checked as expenses.js would read it, then sent; the page
   // drawn again once it is saved, or why not said.
   const send = (op, body = { op }) => {
-    const gaps = validate(state, { id: 'new', ts: 0, by: you, op });
+    const gaps = validate(state, { id: 'new', ts: 0, by: you, key: you_key ?? null, op });
     if (gaps.length) return said.replaceChildren(`That isn’t saved: ${gaps.map((g) => g.message).join('; ')}.`);
     const sent = fetch(ACTS, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
     return sent.then(async (w) => (w.ok ? show() : Promise.reject(new Error((await w.json().catch(() => ({}))).error ?? `it answered ${w.status}`)))).catch((e) => said.replaceChildren(`That isn’t saved: ${e.message}.`));
   };
-  const mine = state.balances[you] ?? 0;
-  const owing = transfers(state.balances);
+  const mine = state.balances[me] ?? 0;
+  const owing = transfers(state.balances, state.names);
+  // A payment says whom it pays by name, for an older Money, and by key.
+  const paying = (t) => ({ kind: SETTLE, to: said(t.to), ...(t.to !== said(t.to) && { to_key: t.to }), amount_cents: t.cents });
   const pays = owing.map((t) => {
-    const li = el('li', `${t.from === you ? 'You pay' : `${t.from} pays`} ${t.to === you ? 'you' : t.to} ${money(t.cents)}. `);
-    if (t.from === you) li.append(button(`Say you paid ${t.to} ${money(t.cents)}`, null, () => send({ kind: SETTLE, to: t.to, amount_cents: t.cents })));
+    const li = el('li', `${t.from === me ? 'You pay' : `${name(t.from)} pays`} ${t.to === me ? 'you' : name(t.to)} ${money(t.cents)}. `);
+    if (t.from === me) li.append(button(`Say you paid ${name(t.to)} ${money(t.cents)}`, null, () => send(paying(t))));
     return li;
   });
   // A person's name, and whose computer wrote their part when it was someone else's.
   const through = (name, via) => (via ? `${name}, through ${via === you ? 'your' : `${via}’s`} computer` : name);
   const spent = Object.entries(state.expenses).map(([id, e]) => {
-    const payer = through(e.payer === you ? 'You' : e.payer, e.vias[e.payer]);
-    const split = e.participants.map((p) => (p === e.payer ? p : through(p, e.vias[p])));
+    const payer = through(e.payer === me ? 'You' : name(e.payer), e.vias[e.payer]);
+    const split = e.participants.map((p) => (p === e.payer ? name(p) : through(name(p), e.vias[p])));
     const li = el('li', `${payer}${e.vias[e.payer] ? ',' : ''} paid ${money(e.amount_cents)} for ${e.description}, split between ${split.join(split.some((p) => p.includes(',')) ? '; ' : ', ')}. `);
-    if (!e.participants.includes(you)) li.append(button('Say you were in on it', null, () => send({ kind: SHARE, expense: id })));
+    if (!e.participants.includes(me)) li.append(button('Say you were in on it', null, () => send({ kind: SHARE, expense: id })));
     return li;
   });
+  const everyone = spans?.filter((s) => s.left == null).map((s) => called(spans, s.person_key, s.person)) ?? people;
   const add = el('p', '', field('What it was for: ', 'what'), ' ', field('How much: ', 'amount'), ' ', button('Add it, paid by you', 'add', () => {
     const cents = parseCents(document.getElementById('amount').value);
     if (cents === null) return said.replaceChildren('Say how much, in dollars and cents, such as 12.50.');
@@ -64,7 +72,7 @@ async function show() {
     pays.length ? el('ul', '', ...pays) : el('p', 'Nobody owes anybody.'),
     el('h2', 'What people paid for'),
     spent.length ? el('ul', '', ...spent) : el('p', 'Nobody has added anything yet.'),
-    el('p', `When someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — ${people.join(', ')} — sees it.`),
+    el('p', `When someone adds what they paid, it is split between them and whoever says they were in on it. Everyone in your group — ${everyone.join(', ')} — sees it.`),
     el('h2', 'Add what you paid'),
     add,
     said,
