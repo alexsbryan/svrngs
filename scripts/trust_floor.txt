@@ -6,6 +6,18 @@
 # on a line of its body, `Trust floor: <the reason, and what was tried first>`.
 # Changing it is the operator's, as a size-budget raise is (AGENTS.md "Done").
 #
+# What it keeps out: code from anywhere but the files you or your group
+# brought, and reach nobody chose: a CDN, a tracker, a fetch to another
+# address, a socket open past this computer or this WiFi. What it does not
+# do: stop an app you chose from sending out what it reads. A page that
+# navigates carries what it holds with it, and a browser has other ways out
+# no policy here closes. What protects what a carried app reads is that you
+# chose it: its files are pinned, each new version runs as you only after
+# your yes, the record says who brought or changed it, and it reads its own
+# part of the record alone (svrn-docs rings/current/WHAT_CAN_ACT_AS_YOU.md
+# §5; DESIGN §3, "Or a folder the group carries"). A sandbox for code from
+# outside your rings waits for its trigger (PLAN §2).
+#
 # page <name> <file> <anchor>: the policy that file serves, the one string
 #   literal after the anchor, which the file holds once. Under it, each
 #   directive as served, token by token, in any order. Anything past 'self'

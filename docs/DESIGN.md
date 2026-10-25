@@ -217,7 +217,17 @@ Events' and the grapevine's folds keep both, `by` and `via`, and their pages
 say an entry another person's computer wrote as "bo, through cy’s
 computer". Every answer carries the containment floor's headers: the page
 may load from and connect to its own origin only; no camera, microphone or
-location; no DNS prefetch. A carried app comes to a group from the shelf
+location; no DNS prefetch (`scripts/trust_floor.txt`). The floor keeps out
+code from anywhere but the app's own files, and reach nobody chose: a CDN,
+a tracker, a fetch elsewhere. It does not stop an app the person chose
+from sending out what it reads, since a page that navigates carries what
+it holds, and a browser has other ways out. What protects what a carried
+app reads is that its people chose it: its files are pinned, each version
+runs as a person only on their yes, the record says who brought or
+changed it, and it reads its own kind alone, the trust a person already
+gives the programs on their computer (svrn-docs
+`rings/current/WHAT_CAN_ACT_AS_YOU.md` §5). A sandbox earns its cost once
+code arrives from outside a person's rings (PLAN §2). A carried app comes to a group from the shelf
 (below, "The home page") or as any folder dropped into the group's folder
 under `apps/`.
 
