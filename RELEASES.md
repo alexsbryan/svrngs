@@ -47,7 +47,9 @@ you. Nobody on a computer is asked.
 
 **Two people with one name stay two.** Their yeses, their versions and
 what they wrote are their own, and the pages tell them apart by when they
-joined: "Ana (joined 3 Oct)".
+joined: "Ana (joined 3 Oct)". Not yet everywhere: Money's balances and
+Events' list of who's coming still count two people of one name as one.
+That's next.
 
 **In Money, only you change your entry.** If kim tries to change your £40
 dinner, it stays counted as you wrote it, and Money says why kim's change

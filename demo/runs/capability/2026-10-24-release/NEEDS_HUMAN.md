@@ -63,5 +63,15 @@ V1.1's is.
   (`crates/svrngs-node/src/home/question.js:178`). The notes and DESIGN
   §3 say the trade, the page does not. No row held it; a row of its own if
   you want it before publishing.
+- **Two people of one name are not yet two everywhere.** Money's balances
+  (`apps/expenses/expenses.js:199`) and Events' list of who's coming
+  (`apps/events/events.js:185`) key a person by name, so two members of
+  one name share one balance. The notes say so, and the fix is the first
+  row after this release (PLAN §1; the operator, 2026-10-25: "Record now,
+  fix after release").
+- **Publish from the commit that carries this note**, not 95a31192: the
+  queue's closing audit landed after the close (76773638), and so did
+  this note. `README.md`'s close names the commit `scripts/check.sh` last
+  passed at.
 - **Not run with people.** Every scene is a program on one host; nobody has
   used this release in a real group (AGENTS.md 7).

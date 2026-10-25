@@ -118,6 +118,15 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   release is prepared, with House rules, and waits on the operator's publish
   (`demo/runs/capability/2026-10-24-release/NEEDS_HUMAN.md`); what it left
   waits in §2, each with its trigger;
+- then what the capability queue left keyed by name, the first row after
+  its release (the operator, 2026-10-25: "Record now, fix after release").
+  capability-keys keyed each yes and each correction by person key
+  (a809c6d5, 1bd20af4); Money's balances (`apps/expenses/expenses.js:199`)
+  and Events' list of who is coming (`apps/events/events.js:185`) still
+  key a person by name, so two members of one name share one balance and
+  come as one. Its worker named guest hosts, the removals list and the
+  door's "did not answer" rows too (`crates/svrngs-node/src/node.rs:158-171`,
+  lists that also reach the CLI and what lent pages receive);
 - sealing, at its §2 trigger.
 
 The operator's switch stands apart from that order: when they flip
