@@ -152,7 +152,9 @@ counted (`door::Who::Own`).
 **Localhost is the trust boundary.** Any process on the lender's computer
 can reach a lent port and type an identity header, as it can reach any
 localhost service. The computer is the boundary, and any program on it
-speaks as its person. A tie between the node and each process it lends to
+speaks as its person, and only as its person: the record API writes a body
+naming this computer's person as its own act, and refuses one naming
+anyone else (`not_yours`), whose entries are signed on their own devices. A tie between the node and each process it lends to
 waits in PLAN §2.
 
 **Or a folder the group carries.** A lend goes with its lender; a carried
@@ -218,9 +220,13 @@ to its files is a new version, by its files' hashes, and runs as nobody
 until they say yes. Both pages ask without interrupting, under "What acts
 as you": one line, "1 app changed. See what’s new", opening to "Money: kim
 changed its files on 16 Oct." and "Open the new version". The yes (`POST
-/runs`) records a `RailAct::Runs` naming the app's files, as the person's:
-its `on_behalf_of`, else its writer's, so a yes through another member's
-computer is that computer's word for the person. An app brought before the
+/runs`) records a `RailAct::Runs` naming the app's files, signed by the
+person's own device: the home page's by this computer, and a phone's by
+the phone's own key, the computer it reaches naming the act and carrying
+the signed line back unchanged (`POST /carry`). A yes counts only from its
+person's own device and only naming bytes a folder act placed at those
+paths, so no other member's computer, and no file a member supplied
+outside the folder, decides what runs as anyone. An app brought before the
 pin is pinned at its first files, nothing migrated.
 Until a person says yes, the version they last said yes to, else the one
 brought, keeps running as them on their computers and phones alike, and
