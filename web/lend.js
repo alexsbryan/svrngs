@@ -148,8 +148,7 @@ function dialFor(lender) {
 // the door checks beside the pass (`linked`); or, when a lend of the open
 // is at a door taking no link, the holder's own bytes, as before (F2).
 async function opened() {
-  loaded ??= init({ module_or_path: store.runtime() });
-  await loaded;
+  await (loaded ??= init({ module_or_path: store.runtime() }));
   const own = !handed.seed;
   const bytes = own ? crypto.getRandomValues(new Uint8Array(32)) : Uint8Array.from(handed.seed.match(/../g), (h) => parseInt(h, 16));
   linked = null;
@@ -425,8 +424,7 @@ async function lent(request, url, where) {
 // An app's write is this phone's own (capability-signed; DESIGN §3): shaped
 // as the door shapes one (svrngs-core `app_act`) and `signed`.
 async function writing(request, lend) {
-  loaded ??= init({ module_or_path: store.runtime() });
-  await loaded;
+  await (loaded ??= init({ module_or_path: store.runtime() }));
   const act = app_act(lend.kind, new Uint8Array(await request.arrayBuffer()));
   if (!act) return Response.json({ error: 'an act is JSON, {op} or {corrects, op}' }, { status: 422 });
   return signed(lend, lend.group, act, handed.pass);
@@ -438,8 +436,7 @@ async function writing(request, lend) {
 // write that kind's part (app.js `writes`); none of them if one is not.
 // Nothing when all are counted, else what the person is told.
 async function appended(lend, named) {
-  loaded ??= init({ module_or_path: store.runtime() });
-  await loaded;
+  await (loaded ??= init({ module_or_path: store.runtime() }));
   const what = `${lend.person}’s ${lend.name}`;
   let acts = null;
   try {
