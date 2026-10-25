@@ -11,6 +11,7 @@ import { test } from 'node:test';
 import {
   EXPENSE,
   actsOf,
+  called,
   SETTLE,
   SHARE,
   init,
@@ -225,6 +226,60 @@ test('a correction from another person of the same name counts for nothing; one 
   const state = fold(actsOf(log));
   assert.deepEqual(state.gaps.map((g) => [g.code, g.id]), [['not_theirs', 'o2']]);
   assert.deepEqual(Object.entries(state.expenses).map(([id, e]) => [id, e.amount_cents]), [['o3', 4000]], "the first Sam's own change, from her phone, is hers");
+});
+
+// The book keeps each person by their first key (keys-names): two people of
+// one name are two balances, and one person's computer, phone and old
+// entries one.
+test('two people of one name keep two balances; one person\'s devices and the old entries a computer wrote for them keep one', () => {
+  const op = (id, extra) => ({ id, actor: 'k1', seq: 0, ts_unix: 7, voided: false, ...extra });
+  const log = {
+    ops: [
+      op('o1', { person: 'sam', person_key: 'p1', payload: { kind: EXPENSE, amount_cents: 6000, description: 'pizza' } }),
+      op('o2', { person: 'sam', person_key: 'p2', actor: 'k2', payload: { kind: SHARE, expense: 'o1' } }),
+      // Cy's computer wrote bo's share, as a phone's was before capability-signed.
+      op('o3', { person: 'cy', person_key: 'pc', actor: 'k3', on_behalf_of: 'bo', on_behalf_of_key: 'pb', payload: { kind: SHARE, expense: 'o1' } }),
+      op('o4', { person: 'bo', person_key: 'pb', actor: 'k4', payload: { kind: EXPENSE, amount_cents: 300, description: 'cups' } }),
+    ],
+  };
+  const state = fold(actsOf(log));
+  assert.deepEqual(state.balances, { p1: 4000, p2: -2000, pb: -2000 }, 'the second Sam owes the first; Bo is one person, his cups his own');
+  assert.deepEqual(state.names, { p1: 'sam', p2: 'sam', pb: 'bo' });
+  assert.equal(sum(state), 0);
+});
+
+test('a payment names whom it pays by key; an older Money\'s, by name, pays the one person of that name, and is not counted where two have it', () => {
+  const pizza = { ...paid('sam', 6000), key: 'p1' };
+  const shared = [pizza, { ...share('bo', pizza.id), key: 'pb' }];
+  const back = { ...settle('bo', 'sam', 3000), key: 'pb' };
+  assert.deepEqual(fold([...shared, back]).balances, { p1: 0, pb: 0 }, 'by the name alone, while one Sam is in the book');
+  const second = { ...share('sam', pizza.id), key: 'p2' };
+  const state = fold([...shared, second, back]);
+  assert.equal(state.gaps[0].code, 'which_payee');
+  assert.match(state.gaps[0].message, /two people are called sam/);
+  const keyed = fold([...shared, second, { ...back, op: { ...back.op, to_key: 'p1' } }]);
+  assert.deepEqual(keyed.gaps, []);
+  assert.deepEqual(keyed.balances, { p1: 1000, pb: 1000, p2: -2000 }, 'the payment names the first Sam by key');
+  assert.equal(validate(keyed, { ...settle('sam', 'sam', 100), key: 'p2', op: { kind: SETTLE, to: 'sam', to_key: 'p2', amount_cents: 100 } })[0].code, 'bad_settle');
+});
+
+test('the penny still goes to the first name, whatever their keys', () => {
+  const names = { zz: 'alex', mm: 'bo', aa: 'cy' };
+  assert.deepEqual(splitShares(1000, ['aa', 'mm', 'zz'], names), [['zz', 334], ['mm', 333], ['aa', 333]]);
+  const lunch = { ...paid('cy', 1000), key: 'aa' };
+  const state = fold([lunch, { ...share('alex', lunch.id), key: 'zz' }, { ...share('bo', lunch.id), key: 'mm' }]);
+  assert.deepEqual(state.balances, { aa: 667, zz: -334, mm: -333 });
+  assert.deepEqual(state.expenses[lunch.id].participants, ['zz', 'mm', 'aa'], 'in the order of their names');
+});
+
+test('a person is said by name, and where two share it, with when each joined', () => {
+  const spans = [
+    { person: 'sam', person_key: 'p1', joined: null, left: null },
+    { person: 'sam', person_key: 'p2', joined: Date.UTC(2026, 9, 3, 12) / 1000, left: null },
+    { person: 'bo', person_key: 'pb', joined: 100, left: null },
+  ];
+  assert.deepEqual(['p1', 'p2', 'pb'].map((k) => called(spans, k, spans.find((s) => s.person_key === k).person)), ['sam (started the group)', 'sam (joined 3 Oct)', 'bo']);
+  assert.equal(called(null, 'sam', 'sam'), 'sam', 'an older svrngs names no stretch');
 });
 
 test('a correction from its author still counts: the expense they replace is gone, and so is one they take back', () => {

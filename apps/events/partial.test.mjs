@@ -6,6 +6,7 @@
 // received is never said to have nothing posted. Red on the plant the
 // finding names, `complete` dropped outside the path's group: The Club
 // said "Nothing posted yet." and dWeb's answers shown as if all were here.
+// Beside it, against the same stand-in, two people called bo (keys-names).
 
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
@@ -17,8 +18,8 @@ import { test } from 'node:test';
 
 const E = '0123456789abcdef';
 const dinner = { kind: 'event', event: E, what: 'dinner', when: 'Friday 7', where: 'the house' };
-const posted = (id) => [{ id, ts_unix: 1000, person: 'sam', payload: dinner }];
-const GROUPS = {
+const posted = (id) => [{ id, ts_unix: 1000, person: 'sam', person_key: 'k-sam', payload: dinner }];
+const PARTIAL = {
   house: { name: 'The House', people: ['sam', 'bo'], ops: posted('h1'), complete: true },
   dweb: { name: 'dWeb', people: ['sam', 'cy'], ops: posted('d1'), complete: false },
   club: { name: 'The Club', people: ['sam', 'di'], ops: [], complete: false },
@@ -26,14 +27,14 @@ const GROUPS = {
 const PARTLY = /may not have reached this computer yet/;
 
 /** svrngs's record API as the store reads it (store.mjs `record`). */
-function svrngs() {
+function svrngs(GROUPS = PARTIAL) {
   const server = http.createServer((req, res) => {
     const url = new URL(req.url, 'http://x');
     const g = GROUPS[url.searchParams.get('namespace')];
     const answer = url.pathname === '/v1/groups'
       ? { groups: Object.entries(GROUPS).map(([id, x]) => ({ id, name: x.name })) }
       : url.pathname === '/v1/rail/people' && g
-        ? { people: g.people.map((p) => ({ person: p, person_key: `k-${p}` })) }
+        ? { people: g.people.map((p) => (typeof p === 'string' ? { person: p, person_key: `k-${p}` } : p)) }
         : url.pathname === '/v1/rail/log' && g
           ? { ops: g.ops, complete: g.complete }
           : null;
@@ -81,6 +82,33 @@ test("a group not fully received is said so on the home list and in the host's v
     const hosts = sections(await as(`/g/house/e/${E}`));
     assert.match(hosts.dWeb, PARTLY, "dWeb's answers may not all be here");
     assert.doesNotMatch(hosts['The House'], PARTLY);
+  } finally {
+    app.stop();
+    api.close();
+  }
+});
+
+// Two people called bo (keys-names): the second is invited and answers as
+// themselves, told apart by when each joined, and their "I'm coming" is a
+// record of their own, never a correction of the first bo's answer. Red at
+// 0c9dc094: the fold kept people by name, so the second bo was shown the
+// first's guests and their change of mind corrected the first's act.
+test('two people called bo are two: each answers as themselves, told apart by when they joined', async () => {
+  const oct = (d) => ({ at: Date.UTC(2026, 9, d, 12) / 1000 });
+  const people = [{ person: 'sam', person_key: 'k-sam', joined: 'started' }, { person: 'bo', person_key: 'k-bo1', joined: oct(1) }, { person: 'bo', person_key: 'k-bo2', joined: oct(3) }];
+  const ops = [...posted('h1'), { id: 'h2', ts_unix: 1100, person: 'bo', person_key: 'k-bo1', payload: { kind: 'coming', event: E, guests: ['Maya'] } }];
+  const api = await svrngs({ house: { name: 'The House', people, ops, complete: true } });
+  const app = await events(`http://127.0.0.1:${api.address().port}`);
+  try {
+    const as = (key, path, init = {}) => fetch(`${app.at}${path}`, { ...init, redirect: 'manual', headers: { 'x-svrngs-key': key, ...init.headers } });
+    const second = await (await as('k-bo2', `/g/house/e/${E}`)).text();
+    assert.match(second, /<li>bo \(joined 1 Oct\) \+ Maya<\/li>/, "the first bo's answer, said as theirs");
+    assert.match(second, /<ul class="invited"><li>bo \(joined 1 Oct\)<\/li><li>bo \(joined 3 Oct\)<\/li><\/ul>/);
+    assert.match(second, /<button>I'm coming<\/button>/, 'the second bo has not answered');
+    assert.doesNotMatch(second, /value="Maya"/, "nor are the first bo's guests theirs");
+    assert.match(await (await as('k-bo1', `/g/house/e/${E}`)).text(), /value="Maya"/);
+    const coming = await as('k-bo2', `/g/house/e/${E}/coming`, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: 'guests=' });
+    assert.deepEqual(JSON.parse(coming.headers.get('x-svrngs-append')), [{ group: 'house', op: { kind: 'coming', event: E } }], 'a record of their own');
   } finally {
     app.stop();
     api.close();

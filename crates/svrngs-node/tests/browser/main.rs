@@ -2174,6 +2174,79 @@ async fn two_people_of_one_name_are_told_apart_on_the_home_page(engine: Engine) 
     drop(ada);
 }
 
+in_both_engines!(
+    /// **Whose computer did not answer, and who asked, by key**
+    /// (keys-names): on ada's computer two people are in house as cy, the
+    /// first's computer running and the second's never answering, and the
+    /// second cy asks to remove dee. Ada's door draws the first cy on and
+    /// the second off; the row saying whose computer did not answer, and
+    /// the ask, name that cy told apart by when they joined. Red at
+    /// 0c9dc094: the door drew both cys off, as the list of computers that
+    /// did not answer named them by name, and the row and the ask said
+    /// "cy" alone.
+    whose_computer_did_not_answer_and_who_asked_are_told_by_key
+);
+async fn whose_computer_did_not_answer_and_who_asked_are_told_by_key(engine: Engine) {
+    let relay = relay().await;
+    let (ada_dir, cy_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let ada = node(ada_dir.path(), &relay, &signing(7)).await;
+    let cy = joined(cy_dir.path(), &relay, &ada, 2, "cy").await;
+    tokio::time::sleep(Duration::from_millis(1_100)).await;
+    for (person, me) in [("cy", 4), ("dee", 5)] {
+        let act = RailAct::Admit {
+            person: Person::parse(person).unwrap(),
+            key: actor_of(&signing(me)),
+            invite: None,
+        };
+        let fixture = svrngs_core::tests_support::Fixture { act };
+        ada.rail().commit(NS, &fixture).unwrap().unwrap();
+    }
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64;
+    let ask = RailAct::Remove {
+        key: actor_of(&signing(5)),
+        through: vec![],
+    };
+    let asked = svrngs_core::tests_support::signed_in(NS, &signing(4), now + 5, 0, ask);
+    ada.rail().ingest_all(NS, &[asked]).unwrap();
+    let all = "#home table.index td[colspan], #home .removals li";
+    let seen = home_page(
+        engine,
+        &ada,
+        json!({ "drawn": "#home .door li", "all": all }),
+    )
+    .await;
+    eprintln!("ada's home page: {seen:#}");
+    let drawn: Vec<(String, String)> = serde_json::from_value(seen["drawn"].clone()).unwrap();
+    let mut cys: Vec<_> = (drawn.iter().filter(|(_, w)| w.starts_with("cy (joined ")))
+        .map(|(c, w)| (c.as_str(), w.rsplit(") ").next().unwrap()))
+        .collect();
+    cys.sort();
+    assert_eq!(
+        cys,
+        [("off", "did not answer"), ("on", "on now")],
+        "{seen:#}"
+    );
+    let said: Vec<&str> = (seen["all"].as_array().unwrap().iter())
+        .filter_map(Value::as_str)
+        .collect();
+    // bo's and dee's computers never answer either; of the two cys, one.
+    let silent = (said.iter())
+        .filter(|l| l.ends_with("'s computer did not answer, so what they lend is not listed."))
+        .filter(|l| l.starts_with("cy"));
+    let silent: Vec<_> = silent.collect();
+    assert_eq!(silent.len(), 1, "{seen:#}");
+    assert!(silent[0].starts_with("cy (joined "), "{seen:#}");
+    let ask = said.iter().find(|l| l.contains("asked to remove dee"));
+    assert!(
+        ask.is_some_and(|l| l.starts_with("cy (joined ")),
+        "the second cy, told apart: {seen:#}"
+    );
+    drop((ada, cy));
+}
+
 /// House's removals, held on ada's computer: cy and dee admitted, cy's
 /// ask to remove dee signed on cy's own key and taken in, then ada's cut
 /// of dee through `/v1/removals`.

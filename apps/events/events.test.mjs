@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { actsOf, answers, fold, hosted, init, ownActs, reduce, validate } from './events.js';
+import { actsOf, answers, called, fold, hosted, init, ownActs, reduce, validate } from './events.js';
 
 const act = (id, ts, by, op, corrects = null) => ({ id, ts, by, op, corrects });
 const dinner = (id, by, more = {}) =>
@@ -56,6 +56,53 @@ test('a correction from another person of the same name counts for nothing; one 
   const state = fold(actsOf(log));
   assert.deepEqual(state.gaps.map((g) => g.code), ['not_theirs']);
   assert.equal(state.events.e1.where, 'the yard', "the first Sam's own change, from her phone, is hers");
+});
+
+// Each person is their first key (keys-names): two people of one name come
+// as two, and one person's devices, and the old answers a computer wrote
+// for them, as one.
+const keyed = (id, ts, person, key, payload, more = {}) => ({ id, ts_unix: ts, person, person_key: key, voided: false, payload, ...more });
+
+test('two people of one name come as two; one person\'s devices and the old answers a computer wrote for them as one', () => {
+  const log = {
+    ops: [
+      keyed('a', 1000, 'sam', 'p1', dinner('a', 'sam').op),
+      keyed('b', 1100, 'bo', 'pb', coming('b', 'bo', ['Maya']).op),
+      keyed('c', 1100, 'bo', 'pb2', coming('c', 'bo').op),
+      // Cy's computer wrote the first Bo's "I came", as a phone's was before capability-signed.
+      keyed('d', 1200, 'cy', 'pc', came('d', 'bo').op, { on_behalf_of: 'bo', on_behalf_of_key: 'pb' }),
+      keyed('e', 1200, 'bo', 'pb', came('e', 'bo', 'Maya').op),
+    ],
+  };
+  const { events: { e1 }, names } = fold(actsOf(log));
+  assert.deepEqual([e1.host, e1.coming, e1.came, e1.guests_came], ['p1', { pb: ['Maya'], pb2: [] }, ['pb'], { pb: ['Maya'] }]);
+  assert.deepEqual(e1.via.came, { pb: ['cy'] });
+  assert.deepEqual(names, { p1: 'sam', pb: 'bo', pb2: 'bo' }, 'cy only carried an answer');
+});
+
+test('the host is who posted it, by key: another of their name is not the host, nor shown the host\'s view', () => {
+  const log = (second) => ({ ops: [keyed('a', 1000, 'sam', 'p1', dinner('a', 'sam').op), keyed('b', 1100, 'sam', second, dinner('b', 'sam', { what: 'mine' }).op)] });
+  assert.deepEqual(fold(actsOf(log('p2'))).gaps.map((g) => g.code), ['not_the_host']);
+  assert.deepEqual(fold(actsOf(log('p1'))).gaps.map((g) => g.code), ['posted_twice']);
+  const house = fold(actsOf(log('p2')));
+  assert.deepEqual(hosted('e1', [{ group: 'house', answers: house, me: 'p2' }]), []);
+  assert.deepEqual(hosted('e1', [{ group: 'house', answers: house, me: 'p1' }]).map((g) => g.group), ['house']);
+});
+
+test('what changing your mind corrects is your own answers, by key, never another\'s of your name', () => {
+  const log = { ops: [keyed('a', 1000, 'sam', 'p1', dinner('a', 'sam').op), keyed('b', 1100, 'bo', 'pb', coming('b', 'bo').op), keyed('c', 1100, 'bo', 'pb2', coming('c', 'bo').op)] };
+  const state = actsOf(log).reduce(reduce, init());
+  assert.deepEqual([ownActs(state, 'pb', 'e1', 'coming'), ownActs(state, 'pb2', 'e1', 'coming')], [['b'], ['c']]);
+});
+
+test('a person is said by name, and where two share it, with when each joined', () => {
+  const spans = [
+    { person: 'bo', person_key: 'pb', joined: null, left: null },
+    { person: 'bo', person_key: 'pb2', joined: Date.UTC(2026, 9, 3, 12) / 1000, left: null },
+    { person: 'cy', person_key: 'pc', joined: 100, left: null },
+  ];
+  assert.deepEqual([called(spans, 'pb', 'bo'), called(spans, 'pb2', 'bo'), called(spans, 'pc', 'cy')], ['bo (started the group)', 'bo (joined 3 Oct)', 'cy']);
+  assert.equal(called(undefined, 'bo', 'bo'), 'bo', 'an older svrngs names no stretch');
 });
 
 test('the record\'s voided flag is not this fold\'s: a voided act by another\'s correction still counts', () => {
