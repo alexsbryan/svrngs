@@ -1217,6 +1217,89 @@ async fn a_pass_opens_only_the_lend_it_names_to_the_key_holding_it() {
     pair.close().await;
 }
 
+/// A pass carried by a link (capability-signed (H); DESIGN §3): a phone's
+/// worker dials with an endpoint key of its own, presenting bo's pass to
+/// its holder and the link the holder signed to that endpoint. It is let
+/// in as bo, the service told neither the pass nor the link. Refused
+/// `pass`: the pass alone, which names another key than the one dialling;
+/// a link naming a lend the pass does not; one signed by another key than
+/// the pass's holder; one that does not read. Planted, each watched
+/// failing: the door reading no link (the pass checked against the
+/// dialer alone); the door taking any link that reads.
+#[tokio::test]
+async fn a_link_carries_a_pass_to_the_key_dialling_and_no_further() {
+    use svrngs_core::alpn::Alpn;
+    use svrngs_core::pass::{Label, Pass};
+
+    let (pair, heads) = lending_heads().await;
+    let a = *pair.a.endpoint().id().as_bytes();
+    let (shelf, elsewhere) = (Label::of(&a, "shelf"), Label::of(&a, "other"));
+    let (holder, endpoint) = (signing(9), signing(10));
+    let bridge = bridge_as(&endpoint, &pair.a, Alpn::Lend).await;
+    let ask = |pass: &Pass, link: Option<String>| {
+        let link = link.map_or(String::new(), |l| format!("x-svrngs-link: {l}\r\n"));
+        raw_to(
+            bridge.local_addr(),
+            format!(
+                "GET /lend/{shelf}/whoami HTTP/1.1\r\nHost: local\r\nx-svrngs-pass: {}\r\n{link}Connection: close\r\n\r\n",
+                pass.encode()
+            ),
+        )
+    };
+    let until = unix_now() + 3600;
+    let bos = Pass::sign(
+        &signing(2),
+        &actor_of(&holder),
+        (shelf.clone(), vec![]),
+        until,
+    );
+    let signed = |by: &svrngs_node::SigningKey, mut link: Pass| {
+        link.sig = svrngs_core::sign_message(by, &link.message());
+        Some(link.encode())
+    };
+    let link = bos.link(&actor_of(&endpoint));
+
+    let opened = ask(&bos, signed(&holder, link.clone())).await;
+    assert_eq!(opened.status, 200, "{}", opened.text);
+    let head = last(&heads);
+    assert_eq!(
+        header_values(&head, "x-svrngs-person"),
+        vec!["bo"],
+        "{head}"
+    );
+    assert!(header_values(&head, "x-svrngs-link").is_empty(), "{head}");
+    assert!(header_values(&head, "x-svrngs-pass").is_empty(), "{head}");
+
+    let mut wider = link.clone();
+    wider.reads.push(elsewhere);
+    for (why, link) in [
+        ("the pass alone, its holder not the dialer", None),
+        (
+            "a link naming a lend the pass does not",
+            signed(&holder, wider),
+        ),
+        (
+            "a link signed by another key than the holder",
+            signed(&signing(8), link),
+        ),
+        ("a link that does not read", Some("not-a-link".to_string())),
+    ] {
+        let refused = ask(&bos, link).await;
+        assert_eq!(refused.status, 403, "{why}: {}", refused.text);
+        assert!(
+            refused.text.contains(r#""kind":"pass""#),
+            "{why}: {}",
+            refused.text
+        );
+    }
+    assert_eq!(
+        heads.lock().unwrap().len(),
+        1,
+        "only the opened request reached shelf"
+    );
+    pair.close().await;
+}
+
 /// The app a pass's holder asks for (su-1, `demo/runs/su/2026-10-09/`
 /// §5; sup-1): the service is told `x-svrngs-app`, the pass's `app` — the
 /// lend the person's page opened — whichever lend is asked, and the

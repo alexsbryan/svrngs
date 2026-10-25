@@ -192,6 +192,11 @@ pub const SHARE_HEADER: &str = "x-svrngs-declared-share-bps";
 /// protocol (u5-2): [`Pass::encode`]'s form. Under [`IDENTITY_PREFIX`], so
 /// no service ever receives it.
 pub const PASS_HEADER: &str = "x-svrngs-pass";
+/// The link a phone's worker presents beside its pass (capability-signed;
+/// DESIGN §3): its holder, a key no page can copy, carrying the pass to
+/// the endpoint key the worker dials with ([`Pass::carries`]). A pass with
+/// none is held by the dialer itself, as an older page's is.
+pub const LINK_HEADER: &str = "x-svrngs-link";
 
 /// On every answer svrngs makes in a lend's place, never on the lend's
 /// own (a service's is dropped, [`forward`]): which of [`LendRefusal`] it is,
@@ -1073,7 +1078,15 @@ async fn holder_of(
     let Some(now) = unix_now() else {
         return Err(refused("this computer's clock cannot be read"));
     };
-    if let Err(fault) = pass.check(&key, &label, now) {
+    let checked = match headers
+        .get(LINK_HEADER)
+        .map(|v| v.to_str().ok().and_then(Pass::decode))
+    {
+        None => pass.check(&key, &label, now),
+        Some(Some(link)) => pass.carries(&link, &key, &label, now),
+        Some(None) => return Err(refused("a link that does not read")),
+    };
+    if let Err(fault) = checked {
         return Err(refused(&fault.to_string()));
     }
     let mut standing = PersonKey::resolved(door, &pass.person);
