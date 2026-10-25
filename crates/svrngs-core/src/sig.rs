@@ -234,20 +234,37 @@ pub fn sign_act(
     view: Option<crate::Digest>,
     grant: Option<crate::pass::Pass>,
 ) -> Op<SignedOp> {
-    let actor = actor_of(signer);
-    let body = crate::body_json(&act, on_behalf_of, view.as_ref(), grant.as_ref());
-    let id = act_id(namespace, &actor, seq, prev.as_ref(), ts_unix, &body);
+    let on_behalf_of = on_behalf_of.map(str::to_string);
+    let (sig, actor) = (String::new(), actor_of(signer));
     let kind = SignedOp {
         seq,
         prev,
-        sig: sign_ring_op(signer, &id),
+        sig,
         act,
-        on_behalf_of: on_behalf_of.map(str::to_string),
+        on_behalf_of,
         view,
         grant,
     };
+    let mut op = unsigned_act(actor, namespace, ts_unix, kind);
+    op.kind.sig = sign_ring_op(signer, &op.id);
+    op
+}
+
+/// [`sign_act`]'s line before its signature, `kind`'s left as it is, for
+/// a key that signs apart: a phone's holder, which no script holds as
+/// bytes (DESIGN §3), signs [`ring_op_message`] of its id.
+pub fn unsigned_act(actor: String, namespace: &str, ts_unix: i64, kind: SignedOp) -> Op<SignedOp> {
+    let k = &kind;
+    let body = crate::body_json(
+        &k.act,
+        k.on_behalf_of.as_deref(),
+        k.view.as_ref(),
+        k.grant.as_ref(),
+    );
+    let id = act_id(namespace, &actor, k.seq, k.prev.as_ref(), ts_unix, &body);
+    let v = kind.line_version();
     Op {
-        v: kind.line_version(),
+        v,
         id,
         ts_unix,
         actor,

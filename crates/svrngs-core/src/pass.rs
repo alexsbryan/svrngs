@@ -173,6 +173,8 @@ pub enum PassFault {
     Lapsed,
     #[error("it does not name this lend")]
     NotNamed,
+    #[error("its link names more than the pass it carries")]
+    Wider,
 }
 
 impl Pass {
@@ -200,7 +202,7 @@ impl Pass {
     /// every variable field preceded by its `u32` big-endian length: the
     /// bytes a pass naming `[app, ...reads]` as its lends signed before the
     /// app had a field of its own (sup-1).
-    fn message(&self) -> Vec<u8> {
+    pub fn message(&self) -> Vec<u8> {
         let mut msg = crate::sig::PASS_DOMAIN.to_vec();
         field(&mut msg, self.person.as_bytes());
         field(&mut msg, self.holder.as_bytes());
@@ -227,6 +229,30 @@ impl Pass {
             return Err(PassFault::NotNamed);
         }
         Ok(())
+    }
+
+    /// Whether `link`, presented by `to` at `now`, carries this pass to it
+    /// for `lend`: each opens `lend` now, `link` held by `to` and
+    /// signed by this pass's holder, and naming no app, lend or time this
+    /// one does not (capability-signed; DESIGN §3). A phone's holder, a key
+    /// no page can copy, names each worker run's endpoint key so.
+    pub fn carries(&self, link: &Pass, to: &str, lend: &Label, now: i64) -> Result<(), PassFault> {
+        link.check(to, lend, now)?;
+        self.check(&link.person, lend, now)?;
+        let within = link.reads.iter().all(|r| self.reads.contains(r));
+        match within && link.app == self.app && link.until <= self.until {
+            true => Ok(()),
+            false => Err(PassFault::Wider),
+        }
+    }
+
+    /// The link this pass's holder signs to `holder`, unsigned, its
+    /// [`Self::message`] what the holder signs: the same lends and time, so
+    /// [`Self::carries`] passes it.
+    pub fn link(&self, holder: &str) -> Self {
+        let mut link = self.clone();
+        (link.person, link.holder, link.sig) = (self.holder.clone(), holder.into(), String::new());
+        link
     }
 
     /// Whether the person it names signed it.

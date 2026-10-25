@@ -138,3 +138,97 @@ fn a_pass_names_its_app_and_its_reads_in_the_bytes_signed_before() {
     let raw = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(json);
     assert_eq!(Pass::decode(&raw), None);
 }
+
+/// A pass's holder carries it to another key by a link it signs
+/// (capability-signed (H); DESIGN §3): a phone's holder, a key no page
+/// can copy, to each worker run's endpoint. The link opens a lend to the
+/// key it names only where the pass opens it to the holder, and never
+/// names more: another app, a lend the pass does not read, or a later
+/// time. One the holder did not sign, or held by another key, opens
+/// nothing. The failing inputs are each check's plant: the link not
+/// checked, the pass not checked against the link's signer, each of
+/// `Wider`'s three.
+#[test]
+fn a_link_carries_a_pass_to_another_key_no_further_than_the_pass() {
+    let (alex, holder, endpoint) = (key(1), key(9), actor_of(&key(7)));
+    let (sams, bos) = (Label::of(&lender(2), "app"), Label::of(&lender(3), "app"));
+    let pass = Pass::sign(
+        &alex,
+        &actor_of(&holder),
+        (sams.clone(), alloc::vec![]),
+        1_000,
+    );
+    let signed = |mut link: Pass| {
+        link.sig = crate::sign_message(&holder, &link.message());
+        link
+    };
+    let link = signed(pass.link(&endpoint));
+    assert_eq!(pass.carries(&link, &endpoint, &sams, 999), Ok(()));
+    let bare = Pass::sign(&holder, &endpoint, (sams.clone(), alloc::vec![]), 1_000);
+    assert_eq!(
+        bare, link,
+        "a link is a pass its holder signs, the same lends and time"
+    );
+    assert_eq!(
+        pass.carries(&link, &actor_of(&key(8)), &sams, 999),
+        Err(PassFault::NotTheHolder)
+    );
+    assert_eq!(
+        pass.carries(&link, &endpoint, &bos, 999),
+        Err(PassFault::NotNamed)
+    );
+    assert_eq!(
+        pass.carries(&link, &endpoint, &sams, 1_000),
+        Err(PassFault::Lapsed)
+    );
+    let by_other = Pass::sign(&key(5), &endpoint, (sams.clone(), alloc::vec![]), 1_000);
+    assert_eq!(
+        pass.carries(&by_other, &endpoint, &sams, 999),
+        Err(PassFault::NotTheHolder)
+    );
+    let mut forged = pass.link(&endpoint);
+    forged.sig = link.sig.clone();
+    forged.until = 2_000;
+    assert_eq!(
+        pass.carries(&forged, &endpoint, &sams, 999),
+        Err(PassFault::Unsigned)
+    );
+    let wider = |f: &dyn Fn(&mut Pass)| {
+        let mut l = pass.link(&endpoint);
+        f(&mut l);
+        let msg = Pass::sign(
+            &holder,
+            &l.holder,
+            (l.app.clone(), l.reads.clone()),
+            l.until,
+        );
+        pass.carries(&msg, &endpoint, &sams, 999)
+    };
+    assert_eq!(wider(&|l| l.reads.push(bos.clone())), Err(PassFault::Wider));
+    assert_eq!(wider(&|l| l.until = 2_000), Err(PassFault::Wider));
+    let reading = (bos.clone(), alloc::vec![sams.clone()]);
+    let two = Pass::sign(&alex, &actor_of(&holder), reading, 1_000);
+    let as_sams = (sams.clone(), alloc::vec![sams.clone()]);
+    let app = Pass::sign(&holder, &endpoint, as_sams, 1_000);
+    assert_eq!(
+        two.carries(&app, &endpoint, &sams, 999),
+        Err(PassFault::Wider)
+    );
+}
+
+/// [`crate::unsigned_act`] is [`crate::sign_act`]'s line before its
+/// signature: signed apart over [`crate::ring_op_message`] of its id, it
+/// is the same line, so a key signing outside this crate makes acts by the
+/// one definition.
+#[test]
+fn a_line_signed_apart_is_the_line_sign_act_makes() {
+    let (k, act) = (key(9), crate::RailAct::Seal);
+    let made = crate::sign_act(&k, "ns", 5, 0, None, act.clone(), None, None, None);
+    let kind = crate::SignedOp {
+        sig: String::new(),
+        ..made.kind.clone()
+    };
+    let mut apart = crate::unsigned_act(actor_of(&k), "ns", 5, kind);
+    apart.kind.sig = crate::sign_message(&k, &crate::ring_op_message(&apart.id));
+    assert_eq!(apart, made);
+}
