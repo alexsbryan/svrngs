@@ -241,8 +241,9 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # `called`), +14 and +3, under its estimate (+25 to +55, +5 to +10). Its
 # economizing pass folded `written`'s changer to one line (-1); the rest
 # it lands is struct fields rustfmt sets a line each and one JS line a
-# site. 18,284 and 3,298.
-BUDGET = {"crates/svrngs-core": 3299, ".": 18285}
+# site. 18,284 and 3,298. REVIEW-audit-capability-auto-1 gave /carry one
+# const and its request one statement (-1): 18,283.
+BUDGET = {"crates/svrngs-core": 3299, ".": 18284}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
