@@ -12270,3 +12270,247 @@ Behaviour kept: `cargo check -p svrngs-node --tests` and `cargo fmt
 | I34 | 6 | `refresh` | Still present: web's Rust is outside the workspace and not exported. |
 | I36 | 6 | `code index --full` | New: a full rebuild that does not finish leaves no index. This audit's first session ran `code index ~/dev/svrngs --corpus-id svrngs --full` (index2.out); its last line is "Training IVF centroids (~44032 vectors, 753s elapsed)", no completion, the session ended under it. ~/.svrnmesh/indexes/svrngs then held `scip_graph.db`, `documents.lance` and `texts` but no `chunks.lance`, and dry-report errors. The old index went before the new one was whole. |
 | I37 | 6 | dry-report scope | New: the `examples` segment is excluded as non-production, so apps/pantry/examples/bridge, the queue's worked example and code people copy, is never judged; the report says 42 reps for apps/pantry and names no exclusion that hit. |
+
+## REVIEW-audit-capability-auto-1 (2026-10-25, range 8c21c4b5..510ebdef)
+
+The previous `REVIEW-audit-` row is REVIEW-audit-models-auto-1, its hash
+8c21c4b5f (ralph/next/models/STATE.md), the latest of the rows' hashes by
+commit date; none ran in the capability queue before this one. The range
+ends at 510ebdef, the commit that made this row: `git rev-list --count
+8c21c4b5..510ebdef` is 158, none a merge (`--merges`: 0). It holds the
+stall queue, the preshift review and the capability queue's thirteen
+rows. The principles are docs/principles/ARCH_PRINCIPLES.md; the
+instrument is ~/dev/commonwealth-ai/target/debug/sovereign-cli, sha256
+6d95a261… (d35f1d45). Every file named below is under target/capaudit/.
+
+This audit's own commits before this section: d35f1d45, 503f62ac,
+4d8245c8, 7ec64382, eda37591 and ee89f674 ("Fixed here").
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --no-merges --numstat --format='@@%h %s'
+8c21c4b5..510ebdef`, summed by the subject's unit, the id inside its
+parentheses or else the word before its colon (ledger.py, ledger.out).
+Product code is lean_check.py's: `.rs`, `.js`, `.mjs`, `.ts`, `.py` and
+`.sh` under `crates/`, `web/` and `scripts/`, tests apart (`*/tests/*`,
+`*_tests.rs`, `tests_*.rs`, `tests.rs`, `*.test.mjs`); `apps/` is outside
+the budget and given in its own columns; `demo/runs/`, `ralph/`, `docs/`
+and the lockfiles are out. Raw lines, comments and blanks in:
+
+| unit | commits | src + | src − | src net | test + | test − | test net | apps/ net | apps/ test net |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| ralph (loop marks) | 12 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 |
+| stall, streaming-stall | 8 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 |
+| browser (54844461) | 1 | 0 | 0 | **0** | 20 | 3 | +17 | 0 | 0 |
+| capability (queue), design, preshift, canon | 21 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 |
+| capability-economize | 9 | 42 | 48 | **−6** | 3 | 3 | 0 | 0 | 0 |
+| capability-navigation | 2 | 28 | 15 | **+13** | 237 | 15 | +222 | 0 | 0 |
+| capability-money | 2 | 0 | 0 | **0** | 0 | 0 | 0 | +41 | +38 |
+| capability-scenes | 16 | 32 | 18 | **+14** | 2810 | 88 | +2722 | +14 | 0 |
+| load (ece3d2ed) | 1 | 0 | 0 | **0** | 28 | 21 | +7 | 0 | 0 |
+| capability-pass-key | 2 | 5 | 1 | **+4** | 0 | 0 | 0 | 0 | 0 |
+| capability-scenes-found | 7 | 107 | 27 | **+80** | 336 | 92 | +244 | 0 | 0 |
+| capability-open | 5 | 131 | 26 | **+105** | 239 | 21 | +218 | 0 | 0 |
+| check (600f6154) | 1 | 7 | 6 | **+1** | 0 | 0 | 0 | 0 | 0 |
+| test (13f6f8c8) | 1 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | +2 |
+| capability-what-acts | 5 | 202 | 80 | **+122** | 366 | 29 | +337 | 0 | 0 |
+| capability-authorship | 2 | 0 | 0 | **0** | 331 | 0 | +331 | 0 | 0 |
+| capability-signed | 45 | 1316 | 498 | **+818** | 1924 | 547 | +1377 | +24 | 0 |
+| capability-step-limit | 4 | 26 | 4 | **+22** | 0 | 0 | 0 | 0 | +8 |
+| capability-keys | 7 | 90 | 45 | **+45** | 172 | 10 | +162 | +14 | +34 |
+| capability-release | 7 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 |
+| total | 158 | 1986 | 768 | **+1218** | 6466 | 829 | +5637 | +93 | +82 |
+
+capability-signed is two thirds of the range's product lines, inside the
+operator's "+535 / +180" (9b9201d9); every raise in the range is a row's
+own, inside a ceiling the operator set (e47f5109, 70a5abd5, bb334fc6,
+bb2353c5), each after its economizing pass (lean_check.py:199-245).
+
+What lean_check.py counts, HEAD's script over a `git archive` tree of
+each end (tree-*/, run with `GIT_DIR=/nonexistent` so it walks the tree,
+since git cannot list a tree under target/):
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 8c21c4b5, range start | 3149 (cap 3150) | 17634 (cap 17635) |
+| 510ebdef, range end | **3298** (cap 3299) | **18284** (cap 18285) |
+| net | **+149** | **+650** |
+
+This audit's commits: svrngs-core unmoved, the repository 18,284 to
+18,283 (eda37591), and the cap ratcheted to 18,284 (ee89f674).
+
+### The instrument
+
+The `svrngs` corpus still has no chunk index (I36), so the corpus is
+d35f1d45's crates/, scripts/, web/, the four apps the range touched
+(events, expenses, grapevine, jellyfin), Cargo.toml and Cargo.lock by
+`git archive` (349 files, cap-d35f1d45/); d35f1d45 changes only
+STATE.md over 510ebdef.
+- `code index . --corpus-id cap-d35f1d45`: 4287 chunks in 523 s
+  (index.out).
+- `refresh`, in the corpus with `GIT_CEILING_DIRECTORIES` at
+  target/capaudit/: rust 21184 symbols and 122368 references; typescript
+  and python "skipped (export failed)" (I4) (refresh2.out). Without the
+  fence it refreshed the `svrngs` corpus instead (I38).
+
+### (2) Clones (`code dry-report`)
+
+The range touched crates/svrngs-core, crates/svrngs-node, crates/svrngs,
+crates/svrngs-runtime, scripts/, web/ and apps/events, expenses,
+grapevine and jellyfin (`git diff --stat 8c21c4b5 510ebdef -- crates web
+scripts apps`). Each was reported at 0.95 and 0.90 (dry-*.md). Whether a
+side was added in the range is `git blame --porcelain` at d35f1d45 over
+each side's lines (sides.py, sides.out; a line's commit in `git rev-list
+8c21c4b5..d35f1d45` is new). Its control in the same run: register.rs
+`Cutover::decide`, :260-275, 16 of 16 new (4c71ec70).
+
+| scope | exact | near 0.95 | near 0.90 | with a side added in the range |
+|---|---|---:|---:|---|
+| crates/svrngs-core/ | 4 | 0 | 12 | 2 |
+| crates/svrngs-node/ | 1 | 0 | 8 | 1 |
+| crates/svrngs/ | 0 | 0 | 0 | 0 |
+| crates/svrngs-runtime/ | 1 | 0 | 0 | 0 |
+| scripts/ | could-not-judge (I4) | 0 | 0 | 0 |
+| web/ | could-not-judge (I4, I34) | 0 | 3 | 1 |
+| apps/events/ | could-not-judge (I4) | 0 | 1 | 0 |
+| apps/expenses/ | could-not-judge (I4) | 0 | 0 | 0 |
+| apps/grapevine/ | could-not-judge (I4) | 1 | 3 | 0 |
+| apps/jellyfin/ | could-not-judge (I4) | 2 | 4 | 0 |
+
+76 sides; 7 have a line from the range, in four clusters, every one at
+0.90 and none exact:
+
+```
+- **2 symbols** · ~16 lines · cosine 0.913–0.913
+  - `decide` — crates/svrngs-core/src/register.rs:260–275 (16 lines)     16/16 new  4c71ec70
+  - `decide` — crates/svrngs-core/src/register.rs:320–330 (11 lines)
+- **3 symbols** · ~13 lines · cosine 0.917–0.929
+  - `decide` — crates/svrngs-core/src/record.rs:26–38 (13 lines)         1/13 new   a32299c1
+  - `decide` — crates/svrngs-core/src/tests_support.rs:275–283 (9 lines)
+  - `decide` — crates/svrngs-core/src/tests_support.rs:287–295 (9 lines)
+- **3 symbols** · ~13 lines · cosine 0.903–0.905
+  - `load` — crates/svrngs-node/src/door/choices.rs:89–101 (13 lines)    2/13 new   d55b5506
+  - `file` — crates/svrngs-node/src/door/choices.rs:98–106 (9 lines)     5/9 new    d55b5506
+  - `read` — crates/svrngs-node/src/door/choices.rs:103–114 (12 lines)   3/12 new   d55b5506
+- **2 symbols** · ~10 lines · cosine 0.913–0.913
+  - pub `holder` — web/store.js:132–139 (8 lines)                        6/8 new    0c9032ed
+  - pub `groups` — web/store.js:136–145 (10 lines)                       2/10 new   0c9032ed
+```
+
+None repeats a decision, read at HEAD:
+- register.rs: `Cutover::decide` (:262) and `HandOnTo::decide` (:322) are
+  two `Command`s, the trait's shape; one writes the keeper's cutover once,
+  the other a hand-on to a named computer.
+- record.rs `decide` (:26) gained one line in a32299c1 (on_behalf_of cut);
+  its pair is the tests' own `decide`s (I8).
+- choices.rs: `load`, `file` and `read` are three steps, each calling the
+  next (:92, :101, :106); the spans overlap (I1).
+- store.js: `holder` (:135) reads or writes one key of the `seal` store;
+  `groups` (:139) lists the `groups` store. Both go through `run`.
+
+The exact clones are the older `signed_by_link` (joining.rs:56, :148),
+`lines` (command.rs:82, :100), `is_empty` (act_set.rs:40, command.rs:104),
+`as_str` (link.rs:186, synced.rs:67), `addr` (api.rs:212, :228) and the
+runtime tests' `open` (tests.rs:19, tests_write_index.rs:12; I8), each 0
+lines new.
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git diff 8c21c4b5 510ebdef -- crates web scripts
+apps`, matched against `(struct|enum|trait|class) +[A-Z]\w*` and `type
+[A-Z]\w* =` (nouns-added.txt): 16, of which `Answered` (node.rs:757) was
+there before, made `pub(crate)`. Each, in cap-d35f1d45 (noun-*.out), and
+in the `svrngs` graph the unfenced refresh rebuilt at ee89f674, after
+this audit's renames (noun-*.after.out; I38):
+
+| noun | definitions | site(s) | after |
+|---|---:|---|---|
+| Capability | 1 | grant.rs:25 | — |
+| Why | 1 | grant.rs:36 | — |
+| Grant | 1 | grant.rs:57 | — |
+| Cutover | 1 | register.rs:257 | — |
+| Opening | 1 | home.rs:214 | — |
+| Unwritten | 1 | origin.rs:262 | — |
+| Asked | **2** | svrngs-core joining.rs:65; svrngs-node iroh.rs:298 (`pub type`, 22d90090) | **1**, iroh.rs's is `WholeRequest` (503f62ac) |
+| At | **2** seen, 3 | relay.rs:57, share.rs:65; web/src/lib.rs:474 (private `type`, 0c9032ed), unseen (I34) | the two seen are as adjudicated before (line 10175 above); web's is `Stamp` (4d8245c8) |
+| Person | 1 product, 2 | svrngs-core lib.rs:243; the scenes' tests/scenes/people.rs:281 | the second is a test harness's, not product |
+| Chains, Jellyfin, Unjudged, Scene, Browsers | 0 | tests (golden.rs, tests/scenes/) | tests are out of the tool's scope |
+
+The two nouns with more than one product definition, as the tool printed
+them before the renames:
+
+```
+noun: Asked
+
+definitions (2), first-party production:
+  svrngs-core                    crates/svrngs-core/src/joining.rs:64
+  svrngs-node                    crates/svrngs-node/src/iroh.rs:297
+
+noun: At
+
+definitions (2), first-party production:
+  svrngs                         crates/svrngs/src/relay.rs:56
+  svrngs-node                    crates/svrngs-node/src/share.rs:64
+```
+
+After: `Asked` 1 (joining.rs:64), `WholeRequest` 1 (iroh.rs:297). `Asked`
+is the third time this name was made again beside joining.rs's (0213ebbc
+in blob.rs, a136834a in room/owner.rs). Line numbers are one early (I1).
+
+### Reading the range
+
+The range's product code was read against the queue's fences and
+principles 1, 6 and 8 where the instrument does not judge it (JS, web's
+Rust, check.sh).
+
+- **One home per threshold** (principle 8). The phone's two Stop lines
+  typed "within 12 hours" beside `PASS_LIFE` (web/app.js:85, :503, :525);
+  said from it now (7ec64382).
+- **One accessor per path** (principle 8). "/carry" was typed at both
+  routers and at the computer posting to the asker's own (node.rs:373,
+  :866; origin.rs:331); one `rail::CARRY_ROUTE` now (eda37591). "/shelf"
+  and "/runs" are older and still typed twice (#223).
+- **One act shape** (principle 8). `grant::app_act` (grant.rs:95) is the
+  one shaping of an app's write, for the door and the phone's worker
+  alike; `Grant::may` (:63) traces every verdict (principle 1).
+- **One way of telling namesakes apart.** question.js `called` (:110) is
+  the pages' one; the door's `--joined` form goes through it (`people`,
+  :139), and it cites the command's (cli.rs:1410 `joined_said`), across
+  the language line.
+- **A step's limit** (scripts/check.sh:15-38). Each limit is 5 times one
+  table, `slowest`, with its reason beside it; a step not named has 300 s,
+  as the comment says.
+
+### Fixed here
+
+- d35f1d45: the row's two paths, the principles and the instrument.
+- 503f62ac: iroh.rs's `pub type Asked` → `WholeRequest`.
+- 4d8245c8: web/src/lib.rs's private `type At` → `Stamp`.
+- 7ec64382: the phone's Stop lines say `PASS_LIFE`'s hours.
+- eda37591: `rail::CARRY_ROUTE` for the carry route's three sites.
+- ee89f674: the repository's cap to 18,284, one past where eda37591 lands.
+
+Behaviour kept: `cargo check -p svrngs-node --tests`, the web crate's
+check for wasm32 and `cargo fmt --check` on both clean; `cargo test -p
+svrngs-node --test carried`, 13 passed; the words of 7ec64382 are the
+same string (`node -e`), which tests/browser/acts.rs:209 and :226 read;
+then `scripts/check.sh` whole (the row's commit).
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 223 | 8 | crates/svrngs-node/src/home.rs:142-143 and crates/svrngs-node/src/node.rs:863-864 (`.route("/shelf", …bring)`, `.route("/runs", …yes)`); the clients crates/svrngs-node/src/home/home.js:174, :176, web/app.js:499, :512 | not fixed (older than the range; a const each is +2 counted lines and the cap has 1) | **Read.** The home page's router and the people's router each type the two folder routes, as "/carry" was before eda37591. A path changed at one router and not the other is a 404 the page reads as a failed bring or yes. |
+| 80 | — | scripts/lean_check.py:246 BUDGET | not fixed (operator's) | 3298 / 3299 and 18283 / 18284 after this audit: +149 and +650 over the range, each raise a row's own inside the operator's ceilings. |
+| 211-222 | as recorded | as recorded | as recorded | Open; this range adds nothing to them. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun`, dry-report spans | Still one line early: Asked at iroh.rs:297 for :298 and joining.rs:64 for :65, Grant at grant.rs:56 for :57, Cutover at register.rs:256 for :257. choices.rs's `load`/`file`/`read` spans overlap the next symbol. |
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)"; scripts/', web/'s and the four apps' exact tiers could not judge. |
+| I8 | 6 | dry-report scope | Still present: removal_tests.rs, register_tests.rs, membership_tests.rs, membership_invite_tests.rs, tests_support.rs and svrngs-runtime's tests.rs and tests_write_index.rs reported as production clones. |
+| I34 | 6 | `refresh` | Still present: web's Rust is outside the workspace and not exported; `type At` at web/src/lib.rs:474 was found by hand. |
+| I36 | 6 | `code index --full` | Still present: ~/.svrnmesh/indexes/svrngs holds no `chunks.lance`. |
+| I38 | 6 | `refresh`, which corpus | New: run in a directory under a git work tree, `refresh` takes the tree's repository as the corpus, not the directory or the corpus indexed there. In cap-d35f1d45/ (under ~/dev/svrngs/target/) it printed "✓ SCIP graph at HEAD for "svrngs"" and "Indexing /Users/alexsbryan/dev/svrngs as corpus 'svrngs'", and began re-embedding the whole repository (10240 chunks at 8m46s, refresh.out); it was stopped, leaving the `svrngs` corpus as I36 left it, with its SCIP graph at ee89f674. With `GIT_CEILING_DIRECTORIES=target/capaudit` it refreshed cap-d35f1d45 (refresh2.out). The previous audits ran in /tmp, outside any tree. |
