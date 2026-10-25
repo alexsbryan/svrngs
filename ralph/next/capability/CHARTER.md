@@ -38,6 +38,17 @@ charter disagree, they win, and the decision says so.
   that reaches one, its writes waiting until a computer on the new svrngs
   takes them (§11's recommended). The ceiling for capability-signed and
   capability-keys: "+535 / +180".
+- **Signed's lines** (2026-10-24, asked when capability-signed stood at
+  18,288, +498, past §14's +479 for it alone): the range is both rows',
+  +278 to +534 and +101 to +178 (§14, "Both"). capability-signed cuts
+  first, and may land up to +498 if the cuts are not found; capability-keys
+  stops only past 18,325 / 3,330.
+- **A time limit on each check step** (2026-10-24): a row of its own after
+  capability-signed and before capability-keys. capability-what-acts's
+  first `scripts/check.sh` printed nothing for 2h35m in `app laws` until
+  the loop's 3h budget ended it (`ctl/log/sessions/
+  capability-what-acts-1.await.log`; the loop's log at
+  2026-10-24T08:41:26Z).
 
 ## Decide
 
@@ -60,9 +71,9 @@ Write `NEEDS_HUMAN.md` and stop for:
   §6) stops. Then, for capability-signed through capability-release
   (2026-10-24, "+535 / +180"): at most 18,325 repository and 3,330
   svrngs-core, each row raising only what it lands, to one past where it
-  lands; a row past the design's range for it (`demo/runs/authorship/
-  2026-10-24/DESIGN.md` §14, +278 to +534 and +101 to +178 for both rows)
-  stops;
+  lands; past the design's range for both rows together
+  (`demo/runs/authorship/2026-10-24/DESIGN.md` §14, +278 to +534 and +101
+  to +178; the operator, 2026-10-24: the range is both rows') stops;
 - **a change to what an act is:** capability-authorship's design, before any
   product code changes the format;
 - **a fix that would break a path a person uses today**, or add a step that
