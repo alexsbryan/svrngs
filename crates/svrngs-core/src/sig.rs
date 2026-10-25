@@ -219,8 +219,9 @@ pub fn sign_ring_op(key: &SigningKey, id: &OpId) -> String {
     sign_message(key, &ring_op_message(id))
 }
 
-/// Sign one act with `signer`, as its actor: [`sign_op`] of a line with no
-/// grant.
+/// Sign one act with `signer`, as its actor: derive its id, sign the id, and build the
+/// line. The ONE place an act is made, for the journal's door, a holder and
+/// the fixtures alike, so the bytes signed have one definition (ARCH §10.6).
 #[allow(clippy::too_many_arguments)]
 pub fn sign_act(
     signer: &SigningKey,
@@ -231,43 +232,20 @@ pub fn sign_act(
     act: crate::RailAct,
     on_behalf_of: Option<&str>,
     view: Option<crate::Digest>,
+    grant: Option<crate::pass::Pass>,
 ) -> Op<SignedOp> {
-    let on_behalf_of = on_behalf_of.map(str::to_string);
-    let (sig, grant) = (String::new(), None);
+    let actor = actor_of(signer);
+    let body = crate::body_json(&act, on_behalf_of, view.as_ref(), grant.as_ref());
+    let id = act_id(namespace, &actor, seq, prev.as_ref(), ts_unix, &body);
     let kind = SignedOp {
         seq,
         prev,
-        sig,
+        sig: sign_ring_op(signer, &id),
         act,
-        on_behalf_of,
+        on_behalf_of: on_behalf_of.map(str::to_string),
         view,
         grant,
     };
-    sign_op(signer, namespace, ts_unix, kind)
-}
-
-/// Sign `kind` with `signer`, as its actor: derive its id, sign the id, and
-/// build the line. The ONE place an act is made, for the journal's door, a
-/// holder and the fixtures alike, so the bytes signed have one definition
-/// (ARCH §10.6).
-pub fn sign_op(
-    signer: &SigningKey,
-    namespace: &str,
-    ts_unix: i64,
-    mut kind: SignedOp,
-) -> Op<SignedOp> {
-    let actor = actor_of(signer);
-    let (obo, view) = (kind.on_behalf_of.as_deref(), kind.view.as_ref());
-    let body = crate::body_json(&kind.act, obo, view, kind.grant.as_ref());
-    let id = act_id(
-        namespace,
-        &actor,
-        kind.seq,
-        kind.prev.as_ref(),
-        ts_unix,
-        &body,
-    );
-    kind.sig = sign_ring_op(signer, &id);
     Op {
         v: kind.line_version(),
         id,

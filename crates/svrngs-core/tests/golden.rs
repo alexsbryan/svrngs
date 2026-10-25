@@ -156,7 +156,7 @@ impl Chains {
         obo: Option<&str>,
     ) -> Op<SignedOp> {
         let (seq, prev) = self.0.entry(actor_of(signer)).or_default();
-        let op = sign_act(signer, NS, T + at, *seq, prev.clone(), act, obo, None);
+        let op = sign_act(signer, NS, T + at, *seq, prev.clone(), act, obo, None, None);
         (*seq, *prev) = (*seq + 1, Some(op.id.clone()));
         op
     }

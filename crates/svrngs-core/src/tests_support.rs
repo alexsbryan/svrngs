@@ -76,7 +76,7 @@ pub fn signed_for(
     on_behalf_of: Option<&str>,
 ) -> Op<SignedOp> {
     let prev = (seq > 0).then(absent_parent);
-    sign_act(k, ns, ts, seq, prev, act, on_behalf_of, None)
+    sign_act(k, ns, ts, seq, prev, act, on_behalf_of, None, None)
 }
 
 /// The previous act [`signed`] names above seq 0: an id no act here derives.
@@ -104,6 +104,7 @@ pub fn after_in(
         prev.kind.seq + 1,
         Some(prev.id.clone()),
         act,
+        None,
         None,
         None,
     )
@@ -144,7 +145,7 @@ pub fn forged(
     prev: Option<OpId>,
     act: RailAct,
 ) -> Op<SignedOp> {
-    let mut line = sign_act(claims, NS, ts, seq, prev, act, None, None);
+    let mut line = sign_act(claims, NS, ts, seq, prev, act, None, None, None);
     line.kind.sig = sign_ring_op(signs, &line.id);
     line
 }

@@ -205,17 +205,17 @@ fn a_holder_s_pass_is_inside_its_line_s_id() {
     let holder = key(9);
     let app = Label::of(&[1; 32], "money");
     let pass = |by: u8| Pass::sign(&key(by), &actor_of(&holder), (app.clone(), vec![]), 2_000);
-    let (sig, act) = (String::new(), record("milk"));
-    let kind = SignedOp {
-        seq: 0,
-        prev: None,
-        sig,
-        act,
-        on_behalf_of: None,
-        view: None,
-        grant: Some(pass(2)),
-    };
-    let held = sign_op(&holder, NS, 100, kind);
+    let held = sign_act(
+        &holder,
+        NS,
+        100,
+        0,
+        None,
+        record("milk"),
+        None,
+        None,
+        Some(pass(2)),
+    );
     assert_eq!(held.v, AUTHORSHIP_LINE_VERSION);
     let mut moved = held.clone();
     moved.kind.grant = Some(pass(3));
@@ -231,7 +231,7 @@ fn a_holder_s_pass_is_inside_its_line_s_id() {
 fn a_view_rewritten_after_signing_is_refused() {
     let act = record("milk");
     let view = claimed_view('a');
-    let op = sign_act(&key(1), NS, 100, 0, None, act, None, Some(view));
+    let op = sign_act(&key(1), NS, 100, 0, None, act, None, Some(view), None);
     assert!(
         admitted(std::slice::from_ref(&op)).gaps().is_empty(),
         "the honest op verifies"
@@ -259,7 +259,17 @@ fn an_equivocation_carries_two_claimed_views() {
     let (view_a, view_b) = (claimed_view('a'), claimed_view('b'));
     let build = |act: RailAct, view: &crate::Digest| {
         let prev = Some(absent_parent());
-        sign_act(&key(1), NS, 102, 2, prev, act, None, Some(view.clone()))
+        sign_act(
+            &key(1),
+            NS,
+            102,
+            2,
+            prev,
+            act,
+            None,
+            Some(view.clone()),
+            None,
+        )
     };
     let left = build(record("left"), &view_a);
     let right = build(record("right"), &view_b);
@@ -434,6 +444,7 @@ fn a_correction_with_no_replacement_still_names_the_guest() {
             replacement: None,
         },
         Some("dee"),
+        None,
         None,
     );
     let f = admitted(&[first, retraction]);

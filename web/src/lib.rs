@@ -406,7 +406,7 @@ pub fn sign_line(
     let prev = prev.map(|p| serde_json::from_value(p.into())).transpose()?;
     let key = svrngs_core::SigningKey::from_bytes(&key);
     Ok(serde_json::to_string(&svrngs_core::sign_act(
-        &key, &group, ts as i64, seq as u64, prev, act, None, None,
+        &key, &group, ts as i64, seq as u64, prev, act, None, None, None,
     ))?)
 }
 

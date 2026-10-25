@@ -58,7 +58,7 @@ fn signed_after(
     act: RailAct,
 ) -> Op<SignedOp> {
     let ts = 1_700_000_000i64 + seq as i64;
-    sign_act(key, ns, ts, seq, prev, act, None, None)
+    sign_act(key, ns, ts, seq, prev, act, None, None, None)
 }
 
 /// The act `key` signs after `prev`: one seq on, naming it.

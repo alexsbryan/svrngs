@@ -130,7 +130,7 @@ pub use register::{
 };
 pub use sig::{
     act_id, actor_of, derive_id, field, redemption_message, ring_op_message, sign_act,
-    sign_message, sign_op, sign_ring_op, verify_hex,
+    sign_message, sign_ring_op, verify_hex,
 };
 pub use sync::{digest, ops_missing_from_within, DigestFold, NO_BUDGET};
 pub use synced::{Change, Entry, Files, NotASyncPath, Placed, Runs, SyncFolder, SyncPath};

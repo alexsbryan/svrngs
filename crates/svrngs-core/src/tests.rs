@@ -678,7 +678,7 @@ fn an_act_whose_previous_act_is_not_its_authors_at_seq_minus_one_is_a_gap() {
     let elsewhere = signed(&key(1), 100, 0, record("a-elsewhere"));
     let follows_elsewhere = after(&key(1), &elsewhere, 101, record("b"));
     // None above seq 0.
-    let names_none = sign_act(&key(1), NS, 102, 1, None, record("c"), None, None);
+    let names_none = sign_act(&key(1), NS, 102, 1, None, record("c"), None, None, None);
     // One at seq 0.
     let names_one_at_zero = sign_act(
         &key(2),
@@ -687,6 +687,7 @@ fn an_act_whose_previous_act_is_not_its_authors_at_seq_minus_one_is_a_gap() {
         0,
         Some(a.id.clone()),
         record("x"),
+        None,
         None,
         None,
     );

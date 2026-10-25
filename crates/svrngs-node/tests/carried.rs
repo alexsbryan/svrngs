@@ -798,7 +798,7 @@ async fn a_line_is_carried_only_signed_by_someone_in_the_group() {
         .unwrap()
     };
     let line = |k: u8, n: u32| {
-        svrngs_core::sign_act(&signing(k), &group, now, 0, None, act(n), None, None)
+        svrngs_core::sign_act(&signing(k), &group, now, 0, None, act(n), None, None, None)
     };
     let mut tampered = line(2, 1);
     tampered.kind.act = act(2);

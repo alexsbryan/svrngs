@@ -53,21 +53,8 @@ fn held(
     act: RailAct,
 ) -> Op<SignedOp> {
     let seq = prev.map_or(0, |p| p.kind.seq + 1);
-    let (prev, sig, grant) = (
-        prev.map(|p| p.id.clone()),
-        String::new(),
-        Some(pass.clone()),
-    );
-    let kind = SignedOp {
-        seq,
-        prev,
-        sig,
-        act,
-        on_behalf_of: None,
-        view: None,
-        grant,
-    };
-    sign_op(&key(holder), NS, ts, kind)
+    let (prev, grant) = (prev.map(|p| p.id.clone()), Some(pass.clone()));
+    sign_act(&key(holder), NS, ts, seq, prev, act, None, None, grant)
 }
 
 /// Each applied act's `what` and its person.

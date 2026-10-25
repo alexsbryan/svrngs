@@ -32,6 +32,7 @@ fn invite(issuer: &SigningKey, seq: u64, link: &SigningKey) -> Op<SignedOp> {
         act,
         None,
         None,
+        None,
     )
 }
 

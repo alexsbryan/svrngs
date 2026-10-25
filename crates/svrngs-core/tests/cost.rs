@@ -48,6 +48,7 @@ fn a_fold_of_computers_records() {
                 act,
                 None,
                 None,
+                None,
             );
             prev = Some(op.id.clone());
             ops.push(op);

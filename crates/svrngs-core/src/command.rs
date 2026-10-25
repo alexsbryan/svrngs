@@ -262,6 +262,7 @@ fn sign_lines(
             act,
             on_behalf_of,
             None,
+            None,
         );
         prev = Some(op.id.clone());
         lines.push(op);
