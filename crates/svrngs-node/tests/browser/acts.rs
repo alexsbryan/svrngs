@@ -96,7 +96,7 @@ async fn the_home_page_says_what_acts_as_you_and_its_stop_holds(engine: Engine) 
             "home": format!("http://svrngs.localhost:{port}/"),
             "page": at("notes"),
             "read": at("films"),
-            "words": "Open cy’s notes. It also opens your friends’ films as you.",
+            "words": "Open cy’s notes. It writes what you say there into your group’s record, as you. It also opens your friends’ films as you.",
         }),
         None,
     )

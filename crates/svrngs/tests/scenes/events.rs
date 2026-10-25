@@ -294,13 +294,13 @@ async fn events(engine: Engine) {
             .find(|(n, _)| n == name)
             .map(|(_, p)| p.clone())
     };
-    // Each answer written by the app on Sam's computer for its person, and
-    // said so (gv-via; server.mjs `through`).
-    let via = |who: &str| format!("{who}, through Sam's computer");
+    // Each answer its own person's, signed by their own computer or phone
+    // as the app on Sam's computer named it (capability-signed, F1), so
+    // none is said to come through Sam's computer.
     let house_part = json!([
         ["Bo", "Cy"],
-        [via("Bo + Maya"), via("Cy")],
-        [via("Bo"), via("Cy"), via("Maya, Bo's guest")]
+        ["Bo + Maya", "Cy"],
+        ["Bo", "Cy", "Maya, Bo's guest"]
     ]);
     assert_eq!(
         part("The House"),
@@ -309,7 +309,7 @@ async fn events(engine: Engine) {
     );
     assert_eq!(
         part("dWeb"),
-        Some(json!([["Di"], [via("Di")], []])),
+        Some(json!([["Di"], ["Di"], []])),
         "Sam sees dWeb: {sam_sees:#}"
     );
     drop((sam, bo, di, server));

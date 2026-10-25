@@ -18,14 +18,17 @@
 export const spoken = (kind) => kind.replaceAll('-', ' ');
 export const named = (l) => (l.group ? spoken(l.kind) : `${l.person}’s ${l.name === l.kind ? l.name : `${l.name} (${l.kind})`}`);
 
-// What opening lend `l` agrees to, said on its open on both pages,
-// pressing which is the yes (capability-open; svrn-docs
+// What opening lend `l` in group `g` agrees to, said on its open on both
+// pages, pressing which is the yes (capability-open; svrn-docs
 // WHAT_CAN_ACT_AS_YOU §9): an app the group carries reads and writes what
 // the shelf, `shelf`, says it is, else its own part of the group's record;
-// a lend declared to read kinds (`--reads`) opens your friends' lends of
-// them as you. Made from what the lend declares, never its kind of app.
+// an app on a port writes what you say there as you, by naming it
+// (capability-signed, F1); a lend declared to read kinds (`--reads`) opens
+// your friends' lends of them as you. Made from what the lend declares,
+// never its kind of app.
 const does = (kind, shelf) => shelf.find((a) => a.name === kind)?.words ?? 'its own part of the group’s record.';
-export const agreed = (l, shelf) => `Open ${named(l)}${l.group ? `. It reads and writes ${does(l.kind, shelf)}` : l.reads?.length ? `. It also opens your friends’ ${l.reads.map(spoken).join(' and ')} as you.` : ''}`;
+const writes = (g) => `. It writes what you say there into ${g.name ?? 'your group'}’s record, as you`;
+export const agreed = (l, shelf, g) => `Open ${named(l)}${l.group ? `. It reads and writes ${does(l.kind, shelf)}` : `${writes(g)}.${l.reads?.length ? ` It also opens your friends’ ${l.reads.map(spoken).join(' and ')} as you.` : ''}`}`;
 
 // Who is visiting now (guests-pages; GUESTS §5 "The pages"), from the
 // record, as every member's page shows them: each guest, by host, until a

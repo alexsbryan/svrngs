@@ -160,13 +160,18 @@ waits in PLAN §2.
 **A lent app writes as whoever asks by naming the act.** Its answer names,
 in `x-svrngs-append`, a JSON array of acts, each `{group, op}` or `{group,
 corrects, op}` as a carried app's route takes one. The asker's own side
-reads it before the page sees the answer: a computer's origin
-(`crates/svrngs-node/src/origin.rs`, `appended`) signs each as its own
-person, under the kind the lend declares (`grant::app_act`), in a group
-both it and the lender stand in, and carries it to the lender (`POST
-/carry`), so the app's next read holds it. A correction of an act outside
-that kind, or a group the two do not share, withholds the answer and says
-why; nothing of it is written. The header never reaches the page.
+reads it before the page sees the answer, shapes each under the kind the
+lend declares (`grant::app_act`), signs it as the person and carries it to
+the lender (`POST /carry`), so the app's next read holds it. A computer's
+origin (`crates/svrngs-node/src/origin.rs`, `appended`) signs as its own
+person, in a group both it and the lender stand in. A phone's worker
+(`web/lend.js`, `appended`) signs with the pass's holder, in the group it
+was opened from, under a second pass the group page signs at the open,
+whose app is that kind's part of the group (`Label::carried`), so the
+fold's `Grant` lets the holder write that part alone. A correction of an
+act outside that kind, or a group the two do not share, withholds the
+answer and says why; nothing of it is written. The header never reaches
+the page.
 
 **Or a folder the group carries.** A lend goes with its lender; a carried
 app stays with the group. It is a folder `apps/<kind>/` holding an
@@ -665,8 +670,9 @@ Seven calls:
    version, since live code can't be pinned, kept beside the lends' yeses
    (`door/choices.rs`, `reaching`) and judged where the reach is
    (`surface.rs`, `reaches`). Opening the app from the home page is the yes:
-   its button says what it agrees to, "Open Sam’s notes. It also opens your
-   friends’ films as you.", and posts it before the app opens. On a phone
+   its button says what it agrees to, "Open Sam’s notes. It writes what
+   you say there into House’s record, as you. It also opens your friends’
+   films as you.", and posts it before the app opens. On a phone
    the group page's open, saying the same, is the yes, as the pass it signs
    names what the app reads. An app this computer lends reads what its
    person declared. An app the group carries says on its open what it reads

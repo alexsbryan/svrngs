@@ -1333,7 +1333,7 @@ async fn a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path(engine: 
 
     assert!(at_origin(&seen["opened"], &label(1, "page")), "{seen:#}");
     assert_eq!(
-        seen["words"], "Open ada’s page (k). It also opens your friends’ k as you.",
+        seen["words"], "Open ada’s page (k). It writes what you say there into house’s record, as you. It also opens your friends’ k as you.",
         "the phone's open is its yes, and says so (capability-open):\n{seen:#}"
     );
     let told = &seen["told"];

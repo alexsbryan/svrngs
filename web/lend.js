@@ -276,6 +276,8 @@ const PAGE_COOKIES = 'x-svrngs-page-cookies';
 // door marks its own (door.rs, `LendRefusal`), so a page tells it from the
 // lend's (mnp-1).
 const REFUSED = 'x-svrngs-refused';
+// The acts a lent app writes as the person asking (`appended`).
+const APPEND = 'x-svrngs-append';
 const say = (status, words, kind) => new Response(words, { status, headers: { ...PLAIN, [REFUSED]: kind } });
 // The two refusals a page meets at the pass and the lend, each in one set of
 // words (#111): no pass held, and a lend the pass does not open.
@@ -363,6 +365,9 @@ async function lent(request, url, where) {
     for (const line of JSON.parse(set)) setCookie(jar, line);
     await keepJar(where.label);
   }
+  const naming = res.headers.get(APPEND);
+  const refused = naming && (await appended(lend, naming));
+  if (refused) return refused;
   if (res.headers.get(REFUSED) === 'pass' && request.mode === 'navigate') {
     trace(`RUNTIME: the pass for ${where.label} is refused: its start page asks the group's page for another`);
     return Response.redirect(`${SCOPE.origin}${SITE}open.html?v=__VERSION__&for=${OWN}&again`, 302);
@@ -377,7 +382,7 @@ async function lent(request, url, where) {
   const gzip = /^gzip$/i.test(res.headers.get('content-encoding') ?? '');
   const answer = gzip ? res.body?.pipeThrough(new DecompressionStream('gzip')) : res.body;
   const headed = new Headers(res.headers);
-  ['x-svrngs-set-cookies', ...(gzip ? ['content-encoding', 'content-length'] : [])].forEach((h) => headed.delete(h));
+  ['x-svrngs-set-cookies', APPEND, ...(gzip ? ['content-encoding', 'content-length'] : [])].forEach((h) => headed.delete(h));
   // What its pages may read now, for the shim to take in before the page
   // reads the answer: Immich reads its sign-in's cookie unreloaded.
   if (set) headed.set(PAGE_COOKIES, cookieFor(jar, '/', true));
@@ -392,31 +397,62 @@ async function lent(request, url, where) {
 }
 
 // An app's write is this phone's own (capability-signed; DESIGN §3): shaped
-// as the door shapes one (svrngs-core `app_act`), signed by the pass's
-// holder under the pass as its chain's next line, kept beside the pass
-// before it is sent, so no seq is signed twice, and carried with every line
-// not yet taken to the lend's computer (`/carry`), which writes none of its
-// own. A line not taken waits, the same bytes, for the next write.
+// as the door shapes one (svrngs-core `app_act`) and `signed`.
 async function writing(request, lend) {
   loaded ??= init({ module_or_path: store.runtime() });
   await loaded;
   const act = app_act(lend.kind, new Uint8Array(await request.arrayBuffer()));
   if (!act) return Response.json({ error: 'an act is JSON, {op} or {corrects, op}' }, { status: 422 });
+  return signed(lend, lend.group, act, handed.pass);
+}
+
+// The acts a lent app's answer names (`x-svrngs-append`), this phone's own
+// as a carried app's are: each shaped under the lend's kind, in the group
+// it was opened from, and `signed` under the pass that lets its holder
+// write that kind's part (app.js `writes`); none of them if one is not.
+// Nothing when all are counted, else what the person is told.
+async function appended(lend, named) {
+  loaded ??= init({ module_or_path: store.runtime() });
+  await loaded;
+  const what = `${lend.person}’s ${lend.name}`;
+  let acts = null;
+  try {
+    acts = JSON.parse(named).map((a) => a.group === handed.group && app_act(lend.kind, new TextEncoder().encode(JSON.stringify(a))));
+  } catch (e) {
+    trace(`RUNTIME: ${what}'s acts are not a list: ${e}`);
+  }
+  if (!handed.writes || !acts?.every(Boolean)) {
+    trace(`RUNTIME: refused — ${what} named an act this phone does not write as its person: ${named}`);
+    return Response.json({ error: `${what} wrote outside its own part of the group you opened it from, so it was not saved.` }, { status: 403 });
+  }
+  for (const act of acts) {
+    const res = await signed(lend, handed.group, act, handed.writes);
+    if (!res.ok) return res;
+  }
+  return null;
+}
+
+// `act` signed in `group` by the pass's holder under `grant` as its chain's
+// next line, kept beside the pass before it is sent, so no seq is signed
+// twice, and carried with every line not yet taken to the lend's computer
+// (`/carry`), which writes none of its own. A line not taken waits, the
+// same bytes, for the next write.
+async function signed(lend, group, act, grant) {
   const at = handed.line ?? { seq: -1, id: null };
   const holder = Uint8Array.from(handed.holder.match(/../g), (h) => parseInt(h, 16));
-  const line = JSON.parse(sign_line(holder, lend.group, Math.floor(Date.now() / 1000), at.seq + 1, at.id, act, handed.pass));
-  handed = { ...handed, line: { seq: line.seq, id: line.id }, unsent: [...(handed.unsent ?? []), line] };
+  const line = JSON.parse(sign_line(holder, group, Math.floor(Date.now() / 1000), at.seq + 1, at.id, act, grant));
+  handed = { ...handed, line: { seq: line.seq, id: line.id }, unsent: [...(handed.unsent ?? []), [group, line]] };
   await store.lendKeep(`pass ${OWN}`, handed);
   trace(`RUNTIME: an act of ${lend.kind} signed as line ${line.seq}, ${handed.unsent.length} to carry`);
   let res;
   try {
-    for (const l of handed.unsent) {
-      const body = new TextEncoder().encode(JSON.stringify([lend.group, l]));
+    for (const sent of handed.unsent) {
+      const body = new TextEncoder().encode(JSON.stringify(sent));
       const headers = [['content-type', 'application/json'], ['content-length', String(body.length)]];
       res = await (await dialFor(lend.key)).fetch('POST', '/carry', headers, new Blob([body]).stream());
-      trace(`RUNTIME: line ${l.seq} carried to ${lend.person}'s computer, answered ${res.status}`);
+      trace(`RUNTIME: line ${sent[1].seq} carried to ${lend.person}'s computer, answered ${res.status}`);
       if (!res.ok) break;
-      handed = { ...handed, unsent: handed.unsent.filter((u) => u.id !== l.id) };
+      handed = { ...handed, unsent: handed.unsent.filter((u) => u[1].id !== sent[1].id) };
       await store.lendKeep(`pass ${OWN}`, handed);
     }
   } catch (e) {

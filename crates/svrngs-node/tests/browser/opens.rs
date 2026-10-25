@@ -54,7 +54,7 @@ async fn opening_an_app_from_the_home_page_is_the_yes_to_what_it_reads(engine: E
     }
     let port = ada.api_addr().port();
     let at = |name: &str| format!("http://{}.localhost:{port}/", label(2, name));
-    let words = "Open cy’s notes. It also opens your friends’ films as you.";
+    let words = "Open cy’s notes. It writes what you say there into your group’s record, as you. It also opens your friends’ films as you.";
 
     let seen = drive(
         engine,
@@ -64,7 +64,7 @@ async fn opening_an_app_from_the_home_page_is_the_yes_to_what_it_reads(engine: E
             "page": at("notes"),
             "read": at("films"),
             "words": words,
-            "plain": "Open cy’s plain (k)",
+            "plain": "Open cy’s plain (k). It writes what you say there into your group’s record, as you.",
         }),
         None,
     )
@@ -77,7 +77,11 @@ async fn opening_an_app_from_the_home_page_is_the_yes_to_what_it_reads(engine: E
         "a page opened another way waits for the person's yes:\n{seen:#}"
     );
     let cells = seen["cells"].as_array().cloned().unwrap_or_default();
-    for cell in [words, "Open cy’s plain (k)", "Open cy’s films"] {
+    for cell in [
+        words,
+        "Open cy’s plain (k). It writes what you say there into your group’s record, as you.",
+        "Open cy’s films. It writes what you say there into your group’s record, as you.",
+    ] {
         assert!(
             cells.contains(&json!(cell)),
             "the index says {cell:?}:\n{seen:#}"
@@ -130,14 +134,14 @@ fn the_open_says_what_an_app_does_in_one_wording() {
     ]);
     assert_eq!(
         in_question(
-            "args[0].map((l) => q.agreed(l, args[1]))",
+            "args[0].map((l) => q.agreed(l, args[1], { name: 'House' }))",
             json!([lends, shelf])
         ),
         json!([
             "Open Money. It reads and writes who paid for what, and who owes whom.",
             "Open Quiz. It reads and writes its own part of the group’s record.",
-            "Open cy’s notes. It also opens your friends’ films and music as you.",
-            "Open cy’s shelf (k)",
+            "Open cy’s notes. It writes what you say there into House’s record, as you. It also opens your friends’ films and music as you.",
+            "Open cy’s shelf (k). It writes what you say there into House’s record, as you.",
         ])
     );
 }

@@ -9,7 +9,9 @@
 //   log(group)                {ops, complete}: `ops` as GET /v1/rail/log
 //                             answers them
 //   append(group, act, name)  the act written as `name`'s: {op: 'record',
-//                             payload} or {op: 'correct', corrects, replacement}
+//                             payload} or {op: 'correct', corrects, replacement};
+//                             the file's alone: under svrngs the server names
+//                             the act in its answer (server.mjs `naming`)
 //
 // Every failure throws, saying whose: a group whose record cannot be read is
 // said as that by the server, never shown as no one answering.
@@ -49,12 +51,13 @@ export function record(api) {
       }
       return out;
     },
+    // Events' own part of the record, its kind `events/` taken off (svrngs
+    // `grant::app_act`), and the acts it wrote before it had one.
     async log(group) {
       const log = await call(at('log', group));
-      return { ops: log.ops, complete: log.complete };
-    },
-    async append(group, act, name) {
-      return (await call(at('append', group), { ...act, on_behalf_of: name })).id;
+      const own = (o) => !o.payload || !o.payload.kind?.includes('/') || o.payload.kind.startsWith('events/');
+      const ops = log.ops.filter(own).map((o) => (o.payload?.kind?.startsWith('events/') ? { ...o, payload: { ...o.payload, kind: o.payload.kind.slice(7) } } : o));
+      return { ops, complete: log.complete };
     },
   };
 }

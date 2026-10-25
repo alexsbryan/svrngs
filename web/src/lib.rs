@@ -370,6 +370,18 @@ pub fn label(lender: String, name: String) -> Result<String, JsError> {
     Ok(label.to_string())
 }
 
+/// The label of the app `kind` carried in `group` and lent by `lender`, 64
+/// hex: what a write pass names, so the fold lets its holder write `kind`'s
+/// part as its person (svrngs-core's `Label::carried`; capability-signed).
+#[wasm_bindgen]
+pub fn carried_label(lender: String, kind: String, group: String) -> Result<String, JsError> {
+    let key: [u8; 32] = hex::decode(&lender)
+        .ok()
+        .and_then(|k| k.try_into().ok())
+        .ok_or_else(|| JsError::new("not a computer's key"))?;
+    Ok(Label::carried(&key, &kind, &group).to_string())
+}
+
 /// The person whose key is `person` lets the key `holder` act as them for
 /// the app `app` toward it and the lends `reads` until `until`, seconds
 /// since 1970: the pass, as the door reads it from a request (u5-2, sup-1;
@@ -406,7 +418,9 @@ pub fn sign_line(
     let key = <[u8; 32]>::try_from(key.as_slice()).map_err(|_| JsError::new("a key is 32 bytes"))?;
     let act = svrngs_core::RailAct::from_json(serde_json::from_str(&act)?).map_err(|e| JsError::new(&e.to_string()))?;
     let prev = prev.map(|p| serde_json::from_value(p.into())).transpose()?;
-    let grant = grant.map(|g| Pass::decode(&g).ok_or_else(|| JsError::new("not a pass"))).transpose()?;
+    let grant = grant
+        .map(|g| Pass::decode(&g).ok_or_else(|| JsError::new("not a pass")))
+        .transpose()?;
     let key = svrngs_core::SigningKey::from_bytes(&key);
     Ok(serde_json::to_string(&svrngs_core::sign_act(
         &key, &group, ts as i64, seq as u64, prev, act, None, None, grant,

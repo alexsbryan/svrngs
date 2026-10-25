@@ -39,6 +39,7 @@
 //   POST /g/<group>/e/<event>/not-coming  your coming taken back
 //   POST /g/<group>/e/<event>/came        guest: one you brought, or none for you
 
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import http from 'node:http';
@@ -120,11 +121,24 @@ async function folded(group) {
   return { state, answers: answers(state), complete: log.complete };
 }
 
+/**
+ * The acts this answer names, `[{group, op}]` or `[{group, corrects, op}]`,
+ * for the asker's own device to sign as theirs (`x-svrngs-append`; svrngs
+ * DESIGN §3, "A lent app writes as whoever asks by naming the act"): under
+ * svrngs no computer but the asker's writes as them.
+ */
+const naming = new AsyncLocalStorage();
+
 /** Write `act` as `name`'s in `group`, once the fold would read it. */
 async function write(group, act, name) {
   const op = act.op === 'record' ? act.payload : act.replacement;
   const gaps = op ? validate({ id: 'new', ts: 0, by: name, op }) : [];
   if (gaps.length) throw new Said(400, gaps.map((g) => g.message).join('; '));
+  if (store.kind === 'record') {
+    naming.getStore().push({ group, ...(act.op === 'correct' && { corrects: act.corrects }), op });
+    trace('named, for the asker\'s device to write', { group, by: name, act: act.op, kind: op?.kind ?? null, corrects: act.corrects ?? null });
+    return;
+  }
   try {
     const id = await store.append(group, act, name);
     trace('written', { group, by: name, act: act.op, kind: op?.kind ?? null, corrects: act.corrects ?? null, id });
@@ -347,17 +361,22 @@ async function route(req) {
   throw new Said(404, 'There is nothing here.');
 }
 
-const server = http.createServer(async (req, res) => {
+// A header carries ASCII alone: JSON's own escapes say the rest.
+const ascii = (json) => json.replace(/[\u007f-\uffff]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`);
+
+const server = http.createServer((req, res) => naming.run([], async () => {
   const headers = { 'cache-control': 'no-store' };
   try {
     const out = await route(req);
+    const named = naming.getStore();
+    if (named.length) headers['x-svrngs-append'] = ascii(JSON.stringify(named));
     if (out.to) res.writeHead(303, { ...headers, location: out.to }).end();
     else res.writeHead(200, { ...headers, 'content-type': 'text/html; charset=utf-8' }).end(out.html);
   } catch (e) {
     const status = e instanceof Said ? e.status : 502;
     const words = e instanceof Said ? e.message : "This page can't be made on this computer right now.";
     trace('answered', { path: req.url, status, words, error: e instanceof Said ? null : e.message });
-    res.writeHead(status, { ...headers, 'content-type': 'text/html; charset=utf-8' }).end(page('Events', `<p class="unread">${esc(words)}</p><p><a href="/">All events</a></p>`));
+    res.writeHead(status, { 'cache-control': 'no-store', 'content-type': 'text/html; charset=utf-8' }).end(page('Events', `<p class="unread">${esc(words)}</p><p><a href="/">All events</a></p>`));
   }
-});
+}));
 server.listen(config.listen ?? 0, '127.0.0.1', () => console.log(JSON.stringify({ port: server.address().port, store: store.kind })));

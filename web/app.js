@@ -42,6 +42,7 @@
 import init, {
   ask,
   believe,
+  carried_label,
   connect_to_join,
   endpoint,
   issuer_of,
@@ -275,6 +276,11 @@ function open(group, key, lent, unanswered, l, at, until = Math.floor(Date.now()
     label: lends[0].label,
     lends,
     pass: pass(key, holder, lends[0].label, lends.slice(1).map((o) => o.label), until),
+    // An app on a port writes its kind's part of the group's record as you
+    // by naming the act (`x-svrngs-append`), under a pass whose app is that
+    // part's label, which the fold reads (DESIGN §3, "Lent apps").
+    writes: l.group ? null : pass(key, holder, carried_label(l.key, l.kind, group.id), [], until),
+    group: group.id,
     holder: hex(holder),
     relay: relay_of(group.token) ?? null,
     page: `${location.origin}${location.pathname}`,
@@ -508,7 +514,7 @@ async function enter(group, asked) {
   list.replaceChildren(
     row(['What', 'What it is', 'Whose', 'How it opens', 'Now'], 'th'),
     ...once(lent).map((l) => {
-      const button = Object.assign(el('button', agreed(l, shelf)), { onclick: () => saying(l, 'yes').then(() => open(group, key, lent, unanswered, l)) });
+      const button = Object.assign(el('button', agreed(l, shelf, group)), { onclick: () => saying(l, 'yes').then(() => open(group, key, lent, unanswered, l)) });
       return row([button, l.group ? named(l) : l.kind, owner(l, group), ...opens(l, 'Here, in this tab')]);
     }),
   );
