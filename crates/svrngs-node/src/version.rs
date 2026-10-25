@@ -17,10 +17,13 @@
 //! first whose door takes a pass carried by its holder's link
 //! (capability-signed; `door.rs` `LINK_HEADER`): a page opening a lend at
 //! a computer at 1 hands it a holder as bytes, as before (DESIGN §3), and
-//! every answer at 1 is read as it was.
+//! every answer at 1 is read as it was. 3 names each person whose computer
+//! did not say what they lend by their first key beside their name
+//! (keys-names; `node.rs` `Named`), where 2 named them by name: a page reads
+//! a name alone at 2 as before (question.js `door`).
 
 /// This build's version, as its answers carry it.
-pub const VERSION: u32 = 2;
+pub const VERSION: u32 = 3;
 
 /// Whether an answer carrying `version`, none when it carries none, comes
 /// from a computer running an svrngs older than any this one reads.

@@ -794,9 +794,10 @@ async fn a_member_s_computer_lists_what_is_lent_with_where_to_reach_it() {
     assert!(synced.stop.is_none(), "{synced:?}");
 
     let lends = pair.b.lends().await;
+    let unanswered = lends.unlisted.unanswered.iter().map(|n| &n.person);
     assert_eq!(
-        lends.unlisted.unanswered,
-        vec![Person::parse("cy").unwrap()]
+        unanswered.collect::<Vec<_>>(),
+        [&Person::parse("cy").unwrap()]
     );
     assert_eq!(lends.lent.len(), 1, "{lends:?}");
     let shelf = &lends.lent[0];
@@ -925,7 +926,9 @@ async fn a_member_asks_what_the_group_s_people_lend_each_with_its_lender_s_key()
         ],
         "{doc:#}"
     );
-    assert_eq!(doc["unanswered"], serde_json::json!(["dan"]), "{doc:#}");
+    // Each by name and first key (keys-names), dan's computer his first.
+    let dan = serde_json::json!([{ "person": "dan", "person_key": actor_of(&signing(9)) }]);
+    assert_eq!(doc["unanswered"], dan, "{doc:#}");
     // Each lend with the relay its group names for its lender, dotless;
     // `null`, said, for cy's, whose computer names none.
     let relays: Vec<&serde_json::Value> = doc["lent"]

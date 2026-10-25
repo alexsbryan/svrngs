@@ -127,7 +127,7 @@ async function show(g, s, room, add, me) {
     const hand = el('p', `You keep the order of removals in ${name}. Choose who keeps it after you, then leave: `, to, button('Hand it on', () => asked('/v1/handovers', { group: g.id, ...others[to.value] }, hand, name)));
     const leave = el('p', `Leaving ${name} stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. `, button(`Leave ${name}`, () => asked('/v1/leaves', { group: g.id }, leave, name)));
     s.append(...(g.keeps && others.length ? [hand] : []), Object.assign(leave, { className: 'leave' }));
-    if (g.removals.length) s.append(Object.assign(el('ul', '', ...g.removals.map((r) => el('li', removal(r)))), { className: 'removals' }));
+    if (g.removals.length) s.append(Object.assign(el('ul', '', ...g.removals.map((r) => el('li', removal(r, rows)))), { className: 'removals' }));
     // Who is visiting (guests-pages; GUESTS §5 "The pages"), from the
     // record, as every member's page shows them: who you have over first
     // (GUESTS's "Your guests", in words that are not events's noun), each
@@ -139,7 +139,7 @@ async function show(g, s, room, add, me) {
     const stop = (v, li = el('li', `${v.guest}, until ${until(v)}. Stop ends the visit now: what you lend stops opening to ${v.guest}, and everyone in ${name} sees it ended. `)) => (li.append(button(`Stop ${v.guest}’s visit`, () => post('/visits', [g.id, v.id]).then((a) => setTimeout(() => location.reload(), a.ts_unix * 1000 - Date.now()), (e) => li.append(` ${e.message}`)))), li);
     const mine = (g.visiting ?? []).filter((v) => v.yours);
     if (mine.length) s.append(el('h3', 'Who you have over'), Object.assign(el('ul', '', ...mine.map((v) => stop(v))), { className: 'yours' }));
-    if (g.visiting?.length) s.append(el('h3', 'Visiting now'), visiting(g.visiting));
+    if (g.visiting?.length) s.append(el('h3', 'Visiting now'), visiting(g.visiting, rows));
     // The index (V1_UI_BUILD §3.1): one table of what is in the group, on
     // any port — each thing by a link that opens it in a tab and says what
     // and whose (question.js `named`); what it is, its lender's word, never
@@ -166,10 +166,11 @@ async function show(g, s, room, add, me) {
     // of its own: what it lends never stale, and never nobody's. One that
     // answered is never said not to have.
     const said = (words) => body.append(el('tr', '', Object.assign(el('td', words), { colSpan: 5 })));
-    for (const p of lends.unanswered) said(`${p}'s computer did not answer, so what they lend is not listed.`);
-    for (const p of lends.unheard) said(`${p}'s computer has not heard of yours yet, so what they lend is not listed yet.`);
-    for (const p of lends.refused) said(`${p}'s computer answered without saying what they lend, so it is not listed.`);
-    for (const p of lends.older) said(`${p}'s computer runs an older svrngs, so what they lend is not listed.`);
+    const whose = (p) => called(rows, p.person_key) ?? p.person;
+    for (const p of lends.unanswered) said(`${whose(p)}'s computer did not answer, so what they lend is not listed.`);
+    for (const p of lends.unheard) said(`${whose(p)}'s computer has not heard of yours yet, so what they lend is not listed yet.`);
+    for (const p of lends.refused) said(`${whose(p)}'s computer answered without saying what they lend, so it is not listed.`);
+    for (const p of lends.older) said(`${whose(p)}'s computer runs an older svrngs, so what they lend is not listed.`);
     if (!body.children.length) said('Nobody lends anything here yet.');
     s.append(table(g, lends, (apps) => post('/shelf', [g.id, apps])));
     for (const l of once(lends.lent).filter((o) => o.group)) add('reads', el('p', carrying(l.kind, lends.shelf)));

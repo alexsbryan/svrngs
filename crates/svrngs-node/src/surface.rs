@@ -303,7 +303,7 @@ async fn read_by(
     };
     let (lent, unlisted) = at.lent(&groups, &own, None).await?;
     let silent: Vec<String> = (groups.iter().flat_map(|(_, s)| s.iter()))
-        .filter(|(_, m)| unlisted.names(&m.person))
+        .filter(|(_, m)| unlisted.names(&m.person_key))
         .map(|(actor, _)| actor.clone())
         .collect();
     let Some(reading) = lent.iter().find(|l| named(l).as_ref() == Some(app)) else {
@@ -388,5 +388,7 @@ pub(crate) async fn reads(at: &Asking, label: &Label) -> Result<Response, Respon
         .collect();
     tracing::debug!(target: "surface", %label, read = read.len(), unanswered = unanswered.len(),
         "surface: reads — answered a lent page the lends of the kinds it reads, each at its origin here");
+    // A lent page is told each lender by name, as it always was.
+    let unanswered: Vec<_> = unanswered.iter().map(|n| &n.person).collect();
     Ok(Json(serde_json::json!({ "lends": read, "unanswered": unanswered })).into_response())
 }

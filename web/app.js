@@ -475,13 +475,15 @@ async function enter(group, asked) {
   apart(lent, people);
   // Who was removed or asked to be, shown to everyone in the group
   // (v1-keeper-office (b)); `null` when the computer could not read it.
-  const gone = (removals ?? [null]).map((r) => el('li', r ? removal(r) : `Who was removed from ${group.name} cannot be read just now.`));
+  const gone = (removals ?? [null]).map((r) => el('li', r ? removal(r, people) : `Who was removed from ${group.name} cannot be read just now.`));
   document.getElementById('removals').replaceChildren(...gone);
   // Who is visiting now, as the home page lists them (guests-pages;
   // question.js `visiting`), `null` when the computer could not read it;
   // a guest's Stop is on the home page of the computer that made their link.
-  const mine = on?.some((v) => v.host === group.person) ? [el('p', 'You stop your guest’s visit on the home page of the computer you made their link on.')] : [];
-  document.getElementById('visitors').replaceChildren(...(on ? (on.length ? [el('h2', 'Visiting now'), visiting(on), ...mine] : []) : [el('p', `Who is visiting ${group.name} cannot be read just now.`)]));
+  // Yours by your first key (keys-names), from a computer at version 2 by name.
+  const you = people.find((r) => r.key === actor(key))?.person_key;
+  const mine = on?.some((v) => (v.host_key ? v.host_key === you : v.host === group.person)) ? [el('p', 'You stop your guest’s visit on the home page of the computer you made their link on.')] : [];
+  document.getElementById('visitors').replaceChildren(...(on ? (on.length ? [el('h2', 'Visiting now'), visiting(on, people), ...mine] : []) : [el('p', `Who is visiting ${group.name} cannot be read just now.`)]));
   show(`You’re in ${titled(group)}, as ${group.person}${via ? `, through ${via.person}’s computer` : ''}`, true);
   // The door and the index as the home page draws them (question.js;
   // V1_UI_BUILD §3.1), judged by the answer this computer gave: whose

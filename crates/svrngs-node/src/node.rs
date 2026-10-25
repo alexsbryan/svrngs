@@ -151,6 +151,14 @@ pub struct Lends {
     pub unlisted: Unlisted,
 }
 
+/// A person by name and by their first key, which tells two of one name
+/// apart (keys-names).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct Named {
+    pub person: Person,
+    pub person_key: String,
+}
+
 /// The people whose computer did not say what they lend, so it is not
 /// known: absent, which is not lending nothing — each by how it was not
 /// said, so a computer that answered is never said not to have answered
@@ -158,24 +166,26 @@ pub struct Lends {
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
 pub struct Unlisted {
     /// Whose computer did not answer.
-    pub unanswered: Vec<Person>,
+    pub unanswered: Vec<Named>,
     /// Whose computer answered that it has not heard this one is in its
     /// group: it closed the connection as not admitted.
-    pub unheard: Vec<Person>,
+    pub unheard: Vec<Named>,
     /// Whose computer answered with a refusal, or with what is not a list
     /// of lends.
-    pub refused: Vec<Person>,
+    pub refused: Vec<Named>,
     /// Whose computer runs an older svrngs ([`crate::version`]): what it
     /// lends is not read.
-    pub older: Vec<Person>,
+    pub older: Vec<Named>,
 }
 
 impl Unlisted {
-    /// Whether `person`'s computer did not say what they lend, by any of
-    /// the four.
-    pub(crate) fn names(&self, person: &Person) -> bool {
+    /// Whether a computer of the person whose first key is `first` did not
+    /// say what they lend, by any of the four.
+    pub(crate) fn names(&self, first: &str) -> bool {
         let lists = [&self.unanswered, &self.unheard, &self.refused, &self.older];
-        lists.iter().any(|l| l.contains(person))
+        lists
+            .iter()
+            .any(|l| l.iter().any(|n| n.person_key == first))
     }
 }
 
@@ -569,7 +579,7 @@ impl Host {
         Some(RoundMembers::of(
             peers
                 .into_iter()
-                .map(|(actor, person, contact)| (format!("{person}/{}", &actor[..8]), contact))
+                .map(|(actor, n, contact)| (format!("{}/{}", n.person, &actor[..8]), contact))
                 .collect(),
         ))
     }
@@ -625,8 +635,8 @@ impl Host {
     fn standing_peers(
         &self,
         groups: &[(String, BTreeMap<String, Member>)],
-    ) -> Vec<(String, Person, Contact)> {
-        let mut keys: BTreeMap<String, (Person, Contact)> = BTreeMap::new();
+    ) -> Vec<(String, Named, Contact)> {
+        let mut keys: BTreeMap<String, (Named, Contact)> = BTreeMap::new();
         let relay = |a: &str| relay_of(groups, a);
         for (namespace, standing) in groups {
             for (actor, person, key) in dialled(&self.actor, namespace, standing, relay) {
@@ -635,7 +645,17 @@ impl Host {
                 }
                 let name = format!("{person}/{}", &actor[..8]);
                 tracing::debug!(target: "node", namespace, member = %name, "node: a member stands in the group, to dial");
-                keys.insert(actor.clone(), (person.clone(), key));
+                let person_key = standing[actor].person_key.clone();
+                keys.insert(
+                    actor.clone(),
+                    (
+                        Named {
+                            person: person.clone(),
+                            person_key,
+                        },
+                        key,
+                    ),
+                );
             }
         }
         keys.into_iter()
@@ -670,14 +690,14 @@ impl Host {
         let mut lends = Lends::default();
         for ask in asks {
             match ask.await {
-                Ok((person, key, Answered::Lends(answered, version))) => {
+                Ok((named, key, Answered::Lends(answered, version))) => {
                     for offered in answered {
                         let Some(address) = self.origin(&key, offered.name.as_str()) else {
                             continue;
                         };
                         lends.lent.push(Lent {
                             version,
-                            person: person.clone(),
+                            person: named.person.clone(),
                             key: key.clone(),
                             offered,
                             address,

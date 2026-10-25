@@ -248,11 +248,7 @@ async fn a_round_dials_a_computer_and_never_a_browser() {
     let lends = tokio::time::timeout(Duration::from_secs(30), a.lends())
         .await
         .expect("the ask finishes");
-    assert_eq!(
-        lends.unlisted.unanswered,
-        Vec::<Person>::new(),
-        "A asks B alone"
-    );
+    assert_eq!(lends.unlisted.unanswered, [], "A asks B alone");
 
     p.transport()
         .add_known_peer(key(1), loopback_sockets(a.endpoint()));
@@ -301,20 +297,22 @@ async fn a_computer_that_refuses_is_said_apart_from_one_that_does_not_answer() {
     let lends = tokio::time::timeout(Duration::from_secs(30), a.lends())
         .await
         .expect("the ask finishes");
-    let names = |n: &[&str]| {
-        n.iter()
-            .map(|p| Person::parse(p).unwrap())
-            .collect::<Vec<_>>()
+    let names = |n: &[(&str, u8)]| {
+        let named = |(p, k): &(&str, u8)| svrngs_node::node::Named {
+            person: Person::parse(p).unwrap(),
+            person_key: actor_of(&signing(*k)),
+        };
+        n.iter().map(named).collect::<Vec<_>>()
     };
     assert_eq!(
         lends.unlisted,
         Unlisted {
-            unanswered: names(&["dee"]),
-            unheard: names(&["bo"]),
-            refused: names(&["cy"]),
+            unanswered: names(&[("dee", 4)]),
+            unheard: names(&[("bo", 2)]),
+            refused: names(&[("cy", 3)]),
             older: vec![],
         },
-        "each computer named by how it did not say what it lends"
+        "each computer named by how it did not say what it lends, and by its person's first key"
     );
     assert!(lends.lent.is_empty(), "{lends:?}");
 }

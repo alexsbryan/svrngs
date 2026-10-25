@@ -59,13 +59,19 @@ pub struct Register {
 }
 
 /// One counting `Remove`, as the group is shown it (v1-keeper-office (b)):
-/// who signed it, whom it names, when it is timed, and whether it was the
-/// keeper's cut, a leave or an ask, as `membership` judged it; and the key
-/// it names, which the page is not sent.
+/// who signed it, whom it names, each by name, by their first key and by
+/// when they joined, which tell two of one name apart where one is no
+/// longer standing (keys-names), when it is timed, and
+/// whether it was the keeper's cut, a leave or an ask, as `membership`
+/// judged it; and the key it names, which the page is not sent.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct Removing {
     pub by: Person,
+    pub by_key: String,
+    pub by_joined: Joined,
     pub of: Person,
+    pub of_key: String,
+    pub of_joined: Joined,
     pub at: i64,
     pub said: RemovalSaid,
     #[serde(skip)]
@@ -188,7 +194,7 @@ fn removals_in(ops: &[Op<SignedOp>], m: &Membership, namespace: &str) -> Vec<Rem
                 tracing::debug!(target: "register", namespace, id = %id, key, "register: a removal the fold does not count is not shown");
                 return None;
             }
-            let (Some(by), Some(of)) = (m.bindings.get(&op.actor), m.bindings.get(key)) else {
+            let (Some((by_key, by)), Some((of_key, of))) = (m.person_of(&op.actor), m.person_of(key)) else {
                 tracing::debug!(target: "register", namespace, id = %id, actor = %op.actor, key, "register: a removal whose signer or named key is bound to nobody is not shown");
                 return None;
             };
@@ -198,7 +204,9 @@ fn removals_in(ops: &[Op<SignedOp>], m: &Membership, namespace: &str) -> Vec<Rem
                 None => RemovalSaid::Asked,
             };
             tracing::debug!(target: "register", namespace, id = %id, by = %by, of = %of, ?said, "register: a removal shown to the group");
-            Some(Removing { by: by.clone(), of: of.clone(), at: op.ts_unix, said, key: key.clone() })
+            let (by_joined, of_joined) = (m.joined(by_key), m.joined(of_key));
+            let (by_key, of_key) = (by_key.into(), of_key.into());
+            Some(Removing { by: by.clone(), by_key, by_joined, of: of.clone(), of_key, of_joined, at: op.ts_unix, said, key: key.clone() })
         })
         .collect();
     out.sort_by_key(|r| r.at);

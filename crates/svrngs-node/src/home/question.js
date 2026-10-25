@@ -34,7 +34,7 @@ export const agreed = (l, shelf, g) => `Open ${named(l)}${l.group ? `. It reads 
 // record, as every member's page shows them: each guest, by host, until a
 // day and an hour.
 export const until = (v) => new Date(v.until * 1000).toLocaleString([], { weekday: 'long', hour: 'numeric', minute: '2-digit' });
-export const visiting = (vs) => Object.assign(el('ul', '', ...[...vs].sort((a, b) => a.host.localeCompare(b.host)).map((v) => el('li', `${v.guest}, ${v.host}’s guest, until ${until(v)}`))), { className: 'visiting' });
+export const visiting = (vs, rows = []) => Object.assign(el('ul', '', ...[...vs].sort((a, b) => a.host.localeCompare(b.host)).map((v) => el('li', `${v.guest}, ${called(rows, v.host_key) ?? v.host}’s guest, until ${until(v)}`))), { className: 'visiting' });
 
 // Whose a lend is on group `g`'s index: its lender's, or the group's for an
 // app the group carries, whichever computer's copy is listed (`once`).
@@ -51,8 +51,8 @@ export const question = (app, lend) => `Let ${named(app)} use ${named(lend)}?`;
 // A removal, a leave or an ask to remove, as everyone in the group is
 // shown it (v1-keeper-office (b); groups-leave): "cy asked to remove dee on
 // 12 Oct 2026, 14:03", "ana left on …", the time in the browser's own words.
-export const removal = (r) =>
-  `${r.said === 'left' ? `${r.of} left` : `${r.by} ${r.said === 'removed' ? 'removed' : 'asked to remove'} ${r.of}`} on ${new Date(r.at * 1000).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}`;
+export const removal = (r, rows = [], all = [...rows, { person: r.by, person_key: r.by_key, joined: r.by_joined }, { person: r.of, person_key: r.of_key, joined: r.of_joined }]) =>
+  `${r.said === 'left' ? `${called(all, r.of_key) ?? r.of} left` : `${called(all, r.by_key) ?? r.by} ${r.said === 'removed' ? 'removed' : 'asked to remove'} ${called(all, r.of_key) ?? r.of}`} on ${new Date(r.at * 1000).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}`;
 
 // The line said when what apps use of `lend` cannot be asked of its
 // lender's computer.
@@ -158,7 +158,8 @@ export function door(rows, lent = []) {
   const cells = people(rows).map(([p, name, devices]) => [p, devices, el('li', '', el('strong', name), ...theirs(p), ' ', el('small', 'asking…'))]);
   const judge = (lends) => cells.forEach(([p, devices, li]) => {
     const phone = devices.includes('browser') ? (devices.includes('computer') ? ', a phone too' : 'in from a phone') : '';
-    const [drawn, words] = !devices.includes('computer') ? ['phone', ''] : !lends ? ['', 'not known now'] : lends.unanswered.includes(p.person) ? ['off', 'did not answer'] : ['on', 'on now'];
+    const silent = lends?.unanswered.some((u) => (u.person_key ?? u) === (u.person_key ? p.person_key : p.person));
+    const [drawn, words] = !devices.includes('computer') ? ['phone', ''] : !lends ? ['', 'not known now'] : silent ? ['off', 'did not answer'] : ['on', 'on now'];
     [li.className, li.lastChild.textContent] = [drawn, words + phone];
   });
   return [Object.assign(el('ul', '', ...cells.map((c) => c[2])), { className: 'door' }), judge];

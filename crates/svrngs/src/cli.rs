@@ -1245,7 +1245,7 @@ impl std::fmt::Display for Said {
                     (&u.older, "runs an older svrngs, so what they lend is not listed"),
                 ] {
                     for person in people {
-                        writeln!(f, "{person}'s computer {why}.")?;
+                        writeln!(f, "{}'s computer {why}.", person.person)?;
                     }
                 }
                 Ok(())

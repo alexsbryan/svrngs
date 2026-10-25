@@ -253,7 +253,8 @@ async fn an_app_asks_what_the_group_s_people_lend_its_own_included_and_none_stal
         vec![entry("alex", &alex, "telly", None)],
         "Sam's lend is not listed once Sam's computer is gone: {body:#}"
     );
-    assert_eq!(body["unanswered"], serde_json::json!(["sam"]), "{body:#}");
+    let sam = serde_json::json!([{ "person": "sam", "person_key": actor_of(&signing(2)) }]);
+    assert_eq!(body["unanswered"], sam, "{body:#}");
     house.close().await;
 }
 
