@@ -286,64 +286,88 @@ async fn money_and_events_open_and_write_at_their_origin(engine: Engine) {
 
 in_both_engines!(
     /// **An entry another person's computer wrote says whose** (gv-via
-    /// (b); `ralph/FINDING_ON_BEHALF_OF.md`'s scene): cy's computer holds,
-    /// as an older svrngs wrote them in bo's name, "bo paid $400 for the
+    /// (b); `ralph/FINDING_ON_BEHALF_OF.md`'s scene): ada's computer holds,
+    /// before it keeps the group past its cutover, cy's computer's lines as
+    /// an older svrngs wrote them in bo's name, "bo paid $400 for the
     /// rent" in Money, and a dinner bo hosts with bo and Maya coming in
     /// Events; a script on cy's computer writing them to its loopback API
-    /// now is refused, `not_yours` (capability-signed). Ada's computer
-    /// takes cy's record, and on each page opened at its origin there each
-    /// old entry reads as bo's, through cy's computer, in the phone's words
-    /// (web/app.js). Planted: the label left out, as before gv-via, and
-    /// each page says bo's alone.
+    /// now is refused, `not_yours` (capability-signed). The cutover covers
+    /// them, and on each page opened at ada's origin each old entry reads
+    /// as bo's, through cy's computer, in the phone's words (web/app.js).
+    /// Planted: the label left out, as before gv-via, and each page says
+    /// bo's alone.
     an_entry_another_s_computer_wrote_says_whose
 );
 async fn an_entry_another_s_computer_wrote_says_whose(engine: Engine) {
     let relay = relay().await;
     let dirs: Vec<_> = (0..2).map(|_| tempfile::tempdir().unwrap()).collect();
     let ada = node(dirs[0].path(), &relay, &signing(7)).await;
-    let cy = joined(dirs[1].path(), &relay, &ada, 2, "cy").await;
     let folder = dirs[0].path().join("house");
     std::fs::create_dir(&folder).unwrap();
     keep_folder(&ada, &folder).await;
     carry(&folder, "Money", &files_of("expenses", "expenses.js"));
     carry(&folder, "Events", &files_of("events", "events.js"));
-    let http = reqwest::Client::builder().no_proxy().build().unwrap();
+    let cy_in = svrngs_core::tests_support::Fixture {
+        act: RailAct::Admit {
+            person: Person::parse("cy").unwrap(),
+            key: actor_of(&signing(2)),
+            invite: None,
+        },
+    };
+    ada.rail().commit(NS, &cy_in).unwrap().unwrap();
     let event = "0123456789abcdef";
-    for payload in [
+    let acts = [
         json!({ "kind": "Money/expense", "amount_cents": 40000, "description": "the rent" }),
         json!({ "kind": "Events/event", "event": event, "what": "dinner", "when": "Friday 7", "where": "the house" }),
         json!({ "kind": "Events/coming", "event": event, "guests": ["Maya"] }),
-    ] {
-        let act = json!({ "op": "record", "payload": payload, "on_behalf_of": "bo" });
+    ]
+    .map(|payload| json!({ "op": "record", "payload": payload, "on_behalf_of": "bo" }));
+    // As an older svrngs wrote them: cy's computer's lines naming bo,
+    // held by ada's before the keeper's computer writes its cutover, which
+    // it does once cy's computer first reaches it (node.rs `cut_over`).
+    // Stamped past cy's admission: the walk is by stamp, then key
+    // (membership.rs `membership`), and a line before its key's `Admit` counts
+    // for no one.
+    let held = ada
+        .rail()
+        .ops_missing_from_within(NS, &Default::default(), usize::MAX);
+    let at = held.unwrap().0.iter().map(|o| o.ts_unix).max().unwrap() + 1;
+    let mut prev = None;
+    let older: Vec<_> = (acts.iter().enumerate())
+        .map(|(seq, act)| {
+            let act = RailAct::from_json(act.clone()).unwrap();
+            let op = svrngs_core::sign_act(
+                &signing(2),
+                NS,
+                at,
+                seq as u64,
+                prev.take(),
+                act,
+                Some("bo"),
+                None,
+                None,
+            );
+            prev = Some(op.id.clone());
+            op
+        })
+        .collect();
+    assert_eq!(
+        ada.rail().ingest_all(NS, &older).unwrap(),
+        3,
+        "as an older svrngs wrote them"
+    );
+    let cy = standing(dirs[1].path(), &relay, &ada, 2, "cy").await;
+    let cutover = ada.rail().register(NS).unwrap().signers;
+    assert!(
+        cutover.is_some(),
+        "ada's computer keeps the group past its cutover"
+    );
+    let http = reqwest::Client::builder().no_proxy().build().unwrap();
+    for act in acts {
         let at = format!("http://{}/v1/rail/append?namespace={NS}", cy.api_addr());
         let wrote = http.post(at).json(&act).send().await.unwrap();
         assert_eq!(wrote.status().as_u16(), 422, "a program writes only as cy");
-        // As an older svrngs wrote it: cy's computer's next line, naming bo.
-        let (rail, me) = (cy.rail(), actor_of(cy.rail().signer()));
-        let all = rail.ops_missing_from_within(NS, &Default::default(), usize::MAX);
-        let tip = (all.unwrap().0.into_iter().filter(|o| o.actor == me)).max_by_key(|o| o.kind.seq);
-        let (seq, prev) = tip.map_or((0, None), |o| (o.kind.seq + 1, Some(o.id)));
-        let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH);
-        let act = RailAct::from_json(act).unwrap();
-        let older = svrngs_core::sign_act(
-            rail.signer(),
-            NS,
-            now.unwrap().as_secs() as i64,
-            seq,
-            prev,
-            act,
-            Some("bo"),
-            None,
-            None,
-        );
-        assert_eq!(
-            rail.ingest_all(NS, &[older]).unwrap(),
-            1,
-            "as an older svrngs wrote it"
-        );
     }
-    let synced = ada.host().sync_with(NS, &cy.endpoint().addr()).await;
-    assert!(synced.stop.is_none(), "ada takes cy's record: {synced:?}");
     for (app, says) in [
         (
             "Money",
