@@ -329,3 +329,33 @@ fn a_yes_naming_files_no_folder_placed_counts_nowhere() {
     ops.push(signed(&key(3), 1_030, 0, yes(&placed)));
     assert_eq!(admitted(&ops).runs().of("Money", "cy"), Some(&placed));
 }
+
+/// **Two people of one name keep their own yes** (capability-keys; svrn-docs
+/// `rings/current/WHAT_CAN_ACT_AS_YOU.md` §7.4, "Yes, keys everywhere").
+/// After bo's change, alex lets two people in as dee, each by hand, and
+/// the first says yes to bo's version on her own computer. Refused: her
+/// yes running as the other dee, who said nothing. Kept: Money runs as bo
+/// changed it for the first dee and as it was brought for the other, each
+/// asked by their own first key. Red at HEAD: a yes was kept by name, so
+/// asked by key it ran as neither, and asked by name as both.
+#[test]
+fn two_people_of_one_name_keep_their_own_yes() {
+    let mut ops = brought_then_changed();
+    let new = money([("index.html", 7), ("app.js", 9)]);
+    let dee = |k: u8| RailAct::Admit {
+        person: p("dee"),
+        key: actor_of(&key(k)),
+        invite: None,
+    };
+    let first = after(&key(1), &ops[2], 1_011, dee(6));
+    ops.extend([first.clone(), after(&key(1), &first, 1_012, dee(8))]);
+    ops.push(signed(&key(6), 1_020, 0, yes(&new)));
+    let runs = admitted(&ops).runs().clone();
+    let brought = money([("index.html", 7), ("app.js", 8)]);
+    let [one, other] = [6, 8].map(|k| runs.of("Money", &actor_of(&key(k))));
+    assert_eq!(
+        (one, other),
+        (Some(&new), Some(&brought)),
+        "(the first dee's, the other's)"
+    );
+}

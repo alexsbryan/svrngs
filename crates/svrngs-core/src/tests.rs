@@ -1048,3 +1048,48 @@ fn an_op_id_reads_short_enough_to_say() {
     assert_eq!(short_id("ring-0123456789abcdef"), "ring-0123456…");
     assert_eq!(short_id("short"), "short");
 }
+
+/// **Who wrote an act is told by key, beside the name** (capability-keys;
+/// svrn-docs `rings/current/WHAT_CAN_ACT_AS_YOU.md` §7.4): alex lets two
+/// people in as dee, each by hand, and each writes a record; bo writes one
+/// from his phone, a second key of his seed row. Each act on the wire names
+/// its writer's first key, `person_key`: the two dees' differ though both
+/// say dee, and bo's phone's is his computer's, so an app keeps two
+/// people's entries apart and one person's devices together. Red at HEAD:
+/// an act named only the name.
+#[test]
+fn each_act_names_its_writer_s_first_key_beside_their_name() {
+    let dee = |k: u8| RailAct::Admit {
+        person: p("dee"),
+        key: actor_of(&key(k)),
+        invite: None,
+    };
+    let mut ops = run(&key(1), 100, [dee(6), dee(8)]);
+    ops.extend([6, 8, 4].map(|k| signed(&key(k), 110, 0, record(&format!("by {k}")))));
+    let mut seed = ring().members;
+    seed.entry(p("bo")).or_default().push(actor_of(&key(4)));
+    let a = admit(
+        &ActSet::of(&ops),
+        &[],
+        &Roster::new(seed),
+        NS,
+        &Ed25519Verifier,
+    );
+    let wire = serde_json::to_value(a.wire()).unwrap();
+    let whose = |what: &str| {
+        let of = wire.as_array().unwrap().iter();
+        let op = of.clone().find(|o| o["payload"]["what"] == what);
+        op.map(|o| (o["person"].clone(), o["person_key"].clone()))
+    };
+    let said = |name: &str, k: u8| {
+        Some((
+            serde_json::json!(name),
+            serde_json::json!(actor_of(&key(k))),
+        ))
+    };
+    assert_eq!(
+        ["by 6", "by 8", "by 4"].map(whose),
+        [said("dee", 6), said("dee", 8), said("bo", 2)],
+        "(each dee by her own key, bo's phone by his first)"
+    );
+}

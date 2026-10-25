@@ -42,6 +42,22 @@ test('a correction of someone else\'s answer counts for nothing, and says so', (
   assert.deepEqual(codes(acts), ['not_theirs', 'not_theirs']);
 });
 
+// Two people of one name are two authors (capability-keys; svrn-docs
+// rings/current/WHAT_CAN_ACT_AS_YOU.md §7.4): the record says each op's
+// writer by their first key, `person_key`, beside the name two may share.
+test('a correction from another person of the same name counts for nothing; one from the author\'s other device counts', () => {
+  const log = {
+    ops: [
+      { id: 'a', ts_unix: 1000, person: 'sam', person_key: 'p1', voided: false, payload: dinner('a', 'sam').op },
+      { id: 'b', ts_unix: 1100, person: 'sam', person_key: 'p2', voided: false, corrects: 'a' },
+      { id: 'c', ts_unix: 1200, person: 'sam', person_key: 'p1', voided: false, corrects: 'a', payload: { ...dinner('c', 'sam').op, where: 'the yard' } },
+    ],
+  };
+  const state = fold(actsOf(log));
+  assert.deepEqual(state.gaps.map((g) => g.code), ['not_theirs']);
+  assert.equal(state.events.e1.where, 'the yard', "the first Sam's own change, from her phone, is hers");
+});
+
 test('the record\'s voided flag is not this fold\'s: a voided act by another\'s correction still counts', () => {
   const log = {
     ops: [

@@ -209,6 +209,24 @@ test('a correction counts only from its author: another member\'s leaves the exp
   assert.match(state.gaps[0].message, /cy tried to change sam’s entry, which only sam can change/);
 });
 
+// Two people of one name are two authors (capability-keys; svrn-docs
+// rings/current/WHAT_CAN_ACT_AS_YOU.md §7.4): the record says each op's
+// writer by their first key, `person_key`, beside the name two may share.
+test('a correction from another person of the same name counts for nothing; one from the author\'s other device counts', () => {
+  const op = (id, extra) => ({ id, actor: 'k1', seq: 0, ts_unix: 7, voided: false, ...extra });
+  const pizza = (cents) => ({ kind: EXPENSE, amount_cents: cents, description: 'pizza' });
+  const log = {
+    ops: [
+      op('o1', { person: 'sam', person_key: 'p1', payload: pizza(6000), voided: true }),
+      op('o2', { person: 'sam', person_key: 'p2', actor: 'k2', corrects: 'o1', payload: pizza(1) }),
+      op('o3', { person: 'sam', person_key: 'p1', actor: 'k3', corrects: 'o1', payload: pizza(4000) }),
+    ],
+  };
+  const state = fold(actsOf(log));
+  assert.deepEqual(state.gaps.map((g) => [g.code, g.id]), [['not_theirs', 'o2']]);
+  assert.deepEqual(Object.entries(state.expenses).map(([id, e]) => [id, e.amount_cents]), [['o3', 4000]], "the first Sam's own change, from her phone, is hers");
+});
+
 test('a correction from its author still counts: the expense they replace is gone, and so is one they take back', () => {
   const op = (id, extra) => ({ id, actor: 'k1', seq: 0, ts_unix: 7, voided: false, ...extra });
   const log = {

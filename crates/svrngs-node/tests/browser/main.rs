@@ -2104,6 +2104,76 @@ async fn the_home_page_tells_two_people_of_one_name_apart(engine: Engine) {
     drop(ada);
 }
 
+in_both_engines!(
+    /// **Two people of one name are told apart, and each is only
+    /// themselves** (capability-keys; svrn-docs `rings/current/
+    /// WHAT_CAN_ACT_AS_YOU.md` §7.4, §9): ada's computer brings Money and
+    /// lets a second person in as ada, by hand, whose own computer changes
+    /// Money's files. Ada's home page says the other ada changed them, told
+    /// apart by when she joined, and offers to hand the order of removals
+    /// on to her the same way. Refused: the other ada's change said as
+    /// ada's own, "you changed its files", and the other ada left out of
+    /// whom ada can hand it on to, as if she were ada. Red at HEAD: the
+    /// page told who changed an app, and who is someone else, by name.
+    two_people_of_one_name_are_told_apart_on_the_home_page
+);
+async fn two_people_of_one_name_are_told_apart_on_the_home_page(engine: Engine) {
+    use svrngs_core::{Change, ContentHash, Entry, SyncPath};
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &signing(7)).await;
+    let path = SyncPath::parse("apps/Money/index.html").unwrap();
+    let synced = |fill: u8, base| RailAct::Synced {
+        folder: "house".into(),
+        changes: vec![Change {
+            path: path.clone(),
+            now: Some((ContentHash::from_bytes([fill; 32]), 10)),
+            base,
+        }],
+    };
+    let commit = |act| {
+        let fixture = svrngs_core::tests_support::Fixture { act };
+        ada.rail().commit(NS, &fixture).unwrap().unwrap()
+    };
+    let brought = commit(synced(1, None)).lines()[0].clone();
+    commit(RailAct::Admit {
+        person: Person::parse("ada").unwrap(),
+        key: actor_of(&signing(4)),
+        invite: None,
+    });
+    let key = brought.actor.clone();
+    let base = Some(Entry {
+        key,
+        seq: brought.kind.seq,
+        path: path.clone(),
+    });
+    let at = brought.ts_unix + 2;
+    let theirs = svrngs_core::tests_support::signed_in(NS, &signing(4), at, 0, synced(2, base));
+    ada.rail().ingest_all(NS, &[theirs]).unwrap();
+    let args = json!({ "all": "#acts p, #home section select option", "unfold": true });
+    let seen = home_page(engine, &ada, args).await;
+    eprintln!("ada's home page: {seen:#}");
+    let all: Vec<&str> = (seen["all"].as_array().unwrap().iter())
+        .filter_map(Value::as_str)
+        .collect();
+    let changed = all
+        .iter()
+        .find(|l| l.starts_with("Money: "))
+        .unwrap_or_else(|| panic!("{seen:#}"));
+    let named = changed
+        .strip_prefix("Money: ada (joined ")
+        .and_then(|w| w.split_once(") changed its files on "));
+    assert!(named.is_some(), "the other ada, told apart: {changed}");
+    let options: Vec<_> = all
+        .iter()
+        .filter(|l| l.starts_with("ada"))
+        .filter(|l| !l.contains("Money"))
+        .collect();
+    assert_eq!(options.len(), 1, "the other ada, to hand on to: {seen:#}");
+    assert!(options[0].starts_with("ada (joined "), "{seen:#}");
+    drop(ada);
+}
+
 /// House's removals, held on ada's computer: cy and dee admitted, cy's
 /// ask to remove dee signed on cy's own key and taken in, then ada's cut
 /// of dee through `/v1/removals`.
