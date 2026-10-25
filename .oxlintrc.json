@@ -1,0 +1,40 @@
+{
+  "$schema": "./web/node_modules/oxlint/configuration_schema.json",
+  "env": {
+    "browser": true,
+    "node": true,
+    "worker": true,
+    "serviceworker": true,
+    "es2024": true
+  },
+  "categories": {
+    "correctness": "error"
+  },
+  "rules": {
+    "no-undef": "error",
+    "no-redeclare": "error",
+    "prefer-const": [
+      "error",
+      {
+        "ignoreReadBeforeAssign": true
+      }
+    ],
+    "eqeqeq": [
+      "error",
+      "smart"
+    ],
+    "no-var": "error",
+    "no-unused-vars": [
+      "error",
+      {
+        "ignoreRestSiblings": true
+      }
+    ],
+    "unicorn/no-invalid-fetch-options": "off"
+  },
+  "ignorePatterns": [
+    "**/vendor/**",
+    "apps/on-air/vendored.mjs",
+    "demo/runs/**"
+  ]
+}

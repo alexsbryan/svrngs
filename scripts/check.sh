@@ -43,6 +43,12 @@ step "lean and RUST_ARCH" python3 scripts/lean_check.py
 step "trust floor"        python3 scripts/trust_check.py
 step "app nouns gate"   python3 scripts/vocab_check.py --self-test
 step "app nouns"        python3 scripts/vocab_check.py
+# Every JavaScript file but what is vendored or recorded, as .oxlintrc.json
+# says, by oxlint as web/package.json pins it: a page that does not parse
+# fails here in a second, not minutes on as a browser's timeout (keys-names:
+# Money's page from bb8d4a3e to 7dfc59c6 declared `said` twice). Without it installed
+# the step fails naming the install, never skipping.
+step "lint" sh -c 'test -x web/node_modules/.bin/oxlint || { echo "oxlint is not installed here: npm ci --prefix web"; exit 1; }; web/node_modules/.bin/oxlint'
 if [ -f Cargo.toml ]; then
   step "rustfmt"  cargo fmt --all --check
   # Then the test targets `cargo test` skips (`test = false`), which

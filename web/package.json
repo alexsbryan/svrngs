@@ -1,8 +1,9 @@
 {
   "name": "svrngs-web-tests",
   "private": true,
-  "description": "The page's browser tests: Playwright drives Chromium (u4-3) and WebKit (u4-7).",
+  "description": "The page's browser tests: Playwright drives Chromium (u4-3) and WebKit (u4-7); and oxlint, check.sh's lint of every JavaScript file but what is vendored or recorded.",
   "devDependencies": {
+    "oxlint": "1.89.0",
     "playwright": "1.59.1"
   }
 }

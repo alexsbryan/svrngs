@@ -57,7 +57,8 @@ there moves the demo that follows it, and work that moves no demo waits.
 `scripts/check.sh` exits 0. It runs the principle pins, the lean check
 (standalone, no I/O in the core, the RUST_ARCH rules a program can
 decide, the size budget), the trust floor (every page's policy and every
-listener held to `scripts/trust_floor.txt`), rustfmt, clippy and the tests. A
+listener held to `scripts/trust_floor.txt`), the lint of every JavaScript
+file (`.oxlintrc.json`), rustfmt, clippy and the tests. A
 size-budget raise is the operator's, and so is a change to the trust floor,
 whose commit gives its reason on a `Trust floor:` line. A raise is asked only
 after an economizing pass: its commit gives the reason, names what that pass
