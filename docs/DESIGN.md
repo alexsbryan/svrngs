@@ -26,9 +26,13 @@ log, and anything a node or code does for someone (read an entry, append
 one, reach an endpoint) is a capability that someone's key granted.
 
 Every rule below follows from that. An entry's author is its signer;
-replicas only carry. Sealing is not built yet (PLAN §2). Where today's code
-falls short is svrn-docs `rings/current/WHAT_CAN_ACT_AS_YOU.md`, and its
-fixes are `ralph/next/capability/`.
+replicas only carry: a phone signs its own acts and a computer its own
+person's, and no computer writes as anyone else (§6). What can act as a
+person is what they or their group chose, said by what it can do: know who
+they are, reach an endpoint as them, read or append entries, or decide for
+them (svrn-docs `rings/current/WHAT_CAN_ACT_AS_YOU.md` §2), never by what
+kind of app it is. Both pages list each under "What acts as you" (§3).
+Sealing is not built yet (PLAN §2).
 
 **For people:** *keep talking where you talk; keep what your group owns —
 money, plans, files, the library — on your own computers, not a platform's.*
@@ -212,10 +216,13 @@ another of the group's computers when this one never held it — and from
   the pass and goes, the same bytes, with the next write.
 
 Each act stays its signer's: its `person` says whose device wrote it, and
-an older act's `on_behalf_of` whom its computer spoke for. Money's,
+its `person_key` whose person, the same from each of their devices; an
+older act's `on_behalf_of` says whom its computer spoke for (§6). Money's,
 Events' and the grapevine's folds keep both, `by` and `via`, and their pages
-say an entry another person's computer wrote as "bo, through cy’s
-computer". Every answer carries the containment floor's headers: the page
+say an entry an older svrngs wrote for another person as "bo, through cy’s
+computer". A correction counts only from the person whose entry it
+changes, by key where both acts carry one, so two people of one name stay
+two (`voids`, `apps/expenses/expenses.js`, `apps/events/events.js`). Every answer carries the containment floor's headers: the page
 may load from and connect to its own origin only; no camera, microphone or
 location; no DNS prefetch (`scripts/trust_floor.txt`). The floor keeps out
 code from anywhere but the app's own files, and reach nobody chose: a CDN,
@@ -486,8 +493,8 @@ words, `asks`, an `ask` address, to which the app adds `&back=<its path>`,
 and `stop`, where it posts its own stop. Either page asks "Let Sam’s night
 use Ana’s taste?" around the lender's words, in one wording both load
 (`question.js`), posts the yes to the lender's door as the person, and sends
-them back to the app at its path. Both pages list what apps use, each yes
-with Stop.
+them back to the app at its path. Both pages list each yes under "What
+acts as you", with its Stop ("Lent apps", call 6).
 
 **Joining: the client first, the browser a door a group opens.** `svrngs new
 <name>` makes a group and prints its link, `svrngs://join/<token>`. On a
@@ -1055,7 +1062,8 @@ at the end of `docs/principles/ARCH_PRINCIPLES.md` maps them.
 
 Signed acts admitted into one total order by `(ts_unix, actor, seq, id)`:
 `Record`, `Correct`, `Admit`, `Remove`, `HandOn`, `Invite`, `Relay`,
-`Synced` (a folder's changes), `Runs` and `Visit` (`RailAct`,
+`Synced` (a folder's changes), `Runs`, `Visit` and `Signers`, the keeper's
+cutover (`RailAct`,
 `crates/svrngs-core/src/lib.rs`). `Correct` voids without erasing. A
 per-actor digest lets sync send only what is missing. Upstream's `Seal`
 retired everything its signer wrote before it, on every copy it reached;
@@ -1103,6 +1111,25 @@ from the journal waits in PLAN §2.
   verified once). A cut covers its key's holders as it covers the key, and
   its `through` names their newest acts. A holder's line ships at line
   version 12, which an older build names `NewerVersionLine`.
+- **An entry's author is its signer.** A line counts as its signer's
+  person, or a holder's as the person its pass names. A line naming
+  another person, as an older svrngs wrote a phone's act (`on_behalf_of`),
+  counts as before only where the keeper's cutover covers it: `Signers
+  {through}`, each key's newest acts the keeper's computer held, written
+  once per group on its first round at the new version (`Cutover`; node.rs
+  `cut_over`), the keeper's office as a cut is, and covering by ancestry
+  as a cut does. Past it such a line is `RailGap::CarriedForAnother`, a
+  contradiction, and counts as nobody's (`admit.rs`). A yes, a `Runs`,
+  counts only from its person's own device and only naming bytes a folder
+  act placed at those paths (`synced.rs`, `written`), whenever it was
+  written, so a phone person's yes that went through another computer
+  falls back to their last own yes, else the app as brought, and their page
+  asks once (§3, "What runs as you"). A yes is kept by the person's first
+  key (`Membership::person_of`), so one person's yes never runs as another
+  of the same name; names are for display, and two of one name are told
+  apart by when each joined, "ada (joined 24 Oct)" (`question.js`,
+  `called`). Signed before and after: `demo/runs/authorship/2026-10-24/`,
+  its design and what a fold costs.
 - **Removal has one decider.** Anyone may ask to remove anyone; the group's
   keeper — one person's key, handed on by an act — sequences each request.
   A removed key cannot remove. There is no recovery inside a group
