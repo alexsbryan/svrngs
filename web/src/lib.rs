@@ -471,12 +471,12 @@ pub fn unsigned_line(
     Ok(js_sys::Array::of2(&serde_json::to_string(&line)?.into(), &message))
 }
 
-type At = (f64, f64, Option<String>);
+type Stamp = (f64, f64, Option<String>);
 
 fn unsigned(
     actor: String,
     group: String,
-    (ts, seq, prev): At,
+    (ts, seq, prev): Stamp,
     act: String,
     grant: Option<Pass>,
 ) -> Result<svrngs_core::Op<svrngs_core::SignedOp>, JsError> {
