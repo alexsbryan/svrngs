@@ -70,3 +70,9 @@ scene passed in Chromium and WebKit. One WebKit seek through a wildcard
 lend took 5,449 ms of its 5 s ("bo", failed), a rate the gate reports and
 does not fail on; 208 of the 242 runs since 2026-10-22 ended at a load
 above 12 cores.
+
+After the close, the queue's closing audit (76773638) and the note on
+what capability-keys left keyed by name (0c9dc094) landed. Publish from
+0c9dc094: `scripts/check.sh` exited 0 there in 801 s, all 25 steps passed
+and none failed or never ran, run by the director with
+`CARGO_INCREMENTAL=0 scripts/check.sh` in the loops' tree on 2026-10-25.
