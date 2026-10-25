@@ -75,43 +75,48 @@ async fn append_signs_as_the_node_and_assigns_the_fields() {
 
 const GUESTS: &[(&str, u8)] = &[("alex", 7), ("halo", 3)];
 
-/// An app serving someone else names them (svrngs, DESIGN §3): the act is
-/// signed as this computer with `on_behalf_of` naming that person, when
-/// they stand in the group. A name of nobody in it, a name that is not one,
-/// and a name that is not text are each refused by kind, and write nothing.
-/// The failing input: `on_behalf_of` dropped, as upstream's session-less
-/// door dropped it.
+/// **Only carry what you signed: the record API writes only as this
+/// computer's own person** (capability-signed; svrn-docs `rings/current/
+/// WHAT_CAN_ACT_AS_YOU.md` §3, shortfall 2). A program on this computer
+/// is this computer's person ("your computer is you", §4), so a body
+/// naming alex, whose computer this is, is written as alex's own act, the
+/// name dropped. A body naming halo, who stands in the group, would be
+/// alex's computer's word for halo: refused, `not_yours`, in words, and
+/// nothing written; so is a name of nobody in it. Planted: a standing
+/// person's name taken as the door's word again — halo's entry written.
 #[tokio::test]
-async fn an_append_names_the_person_an_app_serves() {
+async fn an_append_writes_only_as_this_computer_s_own_person() {
     let (_dir, rail) = rail_with(GUESTS);
     group_of(&rail, "ledger").unwrap();
     let journal = "ledger";
     let body = |named: serde_json::Value| serde_json::json!({ "op": "record", "payload": { "amount": 4 }, "on_behalf_of": named });
     for (named, kind) in [
-        (serde_json::json!("beefy"), "not_in_group"),
+        (serde_json::json!("halo"), "not_yours"),
+        (serde_json::json!("beefy"), "not_yours"),
         (serde_json::json!(" "), "not_a_name"),
         (serde_json::json!("a\u{1b}[2J"), "not_a_name"),
         (serde_json::json!(7), "not_a_name"),
     ] {
         let resp = append_act(&rail, journal, body(named.clone())).await;
         assert_eq!(resp.status(), StatusCode::UNPROCESSABLE_ENTITY, "{named}");
-        assert_eq!(body_of(resp).await["kind"], kind, "{named}");
+        let said = body_of(resp).await;
+        assert_eq!(said["kind"], kind, "{named}");
+        assert!(
+            said["error"].as_str().is_some_and(|e| !e.is_empty()),
+            "{named}: said in words"
+        );
     }
     assert!(
         svrngs_core::tests_support::wire_ops(&rail.admission(journal).unwrap()).is_empty(),
         "a refusal writes nothing"
     );
 
-    let resp = append_act(&rail, journal, body(serde_json::json!("halo"))).await;
+    // Kept: a local program appends as this computer's own person.
+    let resp = append_act(&rail, journal, body(serde_json::json!("alex"))).await;
     assert_eq!(resp.status(), StatusCode::OK);
-    assert_eq!(
-        body_of(resp).await["actor"],
-        actor_of(&key(7)),
-        "this computer signs"
-    );
     let ops = svrngs_core::tests_support::wire_ops(&rail.admission(journal).unwrap());
-    assert_eq!(ops.len(), 1);
-    assert_eq!(ops[0].on_behalf_of.as_deref(), Some("halo"));
+    assert_eq!((ops.len(), ops[0].person.as_str()), (1, "alex"));
+    assert_eq!(ops[0].on_behalf_of, None, "its own act names nobody");
 }
 
 /// An unstamped append is unchanged: signed as the node, no name on it.
