@@ -235,7 +235,14 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # each step of check.sh in a process group of its own, ended at a limit of
 # 5 times its slowest passing run here, +6 after its economizing pass
 # folded its own leftover-ending loop to one line (-2): 18,270.
-BUDGET = {"crates/svrngs-core": 3295, ".": 18270}
+# capability-keys, consent and authorship by first key: Runs and each
+# act's writer keyed by it in svrngs-core, the carried route asking by it,
+# and the pages telling two people of one name apart (question.js
+# `called`), +14 and +3, under its estimate (+25 to +55, +5 to +10). Its
+# economizing pass folded `written`'s changer to one line (-1); the rest
+# it lands is struct fields rustfmt sets a line each and one JS line a
+# site. 18,284 and 3,298.
+BUDGET = {"crates/svrngs-core": 3299, ".": 18285}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
