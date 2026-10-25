@@ -34,10 +34,12 @@ use axum::http::header::{self, HeaderMap, HeaderValue};
 use axum::http::{Method, StatusCode, Uri};
 use axum::response::{IntoResponse, Response};
 use axum::Router;
+use serde_json::Value;
 use svrngs_core::pass::{Label, Pass};
 
 use crate::door::{self, Door, LendRefusal, Who, LEND_ROUTE, PASS_HEADER, REFUSED_HEADER};
 use crate::iroh::Contact;
+use crate::lend::Offered;
 use crate::node::Asking;
 use crate::register::{Register, RemovalSaid};
 use crate::surface::{seed_of, STOP_SUFFIX};
@@ -232,7 +234,8 @@ pub(crate) async fn reach(
         tracing::debug!(target: "origin", %label, "origin: this computer's own lend, through its door's rules");
         let (mut parts, body) = req.into_parts();
         parts.uri = uri_of(&target)?;
-        return door::lend_for(door, Who::Own(app), None, Request::from_parts(parts, body)).await;
+        let answer = door::lend_for(door, Who::Own(app), None, Request::from_parts(parts, body));
+        return appended(at, &label, None, answer.await?).await;
     }
     let contact = dialled(at, &label)?;
     let Some(pass) = own_pass(at, &app, &label) else {
@@ -243,7 +246,122 @@ pub(crate) async fn reach(
     };
     req.headers_mut().insert(PASS_HEADER, pass);
     tracing::debug!(target: "origin", %label, %app, lender = hex::encode(lender), "origin: another computer's lend, through the dial to its door, the app in this computer's own pass");
-    carried(at, req, &contact, &target, label.as_str()).await
+    let answer = carried(at, req, &contact, &target, label.as_str()).await?;
+    appended(at, &label, Some(&contact), answer).await
+}
+
+/// The header in which a lent app's answer names, as a JSON array, the
+/// acts it writes as the person asking: each `{group, op}` or `{group,
+/// corrects, op}`, as a carried app's page posts one (capability-signed,
+/// F1; DESIGN §3, "Lent apps").
+pub(crate) const APPEND_HEADER: &str = "x-svrngs-append";
+
+/// Why a lent app's act is not written as the person asking, as they are
+/// told it after the app's name.
+#[derive(Debug, thiserror::Error)]
+enum Unwritten {
+    #[error("answered with an entry svrngs cannot read")]
+    Unread,
+    #[error("wrote in a group you and its lender are not both in")]
+    NotBoth,
+    #[error("writes only its own part of the group’s record")]
+    OtherPart,
+}
+
+/// `answer` from the lend `label`, its lender's computer at `contact`
+/// (none for this computer's own), with each act it names in
+/// [`APPEND_HEADER`] written by this computer's key as its own person,
+/// under the kind the lend declares, in a group its lender stands in too,
+/// and carried to the lender before the page sees the answer, which never
+/// carries the header on. One refused, none is written: the answer is
+/// withheld and the person told why.
+async fn appended(
+    at: &Asking,
+    label: &Label,
+    contact: Option<&Contact>,
+    mut answer: Response,
+) -> Result<Response, Response> {
+    let Some(named) = answer.headers_mut().remove(APPEND_HEADER) else {
+        return Ok(answer);
+    };
+    let (rail, lender) = (&at.host.rail, hex::encode(label.lender()));
+    let lend = declared(at, label, contact).await;
+    let who = contact.and_then(|_| rail.standing_anywhere(&lender));
+    let whose = who.map_or("Your".into(), |(_, m)| format!("{}’s", m.person));
+    let name = lend.as_ref().map_or("app", |l| l.name.as_str());
+    let what = format!("{whose} {name}");
+    let acts: Vec<Value> = serde_json::from_slice(named.as_bytes()).unwrap_or_default();
+    let judged = |act: &Value| {
+        let kind = lend.as_ref().ok_or(Unwritten::Unread)?.kind.as_str();
+        let group = act["group"].as_str();
+        let read = rail.admission(group.ok_or(Unwritten::Unread)?).ok();
+        let both =
+            |s: &std::collections::BTreeSet<_>| s.contains(&lender) && s.contains(&at.host.actor);
+        let read = read
+            .filter(|a| both(&a.membership().standing))
+            .ok_or(Unwritten::NotBoth)?;
+        let body = serde_json::to_vec(act).unwrap_or_default();
+        let shaped = svrngs_core::grant::app_act(kind, &body).ok_or(Unwritten::Unread)?;
+        let ops = serde_json::to_value(read.wire()).unwrap_or_default();
+        let ops = ops.as_array().map_or(&[][..], Vec::as_slice);
+        match shaped.get("corrects") {
+            Some(id) if !crate::folder::carried::of_kind(ops, kind, id) => {
+                Err(Unwritten::OtherPart)
+            }
+            _ => Ok((group.unwrap_or_default().to_string(), shaped)),
+        }
+    };
+    let acts = acts.iter().map(judged).collect::<Result<Vec<_>, _>>().map_err(|why| {
+        tracing::debug!(target: "origin", %label, ?why, ?named, "origin: refused — a lent app's act, not written as the person asking, and its answer withheld");
+        LendRefusal::Closed.say(StatusCode::FORBIDDEN, format!("{what} {why}, so it was not saved."))
+    })?;
+    for (group, act) in acts {
+        let written = crate::rail::append_act(rail, &group, act).await;
+        tracing::debug!(target: "origin", %label, group, status = written.status().as_u16(), carried = contact.is_some(), "origin: a lent app's act, written by this computer as its own person, then carried to the lender");
+        if !written.status().is_success() {
+            return Err(written);
+        }
+        at.folders.nudge.notify_one();
+        let Some(contact) = contact else { continue };
+        let line = axum::body::to_bytes(written.into_body(), usize::MAX)
+            .await
+            .unwrap_or_default();
+        let line = serde_json::from_slice::<Value>(&line).map_or(Value::Null, |l| l["op"].clone());
+        let asked =
+            axum::http::Request::post("/carry").header(header::CONTENT_TYPE, "application/json");
+        let asked = asked
+            .body(serde_json::json!([group, line]).to_string().into())
+            .expect("a fixed route");
+        let taken = at.host.transport.fetch(contact, asked).await;
+        let taken: Option<Value> = taken
+            .ok()
+            .and_then(|t| serde_json::from_slice(t.body()).ok());
+        tracing::debug!(target: "origin", %label, group, ?taken, "origin: the lender's computer took the line, or why not");
+        if taken.is_none_or(|t| t["counted"] != true) {
+            let said =
+                format!("Saved on this computer. {what} shows it once {whose} computer has it.");
+            return Err(LendRefusal::Away.say(StatusCode::BAD_GATEWAY, said));
+        }
+    }
+    Ok(answer)
+}
+
+/// The lend `label` as its lender declares it: this computer's own from
+/// its declarations, another computer's asked of it now.
+async fn declared(at: &Asking, label: &Label, contact: Option<&Contact>) -> Option<Offered> {
+    let lends = match contact {
+        None => door::offered(&at.door).await.ok()?,
+        Some(c) => {
+            match crate::node::ask_lends(&at.host.transport, label.as_str(), c.clone()).await {
+                crate::node::Answered::Lends(lends) => lends,
+                _ => return None,
+            }
+        }
+    };
+    let lender = label.lender();
+    lends
+        .into_iter()
+        .find(|o| Label::of(&lender, o.name.as_str()) == *label)
 }
 
 /// `target` as the address a lend is asked at, or refused as no path.

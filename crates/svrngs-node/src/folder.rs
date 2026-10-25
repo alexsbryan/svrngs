@@ -54,7 +54,7 @@ use crate::node::{Host, ANSWER_WITHIN};
 #[path = "blob.rs"]
 mod blob;
 #[path = "carried.rs"]
-mod carried;
+pub(crate) mod carried;
 pub(crate) use carried::{bring, shelf, yes};
 #[path = "synced.rs"]
 mod synced;

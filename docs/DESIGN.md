@@ -157,6 +157,17 @@ naming this computer's person as its own act, and refuses one naming
 anyone else (`not_yours`), whose entries are signed on their own devices. A tie between the node and each process it lends to
 waits in PLAN §2.
 
+**A lent app writes as whoever asks by naming the act.** Its answer names,
+in `x-svrngs-append`, a JSON array of acts, each `{group, op}` or `{group,
+corrects, op}` as a carried app's route takes one. The asker's own side
+reads it before the page sees the answer: a computer's origin
+(`crates/svrngs-node/src/origin.rs`, `appended`) signs each as its own
+person, under the kind the lend declares (`grant::app_act`), in a group
+both it and the lender stand in, and carries it to the lender (`POST
+/carry`), so the app's next read holds it. A correction of an act outside
+that kind, or a group the two do not share, withholds the answer and says
+why; nothing of it is written. The header never reaches the page.
+
 **Or a folder the group carries.** A lend goes with its lender; a carried
 app stays with the group. It is a folder `apps/<kind>/` holding an
 `index.html` in one of the group's synced folders, so its files are already

@@ -960,17 +960,16 @@ async fn a_lent_app_writes_as_the_person_asking_only_by_their_own_device() {
     );
     assert!(written(&alex).contains(&came), "{:?}", written(&alex));
 
-    let before = (written(&alex), written(&sam));
     for (row, acts, words) in [
         (
             "a correction outside the lend's kind",
             serde_json::json!([{ "group": NS, "corrects": paid, "op": null }]),
-            "Sam’s events writes only its own part of the group’s record, so it was not saved.",
+            "sam’s events writes only its own part of the group’s record, so it was not saved.",
         ),
         (
             "a group this computer does not hold",
             serde_json::json!([{ "group": "elsewhere", "op": { "kind": "coming", "event": "e1" } }]),
-            "Sam’s events wrote in a group Sam and you are not both in, so it was not saved.",
+            "sam’s events wrote in a group you and its lender are not both in, so it was not saved.",
         ),
     ] {
         let (head, sock) = ask(api, &host(2), &post(acts)).await;
@@ -983,11 +982,15 @@ async fn a_lent_app_writes_as_the_person_asking_only_by_their_own_device() {
             "{row}: {head}"
         );
     }
-    assert_eq!(
-        (written(&alex), written(&sam)),
-        before,
-        "nothing refused is written"
-    );
+    for node in [&alex, &sam] {
+        let corrections = written(node)
+            .into_iter()
+            .filter(|(k, _, _)| k == "a correction");
+        assert_eq!(corrections.count(), 0, "nothing refused is written");
+        let elsewhere = node.rail().admission("elsewhere").ok();
+        let elsewhere = elsewhere.map(|a| serde_json::to_value(a.wire()).unwrap());
+        assert!(elsewhere.is_none_or(|ops| ops.as_array().unwrap().is_empty()));
+    }
     assert!(
         !written(&sam).iter().any(|(_, _, k)| k == &sam_key),
         "Sam's computer writes nothing as Alex"

@@ -735,7 +735,7 @@ pub(crate) fn dialled<'a, 'r>(
 
 /// How a computer asked what it lends answered: a closed set (AGENTS 9),
 /// one for each of [`Unlisted`]'s lists and the list itself.
-enum Answered {
+pub(crate) enum Answered {
     Lends(Vec<Offered>),
     Unanswered,
     Unheard,
@@ -747,7 +747,11 @@ enum Answered {
 /// one closes the connection as not admitted, read from that same dial
 /// (`demo/runs/first-minute/2026-10-12/`; arch-peer (c), where a second
 /// dial asked it once a request through the bridge had failed).
-async fn ask_lends(transport: &IrohTransport, actor: &str, contact: Contact) -> Answered {
+pub(crate) async fn ask_lends(
+    transport: &IrohTransport,
+    actor: &str,
+    contact: Contact,
+) -> Answered {
     let asked = axum::http::Request::get(LENDS_ROUTE).body(Default::default());
     let asked = asked.expect("a fixed route");
     match transport.fetch(&contact, asked).await {

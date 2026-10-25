@@ -354,8 +354,7 @@ impl Folders {
         }
         let body = (to_bytes(req.into_body(), WRITE_MOST).await).map_err(|_| TOO_LARGE)?;
         let act = svrngs_core::grant::app_act(kind.as_str(), &body).ok_or(NOT_AN_ACT)?;
-        let theirs = |id: &Value| !ops.iter().any(|o| &o["id"] == id && own(o).is_some());
-        if act.get("corrects").is_some_and(theirs) {
+        if (act.get("corrects")).is_some_and(|id| !of_kind(ops, kind.as_str(), id)) {
             return Err(NOT_ITS_OWN);
         }
         let answer = crate::rail::append_act(rail, group, act).await;
@@ -365,6 +364,20 @@ impl Folders {
         }
         Ok(answer)
     }
+}
+
+/// Whether the act `id` among `ops`, a group's acts as the wire spells
+/// them, is of the app `kind`'s own part, `<kind>/…`: what an app's
+/// correction may void, at a carried app's route and in a lent app's
+/// answer alike (capability-signed).
+pub(crate) fn of_kind(ops: &[Value], kind: &str, id: &Value) -> bool {
+    let prefix = format!("{kind}/");
+    let own = |o: &Value| {
+        o["payload"]["kind"]
+            .as_str()
+            .is_some_and(|k| k.starts_with(&prefix))
+    };
+    ops.iter().any(|o| &o["id"] == id && own(o))
 }
 
 fn content_type(file: &Path) -> &'static str {
