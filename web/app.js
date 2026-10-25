@@ -500,7 +500,7 @@ async function enter(group, asked) {
   // What acts as you, as the home page says it (question.js `acts`). The
   // yes to a lend opening friends' lends as the person is its open here,
   // kept with the group, `reads`, which its Stop changes (`saying`).
-  const [acting, add] = acts({ opens: 'A Stop here holds from the next pass this phone signs for the app, within 12 hours.' });
+  const [acting, add] = acts({ opens: `A Stop here holds from the next pass this phone signs for the app, within ${PASS_LIFE / 3600} hours.` });
   document.getElementById('acts').replaceWith(acting);
   const saying = (l, what) => (l.reads?.length ? store.opened({ ...group, reads: { ...group.reads, [label(l.key, l.name)]: { said: what, at: Math.floor(Date.now() / 1000) } } }).then((g) => (group = g)) : Promise.resolve());
   for (const l of once(lent).filter((o) => o.group)) add('reads', el('p', carrying(l.kind, shelf)));
@@ -522,7 +522,7 @@ async function enter(group, asked) {
   for (const l of lent.filter((o) => o.reads?.length && group.reads?.[label(o.key, o.name)])) {
     const c = group.reads[label(l.key, l.name)];
     const p = el('p', reading(l, c));
-    const stop = () => saying(l, 'stop').then(() => p.replaceChildren(`${named(l)} stops opening your friends’ ${l.reads.map(spoken).join(' and ')} as you within 12 hours, when the pass it holds ends.`));
+    const stop = () => saying(l, 'stop').then(() => p.replaceChildren(`${named(l)} stops opening your friends’ ${l.reads.map(spoken).join(' and ')} as you within ${PASS_LIFE / 3600} hours, when the pass it holds ends.`));
     if (c.said === 'yes') p.append(Object.assign(el('button', 'Stop'), { onclick: stop }));
     add('opens', p);
   }
