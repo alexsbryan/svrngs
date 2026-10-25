@@ -56,3 +56,14 @@ Fences the rows keep:
     networks are named `svrngs-test-*` and removed by the test that made
     them.
 12. **A gate's result needs no commit of its own.** The await log keeps it.
+13. **Browsers, one of each engine per run** (c4a294fc). Two gates at once on
+    this Mac crashed macOS's pasteboard daemon (`com.apple.pboard`, 45
+    restarts), so the browser tests share one Chromium and one WebKit.
+    - A new browser test runs a page in the engine it stands for: a
+      computer's page through `in_chromium!`, a phone's page through
+      `in_webkit!` (`crates/svrngs-node/tests/browser/harness.rs:44`, `:59`).
+      Use `in_both_engines!` only where the two engines behave differently.
+    - Any new spawn of a driver passes
+      `.env("SVRNGS_BROWSERS", harness::browsers())`.
+    - Never run `scripts/check.sh` while another gate is running on this
+      host.
