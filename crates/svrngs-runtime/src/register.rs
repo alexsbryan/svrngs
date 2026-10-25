@@ -309,34 +309,18 @@ impl RingRail {
     /// group whose register is unreadable vouches for nobody, and groups
     /// that cannot be listed vouch for nobody at all.
     pub fn standing_anywhere(&self, actor: &str) -> Option<(String, Member)> {
-        let namespaces = match self.namespaces() {
-            Ok(n) => n,
+        let held = self.namespaces().inspect_err(|e| tracing::warn!(target: "register", actor, error = %e, "register: cannot list the groups held, so nobody can be shown to stand in one"));
+        let held = held.ok()?;
+        let found = held.iter().find_map(|ns| match self.standing(ns) {
+            Ok(Standing::Members(m)) => Some((ns.clone(), m.get(actor)?.clone())),
+            Ok(_) => None,
             Err(e) => {
-                tracing::warn!(target: "register", actor, error = %e,
-                    "register: cannot list the groups held, so nobody can be shown to stand in one");
-                return None;
+                tracing::warn!(target: "register", actor, namespace = ns, error = %e, "register: a group's register is unreadable, so it vouches for nobody");
+                None
             }
-        };
-        for namespace in &namespaces {
-            match self.standing(namespace) {
-                Ok(Standing::Members(m)) => {
-                    if let Some(member) = m.get(actor) {
-                        tracing::debug!(target: "register", actor, namespace, person = %member.person,
-                            person_key = member.person_key, device = ?member.device,
-                            "register: the key stands in a group held here");
-                        return Some((namespace.clone(), member.clone()));
-                    }
-                }
-                Ok(_) => {}
-                Err(e) => {
-                    tracing::warn!(target: "register", actor, namespace, error = %e,
-                        "register: a group's register is unreadable, so it vouches for nobody");
-                }
-            }
-        }
-        tracing::debug!(target: "register", actor, groups = namespaces.len(),
-            "register: the key stands in no group held here");
-        None
+        });
+        tracing::debug!(target: "register", actor, groups = held.len(), found = ?found, "register: the group held here the key stands in, and as whom, or none");
+        found
     }
 
     /// The first group held here a visit the fold counts is `key`'s in, its
@@ -362,15 +346,8 @@ impl RingRail {
     /// unreadable, show nobody removed: said at warn, as
     /// [`Self::standing_anywhere`] says them.
     pub fn removed_anywhere(&self, actor: &str) -> Option<String> {
-        let namespaces = match self.namespaces() {
-            Ok(n) => n,
-            Err(e) => {
-                tracing::warn!(target: "register", actor, error = %e,
-                    "register: cannot list the groups held, so nobody can be shown to have been removed from one");
-                return None;
-            }
-        };
-        let found = namespaces.into_iter().find(|ns| match self.register(ns) {
+        let held = self.namespaces().inspect_err(|e| tracing::warn!(target: "register", actor, error = %e, "register: cannot list the groups held, so nobody can be shown to have been removed from one"));
+        let found = held.ok()?.into_iter().find(|ns| match self.register(ns) {
             Ok(r) => r.removed.contains_key(actor),
             Err(e) => {
                 tracing::warn!(target: "register", actor, namespace = ns, error = %e,
