@@ -135,7 +135,8 @@ export function validate(state, act) {
  * voids whoever corrects. A correction's replacement is an act of its own,
  * under the correction's id. A correction that counts for nothing is kept,
  * carrying as `uncounted` the gap `validate` answers for it, so the page says
- * so. `by` is `on_behalf_of` when the op names one, else its `person`; `via`
+ * so. `by` is `on_behalf_of` when the op names one, else its `person`, and `key`
+ * that person's first key when the op names none; `via`
  * is the `person` when `on_behalf_of` names another, else null. A log with no
  * list of ops is an error, never an empty book.
  */
@@ -143,12 +144,18 @@ export function actsOf(log) {
   if (!Array.isArray(log?.ops)) throw new Error(`the record answered no list of acts: ${JSON.stringify(log)}`);
   const acts = log.ops
     .filter((o) => o.payload != null || o.corrects != null)
-    .map((o) => ({ id: o.id, ts: o.ts_unix, by: o.on_behalf_of ?? o.person, via: o.on_behalf_of != null && o.on_behalf_of !== o.person ? o.person : null, op: o.payload ?? null, corrects: o.corrects ?? null }));
+    .map((o) => ({ id: o.id, ts: o.ts_unix, by: o.on_behalf_of ?? o.person, key: o.on_behalf_of == null ? (o.person_key ?? null) : null, via: o.on_behalf_of != null && o.on_behalf_of !== o.person ? o.person : null, op: o.payload ?? null, corrects: o.corrects ?? null }));
   const { voided, uncounted } = voids(acts);
   return acts
     .filter((a) => !has(voided, a.id) && (a.op != null || has(uncounted, a.id)))
     .map(({ corrects, ...a }) => (has(uncounted, a.id) ? { ...a, uncounted: uncounted[a.id] } : a));
 }
+
+// The same author, by first key where both acts carry one (capability-keys;
+// svrn-docs rings/current/WHAT_CAN_ACT_AS_YOU.md §7.4), so two people of one
+// name are two and one person's devices one; else by name, as an act written
+// for someone through another's computer, or an older svrngs's, always was.
+const same = (a, b) => (a.key && b.key ? a.key === b.key : a.by === b.by);
 
 /**
  * The acts voided, each by its own author's correction, and the corrections
@@ -163,7 +170,7 @@ function voids(acts) {
     if (isKey(c.id) && !has(byId, c.id)) byId[c.id] = c;
     if (c.corrects == null) continue;
     const was = has(byId, c.corrects) ? byId[c.corrects] : null;
-    if (was && was.by === c.by) {
+    if (was && same(was, c)) {
       voided[c.corrects] = true;
     } else {
       uncounted[c.id] = was

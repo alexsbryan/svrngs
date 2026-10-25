@@ -113,7 +113,8 @@ export function validate(act) {
  * every op that carries an app's act or a correction, in the record's
  * order, **voided ones included** — the record voids whoever corrects, and
  * this fold decides whose correction counts. `by` is `on_behalf_of` when
- * the op names one, else its `person`; `via` is the `person` when
+ * the op names one, else its `person`, and `key` that person's first key
+ * when the op names none; `via` is the `person` when
  * `on_behalf_of` names another — whose computer wrote it for them
  * (ralph/FINDING_ON_BEHALF_OF.md) — else null. A log with no list of ops is
  * an error, never a group with no answers.
@@ -122,7 +123,7 @@ export function actsOf(log) {
   if (!Array.isArray(log?.ops)) throw new Error(`the record answered no list of acts: ${JSON.stringify(log)}`);
   return log.ops
     .filter((o) => o.payload != null || o.corrects != null)
-    .map((o) => ({ id: o.id, ts: o.ts_unix, by: o.on_behalf_of ?? o.person, via: o.on_behalf_of != null && o.on_behalf_of !== o.person ? o.person : null, op: o.payload ?? null, corrects: o.corrects ?? null }));
+    .map((o) => ({ id: o.id, ts: o.ts_unix, by: o.on_behalf_of ?? o.person, key: o.on_behalf_of == null ? (o.person_key ?? null) : null, via: o.on_behalf_of != null && o.on_behalf_of !== o.person ? o.person : null, op: o.payload ?? null, corrects: o.corrects ?? null }));
 }
 
 /** No acts yet. */
@@ -135,7 +136,7 @@ export function reduce(state, act) {
   const gaps = validate(act);
   for (const g of gaps) state.gaps.push({ ...g, id: isObject(act) && typeof act.id === 'string' ? act.id : null });
   if (gaps.length || has(state.acts, act.id)) return state;
-  state.acts[act.id] = { by: act.by, via: act.via ?? null, ts: act.ts, op: act.op ?? null, corrects: act.corrects ?? null };
+  state.acts[act.id] = { by: act.by, key: act.key ?? null, via: act.via ?? null, ts: act.ts, op: act.op ?? null, corrects: act.corrects ?? null };
   state.order.push(act.id);
   return state;
 }
@@ -218,6 +219,12 @@ export function ownActs(state, person, event, kind, guest = null) {
     .reverse();
 }
 
+// The same author, by first key where both acts carry one (capability-keys;
+// svrn-docs rings/current/WHAT_CAN_ACT_AS_YOU.md §7.4), so two people of one
+// name are two and one person's devices one; else by name, as an act written
+// for someone through another's computer, or an older svrngs's, always was.
+const same = (a, b) => (a.key && b.key ? a.key === b.key : a.by === b.by);
+
 /**
  * The acts voided, each by its own person's correction, and the corrections
  * that count for nothing, each with its gap: one by someone else, or of an
@@ -230,7 +237,7 @@ function voids(state) {
     const c = state.acts[id];
     if (c.corrects == null) continue;
     const was = has(state.acts, c.corrects) ? state.acts[c.corrects] : null;
-    if (was?.by === c.by) {
+    if (was && same(was, c)) {
       voided[c.corrects] = true;
     } else {
       uncounted[id] = was

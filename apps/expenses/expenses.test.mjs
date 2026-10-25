@@ -160,8 +160,8 @@ test('the record\'s log: `by` is whom an app wrote for, else the computer\'s per
     ],
   };
   assert.deepEqual(actsOf(log), [
-    { id: 'o2', ts: 7, by: 'sam', via: null, op: pizza },
-    { id: 'o3', ts: 7, by: 'bo', via: 'sam', op: { kind: SHARE, expense: 'o2' } },
+    { id: 'o2', ts: 7, by: 'sam', key: null, via: null, op: pizza },
+    { id: 'o3', ts: 7, by: 'bo', key: null, via: 'sam', op: { kind: SHARE, expense: 'o2' } },
   ]);
   assert.throws(() => actsOf({ error: 'not held' }), /no list of acts/);
 });
