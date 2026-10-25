@@ -231,8 +231,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # economizing cut 101 and 75 first: RailGap and InviteFault's words by
 # thiserror (-63 core), Device's serde by derive (-12), the runtime's
 # standing_anywhere and removed_anywhere said as visit_anywhere (-23), the
-# lend worker's wasm wait (-3). 18,263 and 3,295.
-BUDGET = {"crates/svrngs-core": 3295, ".": 18263}
+# lend worker's wasm wait (-3). 18,263 and 3,295. capability-step-limit,
+# each step of check.sh in a process group of its own, ended at a limit of
+# 5 times its slowest passing run here, +6 after its economizing pass
+# folded its own leftover-ending loop to one line (-2): 18,270.
+BUDGET = {"crates/svrngs-core": 3295, ".": 18270}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 

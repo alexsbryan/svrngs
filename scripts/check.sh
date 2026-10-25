@@ -12,9 +12,28 @@ soft=$(ulimit -n)
 ulimit -Sn 10240 2>/dev/null || ulimit -Sn "$(ulimit -Hn)"
 echo "note       open files: $soft, raised to $(ulimit -n)"
 failed=0
+# Each step's time limit, so a hung step fails in minutes, not when the
+# loop's budget ends (capability-step-limit: `app laws` held 2h35m, its
+# runner kept open by a page test's server). The limit is 5 times the step's
+# slowest passing run in the capability queue's 14 gates (2026-10-23 to
+# 2026-10-24; demo/runs/step-limit/2026-10-24/README.md): those runs spread
+# up to 2.7 times (scenes, 204 to 544 s) with the host's load, and 5 leaves
+# room past the slowest seen while ending a hang in about 45 min at most. Every
+# step not named passed in at most 59 s there (app laws), so has 300 s.
+slowest() { case $1 in tests) echo 307 ;; browser) echo 246 ;; scenes) echo 544 ;; "conformance canary") echo 178 ;; *) echo 60 ;; esac; }
+# Each step runs in a process group of its own (set -m), ended whole at its
+# limit and when it ends, so no server or browser it started outlives it
+# (Playwright's browsers close as their driver is told TERM); the loop's
+# TERM, or a Ctrl-C, is passed on to the step running.
+set -m
+trap 'kill -TERM -${running:-} 2>/dev/null; exit 1' INT TERM HUP
 step() {  # step <name> <command...>
-  local name=$1 began=$SECONDS; shift
-  if "$@" >/tmp/svrngs-check.$$ 2>&1; then echo "passed     $name ($((SECONDS - began)) s)"
+  local name=$1 began=$SECONDS limit=$((5 * $(slowest "$1"))) status watch; shift
+  "$@" >/tmp/svrngs-check.$$ 2>&1 & running=$!
+  (sleep "$limit"; kill -TERM -$running) 2>/dev/null & watch=$!
+  wait $running; status=$?; { kill -TERM -$watch; kill -TERM -$running && sleep 2; kill -KILL -$running; } 2>/dev/null
+  if [ $status = 0 ]; then echo "passed     $name ($((SECONDS - began)) s)"
+  elif ((SECONDS - began >= limit)); then echo "failed     $name: still running at its limit of $limit s, so it and all it started were ended; its last output:"; tail -n 20 /tmp/svrngs-check.$$ | sed 's/^/           /'; failed=1
   else echo "failed     $name ($((SECONDS - began)) s)"; sed 's/^/           /' /tmp/svrngs-check.$$; failed=1; fi
 }
 step "principles pinned"  python3 scripts/principles_check.py
