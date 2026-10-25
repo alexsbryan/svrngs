@@ -241,7 +241,7 @@ function said(e, invited, say) {
     ? `<ul class="coming">${people.map((p) => `<li>${esc(say(p))}${e.coming[p].map((g) => ` + ${esc(g)}`).join('')}${through(e.via.coming[p])}</li>`).join('')}</ul>`
     : '<p class="quiet">No one has said yet.</p>';
   const guests = Object.entries(e.guests_came).flatMap(([p, gs]) => gs.map((g) => `${esc(g)}, ${esc(say(p))}'s guest${through(e.via.guests_came[p]?.[g])}`));
-  const came = [...e.came.map((p) => esc(say(p)) + through(e.via.came[p])), ...guests];
+  const came = [...[...e.came].sort(by).map((p) => esc(say(p)) + through(e.via.came[p])), ...guests];
   const list = asked.length ? `<ul class="invited">${asked.map((p) => `<li>${esc(say(p))}</li>`).join('')}</ul>` : '<p class="quiet">No one else is in this group.</p>';
   return `<h3>Invited</h3>${list}<h3>Coming</h3>${coming}<h3>Came</h3>${came.length ? `<ul class="came">${came.map((c) => `<li>${c}</li>`).join('')}</ul>` : '<p class="quiet">No one yet.</p>'}`;
 }

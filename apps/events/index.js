@@ -52,7 +52,8 @@ async function show() {
   const listed = Object.entries(events).map(([event, e]) => {
     const coming = Object.entries(e.coming).map(([p, guests]) => [named(p), ...guests].join(' + ') + through(e.via.coming[p], you));
     const guestsCame = Object.entries(e.guests_came).flatMap(([p, gs]) => gs.map((g) => `${g}, ${named(p)}’s guest${through(e.via.guests_came[p]?.[g], you)}`));
-    const came = [...e.came.map((p) => named(p) + through(e.via.came[p], you)), ...guestsCame];
+    // Who came in the order of their names: the fold keeps them by key.
+    const came = [...e.came.map((p) => [named(p), p]).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([n, p]) => n + through(e.via.came[p], you)), ...guestsCame];
     const host = e.via.host ? `${e.host === me ? 'You' : named(e.host)}${through([e.via.host], you)}, hosts it.` : e.host === me ? 'You host it.' : `${named(e.host)} hosts it.`;
     const s = el('section', '', el('h2', e.what), el('p', `${e.when || 'Some time'}, ${e.where ? `at ${e.where}` : 'somewhere'}. ${host}`));
     s.append(el('p', coming.length ? `Coming: ${coming.join(', ')}.` : 'Nobody has said they’re coming yet.'), el('p', came.length ? `Came: ${came.join(', ')}.` : 'Nobody has said they came yet.'));
