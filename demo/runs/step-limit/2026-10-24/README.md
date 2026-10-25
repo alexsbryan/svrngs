@@ -92,3 +92,17 @@ times with the host's load (scenes, 204 to 544 s), so 5 leaves room past
 the slowest seen, and the longest limit still ends a hang in about 45 min, not
 3 h. The rule and the four named steps live in one place,
 `scripts/check.sh`'s `slowest`.
+
+## The close
+
+The first full gate with the limits in took 870 s, inside this queue's
+685 to 1261 s, and every step passed in its limit but the ceiling canary
+(`ralph/next/capability/ctl/log/sessions/capability-step-limit-1.await.log`):
+its three idle rounds read 0.181, 0.034 and 0.376 s of processor against
+0.1 s, the third at 0.376 s in 0.048 s of wall. The step's 3 s is its usual
+time; what the limits change is how a step is started and ended, not what
+it runs. Run again by its own command right after, five times, at a load of 8
+to 16: medians 0.0273, 0.0227, 0.0236, 0.0249 and 0.0469 s, all passed, the
+first round of each at 0.18 to 0.21 s as in every gate here. The 0.376 s
+round did not reproduce, so its cause is not known; it is left to the
+ceiling's own reading, not to this row. The gate was then run once more.
