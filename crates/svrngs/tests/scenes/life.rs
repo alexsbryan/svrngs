@@ -30,6 +30,9 @@ use crate::harness::{relay_url, Engine};
 use crate::people::{late, Browsers, Person, Scene};
 
 const GROUP: &str = "lake-trip";
+/// Sam's films' open, which says what it may write as you (capability-signed, F1).
+const OPEN_FILMS: &str =
+    "Open Sam’s films. It writes what you say there into lake-trip’s record, as you.";
 const PHOTOS: usize = 30;
 
 /// The trip's photo `n`, bytes of its own.
@@ -130,7 +133,7 @@ async fn newcomer(browsers: &mut Browsers, who: &Person, trip: &[(String, Vec<u8
         home_says(browsers, who, words, Duration::from_secs(60)).await;
     }
     let got = browsers
-        .tell(json!({ "do": "follow", "who": who.name.to_lowercase(), "link": "Open Sam’s films" }))
+        .tell(json!({ "do": "follow", "who": who.name.to_lowercase(), "link": OPEN_FILMS }))
         .await;
     assert_eq!(
         got["status"], 200,
@@ -234,7 +237,7 @@ async fn life(engine: Engine) {
     let status = cy["status"].as_str().unwrap_or_default();
     assert!(status.contains("in lake-trip"), "Cy's phone joins: {cy:#}");
     let cy = browsers
-        .tell(json!({ "do": "lend", "who": "cy", "button": "Open Sam’s films" }))
+        .tell(json!({ "do": "lend", "who": "cy", "button": OPEN_FILMS }))
         .await;
     assert!(
         cy["text"]
@@ -313,7 +316,7 @@ async fn life(engine: Engine) {
     let asleep = "Ana's computer did not answer";
     home_says(&mut browsers, &eve, asleep, Duration::from_secs(60)).await;
     let got = browsers
-        .tell(json!({ "do": "follow", "who": "eve", "link": "Open Sam’s films" }))
+        .tell(json!({ "do": "follow", "who": "eve", "link": OPEN_FILMS }))
         .await;
     assert_eq!(got["status"], 200, "Sam's films play on for Eve: {got:#}");
     drop((sam, alex, bo, dee, eve));
