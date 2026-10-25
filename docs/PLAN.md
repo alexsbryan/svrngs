@@ -120,14 +120,17 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   `demo/runs/capability/2026-10-24-release/README.md`); what it left
   waits in §2, each with its trigger;
 - then what the capability queue left keyed by name, the first row after
-  its release (the operator, 2026-10-25: "Record now, fix after release").
-  capability-keys keyed each yes and each correction by person key
-  (a809c6d5, 1bd20af4); Money's balances (`apps/expenses/expenses.js:199`)
-  and Events' list of who is coming (`apps/events/events.js:185`) still
-  key a person by name, so two members of one name share one balance and
-  come as one. Its worker named guest hosts, the removals list and the
-  door's "did not answer" rows too (`crates/svrngs-node/src/node.rs:158-171`,
-  lists that also reach the CLI and what lent pages receive);
+  its release (the operator, 2026-10-25: "Record now, fix after release";
+  "Just knock it out here"), landed 2026-10-25 (keys-names, 4a723d38 to
+  0a3b2092): Money's balances and Events' who is coming keep each person
+  by first key and say them by name, "sam (joined 3 Oct)"; an act an older
+  computer wrote for someone is theirs by key where one person of that
+  name had joined by then, from the node's answer (`rail.rs` `ops_json`;
+  the operator chose the node over the core and the apps, "Node"); and
+  the door's "did not answer" rows, the removals and guest hosts name each
+  by key beside the name. The grapevine still judges a correction, a
+  person's own records and who carried an ask by name
+  (`apps/grapevine/grapevine.js:237`, `:248`, `:482`): a row of its own;
 - sealing, at its §2 trigger.
 
 The operator's switch stands apart from that order: when they flip

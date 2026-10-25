@@ -217,12 +217,21 @@ another of the group's computers when this one never held it — and from
 
 Each act stays its signer's: its `person` says whose device wrote it, and
 its `person_key` whose person, the same from each of their devices; an
-older act's `on_behalf_of` says whom its computer spoke for (§6). Money's,
+older act's `on_behalf_of` says whom its computer spoke for (§6), and the
+node's answer adds `on_behalf_of_key`, that person's first key, where one
+person of that name had joined by the act's time (`ops_json`,
+`crates/svrngs-node/src/rail.rs`; admission carries the name and
+interprets nothing). Money's,
 Events' and the grapevine's folds keep both, `by` and `via`, and their pages
 say an entry an older svrngs wrote for another person as "bo, through cy’s
-computer". A correction counts only from the person whose entry it
-changes, by key where both acts carry one, so two people of one name stay
-two (`voids`, `apps/expenses/expenses.js`, `apps/events/events.js`). Every answer carries the containment floor's headers: the page
+computer". Money and Events keep each person by that first key, `key`, and
+say them by name: two people of one name are two balances and two who are
+coming, told apart by when each joined, and one person's computer, phone
+and older entries are one (`who`, `apps/expenses/expenses.js`,
+`apps/events/events.js`); an answer from an older svrngs, which names no
+key, is kept by name. A correction counts only from the person whose entry
+it changes, by key where both acts carry one, so two people of one name
+stay two (`voids`). Every answer carries the containment floor's headers: the page
 may load from and connect to its own origin only; no camera, microphone or
 location; no DNS prefetch (`scripts/trust_floor.txt`). The floor keeps out
 code from anywhere but the app's own files, and reach nobody chose: a CDN,

@@ -1,5 +1,17 @@
 # svrngs releases
 
+## Next, not released yet
+
+**Two people with one name stay two in Money and Events too.** Money keeps
+a balance for each person, and Events lists each person who's coming, even
+when two of them share a name. The pages tell them apart by when they
+joined: "sam (joined 3 Oct)". So do the lists of who's visiting, who was
+removed, and whose computer didn't answer. An entry a computer wrote for
+someone before V1.2 still counts as theirs. If an older Money said someone
+paid sam back while two people are called sam, Money says it can't tell
+which sam, and the payer can say it again. It's in this repository, and not
+yet in the build at `group.svrnme.sh`.
+
 ## V1.2, 25 October 2026
 
 V1.2 brings House rules, where your house writes down what it
