@@ -282,7 +282,7 @@ impl IrohTransport {
     /// silent for [`crate::dial::DIAL_WITHIN`], and a request on it fails
     /// then, though the computer answers a fresh dial (capability-scenes'
     /// Grapevine scene: the next round was a minute away).
-    pub async fn fetch(&self, peer: &Contact, req: Asked) -> Result<Whole, Unsent> {
+    pub async fn fetch(&self, peer: &Contact, req: WholeRequest) -> Result<Whole, Unsent> {
         let kept = self.open(peer, Alpn::Member).is_some();
         let again = kept.then(|| req.clone());
         let answered = whole(self.send(peer, req.map(Into::into))).await;
@@ -295,7 +295,7 @@ impl IrohTransport {
 }
 
 /// A request held whole, so it can be sent again.
-pub type Asked = axum::http::Request<axum::body::Bytes>;
+pub type WholeRequest = axum::http::Request<axum::body::Bytes>;
 
 /// How long a request read whole waits for its answer, the dial included:
 /// the ten seconds the round's reqwest client was built with
