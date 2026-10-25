@@ -17,7 +17,7 @@
 // a lend opened to this WiFi or closed (/v1/room, room.rs). Its words are
 // DESIGN §1's: groups, people, what they lend, computer; its question and
 // what apps use and its removals are question.js's, the group's page's too.
-import { acts, agreed, carrying, changes, deciders, door, el, named, namesakes, once, opens, owner, question, reading, removal, row, table, unlent, until, uses as used, visiting, whose } from './question.js';
+import { acts, agreed, apart, called, carrying, changes, deciders, door, el, named, namesakes, once, opens, owner, question, reading, removal, row, table, unlent, until, uses as used, visiting, whose } from './question.js';
 
 const main = document.getElementById('home');
 const button = (text, act) => Object.assign(el('button', text), { onclick: act });
@@ -121,8 +121,9 @@ async function show(g, s, room, add, me) {
     // Leaving (groups-leave), what stays and what stops said before; whoever
     // keeps the order of removals chooses who keeps it next, beside it.
     const name = g.name ?? 'this group';
-    const others = [...new Map(rows.filter((r) => r.device === 'computer' && r.person !== g.person).map((r) => [r.person_key, r])).values()];
-    const to = el('select', '', ...others.map((r, i) => Object.assign(el('option', r.person), { value: i })));
+    const own = rows.find((r) => r.key === me)?.person_key;
+    const others = [...new Map(rows.filter((r) => r.device === 'computer' && r.person_key !== own).map((r) => [r.person_key, r])).values()];
+    const to = el('select', '', ...others.map((r, i) => Object.assign(el('option', called(rows, r.person_key)), { value: i })));
     const hand = el('p', `You keep the order of removals in ${name}. Choose who keeps it after you, then leave: `, to, button('Hand it on', () => asked('/v1/handovers', { group: g.id, ...others[to.value] }, hand, name)));
     const leave = el('p', `Leaving ${name} stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. `, button(`Leave ${name}`, () => asked('/v1/leaves', { group: g.id }, leave, name)));
     s.append(...(g.keeps && others.length ? [hand] : []), Object.assign(leave, { className: 'leave' }));
@@ -151,6 +152,7 @@ async function show(g, s, room, add, me) {
       throw e;
     });
     judge(lends);
+    apart(lends.lent, rows);
     body.replaceChildren();
     // Each with its address for a program, copied by a button that says
     // so, then said (start-home): the clipboard may refuse a page.
@@ -171,7 +173,7 @@ async function show(g, s, room, add, me) {
     if (!body.children.length) said('Nobody lends anything here yet.');
     s.append(table(g, lends, (apps) => post('/shelf', [g.id, apps])));
     for (const l of once(lends.lent).filter((o) => o.group)) add('reads', el('p', carrying(l.kind, lends.shelf)));
-    const changed = changes(g, lends, (app) => post('/runs', [g.id, app]));
+    const changed = changes(g, lends, (app) => post('/runs', [g.id, app]), rows, me);
     if (changed.length) add('reads', ...changed);
     return lends.lent;
   } catch (e) {
@@ -284,7 +286,8 @@ function screen(g) {
   const read = (first, began = Date.now()) => Promise.all([get(`/v1/rail/people?namespace=${ns}`), get(`/v1/lends?namespace=${ns}`)]).then(([{ people: rows }, lends]) => {
     const [people, judge] = door(rows, lends.lent);
     judge(lends);
-    const arrived = [...rows.map((r) => [r.person_key, `${r.person} joined`]), ...lends.lent.filter((l) => !l.group).map((l) => [l.origin, `${l.person} lent ${l.name}`])].filter(([key]) => !seen.has(key) && seen.add(key));
+    apart(lends.lent, rows);
+    const arrived = [...rows.map((r) => [r.person_key, `${called(rows, r.person_key)} joined`]), ...lends.lent.filter((l) => !l.group).map((l) => [l.origin, `${l.called ?? l.person} lent ${l.name}`])].filter(([key]) => !seen.has(key) && seen.add(key));
     for (const [key, words] of first ? [] : arrived) {
       list.querySelector('mark')?.remove();
       list.prepend(el('li', '', el('time', new Date().toLocaleTimeString([], { timeStyle: 'short' })), ` ${words} `, el('mark', 'new')));

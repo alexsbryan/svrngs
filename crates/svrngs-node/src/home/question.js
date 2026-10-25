@@ -16,7 +16,7 @@
 // in it said as a space: a kind is one word (declared.rs
 // `valid_header_name`), and "House-rules" reads "House rules" (canon-house).
 export const spoken = (kind) => kind.replaceAll('-', ' ');
-export const named = (l) => (l.group ? spoken(l.kind) : `${l.person}’s ${l.name === l.kind ? l.name : `${l.name} (${l.kind})`}`);
+export const named = (l) => (l.group ? spoken(l.kind) : `${l.called ?? l.person}’s ${l.name === l.kind ? l.name : `${l.name} (${l.kind})`}`);
 
 // What opening lend `l` in group `g` agrees to, said on its open on both
 // pages, pressing which is the yes (capability-open; svrn-docs
@@ -38,7 +38,7 @@ export const visiting = (vs) => Object.assign(el('ul', '', ...[...vs].sort((a, b
 
 // Whose a lend is on group `g`'s index: its lender's, or the group's for an
 // app the group carries, whichever computer's copy is listed (`once`).
-export const owner = (l, g) => (l.group ? (g.name ?? 'your group') : l.person);
+export const owner = (l, g) => (l.group ? (g.name ?? 'your group') : (l.called ?? l.person));
 
 // One copy of each app a group carries, the first listed, and every other
 // lend as it is: each computer holding the app lends its copy
@@ -101,6 +101,22 @@ export const el = (tag, text, ...kids) => {
 // locale, which differs from it (#157).
 const day = (t, d = new Date(t * 1000)) => `${d.getDate()} ${'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[d.getMonth()]}`;
 
+// The person whose first key is `key`, as the people rows `rows`
+// (/v1/rail/people) name them (capability-keys; svrn-docs
+// WHAT_CAN_ACT_AS_YOU §9): their name, and where someone else in `rows`
+// shares it, when they joined, `when` saying it, "ada (joined 3 Oct)", as
+// the command tells them apart (cli.rs `joined_said`); undefined for a key
+// no row holds. Who did something is told by key, never by name.
+export const called = (rows, key, when = (j) => (j === 'started' ? 'started the group' : `joined ${day(j.at)}`)) => {
+  const p = rows.find((r) => r.person_key === key);
+  return p && (rows.some((r) => r.person === p.person && r.person_key !== key) ? `${p.person} (${when(p.joined)})` : p.person);
+};
+
+// Each of `lent` given `called`, its lender as `called` says them by the
+// key of the computer lending it, so `named` and `owner` tell two lenders
+// of one name apart.
+export const apart = (lent, rows) => lent.forEach((l) => (l.called = called(rows, rows.find((r) => r.key === l.key)?.person_key)));
+
 // Who made a group and since when this computer or phone has held it, so
 // two of one name are told apart (#138): "sam’s, since 14 Oct".
 export const whose = (g) => `${g.maker ? `${g.maker}’s` : 'yours'}${g.since ? `, since ${day(g.since)}` : ''}`;
@@ -125,7 +141,7 @@ function people(rows) {
   const each = [...new Map(rows.map((r) => [r.person_key, r])).values()].sort((a, b) => since(a) - since(b));
   const at = (d, m = -d.getTimezoneOffset()) => `${d.toLocaleString('sv-SE')} ${m < 0 ? '-' : '+'}${String(Math.trunc(Math.abs(m) / 60) * 100 + (Math.abs(m) % 60)).padStart(4, '0')}`;
   const when = (j) => (j === 'started' ? 'started the group' : `joined ${at(new Date(j.at * 1000))}`);
-  return each.map((p) => [p, each.filter((q) => q.person === p.person).length > 1 ? `${p.person} (${when(p.joined)})` : p.person, rows.filter((r) => r.person_key === p.person_key).map((r) => r.device)]);
+  return each.map((p) => [p, called(rows, p.person_key, when), rows.filter((r) => r.person_key === p.person_key).map((r) => r.device)]);
 }
 
 // The door (V1_UI_BUILD §3.1): each person once, a cell in a grid, unjudged
@@ -138,7 +154,7 @@ function people(rows) {
 // window, a link each by its name, opened in a tab as this computer's
 // person; an app the group carries is the group's, in nobody's window.
 export function door(rows, lent = []) {
-  const theirs = (p) => lent.filter((l) => !l.group && l.person === p.person).flatMap((l) => [' ', Object.assign(el('a', l.name), { href: l.origin, target: '_blank' })]);
+  const theirs = (p) => lent.filter((l) => !l.group && rows.find((r) => r.key === l.key)?.person_key === p.person_key).flatMap((l) => [' ', Object.assign(el('a', l.name), { href: l.origin, target: '_blank' })]);
   const cells = people(rows).map(([p, name, devices]) => [p, devices, el('li', '', el('strong', name), ...theirs(p), ' ', el('small', 'asking…'))]);
   const judge = (lends) => cells.forEach(([p, devices, li]) => {
     const phone = devices.includes('browser') ? (devices.includes('computer') ? ', a phone too' : 'in from a phone') : '';
@@ -172,11 +188,14 @@ export function table(g, lends, bring) {
 // WHAT_RUNS_AS_YOU §3), never in the way: one line, "2 apps changed. See
 // what’s new", opening to who and when for each, with a button saying yes
 // to it by `yes(app)`. Until you do, the version you said yes to, or the
-// one brought, runs as you, on your computers and phones alike.
-export function changes(g, lends, yes) {
+// one brought, runs as you, on your computers and phones alike. Who
+// changed it is told by key, of the people rows `rows`, this device's
+// being `me`: an older computer's answer, with none, by name.
+export function changes(g, lends, yes, rows, me) {
   if (lends.changed === null) return [el('p', `This computer can’t say whether anyone changed an app in ${g.name ?? 'your group'}.`)];
+  const you = (c) => (c.by_key ? c.by_key === rows.find((r) => r.key === me)?.person_key : c.by === g.person);
   const each = (lends.changed ?? []).filter((c) => c.group === g.id).map((c) => {
-    const p = el('p', `${spoken(c.app)}: ${c.by === g.person ? 'you' : c.by} changed its files on ${day(c.at)}. `);
+    const p = el('p', `${spoken(c.app)}: ${you(c) ? 'you' : (called(rows, c.by_key) ?? c.by)} changed its files on ${day(c.at)}. `);
     p.append(Object.assign(el('button', 'Open the new version'), { onclick: () => yes(c.app).then(() => p.replaceChildren(`${spoken(c.app)} opens at its new version for you now.`), (e) => p.append(` ${e.message}`)) }));
     return p;
   });

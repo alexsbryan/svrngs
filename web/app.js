@@ -56,7 +56,7 @@ import init, {
   sign_line,
 } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
-import { acts, agreed, carrying, changes, deciders, door, el, named, once, opens, owner, question, reading, removal, row, spoken, table, unlent, uses as used, visiting, whose } from './question.js?v=__VERSION__';
+import { acts, agreed, apart, carrying, changes, deciders, door, el, named, once, opens, owner, question, reading, removal, row, spoken, table, unlent, uses as used, visiting, whose } from './question.js?v=__VERSION__';
 
 const heading = document.getElementById('status');
 const said = document.getElementById('response');
@@ -472,6 +472,7 @@ async function enter(group, asked) {
   // The computers that lend, kept to reach the group through next time.
   const computers = new Map(lent.map((l) => [l.key, { key: l.key, relay: l.relay ?? null, person: l.person }]));
   group = await store.opened({ ...group, computers: [...computers.values()] });
+  apart(lent, people);
   // Who was removed or asked to be, shown to everyone in the group
   // (v1-keeper-office (b)); `null` when the computer could not read it.
   const gone = (removals ?? [null]).map((r) => el('li', r ? removal(r) : `Who was removed from ${group.name} cannot be read just now.`));
@@ -515,7 +516,8 @@ async function enter(group, asked) {
     for (const l of group.unsent) await through('/carry')(l);
     group = await store.opened({ ...group, unsent: [] });
   };
-  const news = changes(group, { changed }, yes);
+  const me = JSON.parse(ask(key, group.token)).key;
+  const news = changes(group, { changed }, yes, people, me);
   if (news.length) add('reads', ...news);
   for (const l of lent.filter((o) => o.reads?.length && group.reads?.[label(o.key, o.name)])) {
     const c = group.reads[label(l.key, l.name)];
@@ -526,7 +528,7 @@ async function enter(group, asked) {
   }
   add('knows', el('p', 'What you open knows your name.'));
   // This phone's key, as the ask a link's issuer is sent names it.
-  add('decides', el('p', `${deciders(people, JSON.parse(ask(key, group.token)).key, 'browser')}.`));
+  add('decides', el('p', `${deciders(people, me, 'browser')}.`));
   list.replaceChildren(
     row(['What', 'What it is', 'Whose', 'How it opens', 'Now'], 'th'),
     ...once(lent).map((l) => {
