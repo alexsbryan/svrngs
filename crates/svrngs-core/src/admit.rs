@@ -801,7 +801,7 @@ pub fn admit(
 /// The body the id covers — the act, in declaration order, with
 /// its payload canonical (see [`Payload`](crate::Payload)), followed by
 /// `on_behalf_of` when the writer stated one, followed by `view` when the
-/// writer committed to one.
+/// writer committed to one, followed by `grant` when a holder signed it.
 ///
 /// The name is inside the signature because a stamp a peer could strip or
 /// rewrite in flight would attribute an act to whoever last handled it. The
@@ -814,6 +814,7 @@ pub fn body_json(
     act: &RailAct,
     on_behalf_of: Option<&str>,
     view: Option<&crate::Digest>,
+    grant: Option<&crate::pass::Pass>,
 ) -> String {
     // A borrowing mirror of `SignedOp`'s signed half rather than a second
     // spelling of the rule: the act flattens in exactly as it serialises
@@ -826,11 +827,14 @@ pub fn body_json(
         on_behalf_of: Option<&'a str>,
         #[serde(skip_serializing_if = "Option::is_none")]
         view: Option<&'a crate::Digest>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        grant: Option<&'a crate::pass::Pass>,
     }
     serde_json::to_string(&Body {
         act,
         on_behalf_of,
         view,
+        grant,
     })
     // A `RailAct` failing to serialise is unreachable; silent `""` would be
     // catastrophic — empty bytes on the signature path (ROOT_CAUSE_FIXES C4,

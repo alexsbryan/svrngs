@@ -212,7 +212,7 @@ fn admit_line(k: &SigningKey, joining: &SigningKey, person: &str) -> String {
         },
     );
     let named = serde_json::to_string(person).unwrap();
-    let body = body_json(&held.kind.act, None, None).replace("\"PLACEHOLDER\"", &named);
+    let body = body_json(&held.kind.act, None, None, None).replace("\"PLACEHOLDER\"", &named);
     let id = act_id(NS, &held.actor, 0, None, 1, &body);
     serde_json::to_string(&held)
         .unwrap()

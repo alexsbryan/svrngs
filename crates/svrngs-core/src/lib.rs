@@ -130,7 +130,7 @@ pub use register::{
 };
 pub use sig::{
     act_id, actor_of, derive_id, field, redemption_message, ring_op_message, sign_act,
-    sign_message, sign_ring_op, verify_hex,
+    sign_message, sign_op, sign_ring_op, verify_hex,
 };
 pub use sync::{digest, ops_missing_from_within, DigestFold, NO_BUDGET};
 pub use synced::{Change, Entry, Files, NotASyncPath, Placed, Runs, SyncFolder, SyncPath};
@@ -641,6 +641,15 @@ pub struct SignedOp {
     /// above).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub view: Option<crate::Digest>,
+    /// The pass that lets this line's signer, a holder, act as the person
+    /// who signed it (capability-signed; DESIGN §1, "An entry's author is
+    /// its signer"): a phone's act in an app it opened, signed on the phone.
+    /// Inside the id, so inside the signature: no carrier can move a line to
+    /// another person's pass. LAST and skipped when absent, so every line
+    /// without one keeps its bytes, its id and its signature (the golden
+    /// test's first case).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub grant: Option<crate::pass::Pass>,
 }
 
 /// The line format version the membership act cohort ships at
@@ -695,15 +704,21 @@ pub const RUNS_LINE_VERSION: u32 = 10;
 /// `NewerVersionLine`, so it holds no visit and lets no guest in.
 pub const VISIT_LINE_VERSION: u32 = 11;
 
+/// The line format version a holder's line ships at (capability-signed): a
+/// [`SignedOp`] carrying a `grant`. A build at [`VISIT_LINE_VERSION`] names
+/// it `NewerVersionLine`, so it counts the line as nobody's, never as the
+/// person of a key that did not sign it.
+pub const AUTHORSHIP_LINE_VERSION: u32 = 12;
+
 impl Journaled for SignedOp {
     const FILE: &'static str = "ring_oplog.jsonl";
     const ID_PREFIX: &'static str = "ring";
     const LABEL: &'static str = "ring_rail";
     /// This build reads the membership cohort's, the link's, a browser's
     /// redemption's, a folder's, removal's, a device link's, a relay's, a
-    /// yes to a carried app's version's and a visit's lines too (see
-    /// [`Self::line_version`]).
-    const UNDERSTANDS: u32 = VISIT_LINE_VERSION;
+    /// yes to a carried app's version's, a visit's and a holder's lines too
+    /// (see [`Self::line_version`]).
+    const UNDERSTANDS: u32 = AUTHORSHIP_LINE_VERSION;
     /// The membership acts — [`RailAct::Admit`] and [`RailAct::Remove`] —
     /// ship at the bumped line version and the original three keep the bytes
     /// they always had, so an un-upgraded node names exactly the acts it
@@ -711,6 +726,9 @@ impl Journaled for SignedOp {
     /// and a ring with no membership act folds byte-identically to the build
     /// before.
     fn line_version(&self) -> u32 {
+        if self.grant.is_some() {
+            return AUTHORSHIP_LINE_VERSION;
+        }
         match self.act {
             RailAct::Admit {
                 invite:

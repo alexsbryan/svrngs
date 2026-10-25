@@ -822,7 +822,7 @@ async fn a_member_s_act_naming_a_path_outside_the_folder_is_refused_at_admission
         }],
     };
     let held = after_in(&ns, &signing(2), &last, last.ts_unix + 1, act);
-    let body = body_json(&held.kind.act, None, None).replace("PLACEHOLDER", "../outside");
+    let body = body_json(&held.kind.act, None, None, None).replace("PLACEHOLDER", "../outside");
     let prev = held.kind.prev.as_ref();
     let id = act_id(&ns, &ben_key, held.kind.seq, prev, held.ts_unix, &body);
     let line = serde_json::to_string(&held)

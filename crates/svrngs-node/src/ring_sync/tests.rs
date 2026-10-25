@@ -39,7 +39,7 @@ pub(super) fn body_of_size(target: usize) -> Payload {
     let mut filler = target.saturating_sub(40);
     loop {
         let p = Payload::new(serde_json::json!({ "b": "x".repeat(filler) })).unwrap();
-        let n = body_json(&RailAct::Record { payload: p.clone() }, None, None).len();
+        let n = body_json(&RailAct::Record { payload: p.clone() }, None, None, None).len();
         if n >= target {
             return p;
         }

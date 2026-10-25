@@ -136,14 +136,14 @@ fn a_seal_held_retires_nothing_and_claims_nothing_complete() {
 fn an_act_naming_nobody_signs_the_bytes_it_always_did() {
     let act = record("milk");
     assert_eq!(
-        body_json(&act, None, None),
+        body_json(&act, None, None, None),
         serde_json::to_string(&act).unwrap(),
         "an absent name must not reach the signed bytes"
     );
     assert!(
-        body_json(&act, Some("dee"), None).ends_with(r#","on_behalf_of":"dee"}"#),
+        body_json(&act, Some("dee"), None, None).ends_with(r#","on_behalf_of":"dee"}"#),
         "a stated name goes last: {}",
-        body_json(&act, Some("dee"), None)
+        body_json(&act, Some("dee"), None, None)
     );
 }
 
@@ -175,24 +175,53 @@ fn the_signed_body_golden_vectors() {
 
     // The bytes every pre-view op on every replica signed.
     assert_eq!(
-        body_json(&act, None, None),
+        body_json(&act, None, None, None),
         serde_json::to_string(&act).unwrap()
     );
     // The view goes last and is skipped when absent.
     assert_eq!(
-        body_json(&act, None, Some(&view)),
+        body_json(&act, None, Some(&view), None),
         format!(
             r#"{{"op":"record","payload":{{"kind":"thing","what":"milk"}},"view":{view_json}}}"#
         ),
         "an act with a view signs it, last"
     );
     assert_eq!(
-        body_json(&act, Some("dee"), Some(&view)),
+        body_json(&act, Some("dee"), Some(&view), None),
         format!(
             r#"{{"op":"record","payload":{{"kind":"thing","what":"milk"}},"on_behalf_of":"dee","view":{view_json}}}"#
         ),
         "name before view, both after the act"
     );
+}
+
+/// **A holder's pass is inside its line's id** (capability-signed), so no
+/// carrier can move a phone's line to another person's pass; and the line
+/// ships at its own version, which an older build names `NewerVersionLine`
+/// rather than count it as anyone's.
+#[test]
+fn a_holder_s_pass_is_inside_its_line_s_id() {
+    use crate::pass::{Label, Pass};
+    let holder = key(9);
+    let app = Label::of(&[1; 32], "money");
+    let pass = |by: u8| Pass::sign(&key(by), &actor_of(&holder), (app.clone(), vec![]), 2_000);
+    let (sig, act) = (String::new(), record("milk"));
+    let kind = SignedOp {
+        seq: 0,
+        prev: None,
+        sig,
+        act,
+        on_behalf_of: None,
+        view: None,
+        grant: Some(pass(2)),
+    };
+    let held = sign_op(&holder, NS, 100, kind);
+    assert_eq!(held.v, AUTHORSHIP_LINE_VERSION);
+    let mut moved = held.clone();
+    moved.kind.grant = Some(pass(3));
+    let derived = derive_id(&moved, NS);
+    assert_ne!(derived, held.id, "another person's pass is another act");
+    assert!(!Ed25519Verifier.verify(&moved.actor, &derived, &moved.kind.sig));
 }
 
 /// **The view is inside the signature.** A stamp a peer could rewrite in

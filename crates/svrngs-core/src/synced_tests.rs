@@ -128,8 +128,8 @@ fn a_synced_change_ships_at_its_own_line_version() {
     assert_eq!(op.kind.line_version(), SYNCED_LINE_VERSION);
     assert_eq!(
         SignedOp::UNDERSTANDS,
-        crate::VISIT_LINE_VERSION,
-        "this build reads it, and removal's, a device link's, a relay's, a yes to a carried app's version and a visit after"
+        crate::AUTHORSHIP_LINE_VERSION,
+        "this build reads it, and removal's, a device link's, a relay's, a yes to a carried app's version, a visit and a holder's line after"
     );
 }
 
