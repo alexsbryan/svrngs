@@ -505,6 +505,7 @@ impl Host {
             tracing::warn!(target: "node", error = %e, "node: cannot list the groups held, so this computer's relay is said in none");
         });
         for namespace in held.unwrap_or_default() {
+            self.cut_over(&namespace);
             // The kept register first: a commit reads the whole journal under
             // its lock, which every idle round paid (scale.rs's ceiling, 0.59 s
             // at 42e36ca against 0.02 s before). The core still decides a move.
@@ -526,6 +527,21 @@ impl Host {
             }
         }
         wrote
+    }
+
+    /// The keeper's cutover in `namespace`, written by this computer when
+    /// it keeps the group and none is written yet, past which a computer's
+    /// act for another person counts nowhere (svrngs-core's `Cutover`;
+    /// capability-signed). Asked of the kept register, as the relay is.
+    fn cut_over(&self, namespace: &str) {
+        let Ok(r) = self.rail.register(namespace) else {
+            return;
+        };
+        let keeps = r.keeper.as_deref() == Some(self.actor.as_str());
+        if keeps && r.signers.is_none() {
+            let wrote = self.rail.commit(namespace, &svrngs_core::Cutover);
+            tracing::debug!(target: "node", namespace, written = matches!(wrote, Ok(Ok(_))), "node: the keeper's cutover, once per group");
+        }
     }
 
     /// The contact the computer `actor` is dialled by: its key and the

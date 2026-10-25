@@ -250,6 +250,37 @@ fn removes<'a>(before: &Admission, keys: impl Iterator<Item = &'a String>) -> Ve
     acts
 }
 
+/// The keeper's cutover (capability-signed; DESIGN §1): a
+/// [`RailAct::Signers`] naming every key's newest acts held now, written
+/// once, and counted only as the keeper's (the fold's `keeps`).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Cutover;
+
+impl Command for Cutover {
+    type Refusal = HandOnRefusal;
+    const READS: Reads = Reads::All;
+
+    fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, HandOnRefusal> {
+        let written = before.membership().signers.is_some();
+        tracing::debug!(target: "register", written, "cutover: written once, naming every key's newest acts held");
+        let through = before.tips.values().flatten().cloned().collect();
+        Ok(if written {
+            Vec::new()
+        } else {
+            vec![RailAct::Signers { through }]
+        })
+    }
+
+    fn confirm(&self, after: &Admission, _written: &[OpId]) -> Result<(), HandOnRefusal> {
+        after
+            .membership()
+            .signers
+            .as_ref()
+            .map(|_| ())
+            .ok_or(HandOnRefusal::NotKeeper)
+    }
+}
+
 /// The keeper hands the group's keeping to `person`'s computer (U7): of
 /// the one person of that name who joined `joined`, when it is asked.
 #[derive(Debug, Clone, PartialEq, Eq)]

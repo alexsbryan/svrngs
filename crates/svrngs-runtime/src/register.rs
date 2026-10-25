@@ -53,6 +53,9 @@ pub struct Register {
     pub removals: Vec<Removing>,
     pub visits: BTreeMap<OpId, Guest>,
     pub cut: BTreeMap<String, Cut>,
+    /// The keeper's cutover, once written (capability-signed;
+    /// `Membership::signers`).
+    pub signers: Option<OpId>,
 }
 
 /// One counting `Remove`, as the group is shown it (v1-keeper-office (b)):
@@ -164,6 +167,7 @@ pub(crate) fn register_in(
         removals,
         visits: m.visits,
         cut: m.cut,
+        signers: m.signers,
     })
 }
 

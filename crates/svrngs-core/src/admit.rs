@@ -359,7 +359,7 @@ pub struct Admission {
     pub(crate) synced: crate::synced::Written,
     /// Each actor's newest acts held: chained, and named as `prev` by no
     /// other act of theirs. What a removal names (U7).
-    tips: BTreeMap<String, Vec<OpId>>,
+    pub(crate) tips: BTreeMap<String, Vec<OpId>>,
 }
 
 impl Admission {

@@ -827,11 +827,15 @@ async fn a_line_is_carried_only_signed_by_someone_in_the_group() {
             .filter(|o| o.payload.is_some())
             .collect::<Vec<_>>()
     };
+    // Every line but the keeper's cutover, which ana's computer, keeping
+    // the group, writes once on a round of its own (capability-signed).
     let all = || {
-        ana.rail()
+        let (mut ops, _) = ana
+            .rail()
             .ops_missing_from_within(&group, &Default::default(), usize::MAX)
-            .unwrap()
-            .0
+            .unwrap();
+        ops.retain(|o| !matches!(o.kind.act, svrngs_core::RailAct::Signers { .. }));
+        ops
     };
     let anas = || {
         all()

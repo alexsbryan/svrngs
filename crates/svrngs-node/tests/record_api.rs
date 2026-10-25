@@ -210,7 +210,10 @@ async fn an_append_naming_a_group_not_held_is_refused() {
     let out: serde_json::Value = answer.json().await.unwrap();
     assert_eq!(out["kind"], "not_held", "{out}");
     assert!(!da.path().join("rings/elsewhere").exists());
-    assert!(svrngs_core::tests_support::wire_ops(&a.rail().admission(NS).unwrap()).is_empty());
+    // No entry written: the keeper's cutover, which a's round writes, is
+    // the record's own, and carries none (capability-signed).
+    let entries = svrngs_core::tests_support::wire_ops(&a.rail().admission(NS).unwrap());
+    assert!(entries.iter().all(|o| o.payload.is_none()), "{entries:?}");
     a.endpoint().close().await;
 }
 

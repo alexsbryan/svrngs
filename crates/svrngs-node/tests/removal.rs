@@ -678,3 +678,40 @@ mod leave_race {
         assert!(cut(2), "and the key that signed the leave");
     }
 }
+
+/// **The keeper's computer cuts over once** (capability-signed; demo/runs/
+/// authorship/2026-10-24/DESIGN.md §5): on its round Sam's computer, which
+/// keeps the group, writes its `Signers`; Ana's and Bo's, which do not,
+/// write none; a second round writes no other; and Ana's copy holds Sam's
+/// after her next round, so her fold refuses what Sam's does. Planted,
+/// watched failing: the round not asking for the cutover (node.rs
+/// `say_relay`'s `cut_over`).
+#[tokio::test]
+async fn the_keepers_computer_cuts_over_once() {
+    let dirs = [(); 3].map(|_| tempfile::tempdir().unwrap());
+    let [sam, ana, _bo] = three(&dirs).await;
+    let cutover = |n: &Node| n.rail().register(NS).unwrap().signers;
+    let written = |n: &Node| {
+        let journal = n.rail().group_dir(NS).unwrap().join("ring_oplog.jsonl");
+        let text = std::fs::read_to_string(journal).unwrap_or_default();
+        text.matches(r#""op":"signers""#).count()
+    };
+    assert_eq!(
+        cutover(&ana),
+        None,
+        "a computer not keeping the group writes none"
+    );
+    assert_eq!(written(&ana), 0);
+    for _ in 0..2 {
+        tokio::time::timeout(Duration::from_secs(30), sam.round())
+            .await
+            .unwrap();
+    }
+    let first = cutover(&sam).expect("the keeper's computer cuts over on its round");
+    assert_eq!(written(&sam), 1, "once");
+    tokio::time::timeout(Duration::from_secs(30), ana.round())
+        .await
+        .unwrap();
+    assert_eq!(cutover(&ana), Some(first));
+    assert_eq!(written(&ana), 1, "carried, and none of Ana's own");
+}

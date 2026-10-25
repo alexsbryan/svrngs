@@ -126,7 +126,7 @@ pub use payload::{Payload, PayloadError, MAX_PAYLOAD_BYTES};
 pub use project::{Invites, Wire};
 pub use record::{Append, AppendRefusal};
 pub use register::{
-    HandOnRefusal, HandOnTo, Leave, MintInvite, Redeem, RedeemRefusal, RelayAt, Removal,
+    Cutover, HandOnRefusal, HandOnTo, Leave, MintInvite, Redeem, RedeemRefusal, RelayAt, Removal,
     RemovalRefusal,
 };
 pub use sig::{
