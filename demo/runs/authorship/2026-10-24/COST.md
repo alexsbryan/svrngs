@@ -42,10 +42,9 @@ Two runs, the same 12-core Mac at load 6.15 (`uptime`).
   2% of before's 69.8 to 70.5 at a different load. Old acts cost what
   they did.
 - `holders`: +4 ms, about 5%, for 8 passes over 2,000 lines. A pass is
-  verified once however many lines carry it (`admit.rs`, `signed`), and
-  `Grant::may` is a label compare per line; one extra verify per pass is
-  about 35 µs, so most of the 4 ms is the per-line grant and the label
-  derivation, not signatures.
+  verified once however many lines carry it (`admit.rs`, `signed`): 8
+  verifies at about 35 µs is 0.3 ms. The rest is per-line work the pass
+  adds, `Grant::may` and a longer line to hash, not measured apart here.
 - `cutover`: +2 ms, about 3%, for the ancestry walk over every chain.
 
 Verification's cost per fold is still one Ed25519 verify per line, plus
