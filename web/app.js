@@ -292,7 +292,8 @@ async function open(group, key, lent, unanswered, l, at, until = Math.floor(Date
     // An app on a port writes its kind's part of the group's record as you
     // by naming the act (`x-svrngs-append`), under a pass whose app is that
     // part's label, which the fold reads (DESIGN §3, "Lent apps").
-    writes: l.group ? null : pass(key, holder, carried_label(l.key, l.kind, group.id), [], until),
+    // A guest's open names no group, so writes none as a member.
+    writes: l.group || !group.id ? null : pass(key, holder, carried_label(l.key, l.kind, group.id), [], until),
     group: group.id,
     holder,
     seed: seed && hex(seed),

@@ -2700,7 +2700,8 @@ in_both_engines!(
     /// (start-home, from start-measure's ranked row 7: "Sam’s llama" read
     /// as a riddle, `demo/runs/start/2026-10-13/README.md` §3 (c)). Ada
     /// lends `shelf`, of kind `k`; her page's link to it reads "Open ada’s
-    /// shelf (k)", the lend named as question.js names it. Planted,
+    /// shelf (k)", the lend named as question.js names it, and what it
+    /// writes as her (capability-signed). Planted,
     /// watched failing: the page as aac2340 left it, "ada’s shelf (k)".
     the_home_page_s_links_say_what_they_open
 );
@@ -2711,7 +2712,11 @@ async fn the_home_page_s_links_say_what_they_open(engine: Engine) {
     let shelf = page_origin("<!doctype html><title>ada's shelf</title>").await;
     lend(dir.path(), "shelf", shelf.port());
     let seen = home_page(engine, &ada, json!({ "read": "#home table.index td a" })).await;
-    assert_eq!(seen["read"], "Open ada’s shelf (k)", "{seen:#}");
+    assert_eq!(
+        seen["read"],
+        "Open ada’s shelf (k). It writes what you say there into your group’s record, as you.",
+        "{seen:#}"
+    );
     drop(ada);
 }
 
@@ -2743,11 +2748,11 @@ async fn the_home_page_shows_less_to_puzzle_over(engine: Engine) {
         !seen["all"].to_string().contains("What apps use"),
         "{seen:#}"
     );
-    let lent = seen["links"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .find(|l| l["text"] == "Open ada’s shelf (k)");
+    let lent = seen["links"].as_array().unwrap().iter().find(|l| {
+        l["text"]
+            .as_str()
+            .is_some_and(|t| t.starts_with("Open ada’s shelf (k)."))
+    });
     assert_eq!(
         lent.map(|l| &l["target"]),
         Some(&json!("_blank")),
@@ -3102,7 +3107,13 @@ async fn the_group_s_page_draws_the_door_and_the_index(engine: Engine) {
         seen["index"],
         json!([
             ["What", "What it is", "Whose", "How it opens", "Now"],
-            ["Open cy’s shelf (k)", "k", "cy", "Here, in this tab", "on"]
+            [
+                "Open cy’s shelf (k). It writes what you say there into house’s record, as you.",
+                "k",
+                "cy",
+                "Here, in this tab",
+                "on"
+            ]
         ]),
         "{seen:#}"
     );
