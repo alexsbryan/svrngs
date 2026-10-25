@@ -18,7 +18,7 @@ export const plain = (s) =>
 // (Sellers' approximate substring match): `bladruner` is two from
 // `bladerunner`, `brazl` one from `brazil`.
 function within(q, t) {
-  let row = new Array(t.length + 1).fill(0);
+  let row = Array.from({ length: t.length + 1 }, () => 0);
   for (let i = 1; i <= q.length; i++) {
     const next = [i];
     for (let j = 1; j <= t.length; j++) {

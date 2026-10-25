@@ -131,7 +131,7 @@ async function runOne(cfgName, file, rep) {
     const u = r.url();
     if (u.includes(':18733') || /\/Videos\/|\/PlaybackInfo|\/Sessions\/Playing|master\.m3u8|\.ts|\.mp4/.test(u)) {
       net.push({ t: now(), method: r.method(), url: u.slice(0, 300), type: r.resourceType() });
-      if (/\/Sessions\/Playing$/.test(u.split('?')[0])) {
+      if (u.split('?')[0].endsWith('/Sessions/Playing')) {
         try { playMethod = JSON.parse(r.postData() || '{}').PlayMethod; } catch {}
       }
     }

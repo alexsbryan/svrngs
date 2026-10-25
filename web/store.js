@@ -37,6 +37,8 @@ const VERSION = 2;
 
 function open() {
   return openDb(DB, VERSION, (db) => {
+    // A copy: objectStoreNames is live, and deleting while walking it skips names.
+    // oxlint-disable-next-line unicorn/no-useless-spread
     for (const name of [...db.objectStoreNames]) db.deleteObjectStore(name);
     db.createObjectStore('seal');
     db.createObjectStore('groups', { keyPath: 'id' });

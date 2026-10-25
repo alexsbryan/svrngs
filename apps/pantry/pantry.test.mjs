@@ -416,7 +416,7 @@ test('two people of one name are told apart by their key and both routed', async
   const ids = models.data.map((m) => m.id).sort();
   assert.equal(ids.length, 2, 'neither one is dropped');
   assert.notEqual(ids[0], ids[1]);
-  for (const id of ids) assert.match(id, /^sam[~.\-]/);
+  for (const id of ids) assert.match(id, /^sam[~.-]/);
   for (const id of ids) assert.match(id, /\/coder$/);
 
   const chats = (lend) => lend.requests.filter((r) => r.path === '/v1/chat/completions').length;

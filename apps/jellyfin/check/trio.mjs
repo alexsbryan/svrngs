@@ -44,7 +44,7 @@ function over([since, until, own]) {
   const s = w.samples.filter((x) => x.t >= since && x.t <= until);
   let played = 0, run = 0, runFrom = null;
   const stills = [];
-  const close = (t) => { if (run >= 5000) stills.push({ from_s: +((runFrom - since) / 1000).toFixed(1), ms: Math.round(run) }); run = 0; runFrom = null; };
+  const close = () => { if (run >= 5000) stills.push({ from_s: +((runFrom - since) / 1000).toFixed(1), ms: Math.round(run) }); run = 0; runFrom = null; };
   for (let i = 1; i < s.length; i++) {
     const a = s[i - 1], b = s[i], dt = b.t - a.t;
     const on = !a.none && !b.none && b.ct > a.ct && !b.paused;

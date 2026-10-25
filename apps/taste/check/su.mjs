@@ -113,7 +113,7 @@ async function openFrom(person, what, ready) {
       ? person.page.locator('#home a', { hasText: `’s ${what}` })
       : person.page.locator('#lent button', { hasText: what });
     await link.first().click();
-    await person.page.waitForURL((u) => !/^svrngs\./.test(u.hostname) && !u.href.startsWith(args.link.split('#')[0]), { timeout: 90_000 });
+    await person.page.waitForURL((u) => !u.hostname.startsWith('svrngs.') && !u.href.startsWith(args.link.split('#')[0]), { timeout: 90_000 });
     await person.page.waitForSelector(ready, { state: 'attached', timeout: 90_000 });
   });
 }
@@ -177,7 +177,7 @@ async function sayYes(person) {
   await page.click('#yes');
   const reached = await timed(person, 'svrngs\'s question', async () => {
     if (person.home) {
-      await page.waitForURL((u) => /^svrngs\./.test(u.hostname) && u.pathname === '/ask', { timeout: 60_000 });
+      await page.waitForURL((u) => u.hostname.startsWith('svrngs.') && u.pathname === '/ask', { timeout: 60_000 });
       await page.waitForSelector('#home section h2', { timeout: 60_000 });
     } else {
       await page.waitForURL((u) => u.href.startsWith(args.link.split('#')[0]) && u.hash.startsWith('#ask='), { timeout: 60_000 });
@@ -193,7 +193,7 @@ async function sayYes(person) {
   const t1 = Date.now();
   await (person.home ? page.getByRole('button', { name: 'Yes', exact: true }) : page.locator('#ask button:not(#not)')).click();
   const back = await timed(person, 'back at Tonight\'s Picks', async () => {
-    await page.waitForURL((u) => !/^svrngs\./.test(u.hostname) && !u.href.startsWith(args.link.split('#')[0]), { timeout: 90_000 });
+    await page.waitForURL((u) => !u.hostname.startsWith('svrngs.') && !u.href.startsWith(args.link.split('#')[0]), { timeout: 90_000 });
     await page.waitForSelector('#taste', { state: 'attached', timeout: 90_000 });
   });
   const after = back === null ? null : await picks(person, t1);

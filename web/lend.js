@@ -265,7 +265,7 @@ function counted(body, said) {
   return new ReadableStream({
     async pull(c) {
       const { value, done } = await reader.read().catch((e) => (said(`the body failed after ${bytes} bytes: ${e}`), Promise.reject(e)));
-      if (done && !cancelled) said(`read whole, ${bytes} bytes`), c.close();
+      if (done && !cancelled) { said(`read whole, ${bytes} bytes`); c.close(); }
       if (done) return;
       bytes += value.byteLength;
       c.enqueue(value);

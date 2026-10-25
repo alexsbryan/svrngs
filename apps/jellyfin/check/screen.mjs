@@ -122,7 +122,7 @@ try {
       const p = ana.page;
       // Which player jellyfin-web makes the phone's, as it says it.
       out.phone_player = [];
-      p.on('console', (m) => { if (/^Active player/.test(m.text())) out.phone_player.push(`${Date.now() - T0} ${m.text().replace(/"id":"[^"]*",/, '').slice(0, 120)}`); });
+      p.on('console', (m) => { if (m.text().startsWith('Active player')) out.phone_player.push(`${Date.now() - T0} ${m.text().replace(/"id":"[^"]*",/, '').slice(0, 120)}`); });
       // jellyfin-web's own "Play on": "Cast to Device" at the top — the
       // icon, or the player's name once one is picked — then the screen by
       // its name and its user's, as the menu writes them.

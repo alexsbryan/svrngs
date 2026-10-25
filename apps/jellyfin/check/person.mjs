@@ -154,7 +154,7 @@ export async function enter(p, run) {
   person.tally = record(context, page, p.user, run);
   const logs = (person.logs = []);
   page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
-  page.on('console', (m) => { if (/^play\(\)/.test(m.text())) logs.push(`console.${m.type()}: ${m.text().slice(0, 200)}`); });
+  page.on('console', (m) => { if (m.text().startsWith('play()')) logs.push(`console.${m.type()}: ${m.text().slice(0, 200)}`); });
   page.on('requestfailed', (r) => logs.push(`failed: ${r.url().slice(0, 120)}: ${r.failure()?.errorText}`));
   page.on('response', (r) => { if (r.status() >= 400) logs.push(`http ${r.status()} ${r.request().method()} ${r.url().slice(0, 140)}`); });
   person.browser = context.browser()?.version() ?? null;
