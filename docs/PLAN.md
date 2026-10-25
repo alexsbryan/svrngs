@@ -122,7 +122,7 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
 - then what the capability queue left keyed by name, the first row after
   its release (the operator, 2026-10-25: "Record now, fix after release";
   "Just knock it out here"), landed 2026-10-25 (keys-names, 4a723d38 to
-  0a3b2092): Money's balances and Events' who is coming keep each person
+  249823cb): Money's balances and Events' who is coming keep each person
   by first key and say them by name, "sam (joined 3 Oct)"; an act an older
   computer wrote for someone is theirs by key where one person of that
   name had joined by then, from the node's answer (`rail.rs` `ops_json`;
