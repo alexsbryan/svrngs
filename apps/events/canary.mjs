@@ -100,14 +100,21 @@ async function main() {
   // `via`, whose computer wrote an answer for someone else (gv-via): none,
   // since each wrote on their own.
   const via = { host: null, coming: {}, came: {}, guests_came: {} };
+  // An event by name: the fold keeps people by first key (events.js `who`).
+  const named = (e, names) => {
+    const n = (k) => names[k] ?? k;
+    const keys = (m) => Object.fromEntries(Object.entries(m).map(([k, v]) => [n(k), v]));
+    const vias = { ...e.via, coming: keys(e.via.coming), came: keys(e.via.came), guests_came: keys(e.via.guests_came) };
+    return { ...e, host: n(e.host), coming: keys(e.coming), came: e.came.map(n), guests_came: keys(e.guests_came), via: vias };
+  };
   const want = { host: 'sam', what: 'dinner', when: 'Friday 7', where: 'the house', coming: { alex: [], bo: ['Maya'] }, came: ['bo'], guests_came: { bo: ['Maya'] }, via };
   const copies = [];
   for (const computer of COMPUTERS) {
     const missing = await unheld(computer, written);
     const ops = (await log(computer)).ops;
     const voided = ops.find((o) => o.id === cy)?.voided;
-    const { events, gaps } = fold(actsOf({ ops }));
-    const { at: _, ...said } = events[event] ?? {};
+    const { events, gaps, names } = fold(actsOf({ ops }));
+    const { at: _, ...said } = events[event] ? named(events[event], names) : {};
     copies.push({ computer, missing, voided, said, gaps: gaps.map((g) => g.code) });
   }
   const lines = copies.map((c) =>
@@ -121,7 +128,8 @@ async function main() {
 
   const other = await log(SAM, second);
   const strangers = actsOf(other).filter((x) => !PEOPLE[second].includes(x.by)).map((x) => x.by);
-  const there = fold(actsOf(other)).events[event];
+  const theirs = fold(actsOf(other));
+  const there = theirs.events[event] && named(theirs.events[event], theirs.names);
   if (strangers.length || !same(there?.coming, { sam: [] }) || there?.host !== 'sam') {
     throw new Error(`${second} holds ${group}'s answers, or not its own: acts by ${JSON.stringify(strangers)}; it folds to ${JSON.stringify(there)}`);
   }

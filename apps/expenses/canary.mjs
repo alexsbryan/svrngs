@@ -71,6 +71,8 @@ async function arrived(computer, id) {
   if ((await unheld(computer, [id])).length) throw new Error(`${computer.name} never held ${id} within ${WAIT_MS} ms`);
 }
 
+// The book's balances by name: it keeps people by first key (expenses.js `who`).
+const named = (book) => Object.fromEntries(Object.entries(book.balances).map(([k, c]) => [book.names[k] ?? k, c]));
 const said = (balances) => PEOPLE.map((p) => `${p} ${p in balances ? money(balances[p]) : 'absent'}`).join(', ');
 
 async function main() {
@@ -101,13 +103,13 @@ async function main() {
   }
   const [s] = copies;
   const lines = copies.map(({ computer, missing, book }) =>
-    `  ${computer.name}: ${said(book.balances)}` +
+    `  ${computer.name}: ${said(named(book))}` +
     (book.gaps.length ? `; unread: ${JSON.stringify(book.gaps)}` : '') +
     (missing.length ? `; never received ${missing.join(', ')}` : ''));
   if (copies.some((c) => !same(c.book.balances, s.book.balances))) {
     throw new Error(`the copies of ${group} fold to different balances:\n${lines.join('\n')}`);
   }
-  if (!same(s.book.balances, OWED) || copies.some((c) => c.book.gaps.length)) {
+  if (!same(named(s.book), OWED) || copies.some((c) => c.book.gaps.length)) {
     throw new Error(`every copy of ${group} agrees, but not with what the acts say (${said(OWED)}):\n${lines.join('\n')}`);
   }
   console.log(`${COMPUTERS.length} computers fold ${written.length} acts of ${group} to the same balances: ${said(OWED)}`);
