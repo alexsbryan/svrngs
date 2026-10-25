@@ -61,3 +61,12 @@ crates/svrngs-core     3298 / 3299 lines
 ## The close
 
 `scripts/check.sh`, once, at the close: below, from its await log.
+
+`scripts/check.sh` exited 0 at 95a31192 in 845 s
+(`ralph/next/capability/ctl/log/sessions/capability-release-1.await.log`,
+its last line "note took 845 s in all"): the principles, lean and
+RUST_ARCH, the trust floor, rustfmt, clippy and the tests passed, and every
+scene passed in Chromium and WebKit. One WebKit seek through a wildcard
+lend took 5,449 ms of its 5 s ("bo", failed), a rate the gate reports and
+does not fail on; 208 of the 242 runs since 2026-10-22 ended at a load
+above 12 cores.
