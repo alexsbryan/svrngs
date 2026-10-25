@@ -831,6 +831,7 @@ fn people_router(asking: Asking) -> axum::Router {
         .route(PEOPLE_LENDS_ROUTE, get(people_lends))
         .route("/shelf", axum::routing::post(crate::folder::bring))
         .route("/runs", axum::routing::post(crate::folder::yes))
+        .route("/carry", axum::routing::post(crate::rail::carry))
         .with_state(asking)
 }
 

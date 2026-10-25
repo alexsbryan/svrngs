@@ -335,6 +335,39 @@ fn stamp(rail: &RingRail, namespace: &str, body: &serde_json::Value) -> Result<(
     }
 }
 
+/// `POST /carry`, `[group, line]`: a line a device of the group signed
+/// itself, a phone's own act, carried unchanged into this computer's copy
+/// as the round stores a peer's (capability-signed; DESIGN.md §3, "The
+/// computer's part"). It writes no line of its own. Refused, in words, when
+/// the line does not verify or its signer stands nowhere in the group;
+/// answered with whether the fold counts it now.
+pub(crate) async fn carry(
+    State(at): State<crate::node::Asking>,
+    by: Option<axum::Extension<crate::iroh::Dialer>>,
+    Json((group, line)): Json<(String, svrngs_core::Op<svrngs_core::SignedOp>)>,
+) -> Response {
+    use svrngs_core::RingVerifier;
+    let rail = &at.host.rail;
+    let id = svrngs_core::derive_id(&line, &group);
+    let signed =
+        id == line.id && svrngs_core::Ed25519Verifier.verify(&line.actor, &id, &line.kind.sig);
+    let read = rail.admission(&group).ok();
+    let stands = (read.as_ref()).is_some_and(|a| a.membership().standing.contains(&line.actor));
+    tracing::debug!(target: "rails", group, %id, signer = %line.actor, by = ?by.map(|d| d.actor()), signed, stands, "rail: a line a device signed, carried here unchanged, or why not");
+    if !(signed && stands) {
+        let why = format!("This entry was not signed by anyone in {group}.");
+        return refused(&group, "not_signed", why);
+    }
+    if let Err(e) = rail.ingest_all(&group, std::slice::from_ref(&line)) {
+        return err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string());
+    }
+    at.folders.nudge.notify_one();
+    let counted = rail
+        .admission(&group)
+        .is_ok_and(|a| a.membership().counts(&id));
+    Json(serde_json::json!({ "id": id, "counted": counted })).into_response()
+}
+
 /// A typed refusal: the sentence, its `kind`, and the group.
 fn refused(namespace: &str, kind: &str, why: String) -> Response {
     (

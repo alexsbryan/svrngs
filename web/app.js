@@ -50,6 +50,7 @@ import init, {
   pass,
   redemption,
   relay_of,
+  sign_line,
 } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
 import { acts, agreed, carrying, changes, deciders, door, el, named, once, opens, owner, question, reading, removal, row, spoken, table, unlent, uses as used, visiting, whose } from './question.js?v=__VERSION__';
@@ -480,7 +481,19 @@ async function enter(group, asked) {
   document.getElementById('acts').replaceWith(acting);
   const saying = (l, what) => (l.reads?.length ? store.opened({ ...group, reads: { ...group.reads, [label(l.key, l.name)]: { said: what, at: Math.floor(Date.now() / 1000) } } }).then((g) => (group = g)) : Promise.resolve());
   for (const l of once(lent).filter((o) => o.group)) add('reads', el('p', carrying(l.kind, shelf)));
-  const news = changes(group, { changed }, through('/runs'));
+  // A yes is this phone's own (capability-signed): the computer it reaches
+  // names the act, and the phone signs it with its own key as its chain's
+  // next line, kept with the group before it is sent, so no seq is signed
+  // twice, and carries every line not yet taken.
+  const yes = async (app) => {
+    const { sign } = await through('/runs')(app);
+    const at = group.line ?? { seq: -1, id: null };
+    const line = JSON.parse(sign_line(key, group.id, Math.floor(Date.now() / 1000), at.seq + 1, at.id, JSON.stringify(sign)));
+    group = await store.opened({ ...group, line: { seq: line.seq, id: line.id }, unsent: [...(group.unsent ?? []), line] });
+    for (const l of group.unsent) await through('/carry')(l);
+    group = await store.opened({ ...group, unsent: [] });
+  };
+  const news = changes(group, { changed }, yes);
   if (news.length) add('reads', ...news);
   for (const l of lent.filter((o) => o.reads?.length && group.reads?.[label(o.key, o.name)])) {
     const c = group.reads[label(l.key, l.name)];

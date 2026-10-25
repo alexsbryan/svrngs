@@ -388,6 +388,28 @@ pub fn pass(person: Vec<u8>, holder: Vec<u8>, app: String, reads: Vec<String>, u
     Ok(Pass::sign(&key(person)?, &holder, (app, reads), until as i64).encode())
 }
 
+/// The line the key `key` signs for `act`, JSON, in the group `group`, at
+/// `seq` after the line whose id is `prev`, at `ts` seconds since 1970: a
+/// phone's own act, which any computer carries unchanged (capability-signed;
+/// svrngs-core's `sign_act`, the one place an act is made).
+#[wasm_bindgen]
+pub fn sign_line(
+    key: Vec<u8>,
+    group: String,
+    ts: f64,
+    seq: f64,
+    prev: Option<String>,
+    act: String,
+) -> Result<String, JsError> {
+    let key = <[u8; 32]>::try_from(key.as_slice()).map_err(|_| JsError::new("a key is 32 bytes"))?;
+    let act = svrngs_core::RailAct::from_json(serde_json::from_str(&act)?).map_err(|e| JsError::new(&e.to_string()))?;
+    let prev = prev.map(|p| serde_json::from_value(p.into())).transpose()?;
+    let key = svrngs_core::SigningKey::from_bytes(&key);
+    Ok(serde_json::to_string(&svrngs_core::sign_act(
+        &key, &group, ts as i64, seq as u64, prev, act, None, None,
+    ))?)
+}
+
 /// A browser endpoint bound with the person's key, online at a relay.
 #[wasm_bindgen]
 pub struct Endpoint {

@@ -103,7 +103,7 @@ pub struct Folders {
     /// The journals, the endpoint, this computer's key, and who stands
     /// where ([`Host::standings`]): the round's, read here too.
     host: Arc<Host>,
-    nudge: Arc<Notify>,
+    pub(crate) nudge: Arc<Notify>,
     pub(crate) data_dir: PathBuf,
     /// The directories this computer syncs (syp-4 e), written by `both_ways`
     /// alone.

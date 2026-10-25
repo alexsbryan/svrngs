@@ -18,8 +18,8 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use serde_json::{json, Value};
-use svrngs_node::actor_of;
 use svrngs_node::node::Node;
+use svrngs_node::{actor_of, RailAct};
 
 /// Ana's, Ben's and Cy's computers, each knowing where the others listen.
 async fn computers() -> (Vec<Node>, Vec<tempfile::TempDir>) {
@@ -764,4 +764,102 @@ async fn an_app_is_told_each_person_s_time_in_the_group() {
     for node in [ana, ben, cy] {
         node.endpoint().close().await;
     }
+}
+
+/// **A line a device signed is carried unchanged, and only one its signer
+/// stands to sign** (capability-signed; `demo/runs/authorship/2026-10-24/
+/// DESIGN.md` §3, "The computer's part"): Ben's phone carries lines to
+/// Ana's computer by `/carry`. A line a stranger's key signed, and Ben's
+/// line with another act put under his signature, are each refused,
+/// `not_signed`, "This entry was not signed by anyone in …", and Ana's copy
+/// holds neither. Kept: Ben's own line is stored as he signed it, its
+/// bytes, its actor and its person his, and counts, and Ana's computer
+/// writes no line of its own for it. Planted: the signature's check left
+/// out — the tampered line is stored.
+#[tokio::test]
+async fn a_line_is_carried_only_signed_by_someone_in_the_group() {
+    let (nodes, _dirs) = computers().await;
+    let (ana, ben) = (&nodes[0], &nodes[1]);
+    let group = found("house", 11, ana, &[(ben, 2)]);
+    let bridge = common::bridge_as(&signing(2), ana, svrngs_core::alpn::Alpn::Member).await;
+    let carry = |line: &svrngs_core::Op<svrngs_core::SignedOp>| {
+        let at = format!("http://{}/carry", bridge.local_addr());
+        http().post(at).json(&json!([group, line])).send()
+    };
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64
+        + 1;
+    let act = |n: u32| {
+        RailAct::from_json(
+            json!({ "op": "record", "payload": { "kind": "Money/expense", "n": n } }),
+        )
+        .unwrap()
+    };
+    let line = |k: u8, n: u32| {
+        svrngs_core::sign_act(&signing(k), &group, now, 0, None, act(n), None, None)
+    };
+    let mut tampered = line(2, 1);
+    tampered.kind.act = act(2);
+    for refused in [line(99, 1), tampered] {
+        let answer = carry(&refused).await.unwrap();
+        assert_eq!(answer.status(), 422, "{}", refused.actor);
+        let said: Value = answer.json().await.unwrap();
+        assert_eq!(said["kind"], "not_signed", "{said}");
+        assert!(
+            said["error"]
+                .as_str()
+                .unwrap()
+                .starts_with("This entry was not signed by anyone in"),
+            "{said}"
+        );
+    }
+    let held = || {
+        let a = ana.rail().admission(&group).unwrap();
+        let ops = svrngs_core::tests_support::wire_ops(&a);
+        ops.into_iter()
+            .filter(|o| o.payload.is_some())
+            .collect::<Vec<_>>()
+    };
+    let all = || {
+        ana.rail()
+            .ops_missing_from_within(&group, &Default::default(), usize::MAX)
+            .unwrap()
+            .0
+    };
+    let anas = || {
+        all()
+            .iter()
+            .filter(|o| o.actor == actor_of(&signing(1)))
+            .count()
+    };
+    assert!(held().is_empty(), "neither is held");
+    let before = (all().len(), anas());
+
+    let own = line(2, 1);
+    let answer = carry(&own).await.unwrap();
+    assert_eq!(answer.status(), 200);
+    let said: Value = answer.json().await.unwrap();
+    assert_eq!(
+        (said["id"].as_str(), said["counted"].as_bool()),
+        (Some(own.id.to_string().as_str()), Some(true)),
+        "{said}"
+    );
+    let ops = held();
+    assert_eq!(
+        (all().len(), anas()),
+        (before.0 + 1, before.1),
+        "ana's computer wrote no line of its own"
+    );
+    assert_eq!(
+        (ops.len(), ops[0].actor.as_str(), ops[0].person.as_str()),
+        (1, own.actor.as_str(), "ben")
+    );
+    let stored = all().into_iter().find(|o| o.id == own.id).unwrap();
+    assert_eq!(
+        serde_json::to_string(&stored).unwrap(),
+        serde_json::to_string(&own).unwrap(),
+        "carried unchanged"
+    );
 }

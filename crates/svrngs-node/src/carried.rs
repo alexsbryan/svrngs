@@ -47,7 +47,7 @@ use axum::response::{IntoResponse, Response};
 use axum::{Extension, Json};
 use iroh_blobs::Hash;
 use serde_json::{json, Map, Value};
-use svrngs_core::{Files, Person, Placed, SyncPath};
+use svrngs_core::{Files, Placed, SyncPath};
 
 use super::{blob::People, dirs_of, Folders};
 use crate::door::LendRefusal::{self, Away, Closed, Fault, Path as Malformed, Unlent};
@@ -173,31 +173,33 @@ type Yes = Json<(String, String)>;
 type Handled = Result<Response, Response>;
 
 /// `POST /runs`: the asker's yes to the version of an app carried in their
-/// group that its files now are (canon-pin (c)), from the home page or a
-/// phone of the group's dialling it (`by`), written as theirs.
+/// group that its files now are (canon-pin (c)), from the home page,
+/// written as this computer's person; or, to a phone of the group's
+/// dialling it (`by`), the act for the phone to sign with its own key and
+/// carry back ([`crate::rail::carry`]): Decide is the person's own devices
+/// alone (capability-signed).
 pub(crate) async fn yes(at: State<Asking>, by: Option<Extension<Dialer>>, a: Yes) -> Handled {
     let (State(at), Json((group, app))) = (at, a);
-    let asker = by.map_or(at.host.actor.to_string(), |Extension(d)| d.actor());
+    let asker = (by.as_ref()).map_or(at.host.actor.to_string(), |Extension(d)| d.actor());
     let act = says(&at, (&group, &app), &asker);
-    tracing::debug!(target: "folder", group, asker, app, refused = act.as_ref().err().map(|r| r.2), "carried: a yes to an app's files now, or why not");
-    let (act, person) = act.map_err(said)?;
+    tracing::debug!(target: "folder", group, asker, app, phone = by.is_some(), refused = act.as_ref().err().map(|r| r.2), "carried: a yes to an app's files now, to write here or for a phone to sign, or why not");
+    let act = act.map_err(said)?;
+    if by.is_some() {
+        return Ok(Json(json!({ "sign": act })).into_response());
+    }
     at.folders.nudge.notify_one();
-    Ok(crate::rail::append_as(&at.host.rail, &group, act, Some(person)).await)
+    Ok(crate::rail::append_act(&at.host.rail, &group, act).await)
 }
 
-/// The act that says `asker`'s yes to the files of `app` in `group` now,
-/// and their person.
-fn says(at: &Asking, (group, app): (&str, &str), asker: &str) -> Result<(Value, Person), Withheld> {
+/// The act that says `asker`'s yes to the files of `app` in `group` now.
+fn says(at: &Asking, (group, app): (&str, &str), asker: &str) -> Result<Value, Withheld> {
     let unread = |e: &dyn std::fmt::Display| traced(group, UNREAD, e);
     let standing = at.host.rail.standing(group).map_err(|e| unread(&e))?;
-    let person = &standing.member(asker).ok_or(NOT_IN)?.person;
+    standing.member(asker).ok_or(NOT_IN)?;
     let read = at.folders.layout(group).map_err(|e| unread(&e))?;
     let files = now(&read.placed, app);
     (!files.is_empty()).then_some(()).ok_or(NOT_HERE)?;
-    Ok((
-        json!({ "op": "runs", "app": app, "files": files }),
-        person.clone(),
-    ))
+    Ok(json!({ "op": "runs", "app": app, "files": files }))
 }
 
 /// The files of the app `kind` that `placed` places now, under its path.
