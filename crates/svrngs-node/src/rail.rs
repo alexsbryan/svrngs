@@ -315,6 +315,10 @@ fn stamp(rail: &RingRail, namespace: &str, body: &serde_json::Value) -> Result<(
     }
 }
 
+/// Where a device's own line is carried ([`carry`]), on the members' and
+/// the holders' protocols, and asked by [`crate::origin`]'s holder write.
+pub(crate) const CARRY_ROUTE: &str = "/carry";
+
 /// `POST /carry`, `[group, line]`: a line a device of the group signed
 /// itself, a phone's own act, carried unchanged into this computer's copy
 /// as the round stores a peer's (capability-signed; DESIGN.md §3, "The

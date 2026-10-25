@@ -72,7 +72,7 @@ use crate::iroh::{
     Endpoint, EndpointAddr, IrohAcceptor, IrohTransport, PublicKey, RelayConfig, SecretKey, Unsent,
 };
 use crate::lend::Offered;
-use crate::rail::{visiting, LiveBuffer, RailApi};
+use crate::rail::{carry, visiting, LiveBuffer, RailApi, CARRY_ROUTE};
 use crate::redeem::SeedText;
 use crate::register::{Member, Standing};
 use crate::ring_routes::{self, err, RingInbound};
@@ -368,9 +368,8 @@ impl Node {
         // what this computer lends (u3-4), and what the people of a
         // member's groups lend (u4-5).
         // A holder carries its phone's own lines too (capability-signed).
-        let carry = axum::routing::post(crate::rail::carry);
         let carry = axum::Router::new()
-            .route("/carry", carry)
+            .route(CARRY_ROUTE, axum::routing::post(carry))
             .with_state(asking.clone());
         let holders = crate::door::holders_router(asking.door.clone()).merge(carry);
         let kept = asking.clone();
@@ -863,7 +862,7 @@ fn people_router(asking: Asking) -> axum::Router {
         .route(PEOPLE_LENDS_ROUTE, get(people_lends))
         .route("/shelf", axum::routing::post(crate::folder::bring))
         .route("/runs", axum::routing::post(crate::folder::yes))
-        .route("/carry", axum::routing::post(crate::rail::carry))
+        .route(CARRY_ROUTE, axum::routing::post(carry))
         .with_state(asking)
 }
 
