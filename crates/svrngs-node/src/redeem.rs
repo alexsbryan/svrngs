@@ -223,7 +223,9 @@ fn serve_visit(
     let until = counted
         .then_some(visit.until)
         .ok_or(NotAdmitted::Uncounted)?;
-    Ok(serde_json::json!({ "host": host, "until": until, "lent": lent }))
+    // Its version, so a guest's page knows this door takes a holder's link.
+    let version = crate::version::VERSION;
+    Ok(serde_json::json!({ "host": host, "until": until, "lent": lent, "version": version }))
 }
 
 /// A decision as the wire carries it: what was done, [`UNJUDGED`], or the

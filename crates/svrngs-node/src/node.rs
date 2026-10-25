@@ -93,6 +93,8 @@ pub struct Lent {
     /// The key their computer is dialled by, as the record spells an actor.
     pub key: String,
     pub offered: Offered,
+    /// The version its computer's answer carries ([`crate::version`]).
+    pub version: u32,
     /// Where this computer's browser opens it: its origin on this
     /// computer's loopback, `http://<label>.localhost:<api port>/`
     /// ([`crate::origin`], u5-2), where until u5-2 it was the bridge to its
@@ -653,12 +655,13 @@ impl Host {
         let mut lends = Lends::default();
         for ask in asks {
             match ask.await {
-                Ok((person, key, Answered::Lends(answered))) => {
+                Ok((person, key, Answered::Lends(answered, version))) => {
                     for offered in answered {
                         let Some(address) = self.origin(&key, offered.name.as_str()) else {
                             continue;
                         };
                         lends.lent.push(Lent {
+                            version,
                             person: person.clone(),
                             key: key.clone(),
                             offered,
@@ -736,7 +739,8 @@ pub(crate) fn dialled<'a, 'r>(
 /// How a computer asked what it lends answered: a closed set (AGENTS 9),
 /// one for each of [`Unlisted`]'s lists and the list itself.
 pub(crate) enum Answered {
-    Lends(Vec<Offered>),
+    /// What it lends, and the version its answer carries.
+    Lends(Vec<Offered>, u32),
     Unanswered,
     Unheard,
     Refused,
@@ -789,7 +793,7 @@ fn answered(actor: &str, body: &[u8]) -> Answered {
         }
         Ok(lends) => {
             tracing::debug!(target: "node", actor, lends = lends.len(), "node: lends — the computer answered");
-            Answered::Lends(lends)
+            Answered::Lends(lends, version.flatten().unwrap_or_default())
         }
         Err(e) => {
             tracing::debug!(target: "node", actor, error = %e, "node: lends — the answer is not a list of lends, so it is refused");
@@ -811,6 +815,9 @@ pub struct Lending {
     pub person: Person,
     pub key: String,
     pub relay: Option<String>,
+    /// The version its computer's answer carries, so a page opening it
+    /// knows whether its door takes a holder's link ([`crate::version`]).
+    pub version: u32,
     #[serde(flatten)]
     pub offered: Offered,
 }
@@ -919,11 +926,19 @@ impl Asking {
     ) -> Result<(Vec<Lending>, Unlisted), Response> {
         let offered = crate::door::offered(&self.door).await?;
         let others = self.host.lends_in(groups, asker).await;
-        let mine = (offered.into_iter()).map(|o| (own.clone(), self.host.actor.clone(), o));
-        let theirs = (others.lent.into_iter()).map(|l| (l.person, l.key, l.offered));
+        let mine = (offered.into_iter()).map(|o| {
+            (
+                own.clone(),
+                self.host.actor.clone(),
+                o,
+                crate::version::VERSION,
+            )
+        });
+        let theirs = (others.lent.into_iter()).map(|l| (l.person, l.key, l.offered, l.version));
         let mut lent: Vec<Lending> = (mine.chain(theirs))
-            .map(|(person, key, offered)| Lending {
+            .map(|(person, key, offered, version)| Lending {
                 relay: relay_of(groups, &key).map(ToString::to_string),
+                version,
                 person,
                 key,
                 offered,

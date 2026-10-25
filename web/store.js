@@ -128,6 +128,13 @@ export async function visitOf(token) {
   return v && { ...v, key: await unseal({ ...v, id: token }) };
 }
 
+// The holder a lend's origin keeps, its public key by the lend's label
+// (capability-signed (H); DESIGN §3), beside the sealing key, apart from
+// any group's row, so no write of one drops it: `key` kept, `null`
+// dropped, or with none read.
+export const holder = (label, key) =>
+  key === undefined ? run('seal', 'readonly', (s) => s.get(`holder ${label}`)) : run('seal', 'readwrite', (s) => s.put(key, `holder ${label}`));
+
 // Every group kept, the last opened first. Their keys stay sealed.
 export async function groups() {
   const all = await run('groups', 'readonly', (s) => s.getAll());

@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // A lend's origin's start (u5-2; DESIGN §3, "Lent apps", calls 1 and 6;
-// §7). The group's page opens `open.html#<what it hands>` here: the pass a
-// fresh key holds for this lend and the lends it reads, that key, the
-// lends, the relay and the page to ask for another pass — never the
-// person's key, which no lend's origin holds. Kept in this origin's store
+// §7). The group's page opens `open.html#<what it hands>` here: the pass
+// this origin's holder holds for this lend and the lends it reads, the
+// holder's bytes when this origin keeps none, the lends, the relay and the
+// page to ask for another pass — never the person's key, which no lend's
+// origin holds. Kept in this origin's store
 // (store.js `lendKeep`), handed to the lend's worker in memory (u4-10:
 // Safari's worker on an iPhone read nothing its page had kept), and the
 // lend opened, which the worker serves.
@@ -25,6 +26,10 @@ function decode(fragment) {
   return JSON.parse(new TextDecoder().decode(bytes));
 }
 
+// An Ed25519 key's 32 bytes, `hex`, as PKCS #8 (RFC 8410): the one form
+// WebCrypto imports a private Ed25519 key from in both engines.
+const pkcs8 = (hex) => Uint8Array.from(`302e020100300506032b657004220420${hex}`.match(/../g), (h) => parseInt(h, 16));
+
 // The worker `reg` runs, once it runs.
 function running(reg) {
   const worker = reg.installing ?? reg.waiting ?? reg.active;
@@ -45,6 +50,16 @@ async function start() {
     // with this one (lend.js `writing`), each under the pass it was signed with.
     const was = await store.lendKept(`pass ${handed.label}`).catch(() => null);
     if (was?.unsent?.length) handed.unsent = was.unsent;
+    // The holder, a key no script here can copy (capability-signed (H);
+    // DESIGN §3): imported once from the bytes the group's page hands, kept
+    // as itself, the bytes kept only when a lend of the open is at a door
+    // taking no holder's link, which the worker dials as. A pass to the
+    // holder kept goes on with its key and its chain; one to a holder not
+    // kept here asks the group's page for a new one.
+    if (handed.seed) handed.key = await crypto.subtle.importKey('pkcs8', pkcs8(handed.seed), 'Ed25519', false, ['sign']);
+    else if (was?.key && was.holder === handed.holder) [handed.key, handed.line] = [was.key, was.line];
+    else return location.replace(`${handed.page}#open=${handed.label}&anew`);
+    if (!handed.raw) delete handed.seed;
     await store.lendKeep(`pass ${handed.label}`, handed);
   } else {
     handed = asked.get('for') && (await store.lendKept(`pass ${asked.get('for')}`));

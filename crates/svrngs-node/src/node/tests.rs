@@ -5,8 +5,9 @@ use super::{answered, Answered};
 /// field** (arch-version (b); AUDIT §2.5). Its answer of what it lends
 /// carries no version, as every build before arch-version's did, so it is
 /// `Older`, though its lends would read. One carrying this build's version,
-/// or a later one, is read; one carrying it whose lends are not lends is
-/// refused, as before. Planted, watched failing: the version check taken
+/// or a later one, is read, and one at 1, before a holder's link, is read
+/// with its version (capability-signed); one carrying it whose lends are
+/// not lends is refused, as before. Planted, watched failing: the version check taken
 /// out of `answered`, which read the versionless answer as lends.
 #[test]
 fn a_computer_answering_an_older_version_is_named_older() {
@@ -28,11 +29,16 @@ fn a_computer_answering_an_older_version_is_named_older() {
         "the published build's"
     );
     let now = crate::version::VERSION;
-    assert!(matches!(said(Some(now), lend()), Answered::Lends(l) if l.len() == 1));
+    assert!(matches!(said(Some(now), lend()), Answered::Lends(l, _) if l.len() == 1));
     assert!(
-        matches!(said(Some(now + 1), lend()), Answered::Lends(l) if l.len() == 1),
+        matches!(said(Some(now + 1), lend()), Answered::Lends(l, _) if l.len() == 1),
         "a later one"
     );
+    assert!(
+        matches!(said(Some(1), lend()), Answered::Lends(l, 1) if l.len() == 1),
+        "one before a holder's link (capability-signed), read with its version"
+    );
+    assert!(!crate::version::links(Some(1)) && crate::version::links(Some(now)));
     assert!(
         matches!(
             said(Some(now), serde_json::json!({ "name": "shelf" })),

@@ -353,7 +353,7 @@ async fn declared(at: &Asking, label: &Label, contact: Option<&Contact>) -> Opti
         None => door::offered(&at.door).await.ok()?,
         Some(c) => {
             match crate::node::ask_lends(&at.host.transport, label.as_str(), c.clone()).await {
-                crate::node::Answered::Lends(lends) => lends,
+                crate::node::Answered::Lends(lends, _) => lends,
                 _ => return None,
             }
         }

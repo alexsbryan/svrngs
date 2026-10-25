@@ -35,8 +35,10 @@ mod relay;
 // (events-asleep).
 #[path = "../../crates/svrngs-node/src/dial.rs"]
 mod dial;
-// This build's version, and the one check of it, the node's (arch-version).
+// This build's version, and the one check of it, the node's (arch-version);
+// the page carries no answer, so reads no `VERSION`.
 #[path = "../../crates/svrngs-node/src/version.rs"]
+#[allow(dead_code)]
 mod version;
 
 use iroh::RelayUrl;
@@ -362,6 +364,13 @@ pub fn older(version: Option<u32>) -> bool {
     version::older(version)
 }
 
+/// Whether a computer whose answer carries `version` takes a pass carried
+/// by its holder's link: the node's rule ([`version::links`]).
+#[wasm_bindgen]
+pub fn links(version: Option<u32>) -> bool {
+    version::links(version)
+}
+
 /// The label of the lend `name` lent by the computer whose key is
 /// `lender`, 64 hex: one DNS label, its origin's name (u5-2).
 #[wasm_bindgen]
@@ -382,29 +391,51 @@ pub fn carried_label(lender: String, kind: String, group: String) -> Result<Stri
     Ok(Label::carried(&key, &kind, &group).to_string())
 }
 
-/// The person whose key is `person` lets the key `holder` act as them for
-/// the app `app` toward it and the lends `reads` until `until`, seconds
-/// since 1970: the pass, as the door reads it from a request (u5-2, sup-1;
-/// svrngs-core's `Pass`).
+/// The person whose key is `person` lets the key `holder`, 64 hex, act as
+/// them for the app `app` toward it and the lends `reads` until `until`,
+/// seconds since 1970: the pass, as the door reads it from a request (u5-2,
+/// sup-1; svrngs-core's `Pass`).
 #[wasm_bindgen]
-pub fn pass(person: Vec<u8>, holder: Vec<u8>, app: String, reads: Vec<String>, until: f64) -> Result<String, JsError> {
-    let key = |bytes: Vec<u8>| {
-        <[u8; 32]>::try_from(bytes.as_slice())
-            .map(|b| svrngs_core::SigningKey::from_bytes(&b))
-            .map_err(|_| JsError::new("a key is 32 bytes"))
-    };
+pub fn pass(person: Vec<u8>, holder: String, app: String, reads: Vec<String>, until: f64) -> Result<String, JsError> {
     let parse = |l: &String| Label::parse(l).ok_or_else(|| JsError::new(&format!("{l} is not a lend's label")));
     let app = parse(&app)?;
     let reads = reads.iter().map(parse).collect::<Result<Vec<_>, _>>()?;
-    let holder = svrngs_core::actor_of(&key(holder)?);
-    Ok(Pass::sign(&key(person)?, &holder, (app, reads), until as i64).encode())
+    Ok(Pass::sign(&signing(person)?, &holder, (app, reads), until as i64).encode())
+}
+
+/// The key of 32 bytes `key`, as the record spells an actor: a holder's,
+/// which a pass names.
+#[wasm_bindgen]
+pub fn actor(key: Vec<u8>) -> Result<String, JsError> {
+    Ok(svrngs_core::actor_of(&signing(key)?))
+}
+
+fn signing(key: Vec<u8>) -> Result<svrngs_core::SigningKey, JsError> {
+    let bytes = <[u8; 32]>::try_from(key.as_slice()).map_err(|_| JsError::new("a key is 32 bytes"))?;
+    Ok(svrngs_core::SigningKey::from_bytes(&bytes))
+}
+
+/// The bytes the holder of the pass `pass` signs for its link to the key
+/// `to`, 64 hex, and, given its signature `sig`, the link as the door reads
+/// it beside the pass (`x-svrngs-link`; svrngs-core's `Pass::carries`):
+/// each worker run's endpoint key, named by a holder no page can copy
+/// (capability-signed; DESIGN §3).
+#[wasm_bindgen]
+pub fn link(pass: String, to: String, sig: Option<Vec<u8>>) -> Result<Vec<u8>, JsError> {
+    let mut link = Pass::decode(&pass).ok_or_else(|| JsError::new("not a pass"))?.link(&to);
+    match sig {
+        None => Ok(link.message()),
+        Some(sig) => {
+            link.sig = hex::encode(sig);
+            Ok(link.encode().into_bytes())
+        }
+    }
 }
 
 /// The line the key `key` signs for `act`, JSON, in the group `group`, at
-/// `seq` after the line whose id is `prev`, at `ts` seconds since 1970,
-/// under the pass `grant` when `key` is a holder's: a phone's own act,
-/// which any computer carries unchanged (capability-signed; svrngs-core's
-/// `sign_act`, the one place an act is made).
+/// `seq` after the line whose id is `prev`, at `ts` seconds since 1970: a
+/// phone's own yes, which any computer carries unchanged (capability-signed;
+/// svrngs-core's `sign_act`, the one place an act is made).
 #[wasm_bindgen]
 pub fn sign_line(
     key: Vec<u8>,
@@ -413,18 +444,54 @@ pub fn sign_line(
     seq: f64,
     prev: Option<String>,
     act: String,
-    grant: Option<String>,
 ) -> Result<String, JsError> {
-    let key = <[u8; 32]>::try_from(key.as_slice()).map_err(|_| JsError::new("a key is 32 bytes"))?;
+    let key = signing(key)?;
+    let mut line = unsigned(svrngs_core::actor_of(&key), group, (ts, seq, prev), act, None)?;
+    line.kind.sig = svrngs_core::sign_ring_op(&key, &line.id);
+    Ok(serde_json::to_string(&line)?)
+}
+
+/// [`sign_line`]'s line for the key `actor`, 64 hex, before its signature,
+/// under the pass `grant`, and the bytes its holder signs: a phone's act in
+/// an app it opened, signed by a holder no page can copy (svrngs-core's
+/// `unsigned_act`).
+#[wasm_bindgen]
+pub fn unsigned_line(
+    actor: String,
+    group: String,
+    ts: f64,
+    seq: f64,
+    prev: Option<String>,
+    act: String,
+    grant: String,
+) -> Result<js_sys::Array, JsError> {
+    let grant = Pass::decode(&grant).ok_or_else(|| JsError::new("not a pass"))?;
+    let line = unsigned(actor, group, (ts, seq, prev), act, Some(grant))?;
+    let message = js_sys::Uint8Array::from(svrngs_core::ring_op_message(&line.id).as_slice());
+    Ok(js_sys::Array::of2(&serde_json::to_string(&line)?.into(), &message))
+}
+
+type At = (f64, f64, Option<String>);
+
+fn unsigned(
+    actor: String,
+    group: String,
+    (ts, seq, prev): At,
+    act: String,
+    grant: Option<Pass>,
+) -> Result<svrngs_core::Op<svrngs_core::SignedOp>, JsError> {
     let act = svrngs_core::RailAct::from_json(serde_json::from_str(&act)?).map_err(|e| JsError::new(&e.to_string()))?;
     let prev = prev.map(|p| serde_json::from_value(p.into())).transpose()?;
-    let grant = grant
-        .map(|g| Pass::decode(&g).ok_or_else(|| JsError::new("not a pass")))
-        .transpose()?;
-    let key = svrngs_core::SigningKey::from_bytes(&key);
-    Ok(serde_json::to_string(&svrngs_core::sign_act(
-        &key, &group, ts as i64, seq as u64, prev, act, None, None, grant,
-    ))?)
+    let kind = svrngs_core::SignedOp {
+        seq: seq as u64,
+        prev,
+        sig: String::new(),
+        act,
+        on_behalf_of: None,
+        view: None,
+        grant,
+    };
+    Ok(svrngs_core::unsigned_act(actor, &group, ts as i64, kind))
 }
 
 /// The act, JSON, an app `kind`'s page asks for with `body`, as the door

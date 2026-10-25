@@ -6,9 +6,10 @@
 // It serves every request under its scope — the lend's pages, their
 // subresources, fetch and XHR, a `<video>`'s byte ranges — by HTTP over a
 // dial to the lender's computer, at its door's `/lend/<label>/<path>`, on
-// the pass holders' protocol, as the fresh key the page made, presenting
-// the pass the page signed (open.js hands both over); the door lets it in
-// as the person. A request a lent page makes to another lend's address is
+// the pass holders' protocol, as a key of this run's that the pass's
+// holder names in a link, presenting the pass the page signed and the link
+// (open.js hands the pass and the holder over); the door lets it in as the
+// person. A request a lent page makes to another lend's address is
 // served the same way when the pass names that lend too, which its lender
 // declared it reads; else refused. Each answer goes back as the door gave
 // it, a 206 and its `Content-Range` with it, its body streamed.
@@ -46,7 +47,7 @@
 // It is kept in this origin's store as it is written, so it outlives the
 // run of the worker that wrote it: each run starts its own lines, after
 // the last runs' (u5-12: a worker WebKit ended took its trace with it).
-import init, { app_act, holder_endpoint, sign_line } from './wasm/svrngs_web.js?v=__VERSION__';
+import init, { actor, app_act, holder_endpoint, link, links, unsigned_line } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
 
 const SCOPE = new URL(self.registration.scope);
@@ -94,6 +95,7 @@ self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
 let handed = null;
 let loaded = null;
 let endpoint = null;
+let linked = null;
 const dials = new Map();
 const jars = new Map();
 let app;
@@ -130,12 +132,8 @@ async function holding() {
 function dialFor(lender) {
   if (!dials.has(lender)) {
     const opening = (async () => {
-      loaded ??= init({ module_or_path: store.runtime() });
-      await loaded;
-      const holder = Uint8Array.from(handed.holder.match(/../g), (h) => parseInt(h, 16));
-      if (!endpoint) trace(`RUNTIME: opening the endpoint as the pass's holder`);
-      endpoint ??= holder_endpoint(holder, handed.relay);
-      trace(`RUNTIME: dialling ${lender} as the pass's holder`);
+      endpoint ??= opened();
+      trace(`RUNTIME: dialling ${lender} for the pass's holder`);
       // Through the relay its group names for the lender (relay-in-record).
       return (await endpoint).dial_lend(lender, handed.lends.find((l) => l.key === lender)?.relay ?? null);
     })();
@@ -144,6 +142,34 @@ function dialFor(lender) {
   }
   return dials.get(lender);
 }
+
+// This run's endpoint (capability-signed (H); DESIGN §3): a key of this
+// run's alone, which the holder, a key no page can copy, names in a link
+// the door checks beside the pass (`linked`); or, when a lend of the open
+// is at a door taking no link, the holder's own bytes, as before (F2).
+async function opened() {
+  loaded ??= init({ module_or_path: store.runtime() });
+  await loaded;
+  const own = !handed.seed;
+  const bytes = own ? crypto.getRandomValues(new Uint8Array(32)) : Uint8Array.from(handed.seed.match(/../g), (h) => parseInt(h, 16));
+  linked = null;
+  if (own) {
+    const to = actor(bytes);
+    const sig = new Uint8Array(await crypto.subtle.sign('Ed25519', handed.key, link(handed.pass, to)));
+    linked = new TextDecoder().decode(link(handed.pass, to, sig));
+  }
+  trace(`RUNTIME: opening the endpoint ${own ? 'of this run, named by the holder’s link' : 'as the pass’s holder, for an older door'}`);
+  return holder_endpoint(bytes, handed.relay);
+}
+
+// The pass a request carries, and the link naming this run's endpoint
+// when the holder signed one (`opened`).
+async function passed(h) {
+  await (endpoint ??= opened());
+  return [['x-svrngs-pass', h.pass], ...(linked ? [['x-svrngs-link', linked]] : [])];
+}
+
+const hex = (bytes) => [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
 
 // ── cookies, a jar per lend ─────────────────────────────────────────────
 
@@ -319,7 +345,7 @@ async function lent(request, url, where) {
   if (host) headers.push(['host', host]);
   const cookie = cookieFor(jar, where.path, false);
   if (cookie) headers.push(['cookie', cookie]);
-  headers.push(['x-svrngs-pass', h.pass]);
+  headers.push(...(await passed(h)));
   // A browser names the origin a post comes from; a worker is not shown
   // it (WebKit's never, Chromium's but for a form's), and Nextcloud
   // refuses a sign-in posted without one (u5-catalogue-dry). Named here
@@ -439,8 +465,8 @@ async function appended(lend, named) {
 // same bytes, for the next write.
 async function signed(lend, group, act, grant) {
   const at = handed.line ?? { seq: -1, id: null };
-  const holder = Uint8Array.from(handed.holder.match(/../g), (h) => parseInt(h, 16));
-  const line = JSON.parse(sign_line(holder, group, Math.floor(Date.now() / 1000), at.seq + 1, at.id, act, grant));
+  const [unsigned, message] = unsigned_line(handed.holder, group, Math.floor(Date.now() / 1000), at.seq + 1, at.id, act, grant);
+  const line = { ...JSON.parse(unsigned), sig: hex(new Uint8Array(await crypto.subtle.sign('Ed25519', handed.key, message))) };
   handed = { ...handed, line: { seq: line.seq, id: line.id }, unsent: [...(handed.unsent ?? []), [group, line]] };
   await store.lendKeep(`pass ${OWN}`, handed);
   trace(`RUNTIME: an act of ${lend.kind} signed as line ${line.seq}, ${handed.unsent.length} to carry`);
@@ -459,6 +485,11 @@ async function signed(lend, group, act, grant) {
     dials.delete(lend.key);
     trace(`RUNTIME: lines not carried: ${e}`);
     return Response.json({ error: `${lend.person}’s computer did not answer. It is kept on this phone and goes with your next entry` }, { status: 502 });
+  }
+  // A computer on an older svrngs takes no signed line (F2): kept, said.
+  if (!res.ok && !links(lend.version)) {
+    const words = `${lend.person}’s computer runs an older svrngs: what you write here reaches your group when a computer on the new svrngs is on.`;
+    return Response.json({ error: words }, { status: 503 });
   }
   // Taken but not counted: the fold refused it (svrngs-core `Grant`), said
   // to the page, never as saved.
@@ -539,7 +570,7 @@ async function stopping(label) {
     return closed();
   }
   const body = new TextEncoder().encode('{"said":"stop"}');
-  const headers = [['x-svrngs-pass', h.pass], ['content-type', 'application/json'], ['content-length', String(body.length)]];
+  const headers = [...(await passed(h)), ['content-type', 'application/json'], ['content-length', String(body.length)]];
   trace(`RUNTIME: a page stops ${OWN} using ${label}`);
   try {
     return await (await dialFor(lend.key)).fetch('POST', `/choices/${label}`, headers, new Blob([body]).stream());
@@ -668,7 +699,7 @@ async function socket({ url, protocols }, port) {
   const lend = where && h?.lends.find((l) => l.label === where.label);
   if (!lend) return port.postMessage({ closed: 1006, reason: 'not open to this page' });
   const key = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))));
-  const headers = [['connection', 'upgrade'], ['upgrade', 'websocket'], ['sec-websocket-version', '13'], ['sec-websocket-key', key], ['x-svrngs-pass', h.pass]];
+  const headers = [['connection', 'upgrade'], ['upgrade', 'websocket'], ['sec-websocket-version', '13'], ['sec-websocket-key', key], ...(await passed(h))];
   if (protocols?.length) headers.push(['sec-websocket-protocol', protocols.join(', ')]);
   const cookie = cookieFor(await jarOf(where.label), where.path, false);
   if (cookie) headers.push(['cookie', cookie]);

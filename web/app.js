@@ -40,6 +40,7 @@
 // framed (vercel.json's `frame-ancestors 'none'`): a lent page is a name
 // under that host and could frame it at `#ask=` to borrow a click.
 import init, {
+  actor,
   ask,
   believe,
   carried_label,
@@ -47,6 +48,7 @@ import init, {
   endpoint,
   issuer_of,
   label,
+  links,
   older,
   pass,
   redemption,
@@ -241,7 +243,7 @@ async function visit(token) {
   const until = new Date(v.until * 1000).toLocaleString();
   trace(`PAGE: a guest of ${v.host} until ${v.until}, opening ${Object.keys(v.lent).join(', ')}`);
   if (v.until <= Date.now() / 1000) return show(`Your visit as ${v.host}’s guest ended ${until}.`, false);
-  const lent = Object.entries(v.lent).map(([name, kind]) => ({ key: issuer_of(token), relay: relay_of(token), name, kind, person: v.host }));
+  const lent = Object.entries(v.lent).map(([name, kind]) => ({ key: issuer_of(token), relay: relay_of(token), name, kind, person: v.host, version: v.version }));
   show(`You’re ${v.host}’s guest until ${until}`, true);
   list.replaceChildren(...lent.map((l) => row([Object.assign(el('button', named(l)), { onclick: () => open({ token }, key, lent, [], l, undefined, v.until + PASS_LIFE) })])));
   said.textContent = lent.length ? '' : `${v.host} lends nothing yet.`;
@@ -250,12 +252,12 @@ async function visit(token) {
 const hex = (bytes) => [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
 
 // Open `l`, one of `lent`, as the person whose key is `key` in `group`: a
-// pass to a fresh key for it and the lends of each kind it reads, handed
-// to its origin in the fragment, which no origin is sent (the module docs),
-// with whose each is and whose computer did not answer, which its worker
-// tells its pages (lend.js `told`). Asked by a lend, at `at`.
-// A guest's pass lasts until `until` (guests-link), past the visit.
-function open(group, key, lent, unanswered, l, at, until = Math.floor(Date.now() / 1000) + PASS_LIFE) {
+// pass to its origin's holder for it and the lends of each kind it reads,
+// handed to its origin in the fragment, which no origin is sent (the
+// module docs), with whose each is and whose computer did not answer,
+// which its worker tells its pages (lend.js `told`). Asked by a lend, at
+// `at`. A guest's pass lasts until `until` (guests-link), past the visit.
+async function open(group, key, lent, unanswered, l, at, until = Math.floor(Date.now() / 1000) + PASS_LIFE) {
   if (!('serviceWorker' in navigator)) {
     said.textContent = `This browser cannot open ${named(l)}.`;
     return;
@@ -266,8 +268,19 @@ function open(group, key, lent, unanswered, l, at, until = Math.floor(Date.now()
   const stopped = group.reads?.[label(l.key, l.name)]?.said === 'stop';
   if (stopped) trace(`PAGE: ${l.name}'s reads were stopped here, so its pass names none`);
   const reads = stopped ? [] : lent.filter((o) => o !== l && (l.reads ?? []).includes(o.kind));
-  const lends = [l, ...reads].map((o) => ({ label: label(o.key, o.name), key: o.key, relay: o.relay ?? null, name: o.name, kind: o.kind, group: o.group ?? null, person: o.person, asks: o.asks }));
-  const holder = crypto.getRandomValues(new Uint8Array(32));
+  const lends = [l, ...reads].map((o) => ({ label: label(o.key, o.name), key: o.key, relay: o.relay ?? null, name: o.name, kind: o.kind, group: o.group ?? null, person: o.person, asks: o.asks, version: o.version ?? null }));
+  // The holder (capability-signed (H); DESIGN §3): one key per lend's
+  // origin, kept there as a key no page can copy, so each pass names it
+  // again and the phone's acts in the app are one chain. Its bytes go to
+  // the origin only when it holds none, and each open when a lend of it is
+  // at a computer whose door takes no holder's link (an older svrngs),
+  // which the worker then dials as (F2).
+  const raw = lends.some((o) => !links(o.version));
+  const kept = !raw && (await store.holder(lends[0].label));
+  const seed = kept ? null : crypto.getRandomValues(new Uint8Array(32));
+  const holder = kept || actor(seed);
+  if (raw) trace(`PAGE: a lend of this open is at a computer on an older svrngs, so its holder goes as bytes`);
+  if (!kept && !raw) await store.holder(lends[0].label, holder);
   // Each app at an address of its own under this page's host (DESIGN §7),
   // the page's files at its root.
   const back = at ? `&back=${encodeURIComponent(at)}` : '';
@@ -281,7 +294,9 @@ function open(group, key, lent, unanswered, l, at, until = Math.floor(Date.now()
     // part's label, which the fold reads (DESIGN §3, "Lent apps").
     writes: l.group ? null : pass(key, holder, carried_label(l.key, l.kind, group.id), [], until),
     group: group.id,
-    holder: hex(holder),
+    holder,
+    seed: seed && hex(seed),
+    raw,
     relay: relay_of(group.token) ?? null,
     page: `${location.origin}${location.pathname}`,
     unanswered,
@@ -519,6 +534,10 @@ async function enter(group, asked) {
     }),
   );
   const again = asked?.get('open') && lent.find((l) => label(l.key, l.name) === asked.get('open'));
+  // A lend's origin holding no key its pass names asks for a new one
+  // (open.js), never from a window another page opened, which could read
+  // its bytes as they arrive.
+  if (again && asked.has('anew') && !window.opener) await store.holder(asked.get('open'), null);
   // One opened here before its open was kept as the yes is that yes.
   if (again && !group.reads?.[asked.get('open')]) await saying(again, 'yes');
   if (again) open(group, key, lent, unanswered, again, asked.get('at') ?? '/');

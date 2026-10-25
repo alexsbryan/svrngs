@@ -628,21 +628,26 @@ Seven calls:
    names no method or path: through it the page may do anything the person
    may, writes included.
 
-   A phone's pass and its holder key's bytes are as readable to the lend's
-   own pages as what the lend reads (`web/tests/ask.mjs`, step 5), and are
-   trusted the same way: the person chose the app, and its code is pinned
-   to what they said yes to. The worker cannot hold the key alone. It
-   shares one origin with the lend's pages, and the browser keeps no store
-   for a worker that those pages cannot read; a worker the browser stops
-   comes back through `open.html`, a page at that origin, which reads the
-   pass from the origin's store (`web/open.js:46`), and WebKit does stop a
-   lend's worker mid-session. A copy of the key works until its pass
-   lapses, 12 hours after the page signed it (`web/app.js:81`,
-   `PASS_LIFE`). A key that cannot be copied, a WebCrypto key naming each
-   run's endpoint key in a second short pass the door checks, lands with
-   each act signed by the device that authors it
-   (`ralph/next/capability/STATE.md`, capability-signed). Measured:
-   `demo/runs/capability/2026-10-23-pass-key/` (`probe.mjs`, `idle.mjs`).
+   A phone's holder is one key per lend's origin, kept there as a WebCrypto
+   key that cannot be copied: the group's page hands its bytes only when
+   the origin keeps none, `open.html` imports them as a key no script can
+   export and drops them (`web/open.js`), and every pass after names the
+   same holder, which the group's page keeps by the lend's label
+   (`web/store.js`, `holder`), so the phone's acts in an app are one chain.
+   Its pages can use the key while open, as they use what the lend reads,
+   and are trusted the same way: the person chose the app, and its code is
+   pinned to what they said yes to. They cannot carry it off. iroh's
+   handshake needs an endpoint key as bytes, so each worker run makes its
+   own, and the holder names it in a link, a short pass the door checks
+   beside the pass (`x-svrngs-link`; `Pass::carries`). An origin holding no
+   key its pass names asks the group's page for a new one (`#open=<label>
+   &anew`), which a window another page opened is never given. A lend at a
+   computer on an older svrngs, whose door takes no link, is opened as
+   before, its holder's bytes kept at the origin for the worker to dial as,
+   and the writes the worker signs wait until a computer on the new svrngs
+   takes them, the page saying so (version 2, `version.rs` `links`).
+   Measured: `demo/runs/capability/2026-10-23-pass-key/` (`probe.mjs`,
+   `idle.mjs`); held by `web/tests/ask.mjs` step 5.
 
    So a lent page composes others: at its own origin, `GET /svrngs-reads`
    answers each lend it reads — its kind, name, lender and the address to
