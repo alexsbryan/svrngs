@@ -86,6 +86,7 @@ mod admit;
 pub mod alpn;
 pub mod app;
 mod command;
+pub mod grant;
 mod hash;
 pub mod joining;
 pub mod link;
@@ -548,6 +549,15 @@ impl Redemption {
 }
 
 impl RailAct {
+    /// The app's act it states: a record's, or a correction's replacement.
+    pub fn payload(&self) -> Option<&Payload> {
+        match self {
+            RailAct::Record { payload } => Some(payload),
+            RailAct::Correct { replacement, .. } => replacement.as_ref(),
+            _ => None,
+        }
+    }
+
     /// Read an act from an app's request body, with refusals a person can
     /// act on.
     ///
@@ -726,10 +736,8 @@ impl Journaled for SignedOp {
     /// and a ring with no membership act folds byte-identically to the build
     /// before.
     fn line_version(&self) -> u32 {
-        if self.grant.is_some() {
-            return AUTHORSHIP_LINE_VERSION;
-        }
         match self.act {
+            _ if self.grant.is_some() => AUTHORSHIP_LINE_VERSION,
             RailAct::Admit {
                 invite:
                     Some(Redemption {

@@ -98,6 +98,13 @@ pub enum PayloadError {
 }
 
 impl Payload {
+    /// The app the act belongs to: its `kind`'s part before the first `/`,
+    /// as the carried route names it; `""` for a kind of no app's.
+    pub fn app(&self) -> &str {
+        let kind = self.0.get("kind").and_then(Value::as_str).unwrap_or("");
+        kind.split_once('/').map_or("", |(app, _)| app)
+    }
+
     /// Canonicalize and check one app-authored value.
     pub fn new(value: Value) -> Result<Self, PayloadError> {
         if !value.is_object() {

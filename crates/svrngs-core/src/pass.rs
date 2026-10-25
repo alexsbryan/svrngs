@@ -108,6 +108,13 @@ impl Label {
         Some(Self(raw.into()))
     }
 
+    /// The label of the app `kind` carried in `group` and lent by `lender`
+    /// ([`carried_name`]): what a holder's pass names as its app, so the
+    /// fold reads the kind a holder may write from it (capability-signed).
+    pub fn carried(lender: &[u8; 32], kind: &str, group: &str) -> Self {
+        Self::of(lender, &carried_name(kind, group))
+    }
+
     /// The lender's key, dialled to reach the lend.
     pub fn lender(&self) -> [u8; 32] {
         key_of(&self.0[..KEY_LETTERS]).expect("a label parsed holds a key")
@@ -128,9 +135,17 @@ impl From<Label> for String {
     }
 }
 
+/// The name of the app `kind` carried in `group`: the kind's and the group
+/// id's first 16 letters, so a computer in two groups carrying an app of one
+/// name gives each a label of its own (COMMUNITY_APPS §7, found 2). One
+/// decider for the node's lend and the fold's [`Label::carried`].
+pub fn carried_name(kind: &str, group: &str) -> String {
+    alloc::format!("{kind}-{}", group.get(..16).unwrap_or(group))
+}
+
 /// A pass (the module docs): keys as the record spells an actor, its
 /// lapse in seconds since 1970.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Pass {
     /// The person it lets act: their key.
@@ -199,7 +214,7 @@ impl Pass {
     /// Whether this pass, presented by `holder` at `now`, opens `lend`: its
     /// app or one of its reads.
     pub fn check(&self, holder: &str, lend: &Label, now: i64) -> Result<(), PassFault> {
-        if !verify_hex(&self.person, &self.message(), &self.sig) {
+        if !self.signed() {
             return Err(PassFault::Unsigned);
         }
         if self.holder != holder {
@@ -212,6 +227,11 @@ impl Pass {
             return Err(PassFault::NotNamed);
         }
         Ok(())
+    }
+
+    /// Whether the person it names signed it.
+    pub fn signed(&self) -> bool {
+        verify_hex(&self.person, &self.message(), &self.sig)
     }
 
     /// The pass as a header carries it: its JSON in base64url.

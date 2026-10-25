@@ -160,6 +160,15 @@ pub enum RailGap {
     /// The keeper's cuts did not settle to one answer (#124): who stands,
     /// and so which acts count, cannot be judged on this copy.
     Unsettled,
+    /// A holder's line its pass does not grant (capability-signed; DESIGN
+    /// §1): written outside its app's own part, after its pass lapsed, as a
+    /// decision, or under a pass its person did not sign or that names
+    /// another key. It counts as nobody's act.
+    Ungranted {
+        id: OpId,
+        actor: String,
+        why: crate::grant::Why,
+    },
 }
 
 /// What a gap means for the fold's answer — the one classification (ARCH
@@ -205,10 +214,15 @@ impl RailGap {
             | Self::WrongPrevious { .. }
             | Self::RefusedRedemption { .. }
             | Self::Unsettled
+            | Self::Ungranted {
+                why: crate::grant::Why::Unheld,
+                ..
+            }
             | Self::SequenceHole { .. } => GapClass::Absence,
             Self::TamperedId { .. }
             | Self::DanglingCorrection { .. }
             | Self::SequenceFork { .. }
+            | Self::Ungranted { .. }
             | Self::Removed { .. } => GapClass::Contradiction,
         }
     }
@@ -294,6 +308,11 @@ impl core::fmt::Display for RailGap {
             Self::Unsettled => {
                 f.write_str("the removals do not come to one answer, so who is in cannot be told")
             }
+            Self::Ungranted { actor, why, .. } => write!(
+                f,
+                "an entry an app wrote as {}… does not count — {why}",
+                crate::actor_prefix(actor)
+            ),
         }
     }
 }
@@ -499,6 +518,44 @@ pub fn admit(
         authentic.insert(derived, op);
     }
 
+    // ── a holder: what the pass on its line grants (capability-signed) ──
+    //
+    // Judged before the chain and the walk, so a line its pass does not
+    // grant is nobody's act, and the walk counts a granted one under its
+    // pass's signer's standing ([`Op::stands_as`]). Each distinct pass is
+    // verified once, however many lines carry it.
+    let mut signed: BTreeMap<&crate::pass::Pass, bool> = BTreeMap::new();
+    let mut ungranted = Vec::new();
+    for (id, op) in &authentic {
+        use crate::grant::{Capability::*, Grant, Why};
+        let Some(pass) = &op.kind.grant else {
+            continue;
+        };
+        let app = |id| (authentic.get(id)).map(|t| t.kind.act.payload().map_or("", Payload::app));
+        let may = |cap| Grant(pass, namespace).may(&op.actor, cap, op.ts_unix);
+        let verdict = match &op.kind.act {
+            _ if !*signed.entry(pass).or_insert_with(|| pass.signed()) => Err(Why::Unsigned),
+            RailAct::Record { payload } => may(Append(payload.app())),
+            RailAct::Correct {
+                corrects,
+                replacement,
+            } => match app(corrects) {
+                Some(k) if replacement.as_ref().is_none_or(|r| r.app() == k) => may(Append(k)),
+                held => Err(held.map_or(Why::Unheld, |_| Why::OtherKind)),
+            },
+            _ => may(Decide),
+        };
+        if let Err(why) = verdict {
+            tracing::debug!(target: "rail:admit", id = %id, actor = %op.actor, person = %pass.person, %why,
+                "admit refused — a holder's line its pass does not grant");
+            ungranted.push((id.clone(), op.actor.clone(), why));
+        }
+    }
+    for (id, actor, why) in ungranted {
+        authentic.remove(&id);
+        gaps.push(RailGap::Ungranted { id, actor, why });
+    }
+
     // ── the chain: each act names its author's act at seq − 1 ─────────
     //
     // svrngs (U2, DESIGN §6). Judged over every authentic act at once, before
@@ -552,7 +609,8 @@ pub fn admit(
     let mut tips: BTreeMap<String, Vec<OpId>> = BTreeMap::new();
     for (id, op) in &authentic {
         if !parents.contains(&(op.actor.as_str(), id)) {
-            tips.entry(op.actor.clone()).or_default().push(id.clone());
+            let key = op.stands_as().to_string();
+            tips.entry(key).or_default().push(id.clone());
         }
     }
 
@@ -585,7 +643,7 @@ pub fn admit(
     let mut seqs: BTreeMap<&str, BTreeMap<u64, Vec<OpId>>> = BTreeMap::new();
     for (id, op) in authentic
         .iter()
-        .filter(|(_, op)| m.person_of(&op.actor).is_some())
+        .filter(|(_, op)| m.person_of(op.stands_as()).is_some())
     {
         let op: &Op<SignedOp> = op;
         seqs.entry(op.actor.as_str())
@@ -596,7 +654,7 @@ pub fn admit(
     }
     let mut admitted: BTreeMap<OpId, Candidate<'_>> = BTreeMap::new();
     for (id, op) in authentic {
-        let Some((_, person)) = m.person_of(&op.actor) else {
+        let Some((_, person)) = m.person_of(op.stands_as()) else {
             gaps.push(RailGap::UnknownSigner {
                 id,
                 actor: op.actor.clone(),
@@ -613,7 +671,7 @@ pub fn admit(
         }
         if !m.counted.contains(&id) && !m.voided.contains(&id) {
             let actor = op.actor.clone();
-            gaps.push(match m.cut.contains_key(&actor) {
+            gaps.push(match m.cut.contains_key(op.stands_as()) {
                 true => RailGap::Removed { id, actor },
                 false => RailGap::NotAMember { id, actor },
             });

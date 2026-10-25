@@ -523,7 +523,7 @@ fn covered(
     for (key, cut) in cuts.iter_mut() {
         let chain: BTreeMap<&OpId, Option<&OpId>> = ops
             .iter()
-            .filter(|(_, op)| &op.actor == key)
+            .filter(|(_, op)| op.stands_as() == key)
             .map(|(id, op)| (*id, op.kind.prev.as_ref()))
             .collect();
         let Some(RailAct::Remove { through, .. }) = ops
@@ -584,10 +584,10 @@ fn walk(
     let mut visits: BTreeMap<OpId, Guest> = BTreeMap::new();
     for (id, op) in order.iter().copied() {
         let of = |k: &str| String::from(devices.get(k).map_or(k, String::as_str));
-        if !live.contains_key(&op.actor) {
+        if !live.contains_key(op.stands_as()) {
             continue;
         }
-        if covers.get(&op.actor).is_some_and(|c| !c.contains(id)) {
+        if covers.get(op.stands_as()).is_some_and(|c| !c.contains(id)) {
             tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor,
                 "membership: an act of a cut key its cut does not cover counts nowhere");
             continue;
@@ -790,7 +790,7 @@ pub fn standing_reads(ops: &[Op<SignedOp>]) -> impl Iterator<Item = &Op<SignedOp
     let named: BTreeSet<&str> = ops.iter().filter_map(|op| op.kind.act.names()).collect();
     let kept = |a: &RailAct| a.moves_membership() || matches!(a, RailAct::Correct { .. });
     ops.iter()
-        .filter(move |op| kept(&op.kind.act) || named.contains(op.actor.as_str()))
+        .filter(move |op| kept(&op.kind.act) || named.contains(op.stands_as()))
 }
 
 /// What a redeeming `Admit` says alone: the `Invite` it names, if that is

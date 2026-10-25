@@ -381,6 +381,11 @@ fn every_gap_class_is_classified() {
             from: 4,
             to: 4,
         },
+        RailGap::Ungranted {
+            id: id.clone(),
+            actor: actor.clone(),
+            why: crate::grant::Why::Unheld,
+        },
     ];
     for gap in &absences {
         assert_eq!(
@@ -402,6 +407,11 @@ fn every_gap_class_is_classified() {
             actor: actor.clone(),
             seq: 3,
             ids: vec![id.clone()],
+        },
+        RailGap::Ungranted {
+            id: id.clone(),
+            actor: actor.clone(),
+            why: crate::grant::Why::OtherKind,
         },
     ];
     for gap in &contradictions {

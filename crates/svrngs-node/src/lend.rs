@@ -227,7 +227,7 @@ impl Lend {
     /// found 2); `None` for a folder's name that is not a kind's, traced
     /// as left out (#167).
     pub fn carried(kind: &str, group: &str) -> Option<Self> {
-        let name = format!("{kind}-{}", group.get(..16).unwrap_or(group));
+        let name = svrngs_core::pass::carried_name(kind, group);
         let (Ok(name), Ok(parsed)) = (LendName::parse(&name), Kind::parse(kind)) else {
             tracing::debug!(target: "folder", kind, group, "carried: left out, a folder under apps/ whose name no app can have");
             return None;

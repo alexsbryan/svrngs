@@ -236,7 +236,8 @@ fn a_holder_corrects_only_its_own_app_s_part() {
 
 /// **A cut covers its person's holders.** The keeper's cut of bo names the
 /// newest acts it held of bo's key and of bo's holder; the holder's acts it
-/// covers count, and one written after it counts nowhere.
+/// covers count, and one it does not, written after it or backdated before
+/// it, counts nowhere.
 #[test]
 fn a_cut_covers_its_person_s_holders() {
     let bo = pass(2, "money", 2_000);
@@ -259,7 +260,14 @@ fn a_cut_covers_its_person_s_holders() {
         Some(&dinner),
         act("money/expense", "late"),
     );
-    let a = admitted(&[own, dinner, cut, late]);
+    let backdated = held(
+        HOLDER,
+        &bo,
+        100,
+        Some(&dinner),
+        act("money/expense", "backdated"),
+    );
+    let a = admitted(&[own, dinner, cut, late, backdated]);
     assert_eq!(
         whose(&a),
         vec![mine("own", "bo"), mine("dinner", "bo")],
