@@ -370,10 +370,11 @@ fn refused(namespace: &str, kind: &str, why: String) -> Response {
 /// key of the one person of that name who had joined by its time, cut or
 /// standing, so an app keeps what was written for them with what they
 /// wrote (keys-names); none where two had, and an app reads it by name.
-/// The log's and a carried app's route alike.
-pub(crate) fn ops_json(admission: &Admission) -> serde_json::Value {
+/// The log's and a carried app's route alike; `None` when the ops cannot
+/// be written out, which each route refuses, never an empty list.
+pub(crate) fn ops_json(admission: &Admission) -> Option<serde_json::Value> {
     let m = admission.membership();
-    let mut ops = serde_json::to_value(admission.wire()).unwrap_or_default();
+    let mut ops = serde_json::to_value(admission.wire()).ok()?;
     for o in ops.as_array_mut().into_iter().flatten() {
         let (Some(named), Some(ts)) = (o["on_behalf_of"].as_str(), o["ts_unix"].as_i64()) else {
             continue;
@@ -384,16 +385,14 @@ pub(crate) fn ops_json(admission: &Admission) -> serde_json::Value {
         let firsts =
             (m.bindings.iter()).filter(|(k, p)| p.as_str() == named && !m.devices.contains_key(*k));
         let mut by = firsts.filter(|(k, _)| !matches!(m.joined(k), Joined::At(t) if t > ts));
-        let one = match (by.next(), by.next()) {
-            (Some((k, _)), None) => Some(k.clone()),
-            _ => None,
-        };
+        let (one, two) = (by.next(), by.next());
+        let one = one.filter(|_| two.is_none()).map(|(k, _)| k.clone());
         tracing::debug!(target: "rails", named, ts, ?one, "rail: whom an act for another spoke for, the one person of that name joined by then, or none");
         if let Some(k) = one {
             o["on_behalf_of_key"] = k.into();
         }
     }
-    ops
+    Some(ops)
 }
 
 /// GET /v1/rail/log — the namespace's acts, in one order, and its gaps:
@@ -408,6 +407,13 @@ async fn log_answer(rail: &RingRail, namespace: &str) -> Response {
     let admission = match rail.admission(namespace) {
         Ok(a) => a,
         Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
+    };
+    let Some(ops) = ops_json(&admission) else {
+        tracing::warn!(target: "rails", namespace, "rail: the log refused — its acts could not be written out");
+        return err(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "the group's acts could not be written out",
+        );
     };
     let gaps: Vec<serde_json::Value> = admission
         .gaps()
@@ -429,7 +435,7 @@ async fn log_answer(rail: &RingRail, namespace: &str) -> Response {
         .collect();
     Json(serde_json::json!({
         "namespace": namespace,
-        "ops": ops_json(&admission),
+        "ops": ops,
         "gaps": gaps,
         "held": admission.held(),
         "complete": admission.is_complete(),

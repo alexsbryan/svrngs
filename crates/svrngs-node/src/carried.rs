@@ -312,7 +312,7 @@ impl Folders {
         let ((kind, group), (people, key)) = (app, asker);
         let (prefix, rail, person) = (format!("{kind}/"), &self.host.rail, &people[key].person);
         let admission = rail.admission(group).ok();
-        let read = admission.as_ref().map(crate::rail::ops_json);
+        let read = admission.as_ref().and_then(crate::rail::ops_json);
         let ops = read.as_ref().and_then(Value::as_array).ok_or(UNREAD)?;
         let own =
             |o: &Value| Some((o["payload"]["kind"].as_str()?.strip_prefix(&prefix)?).to_string());
