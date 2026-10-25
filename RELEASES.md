@@ -2,9 +2,75 @@
 
 ## Next, not released yet
 
-The next release brings House rules: your house writes down what it
-agrees, and how it agrees it. It's in this repository, and not yet in the
-build at `group.svrnme.sh`.
+The next release brings House rules, where your house writes down what it
+agrees and how it agrees it, and it makes plain what can act as you: an app
+says what it does as you when you open it, and only your own phone or
+computer writes as you. It's in this repository, and not yet in the build
+at `group.svrnme.sh`. Update every computer in your group: until all of
+them are on it, an older one leaves out what your phone writes in an app.
+
+**Opening an app is your yes.** The button that opens an app says what it
+does as you: "Open Money. It reads and writes who paid for what, and who
+owes whom.", or "Open Sam’s notes. It writes what you say there into
+House’s record, as you. It also opens your friends’ films as you."
+Pressing it is the yes, and nothing else is asked. An app gets a question
+only when it reaches for something you didn't open it for, such as a page
+you opened from a bookmark trying to open a friend's films as you. It is
+told "Say yes on your home page", and the question waits there, one tap.
+
+**What acts as you, in one place.** Your home page, and the group's page
+on your phone, list everything that can act as you, by what it can do:
+what reads and writes for you, what opens your friends' things as you,
+what knows your name, what is open to this WiFi, and what can decide for
+you, which is only your own computer and your own phone. Each line says
+since when, and has its Stop. A Stop holds from the app's next request on
+a computer, and within 12 hours on a phone. When an app's files change,
+one line says "1 app changed. See what’s new", and the version you have
+keeps running until you press **Open the new version**.
+
+**Only your own phone or computer writes as you.** Before, what you did on
+your phone was written by whichever computer your phone reached, and a
+member's computer could write in someone else's name or choose which
+version of an app ran for them; the page could only say "bo, through cy’s
+computer". Now your phone signs what you do on it, your computer signs
+what you do on it, and every other computer only carries it. Nobody
+else's computer can choose what runs as you. An entry an older svrngs
+wrote that way still shows as "bo, through cy’s computer", and still
+counts.
+
+**Your phone may ask you once.** After the update, your phone's group page
+may show "1 app changed. See what’s new" for an app you had already said
+yes to. That yes went through a computer, and now only your phone's own
+counts. Until you press **Open the new version**, the version you last
+said yes to on your phone, or the app as your group brought it, runs for
+you. Nobody on a computer is asked.
+
+**Two people with one name stay two.** Their yeses, their versions and
+what they wrote are their own, and the pages tell them apart by when they
+joined: "Ana (joined 3 Oct)".
+
+**In Money, only you change your entry.** If kim tries to change your £40
+dinner, it stays counted as you wrote it, and Money says why kim's change
+isn't: "kim tried to change alex’s entry, which only alex can change".
+Events already worked this way.
+
+**What you won't notice.** The key your phone opens an app with stays where
+the app's own pages can't copy it. A frame or a form a page sends into a
+friend's app is held to the same rule as the page's own requests to it.
+
+**What an app you open can do.** An app can't load code from anywhere
+but its own files, or send what it reads to a CDN or a tracker by
+accident. It can still share what it reads, if its code does. What
+protects you is that your group chose it: its files are pinned, each new
+version runs as you only after your yes, and the record says who brought
+or changed it. That's the trade: apps from people you know, trusted as
+you trust the programs on your computer, rather than a sandbox. Bring
+what you trust.
+
+**When a friend's computer runs an older svrngs,** what you write from your
+phone in an app they lend waits, and the page says "Sam’s computer runs an
+older svrngs: what you write here reaches your group when a computer on
+the new svrngs is on."
 
 **House rules.** On your home page, under **Bring things to the table**,
 tick House rules and press **Bring the ticked ones to** your group. The
@@ -21,8 +87,8 @@ how your house decides the same way you agree to anything else.
   joins or leaves today.
 - When people leave, the rest of you still decide, including how you
   decide.
-- An agreement made from a phone says whose computer it went through:
-  "Agreed: Dee, through Ana’s computer."
+- An agreement made from a phone is signed on that phone, so it reads as
+  that person's alone: "Agreed: Dee."
 - It runs on every computer and phone in your group. Nobody keeps a server
   on, and nobody keeps the book.
 
@@ -39,9 +105,9 @@ in svrngs stops a party at 11; you do.
 
 **Its files run as you only after your yes.** House rules is on the table
 like Money and Events, so V1.1's rule holds for it too. If someone in the
-group changes its files, your page asks "Open the new version?", and the
-version you have keeps working until you press **Yes, use the new version
-of House rules**.
+group changes its files, your page says "1 app changed. See what’s new",
+and the version you have keeps working until you press **Open the new
+version**.
 
 **In the run.** A house of four, three on computers and one on a phone,
 chose "most of you agree" and agreed on quiet hours over one objection.
@@ -68,8 +134,22 @@ n0's relays. Nobody has used House rules in a real house yet
 
 **If you build apps.** A carried app's `svrngs/acts` now says each person's
 time in the group, `spans`, those who left included, so an app can count a
-past entry with whoever was in the group when it was written.
-[`docs/DESIGN.md`](docs/DESIGN.md) §3 has it.
+past entry with whoever was in the group when it was written. Each act
+carries `person_key`, the same from each of a person's devices: key on it,
+and show the name. Your computer's record API writes only as you. A lent
+app that writes for whoever opens it names the act in its answer's
+`x-svrngs-append` header, and the asker's own computer or phone signs it,
+within the kind its lender lent it as. [`docs/DESIGN.md`](docs/DESIGN.md)
+§3 has each.
+
+**In the runs.** Every demo scene plays on each check of this release, each
+person a program on one computer, in Chromium and WebKit: Money, Events,
+House rules, the grapevine, the doc, the group's life and the pantry, and
+films and movie night where Jellyfin is installed. The last full check
+passed in 838 s. Checking who signed each entry costs a group's 2,000
+entries about 4 ms more when phones wrote them, on 72 ms
+(`demo/runs/authorship/2026-10-24/COST.md`). Nobody has used this release
+in a real group yet.
 
 ## V1.1.3, 20 October 2026
 
