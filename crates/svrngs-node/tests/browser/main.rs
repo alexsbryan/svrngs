@@ -18,9 +18,6 @@
 #[allow(dead_code)]
 #[path = "../door/origins.rs"]
 mod origins;
-// The bridge to a door as a pass holder, the door's tests' own.
-#[path = "../common/mod.rs"]
-mod common;
 // The page built, and a relay on 127.0.0.1: shared with the command's
 // joining test (crates/svrngs/tests/join_page.rs).
 #[macro_use]
@@ -48,7 +45,6 @@ use std::collections::BTreeSet;
 use std::path::Path;
 use std::time::Duration;
 
-use common::bridge_as;
 use drive::drive;
 use harness::{relay, relay_url, repo, site, Engine};
 use iroh_relay::server::Server;
@@ -1581,9 +1577,10 @@ in_both_engines!(
     /// The group's page's "What apps use" says so, and its Stop refuses the
     /// page `stopped`; said yes again, the page's own stop, sent by the
     /// worker with the pass, refuses it again. The group's page framed by
-    /// the lent page is not shown in the frame, and the page's own yes, on
-    /// a dial of its own with the pass its origin keeps, is refused and
-    /// keeps nothing. Asked of an app and a lend not lent, the group's page
+    /// the lent page is not shown in the frame, and its origin keeps no
+    /// text that is its pass's holder key, only a key object that cannot
+    /// be copied (capability-signed (H); a pass's own yes is refused in
+    /// tests/door/choices.rs). Asked of an app and a lend not lent, the group's page
     /// says [`UNLENT`], as the home page does (onair-economize (d); red at
     /// a20ed46: "... in your group now."). Planted, each watched failing: a
     /// holder's yes accepted at the door; the group's page framed (no
@@ -1709,48 +1706,27 @@ async fn a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped(eng
         json!([]),
         "the group's page must never show in a lent page's frame:\n{seen:#}"
     );
-    // The app's own yes, with what its origin keeps, at cy's door on the
-    // pass holders' protocol: dialled straight, not through the relay,
-    // where the worker holds that key.
+    // What its origin keeps (capability-signed (H); DESIGN §3): no text
+    // kept with its pass is the key the pass names as its holder, so no
+    // page there copies it to act as bo elsewhere, and the key object kept
+    // in its place gives up no bytes.
     let kept = &seen["kept"];
-    let (Some(pass), Ok(holder)) = (
-        kept["pass"].as_str(),
-        hex::decode(kept["holder"].as_str().unwrap_or_default()),
-    ) else {
-        panic!("the origin keeps the pass and its holder: {seen:#}");
-    };
-    let holder = SigningKey::from_bytes(&holder.try_into().expect("a key is 32 bytes"));
-    let door = bridge_as(&holder, &cy, svrngs_core::alpn::Alpn::Lend).await;
-    let at = door.local_addr();
-    let asked = |head: String| async move {
-        let mut sock = tokio::net::TcpStream::connect(at).await.unwrap();
-        sock.write_all(head.as_bytes()).await.unwrap();
-        let mut answer = String::new();
-        tokio::io::AsyncReadExt::read_to_string(&mut sock, &mut answer)
-            .await
-            .unwrap();
-        answer
-    };
-    let body = format!(r#"{{"app":"{page_label}","said":"yes"}}"#);
-    let yes = asked(format!(
-        "POST /choices/{shelf_label} HTTP/1.1\r\nHost: cy\r\nx-svrngs-pass: {pass}\r\n\
-         content-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
-        body.len()
-    ))
-    .await;
+    let pass = svrngs_core::pass::Pass::decode(kept["pass"].as_str().unwrap_or_default())
+        .unwrap_or_else(|| panic!("the origin keeps its pass: {seen:#}"));
+    let texts = kept["texts"].as_array().into_iter().flatten();
+    let copied = texts
+        .filter_map(|t| <[u8; 32]>::try_from(hex::decode(t.as_str()?).ok()?).ok())
+        .any(|b| actor_of(&SigningKey::from_bytes(&b)) == pass.holder);
     assert!(
-        yes.starts_with("HTTP/1.1 403"),
-        "a pass's yes is refused: {yes}"
+        !copied,
+        "a page at the lend's origin reads its holder's key as bytes: {seen:#}"
     );
-    let after = asked(format!(
-        "GET /lend/{shelf_label}/probe HTTP/1.1\r\nHost: cy\r\nx-svrngs-pass: {pass}\r\nconnection: close\r\n\r\n"
-    ))
-    .await;
-    assert!(
-        after.to_lowercase().contains("x-svrngs-refused: stopped"),
-        "nothing kept of a pass's yes: {after}"
+    assert_eq!(
+        kept["exported"],
+        json!(["InvalidAccessError"]),
+        "the holder kept as one key that cannot be copied: {seen:#}"
     );
-    drop((ada, cy, door));
+    drop((ada, cy));
 }
 
 in_both_engines!(

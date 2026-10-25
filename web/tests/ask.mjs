@@ -13,8 +13,10 @@
 //      its line read;
 //   4. the page frames the group's page at `#ask=`, and the test reads
 //      whether the group's page is in the frame;
-//   5. what an app at the page's origin can read there, its pass and its
-//      holder's key, handed to the test, which posts a yes with them.
+//   5. what an app at the page's origin can read there: everything its
+//      origin keeps of the pass, each text in it handed to the test, which
+//      looks for the holder's key among them, and whether each key object
+//      kept there gives up its bytes.
 //
 //   node web/tests/ask.mjs '{"engine": "chromium"|"webkit", "site": ...,
 //     "key": ..., "token": ..., "open": "<the lend's name>",
@@ -111,14 +113,20 @@ try {
   );
   out.framed = framed.filter((t) => t !== null);
 
-  // 5. What an app at this origin can read: its pass and its holder's key.
+  // 5. What an app at this origin can read of its pass: every text kept
+  // with it, and whether each key kept with it gives up its bytes.
   out.kept = await page.evaluate(
     (label) =>
       new Promise((done) => {
         const req = indexedDB.open('svrngs-lend');
         req.onsuccess = () => {
           const get = req.result.transaction('kept').objectStore('kept').get(`pass ${label}`);
-          get.onsuccess = () => done({ pass: get.result?.pass, holder: get.result?.holder });
+          get.onsuccess = async () => {
+            const kept = get.result ?? {};
+            const keys = Object.values(kept).filter((v) => v instanceof CryptoKey);
+            const exported = await Promise.all(keys.map((k) => crypto.subtle.exportKey('pkcs8', k).then(() => 'exported', (e) => e.name)));
+            done({ pass: kept.pass, texts: Object.values(kept).filter((v) => typeof v === 'string'), exported });
+          };
         };
       }),
     new URL(lendOrigin).hostname.split('.')[0],
