@@ -18,10 +18,11 @@
 //!   begins `<kind>/`, the prefix taken off, and each correction of one —
 //!   as `ops`, in the record's order and the shape `/v1/rail/log` gives
 //!   them, voided ones too, so an app's fold reads them as it reads the
-//!   record; with who asks, `you`, the people in the group now, and
-//!   `spans`, each person's time in it, `{person, joined, left}`, from
-//!   svrngs-core's membership (canon-spans), null while who stands is
-//!   unsettled (#124);
+//!   record; with who asks, `you`, and their first key, `you_key`, which
+//!   the fold keeps them by (keys-names), the people in the group now, and
+//!   `spans`, each person's time in it, `{person, joined, left,
+//!   person_key}`, from svrngs-core's membership (canon-spans), null while
+//!   who stands is unsettled (#124);
 //!   `POST {op}` records an act, and `{corrects, op}` corrects one of its
 //!   own, `op` null to void it, and absent never (#165): the prefix put on its kind
 //!   ([`svrngs_core::grant::app_act`]), signed by this computer as its own
@@ -316,7 +317,7 @@ impl Folders {
         let ((kind, group), (people, key)) = (app, asker);
         let (prefix, rail, person) = (format!("{kind}/"), &self.host.rail, &people[key].person);
         let admission = rail.admission(group).ok();
-        let read = (admission.as_ref()).and_then(|a| serde_json::to_value(a.wire()).ok());
+        let read = admission.as_ref().map(crate::rail::ops_json);
         let ops = read.as_ref().and_then(Value::as_array).ok_or(UNREAD)?;
         let own =
             |o: &Value| Some((o["payload"]["kind"].as_str()?.strip_prefix(&prefix)?).to_string());
@@ -340,8 +341,8 @@ impl Folders {
                 .filter(|m| !m.unsettled);
             let spans = register.map(|m| m.spans());
             tracing::debug!(target: "folder", group, %kind, spans = ?spans.as_ref().map(Vec::len), "carried: each person's time in the group, or none, their standing unsettled");
-            let read =
-                json!({ "you": person, "group": group, "people": all, "spans": spans, "ops": ops });
+            let you_key = &people[key].person_key;
+            let read = json!({ "you": person, "you_key": you_key, "group": group, "people": all, "spans": spans, "ops": ops });
             return Ok(Json(read).into_response());
         }
         // A write is its person's own device's (capability-signed): this

@@ -57,7 +57,7 @@ use crate::node::dialled;
 use crate::register::{Member, Standing};
 use crate::ring_routes::err;
 use crate::{actor_of, Device, Joined, Person, RailAct, RailError, RingRail};
-use svrngs_core::{Append, AppendRefusal};
+use svrngs_core::{Admission, Append, AppendRefusal};
 
 /// What the doors read: the journals, the nudge that wakes the round
 /// after an append ([`crate::ring_sync::append`]), and the live lane's
@@ -366,6 +366,37 @@ fn refused(namespace: &str, kind: &str, why: String) -> Response {
         .into_response()
 }
 
+/// `admission`'s ops as the wire spells them, each an older computer wrote
+/// for another person (`on_behalf_of`) with `on_behalf_of_key`: the first
+/// key of the one person of that name who had joined by its time, cut or
+/// standing, so an app keeps what was written for them with what they
+/// wrote (keys-names); none where two had, and an app reads it by name.
+/// The log's and a carried app's route alike.
+pub(crate) fn ops_json(admission: &Admission) -> serde_json::Value {
+    let m = admission.membership();
+    let mut ops = serde_json::to_value(admission.wire()).unwrap_or_default();
+    for o in ops.as_array_mut().into_iter().flatten() {
+        let (Some(named), Some(ts)) = (o["on_behalf_of"].as_str(), o["ts_unix"].as_i64()) else {
+            continue;
+        };
+        if o["person"] == named {
+            continue;
+        }
+        let firsts =
+            (m.bindings.iter()).filter(|(k, p)| p.as_str() == named && !m.devices.contains_key(*k));
+        let mut by = firsts.filter(|(k, _)| !matches!(m.joined(k), Joined::At(t) if t > ts));
+        let one = match (by.next(), by.next()) {
+            (Some((k, _)), None) => Some(k.clone()),
+            _ => None,
+        };
+        tracing::debug!(target: "rails", named, ts, ?one, "rail: whom an act for another spoke for, the one person of that name joined by then, or none");
+        if let Some(k) = one {
+            o["on_behalf_of_key"] = k.into();
+        }
+    }
+    ops
+}
+
 /// GET /v1/rail/log — the namespace's acts, in one order, and its gaps:
 /// admitted ops, each gap's own sentence (the rail's `Display`, so the page
 /// and the terminal say the same words), the held count, completeness, and
@@ -399,7 +430,7 @@ async fn log_answer(rail: &RingRail, namespace: &str) -> Response {
         .collect();
     Json(serde_json::json!({
         "namespace": namespace,
-        "ops": admission.wire(),
+        "ops": ops_json(&admission),
         "gaps": gaps,
         "held": admission.held(),
         "complete": admission.is_complete(),
