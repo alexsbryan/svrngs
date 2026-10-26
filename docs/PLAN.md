@@ -188,9 +188,16 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   would name (`demo/runs/factorio/2026-10-26-rehearsal.json`, d5f65cdb).
   Not carried: the jellyfin, movie-night and taste `check.sh` runs,
   outside the gate, which open a lend's origin bare. The operator, "Let's do
-  half the rows": the loop stops after the svrngs half, at give-play-scene,
-  before Give's own, until the operator says Give's half goes
-  (HUMAN-give-half);
+  half the rows": the loop stopped after the svrngs half, at
+  give-play-scene, until the operator said Give's half goes, after
+  give-cut (HUMAN-give-half, 2026-10-26). Landed, give-cut: the lender
+  asks a raw lend's dialer's standing again every sweep, 1 s, and closes
+  the connection once they no longer stand, so a removed member's open
+  TCP connection or UDP flow ends on the lender's side, not their own
+  (`crates/svrngs/tests/tcp.rs`, `udp.rs`,
+  `a_member_no_longer_standing_is_cut`; 662e30be); +16 library, 0 core, 0
+  `apps/`, 0 surface, the cap 19,111, its raise landed for the operator
+  (6019879b);
 - sealing, at its §2 trigger.
 
 The operator's switch stands apart from that order: when they flip
