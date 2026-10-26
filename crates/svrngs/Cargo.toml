@@ -72,9 +72,11 @@ path = "tests/scenes/main.rs"
 test = false
 
 # The worlds of svrngs's xenia scenes (demo/xenia/README.md): run one at a
-# time, by name, by demo/xenia/<scene>.sh; no step of scripts/check.sh
-# runs them, and its clippy step lints them.
+# time, by its scene's command in demo/xenia/; no step of scripts/check.sh
+# runs them, and its clippy step lints them. No harness, so libtest writes
+# nothing on the stdout that carries the scene's line.
 [[test]]
 name = "xenia"
 path = "tests/xenia/main.rs"
+harness = false
 test = false

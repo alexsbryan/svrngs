@@ -8,10 +8,10 @@
 //! JSON line and stays up until its stdin closes, when every computer and
 //! server it started is killed on drop.
 //!
-//! A test target run only by name (`test = false` in
-//! `crates/svrngs/Cargo.toml`): `demo/xenia/<scene>.sh` runs one, and
-//! nothing in `scripts/check.sh` does. A world that cannot be stood up
-//! prints no line, so xenia's runner says the scene never ran.
+//! A test target with no harness, run only by name (`test = false` in
+//! `crates/svrngs/Cargo.toml`): each scene's command in `demo/xenia/`
+//! runs one, and nothing in `scripts/check.sh` does. A world that cannot
+//! be stood up prints no line, so xenia's runner says the scene never ran.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 #[path = "../../../svrngs-node/tests/browser/harness.rs"]
@@ -391,19 +391,26 @@ async fn newcomer_world() {
     stay_up(line, (house, june)).await
 }
 
-/// Each world as a test, by its scene's name, judged as the demo scenes
-/// are ([`people::judged`]): a wait that ran out past the load bar is said
-/// on stderr as could-not-judge, and no line is printed.
-macro_rules! world {
-    ($scene:ident, $world:ident) => {
-        #[tokio::test(flavor = "multi_thread")]
-        async fn $scene() {
-            let place = format!("xenia-{}-chromium", stringify!($scene));
-            people::judged(place, $world()).await
-        }
-    };
+/// The world its scene's command names, by the command's own name, `$0`
+/// as `demo/xenia/world/scene.sh` passes it: judged as the demo scenes are
+/// ([`people::judged`]), so a wait that ran out past the load bar is said
+/// on stderr as could-not-judge, and no line is printed. With no harness,
+/// nothing but the world writes to stdout, so its line is the first.
+fn main() {
+    let named = std::env::args().nth(1).unwrap_or_default();
+    let scene = named.rsplit('/').next().unwrap_or_default().to_string();
+    let world: std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send>> =
+        match scene.as_str() {
+            "together" => Box::pin(together_world()),
+            "kim" => Box::pin(kim_world()),
+            "ana" => Box::pin(ana_world()),
+            "newcomer" => Box::pin(newcomer_world()),
+            _ => {
+                eprintln!("xenia: no world is called {named:?}: together, kim, ana or newcomer");
+                std::process::exit(2)
+            }
+        };
+    let place = format!("xenia-{scene}-chromium");
+    let run = tokio::runtime::Runtime::new().expect("a runtime");
+    run.block_on(people::judged(place, world));
 }
-world!(together, together_world);
-world!(kim, kim_world);
-world!(ana, ana_world);
-world!(newcomer, newcomer_world);

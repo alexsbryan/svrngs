@@ -26,16 +26,17 @@ while a `DRAFT` line tops any file in `people/`.
 
 ## The scenes
 
-Each `*.sh` here is one scene: it stands up its world, prints the scene's
-line, and keeps the world up until xenia closes its stdin.
+Each of the four below is one scene: a link to `world/scene.sh`, which
+stands up the world the link's name names, prints the scene's line, and
+keeps the world up until xenia closes its stdin.
 
-- **`together.sh`**: Kim, on her computer, puts the pizza into the house's
+- **`together`**: Kim, on her computer, puts the pizza into the house's
   money and tells Ana in the house chat. Ana, on her phone, opens the
   house's link and finds what she owes.
-- **`kim.sh`**: Kim alone, the pizza into the house's money.
-- **`ana.sh`**: Ana alone, the pizza already in, from the link to what she
+- **`kim`**: Kim alone, the pizza into the house's money.
+- **`ana`**: Ana alone, the pizza already in, from the link to what she
   owes.
-- **`newcomer.sh`**: June, a bit afraid of computers, joins the house from
+- **`newcomer`**: June, a bit afraid of computers, joins the house from
   her computer's home page by the link Kim sent, with no terminal.
 
 Each world is a function in `crates/svrngs/tests/xenia/main.rs`, built on
