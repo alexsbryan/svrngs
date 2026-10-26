@@ -6,7 +6,7 @@ svrn-docs `rings/current/GIVE.md` is this queue's exploration, and its §12 list
 - **The record API stops trusting loopback.** `api.rs:12` says "Loopback IS the auth", and on a Mac running podman it is false: a container reaches the Mac's `127.0.0.1` through gvproxy (measured 2026-10-25, GIVE.md §5). This fix is owed whether or not Give exists.
 - **Give ships as its own package.** A group can keep an app in rootless podman, one keeper at a time. Give lives in `apps/give/`, on svrngs's public surface and nothing else.
 
-There are fourteen rows:
+There are fifteen rows:
 
 1. the economizing pass, the estimate, and the ceiling, with the three questions the charter says are awaiting the operator;
 2. the token for programs;
@@ -15,13 +15,14 @@ There are fourteen rows:
 5. the TCP door;
 6. Play, on each member's computer;
 7. the raw-port scenes and the operator's game sessions;
-8. Give's runtime and its two cards;
-9. Give keeping an app, starting from the shelf;
-10. moving it;
-11. taking it over, and the stale copy;
-12. Give's scenes and the people runs;
-13. install;
-14. the docs and a release, prepared for the operator.
+8. the cut: a member no longer standing loses an open raw connection, closed by the lender;
+9. Give's runtime and its two cards;
+10. Give keeping an app, starting from the shelf;
+11. moving it;
+12. taking it over, and the stale copy;
+13. Give's scenes and the people runs;
+14. install;
+15. the docs and a release, prepared for the operator.
 
 **Waits, each with its trigger:**
 
@@ -132,8 +133,18 @@ There are fourteen rows:
     Then stop.
   - **Check:** the scene red on its plant, then green, in the full gate.
   - **THE OPERATOR DECIDED, 2026-10-26,** on `demo/runs/give/2026-10-26-play-scene/NEEDS_HUMAN.md`: "I think this is good enough for the game server for now -- we can do the two-home session another time." No bars are set now. The two-home sessions of `demo/factorio.md` and `demo/minecraft.md` wait for the operator, and are never-ran until they are played. Beside them stands a rehearsal on one host with Factorio 2.1.23, a UDP port lent and Play, the operator at the client: 9 minutes, no desync, no drop, its path on this host and so neither of the two the bars would name (`demo/runs/factorio/2026-10-26-rehearsal.json`, d5f65cdb). (a) and (b) landed and the full gate passed (give-play-scene-1.await.log); close the row with PLAN §1 saying the sessions wait, then stop at HUMAN-give-half.
-- [ ] HUMAN-give-half — depends [give-play-scene] — the operator, 2026-10-25: "Let's do half the rows." The svrngs half runs (give-economize through give-play-scene), and the loop stops here, before Give's own rows. This row is checked [x] by the operator, or the operator's delegate on the operator's word, once the svrngs half has landed and the operator says Give's half goes.
-- [ ] give-app-runtime — depends [HUMAN-give-half] — ONE ROW, in `apps/give/` (not counted, reported). The kill clause holds (CHARTER):
+- [x] HUMAN-give-half — depends [give-play-scene] — the operator, 2026-10-25: "Let's do half the rows." The svrngs half runs (give-economize through give-play-scene), and the loop stops here, before Give's own rows. This row is checked [x] by the operator, or the operator's delegate on the operator's word, once the svrngs half has landed and the operator says Give's half goes. **THE OPERATOR, 2026-10-26: "Let's restart the loop and slot in the fix somewhere where it makes sense"**: Give's half goes, after give-cut.
+- [ ] give-cut — depends [HUMAN-give-half] — ONE ROW, red first, and `scripts/check.sh` once, at the close (the operator, 2026-10-26: "slot in the fix somewhere where it makes sense"; give-play-1.out's lesson, "Removing a member doesn't close their open port"):
+  - **The gap.** The lender admits a raw use once, when a UDP flow or a TCP connection opens (`door/udp.rs` `admitted`, `PersonKey::resolved`), and never again. An open TCP connection runs until it closes, and a UDP flow until it is idle past `IDLE`, 60 s, so a game that keeps sending runs on after its member is removed. A lent page's door asks on every request (`door.rs:1099-1105`). Play closes its own listener when its member stops standing (play.rs), but that is the member's own computer, and a modified one would not. `svrngs remove` says "nothing new reaches them".
+  - **(a) Tests: A MEMBER NO LONGER STANDING IS CUT.** These fail at HEAD, in `crates/svrngs/tests/udp.rs` and `tcp.rs`:
+    - A member with a TCP connection open on a lend is removed, and within a few seconds the lender closes it: the member's program reads its end.
+    - A member with a UDP flow that keeps sending is removed, and within a few seconds none of its packets reaches the lent port and nothing comes back.
+    - The member's side is driven by `door::udp::carried` and `door::tcp::carried` directly, not by Play, so the member's own check is not what cuts them.
+    - A member still standing keeps their connection through the same window.
+    - A plant that skips the lender's check turns them red.
+  - **(b) The change, the lender's.** While a raw lend's connection is open, the lender asks the dialer's standing again on the sweep it already keeps (`SWEEP`, 1 s), as `admitted` asks it, and closes the member's connection to that lend when it no longer stands, with a debug trace saying why. One check for both doors, in `serve`, which holds the connection.
+  - **Check:** (a) red first, green after; give-udp's and give-tcp's tests unchanged by name; `python3 scripts/lean_check.py` before and after. Its range is +10 to +40 library and 0 core, inside what the ceiling for give-token through give-play left (at most 19,233 and 3,244). A worker's edit of `BUDGET` is refused as a CI bypass (give-tcp-1.out), so commit the row's work, write the raise as a ready diff in `NEEDS_HUMAN.md`, and stop; the operator's session lands it. Past the range, the row stops for the operator.
+- [ ] give-app-runtime — depends [give-cut] — ONE ROW, in `apps/give/` (not counted, reported). The kill clause holds (CHARTER):
   - **(a) Tests: A CARD RUNS.** These run against a stand-in card (a small published image whose door is HTTP):
     - A card is the app's `compose.yaml` with an `x-svrngs` block: title, about, door (http, tcp or udp), state, and asks, each ask with its link and the environment its yes sets. Parsing refuses `build:`, `privileged`, custom networks, host networking and any bind mount from the host, each refusal naming its field.
     - `give check <card dir>` passes when the stand-in is pulled by digest, started rootless, healthy by its own `healthcheck`, snapshotted (pause, a reflink copy where the filesystem has one and a plain copy where it does not, unpause), stopped, restored, started again, and healthy again. A plant that breaks the restore fails it, naming the step.
