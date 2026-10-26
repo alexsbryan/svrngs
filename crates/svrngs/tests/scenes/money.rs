@@ -106,7 +106,11 @@ async fn money(engine: Engine) {
     let (ada, house) = scene.founds("Ada", "house").await;
 
     // Ada brings Money from her home page.
-    let bring = json!([["button:has-text('Bring the ticked ones')", null, true]]);
+    // Ticked first: the shelf's boxes start unticked (the operator, 2026-10-26).
+    let bring = json!([
+        ["#home label:has-text('Money') input", true],
+        ["button:has-text('Bring the ticked ones')", null, true]
+    ]);
     let brought = sees(engine, "home.mjs", json!({ "ask": ada.home_page(), "heading": false, "all": "#home section h3 ~ p", "do": bring })).await;
     assert!(
         brought["after"][0]
@@ -198,5 +202,6 @@ async fn money(engine: Engine) {
         "Ada's own correction counts: {seen:#}"
     );
     assert!(said.contains(refused), "{seen:#}");
+
     drop((ada, bo));
 }

@@ -138,6 +138,10 @@ try {
       why,
       status: document.getElementById('status').textContent,
       lent: [...document.querySelectorAll('#lent button')].map((b) => b.textContent),
+      // What is folded, by its heading, and whether the group's things come
+      // before its people (the operator, 2026-10-26: the page after joining).
+      folded: [...document.querySelectorAll('#shelf details, #acts details')].filter((d) => !d.open).map((d) => d.querySelector('summary').textContent),
+      leads: Boolean(document.querySelector('table.index').compareDocumentPosition(document.getElementById('door')) & Node.DOCUMENT_POSITION_FOLLOWING),
       answer: document.getElementById('response').textContent,
       said: window.__said,
       lines: window.__lines,

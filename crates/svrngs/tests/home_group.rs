@@ -174,7 +174,7 @@ async fn the_home_page_makes_a_group_another_computer_joins_with_no_restart(
 
     let (mut running, page) = run(home.path()).await;
 
-    let all = "#home section h2, #home section p, #home > p";
+    let all = "#home section h2, #home section p, #home > p, #home summary";
     let seen = home_page(
         engine,
         &page,
@@ -288,7 +288,7 @@ async fn the_home_page_joins_another_group_from_its_link_while_svrngs_runs(
     let home = tempfile::tempdir().unwrap();
     new(home.path(), "Lab", &harness::relay_url(&relay)).await;
     let (mut running, page) = run(home.path()).await;
-    let all = "#home section h2, #home section p, #home > p";
+    let all = "#home section h2, #home section p, #home > p, #home summary";
     let seen = home_page(
         engine,
         &page,
@@ -321,6 +321,14 @@ async fn the_home_page_joins_another_group_from_its_link_while_svrngs_runs(
             "{group}: {seen:#}"
         );
     }
+    // Just joined Trip, its shelf is folded as "Bring more to Trip"; Lab's,
+    // a group Dee was in already, is not (the operator, 2026-10-26;
+    // demo/xenia/findings/after-join-reads-as-permissions.md).
+    let summaries: Vec<_> = (seen["after"][1].as_array().into_iter().flatten())
+        .filter_map(Value::as_str)
+        .filter(|h| h.starts_with("Bring more to"))
+        .collect();
+    assert_eq!(summaries, ["Bring more to Trip"], "{seen:#}");
     let place = home.path().join("svrngs/Trip");
     assert!(
         joined.contains(&format!(

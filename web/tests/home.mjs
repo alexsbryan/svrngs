@@ -3,7 +3,7 @@
 // `args.ask`, its `/ask?lend=<label>&app=<label>`, it is read for its
 // heading, which the test holds to the one source (question.js).
 //
-//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>?, <stays>?], ...], "timed"?: [<selector>, ...], "drawn"?: "<selector>", "text"?: true, "open"?: "<a link's words>", "opens"?: ["<link>", ...], "older"?: true, "unfold"?: true}'
+//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>? | true, <stays>?], ...], "timed"?: [<selector>, ...], "drawn"?: "<selector>", "text"?: true, "open"?: "<a link's words>", "opens"?: ["<link>", ...], "older"?: true, "unfold"?: true}'
 //
 // It also answers `sent`, every request the page made (method, URL and
 // body), and each link's `href`: a page never sends a secret it is shown
@@ -74,6 +74,11 @@ try {
   const after = [];
   let clipboard = null;
   for (const [selector, value, stays] of args.do ?? []) {
+    // A value `true` ticks the box (the shelf, its boxes unticked to start).
+    if (value === true) {
+      await page.locator(selector).first().check({ timeout: 30_000 });
+      continue;
+    }
     const filled = value !== undefined && value !== null;
     if (filled && !stays) {
       await page.locator(selector).first().fill(value);

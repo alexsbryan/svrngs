@@ -192,6 +192,16 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
     );
     assert!(in_house(&first["status"], "Pia"), "{seen:#}");
     assert_eq!(first["lent"], json!([SHELF]), "{seen:#}");
+    // Just joined, the page leads with the group's things, before its
+    // people; the shelf is folded as "Bring more to house", and "What acts
+    // as you" under its heading (the operator, 2026-10-26;
+    // demo/xenia/findings/after-join-reads-as-permissions.md).
+    assert_eq!(first["leads"], true, "{seen:#}");
+    assert_eq!(
+        first["folded"],
+        json!(["Bring more to house", "What acts as you"]),
+        "{seen:#}"
+    );
 
     // The issuer's journal: one Admit naming a browser's key and that name,
     // and the key the one the page keeps sealed.
@@ -227,6 +237,12 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
         assert_eq!(o["asked"], false, "{again}: asked again:\n{seen:#}");
         assert!(in_house(&o["status"], "Pia"), "{again}:\n{seen:#}");
         assert_eq!(o["lent"], json!([SHELF]), "{again}:\n{seen:#}");
+        // In already, the shelf is open as it always was.
+        assert_eq!(
+            o["folded"],
+            json!(["What acts as you"]),
+            "{again}:\n{seen:#}"
+        );
     }
 
     // A lend opens at an origin of its own, `<label>.localhost`, whose

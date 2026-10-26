@@ -104,6 +104,10 @@ async fn the_home_page_says_what_acts_as_you_and_its_stop_holds(engine: Engine) 
     .await;
     eprintln!("the home page's run: {seen:#}");
     assert_eq!(seen["error"], Value::Null, "{seen:#}");
+    assert_eq!(
+        seen["folded"], true,
+        "\"What acts as you\" is folded under its heading: {seen:#}"
+    );
     let before = seen["before"].as_str().unwrap_or_default();
     for part in [
         "What acts as you\n",
@@ -206,6 +210,10 @@ async fn the_group_page_says_what_acts_as_you_and_its_stop_holds_at_the_next_pas
         reads("yes")[0]["name"],
         "shelf",
         "the open is the yes:\n{seen:#}"
+    );
+    assert_eq!(
+        seen["folded"], true,
+        "\"What acts as you\" is folded under its heading: {seen:#}"
     );
     let before = seen["before"].as_str().unwrap_or_default();
     for part in [

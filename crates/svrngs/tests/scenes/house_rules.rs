@@ -121,7 +121,8 @@ async fn house_rules(engine: Engine) {
     let cy = scene.joins("Cy", &ana.invites(&elm).await, "Elm").await;
     let open_it = |who: &Person| json!({ "poll": who.home_page(), "re": "Open House rules", "within": 60_000, "every": 2_000 });
 
-    // 5. Ana brings House rules, Money and Events unticked.
+    // 5. Ana brings House rules, its box ticked; none starts ticked (the
+    // operator, 2026-10-26; demo/xenia/findings/after-join-reads-as-permissions.md).
     let label = |app: &str| format!("#home label:has-text('{app}') input");
     let ticked = |app: &str| format!("#home label:has-text('{app}') input:checked");
     let done = steps(
@@ -133,8 +134,7 @@ async fn house_rules(engine: Engine) {
             { "count": ticked("Money") },
             { "count": ticked("Events") },
             { "count": ticked("House rules") },
-            { "uncheck": label("Money") },
-            { "uncheck": label("Events") },
+            { "check": label("House rules") },
             { "click": "Bring the ticked ones to Elm", "until": "You brought|Nothing was brought|already" },
             says(r"You brought House rules to Elm: everyone in it can open it in a few seconds\."),
         ]),
@@ -143,8 +143,8 @@ async fn house_rules(engine: Engine) {
     let ticked: Vec<_> = done[2..5].iter().map(|d| d["value"].clone()).collect();
     assert_eq!(
         ticked,
-        [1, 1, 1],
-        "step 5: Money, Events and House rules each ticked"
+        [0, 0, 0],
+        "step 5: none of Money, Events and House rules ticked"
     );
 
     // 6. Ana says how the house decides: most of you agree.

@@ -25,6 +25,13 @@ import { driving, launch } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const section = (page) => page.locator('#acts').innerText({ timeout: 60_000 });
+// "What acts as you" folded under its heading, then opened by it, as a
+// person opens it: whether it was folded.
+const unfold = async (page) => {
+  const folded = await page.locator('#acts details').evaluate((d) => !d.open, null, { timeout: 60_000 });
+  await page.locator('#acts summary').click({ timeout: 10_000 });
+  return folded;
+};
 // A fetch from `page` of the read lend at `path`, at the address the
 // page's `/svrngs-reads` gives it (a capability in the path, give-session),
 // or, `bare`, at its plain origin: svrngs's refusal is readable to the page.
@@ -52,9 +59,11 @@ if (args.home) {
     seen.bare = await fetched(tab, 'bare', true);
     await home.reload();
     await loaded();
+    seen.folded = await unfold(home);
     seen.before = await section(home);
     await Promise.all([home.waitForEvent('load'), home.locator('#acts p', { hasText: 'as you. Since' }).locator('button', { hasText: 'Stop' }).click({ timeout: 10_000 })]);
     await loaded();
+    await unfold(home);
     seen.after = await section(home);
     const page = await context.newPage();
     await page.goto(args.page);
@@ -77,7 +86,8 @@ if (args.home) {
       await page.locator('#lent button', { hasText: args.open }).click({ timeout: 90_000 });
       seen.yes = await told(page);
       await page.goto(origin);
-      await page.locator('#acts p', { hasText: 'as you. Since' }).waitFor({ timeout: 90_000 });
+      await page.locator('#acts p', { hasText: 'as you. Since' }).waitFor({ state: 'attached', timeout: 90_000 });
+      seen.folded = await unfold(page);
       seen.before = await section(page);
       const line = page.locator('#acts p', { hasText: 'as you. Since' });
       await line.locator('button', { hasText: 'Stop' }).click({ timeout: 10_000 });

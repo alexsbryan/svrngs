@@ -404,9 +404,11 @@ async fn an_entry_another_s_computer_wrote_says_whose(engine: Engine) {
 
 in_chromium!(
     /// **Bring things to the table, on the home page** (v1ui-shelf (c);
-    /// V1_UI_BUILD §3.4): ada's home page offers Money and Events, both
-    /// ticked; one tap brings them, the page says so, and her computer
-    /// lists each as house's. House keeps no seed here, so the page calls
+    /// V1_UI_BUILD §3.4): ada's home page offers Money and Events, each
+    /// unticked, so the button alone brings nothing and says to tick
+    /// something first (the operator, 2026-10-26; demo/xenia/findings/
+    /// after-join-reads-as-permissions.md); she ticks them, one tap brings
+    /// them, the page says so, and her computer lists each as house's. House keeps no seed here, so the page calls
     /// it "your group". Red before (c): no shelf on the page. Then the
     /// index, the page opened again, draws each by its kind's own name and
     /// as the group's, no word holding its lend name, `<kind>-<the group's
@@ -424,7 +426,14 @@ async fn the_home_page_brings_things_to_the_table(engine: Engine) {
     let folder = dir.path().join("house");
     std::fs::create_dir(&folder).unwrap();
     keep_folder(&ada, &folder).await;
-    let bring = json!([["text=Bring the ticked ones to your group", null, true]]);
+    let tick = |app: &str| json!([format!("#home label:has-text('{app}') input"), true]);
+    let bring = json!([
+        ["text=Bring the ticked ones to your group", null, true],
+        tick("Money"),
+        tick("Events"),
+        tick("House rules"),
+        ["text=Bring the ticked ones to your group", null, true]
+    ]);
     let args = json!({ "all": "#home section h3 ~ p", "do": bring });
     let seen = home_page(engine, &ada, args).await;
     eprintln!("the home page's run: {seen:#}");
@@ -441,7 +450,12 @@ async fn the_home_page_brings_things_to_the_table(engine: Engine) {
         before.contains("House rules: the rules your house agrees"),
         "{seen:#}"
     );
-    let after = seen["after"][0].to_string();
+    let none = seen["after"][0].to_string();
+    assert!(
+        none.contains("Tick something to bring first."),
+        "unticked, the button brings nothing: {seen:#}"
+    );
+    let after = seen["after"][1].to_string();
     assert!(
         after.contains(
             "You brought Money to your group: everyone in it can open it in a few seconds."
@@ -472,7 +486,14 @@ async fn the_home_page_brings_things_to_the_table(engine: Engine) {
         said.contains("How does your house decide its rules?"),
         "House rules runs at its origin under the carried policy: {opened:#}"
     );
-    let index = home_page(engine, &ada, json!({ "all": "#home table.index tr" })).await;
+    // The group's things lead its section, right under its heading (the
+    // operator, 2026-10-26: Money found first).
+    let index = home_page(
+        engine,
+        &ada,
+        json!({ "all": "#home section h2 + table.index tr" }),
+    )
+    .await;
     let rows = index["all"].to_string();
     for app in ["Money", "Events", "House rules"] {
         let drawn = format!("{app}your groupIn a tab");
@@ -492,8 +513,9 @@ async fn the_home_page_brings_things_to_the_table(engine: Engine) {
 
 in_webkit!(
     /// **Bring things to the table, on a phone** (v1ui-shelf (c)): bo's
-    /// phone, in house through ada's computer, brings the shelf's two apps
-    /// by the one button; the page says so, and ada's computer lists each
+    /// phone, in house through ada's computer, finds the shelf's boxes
+    /// unticked (the operator, 2026-10-26), ticks them, and brings the
+    /// shelf's two apps by the one button; the page says so, and ada's computer lists each
     /// as house's. Red before (c): the page has no shelf.
     the_phone_brings_things_to_the_table
 );
@@ -513,6 +535,10 @@ async fn the_phone_brings_things_to_the_table(engine: Engine) {
     });
     let seen = drive(engine, "shelf.mjs", args, None).await;
     eprintln!("the phone's run: {seen:#}");
+    assert_eq!(
+        seen["ticked"], 0,
+        "the shelf's boxes start unticked: {seen:#}"
+    );
     let after = seen["after"].as_str().unwrap_or_default();
     assert!(
         after.contains("You brought Money to house: everyone in it can open it in a few seconds.")
