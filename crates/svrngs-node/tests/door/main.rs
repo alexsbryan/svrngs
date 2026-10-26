@@ -818,8 +818,10 @@ async fn a_member_s_computer_lists_what_is_lent_with_where_to_reach_it() {
         .resolve(&host, pair.b.api_addr())
         .build()
         .unwrap();
+    // As a program on B asks it, with B's token (give-session).
     let reply = http
         .get(format!("{}whoami", shelf.address))
+        .bearer_auth(pair.b.token().trim())
         .send()
         .await
         .unwrap();
