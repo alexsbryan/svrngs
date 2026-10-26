@@ -75,6 +75,32 @@ export function serve(dir, { worker, port = 0 } = {}) {
 // its screen, touch and Safari's user agent — the engine iOS Safari is.
 const ENGINES = { chromium: null, webkit: 'iPhone 15' };
 
+// The hosts svrngs opened for this half (drive.rs `opens`): each
+// computer's home page and each lend its args name, opened in `context` by
+// a code from `/v1/open`, asked with the token as `svrngs open` asks it, and
+// redeemed by the context's own requests, whose cookies its pages share, so
+// the context holds each host's session as a person's browser does
+// (give-session). A code is single-use, so each context mints its own; one
+// refused is said, and the host left unopened.
+async function opened(context) {
+  for (const { port, token, names } of JSON.parse(process.env.SVRNGS_OPENS ?? '[]')) {
+    for (const name of names) {
+      const body = JSON.stringify(name === 'svrngs' ? {} : { lend: name });
+      const headers = { authorization: `Bearer ${token}`, 'content-type': 'application/json' };
+      const asked = await fetch(`http://127.0.0.1:${port}/v1/open`, { method: 'POST', headers, body }).catch((e) => e);
+      if (!asked.ok) {
+        console.error(`svrngs at ${port} did not open ${name}: ${asked.status ?? asked}`);
+        continue;
+      }
+      // Redeemed and not followed, so no lend's service is asked by it.
+      const at = (await asked.json()).open;
+      const redeemed = await context.request.get(at, { maxRedirects: 0 });
+      if (!redeemed.headers()['set-cookie']) console.error(`svrngs at ${port} set no session at ${at}: ${redeemed.status()}`);
+    }
+  }
+  return context;
+}
+
 // A browser of `engine` and a context in it, as a phone or a desktop
 // opens the page, and how to close it. With `profile`, a directory, the
 // context keeps what the page stores there, so a browser closed and
@@ -83,7 +109,9 @@ const ENGINES = { chromium: null, webkit: 'iPhone 15' };
 // Playwright's by name, the engine is that device in place of its own
 // (Demo B's Android phones: Chromium as a Pixel 7). With `args`, the
 // browser's own flags (arch-peer (a): Chromium told a page is public).
-export async function launch(engine, { profile, device: as, args } = {}) {
+// `unopened`: a context svrngs opened no host in, as a browser no open
+// reached (give-session).
+export async function launch(engine, { profile, device: as, args, unopened } = {}) {
   if (!(engine in ENGINES)) {
     console.error(`no engine ${JSON.stringify(engine)}: one of ${Object.keys(ENGINES).join(', ')}`);
     process.exit(1);
@@ -97,22 +125,26 @@ export async function launch(engine, { profile, device: as, args } = {}) {
   }
   const named = as ?? ENGINES[engine];
   const device = named ? pw.devices[named] : {};
+  let made;
   try {
     if (profile) {
       const context = await pw[engine].launchPersistentContext(profile, device);
-      return { context, close: () => context.close() };
+      made = { context, close: () => context.close() };
+    } else {
+      // The run's browser of `engine`, where its harness started one
+      // (browsers.mjs), and a context of its own in it: a browser a test
+      // crashed macOS's pasteboard daemon (harness.rs `browsers`). Closing
+      // it then closes this context and lets the shared browser be.
+      const shared = !args && JSON.parse(process.env.SVRNGS_BROWSERS ?? '{}')[engine];
+      const browser = await (shared ? pw[engine].connect(shared) : pw[engine].launch({ args }));
+      made = { context: await browser.newContext(device), close: () => browser.close() };
     }
-    // The run's browser of `engine`, where its harness started one
-    // (browsers.mjs), and a context of its own in it: a browser a test
-    // crashed macOS's pasteboard daemon (harness.rs `browsers`). Closing
-    // it then closes this context and lets the shared browser be.
-    const shared = !args && JSON.parse(process.env.SVRNGS_BROWSERS ?? '{}')[engine];
-    const browser = await (shared ? pw[engine].connect(shared) : pw[engine].launch({ args }));
-    return { context: await browser.newContext(device), close: () => browser.close() };
   } catch (e) {
     console.error(`Playwright's ${engine} cannot start — run: ${INSTALL}\n${e}`);
     process.exit(3);
   }
+  if (!unopened) await opened(made.context);
+  return made;
 }
 
 // Every address off this computer refused, as with n0 unreachable

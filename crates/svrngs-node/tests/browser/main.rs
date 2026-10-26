@@ -130,6 +130,7 @@ async fn seeded(dir: &Path, relay: String, me: u8, founder: &str, founder_key: u
     )
     .await
     .expect("a node starts");
+    drive::opens_at(node.api_addr().port(), &node.token());
     let seed = Roster::new(
         [(
             Person::parse(founder).unwrap(),
@@ -1443,6 +1444,7 @@ async fn a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone(engine: Engi
             "host",
             format!("{label}.localhost:{}", ada.api_addr().port()),
         )
+        .bearer_auth(ada.token().trim())
         .send()
         .await
         .unwrap();
@@ -2615,7 +2617,7 @@ async fn the_group_s_page_says_a_refusal_apart_from_no_answer(engine: Engine) {
 
 /// A computer in no group: a node with no seed and nothing in its record.
 async fn alone(dir: &Path, relay: &Server) -> Node {
-    Node::start(
+    let node = Node::start(
         dir.to_path_buf(),
         signing(3),
         &RelayConfig {
@@ -2627,7 +2629,9 @@ async fn alone(dir: &Path, relay: &Server) -> Node {
         "127.0.0.1:0".parse().unwrap(),
     )
     .await
-    .expect("a node starts")
+    .expect("a node starts");
+    drive::opens_at(node.api_addr().port(), &node.token());
+    node
 }
 
 in_chromium!(
@@ -2937,7 +2941,8 @@ async fn the_home_page_shows_a_group_before_its_slowest_computer(engine: Engine)
 in_chromium!(
     /// **A link pasted on the home page opens only within its lend**
     /// (#153). Under "Open a link from your group", a link to a lend at a
-    /// path opens a tab at that path on the lend's origin; one whose path
+    /// path opens a tab at that path on the lend's origin, through the
+    /// home page's `/to` (give-session); one whose path
     /// is `/\evil.example/x` — a path to `startsWith('/')`, another host
     /// to the URL parser — opens nothing and is said not to be a link to
     /// something lent. Red at d62c393e: it opened `http://evil.example/x`.
@@ -2947,12 +2952,13 @@ async fn the_home_page_opens_a_link_only_within_its_lend(engine: Engine) {
     let relay = relay().await;
     let dir = tempfile::tempdir().unwrap();
     let ada = node(dir.path(), &relay, &signing(7)).await;
-    let port = ada.api_addr().port();
     let links = ["/at/a/path", "/\\evil.example/x"]
         .map(|at| format!("http://page.example/#open=abc123&at={at}"));
     let seen = home_page(engine, &ada, json!({ "opens": links })).await;
     let opens = &seen["opens"];
-    let lent = format!("http://abc123.localhost:{port}/at/a/path");
+    // Through the home page's `/to`, which opens that path on the lend's
+    // origin with a code for it alone (give-session; tests/session.rs).
+    let lent = "/to?lend=abc123&at=%2Fat%2Fa%2Fpath";
     assert_eq!(opens[0][0], json!([lent]), "{seen:#}");
     assert_eq!(opens[1][0], json!([]), "{seen:#}");
     let said = opens[1][1].as_str().unwrap_or_default();
@@ -3177,6 +3183,7 @@ async fn the_home_page_tells_two_groups_of_one_name_apart(engine: Engine) {
     )
     .await
     .expect("a node starts");
+    drive::opens_at(ada.api_addr().port(), &ada.token());
     let trip = || Name::parse("Trip").unwrap();
     for (founder, key) in [("ada", 1), ("sam", 5)] {
         let seed = draw(

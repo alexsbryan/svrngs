@@ -7,6 +7,48 @@ use tokio::io::AsyncWriteExt;
 
 use crate::harness::{browsers, repo, Engine};
 
+/// Each computer a browser half may be opened at: its record API's port
+/// and its token, the latest for a port first (give-session).
+static COMPUTERS: std::sync::Mutex<Vec<(u16, String)>> = std::sync::Mutex::new(Vec::new());
+
+/// The computer whose record API is at `port`, holding `token`: a browser
+/// half whose args name it is opened there, as the person's browser is once
+/// svrngs opened it ([`drive`]).
+pub fn opens_at(port: u16, token: &str) {
+    COMPUTERS
+        .lock()
+        .unwrap()
+        .insert(0, (port, token.trim().into()));
+}
+
+/// What svrngs opens for a half run on `args`: each computer [`opens_at`]
+/// named whose port they name, with its home page and each lend's host they
+/// name there, as `[{port, token, names}]` (web/tests/page.mjs `launch`).
+pub fn opens(args: &Value) -> Value {
+    let said = args.to_string();
+    let mut seen = std::collections::BTreeSet::new();
+    let computers = COMPUTERS.lock().unwrap().clone();
+    let named = computers.into_iter().filter_map(|(port, token)| {
+        let at = format!(":{port}");
+        let ends = |i: usize| !said[i + at.len()..].starts_with(|c: char| c.is_ascii_digit());
+        let mut names = vec!["svrngs".to_string()];
+        let hosts = said.match_indices(&at).filter(|(i, _)| ends(*i));
+        let hosts: Vec<usize> = hosts.map(|(i, _)| i).collect();
+        for i in &hosts {
+            let Some(host) = said[..*i].strip_suffix(".localhost") else {
+                continue;
+            };
+            let from = host
+                .rfind(|c: char| !c.is_ascii_alphanumeric())
+                .map_or(0, |b| b + 1);
+            (!names.iter().any(|n| n == &host[from..])).then(|| names.push(host[from..].into()));
+        }
+        (!hosts.is_empty() && seen.insert(port))
+            .then(|| json!({ "port": port, "token": token, "names": names }))
+    });
+    Value::Array(named.collect())
+}
+
 /// Run the browser half `web/tests/<script>` in `engine` on `args`, and
 /// read the JSON line it printed. When `release` fires, the browser half is told `go`
 /// (its upload's tail, u4-4).
@@ -21,6 +63,7 @@ pub async fn drive(
         .arg(repo().join("web/tests").join(script))
         .arg(args.to_string())
         .env("SVRNGS_BROWSERS", browsers())
+        .env("SVRNGS_OPENS", opens(&args).to_string())
         .stdin(std::process::Stdio::piped())
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())

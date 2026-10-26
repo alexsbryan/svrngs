@@ -52,10 +52,13 @@ async fn sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest(engine:
     let jellyfin = one_origin(page_origin(html).await, film_origin).await;
     lend(dir.path(), "jellyfin", jellyfin.port());
 
+    // Kim's browser, opened at Kim's home page as svrngs opens it.
+    let kims_home = crate::drive::opens(&json!(kim.api_addr().to_string()));
     let mut half = tokio::process::Command::new("node")
         .arg(repo().join("web/tests/visit.mjs"))
         .arg(json!({ "engine": engine.as_str(), "site": site() }).to_string())
         .env("SVRNGS_BROWSERS", crate::harness::browsers())
+        .env("SVRNGS_OPENS", kims_home.to_string())
         .stdin(std::process::Stdio::piped())
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())

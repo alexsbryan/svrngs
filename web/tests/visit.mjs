@@ -78,11 +78,11 @@ try {
   const sent = { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ group, device: false, visit: 72 * 3600 }) };
   const long = await page.evaluate((sent) => fetch('/link', sent).then((r) => r.json()), sent);
 
-  ana = await launch(args.engine);
+  ana = await launch(args.engine, { unopened: true });
   watch('ana', ana.context);
   const anaLong = (await opens(ana.context, long.https, 'Ana')).status;
 
-  sam = await launch(args.engine);
+  sam = await launch(args.engine, { unopened: true });
   watch('sam', sam.context);
   const phone = await sam.context.newPage();
   await phone.goto(origin);
