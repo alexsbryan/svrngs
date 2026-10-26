@@ -70,7 +70,7 @@ There are fourteen rows:
 
     `api.rs:12`'s "Loopback IS the auth" and the `NotLoopback` text are said anew. The trust floor gains the gate "a caller without the token is refused".
   - **Check:** (a) red first, green after; every `apps/` test and check green; the scenes green.
-- [ ] give-session — depends [give-token] — ONE ROW, red first, and `scripts/check.sh` once, at the close (GIVE.md §5):
+- [x] give-session 9a2e0b239 — depends [give-token] — ONE ROW, red first, and `scripts/check.sh` once, at the close (GIVE.md §5):
   - **(a) Tests: A BROWSER COMES THROUGH AN OPEN.** Browser tests in Chromium and WebKit, failing at HEAD:
     - The home page and a lend's origin, asked with no session, answer only "Open svrngs from your computer", naming the opener below. No terminal is needed (WHAT_CAN_ACT_AS_YOU §9: "nothing needs a terminal").
     - A new verb, `svrngs open`, opens the home page with a single-use, expiring code that becomes the session cookie. So does `install.sh`'s open.
