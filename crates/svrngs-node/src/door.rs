@@ -578,9 +578,13 @@ pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
             upload: lend.upload,
             reads: lend.reads,
             asks: lend.asks,
-            group: match lend.source {
-                Source::Carried(group) => Some(group),
+            group: match &lend.source {
+                Source::Carried(group) => Some(group.clone()),
                 Source::Port(_) | Source::Raw(..) => None,
+            },
+            raw: match lend.source {
+                Source::Raw(raw, _) => Some(raw),
+                _ => None,
             },
         });
     }

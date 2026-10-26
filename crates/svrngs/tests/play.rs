@@ -87,6 +87,7 @@ async fn house(sam: &Path, alex: &Path) -> (Node, Node, Seed) {
     let (seed, printed) = made.await.expect("Sam makes house");
     let alex = start(2, alex).await;
     knows(&alex, &sam);
+    knows(&sam, &alex);
     let link = Link::parse(&printed.client).unwrap();
     let joined = cli::join_group(&alex, &signing(2), &link, &name("Alex")).await;
     joined.expect("Alex is let in");
@@ -261,7 +262,19 @@ async fn play_stays_on_at_the_same_port_across_a_restart() {
         within(|| nothing_at(to)).await,
         "nothing listens while svrngs is off"
     );
-    let alex = start(2, alex_dir.path()).await;
+    // Started again from a copy of its data dir, key, record and Plays
+    // alike: a node dropped in this process leaves a blocking task its
+    // runtime waits on, so a start on the same dir hangs here (sampled:
+    // `BlockingPool::shutdown` under `block_in_place`); the command's own
+    // restarts are processes (crates/svrngs/tests/share.rs).
+    let again = tempfile::tempdir().unwrap();
+    let copied = std::process::Command::new("cp")
+        .arg("-R")
+        .arg(alex_dir.path().join("."))
+        .arg(again.path())
+        .status();
+    assert!(copied.unwrap().success());
+    let alex = start(2, again.path()).await;
     knows(&alex, &sam);
     let again = within(|| async { udp_asks(to, b"after").await.as_deref() == Some(&b"after"[..]) });
     assert!(

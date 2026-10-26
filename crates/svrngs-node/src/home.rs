@@ -39,7 +39,9 @@
 //! decided as `svrngs share` decides a lend ([`crate::share`]) from what
 //! `GET /running` offers, every port that answers here and is not lent;
 //! and **a lend opened to this WiFi, or closed** (`POST /v1/room`, the room's
-//! one route, [`crate::room`], which `svrngs room` asks too); and **an app
+//! one route, [`crate::room`], which `svrngs room` asks too); **a port
+//! lent opened on this computer while Play is on, or closed** (`POST
+//! /v1/play`, [`crate::play`]); and **an app
 //! opened by its button, which is the person's yes to it reaching their
 //! friends' lends as them** (`POST /reaching`, a form; capability-open),
 //! **or that yes stopped**, each listed under "What acts as you" (`GET
@@ -153,6 +155,7 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
         .merge(crate::surface::router(at.clone()))
         .merge(crate::removal::router(at.clone()))
         .merge(crate::room::route::router(at.clone()))
+        .merge(crate::play::router(at.clone()))
         .layer(axum::middleware::from_fn_with_state(
             at.clone(),
             only_itself,

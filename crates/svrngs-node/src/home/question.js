@@ -207,7 +207,7 @@ export function changes(g, lends, yes, rows, me) {
 // §9): one section on both pages, a part for each thing an app or a
 // device can do as you, in this order, each headed only once `add(part,
 // ...lines)` gives it a line, then `notes[part]`, a page's own words.
-const PARTS = { reads: 'Reads and writes for you', opens: 'Opens friends’ things as you', knows: 'Knows who you are', wifi: 'Open to this WiFi', decides: 'Can decide for you' };
+const PARTS = { reads: 'Reads and writes for you', opens: 'Opens friends’ things as you', knows: 'Knows who you are', wifi: 'Open to this WiFi', play: 'Open to programs on this computer', decides: 'Can decide for you' };
 export function acts(notes) {
   const parts = Object.fromEntries(Object.keys(PARTS).map((k) => [k, el('div')]));
   const add = (k, ...lines) => (parts[k].children.length || parts[k].append(el('h3', PARTS[k]), ...(notes[k] ? [el('p', notes[k])] : [])), parts[k].append(...lines));

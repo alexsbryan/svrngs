@@ -85,6 +85,9 @@ pub mod network;
 // The room, u6-1's (docs/DESIGN.md §3, "The room"): the lends a person
 // turns on, served by the running node on the network each was turned on at.
 pub mod room;
+// Play, give-play's (svrn-docs rings/current/GIVE.md §6): a port a member
+// lends, opened on this computer's 127.0.0.1 while its person has Play on.
+pub mod play;
 // What a lend is decided from: the probe, the well-known table (v1ui-lend (a)).
 pub mod share;
 

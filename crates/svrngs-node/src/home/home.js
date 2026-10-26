@@ -13,8 +13,9 @@
 // (/visits, guests-pages),
 // a folder opened (/folder), a group made (/group, start-group), one
 // joined from a link (/join, arch-command (c)), the shelf's apps brought
-// (/shelf), a yes to a carried app's new version (/runs, canon-pin (c)) and
-// a lend opened to this WiFi or closed (/v1/room, room.rs). Its words are
+// (/shelf), a yes to a carried app's new version (/runs, canon-pin (c)),
+// a lend opened to this WiFi or closed (/v1/room, room.rs) and a port
+// lent opened on this computer with Play or closed (/v1/play, play.rs). Its words are
 // DESIGN §1's: groups, people, what they lend, computer; its question and
 // what apps use and its removals are question.js's, the group's page's too.
 import { acts, agreed, apart, called, carrying, changes, deciders, door, el, named, namesakes, once, opens, owner, question, reading, removal, row, table, unlent, until, uses as used, visiting, whose } from './question.js';
@@ -77,6 +78,20 @@ function wifi(l, room, was, p = el('span')) {
   return p;
 }
 
+// A port lent, UDP or TCP, opened on this computer while Play is on
+// (give-play; play.rs): said as /v1/play says it (`Open::said`), its
+// address copied once pressed, with Stop; drawn again in place from the
+// answer, or its refusal said. `plays` is the error when what has Play on
+// cannot be read, said once under "What acts as you"; Play writes it over.
+function play(l, plays, copied = '', p = el('span')) {
+  const of = (all) => all.find?.((r) => r.key === l.key && r.name === l.name);
+  const on = of(plays);
+  const copy = (r) => (r?.open.is === 'at' ? navigator.clipboard.writeText(`127.0.0.1:${r.port}`).then(() => ' Copied.', () => ' Copy it from here.') : '');
+  const turn = () => post('/v1/play', { [on ? 'off' : 'on']: { key: l.key, name: l.name } }).then(async (now) => p.replaceWith(play(l, now, on ? '' : await copy(of(now)))), (e) => p.append(` ${e.message}`));
+  p.replaceChildren(`${on ? `${on.said}${copied}` : 'Play opens it on this computer, for a program here to connect to.'} `, button(on ? 'Stop' : 'Play', turn));
+  return p;
+}
+
 // Each group's section, headed by its name and, so two of one name are
 // told apart, who made it and since when (#138); in its colour, derived
 // from its id (look.css `data-colour`; the operator, "Derived from the
@@ -93,7 +108,7 @@ function section(g) {
 // (start-home). Under "What acts as you", by `add`: who decides for you
 // in it, of its people by this computer's key, `me`; the apps it carries,
 // and their changes. Answers what they lend.
-async function show(g, s, room, add, me) {
+async function show(g, s, room, add, me, plays) {
   if (g.removed === null) return s.append(el('p', `This computer could not read who is in ${g.name ?? 'this group'}.`));
   if (g.removed) return s.append(el('p', `You are no longer in ${g.name ?? 'this group'}. What you already have stays on this computer; nothing new reaches it.`));
   const ns = encodeURIComponent(g.id);
@@ -163,9 +178,9 @@ async function show(g, s, room, add, me) {
     // so, then said (start-home): the clipboard may refuse a page.
     for (const l of once(lends.lent)) {
       const [opened, now] = opens(l, 'In a tab');
-      const how = el('td', `${opened}. `, button('Copy its address for a program', () => Promise.resolve().then(() => navigator.clipboard.writeText(l.origin)).then(() => how.append(` Copied: ${l.origin}`), () => how.append(` Copy it from here: ${l.origin}`))));
-      how.append(wifi(l, room));
-      body.append(el('tr', '', el('td', '', opener(l, agreed(l, lends.shelf, g))), el('td', l.group ? named(l) : l.kind), el('td', owner(l, g)), how, el('td', now)));
+      // A port is no page: Play, not a tab, and no WiFi (give-play).
+      const how = l.raw ? el('td', '', l.key === me ? 'A port this computer lends.' : play(l, plays)) : el('td', `${opened}. `, button('Copy its address for a program', () => Promise.resolve().then(() => navigator.clipboard.writeText(l.origin)).then(() => how.append(` Copied: ${l.origin}`), () => how.append(` Copy it from here: ${l.origin}`))), wifi(l, room));
+      body.append(el('tr', '', el('td', '', l.raw ? named(l) : opener(l, agreed(l, lends.shelf, g))), el('td', l.group ? named(l) : l.kind), el('td', owner(l, g)), how, el('td', now)));
     }
     // Each computer that did not say, by how (bash-first-minute (c)), a row
     // of its own: what it lends never stale, and never nobody's. One that
@@ -344,12 +359,15 @@ function ask(lent, q) {
     // What acts as you (question.js `acts`): among it what is open to this
     // WiFi (room.rs), each said in its lend's row and all of it here, a
     // lend whose lender is away too.
-    const room = await get('/v1/room').catch((e) => e);
-    const [acting, add] = acts({ opens: 'Each Stop holds from the app’s next request.' });
-    const lent = Promise.all(groups.filter((g) => !g.left).map((g) => show(g, section(g), room, add, me)));
+    const [room, plays] = await Promise.all(['/v1/room', '/v1/play'].map((r) => get(r).catch((e) => e)));
+    const [acting, add] = acts({ opens: 'Each Stop holds from the app’s next request.', play: 'Any program on this computer reaches these as you while Play is on.' });
+    const lent = Promise.all(groups.filter((g) => !g.left).map((g) => show(g, section(g), room, add, me, plays)));
     main.append(acting);
     add('knows', el('p', 'What you open knows your name.'));
     if (room.length || room.message) add('wifi', el('p', room.message ?? 'Anyone on this WiFi can open these as you while svrngs runs: your TV, a phone, another computer. Each stays on the WiFi where you turned it on.'), Object.assign(el('ul', '', ...(room.map?.((r) => el('li', `${r.person ? `${r.person}’s ` : ''}${r.name}:`, wifi(r, room))) ?? [])), { id: 'room' }));
+    // Each Play on (give-play), its Stop the row's own act.
+    const stop = (r, p = el('p', `Open on this computer: ${r.name}${r.person ? ` (${r.person}’s)` : ''}, while Play is on. `)) => (p.append(button('Stop', () => post('/v1/play', { off: { key: r.key, name: r.name } }).then(() => location.reload(), (e) => p.append(` ${e.message}`)))), p);
+    if (plays.length || plays.message) add('play', ...(plays.message ? [el('p', plays.message)] : plays.map((r) => stop(r))));
     // The groups you left (groups-leave), with what stays of each here.
     const gone = groups.filter((g) => g.left).map((g) => el('p', `${g.name ?? 'A group'}${g.made ? ` (${whose(g.made)})` : ''}: what you have of it stays on this computer${g.folders?.length ? `, its folder at ${g.folders.join(' and ')}` : ''}, and nothing new of it reaches you.`));
     if (gone.length) main.append(Object.assign(el('section', '', el('h2', 'Groups you left'), ...gone), { id: 'left' }));

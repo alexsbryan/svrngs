@@ -29,7 +29,7 @@ use crate::node::Asking;
 /// addresses (`Endpoint::watch_addr`) never sees. A read is the interface
 /// and routing tables (5-9 ms here, netdev's) and configd's state (5 ms a
 /// `scutil`), and sends nothing; nothing is read while nothing is on.
-pub(super) const LOOK_EVERY: Duration = Duration::from_secs(5);
+pub(crate) const LOOK_EVERY: Duration = Duration::from_secs(5);
 
 /// A turn, and where its owner answers the room as it stands after it, or
 /// why what is on cannot be read.

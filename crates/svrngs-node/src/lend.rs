@@ -377,6 +377,11 @@ pub struct Offered {
     /// computer answers. Absent for a port's.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub group: Option<String>,
+    /// How its bytes travel when it is a port's own, not a page's
+    /// (give-play): what the home page offers Play for. Absent for a page,
+    /// and from a computer whose svrngs lends no port.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub raw: Option<Raw>,
 }
 
 impl Offered {

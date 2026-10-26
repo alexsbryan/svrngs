@@ -85,19 +85,13 @@ async fn a_member_presses_play_and_its_stop_is_listed_under_what_acts_as_you(eng
     assert_eq!(udp_asks(at, b"hello").await.as_deref(), Some(&b"hello"[..]));
 
     let stop = json!(["#acts button:has-text('Stop')"]);
-    let seen = home_page(
-        engine,
-        &ada,
-        json!({ "all": row, "do": [stop], "text": true }),
-    )
-    .await;
+    let all = format!("{row}, #acts p");
+    let seen = home_page(engine, &ada, json!({ "all": all, "do": [stop] })).await;
     eprintln!("the home page's second run: {seen:#}");
-    assert!(seen["all"].to_string().contains(&on), "{seen:#}");
-    let text = seen["text"].as_str().unwrap_or_default();
-    assert!(
-        text.contains("Open on this computer: played (cy’s), while Play is on."),
-        "{text}"
-    );
+    let before = seen["all"].to_string();
+    assert!(before.contains(&on), "{seen:#}");
+    let line = "Open on this computer: played (cy’s), while Play is on. Stop";
+    assert!(before.contains(line), "{seen:#}");
     let after = seen["after"][0].to_string();
     assert!(!after.contains(&on) && after.contains("Play"), "{seen:#}");
     let free = tokio::time::timeout(Duration::from_secs(10), async {

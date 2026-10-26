@@ -174,6 +174,19 @@ door's words.
   no other, nor the record's sync. A side's close is its stream's finish,
   so a half-close crosses (`crates/svrngs-node/src/door/tcp.rs`). A TCP
   port is lent only when something answers on it, as a page's is.
+- **Play.** On a member's home page a port's row offers Play, not a tab.
+  Pressed, the member's computer listens on `127.0.0.1` at the lend's own
+  port (`room::port_of`, by its label, the same each time), UDP or TCP as
+  the lender's computer says the lend travels, and the row says "Connect
+  to 127.0.0.1:<port>." with the address copied. Which lends have Play on
+  is kept in `play.json`, so they open again as svrngs starts. Each is
+  open only while the member and its lender stand in a group held there
+  together, read every 5 s, and nothing listens while it is off
+  (`crates/svrngs-node/src/play.rs`, its owner on the room's model). A raw
+  port carries no token, so any program on that computer reaches the lend
+  as its person while Play is on: each Play on is a line under "What acts
+  as you", "Open on this computer: <name> (<lender>’s), while Play is
+  on.", whose Stop is the row's own.
 
 **The person's own programs are the trust boundary.** A program on this
 computer asks the record API showing the token in the data dir's `token`
@@ -767,7 +780,8 @@ Seven calls:
    (`question.js`, `agreed`). Each yes is listed under "What acts as you",
    on both pages, with since when and a Stop (`question.js`, `acts`, which
    groups what acts as the person by what it can do: reads and writes,
-   opens friends' things, knows who you are, open to this WiFi, can decide
+   opens friends' things, knows who you are, open to this WiFi, open to
+   programs on this computer (Play, "A port, not a page"), can decide
    for you, the last only the person's own devices, by key). On a computer
    the Stop is kept as the yes is, and holds from the app's next request; on
    a phone it is kept with the group, and the next pass the page signs for

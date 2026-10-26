@@ -217,6 +217,8 @@ pub struct Node {
     _round: RingSyncHandle,
     /// The room's one owner ([`crate::room::owner::spawn`]), stopped with the node.
     _room: n0_future::task::AbortOnDropHandle<()>,
+    /// Play's one owner ([`crate::play::spawn`]), stopped with the node.
+    _play: n0_future::task::AbortOnDropHandle<()>,
 }
 
 /// What the round reads: the journals, the endpoint's transport, and the key
@@ -335,6 +337,7 @@ impl Node {
             oidc: oidc.clone(),
         };
         let (room, owner) = crate::room::owner::Room::new();
+        let (plays, player) = crate::play::Plays::new();
         let asking = Asking {
             host: host.clone(),
             door,
@@ -342,9 +345,11 @@ impl Node {
             seeds,
             oidc,
             room,
+            plays,
             sessions: crate::session::Sessions::new(token.clone(), host.api_port),
         };
         let room = crate::room::owner::spawn(asking.clone(), owner);
+        let play = crate::play::spawn(asking.clone(), player);
         // The record, and beside it what an app asks of this computer (u5-1).
         let rail_api = RailApi {
             rail: rail.clone(),
@@ -358,6 +363,7 @@ impl Node {
                 .merge(crate::folder::router(folders.clone()))
                 .merge(crate::removal::router(asking.clone()))
                 .merge(crate::room::route::router(asking.clone()))
+                .merge(crate::play::router(asking.clone()))
                 .merge(crate::session::router(asking.sessions.clone())),
             asking.oidc.clone().router(),
             crate::home::router(asking.clone(), rail_api),
@@ -427,6 +433,7 @@ impl Node {
             _acceptor: acceptor,
             _round: round,
             _room: room,
+            _play: play,
         })
     }
 
@@ -873,6 +880,8 @@ pub(crate) struct Asking {
     pub(crate) oidc: crate::oidc::Provider,
     /// The room's handle: its turns, and what it serves now ([`crate::room`]).
     pub(crate) room: crate::room::owner::Room,
+    /// Play's handle: its turns, and what it opens now ([`crate::play`]).
+    pub(crate) plays: crate::play::Plays,
     /// Who opened the home page and each lend's origin ([`crate::session`]).
     pub(crate) sessions: crate::session::Sessions,
 }
