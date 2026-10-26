@@ -154,6 +154,12 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   director's decision (`demo/runs/give/2026-10-26-session/DECISION.md`); a
   container on a Mac is refused (`demo/runs/give/2026-10-26-container/`);
   +216 library after its own cut of 15, 0 core, the cap 18,492.
+  Landed, give-udp: `svrngs share <port> --udp` lends a UDP port, its
+  packets carried as QUIC datagrams on `Alpn::Port` and reassembled whole
+  past `max_datagram_size`, a stranger and a person past the limit refused
+  (`crates/svrngs/tests/udp.rs`, `crates/svrngs-node/src/door/udp/tests.rs`);
+  +249 library, +2 core, 0 `apps/`, +1 surface (a lend may be UDP), the
+  caps 18,742 and 3,242.
   Not carried: the jellyfin, movie-night and taste `check.sh` runs,
   outside the gate, which open a lend's origin bare. The operator, "Let's do
   half the rows": the loop stops after the svrngs half, give-play-scene,
