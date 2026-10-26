@@ -445,8 +445,13 @@ The home page (`home.rs`, sup-2), `http://svrngs.localhost:<api port>/`, is
 routed by its `Host` (`api::to_a_lend`) beside the lends' origins and
 served only at its exact host and port: a read only from its own origin, a
 typed address or a navigation, a write only from its own origin with its
-exact `Origin` (`only_itself`), every answer `default-src 'self';
-frame-ancestors 'none'`. It serves `home/index.html`, `home/home.js` and
+exact `Origin` (`only_itself`), and only to a browser showing its session
+or a program showing the token, every answer `default-src 'self';
+frame-ancestors 'none'`. `session.rs` holds this computer's opens and
+sessions for the home page and every lend's origin alike: `POST /v1/open`
+behind the token (`svrngs open`), the home page's `/to`, `/svrngs-open`
+where a code becomes its host's cookie, and the capability a read's
+address carries (`/svrngs-as/<cap>/`, taken off in `origin.rs` `lent`). It serves `home/index.html`, `home/home.js` and
 `home/look.css`, the record API's `/v1/groups`, `/v1/lends` and
 `/v1/rail/people` from the same routers, and `/choices`, kept by this
 computer's door for its own lends and dialled to the lender's otherwise

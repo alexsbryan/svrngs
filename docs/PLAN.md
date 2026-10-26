@@ -146,8 +146,15 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   refuses one without it, 401 `no_token` naming the file; the command,
   install.sh and every app that asks the record show it; +48 library, 0
   core, the cap 18,276 (662803be; `crates/svrngs-node/tests/record_api.rs`,
-  `a_program_without_the_token_is_refused_on_every_record_route`). The
-  operator, "Let's do
+  `a_program_without_the_token_is_refused_on_every_record_route`).
+  Landed, give-session: the home page and each lend's origin answer a
+  browser only with a session an open made (`svrngs open`, install.sh's
+  opener, the home page's `/to`) and a program only with the token; a
+  lend's page reads another at a capability in its read address, the
+  director's decision (`demo/runs/give/2026-10-26-session/DECISION.md`); a
+  container on a Mac is refused (`demo/runs/give/2026-10-26-container/`).
+  Not carried: the jellyfin, movie-night and taste `check.sh` runs,
+  outside the gate, which open a lend's origin bare. The operator, "Let's do
   half the rows": the loop stops after the svrngs half, give-play-scene,
   before Give's own;
 - sealing, at its §2 trigger.

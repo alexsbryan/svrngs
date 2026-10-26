@@ -169,6 +169,21 @@ secret. Any process on the lender's computer can still reach a lent port
 and type an identity header, as it can reach any localhost service. A tie
 between the node and each process it lends to waits in PLAN §2.
 
+**A browser comes in through an open.** The home page and each lend's
+origin answer a browser only with this computer's session for that host,
+and a program only with the token (`crates/svrngs-node/src/session.rs`).
+An open is an address with a code, single-use and gone in a minute, that
+becomes the host's session where it is redeemed (`/svrngs-open`): `svrngs
+open` mints one for the home page, from the token, and hands it to the
+browser, and so do install.sh and the opener it puts in the person's
+Applications, or on Linux their applications menu; the home page mints
+one for each lend it opens (`/to`). A session is the token's HMAC over the
+host's first name, kept nowhere, so a restart keeps every bookmark working
+and one host's session opens no other. Anything else is answered "Open
+svrngs from your computer", naming that opener, with no terminal needed.
+Neither the session nor the token reaches a lend's service. A container
+on the Mac is refused at both (`demo/runs/give/2026-10-26-container/`).
+
 **A lent app writes as whoever asks by naming the act.** Its answer names,
 in `x-svrngs-append`, a JSON array of acts, each `{group, op}` or `{group,
 corrects, op}` as a carried app's route takes one. The asker's own side
@@ -699,9 +714,19 @@ Seven calls:
    names another lend; a request from another lend's page is that page's,
    by its `Origin`, a frame's by its `Referer`, so a page's frame or form is
    held to what its fetch is; one from another page naming no lend, an
-   `<img>`, is refused `closed`; one
-   with no `Sec-Fetch-Site`, as a program sends, is the lend's own, as
-   loopback is trusted. A page reaches its own lend and the kinds its lender
+   `<img>`, is refused `closed`; and a WebSocket's handshake, which sends
+   no `Sec-Fetch-Site`, is judged by its `Origin`. A program showing the
+   token is the lend's own. A page's fetch of a lend it reads carries no
+   cookie, as it is another origin, so `/svrngs-reads` answers that lend's
+   address with a capability in its path,
+   `http://<read>.localhost:<port>/svrngs-as/<cap>/`: the token's HMAC over
+   the pair, the page's lend and the read lend. The door takes the prefix
+   off before anything is decided, and lets the request in only when `app_of`
+   names another lend whose capability it is; a link the person follows
+   under it goes on to the home page's `/to`, so the home page's session
+   decides. A capability is never a session: whoever holds one is that page
+   toward that one lend, and the person's yes is still judged on every
+   request. A page reaches its own lend and the kinds its lender
    declared it reads, in a group both lenders and this computer stand in,
    else `closed`. Another computer's app reaches them as this computer's
    person only on that person's yes, else `unasked`, "Say yes on your home
