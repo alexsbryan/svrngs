@@ -254,8 +254,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # the home page's (-5 after +1): 18,243. The lint's own line in check.sh
 # (+1), ops_json's own-name guard folded into the name it reads (-2), and
 # the home page drawn from a function its module does not await (-2):
-# 18,240.
-BUDGET = {"crates/svrngs-core": 3239, ".": 18241}
+# 18,240. give-economize's pass (demo/runs/economize/2026-10-25-give/
+# SURVEY.md): the links' sequencer taken in one line (-6), an own pass's
+# reads and the door's "unasked" each said in one statement (-4, -3):
+# 18,227.
+BUDGET = {"crates/svrngs-core": 3239, ".": 18228}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
