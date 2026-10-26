@@ -386,6 +386,10 @@ async fn the_line_run_twice_installs_runs_at_login_opens_home_and_joins_once() {
 /// This build's binary under Linux's name too, beside this computer's, for
 /// a run whose `uname` says Linux: the Linux path is run with it here.
 fn as_linux(site: &Path) {
+    // On Linux x86_64 this computer's tarball is that one, summed by `site`.
+    if tarball() == "svrngs-linux-x86_64.tar.gz" {
+        return;
+    }
     let get = site.join("get");
     std::fs::copy(get.join(tarball()), get.join("svrngs-linux-x86_64.tar.gz")).unwrap();
     let sums = std::process::Command::new("shasum")
