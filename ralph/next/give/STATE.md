@@ -33,7 +33,7 @@ There are fourteen rows:
 - **LAN discovery, consoles and Bedrock:** a group asks, counted.
 - **A cap on Give's own lines:** Give lands.
 
-- [ ] give-economize — depends [] — ONE ROW, each cut its own commit with its behaviour kept, and `scripts/check.sh` once, at the close — the economizing pass before any raise (AGENTS.md "Done"):
+- [x] give-economize 509696f99 — depends [] — ONE ROW, each cut its own commit with its behaviour kept, and `scripts/check.sh` once, at the close — the economizing pass before any raise (AGENTS.md "Done"):
   - **(a) A survey, nothing to product.** Using the instruments of the latest `demo/runs/economize/*/SURVEY.md`, FIND what the product carries that it does not need. Look first in what this queue touches: `crates/svrngs-node/src/api.rs`, `home.rs`, `origin.rs`, `door.rs`, `lend.rs`, `node.rs`, `room/`, `crates/svrngs/src/cli.rs` (share and unshare), and `web/install.sh`. Write it to `demo/runs/economize/<date>-give/SURVEY.md`, each candidate with its lines.
   - **(b) Cuts, behaviour kept.** CUT what the survey finds, each cut its own commit, with the caps lowered to where they land.
   - **(c) An estimate.** ESTIMATE each later svrngs row's lines in four ledgers (core, library, `apps/`, surface items) from the sites it touches, beside GIVE.md §9's sizings:
