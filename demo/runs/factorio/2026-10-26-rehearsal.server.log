@@ -1,0 +1,66 @@
+   0.000 2026-10-26 13:46:11; Factorio 2.1.23 (build 87750, mac-arm64, steam)
+   0.003 Operating system: macOS 27.0.1
+   0.003 Program arguments: "~/Library/Application Support/Steam/steamapps/common/Factorio/factorio.app/Contents/MacOS/factorio" "-c" "<scratch>/factorio/config.ini" "--start-server" "<scratch>/factorio/saves/rehearsal.zip" "--server-settings" "<scratch>/factorio/server-settings.json" "--bind" "127.0.0.1:34197" 
+   0.003 Config path: <scratch>/factorio/config.ini
+   0.003 Read data path: ~/Library/Application Support/Steam/steamapps/common/Factorio/factorio.app/Contents/data
+   0.003 Write data path: <scratch>/factorio [37674/948584MB]
+   0.003 Binaries path: ~/Library/Application Support/Steam/steamapps/common/Factorio/factorio.app/Contents
+   0.120 System info: [CPU: arm64, 12 cores, RAM: 65536 MB]
+   0.125 Running in headless mode
+   0.125 Audio is disabled
+   0.125 Info ModManager.cpp:455: FeatureFlag: 
+   0.127 Loading mod core 0.0.0 (data.lua)
+   0.137 Loading mod base 2.1.23 (data.lua)
+   0.247 Loading mod base 2.1.23 (data-updates.lua)
+   0.273 Checksum for core: 3668028660
+   0.273 Checksum of base: 3864816957
+   0.372 Prototype list checksum: 1805372151
+   0.395 Info PlayerData.cpp:566: Cloud player-data.json unavailable
+   0.395 Info PlayerData.cpp:582: Local player-data.json unavailable
+   0.395 Info GlobalContext.cpp:1346: Resetting config.
+   0.396 Factorio initialised
+   0.396 Info ServerSynchronizer.cpp:22: nextHeartbeatSequenceNumber(0) initialized Synchronizer nextTickClosureTick(0).
+   0.396 Info ServerMultiplayerManager.cpp:809: updateTick(18446744073709551615) changing state from(Ready) to(PreparedToHostGame)
+   0.396 Info ServerMultiplayerManager.cpp:809: updateTick(18446744073709551615) changing state from(PreparedToHostGame) to(CreatingGame)
+   0.396 Loading map <scratch>/factorio/saves/rehearsal.zip: 1801582 bytes.
+   0.413 Loading level.dat: 1824629 bytes.
+   0.413 Info Scenario.cpp:152: Map version 2.0.77-0
+   0.440 Blueprint storage "blueprint-storage-2.dat" was not found, trying to load previous version storage "blueprint-storage.dat"
+   0.446 Loading script.dat: 1195 bytes.
+   0.461 Checksum for script __level__/control.lua: 3368906707
+   0.462 Info UDPSocket.cpp:38: Opening socket at (IP ADDR:({127.0.0.1:34197}))
+   0.462 Hosting game at IP ADDR:({127.0.0.1:34197})
+   0.462 Info ServerMultiplayerManager.cpp:809: updateTick(15288) changing state from(CreatingGame) to(InGame)
+   0.463 Info CommandLineMultiplayer.cpp:297: Maximum segment size = 100; minimum segment size = 25; maximum-segment-size peer count = 10; minimum-segment-size peer count = 20
+   0.463 Error InterruptibleStdioStream.cpp:72: Got EOF on stdin; closing
+ 458.566 ConnectionRequestReplyConfirm (type(ConnectionRequestReplyConfirm) ) from(IP ADDR:({127.0.0.1:58308}))
+ 458.566 Info ServerRouter.cpp:465: Replying to connectionRequest for address(IP ADDR:({127.0.0.1:58308})).
+ 458.566 Info ServerSynchronizer.cpp:594: nextHeartbeatSequenceNumber(27485) adding peer(1)
+ 458.582 Info ServerMultiplayerManager.cpp:809: updateTick(15288) changing state from(InGame) to(InGameSavingMap)
+ 458.598 Info ServerMultiplayerManager.cpp:977: updateTick(15288) received stateChanged peerID(1) oldState(Ready) newState(ConnectedWaitingForMap)
+ 458.616 Info ServerMultiplayerManager.cpp:1038: UpdateTick(15288) Serving map(<scratch>/factorio/temp/mp-save-0.zip) for peer(1) size(1168913) auxiliary(132) crc(805452329)
+ 458.616 Info ServerMultiplayerManager.cpp:809: updateTick(15288) changing state from(InGameSavingMap) to(InGame)
+ 458.663 Info ServerMultiplayerManager.cpp:977: updateTick(15288) received stateChanged peerID(1) oldState(ConnectedWaitingForMap) newState(ConnectedDownloadingMap)
+ 458.830 Info ServerMultiplayerManager.cpp:977: updateTick(15288) received stateChanged peerID(1) oldState(ConnectedDownloadingMap) newState(ConnectedLoadingMap)
+ 458.882 Info ServerMultiplayerManager.cpp:977: updateTick(15288) received stateChanged peerID(1) oldState(ConnectedLoadingMap) newState(TryingToCatchUp)
+ 458.882 Info ServerMultiplayerManager.cpp:977: updateTick(15288) received stateChanged peerID(1) oldState(TryingToCatchUp) newState(WaitingForCommandToStartSendingTickClosures)
+ 458.898 Info InputActionHandler.cpp:5065: UpdateTick (15288) processed PlayerJoinGame peerID(1) playerIndex(0) mode(connect) 
+ 458.930 Info ServerMultiplayerManager.cpp:977: updateTick(15290) received stateChanged peerID(1) oldState(WaitingForCommandToStartSendingTickClosures) newState(InGame)
+2026-10-26 13:53:50 [JOIN] <the operator> joined the game
+ 804.113 Info AppManager.cpp:335: Saving to _autosave1 (blocking).
+ 804.165 Info AppManagerStates.cpp:2131: Saving finished
+ 999.817 Received SIGINT, shutting down
+ 999.817 Quitting: signal.
+ 999.817 Info MainLoop.cpp:433: Saving map as <scratch>/factorio/saves/rehearsal.zip
+ 999.838 Info MainLoop.cpp:444: Saving progress: 0.073746%
+ 999.847 Info MainLoop.cpp:444: Saving progress: 100.000000%
+ 999.860 Info ServerMultiplayerManager.cpp:120: Disconnecting multiplayer connection.
+ 999.860 Info ServerMultiplayerManager.cpp:809: updateTick(47741) changing state from(InGame) to(DisconnectingScheduled)
+ 999.898 Info ServerMultiplayerManager.cpp:809: updateTick(47741) changing state from(DisconnectingScheduled) to(Disconnecting)
+1000.253 Info ServerMultiplayerManager.cpp:809: updateTick(47741) changing state from(Disconnecting) to(Disconnected)
+1000.253 Info ServerMultiplayerManager.cpp:147: Quitting multiplayer connection.
+1000.253 Info ServerMultiplayerManager.cpp:809: updateTick(47741) changing state from(Disconnected) to(Closed)
+1000.253 Info ServerMultiplayerManager.cpp:167: Deleting active scenario (global = true).
+1000.271 Info UDPSocket.cpp:238: Closing socket
+1000.271 Info UDPSocket.cpp:268: Socket closed
+1000.287 Goodbye
