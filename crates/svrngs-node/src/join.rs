@@ -43,7 +43,7 @@ pub enum Entered {
 pub enum NotJoined {
     #[error("This link lets nobody new in: ask whoever sent it for a new one.")]
     LinkRefused,
-    #[error("Someone in {group} already goes by {holder}, so you were not let in as them. If that’s you, press “Make a link to add your phone or another computer of yours” on a computer already in {group}, and paste that link here. Else join under another name.")]
+    #[error("Someone in {group} already goes by {holder}, so you were not let in as them. If that’s you, press “Add your phone or another computer” on a computer already in {group}, and paste that link here. Else join under another name.")]
     NameTaken { holder: Name, group: Name },
     #[error("The computer that sent this link cannot be reached. It may be off: try again later.")]
     IssuerAway,

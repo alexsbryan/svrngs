@@ -14,7 +14,7 @@ own pages, one account for the room, every library ticked (the room
 account, `apps/jellyfin/ROOM.md`); then Jellyfin's list of users exported. Dee: in Sam's
 group on a computer at home, on the WiFi the TV is on; on that
 computer's home page Dee opens Sam's Jellyfin to this WiFi, **Open it to
-this WiFi** on its row, or `svrngs room jellyfin`, which says the address
+this WiFi** on its line below the group's list, or `svrngs room jellyfin`, which says the address
 the room reaches it at; Dee's TV has Jellyfin's own app from
 its store, that address typed into it once and signed in by Quick
 Connect from Dee's phone with the room account (`apps/jellyfin/ROOM.md`,
@@ -35,7 +35,7 @@ phone, and keeps running; beside it, `svrngs share 8096`, which prints how
 to make an account in Jellyfin's own pages; Sam makes one for the room,
 every library ticked, and the export of Jellyfin's users is taken after
 that. Dee: `svrngs join <link>` on the computer on the TV's WiFi, then
-**Open it to this WiFi** on Sam's jellyfin's row of the home page, or
+**Open it to this WiFi** on Sam's jellyfin's line of the home page, or
 `svrngs room jellyfin`, which prints "Sam's jellyfin:" and
 `http://<an address on Dee's WiFi>:<port>/`, the same each time, and keeps
 running; that address typed into Jellyfin's app on the TV, "Use Quick

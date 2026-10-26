@@ -90,7 +90,7 @@ svrngs is running here already, so they can open it now.
 One lend reaches both groups: The House and dWeb each list it as
 **Sam’s events**.
 
-**2. Open it.** On Sam's home page, press **Open Sam’s events**, under
+**2. Open it.** On Sam's home page, press **Sam’s events**, under
 either group (the run opened the address that link opens, the one Sam's
 computer lists for the lend, `home.js:90`). The app's page says
 **Events**, each group with *"Nothing posted yet."*, and **Post an
@@ -131,7 +131,7 @@ Yes and Not now; Bo leaves them ("When something does not work").
 ![The dinner, opened from Bo's home page](runs/events/2026-10-14-links/data/shots/12-bo-L3.png)
 
 The other way, with no link: on the home page, under The House, press
-**Open Sam’s events**, and in the app's list, **Dinner** (the run's shots
+**Sam’s events**, and in the app's list, **Dinner** (the run's shots
 take).
 
 ![Bo's home page, Sam's events under The House](runs/events/2026-10-14/data/shots/03-bo-2w.png)

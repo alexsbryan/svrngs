@@ -35,8 +35,8 @@ From the link on: Sam makes the group on his home page and copies its
 link, or runs `svrngs new <group>`, which prints it,
 `svrngs://join/<token>`; Sam sends each person the link, and nothing
 else. Each of the others joins by it on their computer, `svrngs join
-<link>`, and opens Sam's jellyfin from their home page, its button
-beginning "Open Sam’s jellyfin", at an address of the lend's own,
+<link>`, and opens Sam's jellyfin from their home page, its link
+"Sam’s jellyfin", at an address of the lend's own,
 `http://<label>.localhost:<port>/`. On Jellyfin's own page they press
 the plugin's sign-in button and are in as themselves, with nothing typed,
 an account the plugin made them as they came; they pick a film, play it,

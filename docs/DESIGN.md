@@ -482,17 +482,19 @@ first, then who is in it (the operator, 2026-10-26: Money found first):
   answer", when it did not; "in from a phone" when their only keys are a
   browser's. Presence is only "on now", never when last seen.
 - **the index**: one table of what is in the group, on any port — each thing
-  by its link; what it is, in its lender's word, never one of svrngs's own
-  (`scripts/vocab_check.py` reads the pages' scripts too); whose; how it
+  by a link of its name, its kind in its lender's word when it differs,
+  never one of svrngs's own (`scripts/vocab_check.py` reads the pages'
+  scripts too), and beside it what opening it agrees to; whose; how it
   opens (in a tab, signing you in once when its lender's program does; its
-  address for a program; opened to this WiFi, or closed, there); and on
-  or full now. A computer that did not say what it lends is a row of its
+  address for a program); and on or full now. Below the group's things,
+  off the first screen, each can be opened to this WiFi, or closed
+  (the operator, 2026-10-26). A computer that did not say what it lends is a row of its
   own, by why, so nothing is stale and nobody is left out — among them one
   running an older svrngs, whose answer is not read field by field
   (`crates/svrngs-node/src/version.rs`).
 
 On it a person can:
-- open each thing lent ("Open Sam’s llama-server"), in a tab of its own, or
+- open each thing lent ("Sam’s llama-server"), in a tab of its own, or
   copy its address for a program, such as a chat program pointed at a
   friend's model;
 - open a link to a lent app someone sent in the chat, pasted under "Open a
@@ -779,16 +781,18 @@ Seven calls:
    version, since live code can't be pinned, kept beside the lends' yeses
    (`door/choices.rs`, `reaching`) and judged where the reach is
    (`surface.rs`, `reaches`). Opening the app from the home page is the yes:
-   its button says what it agrees to, "Open Sam’s notes. It writes what
-   you say there into House’s record, as you. It also opens your friends’
-   films as you.", and posts it before the app opens. On a phone
-   the group page's open, saying the same, is the yes, as the pass it signs
-   names what the app reads. An app this computer lends reads what its
-   person declared. An app the group carries says on its open what it reads
-   and writes, the shelf's words or "its own part of the group’s record",
-   so its first version runs as a person once they open it so named
-   (`question.js`, `agreed`). Each yes is listed under "What acts as you",
-   folded under its heading, a list to look at, never in the way,
+   its button names the app, "Sam’s notes"; the line beside it says what
+   it reads and writes, "It writes what you say there into House’s record,
+   as you. It also opens your friends’ films as you."; and pressing the
+   button is the consent, posted before the app opens. On a phone the
+   group page's open, with the same line beside it, is the yes, as the
+   pass it signs names what the app reads. An app this computer lends
+   reads what its person declared. Beside the open of an app the group
+   carries is what it reads and writes, the shelf's words or "its own part
+   of the group’s record", so its first version runs as a person once they
+   open it so named (`question.js`, `named` and `agreed`). Each yes is
+   listed under "What acts as you", folded under its heading, a list to
+   look at, never in the way,
    on both pages, with since when and a Stop (`question.js`, `acts`, which
    groups what acts as the person by what it can do: reads and writes,
    opens friends' things, knows who you are, open to this WiFi, open to
@@ -864,9 +868,10 @@ assume no screen, a TV one device among others.
    computer to computer over iroh, which can go direct, where a browser's is
    relay-only.
 3. *The room is the running node's, turned on per lend.* Its person opens
-   a lend to this WiFi or closes it with the button in that lend's row on
-   the home page ("Open it to this WiFi", "Close it to this WiFi"; "On this
-   WiFi" lists what is open), or opens it with `svrngs room <name>...`, which asks the svrngs running
+   a lend to this WiFi or closes it with the button in that lend's line
+   below its group's things on the home page ("Open it to this WiFi",
+   "Close it to this WiFi"; "Open to this WiFi", under "What acts as you",
+   lists what is open), or opens it with `svrngs room <name>...`, which asks the svrngs running
    here, else the one it starts, at the same loopback route (`/v1/room`):
    the room has one decider (`crates/svrngs-node/src/room.rs`). Each lend on
    is served at a port of its own on this computer's private address,

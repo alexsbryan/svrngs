@@ -2,6 +2,14 @@
 
 ## Next, not released yet
 
+**Your home page leads with what's in your group.** Each app is a link
+of its name, such as **Money**, with what it does as you beside it: "It
+reads and writes who paid for what, and who owes whom." Pressing it is
+still your yes, and nothing else is asked; the phone's group page says it
+the same way. Opening an app to this WiFi has moved below your group's
+list. The buttons say **Invite someone to House** and **Add your phone or
+another computer**, and how to open the page again is at its foot.
+
 **Two people with one name stay two in Money and Events too.** Money keeps
 a balance for each person, and Events lists each person who's coming, even
 when two of them share a name. The pages tell them apart by when they

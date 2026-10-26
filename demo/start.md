@@ -68,7 +68,7 @@ one below, …"*.
 **4. Make the group, then a link.** Under **Make a group**, type a name
 for the group in *"A name for the group"* (the run: `Lab`) and your own
 name in *"Your name in it"* (`Sam`), and press **Make a group**. The page
-says *"You made Lab. Make a link below to invite someone to it."*, and
+says *"You made Lab. Invite someone to it below."*, and
 where the group's folder is on this computer.
 
 ![Sam's home page, the group made](runs/start/2026-10-13-story/data/shots/sam-home-made.png)
@@ -82,7 +82,7 @@ rest agree or object, and canon, the library under it, decides when a rule
 holds (`../RELEASES.md`, "Next"). (Not in the run, which came before House
 rules.)
 
-Press **Make a link to invite someone to Lab**. The page says *"Send this
+Press **Invite someone to Lab**. The page says *"Send this
 link to the person you are inviting: …"* with **Copy the link**. Send it
 to Bo however you two talk — a chat, a message, an email. It works for a
 day, while Sam's computer is on.
@@ -153,7 +153,7 @@ run) it says *"You're in Lab, as Bo."*, where Lab's folder is, and last
 Bo's home page's address, and opens it. svrngs names Bo by the name the
 computer knows them by; nothing to type.
 
-**8. Open Sam's model.** On Bo's home page, under Lab, press **Open Sam’s
+**8. Open Sam's model.** On Bo's home page, under Lab, press **Sam’s
 llama-server**. llama-server's chat page opens in a tab of its own. Type a
 question in *"Type a message…"* (the run: `Name three rivers in Spain.`)
 and press Enter. The answer appears as it is written (its first words
@@ -165,7 +165,7 @@ that is the model, not svrngs.
 
 **9. A program on Bo's computer** — a chat app, an editor's assistant, a
 script — can ask Sam's model too. Press **Copy its address for a
-program**, beside **Open Sam’s llama-server**: the page says *"Copied:"*
+program**, beside **Sam’s llama-server**: the page says *"Copied:"*
 and the address. Paste it where the program asks for an address (often
 called its *base URL*, or *OpenAI-compatible API*). The address stays the
 same when svrngs or the computer starts again. Many programs also ask for

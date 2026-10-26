@@ -87,7 +87,7 @@ page says *"You brought House rules to Elm: everyone in it can open it in
 a few seconds."* (221 ms in the run).
 
 **6. Ana says how the house decides.** Reload Ana's home page and press
-**Open House rules** in Elm's table. It asks *"How does your house decide
+**House rules** in Elm's table. It asks *"How does your house decide
 its rules?"*, with three choices and none ticked. Choose **Most of you
 agree** and press **Make this how your house decides**. Under **How your
 house decides** the page says *"A rule holds once more than half of the
@@ -105,7 +105,7 @@ The page asks *"Why do you object?"*: type `I work late on Fridays` and
 press **Send your objection**. It says *"You object: “I work late on
 Fridays”"*, and the quiet hours are still proposed.
 
-**9. Bo agrees.** On Bo's home page, press **Open House rules**. Under
+**9. Bo agrees.** On Bo's home page, press **House rules**. Under
 **What’s proposed** it says *"Cy objects: “I work late on Fridays”"*.
 Press **Agree**. With Ana's, that's two of the three, and the quiet hours
 move under **Your house’s rules**: *"Quiet hours are 10pm to 7am (Ana
@@ -135,7 +135,7 @@ rm -rf /tmp/house
   step 4. That person's svrngs isn't running yet, or stopped. Press Enter
   in that window: if it stopped, the window says so, with what svrngs said
   before it. Then run that person's last line in step 1, 2 or 3 again.
-- **No "Open House rules" on Bo's or Cy's home page.** Reload it. Each
+- **No House rules in Bo's or Cy's table.** Reload it. Each
   computer lists House rules once it holds its files, under a second after
   Ana brought it, in the run.
 - **"This computer can’t yet say who is in your house, so it can’t say

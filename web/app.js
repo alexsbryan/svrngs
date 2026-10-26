@@ -198,7 +198,7 @@ async function join(token, kept) {
     // is asked, saying whose it is and how to add this phone if it is theirs.
     const taken = (status, text) =>
       status === 409
-        ? `Someone in ${group.name} already goes by ${JSON.parse(text).error}. If that’s you, open your home page on your computer, press “Make a link to add your phone or another computer of yours”, and open that link here. Else join under another name.`
+        ? `Someone in ${group.name} already goes by ${JSON.parse(text).error}. If that’s you, open your home page on your computer, press “Add your phone or another computer”, and open that link here. Else join under another name.`
         : joining(status);
     try {
       await post(issuer, '/redeem', body, taken);
@@ -530,10 +530,10 @@ async function enter(group, asked, joined) {
   // This phone's key, as the ask a link's issuer is sent names it.
   add('decides', el('p', `${deciders(people, me, 'browser')}.`));
   list.replaceChildren(
-    row(['What', 'What it is', 'Whose', 'How it opens', 'Now'], 'th'),
+    row(['What', 'Whose', 'How it opens', 'Now'], 'th'),
     ...once(lent).map((l) => {
-      const button = Object.assign(el('button', agreed(l, shelf, group)), { onclick: () => saying(l, 'yes').then(() => open(group, key, lent, unanswered, l)) });
-      return row([button, l.group ? named(l) : l.kind, owner(l, group), ...opens(l, 'Here, in this tab')]);
+      const button = Object.assign(el('button', named(l)), { onclick: () => saying(l, 'yes').then(() => open(group, key, lent, unanswered, l)) });
+      return row([el('span', '', button, ` ${agreed(l, shelf, group)}`), owner(l, group), ...opens(l, 'Here, in this tab')]);
     }),
   );
   const again = asked?.get('open') && lent.find((l) => label(l.key, l.name) === asked.get('open'));

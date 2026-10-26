@@ -50,14 +50,15 @@ const label = (l) => new URL(l.origin).hostname.split('.')[0];
 // back here (capability-what-acts).
 const reach = (app, words, said = 'yes') => Object.assign(el('form', '', ...[['app', app], ['said', said]].map(([name, value]) => Object.assign(el('input'), { type: 'hidden', name, value })), el('button', words)), { method: 'post', action: '/reaching', ...(said === 'yes' && { target: '_blank' }) });
 
-// The open of lend `l`, saying `words` (question.js `agreed`): for one
-// reading friends' lends, the form posting its yes; else a link.
+// The open of lend `l`, by its name (question.js `named`; what opening it
+// agrees to is said beside it, `agreed`): for one reading friends' lends,
+// the form posting its yes; else a link.
 // A lend opened through `/to` (home.rs), which gives its origin a code of
 // its own that becomes its session there (give-session).
 const via = (lend, at) => `/to?${new URLSearchParams({ lend, ...(at && { at }) })}`;
 // The path of the address `at`, its query and fragment kept, for `via`.
 const path = (at) => ((u) => u.pathname + u.search + u.hash)(new URL(at));
-const opener = (l, words) => (l.reads?.length ? reach(label(l), words) : Object.assign(el('a', words), { href: via(label(l)), target: '_blank' }));
+const opener = (l) => (l.reads?.length ? reach(label(l), named(l)) : Object.assign(el('a', named(l)), { href: via(label(l)), target: '_blank' }));
 
 // What the people of group `g` lend, for the ask; none when it cannot be
 // read. `removed` is null when who is in the group cannot be read here:
@@ -115,7 +116,7 @@ async function show(g, s, room, add, me, plays) {
   // The group's things first, right under its heading (the operator,
   // 2026-10-26: Money found first), filled once each computer has said.
   const body = el('tbody', '', row(['Asking each computer in the group what it lends…']));
-  s.append(Object.assign(el('table', '', el('thead', '', row(['What', 'What it is', 'Whose', 'How it opens', 'Now'], 'th')), body), { className: 'index' }));
+  s.append(Object.assign(el('table', '', el('thead', '', row(['What', 'Whose', 'How it opens', 'Now'], 'th')), body), { className: 'index' }));
   try {
     const rows = (await get(`/v1/rail/people?namespace=${ns}`)).people;
     const [people, judge] = door(rows);
@@ -141,7 +142,7 @@ async function show(g, s, room, add, me, plays) {
     // guest opens the link; then the link, for any chat.
     const length = el('select', '', ...[48, 24, 6].map((h) => Object.assign(el('option', `${h} hours`), { value: h * 3600 })));
     const guest = button('Have a guest', () => guest.replaceWith(el('label', 'For how long, from when they open the link: ', length), button('Make a link for your guest', () => post('/link', { group: g.id, device: false, visit: Number(length.value) }).then(({ https }) => shown('Send this link to your guest, in any chat: ', el('code', https), ` They open it in a browser and give their name. For ${length.selectedOptions[0].textContent} from then they can open what you lend, and everyone in ${g.name ?? 'this group'} sees they are your guest. It lets one guest in, once, within a day, while this computer is on. `, copy(https, s.querySelector('.link'))), (e) => shown(e.message)))));
-    s.append(el('p', '', made(false, `Make a link to invite someone to ${g.name ?? 'this group'}`), made(true, 'Make a link to add your phone or another computer of yours'), guest), Object.assign(el('p'), { className: 'link' }));
+    s.append(el('p', '', made(false, `Invite someone to ${g.name ?? 'this group'}`), made(true, 'Add your phone or another computer'), guest), Object.assign(el('p'), { className: 'link' }));
     // Leaving (groups-leave), what stays and what stops said before; whoever
     // keeps the order of removals chooses who keeps it next, beside it.
     const name = g.name ?? 'this group';
@@ -165,10 +166,13 @@ async function show(g, s, room, add, me, plays) {
     if (mine.length) s.append(el('h3', 'Who you have over'), Object.assign(el('ul', '', ...mine.map((v) => stop(v))), { className: 'yours' }));
     if (g.visiting?.length) s.append(el('h3', 'Visiting now'), visiting(g.visiting, rows));
     // The index (V1_UI_BUILD §3.1): one table of what is in the group, on
-    // any port — each thing by a link that opens it in a tab and says what
-    // and whose (question.js `named`); what it is, its lender's word, never
-    // a word of svrngs's own (scripts/vocab_check.py); whose; how it opens;
-    // and whether it is full now.
+    // any port — each thing by a link named as question.js `named` names
+    // it, which opens it in a tab, with what opening it agrees to beside it
+    // (`agreed`): the name people tapped, which had been plain text beside
+    // an "Open …" link (demo/xenia/findings/wordy-home.md, Kim run 1); its
+    // kind its lender's word, never a word of svrngs's own
+    // (scripts/vocab_check.py); whose; how it opens; and whether it is full
+    // now.
     const lends = await get(`/v1/lends?namespace=${ns}`).catch((e) => {
       judge();
       throw e;
@@ -181,17 +185,21 @@ async function show(g, s, room, add, me, plays) {
     for (const l of once(lends.lent)) {
       const [opened, now] = opens(l, 'In a tab');
       // A port is no page: Play, not a tab, and no WiFi (give-play).
-      const how = l.raw ? el('td', '', l.key === me ? 'A port this computer lends.' : play(l, plays)) : el('td', `${opened}. `, button('Copy its address for a program', () => Promise.resolve().then(() => navigator.clipboard.writeText(l.origin)).then(() => how.append(` Copied: ${l.origin}`), () => how.append(` Copy it from here: ${l.origin}`))), wifi(l, room));
-      body.append(el('tr', '', el('td', '', l.raw ? named(l) : opener(l, agreed(l, lends.shelf, g))), el('td', l.group ? named(l) : l.kind), el('td', owner(l, g)), how, el('td', now)));
+      const how = l.raw ? el('td', '', l.key === me ? 'A port this computer lends.' : play(l, plays)) : el('td', `${opened}. `, button('Copy its address for a program', () => Promise.resolve().then(() => navigator.clipboard.writeText(l.origin)).then(() => how.append(` Copied: ${l.origin}`), () => how.append(` Copy it from here: ${l.origin}`))));
+      body.append(el('tr', '', l.raw ? el('td', named(l)) : el('td', '', opener(l), ` ${agreed(l, lends.shelf, g)}`), el('td', owner(l, g)), how, el('td', now)));
     }
     // Each computer that did not say, by how (bash-first-minute (c)), a row
     // of its own: what it lends never stale, and never nobody's. One that
     // answered is never said not to have.
-    const said = (words) => body.append(el('tr', '', Object.assign(el('td', words), { colSpan: 5 })));
+    const said = (words) => body.append(el('tr', '', Object.assign(el('td', words), { colSpan: 4 })));
     const unlisted = { unanswered: 'did not answer, so what they lend is not listed', unheard: 'has not heard of yours yet, so what they lend is not listed yet', refused: 'answered without saying what they lend, so it is not listed', older: 'runs an older svrngs, so what they lend is not listed' };
     for (const [how, why] of Object.entries(unlisted)) for (const p of lends[how]) said(`${called(rows, p.person_key) ?? p.person}'s computer ${why}.`);
     if (!body.children.length) said('Nobody lends anything here yet.');
-    s.append(table(g, lends, (apps) => post('/shelf', [g.id, apps]), new URLSearchParams(location.search).getAll('joined').includes(g.name)));
+    // Then each opened to this WiFi or closed, at the section's foot, off
+    // the first screen: in each row, Kim tapped it on the way to Money,
+    // not knowing what it did (demo/xenia/findings/
+    // inert-home-open-it-to-this-wifi.md; the operator, 2026-10-26).
+    s.append(table(g, lends, (apps) => post('/shelf', [g.id, apps]), new URLSearchParams(location.search).getAll('joined').includes(g.name)), Object.assign(el('ul', '', ...once(lends.lent).filter((l) => !l.raw).map((l) => el('li', `${named(l)}:`, wifi(l, room)))), { className: 'wifi' }));
     for (const l of once(lends.lent).filter((o) => o.group)) add('reads', el('p', carrying(l.kind, lends.shelf)));
     const changed = changes(g, lends, (app) => post('/runs', [g.id, app]), rows, me);
     if (changed.length) add('reads', ...changed);
@@ -352,7 +360,7 @@ function ask(lent, q) {
     // Said after a group is made here (start-group), with where its folder
     // could not be made, if it could not.
     const unplaced = q.has('unplaced') ? `Its folder could not be made: ${q.get('unplaced')}. ` : '';
-    if (q.has('made')) main.append(el('p', `You made ${q.get('made')}. ${q.get('also') ? `${q.get('also')} ` : ''}${unplaced}Make a link below to invite someone to it.`));
+    if (q.has('made')) main.append(el('p', `You made ${q.get('made')}. ${q.get('also') ? `${q.get('also')} ` : ''}${unplaced}Invite someone to it below.`));
     // Said after a group is joined here (arch-command (c)).
     if (q.has('joined')) main.append(el('p', `You’re in ${q.get('joined')}${q.has('person') ? `, as ${q.get('person')}.` : ' already.'} ${unplaced}`));
     if (q.has('left')) main.append(el('p', `You left ${q.get('left')}. Rejoining needs a new invitation, and this computer can’t rejoin yet.`));
