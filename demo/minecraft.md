@@ -1,11 +1,14 @@
 # Minecraft Java — two homes, one server, through a port lent
 
 Gate: **the operator's, set before the first run** (svrn-docs
-`rings/current/GIVE.md` §11; `runs/give/2026-10-26-play-scene/NEEDS_HUMAN.md`).
-Until the operator sets it, this run has no gate and is not run. The
-candidate, by Factorio's (`factorio.md`): a 30-minute session between two
-homes, once on a direct path and once with the relay forced, with no drop
-on either, and the ping Minecraft reports on each path written down.
+`rings/current/GIVE.md` §11;
+`runs/give/2026-10-26-play-scene/NEEDS_HUMAN.md`). Until the operator sets
+it, this run has no gate and is not run. The operator set none on
+2026-10-26 ("we can do the two-home session another time"), so it waits in
+`docs/PLAN.md` §2, never-ran until played. The candidate, by Factorio's
+(`factorio.md`): a 30-minute session between two homes, once on a direct
+path and once with the relay forced, with no drop on either, and the ping
+Minecraft reports on each path written down.
 
 Minecraft: Java Edition speaks TCP on port 25565. svrngs carries each
 connection on a QUIC stream of its own, on the one connection kept

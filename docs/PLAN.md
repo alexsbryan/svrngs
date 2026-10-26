@@ -175,10 +175,22 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   +226 library, 0 core, 0 `apps/`, +2 surface (a lend's `raw`, and
   `/v1/play` answering a program holding the token), the cap 19,095, its
   raise landed for the operator (2f454259).
+  Landed, give-play-scene: the gate's "scenes" step plays two lent ports,
+  a UDP and a TCP echo program, each person pressing Play on the other's
+  row and their bytes crossing (`crates/svrngs/tests/scenes/ports.rs`,
+  b9fbd681), red on a listener unbound behind its row; the run-of-shows
+  `demo/factorio.md` and `demo/minecraft.md`, written before any run; 0
+  in each ledger. The two-home sessions they describe wait for the
+  operator, who set no bars ("we can do the two-home session another
+  time", 2026-10-26), and are never-ran until played. Beside them stands a
+  rehearsal on one host, Factorio 2.1.23 through a UDP port lent and Play:
+  9 minutes, no desync, no drop, its path neither of the two the bars
+  would name (`demo/runs/factorio/2026-10-26-rehearsal.json`, d5f65cdb).
   Not carried: the jellyfin, movie-night and taste `check.sh` runs,
   outside the gate, which open a lend's origin bare. The operator, "Let's do
-  half the rows": the loop stops after the svrngs half, give-play-scene,
-  before Give's own;
+  half the rows": the loop stops after the svrngs half, at give-play-scene,
+  before Give's own, until the operator says Give's half goes
+  (HUMAN-give-half);
 - sealing, at its §2 trigger.
 
 The operator's switch stands apart from that order: when they flip
@@ -195,6 +207,7 @@ The grapevine's standing carries are a row after V1 too (GRAPEVINE_DEMO
 | a native phone app, and groups of phones only; first, phones as replicas of the group (operator, 2026-10-07): a member's phone holds the group's record and the files it shares, and syncs with whoever it reaches through a relay, so the group stays reachable while every computer sleeps (DESIGN §8, risk 1) — a replica, not a relay in iroh's sense, since a phone on cellular sits behind its carrier's NAT. The phone's OS decides it: a page cannot listen and a browser's iroh is relay-only (DESIGN §3, "The room", call 2), iOS suspends an app soon after it leaves the screen, and a network extension (the VPN slot) runs in the background under a memory cap. The spike, on iOS first and no larger than proves it: an iPhone app whose network extension holds an iroh endpoint with a member's key and answers a computer's dial by key every few minutes for 24 hours, the phone locked in a pocket; recorded, answered of dialled, memory against the cap, battery and data, against bars the operator sets before it runs. The record on the phone follows only if the endpoint stays reachable; Android after iOS | after Demo C, or the operator moves it in (operator, 2026-10-10: "I don't want to distract us from the core right now, but wanna keep it on the back burner"; its design, deferred, svrn-docs `rings/current/PHONE_REPLICA.md`); or the browser cannot keep what a group needs — its key, or a copy — measured |
 | a chat's own door: a package that posts a group's link for a person, names a group for its channel, or follows a channel's members (E0's, at tag `e0-bot`, DESIGN §3) | a group asks for one that a pasted link cannot answer, counted |
 | Windows | a group asks |
+| the two-home game sessions of `demo/factorio.md` and `demo/minecraft.md`: each game 30 minutes between two homes, once on a direct path and once with the relay forced, desyncs, drops and the game's ping counted per path. Never-ran: no bars are set, and the one rehearsal (`demo/runs/factorio/2026-10-26-rehearsal.json`) ran both computers on one host, so neither path | the operator sets the bars and plays them (2026-10-26: "we can do the two-home session another time"), or a group playing through a lent port reports a desync or a drop |
 | the switch to svrngs's relay, parked at the gate (relay-park; §3, 2026-10-13): the build's one constant flipped from n0's to svrngs's at `relay.svrnme.sh`, then `scripts/deploy-relay.sh`, then `scripts/deploy-page.sh`, in that order (DESIGN §7), each the operator's; n0's relays and lookup the command's default until then, and nothing else changed by it; with it, #134 and #135 (`ralph/REVIEW_FINDINGS.md`), whose moment is the switch | V1 released on n0's relays (§1, "V1"; §3, 2026-10-15), and the operator starts paying for svrngs's relay (the operator, 2026-10-13: "until I'm actually ready to start paying / flip the switch for production") |
 | AirPlay and Cast from a page, and DLNA: a screen handed a lend's address by a phone, for an app with no client of its own on it. In the reads (`demo/runs/u6/2026-10-05-screen/reads.json`) AirPlay from Safari on an iPhone showed the LG no video three ways — the page's address, which only the phone's worker answers; jellyfin-web, whose hls.js sets `disableRemotePlayback`; a plain LAN file, which the TV never fetched — and iOS has no Cast sender. Until 2026-10-05 this was U6 (DESIGN §3, "The room", call 1) | an app with no client of its own for a screen is asked for on one, counted |
 | a public address per lend, for a room with no member's computer in it: a relay that forwards bytes it cannot read to the lender, who holds a certificate per lend — a new service, and Let's Encrypt's per-domain limit (DESIGN §3, "The room", call 2) | a group with no computer in the room asks, counted |

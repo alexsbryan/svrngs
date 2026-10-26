@@ -1,11 +1,14 @@
 # Factorio — two homes, one factory, through a port lent
 
 Gate: **the operator's, set before the first run** (svrn-docs
-`rings/current/GIVE.md` §11; `runs/give/2026-10-26-play-scene/NEEDS_HUMAN.md`).
-Until the operator sets it, this run has no gate and is not run. The
-candidate GIVE.md §11 gives: a 30-minute session between two homes, once
-on a direct path and once with the relay forced, with zero desyncs on
-each, and the ping Factorio reports on each path written down.
+`rings/current/GIVE.md` §11;
+`runs/give/2026-10-26-play-scene/NEEDS_HUMAN.md`). Until the operator sets
+it, this run has no gate and is not run. The operator set none on
+2026-10-26 ("we can do the two-home session another time"), so it waits in
+`docs/PLAN.md` §2, never-ran until played. The candidate GIVE.md §11
+gives: a 30-minute session between two homes, once on a direct path and
+once with the relay forced, with zero desyncs on each, and the ping
+Factorio reports on each path written down.
 
 Factorio speaks UDP on port 34197. svrngs carries it as QUIC datagrams,
 one flow per player, and splits a packet too large for one datagram,
