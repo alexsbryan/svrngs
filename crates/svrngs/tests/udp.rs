@@ -7,7 +7,10 @@
 //! and why: a key standing in no group Sam's computer holds is closed at
 //! the connection, as on every protocol a member speaks, since a raw port
 //! carries no pass; and a person past the lend's limit is told so, the
-//! limit counting people, so one person's two programs are one.
+//! limit counting people, so one person's two programs are one; and a
+//! person removed while their program keeps sending is cut by Sam's
+//! computer within seconds, since the member's own computer may not cut
+//! itself (give-cut).
 
 use std::net::SocketAddr;
 use std::time::Duration;
@@ -20,8 +23,9 @@ use svrngs_node::iroh::{EndpointAddr, MemoryLookup, RelayConfig};
 use svrngs_node::lend::{Lend, Raw, Source};
 use svrngs_node::link::Link;
 use svrngs_node::node::Node;
-use svrngs_node::SigningKey;
+use svrngs_node::{actor_of, SigningKey};
 use tokio::net::UdpSocket;
+use tokio::sync::mpsc;
 
 fn no_relay() -> RelayConfig {
     RelayConfig {
@@ -257,5 +261,116 @@ async fn the_limit_counts_people_across_flows() {
     assert_eq!(
         asks(&one, alex_s, b"again").await.as_deref(),
         Some(&b"again"[..])
+    );
+}
+
+/// Sam's computer removes `who` from the group they stand in there: the
+/// cut `svrngs remove` makes, written on Sam's record.
+fn remove(sam: &Computer, who: &Computer) {
+    let rail = sam.node.rail();
+    let (group, member) = rail
+        .standing_anywhere(&actor_of(&who.key))
+        .expect("they stand");
+    let cut = svrngs_core::Removal {
+        person: member.person,
+        joined: None,
+    };
+    rail.commit(&group, &cut).unwrap().unwrap();
+}
+
+/// A program on Sam's computer that answers each packet with itself, and
+/// tells each packet it is sent.
+async fn told_echo() -> (SocketAddr, mpsc::UnboundedReceiver<Vec<u8>>) {
+    let socket = UdpSocket::bind("127.0.0.1:0").await.unwrap();
+    let (addr, (tell, told)) = (socket.local_addr().unwrap(), mpsc::unbounded_channel());
+    tokio::spawn(async move {
+        let mut buf = vec![0; 65_535];
+        while let Ok((n, from)) = socket.recv_from(&mut buf).await {
+            let _ = tell.send(buf[..n].to_vec());
+            let _ = socket.send_to(&buf[..n], from).await;
+        }
+    });
+    (addr, told)
+}
+
+/// A program that sends `packet` to `to` every 100 ms and tells each
+/// answer it hears, until the test ends.
+fn keeps_sending(
+    program: UdpSocket,
+    to: SocketAddr,
+    packet: &'static [u8],
+) -> mpsc::UnboundedReceiver<Vec<u8>> {
+    let (tell, told) = mpsc::unbounded_channel();
+    tokio::spawn(async move {
+        let mut buf = vec![0; 65_535];
+        let mut every = tokio::time::interval(Duration::from_millis(100));
+        loop {
+            tokio::select! {
+                _ = every.tick() => drop(program.send_to(packet, to).await),
+                Ok((n, _)) = program.recv_from(&mut buf) => drop(tell.send(buf[..n].to_vec())),
+            }
+        }
+    });
+    told
+}
+
+/// What came on `told` since it was last drained.
+fn drained(told: &mut mpsc::UnboundedReceiver<Vec<u8>>) -> Vec<Vec<u8>> {
+    std::iter::from_fn(|| told.try_recv().ok()).collect()
+}
+
+/// **A member no longer standing is cut** (give-cut). Alex and Dee each
+/// have a program that keeps sending to Sam's echo. Sam removes Alex, and
+/// within a few seconds none of Alex's packets reaches the lent port and
+/// nothing comes back to Alex's program; Dee, still standing, is carried
+/// through the same window. Alex's side is the door's own member half, not
+/// Play, so it is Sam's computer that cuts: a removal says nothing new
+/// reaches the person, and a flow that never idles would otherwise run on.
+/// Planted: the lender's sweep that asks standing again, skipped.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_member_no_longer_standing_is_cut() {
+    let (sam, them) = house(&[(2, "Alex"), (3, "Dee")]).await;
+    let (echo, mut lent) = told_echo().await;
+    let lend = share_udp(&sam, echo.port(), &[]);
+    let (alex, dee) = (&them[0], &them[1]);
+    let (carried, alex_s) = open(alex, &sam, &lend).await;
+    let _alex = carried.expect("Alex's computer opens Sam's echo");
+    let (carried, dee_s) = open(dee, &sam, &lend).await;
+    let _dee = carried.expect("Dee's computer opens Sam's echo");
+    let mut alex_hears = keeps_sending(program().await, alex_s, b"alex");
+    let mut dee_hears = keeps_sending(program().await, dee_s, b"dee");
+    tokio::time::sleep(Duration::from_secs(2)).await;
+    assert!(
+        drained(&mut lent).iter().any(|p| p == b"alex"),
+        "control: Alex's packets reach the lent port"
+    );
+    assert!(
+        !drained(&mut alex_hears).is_empty(),
+        "control: Alex's program hears the echo"
+    );
+
+    remove(&sam, alex);
+    tokio::time::sleep(Duration::from_secs(3)).await;
+    let _ = (
+        drained(&mut lent),
+        drained(&mut alex_hears),
+        drained(&mut dee_hears),
+    );
+    tokio::time::sleep(Duration::from_secs(2)).await;
+    let reached = drained(&mut lent);
+    assert!(
+        !reached.iter().any(|p| p == b"alex"),
+        "Alex, removed, still reaches the lent port {} times in 2s",
+        reached.iter().filter(|p| *p == b"alex").count()
+    );
+    let heard = drained(&mut alex_hears);
+    assert!(
+        heard.is_empty(),
+        "Alex, removed, still hears {} answers in 2s",
+        heard.len()
+    );
+    assert!(
+        reached.iter().any(|p| p == b"dee") && !drained(&mut dee_hears).is_empty(),
+        "Dee, still standing, is carried through the same window"
     );
 }

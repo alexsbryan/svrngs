@@ -10,7 +10,9 @@
 //! a key standing in no group Sam's computer holds is closed at the
 //! connection, as on every protocol a member speaks, since a raw port
 //! carries no pass; and a person past the lend's limit is told so, the
-//! limit counting people, so one person's two connections are one.
+//! limit counting people, so one person's two connections are one; and a
+//! person removed with a connection open is cut by Sam's computer within
+//! seconds, since the member's own computer may not cut itself (give-cut).
 
 use std::net::SocketAddr;
 use std::time::Duration;
@@ -23,7 +25,7 @@ use svrngs_node::iroh::{EndpointAddr, MemoryLookup, RelayConfig};
 use svrngs_node::lend::{Lend, Raw, Source};
 use svrngs_node::link::Link;
 use svrngs_node::node::Node;
-use svrngs_node::SigningKey;
+use svrngs_node::{actor_of, SigningKey};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::time::timeout;
@@ -330,5 +332,63 @@ async fn the_limit_counts_people_across_connections() {
     assert_eq!(
         asks(&mut one, b"again").await.as_deref(),
         Some(&b"again"[..])
+    );
+}
+
+/// Sam's computer removes `who` from the group they stand in there: the
+/// cut `svrngs remove` makes, written on Sam's record.
+fn remove(sam: &Computer, who: &Computer) {
+    let rail = sam.node.rail();
+    let (group, member) = rail
+        .standing_anywhere(&actor_of(&who.key))
+        .expect("they stand");
+    let cut = svrngs_core::Removal {
+        person: member.person,
+        joined: None,
+    };
+    rail.commit(&group, &cut).unwrap().unwrap();
+}
+
+/// **A member no longer standing is cut** (give-cut). Alex and Dee each
+/// have a connection open on Sam's echo. Sam removes Alex, and within a few
+/// seconds Sam's computer closes Alex's: Alex's program reads its end.
+/// Dee, still standing, keeps theirs through the same window. Alex's side
+/// is the door's own member half, not Play, so it is Sam's computer that
+/// cuts: a removal says nothing new reaches the person, and an open
+/// connection would otherwise run until it closes. Planted: the lender's
+/// sweep that asks standing again, skipped.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_member_no_longer_standing_is_cut() {
+    let (sam, them, _) = house(&[(2, "Alex"), (3, "Dee")]).await;
+    let lend = share_tcp(&sam, echo().await, &[]);
+    let (alex, dee) = (&them[0], &them[1]);
+    let (carried, alex_s) = open(alex, &sam, &lend).await;
+    let _alex = carried.expect("Alex's computer opens Sam's echo");
+    let (carried, dee_s) = open(dee, &sam, &lend).await;
+    let _dee = carried.expect("Dee's computer opens Sam's echo");
+    let mut alexs = TcpStream::connect(alex_s).await.unwrap();
+    let mut dees = TcpStream::connect(dee_s).await.unwrap();
+    assert_eq!(
+        asks(&mut alexs, b"alex").await.as_deref(),
+        Some(&b"alex"[..])
+    );
+    assert_eq!(asks(&mut dees, b"dee").await.as_deref(), Some(&b"dee"[..]));
+
+    remove(&sam, alex);
+    let mut rest = Vec::new();
+    let ended = timeout(Duration::from_secs(5), alexs.read_to_end(&mut rest)).await;
+    assert!(
+        ended.is_ok(),
+        "Alex, removed, still has a connection open 5s later"
+    );
+    assert!(
+        rest.is_empty(),
+        "Alex hears {} bytes after the cut",
+        rest.len()
+    );
+    assert_eq!(
+        asks(&mut dees, b"still").await.as_deref(),
+        Some(&b"still"[..]),
+        "Dee, still standing, keeps their connection through the same window"
     );
 }
