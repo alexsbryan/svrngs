@@ -530,7 +530,12 @@ impl<'a> App<'a> {
     pub fn remove(&self) -> Result<(), RunError> {
         let name = self.name.as_str();
         if self.podman.answers(&["pod", "exists", name])? {
-            self.podman.run(&["pod", "rm", "--force", "--time", "0", name])?;
+            // Stopped, then removed: `pod rm --force` of a running pod exited
+            // 125 here on netavark's teardown ("nft" did not return
+            // successfully) and left the pod, where stop then rm went
+            // cleanly (podman 6.0.1 on a Mac, 2026-10-26).
+            self.podman.run(&["pod", "stop", "--time", "0", name])?;
+            self.podman.run(&["pod", "rm", name])?;
         }
         for v in &self.card.volumes {
             for v in [self.volume(v), format!("{}-snapshot", self.volume(v))] {
