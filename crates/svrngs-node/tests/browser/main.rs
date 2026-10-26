@@ -2642,8 +2642,9 @@ in_chromium!(
     /// computer, what can be done on it, in DESIGN §1's words; on a
     /// computer in no group, how to make one (on the page since
     /// start-group) or join one (on the page since arch-command (c)).
-    /// Planted, watched failing: index.html and home.js as c6c2212 left
-    /// them.
+    /// And how it opens again (give-session). Planted, watched failing:
+    /// index.html and home.js as c6c2212 left them; red before
+    /// give-session's words, with no `p.open`.
     the_home_page_says_what_it_is_for
 );
 async fn the_home_page_says_what_it_is_for(engine: Engine) {
@@ -2656,6 +2657,14 @@ async fn the_home_page_says_what_it_is_for(engine: Engine) {
         intro.starts_with(
             "This page is yours, and only this computer opens it: nobody in your groups sees it."
         ),
+        "{seen:#}"
+    );
+    // How it opens again, by the opener install.sh put in place, or a
+    // bookmark, with no terminal (give-session).
+    let seen = home_page(engine, &ada, json!({ "read": "#intro p.open" })).await;
+    assert_eq!(
+        seen["read"],
+        "To open it again, open svrngs from your Applications, or on Linux your applications menu. A bookmark of it opens it in this browser too.",
         "{seen:#}"
     );
     let dee = alone(dirs[1].path(), &relay).await;
