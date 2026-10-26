@@ -1,10 +1,9 @@
-DRAFT — the operator's to write (xenia PLAN §3). Until this line is gone, xenia refuses this file: its front matter must open it.
 ---
-reads_wpm: 200          # under the adult mean of 238 (Brysbaert 2019, J. Memory and Language 109:104047), on a phone and between other things; no source for the discount
-words_per_screen: 40    # about a fifth of a page's words (Nielsen 2008, "How Little Do Users Read?"), on a phone's smaller screen
-patience_s: 180         # demo/b.md's gate: a newcomer from the link to what they came for within three minutes
-regain_s: 20            # no source: xenia's plants' value (xenia plants/people/)
-act_s: 4                # Kim's 3 s, slower by phone typing: 36 words a minute on a phone (Palin et al. 2019, MobileHCI) against 52 on a keyboard (Dhakal et al. 2018, CHI)
+budget: 20          # the operator's: on a phone she reads about twenty words before she taps something
+patience: 80        # four looks' worth in one step: past that she'd rather ask the house chat than keep reading
+wait_s: 10          # on a phone, ten seconds of a spinner and she's off to another app
+reads_wpm: 200      # reading on a phone between other things, for the clock only
+act_s: 4            # thumb taps and thumb typing, slower than a keyboard
 ---
 I'm Ana. I'm twenty-four and I moved into the shared house last month. I
 do most things on my phone. I'm happy to ask the others when I'm stuck,

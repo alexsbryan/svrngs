@@ -38,9 +38,9 @@ use crate::people::{Person, Scene};
 const HOUSE: &str = "House";
 
 // What each person was told, the channels' opening messages (xenia DESIGN
-// §1, "Channel"). DRAFT — the operator's to write (xenia PLAN §3). Each
-// says only what its sender could know, and no word of svrngs's but its
-// name.
+// §1, "Channel"). A first cut, which the operator may rewrite once the
+// first accounts are read (xenia PLAN §3). Each says only what its sender
+// could know, and no word of svrngs's but its name.
 
 /// Sam, a housemate in no scene's cast, to Kim.
 const KIM_TOLD: &str = "Kim, you paid for Friday’s pizza, didn’t you? It was $36 for you and Ana. Can you put it in the house’s money, and let Ana know here?";

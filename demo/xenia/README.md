@@ -16,13 +16,13 @@ xenia run <svrngs>/demo/xenia --runs 3 --model sonnet
 
 The first line builds the worlds once, so no scene waits minutes on its
 first build. `xenia` is xenia's `src/run.ts`. It runs xenia's plants
-first, then each scene three times, and writes the accounts and a summary
+three times each first, then each scene three times, and writes the accounts and a summary
 under `runs/` where you run it, which is why you run it from xenia's
 checkout.
 
-The people are drafts until the operator writes them. xenia refuses a
-person whose file does not open with its numbers, so the set won't run
-while a `DRAFT` line tops any file in `people/`.
+The people in `people/` are a first cut, which the operator may rewrite
+once the first accounts are read. A changed person is a new person, so
+accounts from before a change don't compare with those after it.
 
 ## The scenes
 

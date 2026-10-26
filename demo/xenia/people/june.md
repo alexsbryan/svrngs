@@ -1,10 +1,9 @@
-DRAFT — the operator's to write (xenia PLAN §3). Until this line is gone, xenia refuses this file: its front matter must open it.
 ---
-reads_wpm: 150          # between the rates for reading to learn (200) and to memorize (138) (Carver 1990, Reading Rate): she reads each instruction to follow it exactly
-words_per_screen: 150   # no source: she reads what is in front of her, afraid to miss the part that matters, as xenia's plant Robin does (xenia plants/people/robin.md)
-patience_s: 300         # no source: her housemates asked, so she keeps at it; her fear shows in what she does, not in a shorter patience
-regain_s: 20            # no source: xenia's plants' value (xenia plants/people/)
-act_s: 6                # an unpractised typist, about 1.2 s a key (Card, Moran & Newell 1980, CACM 23(7), K for the worst typist), and every tap a small decision
+budget: 40          # the operator's: she reads a little more before acting, afraid of tapping the wrong thing
+patience: 200       # five looks' worth in one step: her housemates asked, so she keeps at it longer than most
+wait_s: 30          # she waits on a slow page rather than touch it, so long as nothing alarms her
+reads_wpm: 150      # she reads each line through before trusting it, for the clock only
+act_s: 6            # she types slowly and thinks before each click
 ---
 I'm June. I'm sixty-three and I live in a shared house with younger
 housemates. I use my computer for email, the news and video calls with my
