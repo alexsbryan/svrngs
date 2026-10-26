@@ -11,7 +11,7 @@
 // checked by expenses.js's one validator before it is sent. Each person is
 // kept by their first key, you by `you_key`, and said by name, two of one
 // name told apart by when each joined (`called`; keys-names).
-import { EXPENSE, SETTLE, SHARE, actsOf, called, init, money, parseCents, reduce, transfers, validate } from './expenses.js';
+import { EXPENSE, NOT_IN, SETTLE, SHARE, actsOf, called, init, money, parseCents, reduce, splitShares, transfers, validate } from './expenses.js';
 
 const ACTS = 'svrngs/acts';
 const app = document.getElementById('app');
@@ -52,22 +52,37 @@ async function show() {
   });
   // A person's name, and whose computer wrote their part when it was someone else's.
   const through = (name, via) => (via ? `${name}, through ${via === you ? 'your' : `${via}’s`} computer` : name);
+  // Who the payer named and hasn't said yet, and who said not them, by name
+  // (expenses.js `named`): said on the line, never counted.
+  const saying = (names, words) => (names.length ? `; ${words(names.join(', '))}` : '');
   const spent = Object.entries(state.expenses).map(([id, e]) => {
     const payer = through(e.payer === me ? 'You' : name(e.payer), e.vias[e.payer]);
     const split = e.participants.map((p) => (p === e.payer ? name(p) : through(name(p), e.vias[p])));
-    const li = el('li', `${payer}${e.vias[e.payer] ? ',' : ''} paid ${money(e.amount_cents)} for ${e.description}, split between ${split.join(split.some((p) => p.includes(',')) ? '; ' : ', ')}. `);
+    const others = saying(Object.keys(e.waiting ?? {}), (n) => `waiting on ${n}`) + saying(Object.keys(e.not ?? {}), (n) => `${n} wasn’t in on it`);
+    const li = el('li', `${payer}${e.vias[e.payer] ? ',' : ''} paid ${money(e.amount_cents)} for ${e.description}, split between ${split.join(split.some((p) => p.includes(',')) ? '; ' : ', ')}${others}. `);
     if (!e.participants.includes(me)) li.append(button('Say you were in on it', null, () => send({ kind: SHARE, expense: id })));
     return li;
   });
   const everyone = spans?.filter((s) => s.left == null).map((s) => called(spans, s.person_key, s.person)) ?? people;
-  const add = el('p', '', field('What it was for: ', 'what'), ' ', field('How much: ', 'amount'), ' ', button('Add it, paid by you', 'add', () => {
+  // Who was in on it: each other person in the group, unticked. A name ticked
+  // is asked, and counts only once they say so themselves (expenses.js).
+  const ticks = (spans?.filter((s) => s.left == null).map((s) => s.person) ?? people).filter((p) => p !== you).map((p) => [p, Object.assign(el('input'), { type: 'checkbox' })]);
+  const who = ticks.length ? ['Who was in on it? ', ...ticks.flatMap(([p, t]) => [el('label', '', t, ` ${p}`), ' '])] : [];
+  const add = el('p', '', field('What it was for: ', 'what'), ' ', field('How much: ', 'amount'), ' ', ...who, button('Add it, paid by you', 'add', () => {
     const cents = parseCents(document.getElementById('amount').value);
     if (cents === null) return said.replaceChildren('Say how much, in dollars and cents, such as 12.50.');
-    return send({ kind: EXPENSE, amount_cents: cents, description: document.getElementById('what').value });
+    const named = ticks.filter(([, t]) => t.checked).map(([p]) => p);
+    return send({ kind: EXPENSE, amount_cents: cents, description: document.getElementById('what').value, ...(named.length && { named }) });
   }));
+  // What someone named you in, asked of you, with what your share would be.
+  const asked = Object.entries(state.expenses).filter(([, e]) => Object.hasOwn(e.waiting ?? {}, you)).map(([id, e]) => {
+    const yours = splitShares(e.amount_cents, [...e.participants, me], state.names).find(([p]) => p === me)[1];
+    return el('p', `${name(e.payer)} says you were in on ${e.description}: ${money(yours)}. `, button('That’s right', null, () => send({ kind: SHARE, expense: id })), ' ', button('Not me', null, () => send({ kind: NOT_IN, expense: id })));
+  });
   app.replaceChildren(
     el('h1', 'Money'),
     el('p', mine > 0 ? `You’re owed ${money(mine)}.` : mine < 0 ? `You owe ${money(-mine)}.` : 'You’re square with everyone.'),
+    ...asked,
     el('h2', 'Who pays whom'),
     pays.length ? el('ul', '', ...pays) : el('p', 'Nobody owes anybody.'),
     el('h2', 'What people paid for'),

@@ -42,6 +42,11 @@
 // **Who shares an expense is who confirmed it, never who is in the group.**
 // The moment a split reads "everyone here", the same acts divide differently
 // once someone joins, and a newcomer silently re-divides every old expense.
+// The payer may name who was in on it (`named`, each by name, as the page
+// lists the group's people: `svrngs/acts` gives their names, and keys only
+// of those who acted): a name moves no one's money, and is only who the
+// expense waits on, until each says so themselves (a share) or says not
+// them (`NOT_IN`). The payer names; they never sign for anyone.
 //
 // **The state is JSON and nothing else** (tag e0-bot, DESIGN C4): no Set, no Map, no
 // Date, and nothing kept between calls in a module variable.
@@ -50,6 +55,7 @@ export const EXPENSE = 'expense';
 export const SHARE = 'share';
 export const SETTLE = 'settle';
 export const REMINDED = 'reminded';
+export const NOT_IN = 'not-in';
 const MAX_CENTS = 100_000_000;
 const MAX_WORDS = 100;
 
@@ -151,7 +157,7 @@ export function validate(state, act) {
     return isKey(op.due) ? [] : [gap('no_due', 'a reminder for nothing')];
   }
   if (!isKey(by) || !isKey(who(act))) return [gap('no_one', 'an entry that no one in the chat wrote')];
-  if (op.kind === SHARE) {
+  if (op.kind === SHARE || op.kind === NOT_IN) {
     return has(state.expenses, op.expense) ? [] : [gap('no_expense', 'a share of an expense that is not in the book')];
   }
   if (op.kind !== EXPENSE && op.kind !== SETTLE) {
@@ -167,6 +173,8 @@ export function validate(state, act) {
   if (op.kind === EXPENSE && typeof op.description === 'string' && op.description.length > MAX_WORDS) {
     gaps.push(gap('long_description', `a description over ${MAX_WORDS} characters`));
   }
+  const named = op.kind === EXPENSE && op.named !== undefined ? (Array.isArray(op.named) ? op.named : [null]) : [];
+  if (named.some((p, i) => !isKey(p) || p === by || named.indexOf(p) !== i)) gaps.push(gap('bad_named', 'naming someone who was in on it by no name, twice, or the payer'));
   if (op.kind === SETTLE && (!isKey(op.to) || (op.to_key !== undefined && !isKey(op.to_key)) || payee(state, op) === who(act))) {
     gaps.push(gap('bad_settle', 'paying back no one, or yourself'));
   } else if (op.kind === SETTLE && payee(state, op) === null) {
@@ -258,17 +266,24 @@ export function reduce(state, act) {
 
   if (op.kind === EXPENSE) {
     // `vias`: whose computer wrote each person's part, where it was someone else's.
-    const e = { payer: me, amount_cents: op.amount_cents, description: op.description.trim(), participants: [me], vias: via ? { [me]: via } : {} };
+    const e = { payer: me, amount_cents: op.amount_cents, description: op.description.trim(), participants: [me], vias: via ? { [me]: via } : {}, waiting: {}, not: {} };
+    for (const p of op.named ?? []) e.waiting[p] = true;
     state.expenses[id] = e;
     split(e, 1);
   } else if (op.kind === SHARE) {
     const e = state.expenses[op.expense];
+    for (const said of [e.waiting, e.not]) delete said[by];
     // Confirming twice is confirming once.
     if (e.participants.includes(me)) return state;
     split(e, -1);
     e.participants = byName([...e.participants, me], state.names);
     if (via) e.vias[me] = via;
     split(e, 1);
+  } else if (op.kind === NOT_IN) {
+    const e = state.expenses[op.expense];
+    if (!has(e.waiting, by)) return state;
+    e.not[by] = true;
+    delete e.waiting[by];
   } else if (op.kind === SETTLE) {
     const to = payee(state, op);
     const key = settleKey(me, to, op.amount_cents, ts);
