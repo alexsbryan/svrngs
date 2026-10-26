@@ -54,11 +54,15 @@ async fn svrngs_new_keeps_the_relay_a_group_made_on_the_home_page_keeps() {
         .await
         .expect("Sam's computer reaches the relay on 127.0.0.1");
 
-    // "Make a group" on the home page, as its own page posts it.
+    // "Make a group" on the home page, as its own page posts it, showing
+    // the token: the relay kept is what this test holds, and a browser's
+    // session is session.rs's (give-session).
     let at = format!("svrngs.localhost:{}", sam.api_addr().port());
     let body = r#"["Lab","Sam"]"#;
+    let token = sam.token();
     let request = format!(
-        "POST /group HTTP/1.1\r\nHost: {at}\r\nOrigin: http://{at}\r\nSec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+        "POST /group HTTP/1.1\r\nHost: {at}\r\nOrigin: http://{at}\r\nSec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nAuthorization: Bearer {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+        token.trim(),
         body.len()
     );
     let mut sock = tokio::net::TcpStream::connect(sam.api_addr())

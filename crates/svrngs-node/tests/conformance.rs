@@ -512,12 +512,26 @@ async fn browser_args(way: Way, engine: Engine, g: &Group, relay: &Server) -> Va
     args
 }
 
-/// The browser half run with `args`: what it saw, its one JSON line.
-async fn browse(args: &Value) -> Value {
+/// What svrngs opens in the browser half on a computer (web/tests/page.mjs
+/// `opened`): Alex's home page and each lend's origin, as Alex's browser
+/// holds them once svrngs opened them (give-session); a phone's, none.
+fn opens(way: Way, g: &Group) -> Value {
+    let names = json!(["svrngs", label(&g.sam), label(&g.bo)]);
+    let (port, token) = (g.alex.api_addr().port(), g.alex.token());
+    match way {
+        Way::Computer => json!([{ "port": port, "token": token.trim(), "names": names }]),
+        Way::Wildcard => json!([]),
+    }
+}
+
+/// The browser half run with `args`, opened as `opens` says: what it saw,
+/// its one JSON line.
+async fn browse(args: &Value, opens: &Value) -> Value {
     let out = tokio::process::Command::new("node")
         .arg(repo().join("web/tests/conformance.mjs"))
         .arg(args.to_string())
         .env("SVRNGS_BROWSERS", browsers())
+        .env("SVRNGS_OPENS", opens.to_string())
         .output()
         .await
         .expect("node runs: the browser tests need Node 18 or later");
@@ -539,7 +553,11 @@ async fn conformance(way: Way, engine: Engine) {
     let relay = relay().await;
     let g = group(&relay).await;
     let api = g.alex.api_addr();
-    let ran = browse(&browser_args(way, engine, &g, &relay).await).await;
+    let ran = browse(
+        &browser_args(way, engine, &g, &relay).await,
+        &opens(way, &g),
+    )
+    .await;
     let kept = repo().join("target/conformance");
     std::fs::create_dir_all(&kept).unwrap();
     std::fs::write(
@@ -768,7 +786,7 @@ async fn tries(way: Way) {
         })
         .collect();
     args["routes"] = json!(routes);
-    let ran = browse(&args).await;
+    let ran = browse(&args, &opens(way, &g)).await;
     std::fs::write(
         kept.join(format!("{}.json", way.as_str())),
         format!("{ran:#}"),
