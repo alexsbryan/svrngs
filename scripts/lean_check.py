@@ -264,8 +264,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # as the sign-in key is (`declared::write_secret`), its one check beside
 # `from_this_computer`, `ask_running` and install.sh's curl showing it,
 # +48 and 0, inside its estimate (+45 to +90, SURVEY.md §6), after its
-# own cut of `NotLoopback`'s words to one line (-2): 18,275.
-BUDGET = {"crates/svrngs-core": 3239, ".": 18276}
+# own cut of `NotLoopback`'s words to one line (-2): 18,275. give-session,
+# under the same ceiling, its range +110 to +220 (SURVEY.md:222, top
+# 18,495): a browser let in only by an open's session (session.rs, its
+# checks in home.rs and origin.rs), a read's capability (+30), `svrngs
+# open` (+26) and install.sh's opener (+6), after its own cut of `run`'s
+# verbs printing once (-15, 2266a50a): +216 and 0, at 18,491.
+BUDGET = {"crates/svrngs-core": 3239, ".": 18492}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
