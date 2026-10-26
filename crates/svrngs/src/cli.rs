@@ -176,6 +176,10 @@ svrngs — keep what your group shares on your own computers.
   svrngs unshare <name>
       Stop lending <name>.
 
+  svrngs open
+      Open your home page in your browser, as svrngs in your Applications
+      (on Linux, your applications menu) does.
+
   svrngs share --folder <dir> --group <group>
       Keep <dir> the same on every computer in <group> that shares a folder
       of its name, whenever svrngs runs here, from now on: anyone in it may
@@ -311,6 +315,8 @@ pub enum Verb {
     /// `leave` (groups-leave), asked of svrngs running here: the group
     /// as typed.
     Leave(String),
+    /// `open` (give-session): the home page, in this computer's browser.
+    Open,
     Relay(Relay),
     Help,
 }
@@ -533,6 +539,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             let at = relay::At::Name { name, staging };
             Ok(Verb::Relay(Relay { at, open }))
         }
+        "open" => Ok(Verb::Open),
         "help" | "-h" | "--help" => Ok(Verb::Help),
         other => Err(format!("unknown command `{other}`")),
     }
@@ -598,8 +605,10 @@ pub enum Refusal {
     /// `room` refused by svrngs running here, in its words.
     #[error("{0}")]
     Room(String),
-    #[error("svrngs is not running on this computer, and only it syncs a folder: start it, then run this again")]
+    #[error("svrngs is not running on this computer: start it, then run this again")]
     NotRunning,
+    #[error("svrngs running here did not open your home page: {0}")]
+    Unopened(String),
     #[error("the folder was refused: {0}")]
     Folder(String),
     #[error("cannot ask svrngs running here: no HTTP client ({0})")]
@@ -668,6 +677,7 @@ impl Refusal {
             | Refusal::Lends(_)
             | Refusal::CannotCheck(_)
             | Refusal::NotRunning
+            | Refusal::Unopened(_)
             | Refusal::NoClient(_)
             | Refusal::Unchanged(_)
             | Refusal::RelayStart(_)
@@ -765,6 +775,7 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
         Verb::Help => format!("{USAGE}\n"),
         Verb::Relay(asked) => return relay::run(asked, &root).await,
         Verb::Unshare(name) => unshare(&root, &name)?.to_string(),
+        Verb::Open => open(&root).await?,
         Verb::Folder { dir, group } => format!("{}\n", folder(&root, dir, &group).await?),
         Verb::Remove {
             kind,
@@ -894,6 +905,27 @@ fn said(seed: &Seed, text: &str, said: impl FnOnce(Outcome) -> Said) -> Result<S
             said(outcome).to_string().trim_end().to_string(),
         )),
     }
+}
+
+/// `svrngs open`: an address with a code that opens the home page once,
+/// as its session there (give-session), asked of svrngs running here and
+/// opened in this computer's browser, else said to open there.
+async fn open(root: &Path) -> Result<String, Refusal> {
+    let (ok, text) = ask_running(root, "/v1/open", &serde_json::json!({})).await?;
+    let open: Option<serde_json::Value> = serde_json::from_str(&text).ok().filter(|_| ok);
+    let at = open.and_then(|o| Some(o["open"].as_str()?.to_string()));
+    let at = at.ok_or_else(|| Refusal::Unopened(text.trim().into()))?;
+    let opener = if cfg!(target_os = "macos") {
+        "open"
+    } else {
+        "xdg-open"
+    };
+    let opened = std::process::Command::new(opener).arg(&at).status();
+    tracing::debug!(target: "cli", opener, ?opened, "cli: open — the home page, with a code for its session, given to the browser");
+    Ok(match opened {
+        Ok(s) if s.success() => "Your home page is open in your browser.\n".into(),
+        _ => format!("Open this in your browser within a minute: {at}\n"),
+    })
 }
 
 /// POST `body` to `route` of svrngs running here, at the API it wrote,
@@ -1554,7 +1586,8 @@ async fn serve(
         | Verb::Relay(_)
         | Verb::Folder { .. }
         | Verb::Remove { .. }
-        | Verb::Leave(_) => {
+        | Verb::Leave(_)
+        | Verb::Open => {
             unreachable!("answered in `run`")
         }
     };

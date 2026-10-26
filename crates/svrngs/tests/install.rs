@@ -338,7 +338,11 @@ async fn the_line_run_twice_installs_runs_at_login_opens_home_and_joins_once() {
     let api = std::fs::read_to_string(home.path().join(".svrngs/api")).unwrap();
     let port_home = api.trim().rsplit(':').next().unwrap().to_string();
     let opened = std::fs::read_to_string(home.path().join("stubs/opened")).unwrap();
-    assert_eq!(opened, format!("http://svrngs.localhost:{port_home}/\n"));
+    let address = format!("http://svrngs.localhost:{port_home}/");
+    assert!(
+        opened.starts_with(&format!("{address}svrngs-open?code=")),
+        "{opened}"
+    );
     // As the command and the home page say it, and the same the second time
     // (start-address (b)).
     let address = format!(
@@ -407,7 +411,8 @@ fn as_linux(site: &Path) {
 /// macOS by the stand-in for launchctl, on Linux by the one for systemctl,
 /// each starting it as the system would — keeps the page svrngs came from
 /// in the data dir, where a group made on the home page keeps it, and
-/// names and opens the home page, where "Make a group" is. Planted,
+/// names and opens the home page, where "Make a group" is, with a session,
+/// and puts the opener in place ([`the_opener_opens_the_home_page`]). Planted,
 /// watched failing: install.sh as a136f60 left it, joining the page's
 /// address as a link and refusing.
 #[tokio::test(flavor = "multi_thread")]
@@ -451,13 +456,101 @@ async fn a_founder_s_line_installs_keeps_svrngs_at_login_and_opens_the_home_page
         );
         let named = format!("Your home page, the same address each time svrngs starts: {address}");
         assert!(said.contains(&named), "{said}");
-        let opened = std::fs::read_to_string(home.path().join("stubs/opened")).unwrap();
-        assert_eq!(opened, format!("{address}\n"));
+        the_opener_opens_the_home_page(home.path(), uname.is_some(), &address, &said).await;
         // Where the node reads it for a group made on the home page:
         // install.sh spells the file in shell, so it is pinned here.
         let origin = std::fs::read_to_string(data.join(ORIGIN_FILE)).unwrap();
         assert_eq!(origin, page, "the page svrngs came from, kept");
     }
+}
+
+/// What svrngs answers the open `url` redeemed in a browser: its status,
+/// and whether it set the session.
+async fn redeemed(url: &str) -> (u16, bool) {
+    let (host, path) = url
+        .strip_prefix("http://")
+        .unwrap()
+        .split_once('/')
+        .unwrap();
+    let port = host.rsplit(':').next().unwrap();
+    let mut sock = tokio::net::TcpStream::connect(format!("127.0.0.1:{port}"))
+        .await
+        .unwrap();
+    let ask = format!("GET /{path} HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\n\r\n");
+    sock.write_all(ask.as_bytes()).await.unwrap();
+    let mut reply = String::new();
+    sock.read_to_string(&mut reply).await.unwrap();
+    let set = reply
+        .to_ascii_lowercase()
+        .contains("\r\nset-cookie: svrngs=");
+    (reply[9..12].parse().unwrap(), set)
+}
+
+/// **install.sh opens the home page with a session, and puts in place an
+/// opener that does again** (give-session): what it opened is an open's
+/// address, whose code, redeemed, sets the home page's session once. The
+/// opener — an app in `~/Applications` on macOS, a `.desktop` entry in the
+/// applications menu on Linux — runs `svrngs open`, which opens another,
+/// and the line says where it is in the person's words. Run with the
+/// stubs on `PATH`, as install.sh ran, so no browser of this computer's is
+/// opened. Red before the opener: no app, no entry, and the home page
+/// opened at its bare address, which a browser with no session is refused.
+async fn the_opener_opens_the_home_page(home: &Path, linux: bool, address: &str, said: &str) {
+    let opened = || std::fs::read_to_string(home.join("stubs/opened")).unwrap();
+    let open = |n: usize| {
+        opened()
+            .lines()
+            .nth(n)
+            .map(String::from)
+            .unwrap_or_default()
+    };
+    let first = open(0);
+    assert!(
+        first.starts_with(&format!("{address}svrngs-open?code=")),
+        "{}",
+        opened()
+    );
+    assert_eq!(
+        redeemed(&first).await,
+        (303, true),
+        "install.sh's open sets the session"
+    );
+    assert_ne!(redeemed(&first).await.0, 303, "a replayed open is refused");
+    let (run, where_) = if linux {
+        let entry = home.join(".local/share/applications/svrngs.desktop");
+        let entry = std::fs::read_to_string(&entry).expect("a .desktop entry");
+        let exec = entry.lines().find_map(|l| l.strip_prefix("Exec="));
+        (exec.expect("an Exec line").to_string(), "applications menu")
+    } else {
+        let app = home.join("Applications/svrngs.app/Contents/MacOS/svrngs");
+        (format!("'{}'", app.display()), "Applications")
+    };
+    let words = format!("To open it again, open svrngs from your {where_}.");
+    assert!(said.contains(&words), "not said: {words}\n{said}");
+    let path = format!(
+        "{}:/usr/bin:/bin:/usr/sbin:/sbin",
+        home.join("stubs").display()
+    );
+    let ran = tokio::process::Command::new("/bin/sh")
+        .args(["-c", &run])
+        .env_clear()
+        .env("HOME", home)
+        .env("PATH", path)
+        .output()
+        .await
+        .unwrap();
+    assert!(ran.status.success(), "the opener ran: {ran:?}");
+    let second = open(1);
+    assert!(
+        second.starts_with(&format!("{address}svrngs-open?code=")),
+        "{}",
+        opened()
+    );
+    assert_eq!(
+        redeemed(&second).await,
+        (303, true),
+        "the opener's open sets the session"
+    );
 }
 
 /// **svrngs on the login shell's PATH** (the room's report, 3: a person

@@ -22,7 +22,9 @@
 # when there is one, keeps the page it came from in the data dir (where a
 # group made on the home page keeps it, for its https links), keeps
 # svrngs running whenever this person logs in (a LaunchAgent on
-# macOS, a systemd --user unit on Linux), and opens their home page. Run
+# macOS, a systemd --user unit on Linux), puts an opener that runs
+# `svrngs open` in their Applications (a .desktop entry on Linux), and opens
+# their home page with it, a code that becomes its session there. Run
 # again, it updates in place, and svrngs joins nothing twice. With
 # --relay it joins nothing and keeps `svrngs relay` running instead, beside
 # any svrngs kept already: a LaunchAgent on macOS; on Linux, where only the
@@ -168,18 +170,26 @@ fi
 say "$unit runs now, and whenever you log in ($kept)."
 [ -z "$relay" ] || exit 0
 
-# Where its home page is: the port svrngs writes to its data, once it
-# answers there, and keeps at each start after (start-address). It is asked
-# as any program asks it, with the token beside the address, sent on stdin so
-# no other user's `ps` reads it (give-token).
+# The opener, in the person's Applications on macOS and their applications
+# menu on Linux, where "Open svrngs from your computer" sends them: it runs
+# `svrngs open`, so the home page opens again with no terminal (give-session).
+if [ "$os" = darwin ]; then
+  app="$HOME/Applications/svrngs.app/Contents" where=Applications && mkdir -p "$app/MacOS"
+  printf '<plist version="1.0"><dict><key>CFBundleExecutable</key><string>svrngs</string></dict></plist>\n' >"$app/Info.plist"
+  printf '#!/bin/sh\nSVRNGS_DIR="%s" exec "%s/svrngs" open\n' "$dir" "$bin" >"$app/MacOS/svrngs" && chmod +x "$app/MacOS/svrngs"
+else
+  app="${XDG_DATA_HOME:-$HOME/.local/share}/applications" where="applications menu" && mkdir -p "$app"
+  printf '[Desktop Entry]\nType=Application\nName=svrngs\nExec=env "SVRNGS_DIR=%s" "%s/svrngs" open\n' "$dir" "$bin" >"$app/svrngs.desktop"
+fi
+# The home page opened, once svrngs answers there: `svrngs open` asks it as
+# any program asks it, with the token beside the address it writes to its
+# data and keeps at each start after (start-address, give-token).
 tries=0
-until api="$(cat "$dir/api" 2>/dev/null)" && printf 'Authorization: Bearer %s' "$(cat "$dir/token" 2>/dev/null)" |
-  curl -fsS -o /dev/null -H @- "$api/v1/groups" 2>/dev/null; do
+until said="$(SVRNGS_DIR="$dir" "$bin/svrngs" open 2>/dev/null)"; do
   tries=$((tries + 1))
   [ "$tries" -lt 30 ] || no "svrngs did not start within 30 seconds; $dir/svrngs.log says why."
   sleep 1
 done
-home="http://svrngs.localhost:${api##*:}/"
-say "Your home page, the same address each time svrngs starts: $home"
-if [ "$os" = darwin ]; then opener=open; else opener=xdg-open; fi
-"$opener" "$home" 2>/dev/null || say "Open it in your browser: $opener did not."
+api="$(cat "$dir/api")"
+say "Your home page, the same address each time svrngs starts: http://svrngs.localhost:${api##*:}/" "$said"
+say "To open it again, open svrngs from your $where."
