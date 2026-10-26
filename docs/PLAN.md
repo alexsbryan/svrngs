@@ -167,6 +167,14 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   (`crates/svrngs/tests/tcp.rs`); +126 library, 0 core, 0 `apps/`, 0
   surface (the same item, a lend may be TCP), the cap 18,868, its raise
   landed for the operator (c0d3b829; "Go for both", give-play's too).
+  Landed, give-play: a member presses Play on a raw lend's row, and the
+  lend opens on `127.0.0.1` at its kept port, UDP or TCP as it is, the same
+  after a restart, gone on Stop and when the member stops standing, and
+  listed under "What acts as you" with its Stop
+  (`crates/svrngs/tests/play.rs`, `crates/svrngs-node/tests/browser/play.rs`);
+  +226 library, 0 core, 0 `apps/`, +2 surface (a lend's `raw`, and
+  `/v1/play` answering a program holding the token), the cap 19,095, its
+  raise landed for the operator (2f454259).
   Not carried: the jellyfin, movie-night and taste `check.sh` runs,
   outside the gate, which open a lend's origin bare. The operator, "Let's do
   half the rows": the loop stops after the svrngs half, give-play-scene,
