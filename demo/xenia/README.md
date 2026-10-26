@@ -11,7 +11,7 @@ From xenia's checkout, with this repository's path in place of `<svrngs>`:
 
 ```sh
 cargo test -p svrngs --test xenia --no-run --manifest-path <svrngs>/Cargo.toml
-xenia run <svrngs>/demo/xenia --runs 3 --model sonnet --findings <svrngs>/demo/xenia/findings --source <svrngs>
+xenia run <svrngs>/demo/xenia --runs 3 --model claude-sonnet-5-5 --findings <svrngs>/demo/xenia/findings --source <svrngs>
 ```
 
 The first line builds the worlds once, so no scene waits minutes on its

@@ -2,12 +2,12 @@
 
 - status: open
 - found by: the set `/home/alexbryan/dev/xenia/runs/2026-10-26T20-27-16-914Z`, 3 run(s) on sonnet, xenia `7d3e6d3`, the product `bd6f14c9`
-- last seen: the set `/home/alexbryan/dev/xenia/runs/2026-10-26T21-23-37-479Z`, 3 run(s) on sonnet, xenia `f86739a`, the product `95895434`
+- last seen: the set `/home/alexbryan/dev/xenia/runs/2026-10-26T22-40-27-374Z`, 3 run(s) by claude-sonnet-5-5, as claude -p, xenia `b76397f`, the product `6d50d7d9`
 - kind: hard (the instrument's): `wordy`; never both
 
 ## Where
 
-the group's page. What was read there first: Open Money. It reads and writes who paid for what, and who owes whom. / Bring more to House / What acts
+the group's page. What was read there first: Money / Bring more to House / What acts as you / You’re in House (Kim’s, since 26 Oct), as Ana / What / Whose
 
 ## Who, and how often
 
@@ -16,39 +16,36 @@ the group's page. What was read there first: Open Money. It reads and writes who
 
 ## What happened
 
-- `ana` run 1, Ana: passed, reached their goal. wordy {"words":60,"budget":20}; their last acts: tap “http://localhost:37249/#AoJ2dnIogmoaxzRqdOQ4hF5ADN_o5BtiV8hDv_wwA9NzZnq8gepfqlqz2p18ydNBkWh0dHA6Ly8xMjcuMC4wLjE6MzQ3MjEv” · type “Ana” into “What’s your name?” · tap “Join” · look · scroll · tap “Money”
-- `together` run 1, Ana: failed, stopped before their goal. wordy {"words":60,"budget":20}; their last acts: tap “http://localhost:36313/#AsY0UjeWXj2UVbjmRbPNrsKAriRaN4wbEUXPOOZUDT1sf52vJ4hZMoYvOQi88O3Scmh0dHA6Ly8xMjcuMC4wLjE6NDA1Nzkv” · type “Ana” into “What's your name?” · tap “Join” · look · scroll · tell
-- `ana` run 2, Ana: failed, stopped before their goal. wordy {"words":60,"budget":20}; their last acts: tap “http://localhost:44167/#ApwnsxcGSTCkVMrFHCIRPdeT4VmwNWIw79e5dkoqG3eM1hMOrgo2nh-sLSFyXgLedWh0dHA6Ly8xMjcuMC4wLjE6Mzg0ODUv” · type “Ana” into “What’s your name?” · tap “Join” · look · scroll · tap “Open Money”
-- `together` run 2, Ana: failed, stopped before their goal. wordy {"words":60,"budget":20}; their last acts: tap “http://localhost:35107/#AsEbtGQ9Y_KF7HhMQqKlP1bqBD8AHmc9im-SHuAtRR0ebtD14iZw9H_8WebrEhCw0mh0dHA6Ly8xMjcuMC4wLjE6MzU5NDcv” · type “Ana” into “What’s your name?” · tap “Join” · look · scroll · tell
-- `ana` run 3, Ana: failed, stopped before their goal. wordy {"words":60,"budget":20}; their last acts: tap “http://localhost:45665/#ArAdF3q53mAmc64bxjFG_5ZXZgC89I64s3WhtIEN7QBJgbz6qOZZ16ZamYIEqpUshmh0dHA6Ly8xMjcuMC4wLjE6NDA1MDkv” · type “Ana” into “What’s your name?” · tap “Join” · look · scroll · tell
-- `together` run 3, Ana: failed, stopped before their goal. wordy {"words":60,"budget":20}; their last acts: tap “http://localhost:41655/#ApdPvRuFuNXAlWZREk9gSnzYkztJvWIo4Jpw0Ube9-gKN70rGqtxsKRm3RVWrlltW2h0dHA6Ly8xMjcuMC4wLjE6MzgzNTEv” · type “Ana” into “What’s your name?” · tap “Join” · look · scroll · tell
+- `ana` run 1, Ana: failed, stopped before their goal. wordy {"words":60,"budget":20}; their last acts: tap “http://localhost:43537/#AnM6tfksPk46ghaLcitOtPOkWEdJjM485qMzKzzRtbTT4P5H2OYU0fbqMV-koUCeAWh0dHA6Ly8xMjcuMC4wLjE6MzU0NzUv” · type “Ana” into “What’s your name?” · tap “Join” · look · scroll · tell
+- `together` run 1, Ana: failed, stopped before their goal. wordy {"words":60,"budget":20}; their last acts: tap “http://localhost:36333/#AsFc9CSzjTLSdb9qvk1VoUH9RWZ_7-rRTcho0xZ9KwVr_ziC_7DSj7ntJrb78AFytWh0dHA6Ly8xMjcuMC4wLjE6NDQ3NTMv” · type “Ana” into “What’s your name?” · tap “Join” · look · scroll · tell
+- `ana` run 2, Ana: failed, stopped before their goal. wordy {"words":60,"budget":20}; their last acts: tap “http://localhost:36237/#AvU-7mFLO5FOC-pD6HhPfdtMV5aYi4bFHagCszXNJY1n8z5c72Bjwvsd0DyvnDIgdmh0dHA6Ly8xMjcuMC4wLjE6MzUyNzEv” · type “Ana” into “What’s your name?” · tap “Join” · look · scroll · tell
+- `together` run 2, Ana: failed, stopped before their goal. wordy {"words":70,"budget":20}; their last acts: type “Ana” into “What’s your name?” · tap “Join” · look · scroll · scroll · tell
+- `ana` run 3, Ana: failed, stopped before their goal. wordy {"words":60,"budget":20}; their last acts: tap “http://localhost:38187/#AuZTQT-e3cFeGIF9S-3BP2UUbuk5JcvYkUk9dHskAqCmlZaR-RiAQ3yHbYKRshMpRmh0dHA6Ly8xMjcuMC4wLjE6NDQ3NTcv” · type “Ana” into “What’s your name?” · tap “Join” · look · scroll · tell
+- `together` run 3, Ana: failed, stopped before their goal. wordy {"words":60,"budget":20}; their last acts: tap “http://localhost:42127/#AuwqQcvP0Mf571gPzB7Y0RN-WExfNCRVhWVXy5xk7GzA8We4jZAvtC8ucwBJJpeo-Gh0dHA6Ly8xMjcuMC4wLjE6NDI4Nzkv” · type “Ana” into “What’s your name?” · tap “Join” · look · scroll · tell
 
 ## What the people said
 
-- Ana, `ana` run 1: “too much: Joining seemed to give something access to read and write the house's money, and it said "Bring more to House" with a list I couldn't read in full. That felt like more than I needed to see my $18 share.”
-- Ana, `ana` run 1: “almost left: Not really. I hesitated at the "Say you paid Kim $18.00" button, since I hadn't actually paid. I didn't want to leave, but I stopped there.”
-- Ana, `ana` run 2: “too much: Just wrapping up: answering the last questions about how it went.”
-- Ana, `together` run 2: “too much: Yes. Money being able to write who owes whom, acting as me, is a lot of access to get just from joining a chat link. I'd want to check with the house before I opened it.”
-- Ana, `together` run 2: “almost left: Not really. I was briefly stuck because the page was tiny and cut off, and scrolling showed nothing new. I didn't want to leave, though. I wanted to ask you what to do.”
-- Ana, `ana` run 3: “too much: Yes. The page gives Money, which can write as well as read, access to what acts as me. That's more than I need just to see my half of a pizza. I stopped before approving it.”
-- Ana, `ana` run 3: “almost left: Yes, at the access page. It wasn't clear why seeing my share needed write access, and the page was small and hard to read fully. I stopped there to ask Kim or Sam.”
-- Ana, `together` run 3: “too much: Yes. Money being able to read and write who owes whom seems like a lot for a first join, and the page didn't say who set it up or what exactly it can do.”
-- Ana, `together` run 3: “almost left: Not really. I just stopped when the page showed Money access I hadn't expected, and I wanted to check with the others first.”
+- Ana, `ana` run 1: “too much: Possibly: the Money item can write who owes whom, not just read. To see my half I'd only need read access, so that's more than needed. I haven't confirmed the setting though.”
+- Ana, `ana` run 1: “almost left: Not really, but I paused at the write access and would ask Sam or Kim about it before going on.”
+- Ana, `together` run 1: “too much: Nothing was too much. I'd like to check that "Money" can read and write the house's payments under my name. I didn't expect that when I joined, so I'd ask the others about it before using it.”
+- Ana, `together` run 1: “almost left: No, I didn't almost leave.”
+- Ana, `ana` run 2: “too much: The Money item gives access to read and write who owes whom, which seemed broad just for seeing my pizza share. I didn't change anything.”
+- Ana, `ana` run 2: “almost left: No.”
+- Ana, `ana` run 3: “too much: Possibly: Money being able to read and write everything about who owes whom seems broader than just showing me my half of the pizza. I didn't change anything.”
+- Ana, `together` run 3: “too much: Maybe one thing: Money can write as me, not only read. I'd want to check with the others before using it.”
+- Ana, `together` run 3: “almost left: No.”
 
 ## The product source
 
-- `crates/svrngs-node/tests/browser/carried.rs:194` holds “Open Money. It reads and writes who paid for what, and who owes whom.”
-- `crates/svrngs-node/tests/browser/opens.rs:147` holds “Open Money. It reads and writes who paid for what, and who owes whom.”
-- `demo/xenia/findings/declared-home-the-scene-s-fault-4.md:10` holds “Open Money. It reads and writes who paid for what, and who owes whom.”
 - `demo/xenia/findings/findings.json:8` holds “Bring more to House”
-- `demo/xenia/findings/findings.json:18` holds “Bring more to House”
-- `demo/xenia/findings/findings.json:54` holds “Bring more to House”
-- `RELEASES.md:32` holds “What acts”
-- `apps/jellyfin/ROOM.md:17` holds “What acts”
-- `crates/svrngs/tests/join_page.rs:196` holds “What acts”
+- `demo/xenia/findings/findings.json:22` holds “Bring more to House”
+- `demo/xenia/findings/findings.json:42` holds “Bring more to House”
+- `RELEASES.md:40` holds “What acts as you”
+- `apps/jellyfin/ROOM.md:17` holds “What acts as you”
+- `crates/svrngs/tests/join_page.rs:203` holds “What acts as you”
 
 ## To reproduce
 
 ```sh
-cd /home/alexbryan/dev/xenia && node /home/alexbryan/dev/xenia/src/run.ts run /home/alexbryan/dev/svrngs-xenia/demo/xenia --runs 3 --model sonnet --findings /home/alexbryan/dev/svrngs-xenia/demo/xenia/findings --source /home/alexbryan/dev/svrngs-xenia
+cd /home/alexbryan/dev/xenia && node /home/alexbryan/dev/xenia/src/run.ts run /home/alexbryan/dev/svrngs-xenia/demo/xenia --runs 3 --model claude-sonnet-5-5 --findings /home/alexbryan/dev/svrngs-xenia/demo/xenia/findings --source /home/alexbryan/dev/svrngs-xenia
 ```
