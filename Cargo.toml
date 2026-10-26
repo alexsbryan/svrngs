@@ -1,8 +1,8 @@
 [workspace]
 resolver = "3"
-# apps/give is here so the gate's rustfmt, clippy and tests reach it; it links
-# no svrngs crate (apps/give/Cargo.toml).
-members = ["crates/svrngs-core", "crates/svrngs-runtime", "crates/svrngs-node", "crates/svrngs", "apps/give"]
+# apps/give and its fold are here so the gate's rustfmt, clippy and tests reach
+# them; neither links a svrngs crate (apps/give/Cargo.toml).
+members = ["crates/svrngs-core", "crates/svrngs-runtime", "crates/svrngs-node", "crates/svrngs", "apps/give", "apps/give/fold"]
 
 [workspace.package]
 version = "0.1.0"
