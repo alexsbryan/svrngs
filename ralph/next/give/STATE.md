@@ -122,7 +122,7 @@ There are fourteen rows:
   - **(b) The change.** An owner task on the room's model (`room/owner.rs:67`, `:133`), its on-state kept as `room.json` keeps the room's, and the row in the cell beside the WiFi toggle (`home/home.js:158-163`). The trust floor's Play line comes with it.
   - **Check:** (a) red first, green after; the room's tests green throughout.
   - **THE OPERATOR DECIDED, 2026-10-26:** "Go for both": this row's raise is approved in advance, to one past where it lands, while it stays inside give-play's range and the ceiling (at most 19,233 and 3,244). A worker's edit of `BUDGET` is refused as a CI bypass (give-tcp-1.out), so commit the row's work, write the raise as a ready diff in `NEEDS_HUMAN.md`, and stop; the operator's session lands it. Past the range or the ceiling, the row stops for the operator as before.
-- [ ] give-play-scene — depends [give-play] — ONE ROW, its plant red first (AGENTS.md 5):
+- [x] give-play-scene 32953fc8d — depends [give-play] — ONE ROW, its plant red first (AGENTS.md 5):
   - **(a) The scene, played.** A raw-port scene in the gate's "scenes" suite: two people, two computers, stand-in UDP and TCP echo servers lent, each person pressing Play and their bytes crossing. It is red on a plant that unbinds the listener.
   - **(b) Run-of-show, before any run.** `demo/factorio.md` and `demo/minecraft.md`, written before the first run (`demo/README.md`).
   - **(c) The operator's sessions.** NEEDS_HUMAN.md asks the operator to set the bars, then to play:
