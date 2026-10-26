@@ -126,10 +126,7 @@ and every raise gives its reason.
 
 You need:
 - Rust 1.91 or later, with rustfmt and clippy;
-- Node.js 20 or later, then `npm ci --prefix web`;
-- commonwealth-ai checked out at `~/dev/commonwealth-ai`, or its path in
-  `COMMONWEALTH_AI`. `scripts/ports.py` compares every forked file with its
-  original there.
+- Node.js 20 or later, then `npm ci --prefix web`.
 
 Then run:
 
@@ -139,6 +136,13 @@ scripts/check.sh
 
 Every step passes, or it isn't done. On Linux, it also runs whole in a
 podman image: [`scripts/gate/README.md`](scripts/gate/README.md).
+
+Some of svrngs is forked from commonwealth-ai, and links nothing from it:
+each forked file names its original on a `ported from commonwealth-ai`
+line. You need commonwealth-ai only to follow those originals: checked out
+at `~/dev/commonwealth-ai`, or its path in `COMMONWEALTH_AI`,
+`scripts/ports.py` lists each forked file beside its original, and
+`scripts/principles_check.py --sync` re-pins `docs/principles/`.
 
 The rest of the map:
 - [`NORTH_STAR.md`](NORTH_STAR.md): what we answer to.
