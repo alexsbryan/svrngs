@@ -81,6 +81,12 @@ There are fourteen rows:
   - **(b) The change.** The session check sits beside `home.rs::only_itself` (`:172`) and in `origin.rs`. The exact-`Origin` guard stays as a second layer.
   - **(c) A recorded run on a Mac with podman.** A container's request to `host.containers.internal:<api port>` is refused, and the home page still opens, in `demo/runs/give/<date>-container/README.md`, with its commands. Without podman this is never-ran, with its reason.
   - **Check:** (a) red first, green after; the kept paths green throughout; the scenes green.
+  - **THE DIRECTOR DECIDED, 2026-10-26,** on `demo/runs/give/2026-10-26-session/NEEDS_HUMAN.md`: the full decision is in `DECISION.md` there.
+    - **A capability in the read address.** `/svrngs-reads` answers each read lend's `address` as `http://<read>.localhost:<port>/svrngs-as/<cap>/`. The cap is the token's HMAC over (page's lend, read lend), from `Sessions`, its input kept apart from a host cookie's.
+    - **Where it is taken.** `origin.rs::lent` lets the prefix in when the cap is this computer's for (`app_of`'s app, this lend), and that app is another lend. The prefix is stripped before anything else; `app_of` still names the app.
+    - **A navigation under the prefix** goes 303 to the home page's `/to?lend=&at=`. A cap never sets a lend's session.
+    - **The three red browser tests.** Their drivers take the read's address from `/svrngs-reads`, every assertion kept. Add one assertion: the plain origin, fetched with no cap, is refused.
+    - **The budget.** 18,446 at fbba26ca; the row's top is 18,495 (SURVEY.md:222). Past it after an economizing pass, stop for the operator.
 - [ ] give-udp — depends [give-session] — ONE ROW, red first, and `scripts/check.sh` once, at the close (GIVE.md §6):
   - **(a) Tests: A UDP PORT IS LENT.** Two nodes on loopback (`loopback_only`), failing at HEAD:
     - `svrngs share <port> --udp` lends a UDP port, and a member's datagrams reach it and come back.
