@@ -151,3 +151,83 @@ fn the_open_says_what_an_app_does_in_one_wording() {
         ])
     );
 }
+
+in_chromium!(
+    /// **An open leads to the home page, a lend opened from it, and a
+    /// bookmark of each opens it again** (give-session; WHAT_CAN_ACT_AS_YOU
+    /// §9, "nothing needs a terminal"). A browser svrngs never opened is
+    /// told at the home page and at a lend's origin alike to open svrngs
+    /// from the computer, naming the opener in the person's words, and the
+    /// lend's service is never asked. The address `svrngs open` hands the
+    /// browser opens the home page; its index opens Ada's pad in a tab, and
+    /// that tab opens both again by their typed addresses, as bookmarks do.
+    /// Before give-session the fresh browser was answered the home page and
+    /// the pad as the person. Planted: the Neither branch taken out of
+    /// `only_itself`, and the fresh browser is shown the home page.
+    an_open_leads_home_then_to_a_lend_and_a_bookmark_opens_each_again
+);
+async fn an_open_leads_home_then_to_a_lend_and_a_bookmark_opens_each_again(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &signing(7)).await;
+    let (pad, on_pad) = kept_page("<!doctype html><title>ada's pad</title><body>the pad").await;
+    lend(dir.path(), "pad", pad.port());
+    let port = ada.api_addr().port();
+    let home = format!("http://svrngs.localhost:{port}/");
+    let at = format!("http://{}.localhost:{port}/", label(1, "pad"));
+    let open: Value = reqwest::Client::new()
+        .post(format!("http://{}/v1/open", ada.api_addr()))
+        .bearer_auth(ada.token().trim())
+        .json(&json!({}))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+
+    let seen = drive(
+        engine,
+        "open.mjs",
+        json!({ "home": home, "lend": at, "open": open["open"], "words": "pad" }),
+        None,
+    )
+    .await;
+    eprintln!("the open's run: {seen:#}");
+
+    let opener = if cfg!(target_os = "macos") {
+        "Open svrngs from your Applications"
+    } else {
+        "Open svrngs from your applications menu"
+    };
+    for fresh in ["fresh_home", "fresh_lend"] {
+        assert_eq!(
+            seen[fresh]["title"], "Open svrngs from your computer",
+            "{seen:#}"
+        );
+        let text = seen[fresh]["text"].as_str().unwrap_or_default();
+        assert!(text.contains(opener), "{fresh} names the opener: {seen:#}");
+    }
+    assert_eq!(seen["error"], Value::Null, "{seen:#}");
+    assert_eq!(
+        seen["opened"], home,
+        "the open lands on the home page: {seen:#}"
+    );
+    for (key, url, title) in [("lend", &at, "ada's pad"), ("lend_again", &at, "ada's pad")] {
+        assert_eq!(
+            (&seen[key]["url"], &seen[key]["title"]),
+            (&json!(url), &json!(title)),
+            "{key}: {seen:#}"
+        );
+    }
+    assert_eq!(seen["home_again"]["url"], home, "{seen:#}");
+    assert_ne!(
+        seen["home_again"]["title"], "Open svrngs from your computer",
+        "a bookmark opens the home page again: {seen:#}"
+    );
+    let asked = on_pad.lock().unwrap().len();
+    assert_eq!(
+        asked, 2,
+        "the pad is asked only once opened, twice: {seen:#}"
+    );
+}
