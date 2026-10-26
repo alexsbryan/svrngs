@@ -206,7 +206,22 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   machine never-ran there; 0 core, 0 library, `apps/` about 1,430 lines
   of Rust by lean_check's rule and 68 of YAML, past GIVE.md §9's 460 to
   860 for these pieces, and Give's surface its five `x-svrngs` fields and
-  `give check`;
+  `give check`. Landed, give-app-keep: the keeper fact's one fold
+  (`apps/give/fold`), linked by Give's program and built to JavaScript for
+  its page (`apps/give/build.sh`), both held to `fold/cases.json`; `give
+  keep`, which lends an app only while the record names its computer,
+  copies it to the group's folder every 5 minutes and as it stops, each
+  copy naming its card version, and stops it when another computer keeps
+  it; `give page` and the carried page, with "Start it for the group" and
+  "kept by"; and scene 1 with the stand-in, in the gate's scenes
+  (`crates/svrngs/tests/scenes/give.rs`). 0 core, 0 library, `apps/`
+  about 1,160 lines by lean_check's rule (the fold 249, the program's
+  record, lending, shelf, page and keeping 619, its commands +116, the
+  runtime and card +24, the page 93, the build 50), against GIVE.md §9's
+  80 to 150 for the fold and 500 to 950 for supervision and snapshots;
+  Give's surface gains `give keep` and `give page`. Who may keep is asked
+  of the operator, any member until then
+  (`demo/runs/give/2026-10-26-keep/QUESTION.md`);
 - sealing, at its §2 trigger.
 
 The operator's switch stands apart from that order: when they flip

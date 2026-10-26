@@ -8,9 +8,11 @@ small package on svrngs's public surface. It links no svrngs crate
 API, `svrngs share` and `svrngs unshare`, the synced folder, and its own
 carried page.
 
-This much has landed: the runtime on the computer that keeps an app, and an
-author's check of a card. The fold of who keeps what, the keeper program and
-the carried page come next (`ralph/next/give/STATE.md`).
+This much has landed: the runtime on the computer that keeps an app, an
+author's check of a card, the one fold of who keeps what, Give's program for
+computers, and the carried page with the shelf and "Start it for the group".
+Moving an app, taking it over and its copies come next
+(`ralph/next/give/STATE.md`).
 
 ## A card
 
@@ -41,6 +43,34 @@ made. If a step fails, the check names it. `--agree` is your yes to the
 card's asks, once you have read them. On a Mac, if Podman's machine is
 missing or stopped, the check makes it or starts it, sized for the card.
 
+## Keeping an app
+
+A computer keeps apps for its groups when it has Podman and runs Give's
+program beside svrngs:
+
+    give page <group>     # once, by anyone: brings Give to the group
+    give keep             # on each computer that keeps apps; leave it running
+
+`give page` puts Give's page in the group's folder, so every member can open
+it from their home page with nothing to install. The page lists the shelf.
+**Start it for the group** asks what the app's makers ask of whoever runs
+it, and the app is then kept by the computer the page was open on. Each row
+says who keeps the app: "kept by your computer", or "kept by Cy’s computer".
+
+`give keep` says in each group that this computer can keep apps. It keeps
+each app the group's record names this computer for, and only those. It
+lends the app through svrngs (`svrngs share`) once it is healthy, copies
+its state into the group's folder every 5 minutes and as it stops, and
+keeps this computer's 3 newest copies of each app. When the record names
+another computer, it stops lending the app, copies it one last time and
+stops it. Ctrl-C stops everything it keeps the same way.
+
+Any member's computer that runs `give keep` may keep an app for now. Who
+may keep is the operator's to decide (`demo/runs/give/2026-10-26-keep/QUESTION.md`).
+
+A lend reaches everyone in every group its person is in, under one name
+(`svrngs share`), so one computer keeps one app of a kind at a time.
+
 ## The files
 
 - `src/card.rs`: a card, read once, with each refusal naming its field.
@@ -48,8 +78,20 @@ missing or stopped, the check makes it or starts it, sized for the card.
   under one name, on Podman's command line (`src/podman.rs`). It names no
   svrngs type.
 - `src/machine.rs`: Podman's machine on a Mac.
-- `src/check.rs`, `src/main.rs`: `give check`.
-- `tests/`: the stand-in card (busybox's httpd) and the tests. The tests that
+- `src/check.rs`: `give check`.
+- `fold/`: who keeps each app, from give's acts in the record's order; the
+  program links it, and the page runs `page/vendor/fold.js`, the same code
+  built to JavaScript by `build.sh` and pinned in `page/vendor/README.md`.
+  `fold/cases.json` is run against both builds (`fold/tests/cases.rs`,
+  `fold.test.mjs`).
+- `src/keep.rs`: `give keep`, its `plan` decided apart from doing it;
+  `src/record.rs`, `src/lend.rs`: the record API and `svrngs share`, all of
+  svrngs it reaches; `src/shelf.rs`: give's own cards and any `--card`.
+- `src/page.rs`, `page/`: Give's page, and `give page`, which brings it.
+- `src/main.rs`: the three commands.
+- `tests/`: the stand-in card (busybox's httpd) and the tests;
+  `page.test.mjs`, the page in Chromium; svrngs's scene of Give,
+  `crates/svrngs/tests/scenes/give.rs`, plays it with real svrngs. The tests that
   need Podman name their pods and volumes `svrngs-test-*`, and remove them.
   Where Podman does not answer, each of those tests fails as never-ran and
   gives its reason.
