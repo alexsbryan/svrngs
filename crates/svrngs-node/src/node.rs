@@ -385,6 +385,7 @@ impl Node {
             .with_state(asking.clone());
         let holders = crate::door::holders_router(asking.door.clone()).merge(carry);
         let kept = asking.clone();
+        let udp = asking.door.clone();
         let inbound = RingInbound {
             rail: rail.clone(),
             live,
@@ -406,6 +407,7 @@ impl Node {
                 Some(Alpn::Redeem) => Admit::Serve(redeem.clone()),
                 Some(Alpn::Lend) => Admit::Serve(holders.clone()),
                 Some(Alpn::Blobs) => Admit::Blobs(blobs.clone()),
+                Some(Alpn::Port) => Admit::Port(Box::new(udp.clone())),
                 None if Alpn::of(alpn) == Some(Alpn::Member)
                     && admitting.removed_anywhere(&key_actor(dialer)).is_some() =>
                 {
@@ -1002,7 +1004,7 @@ impl Asking {
 fn admit_dialer(rail: &RingRail, alpn: &[u8], dialer: &PublicKey) -> Option<Alpn> {
     let actor = key_actor(dialer);
     match Alpn::of(alpn) {
-        Some(Alpn::Member) | Some(Alpn::Blobs) => {}
+        Some(Alpn::Member) | Some(Alpn::Blobs) | Some(Alpn::Port) => {}
         Some(Alpn::Redeem) => {
             tracing::debug!(target: "node", actor, "node: admitted to redeem a link — any dialer may");
             return Some(Alpn::Redeem);

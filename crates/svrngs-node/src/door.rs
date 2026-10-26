@@ -104,6 +104,7 @@ use svrngs_core::token::Group;
 
 pub mod choices;
 pub mod limit;
+pub mod udp;
 
 /// svrngs's own header prefix: every header under it on a request through
 /// the door is the door's. A client's is stripped whole.
@@ -578,7 +579,7 @@ pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
             asks: lend.asks,
             group: match lend.source {
                 Source::Carried(group) => Some(group),
-                Source::Port(_) => None,
+                Source::Port(_) | Source::Raw(..) => None,
             },
         });
     }
@@ -1286,6 +1287,11 @@ pub(crate) async fn lend_for(
             let opened = (door.folders).open(&lend, (group, device.as_str(), &service_path), req);
             return Ok(opened.await);
         }
+        Source::Raw(..) => {
+            tracing::debug!(target: "door", actor, lend = %lend.name, "door: refused — a raw port, which a page never opens");
+            let words = format!("{} is lent as a port, not a page", lend.name);
+            return Err(LendRefusal::Unlent.say(StatusCode::NOT_FOUND, words));
+        }
     };
     if service_path == crate::oidc::AUTHORIZE_PATH {
         let Some(client) = lend.sign_in_with_svrngs.as_ref() else {
@@ -1345,10 +1351,7 @@ pub(crate) async fn lend_for(
     let whereabouts = crate::network::guess(observed.and_then(|o| o.addr));
     let Some((verdict, held)) = door.using.ask(&lend, actor, whereabouts).await else {
         tracing::warn!(target: "door", lend = %lend.name, "door: refused — no count of who uses the lend, so none can be let in");
-        return Err(LendRefusal::Fault.say(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "the computer that lends this cannot count who is using it now, so it lets nobody in",
-        ));
+        return Err(LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, UNCOUNTED));
     };
     let (relayed, rtt_ms, sent, received) = observed.map_or((None, None, None, None), |o| {
         (
@@ -1394,6 +1397,10 @@ pub(crate) async fn lend_for(
     .await
 }
 
+/// The words a person is told when the count of who uses a lend is gone.
+const UNCOUNTED: &str =
+    "the computer that lends this cannot count who is using it now, so it lets nobody in";
+
 /// What the door decided for a request let in: the share it is told, and
 /// the use it holds until its answer is whole or abandoned (none for a
 /// person guessed home, who is not counted).
@@ -1407,17 +1414,21 @@ struct Told {
 /// they can change (bash-limit) — and the figures, for an app to turn into
 /// a choice (DESIGN §3, "Too many at once").
 fn busy(lend: &Lend, using: u32, limit: std::num::NonZeroU16) -> Response {
+    let body = serde_json::json!({ "error": busy_words(lend, using, limit), "using": using, "limit": limit });
+    LendRefusal::Full.said(StatusCode::SERVICE_UNAVAILABLE, body)
+}
+
+/// [`busy`]'s reason, which the UDP door tells a flow it refuses too.
+fn busy_words(lend: &Lend, using: u32, limit: std::num::NonZeroU16) -> String {
     let people = |n: u32| if n == 1 { "person" } else { "people" };
     let limit = limit.get();
-    let reason = format!(
+    format!(
         "{} is lent to {limit} {} at once, and {using} {} using it now: try again when one stops. \
         That number is the choice of the person who lends it, and they can change it.",
         lend.name,
         people(u32::from(limit)),
         if using == 1 { "is" } else { "are" },
-    );
-    let body = serde_json::json!({ "error": reason, "using": using, "limit": limit });
-    LendRefusal::Full.said(StatusCode::SERVICE_UNAVAILABLE, body)
+    )
 }
 
 /// A connection to `to`, `lend`'s service, when it takes one within

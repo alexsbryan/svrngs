@@ -50,6 +50,7 @@ fn share(p: u16) -> Share {
         reads: Vec::new(),
         asks: None,
         sign_in: false,
+        raw: None,
     }
 }
 

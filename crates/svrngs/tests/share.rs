@@ -51,6 +51,7 @@ fn share_of(origin: SocketAddr, kind: &str) -> Share {
         reads: Vec::new(),
         asks: None,
         sign_in: false,
+        raw: None,
     }
 }
 

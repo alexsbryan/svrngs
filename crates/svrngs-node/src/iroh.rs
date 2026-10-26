@@ -401,7 +401,7 @@ pub(crate) async fn on_stream(conn: &Connection, mut req: Request) -> Result<Str
 /// Whether the far end of `conn` closes it as [`NOT_ADMITTED`] within
 /// [`CLOSED_WITHIN`]: it answered, and does not know this computer stands
 /// in any group it holds.
-async fn closed_unadmitted(conn: &Connection) -> bool {
+pub(crate) async fn closed_unadmitted(conn: &Connection) -> bool {
     let closed = timeout(CLOSED_WITHIN, conn.closed()).await.ok();
     let unadmitted = matches!(&closed, Some(iroh::endpoint::ConnectionError::ApplicationClosed(c)) if c.reason.as_ref() == NOT_ADMITTED);
     tracing::debug!(target: "transport", peer = %conn.remote_id().fmt_short(), unadmitted, ?closed, "iroh: whether the peer closes this computer's connection as not admitted");
@@ -419,7 +419,7 @@ const CLOSED_WITHIN: Duration = Duration::from_secs(1);
 
 /// The acceptor's answer to a connection, decided once per connection on its
 /// negotiated ALPN and the key its handshake verified.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Admit {
     /// Serve every bi-stream on the connection with this router: the
     /// routes its protocol reaches, and no others.
@@ -427,6 +427,9 @@ pub enum Admit {
     /// Hand the connection to iroh-blobs' provider (gf-1): a shared
     /// folder's bytes by hash, on its own protocol.
     Blobs(iroh_blobs::BlobsProtocol),
+    /// Hand the connection to the door's UDP half (give-udp): a lent
+    /// port's datagrams.
+    Port(Box<crate::door::Door>),
     /// Close the connection before any stream is read: no HTTP answer.
     Refuse,
 }
@@ -450,7 +453,7 @@ impl Dialer {
 /// reads of the path it travels (svrngs, u3-6). Inserted by
 /// [`IrohAcceptor`] as an extension, as the dialer is.
 #[derive(Debug, Clone)]
-pub struct Via(iroh::endpoint::Connection);
+pub struct Via(pub(crate) iroh::endpoint::Connection);
 
 /// What a connection's selected path looks like now, as iroh's
 /// `Connection::paths()` and `PathStats` report it: use, never capacity
@@ -562,6 +565,10 @@ impl IrohAcceptor {
                             tracing::debug!(target: "transport", dialer = %dialer.actor(), "iroh acceptor: dialer admitted — its connection handed to the blobs provider");
                             blobs.accept(conn).await.ok();
                             return;
+                        }
+                        Admit::Port(door) => {
+                            tracing::debug!(target: "transport", dialer = %dialer.actor(), "iroh acceptor: dialer admitted — its connection handed to the door's UDP half");
+                            return crate::door::udp::serve(*door, conn).await;
                         }
                         Admit::Serve(router) => {
                             tracing::debug!(

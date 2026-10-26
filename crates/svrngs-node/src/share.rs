@@ -36,7 +36,7 @@
 use std::num::NonZeroU16;
 use std::time::Duration;
 
-use crate::lend::{Kind, Lend, LendName, RefusedPath, Upload};
+use crate::lend::{Kind, Lend, LendName, Raw, RefusedPath, Source, Upload};
 
 /// The well-known ports and the kind of service that listens on each, one
 /// `<port> <kind>` a line, then how its lender makes a person an account
@@ -106,6 +106,8 @@ pub struct Share {
     /// `--sign-in-with-svrngs`: it signs each person in as themselves, with
     /// nothing typed (SIGN_IN_WITH_SVRNGS §5 "Turning it on").
     pub sign_in: bool,
+    /// `--udp`: lent as its own datagrams, not as a page (give-udp).
+    pub raw: Option<Raw>,
 }
 
 /// Why a lend could not be decided, in a person's words.
@@ -219,11 +221,16 @@ pub fn lend_of(
     listens: impl Fn(NonZeroU16) -> bool,
     well_known: Option<Kind>,
 ) -> Result<Lend, ShareRefusal> {
-    if !listens(share.port) {
+    // A UDP port answers no connection, so nothing tells whether a program
+    // listens on it, and the table's ports are a page's.
+    let raw = share.raw;
+    if raw.is_some() {
+        tracing::debug!(target: "share", port = share.port, ?raw, "share: a raw port, lent unprobed and of the kind given alone");
+    } else if !listens(share.port) {
         tracing::debug!(target: "share", port = share.port, "share: refused — nothing listens on the port");
         return Err(ShareRefusal::NothingListens(share.port));
     }
-    let Some(kind) = share.kind.clone().or(well_known) else {
+    let Some(kind) = share.kind.clone().or(well_known.filter(|_| raw.is_none())) else {
         tracing::debug!(target: "share", port = share.port, "share: refused — no kind given, and the port is not a well-known one");
         return Err(ShareRefusal::NoKind(share.port));
     };
@@ -233,7 +240,7 @@ pub fn lend_of(
     };
     let limit = share.limit;
     let mut refused = share.refused.clone();
-    for path in kept_of(&kind) {
+    for path in kept_of(&kind).into_iter().filter(|_| raw.is_none()) {
         if !refused.contains(&path) {
             refused.push(path);
         }
@@ -243,7 +250,7 @@ pub fn lend_of(
         "share: the lend decided");
     Ok(Lend {
         name,
-        source: crate::lend::Source::Port(share.port),
+        source: raw.map_or(Source::Port(share.port), |r| Source::Raw(r, share.port)),
         kind,
         limit,
         refused,

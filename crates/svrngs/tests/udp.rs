@@ -238,14 +238,14 @@ async fn the_limit_counts_people_across_flows() {
 
     // Dee is a second person, past a limit of one: told so, and not carried.
     let (carried, local) = open(dee, &sam, &lend).await;
-    let mut dee_s = carried.expect("Dee's computer opens it; a flow is what is counted");
+    let (mut told, _dee) = carried.expect("Dee's computer opens it; a flow is what is counted");
     let theirs = program().await;
     assert_eq!(
         asks(&theirs, local, b"dee").await,
         None,
         "Dee's packet is carried past the limit"
     );
-    let told = tokio::time::timeout(Duration::from_secs(5), dee_s.told()).await;
+    let told = tokio::time::timeout(Duration::from_secs(5), told.recv()).await;
     let told = told
         .expect("Dee is told within 5s")
         .expect("the lender's words");

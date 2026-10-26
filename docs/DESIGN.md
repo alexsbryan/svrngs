@@ -153,6 +153,19 @@ never stale. The lender's own lend, opened on their own computer, goes
 through their own door's rules too, its secret injected and its limit
 counted (`door::Who::Own`).
 
+**A port, not a page.** A program that speaks UDP is lent with `svrngs
+share <port> --udp --kind <kind>`: its declaration says `"raw": "udp"`, and
+the door carries it on a protocol of its own (`Alpn::Port`), never as a
+page. A member's computer opens one connection for one lend, and each
+program sending to its socket there is a flow. The lender gives each flow
+a socket of its own on 127.0.0.1:0, connected to the lent port alone, let
+in by its person's standing and the lend's limit, which counts people, not
+flows; it closes after a minute idle. Packets cross as QUIC datagrams. One
+larger than a datagram is cut and made whole on the far side, and a
+fragment lost loses that packet alone, as on the open internet
+(`crates/svrngs-node/src/door/udp.rs`). A person past the limit is told so
+in the door's words.
+
 **The person's own programs are the trust boundary.** A program on this
 computer asks the record API showing the token in the data dir's `token`
 file, beside `api`, owner-only, as `Authorization: Bearer <token>`;

@@ -185,6 +185,17 @@ pub enum Source {
     /// served by each computer holding it, from its store
     /// ([`crate::folder::Folders::carried`]): lent to that group alone.
     Carried(String),
+    /// A port on 127.0.0.1 carried as its own bytes, not a page's
+    /// (give-udp; `svrngs share <port> --udp`): the door's
+    /// [`crate::alpn::Alpn::Port`], never its HTTP.
+    Raw(Raw, NonZeroU16),
+}
+
+/// How a raw lend's bytes travel, as its declaration says: `"raw": "udp"`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Raw {
+    Udp,
 }
 
 /// A lend as its declaration says, or as its group's folder carries it:
@@ -260,6 +271,9 @@ impl Lend {
 #[serde(deny_unknown_fields)]
 struct LendFile {
     port: NonZeroU16,
+    /// Absent for a page's port, as every declaration before give-udp is.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    raw: Option<Raw>,
     kind: Kind,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     limit: Option<NonZeroU16>,
@@ -445,7 +459,7 @@ pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError>
         .transpose()?;
     Ok(Some(Lend {
         name: name.clone(),
-        source: Source::Port(file.port),
+        source: (file.raw).map_or(Source::Port(file.port), |r| Source::Raw(r, file.port)),
         kind: file.kind,
         limit: file.limit,
         refused,
@@ -537,8 +551,10 @@ pub fn limit(
 
 /// `lend`'s declaration, through a file renamed into place.
 fn write(data_dir: &Path, lend: &Lend) -> Result<(), LendError> {
-    let Source::Port(port) = lend.source else {
-        return Err(LendError::Carried(lend.name.clone()));
+    let (port, raw) = match lend.source {
+        Source::Port(port) => (port, None),
+        Source::Raw(raw, port) => (port, Some(raw)),
+        Source::Carried(_) => return Err(LendError::Carried(lend.name.clone())),
     };
     let dir = lends_dir(data_dir);
     std::fs::create_dir_all(&dir).map_err(|source| LendError::Unwritable {
@@ -547,6 +563,7 @@ fn write(data_dir: &Path, lend: &Lend) -> Result<(), LendError> {
     })?;
     let file = LendFile {
         port,
+        raw,
         kind: lend.kind.clone(),
         limit: lend.limit,
         refused: lend.refused.iter().map(|r| r.0.clone()).collect(),

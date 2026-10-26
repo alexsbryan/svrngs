@@ -475,6 +475,7 @@ async fn lend_one(
         reads: Vec::new(),
         asks: None,
         sign_in: false,
+        raw: None,
     };
     // Each of the lend's refusals in a person's words: a kind is known or
     // given above, so `NoKind` is not met here.
