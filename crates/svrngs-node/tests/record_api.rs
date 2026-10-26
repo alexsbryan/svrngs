@@ -609,3 +609,131 @@ async fn an_app_has_this_computers_key_sign_its_bytes() {
         "a page is refused"
     );
 }
+
+/// Every route of the record, as an app asks it: its method and path.
+const RECORD_ROUTES: [(&str, &str); 16] = [
+    ("POST", "/v1/rail/append?namespace=house"),
+    ("GET", "/v1/rail/log?namespace=house"),
+    ("POST", "/v1/rail/live?namespace=house"),
+    ("GET", "/v1/rail/live?namespace=house"),
+    ("GET", "/v1/rail/people?namespace=house"),
+    ("GET", "/v1/groups"),
+    ("GET", "/v1/lends?namespace=house"),
+    ("POST", "/v1/sign?app=x"),
+    ("POST", "/v1/folders"),
+    ("PUT", "/v1/blob?group=house&keep=1"),
+    ("GET", "/v1/blob/00?group=house"),
+    ("POST", "/v1/removals"),
+    ("POST", "/v1/handovers"),
+    ("POST", "/v1/leaves"),
+    ("GET", "/v1/room"),
+    ("POST", "/v1/room"),
+];
+
+/// `node`'s answer to `method` `path`, showing `token` if any: its status
+/// and its JSON, or `null` for a body that is not.
+async fn asked_with(
+    node: &Node,
+    method: &str,
+    path: &str,
+    token: Option<&str>,
+) -> (u16, serde_json::Value) {
+    let method = reqwest::Method::from_bytes(method.as_bytes()).unwrap();
+    let mut ask = app()
+        .request(method, format!("http://{}{path}", node.api_addr()))
+        .header("content-type", "application/json")
+        .body("{}");
+    if let Some(token) = token {
+        ask = ask.bearer_auth(token);
+    }
+    let answer = ask.send().await.unwrap();
+    let status = answer.status().as_u16();
+    (
+        status,
+        answer.json().await.unwrap_or(serde_json::Value::Null),
+    )
+}
+
+/// The token `dir`'s node keeps beside its `api` file, as a program on
+/// this computer reads it.
+fn token_in(dir: &std::path::Path) -> String {
+    std::fs::read_to_string(dir.join("token")).expect("the node keeps a token beside its api file")
+}
+
+/// **A program asks with the token** (give-token; svrn-docs GIVE.md §5): a
+/// container on a Mac running podman reaches the Mac's `127.0.0.1` through
+/// gvproxy, so loopback is no proof that the person's own program is
+/// asking. Every route of the record refuses a caller on loopback that
+/// shows no token, or one that is not this computer's, 401 `no_token`,
+/// naming the file that holds it; the same request with the token is
+/// answered as before. Sign-in's routes keep their own client secret and
+/// are not asked for it. The failing input: the check skipped in
+/// `api::router`, every caller on loopback served.
+#[tokio::test]
+async fn a_program_without_the_token_is_refused_on_every_record_route() {
+    let dir = tempfile::tempdir().unwrap();
+    let node = start(1, &dir).await;
+    hold(&node, NS, 1);
+    let file = dir.path().join("token").display().to_string();
+    for (method, path) in RECORD_ROUTES {
+        for shown in [None, Some("not-this-computers-token")] {
+            let (status, out) = asked_with(&node, method, path, shown).await;
+            assert_eq!(
+                (status, &out["kind"]),
+                (401, &serde_json::json!("no_token")),
+                "{method} {path} showing {shown:?} is refused: {out}"
+            );
+            let said = out["error"].as_str().unwrap();
+            assert!(said.contains(&file), "the refusal names {file}: {said}");
+        }
+    }
+    let token = token_in(dir.path());
+    for (method, path) in RECORD_ROUTES {
+        let (status, out) = asked_with(&node, method, path, Some(&token)).await;
+        assert!(
+            status != 401 && out["kind"] != "no_token",
+            "{method} {path} with the token is answered as before: {status} {out}"
+        );
+    }
+    let (status, _) = asked_with(&node, "GET", "/v1/groups", Some(&token)).await;
+    assert_eq!(status, 200, "the groups are read with the token");
+    let signin = "/oidc/doc/.well-known/openid-configuration";
+    let (status, out) = asked_with(&node, "GET", signin, None).await;
+    assert!(
+        status != 401 && out["kind"] != "no_token",
+        "sign-in's routes keep their own secret: {status} {out}"
+    );
+    node.endpoint().close().await;
+}
+
+/// **The token is the computer's, minted once and kept** (give-token): it
+/// is written beside the `api` file, owner-only (0600), on the first start,
+/// and read again at the next, so a program that read it keeps asking with
+/// it across a restart. The failing input: a token minted at every start.
+#[tokio::test]
+async fn the_token_is_minted_once_owner_only_and_kept_across_restarts() {
+    let dir = tempfile::tempdir().unwrap();
+    let first = start(1, &dir).await;
+    let token = token_in(dir.path());
+    assert!(dir.path().join("api").exists(), "beside the api file");
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mode = std::fs::metadata(dir.path().join("token"))
+            .unwrap()
+            .permissions()
+            .mode();
+        assert_eq!(mode & 0o777, 0o600, "the token is the person's alone");
+    }
+    first.endpoint().close().await;
+    drop(first);
+    let again = start(1, &dir).await;
+    assert_eq!(
+        token_in(dir.path()),
+        token,
+        "the token is kept across a restart"
+    );
+    let (status, _) = asked_with(&again, "GET", "/v1/groups", Some(&token)).await;
+    assert_eq!(status, 200, "the token read before the restart still asks");
+    again.endpoint().close().await;
+}
