@@ -124,11 +124,7 @@ pub(crate) fn fetch(headers: &HeaderMap) -> ([Option<&str>; 4], bool) {
 /// at another computer's door: its key the person and the holder, so that
 /// door, dialled as this key, reads the app from it (`door.rs`'s `own_app`).
 fn own_pass(at: &Asking, app: &Label, label: &Label) -> Option<HeaderValue> {
-    let reads = if app == label {
-        vec![]
-    } else {
-        vec![label.clone()]
-    };
+    let reads = Vec::from_iter((app != label).then(|| label.clone()));
     let until = door::unix_now()? + OWN_PASS_FOR;
     let (key, actor) = (at.host.rail.signer(), &at.host.actor);
     let pass = Pass::sign(key, actor, (app.clone(), reads), until);
