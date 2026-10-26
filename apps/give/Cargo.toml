@@ -17,7 +17,14 @@ publish = false
 
 [dependencies]
 anyhow = "1"
+# The record API on this computer's loopback, plain HTTP; the lock already
+# holds it, without TLS or compression.
+attohttpc = { version = "0.30", default-features = false }
 blake3 = "1.8"
+# Give's one fold, which its page runs too (fold/Cargo.toml).
+give-fold = { path = "fold" }
+# A clean stop on SIGINT and SIGTERM: the keeper program's last snapshot.
+libc = "0.2"
 serde_json = "1"
 # The card is the app's own compose.yaml. serde_yaml 0.9 is marked
 # deprecated by its author and still the YAML reader the registry here

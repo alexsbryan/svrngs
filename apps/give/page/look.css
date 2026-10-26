@@ -1,0 +1,17 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+/* Give's look, after svrngs's own (crates/svrngs-node/src/home/look.css),
+   which give does not reach: the browser's own fonts, colours and elements,
+   plain rules, warmth by colour names. Its own copy, so give moves out at no
+   cost. */
+
+:root { color-scheme: light dark; --rule: 3px solid CanvasText; --face: system-ui, -apple-system, "Segoe UI", sans-serif; }
+[hidden] { display: none !important; }
+body { max-width: 64rem; margin: 0 auto; padding: 0 1rem 3rem; background: Canvas; color: CanvasText; font: 16px/1.45 var(--face); }
+h1 { margin: 1.5rem 0; padding: 1.25rem 1.25rem 1rem; border: var(--rule); background: lightgreen; color: black; font-size: clamp(2rem, 7vw, 5.5rem); font-weight: 900; line-height: 0.9; letter-spacing: -0.045em; }
+h2 { margin: 0 0 0.25rem; font-size: 1.5rem; font-weight: 900; letter-spacing: -0.03em; }
+section { border-top: var(--rule); padding: 1rem 0 1.25rem; }
+p { max-width: 72ch; margin: 0.25rem 0 0.5rem; }
+.kept { font-weight: 700; }
+.ask { border-left: var(--rule); padding-left: 0.75rem; }
+button { font: inherit; font-weight: 700; padding: 0.4rem 0.9rem; border: var(--rule); background: yellow; color: black; cursor: pointer; margin-right: 0.5rem; }
+button.quiet { background: Canvas; color: CanvasText; }
