@@ -761,20 +761,11 @@ pub fn reach(root: &Path, command: &Verb, at: MeetAt) -> Result<RelayConfig, Ref
 /// `share` declares its lend first, and runs only when svrngs is not
 /// running here already; `unshare` only withdraws one.
 pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<(), Refusal> {
-    let command = match command {
-        Verb::Help => {
-            println!("{USAGE}");
-            return Ok(());
-        }
+    let said = match command {
+        Verb::Help => format!("{USAGE}\n"),
         Verb::Relay(asked) => return relay::run(asked, &root).await,
-        Verb::Unshare(name) => {
-            print!("{}", unshare(&root, &name)?);
-            return Ok(());
-        }
-        Verb::Folder { dir, group } => {
-            println!("{}", folder(&root, dir, &group).await?);
-            return Ok(());
-        }
+        Verb::Unshare(name) => unshare(&root, &name)?.to_string(),
+        Verb::Folder { dir, group } => format!("{}\n", folder(&root, dir, &group).await?),
         Verb::Remove {
             kind,
             person,
@@ -795,32 +786,24 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
             };
             let (_, text) = ask_running(&root, route, &asked).await?;
             let group = seed.name().clone();
-            print!(
-                "{}",
-                said(&seed, &text, |outcome| Said::Removal {
-                    group,
-                    person,
-                    outcome
-                })?
-            );
-            return Ok(());
+            said(&seed, &text, |outcome| Said::Removal {
+                group,
+                person,
+                outcome,
+            })?
+            .to_string()
         }
         Verb::Leave(group) => {
             let seed = group_named(&root, &group)?;
             let (_, text) =
                 ask_running(&root, LEAVES_ROUTE, &LeaveAsk { group: seed.id() }).await?;
             let group = seed.name().clone();
-            print!(
-                "{}",
-                said(&seed, &text, |outcome| Said::Left { group, outcome })?
-            );
-            return Ok(());
+            said(&seed, &text, |outcome| Said::Left { group, outcome })?.to_string()
         }
         Verb::Room(names) => match claim(&root) {
             Err(Refusal::Busy(lock)) => {
                 tracing::debug!(target: "cli", lock = %lock.display(), "cli: room — svrngs runs here already, so it is asked");
-                print!("{}", room(&root, names).await?);
-                return Ok(());
+                room(&root, names).await?.to_string()
             }
             claimed => return start(Verb::Room(names), root, relay, claimed?, None).await,
         },
@@ -852,20 +835,22 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
                 accounts,
                 client,
             };
-            return match claim(&root) {
+            match claim(&root) {
                 Err(Refusal::Busy(lock)) => {
                     tracing::debug!(target: "cli", lock = %lock.display(), "cli: share — svrngs runs here already, and reads the lend from its declaration");
                     let api = svrngs_node::api::kept_address(&root)?.ok_or(Refusal::NotRunning)?;
-                    print!("{}", sharing.said(api));
-                    Ok(())
+                    sharing.said(api).to_string()
                 }
-                claimed => start(Verb::Run, root, relay, claimed?, Some(sharing)).await,
-            };
+                claimed => return start(Verb::Run, root, relay, claimed?, Some(sharing)).await,
+            }
         }
-        other => other,
+        other => {
+            let claimed = claim(&root)?;
+            return start(other, root, relay, claimed, None).await;
+        }
     };
-    let claimed = claim(&root)?;
-    start(command, root, relay, claimed, None).await
+    print!("{said}");
+    Ok(())
 }
 
 /// `share --folder --group`, asked of the node running here
