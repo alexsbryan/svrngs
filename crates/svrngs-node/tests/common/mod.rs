@@ -148,3 +148,29 @@ pub fn heard(filter: &str) -> (Said, (tracing::subscriber::DefaultGuard, tracing
     let two = tracing::Dispatch::new(tracing::subscriber::NoSubscriber::default());
     (said, (guard, two))
 }
+
+/// The cookie a browser holds once `node`'s svrngs opened the home page
+/// (`lend` none) or the lend `lend`'s origin: `/v1/open`, asked with the
+/// token as `svrngs open` asks it, its code redeemed at the host it names,
+/// `svrngs=<value>` (give-session). A test of a browser at either sends it.
+#[allow(
+    dead_code,
+    reason = "each test binary compiles this file; only some model a browser"
+)]
+pub async fn opened(node: &svrngs_node::node::Node, lend: Option<&str>) -> String {
+    let client = reqwest::Client::builder().no_proxy();
+    let client = client.redirect(reqwest::redirect::Policy::none());
+    let client = client.build().unwrap();
+    let body = lend.map_or(serde_json::json!({}), |l| serde_json::json!({ "lend": l }));
+    let open = client.post(format!("http://{}/v1/open", node.api_addr()));
+    let open = open.bearer_auth(node.token().trim()).json(&body);
+    let open: serde_json::Value = open.send().await.unwrap().json().await.unwrap();
+    let url = open["open"].as_str().expect("an open's address");
+    let (host, path) = url.trim_start_matches("http://").split_once('/').unwrap();
+    let redeem = client.get(format!("http://{}/{path}", node.api_addr()));
+    let redeem = redeem.header("host", host).header("sec-fetch-site", "none");
+    let answer = redeem.send().await.unwrap();
+    let set = answer.headers().get("set-cookie").expect("the open set its session");
+    let set = set.to_str().unwrap();
+    set.split(';').next().unwrap().to_string()
+}

@@ -79,7 +79,7 @@ fn of_kind<'a>(lends: &'a Value, kind: &str) -> Vec<&'a Value> {
 }
 
 /// `path` asked at the origin `origin` on `node`'s listener, as a
-/// program on that computer asks it: the answer.
+/// program on that computer asks it, with its token: the answer.
 async fn at(
     node: &Node,
     origin: &str,
@@ -91,7 +91,8 @@ async fn at(
     let url = format!("http://{}{path}", node.api_addr());
     let ask = http()
         .request(method.parse().unwrap(), url)
-        .header("host", host);
+        .header("host", host)
+        .bearer_auth(node.token().trim());
     let ask = match body {
         Some(b) => ask.json(&b),
         None => ask,
@@ -505,6 +506,7 @@ async fn bringing_from_the_shelf_traces_why_it_could_not_write() {
     let answer = http()
         .post(format!("http://{}/shelf", ana.api_addr()))
         .header("host", &home)
+        .header("cookie", common::opened(ana, None).await)
         .header("sec-fetch-site", "same-origin")
         .header("sec-fetch-mode", "cors")
         .header("origin", format!("http://{home}"))
