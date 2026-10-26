@@ -382,7 +382,7 @@ async fn newcomer_world() {
             "goal": { "expr": in_house_at(&home) },
             "milestones": [
                 // The home page read the link and names the house on its button (home.js, `says`), read.
-                { "text": format!("Join {HOUSE} as") },
+                { "text": format!("Join {HOUSE}") },
             ],
         }],
         "channels": [{
@@ -395,7 +395,7 @@ async fn newcomer_world() {
             // three minutes", from the home page she starts on.
             { "from": { "text": "Join a group from a link" }, "to": { "expr": in_house_at(&home) }, "seconds": 180 },
             // NORTH_STAR §1's ten seconds, from the button that joins.
-            { "from": { "text": format!("Join {HOUSE} as") }, "to": { "expr": in_house_at(&home) }, "seconds": 10 },
+            { "from": { "text": format!("Join {HOUSE}") }, "to": { "expr": in_house_at(&home) }, "seconds": 10 },
         ],
         "reach": reach,
     });
