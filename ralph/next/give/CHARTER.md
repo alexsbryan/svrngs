@@ -56,20 +56,30 @@ svrn-docs `rings/current/GIVE.md`. Read it whole before the first row.
   - Quality over a relayed path is judged by play, in give-play-scene
     (GIVE.md §6).
 
-## Awaiting the operator before the rows it names
+## What the operator decided, 2026-10-25, on give-economize's NEEDS_HUMAN
 
-1. **The ceiling** for the svrngs rows, core and repository, which
-   give-economize asks for. give-token does not start until it is set.
-2. **WHAT_CAN_ACT_AS_YOU §4.** Does the caller check overturn "Accept it, and
-   say so" for programs meant to be contained? It is asked with the ceiling,
-   because give-token depends on the answer.
-3. **The trust floor's new lines**, asked with the ceiling. They are the
-   member's Play listener on `127.0.0.1` alone, and the keeper's per-flow UDP
-   socket on `127.0.0.1:0`, connected to the lent port. A change to the floor
-   is the operator's (AGENTS.md "Done").
-4. **Who may keep**, asked at give-app-keep: any member with Podman and the
-   keeper program, or a successor the house names. Until the operator
-   answers, the default is any member.
+These answer `demo/runs/economize/2026-10-25-give/NEEDS_HUMAN.md`. The row in
+STATE.md holds them in full.
+
+- **The ceiling is +1,005 repository and +5 svrngs-core** over the caps the
+  pass left, so at most 19,233 and 3,244, for give-token through give-play.
+  Each row raises only what it lands, to one past where it lands.
+- **WHAT_CAN_ACT_AS_YOU §4: yes.** The caller check overturns "Accept it,
+  and say so" for programs meant to be contained, and keeps it for the
+  person's own programs, which read the token.
+- **Both trust floor lines are approved**, word for word as NEEDS_HUMAN.md §3
+  gives them.
+- **The seat added two things that follow from WHAT_CAN_ACT_AS_YOU §9:**
+  - give-session's opener: no terminal is needed to get back to the home
+    page;
+  - give-play's line in "What acts as you": every Play that is on, with its
+    Stop.
+
+## Awaiting the operator
+
+- **Who may keep**, asked at give-app-keep: any member with Podman and the
+  keeper program, or a successor the house names. Until the operator
+  answers, the default is any member.
 
 ## Decide
 

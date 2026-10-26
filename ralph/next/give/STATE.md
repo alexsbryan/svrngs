@@ -52,6 +52,10 @@ There are fourteen rows:
 
     Then stop.
   - **Check:** every cut's tests unchanged by name; `python3 scripts/lean_check.py` before and after.
+  - **THE OPERATOR DECIDED, 2026-10-25,** on `demo/runs/economize/2026-10-25-give/NEEDS_HUMAN.md`:
+    1. **The ceiling is the estimate's top:** +1,005 repository and +5 svrngs-core over the caps the pass left, so at most 19,233 and 3,244, for give-token through give-play. Each row raises only what it lands, to one past where it lands. A row past its range stops for the operator.
+    2. **§4: yes.** The caller check overturns WHAT_CAN_ACT_AS_YOU §4's "Accept it, and say so" for programs meant to be contained, and keeps it for the person's own programs, which read the token.
+    3. **The trust floor:** both lines are approved with their reasons word for word as NEEDS_HUMAN.md §3 gives them, Play's held on each of its two bind lines. Each lands in its row's commit with a `Trust floor:` line citing this decision.
 - [ ] give-token — depends [give-economize] — ONE ROW, red first, and `scripts/check.sh` once, at the close (GIVE.md §5):
   - **(a) Tests: A PROGRAM ASKS WITH THE TOKEN.** These fail at HEAD:
     - A request on loopback with no token is refused on every record route: `/v1/rail/{append,log,live,people}`, `/v1/groups`, `/v1/lends`, `/v1/folders`, `/v1/blob`, `/v1/removals`, `/v1/handovers`, `/v1/leaves` and `/v1/room`. The refusal names the token file.
@@ -68,8 +72,9 @@ There are fourteen rows:
   - **Check:** (a) red first, green after; every `apps/` test and check green; the scenes green.
 - [ ] give-session — depends [give-token] — ONE ROW, red first, and `scripts/check.sh` once, at the close (GIVE.md §5):
   - **(a) Tests: A BROWSER COMES THROUGH AN OPEN.** Browser tests in Chromium and WebKit, failing at HEAD:
-    - The home page and a lend's origin, asked with no session, answer only "Open svrngs from your computer", with the command.
+    - The home page and a lend's origin, asked with no session, answer only "Open svrngs from your computer", naming the opener below. No terminal is needed (WHAT_CAN_ACT_AS_YOU §9: "nothing needs a terminal").
     - A new verb, `svrngs open`, opens the home page with a single-use, expiring code that becomes the session cookie. So does `install.sh`'s open.
+    - **The opener.** `install.sh` puts a clickable opener in place that runs `svrngs open`: an app in `~/Applications` on macOS, and a `.desktop` entry on Linux. The "Open svrngs from your computer" page names it in the person's words ("Open svrngs from your Applications"). A run of `install.sh` checks that the opener opens the home page with a session. On a host where this cannot run, the check is never-ran with its reason.
     - A lend opened from the home page carries a code for its own origin, on `oidc/provider.rs:190-230`'s `Codes`. A replayed code is refused.
     - At a lend's origin, a request with no `Sec-Fetch-Site` is the lend's own only with the token (`origin.rs:85-88`).
     - **The kept paths:** the home page and the group page open; a lend opened from either; a phone's yes; a newcomer opens Money and Notes answering no question; a browser already opened once keeps working from a bookmark.
@@ -105,6 +110,7 @@ There are fourteen rows:
     - The port is the same after a restart.
     - Stop unbinds it, and nothing listens while it is off.
     - A member who stops standing loses the listener.
+    - **It is listed under "What acts as you".** While Play is on, anything on this computer can reach that lend as this member, since a raw port carries no token. So every Play that is on is a line in "What acts as you", beside the WiFi lines (capability-what-acts), with its Stop: "Open on this computer: <the lend's name> (<lender>'s), while Play is on. Stop". That Stop is the same act as the row's own.
     - The room's tests are unchanged by name.
   - **(b) The change.** An owner task on the room's model (`room/owner.rs:67`, `:133`), its on-state kept as `room.json` keeps the room's, and the row in the cell beside the WiFi toggle (`home/home.js:158-163`). The trust floor's Play line comes with it.
   - **Check:** (a) red first, green after; the room's tests green throughout.
