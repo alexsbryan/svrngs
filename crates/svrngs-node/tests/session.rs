@@ -336,3 +336,54 @@ async fn an_open_s_code_becomes_the_session_once_and_each_lend_gets_its_own() {
         "no session reaches the lend's service: {heads:?}"
     );
 }
+
+/// **A read's address is no session** (DESIGN §3, "Lent apps", call 6): a
+/// lend's page reads another lend at `/svrngs-as/<cap>/` there, the cap
+/// this computer's for that pair alone (the browser tests, `navigations`,
+/// `opens`, `acts`). Refused: a cap this computer did not give, which a
+/// container on a Mac running podman forges with the page's `Origin`, and
+/// nothing of it reaches the lend's service. A navigation under the prefix,
+/// the person following a link, is sent to the home page's `/to` at the
+/// rest of its path, so the home page's session decides and a cap never
+/// sets a lend's. Planted: the cap's check taken for held, and the forged
+/// one reaches the service.
+#[tokio::test]
+async fn a_read_s_address_is_held_to_its_capability_and_never_a_session() {
+    let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (alex, _sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
+    let (service, heads) = origins::head_origin().await;
+    declare(alex_dir.path(), service.port());
+    let api = alex.api_addr();
+    let port = api.port();
+    let night = Label::of(&signing(1).verifying_key().to_bytes(), "night");
+    let page = Label::of(&signing(1).verifying_key().to_bytes(), "page");
+    let lend = format!("{night}.localhost:{port}");
+    let fetch = format!("Sec-Fetch-Site: same-site\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{page}.localhost:{port}\r\n");
+
+    let forged = ask(api, "GET", &lend, "/svrngs-as/forged/films", &fetch, "").await;
+    assert_eq!(
+        forged.status, 401,
+        "a cap not this computer's: {}",
+        forged.body
+    );
+    assert!(opener_named(&forged.body), "{}", forged.body);
+    assert!(
+        heads.lock().unwrap().is_empty(),
+        "nothing reached the lend's service"
+    );
+
+    let followed = ask(api, "GET", &lend, "/svrngs-as/any/films?x=1", TYPED, "").await;
+    assert_eq!(
+        (followed.status, followed.header("location")),
+        (
+            303,
+            Some(
+                format!("http://svrngs.localhost:{port}/to?lend={night}&at=%2Ffilms%3Fx%3D1")
+                    .as_str()
+            )
+        ),
+        "{}",
+        followed.head
+    );
+    assert!(followed.header("set-cookie").is_none(), "{}", followed.head);
+}

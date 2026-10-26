@@ -374,10 +374,11 @@ pub(crate) async fn reads(at: &Asking, label: &Label) -> Result<Response, Respon
     let (lent, Unlisted { unanswered, .. }, _) = read_by(at, label).await?;
     let read: Vec<serde_json::Value> = (lent.iter())
         .filter_map(|l| {
-            let address = host.origin(&l.key, l.offered.name.as_str())?;
+            let lend = named(l)?;
+            let address = crate::origin::origin(&lend, host.api_port) + &crate::session::AS_PATH[1..];
+            let address = address + &at.sessions.cap(label, &lend) + "/";
             let mut read = serde_json::json!({ "kind": l.offered.kind, "name": l.offered.name, "lender": l.person, "address": address });
             if let Some(words) = &l.offered.asks {
-                let lend = named(l)?;
                 read["asks"] = words.as_str().into();
                 read["ask"] = crate::home::ask_address(host.api_port, &lend, label).into();
                 let page = crate::origin::origin(label, host.api_port);

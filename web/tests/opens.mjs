@@ -4,7 +4,8 @@
 // first another way, its typed address as a bookmark opens it, it fetches
 // `args.read` at `bookmark`; then the person opens it from their home page,
 // `args.home`, by the index's button reading `args.words`, the yes, and the
-// new tab fetches at `opened`, and the first tab again at `after`. Then a
+// new tab fetches at `opened`, and the first tab again at `after`, and at
+// the read lend's plain origin, `bare`, carrying no capability. Then a
 // lend that reads nothing, `args.plain`, opened by the index's link. The
 // Rust half reads what the read lend was asked; this half says what the
 // page was answered, and every index cell's words.
@@ -19,13 +20,19 @@ import { launch } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const { context, close } = await launch(args.engine);
-// A fetch of the read lend from `page` at `path`: svrngs's refusal is
+// A fetch of the read lend from `page` at `path`, at the address the
+// page's `/svrngs-reads` gives it, as an app builds on it (a capability in
+// the path, give-session); `bare`, at its plain origin: svrngs's refusal is
 // readable to the page, a lend's own answer is not, so the Rust half
 // judges a reach by what the lend was asked.
-const fetched = (page, path) =>
+const fetched = (page, path, bare) =>
   page.evaluate(
-    (to) => fetch(to).then(async (r) => ({ status: r.status, refused: r.headers.get('x-svrngs-refused'), error: (await r.json().catch(() => ({}))).error ?? null }), (e) => ({ status: `${e}` })),
-    `${args.read}${path}`,
+    async ([read, path, bare]) => {
+      const reads = bare ? { lends: [] } : await fetch('/svrngs-reads').then((r) => r.json());
+      const to = reads.lends.find((l) => l.address.startsWith(read))?.address ?? read;
+      return fetch(`${to}${path}`).then(async (r) => ({ status: r.status, refused: r.headers.get('x-svrngs-refused'), error: (await r.json().catch(() => ({}))).error ?? null }), (e) => ({ status: `${e}` }));
+    },
+    [args.read, path, bare],
   );
 const opened = async (click) => {
   const [tab] = await Promise.all([context.waitForEvent('page'), click]);
@@ -46,6 +53,7 @@ try {
   const tab = await opened(home.locator('#home table.index button', { hasText: args.words }).click({ timeout: 10_000 }));
   seen.there = { url: tab.url(), reached: await fetched(tab, 'opened') };
   seen.after = await fetched(page, 'after');
+  seen.bare = await fetched(page, 'bare', true);
   seen.plain = (await opened(home.locator('#home table.index a', { hasText: args.plain }).click())).url();
 } catch (e) {
   seen.error = `the page did not finish: ${e}`;

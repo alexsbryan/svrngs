@@ -3,7 +3,7 @@
 //
 // With `args.home`, on a computer: the reading lend opened from the home
 // page by its button reading `args.words`, the yes, its tab fetching
-// `args.read` at `opened`; the home page opened again and its section read,
+// `args.read` at `opened`, and at its plain origin, `bare`; the home page opened again and its section read,
 // `before`; the yes's Stop pressed, and the section read again, `after`;
 // then a page of the reading lend, `args.page`, fetching `args.read` at
 // `stopped`.
@@ -25,9 +25,18 @@ import { driving, launch } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const section = (page) => page.locator('#acts').innerText({ timeout: 60_000 });
-// A fetch from `page` of `to`: svrngs's refusal is readable to the page.
-const fetched = (page, to) =>
-  page.evaluate((u) => fetch(u).then(async (r) => ({ status: r.status, refused: r.headers.get('x-svrngs-refused'), error: (await r.json().catch(() => ({}))).error ?? null }), (e) => ({ status: `${e}` })), to);
+// A fetch from `page` of the read lend at `path`, at the address the
+// page's `/svrngs-reads` gives it (a capability in the path, give-session),
+// or, `bare`, at its plain origin: svrngs's refusal is readable to the page.
+const fetched = (page, path, bare) =>
+  page.evaluate(
+    async ([read, path, bare]) => {
+      const reads = bare ? { lends: [] } : await fetch('/svrngs-reads').then((r) => r.json());
+      const to = reads.lends.find((l) => l.address.startsWith(read))?.address ?? read;
+      return fetch(`${to}${path}`).then(async (r) => ({ status: r.status, refused: r.headers.get('x-svrngs-refused'), error: (await r.json().catch(() => ({}))).error ?? null }), (e) => ({ status: `${e}` }));
+    },
+    [args.read, path, bare],
+  );
 
 if (args.home) {
   const { context, close } = await launch(args.engine);
@@ -39,7 +48,8 @@ if (args.home) {
     await loaded();
     const [tab] = await Promise.all([context.waitForEvent('page'), home.locator('#home table.index button', { hasText: args.words }).click({ timeout: 10_000 })]);
     await tab.waitForLoadState();
-    seen.opened = await fetched(tab, `${args.read}opened`);
+    seen.opened = await fetched(tab, 'opened');
+    seen.bare = await fetched(tab, 'bare', true);
     await home.reload();
     await loaded();
     seen.before = await section(home);
@@ -48,7 +58,7 @@ if (args.home) {
     seen.after = await section(home);
     const page = await context.newPage();
     await page.goto(args.page);
-    seen.stopped = await fetched(page, `${args.read}stopped`);
+    seen.stopped = await fetched(page, 'stopped');
   } catch (e) {
     seen.error = `the page did not finish: ${e}`;
   }

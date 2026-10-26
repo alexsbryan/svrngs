@@ -329,7 +329,12 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
             .as_array()
             .unwrap()
             .iter()
-            .find(|r| r["address"] == format!("http://{}/", at(l)));
+            // Its origin, with the capability night's page shows there
+            // (give-session; tests/session.rs).
+            .find(|r| {
+                (r["address"].as_str().unwrap_or_default())
+                    .starts_with(&format!("http://{}/svrngs-as/", at(l)))
+            });
         let one = one.unwrap_or_else(|| panic!("{reads:#}"));
         assert_eq!(one["asks"], WORDS);
         assert_eq!(

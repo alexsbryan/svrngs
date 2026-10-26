@@ -59,7 +59,8 @@ in_chromium!(
     /// she opens knows her name; and only this computer can decide for her,
     /// not bo's, admitted to the group. Its Stop holds from the notes' next
     /// request: a page of the notes reaching cy's films as ada is refused,
-    /// `unasked`, after it. Red at 0573f402: no such parts, and no Stop for
+    /// `unasked`, after it. Its fetch is at the address `/svrngs-reads`
+    /// gives, never the films' plain origin (give-session). Red at 0573f402: no such parts, and no Stop for
     /// the yes. Planted: the Stop kept as a yes, and the notes still reach
     /// the films.
     the_home_page_says_what_acts_as_you_and_its_stop_holds
@@ -147,6 +148,10 @@ async fn the_home_page_says_what_acts_as_you_and_its_stop_holds(engine: Engine) 
         asked.iter().any(|l| l.starts_with("GET /opened "))
             && !asked.iter().any(|l| l.starts_with("GET /stopped ")),
         "the films are reached on the yes, and not after its Stop: {asked:?}"
+    );
+    assert!(
+        !asked.iter().any(|l| l.starts_with("GET /bare ")),
+        "the films are never reached at their plain origin, which a fetch carrying no capability asks (give-session): {asked:?}"
     );
     drop((ada, cy));
 }

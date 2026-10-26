@@ -28,7 +28,9 @@ in_chromium!(
     /// her home page the notes' button says what opening it lets it do, "It
     /// also opens your friends’ films as you"; one tap opens it, answering
     /// no question, and from then its page reaches the films, in the new
-    /// tab and the bookmarked one alike. Kept: the plain lend opens by its
+    /// tab and the bookmarked one alike, at the address its `/svrngs-reads`
+    /// gives, and never at the films' plain origin (give-session). Kept:
+    /// the plain lend opens by its
     /// link as before, its words unchanged. Planted: `surface::reaches`
     /// carrying a reach with no yes, and the bookmarked fetch reaches the
     /// films.
@@ -97,6 +99,10 @@ async fn opening_an_app_from_the_home_page_is_the_yes_to_what_it_reads(engine: E
     assert!(
         !on_films.iter().any(|l| l == "GET /bookmark"),
         "the films are never reached before the yes: {on_films:?}"
+    );
+    assert!(
+        !on_films.iter().any(|l| l == "GET /bare"),
+        "the films are never reached at their plain origin, which a fetch carrying no capability asks: {on_films:?}\n{seen:#}"
     );
     for after in ["GET /opened", "GET /after"] {
         assert!(

@@ -37,6 +37,10 @@ use crate::oidc::provider::{same, Codes};
 /// serves, as the reads' (`crate::surface::READS_PATH`).
 pub(crate) const OPEN_PATH: &str = "/svrngs-open";
 
+/// Where a lend's page reads another lend, `<AS_PATH><cap>/<path>` at that
+/// lend's origin ([`Sessions::cap`]; DESIGN §3, "Lent apps", call 6).
+pub(crate) const AS_PATH: &str = "/svrngs-as/";
+
 /// The home page's first name, as its host says it (`crate::home`).
 pub(crate) const HOME: &str = "svrngs";
 
@@ -89,6 +93,14 @@ impl Sessions {
     /// The cookie's value at the host first named `name`.
     fn value(&self, name: &str) -> String {
         URL_SAFE_NO_PAD.encode(ring::hmac::sign(&self.key, name.as_bytes()))
+    }
+
+    /// What the page of the lend `app` shows in its address for the lend
+    /// `read`, whose origin its fetch sends no cookie: the token's HMAC
+    /// over the pair, whose `/` is in no host's first name, so no host's
+    /// cookie is one. Kept nowhere, it lasts as the token does.
+    pub(crate) fn cap(&self, app: &Label, read: &Label) -> String {
+        self.value(&format!("{app}/{read}"))
     }
 
     /// What `headers` showed at the host first named `name`.

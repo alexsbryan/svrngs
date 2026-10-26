@@ -104,6 +104,10 @@ async fn a_navigation_from_another_lend_s_page_is_judged_as_its_fetch(engine: En
             heads.iter().any(|l| l == "GET /linked"),
             "the {name} is asked the link's path: {heads:?}"
         );
+        assert!(
+            !heads.iter().any(|l| l == "GET /bare"),
+            "the {name} is never reached at its plain origin by a fetch: {heads:?}\n{seen:#}"
+        );
         let read = name == "notes";
         for reached in ["GET /fetched", "GET /framed", "POST /posted"] {
             assert_eq!(

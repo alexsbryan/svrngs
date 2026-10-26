@@ -32,7 +32,7 @@ use axum::body::Body;
 use axum::extract::{Request, State};
 use axum::http::header::{self, HeaderMap, HeaderValue};
 use axum::http::{Method, StatusCode, Uri};
-use axum::response::{IntoResponse, Response};
+use axum::response::{IntoResponse, Redirect, Response};
 use axum::Router;
 use serde_json::Value;
 use svrngs_core::pass::{Label, Pass};
@@ -41,7 +41,9 @@ use crate::door::{self, Door, LendRefusal, Who, LEND_ROUTE, PASS_HEADER, REFUSED
 use crate::iroh::Contact;
 use crate::lend::Offered;
 use crate::node::Asking;
+use crate::oidc::provider::same;
 use crate::register::{Register, RemovalSaid};
+use crate::session::{Shown, AS_PATH};
 use crate::surface::{seed_of, STOP_SUFFIX};
 
 /// How long a pass this computer signs for its own page lasts: one
@@ -77,7 +79,7 @@ fn at(host: &str) -> Option<(Label, Option<String>)> {
 /// `<img>`, a frame with its `Referer` withheld) is nobody's, `None`. So a
 /// page's frame or form is held to what its fetch is (capability-navigation).
 /// Asked only of a browser's request, with its session here
-/// ([`crate::session::Shown::Session`]), so with `Sec-Fetch-Site`; a
+/// ([`Shown::Session`]), so with `Sec-Fetch-Site`; a
 /// program's, which shows the token, is the lend's own ([`lent`]).
 fn app_of(headers: &HeaderMap, host: &Label) -> Option<Label> {
     let ([site, mode, origin, at_host], own) = fetch(headers);
@@ -145,11 +147,29 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
     if req.uri().path() == crate::session::OPEN_PATH {
         return Ok(at.sessions.redeem(label.as_str(), req.uri().query()));
     }
+    // A page's read of this lend, by the capability in its address
+    // (`crate::surface::reads`), is taken off before anything is decided.
+    let cap = capped(&mut req)?;
     // A browser with this origin's session, else a program with the token,
     // which is the lend's own; neither is carried on to the lend.
-    let shown = at.sessions.shown(req.headers(), label.as_str());
+    let mut shown = at.sessions.shown(req.headers(), label.as_str());
     at.sessions.strip(req.headers_mut());
-    if shown == crate::session::Shown::Neither {
+    if let Some(cap) = cap.filter(|_| shown != Shown::Token) {
+        let app = app_of(req.headers(), &label);
+        if app.as_ref() == Some(&label) {
+            tracing::debug!(target: "origin", %label, "origin: the person going to a read's address, opened by the home page, whose session decides; a capability is never a session");
+            let tail = req.uri().to_string();
+            let tail: String = form_urlencoded::byte_serialize(tail.as_bytes()).collect();
+            let home = crate::home::address(at.host.api_port) + "to?lend=" + label.as_str();
+            return Ok(Redirect::to(&(home + "&at=" + &tail)).into_response());
+        }
+        let held = app
+            .as_ref()
+            .is_some_and(|a| same(cap.as_bytes(), at.sessions.cap(&a, &label).as_bytes()));
+        tracing::debug!(target: "origin", %label, ?app, held, "origin: a page's read by the capability in its address, refused unless this computer's for that page");
+        shown = if held { Shown::Session } else { Shown::Neither };
+    }
+    if shown == Shown::Neither {
         tracing::debug!(target: "origin", %label, "origin: refused — neither this origin's session nor the token");
         return Err(at.sessions.refused());
     }
@@ -157,7 +177,7 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
         tracing::debug!(target: "origin", %label, "origin: the lend's page asks the lends it reads, answered from the record");
         return crate::surface::reads(&at, &label).await;
     }
-    let program = (shown == crate::session::Shown::Token).then(|| label.clone());
+    let program = (shown == Shown::Token).then(|| label.clone());
     let Some(app) = program.or_else(|| app_of(req.headers(), &label)) else {
         tracing::debug!(target: "origin", %label, "origin: refused — from another page that names no origin");
         return Err(LendRefusal::Closed.say(
@@ -212,6 +232,16 @@ fn readable(answer: Result<Response, Response>, page: Option<HeaderValue>) -> Re
     headers.insert(header::ACCESS_CONTROL_EXPOSE_HEADERS, exposed);
     headers.append(header::VARY, HeaderValue::from_static("origin"));
     answer
+}
+
+/// The capability `req`'s path names under [`AS_PATH`], taken off its path.
+fn capped(req: &mut Request) -> Result<Option<String>, Response> {
+    let path = req.uri().to_string();
+    let Some((cap, tail)) = (path.strip_prefix(AS_PATH)).and_then(|p| p.split_once('/')) else {
+        return Ok(None);
+    };
+    *req.uri_mut() = uri_of(&format!("/{tail}"))?;
+    Ok(Some(cap.into()))
 }
 
 /// `req` carried to the lend `label`, as this computer's person, for the
