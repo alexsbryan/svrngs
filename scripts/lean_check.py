@@ -273,8 +273,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # under the same ceiling, its range +135 to +250 and +2 to +5 core
 # (SURVEY.md:223): `Alpn::Port`, a raw `Source`, `--udp`, and the UDP
 # door (door/udp.rs), after its own pass over that file (383 counted at
-# first, 199 at 36471346): +249 and +2, at 18,741 and 3,241.
-BUDGET = {"crates/svrngs-core": 3242, ".": 18742}
+# first, 199 at 36471346): +249 and +2, at 18,741 and 3,241. give-tcp,
+# under the same ceiling, its range +60 to +130 and 0 core (SURVEY.md:224):
+# `Raw::Tcp`, `--tcp`, the opening naming how a lend travels, and the TCP
+# door (door/tcp.rs), sharing the UDP door's admission and opening
+# (083cc6b6): +126 and 0, at 18,867.
+BUDGET = {"crates/svrngs-core": 3242, ".": 18868}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
