@@ -17,7 +17,7 @@ mod pair;
 use std::net::SocketAddr;
 use std::time::Duration;
 
-use common::loopback_sockets;
+use common::{loopback_sockets, Browser};
 use pair::{alex_lets_sam_in, signing, start, NS};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
@@ -94,6 +94,13 @@ async fn ask(api: SocketAddr, host: &str, rest: &str) -> (String, tokio::net::Tc
     (String::from_utf8_lossy(&reply).into_owned(), sock)
 }
 
+/// [`ask`] from a caller on `on`'s computer: a page with the session svrngs
+/// opened at `host`, a program with the token (give-session).
+async fn asked(on: &Browser, host: &str, rest: &str) -> (String, tokio::net::TcpStream) {
+    let shown = on.shown(host, rest).await;
+    ask(on.api(), host, &format!("{rest}{shown}")).await
+}
+
 /// A whole reply's body after its head, read to the close.
 async fn body(mut sock: tokio::net::TcpStream) -> String {
     let mut rest = Vec::new();
@@ -125,6 +132,8 @@ async fn each_lend_opens_at_an_origin_of_its_own_on_this_computer() {
     lends(alex_dir.path(), "telly", telly.port(), ALEXS);
 
     let api = alex.api_addr();
+
+    let on = &Browser::of(&alex);
     let port = api.port();
     let label = |node: &Node, name: &str| Label::of(node.endpoint().id().as_bytes(), name);
     let host = |l: &Label| format!("{l}.localhost:{port}");
@@ -163,8 +172,8 @@ async fn each_lend_opens_at_an_origin_of_its_own_on_this_computer() {
         "the bare command's addresses are the lends' origins: {bare:?}"
     );
 
-    let (head, sock) = ask(
-        api,
+    let (head, sock) = asked(
+        on,
         &host(&label(&sam, "pad")),
         "GET /whoami?x=1 HTTP/1.1\r\nConnection: close\r\n",
     )
@@ -193,8 +202,8 @@ async fn each_lend_opens_at_an_origin_of_its_own_on_this_computer() {
         "{seen}"
     );
 
-    let (head, sock) = ask(
-        api,
+    let (head, sock) = asked(
+        on,
         &host(&label(&alex, "telly")),
         "GET /mine HTTP/1.1\r\nConnection: close\r\n",
     )
@@ -213,8 +222,8 @@ async fn each_lend_opens_at_an_origin_of_its_own_on_this_computer() {
     );
     assert_eq!(header_values(&seen, "authorization"), vec![ALEXS], "{seen}");
 
-    let (head, mut sock) = ask(
-        api,
+    let (head, mut sock) = asked(
+        on,
         &host(&label(&sam, "live")),
         "GET /socket HTTP/1.1\r\nConnection: Upgrade\r\nUpgrade: websocket\r\nSec-WebSocket-Version: 13\r\n",
     )
@@ -238,8 +247,8 @@ async fn each_lend_opens_at_an_origin_of_its_own_on_this_computer() {
     );
 
     let stranger = Label::of(&signing(9).verifying_key().to_bytes(), "pad");
-    let (head, _) = ask(
-        api,
+    let (head, _) = asked(
+        on,
         &host(&stranger),
         "GET / HTTP/1.1\r\nConnection: close\r\n",
     )
@@ -272,11 +281,12 @@ async fn the_record_answers_no_lend_s_origin_and_refuses_a_page() {
     let (telly, heads) = origins::head_origin().await;
     lends(dir.path(), "telly", telly.port(), ALEXS);
     let api = alex.api_addr();
+    let on = &Browser::of(&alex);
     let label = Label::of(alex.endpoint().id().as_bytes(), "telly");
     let lend_host = format!("{label}.localhost:{}", api.port());
 
-    let (head, sock) = ask(
-        api,
+    let (head, sock) = asked(
+        on,
         &lend_host,
         "GET /v1/groups HTTP/1.1\r\nConnection: close\r\n",
     )
@@ -348,14 +358,14 @@ fn declare(dir: &std::path::Path, name: &str, port: u16, kind: &str, reads: &[&s
 /// kind, and the app the service behind it was told — `None` when the
 /// service was not asked.
 async fn judged(
-    api: SocketAddr,
+    on: &Browser,
     host: &str,
     extra: &str,
     heads: &std::sync::Mutex<Vec<String>>,
 ) -> (u16, Option<String>, Option<Vec<String>>) {
     let before = heads.lock().unwrap().len();
-    let (head, sock) = ask(
-        api,
+    let (head, sock) = asked(
+        on,
         host,
         &format!("GET /x HTTP/1.1\r\nConnection: close\r\n{extra}"),
     )
@@ -379,7 +389,8 @@ async fn judged(
 /// reads** (sup-1; DESIGN §3, "Lent apps", call 6, and its table). Alex
 /// lends a page, `night`, reading kind `media`, a `telly` of it and a
 /// `diary`; Sam a `films` and a `notes`. At Alex's computer, each row of
-/// the table: a program (no `Sec-Fetch-*`), a typed address, a link
+/// the table: a program (no `Sec-Fetch-*`) showing the token, and each
+/// page's request with the session svrngs opened there: a typed address, a link
 /// followed from another page (a navigation with no `Origin`) and a request
 /// from the lend's own origin are the lend's own page, its service told its
 /// own label; a `fetch` from `night`'s page, by its `Origin`, is `night`'s,
@@ -394,7 +405,8 @@ async fn judged(
 /// site's.
 /// Node's `fetch` says `Sec-Fetch-Mode: cors` and no `Sec-Fetch-Site`,
 /// which a browser never leaves out (start-address (b); start-measure,
-/// `demo/runs/start/2026-10-13/README.md` §3 (a) 4): a program's.
+/// `demo/runs/start/2026-10-13/README.md` §3 (a) 4): a program's, the
+/// lend's own with the token; without it, refused (give-session).
 /// Planted, each watched failing: the origin taking the `Host` for a
 /// cross-origin `fetch`; a page reaching a lend it does not read; Alex's
 /// computer presenting no pass of its own to Sam's door; a program with a
@@ -417,6 +429,7 @@ async fn a_computer_s_origin_names_the_app_and_keeps_a_page_to_its_reads() {
         heads.insert(name, kept);
     }
     let api = alex.api_addr();
+    let on = &Browser::of(&alex);
     let port = api.port();
     let label = |seed: u8, name: &str| Label::of(&signing(seed).verifying_key().to_bytes(), name);
     let night = label(1, "night");
@@ -429,9 +442,15 @@ async fn a_computer_s_origin_names_the_app_and_keeps_a_page_to_its_reads() {
     let told = |l: &Label| (200, None, Some(vec![l.to_string()]));
     let closed = (403, Some("closed".to_string()), None);
     let rows = [
-        ("a program", 1, "night", String::new(), told(&night)),
         (
-            "Node's fetch, a program saying a mode and no site",
+            "a program, with the token",
+            1,
+            "night",
+            String::new(),
+            told(&night),
+        ),
+        (
+            "Node's fetch, a program saying a mode and no site, with the token",
             1,
             "night",
             "Sec-Fetch-Mode: cors\r\n".into(),
@@ -553,10 +572,19 @@ async fn a_computer_s_origin_names_the_app_and_keeps_a_page_to_its_reads() {
     ];
     for (row, seed, name, extra, want) in rows {
         let host = format!("{}.localhost:{port}", label(seed, name));
-        let got = judged(api, &host, &extra, &heads[name]).await;
+        let got = judged(on, &host, &extra, &heads[name]).await;
         eprintln!("{row}: {got:?}");
         assert_eq!(got, want, "{row}");
     }
+    // A program without the token is told where it is, and its lend's
+    // service is never asked (give-session).
+    let before = heads["night"].lock().unwrap().len();
+    let host = format!("{night}.localhost:{port}");
+    let (head, sock) = ask(api, &host, "GET /x HTTP/1.1\r\nConnection: close\r\n").await;
+    let said = body(sock).await;
+    assert!(head.starts_with("HTTP/1.1 401"), "{head}{said}");
+    assert!(said.contains("token"), "{said}");
+    assert_eq!(heads["night"].lock().unwrap().len(), before);
     sam.endpoint().close().await;
     alex.endpoint().close().await;
 }
@@ -645,18 +673,19 @@ async fn a_lend_s_computer_asleep_is_said_away_within_the_cap() {
     let (pad, _) = origins::head_origin().await;
     lends(sam_dir.path(), "pad", pad.port(), SAMS);
     let api = alex.api_addr();
+    let on = &Browser::of(&alex);
     let host =
         |key: &[u8; 32], name: &str| format!("{}.localhost:{}", Label::of(key, name), api.port());
     let within = svrngs_node::dial::DIAL_WITHIN + Duration::from_secs(1);
 
-    let asked = std::time::Instant::now();
-    let (head, sock) = ask(
-        api,
+    let since = std::time::Instant::now();
+    let (head, sock) = asked(
+        on,
         &host(sam.endpoint().id().as_bytes(), "pad"),
         "GET / HTTP/1.1\r\nConnection: close\r\n",
     )
     .await;
-    let took = asked.elapsed();
+    let took = since.elapsed();
     eprintln!("Sam's pad, through the slow path, answered in {took:?}: {head}");
     assert!(
         head.starts_with("HTTP/1.1 200"),
@@ -668,14 +697,14 @@ async fn a_lend_s_computer_asleep_is_said_away_within_the_cap() {
         "the dial went through the slow path, at least a round trip: {took:?}"
     );
 
-    let asked = std::time::Instant::now();
-    let (head, sock) = ask(
-        api,
+    let since = std::time::Instant::now();
+    let (head, sock) = asked(
+        on,
         &host(&signing(3).verifying_key().to_bytes(), "pad"),
         "GET / HTTP/1.1\r\nConnection: close\r\n",
     )
     .await;
-    let took = asked.elapsed();
+    let took = since.elapsed();
     eprintln!("Cy's pad, Cy's computer asleep, answered in {took:?}: {head}");
     assert!(
         head.starts_with("HTTP/1.1 502"),
@@ -713,6 +742,7 @@ async fn a_stopped_lend_is_said_by_its_lender_as_a_page_to_a_tab_and_json_to_a_p
     lends(alex_dir.path(), "telly", stopped.port(), ALEXS);
     lends(sam_dir.path(), "pad", stopped.port(), SAMS);
     let api = alex.api_addr();
+    let on = &Browser::of(&alex);
     for (node, name, lender) in [(&alex, "telly", "alex"), (&sam, "pad", "Its lender")] {
         let host = format!(
             "{}.localhost:{}",
@@ -720,7 +750,7 @@ async fn a_stopped_lend_is_said_by_its_lender_as_a_page_to_a_tab_and_json_to_a_p
             api.port()
         );
         let tab = "GET / HTTP/1.1\r\nAccept: text/html,*/*\r\nSec-Fetch-Mode: navigate\r\nConnection: close\r\n";
-        let (head, sock) = ask(api, &host, tab).await;
+        let (head, sock) = asked(on, &host, tab).await;
         let page = format!("{head}{}", body(sock).await);
         assert!(page.starts_with("HTTP/1.1 502"), "{page}");
         assert!(
@@ -736,7 +766,7 @@ async fn a_stopped_lend_is_said_by_its_lender_as_a_page_to_a_tab_and_json_to_a_p
             !page.contains("{\"") && !page.contains(&stopped.port().to_string()),
             "{page}"
         );
-        let (head, sock) = ask(api, &host, "GET / HTTP/1.1\r\nConnection: close\r\n").await;
+        let (head, sock) = asked(on, &host, "GET / HTTP/1.1\r\nConnection: close\r\n").await;
         let program = format!("{head}{}", body(sock).await);
         assert!(program.contains(r#""kind":"away""#), "{program}");
     }
@@ -784,6 +814,7 @@ async fn a_lend_s_computer_that_did_not_answer_is_shown_to_a_tab_as_its_window_d
     };
     alex.rail().commit(NS, &admit).unwrap().unwrap();
     let api = alex.api_addr();
+    let on = &Browser::of(&alex);
     let host = format!(
         "{}.localhost:{}",
         Label::of(&signing(3).verifying_key().to_bytes(), "pad"),
@@ -791,7 +822,7 @@ async fn a_lend_s_computer_that_did_not_answer_is_shown_to_a_tab_as_its_window_d
     );
 
     let tab = "GET / HTTP/1.1\r\nAccept: text/html,*/*\r\nSec-Fetch-Mode: navigate\r\nConnection: close\r\n";
-    let (head, sock) = ask(api, &host, tab).await;
+    let (head, sock) = asked(on, &host, tab).await;
     let page = format!("{head}{}", body(sock).await);
     eprintln!("Cy's pad, Cy's computer not answering, to a tab: {page}");
     assert!(page.starts_with("HTTP/1.1 502"), "{page}");
@@ -817,7 +848,7 @@ async fn a_lend_s_computer_that_did_not_answer_is_shown_to_a_tab_as_its_window_d
         "{page}"
     );
 
-    let (head, sock) = ask(api, &host, "GET / HTTP/1.1\r\nConnection: close\r\n").await;
+    let (head, sock) = asked(on, &host, "GET / HTTP/1.1\r\nConnection: close\r\n").await;
     let program = format!("{head}{}", body(sock).await);
     assert!(
         program.contains(
@@ -907,6 +938,7 @@ async fn a_lent_app_writes_as_the_person_asking_only_by_their_own_device() {
         );
     }
     let api = alex.api_addr();
+    let on = &Browser::of(&alex);
     let host = |seed: u8| {
         let label = Label::of(&signing(seed).verifying_key().to_bytes(), "events");
         format!("{label}.localhost:{}", api.port())
@@ -927,7 +959,7 @@ async fn a_lent_app_writes_as_the_person_asking_only_by_their_own_device() {
     let paid = paid.unwrap().unwrap().lines()[0].id.clone();
 
     let coming = serde_json::json!([{ "group": NS, "op": { "kind": "coming", "event": "e1" } }]);
-    let (head, sock) = ask(api, &host(2), &post(coming)).await;
+    let (head, sock) = asked(on, &host(2), &post(coming)).await;
     body(sock).await;
     eprintln!("Alex at Sam's events, coming: {head}");
     assert!(head.starts_with("HTTP/1.1 303"), "{head}");
@@ -948,7 +980,7 @@ async fn a_lent_app_writes_as_the_person_asking_only_by_their_own_device() {
     assert!(written(&alex).contains(&alex_s), "{:?}", written(&alex));
 
     let own = serde_json::json!([{ "group": NS, "op": { "kind": "came", "event": "e1" } }]);
-    let (head, sock) = ask(api, &host(1), &post(own)).await;
+    let (head, sock) = asked(on, &host(1), &post(own)).await;
     body(sock).await;
     assert!(
         head.starts_with("HTTP/1.1 303"),
@@ -973,7 +1005,7 @@ async fn a_lent_app_writes_as_the_person_asking_only_by_their_own_device() {
             "sam’s events wrote in a group you and its lender are not both in, so it was not saved.",
         ),
     ] {
-        let (head, sock) = ask(api, &host(2), &post(acts)).await;
+        let (head, sock) = asked(on, &host(2), &post(acts)).await;
         let page = format!("{head}{}", body(sock).await);
         eprintln!("{row}: {page}");
         assert!(page.starts_with("HTTP/1.1 403"), "{row}: {page}");

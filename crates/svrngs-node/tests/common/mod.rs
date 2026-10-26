@@ -184,6 +184,15 @@ impl Browser {
         format!("Authorization: Bearer {}\r\n", self.token)
     }
 
+    /// What a caller on this computer shows `host` with `extra`: a page's
+    /// request the session there, a program's the token, which it reads.
+    pub async fn shown(&self, host: &str, extra: &str) -> String {
+        match extra.contains("Sec-Fetch-Site") {
+            true => self.cookie(host, extra).await,
+            false => self.bearer(),
+        }
+    }
+
     /// The `Cookie:` line it sends `host` with `extra`: none from a
     /// program, or at a host no open names (the record's own address).
     pub async fn cookie(&self, host: &str, extra: &str) -> String {
