@@ -277,8 +277,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # under the same ceiling, its range +60 to +130 and 0 core (SURVEY.md:224):
 # `Raw::Tcp`, `--tcp`, the opening naming how a lend travels, and the TCP
 # door (door/tcp.rs), sharing the UDP door's admission and opening
-# (083cc6b6): +126 and 0, at 18,867.
-BUDGET = {"crates/svrngs-core": 3242, ".": 18868}
+# (083cc6b6): +126 and 0, at 18,867. give-play, under the same ceiling,
+# its range +165 to +310 and 0 core (SURVEY.md:225): Play's owner on the
+# room's model (play.rs), sharing the room's store (64b96771) and port,
+# `Offered.raw`, and the home page's row and line, after its own cut of
+# 10: +226 and 0, at 19,094.
+BUDGET = {"crates/svrngs-core": 3242, ".": 19095}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
