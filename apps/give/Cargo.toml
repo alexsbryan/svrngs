@@ -1,0 +1,29 @@
+# Give: a group keeps an app on one member's computer at a time, from the
+# app's own published image, in rootless podman (svrn-docs
+# rings/current/GIVE.md §7a). This crate is its keeper program and the
+# runtime under it.
+#
+# It links no svrngs crate and takes nothing from the workspace's tables, so
+# it reaches svrngs through its public surface alone and moves to a
+# repository of its own at no cost (tests/surface.rs holds that). It is a
+# member of the svrngs workspace only so the gate's rustfmt, clippy and tests
+# reach it.
+[package]
+name = "give"
+version = "0.1.0"
+edition = "2024"
+license = "AGPL-3.0-or-later"
+publish = false
+
+[dependencies]
+anyhow = "1"
+blake3 = "1.8"
+serde_json = "1"
+# The card is the app's own compose.yaml. serde_yaml 0.9 is marked
+# deprecated by its author and still the YAML reader the registry here
+# already holds; give reads it into a Value and walks it itself (card.rs).
+serde_yaml = "0.9"
+tar = "0.4"
+thiserror = "2"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
