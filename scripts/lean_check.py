@@ -281,8 +281,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # its range +165 to +310 and 0 core (SURVEY.md:225): Play's owner on the
 # room's model (play.rs), sharing the room's store (64b96771) and port,
 # `Offered.raw`, and the home page's row and line, after its own cut of
-# 10: +226 and 0, at 19,094.
-BUDGET = {"crates/svrngs-core": 3242, ".": 19095}
+# 10: +226 and 0, at 19,094. give-cut, inside what that ceiling left, its
+# range +10 to +40 and 0 core: the lender's sweep closing a raw lend's
+# connection once its dialer no longer stands (door/udp.rs): +16 and 0, at
+# 19,110.
+BUDGET = {"crates/svrngs-core": 3242, ".": 19111}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
