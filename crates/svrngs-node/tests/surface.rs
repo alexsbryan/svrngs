@@ -107,6 +107,25 @@ async fn at_origin(
     (status, serde_json::from_slice(&body).unwrap())
 }
 
+/// `body`'s reads with each address's capability taken off, once it is
+/// seen there: a read's address is its origin under `/svrngs-as/<cap>/`
+/// (give-session; tests/session.rs holds the cap itself).
+fn uncapped(mut body: serde_json::Value) -> serde_json::Value {
+    for read in body["lends"].as_array_mut().into_iter().flatten() {
+        let address = read["address"].as_str().unwrap_or_default();
+        let (origin, cap) = address
+            .split_once("svrngs-as/")
+            .unwrap_or_else(|| panic!("{read}"));
+        let cap = cap.strip_suffix('/').unwrap_or_default();
+        assert!(
+            !cap.is_empty() && !cap.contains('/'),
+            "a capability in {address}"
+        );
+        read["address"] = origin.into();
+    }
+    body
+}
+
 /// Alex's group "house" and Sam in it, each computer holding its seed, and
 /// Alex knowing where Sam listens.
 struct House {
@@ -372,9 +391,9 @@ async fn a_caller_off_loopback_is_refused_the_groups_and_the_lends() {
 /// Alex lends a page, `night`, reading kind `media`, and a `telly` of it;
 /// Sam a `films`. At `night`'s origin on Alex's computer, `/svrngs-reads`
 /// answers `telly` and `films`, each with its kind, name, lender's person
-/// and its origin on this computer, never `night` itself; then, Sam's
-/// computer gone, `telly` alone and Sam named as not answering. Planted:
-/// the unanswered answered none.
+/// and its origin on this computer under a capability ([`uncapped`]),
+/// never `night` itself; then, Sam's computer gone, `telly` alone and Sam
+/// named as not answering. Planted: the unanswered answered none.
 #[tokio::test]
 async fn a_lent_page_asks_at_its_own_origin_the_lends_it_reads() {
     let mut house = House::new().await;
@@ -392,7 +411,7 @@ async fn a_lent_page_asks_at_its_own_origin_the_lends_it_reads() {
     let (status, body) = at_origin(&house.alex, &night, reads, None).await;
     assert_eq!(status, 200, "{body:#}");
     assert_eq!(
-        body,
+        uncapped(body),
         serde_json::json!({
             "lends": [telly, { "kind": "media", "name": "films", "lender": "sam", "address": at(2, "films") }],
             "unanswered": [],
@@ -405,7 +424,7 @@ async fn a_lent_page_asks_at_its_own_origin_the_lends_it_reads() {
     let (status, body) = at_origin(&house.alex, &night, reads, None).await;
     assert_eq!(status, 200, "{body:#}");
     assert_eq!(
-        body,
+        uncapped(body),
         serde_json::json!({ "lends": [telly], "unanswered": ["sam"] }),
         "Sam's computer gone: his lend not told, he named as not answering"
     );
@@ -457,7 +476,7 @@ async fn a_lent_page_is_not_held_by_a_computer_that_never_answers() {
     eprintln!("the reads answered in {took:?}: {body}");
     assert_eq!(status, 200, "{body:#}");
     assert_eq!(
-        body,
+        uncapped(body),
         serde_json::json!({
             "lends": [
                 { "kind": "media", "name": "telly", "lender": "alex", "address": at(1, "telly") },
