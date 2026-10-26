@@ -30,7 +30,11 @@ use std::time::Duration;
 use svrngs::cli;
 use svrngs::group::Name;
 use svrngs_node::invite::ORIGIN_FILE;
+// Only the macOS tests' (the_line_run_twice_…): unused, and so clippy's
+// error, where they are not built.
+#[cfg(target_os = "macos")]
 use svrngs_node::link::Origin;
+#[cfg(target_os = "macos")]
 use svrngs_node::RailAct;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
