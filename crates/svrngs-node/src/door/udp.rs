@@ -166,37 +166,45 @@ pub(crate) async fn serve(door: Door, conn: Connection) {
 
 /// What a flow is opened from: the door, the dialer, the lend and its port,
 /// and the member's connection.
-type Lending<'a> = (&'a Door, &'a str, &'a Lend, NonZeroU16, &'a Connection);
+pub(super) type Lending<'a> = (&'a Door, &'a str, &'a Lend, NonZeroU16, &'a Connection);
 
-/// A flow's first packet, let in by the dialer's standing now and the
-/// lend's limit, which counts people, not flows: a socket on 127.0.0.1:0
+/// A flow's first packet, let in by [`admitted`]: a socket on 127.0.0.1:0
 /// connected to the lent port alone, in a task of its own; or why not, in
 /// a person's words.
 async fn opened(lent: &Lending<'_>, flow: u32) -> Result<mpsc::Sender<Vec<u8>>, String> {
-    let (door, actor, lend, port, conn) = *lent;
-    let Some((_, _, whose)) = PersonKey::resolved(door, actor) else {
-        tracing::debug!(target: "door", actor, flow, "udp: a flow refused — the dialer stands in no group held here now");
-        return Err(LENDS_NOTHING.into());
-    };
-    let at = crate::network::guess(Via(conn.clone()).observe().and_then(|o| o.addr));
-    let held = match door.using.ask(lend, whose.as_str(), at).await {
-        Some((Verdict::Full { using, limit }, _)) => {
-            tracing::info!(target: "door", person = whose.as_str(), lend = %lend.name, flow, using, limit,
-                "udp: a flow refused — as many people as the lend's limit are using it");
-            return Err(busy_words(lend, using, limit));
-        }
-        Some((_, held)) => held,
-        None => return Err(super::UNCOUNTED.into()),
-    };
+    let (_, actor, lend, port, conn) = *lent;
+    let held = admitted(lent, &format!("udp: flow {flow}")).await?;
     let unreached = |e: std::io::Error| format!("{} cannot be reached here: {e}", lend.name);
     let socket = UdpSocket::bind((Ipv4Addr::LOCALHOST, 0)).await;
     let socket = socket.map_err(unreached)?;
     let to = (Ipv4Addr::LOCALHOST, port.get());
     socket.connect(to).await.map_err(unreached)?;
-    tracing::debug!(target: "door", person = whose.as_str(), lend = %lend.name, flow, port, counted = held.is_some(), "udp: a flow opened, its socket connected to the lent port");
+    tracing::debug!(target: "door", actor, lend = %lend.name, flow, port, counted = held.is_some(), "udp: a flow opened, its socket connected to the lent port");
     let (packets, sent) = mpsc::channel(256);
     tokio::spawn(flowing(socket, (conn.clone(), flow), sent, held));
     Ok(packets)
+}
+
+/// One use of a raw lend, `what` in the traces, let in by the dialer's
+/// standing now and the lend's limit, which counts people, not flows or
+/// connections: that person's use, held (none for one not counted); or why
+/// not, in a person's words.
+pub(super) async fn admitted(lent: &Lending<'_>, what: &str) -> Result<Option<InFlight>, String> {
+    let (door, actor, lend, _, conn) = *lent;
+    let Some((_, _, whose)) = PersonKey::resolved(door, actor) else {
+        tracing::debug!(target: "door", actor, what, "raw: a use refused — the dialer stands in no group held here now");
+        return Err(LENDS_NOTHING.into());
+    };
+    let at = crate::network::guess(Via(conn.clone()).observe().and_then(|o| o.addr));
+    match door.using.ask(lend, whose.as_str(), at).await {
+        Some((Verdict::Full { using, limit }, _)) => {
+            tracing::info!(target: "door", person = whose.as_str(), lend = %lend.name, what, using, limit,
+                "raw: a use refused — as many people as the lend's limit are using it");
+            Err(busy_words(lend, using, limit))
+        }
+        Some((_, held)) => Ok(held),
+        None => Err(super::UNCOUNTED.into()),
+    }
 }
 
 /// One flow: its packets to the lent port, and the port's answers to the
@@ -245,7 +253,7 @@ pub enum Unopened {
 pub type Carried = (mpsc::UnboundedReceiver<String>, AbortOnDropHandle<()>);
 
 /// The opening's stream, kept open: the lender's words come on it.
-type Opened = (SendStream, Lines<BufReader<RecvStream>>);
+pub(super) type Opened = (SendStream, Lines<BufReader<RecvStream>>);
 type Tell = mpsc::UnboundedSender<String>;
 
 /// Open the UDP lend `lend` of the computer at `to`, its flows those of
@@ -257,6 +265,19 @@ pub async fn carried(
     lend: &LendName,
     local: UdpSocket,
 ) -> Result<Carried, Unopened> {
+    let (conn, opened) = opening(endpoint, to, lend).await?;
+    let (tell, told) = mpsc::unbounded_channel();
+    let task = tokio::spawn(member(conn, local, opened, tell));
+    Ok((told, AbortOnDropHandle::new(task)))
+}
+
+/// The opening of `lend` at `to`: the member's one connection for it, and
+/// the stream the lender's words come on.
+pub(super) async fn opening(
+    endpoint: &Endpoint,
+    to: EndpointAddr,
+    lend: &LendName,
+) -> Result<(Connection, Opened), Unopened> {
     let within = Some(crate::dial::DIAL_WITHIN);
     let dialled = crate::iroh::dialled(endpoint, to, Alpn::Port.bytes(), within).await;
     let conn = dialled.map_err(|e| Unopened::Unreached(e.to_string()))?;
@@ -273,9 +294,7 @@ pub async fn carried(
         got => Err(Unopened::Unreached(format!("{:?}", got.err()))),
     };
     tracing::debug!(target: "door", lend = %lend, refused = ?opened.as_ref().err(), "udp: the lend opened, or refused");
-    let (tell, told) = mpsc::unbounded_channel();
-    let task = tokio::spawn(member(conn, local, opened?, tell));
-    Ok((told, AbortOnDropHandle::new(task)))
+    Ok((conn, opened?))
 }
 
 /// The member's loop: `local`'s packets to the lender, each flow's answers
