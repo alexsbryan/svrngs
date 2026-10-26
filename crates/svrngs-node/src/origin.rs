@@ -165,7 +165,7 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
         }
         let held = app
             .as_ref()
-            .is_some_and(|a| same(cap.as_bytes(), at.sessions.cap(&a, &label).as_bytes()));
+            .is_some_and(|a| same(cap.as_bytes(), at.sessions.cap(a, &label).as_bytes()));
         tracing::debug!(target: "origin", %label, ?app, held, "origin: a page's read by the capability in its address, refused unless this computer's for that page");
         shown = if held { Shown::Session } else { Shown::Neither };
     }

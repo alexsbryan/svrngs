@@ -155,7 +155,8 @@ pub fn heard(filter: &str) -> (Said, (tracing::subscriber::DefaultGuard, tracing
 /// sends its `Sec-Fetch-*`; a program's request, with none, gets no cookie.
 #[allow(
     dead_code,
-    reason = "each test binary compiles this file; only some model a browser"
+    clippy::disallowed_types,
+    reason = "each test binary compiles this file; only some model a browser, whose cookies one test's lock keeps"
 )]
 pub struct Browser {
     api: SocketAddr,
@@ -165,7 +166,8 @@ pub struct Browser {
 
 #[allow(
     dead_code,
-    reason = "each test binary compiles this file; only some model a browser"
+    clippy::disallowed_types,
+    reason = "each test binary compiles this file; only some model a browser, whose cookies one test's lock keeps"
 )]
 impl Browser {
     pub fn of(node: &svrngs_node::node::Node) -> Self {
