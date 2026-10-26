@@ -3403,8 +3403,8 @@ async fn the_home_page_makes_a_link_to_invite_someone(engine: Engine) {
         json!({
             "all": "#home section p.link",
             "do": [
-                ["#home section button:has-text('Invite someone to')", null, true],
-                ["#home section button:has-text('Add your phone or another computer')", null, true],
+                ["#home section button:text-matches('^Invite someone to ')", null, true],
+                ["#home section button:text-is('Add your phone or another computer')", null, true],
                 ["#home section p.link button:has-text('Copy the link')", null, true],
             ],
         }),

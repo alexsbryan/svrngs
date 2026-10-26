@@ -185,7 +185,7 @@ async fn the_home_page_makes_a_group_another_computer_joins_with_no_restart(
                 ["#make input[name=name]", "Trip"],
                 ["#make input[name=person]", "Dee"],
                 ["#make button:has-text('Make a group')", null],
-                ["#home section button:has-text('Invite someone to Trip')", null, true],
+                ["#home section button:text-is('Invite someone to Trip')", null, true],
                 ["#make input[name=name]", "trip", true],
                 ["#make input[name=person]", "Dee"],
                 ["#make button:has-text('Make a group')", null],
