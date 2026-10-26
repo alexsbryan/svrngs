@@ -127,16 +127,30 @@ impl<'a> App<'a> {
         format!("{}-{volume}", self.name.0)
     }
 
-    /// Each image, by its digest, unless this computer has it already.
+    /// Each image, by its digest, unless this computer has it already, in
+    /// the build its card names if it names one.
     pub fn pull(&self) -> Result<(), RunError> {
         for s in &self.card.services {
             let image = s.image.as_str();
-            if self.podman.answers(&["image", "exists", image])? {
-                tracing::debug!(image, "already here");
-            } else {
-                self.podman.run(&["pull", "--quiet", image])?;
-                tracing::debug!(image, "pulled");
+            let here = match self.podman.answers(&["image", "exists", image])? {
+                false => None,
+                true => Some(
+                    self.podman
+                        .run(&["image", "inspect", "--format", "{{.Os}}/{{.Architecture}}", image])?,
+                ),
+            };
+            match (&here, &s.platform) {
+                (Some(here), Some(wants)) if here != wants => {}
+                (Some(here), _) => {
+                    tracing::debug!(image, here, "already here");
+                    continue;
+                }
+                (None, _) => {}
             }
+            let mut pull = vec!["pull", "--quiet"];
+            pull.extend(s.platform.iter().flat_map(|p| ["--platform", p.as_str()]));
+            self.podman.run(&[pull.as_slice(), &[image]].concat())?;
+            tracing::debug!(image, platform = s.platform, ?here, "pulled");
         }
         Ok(())
     }
@@ -226,6 +240,9 @@ impl<'a> App<'a> {
                 "--entrypoint".into(),
                 serde_json::to_string(e).expect("a list of strings is JSON"),
             ]);
+        }
+        if let Some(p) = &s.platform {
+            a.extend(["--platform".into(), p.clone()]);
         }
         a.push(s.image.as_str().into());
         a.extend(s.command.iter().flatten().cloned());

@@ -97,6 +97,9 @@ pub struct Service {
     pub command: Option<Vec<String>>,
     pub user: Option<String>,
     pub working_dir: Option<String>,
+    /// `platform`: which of the image's builds to run, `os/arch`, where the
+    /// card's author found the one for this computer's own does not run.
+    pub platform: Option<String>,
     /// `mem_limit`, in bytes.
     pub memory: Option<u64>,
     /// `stop_grace_period`; compose's default is 10 s.
@@ -270,7 +273,7 @@ fn read_service(name: &str, v: &Value, volumes: &[String]) -> Result<Service, Re
         let field = format!("{at}.{key}");
         match key {
             "image" | "environment" | "volumes" | "ports" | "healthcheck" | "entrypoint" | "command" | "user"
-            | "working_dir" | "mem_limit" | "stop_grace_period" => {}
+            | "working_dir" | "platform" | "mem_limit" | "stop_grace_period" => {}
             // give keeps the app running itself, and starts services in the
             // file's order.
             "restart" | "depends_on" => tracing::debug!(field, "not read: give starts and restarts the app itself"),
@@ -334,6 +337,10 @@ fn read_service(name: &str, v: &Value, volumes: &[String]) -> Result<Service, Re
         working_dir: m
             .get("working_dir")
             .map(|v| string(v, &format!("{at}.working_dir")))
+            .transpose()?,
+        platform: m
+            .get("platform")
+            .map(|v| string(v, &format!("{at}.platform")))
             .transpose()?,
         memory: m
             .get("mem_limit")

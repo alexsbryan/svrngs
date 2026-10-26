@@ -160,6 +160,12 @@ fn what_is_harmless_is_read() {
     );
     let card = Card::parse(&with("    image: docker.io", "    mem_limit: 3g\n    image: docker.io")).unwrap();
     assert_eq!(card.memory(), 3 << 30);
+    let card = Card::parse(&with(
+        "    image: docker.io",
+        "    platform: linux/amd64\n    image: docker.io",
+    ))
+    .unwrap();
+    assert_eq!(card.services[0].platform.as_deref(), Some("linux/amd64"));
 }
 
 #[test]
