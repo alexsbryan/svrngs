@@ -70,3 +70,11 @@ test = false
 name = "scenes"
 path = "tests/scenes/main.rs"
 test = false
+
+# The worlds of svrngs's xenia scenes (demo/xenia/README.md): run one at a
+# time, by name, by demo/xenia/<scene>.sh; no step of scripts/check.sh
+# runs them, and its clippy step lints them.
+[[test]]
+name = "xenia"
+path = "tests/xenia/main.rs"
+test = false

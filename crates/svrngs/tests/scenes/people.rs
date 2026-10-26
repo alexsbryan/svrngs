@@ -374,6 +374,37 @@ impl Person {
         serde_json::from_slice(&got).unwrap_or(Value::Null)
     }
 
+    /// `POST <path>` of `body` at the lend whose origin here is `origin`, as
+    /// that lend's own page sends it: its `Host`, and the browser's word that
+    /// it came from that origin, which no page's script can set (origin.rs
+    /// `fetch` and `app_of`). What a scene writes before a person arrives,
+    /// as Money's page would have written it. The xenia worlds' alone
+    /// (tests/xenia/main.rs), so unused in the scenes' binary.
+    #[allow(dead_code)]
+    pub async fn on_lend(&self, origin: &str, path: &str, body: &Value) -> Value {
+        let origin = origin.trim_end_matches('/');
+        let host = origin.trim_start_matches("http://");
+        let name = host.split(':').next().unwrap_or_default();
+        let http = reqwest::Client::builder().no_proxy();
+        let http = http.resolve(name, self.api).build().unwrap();
+        let sent = http.post(format!("{origin}{path}"));
+        let sent = sent
+            .header("origin", origin)
+            .header("sec-fetch-site", "same-origin")
+            .header("content-type", "application/json")
+            .body(body.to_string());
+        let got = sent.send().await.unwrap();
+        let status = got.status();
+        let got = got.bytes().await.unwrap();
+        assert!(
+            status.is_success(),
+            "{}'s lend at {origin} answered {path} {status}: {}",
+            self.name,
+            String::from_utf8_lossy(&got)
+        );
+        serde_json::from_slice(&got).unwrap_or(Value::Null)
+    }
+
     /// The link the home page makes to invite someone to `group`.
     pub async fn invites(&self, group: &str) -> String {
         let asked = json!({ "group": group, "device": false });
