@@ -160,6 +160,13 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   (`crates/svrngs/tests/udp.rs`, `crates/svrngs-node/src/door/udp/tests.rs`);
   +249 library, +2 core, 0 `apps/`, +1 surface (a lend may be UDP), the
   caps 18,742 and 3,242.
+  Landed, give-tcp: `svrngs share <port> --tcp` lends a TCP port, each
+  connection a QUIC stream of its own on the lend's one connection, one
+  stalled connection holding back neither another nor the record, a
+  half-close carried, a stranger and a person past the limit refused
+  (`crates/svrngs/tests/tcp.rs`); +126 library, 0 core, 0 `apps/`, 0
+  surface (the same item, a lend may be TCP), the cap 18,868, its raise
+  landed for the operator (c0d3b829; "Go for both", give-play's too).
   Not carried: the jellyfin, movie-night and taste `check.sh` runs,
   outside the gate, which open a lend's origin bare. The operator, "Let's do
   half the rows": the loop stops after the svrngs half, give-play-scene,
