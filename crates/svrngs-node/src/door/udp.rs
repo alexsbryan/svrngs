@@ -40,7 +40,7 @@ use tokio::net::UdpSocket;
 use tokio::sync::mpsc;
 
 use super::{busy_words, find, now, Door, InFlight, PersonKey, Verdict, LENDS_NOTHING};
-use crate::iroh::{closed_unadmitted, key_actor, Alpn, Endpoint, EndpointAddr, Via};
+use crate::iroh::{closed_unadmitted, key_actor, Alpn, Endpoint, EndpointAddr, Via, NOT_ADMITTED};
 use crate::lend::{Lend, LendName, Raw, Source};
 
 /// The frame's bytes before a fragment: flow, number, index and count.
@@ -126,7 +126,8 @@ type Flows = BTreeMap<u32, Result<mpsc::Sender<Vec<u8>>, Instant>>;
 /// The lender's half: `conn`, its dialer admitted by standing in a group
 /// held here (node.rs `admit_dialer`), opening one raw lend, its line the
 /// way it travels and its name, `UDP <name>` or `TCP <name>`; a TCP lend's
-/// connections are [`super::tcp`]'s.
+/// connections are [`super::tcp`]'s. The lender closes it once the dialer
+/// no longer stands ([`unstood`]), whatever it carries then (give-cut).
 pub(crate) async fn serve(door: Door, conn: Connection) {
     let actor = key_actor(&conn.remote_id());
     let Ok((mut send, recv)) = conn.accept_bi().await else {
@@ -150,6 +151,29 @@ pub(crate) async fn serve(door: Door, conn: Connection) {
     };
     let _ = send.write_all(b"ok\n").await;
     let lent = (&door, actor.as_str(), &lend, port, &conn);
+    tokio::select! {
+        () = carrying(lent, raw, send) => {}
+        () = unstood(&door, &actor) => {
+            tracing::debug!(target: "door", actor, lend = %lend.name, "raw: the member's connection closed by the lender — the dialer no longer stands in any group held here");
+            conn.close(0u32.into(), NOT_ADMITTED);
+        }
+    }
+}
+
+/// When `actor` no longer stands in any group held here, asked every
+/// [`SWEEP`] as [`admitted`] asks it: a removed member's open connection
+/// would otherwise run until it closes, or a flow that keeps sending, on.
+async fn unstood(door: &Door, actor: &str) {
+    let mut every = tokio::time::interval(SWEEP);
+    while PersonKey::resolved(door, actor).is_some() {
+        every.tick().await;
+    }
+}
+
+/// The lend opened, carried: a TCP lend's connections, or a UDP lend's
+/// flows, until the member's connection closes.
+async fn carrying(lent: Lending<'_>, raw: Option<Raw>, mut send: SendStream) {
+    let (_, actor, lend, _, conn) = lent;
     if raw == Some(Raw::Tcp) {
         return super::tcp::serve(lent).await;
     }

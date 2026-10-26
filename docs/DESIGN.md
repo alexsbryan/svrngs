@@ -160,7 +160,10 @@ its own (`Alpn::Port`), never as a page. A member's computer opens one
 connection for one lend, naming the lend and how it travels. Each use is
 let in by its person's standing and the lend's limit, which counts people,
 not flows or connections, and a person past the limit is told so in the
-door's words.
+door's words. While the connection is open the lender asks the dialer's
+standing again every second, and once they no longer stand it closes the
+connection, every flow and stream on it: a removed member is cut within
+seconds, whatever their own computer does (`door::udp::serve`).
 
 - **UDP.** Each program sending to the member's socket is a flow. The
   lender gives each flow a socket of its own on 127.0.0.1:0, connected to
