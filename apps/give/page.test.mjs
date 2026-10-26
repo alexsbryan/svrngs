@@ -94,12 +94,12 @@ test('a group starts an app from the shelf, and every member reads who keeps it 
     };
     const press = async (name, row) => {
       const before = await text();
-      const scope = row ? page.locator('section', { hasText: row }) : page;
+      const scope = row ? page.locator('li', { hasText: row }) : page;
       await scope.getByRole('button', { name, exact: true }).first().click();
       await page.waitForFunction((b) => document.querySelector('main').innerText !== b, before, { timeout: 30_000 });
       said.push(await text());
     };
-    const row = (title) => page.locator('section', { hasText: title }).innerText();
+    const row = (title) => page.locator('li', { hasText: title }).innerText();
 
     // Cy's computer can't keep yet: each row asks, once, for the install.
     await as('cy', 'ka', 'a1');

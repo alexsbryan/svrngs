@@ -62,3 +62,5 @@ mod night;
 mod pantry;
 // Ports (demo/factorio.md, demo/minecraft.md): each presses Play, bytes cross.
 mod ports;
+// Give, scene 1 (apps/give): Cy starts an app for the group, Bo opens it.
+mod give;

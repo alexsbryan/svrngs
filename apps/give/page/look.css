@@ -9,7 +9,8 @@
 body { max-width: 64rem; margin: 0 auto; padding: 0 1rem 3rem; background: Canvas; color: CanvasText; font: 16px/1.45 var(--face); }
 h1 { margin: 1.5rem 0; padding: 1.25rem 1.25rem 1rem; border: var(--rule); background: lightgreen; color: black; font-size: clamp(2rem, 7vw, 5.5rem); font-weight: 900; line-height: 0.9; letter-spacing: -0.045em; }
 h2 { margin: 0 0 0.25rem; font-size: 1.5rem; font-weight: 900; letter-spacing: -0.03em; }
-section { border-top: var(--rule); padding: 1rem 0 1.25rem; }
+ul { list-style: none; margin: 0; padding: 0; }
+li { border-top: var(--rule); padding: 1rem 0 1.25rem; }
 p { max-width: 72ch; margin: 0.25rem 0 0.5rem; }
 .kept { font-weight: 700; }
 .ask { border-left: var(--rule); padding-left: 0.75rem; }

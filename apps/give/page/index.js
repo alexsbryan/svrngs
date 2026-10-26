@@ -62,7 +62,7 @@ async function start(card, agreed) {
 /** One card's row: its name and line, and who keeps it, or how to start it. */
 function row(card, kept, read) {
   const keeping = kept.apps[card.kind];
-  const out = el('section', '', el('h2', card.title), el('p', card.about));
+  const out = el('li', '', el('h2', card.title), el('p', card.about));
   if (keeping) {
     out.append(el('p', `${card.title} · kept by ${who(keeping, read)}`));
     out.lastChild.className = 'kept';
@@ -113,7 +113,7 @@ async function show() {
     el('h1', 'Give'),
     el('p', 'Apps your group keeps on one of your computers at a time. Everyone in the group can use one while it’s kept.'),
     ...(refused ? [el('p', refused)] : []),
-    ...cards.map((card) => row(card, kept, read)),
+    el('ul', '', ...cards.map((card) => row(card, kept, read))),
   );
 }
 
