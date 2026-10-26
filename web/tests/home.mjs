@@ -124,6 +124,8 @@ try {
   // once what this computer lends is drawn below its heading: a lend made
   // by `do` draws it again (REVIEW-audit-v1ui-auto-1: read loaded, between).
   if (args.text) await page.locator('#lent h2 ~ *').first().waitFor({ timeout: 30_000 });
+  // Opened again, as a press above may have drawn the page again.
+  if (args.unfold) await page.evaluate(() => document.querySelectorAll('details').forEach((d) => (d.open = true)));
   const text = args.text ? await page.locator('body').innerText() : null;
   // Every link on the page, its words and where it opens (start-home).
   const links = await page.locator('a').evaluateAll((as) => as.map((a) => ({ text: a.textContent, target: a.target, href: a.href })));

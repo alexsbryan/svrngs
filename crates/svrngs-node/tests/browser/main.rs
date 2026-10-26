@@ -2801,7 +2801,7 @@ async fn the_home_page_opens_a_lend_to_this_wifi_and_closes_it(engine: Engine) {
     let seen = home_page(
         engine,
         &ada,
-        json!({ "all": row, "do": [press("Close it to this WiFi")], "text": true }),
+        json!({ "all": row, "do": [press("Close it to this WiFi")], "text": true, "unfold": true }),
     )
     .await;
     eprintln!("the home page's second run: {seen:#}");
@@ -2843,7 +2843,9 @@ async fn the_home_page_says_a_room_it_cannot_read(engine: Engine) {
     let ada = computer(dir.path(), &relay, &signing(7), me, "ada").await;
     let shelf = page_origin("<!doctype html><title>ada's shelf</title>").await;
     lend(dir.path(), "shelf", shelf.port());
-    let seen = home_page(engine, &ada, json!({ "text": true })).await;
+    // "What acts as you", where "On this WiFi" is, opened (folded since
+    // the operator's change of 2026-10-26).
+    let seen = home_page(engine, &ada, json!({ "text": true, "unfold": true })).await;
     let text = seen["text"].as_str().unwrap_or_default();
     assert!(text.contains("Open to this WiFi"), "{seen:#}");
     assert!(

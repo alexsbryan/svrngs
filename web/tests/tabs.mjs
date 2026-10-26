@@ -15,7 +15,7 @@
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
-import { held, launch, serve } from './page.mjs';
+import { held, launch, serve, unfold } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const server = await serve(args.site);
@@ -41,6 +41,7 @@ const said = (page) =>
 // null when the tab shows no such list.
 async function asked(page) {
   if (await page.locator('#uses').isHidden()) return null;
+  await unfold(page);
   await page.evaluate(() => (document.getElementById('uses').open = false));
   await page.waitForTimeout(200);
   await page.evaluate(() => document.getElementById('used').replaceChildren());

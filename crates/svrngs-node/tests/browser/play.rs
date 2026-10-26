@@ -86,7 +86,12 @@ async fn a_member_presses_play_and_its_stop_is_listed_under_what_acts_as_you(eng
 
     let stop = json!(["#acts button:has-text('Stop')"]);
     let all = format!("{row}, #acts p");
-    let seen = home_page(engine, &ada, json!({ "all": all, "do": [stop] })).await;
+    let seen = home_page(
+        engine,
+        &ada,
+        json!({ "all": all, "do": [stop], "unfold": true }),
+    )
+    .await;
     eprintln!("the home page's second run: {seen:#}");
     let before = seen["all"].to_string();
     assert!(before.contains(&on), "{seen:#}");

@@ -180,7 +180,7 @@ async fn ports(engine: Engine) {
 
     // Bo's "What acts as you" names Ana's walkie; its Stop closes it.
     let stop = json!(["#acts button:has-text('Stop')"]);
-    let args = json!({ "ask": bo.home_page(), "all": "#acts p", "do": [stop] });
+    let args = json!({ "ask": bo.home_page(), "all": "#acts p", "do": [stop], "unfold": true });
     let seen: Value = sees(engine, "home.mjs", args).await;
     eprintln!("Bo's home page, Stop: {seen:#}");
     let line = "Open on this computer: walkie (Ana’s), while Play is on. Stop";

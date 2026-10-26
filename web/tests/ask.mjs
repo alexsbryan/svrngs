@@ -24,7 +24,7 @@
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
-import { held, launch, serve } from './page.mjs';
+import { held, launch, serve, unfold } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const server = await serve(args.site);
@@ -76,6 +76,7 @@ try {
   // 2. The group's page: what apps use, and its Stop.
   await page.goto(origin);
   await page.waitForSelector('#status.good, #status.bad', { timeout: 90_000 });
+  await unfold(page);
   await page.locator('#uses summary').click();
   await page.waitForSelector('#used li', { timeout: 90_000 });
   out.used = await page.locator('#used').innerText();

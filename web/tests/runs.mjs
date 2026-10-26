@@ -10,7 +10,7 @@
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
-import { driving } from './page.mjs';
+import { driving, unfold } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 // The app opened from the group's page at `origin`, once the page lists
@@ -25,11 +25,13 @@ const opened = async (page, origin) => {
 const unfolded = (page) => page.locator('#acts summary', { hasText: 'See what’s new' }).click({ timeout: 60_000 });
 await driving(args, async ({ page, origin }) => {
   // The section's words once it asks, or as they are when it never does.
+  await unfold(page);
   await unfolded(page).catch(() => {});
   const asked = await page.locator('#acts').innerText();
   if (!asked.includes('changed its files on')) return { asked };
   const before = await opened(page, origin);
   await page.goto(origin);
+  await unfold(page);
   await unfolded(page);
   await page.locator('#acts button', { hasText: 'Open the new version' }).click({ timeout: 60_000 });
   // Said once written, or why not beside the button; read either way.

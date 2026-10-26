@@ -151,6 +151,13 @@ export async function launch(engine, { profile, device: as, args, unopened } = {
 // (relay-default (b)): each request and socket the context opens elsewhere —
 // n0's lookup, n0's relays, any host — aborted, and its URL kept in the
 // list answered. Ours run on 127.0.0.1 and names under localhost.
+// "What acts as you" opened by its heading, as a person opens it: on both
+// pages it is folded under it (question.js `acts`). Once open, left so.
+export async function unfold(page) {
+  const acts = page.locator('#acts > details');
+  if (!(await acts.evaluate((d) => d.open, null, { timeout: 90_000 }))) await acts.locator('> summary').click({ timeout: 10_000 });
+}
+
 export async function offline(context) {
   const away = [];
   const off = (url) => /^(https?|wss?):$/.test(url.protocol) && !/^(127\.0\.0\.1|\[::1\]|(.+\.)?localhost)$/.test(url.hostname);
