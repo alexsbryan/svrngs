@@ -162,6 +162,7 @@ There are fifteen rows:
     - **The carried page.** It shows the shelf of cards. "Start it for the group" asks the card's asks. A computer without Podman or the keeper program is asked once to install them. Each app shows "kept by <computer>".
     - **Scene 1** is played with the stand-in: a member starts the app, and another member reaches it.
   - **(b) The open question.** Who may keep is asked here (CHARTER), with any member as the default until the operator answers.
+  - **THE OPERATOR DECIDED, 2026-10-26,** on `demo/runs/give/2026-10-26-keep/QUESTION.md`: "The first is fine": any member whose computer has Podman and Give's program may keep, as landed. A successor the house names waits for a group that asks.
   - **Check:** red first, green after; the fold's tests identical across both builds; svrngs's scenes green.
 - [ ] give-app-move — depends [give-app-keep] — ONE ROW, red first (GIVE.md §3 scene 3):
   - **(a) Tests: MOVE IT TO ANOTHER COMPUTER.**

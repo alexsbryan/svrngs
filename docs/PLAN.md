@@ -219,9 +219,10 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   record, lending, shelf, page and keeping 619, its commands +116, the
   runtime and card +24, the page 93, the build 50), against GIVE.md §9's
   80 to 150 for the fold and 500 to 950 for supervision and snapshots;
-  Give's surface gains `give keep` and `give page`. Who may keep is asked
-  of the operator, any member until then
-  (`demo/runs/give/2026-10-26-keep/QUESTION.md`);
+  Give's surface gains `give keep` and `give page`. Any member may keep,
+  the operator's answer to `demo/runs/give/2026-10-26-keep/QUESTION.md`
+  (2026-10-26: "The first is fine"); a successor the house names waits
+  for a group that asks;
 - sealing, at its §2 trigger.
 
 The operator's switch stands apart from that order: when they flip

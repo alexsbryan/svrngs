@@ -46,3 +46,8 @@ other and keep a group for years. Every move and takeover already needs a person
 overwritten. A list of keepers would guard against a member the group
 already trusts to write its record. Option 2's trigger could be the
 first group that asks, the way the queue's other waits are triggered.
+
+## The answer
+
+The operator, 2026-10-26: "The first is fine." Any member keeps, as landed.
+Option 2 waits for the first group that asks.
