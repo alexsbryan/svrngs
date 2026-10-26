@@ -131,6 +131,19 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   by key beside the name. The grapevine still judges a correction, a
   person's own records and who carried an ask by name
   (`apps/grapevine/grapevine.js:237`, `:248`, `:482`): a row of its own;
+- the give queue (`ralph/next/give/`; the operator, 2026-10-25; svrn-docs
+  `rings/current/GIVE.md`): any port through the door, raw UDP and TCP, so
+  "if you can run it on localhost, you can share it" holds past HTTP; a
+  caller check on the record API, since a container on a Mac reaches its
+  loopback (GIVE.md §5); then Give, in `apps/give/`, a group keeping an
+  app in rootless podman, on svrngs's public surface alone. Its
+  economizing pass cut 13 lines (3acd44aa, 842f9da3, 36f58a12; the cap
+  18,228, 85a1817b) and estimated the svrngs rows at +2 to +5 core and
+  +515 to +1,000 library (`demo/runs/economize/2026-10-25-give/SURVEY.md`
+  §6). give-token waits on the operator's ceiling and the two questions
+  asked with it (that run's `NEEDS_HUMAN.md`). The operator, "Let's do
+  half the rows": the loop stops after the svrngs half, give-play-scene,
+  before Give's own;
 - sealing, at its §2 trigger.
 
 The operator's switch stands apart from that order: when they flip
