@@ -1,5 +1,7 @@
 # Findings
 
+Frozen: the hand-written record of the first set, kept as it was found. Later sets' findings are xenia's own, in `../findings.json` and the files it renders beside it; these are not merged into them, since xenia fingerprints a finding by its kind, screen and element, and these were grouped by hand.
+
 What the set `~/dev/xenia/runs/2026-10-26T16-41-02-232Z` found (3 runs on sonnet, xenia `57d0da1`), one file each, for a later worker to pick up cold. None is acted on here. Each says its kind: hard, the instrument's count, or soft, what the person said, never both; findings about xenia itself are under `instrument/`. Simulated: a rehearsal, never a people result.
 
 - open · [`after-join-reads-as-permissions`](after-join-reads-as-permissions.md) · The page after joining reads as a permissions grant · soft; Ana, 5 of 6
