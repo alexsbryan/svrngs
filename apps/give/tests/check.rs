@@ -76,6 +76,8 @@ fn the_stand_in_keeps_its_state_across_a_restore() {
 
     let snapshot = app.snapshot(&dir).unwrap();
     assert!(snapshot.dir.join("data.tar").is_file());
+    let named = std::fs::read_to_string(snapshot.dir.join("card")).unwrap();
+    assert_eq!(named, card.version, "the snapshot names the card version that wrote it");
     let left: Vec<_> = std::fs::read_dir(&dir)
         .unwrap()
         .map(|e| e.unwrap().file_name())
@@ -121,6 +123,35 @@ fn a_state_unlike_its_snapshot_is_told() {
     app.wait_healthy().unwrap();
     app.stop().unwrap();
     assert_eq!(app.differs(&snapshot.dir, &dir).unwrap(), ["data/starts changed"]);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// A copy is started only by the card version that wrote it (GIVE.md §4):
+/// a snapshot naming another version is refused before any volume is
+/// touched, so the state the app has stays as it is.
+#[test]
+fn a_snapshot_of_another_card_version_is_refused() {
+    let podman = podman_here();
+    let card = Card::parse(STANDIN).unwrap();
+    let app = App::new(&podman, &card, name("version"));
+    let _removed = Removed(&app);
+    let (dir, at) = (scratch("version"), free_port());
+    app.pull().unwrap();
+    app.start(at, &Agreed::to(&card.asks)).unwrap();
+    app.wait_healthy().unwrap();
+    let snapshot = app.snapshot(&dir).unwrap();
+    app.stop().unwrap();
+    std::fs::write(snapshot.dir.join("card"), "another").unwrap();
+    let refused = app.restore(&snapshot.dir).unwrap_err().to_string();
+    assert!(
+        refused.contains("another version of its card wrote it") && refused.contains(&card.version),
+        "{refused}"
+    );
+    assert_eq!(
+        app.differs(&snapshot.dir, &dir).unwrap(),
+        Vec::<String>::new(),
+        "the state untouched"
+    );
     let _ = std::fs::remove_dir_all(&dir);
 }
 

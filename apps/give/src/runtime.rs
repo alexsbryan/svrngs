@@ -35,6 +35,14 @@ pub enum RunError {
     },
     #[error("{path}: {why}")]
     File { path: PathBuf, why: String },
+    #[error(
+        "{snapshot}: another version of its card wrote it ({wrote}), and this is {runs}; a copy is started only by the version that wrote it"
+    )]
+    OtherCard {
+        snapshot: PathBuf,
+        wrote: String,
+        runs: String,
+    },
 }
 
 /// The name an app runs under: its pod, and the prefix of its containers
@@ -83,8 +91,9 @@ pub enum Copy {
     Plain,
 }
 
-/// A snapshot on disk: `<dir>/<volume>.tar` for each state volume, and
-/// `<dir>/<volume>.root`, its own folder's owner and mode.
+/// A snapshot on disk: `<dir>/<volume>.tar` for each state volume,
+/// `<dir>/<volume>.root`, its own folder's owner and mode, and `<dir>/card`,
+/// the version of the card that wrote it ([`Card::version`]).
 #[derive(Debug, Clone)]
 pub struct Snapshot {
     pub dir: PathBuf,
@@ -371,6 +380,8 @@ impl<'a> App<'a> {
             let at = partial.join(format!("{v}.root"));
             std::fs::write(&at, root).map_err(|e| file(&at, e))?;
         }
+        let at = partial.join("card");
+        std::fs::write(&at, &self.card.version).map_err(|e| file(&at, e))?;
         let copies = copies.into_iter().map(|(v, copy, _)| (v, copy)).collect();
         for v in &self.card.state {
             let tar = partial.join(format!("{v}.tar"));
@@ -469,8 +480,19 @@ impl<'a> App<'a> {
     }
 
     /// Replace each state volume with the snapshot's, its own folder's
-    /// owner and mode included. The app is stopped.
+    /// owner and mode included. The app is stopped. A snapshot another
+    /// version of the card wrote is refused before any volume is touched.
     pub fn restore(&self, snapshot: &Path) -> Result<(), RunError> {
+        let at = snapshot.join("card");
+        let wrote = std::fs::read_to_string(&at).map_err(|e| file(&at, e))?;
+        if wrote != self.card.version {
+            tracing::debug!(snapshot = %snapshot.display(), wrote, runs = self.card.version, "refused: another version of the card wrote the snapshot");
+            return Err(RunError::OtherCard {
+                snapshot: snapshot.to_path_buf(),
+                wrote,
+                runs: self.card.version.clone(),
+            });
+        }
         let shell = self.storage_shell()?;
         for v in &self.card.state {
             let (tar, root) = (snapshot.join(format!("{v}.tar")), snapshot.join(format!("{v}.root")));

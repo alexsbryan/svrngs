@@ -183,3 +183,14 @@ fn an_ask_carries_its_link_and_what_its_yes_sets() {
     );
     assert_eq!(refused(&plain).0, "x-svrngs.asks.link");
 }
+
+/// A card's version is its file's bytes, hashed: each snapshot names the
+/// version that wrote it, so a copy is started only by that version
+/// (GIVE.md §4, "Versions and drift"). One byte changed is another version.
+#[test]
+fn a_card_is_named_by_its_bytes() {
+    let card = Card::parse(STANDIN).unwrap();
+    assert_eq!(card.version, blake3::hash(STANDIN.as_bytes()).to_hex().as_str());
+    let other = Card::parse(&with("interval: 1s", "interval: 2s")).unwrap();
+    assert_ne!(other.version, card.version);
+}

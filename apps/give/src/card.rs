@@ -30,6 +30,10 @@ pub struct Card {
     pub asks: Vec<Ask>,
     /// In the order the file gives them, which is the order they start.
     pub services: Vec<Service>,
+    /// The file's bytes, hashed (blake3, hex): each snapshot names the
+    /// version that wrote it, and a copy is started only by that version
+    /// (GIVE.md §4, "Versions and drift").
+    pub version: String,
 }
 
 /// Which published port is the app's door, and how it is spoken.
@@ -155,7 +159,10 @@ pub enum Refused {
 impl Card {
     /// Read a card from its `compose.yaml` text.
     pub fn parse(text: &str) -> Result<Card, Refused> {
-        let card = read(text);
+        let card = read(text).map(|card| Card {
+            version: blake3::hash(text.as_bytes()).to_hex().to_string(),
+            ..card
+        });
         if let Err(Refused::Field { field, why }) = &card {
             tracing::debug!(field, why, "card refused");
         }
@@ -241,6 +248,7 @@ fn read(text: &str) -> Result<Card, Refused> {
         volumes,
         asks,
         services: out,
+        version: String::new(),
     })
 }
 
