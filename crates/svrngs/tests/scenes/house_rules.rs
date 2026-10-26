@@ -74,7 +74,7 @@ fn says(re: &str) -> Value {
     json!({ "wait": re, "within": 5_000 })
 }
 
-/// The address `who`'s own **Open House rules** holds: their computer's
+/// The address `who`'s own **House rules** link holds: their computer's
 /// copy (doc.py `rules_at`), as their home page lists it.
 async fn rules_at(who: &Person, group: &str) -> String {
     let people = who.get(&format!("/v1/rail/people?namespace={group}")).await;
@@ -119,7 +119,9 @@ async fn house_rules(engine: Engine) {
     let (ana, elm) = scene.founds("Ana", "Elm").await;
     let bo = scene.joins("Bo", &ana.invites(&elm).await, "Elm").await;
     let cy = scene.joins("Cy", &ana.invites(&elm).await, "Elm").await;
-    let open_it = |who: &Person| json!({ "poll": who.home_page(), "re": "Open House rules", "within": 60_000, "every": 2_000 });
+    // House rules in the index, by its name and what it does beside it,
+    // never the shelf's own line of it.
+    let open_it = |who: &Person| json!({ "poll": who.home_page(), "re": "House rules It reads and writes", "within": 60_000, "every": 2_000 });
 
     // 5. Ana brings House rules, its box ticked; none starts ticked (the
     // operator, 2026-10-26; demo/xenia/findings/after-join-reads-as-permissions.md).

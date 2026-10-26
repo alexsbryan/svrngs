@@ -35,9 +35,10 @@ use svrngs_node::node::Node;
 use svrngs_node::{actor_of, Device, RailAct, SigningKey};
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
 
-/// Sam's shelf as the phone's page offers it: a port lend writes as the
-/// person opening it, and its open says so (svrngs-node home/question.js `agreed`).
-const SHELF: &str = "Open Sam’s shelf. It writes what you say there into house’s record, as you.";
+/// Sam's shelf as the phone's page offers it, its open and the line beside
+/// it: a port lend writes as the person opening it, said beside its open
+/// (svrngs-node home/question.js `named`, `agreed`).
+const SHELF: &str = "Sam’s shelf It writes what you say there into house’s record, as you.";
 
 /// A service on 127.0.0.1 answering every request `200 hi`.
 async fn service() -> u16 {
@@ -187,7 +188,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
         "the page asks a newcomer's name:\n{seen:#}"
     );
     assert_eq!(
-        first["why"], "Someone in house already goes by Sam. If that’s you, open your home page on your computer, press “Make a link to add your phone or another computer of yours”, and open that link here. Else join under another name.",
+        first["why"], "Someone in house already goes by Sam. If that’s you, open your home page on your computer, press “Add your phone or another computer”, and open that link here. Else join under another name.",
         "a name someone goes by is refused, and another asked (bash-person):\n{seen:#}"
     );
     assert!(in_house(&first["status"], "Pia"), "{seen:#}");

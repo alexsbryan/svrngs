@@ -21,9 +21,10 @@ await driving(args, async ({ page, logs }) => {
   const said = await page.evaluate(() => document.getElementById('response').textContent);
   // At the lend's origin, its start page gone.
   const away = (url) => url.hostname.endsWith('.localhost') && !url.pathname.endsWith('/open.html');
-  // The open's words (capability-open): what the yes it is says.
+  // The open's words and the line beside it (capability-open): what the
+  // yes it is says.
   const button = page.locator('#lent button', { hasText: args.open });
-  const words = await button.textContent({ timeout: 90_000 });
+  const words = await button.locator('..').textContent({ timeout: 90_000 });
   await Promise.all([page.waitForURL(away, { timeout: 90_000 }), button.click()]);
   await page.waitForLoadState('load');
   const opened = page.url();

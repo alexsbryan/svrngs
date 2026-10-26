@@ -1333,8 +1333,8 @@ async fn a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path(engine: 
 
     assert!(at_origin(&seen["opened"], &label(1, "page")), "{seen:#}");
     assert_eq!(
-        seen["words"], "Open ada’s page (k). It writes what you say there into house’s record, as you. It also opens your friends’ k as you.",
-        "the phone's open is its yes, and says so (capability-open):\n{seen:#}"
+        seen["words"], "ada’s page (k) It writes what you say there into house’s record, as you. It also opens your friends’ k as you.",
+        "the phone's open is its yes, and what it does is said beside it (capability-open):\n{seen:#}"
     );
     let told = &seen["told"];
     assert_eq!(told["status"], 200, "{seen:#}");
@@ -2644,9 +2644,11 @@ in_chromium!(
     /// computer, what can be done on it, in DESIGN §1's words; on a
     /// computer in no group, how to make one (on the page since
     /// start-group) or join one (on the page since arch-command (c)).
-    /// And how it opens again (give-session). Planted, watched failing:
+    /// And how it opens again (give-session), at the page's foot, off the
+    /// first screen (the operator, 2026-10-26). Planted, watched failing:
     /// index.html and home.js as c6c2212 left them; red before
-    /// give-session's words, with no `p.open`.
+    /// give-session's words, with no `p.open`; red at d736ff18, in the
+    /// intro.
     the_home_page_says_what_it_is_for
 );
 async fn the_home_page_says_what_it_is_for(engine: Engine) {
@@ -2662,8 +2664,8 @@ async fn the_home_page_says_what_it_is_for(engine: Engine) {
         "{seen:#}"
     );
     // How it opens again, by the opener install.sh put in place, or a
-    // bookmark, with no terminal (give-session).
-    let seen = home_page(engine, &ada, json!({ "read": "#intro p.open" })).await;
+    // bookmark, with no terminal (give-session), at the page's foot.
+    let seen = home_page(engine, &ada, json!({ "read": "#terminal ~ #again p.open" })).await;
     assert_eq!(
         seen["read"],
         "To open it again, open svrngs from your Applications, or on Linux your applications menu. A bookmark of it opens it in this browser too.",
@@ -2752,15 +2754,18 @@ in_chromium!(
     /// **The home page opens a lend to this WiFi, and closes it** (the
     /// room's report, 4: nothing on the page put a group-mate's lend on a
     /// TV; the operator, 2026-10-22: any device, any lend, the words
-    /// assuming no screen). Ada lends `shelf`; its row in her page's index
+    /// assuming no screen). Ada lends `shelf`; its line below her group's
+    /// things, off the first screen and out of the index (the operator,
+    /// 2026-10-26, from demo/xenia/findings/inert-home-open-it-to-this-wifi.md),
     /// says what its button does, and whom it lets in, before it is
     /// pressed; pressed, it says the address to type into a device's app or
     /// browser, where the room then serves the shelf to this host's
-    /// network. Opened again, the row says it is open, "On this WiFi" says
-    /// who can open it, and pressed again the row says it is closed, and the
+    /// network. Opened again, the line says it is open, "On this WiFi" says
+    /// who can open it, and pressed again the line says it is closed, and the
     /// address refuses. Each engine's ada has a key of her own, so each
     /// shelf's port is its own. Planted, watched failing: the page as
-    /// a9e82b9a left it, its words a TV's.
+    /// a9e82b9a left it, its words a TV's; as d736ff18 left it, in the
+    /// index's row.
     the_home_page_opens_a_lend_to_this_wifi_and_closes_it
 );
 async fn the_home_page_opens_a_lend_to_this_wifi_and_closes_it(engine: Engine) {
@@ -2781,7 +2786,7 @@ async fn the_home_page_opens_a_lend_to_this_wifi_and_closes_it(engine: Engine) {
     lend(dir.path(), "shelf", shelf.port());
     let label = svrngs_core::pass::Label::of(signing(me).verifying_key().as_bytes(), "shelf");
     let at = std::net::SocketAddr::new(ip.into(), svrngs_node::room::port_of(&label));
-    let row = "#home table.index td";
+    let row = "#home section table.index ~ ul.wifi li";
     let press = |words: &str| json!([format!("{row} button:has-text('{words}')"), null, true]);
     let seen = home_page(
         engine,
@@ -2790,6 +2795,12 @@ async fn the_home_page_opens_a_lend_to_this_wifi_and_closes_it(engine: Engine) {
     )
     .await;
     eprintln!("the home page's run: {seen:#}");
+    assert!(
+        seen["all"][0]
+            .as_str()
+            .is_some_and(|t| t.starts_with("ada’s shelf (k):")),
+        "{seen:#}"
+    );
     let offered = "Open it to this WiFi, and anyone on it can open it as you while svrngs runs.";
     assert!(seen["all"].to_string().contains(offered), "{seen:#}");
     let on = format!("Open to this WiFi: type http://{at}/ into an app or a browser on a device here, such as your TV, a phone or another computer. Anyone on this WiFi can open it there as you.");
@@ -2826,7 +2837,7 @@ in_chromium!(
     /// **The home page says a room it cannot read** (AGENTS.md 6): ada's
     /// room.json holds what is not a list of lends; her page's "On this
     /// WiFi" says what is open to it cannot be read, and why, and that
-    /// opening a lend again starts it over, and the shelf's row still
+    /// opening a lend again starts it over, and the shelf's line still
     /// offers "Open it to this WiFi". Planted, watched failing: the page as
     /// c0b0bf59 left it, which read the room as empty and said nothing;
     /// then as a9e82b9a left it, its words a TV's.
@@ -2861,10 +2872,14 @@ in_chromium!(
     /// **Each thing lent opens by a link saying what it opens and whose**
     /// (start-home, from start-measure's ranked row 7: "Sam’s llama" read
     /// as a riddle, `demo/runs/start/2026-10-13/README.md` §3 (c)). Ada
-    /// lends `shelf`, of kind `k`; her page's link to it reads "Open ada’s
-    /// shelf (k)", the lend named as question.js names it, and what it
-    /// writes as her (capability-signed). Planted,
-    /// watched failing: the page as aac2340 left it, "ada’s shelf (k)".
+    /// lends `shelf`, of kind `k`; her page's link to it reads "ada’s
+    /// shelf (k)", the lend named as question.js names it, its kind told,
+    /// and beside it what it writes as her (capability-signed): the name is
+    /// the link, as Kim tapped it (the operator, 2026-10-26;
+    /// demo/xenia/findings/wordy-home.md). Planted, watched failing: the
+    /// page as aac2340 left it, "ada’s shelf (k)" with nothing beside it;
+    /// as d736ff18 left it, "Open ada’s shelf (k). It writes …" all on the
+    /// link.
     the_home_page_s_links_say_what_they_open
 );
 async fn the_home_page_s_links_say_what_they_open(engine: Engine) {
@@ -2873,12 +2888,20 @@ async fn the_home_page_s_links_say_what_they_open(engine: Engine) {
     let ada = node(dir.path(), &relay, &signing(7)).await;
     let shelf = page_origin("<!doctype html><title>ada's shelf</title>").await;
     lend(dir.path(), "shelf", shelf.port());
-    let seen = home_page(engine, &ada, json!({ "read": "#home table.index td a" })).await;
+    let seen = home_page(
+        engine,
+        &ada,
+        json!({ "read": "#home table.index td a", "all": "#home table.index td" }),
+    )
+    .await;
+    assert_eq!(seen["read"], "ada’s shelf (k)", "{seen:#}");
     assert_eq!(
-        seen["read"],
-        "Open ada’s shelf (k). It writes what you say there into your group’s record, as you.",
+        seen["all"][0],
+        "ada’s shelf (k) It writes what you say there into your group’s record, as you.",
         "{seen:#}"
     );
+    // The WiFi is below the group's things, never in the index's row.
+    assert!(!seen["all"].to_string().contains("WiFi"), "{seen:#}");
     drop(ada);
 }
 
@@ -2910,11 +2933,11 @@ async fn the_home_page_shows_less_to_puzzle_over(engine: Engine) {
         !seen["all"].to_string().contains("What apps use"),
         "{seen:#}"
     );
-    let lent = seen["links"].as_array().unwrap().iter().find(|l| {
-        l["text"]
-            .as_str()
-            .is_some_and(|t| t.starts_with("Open ada’s shelf (k)."))
-    });
+    let lent = seen["links"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|l| l["text"].as_str().is_some_and(|t| t == "ada’s shelf (k)"));
     assert_eq!(
         lent.map(|l| &l["target"]),
         Some(&json!("_blank")),
@@ -3271,10 +3294,9 @@ async fn the_group_s_page_draws_the_door_and_the_index(engine: Engine) {
     assert_eq!(
         seen["index"],
         json!([
-            ["What", "What it is", "Whose", "How it opens", "Now"],
+            ["What", "Whose", "How it opens", "Now"],
             [
-                "Open cy’s shelf (k). It writes what you say there into house’s record, as you.",
-                "k",
+                "cy’s shelf (k) It writes what you say there into house’s record, as you.",
                 "cy",
                 "Here, in this tab",
                 "on"
@@ -3381,8 +3403,8 @@ async fn the_home_page_makes_a_link_to_invite_someone(engine: Engine) {
         json!({
             "all": "#home section p.link",
             "do": [
-                ["#home section button:has-text('Make a link to invite someone to')", null, true],
-                ["#home section button:has-text('Make a link to add your phone or another computer of yours')", null, true],
+                ["#home section button:has-text('Invite someone to')", null, true],
+                ["#home section button:has-text('Add your phone or another computer')", null, true],
                 ["#home section p.link button:has-text('Copy the link')", null, true],
             ],
         }),
@@ -3857,7 +3879,7 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
         Some((port(chores.port()), "chore-wheel".into()))
     );
 
-    let opened = home_page(engine, &bo, json!({ "open": "Open ada’s jellyfin" })).await;
+    let opened = home_page(engine, &bo, json!({ "open": "ada’s jellyfin" })).await;
     eprintln!("bo's home page: {opened:#}");
     let tab = &opened["opened"];
     assert!(

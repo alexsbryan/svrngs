@@ -189,13 +189,13 @@ document.title = `Money: ${ops.length} by ${ops.map((o) => o.on_behalf_of ?? o.p
         "{seen:#}"
     );
     // The index draws Money by its own name and as the group's, never by
-    // its lend name or as one person's (v1ui-polish (b)), its open saying
-    // what it reads and writes (capability-open).
-    let open = "Open Money. It reads and writes who paid for what, and who owes whom.";
-    assert_eq!(listed["lent"], json!([open]), "{seen:#}");
+    // its lend name or as one person's (v1ui-polish (b)), its open naming
+    // it, with what it reads and writes beside it (capability-open; the
+    // operator, 2026-10-26).
+    assert_eq!(listed["lent"], json!(["Money"]), "{seen:#}");
     let text = listed["text"].as_str().unwrap_or_default();
     assert!(
-        text.contains(&format!("{open}\tMoney\thouse\t")),
+        text.contains("Money It reads and writes who paid for what, and who owes whom.\thouse\t"),
         "{seen:#}"
     );
     assert!(
@@ -496,14 +496,17 @@ async fn the_home_page_brings_things_to_the_table(engine: Engine) {
     .await;
     let rows = index["all"].to_string();
     for app in ["Money", "Events", "House rules"] {
-        let drawn = format!("{app}your groupIn a tab");
-        let open = format!("Open {app}. It reads and writes ");
-        assert!(rows.contains(&open), "{app}'s open says so: {index:#}");
+        let open = format!("{app} It reads and writes ");
         assert!(
-            rows.contains(&drawn),
-            "{app} the group's, by its name: {index:#}"
+            rows.contains(&open),
+            "{app} by its name, what it does beside it: {index:#}"
         );
     }
+    assert_eq!(
+        rows.matches(".your groupIn a tab").count(),
+        3,
+        "each the group's: {index:#}"
+    );
     assert!(
         !rows.contains(&format!("-{NS}")) && !rows.contains("ada"),
         "{index:#}"
@@ -793,9 +796,9 @@ async fn the_phone_goes_on_to_a_computer_that_answers(engine: Engine) {
         "{seen:#}"
     );
     assert!(
-        listed["lent"].as_array().is_some_and(|l| l.iter().any(|b| b
-            .as_str()
-            .is_some_and(|b| b.starts_with("Open House rules.")))),
+        listed["lent"].as_array().is_some_and(|l| l
+            .iter()
+            .any(|b| b.as_str().is_some_and(|b| b == "House rules"))),
         "{seen:#}"
     );
     drop((ada, cy));

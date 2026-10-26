@@ -60,7 +60,7 @@ async fn opened(engine: Engine, who: &Person, steps: Value) -> Value {
     let opened = sees(
         engine,
         "home.mjs",
-        json!({ "ask": page, "heading": false, "open": "Open Money" }),
+        json!({ "ask": page, "heading": false, "open": "Money" }),
     );
     let opened = opened.await;
     let url = opened["opened"]["url"]

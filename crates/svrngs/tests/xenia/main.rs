@@ -61,7 +61,7 @@ fn june_told(link: &str) -> String {
 /// start, since what it was for is her own words.
 const PIZZA: &str = "You paid $36.00 for";
 
-/// Money open, from the home page's "Open Money" (question.js `agreed`),
+/// Money open, from the home page's "Money" (question.js `named`),
 /// in the tab of its own it opens (home.js `opener`): its form's heading,
 /// read (index.js).
 const MONEY: &str = "Add what you paid";

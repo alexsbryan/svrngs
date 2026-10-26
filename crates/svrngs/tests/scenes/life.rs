@@ -30,9 +30,9 @@ use crate::harness::{relay_url, Engine};
 use crate::people::{late, Browsers, Person, Scene};
 
 const GROUP: &str = "lake-trip";
-/// Sam's films' open, which says what it may write as you (capability-signed, F1).
-const OPEN_FILMS: &str =
-    "Open Sam’s films. It writes what you say there into lake-trip’s record, as you.";
+/// Sam's films' open, by its name, what it may write as you said beside it
+/// (capability-signed, F1; question.js `named`, `agreed`).
+const OPEN_FILMS: &str = "Sam’s films";
 const PHOTOS: usize = 30;
 
 /// The trip's photo `n`, bytes of its own.

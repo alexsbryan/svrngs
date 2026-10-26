@@ -3,8 +3,9 @@
 //! §7.1 and §7.3, §9 "Opening is the yes"): an app another member lends,
 //! whose lender declared it reads a kind (`--reads`), opens their lends of
 //! that kind as you only once you said yes, and opening it from your home
-//! page, by a button saying so, is that yes. The open of a carried app says
-//! what it reads and writes, as the shelf words it.
+//! page, by a button naming it with what it does said beside it, is that
+//! yes. Beside the open of a carried app is what it reads and writes, as the
+//! shelf words it.
 
 use super::*;
 
@@ -25,8 +26,9 @@ in_chromium!(
     /// typed address, as a bookmark opens it, and its fetch of cy's films
     /// is refused, `unasked`, in words ada can act on: before this test it
     /// reached cy's films as ada, on nobody's yes but cy's `--reads`. On
-    /// her home page the notes' button says what opening it lets it do, "It
-    /// also opens your friends’ films as you"; one tap opens it, answering
+    /// her home page the notes' button names them, and beside it is what
+    /// opening it lets it do, "It also opens your friends’ films as you"
+    /// (the operator, 2026-10-26: the button names the app); one tap opens it, answering
     /// no question, and from then its page reaches the films, in the new
     /// tab and the bookmarked one alike, at the address its `/svrngs-reads`
     /// gives, and never at the films' plain origin (give-session). Kept:
@@ -56,7 +58,7 @@ async fn opening_an_app_from_the_home_page_is_the_yes_to_what_it_reads(engine: E
     }
     let port = ada.api_addr().port();
     let at = |name: &str| format!("http://{}.localhost:{port}/", label(2, name));
-    let words = "Open cy’s notes. It writes what you say there into your group’s record, as you. It also opens your friends’ films as you.";
+    let words = "cy’s notes It writes what you say there into your group’s record, as you. It also opens your friends’ films as you.";
 
     let seen = drive(
         engine,
@@ -65,8 +67,8 @@ async fn opening_an_app_from_the_home_page_is_the_yes_to_what_it_reads(engine: E
             "home": format!("http://svrngs.localhost:{port}/"),
             "page": at("notes"),
             "read": at("films"),
-            "words": words,
-            "plain": "Open cy’s plain (k). It writes what you say there into your group’s record, as you.",
+            "words": "cy’s notes",
+            "plain": "cy’s plain (k)",
         }),
         None,
     )
@@ -81,8 +83,8 @@ async fn opening_an_app_from_the_home_page_is_the_yes_to_what_it_reads(engine: E
     let cells = seen["cells"].as_array().cloned().unwrap_or_default();
     for cell in [
         words,
-        "Open cy’s plain (k). It writes what you say there into your group’s record, as you.",
-        "Open cy’s films. It writes what you say there into your group’s record, as you.",
+        "cy’s plain (k) It writes what you say there into your group’s record, as you.",
+        "cy’s films It writes what you say there into your group’s record, as you.",
     ] {
         assert!(
             cells.contains(&json!(cell)),
@@ -113,14 +115,17 @@ async fn opening_an_app_from_the_home_page_is_the_yes_to_what_it_reads(engine: E
     drop((ada, cy));
 }
 
-/// **The open says what an app does, in one wording for both pages**
-/// (shortfall 7; the note's §9): an app the group carries reads and writes
-/// what the shelf says it is, or else "its own part of the group’s
+/// **The open names the app, and beside it is what it does, in one
+/// wording for both pages** (shortfall 7; the note's §9; the operator,
+/// 2026-10-26, from demo/xenia/findings/first-set/
+/// after-join-reads-as-permissions.md): an app the group carries reads and
+/// writes what the shelf says it is, or else "its own part of the group’s
 /// record", so its first version runs as a person only once they open it
 /// so named; a lend reading other kinds opens your friends' lends of them
-/// as you; one doing neither is opened by its name alone, as before. Both
-/// pages draw their open from question.js's `agreed`. Red at HEAD: no
-/// `agreed`, and each page's open said the name alone.
+/// as you; one doing neither writes what you say there as you. Both pages
+/// draw the line beside the open from question.js's `agreed`, and the open
+/// by `named`. Red at d736ff18: `agreed` said "Open " and the name before
+/// what the app does, all of it on the button.
 #[test]
 fn the_open_says_what_an_app_does_in_one_wording() {
     for page in ["crates/svrngs-node/src/home/home.js", "web/app.js"] {
@@ -140,14 +145,14 @@ fn the_open_says_what_an_app_does_in_one_wording() {
     ]);
     assert_eq!(
         in_question(
-            "args[0].map((l) => q.agreed(l, args[1], { name: 'House' }))",
+            "args[0].map((l) => [q.named(l), q.agreed(l, args[1], { name: 'House' })])",
             json!([lends, shelf])
         ),
         json!([
-            "Open Money. It reads and writes who paid for what, and who owes whom.",
-            "Open Quiz. It reads and writes its own part of the group’s record.",
-            "Open cy’s notes. It writes what you say there into House’s record, as you. It also opens your friends’ films and music as you.",
-            "Open cy’s shelf (k). It writes what you say there into House’s record, as you.",
+            ["Money", "It reads and writes who paid for what, and who owes whom."],
+            ["Quiz", "It reads and writes its own part of the group’s record."],
+            ["cy’s notes", "It writes what you say there into House’s record, as you. It also opens your friends’ films and music as you."],
+            ["cy’s shelf (k)", "It writes what you say there into House’s record, as you."],
         ])
     );
 }
