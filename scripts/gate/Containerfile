@@ -76,6 +76,7 @@ WORKDIR /work
 # What the image runs, in the checkout mounted at /work: Linux builds of
 # oxlint and Playwright first, and check.sh either way, which fails its lint
 # and browser steps naming this install when it did not take.
-# CARGO_INCREMENTAL=0 as the loops run, so target/ stays smaller.
-ENV CARGO_INCREMENTAL=0
+# CARGO_INCREMENTAL=0 as the loops run, so target/ stays smaller; USER as
+# a login sets it and podman does not (crates/svrngs/tests/name.rs reads it).
+ENV CARGO_INCREMENTAL=0 USER=gate
 CMD ["bash", "-c", "npm ci --prefix web --no-audit --no-fund || echo 'note       npm ci --prefix web failed'; exec scripts/check.sh"]
