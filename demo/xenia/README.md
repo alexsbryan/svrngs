@@ -11,14 +11,17 @@ From xenia's checkout, with this repository's path in place of `<svrngs>`:
 
 ```sh
 cargo test -p svrngs --test xenia --no-run --manifest-path <svrngs>/Cargo.toml
-xenia run <svrngs>/demo/xenia --runs 3 --model sonnet
+xenia run <svrngs>/demo/xenia --runs 3 --model sonnet --findings <svrngs>/demo/xenia/findings --source <svrngs>
 ```
 
 The first line builds the worlds once, so no scene waits minutes on its
 first build. `xenia` is xenia's `src/run.ts`. It runs xenia's plants
-three times each first, then each scene three times, and writes the accounts and a summary
-under `runs/` where you run it, which is why you run it from xenia's
-checkout.
+three times each first, then each scene three times, and writes the
+accounts and a summary under `runs/` where you run it, which is why you
+run it from xenia's checkout. With `--findings`, it keeps what went wrong
+in `findings/`, one file per finding, updated by each set that sees it
+again; `findings/first-set/` is the first set's, written by hand and kept
+as it was.
 
 The people in `people/` are a first cut, which the operator may rewrite
 once the first accounts are read. A changed person is a new person, so
