@@ -56,7 +56,7 @@ There are fourteen rows:
     1. **The ceiling is the estimate's top:** +1,005 repository and +5 svrngs-core over the caps the pass left, so at most 19,233 and 3,244, for give-token through give-play. Each row raises only what it lands, to one past where it lands. A row past its range stops for the operator.
     2. **§4: yes.** The caller check overturns WHAT_CAN_ACT_AS_YOU §4's "Accept it, and say so" for programs meant to be contained, and keeps it for the person's own programs, which read the token.
     3. **The trust floor:** both lines are approved with their reasons word for word as NEEDS_HUMAN.md §3 gives them, Play's held on each of its two bind lines. Each lands in its row's commit with a `Trust floor:` line citing this decision.
-- [ ] give-token — depends [give-economize] — ONE ROW, red first, and `scripts/check.sh` once, at the close (GIVE.md §5):
+- [x] give-token 48c28c4d — depends [give-economize] — ONE ROW, red first, and `scripts/check.sh` once, at the close (GIVE.md §5):
   - **(a) Tests: A PROGRAM ASKS WITH THE TOKEN.** These fail at HEAD:
     - A request on loopback with no token is refused on every record route: `/v1/rail/{append,log,live,people}`, `/v1/groups`, `/v1/lends`, `/v1/folders`, `/v1/blob`, `/v1/removals`, `/v1/handovers`, `/v1/leaves` and `/v1/room`. The refusal names the token file.
     - The same request with the token is answered as today.
