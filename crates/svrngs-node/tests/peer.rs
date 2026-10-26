@@ -76,7 +76,12 @@ impl Dialled {
             .expect("Alex's round finishes");
         let label = Label::of(sam.endpoint().id().as_bytes(), "pad");
         let host = format!("{label}.localhost:{}", alex.api_addr().port());
-        let opened = plain(alex.api_addr().port(), &host, "GET / HTTP/1.1\r\n", "").await;
+        // As a program on Alex's computer asks it, with its token.
+        let program = format!(
+            "GET / HTTP/1.1\r\nAuthorization: Bearer {}\r\n",
+            alex.token().trim()
+        );
+        let opened = plain(alex.api_addr().port(), &host, &program, "").await;
         assert!(
             opened
                 .as_deref()
