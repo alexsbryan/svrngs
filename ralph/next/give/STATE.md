@@ -87,7 +87,7 @@ There are fourteen rows:
     - **A navigation under the prefix** goes 303 to the home page's `/to?lend=&at=`. A cap never sets a lend's session.
     - **The three red browser tests.** Their drivers take the read's address from `/svrngs-reads`, every assertion kept. Add one assertion: the plain origin, fetched with no cap, is refused.
     - **The budget.** 18,446 at fbba26ca; the row's top is 18,495 (SURVEY.md:222). Past it after an economizing pass, stop for the operator.
-- [ ] give-udp — depends [give-session] — ONE ROW, red first, and `scripts/check.sh` once, at the close (GIVE.md §6):
+- [x] give-udp ce9c2523a — depends [give-session] — ONE ROW, red first, and `scripts/check.sh` once, at the close (GIVE.md §6):
   - **(a) Tests: A UDP PORT IS LENT.** Two nodes on loopback (`loopback_only`), failing at HEAD:
     - `svrngs share <port> --udp` lends a UDP port, and a member's datagrams reach it and come back.
     - A packet larger than `max_datagram_size` arrives whole.
