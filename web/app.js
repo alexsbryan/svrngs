@@ -405,13 +405,13 @@ const titled = (group) => `${group.name}${group.maker ? ` (${whose(group)})` : '
 // closes. One opened while another holds it says so and offers to take
 // it (`steal`); a tab it is taken from opens again, and says so too. A
 // browser with no locks reaches the group from each tab, as before.
-function hold(group, asked, steal = false) {
-  if (!navigator.locks) return (trace('PAGE: this browser has no locks, so each tab reaches the group'), enter(group, asked));
+function hold(group, asked, steal = false, joined = false) {
+  if (!navigator.locks) return (trace('PAGE: this browser has no locks, so each tab reaches the group'), enter(group, asked, joined));
   return new Promise((entered, failed) => {
     const reached = (lock) => {
       if (!lock) return entered(elsewhere(group, asked));
       trace(`PAGE: this tab holds ${group.id}${steal ? ', taken from another tab' : ''}`);
-      return enter(group, asked).then(() => (entered(), new Promise(() => {})), failed);
+      return enter(group, asked, joined).then(() => (entered(), new Promise(() => {})), failed);
     };
     navigator.locks.request(`svrngs ${group.id}`, steal ? { steal } : { ifAvailable: true }, reached).catch((e) => {
       if (e.name !== 'AbortError') return failed(e);
@@ -435,7 +435,7 @@ function elsewhere(group, asked) {
 // In `group`: list what its people lend, and open the one `asked` names
 // at once, at its path, when a lend's origin asked for it; or ask whether
 // an app may use a lend.
-async function enter(group, asked) {
+async function enter(group, asked, joined) {
   group = await store.opened(group);
   document.title = group.name;
   const key = await store.unseal(group);
@@ -496,7 +496,7 @@ async function enter(group, asked) {
     const [b] = await reachGroup(group, key, dialler);
     return JSON.parse(await post(b, path, JSON.stringify([group.id, body]), (_, text) => JSON.parse(text).error).finally(() => b.close()));
   };
-  document.getElementById('shelf').replaceChildren(table(group, { lent, shelf }, through('/shelf')));
+  document.getElementById('shelf').replaceChildren(table(group, { lent, shelf }, through('/shelf'), joined));
   // What acts as you, as the home page says it (question.js `acts`). The
   // yes to a lend opening friends' lends as the person is its open here,
   // kept with the group, `reads`, which its Stop changes (`saying`).
@@ -631,13 +631,14 @@ async function opening(fragment) {
     if (token) offer(token);
     const kept = await store.groups();
     let group = token ? kept.find((g) => g.token === token) : kept[0];
-    if (token && !group) group = await join(token, kept);
+    const joined = Boolean(token && !group);
+    if (joined) group = await join(token, kept);
     if (!group && !asked) offer('');
     // A link into a lend on a computer keeping no group here, its person's
     // svrngs elsewhere on it: opened from its home page (events-links (c)).
     if (!group && asked?.has('open') && computer()) return (line('opens', location.href), show('This link opens in svrngs on your computer.', true));
     if (!group) throw new Said('Open this page from your group’s link.');
-    await hold(group, asked);
+    await hold(group, asked, false, joined);
   } catch (e) {
     failed(e);
   }

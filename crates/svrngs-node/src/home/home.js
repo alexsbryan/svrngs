@@ -112,6 +112,10 @@ async function show(g, s, room, add, me, plays) {
   if (g.removed === null) return s.append(el('p', `This computer could not read who is in ${g.name ?? 'this group'}.`));
   if (g.removed) return s.append(el('p', `You are no longer in ${g.name ?? 'this group'}. What you already have stays on this computer; nothing new reaches it.`));
   const ns = encodeURIComponent(g.id);
+  // The group's things first, right under its heading (the operator,
+  // 2026-10-26: Money found first), filled once each computer has said.
+  const body = el('tbody', '', row(['Asking each computer in the group what it lends…']));
+  s.append(Object.assign(el('table', '', el('thead', '', row(['What', 'What it is', 'Whose', 'How it opens', 'Now'], 'th')), body), { className: 'index' }));
   try {
     const rows = (await get(`/v1/rail/people?namespace=${ns}`)).people;
     const [people, judge] = door(rows);
@@ -165,8 +169,6 @@ async function show(g, s, room, add, me, plays) {
     // and whose (question.js `named`); what it is, its lender's word, never
     // a word of svrngs's own (scripts/vocab_check.py); whose; how it opens;
     // and whether it is full now.
-    const body = el('tbody', '', row(['Asking each computer in the group what it lends…']));
-    s.append(Object.assign(el('table', '', el('thead', '', row(['What', 'What it is', 'Whose', 'How it opens', 'Now'], 'th')), body), { className: 'index' }));
     const lends = await get(`/v1/lends?namespace=${ns}`).catch((e) => {
       judge();
       throw e;
@@ -189,7 +191,7 @@ async function show(g, s, room, add, me, plays) {
     const unlisted = { unanswered: 'did not answer, so what they lend is not listed', unheard: 'has not heard of yours yet, so what they lend is not listed yet', refused: 'answered without saying what they lend, so it is not listed', older: 'runs an older svrngs, so what they lend is not listed' };
     for (const [how, why] of Object.entries(unlisted)) for (const p of lends[how]) said(`${called(rows, p.person_key) ?? p.person}'s computer ${why}.`);
     if (!body.children.length) said('Nobody lends anything here yet.');
-    s.append(table(g, lends, (apps) => post('/shelf', [g.id, apps])));
+    s.append(table(g, lends, (apps) => post('/shelf', [g.id, apps]), new URLSearchParams(location.search).getAll('joined').includes(g.name)));
     for (const l of once(lends.lent).filter((o) => o.group)) add('reads', el('p', carrying(l.kind, lends.shelf)));
     const changed = changes(g, lends, (app) => post('/runs', [g.id, app]), rows, me);
     if (changed.length) add('reads', ...changed);

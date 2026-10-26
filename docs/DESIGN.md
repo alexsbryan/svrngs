@@ -475,7 +475,8 @@ link. Each group is shown as soon as its people are read, and what they lend
 is added once each computer has answered or not, so a computer asleep holds
 back only that list. Each group is headed by its name, who made it and since
 when this computer has held it, so two of one name are told apart, in a colour
-derived from its id, nothing to choose. Under it:
+derived from its id, nothing to choose. Under it, what is in the group
+first, then who is in it (the operator, 2026-10-26: Money found first):
 - **the door**: each person once, a cell in a grid, in the order they
   joined — lit, "on now", while their computer answers; drawn off, "did not
   answer", when it did not; "in from a phone" when their only keys are a
@@ -509,7 +510,11 @@ On it a person can:
 - bring things to the table: the shelf, svrngs's own apps (Money, Events,
   House rules), listed as data in `crates/svrngs-node/src/shelf.txt` and
   embedded at build so svrngs's code names none, each brought into the
-  group's folder by one button, never over one there already;
+  group's folder by one button, never over one there already. Its boxes
+  start unticked, and for a group just joined it is folded as "Bring more
+  to <group>": a newcomer read the ticked boxes as a grant asked of them
+  (the operator, 2026-10-26; `demo/xenia/findings/
+  after-join-reads-as-permissions.md`);
 - change how many people at once may use what their computer lends, a number
   or everyone, or stop lending it;
 - say yes to an app, or stop it;
@@ -547,7 +552,9 @@ what runs here lent, a change to a lend, a link, the folder opened, a group
 made or joined, what it brings to the table, a new version said yes to, a
 leave or a hand-on.
 
-**The group's page on a phone** draws the same door, index and shelf from
+**The group's page on a phone** leads with "You’re in <group>" and the
+index, then draws the same door and shelf, folded as the home page folds
+it for someone who has just joined, from
 the same lines (`question.js`), judged by the answer of the computer it
 reached, and brings through that computer, whose door asks that the phone
 stands in the group. One version check, the node's `version.rs` compiled into
@@ -781,6 +788,7 @@ Seven calls:
    and writes, the shelf's words or "its own part of the group’s record",
    so its first version runs as a person once they open it so named
    (`question.js`, `agreed`). Each yes is listed under "What acts as you",
+   folded under its heading, a list to look at, never in the way,
    on both pages, with since when and a Stop (`question.js`, `acts`, which
    groups what acts as the person by what it can do: reads and writes,
    opens friends' things, knows who you are, open to this WiFi, open to

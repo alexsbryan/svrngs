@@ -285,7 +285,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # range +10 to +40 and 0 core: the lender's sweep closing a raw lend's
 # connection once its dialer no longer stands (door/udp.rs): +16 and 0, at
 # 19,110.
-BUDGET = {"crates/svrngs-core": 3242, ".": 19111}
+# The page after joining (the operator, 2026-10-26: the shelf unticked and,
+# just joined, folded; "What acts as you" folded; the group's things
+# first), after its own economizing pass, the page's heading set by one
+# assignment (-3): +1, at 19,108, so the cap lowered to one past it.
+BUDGET = {"crates/svrngs-core": 3242, ".": 19109}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 

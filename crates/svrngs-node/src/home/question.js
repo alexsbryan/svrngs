@@ -167,21 +167,24 @@ export function door(rows, lent = []) {
 
 // "Bring things to the table" (V1_UI_BUILD §3.4; v1ui-shelf (c)): the
 // shelf, svrngs's own apps as `lends.shelf` lists them, each not on group
-// `g`'s table yet ticked, and one button bringing the ticked ones, by
+// `g`'s table yet unticked, and one button bringing the ticked ones, by
 // `bring(names)`, which answers each `{app, already}`; then what happened
 // said. One already on the table is said so. A group whose name cannot be
-// read is "your group".
-export function table(g, lends, bring) {
+// read is "your group". For someone who has just `joined`, folded as
+// "Bring more to <group>": a newcomer read the ticked boxes as a grant
+// asked of them (the operator, 2026-10-26; demo/xenia/findings/
+// after-join-reads-as-permissions.md).
+export function table(g, lends, bring, joined) {
   const name = g.name ?? 'your group';
   const on = (a) => lends.lent.some((l) => l.group === g.id && l.kind === a.name);
-  const ticks = lends.shelf.filter((a) => !on(a)).map((a) => [a.name, Object.assign(el('input'), { type: 'checkbox', checked: true })]);
+  const ticks = lends.shelf.filter((a) => !on(a)).map((a) => [a.name, Object.assign(el('input'), { type: 'checkbox' })]);
   const said = el('p', ticks.length ? `These come with svrngs. Bring one, and everyone in ${name} opens it on their own computer or phone, while any computer in ${name} is on.` : '');
   const s = el('section', '', el('h3', 'Bring things to the table'), ...lends.shelf.filter(on).map((a) => el('p', `${spoken(a.name)} is on the table.`)), said);
   for (const [name, tick] of ticks) s.append(el('p', '', el('label', '', tick, ` ${spoken(name)}: ${lends.shelf.find((a) => a.name === name).words}`)));
   const done = (r) => (r.already ? `${spoken(r.app)} is on the table already.` : `You brought ${spoken(r.app)} to ${name}: everyone in it can open it in a few seconds.`);
   const go = () => bring(ticks.filter(([, t]) => t.checked).map(([n]) => n)).then((b) => said.replaceChildren(b.map(done).join(' ') || 'Tick something to bring first.'), (e) => said.replaceChildren(`Nothing was brought: ${e.message}`));
   if (ticks.length) s.append(el('p', '', Object.assign(el('button', `Bring the ticked ones to ${name}`), { onclick: go })));
-  return s;
+  return joined ? el('details', '', el('summary', `Bring more to ${name}`), s) : s;
 }
 
 // Each app on group `g`'s table whose files someone changed since the
@@ -204,14 +207,16 @@ export function changes(g, lends, yes, rows, me) {
 }
 
 // "What acts as you" (capability-what-acts; svrn-docs WHAT_CAN_ACT_AS_YOU
-// §9): one section on both pages, a part for each thing an app or a
-// device can do as you, in this order, each headed only once `add(part,
-// ...lines)` gives it a line, then `notes[part]`, a page's own words.
+// §9): one section on both pages, folded under its heading, a list to look
+// at when you want to check or stop something, never in the way (§9; the
+// operator, 2026-10-26); a part for each thing an app or a device can do
+// as you, in this order, each headed only once `add(part, ...lines)` gives
+// it a line, then `notes[part]`, a page's own words.
 const PARTS = { reads: 'Reads and writes for you', opens: 'Opens friends’ things as you', knows: 'Knows who you are', wifi: 'Open to this WiFi', play: 'Open to programs on this computer', decides: 'Can decide for you' };
 export function acts(notes) {
   const parts = Object.fromEntries(Object.keys(PARTS).map((k) => [k, el('div')]));
   const add = (k, ...lines) => (parts[k].children.length || parts[k].append(el('h3', PARTS[k]), ...(notes[k] ? [el('p', notes[k])] : [])), parts[k].append(...lines));
-  return [Object.assign(el('section', '', el('h2', 'What acts as you'), ...Object.values(parts)), { id: 'acts' }), add];
+  return [Object.assign(el('section', '', el('details', '', el('summary', '', el('h2', 'What acts as you')), ...Object.values(parts))), { id: 'acts' }), add];
 }
 
 // An app the group carries, as "What acts as you" says it: what it reads

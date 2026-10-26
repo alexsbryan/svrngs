@@ -67,6 +67,8 @@ pre:empty { display: none; }
 blockquote { margin: 1rem 0; padding: 0.5rem 1rem; border-left: 0.5rem solid var(--ink); font-size: 1.25rem; font-style: italic; }
 
 details > summary { font-weight: 700; cursor: pointer; }
+/* A heading folded under its own summary ("What acts as you"), on its line. */
+summary > h2 { display: inline; }
 
 /* A group's colour, derived from its id by the page (home.js `section`; the
    operator, "Derived from the group"): no setting, nothing to choose. Each a
