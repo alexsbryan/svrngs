@@ -143,15 +143,22 @@ async fn the_home_page_makes_a_group_another_computer_joins_with_no_restart(
     let second =
         format!("You’re already in Lab (yours, since {today}). This is a second group called lab.");
     assert!(said.contains(&second), "{said:#?}");
-    // Its folder its own: this disk may ignore case, so lab beside Lab is
-    // the place's name and its id's start.
+    // Its folder its own. On a disk that ignores case (macOS's), Lab's
+    // folder answers to LAB, a spelling neither group has, and lab's place
+    // is Lab's, so lab goes beside it, its id's start after its name; on
+    // one that keeps case (Linux's), lab's place is free, and lab's.
     let held = svrngs::group::groups(&home.path().join(".svrngs"));
     let lab = held
         .iter()
         .find(|s| s.name().as_str() == "lab")
         .expect("lab held");
     let id = &lab.id()[..8];
-    let apart = home.path().join(format!("svrngs/lab-{id}"));
+    assert!(home.path().join("svrngs/Lab").is_dir(), "Lab's folder");
+    let ignores_case = home.path().join("svrngs/LAB").exists();
+    let apart = match ignores_case {
+        true => home.path().join(format!("svrngs/lab-{id}")),
+        false => home.path().join("svrngs/lab"),
+    };
     assert!(
         (said.iter()).any(|l| l.starts_with(&format!("lab's folder is {}: ", apart.display()))),
         "{said:#?}"
