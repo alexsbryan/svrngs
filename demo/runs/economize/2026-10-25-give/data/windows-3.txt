@@ -1,0 +1,122 @@
+crates/svrngs/src/cli.rs:797 crates/svrngs/src/cli.rs:812 | let group = seed.name().clone(); ⏎ print!( ⏎ "{}",
+crates/svrngs/src/cli.rs:1091 crates/svrngs/src/cli.rs:1155 | lend: Lend, ⏎ secret: bool, ⏎ accounts: Option<share::Signs>,
+crates/svrngs/src/cli.rs:1520 crates/svrngs/src/cli.rs:1554 | let page = match origin { ⏎ Some(page) => Some(checked_page(page).await?), ⏎ None => None,
+crates/svrngs/src/cli.rs:1521 crates/svrngs/src/cli.rs:1555 | Some(page) => Some(checked_page(page).await?), ⏎ None => None, ⏎ };
+crates/svrngs-node/src/door.rs:385 crates/svrngs-node/src/door.rs:395 | .layer(axum::middleware::from_fn(paged)) ⏎ .with_state(door) ⏎ }
+crates/svrngs-node/src/door.rs:471 crates/svrngs-node/src/door/limit.rs:91 | lend: &Lend, ⏎ actor: &str, ⏎ whereabouts: Whereabouts,
+crates/svrngs-node/src/door.rs:518 crates/svrngs-node/src/node.rs:897 | dialer: Option<Extension<Dialer>>, ⏎ ) -> Result<Response, Response> { ⏎ let Some(Extension(dialer)) = dialer else {
+crates/svrngs-node/src/door.rs:986 crates/svrngs-node/src/door.rs:1211 | State(door): State<Door>, ⏎ dialer: Option<Extension<Dialer>>, ⏎ via: Option<Extension<Via>>,
+crates/svrngs-node/src/door.rs:987 crates/svrngs-node/src/door.rs:1212 | dialer: Option<Extension<Dialer>>, ⏎ via: Option<Extension<Via>>, ⏎ req: Request,
+crates/svrngs-node/src/door.rs:988 crates/svrngs-node/src/door.rs:1213 | via: Option<Extension<Via>>, ⏎ req: Request, ⏎ ) -> Result<Response, Response> {
+crates/svrngs-node/src/door.rs:1697 crates/svrngs-node/src/origin.rs:457 | let mut response = Response::new(Body::new(body)); ⏎ Ok(response.into_response()) ⏎ }
+crates/svrngs-node/src/node.rs:60 crates/svrngs-node/src/folder.rs:29 crates/svrngs-node/src/redeem.rs:49 crates/svrngs-node/src/removal.rs:28 crates/svrngs-node/src/room/route.rs:9 | use axum::extract::State; ⏎ use axum::http::StatusCode; ⏎ use axum::response::{IntoResponse, Response};
+crates/svrngs-node/src/node.rs:61 crates/svrngs-node/src/room/route.rs:10 | use axum::http::StatusCode; ⏎ use axum::response::{IntoResponse, Response}; ⏎ use axum::routing::get;
+crates/svrngs-node/src/node.rs:195 crates/svrngs-node/src/lend.rs:385 crates/svrngs-node/src/lend.rs:401 crates/svrngs-node/src/group.rs:74 crates/svrngs/src/identity.rs:83 crates/svrngs/src/identity.rs:88 | path: PathBuf, ⏎ source: std::io::Error, ⏎ },
+crates/svrngs-node/src/node.rs:259 crates/svrngs-node/src/node.rs:273 | data_dir: PathBuf, ⏎ key: SigningKey, ⏎ relay: &RelayConfig,
+crates/svrngs-node/src/node.rs:260 crates/svrngs-node/src/node.rs:274 | key: SigningKey, ⏎ relay: &RelayConfig, ⏎ seeds: SeedText,
+crates/svrngs-node/src/node.rs:261 crates/svrngs-node/src/node.rs:275 | relay: &RelayConfig, ⏎ seeds: SeedText, ⏎ api: SocketAddr,
+crates/svrngs-node/src/folder.rs:30 crates/svrngs-node/src/redeem.rs:50 crates/svrngs-node/src/removal.rs:29 crates/svrngs-node/src/ring_routes.rs:33 | use axum::http::StatusCode; ⏎ use axum::response::{IntoResponse, Response}; ⏎ use axum::routing::post;
+crates/svrngs-node/src/folder.rs:31 crates/svrngs-node/src/removal.rs:30 | use axum::response::{IntoResponse, Response}; ⏎ use axum::routing::post; ⏎ use axum::{Json, Router};
+crates/svrngs-core/src/membership.rs:123 crates/svrngs-core/src/admit.rs:96 | Ord, ⏎ serde::Serialize, ⏎ serde::Deserialize,
+crates/svrngs-core/src/membership.rs:124 crates/svrngs-core/src/admit.rs:97 | serde::Serialize, ⏎ serde::Deserialize, ⏎ thiserror::Error,
+crates/svrngs-core/src/membership.rs:125 crates/svrngs-core/src/admit.rs:98 | serde::Deserialize, ⏎ thiserror::Error, ⏎ )]
+crates/svrngs-core/src/membership.rs:296 crates/svrngs-core/src/register.rs:120 | pub key: String, ⏎ pub until: i64, ⏎ pub device_of: Option<String>,
+crates/svrngs-core/src/membership.rs:297 crates/svrngs-core/src/register.rs:121 | pub until: i64, ⏎ pub device_of: Option<String>, ⏎ }
+crates/svrngs-node/src/home.rs:451 crates/svrngs-node/src/lend.rs:239 | limit: None, ⏎ refused: Vec::new(), ⏎ upload: None,
+crates/svrngs-node/src/home.rs:452 crates/svrngs-node/src/lend.rs:240 | refused: Vec::new(), ⏎ upload: None, ⏎ reads: Vec::new(),
+crates/svrngs-core/src/admit.rs:61 crates/svrngs-core/src/lib.rs:108 crates/svrngs-core/src/synced.rs:12 crates/svrngs-core/src/view.rs:22 | use alloc::collections::{BTreeMap, BTreeSet}; ⏎ use alloc::format; ⏎ use alloc::string::String;
+crates/svrngs-core/src/admit.rs:62 crates/svrngs-core/src/lib.rs:109 crates/svrngs-core/src/view.rs:23 | use alloc::format; ⏎ use alloc::string::String; ⏎ use alloc::string::ToString;
+crates/svrngs-core/src/admit.rs:63 crates/svrngs-core/src/lib.rs:110 crates/svrngs-core/src/sync.rs:55 crates/svrngs-core/src/view.rs:24 crates/svrngs-core/src/payload.rs:53 | use alloc::string::String; ⏎ use alloc::string::ToString; ⏎ use alloc::vec::Vec;
+crates/svrngs-core/src/admit.rs:64 crates/svrngs-core/src/sync.rs:56 | use alloc::string::ToString; ⏎ use alloc::vec::Vec; ⏎ use crate::op::{Op, OpId};
+crates/svrngs-core/src/admit.rs:482 crates/svrngs-core/src/admit.rs:642 | actor: op.actor.clone(), ⏎ }); ⏎ continue;
+crates/svrngs-node/src/rail.rs:42 crates/svrngs-node/src/rail.rs:519 | clippy::disallowed_types, ⏎ reason = "the live lane's buffer, this computer's only" ⏎ )]
+crates/svrngs-node/src/rail.rs:47 crates/svrngs-node/src/surface.rs:35 | use axum::extract::{Query, State}; ⏎ use axum::http::StatusCode; ⏎ use axum::response::{IntoResponse, Response};
+crates/svrngs-node/src/rail.rs:131 crates/svrngs-node/src/rail.rs:363 | Json(serde_json::json!({ "error": why, "kind": kind, "namespace": namespace })), ⏎ ) ⏎ .into_response()
+crates/svrngs-node/src/rail.rs:464 crates/svrngs-node/src/rail.rs:483 crates/svrngs-node/src/rail.rs:679 | State(api): State<RailApi>, ⏎ Query(q): Query<RailQuery>, ⏎ ) -> Result<Response, Response> {
+crates/svrngs-node/src/rail.rs:475 crates/svrngs-node/src/rail.rs:485 | ) -> Result<Response, Response> { ⏎ let namespace = namespace_of(&q)?; ⏎ group_of(&api.rail, &namespace)?;
+crates/svrngs-node/src/rail.rs:542 crates/svrngs-node/src/rail.rs:652 | tracing::warn!( ⏎ target: "rails", ⏎ namespace,
+crates/svrngs-node/src/rail.rs:576 crates/svrngs-node/src/rail.rs:612 | tracing::debug!( ⏎ target: "rails", ⏎ namespace,
+crates/svrngs-node/src/rail.rs:577 crates/svrngs-node/src/rail.rs:613 | target: "rails", ⏎ namespace, ⏎ bytes = body.len(),
+crates/svrngs-node/src/rail.rs:582 crates/svrngs-node/src/ring_routes.rs:267 | return err( ⏎ StatusCode::PAYLOAD_TOO_LARGE, ⏎ format!(
+crates/svrngs-node/src/rail.rs:606 crates/svrngs-node/src/blob.rs:218 | Ok(people) => people, ⏎ Err(refusal) => return refusal, ⏎ };
+crates/svrngs-node/src/ring_sync.rs:275 crates/svrngs-node/src/iroh.rs:585 crates/svrngs-node/src/api.rs:261 | _task: AbortOnDropHandle::new(task), ⏎ } ⏎ }
+crates/svrngs-node/src/ring_sync.rs:296 crates/svrngs-node/src/surface.rs:122 | let namespaces = match rail.namespaces() { ⏎ Ok(n) => n, ⏎ Err(e) => {
+crates/svrngs-node/src/ring_sync.rs:563 crates/svrngs-node/src/ring_sync.rs:605 | Ok(d) => d, ⏎ Err(e) => return out.stopped(ExchangeStop::Failed(format!("local journal: {e}"))), ⏎ };
+crates/svrngs-node/src/ring_sync.rs:567 crates/svrngs-node/src/ring_sync.rs:609 | to, ⏎ &RingSyncRequest { ⏎ namespace: namespace.to_string(),
+crates/svrngs-node/src/iroh.rs:552 crates/svrngs-node/src/iroh.rs:568 | target: "transport", ⏎ alpn = %String::from_utf8_lossy(&alpn), ⏎ dialer = %dialer.actor(),
+crates/svrngs-node/src/lend.rs:91 crates/svrngs-core/src/synced.rs:65 crates/svrngs-core/src/link.rs:182 | } ⏎ pub fn as_str(&self) -> &str { ⏎ &self.0
+crates/svrngs-node/src/lend.rs:93 crates/svrngs-core/src/synced.rs:67 crates/svrngs-core/src/link.rs:184 | pub fn as_str(&self) -> &str { ⏎ &self.0 ⏎ }
+crates/svrngs-node/src/lend.rs:202 crates/svrngs-node/src/share.rs:97 | pub limit: Option<NonZeroU16>, ⏎ pub refused: Vec<RefusedPath>, ⏎ pub upload: Option<Upload>,
+crates/svrngs-node/src/lend.rs:203 crates/svrngs-node/src/share.rs:98 | pub refused: Vec<RefusedPath>, ⏎ pub upload: Option<Upload>, ⏎ pub reads: Vec<Kind>,
+crates/svrngs-node/src/lend.rs:342 crates/svrngs-node/src/share.rs:101 | pub upload: Option<Upload>, ⏎ pub reads: Vec<Kind>, ⏎ pub asks: Option<String>,
+crates/svrngs-node/src/lend.rs:384 crates/svrngs/src/identity.rs:82 | Unreadable { ⏎ path: PathBuf, ⏎ source: std::io::Error,
+crates/svrngs-node/src/lend.rs:464 crates/svrngs-runtime/src/lib.rs:133 | let entries = match std::fs::read_dir(&dir) { ⏎ Ok(e) => e, ⏎ Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+crates/svrngs-node/src/oidc/provider.rs:27 crates/svrngs-node/src/oidc/provider.rs:195 crates/svrngs-node/src/oidc/provider.rs:205 | clippy::disallowed_types, ⏎ reason = "the code store is one process's map, read and written by its own routes" ⏎ )]
+crates/svrngs-node/src/oidc/provider.rs:73 crates/svrngs-runtime/src/journal.rs:486 | SystemTime::now() ⏎ .duration_since(UNIX_EPOCH) ⏎ .map(|d| d.as_secs() as i64)
+crates/svrngs-node/src/oidc/provider.rs:289 crates/svrngs-node/src/oidc/provider.rs:393 | State(p): State<Provider>, ⏎ Path(lend): Path<String>, ⏎ headers: HeaderMap,
+crates/svrngs-node/src/oidc/provider.rs:293 crates/svrngs-node/src/oidc/provider.rs:396 | ) -> Response { ⏎ let Some((name, _declared, config)) = p.declared(&lend) else { ⏎ return missing(&lend);
+crates/svrngs-node/src/oidc/provider.rs:294 crates/svrngs-node/src/oidc/provider.rs:397 | let Some((name, _declared, config)) = p.declared(&lend) else { ⏎ return missing(&lend); ⏎ };
+crates/svrngs-node/src/oidc/provider.rs:309 crates/svrngs-node/src/oidc/provider.rs:316 | return refuse( ⏎ StatusCode::UNAUTHORIZED, ⏎ "invalid_client",
+crates/svrngs-node/src/oidc/provider.rs:334 crates/svrngs-node/src/oidc/provider.rs:341 crates/svrngs-node/src/oidc/provider.rs:348 crates/svrngs-node/src/oidc/provider.rs:356 crates/svrngs-node/src/oidc/provider.rs:363 | return refuse( ⏎ StatusCode::BAD_REQUEST, ⏎ "invalid_grant",
+crates/svrngs-runtime/src/journal.rs:324 crates/svrngs-runtime/src/journal.rs:387 | let mut guard = self.log(); ⏎ let log = &mut *guard; ⏎ let restarted = log.held.catch_up(&log.oplog, &self.namespace)?;
+crates/svrngs-runtime/src/journal.rs:325 crates/svrngs-runtime/src/journal.rs:388 | let log = &mut *guard; ⏎ let restarted = log.held.catch_up(&log.oplog, &self.namespace)?; ⏎ tracing::debug!(namespace = %self.namespace, restarted, "ring rail: 
+crates/svrngs-runtime/src/journal.rs:342 crates/svrngs-runtime/src/journal.rs:357 crates/svrngs-runtime/src/journal.rs:421 crates/svrngs-runtime/src/journal.rs:504 | let mut guard = self.log(); ⏎ let log = &mut *guard; ⏎ log.held.catch_up(&log.oplog, &self.namespace)?;
+crates/svrngs-runtime/src/journal.rs:362 crates/svrngs-runtime/src/lib.rs:267 | } ⏎ pub fn ops_missing_from_within( ⏎ &self,
+crates/svrngs-runtime/src/journal.rs:384 crates/svrngs-runtime/src/lib.rs:272 | theirs: &Digest, ⏎ budget_bytes: usize, ⏎ ) -> Result<(Vec<Op<SignedOp>>, bool), RailError> {
+crates/svrngs-runtime/src/journal.rs:397 crates/svrngs-runtime/src/journal.rs:508 | .oplog ⏎ .read_all_with_skips() ⏎ .map_err(|e| RailError::Io(e.to_string()))?;
+crates/svrngs-runtime/src/journal.rs:438 crates/svrngs-runtime/src/journal.rs:447 | tracing::debug!( ⏎ namespace = %self.namespace, ⏎ offered = ops.len(),
+crates/svrngs-runtime/src/journal.rs:499 crates/svrngs-core/src/command.rs:124 | fn append_with<R>( ⏎ &self, ⏎ actor: &str,
+web/src/lib.rs:246 web/src/http.rs:207 | method: String, ⏎ path: String, ⏎ headers: js_sys::Array,
+web/src/lib.rs:247 web/src/http.rs:208 | path: String, ⏎ headers: js_sys::Array, ⏎ body: Option<web_sys::ReadableStream>,
+web/src/lib.rs:443 web/src/lib.rs:462 | ts: f64, ⏎ seq: f64, ⏎ prev: Option<String>,
+web/src/lib.rs:444 web/src/lib.rs:463 | seq: f64, ⏎ prev: Option<String>, ⏎ act: String,
+crates/svrngs-core/src/lib.rs:526 crates/svrngs-core/src/joining.rs:110 | invite: &OpId, ⏎ person: &Person, ⏎ device: Device,
+crates/svrngs-core/src/lib.rs:527 crates/svrngs-core/src/joining.rs:111 | person: &Person, ⏎ device: Device, ⏎ ) -> Self {
+crates/svrngs-node/src/redeem.rs:51 crates/svrngs-node/src/ring_routes.rs:34 | use axum::response::{IntoResponse, Response}; ⏎ use axum::routing::post; ⏎ use axum::{Extension, Json};
+crates/svrngs-node/src/door/choices.rs:278 crates/svrngs-node/src/door/choices.rs:304 crates/svrngs-node/src/door/choices.rs:322 | State(door): State<Door>, ⏎ dialer: Option<Extension<Dialer>>, ⏎ Segment(raw): Segment<String>,
+crates/svrngs-node/src/door/choices.rs:279 crates/svrngs-node/src/door/choices.rs:305 | dialer: Option<Extension<Dialer>>, ⏎ Segment(raw): Segment<String>, ⏎ headers: HeaderMap,
+crates/svrngs-node/src/door/choices.rs:280 crates/svrngs-node/src/door/choices.rs:306 | Segment(raw): Segment<String>, ⏎ headers: HeaderMap, ⏎ body: Bytes,
+crates/svrngs-node/src/door/choices.rs:281 crates/svrngs-node/src/door/choices.rs:307 | headers: HeaderMap, ⏎ body: Bytes, ⏎ ) -> Result<Response, Response> {
+crates/svrngs-node/src/surface.rs:37 crates/svrngs-node/src/api.rs:21 | use axum::response::{IntoResponse, Response}; ⏎ use axum::routing::{get, post}; ⏎ use axum::{Json, Router};
+crates/svrngs-node/src/carried.rs:48 crates/svrngs-node/src/blob.rs:21 | use axum::response::{IntoResponse, Response}; ⏎ use axum::{Extension, Json}; ⏎ use iroh_blobs::Hash;
+crates/svrngs-core/src/register.rs:8 crates/svrngs-core/src/record.rs:5 | use alloc::vec; ⏎ use alloc::vec::Vec; ⏎ use crate::command::{Command, Reads};
+crates/svrngs-core/src/register.rs:25 crates/svrngs-core/src/joining.rs:91 | pub key: String, ⏎ pub cosig: String, ⏎ pub device: Device,
+crates/svrngs-core/src/register.rs:27 crates/svrngs-core/src/joining.rs:93 | pub cosig: String, ⏎ pub device: Device, ⏎ pub link: String,
+crates/svrngs-core/src/register.rs:126 crates/svrngs-core/src/register.rs:142 | type Refusal = Infallible; ⏎ const READS: Reads = Reads::Membership; ⏎ fn decide(&self, _before: &Admission) -> Result<Vec<RailAct>, Infallible> {
+crates/svrngs-core/src/register.rs:158 crates/svrngs-core/src/register.rs:278 | pub person: Person, ⏎ pub joined: Option<Joined>, ⏎ }
+crates/svrngs-core/src/register.rs:181 crates/svrngs-core/src/register.rs:221 | type Refusal = RemovalRefusal; ⏎ const READS: Reads = Reads::All; ⏎ fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, RemovalRefusal> {
+crates/svrngs-core/src/register.rs:182 crates/svrngs-core/src/register.rs:222 | const READS: Reads = Reads::All; ⏎ fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, RemovalRefusal> { ⏎ let m = before.membership();
+crates/svrngs-runtime/src/register.rs:135 crates/svrngs-runtime/src/register.rs:220 | ops: &[Op<SignedOp>], ⏎ seed: &Roster, ⏎ namespace: &str,
+crates/svrngs-runtime/src/register.rs:136 crates/svrngs-runtime/src/register.rs:221 | seed: &Roster, ⏎ namespace: &str, ⏎ verifier: &dyn RingVerifier,
+crates/svrngs-node/src/removal.rs:142 crates/svrngs-node/src/removal.rs:293 | let Ok(person) = Person::parse(&asked.person) else { ⏎ tracing::debug!(target: "removal", ?asked, "removal: refused — the name asked is no name, so nobody of it
+crates/svrngs-node/src/removal.rs:143 crates/svrngs-node/src/removal.rs:294 | tracing::debug!(target: "removal", ?asked, "removal: refused — the name asked is no name, so nobody of it is in the group"); ⏎ return Outcome::NotInGroup; ⏎ };
+crates/svrngs-node/src/group.rs:90 crates/svrngs-node/src/group.rs:124 | let Some(raw) = kept(&path)? else { ⏎ return Ok(None); ⏎ };
+crates/svrngs-node/src/blob.rs:214 crates/svrngs-node/src/blob.rs:283 | Path(hash): Path<Hash>, ⏎ Query(BlobQuery { group, .. }): Query<BlobQuery>, ⏎ ) -> Response {
+crates/svrngs-node/src/ring_routes.rs:177 crates/svrngs-node/src/ring_routes.rs:250 | State(state): State<RingInbound>, ⏎ dialer: Option<Extension<Dialer>>, ⏎ body: axum::body::Bytes,
+crates/svrngs-node/src/ring_routes.rs:178 crates/svrngs-node/src/ring_routes.rs:251 | dialer: Option<Extension<Dialer>>, ⏎ body: axum::body::Bytes, ⏎ ) -> Response {
+crates/svrngs-node/src/ring_routes.rs:203 crates/svrngs-node/src/ring_routes.rs:226 | target: "rails", ⏎ namespace = %req.namespace, ⏎ request_bytes,
+crates/svrngs-node/src/invite.rs:174 crates/svrngs-node/src/invite.rs:209 | group: &str, ⏎ device: bool, ⏎ page: Option<&Origin>,
+crates/svrngs-node/src/invite.rs:175 crates/svrngs-node/src/invite.rs:210 | device: bool, ⏎ page: Option<&Origin>, ⏎ visit: Option<i64>,
+crates/svrngs-node/src/invite.rs:176 crates/svrngs-node/src/invite.rs:211 | page: Option<&Origin>, ⏎ visit: Option<i64>, ⏎ ) -> Result<Linked, Unminted> {
+crates/svrngs-node/src/invite.rs:180 crates/svrngs-node/src/invite.rs:197 | .minting ⏎ .lock() ⏎ .unwrap_or_else(std::sync::PoisonError::into_inner);
+crates/svrngs-runtime/src/oplog.rs:227 crates/svrngs-runtime/src/oplog.rs:276 | if line.trim().is_empty() { ⏎ continue; ⏎ }
+crates/svrngs-runtime/src/oplog.rs:317 crates/svrngs-runtime/src/oplog.rs:331 | tracing::warn!( ⏎ log = K::LABEL, ⏎ path = %self.path.display(),
+crates/svrngs-runtime/src/oplog.rs:318 crates/svrngs-runtime/src/oplog.rs:332 | log = K::LABEL, ⏎ path = %self.path.display(), ⏎ line = line_no,
+crates/svrngs-runtime/src/lib.rs:12 crates/svrngs-runtime/src/lib.rs:60 | clippy::disallowed_types, ⏎ reason = "the open-journal map; an actor per journal replaces it (DESIGN §5)" ⏎ )]
+crates/svrngs-core/src/command.rs:82 crates/svrngs-core/src/command.rs:100 | pub fn lines(&self) -> &[Op<SignedOp>] { ⏎ &self.0 ⏎ }
+crates/svrngs-core/src/command.rs:102 crates/svrngs-core/src/act_set.rs:38 | } ⏎ pub fn is_empty(&self) -> bool { ⏎ self.0.is_empty()
+crates/svrngs-core/src/command.rs:104 crates/svrngs-core/src/act_set.rs:40 | pub fn is_empty(&self) -> bool { ⏎ self.0.is_empty() ⏎ }
+crates/svrngs-node/src/api.rs:18 crates/svrngs-node/src/room/owner.rs:13 | use axum::extract::{ConnectInfo, Request, State}; ⏎ use axum::http::StatusCode; ⏎ use axum::middleware::Next;
+crates/svrngs-node/src/api.rs:159 crates/svrngs-node/src/room/owner.rs:167 | let caller = request ⏎ .extensions() ⏎ .get::<ConnectInfo<SocketAddr>>()
+crates/svrngs-node/src/api.rs:212 crates/svrngs-node/src/api.rs:228 | pub fn addr(&self) -> SocketAddr { ⏎ self.addr ⏎ }
+crates/svrngs-node/src/guest.rs:93 crates/svrngs-node/src/guest.rs:106 | secret_key: SecretKey, ⏎ alpns: Vec<Vec<u8>>, ⏎ cfg: &RelayConfig,
+crates/svrngs/src/identity.rs:116 crates/svrngs/src/identity.rs:133 | tracing::debug!( ⏎ target: "identity", ⏎ error = %source,
+crates/svrngs-core/src/joining.rs:40 crates/svrngs-core/src/joining.rs:123 | sig: String::new(), ⏎ }; ⏎ req.sig = sign_message(link, &req.message());
+crates/svrngs-core/src/joining.rs:41 crates/svrngs-core/src/joining.rs:124 | }; ⏎ req.sig = sign_message(link, &req.message()); ⏎ req
+crates/svrngs-core/src/joining.rs:42 crates/svrngs-core/src/joining.rs:125 | req.sig = sign_message(link, &req.message()); ⏎ req ⏎ }
+crates/svrngs-core/src/joining.rs:51 crates/svrngs-core/src/joining.rs:143 | msg ⏎ } ⏎ pub fn signed_by_link(&self) -> bool {
+crates/svrngs-core/src/joining.rs:52 crates/svrngs-core/src/joining.rs:144 | } ⏎ pub fn signed_by_link(&self) -> bool { ⏎ verify_hex(&self.link, &self.message(), &self.sig)
+crates/svrngs-core/src/joining.rs:56 crates/svrngs-core/src/joining.rs:148 | pub fn signed_by_link(&self) -> bool { ⏎ verify_hex(&self.link, &self.message(), &self.sig) ⏎ }
+crates/svrngs-core/src/joining.rs:57 crates/svrngs-core/src/joining.rs:149 | verify_hex(&self.link, &self.message(), &self.sig) ⏎ } ⏎ }
+crates/svrngs/src/main.rs:43 crates/svrngs/src/main.rs:55 | Ok(r) => r, ⏎ Err(e) => return refuse(e), ⏎ };
+crates/svrngs-node/src/peer_wire.rs:58 crates/svrngs-node/src/peer_wire.rs:70 | pub namespace: String, ⏎ pub digest: Digest, ⏎ pub ops: Vec<Op<SignedOp>>,

@@ -1,0 +1,46 @@
+svrnmesh: bridged 1 legacy SOVEREIGN_* env var(s) to SVRNMESH_* (the SOVEREIGN_* prefix is deprecated — update your scripts)
+Full rebuild of 'give-econ-corpus2' — no existing index for this corpus.
+Every chunk will be re-embedded; this is the slow path.
+Indexing /private/tmp/give-econ-corpus as corpus 'give-econ-corpus2'
+Index directory: /Users/alexsbryan/.svrnmesh/indexes
+
+corpus-mcp: endpoint candidate ollama http://localhost:11434/v1 — unavailable: GET http://localhost:11434/v1/models: error sending request for url (http://localhost:11434/v1/models)
+corpus-mcp: endpoint candidate llama-server http://localhost:8080/v1 — unavailable: GET http://localhost:8080/v1/models: error sending request for url (http://localhost:8080/v1/models)
+corpus-mcp: endpoint candidate oicp daemon http://localhost:9741 — 5 model(s) listed, first `commonwealth/fast`
+corpus-mcp: host http://localhost:9741: OICP capabilities detected (5 top-level keys)
+corpus-mcp: embeddings via http://localhost:9741/v1/embeddings, model `qwen-embedding-0.6b`, 1024-d (oicp)
+corpus-mcp: embed quirks `Qwen3Embedding` for model stem `qwen-embedding-0.6b` — documents and queries are prepared the way this corpus was built
+[give-econ-corpus2] Starting embed+index pipeline (embed_batch=256, index_flush=2000, batch_embed=false)
+[give-econ-corpus2] 256 embedded (256 buffered) | 256 docs | 17.4 chunks/s | 0m14s
+[give-econ-corpus2] 512 embedded (512 buffered) | 512 docs | 21.8 chunks/s | 0m26s
+[give-econ-corpus2] 768 embedded (768 buffered) | 768 docs | 18.0 chunks/s | 0m40s
+[give-econ-corpus2] 1024 embedded (1024 buffered) | 1024 docs | 20.4 chunks/s | 0m53s
+[give-econ-corpus2] 1280 embedded (1280 buffered) | 1280 docs | 11.2 chunks/s | 1m16s
+[give-econ-corpus2] 1536 embedded (1536 buffered) | 1536 docs | 11.9 chunks/s | 1m37s
+[give-econ-corpus2] 1792 embedded (1792 buffered) | 1792 docs | 25.7 chunks/s | 1m47s
+[give-econ-corpus2] 2048 embedded (2048 buffered) | 2048 docs | 20.8 chunks/s | 2m0s
+[give-econ-corpus2] Flushed 2048 chunks to index (179ms) — 2048 total committed
+[give-econ-corpus2] 2304 embedded (256 buffered) | 2304 docs | 20.8 chunks/s | 2m12s
+[give-econ-corpus2] Final flush — 435 chunks — 2483 total committed from 2483 docs (0 skipped)
+[give-econ-corpus2] Index build starting — model: qwen-embedding-0.6b (1024d), chunks: 2483, vector: true (IVF-PQ auto ≈ 50 partitions), fts: true
+[give-econ-corpus2] Pre-build dedupe pass (0/3)...
+[give-econ-corpus2] Dedupe: no duplicates found (2483 rows)
+[give-econ-corpus2] Building vector index (1/3)...
+[give-econ-corpus2] IVF-PQ params — chunks: 2483, dims: 1024, partitions: 49, sub_vectors: 64, training sample: ~12544 vectors
+[give-econ-corpus2] ↳ Training IVF centroids (~12544 vectors, 15s elapsed)...
+[give-econ-corpus2] ↳ Training IVF centroids (~12544 vectors, 31s elapsed)...
+[give-econ-corpus2] ↳ Training IVF centroids (~12544 vectors, 46s elapsed)...
+[give-econ-corpus2] ↳ Training IVF centroids (~12544 vectors, 62s elapsed)...
+[give-econ-corpus2] ↳ Training IVF centroids (~12544 vectors, 78s elapsed)...
+[give-econ-corpus2] ↳ Training IVF centroids (~12544 vectors, 93s elapsed)...
+[give-econ-corpus2] ↳ Training IVF centroids (~12544 vectors, 109s elapsed)...
+[give-econ-corpus2] Vector index done
+[give-econ-corpus2] Building FTS content index (2/3)...
+[give-econ-corpus2] FTS content index done
+[give-econ-corpus2] Building FTS title index (3/3)...
+[give-econ-corpus2] FTS title index done
+[give-econ-corpus2] Ingestion complete — 2483 chunks in 4m27s
+
+✓ Indexed 2483 chunks in 267s
+  Corpus: give-econ-corpus2  (18979 KB on disk)
+  Location: /Users/alexsbryan/.svrnmesh/indexes/give-econ-corpus2
