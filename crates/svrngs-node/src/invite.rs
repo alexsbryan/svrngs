@@ -176,10 +176,7 @@ impl Host {
         page: Option<&Origin>,
         visit: Option<i64>,
     ) -> Result<Linked, Unminted> {
-        let _minting = self
-            .minting
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let _minting = (self.minting.lock()).unwrap_or_else(std::sync::PoisonError::into_inner);
         self.link_held(group, device, page, visit)
     }
 
@@ -193,10 +190,7 @@ impl Host {
         page: Option<&Origin>,
         relay: Option<&RelayUrl>,
     ) -> Result<Result<Linked, Unminted>, String> {
-        let _minting = self
-            .minting
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let _minting = (self.minting.lock()).unwrap_or_else(std::sync::PoisonError::into_inner);
         self.keep_group(seed, page, relay)?;
         tracing::debug!(target: "link", group = %seed.id(), "link: the group kept; its first link minted before any other");
         Ok(self.link_held(&seed.id(), false, None, None))
