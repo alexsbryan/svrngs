@@ -108,9 +108,14 @@ fn faults() -> Value {
         // says it.
         { "text": "already running on this computer" },
         // The computer that sent the link, or a lender, not answering
-        // (web/app.js:115, `unanswered`; :171, :239, :315): demo/b.md's evening
-        // holds only if Sam's computer across town answers each phone.
-        { "text": "did not answer" },
+        // (web/app.js:112, `unanswered`; :168, :236, :312), or a person's
+        // computer on the door (question.js:162, `door`): demo/b.md's evening
+        // holds only if Sam's computer across town answers each phone. Not the
+        // group's screen's legend, "Dashed: did not answer." (home.js:287),
+        // which names no computer and is on that screen whoever answers:
+        // as the plain text it fired on Kim's "Show House on a screen", 2 of
+        // 3 runs (demo/xenia/findings/declared-home-the-scene-s-fault-4.md).
+        { "expr": r"/(?<!Dashed: )did not answer/i.test(document.body.innerText)" },
         // Money's page when the group's money cannot be read
         // (apps/expenses/index.js:29), and the home page's for its groups
         // (crates/svrngs-node/src/home/home.js:178, :245, :297, :391): a refusal
