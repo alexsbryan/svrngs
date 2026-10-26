@@ -14,10 +14,9 @@ mod origins;
 #[path = "common/pair.rs"]
 mod pair;
 
-use std::net::SocketAddr;
 use std::time::Duration;
 
-use common::{heard, loopback_sockets};
+use common::{heard, loopback_sockets, Browser};
 use pair::{alex_lets_sam_in, signing, start, NS};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
@@ -64,18 +63,20 @@ impl Got {
     }
 }
 
-/// One request to `api` at `host`, `extra` its other header lines.
+/// One request from `browser` at `host`, `extra` its other header lines,
+/// with the session svrngs opened there when `extra` is a page's.
 async fn ask(
-    api: SocketAddr,
+    browser: &Browser,
     method: &str,
     host: &str,
     path: &str,
     extra: &str,
     body: &str,
 ) -> Got {
-    let mut sock = tokio::net::TcpStream::connect(api).await.unwrap();
+    let mut sock = tokio::net::TcpStream::connect(browser.api()).await.unwrap();
+    let cookie = browser.cookie(host, extra).await;
     let request = format!(
-        "{method} {path} HTTP/1.1\r\nHost: {host}\r\n{extra}Content-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+        "{method} {path} HTTP/1.1\r\nHost: {host}\r\n{extra}{cookie}Content-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
         body.len()
     );
     sock.write_all(request.as_bytes()).await.unwrap();
@@ -142,6 +143,7 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
         heads.insert((who, name), kept);
     }
     let api = alex.api_addr();
+    let browser = &Browser::of(&alex);
     let port = api.port();
     let label = |seed: u8, name: &str| Label::of(&signing(seed).verifying_key().to_bytes(), name);
     let (night, alexs, sams) = (label(1, "night"), label(1, "taste"), label(2, "taste"));
@@ -155,14 +157,14 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
         at(&night)
     );
 
-    let page = ask(api, "GET", &home, "/", typed, "").await;
+    let page = ask(browser, "GET", &home, "/", typed, "").await;
     assert_eq!(page.status, 200, "{}", page.body);
     assert!(page.body.contains(r#"src="/home.js""#), "{}", page.body);
     // oidc-retire: the kind-keyed sign-in helper route is gone, so Jellyfin
     // answers as any kind with none (SIGN_IN_WITH_SVRNGS §7 3). A planted
     // `/helper/{kind}` route made this red before it passed.
-    let jellyfin = ask(api, "GET", &home, "/helper/jellyfin", typed, "").await;
-    let any = ask(api, "GET", &home, "/helper/unheard-of", typed, "").await;
+    let jellyfin = ask(browser, "GET", &home, "/helper/jellyfin", typed, "").await;
+    let any = ask(browser, "GET", &home, "/helper/unheard-of", typed, "").await;
     assert_eq!(jellyfin.status, 404, "{}", jellyfin.body);
     assert_eq!(
         jellyfin.status, any.status,
@@ -171,7 +173,7 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
     );
     for got in [
         &page,
-        &ask(api, "GET", &home, "/v1/groups", &from_night, "").await,
+        &ask(browser, "GET", &home, "/v1/groups", &from_night, "").await,
     ] {
         assert_eq!(
             got.header("content-security-policy"),
@@ -180,7 +182,7 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
             got.head
         );
     }
-    let module = ask(api, "GET", &home, "/home.js", &own, "").await;
+    let module = ask(browser, "GET", &home, "/home.js", &own, "").await;
     assert_eq!(
         (module.status, module.header("content-type")),
         (200, Some("text/javascript"))
@@ -190,7 +192,7 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
         at(&night)
     );
     let asking = ask(
-        api,
+        browser,
         "GET",
         &home,
         &format!("/ask?lend={sams}&app={night}&back=/x"),
@@ -203,7 +205,7 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
         "a lend's page sends its person to ask: {}",
         asking.body
     );
-    let elsewhere = ask(api, "GET", "svrngs.localhost:1", "/", typed, "").await;
+    let elsewhere = ask(browser, "GET", "svrngs.localhost:1", "/", typed, "").await;
     assert_eq!(
         elsewhere.status, 403,
         "only at its own port: {}",
@@ -214,15 +216,15 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
         "/v1/groups".to_string(),
         format!("/v1/lends?namespace={NS}"),
     ] {
-        let shown = ask(api, "GET", &home, &path, &own, "").await;
+        let shown = ask(browser, "GET", &home, &path, &own, "").await;
         let program = format!("Authorization: Bearer {}\r\n", alex.token());
-        let answered = ask(api, "GET", "127.0.0.1", &path, &program, "").await;
+        let answered = ask(browser, "GET", "127.0.0.1", &path, &program, "").await;
         assert_eq!(
             (shown.status, shown.json()),
             (answered.status, answered.json()),
             "{path}: one decider"
         );
-        let read = ask(api, "GET", &home, &path, &from_night, "").await;
+        let read = ask(browser, "GET", &home, &path, &from_night, "").await;
         assert_eq!(
             (read.status, read.header("x-svrngs-refused")),
             (403, Some("closed")),
@@ -231,7 +233,7 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
         );
     }
     let shown = ask(
-        api,
+        browser,
         "GET",
         &home,
         &format!("/v1/lends?namespace={NS}"),
@@ -249,7 +251,7 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
 
     let fetch = |l: &Label| {
         let (host, extra) = (at(l), from_night.clone());
-        async move { ask(api, "GET", &host, "/x", &extra, "").await }
+        async move { ask(browser, "GET", &host, "/x", &extra, "").await }
     };
     let refused = |got: &Got| {
         (
@@ -275,9 +277,9 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
             "its own origin with no Origin",
             "Sec-Fetch-Site: same-origin\r\n".into(),
         ),
-        ("a program", String::new()),
+        ("a program, with the token", browser.bearer()),
     ] {
-        let posted = ask(api, "POST", &home, "/choices", &extra, &yes(&alexs)).await;
+        let posted = ask(browser, "POST", &home, "/choices", &extra, &yes(&alexs)).await;
         assert_eq!(
             refused(&posted),
             (403, Some("closed".into())),
@@ -292,7 +294,7 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
     );
 
     for l in [&alexs, &sams] {
-        let said = ask(api, "POST", &home, "/choices", &own, &yes(l)).await;
+        let said = ask(browser, "POST", &home, "/choices", &own, &yes(l)).await;
         assert_eq!(said.status, 200, "the person's yes at {l}: {}", said.body);
         let carried = fetch(l).await;
         assert_eq!(
@@ -303,7 +305,7 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
         );
     }
     let kept = ask(
-        api,
+        browser,
         "GET",
         &home,
         &format!("/choices?lend={sams}"),
@@ -318,7 +320,8 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
         kept.body
     );
 
-    let reads = ask(api, "GET", &at(&night), "/svrngs-reads", "", "")
+    let page = "Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\n";
+    let reads = ask(browser, "GET", &at(&night), "/svrngs-reads", page, "")
         .await
         .json();
     for l in [&alexs, &sams] {
@@ -343,7 +346,7 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
     let same = "Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\n";
     for l in [&alexs, &sams] {
         let stop = ask(
-            api,
+            browser,
             "POST",
             &at(&night),
             &format!("/svrngs-reads/{l}/svrngs-stop"),
@@ -402,12 +405,12 @@ async fn a_lend_s_limit_is_changed_on_the_home_page_and_the_door_takes_it() {
     };
     let typed = "Sec-Fetch-Site: none\r\nSec-Fetch-Mode: navigate\r\n";
     let open = |node: &Node| {
-        let api = node.api_addr();
-        let host = format!("{shelf}.localhost:{}", api.port());
-        async move { ask(api, "GET", &host, "/x", typed, "").await }
+        let browser = Browser::of(node);
+        let host = format!("{shelf}.localhost:{}", node.api_addr().port());
+        async move { ask(&browser, "GET", &host, "/x", typed, "").await }
     };
-    let (api, home) = (
-        sam.api_addr(),
+    let (browser, home) = (
+        &Browser::of(&sam),
         format!("svrngs.localhost:{}", sam.api_addr().port()),
     );
     let own =
@@ -434,16 +437,16 @@ async fn a_lend_s_limit_is_changed_on_the_home_page_and_the_door_takes_it() {
     for (row, extra) in [
         (
             "shelf's page",
-            format!("Sec-Fetch-Site: same-site\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{shelf}.localhost:{}\r\n", api.port()),
+            format!("Sec-Fetch-Site: same-site\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{shelf}.localhost:{}\r\n", browser.api().port()),
         ),
         (
             "the home page's Origin, from another site",
             format!("Sec-Fetch-Site: same-site\r\nOrigin: http://{home}\r\n"),
         ),
         ("its own origin with no Origin", "Sec-Fetch-Site: same-origin\r\n".into()),
-        ("a program", String::new()),
+        ("a program, with the token", browser.bearer()),
     ] {
-        let posted = ask(api, "POST", &home, "/lent", &extra, everyone).await;
+        let posted = ask(browser, "POST", &home, "/lent", &extra, everyone).await;
         assert_eq!(
             (posted.status, posted.header("x-svrngs-refused")),
             (403, Some("closed")),
@@ -453,9 +456,9 @@ async fn a_lend_s_limit_is_changed_on_the_home_page_and_the_door_takes_it() {
     }
     assert_eq!(limit(), Some(Some(1)), "no refused change was kept");
 
-    let changed = ask(api, "POST", &home, "/lent", &own, everyone).await;
+    let changed = ask(browser, "POST", &home, "/lent", &own, everyone).await;
     assert_eq!(changed.status, 204, "Sam's own change: {}", changed.body);
-    let listed = ask(api, "GET", &home, "/lent", &own, "").await.json();
+    let listed = ask(browser, "GET", &home, "/lent", &own, "").await.json();
     assert_eq!(listed["lent"][0]["name"], "shelf", "{listed:#}");
     assert_eq!(
         listed["lent"][0]["limit"],
@@ -467,12 +470,12 @@ async fn a_lend_s_limit_is_changed_on_the_home_page_and_the_door_takes_it() {
 
     let two = r#"{"lend":"shelf","to":{"limit":2}}"#;
     assert_eq!(
-        ask(api, "POST", &home, "/lent", &own, two).await.status,
+        ask(browser, "POST", &home, "/lent", &own, two).await.status,
         204
     );
     assert_eq!(limit(), Some(Some(2)));
     let none = ask(
-        api,
+        browser,
         "POST",
         &home,
         "/lent",
@@ -488,11 +491,13 @@ async fn a_lend_s_limit_is_changed_on_the_home_page_and_the_door_takes_it() {
     );
     let stop = r#"{"lend":"shelf","to":"stop"}"#;
     assert_eq!(
-        ask(api, "POST", &home, "/lent", &own, stop).await.status,
+        ask(browser, "POST", &home, "/lent", &own, stop)
+            .await
+            .status,
         204
     );
     assert_eq!(limit(), None, "no longer lent");
-    let listed = ask(api, "GET", &home, "/lent", &own, "").await.json();
+    let listed = ask(browser, "GET", &home, "/lent", &own, "").await.json();
     assert_eq!(listed["lent"], serde_json::json!([]), "{listed:#}");
     sam.endpoint().close().await;
     alex.endpoint().close().await;
@@ -519,6 +524,7 @@ async fn a_lend_is_signed_in_with_svrngs_from_the_home_page() {
     std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
     let name = lend::LendName::parse("shelf").unwrap();
     let api = alex.api_addr();
+    let browser = &Browser::of(&alex);
     let home = format!("svrngs.localhost:{}", api.port());
     let own =
         format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{home}\r\n");
@@ -528,7 +534,7 @@ async fn a_lend_is_signed_in_with_svrngs_from_the_home_page() {
                 .all(|b| b.is_ascii_alphanumeric() || b"-._~".contains(&b))
     };
 
-    let before = ask(api, "GET", &home, "/lent", &own, "").await.json();
+    let before = ask(browser, "GET", &home, "/lent", &own, "").await.json();
     assert_eq!(
         before["signing"],
         serde_json::json!([]),
@@ -536,7 +542,7 @@ async fn a_lend_is_signed_in_with_svrngs_from_the_home_page() {
     );
 
     let turned = ask(
-        api,
+        browser,
         "POST",
         &home,
         "/lent",
@@ -572,7 +578,7 @@ async fn a_lend_is_signed_in_with_svrngs_from_the_home_page() {
         "the declaration holding a secret is owner-only"
     );
 
-    let after = ask(api, "GET", &home, "/lent", &own, "").await.json();
+    let after = ask(browser, "GET", &home, "/lent", &own, "").await.json();
     assert_eq!(after["signing"], serde_json::json!(["shelf"]), "{after:#}");
     assert!(
         !after.to_string().contains(secret),
@@ -601,11 +607,11 @@ async fn groups_that_cannot_be_read_are_said_so() {
     let rings = dir.path().join("rings");
     std::fs::set_permissions(&rings, std::fs::Permissions::from_mode(0o000)).unwrap();
     let got = ask(
-        alex.api_addr(),
+        &Browser::of(&alex),
         "GET",
         &format!("{night}.localhost:{}", alex.api_addr().port()),
         "/svrngs-reads",
-        "",
+        "Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\n",
         "",
     )
     .await;
@@ -664,6 +670,7 @@ async fn svrngs_s_own_answers_are_readable_by_a_page_that_reads_the_lend_and_no_
         .unwrap();
     }
     let api = alex.api_addr();
+    let browser = &Browser::of(&alex);
     let port = api.port();
     let label = |seed: u8, name: &str| Label::of(&signing(seed).verifying_key().to_bytes(), name);
     let night = label(1, "night");
@@ -694,7 +701,7 @@ async fn svrngs_s_own_answers_are_readable_by_a_page_that_reads_the_lend_and_no_
     let unread = |status: u16, kind: Option<&str>| (status, kind.map(str::to_string), None, None);
     let night_at = |l: Label, path: &'static str| {
         let (host, extra) = (at(&l), from(&page));
-        async move { ask(api, "GET", &host, path, &extra, "").await }
+        async move { ask(browser, "GET", &host, path, &extra, "").await }
     };
     let rows = [
         (
@@ -749,13 +756,13 @@ async fn svrngs_s_own_answers_are_readable_by_a_page_that_reads_the_lend_and_no_
     let same = "Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\n";
     let telly = label(1, "telly");
     let stop = format!("/svrngs-reads/{telly}/svrngs-stop");
-    let stopped = ask(api, "POST", &at(&night), &stop, same, "").await;
+    let stopped = ask(browser, "POST", &at(&night), &stop, same, "").await;
     assert_eq!(stopped.status, 200, "night stops itself: {}", stopped.body);
     let got = night_at(telly.clone(), "/x").await;
     assert_eq!(read(&got), readable(403, "stopped"), "{}", got.body);
 
     let from_home = ask(
-        api,
+        browser,
         "GET",
         &at(&telly),
         "/x",
@@ -768,7 +775,7 @@ async fn svrngs_s_own_answers_are_readable_by_a_page_that_reads_the_lend_and_no_
         unread(403, Some("closed")),
         "the home page's fetch"
     );
-    let at_home = ask(api, "GET", &home, "/v1/lends", &from(&page), "").await;
+    let at_home = ask(browser, "GET", &home, "/v1/lends", &from(&page), "").await;
     assert_eq!(
         read(&at_home),
         unread(403, Some("closed")),
@@ -793,7 +800,7 @@ async fn the_page_s_link_for_a_group_not_held_is_refused_and_traced() {
     let own =
         format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{home}\r\n");
     let body = r#"{"group":"elsewhere","device":false}"#;
-    let got = ask(alex.api_addr(), "POST", &home, "/link", &own, body).await;
+    let got = ask(&Browser::of(&alex), "POST", &home, "/link", &own, body).await;
     assert_eq!(
         (got.status, got.header("x-svrngs-refused")),
         (403, Some("closed")),
@@ -860,7 +867,7 @@ async fn lending_from_the_page_says_each_refusal_apart_and_traces_it() {
         ),
     ];
     for (body, words) in &asked {
-        let got = ask(alex.api_addr(), "POST", &home, "/running", &own, body).await;
+        let got = ask(&Browser::of(&alex), "POST", &home, "/running", &own, body).await;
         assert_eq!(
             (got.status, got.json()["error"].as_str()),
             (400, Some(*words)),
@@ -896,7 +903,7 @@ async fn looking_for_what_runs_here_says_which_read_failed_and_traces_why() {
     std::fs::write(&lends, "not a directory").unwrap();
     let home = format!("svrngs.localhost:{}", alex.api_addr().port());
     let own = "Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\n";
-    let got = ask(alex.api_addr(), "GET", &home, "/running", own, "").await;
+    let got = ask(&Browser::of(&alex), "GET", &home, "/running", own, "").await;
     assert_eq!(
         (got.status, got.json()["error"].as_str()),
         (500, Some("it cannot read what you lend already")),

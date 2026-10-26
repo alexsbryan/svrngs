@@ -149,6 +149,62 @@ pub fn heard(filter: &str) -> (Said, (tracing::subscriber::DefaultGuard, tracing
     (said, (guard, two))
 }
 
+/// A browser on `node`'s computer that svrngs opened at every host it
+/// visits, as the home page opens each lend (`/to`): it sends each host the
+/// session an open set there (give-session). A test that models a page
+/// sends its `Sec-Fetch-*`; a program's request, with none, gets no cookie.
+#[allow(
+    dead_code,
+    reason = "each test binary compiles this file; only some model a browser"
+)]
+pub struct Browser {
+    api: SocketAddr,
+    token: String,
+    held: std::sync::Mutex<std::collections::HashMap<String, String>>,
+}
+
+#[allow(
+    dead_code,
+    reason = "each test binary compiles this file; only some model a browser"
+)]
+impl Browser {
+    pub fn of(node: &svrngs_node::node::Node) -> Self {
+        let (api, token) = (node.api_addr(), node.token().trim().to_string());
+        let held = std::sync::Mutex::default();
+        Self { api, token, held }
+    }
+
+    /// The listener it asks.
+    pub fn api(&self) -> SocketAddr {
+        self.api
+    }
+
+    /// The token's line, which a program on this computer sends.
+    pub fn bearer(&self) -> String {
+        format!("Authorization: Bearer {}\r\n", self.token)
+    }
+
+    /// The `Cookie:` line it sends `host` with `extra`: none from a
+    /// program, or at a host no open names (the record's own address).
+    pub async fn cookie(&self, host: &str, extra: &str) -> String {
+        let name = host.split_once(".localhost").map(|(n, _)| n);
+        let Some(name) = name.filter(|_| extra.contains("Sec-Fetch-Site")) else {
+            return String::new();
+        };
+        let held = self.held.lock().unwrap().get(name).cloned();
+        let cookie = match held {
+            Some(c) => c,
+            None => {
+                let lend = Some(name).filter(|n| *n != "svrngs");
+                let c = opened_at(self.api, &self.token, lend).await;
+                self.held.lock().unwrap().insert(name.into(), c.clone());
+                c
+            }
+        };
+        format!("Cookie: {cookie}\r\n")
+    }
+}
+
 /// The cookie a browser holds once `node`'s svrngs opened the home page
 /// (`lend` none) or the lend `lend`'s origin: `/v1/open`, asked with the
 /// token as `svrngs open` asks it, its code redeemed at the host it names,
@@ -158,19 +214,26 @@ pub fn heard(filter: &str) -> (Said, (tracing::subscriber::DefaultGuard, tracing
     reason = "each test binary compiles this file; only some model a browser"
 )]
 pub async fn opened(node: &svrngs_node::node::Node, lend: Option<&str>) -> String {
+    opened_at(node.api_addr(), node.token().trim(), lend).await
+}
+
+async fn opened_at(api: SocketAddr, token: &str, lend: Option<&str>) -> String {
     let client = reqwest::Client::builder().no_proxy();
     let client = client.redirect(reqwest::redirect::Policy::none());
     let client = client.build().unwrap();
     let body = lend.map_or(serde_json::json!({}), |l| serde_json::json!({ "lend": l }));
-    let open = client.post(format!("http://{}/v1/open", node.api_addr()));
-    let open = open.bearer_auth(node.token().trim()).json(&body);
+    let open = client.post(format!("http://{api}/v1/open"));
+    let open = open.bearer_auth(token).json(&body);
     let open: serde_json::Value = open.send().await.unwrap().json().await.unwrap();
     let url = open["open"].as_str().expect("an open's address");
     let (host, path) = url.trim_start_matches("http://").split_once('/').unwrap();
-    let redeem = client.get(format!("http://{}/{path}", node.api_addr()));
+    let redeem = client.get(format!("http://{api}/{path}"));
     let redeem = redeem.header("host", host).header("sec-fetch-site", "none");
     let answer = redeem.send().await.unwrap();
-    let set = answer.headers().get("set-cookie").expect("the open set its session");
+    let set = answer
+        .headers()
+        .get("set-cookie")
+        .expect("the open set its session");
     let set = set.to_str().unwrap();
     set.split(';').next().unwrap().to_string()
 }
