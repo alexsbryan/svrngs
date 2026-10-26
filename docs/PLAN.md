@@ -152,7 +152,8 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   opener, the home page's `/to`) and a program only with the token; a
   lend's page reads another at a capability in its read address, the
   director's decision (`demo/runs/give/2026-10-26-session/DECISION.md`); a
-  container on a Mac is refused (`demo/runs/give/2026-10-26-container/`).
+  container on a Mac is refused (`demo/runs/give/2026-10-26-container/`);
+  +216 library after its own cut of 15, 0 core, the cap 18,492.
   Not carried: the jellyfin, movie-night and taste `check.sh` runs,
   outside the gate, which open a lend's origin bare. The operator, "Let's do
   half the rows": the loop stops after the svrngs half, give-play-scene,
