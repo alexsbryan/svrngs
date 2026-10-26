@@ -1,0 +1,81 @@
+# What scripts/check.sh needs on a Linux computer, pinned, so the gate runs
+# on one that has none of it (scripts/gate/README.md). Ubuntu, because
+# Playwright's WebKit is built for it: on Fedora it will not start
+# ("Host system is missing dependencies to run browsers", a run of the gate
+# on the Fedora box at 48c28c4d, 2026-10-25).
+FROM docker.io/library/ubuntu:24.04@sha256:a61567bd31828687156d735ea8eb01ba4e37636e225dd6a48ba94136a70d9d61
+
+ENV DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 TZ=UTC
+# Every apt install below, Playwright's too, takes the archive as it was on
+# this day, so a rebuild gets the same packages: the snapshot is served over
+# https, so the certificates come first, from the archive as it is now.
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
+ && echo 'APT::Snapshot "20261020T000000Z";' >/etc/apt/apt.conf.d/50snapshot \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends \
+      ca-certificates curl xz-utils git build-essential pkg-config clang lld \
+      python3 lsof perl procps \
+ && rm -rf /var/lib/apt/lists/*
+
+# Jellyfin, the server the films and night scenes lend: 12.0, as the
+# operator's Mac runs (Jellyfin.app's CFBundleShortVersionString), from
+# Jellyfin's own archive, with its ffmpeg, which is also the `ffmpeg` the
+# browser tests make their films with.
+RUN set -e; cd /tmp; base=https://repo.jellyfin.org/ubuntu/pool/main/j; \
+    get() { curl -fsSLo "$1" "$base/$2/$1"; echo "$3  $1" | sha256sum -c -; }; \
+    get jellyfin-server_12.0+ubu2404_amd64.deb jellyfin 50f4283b72b2d78196d07718e9a4f2485896daad00909271858c4da7ca078658; \
+    get jellyfin-web_12.0+ubu2404_all.deb jellyfin bc049fdeb5bf4a6b6c3533c95374c9bf37bf108bdfafc9c7b779e02df38c2f90; \
+    get jellyfin-ffmpeg8_8.1.2-5-noble_amd64.deb jellyfin-ffmpeg b4e72894ad26c809ed0104805f5415a97be75212b9fcf9d60b89ad25bb3d43e3; \
+    apt-get update; apt-get install -y --no-install-recommends ./jellyfin-*.deb; \
+    rm -rf /var/lib/apt/lists/* /tmp/*.deb; \
+    ln -s /usr/lib/jellyfin-ffmpeg/ffmpeg /usr/local/bin/ffmpeg; \
+    ln -s /usr/lib/jellyfin-ffmpeg/ffprobe /usr/local/bin/ffprobe
+
+# Node as the operator's Mac runs the gate (`node --version`, v20.20.2).
+RUN set -e; cd /tmp; f=node-v20.20.2-linux-x64.tar.xz; \
+    curl -fsSLO "https://nodejs.org/dist/v20.20.2/$f"; \
+    echo "df770b2a6f130ed8627c9782c988fda9669fa23898329a61a871e32f965e007d  $f" | sha256sum -c -; \
+    mkdir /opt/node; tar -xJf "$f" -C /opt/node --strip-components=1; rm "$f"
+ENV PATH=/opt/node/bin:$PATH
+
+# Chromium and WebKit, and the libraries each needs, by the Playwright
+# web/package.json pins, where every user reads them.
+ENV PLAYWRIGHT_BROWSERS_PATH=/opt/ms-playwright
+RUN npx -y playwright@1.59.1 install --with-deps chromium webkit \
+ && chmod -R a+rX /opt/ms-playwright && rm -rf /var/lib/apt/lists/* /root/.npm
+
+# The wasm-bindgen CLI build-web.sh checks for (0.2.128), and binaryen's
+# wasm-opt at the version the Mac has (133).
+RUN set -e; cd /tmp; \
+    f=wasm-bindgen-0.2.128-x86_64-unknown-linux-musl.tar.gz; \
+    curl -fsSLO "https://github.com/wasm-bindgen/wasm-bindgen/releases/download/0.2.128/$f"; \
+    echo "b51f0208fdff83515a787bd8ab9ac5865ed84dabb66d0c709957bb59793c645f  $f" | sha256sum -c -; \
+    tar -xzf "$f"; install -m 755 wasm-bindgen-0.2.128-x86_64-unknown-linux-musl/wasm-bindgen /usr/local/bin/; \
+    f=binaryen-version_133-x86_64-linux.tar.gz; \
+    curl -fsSLO "https://github.com/WebAssembly/binaryen/releases/download/version_133/$f"; \
+    echo "2dc9c7813f5375db93d96ead4b78222fcc3e2677bbb832297af4797782a37489  $f" | sha256sum -c -; \
+    mkdir /opt/binaryen; tar -xzf "$f" -C /opt/binaryen --strip-components=1; \
+    ln -s /opt/binaryen/bin/wasm-opt /usr/local/bin/wasm-opt; rm -rf /tmp/*
+
+# The gate runs as `gate`, uid 1000, not root: a test that makes a file
+# unreadable and expects it unread would pass as root for the wrong reason.
+# README.md's `keep-id` maps the host's user onto it.
+RUN userdel -r ubuntu && useradd -m -u 1000 -s /bin/bash gate \
+ && mkdir /work && chown gate:gate /work
+USER gate
+# Rust as the operator's Mac has it (`rustc --version`, 1.94.1; svrngs has
+# no rust-toolchain.toml), with rustfmt, clippy and the page's wasm target.
+ENV CARGO_HOME=/home/gate/.cargo RUSTUP_HOME=/home/gate/.rustup PATH=/home/gate/.cargo/bin:$PATH
+RUN set -e; cd /tmp; \
+    curl -fsSLo rustup-init https://static.rust-lang.org/rustup/archive/1.29.0/x86_64-unknown-linux-gnu/rustup-init; \
+    echo "4acc9acc76d5079515b46346a485974457b5a79893cfb01112423c89aeb5aa10  rustup-init" | sha256sum -c -; \
+    chmod +x rustup-init; ./rustup-init -y --no-modify-path --profile minimal \
+      --default-toolchain 1.94.1 -c rustfmt,clippy -t wasm32-unknown-unknown; \
+    rm rustup-init; mkdir -p "$CARGO_HOME/registry" "$CARGO_HOME/git" /home/gate/.npm
+WORKDIR /work
+# What the image runs, in the checkout mounted at /work: Linux builds of
+# oxlint and Playwright first, and check.sh either way, which fails its lint
+# and browser steps naming this install when it did not take.
+# CARGO_INCREMENTAL=0 as the loops run, so target/ stays smaller.
+ENV CARGO_INCREMENTAL=0
+CMD ["bash", "-c", "npm ci --prefix web --no-audit --no-fund || echo 'note       npm ci --prefix web failed'; exec scripts/check.sh"]
