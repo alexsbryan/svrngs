@@ -269,8 +269,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # 18,495): a browser let in only by an open's session (session.rs, its
 # checks in home.rs and origin.rs), a read's capability (+30), `svrngs
 # open` (+26) and install.sh's opener (+6), after its own cut of `run`'s
-# verbs printing once (-15, 2266a50a): +216 and 0, at 18,491.
-BUDGET = {"crates/svrngs-core": 3239, ".": 18492}
+# verbs printing once (-15, 2266a50a): +216 and 0, at 18,491. give-udp,
+# under the same ceiling, its range +135 to +250 and +2 to +5 core
+# (SURVEY.md:223): `Alpn::Port`, a raw `Source`, `--udp`, and the UDP
+# door (door/udp.rs), after its own pass over that file (383 counted at
+# first, 199 at 36471346): +249 and +2, at 18,741 and 3,241.
+BUDGET = {"crates/svrngs-core": 3242, ".": 18742}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
