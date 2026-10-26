@@ -30,9 +30,12 @@ const JOURNAL = [
   act('a10', 3010, DI, { kind: 'share', expense: 'a9' }),
   act('a11', 3020, SAM, { kind: 'expense', amount_cents: -5, description: 'nothing' }),
   act('a12', 9 * DAY, null, { kind: 'reminded', due: `remind:${BO}:1050` }),
+  act('a13', 9 * DAY + 10, BO, { kind: 'expense', amount_cents: 900, description: 'chips', named: [AMA, CY] }),
+  act('a14', 9 * DAY + 20, AMA, { kind: 'share', expense: 'a13' }),
+  act('a15', 9 * DAY + 30, CY, { kind: 'not-in', expense: 'a13' }),
 ];
 /** Acts a duplicate of which must change nothing: the kinds Expenses keys. */
-const KEYED = new Set(['share', 'settle', 'reminded']);
+const KEYED = new Set(['share', 'settle', 'reminded', 'not-in']);
 
 const clone = (v) => structuredClone(v);
 const fold = (app, acts) => acts.reduce((s, a) => app.reduce(s, clone(a)), app.init());
@@ -103,7 +106,9 @@ export const LAWS = {
       { kind: 'expense', amount_cents: 1.5, description: 'x' }, { kind: 'expense', amount_cents: 1e300, description: 'x' },
       { kind: 'expense', amount_cents: 5, description: 7 }, { kind: 'share', expense: '__proto__' },
       { kind: 'share', expense: 'constructor' }, { kind: 'share', expense: ['a1'] }, { kind: 'settle', to: null, amount_cents: 5 },
-      { kind: 'settle', to: '__proto__', amount_cents: 5 }, { kind: 'reminded' }, { kind: 'reminded', due: {} }];
+      { kind: 'settle', to: '__proto__', amount_cents: 5 }, { kind: 'reminded' }, { kind: 'reminded', due: {} },
+      { kind: 'expense', amount_cents: 5, description: 'x', named: ['__proto__'] }, { kind: 'expense', amount_cents: 5, description: 'x', named: {} },
+      { kind: 'not-in', expense: '__proto__' }, { kind: 'not-in', expense: 'a13' }];
     const bys = [null, '', 42, '__proto__', 'constructor', SAM];
     const acts = [null, 7, [], {}, { id: 5, ts: 'now', by: SAM, op: {} }, { id: '__proto__', ts: 1, by: SAM, op: JOURNAL[0].op }];
     for (const op of ops) for (const by of bys) acts.push(act(`x${acts.length}`, 1, by, op));

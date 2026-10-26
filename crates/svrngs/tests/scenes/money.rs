@@ -4,7 +4,9 @@
 //! was in on it, owes half, and says he paid it back, and both are square.
 //! Then a program on Bo's computer writes a correction of Ada's groceries:
 //! it is not counted, on either page, and says whose it was. Ada's own
-//! correction of an entry of hers still counts.
+//! correction of an entry of hers still counts. Then Ada names Bo in on
+//! dinner: her line waits on him, his page asks him, and his half counts
+//! once he says "That’s right".
 //!
 //! The invariant it relies on: **a correction counts only from its
 //! author** (capability-money; expenses.js `voids`). The record voids an
@@ -203,5 +205,33 @@ async fn money(engine: Engine) {
     );
     assert!(said.contains(refused), "{seen:#}");
 
+    // Ada names Bo in on dinner (the operator, 2026-10-26; demo/xenia/
+    // findings/split-leaves-out-ana.md): it waits on him, he is asked, and
+    // his half counts only once he says so himself.
+    let steps = json!([
+        ["#what", "dinner"],
+        ["#amount", "20"],
+        ["label:has-text('Bo') input", true],
+        ["#add"]
+    ]);
+    let seen = opened(engine, &ada, steps).await;
+    let after = seen["after"][0].as_str().unwrap_or_default();
+    assert!(
+        after.contains("You paid $20.00 for dinner, split between Ada; waiting on Bo."),
+        "Ada's line waits on Bo: {seen:#}"
+    );
+    held(&bo, &house, |o| o["payload"]["description"] == "dinner").await;
+    let seen = opened(engine, &bo, json!([])).await;
+    let said = seen["said"].as_str().unwrap_or_default();
+    assert!(
+        said.contains("Ada says you were in on dinner: $10.00."),
+        "Bo is asked: {seen:#}"
+    );
+    let seen = opened(engine, &bo, json!([["text=That’s right"]])).await;
+    let yes = seen["after"][0].as_str().unwrap_or_default();
+    assert!(
+        yes.contains("You owe $10.00.") && yes.contains("split between Ada, Bo."),
+        "Bo's own yes is his half: {seen:#}"
+    );
     drop((ada, bo));
 }

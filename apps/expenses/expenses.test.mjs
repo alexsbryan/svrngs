@@ -10,6 +10,7 @@ import { test } from 'node:test';
 
 import {
   EXPENSE,
+  NOT_IN,
   actsOf,
   called,
   SETTLE,
@@ -30,6 +31,8 @@ let n = 0;
 const act = (by, op, ts = 1000) => ({ id: `act-${++n}`, ts, by, op });
 const paid = (by, cents, what = 'pizza', ts) => act(by, { kind: EXPENSE, amount_cents: cents, description: what }, ts);
 const share = (by, expense, ts) => act(by, { kind: SHARE, expense }, ts);
+const named = (by, cents, people, what = 'pizza') => act(by, { kind: EXPENSE, amount_cents: cents, description: what, named: people });
+const notIn = (by, expense) => act(by, { kind: NOT_IN, expense });
 const settle = (by, to, cents, ts) => act(by, { kind: SETTLE, to, amount_cents: cents }, ts);
 const fold = (acts) => acts.reduce(reduce, init());
 const sum = (state) => Object.values(state.balances).reduce((a, b) => a + b, 0);
@@ -296,4 +299,37 @@ test('a correction from its author still counts: the expense they replace is gon
   assert.deepEqual(Object.entries(state.expenses).map(([id, e]) => [id, e.amount_cents]), [['o2', 4000]]);
   assert.deepEqual(state.balances, { sam: 0 }, 'Sam paid for, and had, the pizza; Ama\'s taken-back payment moves nothing');
   assert.deepEqual(state.gaps, []);
+});
+
+test('who the payer names waits on their own yes: naming moves no one\'s money, and a share counts as it always did', () => {
+  const pizza = named(SAM, 3600, [AMA, BO]);
+  const waiting = fold([pizza]);
+  assert.deepEqual(waiting.balances, { [SAM]: 0 }, 'Sam named Ama and Bo, and nobody owes anything for it');
+  assert.deepEqual(waiting.expenses[pizza.id].participants, [SAM]);
+  assert.deepEqual(waiting.expenses[pizza.id].waiting, { [AMA]: true, [BO]: true });
+  const yes = fold([pizza, share(AMA, pizza.id)]);
+  assert.deepEqual(yes.balances, { [SAM]: 1800, [AMA]: -1800 }, 'Ama\'s own yes is her half');
+  assert.deepEqual(yes.expenses[pizza.id].waiting, { [BO]: true });
+  const unnamed = fold([pizza, share(CY, pizza.id)]);
+  assert.deepEqual(unnamed.balances, { [SAM]: 1800, [CY]: -1800 }, 'someone not named still says they were in on it');
+  assert.deepEqual(unnamed.expenses[pizza.id].waiting, { [AMA]: true, [BO]: true });
+});
+
+test('"not me" ends the wait and moves nothing; a yes after it clears it', () => {
+  const pizza = named(SAM, 3600, [AMA]);
+  const state = fold([pizza, notIn(AMA, pizza.id)]);
+  assert.deepEqual(state.balances, { [SAM]: 0 });
+  assert.deepEqual(state.expenses[pizza.id].waiting, {});
+  assert.deepEqual(state.expenses[pizza.id].not, { [AMA]: true });
+  assert.deepEqual(fold([pizza, notIn(BO, pizza.id)]).expenses[pizza.id].not, {}, 'only someone named can say not me');
+  assert.deepEqual(validate(init(), notIn(AMA, 'nothing')).map((g) => g.code), ['no_expense']);
+  assert.deepEqual(fold([pizza, notIn(AMA, pizza.id), share(AMA, pizza.id)]).expenses[pizza.id].not, {});
+});
+
+test('the payer names people by name, never themselves, never twice: else the expense is refused whole', () => {
+  for (const people of [[SAM], [AMA, AMA], ['__proto__'], [''], [{ key: AMA }], AMA]) {
+    const pizza = named(SAM, 3600, people);
+    assert.deepEqual(validate(init(), pizza).map((g) => g.code), ['bad_named'], JSON.stringify(people));
+    assert.deepEqual(fold([pizza]).balances, {});
+  }
 });

@@ -10,7 +10,7 @@
 // else clicked and the page's words read once it has drawn them again.
 //
 //   node web/tests/carried.mjs '{"engine": "chromium"|"webkit", "url": "<the app's origin>",
-//     "title"?: "<its title once done>", "do"?: [[<selector>, <value>?], ...]}'
+//     "title"?: "<its title once done>", "do"?: [[<selector>, <value>? | true], ...]}'
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
@@ -30,6 +30,11 @@ try {
   if (args.do) await page.waitForFunction(() => !document.body.innerText.includes('…'), null, { timeout: 30_000 });
   const after = [];
   for (const [selector, value] of args.do ?? []) {
+    // `true` ticks the box, which redraws nothing.
+    if (value === true) {
+      await page.locator(selector).first().check({ timeout: 30_000 });
+      continue;
+    }
     if (value !== undefined) {
       await page.locator(selector).first().fill(value);
       continue;
