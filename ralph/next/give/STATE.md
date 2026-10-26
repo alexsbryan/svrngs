@@ -131,6 +131,7 @@ There are fourteen rows:
 
     Then stop.
   - **Check:** the scene red on its plant, then green, in the full gate.
+  - **THE OPERATOR DECIDED, 2026-10-26,** on `demo/runs/give/2026-10-26-play-scene/NEEDS_HUMAN.md`: "I think this is good enough for the game server for now -- we can do the two-home session another time." No bars are set now. The two-home sessions of `demo/factorio.md` and `demo/minecraft.md` wait for the operator, and are never-ran until they are played. Beside them stands a rehearsal on one host with Factorio 2.1.23, a UDP port lent and Play, the operator at the client: 9 minutes, no desync, no drop, its path on this host and so neither of the two the bars would name (`demo/runs/factorio/2026-10-26-rehearsal.json`, d5f65cdb). (a) and (b) landed and the full gate passed (give-play-scene-1.await.log); close the row with PLAN §1 saying the sessions wait, then stop at HUMAN-give-half.
 - [ ] HUMAN-give-half — depends [give-play-scene] — the operator, 2026-10-25: "Let's do half the rows." The svrngs half runs (give-economize through give-play-scene), and the loop stops here, before Give's own rows. This row is checked [x] by the operator, or the operator's delegate on the operator's word, once the svrngs half has landed and the operator says Give's half goes.
 - [ ] give-app-runtime — depends [HUMAN-give-half] — ONE ROW, in `apps/give/` (not counted, reported). The kill clause holds (CHARTER):
   - **(a) Tests: A CARD RUNS.** These run against a stand-in card (a small published image whose door is HTTP):
