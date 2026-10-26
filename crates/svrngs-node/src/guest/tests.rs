@@ -132,11 +132,12 @@ async fn a_loopback_only_endpoint_binds_loopback_alone() {
 
 /// One place in the product opens a stream to a peer's HTTP door: a
 /// request on the stream, `iroh.rs` `on_stream` (arch-peer (d); upstream's
-/// was the bridge's accept loop, gone with it). The one other is a UDP
-/// lend's opening, `door/udp.rs` `carried`, on `Alpn::Port`, which names
-/// the lend and reads its refusals and carries no request (give-udp).
-/// Beside them the tests' splice, `node/tests_support.rs`, behind
-/// `test-support`. The needle is split so this file does not match itself.
+/// was the bridge's accept loop, gone with it). The two others are on
+/// `Alpn::Port` and carry no request: a raw lend's opening, `door/udp.rs`
+/// `opening`, which names the lend and reads its refusals (give-udp), and
+/// a TCP lend's stream per connection, `door/tcp.rs` `carry`, which carries
+/// a program's own bytes (give-tcp). Beside them the tests' splice,
+/// `node/tests_support.rs`, behind `test-support`. The needle is split so this file does not match itself.
 #[test]
 fn one_place_opens_a_stream_to_a_peer() {
     fn rs_files(dir: &std::path::Path, out: &mut Vec<std::path::PathBuf>) {
@@ -171,14 +172,13 @@ fn one_place_opens_a_stream_to_a_peer() {
     let opened = sites(concat!("open_bi", "()"));
     assert_eq!(
         opened.len(),
-        3,
-        "the request on the stream, a UDP lend's opening and the tests' splice: {opened:?}"
+        4,
+        "the request on the stream, a raw lend's opening, a TCP lend's connection and the tests' splice: {opened:?}"
     );
     assert!(opened.iter().any(|b| b.contains("iroh.rs")), "{opened:?}");
-    assert!(
-        opened.iter().any(|b| b.contains("door/udp.rs")),
-        "{opened:?}"
-    );
+    for half in ["door/udp.rs", "door/tcp.rs"] {
+        assert!(opened.iter().any(|b| b.contains(half)), "{opened:?}");
+    }
     assert!(
         opened.iter().any(|b| b.contains("tests_support.rs")),
         "{opened:?}"

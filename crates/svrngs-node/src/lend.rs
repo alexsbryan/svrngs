@@ -186,16 +186,28 @@ pub enum Source {
     /// ([`crate::folder::Folders::carried`]): lent to that group alone.
     Carried(String),
     /// A port on 127.0.0.1 carried as its own bytes, not a page's
-    /// (give-udp; `svrngs share <port> --udp`): the door's
-    /// [`crate::alpn::Alpn::Port`], never its HTTP.
+    /// (give-udp, give-tcp; `svrngs share <port> --udp` or `--tcp`): the
+    /// door's [`crate::alpn::Alpn::Port`], never its HTTP.
     Raw(Raw, NonZeroU16),
 }
 
-/// How a raw lend's bytes travel, as its declaration says: `"raw": "udp"`.
+/// How a raw lend's bytes travel, as its declaration says: `"raw": "udp"`
+/// or `"raw": "tcp"`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Raw {
     Udp,
+    Tcp,
+}
+
+impl Raw {
+    /// Its name as a person reads it, and as the door's opening names it.
+    pub fn said(self) -> &'static str {
+        match self {
+            Raw::Udp => "UDP",
+            Raw::Tcp => "TCP",
+        }
+    }
 }
 
 /// A lend as its declaration says, or as its group's folder carries it:

@@ -106,7 +106,8 @@ pub struct Share {
     /// `--sign-in-with-svrngs`: it signs each person in as themselves, with
     /// nothing typed (SIGN_IN_WITH_SVRNGS §5 "Turning it on").
     pub sign_in: bool,
-    /// `--udp`: lent as its own datagrams, not as a page (give-udp).
+    /// `--udp` or `--tcp`: lent as its own datagrams or bytes, not as a
+    /// page (give-udp, give-tcp).
     pub raw: Option<Raw>,
 }
 
@@ -222,10 +223,11 @@ pub fn lend_of(
     well_known: Option<Kind>,
 ) -> Result<Lend, ShareRefusal> {
     // A UDP port answers no connection, so nothing tells whether a program
-    // listens on it, and the table's ports are a page's.
+    // listens on it; a TCP port is probed as a page's is. The table's ports
+    // are a page's.
     let raw = share.raw;
-    if raw.is_some() {
-        tracing::debug!(target: "share", port = share.port, ?raw, "share: a raw port, lent unprobed and of the kind given alone");
+    if raw == Some(Raw::Udp) {
+        tracing::debug!(target: "share", port = share.port, "share: a UDP port, lent unprobed");
     } else if !listens(share.port) {
         tracing::debug!(target: "share", port = share.port, "share: refused — nothing listens on the port");
         return Err(ShareRefusal::NothingListens(share.port));

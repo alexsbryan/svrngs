@@ -252,9 +252,10 @@ async fn one_stalled_connection_holds_back_neither_the_other_nor_the_record() {
         "a second connection is its own stream, not held back by the first"
     );
     // And the record still syncs between the two computers.
+    let (group, sam_at) = (seed.id(), at(&sam.node));
     let synced = timeout(
         Duration::from_secs(10),
-        alex.node.host().sync_with(&seed.id(), &at(&sam.node)),
+        alex.node.host().sync_with(&group, &sam_at),
     );
     let synced = synced.await.expect("the record syncs within 10s");
     assert!(synced.stop.is_none(), "the record syncs: {:?}", synced.stop);

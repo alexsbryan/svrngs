@@ -104,6 +104,7 @@ use svrngs_core::token::Group;
 
 pub mod choices;
 pub mod limit;
+pub mod tcp;
 pub mod udp;
 
 /// svrngs's own header prefix: every header under it on a request through

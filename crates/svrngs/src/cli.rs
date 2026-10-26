@@ -12,7 +12,7 @@
 //! svrngs join <link> [--as N] [--no-run]   join a group by its link, run
 //! svrngs link <group> [--origin U]
 //!                                          a new link to a group, print it, run
-//! svrngs share <port> [--name N] [--kind K] [--limit L] [--refuse P]... [--upload M] [--reads K]... [--ask W] [--sign-in-with-svrngs] [--udp]
+//! svrngs share <port> [--name N] [--kind K] [--limit L] [--refuse P]... [--upload M] [--reads K]... [--ask W] [--sign-in-with-svrngs] [--udp | --tcp]
 //!                                          lend a service on this computer
 //! svrngs unshare <name>                    stop lending it
 //! svrngs share --folder <dir> --group <group> keep a folder the same on every member's disk,
@@ -148,7 +148,7 @@ svrngs — keep what your group shares on your own computers.
       --device makes it a link for another computer or phone of yours: it
       joins as you, asked no name.
 
-  svrngs share <port> [--name <name>] [--kind <kind>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <kind>]... [--ask <words>] [--sign-in-with-svrngs] [--udp]
+  svrngs share <port> [--name <name>] [--kind <kind>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <kind>]... [--ask <words>] [--sign-in-with-svrngs] [--udp | --tcp]
       Lend what runs on <port> on this computer to everyone in your groups:
       each reaches it through this computer, as themselves. It asks for the
       password the service takes on each request, if any; that stays on
@@ -172,8 +172,9 @@ svrngs — keep what your group shares on your own computers.
       Connect sign each person in as themselves, with nothing typed: it
       prints the issuer, a client id and a secret for the app's own
       settings, and keeps the secret on this computer.
-      --udp lends a port that speaks UDP as it is, not as a page: it
-      takes a --kind, and --name and --limit as any lend does.
+      --udp or --tcp lends a port that speaks UDP or TCP as it is, not
+      as a page: it takes a --kind, and --name and --limit as any lend
+      does.
 
   svrngs unshare <name>
       Stop lending <name>.
@@ -352,7 +353,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let (mut folder, mut group) = (None, None);
     let mut asks = None;
     let mut sign_in = false;
-    let mut udp = None;
+    let mut carries = None;
     let mut run = true;
     let mut device = false;
     let (mut open, mut staging) = (false, false);
@@ -418,7 +419,12 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             "--no-run" if verb == "join" => run = false,
             "--device" if verb == "link" => device = true,
             "--sign-in-with-svrngs" if verb == "share" => sign_in = true,
-            "--udp" if verb == "share" => udp = Some(svrngs_node::lend::Raw::Udp),
+            "--udp" | "--tcp" if verb == "share" => {
+                let said = if arg == "--udp" { lend::Raw::Udp } else { lend::Raw::Tcp };
+                if carries.replace(said).is_some() {
+                    return Err("a port is lent as UDP or as TCP: give one of --udp and --tcp".into());
+                }
+            }
             "--open" if verb == "relay" => open = true,
             "--staging" if verb == "relay" => staging = true,
             "-h" | "--help" => return Ok(Verb::Help),
@@ -510,8 +516,8 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         }),
         "share" => {
             let page = !refused.is_empty() || upload.is_some() || !reads.is_empty();
-            if udp.is_some() && (page || asks.is_some() || sign_in) {
-                return Err("--udp lends a port as it is, with no paths, upload, reads, ask or sign-in: those are a page's".into());
+            if carries.is_some() && (page || asks.is_some() || sign_in) {
+                return Err("--udp and --tcp lend a port as it is, with no paths, upload, reads, ask or sign-in: those are a page's".into());
             }
             let port = positional.ok_or("share wants a port: `svrngs share <port>`")?;
             Ok(Verb::Share(Share {
@@ -524,7 +530,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 reads,
                 asks,
                 sign_in,
-                raw: udp,
+                raw: carries,
             }))
         }
         "leave" => Ok(Verb::Leave(
@@ -1289,15 +1295,15 @@ impl std::fmt::Display for Said {
                 issuer,
             } => {
                 // `share` lends a port; a group's folder carries an app.
-                let (name, (port, udp)) = match &lend.source {
-                    Source::Port(port) => (&lend.name, (port, "")),
-                    Source::Raw(lend::Raw::Udp, port) => (&lend.name, (port, "UDP ")),
+                let (name, (port, raw)) = match &lend.source {
+                    Source::Port(port) => (&lend.name, (port, String::new())),
+                    Source::Raw(raw, port) => (&lend.name, (port, format!("{} ", raw.said()))),
                     Source::Carried(_) => return writeln!(f, "{} is carried in its group's folder.", lend.name),
                 };
                 match lend.limit {
-                    Some(n) => writeln!(f, "You lend {name} ({udp}port {port}) to everyone in your groups, up to {n} {} at once.",
+                    Some(n) => writeln!(f, "You lend {name} ({raw}port {port}) to everyone in your groups, up to {n} {} at once.",
                         if n.get() == 1 { "person" } else { "people" })?,
-                    None => writeln!(f, "You lend {name} ({udp}port {port}) to everyone in your groups, as many at once as want it. \
+                    None => writeln!(f, "You lend {name} ({raw}port {port}) to everyone in your groups, as many at once as want it. \
                         To let fewer in at once, change it on your home page, or `svrngs share {port} --limit <number>`.")?,
                 }
                 match accounts {

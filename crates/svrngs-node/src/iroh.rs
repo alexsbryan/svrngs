@@ -427,8 +427,8 @@ pub enum Admit {
     /// Hand the connection to iroh-blobs' provider (gf-1): a shared
     /// folder's bytes by hash, on its own protocol.
     Blobs(iroh_blobs::BlobsProtocol),
-    /// Hand the connection to the door's UDP half (give-udp): a lent
-    /// port's datagrams.
+    /// Hand the connection to the door's raw half (give-udp, give-tcp): a
+    /// lent port's datagrams, or its connections, a stream each.
     Port(Box<crate::door::Door>),
     /// Close the connection before any stream is read: no HTTP answer.
     Refuse,
@@ -567,7 +567,7 @@ impl IrohAcceptor {
                             return;
                         }
                         Admit::Port(door) => {
-                            tracing::debug!(target: "transport", dialer = %dialer.actor(), "iroh acceptor: dialer admitted — its connection handed to the door's UDP half");
+                            tracing::debug!(target: "transport", dialer = %dialer.actor(), "iroh acceptor: dialer admitted — its connection handed to the door's raw half, UDP or TCP");
                             return crate::door::udp::serve(*door, conn).await;
                         }
                         Admit::Serve(router) => {

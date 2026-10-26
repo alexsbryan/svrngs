@@ -153,18 +153,27 @@ never stale. The lender's own lend, opened on their own computer, goes
 through their own door's rules too, its secret injected and its limit
 counted (`door::Who::Own`).
 
-**A port, not a page.** A program that speaks UDP is lent with `svrngs
-share <port> --udp --kind <kind>`: its declaration says `"raw": "udp"`, and
-the door carries it on a protocol of its own (`Alpn::Port`), never as a
-page. A member's computer opens one connection for one lend, and each
-program sending to its socket there is a flow. The lender gives each flow
-a socket of its own on 127.0.0.1:0, connected to the lent port alone, let
-in by its person's standing and the lend's limit, which counts people, not
-flows; it closes after a minute idle. Packets cross as QUIC datagrams. One
-larger than a datagram is cut and made whole on the far side, and a
-fragment lost loses that packet alone, as on the open internet
-(`crates/svrngs-node/src/door/udp.rs`). A person past the limit is told so
-in the door's words.
+**A port, not a page.** A program that speaks UDP or TCP is lent with
+`svrngs share <port> --udp --kind <kind>`, or `--tcp`: its declaration says
+`"raw": "udp"` or `"raw": "tcp"`, and the door carries it on a protocol of
+its own (`Alpn::Port`), never as a page. A member's computer opens one
+connection for one lend, naming the lend and how it travels. Each use is
+let in by its person's standing and the lend's limit, which counts people,
+not flows or connections, and a person past the limit is told so in the
+door's words.
+
+- **UDP.** Each program sending to the member's socket is a flow. The
+  lender gives each flow a socket of its own on 127.0.0.1:0, connected to
+  the lent port alone; it closes after a minute idle. Packets cross as QUIC
+  datagrams. One larger than a datagram is cut and made whole on the far
+  side, and a fragment lost loses that packet alone, as on the open
+  internet (`crates/svrngs-node/src/door/udp.rs`).
+- **TCP.** Each program's connection to the member's listener is a QUIC
+  stream of its own, and the lender connects it to 127.0.0.1:<port>. A
+  stream has flow control of its own, so one connection stalled holds back
+  no other, nor the record's sync. A side's close is its stream's finish,
+  so a half-close crosses (`crates/svrngs-node/src/door/tcp.rs`). A TCP
+  port is lent only when something answers on it, as a page's is.
 
 **The person's own programs are the trust boundary.** A program on this
 computer asks the record API showing the token in the data dir's `token`

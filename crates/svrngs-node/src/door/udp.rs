@@ -124,24 +124,37 @@ fn carry(conn: &Connection, flow: u32, number: &mut u32, packet: &[u8]) {
 type Flows = BTreeMap<u32, Result<mpsc::Sender<Vec<u8>>, Instant>>;
 
 /// The lender's half: `conn`, its dialer admitted by standing in a group
-/// held here (node.rs `admit_dialer`), opening one UDP lend.
+/// held here (node.rs `admit_dialer`), opening one raw lend, its line the
+/// way it travels and its name, `UDP <name>` or `TCP <name>`; a TCP lend's
+/// connections are [`super::tcp`]'s.
 pub(crate) async fn serve(door: Door, conn: Connection) {
     let actor = key_actor(&conn.remote_id());
     let Ok((mut send, recv)) = conn.accept_bi().await else {
-        return tracing::debug!(target: "door", actor, "udp: the member closed before naming a lend");
+        return tracing::debug!(target: "door", actor, "raw: the member closed before naming a lend");
     };
     let mut named = String::new();
     let _ = BufReader::new(recv.take(256)).read_line(&mut named).await;
-    let found = find(&door, named.trim()).ok().flatten();
-    tracing::debug!(target: "door", actor, named, source = ?found.as_ref().map(|l| &l.source), "udp: a lend asked for, opened only when declared as a UDP port");
-    let Some((lend, Source::Raw(Raw::Udp, port))) = found.map(|l| (l.clone(), l.source)) else {
-        let words = format!("{} is not lent here as a UDP port\n", named.trim());
+    let (said, name) = named.trim().split_once(' ').unwrap_or_default();
+    let raw = [Raw::Udp, Raw::Tcp].into_iter().find(|r| r.said() == said);
+    let found = find(&door, name).ok().flatten();
+    tracing::debug!(target: "door", actor, named, source = ?found.as_ref().map(|l| &l.source), "raw: a lend asked for, opened only when declared as the port asked");
+    let port = |l: &Lend| match l.source {
+        Source::Raw(r, port) if Some(r) == raw => Some(port),
+        _ => None,
+    };
+    let Some((port, lend)) = found.and_then(|l| Some((port(&l)?, l))) else {
+        let said = raw.map_or("raw", Raw::said);
+        let words = format!("{name} is not lent here as a {said} port\n");
         let _ = (send.write_all(words.as_bytes()).await, send.finish());
         return drop(tokio::time::timeout(Duration::from_secs(5), conn.closed()).await);
     };
     let _ = send.write_all(b"ok\n").await;
+    let lent = (&door, actor.as_str(), &lend, port, &conn);
+    if raw == Some(Raw::Tcp) {
+        return super::tcp::serve(lent).await;
+    }
     let mut flows = Flows::new();
-    let (mut whole, lent) = (Whole::new(), (&door, actor.as_str(), &lend, port, &conn));
+    let mut whole = Whole::new();
     while let Ok(d) = conn.read_datagram().await {
         let Some((flow, packet)) = take(&mut whole, d, now()) else {
             continue;
@@ -235,7 +248,7 @@ async fn flowing(
     tracing::debug!(target: "door", flow, idle = past(last, IDLE, now()), counted = held.is_some(), "udp: a flow closed, idle past its expiry or its connection gone");
 }
 
-/// Why a member's computer could not open a UDP lend.
+/// Why a member's computer could not open a raw lend.
 #[derive(Debug, thiserror::Error)]
 pub enum Unopened {
     #[error("the computer that lends it does not know this one stands in its group")]
@@ -247,14 +260,14 @@ pub enum Unopened {
     Refused(String),
 }
 
-/// A member's use of a UDP lend, held until dropped: the lender's words
-/// for each flow it refused, and the task carrying every program's packets
-/// that sends to its socket.
+/// A member's use of a raw lend, held until dropped: the lender's words
+/// for each flow or connection it refused, and the task carrying every
+/// program's packets or connections.
 pub type Carried = (mpsc::UnboundedReceiver<String>, AbortOnDropHandle<()>);
 
 /// The opening's stream, kept open: the lender's words come on it.
 pub(super) type Opened = (SendStream, Lines<BufReader<RecvStream>>);
-type Tell = mpsc::UnboundedSender<String>;
+pub(super) type Tell = mpsc::UnboundedSender<String>;
 
 /// Open the UDP lend `lend` of the computer at `to`, its flows those of
 /// the programs on 127.0.0.1 sending to `local`, each by its port: the
@@ -265,17 +278,18 @@ pub async fn carried(
     lend: &LendName,
     local: UdpSocket,
 ) -> Result<Carried, Unopened> {
-    let (conn, opened) = opening(endpoint, to, lend).await?;
+    let (conn, opened) = opening(endpoint, to, Raw::Udp, lend).await?;
     let (tell, told) = mpsc::unbounded_channel();
     let task = tokio::spawn(member(conn, local, opened, tell));
     Ok((told, AbortOnDropHandle::new(task)))
 }
 
-/// The opening of `lend` at `to`: the member's one connection for it, and
-/// the stream the lender's words come on.
+/// The opening of `lend` at `to`, as `raw`: the member's one connection
+/// for it, and the stream the lender's words come on.
 pub(super) async fn opening(
     endpoint: &Endpoint,
     to: EndpointAddr,
+    raw: Raw,
     lend: &LendName,
 ) -> Result<(Connection, Opened), Unopened> {
     let within = Some(crate::dial::DIAL_WITHIN);
@@ -283,7 +297,8 @@ pub(super) async fn opening(
     let conn = dialled.map_err(|e| Unopened::Unreached(e.to_string()))?;
     let opened = async {
         let (mut send, recv) = conn.open_bi().await?;
-        send.write_all(format!("{lend}\n").as_bytes()).await?;
+        send.write_all(format!("{} {lend}\n", raw.said()).as_bytes())
+            .await?;
         let mut lines = BufReader::new(recv).lines();
         Ok::<_, std::io::Error>((lines.next_line().await?, (send, lines)))
     };
@@ -293,7 +308,7 @@ pub(super) async fn opening(
         _ if closed_unadmitted(&conn).await => Err(Unopened::NotAdmitted),
         got => Err(Unopened::Unreached(format!("{:?}", got.err()))),
     };
-    tracing::debug!(target: "door", lend = %lend, refused = ?opened.as_ref().err(), "udp: the lend opened, or refused");
+    tracing::debug!(target: "door", lend = %lend, refused = ?opened.as_ref().err(), "raw: the lend opened, or refused");
     Ok((conn, opened?))
 }
 
