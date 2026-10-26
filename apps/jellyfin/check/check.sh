@@ -70,6 +70,14 @@ STEP="$1"; R="$2"; OUT="$3"
 HERE="$(cd "$(dirname "$0")" && pwd)"; REPO="$(cd "$HERE/../../.." && pwd)"
 B="$REPO/target/debug/svrngs"
 JF_APP="${JF_APP:-/Applications/Jellyfin.app/Contents}"
+# Jellyfin's server, its ffmpeg and its pages: in macOS's app, or where
+# Jellyfin's own Linux packages put them (jellyfin-server, jellyfin-web,
+# jellyfin-ffmpeg8; scripts/gate/Containerfile installs them).
+if [ "$(uname -s)" = Darwin ]; then
+  JF_BIN="$JF_APP/MacOS/jellyfin"; JF_FFMPEG="$JF_APP/MacOS/ffmpeg"; JF_WEB="$JF_APP/Resources/jellyfin-web"
+else
+  JF_BIN=/usr/lib/jellyfin/bin/jellyfin; JF_FFMPEG=/usr/lib/jellyfin-ffmpeg/ffmpeg; JF_WEB=/usr/share/jellyfin/web
+fi
 # Jellyfin's port: its own, unless JF_PORT names another (each engine's
 # films scene runs a Jellyfin of its own at once).
 JF_PORT="${JF_PORT:-8096}"; O="http://127.0.0.1:$JF_PORT"
@@ -98,7 +106,7 @@ down() {
 # the engines that cannot open Matroska. A 1,200 s one took 5.5 min at a
 # load of 65 here (2026-10-05), so Demo A's are made once, by `films`.
 films() {
-  local dir="$1" len="$2" ff="$JF_APP/MacOS/ffmpeg"
+  local dir="$1" len="$2" ff="$JF_FFMPEG"
   mkdir -p "$dir"
   # Each written aside and moved in whole, so a film cut short is made again.
   make() {
@@ -120,12 +128,15 @@ films() {
 # Sam's Jellyfin alone, its films and the lender's own account: up's
 # first half, which the films scene runs (crates/svrngs/tests/scenes/films.rs).
 jellyfin() {
+  # This computer's having no Jellyfin is said apart, exit 4, so the films
+  # scenes are never-ran and not failed (films.rs `Jellyfin::up`).
+  [ -x "$JF_BIN" ] || { echo "Jellyfin is not installed on this computer ($JF_BIN)" >&2; exit 4; }
   down; rm -rf "$R"; mkdir -p "$R"/jf/{data,config,cache,log,media} "$R"/sam "$R"/alex "$OUT"
   (umask 077; mkdir -p "$SECRETS")
   : >"$OUT/steps.log"
 
   # --- Sam's Jellyfin, its films made here, or MEDIA's (`films`) ----------
-  local ff="$JF_APP/MacOS/ffmpeg" lib="${MEDIA:-$R/jf/media}"
+  local ff="$JF_FFMPEG" lib="${MEDIA:-$R/jf/media}"
   [ -n "${MEDIA:-}" ] || films "$lib" 120
   # Sam's home videos, a library Sam may keep back (the mw README §7, item 5).
   if [ -n "${KEEP_BACK:-}" ]; then
@@ -142,8 +153,8 @@ jellyfin() {
   <EnableRemoteAccess>false</EnableRemoteAccess>
 </NetworkConfiguration>
 EOF
-  nohup "$JF_APP/MacOS/jellyfin" -d "$R/jf/data" -c "$R/jf/config" -C "$R/jf/cache" -l "$R/jf/log" \
-    -w "$JF_APP/Resources/jellyfin-web" --ffmpeg "$ff" --nonetchange >"$R/jf/stdout.log" 2>&1 &
+  nohup "$JF_BIN" -d "$R/jf/data" -c "$R/jf/config" -C "$R/jf/cache" -l "$R/jf/log" \
+    -w "$JF_WEB" --ffmpeg "$ff" --nonetchange >"$R/jf/stdout.log" 2>&1 &
   echo $! >"$R/jf.pid"
   local ok=0 info
   for _ in $(seq 1 90); do

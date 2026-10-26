@@ -26,9 +26,6 @@ use crate::harness::{browsers, repo, Engine};
 use crate::load;
 use crate::people::{late, Scene};
 
-/// Where the films check finds Jellyfin (check.sh `JF_APP`).
-pub const JELLYFIN: &str = "/Applications/Jellyfin.app/Contents/MacOS/jellyfin";
-
 /// check.sh `<step> <scratch> <out>`, with Jellyfin on `port`.
 async fn check(step: &str, scratch: &Path, port: u16) -> std::process::Output {
     let script = repo().join("apps/jellyfin/check/check.sh");
@@ -52,7 +49,9 @@ pub struct Jellyfin {
 }
 
 impl Jellyfin {
-    pub async fn up(scratch: PathBuf) -> Jellyfin {
+    /// Or check.sh's words where this computer has no Jellyfin (its exit
+    /// 4): where Jellyfin is installed has one home, check.sh `JF_BIN`.
+    pub async fn up(scratch: PathBuf) -> Result<Jellyfin, String> {
         // Its library's path as Jellyfin keeps it, with no `..` in it: a
         // library at `crates/svrngs/../../target/…` scans to no films.
         std::fs::create_dir_all(&scratch).unwrap();
@@ -63,12 +62,15 @@ impl Jellyfin {
         drop(free);
         let jf = Jellyfin { scratch, port };
         let ran = check("jellyfin", &jf.scratch, port).await;
+        if ran.status.code() == Some(4) {
+            return Err(String::from_utf8_lossy(&ran.stderr).trim().to_string());
+        }
         assert!(
             ran.status.success(),
             "Sam's Jellyfin did not come up: {}",
             String::from_utf8_lossy(&ran.stderr)
         );
-        jf
+        Ok(jf)
     }
 
     pub fn at(&self) -> String {
@@ -150,12 +152,10 @@ scene!(
 );
 async fn films(engine: Engine) {
     let scene = Scene::new("films", engine).await;
-    if !Path::new(JELLYFIN).exists() {
-        return scene.never_ran(&format!(
-            "Jellyfin is not installed on this computer ({JELLYFIN})"
-        ));
-    }
-    let jf = Jellyfin::up(scene.scratch("jellyfin")).await;
+    let jf = match Jellyfin::up(scene.scratch("jellyfin")).await {
+        Ok(jf) => jf,
+        Err(why) => return scene.never_ran(&why),
+    };
     let secrets = jf.scratch.join("r/secrets");
 
     // 1. Sam makes House and lends his Jellyfin, typing nothing.

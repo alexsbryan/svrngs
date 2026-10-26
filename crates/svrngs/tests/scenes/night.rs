@@ -21,12 +21,10 @@
 //! and plays Sam's film through Dee's computer; and nobody makes an
 //! account: Jellyfin's users after are those Sam made (demo/b.md, "After").
 
-use std::path::Path;
-
 use serde_json::{json, Value};
 use svrngs_node::room::Served;
 
-use crate::films::{node, Jellyfin, JELLYFIN};
+use crate::films::{node, Jellyfin};
 use crate::harness::{relay_url, Engine};
 use crate::people::{late, Scene};
 
@@ -59,12 +57,10 @@ scene!(
 );
 async fn night(engine: Engine) {
     let scene = Scene::new("night", engine).await;
-    if !Path::new(JELLYFIN).exists() {
-        return scene.never_ran(&format!(
-            "Jellyfin is not installed on this computer ({JELLYFIN})"
-        ));
-    }
-    let jf = Jellyfin::up(scene.scratch("jellyfin")).await;
+    let jf = match Jellyfin::up(scene.scratch("jellyfin")).await {
+        Ok(jf) => jf,
+        Err(why) => return scene.never_ran(&why),
+    };
     let (page, _served) = scene.page().await;
     let at = relay_url(&scene.relay);
 
