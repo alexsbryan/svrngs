@@ -37,6 +37,8 @@ mod navigations;
 mod opens;
 // What acts as you, and its Stop (capability-what-acts).
 mod acts;
+// A lent port opened on this computer while Play is on (give-play).
+mod play;
 // A browser half run and its JSON read: the demo scenes' too
 // (crates/svrngs/tests/scenes).
 mod drive;
