@@ -140,8 +140,14 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   economizing pass cut 13 lines (3acd44aa, 842f9da3, 36f58a12; the cap
   18,228, 85a1817b) and estimated the svrngs rows at +2 to +5 core and
   +515 to +1,000 library (`demo/runs/economize/2026-10-25-give/SURVEY.md`
-  §6). give-token waits on the operator's ceiling and the two questions
-  asked with it (that run's `NEEDS_HUMAN.md`). The operator, "Let's do
+  §6). The operator answered its `NEEDS_HUMAN.md` (a7865e6e): the ceiling
+  +1,005 and +5, at most 19,233 and 3,244. Landed, give-token: every record
+  route asks a program for the token in the data dir's `token` file and
+  refuses one without it, 401 `no_token` naming the file; the command,
+  install.sh and every app that asks the record show it; +48 library, 0
+  core, the cap 18,276 (662803be; `crates/svrngs-node/tests/record_api.rs`,
+  `a_program_without_the_token_is_refused_on_every_record_route`). The
+  operator, "Let's do
   half the rows": the loop stops after the svrngs half, give-play-scene,
   before Give's own;
 - sealing, at its §2 trigger.
