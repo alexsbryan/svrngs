@@ -1,9 +1,12 @@
 # The stand-in the tests keep: busybox's httpd, a small published image whose
 # door is HTTP. Each start adds a line to /data/starts, its state, so a
-# restore that kept the state shows one line more after the next start.
+# restore that kept the state shows one line more after the next start. It
+# runs as a user of its own, as many images do, so its volume's own folder
+# is that user's, and a restore must bring that back too.
 services:
   web:
     image: docker.io/library/busybox:1.37.0@sha256:bdf57e528e45e4433820e045b29b4597825a1c9e38353532d90a01445013f82e
+    user: "1000:1000"
     command: ["sh", "-c", "date >> /data/starts && exec httpd -f -p 8080 -h /data"]
     volumes: ["data:/data"]
     ports: ["8080:8080"]

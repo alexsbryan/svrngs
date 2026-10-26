@@ -83,7 +83,8 @@ pub enum Copy {
     Plain,
 }
 
-/// A snapshot on disk: `<dir>/<volume>.tar` for each state volume.
+/// A snapshot on disk: `<dir>/<volume>.tar` for each state volume, and
+/// `<dir>/<volume>.root`, its own folder's owner and mode.
 #[derive(Debug, Clone)]
 pub struct Snapshot {
     pub dir: PathBuf,
@@ -342,13 +343,18 @@ impl<'a> App<'a> {
             .card
             .state
             .iter()
-            .map(|v| Ok((v.clone(), self.copy(&shell, v)?)))
+            .map(|v| Ok((v.clone(), self.copy(&shell, v)?, self.root_of(&shell, &self.volume(v))?)))
             .collect();
         let unpaused = self.podman.run(&["pod", "unpause", name]);
         let paused = paused.elapsed();
         let copies = copies?;
         unpaused?;
         tracing::debug!(app = name, ?paused, ?copies, "paused for the copy");
+        for (v, _, root) in &copies {
+            let at = partial.join(format!("{v}.root"));
+            std::fs::write(&at, root).map_err(|e| file(&at, e))?;
+        }
+        let copies = copies.into_iter().map(|(v, copy, _)| (v, copy)).collect();
         for v in &self.card.state {
             let tar = partial.join(format!("{v}.tar"));
             let copy = format!("{}-snapshot", self.volume(v));
@@ -378,6 +384,25 @@ impl<'a> App<'a> {
                 Err(RunError::Rootful)
             }
         }
+    }
+
+    fn mountpoint(&self, volume: &str) -> Result<String, RunError> {
+        Ok(self
+            .podman
+            .run(&["volume", "inspect", "--format", "{{.Mountpoint}}", volume])?)
+    }
+
+    /// The owner and mode of a volume's own folder, `uid:gid:mode`, which
+    /// `podman volume export` leaves out of its tar: an app that runs as a
+    /// user of its own writes there only if they come back with the state.
+    fn root_of(&self, shell: &[&str], volume: &str) -> Result<String, RunError> {
+        let mount = self.mountpoint(volume)?;
+        let args: Vec<&str> = shell
+            .iter()
+            .copied()
+            .chain(["stat", "-c", "%u:%g:%a", &mount])
+            .collect();
+        Ok(self.podman.run(&args)?)
     }
 
     /// Copy one volume to `<volume>-snapshot`: a reflink if the filesystem
@@ -426,10 +451,29 @@ impl<'a> App<'a> {
         Ok(())
     }
 
-    /// Replace each state volume with the snapshot's. The app is stopped.
+    /// Replace each state volume with the snapshot's, its own folder's
+    /// owner and mode included. The app is stopped.
     pub fn restore(&self, snapshot: &Path) -> Result<(), RunError> {
+        let shell = self.storage_shell()?;
         for v in &self.card.state {
-            let tar = snapshot.join(format!("{v}.tar"));
+            let (tar, root) = (snapshot.join(format!("{v}.tar")), snapshot.join(format!("{v}.root")));
+            let owner = std::fs::read_to_string(&root).map_err(|e| file(&root, e))?;
+            let parts: Vec<&str> = owner.trim().split(':').collect();
+            let [uid, gid, mode] = parts.as_slice() else {
+                return Err(RunError::File {
+                    path: root,
+                    why: format!("{owner} is not uid:gid:mode"),
+                });
+            };
+            if !parts
+                .iter()
+                .all(|p| !p.is_empty() && p.bytes().all(|b| b.is_ascii_digit()))
+            {
+                return Err(RunError::File {
+                    path: root,
+                    why: format!("{owner} is not uid:gid:mode"),
+                });
+            }
             if !tar.is_file() {
                 return Err(RunError::File {
                     path: tar,
@@ -443,6 +487,12 @@ impl<'a> App<'a> {
             self.podman.run(&["volume", "create", &volume])?;
             self.podman
                 .run(&["volume", "import", &volume, &tar.to_string_lossy()])?;
+            let mount = self.mountpoint(&volume)?;
+            let owner = format!("{uid}:{gid}");
+            for change in [["chown", owner.as_str(), &mount], ["chmod", mode, &mount]] {
+                self.podman
+                    .run(&shell.iter().copied().chain(change).collect::<Vec<_>>())?;
+            }
             tracing::debug!(volume, snapshot = %snapshot.display(), "restored");
         }
         Ok(())
@@ -451,8 +501,14 @@ impl<'a> App<'a> {
     /// Where the state volumes differ from a snapshot, file by file: what
     /// each holds, its owner, mode and bytes. Empty when they match.
     pub fn differs(&self, snapshot: &Path, scratch: &Path) -> Result<Vec<String>, RunError> {
-        let mut out = Vec::new();
+        let (shell, mut out) = (self.storage_shell()?, Vec::new());
         for v in &self.card.state {
+            let at = snapshot.join(format!("{v}.root"));
+            let was = std::fs::read_to_string(&at).map_err(|e| file(&at, e))?;
+            let is = self.root_of(&shell, &self.volume(v))?;
+            if was.trim() != is {
+                out.push(format!("{v}'s own folder was {} and is {is}", was.trim()));
+            }
             let now = scratch.join(format!("{v}.now.tar"));
             self.podman
                 .run(&["volume", "export", "--output", &now.to_string_lossy(), &self.volume(v)])?;
