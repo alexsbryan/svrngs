@@ -1,0 +1,36 @@
+# Minecraft: Java Edition's server, as itzg/docker-minecraft-server
+# publishes it (GIVE.md §4). The image's tag and its digest, for linux/amd64
+# and linux/arm64 alike, were read from Docker Hub on 2026-10-26; VERSION is
+# Mojang's latest release that day (piston-meta version_manifest_v2.json),
+# pinned because the image's default is LATEST.
+services:
+  server:
+    image: docker.io/itzg/minecraft-server:2026.10.1-java25@sha256:d12aed7e35981dfe259b60fbfee77d23a19b5898a7a31dca298d18b47b7b5776
+    environment:
+      TYPE: VANILLA
+      VERSION: "26.3"
+      MEMORY: 2G
+    volumes: ["world:/data"]
+    ports: ["25565:25565/tcp"]
+    # The heap above, and room for the JVM around it.
+    mem_limit: 3g
+    # The image's own health command; the first start fetches the server
+    # and makes the world, so it is given minutes.
+    healthcheck:
+      test: ["CMD", "mc-health"]
+      interval: 10s
+      retries: 6
+      start_period: 5m
+    # The server saves the world as it stops.
+    stop_grace_period: 60s
+volumes:
+  world: {}
+x-svrngs:
+  title: Minecraft
+  about: "A world your group plays in. Each player needs Minecraft: Java Edition 26.3."
+  door: { port: 25565, protocol: tcp }
+  state: [world]
+  asks:
+    - say: Minecraft's makers ask whoever runs a server to agree to their terms.
+      link: https://aka.ms/MinecraftEULA
+      sets: { EULA: "TRUE" }

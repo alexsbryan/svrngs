@@ -1,0 +1,55 @@
+$ podman version --format {{.Client.Version}}; podman info --format ...
+5.8.7
+amd64 remote=false rootless=true overlay fedora 44
+$ stat -f -c %T ~/.local/share/containers/storage/volumes
+btrfs
+
+$ give check  --name svrngs-test-standin tests/standin
+passed  read the card: Stand-in
+passed  its asks: 0 agreed
+passed  podman's machine
+passed  pull by digest: docker.io/library/busybox:1.37.0@sha256:bdf57e528e45e4433820e045b29b4597825a1c9e38353532d90a01445013f82e
+passed  start: its door on 127.0.0.1:44631
+passed  healthy
+passed  snapshot: [("data", Reflink)], paused 285.460527ms
+passed  stop
+passed  restore: the state is the snapshot's
+passed  start again
+passed  healthy again
+passed  remove what the check made
+Stand-in can go on the shelf.
+exit 0 after 14 s
+
+$ give check --agree --name svrngs-test-minecraft cards/minecraft
+passed  read the card: Minecraft
+passed  its asks: 1 agreed
+passed  podman's machine
+passed  pull by digest: docker.io/itzg/minecraft-server:2026.10.1-java25@sha256:d12aed7e35981dfe259b60fbfee77d23a19b5898a7a31dca298d18b47b7b5776
+passed  start: its door on 127.0.0.1:33255
+passed  healthy
+passed  snapshot: [("world", Reflink)], paused 344.806976ms
+passed  stop
+passed  restore: the state is the snapshot's
+passed  start again
+passed  healthy again
+passed  remove what the check made
+Minecraft can go on the shelf.
+exit 0 after 76 s
+
+$ give check  --name svrngs-test-factorio cards/factorio
+passed  read the card: Factorio
+passed  its asks: 0 agreed
+passed  podman's machine
+passed  pull by digest: docker.io/factoriotools/factorio:2.1.23-rootless@sha256:a88410c4ef8685bf754256c6076b87ad185596544f4d53a6145ebcf671dd2f92
+passed  start: its door on 127.0.0.1:38165
+passed  healthy
+passed  snapshot: [("world", Reflink)], paused 277.513964ms
+passed  stop
+passed  restore: the state is the snapshot's
+passed  start again
+passed  healthy again
+passed  remove what the check made
+Factorio can go on the shelf.
+exit 0 after 39 s
+
+$ podman pod ls -q --filter name=svrngs-test; podman volume ls -q --filter name=svrngs-test

@@ -1,0 +1,32 @@
+# Factorio's headless server, as factoriotools/factorio publishes it, in its
+# rootless build (GIVE.md §4). The tag and its digest, for linux/amd64 and
+# linux/arm64 alike, were read from Docker Hub on 2026-10-26: 2.1.23, the
+# version the operator's rehearsal played (demo/runs/factorio/
+# 2026-10-26-rehearsal.json). The first start makes a map.
+services:
+  server:
+    image: docker.io/factoriotools/factorio:2.1.23-rootless@sha256:a88410c4ef8685bf754256c6076b87ad185596544f4d53a6145ebcf671dd2f92
+    # The image's arm64 build runs Factorio's x64 binary through box64,
+    # which segfaulted making the map on a Mac (exit 139, 2026-10-26,
+    # demo/runs/give/2026-10-26-cards/). Its amd64 build runs natively on
+    # amd64, and under Rosetta in podman's machine on a Mac.
+    platform: linux/amd64
+    volumes: ["world:/factorio"]
+    ports: ["34197:34197/udp"]
+    # The image has no health command, so: the game's port is bound, which
+    # it is once the map has loaded. 34197 is 8595 in the hex of
+    # /proc/net/udp.
+    healthcheck:
+      test: ["CMD-SHELL", "grep -qi ':8595 ' /proc/net/udp /proc/net/udp6"]
+      interval: 5s
+      retries: 12
+      start_period: 3m
+    # The server saves the map as it stops.
+    stop_grace_period: 30s
+volumes:
+  world: {}
+x-svrngs:
+  title: Factorio
+  about: A factory your group builds together. Each player needs their own copy of Factorio 2.1.23.
+  door: { port: 34197, protocol: udp }
+  state: [world]
