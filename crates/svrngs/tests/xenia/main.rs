@@ -32,7 +32,7 @@ use serde_json::{json, Value};
 use svrngs_core::link::KEPT_WORDS;
 
 use crate::harness::{relay_url, Engine};
-use crate::people::{Person, Scene};
+use crate::people::{Browsers, Person, Scene};
 
 /// The group's name, as the pages say it ("You’re in House").
 const HOUSE: &str = "House";
@@ -251,14 +251,18 @@ impl House {
     /// "Scene"; xenia 7d3e6d3), the first whose check holds naming the
     /// screen: Money by its lend's name, on a computer or through the page
     /// (`money_on_page`); the group's page asking a newcomer's name
-    /// (web/index.html, `join`); a computer's home page, at
-    /// `svrngs.localhost`; then the group's page, at the page's address.
+    /// (web/index.html, `join`); the group on a screen, the tab "Show House
+    /// on a screen" opens at `/?screen=<its id>` (home.js:109), by its own
+    /// title (home.js:284), on a computer's home page's address but not
+    /// that page; a computer's home page, at `svrngs.localhost`; then the
+    /// group's page, at the page's address.
     fn screens(&self) -> Value {
         let label = self.money.trim_start_matches("http://");
         let label = label.split('.').next().unwrap_or_default();
         json!([
             { "name": "Money", "url": format!("{label}.localhost") },
             { "name": "Joining", "text": "What’s your name?" },
+            { "name": format!("{HOUSE} on a screen"), "url": "/?screen=" },
             { "name": "Home", "url": "svrngs.localhost" },
             { "name": "the group's page", "url": origin(&self.page) },
         ])
@@ -340,10 +344,24 @@ async fn together_world() {
 }
 
 /// **Kim alone.** The computer half of the errand: the pizza in the house's
-/// money, on her own page. She may tell Ana in the chat; nobody is there
-/// to hear it.
+/// money, on her own page. Ana is in the house, joined from her phone, as
+/// Kim's story has it ("It was $36 for you and Ana"), and not there now:
+/// her phone joined by the house's link and was closed, so Money's form
+/// asks "Who was in on it?" with Ana to tick (apps/expenses/index.js:69-70,
+/// shown only when the group has someone besides Kim). Kim may tell Ana in
+/// the chat; nobody is there to hear it.
 async fn kim_world() {
     let house = House::up("kim").await;
+    let link = house.link().await;
+    let mut phone = Browsers::open(Engine::Chromium, &[("ana", Engine::Webkit)]).await;
+    let ana = phone
+        .tell(json!({ "do": "join", "who": "ana", "link": link, "name": "Ana" }))
+        .await;
+    let joined = ana["status"].as_str().unwrap_or_default();
+    if !joined.contains(&format!("in {HOUSE}")) {
+        people::late(format!("Ana's phone did not join {HOUSE}: {ana}")).await
+    }
+    drop(phone);
     let line = json!({
         "begins": "on a computer at her home page, in the house already; how the house was made not seen",
         "cast": [{
