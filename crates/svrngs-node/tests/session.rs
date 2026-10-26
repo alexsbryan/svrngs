@@ -197,7 +197,9 @@ async fn a_browser_with_no_session_and_a_program_with_no_token_are_told_to_open_
 /// code for that lend's origin alone, which sets its session there and
 /// goes on to the path asked. A code redeemed twice, or at another
 /// origin, is refused; the home page's session opens no lend's origin,
-/// and no lend's session is ever carried to the lend's service. Planted:
+/// and no lend's session is ever carried to the lend's service; a
+/// WebSocket's handshake, which carries no Sec-Fetch-Site, is judged by
+/// its Origin. Planted:
 /// `Codes::redeem` keeping a code after its use, and the replay opens the
 /// home page.
 #[tokio::test]
@@ -309,6 +311,17 @@ async fn an_open_s_code_becomes_the_session_once_and_each_lend_gets_its_own() {
         (200, "ok"),
         "{}",
         reached.head
+    );
+    // A WebSocket's handshake, which Chromium sends with the cookie and
+    // its page's Origin but no Sec-Fetch-Site (the doc scene's socket), is
+    // its own page's, judged by that Origin (origin.rs app_of).
+    let socket = format!("Origin: http://{lend}\r\n{lends}");
+    let socket = ask(api, "GET", &lend, at, &socket, "").await;
+    assert_eq!(
+        (socket.status, socket.body.as_str()),
+        (200, "ok"),
+        "a socket from the lend's own page: {}",
+        socket.head
     );
     let replay = ask(api, "GET", &lend, &path_of(&there), TYPED, "").await;
     assert_ne!(

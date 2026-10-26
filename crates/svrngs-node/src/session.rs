@@ -63,7 +63,10 @@ const OPENER: &str = if cfg!(target_os = "macos") {
 pub(crate) enum Shown {
     /// The token: a program the person runs.
     Token,
-    /// The host's cookie, from a browser, which sends `Sec-Fetch-Site`.
+    /// The host's cookie, from a browser, whose page `crate::origin`'s
+    /// `app_of` judges by what it sends of it: its `Sec-Fetch-*`, else its
+    /// `Origin`, as a WebSocket's handshake in Chromium sends no
+    /// `Sec-Fetch-Site`; one sending neither reaches nothing.
     Session,
     Neither,
 }
@@ -106,22 +109,20 @@ impl Sessions {
     /// What `headers` showed at the host first named `name`.
     pub(crate) fn shown(&self, headers: &HeaderMap, name: &str) -> Shown {
         let want = self.value(name);
-        let browser = headers.contains_key("sec-fetch-site");
         let ours = |c: &str| {
             c.strip_prefix(COOKIE)?
                 .strip_prefix('=')
                 .map(str::to_string)
         };
-        let session = browser
-            && cookies(headers)
-                .filter_map(ours)
-                .any(|v| same(v.as_bytes(), want.as_bytes()));
+        let session = cookies(headers)
+            .filter_map(ours)
+            .any(|v| same(v.as_bytes(), want.as_bytes()));
         let shown = match (self.token.shown(headers), session) {
             (true, _) => Shown::Token,
             (false, true) => Shown::Session,
             _ => Shown::Neither,
         };
-        tracing::debug!(target: "session", name, ?shown, browser, "session: what the caller showed, the token, this host's session, or neither");
+        tracing::debug!(target: "session", name, ?shown, "session: what the caller showed, the token, this host's session, or neither");
         shown
     }
 
