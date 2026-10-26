@@ -350,8 +350,7 @@ def main():
     if core_lib.exists() and "#![cfg_attr(not(test), no_std)]" not in core_lib.read_text():
         broken.append("crates/svrngs-core/src/lib.rs lost #![cfg_attr(not(test), no_std)]: the core is no_std")
     for path, cap in BUDGET.items():
-        base = ROOT / path
-        n = code_lines(base) if base.exists() else 0
+        n = code_lines(ROOT / path)
         print(f"{path:<20} {n:>6} / {cap} lines")
         if n >= cap:
             broken.append(f"{path} has {n} lines of code, budget {cap}: raised only by the operator, with the reason in the commit")
