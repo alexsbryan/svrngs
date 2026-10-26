@@ -46,7 +46,7 @@ use crate::lend::LendName;
 use crate::network::{Network, Unread};
 use crate::Person;
 
-mod kept;
+pub(crate) mod kept;
 pub(crate) mod owner;
 pub(crate) mod route;
 
