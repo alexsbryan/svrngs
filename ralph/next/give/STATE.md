@@ -110,7 +110,7 @@ There are fourteen rows:
   - **(b) The change.** One iroh bi-stream per connection, on the one connection kept per computer.
   - **Check:** (a) red first, green after.
   - **THE OPERATOR DECIDED, 2026-10-26,** on `demo/runs/give/2026-10-26-tcp/NEEDS_HUMAN.md`: "Go for both", this row's raise and give-play's. Landed for this row by the operator's session: the cap 18,868 (c0d3b829, its plant named) and PLAN §1's ledger line (0c002e14). What remains is `scripts/check.sh` once, at the close.
-- [ ] give-play — depends [give-tcp] — ONE ROW, red first, and `scripts/check.sh` once, at the close (GIVE.md §3 scene 2, §6):
+- [x] give-play db4b68713 — depends [give-tcp] — ONE ROW, red first, and `scripts/check.sh` once, at the close (GIVE.md §3 scene 2, §6):
   - **(a) Tests: A MEMBER PRESSES PLAY.** Browser tests in Chromium and WebKit, failing at HEAD:
     - A raw lend's row on a member's home page shows Play.
     - Pressing it binds `127.0.0.1:<port_of(label)>` (`room.rs:63`), UDP or TCP as the lend is, and the row says "Connect to 127.0.0.1:<port>", with the address copied, in the lend's own name.
