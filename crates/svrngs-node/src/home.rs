@@ -129,6 +129,7 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
     let home = Router::new()
         .route("/", get(page))
         .route("/ask", get(page))
+        .route("/to", get(to))
         .route("/home.js", get(|| async { MODULE }))
         .route("/question.js", get(|| async { QUESTION }))
         .route("/look.css", get(|| async { LOOK }))
@@ -180,9 +181,15 @@ async fn only_itself(State(at): State<Asking>, req: Request, next: Next) -> Resp
         } else {
             site == Some("same-origin") && origin.is_some_and(|o| o == format!("http://{own}"))
         };
-    tracing::debug!(target: "home", path = %req.uri().path(), method = %req.method(), at_own, ?site, ?mode, ?origin, answers,
-        "home: answered only from itself, a typed address or, to read, a navigation");
-    let mut answer = if answers {
+    let shown = at.sessions.shown(req.headers(), crate::session::HOME);
+    let opening = at_own && req.uri().path() == crate::session::OPEN_PATH;
+    tracing::debug!(target: "home", path = %req.uri().path(), method = %req.method(), at_own, ?site, ?mode, ?origin, answers, ?shown, opening,
+        "home: answered only to an open, then only with its session or the token, from itself, a typed address or, to read, a navigation");
+    let mut answer = if opening {
+        at.sessions.redeem(crate::session::HOME, req.uri().query())
+    } else if shown == crate::session::Shown::Neither {
+        at.sessions.refused()
+    } else if answers {
         next.run(req).await
     } else {
         LendRefusal::Closed.say(StatusCode::FORBIDDEN, "this page answers only itself")
@@ -229,10 +236,24 @@ async fn reaching(State(at): State<Asking>, Form(o): Form<Opening>) -> Response 
         return kept;
     }
     let to = match said {
-        Said::Yes => crate::origin::origin(&o.app, at.host.api_port),
+        Said::Yes => at.sessions.open(o.app.as_str(), None),
         Said::Stop => "/".into(),
     };
     Redirect::to(&to).into_response()
+}
+
+/// A lend the page opens, at a path there.
+#[derive(Deserialize)]
+struct To {
+    lend: Label,
+    at: Option<String>,
+}
+
+/// `GET /to?lend=&at=`: the lend opened from this page at its origin, with
+/// a code for that origin alone, which becomes its session there
+/// ([`crate::session`]; give-session).
+async fn to(State(at): State<Asking>, Query(t): Query<To>) -> Redirect {
+    Redirect::to(&at.sessions.open(t.lend.as_str(), t.at.as_deref()))
 }
 
 /// `GET /reaching`: what the person said of each app reaching others'

@@ -77,6 +77,8 @@ pub mod surface;
 /// The home page at `svrngs.localhost` (sup-2).
 pub mod home;
 pub mod origin;
+// A browser told from a program at both: an open's session, or the token.
+mod session;
 // Where this computer is, and on which network: the router's hardware
 // address, this computer's address there, a caller's (the room; the door).
 pub mod network;

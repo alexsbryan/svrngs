@@ -81,7 +81,7 @@ pub(crate) fn now() -> i64 {
 #[derive(Clone)]
 pub struct Provider {
     key: Arc<Key>,
-    codes: Arc<Codes>,
+    codes: Arc<Codes<Code>>,
     data_dir: PathBuf,
     port: u16,
 }
@@ -142,6 +142,7 @@ impl Provider {
 
     /// Mint `code`, answering the one string the token route redeems.
     pub(crate) fn mint(&self, code: Code) -> String {
+        tracing::debug!(target: "oidc", lend = %code.lend, client = %code.client, "oidc: minted a one-time code");
         self.codes.mint(code)
     }
 }
@@ -190,41 +191,40 @@ impl S256Challenge {
 /// The codes this run has minted, in memory and nowhere else, each with
 /// when it lapses, [`CODE_LIFETIME`] after it was minted, and whether it
 /// was redeemed: one use, and expired ones dropped on each mint and
-/// redemption.
+/// redemption. Sign-in's codes, and an open's (`crate::session`).
 #[expect(
     clippy::disallowed_types,
     reason = "the code store is one process's map, read and written by its own routes"
 )]
-struct Codes {
-    inner: Mutex<HashMap<String, (Code, i64, bool)>>,
+pub(crate) struct Codes<T> {
+    inner: Mutex<HashMap<String, (T, i64, bool)>>,
     rng: SystemRandom,
 }
 
-impl Codes {
+impl<T: Clone> Codes<T> {
     #[expect(
         clippy::disallowed_types,
         reason = "the code store is one process's map, read and written by its own routes"
     )]
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             inner: Mutex::new(HashMap::new()),
             rng: SystemRandom::new(),
         }
     }
 
-    fn mint(&self, code: Code) -> String {
+    pub(crate) fn mint(&self, code: T) -> String {
         use ring::rand::SecureRandom;
         let mut bytes = [0u8; 32];
         let _ = self.rng.fill(&mut bytes);
         let text = URL_SAFE_NO_PAD.encode(bytes);
-        tracing::debug!(target: "oidc", lend = %code.lend, client = %code.client, "oidc: minted a one-time code");
         let mut codes = self.inner.lock().expect("the code store's lock");
         codes.retain(|_, (_, expires, _)| *expires > now());
         codes.insert(text.clone(), (code, now() + CODE_LIFETIME, false));
         text
     }
 
-    fn redeem(&self, text: &str) -> Result<Code, &'static str> {
+    pub(crate) fn redeem(&self, text: &str) -> Result<T, &'static str> {
         let mut codes = self.inner.lock().expect("the code store's lock");
         codes.retain(|_, (_, expires, _)| *expires > now());
         let Some((code, _, used)) = codes.get_mut(text) else {

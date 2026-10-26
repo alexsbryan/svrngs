@@ -60,6 +60,24 @@ pub const TOKEN_FILE: &str = "token";
 #[derive(Clone)]
 pub struct Token(std::sync::Arc<(String, std::path::PathBuf)>);
 
+impl Token {
+    /// Whether `headers` show it, as `Authorization: Bearer <token>`,
+    /// compared in constant time by the sign-in provider's `same`.
+    pub(crate) fn shown(&self, headers: &axum::http::HeaderMap) -> bool {
+        let shown = crate::oidc::provider::bearer(headers);
+        shown.is_ok_and(|s| crate::oidc::provider::same(s.as_bytes(), self.0 .0.as_bytes()))
+    }
+
+    pub(crate) fn secret(&self) -> &str {
+        &self.0 .0
+    }
+
+    /// The file it is kept in.
+    pub(crate) fn file(&self) -> &std::path::Path {
+        &self.0 .1
+    }
+}
+
 /// The token kept in `data_dir`, or, before the first start, a fresh one
 /// written there owner-only, as the sign-in key is kept (`oidc.rs`). A file
 /// that cannot be read, or holds no token svrngs made, is refused, never
@@ -204,14 +222,12 @@ async fn not_from_a_page(request: Request, next: Next) -> Response {
 /// (give-token): a caller showing none, or another, is refused 401 naming
 /// the file that holds it, before any door runs.
 async fn holds_the_token(State(token): State<Token>, request: Request, next: Next) -> Response {
-    let (secret, file) = &*token.0;
-    let shown = crate::oidc::provider::bearer(request.headers());
-    let holds = shown.is_ok_and(|s| crate::oidc::provider::same(s.as_bytes(), secret.as_bytes()));
-    tracing::debug!(target: "rails", holds, shown = shown.is_ok(), path = %request.uri().path(), "api: whether the caller showed this computer's token");
+    let holds = token.shown(request.headers());
+    tracing::debug!(target: "rails", holds, path = %request.uri().path(), "api: whether the caller showed this computer's token");
     if holds {
         return next.run(request).await;
     }
-    let why = format!("send this computer's token, which {} holds, as `Authorization: Bearer <token>`: the record answers no program without it", file.display());
+    let why = format!("send this computer's token, which {} holds, as `Authorization: Bearer <token>`: the record answers no program without it", token.file().display());
     (
         StatusCode::UNAUTHORIZED,
         Json(serde_json::json!({ "error": why, "kind": "no_token" })),

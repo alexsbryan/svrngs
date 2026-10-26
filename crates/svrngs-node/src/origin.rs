@@ -76,18 +76,11 @@ fn at(host: &str) -> Option<(Label, Option<String>)> {
 /// sends none, by its `Referer`; one from another page naming no lend (an
 /// `<img>`, a frame with its `Referer` withheld) is nobody's, `None`. So a
 /// page's frame or form is held to what its fetch is (capability-navigation).
-/// A request with no `Sec-Fetch-Site` is a program's, not a page's
-/// — a browser that sends any `Sec-Fetch-*` sends it, and Node's `fetch`
-/// sends a mode alone (start-measure, `demo/runs/start/2026-10-13/` §3 (a)
-/// 4), as the record reads a page by it too (`crate::api`'s
-/// `not_from_a_page`) — and is the lend's own, as loopback is trusted
-/// (PLAN §2).
+/// Asked only of a browser's request, with its session here
+/// ([`crate::session::Shown::Session`]), so with `Sec-Fetch-Site`; a
+/// program's, which shows the token, is the lend's own ([`lent`]).
 fn app_of(headers: &HeaderMap, host: &Label) -> Option<Label> {
     let ([site, mode, origin, at_host], own) = fetch(headers);
-    if site.is_none() {
-        tracing::debug!(target: "origin", %host, ?mode, "origin: no Sec-Fetch-Site, a program on this computer, so the lend's own");
-        return Some(host.clone());
-    }
     let port = at(at_host?)?.1;
     let dest = headers.get("sec-fetch-dest").and_then(|v| v.to_str().ok());
     let framed = mode == Some("navigate") && dest.is_some_and(|d| d != "document");
@@ -144,16 +137,28 @@ pub(crate) fn router(asking: Asking) -> Router {
 }
 
 /// A request at a lend's origin, carried to the lend.
-async fn lent(State(at): State<Asking>, req: Request) -> Result<Response, Response> {
+async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Response> {
     let Some(label) = label_of(req.headers().get(header::HOST)) else {
         tracing::debug!(target: "origin", host = ?req.headers().get(header::HOST), "origin: refused — no lend's host");
         return Err(LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here"));
     };
+    if req.uri().path() == crate::session::OPEN_PATH {
+        return Ok(at.sessions.redeem(label.as_str(), req.uri().query()));
+    }
+    // A browser with this origin's session, else a program with the token,
+    // which is the lend's own; neither is carried on to the lend.
+    let shown = at.sessions.shown(req.headers(), label.as_str());
+    at.sessions.strip(req.headers_mut());
+    if shown == crate::session::Shown::Neither {
+        tracing::debug!(target: "origin", %label, "origin: refused — neither this origin's session nor the token");
+        return Err(at.sessions.refused());
+    }
     if req.uri().path() == crate::surface::READS_PATH {
         tracing::debug!(target: "origin", %label, "origin: the lend's page asks the lends it reads, answered from the record");
         return crate::surface::reads(&at, &label).await;
     }
-    let Some(app) = app_of(req.headers(), &label) else {
+    let program = (shown == crate::session::Shown::Token).then(|| label.clone());
+    let Some(app) = program.or_else(|| app_of(req.headers(), &label)) else {
         tracing::debug!(target: "origin", %label, "origin: refused — from another page that names no origin");
         return Err(LendRefusal::Closed.say(
             StatusCode::FORBIDDEN,

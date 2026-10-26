@@ -342,6 +342,7 @@ impl Node {
             seeds,
             oidc,
             room,
+            sessions: crate::session::Sessions::new(token.clone(), host.api_port),
         };
         let room = crate::room::owner::spawn(asking.clone(), owner);
         // The record, and beside it what an app asks of this computer (u5-1).
@@ -356,7 +357,8 @@ impl Node {
             crate::surface::router(asking.clone())
                 .merge(crate::folder::router(folders.clone()))
                 .merge(crate::removal::router(asking.clone()))
-                .merge(crate::room::route::router(asking.clone())),
+                .merge(crate::room::route::router(asking.clone()))
+                .merge(crate::session::router(asking.sessions.clone())),
             asking.oidc.clone().router(),
             crate::home::router(asking.clone(), rail_api),
             token,
@@ -869,6 +871,8 @@ pub(crate) struct Asking {
     pub(crate) oidc: crate::oidc::Provider,
     /// The room's handle: its turns, and what it serves now ([`crate::room`]).
     pub(crate) room: crate::room::owner::Room,
+    /// Who opened the home page and each lend's origin ([`crate::session`]).
+    pub(crate) sessions: crate::session::Sessions,
 }
 
 fn people_router(asking: Asking) -> axum::Router {

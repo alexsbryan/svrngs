@@ -216,13 +216,13 @@ async fn an_open_s_code_becomes_the_session_once_and_each_lend_gets_its_own() {
     let bearer = format!("Authorization: Bearer {}\r\n", alex.token().trim());
     let local = api.to_string();
 
-    let refused = ask(api, "POST", &local, "/v1/open", "", "").await;
+    let refused = ask(api, "POST", &local, "/v1/open", "", "{}").await;
     assert_eq!(
         refused.status, 401,
         "an open is the token's: {}",
         refused.body
     );
-    let open = ask(api, "POST", &local, "/v1/open", &bearer, "").await;
+    let open = ask(api, "POST", &local, "/v1/open", &bearer, "{}").await;
     assert_eq!(open.status, 200, "{}", open.body);
     let url: serde_json::Value = serde_json::from_str(&open.body).unwrap();
     let url = url["open"]

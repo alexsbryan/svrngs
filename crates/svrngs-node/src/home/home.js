@@ -51,7 +51,12 @@ const reach = (app, words, said = 'yes') => Object.assign(el('form', '', ...[['a
 
 // The open of lend `l`, saying `words` (question.js `agreed`): for one
 // reading friends' lends, the form posting its yes; else a link.
-const opener = (l, words) => (l.reads?.length ? reach(label(l), words) : Object.assign(el('a', words), { href: l.origin, target: '_blank' }));
+// A lend opened through `/to` (home.rs), which gives its origin a code of
+// its own that becomes its session there (give-session).
+const via = (lend, at) => `/to?${new URLSearchParams({ lend, ...(at && { at }) })}`;
+// The path of the address `at`, its query and fragment kept, for `via`.
+const path = (at) => ((u) => u.pathname + u.search + u.hash)(new URL(at));
+const opener = (l, words) => (l.reads?.length ? reach(label(l), words) : Object.assign(el('a', words), { href: via(label(l)), target: '_blank' }));
 
 // What the people of group `g` lend, for the ask; none when it cannot be
 // read. `removed` is null when who is in the group cannot be read here:
@@ -307,7 +312,7 @@ const within = (at, origin) => ((u) => (u.origin === new URL(origin).origin ? u.
 function ask(lent, q) {
   const [lend, app] = [q.get('lend'), q.get('app')].map((x) => lent.find((l) => label(l) === x));
   if (!lend || !app || !lend.asks) return main.append(el('p', unlent));
-  const go = () => location.assign(within(q.get('back'), app.origin) ?? app.origin);
+  const go = () => location.assign(via(label(app), path(within(q.get('back'), app.origin) ?? app.origin)));
   const s = el('section', '', el('h2', question(app, lend)), el('blockquote', lend.asks));
   s.append(button('Yes', () => said(label(lend), label(app), 'yes').then(go, (e) => s.append(e.message))), button('Not now', go));
   main.append(s);
@@ -355,9 +360,9 @@ function ask(lent, q) {
     const open = el('p', '', el('label', 'The link: ', el('input')), button('Open it', () => {
       const q = new URLSearchParams(open.querySelector('input').value.split('#')[1] ?? '');
       const lend = q.get('open') ?? '';
-      const to = /^[a-z0-9]+$/.test(lend) && within(q.get('at'), `http://${lend}.localhost:${location.port}`);
-      if (!to) return open.append(' That is not a link to something lent in your groups.');
-      window.open(to, '_blank');
+      const at = /^[a-z0-9]+$/.test(lend) && within(q.get('at'), `http://${lend}.localhost:${location.port}`);
+      if (!at) return open.append(' That is not a link to something lent in your groups.');
+      window.open(via(lend, path(at)), '_blank');
     }));
     main.append(Object.assign(el('section', '', el('h2', 'Open a link from your group'), open), { id: 'open' }));
     // A group made here as `svrngs new` makes one, by the svrngs running
