@@ -65,6 +65,7 @@ async fn cy_here(dir: &Path) -> (Node, Addr) {
         id: cy.endpoint().id().to_string(),
         sockets: loopback_sockets(cy.endpoint()),
         api: cy.api_addr(),
+        token: cy.token(),
     };
     (cy, addr)
 }
@@ -143,6 +144,7 @@ async fn sync(who: &Addr, dir: &Path, group: &str) {
     for _ in 0..60 {
         let asked = http
             .post(format!("http://{}/v1/folders", who.api))
+            .bearer_auth(&who.token)
             .header("content-type", "application/json")
             .body(body.clone())
             .send()

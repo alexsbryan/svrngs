@@ -743,9 +743,10 @@ fn share_runs_when_svrngs_does_not_and_leaves_when_it_does() {
 /// wrote, as the home page reads it.
 fn room_of(dir: &Path) -> serde_json::Value {
     let api = std::fs::read_to_string(dir.join("api")).unwrap();
+    let token = std::fs::read_to_string(dir.join("token")).unwrap();
     let mut sock = std::net::TcpStream::connect(api.trim().trim_start_matches("http://")).unwrap();
-    sock.write_all(b"GET /v1/room HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n")
-        .unwrap();
+    let ask = format!("GET /v1/room HTTP/1.1\r\nHost: 127.0.0.1\r\nAuthorization: Bearer {token}\r\nConnection: close\r\n\r\n");
+    sock.write_all(ask.as_bytes()).unwrap();
     let mut answer = String::new();
     sock.read_to_string(&mut answer).unwrap();
     let body = answer.split("\r\n\r\n").nth(1).unwrap_or_default();

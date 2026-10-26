@@ -52,16 +52,23 @@ import { KINDS } from './kinds.mjs';
 import { Refused, debug as trace, heldBy, heldIn, loop, person, stateFile } from './relay.mjs';
 import { file, record } from './store.mjs';
 
+/** The token svrngs's record asks of this app, from the file the config names
+ * (`token`, beside svrngs's `api` file; give-token). */
+function tokenOf(config) {
+  if (typeof config.token !== 'string') throw new Error("the config names no `token`, the file beside svrngs's api file that its record asks for");
+  return readFileSync(config.token, 'utf8').trim();
+}
 const config = JSON.parse(readFileSync(process.argv[2], 'utf8'));
 if (typeof config.data !== 'string') throw new Error('the config names no `data`, the folder each person\'s state file is kept in');
-const store = config.file ? file(config.file) : record(config.record);
+const token = config.file ? null : tokenOf(config);
+const store = config.file ? file(config.file) : record(config.record, token);
 const SIM = store.kind === 'file';
 if (SIM && !(Array.isArray(config.acting) && config.acting.length && config.acting.every((n) => typeof n === 'string' && n))) {
   throw new Error('a file of its own is a simulation, and its config names who it acts for: "acting": ["Sam", "Jo"]');
 }
 const people = SIM
   ? config.acting.map((name) => person({ id: name, store, held: heldIn(store, name), kinds: KINDS, state: stateFile(join(config.data, `${name}.state.json`)) }))
-  : [person({ id: 'me', store, held: heldBy(config.record, store), kinds: KINDS, state: stateFile(join(config.data, 'state.json')) })];
+  : [person({ id: 'me', store, held: heldBy(config.record, token, store), kinds: KINDS, state: stateFile(join(config.data, 'state.json')) })];
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const q = (s) => `“${esc(s)}”`;

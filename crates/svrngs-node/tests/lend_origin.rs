@@ -132,6 +132,7 @@ async fn each_lend_opens_at_an_origin_of_its_own_on_this_computer() {
     let http = reqwest::Client::builder().no_proxy().build().unwrap();
     let listed: serde_json::Value = http
         .get(format!("http://{api}/v1/lends?namespace={NS}"))
+        .bearer_auth(alex.token())
         .send()
         .await
         .unwrap()

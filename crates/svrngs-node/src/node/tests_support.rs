@@ -12,6 +12,14 @@ impl Node {
         self.routes.clone()
     }
 
+    /// The token a program on this computer shows the record, read from
+    /// the file beside the `api` file as a program reads it
+    /// ([`crate::api::TOKEN_FILE`]).
+    pub fn token(&self) -> String {
+        let file = self.asking.door.data_dir.join(crate::api::TOKEN_FILE);
+        std::fs::read_to_string(file).expect("a started node keeps its token")
+    }
+
     /// The dial-by-key transport the round dials through; a caller seeds a
     /// member's addresses here when no address lookup can find it.
     pub fn transport(&self) -> &IrohTransport {

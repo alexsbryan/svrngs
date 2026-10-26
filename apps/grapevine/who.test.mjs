@@ -25,7 +25,8 @@ const ASK = { kind: 'tool', fields: { what: 'tile saw', when: 'Saturday' }, grou
 /** The server in `dir` (this one, or a planted copy) on `config`; its address, and how to stop it. */
 async function serve(dir, config) {
   const data = mkdtempSync(join(tmpdir(), 'grapevine-who-'));
-  writeFileSync(join(data, 'config.json'), JSON.stringify({ data, ...config }));
+  writeFileSync(join(data, 'token'), 'the-token');
+  writeFileSync(join(data, 'config.json'), JSON.stringify({ data, token: join(data, 'token'), ...config }));
   const child = spawn(process.execPath, [join(dir, 'server.mjs'), join(data, 'config.json')], { stdio: ['ignore', 'pipe', 'inherit'] });
   const line = await new Promise((done, fail) => {
     child.stdout.once('data', (b) => done(String(b)));
@@ -73,6 +74,8 @@ async function svrngs() {
   };
   const appended = [];
   const server = http.createServer(async (req, res) => {
+    // An ask without the token refused, as svrngs refuses it (give-token).
+    if (req.headers.authorization !== 'Bearer the-token') return res.writeHead(401).end('{"kind":"no_token"}');
     const url = new URL(req.url, 'http://svrngs');
     const at = url.searchParams.get('namespace');
     let body = '';

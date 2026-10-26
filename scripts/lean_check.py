@@ -257,8 +257,15 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # 18,240. give-economize's pass (demo/runs/economize/2026-10-25-give/
 # SURVEY.md): the links' sequencer taken in one line (-6), an own pass's
 # reads and the door's "unasked" each said in one statement (-4, -3):
-# 18,227.
-BUDGET = {"crates/svrngs-core": 3239, ".": 18228}
+# 18,227. give-token, the record asking every program for the token in
+# the data dir's `token` file, under the operator's ceiling for give-token
+# through give-play (2026-10-25, ralph/next/give/STATE.md give-economize,
+# "+1,005 repository and +5 svrngs-core", at most 19,233): the token kept
+# as the sign-in key is (`declared::write_secret`), its one check beside
+# `from_this_computer`, `ask_running` and install.sh's curl showing it,
+# +48 and 0, inside its estimate (+45 to +90, SURVEY.md §6), after its
+# own cut of `NotLoopback`'s words to one line (-2): 18,275.
+BUDGET = {"crates/svrngs-core": 3239, ".": 18276}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 

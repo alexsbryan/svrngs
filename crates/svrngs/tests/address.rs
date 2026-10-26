@@ -89,9 +89,9 @@ fn address_in(line: &str) -> String {
 
 /// GET `path` at `address`, as a browser typing it asks (`Sec-Fetch-Site:
 /// none`, which the home page answers) or as a program does (`browser`
-/// false: no `Sec-Fetch-*`, which a lend answers as its own): its status
-/// line and body.
-fn get(address: &str, path: &str, browser: bool) -> (String, String) {
+/// false: no `Sec-Fetch-*`, which a lend answers as its own), showing the
+/// record `token` if any: its status line and body.
+fn get(address: &str, path: &str, browser: bool, token: Option<&str>) -> (String, String) {
     let authority = address
         .strip_prefix("http://")
         .and_then(|a| a.strip_suffix('/'))
@@ -105,9 +105,10 @@ fn get(address: &str, path: &str, browser: bool) -> (String, String) {
     } else {
         ""
     };
+    let token = token.map_or(String::new(), |t| format!("Authorization: Bearer {t}\r\n"));
     write!(
         sock,
-        "GET {path} HTTP/1.1\r\nHost: {authority}\r\n{fetch}Connection: close\r\n\r\n"
+        "GET {path} HTTP/1.1\r\nHost: {authority}\r\n{fetch}{token}Connection: close\r\n\r\n"
     )
     .unwrap();
     let mut answer = String::new();
@@ -120,12 +121,12 @@ fn get(address: &str, path: &str, browser: bool) -> (String, String) {
 }
 
 /// Where this computer opens its own lend `name`, as `/v1/lends` at the
-/// API in `dir` answers it to the home page.
-fn origin_of(dir: &Path, name: &str) -> String {
+/// API in `dir` answers a program showing `token`.
+fn origin_of(dir: &Path, name: &str, token: &str) -> String {
     let api = std::fs::read_to_string(dir.join(svrngs_node::api::API_FILE)).unwrap();
     let api = format!("{}/", api.trim());
     let json = |path: &str| {
-        let (status, body) = get(&api, path, false);
+        let (status, body) = get(&api, path, false, Some(token));
         assert!(status.ends_with("200 OK"), "{path} {status} {body}");
         (
             serde_json::from_str::<serde_json::Value>(&body).unwrap(),
@@ -164,7 +165,10 @@ fn service() -> TcpListener {
 /// Sam's computer makes a group and lends a service; the bare command
 /// runs, as the LaunchAgent runs it, is stopped, as `launchctl bootout`
 /// stops it, and starts again over the same data dir, as `KeepAlive` does.
-/// The home page and the lend answer at the same address both times.
+/// The home page and the lend answer at the same address both times, and
+/// the record's token is the same file (give-token): a program that read
+/// it before the restart asks with it after. The failing input: a token
+/// minted at every start, which the second run's ask refuses.
 #[cfg(unix)]
 #[test]
 fn the_home_page_and_a_lend_answer_at_one_address_across_a_restart() {
@@ -191,17 +195,24 @@ fn the_home_page_and_a_lend_answer_at_one_address_across_a_restart() {
     drop(made);
 
     let mut at = Vec::new();
+    let mut kept = None;
     for run in ["first", "again"] {
         let mut svrngs = Program::start(dir.path(), &logs.path().join(run), &[]);
         let home = address_in(&svrngs.until("//svrngs.localhost:"));
-        let lent = origin_of(dir.path(), "pad");
-        let (status, page) = get(&home, "/", true);
+        let token = std::fs::read_to_string(dir.path().join("token")).unwrap();
+        let read_before = kept.get_or_insert(token.clone());
+        assert_eq!(
+            &token, read_before,
+            "{run}: the token moved across a restart"
+        );
+        let lent = origin_of(dir.path(), "pad", read_before);
+        let (status, page) = get(&home, "/", true, None);
         assert!(status.ends_with("200 OK"), "{run}: {home} {status}");
         assert!(
             page.contains("/home.js"),
             "{run}: {home} is not the home page"
         );
-        let (status, body) = get(&lent, "/", false);
+        let (status, body) = get(&lent, "/", false, None);
         assert!(status.ends_with("200 OK"), "{run}: {lent} {status}");
         assert_eq!(body, "ok", "{run}: {lent}");
         drop(svrngs);

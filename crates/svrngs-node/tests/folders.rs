@@ -69,6 +69,7 @@ impl Group {
 async fn ask(node: &Node, body: serde_json::Value) -> (u16, String) {
     let answer = http()
         .post(format!("http://{}/v1/folders", node.api_addr()))
+        .bearer_auth(node.token())
         .header("content-type", "application/json")
         .body(body.to_string())
         .send()
@@ -1212,6 +1213,7 @@ async fn a_removed_member_gets_nothing_new_from_the_folder_and_keeps_what_they_h
 
     let removed = http()
         .post(format!("http://{}/v1/removals", group.ana.api_addr()))
+        .bearer_auth(group.ana.token())
         .json(&serde_json::json!({ "group": seed("films", 9).id(), "person": "cy" }))
         .send()
         .await
@@ -1247,7 +1249,13 @@ async fn put_blob(node: &Node, group: &str, keep: u64, bytes: &[u8]) -> (u16, St
         "http://{}/v1/blob?group={group}&keep={keep}",
         node.api_addr()
     );
-    let answer = http().put(url).body(bytes.to_vec()).send().await.unwrap();
+    let answer = http()
+        .put(url)
+        .bearer_auth(node.token())
+        .body(bytes.to_vec())
+        .send()
+        .await
+        .unwrap();
     (answer.status().as_u16(), answer.text().await.unwrap())
 }
 
@@ -1255,7 +1263,12 @@ async fn put_blob(node: &Node, group: &str, keep: u64, bytes: &[u8]) -> (u16, St
 /// answer names, and its body.
 async fn get_blob(node: &Node, group: &str, hash: &str) -> (u16, Option<String>, Vec<u8>) {
     let url = format!("http://{}/v1/blob/{hash}?group={group}", node.api_addr());
-    let answer = http().get(url).send().await.unwrap();
+    let answer = http()
+        .get(url)
+        .bearer_auth(node.token())
+        .send()
+        .await
+        .unwrap();
     let holder = answer.headers().get("x-svrngs-holder");
     let holder = holder.map(|h| h.to_str().unwrap().to_string());
     (
@@ -1421,7 +1434,9 @@ async fn a_leave_stops_the_group_reaching_them_and_keeps_what_they_hold() {
     assert_eq!(served, Ok(50_000), "control: Ana serves Ben");
 
     let id = seed("films", 9).id();
-    let leave = http().post(format!("http://{}{LEAVES_ROUTE}", group.ben.api_addr()));
+    let leave = http()
+        .post(format!("http://{}{LEAVES_ROUTE}", group.ben.api_addr()))
+        .bearer_auth(group.ben.token());
     let left = leave
         .json(&LeaveAsk { group: id.clone() })
         .send()

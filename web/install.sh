@@ -169,9 +169,12 @@ say "$unit runs now, and whenever you log in ($kept)."
 [ -z "$relay" ] || exit 0
 
 # Where its home page is: the port svrngs writes to its data, once it
-# answers there, and keeps at each start after (start-address).
+# answers there, and keeps at each start after (start-address). It is asked
+# as any program asks it, with the token beside the address, sent on stdin so
+# no other user's `ps` reads it (give-token).
 tries=0
-until api="$(cat "$dir/api" 2>/dev/null)" && curl -fsS -o /dev/null "$api/v1/groups" 2>/dev/null; do
+until api="$(cat "$dir/api" 2>/dev/null)" && printf 'Authorization: Bearer %s' "$(cat "$dir/token" 2>/dev/null)" |
+  curl -fsS -o /dev/null -H @- "$api/v1/groups" 2>/dev/null; do
   tries=$((tries + 1))
   [ "$tries" -lt 30 ] || no "svrngs did not start within 30 seconds; $dir/svrngs.log says why."
   sleep 1

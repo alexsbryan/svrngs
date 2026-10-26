@@ -447,13 +447,15 @@ fn secret_ok(declared: Option<&str>, presented: Option<&str>) -> bool {
 }
 
 /// Whether two secrets are the same bytes, comparing every byte so a
-/// mismatch costs the same wherever it is.
-fn same(a: &[u8], b: &[u8]) -> bool {
+/// mismatch costs the same wherever it is: the record's token too
+/// ([`crate::api`]).
+pub(crate) fn same(a: &[u8], b: &[u8]) -> bool {
     a.len() == b.len() && a.iter().zip(b).fold(0, |acc, (x, y)| acc | (x ^ y)) == 0
 }
 
-/// The Bearer token from a userinfo request's `Authorization`, or why none.
-fn bearer(headers: &HeaderMap) -> Result<&str, &'static str> {
+/// The Bearer token from a request's `Authorization`, or why none: a
+/// userinfo request's, and a program's to the record ([`crate::api`]).
+pub(crate) fn bearer(headers: &HeaderMap) -> Result<&str, &'static str> {
     headers
         .get(header::AUTHORIZATION)
         .and_then(|value| value.to_str().ok())

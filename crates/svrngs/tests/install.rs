@@ -556,11 +556,13 @@ async fn new_places_the_groups_folder() {
     );
     assert!(place.is_dir(), "{} not made", place.display());
     let api = std::fs::read_to_string(home.path().join(".svrngs/api")).unwrap();
+    let token = std::fs::read_to_string(home.path().join(".svrngs/token")).unwrap();
     let groups: serde_json::Value = reqwest::Client::builder()
         .no_proxy()
         .build()
         .unwrap()
         .get(format!("{}/v1/groups", api.trim()))
+        .bearer_auth(token)
         .send()
         .await
         .unwrap()
@@ -629,7 +631,12 @@ async fn joining_places_the_groups_folder() {
     let groups = tokio::time::timeout(Duration::from_secs(30), async {
         loop {
             let api = std::fs::read_to_string(home.path().join(".svrngs/api")).unwrap_or_default();
-            if let Ok(answer) = http.get(format!("{}/v1/groups", api.trim())).send().await {
+            let token =
+                std::fs::read_to_string(home.path().join(".svrngs/token")).unwrap_or_default();
+            let asked = http
+                .get(format!("{}/v1/groups", api.trim()))
+                .bearer_auth(token);
+            if let Ok(answer) = asked.send().await {
                 break answer.json::<serde_json::Value>().await.unwrap();
             }
             tokio::time::sleep(Duration::from_millis(100)).await;

@@ -35,5 +35,6 @@ budget (`scripts/lean_check.py`).
 Run alone: `node apps/events/server.mjs config.json`, with
 `{"file": "events.json", "who": "remote-user"}` and `events.json` holding
 `{"groups": {"house": {"name": "The House", "people": ["sam", "bo"]}}}`.
-Under svrngs: `{"record": "<the data dir's api file>", "who": "x-svrngs-key"}`,
+Under svrngs: `{"record": "<the address the data dir's api file names>",
+"token": "<the data dir's token file>", "who": "x-svrngs-key"}`,
 lent with `svrngs share`.

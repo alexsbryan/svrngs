@@ -215,7 +215,8 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
         format!("/v1/lends?namespace={NS}"),
     ] {
         let shown = ask(api, "GET", &home, &path, &own, "").await;
-        let answered = ask(api, "GET", "127.0.0.1", &path, "", "").await;
+        let program = format!("Authorization: Bearer {}\r\n", alex.token());
+        let answered = ask(api, "GET", "127.0.0.1", &path, &program, "").await;
         assert_eq!(
             (shown.status, shown.json()),
             (answered.status, answered.json()),

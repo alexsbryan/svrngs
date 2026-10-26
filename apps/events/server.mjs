@@ -47,8 +47,14 @@ import http from 'node:http';
 import { CAME, COMING, EVENT, MAX_WORDS, actsOf, answers, called, guestName, hosted, init, ownActs, reduce, validate } from './events.js';
 import { file, record } from './store.mjs';
 
+/** The token svrngs's record asks of this app, from the file the config names
+ * (`token`, beside svrngs's `api` file; give-token). */
+function tokenOf(config) {
+  if (typeof config.token !== 'string') throw new Error("the config names no `token`, the file beside svrngs's api file that its record asks for");
+  return readFileSync(config.token, 'utf8').trim();
+}
 const config = JSON.parse(readFileSync(process.argv[2], 'utf8'));
-const store = config.file ? file(config.file) : record(config.record);
+const store = config.file ? file(config.file) : record(config.record, tokenOf(config));
 const WHO = (config.who ?? 'x-svrngs-key').toLowerCase();
 // Every decision branch, at debug (AGENTS.md 1), when EVENTS_DEBUG is set.
 const trace = process.env.EVENTS_DEBUG ? (what, fields) => console.error(JSON.stringify({ at: new Date().toISOString(), what, ...fields })) : () => {};

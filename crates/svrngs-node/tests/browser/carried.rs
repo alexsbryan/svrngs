@@ -22,7 +22,11 @@ pub(super) async fn carried_at(at: &Node, app: &str) -> String {
     let url = format!("http://{}/v1/lends?namespace={NS}", at.api_addr());
     let http = reqwest::Client::builder().no_proxy().build().unwrap();
     for _ in 0..60 {
-        let lends: Value = http.get(&url).send().await.unwrap().json().await.unwrap();
+        let lends: Value = (http.get(&url).bearer_auth(at.token()).send().await)
+            .unwrap()
+            .json()
+            .await
+            .unwrap();
         let listed = lends["lent"].as_array().into_iter().flatten();
         if let Some(l) = listed.into_iter().find(|l| l["kind"] == app) {
             return l["origin"].as_str().unwrap().to_string();
@@ -365,7 +369,13 @@ async fn an_entry_another_s_computer_wrote_says_whose(engine: Engine) {
     let http = reqwest::Client::builder().no_proxy().build().unwrap();
     for act in acts {
         let at = format!("http://{}/v1/rail/append?namespace={NS}", cy.api_addr());
-        let wrote = http.post(at).json(&act).send().await.unwrap();
+        let wrote = http
+            .post(at)
+            .bearer_auth(cy.token())
+            .json(&act)
+            .send()
+            .await
+            .unwrap();
         assert_eq!(wrote.status().as_u16(), 422, "a program writes only as cy");
     }
     for (app, says) in [
@@ -577,7 +587,11 @@ async fn a_new_version_runs_as_each_person_only_after_their_yes(engine: Engine) 
     // Ada's own copy, opened at its origin on her computer.
     let url = format!("http://{}/v1/lends?namespace={NS}", ada.api_addr());
     let http = reqwest::Client::builder().no_proxy().build().unwrap();
-    let lends: Value = http.get(&url).send().await.unwrap().json().await.unwrap();
+    let lends: Value = (http.get(&url).bearer_auth(ada.token()).send().await)
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
     let own = |l: &&Value| l["kind"] == "Money" && l["key"] == actor_of(&signing(1));
     let lent = lends["lent"].as_array().unwrap();
     let money = lent.iter().find(own).expect("ada's Money")["origin"]
@@ -693,7 +707,8 @@ async fn the_phone_goes_on_to_a_computer_that_answers(engine: Engine) {
     let mut listed = false;
     for _ in 0..60 {
         let url = format!("http://{}/v1/lends?namespace={NS}", cy.api_addr());
-        let lends: Value = http.get(url).send().await.unwrap().json().await.unwrap();
+        let asked = http.get(url).bearer_auth(cy.token()).send().await;
+        let lends: Value = asked.unwrap().json().await.unwrap();
         let mut lent = lends["lent"].as_array().into_iter().flatten();
         listed = lent.any(|l| l["key"] == ada_key);
         if listed {
@@ -721,7 +736,9 @@ async fn the_phone_goes_on_to_a_computer_that_answers(engine: Engine) {
     })
     .await
     .expect("the phone opens the group through cy's computer");
-    let leave = http.post(format!("http://{}{LEAVES_ROUTE}", cy.api_addr()));
+    let leave = http
+        .post(format!("http://{}{LEAVES_ROUTE}", cy.api_addr()))
+        .bearer_auth(cy.token());
     let left = leave.json(&LeaveAsk { group: NS.into() }).send().await;
     assert_eq!(
         left.unwrap().json::<Outcome>().await.unwrap(),

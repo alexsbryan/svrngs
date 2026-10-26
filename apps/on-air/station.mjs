@@ -4,13 +4,15 @@
 // signed `ended` last. Every answer svrngs gives is kept as it came, and a
 // step it refused is said, never filled in:
 //
-//   node station.mjs --api <url> --group <id> --mp3 <file> --show <name>
-//        --public <dir> [--keep 60] [--piece 4] [--pace 1] [--limit n]
+//   node station.mjs --api <url> --token <file> --group <id> --mp3 <file>
+//        --show <name> --public <dir> [--keep 60] [--piece 4] [--pace 1] [--limit n]
 //        [--no-ended] [--out <file.jsonl>]
 //
-// --pace 0 sends as fast as it can (a plant's show); --no-ended stops
+// --token is svrngs's `token` file, beside its `api` file: every ask shows
+// what it holds (give-token). --pace 0 sends as fast as it can (a plant's show); --no-ended stops
 // without the signed end (the off-air plant).
 import './vendored.mjs';
+import { readFileSync } from 'node:fs';
 import { mkdir, readFile, writeFile, appendFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
@@ -18,14 +20,15 @@ import { parseArgs } from 'node:util';
 const air = await import('./page/air.mjs');
 const { values: o } = parseArgs({
   options: {
-    api: { type: 'string' }, group: { type: 'string' }, mp3: { type: 'string' }, show: { type: 'string' },
+    api: { type: 'string' }, token: { type: 'string' }, group: { type: 'string' }, mp3: { type: 'string' }, show: { type: 'string' },
     public: { type: 'string' }, keep: { type: 'string', default: '60' }, piece: { type: 'string', default: '4' },
     pace: { type: 'string', default: '1' }, limit: { type: 'string' }, 'no-ended': { type: 'boolean' },
     out: { type: 'string' },
   },
 });
-for (const k of ['api', 'group', 'mp3', 'show', 'public']) if (!o[k]) throw new Error(`--${k} is needed`);
+for (const k of ['api', 'token', 'group', 'mp3', 'show', 'public']) if (!o[k]) throw new Error(`--${k} is needed`);
 const api = o.api.replace(/\/$/, '');
+const token = readFileSync(o.token, 'utf8').trim();
 const dir = join(o.public, 'air', o.show);
 await mkdir(join(dir, 'lines'), { recursive: true });
 await mkdir(join(dir, 'pieces'), { recursive: true });
@@ -41,7 +44,7 @@ async function say(event, fields) {
 async function ask(method, path, body, type = 'application/octet-stream') {
   const t0 = Date.now();
   try {
-    const r = await fetch(api + path, { method, body, headers: { 'content-type': type } });
+    const r = await fetch(api + path, { method, body, headers: { 'content-type': type, authorization: `Bearer ${token}` } });
     const text = await r.text();
     let json = null;
     try { json = JSON.parse(text); } catch {}

@@ -6,7 +6,8 @@
 //   node apps/pantry/pantry.mjs serve [--port N]
 //
 // Both read this computer's record through its data dir's `api` file
-// (`$SVRNGS_DIR/api`, else `~/.svrngs/api`). `--record URL` names another.
+// (`$SVRNGS_DIR/api`, else `~/.svrngs/api`), asking with the token in the
+// `token` file beside it (give-token). `--record URL` names another.
 // The pantry knows a lend by asking it: OpenAI's `/v1/models` is a model;
 // MCP's initialize and tools/list over Streamable HTTP is a tool. It keeps
 // no kind list, no card and no matcher.
@@ -47,6 +48,17 @@ export function recordAt() {
   return readFileSync(join(dataDir(), 'api'), 'utf8').trim().replace(/\/+$/, '');
 }
 
+/// The token this computer's record asks of a program, from the data dir's
+/// `token` file; none where there is no such file, which the record refuses
+/// naming the file.
+function tokenAt() {
+  try {
+    return readFileSync(join(dataDir(), 'token'), 'utf8').trim();
+  } catch {
+    return '';
+  }
+}
+
 /// The address the last start took, if one was kept.
 function keptPort(dir) {
   try {
@@ -73,8 +85,9 @@ function secondsAgo(at, now) {
   return Math.max(0, Math.round((now() - at) / 1000));
 }
 
-async function get(url) {
-  const res = await fetch(url, { signal: AbortSignal.timeout(DISCOVERY_TIMEOUT) });
+async function get(url, token) {
+  const headers = token === undefined ? {} : { authorization: `Bearer ${token}` };
+  const res = await fetch(url, { headers, signal: AbortSignal.timeout(DISCOVERY_TIMEOUT) });
   if (!res.ok) throw new Error(`${url} answered ${res.status}`);
   return res.json();
 }
@@ -88,21 +101,21 @@ async function get(url) {
 const keptLends = new Map();
 
 export async function lendsNow(record, { clock = Date.now, refresh = false } = {}) {
-  const base = record.replace(/\/+$/, '');
+  const base = record.at.replace(/\/+$/, '');
   const now = clock();
   const kept = keptLends.get(base);
   if (!refresh && kept && now - kept.at < LENDS_FOR) {
     note('kept lends', base, `looked ${secondsAgo(kept.at, clock)}s ago`);
     return { ...kept.seen, at: kept.at, asked: false };
   }
-  const held = await get(`${base}/v1/groups`);
+  const held = await get(`${base}/v1/groups`, record.token);
   const groups = Array.isArray(held.groups) ? held.groups : [];
   const lends = [];
   const unlisted = [];
   const seen = new Set();
   for (const group of groups) {
     const id = group.id;
-    const body = await get(`${base}/v1/lends?namespace=${encodeURIComponent(id)}`);
+    const body = await get(`${base}/v1/lends?namespace=${encodeURIComponent(id)}`, record.token);
     for (const lend of body.lent || []) {
       const key = `${lend.person}\u0000${lend.key}\u0000${lend.name}\u0000${lend.origin}`;
       if (seen.has(key)) continue;
@@ -138,7 +151,7 @@ function namesLender({ lends, unlisted }, prefix) {
 async function lendsFor(record, clock, prefix) {
   const seen = await lendsNow(record, { clock });
   if (prefix === undefined || seen.asked || namesLender(seen, prefix)) return seen;
-  note('asked lends again', record, `does not name ${prefix}`);
+  note('asked lends again', record.at, `does not name ${prefix}`);
   return lendsNow(record, { clock, refresh: true });
 }
 
@@ -238,8 +251,8 @@ function modelId(lend, model, taken) {
 }
 
 /// What your groups lend now, each lend asked by its protocol.
-export async function list({ record = recordAt(), clock = Date.now } = {}) {
-  const { lends, unlisted, at } = await lendsNow(record, { clock });
+export async function list({ record = recordAt(), token = tokenAt(), clock = Date.now } = {}) {
+  const { lends, unlisted, at } = await lendsNow({ at: record, token }, { clock });
   const found = [];
   const used = new Set();
   for (const lend of lends) {
@@ -391,7 +404,8 @@ function rewriteModel(raw, contentType, model) {
 /// `--port` it takes the address it took last time, from the data dir's
 /// `pantry-port`, so the address a person pasted into their interface stays;
 /// another program holding it is said by name, never moved past in silence.
-export async function serve({ record = recordAt(), port, host = '127.0.0.1', state, clock = Date.now } = {}) {
+export async function serve({ record: at = recordAt(), token = tokenAt(), port, host = '127.0.0.1', state, clock = Date.now } = {}) {
+  const record = { at, token };
   const dir = dataDir(state);
   const wanted = port === undefined ? (keptPort(dir) ?? 0) : port;
   const server = http.createServer(async (req, res) => {

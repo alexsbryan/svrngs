@@ -106,7 +106,9 @@ async fn run(home: &Path) -> (tokio::process::Child, String) {
         loop {
             let api = std::fs::read_to_string(home.join(".svrngs/api")).unwrap_or_default();
             let api = api.trim().to_string();
-            if http.get(format!("{api}/v1/groups")).send().await.is_ok() {
+            let token = std::fs::read_to_string(home.join(".svrngs/token")).unwrap_or_default();
+            let asked = http.get(format!("{api}/v1/groups")).bearer_auth(token);
+            if asked.send().await.is_ok() {
                 break api;
             }
             tokio::time::sleep(Duration::from_millis(100)).await;

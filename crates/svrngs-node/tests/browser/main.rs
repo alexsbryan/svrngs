@@ -248,6 +248,7 @@ async fn keep_folder(at: &Node, folder: &Path) {
         .build()
         .unwrap()
         .post(format!("http://{}/v1/folders", at.api_addr()))
+        .bearer_auth(at.token())
         .json(&svrngs_node::folder::FolderAsk {
             dir: folder.to_path_buf(),
             group: NS.into(),
@@ -2364,6 +2365,7 @@ async fn removal(ada: &Node, who: &str) -> svrngs_node::removal::Outcome {
             ada.api_addr(),
             svrngs_node::removal::REMOVALS_ROUTE
         ))
+        .bearer_auth(ada.token())
         .json(&svrngs_node::removal::RemovalAsk {
             group: NS.into(),
             person: who.into(),

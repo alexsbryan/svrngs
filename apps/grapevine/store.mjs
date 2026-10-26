@@ -20,12 +20,14 @@ import { readFileSync, renameSync, writeFileSync } from 'node:fs';
 /**
  * The group's record, through the loopback API of the computer this app runs
  * on (`api`, `http://127.0.0.1:<port>`, as the data dir's `api` file names
- * it). A person is named by their first key, `person_key`, which the door
+ * it), asked with `token`, what the `token` file beside it holds
+ * (give-token). A person is named by their first key, `person_key`, which the door
  * tells the app as `x-svrngs-key` (crates/svrngs-node/src/door.rs:123-127).
  */
-export function record(api) {
+export function record(api, token) {
+  const shown = { authorization: `Bearer ${token}` };
   async function call(path, body) {
-    const sent = body === undefined ? {} : { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) };
+    const sent = body === undefined ? { headers: shown } : { method: 'POST', headers: { ...shown, 'content-type': 'application/json' }, body: JSON.stringify(body) };
     let res;
     try {
       res = await fetch(`${api}${path}`, sent);

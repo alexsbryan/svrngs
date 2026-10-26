@@ -304,9 +304,16 @@ impl Person {
         self.home.join("svrngs.log")
     }
 
+    /// The token its record asks of a program, from the file beside its
+    /// `api` file, as a program on this computer reads it (give-token).
+    fn token(&self) -> String {
+        std::fs::read_to_string(self.home.join(".svrngs/token")).unwrap_or_default()
+    }
+
     /// `GET <path>` of its record API, as a program on this computer asks.
     pub async fn get(&self, path: &str) -> Value {
-        let got = self.http.get(format!("http://{}{path}", self.api)).send();
+        let got = self.http.get(format!("http://{}{path}", self.api));
+        let got = got.bearer_auth(self.token()).send();
         let got = got.await.unwrap().bytes().await.unwrap();
         serde_json::from_slice(&got).unwrap_or(Value::Null)
     }
@@ -316,6 +323,7 @@ impl Person {
     pub async fn post(&self, path: &str, body: &Value) -> (u16, Value) {
         let sent = self.http.post(format!("http://{}{path}", self.api));
         let sent = sent
+            .bearer_auth(self.token())
             .header("content-type", "application/json")
             .body(body.to_string());
         let got = sent.send().await.unwrap();

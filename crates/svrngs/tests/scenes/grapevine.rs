@@ -64,7 +64,8 @@ fn app(dir: &std::path::Path) -> std::path::PathBuf {
 async fn started(app: &std::path::Path, who: &Person) -> (String, tokio::process::Child) {
     let record = std::fs::read_to_string(who.home.join(".svrngs/api")).unwrap();
     let config = who.home.join("grapevine.json");
-    let said = json!({ "record": record.trim(), "data": who.home });
+    let token = who.home.join(".svrngs/token");
+    let said = json!({ "record": record.trim(), "token": token, "data": who.home });
     std::fs::write(&config, said.to_string()).unwrap();
     let mut server = tokio::process::Command::new("node")
         .arg(app.join("server.mjs"))

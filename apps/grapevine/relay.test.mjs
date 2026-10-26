@@ -128,7 +128,7 @@ test("a group whose people can't be read keeps svrngs's answer, and says so", as
   const traced = [];
   const store = { people: () => Promise.reject(new Error('the record is away')) };
   try {
-    const held = await relay.heldBy(`http://127.0.0.1:${api.address().port}`, store, (what, fields) => traced.push({ what, ...fields }))();
+    const held = await relay.heldBy(`http://127.0.0.1:${api.address().port}`, 'the-token', store, (what, fields) => traced.push({ what, ...fields }))();
     assert.deepEqual(held, [{ id: 'page', name: '1400 Page', me: 'Jo' }]);
     assert.ok(traced.some((t) => t.group === 'page' && t.error === 'the record is away'), JSON.stringify(traced));
   } finally {

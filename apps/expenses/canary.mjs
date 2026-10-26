@@ -4,27 +4,32 @@
 // `reduce`, to the same balances — the ones the acts say. It uses only what DESIGN §3 says an
 // app gets: the people, and the record over loopback.
 //
-//   node apps/expenses/canary.mjs <group> <Sam's record> <Alex's> <Bo's> <Cy's>
+//   node apps/expenses/canary.mjs <group> <Sam's svrngs data dir> <Alex's> <Bo's> <Cy's>
 //
-// Each record is a member node's loopback API, `http://127.0.0.1:<port>`.
+// Each record is a member's svrngs data dir: the loopback address its `api`
+// file names, asked with the token its `token` file holds (give-token).
 // The caller (crates/svrngs-node/tests/canaries.rs) stands up one computer
 // for each of Sam, Alex, Bo and Cy, since a computer writes only as its own
 // person (DESIGN §3, `not_yours`). Exit 0 holds; 1 says what broke, and when
 // the copies differ, names each and what it says.
 
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { isDeepStrictEqual as same } from 'node:util';
 
 import { EXPENSE, SETTLE, SHARE, actsOf, init, money, reduce } from './expenses.js';
 
 const [group, samAt, alexAt, boAt, cyAt] = process.argv.slice(2);
 if (!cyAt) {
-  console.error("usage: node canary.mjs <group> <Sam's record> <Alex's> <Bo's> <Cy's>");
+  console.error("usage: node canary.mjs <group> <Sam's svrngs data dir> <Alex's> <Bo's> <Cy's>");
   process.exit(2);
 }
-const SAM = { name: "Sam's computer", at: samAt };
-const ALEX = { name: "Alex's computer", at: alexAt };
-const BO = { name: "Bo's computer", at: boAt };
-const CY = { name: "Cy's computer", at: cyAt };
+/** The record on `name`, whose svrngs data dir is `dir`. */
+const on = (name, dir) => ({ name, at: readFileSync(join(dir, 'api'), 'utf8').trim(), token: readFileSync(join(dir, 'token'), 'utf8').trim() });
+const SAM = on("Sam's computer", samAt);
+const ALEX = on("Alex's computer", alexAt);
+const BO = on("Bo's computer", boAt);
+const CY = on("Cy's computer", cyAt);
 const COMPUTERS = [SAM, ALEX, BO, CY];
 const PEOPLE = ['alex', 'bo', 'cy', 'sam'];
 /** What the acts below say each person is owed (+) or owes (-), in cents. */
@@ -36,7 +41,8 @@ const WAIT_MS = 10_000;
 
 async function call(computer, door, body) {
   const url = `${computer.at}/v1/rail/${door}?namespace=${encodeURIComponent(group)}`;
-  const sent = body === undefined ? {} : { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) };
+  const shown = { authorization: `Bearer ${computer.token}` };
+  const sent = body === undefined ? { headers: shown } : { method: 'POST', headers: { ...shown, 'content-type': 'application/json' }, body: JSON.stringify(body) };
   const res = await fetch(url, sent);
   const out = await res.json();
   if (!res.ok) throw new Error(`${computer.name} refused ${door}: ${res.status} ${JSON.stringify(out)}`);

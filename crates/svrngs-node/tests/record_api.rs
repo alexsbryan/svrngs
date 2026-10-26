@@ -163,6 +163,7 @@ async fn an_app_appends_on_loopback_and_the_woken_round_carries_it_to_b() {
             "http://{}/v1/rail/append?namespace={NS}",
             a.api_addr()
         ))
+        .bearer_auth(a.token())
         .json(&serde_json::json!({ "op": "record", "payload": { "n": 1 } }))
         .send()
         .await
@@ -202,6 +203,7 @@ async fn an_append_naming_a_group_not_held_is_refused() {
             "http://{}/v1/rail/append?namespace=elsewhere",
             a.api_addr()
         ))
+        .bearer_auth(a.token())
         .json(&serde_json::json!({ "op": "record", "payload": { "n": 1 } }))
         .send()
         .await
@@ -234,6 +236,7 @@ async fn the_people_read_lists_a_and_b_with_their_keys() {
             "http://{}/v1/rail/people?namespace={NS}",
             a.api_addr()
         ))
+        .bearer_auth(a.token())
         .send()
         .await
         .unwrap()
@@ -261,6 +264,7 @@ async fn the_people_read_lists_a_and_b_with_their_keys() {
 /// listener hands every request its own. The endpoint is kept for the
 /// transport the live lane dials through.
 async fn api_alone(dir: &tempfile::TempDir) -> (axum::Router, svrngs_node::iroh::Endpoint) {
+    let token = svrngs_node::api::kept_token(dir.path()).unwrap();
     let endpoint = svrngs_node::iroh::build_relayed_endpoint(
         svrngs_node::iroh::SecretKey::from_bytes(&signing(1).to_bytes()),
         Vec::new(),
@@ -280,14 +284,21 @@ async fn api_alone(dir: &tempfile::TempDir) -> (axum::Router, svrngs_node::iroh:
         },
         axum::Router::new(),
         axum::Router::new(),
+        axum::Router::new(),
+        token,
     );
     (router, endpoint)
 }
 
 /// A request to the people door from `caller`, if any; its status and body.
-async fn ask_as(router: axum::Router, caller: Option<SocketAddr>) -> (u16, serde_json::Value) {
+async fn ask_as(
+    router: axum::Router,
+    caller: Option<SocketAddr>,
+    token: &str,
+) -> (u16, serde_json::Value) {
     use tower::ServiceExt;
     let mut request = axum::http::Request::get(format!("/v1/rail/people?namespace={NS}"))
+        .header("authorization", format!("Bearer {token}"))
         .body(axum::body::Body::empty())
         .unwrap();
     if let Some(addr) = caller {
@@ -313,8 +324,9 @@ async fn ask_as(router: axum::Router, caller: Option<SocketAddr>) -> (u16, serde
 async fn a_caller_not_on_loopback_is_refused_by_name() {
     let dir = tempfile::tempdir().unwrap();
     let (router, _endpoint) = api_alone(&dir).await;
+    let token = token_in(dir.path());
     for caller in ["192.168.1.5:50000", "[2001:db8::5]:50000"] {
-        let (status, out) = ask_as(router.clone(), Some(caller.parse().unwrap())).await;
+        let (status, out) = ask_as(router.clone(), Some(caller.parse().unwrap()), &token).await;
         assert_eq!(status, 403, "{caller}: {out}");
         assert_eq!(out["kind"], "not_loopback", "{caller}");
         let named = out["error"].as_str().unwrap();
@@ -323,14 +335,14 @@ async fn a_caller_not_on_loopback_is_refused_by_name() {
             "the refusal names {caller}: {named}"
         );
     }
-    let (status, out) = ask_as(router.clone(), None).await;
+    let (status, out) = ask_as(router.clone(), None, &token).await;
     assert_eq!(
         (status, &out["kind"]),
         (403, &serde_json::json!("not_loopback")),
         "{out}"
     );
     for caller in ["127.0.0.1:50000", "[::ffff:127.0.0.1]:50000", "[::1]:50000"] {
-        let (status, out) = ask_as(router.clone(), Some(caller.parse().unwrap())).await;
+        let (status, out) = ask_as(router.clone(), Some(caller.parse().unwrap()), &token).await;
         assert_eq!(
             (status, &out["kind"]),
             (404, &serde_json::json!("not_held")),
@@ -346,6 +358,7 @@ async fn push(node: &Node, ns: &str, payload: Vec<u8>) -> (u16, serde_json::Valu
             "http://{}/v1/rail/live?namespace={ns}",
             node.api_addr()
         ))
+        .bearer_auth(node.token())
         .body(payload)
         .send()
         .await
@@ -360,6 +373,7 @@ async fn drain(node: &Node, ns: &str) -> serde_json::Value {
             "http://{}/v1/rail/live?namespace={ns}",
             node.api_addr()
         ))
+        .bearer_auth(node.token())
         .send()
         .await
         .unwrap()
@@ -583,6 +597,7 @@ async fn an_app_has_this_computers_key_sign_its_bytes() {
     let sign = |name: &str| {
         app()
             .post(format!("http://{}/v1/sign?app={name}", node.api_addr()))
+            .bearer_auth(node.token())
             .body("line 812")
     };
     let answer = sign("notes").send().await.unwrap();
@@ -622,7 +637,10 @@ const RECORD_ROUTES: [(&str, &str); 16] = [
     ("POST", "/v1/sign?app=x"),
     ("POST", "/v1/folders"),
     ("PUT", "/v1/blob?group=house&keep=1"),
-    ("GET", "/v1/blob/00?group=house"),
+    (
+        "GET",
+        "/v1/blob/0000000000000000000000000000000000000000000000000000000000000000?group=house",
+    ),
     ("POST", "/v1/removals"),
     ("POST", "/v1/handovers"),
     ("POST", "/v1/leaves"),
@@ -706,15 +724,17 @@ async fn a_program_without_the_token_is_refused_on_every_record_route() {
     node.endpoint().close().await;
 }
 
-/// **The token is the computer's, minted once and kept** (give-token): it
-/// is written beside the `api` file, owner-only (0600), on the first start,
-/// and read again at the next, so a program that read it keeps asking with
-/// it across a restart. The failing input: a token minted at every start.
+/// **The token is the person's alone** (give-token): it is written
+/// beside the `api` file, owner-only (0600), so a program the person runs
+/// reads it as it could read their key, and one meant to be contained, in
+/// a container, cannot. That it is kept across a restart is the command's
+/// test (crates/svrngs/tests/address.rs), which restarts the program over
+/// one data dir. The failing input: no token file.
 #[tokio::test]
-async fn the_token_is_minted_once_owner_only_and_kept_across_restarts() {
+async fn the_token_is_owner_only_beside_the_api_file() {
     let dir = tempfile::tempdir().unwrap();
-    let first = start(1, &dir).await;
-    let token = token_in(dir.path());
+    let node = start(1, &dir).await;
+    token_in(dir.path());
     assert!(dir.path().join("api").exists(), "beside the api file");
     #[cfg(unix)]
     {
@@ -725,15 +745,5 @@ async fn the_token_is_minted_once_owner_only_and_kept_across_restarts() {
             .mode();
         assert_eq!(mode & 0o777, 0o600, "the token is the person's alone");
     }
-    first.endpoint().close().await;
-    drop(first);
-    let again = start(1, &dir).await;
-    assert_eq!(
-        token_in(dir.path()),
-        token,
-        "the token is kept across a restart"
-    );
-    let (status, _) = asked_with(&again, "GET", "/v1/groups", Some(&token)).await;
-    assert_eq!(status, 200, "the token read before the restart still asks");
-    again.endpoint().close().await;
+    node.endpoint().close().await;
 }

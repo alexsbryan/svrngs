@@ -293,6 +293,7 @@ impl Node {
         let nudge = Arc::new(Notify::new());
         // One live buffer: the live route fills it, the loopback drain empties it.
         let live = Arc::new(LiveBuffer::default());
+        let token = crate::api::kept_token(&data_dir)?;
         let api = crate::api::bind(api).await?;
         let endpoint = build_relayed_endpoint(
             secret,
@@ -353,11 +354,12 @@ impl Node {
         let routes = crate::api::router(
             rail_api.clone(),
             crate::surface::router(asking.clone())
-                .merge(asking.oidc.clone().router())
                 .merge(crate::folder::router(folders.clone()))
                 .merge(crate::removal::router(asking.clone()))
                 .merge(crate::room::route::router(asking.clone())),
+            asking.oidc.clone().router(),
             crate::home::router(asking.clone(), rail_api),
+            token,
         );
         let api = crate::api::serve(routes.clone(), api);
         if let Err(e) = crate::api::write_address(&data_dir, api.addr()) {

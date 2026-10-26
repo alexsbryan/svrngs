@@ -6,7 +6,7 @@
 // first's answers. It uses only what DESIGN §3 says an app gets: the people,
 // and the record over loopback.
 //
-//   node apps/events/canary.mjs <group> <second group> <Sam's record> <Alex's> <Bo's> <Cy's>
+//   node apps/events/canary.mjs <group> <second group> <Sam's svrngs data dir> <Alex's> <Bo's> <Cy's>
 //
 // The caller (crates/svrngs-node/tests/canaries.rs) stands up one computer
 // for each of Sam, Alex, Bo and Cy in the group, since a computer writes only
@@ -15,19 +15,25 @@
 // differ, names each and what it says.
 
 import { randomBytes } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { isDeepStrictEqual as same } from 'node:util';
 
 import { CAME, COMING, EVENT, actsOf, fold } from './events.js';
 
 const [group, second, samAt, alexAt, boAt, cyAt] = process.argv.slice(2);
 if (!cyAt) {
-  console.error("usage: node canary.mjs <group> <second group> <Sam's record> <Alex's> <Bo's> <Cy's>");
+  console.error("usage: node canary.mjs <group> <second group> <Sam's svrngs data dir> <Alex's> <Bo's> <Cy's>");
   process.exit(2);
 }
-const SAM = { name: "Sam's computer", at: samAt };
-const ALEX = { name: "Alex's computer", at: alexAt };
-const BO = { name: "Bo's computer", at: boAt };
-const CY = { name: "Cy's computer", at: cyAt };
+/** The record on `name`, whose svrngs data dir is `dir`: the loopback
+ * address its `api` file names, asked with the token its `token` file holds
+ * (give-token). */
+const on = (name, dir) => ({ name, at: readFileSync(join(dir, 'api'), 'utf8').trim(), token: readFileSync(join(dir, 'token'), 'utf8').trim() });
+const SAM = on("Sam's computer", samAt);
+const ALEX = on("Alex's computer", alexAt);
+const BO = on("Bo's computer", boAt);
+const CY = on("Cy's computer", cyAt);
 const COMPUTERS = [SAM, ALEX, BO, CY];
 const PEOPLE = { [group]: ['alex', 'bo', 'cy', 'sam'], [second]: ['di', 'sam'] };
 /** How long one copy is given to hold an act the other wrote (apps/expenses/canary.mjs, WAIT_MS). */
@@ -35,7 +41,8 @@ const WAIT_MS = 10_000;
 
 async function call(computer, door, at, body) {
   const url = `${computer.at}/v1/rail/${door}?namespace=${encodeURIComponent(at)}`;
-  const sent = body === undefined ? {} : { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) };
+  const shown = { authorization: `Bearer ${computer.token}` };
+  const sent = body === undefined ? { headers: shown } : { method: 'POST', headers: { ...shown, 'content-type': 'application/json' }, body: JSON.stringify(body) };
   const res = await fetch(url, sent);
   const out = await res.json();
   if (!res.ok) throw new Error(`${computer.name} refused ${door} in ${at}: ${res.status} ${JSON.stringify(out)}`);

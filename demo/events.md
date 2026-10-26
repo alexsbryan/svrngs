@@ -64,7 +64,7 @@ the app's (`apps/events/nouns.txt`, `scripts/vocab_check.py`).
 on Sam's computer, with Node.js installed. In a terminal, in that copy:
 
 ```
-echo "{\"record\": \"$(cat ~/.svrngs/api)\", \"who\": \"x-svrngs-key\"}" > ~/events.json
+echo "{\"record\": \"$(cat ~/.svrngs/api)\", \"token\": \"$HOME/.svrngs/token\", \"who\": \"x-svrngs-key\"}" > ~/events.json
 node apps/events/server.mjs ~/events.json
 ```
 

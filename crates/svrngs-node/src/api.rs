@@ -9,9 +9,14 @@
 //! (svrngs: the mesh, media, publish, origin, membership, store and ledger
 //! doors beside them stay behind; PLAN §4, U3's inventory.)
 //!
-//! **Loopback IS the auth.** There is no bearer here, and the bind refuses
-//! any address that is not loopback rather than serving an unauthenticated
-//! API to a network.
+//! **Loopback is not the auth; the token is** (give-token). The bind
+//! refuses any address that is not loopback, and every request to the
+//! record shows the token in [`TOKEN_FILE`] ([`holds_the_token`]). A
+//! container on a Mac running podman reaches the Mac's `127.0.0.1`
+//! (svrn-docs `rings/current/GIVE.md` §5), so loopback alone let a program
+//! meant to be contained write as the person; a program the person runs
+//! reads the token as it could read their key, so it still acts as them
+//! (WHAT_CAN_ACT_AS_YOU §4, kept for their own programs).
 
 use std::net::SocketAddr;
 
@@ -30,7 +35,7 @@ use crate::rail::RailApi;
 /// crate names its errors, since `Refusal` is the command's, cli.rs.)
 #[derive(Debug, thiserror::Error)]
 pub enum ApiError {
-    #[error("{0} is not a loopback address; this API has no auth because loopback is the auth")]
+    #[error("{0} is not a loopback address; the record is this computer's alone")]
     NotLoopback(SocketAddr),
     #[error("cannot listen on {0}: {1}")]
     Listen(SocketAddr, std::io::Error),
@@ -40,6 +45,48 @@ pub enum ApiError {
     AddressFile(std::path::PathBuf, std::io::Error),
     #[error("{0} names no address svrngs listens at: delete it, and svrngs takes a new one as it starts")]
     NoAddress(std::path::PathBuf),
+    #[error("cannot read or keep this computer's token, {0}: {1}")]
+    TokenFile(std::path::PathBuf, std::io::Error),
+    #[error("{0} holds no token svrngs made: delete it, and svrngs makes a new one as it starts")]
+    NoToken(std::path::PathBuf),
+}
+
+/// The file in the data dir, beside [`API_FILE`] and owner-only (0600),
+/// holding the token a program shows the record, as `Authorization: Bearer
+/// <token>`: made at the first start and kept ([`kept_token`]).
+pub const TOKEN_FILE: &str = "token";
+
+/// This computer's token, and the file a refusal names for it.
+#[derive(Clone)]
+pub struct Token(std::sync::Arc<(String, std::path::PathBuf)>);
+
+/// The token kept in `data_dir`, or, before the first start, a fresh one
+/// written there owner-only, as the sign-in key is kept (`oidc.rs`). A file
+/// that cannot be read, or holds no token svrngs made, is refused, never
+/// replaced: a program that read it would be refused in silence.
+#[expect(clippy::disallowed_methods, reason = "draws the record's token")]
+pub fn kept_token(data_dir: &std::path::Path) -> Result<Token, ApiError> {
+    use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
+    let path = data_dir.join(TOKEN_FILE);
+    let text = match std::fs::read_to_string(&path) {
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            let mut secret = [0u8; 32];
+            // As identity.rs: getrandom failing is a host with no entropy.
+            getrandom::fill(&mut secret).expect("failed to draw the record's token");
+            let text = URL_SAFE_NO_PAD.encode(secret);
+            crate::declared::write_secret(&path, text.as_bytes())
+                .map_err(|(at, e)| ApiError::TokenFile(at, e))?;
+            tracing::debug!(target: "rails", path = %path.display(), "api: made this computer's token, once, owner-only");
+            text
+        }
+        read => read.map_err(|e| ApiError::TokenFile(path.clone(), e))?,
+    };
+    let made = URL_SAFE_NO_PAD
+        .decode(text.trim())
+        .is_ok_and(|b| b.len() == 32);
+    tracing::debug!(target: "rails", path = %path.display(), made, "api: read this computer's token");
+    made.then(|| Token(std::sync::Arc::new((text.trim().into(), path.clone()))))
+        .ok_or(ApiError::NoToken(path))
 }
 
 /// The file in the data dir naming where the API listens, as a URL and a
@@ -80,11 +127,13 @@ pub fn write_address(data_dir: &std::path::Path, addr: SocketAddr) -> Result<(),
 }
 
 /// The routes this API serves: the rail's, and `apps` — the routes an app
-/// asks beside the record ([`crate::surface::router`]) — refused to a page
-/// in a browser ([`not_from_a_page`]); and, for a request whose `Host`
-/// names a lend, `lends`, the lend's origin ([`crate::origin`], u5-2), which
-/// answers no route of the record's. All behind the one loopback check.
-pub fn router(api: RailApi, apps: Router, lends: Router) -> Router {
+/// asks beside the record ([`crate::surface::router`]) — each asked for
+/// `token` ([`holds_the_token`]); `signin`, which keeps its own client
+/// secret ([`crate::oidc::provider`]); all refused to a page in a browser
+/// ([`not_from_a_page`]); and, for a request whose `Host` names a lend,
+/// `lends`, the lend's origin ([`crate::origin`], u5-2), which answers no
+/// route of the record's. All behind the one loopback check.
+pub fn router(api: RailApi, apps: Router, signin: Router, lends: Router, token: Token) -> Router {
     Router::new()
         // The ring rail's doors (FIVE_PROGRAMS fp-44): durable append and
         // the log, and the live lane's local buffer half. The bodies mirror
@@ -100,6 +149,8 @@ pub fn router(api: RailApi, apps: Router, lends: Router) -> Router {
         .route("/v1/rail/people", get(crate::rail::people))
         .with_state(api)
         .merge(apps)
+        .layer(axum::middleware::from_fn_with_state(token, holds_the_token))
+        .merge(signin)
         .layer(axum::middleware::from_fn(not_from_a_page))
         .layer(axum::middleware::from_fn_with_state(lends, to_a_lend))
         // svrngs: every request's caller is asked too, so a listener that
@@ -149,6 +200,25 @@ async fn not_from_a_page(request: Request, next: Next) -> Response {
         .into_response()
 }
 
+/// Serve the record only to a program that shows this computer's token
+/// (give-token): a caller showing none, or another, is refused 401 naming
+/// the file that holds it, before any door runs.
+async fn holds_the_token(State(token): State<Token>, request: Request, next: Next) -> Response {
+    let (secret, file) = &*token.0;
+    let shown = crate::oidc::provider::bearer(request.headers());
+    let holds = shown.is_ok_and(|s| crate::oidc::provider::same(s.as_bytes(), secret.as_bytes()));
+    tracing::debug!(target: "rails", holds, shown = shown.is_ok(), path = %request.uri().path(), "api: whether the caller showed this computer's token");
+    if holds {
+        return next.run(request).await;
+    }
+    let why = format!("send this computer's token, which {} holds, as `Authorization: Bearer <token>`: the record answers no program without it", file.display());
+    (
+        StatusCode::UNAUTHORIZED,
+        Json(serde_json::json!({ "error": why, "kind": "no_token" })),
+    )
+        .into_response()
+}
+
 /// Serve a request only from a caller on this computer: the bind guard's
 /// one decision ([`check_loopback`]) asked of the caller's address, which
 /// [`serve`] hands every request. A caller elsewhere, or one whose address
@@ -186,8 +256,8 @@ async fn from_this_computer(request: Request, next: Next) -> Response {
 }
 
 /// The bind guard, as a function so it has a failing input that can be
-/// named without standing an iroh endpoint up. This API has no auth because
-/// loopback IS the auth; anywhere else is publishing it.
+/// named without standing an iroh endpoint up. The record is this
+/// computer's alone; served anywhere else, it would be published.
 pub fn check_loopback(listen: SocketAddr) -> Result<(), ApiError> {
     // svrngs: canonical first, so `::ffff:127.0.0.1` reads as the loopback
     // it is, where `Ipv6Addr::is_loopback` alone says no.

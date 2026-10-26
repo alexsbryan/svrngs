@@ -150,6 +150,7 @@ fn http() -> reqwest::Client {
 async fn asked(node: &Node, body: Value) -> (u16, Value) {
     let answer = http()
         .post(format!("http://{}/v1/room", node.api_addr()))
+        .bearer_auth(node.token())
         .json(&body)
         .send()
         .await
@@ -165,6 +166,7 @@ async fn asked(node: &Node, body: Value) -> (u16, Value) {
 async fn on(node: &Node) -> Value {
     let answer = http()
         .get(format!("http://{}/v1/room", node.api_addr()))
+        .bearer_auth(node.token())
         .send()
         .await
         .unwrap();
@@ -507,6 +509,7 @@ async fn a_room_that_cannot_be_read_is_said_until_a_lend_is_turned_on_again() {
     let alex = alex(alex_dir.path(), SAM).await;
     let unread = http()
         .get(format!("http://{}/v1/room", alex.api_addr()))
+        .bearer_auth(alex.token())
         .send()
         .await
         .unwrap();

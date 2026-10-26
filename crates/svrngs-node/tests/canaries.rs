@@ -117,11 +117,11 @@ async fn computers(dirs: &[tempfile::TempDir; 4]) -> Vec<Node> {
     nodes
 }
 
-/// Each computer's loopback record API, in `PEOPLE`'s order.
-fn records(nodes: &[Node]) -> Vec<String> {
-    nodes
-        .iter()
-        .map(|n| format!("http://{}", n.api_addr()))
+/// Each computer's svrngs data dir, in `PEOPLE`'s order: where an app
+/// reads the record's address and the token it asks with (give-token).
+fn records(dirs: &[tempfile::TempDir]) -> Vec<String> {
+    dirs.iter()
+        .map(|d| d.path().display().to_string())
         .collect()
 }
 
@@ -161,7 +161,7 @@ async fn expenses() {
     let nodes = computers(&dirs).await;
     let args: Vec<String> = [GROUP.to_string()]
         .into_iter()
-        .chain(records(&nodes))
+        .chain(records(&dirs))
         .collect();
     canary("expenses", &args).await;
     for n in &nodes {
@@ -184,7 +184,7 @@ async fn events() {
     admit(&nodes[0], SECOND, "di", 5);
     let args: Vec<String> = [GROUP.to_string(), SECOND.to_string()]
         .into_iter()
-        .chain(records(&nodes))
+        .chain(records(&dirs))
         .collect();
     canary("events", &args).await;
     for n in &nodes {

@@ -3,9 +3,10 @@
 per film the group's folders name, each holding that film's URL at the
 meeting point's endpoint, so Jellyfin plays it by HTTP range from there.
 
-    strm.py API_URL LIBRARY_DIR
+    strm.py API_URL TOKEN_FILE LIBRARY_DIR
 
-API_URL is the meeting point's record API (its data dir's `api` file);
+API_URL is the meeting point's record API (its data dir's `api` file),
+asked with what TOKEN_FILE, the `token` file beside it, holds (give-token);
 what it answers at GET /v1/folders names the endpoint and every standing
 folder. A hash two holders share is one film, one stub. A film is named
 by its kind, as the first run named its two (ExpMp4, ExpMkv), so the
@@ -19,8 +20,9 @@ import urllib.request
 
 TYPES = {".mp4": "video/mp4", ".mkv": "video/x-matroska"}
 
-api, library = sys.argv[1].strip().rstrip("/"), sys.argv[2]
-listed = json.load(urllib.request.urlopen(f"{api}/v1/folders", timeout=10))
+api, token, library = sys.argv[1].strip().rstrip("/"), sys.argv[2], sys.argv[3]
+shown = {"authorization": "Bearer " + open(token).read().strip()}
+listed = json.load(urllib.request.urlopen(urllib.request.Request(f"{api}/v1/folders", headers=shown), timeout=10))
 endpoint = listed["endpoint"]
 films = {}
 for folder in listed["folders"]:

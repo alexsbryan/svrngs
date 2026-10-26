@@ -39,6 +39,7 @@ async fn synced_in(who: &Node, root: &Path, group: &str) -> PathBuf {
     std::fs::create_dir_all(&dir).unwrap();
     let said = http()
         .post(format!("http://{}/v1/folders", who.api_addr()))
+        .bearer_auth(who.token())
         .json(&json!({ "dir": dir, "group": group }))
         .send()
         .await
@@ -61,7 +62,12 @@ fn carry(dir: &Path, name: &str) {
 /// What `node` lends its browser in `group` now (`GET /v1/lends`).
 async fn lends(node: &Node, group: &str) -> Value {
     let url = format!("http://{}/v1/lends?namespace={group}", node.api_addr());
-    let answer = http().get(url).send().await.unwrap();
+    let answer = http()
+        .get(url)
+        .bearer_auth(node.token())
+        .send()
+        .await
+        .unwrap();
     assert!(answer.status().is_success(), "{:?}", answer.text().await);
     answer.json().await.unwrap()
 }
@@ -690,7 +696,9 @@ async fn an_app_is_told_each_person_s_time_in_the_group() {
     }
     let root = tempfile::tempdir().unwrap();
     carry(&synced_in(ana, root.path(), &group).await, "Money");
-    let leave = http().post(format!("http://{}{LEAVES_ROUTE}", cy.api_addr()));
+    let leave = http()
+        .post(format!("http://{}{LEAVES_ROUTE}", cy.api_addr()))
+        .bearer_auth(cy.token());
     let ask = leave
         .json(&LeaveAsk {
             group: group.clone(),

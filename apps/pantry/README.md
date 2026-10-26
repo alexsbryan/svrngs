@@ -23,7 +23,7 @@ annotation, and each person whose computer did not answer. `serve` prints
 one address; keep it running.
 
 The pantry reads this computer's record at `$SVRNGS_DIR/api`, else
-`~/.svrngs/api`. `--record URL` names another record, and `--port N` names
+`~/.svrngs/api`, with the token in `token` beside it. `--record URL` names another record, and `--port N` names
 another port. Without one, `serve` takes the address it took last time,
 kept in your data dir's `pantry-port`, so the address you pasted into your
 interface keeps working after a restart. If another program holds that

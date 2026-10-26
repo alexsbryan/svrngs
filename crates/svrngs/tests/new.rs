@@ -522,6 +522,7 @@ async fn the_bare_command_prints_where_apps_reach_the_record() {
         .build()
         .unwrap()
         .get(format!("http://{url}/v1/rail/people?namespace=elsewhere"))
+        .bearer_auth(std::fs::read_to_string(dir.path().join("token")).unwrap())
         .send()
         .await
         .expect("the printed address answers");

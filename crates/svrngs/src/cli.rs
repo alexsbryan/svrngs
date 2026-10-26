@@ -911,14 +911,16 @@ fn said(seed: &Seed, text: &str, said: impl FnOnce(Outcome) -> Said) -> Result<S
     }
 }
 
-/// POST `body` to `route` of svrngs running here, at the API it wrote:
-/// whether it answered success, and its body.
+/// POST `body` to `route` of svrngs running here, at the API it wrote,
+/// showing the token it keeps beside it: whether it answered success, and
+/// its body.
 async fn ask_running(
     root: &Path,
     route: &str,
     body: &impl serde::Serialize,
 ) -> Result<(bool, String), Refusal> {
-    let api = std::fs::read_to_string(root.join(svrngs_node::api::API_FILE)).unwrap_or_default();
+    let read = |file| std::fs::read_to_string(root.join(file)).unwrap_or_default();
+    let (api, token) = (read(API_FILE), read(svrngs_node::api::TOKEN_FILE));
     let body = serde_json::to_string(body).expect("an ask is JSON");
     let to = format!("{}{route}", api.trim());
     let client = http().map_err(|error| {
@@ -926,6 +928,7 @@ async fn ask_running(
             Refusal::NoClient(error)
         })?;
     let sent = client.post(to).header("content-type", "application/json");
+    let sent = sent.bearer_auth(token.trim());
     let answer = sent.body(body).send().await.map_err(|e| {
         tracing::debug!(target: "cli", api, error = %e, "cli: refused — no svrngs answers at the API it wrote");
         Refusal::NotRunning

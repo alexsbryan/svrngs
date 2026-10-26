@@ -179,7 +179,13 @@ async fn leaving_on_the_home_page_is_said_as_a_leave_everywhere(engine: harness:
 async fn left_on(node: &Node, group: &str) -> bool {
     let http = reqwest::Client::builder().no_proxy().build().unwrap();
     let url = format!("http://{}/v1/groups", node.api_addr());
-    let held = http.get(url).send().await.unwrap().text().await.unwrap();
+    let held = http
+        .get(url)
+        .bearer_auth(node.token())
+        .send()
+        .await
+        .unwrap();
+    let held = held.text().await.unwrap();
     let held: Value = serde_json::from_str(&held).unwrap();
     let groups = held["groups"].as_array().cloned().unwrap_or_default();
     groups.iter().any(|g| g["id"] == group && g["left"] == true)
@@ -339,7 +345,9 @@ async fn a_leave_reaches_the_leavers_other_computer(engine: harness::Engine) {
     // As `svrngs leave` asks: what happened.
     let leave = |g: &str| {
         let ask = reqwest::Client::builder().no_proxy().build().unwrap();
-        let ask = ask.post(format!("http://{}{LEAVES_ROUTE}", one.api_addr()));
+        let ask = ask
+            .post(format!("http://{}{LEAVES_ROUTE}", one.api_addr()))
+            .bearer_auth(one.token());
         let body = serde_json::to_string(&LeaveAsk {
             group: g.to_string(),
         });
@@ -539,6 +547,7 @@ async fn leave_from(node: &Node, group: &str) -> svrngs_node::removal::Outcome {
     });
     let sent = ask
         .post(format!("http://{}{LEAVES_ROUTE}", node.api_addr()))
+        .bearer_auth(node.token())
         .header("content-type", "application/json")
         .body(body.unwrap())
         .send();

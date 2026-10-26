@@ -10,7 +10,7 @@
 //   node apps/doc/server.mjs --port <port> --keep <dir> [--svrngs <svrngs's api file>]
 //
 // `--svrngs` is the `api` file in svrngs's data dir (`~/.svrngs/api`): the
-// server asks it once a minute for this computer's name in its groups, so
+// server asks it, with the token in the `token` file beside it, once a minute for this computer's name in its groups, so
 // every page can say whose doc it is, and whose computer is not answering
 // when it says goodnight. Without it, the pages name nobody.
 // `DOC_DEBUG=1` traces each decision as a JSON line on stderr.
@@ -162,7 +162,9 @@ export async function start({ port = 0, keep, api = null }) {
     if (!api) return;
     try {
       const base = readFileSync(api, 'utf8').trim().replace(/\/$/, '');
-      const groups = (await (await fetch(`${base}/v1/groups`)).json()).groups ?? [];
+      const token = readFileSync(join(dirname(api), 'token'), 'utf8').trim();
+      const asked = await fetch(`${base}/v1/groups`, { headers: { authorization: `Bearer ${token}` } });
+      const groups = (await asked.json()).groups ?? [];
       const names = [...new Set(groups.map((g) => g.person).filter(Boolean))];
       const now = names.length === 1 ? names[0] : null;
       trace('lender: asked svrngs this computer\'s name', { names, lender: now, said: names.length > 1 ? 'two names in its groups, so none' : undefined });

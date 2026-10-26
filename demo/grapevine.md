@@ -80,7 +80,7 @@ It says *"You're in Waller block, as Kim."* and keeps running.
 **4. In each window, the same two lines:**
 
 ```
-echo "{\"record\": \"$(cat $HOME/.svrngs/api)\", \"data\": \"$HOME\"}" > $HOME/grapevine.json
+echo "{\"record\": \"$(cat $HOME/.svrngs/api)\", \"token\": \"$HOME/.svrngs/token\", \"data\": \"$HOME\"}" > $HOME/grapevine.json
 node apps/grapevine/server.mjs $HOME/grapevine.json
 ```
 

@@ -157,7 +157,7 @@ async fn events(engine: Engine) {
     let record = std::fs::read_to_string(sam.home.join(".svrngs/api")).unwrap();
     std::fs::write(
         &config,
-        json!({ "record": record.trim().trim_end_matches('/'), "who": "x-svrngs-key" }).to_string(),
+        json!({ "record": record.trim().trim_end_matches('/'), "token": sam.home.join(".svrngs/token"), "who": "x-svrngs-key" }).to_string(),
     )
     .unwrap();
     let mut server = tokio::process::Command::new("node")

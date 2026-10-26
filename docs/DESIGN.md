@@ -153,13 +153,21 @@ never stale. The lender's own lend, opened on their own computer, goes
 through their own door's rules too, its secret injected and its limit
 counted (`door::Who::Own`).
 
-**Localhost is the trust boundary.** Any process on the lender's computer
-can reach a lent port and type an identity header, as it can reach any
-localhost service. The computer is the boundary, and any program on it
-speaks as its person, and only as its person: the record API writes a body
-naming this computer's person as its own act, and refuses one naming
-anyone else (`not_yours`), whose entries are signed on their own devices. A tie between the node and each process it lends to
-waits in PLAN §2.
+**The person's own programs are the trust boundary.** A program on this
+computer asks the record API showing the token in the data dir's `token`
+file, beside `api`, owner-only, as `Authorization: Bearer <token>`;
+without it every record route refuses, 401 `no_token`, naming the file
+(`crates/svrngs-node/src/api.rs`, `holds_the_token`). Loopback alone was
+the boundary until give-token, and it is not one: a container on a Mac
+running podman reaches the Mac's `127.0.0.1` (svrn-docs
+`rings/current/GIVE.md` §5). A program the person runs reads the token as
+it could read their key, so it speaks as its person, and only as its
+person: the record API writes a body naming this computer's person as its
+own act, and refuses one naming anyone else (`not_yours`), whose entries
+are signed on their own devices. Sign-in's routes keep their client's own
+secret. Any process on the lender's computer can still reach a lent port
+and type an identity header, as it can reach any localhost service. A tie
+between the node and each process it lends to waits in PLAN §2.
 
 **A lent app writes as whoever asks by naming the act.** Its answer names,
 in `x-svrngs-append`, a JSON array of acts, each `{group, op}` or `{group,

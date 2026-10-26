@@ -663,6 +663,7 @@ async fn conformance(way: Way, engine: Engine) {
         let http = reqwest::Client::builder().no_proxy().build().unwrap();
         let log = http
             .get(format!("http://{api}/v1/rail/log?namespace={NS}"))
+            .bearer_auth(g.alex.token())
             .send()
             .await
             .unwrap()

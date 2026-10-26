@@ -26,9 +26,14 @@ const PARTIAL = {
 };
 const PARTLY = /may not have reached this computer yet/;
 
-/** svrngs's record API as the store reads it (store.mjs `record`). */
+/** The token the stand-in asks for, as svrngs asks for its `token` file's. */
+const TOKEN = 'the-token';
+
+/** svrngs's record API as the store reads it (store.mjs `record`): an ask
+ * without the token refused, as svrngs refuses it (give-token). */
 function svrngs(GROUPS = PARTIAL) {
   const server = http.createServer((req, res) => {
+    if (req.headers.authorization !== `Bearer ${TOKEN}`) return res.writeHead(401).end('{"kind":"no_token"}');
     const url = new URL(req.url, 'http://x');
     const g = GROUPS[url.searchParams.get('namespace')];
     const answer = url.pathname === '/v1/groups'
@@ -46,7 +51,8 @@ function svrngs(GROUPS = PARTIAL) {
 
 async function events(api) {
   const dir = mkdtempSync(join(tmpdir(), 'events-partial-'));
-  writeFileSync(join(dir, 'config.json'), JSON.stringify({ record: api }));
+  writeFileSync(join(dir, 'token'), TOKEN);
+  writeFileSync(join(dir, 'config.json'), JSON.stringify({ record: api, token: join(dir, 'token') }));
   const child = spawn(process.execPath, [new URL('./server.mjs', import.meta.url).pathname, join(dir, 'config.json')], { stdio: ['ignore', 'pipe', 'inherit'] });
   const line = await new Promise((done, fail) => {
     child.stdout.once('data', (b) => done(String(b)));

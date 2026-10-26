@@ -74,7 +74,7 @@ page open web/open.html <meta http-equiv="Content-Security-Policy" content=
   form-action 'none'
 
 # Where svrngs listens.
-listen crates/svrngs-node/src/api.rs: let listener = tokio::net::TcpListener::bind(listen) | loopback alone: the record API, the home page and each lend's origin, refused off loopback by `check_loopback` just before (api.rs:235)
+listen crates/svrngs-node/src/api.rs: let listener = tokio::net::TcpListener::bind(listen) | loopback alone: the record API, the home page and each lend's origin, refused off loopback by `check_loopback` just before (api.rs:308)
 listen crates/svrngs-node/src/room/owner.rs: let listener = tokio::net::TcpListener::bind(addr) | the room: this computer's private address alone (`pick`), for each lend its person turned on, whenever svrngs runs on the network where they turned it on (`serves`, its router's hardware address), kept across restarts; each caller asked to be on this network (room/owner.rs `listen`)
 listen crates/svrngs-node/src/network.rs: let probe = std::net::UdpSocket::bind("0.0.0.0:0").ok()?; | no listener: a socket connected to learn the outward route's address, which sends nothing and is dropped (network.rs `route`)
 listen crates/svrngs-node/src/guest.rs: .bind() | the iroh endpoint, UDP on every interface: QUIC that admits a dialer only by its key and the protocols the node names, so a member's computer is reached with no port forwarded (DESIGN §3)
@@ -89,6 +89,7 @@ gate crates/svrngs-node/tests/lend_origin.rs the_record_answers_no_lend_s_origin
 gate crates/svrngs-node/tests/door/main.rs a_forged_identity_header_is_replaced_by_the_verified_one | the door strips the identity headers a client typed, and says who the door verified
 gate crates/svrngs-node/tests/record_api.rs a_listener_not_on_loopback_is_refused_by_name | the record API binds loopback alone
 gate crates/svrngs-node/tests/record_api.rs a_caller_not_on_loopback_is_refused_by_name | the record API answers a caller on this computer alone
+gate crates/svrngs-node/tests/record_api.rs a_program_without_the_token_is_refused_on_every_record_route | the record API answers a program on this computer only when it shows the token in the data dir's `token` file, which is the person's alone: a container on a Mac reaches this computer's loopback, and cannot read it (api.rs, `holds_the_token`; svrn-docs GIVE.md §5)
 gate crates/svrngs-node/src/room_tests.rs picks_the_private_lan_address_or_none | the room door's address is the private LAN's, or none
 gate crates/svrngs-node/src/room_tests.rs a_caller_off_this_network_is_refused | the room door answers a caller on this network alone
 gate crates/svrngs-node/tests/browser/main.rs the_published_page_allows_no_loopback | the published page reaches nothing on this computer (v1patch-loopback)

@@ -155,6 +155,7 @@ impl House {
         let answer = tokio::time::timeout(
             Duration::from_secs(30),
             http.get(format!("http://{}{path}", self.alex.api_addr()))
+                .bearer_auth(self.alex.token())
                 .send(),
         )
         .await
@@ -341,6 +342,7 @@ async fn a_caller_off_loopback_is_refused_the_groups_and_the_lends() {
     ] {
         for (caller, want) in [("192.168.1.5:50000", 403), ("127.0.0.1:50000", 200)] {
             let mut request = axum::http::Request::get(&path)
+                .header("authorization", format!("Bearer {}", house.alex.token()))
                 .body(axum::body::Body::empty())
                 .unwrap();
             let caller: SocketAddr = caller.parse().unwrap();

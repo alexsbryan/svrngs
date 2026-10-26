@@ -78,6 +78,7 @@ async fn ask(node: &Node, route: &str, person: &str) -> (u16, Outcome) {
         .build()
         .unwrap()
         .post(format!("http://{}{route}", node.api_addr()))
+        .bearer_auth(node.token())
         .json(&RemovalAsk {
             group: NS.into(),
             person: person.into(),
@@ -430,6 +431,7 @@ mod leave_race {
     async fn leaves(node: &Node) -> Outcome {
         let answer = http()
             .post(format!("http://{}{LEAVES_ROUTE}", node.api_addr()))
+            .bearer_auth(node.token())
             .json(&LeaveAsk { group: NS.into() })
             .send()
             .await
@@ -445,6 +447,7 @@ mod leave_race {
         };
         let answer = http()
             .post(format!("http://{}{REMOVALS_ROUTE}", node.api_addr()))
+            .bearer_auth(node.token())
             .json(&ask)
             .send()
             .await
@@ -490,6 +493,7 @@ mod leave_race {
                 "http://{}/v1/rail/log?namespace={NS}",
                 node.api_addr()
             ))
+            .bearer_auth(node.token())
             .send()
             .await
             .unwrap()
