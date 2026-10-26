@@ -101,7 +101,7 @@ There are fourteen rows:
     - **The lender:** one socket per flow, on `127.0.0.1:0`, connected to the lent port, with the trust floor's line.
     - **The carrier:** iroh's QUIC datagrams (`endpoint/connection.rs:907`, `:969`, `:998`), in a small frame of flow, sequence, index and count, reassembled on the far side.
   - **Check:** (a) red first, green after; a plant that skips reassembly turns the large-packet test red.
-- [ ] give-tcp — depends [give-udp] — ONE ROW, red first, and `scripts/check.sh` once, at the close (GIVE.md §6):
+- [x] give-tcp 6acead15c — depends [give-udp] — ONE ROW, red first, and `scripts/check.sh` once, at the close (GIVE.md §6):
   - **(a) Tests: A TCP PORT IS LENT.** These fail at HEAD:
     - `svrngs share <port> --tcp` lends a TCP port, and a member's bytes reach it and come back.
     - Two connections at once run on two streams, and one stalled stream holds back neither the other nor the record's sync.
