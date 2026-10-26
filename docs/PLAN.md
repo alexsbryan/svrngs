@@ -197,7 +197,16 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   (`crates/svrngs/tests/tcp.rs`, `udp.rs`,
   `a_member_no_longer_standing_is_cut`; 662e30be); +16 library, 0 core, 0
   `apps/`, 0 surface, the cap 19,111, its raise landed for the operator
-  (6019879b);
+  (6019879b). Landed, give-app-runtime: `apps/give`, a crate linking no
+  svrngs crate (`tests/surface.rs`), with a card read once and refused by
+  field, a runtime naming no svrngs type that starts, checks, snapshots,
+  restores and stops a card in rootless podman, and `give check`; the
+  Minecraft and Factorio cards pass it on this Mac and on Linux
+  (`demo/runs/give/2026-10-26-cards/`), a plain copy and a Mac's new
+  machine never-ran there; 0 core, 0 library, `apps/` about 1,430 lines
+  of Rust by lean_check's rule and 68 of YAML, past GIVE.md §9's 460 to
+  860 for these pieces, and Give's surface its five `x-svrngs` fields and
+  `give check`;
 - sealing, at its §2 trigger.
 
 The operator's switch stands apart from that order: when they flip
