@@ -92,10 +92,7 @@ class Said extends Error {
   }
 }
 
-function show(words, good) {
-  heading.textContent = words;
-  heading.className = good ? 'good' : 'bad';
-}
+const show = (words, good) => Object.assign(heading, { textContent: words, className: good ? 'good' : 'bad' });
 
 // Why the page stopped, said: a `Said`'s words, else that it could not.
 const failed = (e) => (console.error(e), show(e instanceof Said ? e.message : 'This browser could not open the page.', false));
