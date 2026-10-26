@@ -21,6 +21,30 @@ pub fn opens_at(port: u16, token: &str) {
         .insert(0, (port, token.trim().into()));
 }
 
+/// An address that opens the host first named `name` (`svrngs`, or a
+/// lend's label) on the computer at `port`, at the path `at`, minted by
+/// its svrngs with its token as `svrngs open` asks it (give-session); none
+/// for a computer [`opens_at`] never named.
+#[allow(dead_code)]
+pub fn open_at(port: u16, name: &str, at: &str) -> Option<String> {
+    use std::io::{Read, Write};
+    let computers = COMPUTERS.lock().unwrap().clone();
+    let (_, token) = computers.into_iter().find(|(p, _)| *p == port)?;
+    let body = if name == "svrngs" {
+        json!({ "at": at })
+    } else {
+        json!({ "lend": name, "at": at })
+    }
+    .to_string();
+    let mut sock = std::net::TcpStream::connect(("127.0.0.1", port)).ok()?;
+    let ask = format!("POST /v1/open HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nAuthorization: Bearer {token}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", body.len());
+    sock.write_all(ask.as_bytes()).ok()?;
+    let mut reply = String::new();
+    sock.read_to_string(&mut reply).ok()?;
+    let answer: Value = serde_json::from_str(reply.split_once("\r\n\r\n")?.1).ok()?;
+    Some(answer["open"].as_str()?.to_string())
+}
+
 /// What svrngs opens for a half run on `args`: each computer [`opens_at`]
 /// named whose port they name, with its home page and each lend's host they
 /// name there, as `[{port, token, names}]` (web/tests/page.mjs `launch`).

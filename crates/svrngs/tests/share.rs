@@ -217,6 +217,8 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
         .unwrap();
     let answer = http
         .get(format!("{address}notes?x=1"))
+        // A program Alex runs, which shows his token (give-session).
+        .bearer_auth(alex.node.token().trim())
         .header("x-svrngs-person", "Sam")
         .send()
         .await
@@ -330,6 +332,7 @@ async fn llama_server_lent_by_its_kind_keeps_back_what_shows_one_person_s_chats(
     let ask = |method: &str, path: &str| {
         let method = reqwest::Method::from_bytes(method.as_bytes()).unwrap();
         http.request(method, format!("{}{}", address.trim_end_matches('/'), path))
+            .bearer_auth(alex.node.token().trim())
             .send()
     };
 

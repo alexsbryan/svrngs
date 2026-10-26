@@ -33,7 +33,7 @@ fn name(s: &str) -> Name {
 /// say.
 async fn home_of(engine: harness::Engine, node: &Node, args: Value) -> Value {
     let page = svrngs_node::home::address(node.api_addr().port());
-    home_page::home_page(engine, &page, args).await
+    home_page::home_page(engine, &page, &node.token(), args).await
 }
 
 /// Every string among `seen[at]`, flattened.
@@ -128,7 +128,13 @@ async fn leaving_on_the_home_page_is_said_as_a_leave_everywhere(engine: harness:
     let sams = actor_of(&SigningKey::from_bytes(&[6; 32]));
     let notes = svrngs_core::pass::Label::of_hex(&sams, "notes").unwrap();
     let old = svrngs_node::origin::origin(&notes, ana.api_addr().port());
-    let seen = home_page::home_page(engine, &old, json!({ "heading": false, "read": "p" })).await;
+    let seen = home_page::home_page(
+        engine,
+        &old,
+        &ana.token(),
+        json!({ "heading": false, "read": "p" }),
+    )
+    .await;
     eprintln!("Ana's old address of Sam's notes: {seen:#}");
     let said = seen["read"].as_str().unwrap_or_default();
     assert!(said.starts_with("You left Trip on "), "{seen:#}");

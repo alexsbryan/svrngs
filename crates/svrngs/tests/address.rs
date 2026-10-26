@@ -206,13 +206,16 @@ fn the_home_page_and_a_lend_answer_at_one_address_across_a_restart() {
             "{run}: the token moved across a restart"
         );
         let lent = origin_of(dir.path(), "pad", read_before);
-        let (status, page) = get(&home, "/", true, None);
+        // As a program the person runs, showing the token: the address is
+        // what this test holds, and a browser's session is session.rs's
+        // (give-session).
+        let (status, page) = get(&home, "/", true, Some(read_before));
         assert!(status.ends_with("200 OK"), "{run}: {home} {status}");
         assert!(
             page.contains("/home.js"),
             "{run}: {home} is not the home page"
         );
-        let (status, body) = get(&lent, "/", false, None);
+        let (status, body) = get(&lent, "/", false, Some(read_before));
         assert!(status.ends_with("200 OK"), "{run}: {lent} {status}");
         assert_eq!(body, "ok", "{run}: {lent}");
         drop(svrngs);

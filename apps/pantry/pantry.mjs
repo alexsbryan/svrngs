@@ -182,8 +182,10 @@ function handles(lends) {
 }
 
 /// What a lend answers when it is asked by protocol: a model, a tool, or
-/// neither, with the reasons kept.
-async function probe(origin) {
+/// neither, with the reasons kept. Its origin on this computer answers a
+/// program only with this computer's `token`, which svrngs takes off before
+/// the lend's service is asked (give-session).
+async function probe(origin, token) {
   const base = origin.replace(/\/+$/, '');
   const why = [];
   let couldNotJudge = false;
@@ -191,7 +193,7 @@ async function probe(origin) {
     || /abort|timeout/i.test(e?.message || '');
   try {
     const res = await fetch(`${base}/v1/models`, {
-      headers: { accept: 'application/json' },
+      headers: { accept: 'application/json', ...(token && { authorization: `Bearer ${token}` }) },
       signal: AbortSignal.timeout(DISCOVERY_TIMEOUT),
     });
     if (res.ok) {
@@ -213,7 +215,7 @@ async function probe(origin) {
     couldNotJudge = couldNotJudge || timedOut(e);
   }
   try {
-    const tools = await toolsAt(base, DISCOVERY_TIMEOUT);
+    const tools = await toolsAt(base, DISCOVERY_TIMEOUT, token);
     return { protocol: 'tool', tools };
   } catch (e) {
     why.push(`MCP did not answer (${e.message})`);
@@ -227,14 +229,14 @@ async function probe(origin) {
 /// and in each refusal.
 const discovered = new Map();
 
-export async function discover(origin, clock = Date.now) {
+export async function discover(origin, clock = Date.now, token = undefined) {
   const now = clock();
   const kept = discovered.get(origin);
   if (kept && now - kept.at < FOUND_FOR) {
     note('kept', origin, `looked ${secondsAgo(kept.at, clock)}s ago`, kept.seen.protocol);
     return { ...kept.seen, at: kept.at };
   }
-  const seen = await probe(origin);
+  const seen = await probe(origin, token);
   discovered.set(origin, { at: now, seen });
   note('probed', origin, '→', seen.protocol,
     seen.models ? `${seen.models.length} model` : seen.tools ? `${seen.tools.length} tool` : seen.why);
@@ -256,7 +258,7 @@ export async function list({ record = recordAt(), token = tokenAt(), clock = Dat
   const found = [];
   const used = new Set();
   for (const lend of lends) {
-    const seen = await discover(lend.origin, clock);
+    const seen = await discover(lend.origin, clock, token);
     if (seen.protocol === 'model') {
       seen.models = seen.models.map((m) => {
         const id = modelId(lend, m.id, used);
@@ -319,7 +321,7 @@ async function modelsNow(record, clock, prefix) {
   const unjudged = new Map();
   for (const lend of lends) {
     if (prefix !== undefined && lend.handle !== prefix) continue;
-    const seen = await discover(lend.origin, clock);
+    const seen = await discover(lend.origin, clock, record.token);
     if (seen.protocol !== 'model') {
       if (seen.protocol === 'neither') {
         if (!unjudged.has(lend.handle)) unjudged.set(lend.handle, []);
@@ -454,9 +456,12 @@ export async function serve({ record: at = recordAt(), token = tokenAt(), port, 
       delete headers.host;
       delete headers.connection;
       delete headers['content-length'];
-      // A friend's lend never receives the person's own credentials.
+      // A friend's lend never receives the person's own credentials. This
+      // computer's token lets pantry in at the lend's origin, and svrngs
+      // takes it off before the lend's service is asked (give-session).
       delete headers.authorization;
       delete headers.cookie;
+      if (record.token) headers.authorization = `Bearer ${record.token}`;
       headers['content-length'] = String(written.body.length);
       note('routed', asked.model, '→', lend.handle, lend.name, lend.origin);
       const target = http.request({

@@ -244,12 +244,29 @@ impl Scene {
             ))
             .await
         };
+        // A browser half `sees` runs on this computer is opened by it, as
+        // `svrngs open` and its home page open one (give-session).
+        let token = std::fs::read_to_string(home.join(".svrngs/token")).unwrap_or_default();
+        crate::drive::opens_at(api.port(), &token);
         let page = format!("svrngs.localhost:{}", api.port());
         let http = reqwest::Client::builder()
             .no_proxy()
             .resolve("svrngs.localhost", api)
+            .redirect(reqwest::redirect::Policy::none())
             .build()
             .unwrap();
+        // The home page's session, as its browser holds it once opened.
+        let open = crate::drive::open_at(api.port(), "svrngs", "/");
+        let set = http.get(open.expect("svrngs opens its home page")).send();
+        let set = set.await.unwrap();
+        let set = set
+            .headers()
+            .get("set-cookie")
+            .and_then(|c| c.to_str().ok());
+        let session = set
+            .and_then(|c| c.split(';').next())
+            .expect("an open sets the session");
+        let session = session.to_string();
         Person {
             name: name.into(),
             home,
@@ -257,6 +274,7 @@ impl Scene {
             api,
             page,
             http,
+            session,
         }
     }
 }
@@ -286,6 +304,8 @@ pub struct Person {
     api: SocketAddr,
     page: String,
     http: reqwest::Client,
+    /// The home page's session, `svrngs=<value>`, as a `Cookie` sends it.
+    session: String,
 }
 
 impl Person {
@@ -339,6 +359,7 @@ impl Person {
         let sent = sent
             .header("origin", format!("http://{}", self.page))
             .header("sec-fetch-site", "same-origin")
+            .header("cookie", &self.session)
             .header("content-type", "application/json")
             .body(body.to_string());
         let got = sent.send().await.unwrap();
@@ -433,12 +454,74 @@ pub async fn sees(engine: Engine, script: &str, args: Value) -> Value {
     crate::drive::drive(engine, script, args, None).await
 }
 
+impl Browsers {
+    /// Each address of a computer's in `command` that `who`'s browser was
+    /// not opened at yet, opened first by that computer's svrngs: an
+    /// address with a code for its host and path, as `svrngs open` and the
+    /// home page's links give one (give-session). Its session is kept
+    /// after, as a bookmark opens it. A poll, which loads its address
+    /// again and again, is preceded by a step going there by the open.
+    fn open_first(&mut self, who: &str, command: &mut Value) {
+        match command {
+            Value::Array(steps) => {
+                let mut i = 0;
+                while i < steps.len() {
+                    let poll = steps[i]["poll"].as_str().map(String::from);
+                    if let Some(open) = poll.and_then(|p| self.first(who, &p)) {
+                        steps.insert(i, json!({ "goto": open }));
+                        i += 1;
+                    }
+                    self.open_first(who, &mut steps[i]);
+                    i += 1;
+                }
+            }
+            Value::Object(fields) => {
+                for (key, value) in fields.iter_mut() {
+                    let at = value
+                        .as_str()
+                        .filter(|_| matches!(key.as_str(), "url" | "goto"));
+                    match at.map(String::from) {
+                        Some(at) => {
+                            if let Some(open) = self.first(who, &at) {
+                                *value = json!(open);
+                            }
+                        }
+                        None => self.open_first(who, value),
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    /// The open for `url`, when it is a computer's, at a host `who`'s
+    /// browser was not opened at yet.
+    fn first(&mut self, who: &str, url: &str) -> Option<String> {
+        let (host, open) = open_of(url)?;
+        self.opened.insert((who.to_string(), host)).then_some(open)
+    }
+}
+
+/// `url`, an address on a computer a scene started, opened by its svrngs:
+/// its host, and an address with a code for that host at `url`'s path, as
+/// `svrngs open` and the home page's links give one (give-session).
+pub fn open_of(url: &str) -> Option<(String, String)> {
+    let rest = url.strip_prefix("http://")?;
+    let (host, path) = rest.split_once('/').unwrap_or((rest, ""));
+    let (name, port) = host.split_once(':')?;
+    let name = name.strip_suffix(".localhost")?;
+    let open = crate::drive::open_at(port.parse().ok()?, name, &format!("/{path}"))?;
+    Some((host.to_string(), open))
+}
+
 /// Each person's browser, kept for the whole scene so what a phone keeps
 /// stays: the recorded Events run's driver,
 /// demo/runs/events/2026-10-14/people.mjs, one JSON command a line.
 pub struct Browsers {
     run: Child,
     said: tokio::io::Lines<tokio::io::BufReader<tokio::process::ChildStdout>>,
+    /// Each person's browser and each computer's host svrngs opened it at.
+    opened: std::collections::BTreeSet<(String, String)>,
 }
 
 impl Browsers {
@@ -468,7 +551,8 @@ impl Browsers {
         let mut said = tokio::io::BufReader::new(run.stdout.take().unwrap()).lines();
         let ready = said.next_line().await.unwrap().unwrap_or_default();
         assert!(ready.contains("ready"), "people.mjs did not start: {ready}");
-        let mut browsers = Browsers { run, said };
+        let opened = Default::default();
+        let mut browsers = Browsers { run, said, opened };
         for (who, theirs) in people {
             let engine = match engine {
                 Engine::Webkit => Engine::Webkit,
@@ -483,7 +567,9 @@ impl Browsers {
 
     /// One command, and its answer; an error the driver caught fails the
     /// scene, its words and the page's console with it.
-    pub async fn tell(&mut self, command: Value) -> Value {
+    pub async fn tell(&mut self, mut command: Value) -> Value {
+        let who = command["who"].as_str().unwrap_or_default().to_string();
+        self.open_first(&who, &mut command);
         let stdin = self.run.stdin.as_mut().unwrap();
         stdin
             .write_all(format!("{command}\n").as_bytes())

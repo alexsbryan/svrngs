@@ -198,8 +198,11 @@ async fn films(engine: Engine) {
     let link = sam.invites(&group).await;
     let alex = scene.joins("Alex", &link, "House").await;
     let bo = scene.joins("Bo", &link, "House").await;
-    let alex_at = alex.lent_by(&group, "Sam", "jellyfin").await;
-    let bo_at = bo.lent_by(&group, "Sam", "jellyfin").await;
+    // Each opened by their svrngs, as the home page's link opens it
+    // (give-session).
+    let opened = |at: String| crate::people::open_of(&at).expect("svrngs opens it").1;
+    let alex_at = opened(alex.lent_by(&group, "Sam", "jellyfin").await);
+    let bo_at = opened(bo.lent_by(&group, "Sam", "jellyfin").await);
 
     // 4. Each signs in, plays a film of their own, and seeks while the
     // other plays on.

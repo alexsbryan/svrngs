@@ -4,11 +4,12 @@
 
 const PROTOCOL = '2025-06-18';
 
-async function post(url, message, { session, version, timeout }) {
+async function post(url, message, { session, version, timeout, token }) {
   const headers = {
     accept: 'application/json, text/event-stream',
     'content-type': 'application/json',
   };
+  if (token) headers.authorization = `Bearer ${token}`;
   if (session) headers['mcp-session-id'] = session;
   if (version) headers['mcp-protocol-version'] = version;
   const res = await fetch(url, {
@@ -48,8 +49,10 @@ function parse(text, contentType) {
 
 /// The tools a Streamable HTTP MCP server at `origin` answers `tools/list`
 /// with, annotations included as the server sent them. Each ask waits up to
-/// `timeout` ms, the caller's one probe time.
-export async function toolsAt(origin, timeout) {
+/// `timeout` ms, the caller's one probe time. A lend's origin on this
+/// computer answers a program only with this computer's `token`, which
+/// svrngs takes off before the lend's service is asked (give-session).
+export async function toolsAt(origin, timeout, token) {
   const url = `${origin.replace(/\/+$/, '')}/mcp`;
   const init = await post(url, {
     jsonrpc: '2.0',
@@ -60,17 +63,19 @@ export async function toolsAt(origin, timeout) {
       capabilities: {},
       clientInfo: { name: 'pantry', version: '0' },
     },
-  }, { timeout });
+  }, { timeout, token });
   const version = init.message?.result?.protocolVersion || PROTOCOL;
   await post(url, { jsonrpc: '2.0', method: 'notifications/initialized' }, {
     session: init.session,
     version,
     timeout,
+    token,
   });
   const listed = await post(url, { jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} }, {
     session: init.session,
     version,
     timeout,
+    token,
   });
   if (listed.message?.error) {
     throw new Error(`MCP tools/list: ${listed.message.error.message || 'refused'}`);

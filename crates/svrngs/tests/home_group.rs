@@ -178,6 +178,7 @@ async fn the_home_page_makes_a_group_another_computer_joins_with_no_restart(
     let seen = home_page(
         engine,
         &page,
+        &std::fs::read_to_string(home.path().join(".svrngs/token")).unwrap(),
         json!({
             "all": all,
             "do": [
@@ -291,6 +292,7 @@ async fn the_home_page_joins_another_group_from_its_link_while_svrngs_runs(
     let seen = home_page(
         engine,
         &page,
+        &std::fs::read_to_string(home.path().join(".svrngs/token")).unwrap(),
         json!({
             "all": all,
             "do": [
