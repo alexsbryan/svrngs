@@ -57,12 +57,18 @@ fn june_told(link: &str) -> String {
 
 /// Kim's pizza on her own Money page, as Money's page draws an expense she
 /// paid: "You paid $36.00 for pizza, split between Kim." (apps/expenses/
-/// index.js, `spent`).
-const PIZZA: &str = r"[...document.querySelectorAll('li')].some((li) => /^You paid \$36\.00 for [^,]*pizza/i.test(li.textContent))";
+/// index.js, `spent`), read, as she would read it to know it is in. Its
+/// start, since what it was for is her own words.
+const PIZZA: &str = "You paid $36.00 for";
 
-/// What Ana owes on her Money page, half of $36 (index.js, "You owe").
-const OWES: &str =
-    "document.title === 'Money' && document.body.innerText.includes('You owe $18.00.')";
+/// Money open, from the home page's "Open Money" (question.js `agreed`),
+/// in the tab of its own it opens (home.js `opener`): its form's heading,
+/// read (index.js).
+const MONEY: &str = "Add what you paid";
+
+/// What Ana owes on her Money page, half of $36 (index.js, "You owe"): a
+/// goal counts once she has read it (the operator, 2026-10-26).
+const OWES: &str = "You owe $18.00";
 
 /// The house's money says someone besides Kim was in on the pizza, folded
 /// by Money's own `expenses.js` from the acts its page reads. Asked again
@@ -132,7 +138,7 @@ fn link_bounds(page: &str) -> Vec<Value> {
 /// effect within 10 s of the tap, the bar the dry run held pause and seek
 /// to (demo/runs/b/2026-10-06/README.md, "Pause and seek from the phone").
 fn add_bound() -> Value {
-    json!({ "from": { "text": "Add it, paid by you" }, "to": { "expr": PIZZA }, "seconds": 10 })
+    json!({ "from": { "text": "Add it, paid by you" }, "to": { "text": PIZZA }, "seconds": 10 })
 }
 
 /// `url`'s origin, with no trailing slash.
@@ -242,11 +248,12 @@ impl House {
         let page = origin(&self.page);
         json!({
             "as": "Ana", "person": "people/ana.md", "device": "phone", "url": null,
-            "goal": { "expr": OWES },
+            "goal": { "text": OWES },
             "milestones": [
-                { "expr": format!("location.origin === '{page}'") },
-                { "expr": format!("location.origin === '{page}' && document.body.innerText.includes('You’re in {HOUSE}')") },
-                { "expr": "document.title === 'Money'" },
+                // At the group's page from the link; in, read; Money open, its heading read (index.js).
+                { "url": format!("{page}/") },
+                { "text": format!("You’re in {HOUSE}") },
+                { "text": "What people paid for" },
             ],
         })
     }
@@ -274,12 +281,13 @@ async fn together_world() {
     let link = house.link().await;
     let mut reach = house.phone_reach();
     reach.push(origin(&house.money));
+    reach.push(origin(&house.kim.home_page()));
     let bounds = [link_bounds(&house.page), vec![add_bound()]].concat();
     let line = json!({
-        "begins": "Kim on a computer, the house’s Money already open in a tab from her home page; Ana on a phone with only the house chat open; how each got there not seen",
+        "begins": "Kim on a computer at her home page, in the house already; Ana on a phone with only the house chat open; how each got there not seen",
         "cast": [
-            { "as": "Kim", "person": "people/kim.md", "device": "computer", "url": house.money,
-              "milestones": [{ "expr": PIZZA }] },
+            { "as": "Kim", "person": "people/kim.md", "device": "computer", "url": house.kim.home_page(),
+              "milestones": [{ "text": MONEY }, { "text": PIZZA }] },
             house.ana(),
         ],
         "screens": [{ "as": "the house’s money", "device": "computer", "url": house.money }],
@@ -304,11 +312,11 @@ async fn together_world() {
 async fn kim_world() {
     let house = House::up("kim").await;
     let line = json!({
-        "begins": "on a computer, the house’s Money already open in a tab from the home page; the house and the home page not seen",
+        "begins": "on a computer at her home page, in the house already; how the house was made not seen",
         "cast": [{
-            "as": "Kim", "person": "people/kim.md", "device": "computer", "url": house.money,
-            "goal": { "expr": PIZZA },
-            "milestones": [{ "expr": "document.getElementById('what')?.value.toLowerCase().includes('pizza') === true" }],
+            "as": "Kim", "person": "people/kim.md", "device": "computer", "url": house.kim.home_page(),
+            "goal": { "text": PIZZA },
+            "milestones": [{ "text": MONEY }],
         }],
         "channels": [{
             "name": "the house chat", "members": ["Kim"],
@@ -316,7 +324,7 @@ async fn kim_world() {
         }],
         "faults": faults(),
         "bounds": [add_bound()],
-        "reach": [origin(&house.money)],
+        "reach": [origin(&house.money), origin(&house.kim.home_page())],
     });
     stay_up(line, house).await
 }
@@ -368,10 +376,13 @@ async fn newcomer_world() {
         "begins": "on a computer where svrngs runs as its install line leaves it, its home page open in the browser, in no group yet; the install not seen",
         "cast": [{
             "as": "June", "person": "people/june.md", "device": "computer", "url": home,
+            // A check on the page: her home page, not the group's page in her
+            // browser, which says the same words (web/app.js:488), so which
+            // computer is in can't be read.
             "goal": { "expr": in_house_at(&home) },
             "milestones": [
-                // The home page read the link and names the house on its button (home.js, `says`).
-                { "expr": format!("[...document.querySelectorAll('button')].some((b) => b.textContent.startsWith('Join {HOUSE}'))") },
+                // The home page read the link and names the house on its button (home.js, `says`), read.
+                { "text": format!("Join {HOUSE} as") },
             ],
         }],
         "channels": [{
