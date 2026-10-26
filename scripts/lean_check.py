@@ -251,8 +251,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # once folded, cut 60 in svrngs-core and 31 in the node, so the caps come
 # down to one past where it lands: 18,247 and 3,238. Its gate's fixes put
 # the phone's four "whose computer did not say" sentences in one table, as
-# the home page's (-5 after +1): 18,243.
-BUDGET = {"crates/svrngs-core": 3239, ".": 18244}
+# the home page's (-5 after +1): 18,243. The lint's own line in check.sh
+# (+1), ops_json's own-name guard folded into the name it reads (-2), and
+# the home page drawn from a function its module does not await (-2):
+# 18,240.
+BUDGET = {"crates/svrngs-core": 3239, ".": 18241}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
