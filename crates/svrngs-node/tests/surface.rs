@@ -69,8 +69,9 @@ fn declare(dir: &std::path::Path, name: &str, port: u16, kind: &str, reads: &[&s
 }
 
 /// `path` asked of `node`'s API at the origin of the lend `at`, by a
-/// caller on loopback; from the page at `from`'s origin, with its
-/// browser's fetch headers, when one is named. Its status and JSON body.
+/// program on loopback, with the token; from the page at `from`'s origin,
+/// with its browser's fetch headers and the session svrngs opened at `at`,
+/// when one is named (give-session). Its status and JSON body.
 async fn at_origin(
     node: &Node,
     at: &svrngs_core::pass::Label,
@@ -83,9 +84,12 @@ async fn at_origin(
         axum::http::Request::get(path).header("host", format!("{at}.localhost:{port}"));
     if let Some(page) = from {
         request = request
+            .header("cookie", common::opened(node, Some(at.as_str())).await)
             .header("sec-fetch-site", "same-site")
             .header("sec-fetch-mode", "cors")
             .header("origin", format!("http://{page}.localhost:{port}"));
+    } else {
+        request = request.header("authorization", format!("Bearer {}", node.token().trim()));
     }
     let mut request = request.body(axum::body::Body::empty()).unwrap();
     let caller: SocketAddr = "127.0.0.1:50000".parse().unwrap();
