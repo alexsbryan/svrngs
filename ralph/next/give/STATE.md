@@ -109,6 +109,7 @@ There are fourteen rows:
     - A key not standing is refused, and the limit is counted.
   - **(b) The change.** One iroh bi-stream per connection, on the one connection kept per computer.
   - **Check:** (a) red first, green after.
+  - **THE OPERATOR DECIDED, 2026-10-26,** on `demo/runs/give/2026-10-26-tcp/NEEDS_HUMAN.md`: "Go for both", this row's raise and give-play's. Landed for this row by the operator's session: the cap 18,868 (c0d3b829, its plant named) and PLAN §1's ledger line (0c002e14). What remains is `scripts/check.sh` once, at the close.
 - [ ] give-play — depends [give-tcp] — ONE ROW, red first, and `scripts/check.sh` once, at the close (GIVE.md §3 scene 2, §6):
   - **(a) Tests: A MEMBER PRESSES PLAY.** Browser tests in Chromium and WebKit, failing at HEAD:
     - A raw lend's row on a member's home page shows Play.
@@ -120,6 +121,7 @@ There are fourteen rows:
     - The room's tests are unchanged by name.
   - **(b) The change.** An owner task on the room's model (`room/owner.rs:67`, `:133`), its on-state kept as `room.json` keeps the room's, and the row in the cell beside the WiFi toggle (`home/home.js:158-163`). The trust floor's Play line comes with it.
   - **Check:** (a) red first, green after; the room's tests green throughout.
+  - **THE OPERATOR DECIDED, 2026-10-26:** "Go for both": this row's raise is approved in advance, to one past where it lands, while it stays inside give-play's range and the ceiling (at most 19,233 and 3,244). A worker's edit of `BUDGET` is refused as a CI bypass (give-tcp-1.out), so commit the row's work, write the raise as a ready diff in `NEEDS_HUMAN.md`, and stop; the operator's session lands it. Past the range or the ceiling, the row stops for the operator as before.
 - [ ] give-play-scene — depends [give-play] — ONE ROW, its plant red first (AGENTS.md 5):
   - **(a) The scene, played.** A raw-port scene in the gate's "scenes" suite: two people, two computers, stand-in UDP and TCP echo servers lent, each person pressing Play and their bytes crossing. It is red on a plant that unbinds the listener.
   - **(b) Run-of-show, before any run.** `demo/factorio.md` and `demo/minecraft.md`, written before the first run (`demo/README.md`).
