@@ -73,7 +73,7 @@ const OWES: &str = "You owe $18.00";
 /// The house's money says someone besides Kim was in on the pizza, folded
 /// by Money's own `expenses.js` from the acts its page reads. Asked again
 /// at each check: Money's page draws once, at load and after its own
-/// writes (index.js `show`), so a screen of it never redraws for another's
+/// writes (index.js `show`), so a display of it never redraws for another's
 /// share.
 const SHARED: &str = "Promise.all([import(location.origin + '/expenses.js'), fetch('svrngs/acts').then((r) => r.json())]).then(([m, read]) => Object.values(m.actsOf(read).reduce(m.reduce, m.init()).expenses).some((e) => /pizza/i.test(e.description) && e.amount_cents === 3600 && e.participants.some((p) => p !== e.payer)))";
 
@@ -139,6 +139,16 @@ fn link_bounds(page: &str) -> Vec<Value> {
 /// to (demo/runs/b/2026-10-06/README.md, "Pause and seek from the phone").
 fn add_bound() -> Value {
     json!({ "from": { "text": "Add it, paid by you" }, "to": { "text": PIZZA }, "seconds": 10 })
+}
+
+/// `url`, an address on a computer of the world, as `svrngs open` opens it
+/// there: an address with a code for its host, single use and good for a
+/// minute, which becomes the browser's session (give-session; people.rs
+/// `open_of`). A browser sent to the bare address is answered "Open svrngs
+/// from your computer" (session.rs).
+fn opened(url: &str) -> String {
+    let (_, open) = people::open_of(url).expect("svrngs opens it");
+    open
 }
 
 /// `url`'s origin, with no trailing slash.
@@ -232,6 +242,23 @@ impl House {
         format!("http://{label}.localhost:{port}/")
     }
 
+    /// svrngs's screens as a person would name them (xenia DESIGN §5,
+    /// "Scene"; xenia 7d3e6d3), the first whose check holds naming the
+    /// screen: Money by its lend's name, on a computer or through the page
+    /// (`money_on_page`); the group's page asking a newcomer's name
+    /// (web/index.html, `join`); a computer's home page, at
+    /// `svrngs.localhost`; then the group's page, at the page's address.
+    fn screens(&self) -> Value {
+        let label = self.money.trim_start_matches("http://");
+        let label = label.split('.').next().unwrap_or_default();
+        json!([
+            { "name": "Money", "url": format!("{label}.localhost") },
+            { "name": "Joining", "text": "What’s your name?" },
+            { "name": "Home", "url": "svrngs.localhost" },
+            { "name": "the group's page", "url": origin(&self.page) },
+        ])
+    }
+
     /// What a phone reaches: the page, Money through it, and the relay.
     fn phone_reach(&self) -> Vec<String> {
         let relay = relay_url(&self.scene.relay);
@@ -274,7 +301,7 @@ async fn stay_up(line: Value, world: impl Send + 'static) {
 /// **Kim and Ana together.** Kim, on her computer, puts the pizza into the
 /// house's money and tells Ana in the house chat; Ana, on her phone, opens
 /// the house's link and finds what she owes. Kim's errand is done when the
-/// house's money has Ana in on the pizza (the scene's goal, on a screen of
+/// house's money has Ana in on the pizza (the scene's goal, on a display of
 /// Kim's Money); Ana's when her own page says what she owes.
 async fn together_world() {
     let house = House::up("together").await;
@@ -286,11 +313,12 @@ async fn together_world() {
     let line = json!({
         "begins": "Kim on a computer at her home page, in the house already; Ana on a phone with only the house chat open; how each got there not seen",
         "cast": [
-            { "as": "Kim", "person": "people/kim.md", "device": "computer", "url": house.kim.home_page(),
+            { "as": "Kim", "person": "people/kim.md", "device": "computer", "url": opened(&house.kim.home_page()),
               "milestones": [{ "text": MONEY }, { "text": PIZZA }] },
             house.ana(),
         ],
-        "screens": [{ "as": "the house’s money", "device": "computer", "url": house.money }],
+        "screens": house.screens(),
+        "displays": [{ "as": "the house’s money", "device": "computer", "url": opened(&house.money) }],
         "channels": [{
             "name": "the house chat", "members": ["Kim", "Ana"],
             "opening": [
@@ -314,7 +342,7 @@ async fn kim_world() {
     let line = json!({
         "begins": "on a computer at her home page, in the house already; how the house was made not seen",
         "cast": [{
-            "as": "Kim", "person": "people/kim.md", "device": "computer", "url": house.kim.home_page(),
+            "as": "Kim", "person": "people/kim.md", "device": "computer", "url": opened(&house.kim.home_page()),
             "goal": { "text": PIZZA },
             "milestones": [{ "text": MONEY }],
         }],
@@ -322,6 +350,7 @@ async fn kim_world() {
             "name": "the house chat", "members": ["Kim"],
             "opening": [{ "from": "Sam", "text": KIM_TOLD }],
         }],
+        "screens": house.screens(),
         "faults": faults(),
         "bounds": [add_bound()],
         "reach": [origin(&house.money), origin(&house.kim.home_page())],
@@ -351,6 +380,7 @@ async fn ana_world() {
                 { "from": "Kim", "text": ANA_PIZZA },
             ],
         }],
+        "screens": house.screens(),
         "faults": faults(),
         "bounds": link_bounds(&house.page),
         "reach": house.phone_reach(),
@@ -375,7 +405,7 @@ async fn newcomer_world() {
     let line = json!({
         "begins": "on a computer where svrngs runs as its install line leaves it, its home page open in the browser, in no group yet; the install not seen",
         "cast": [{
-            "as": "June", "person": "people/june.md", "device": "computer", "url": home,
+            "as": "June", "person": "people/june.md", "device": "computer", "url": opened(&home),
             // A check on the page: her home page, not the group's page in her
             // browser, which says the same words (web/app.js:488), so which
             // computer is in can't be read.
@@ -389,6 +419,7 @@ async fn newcomer_world() {
             "name": "the house chat", "members": ["June"],
             "opening": [{ "from": "Kim", "text": june_told(&link) }],
         }],
+        "screens": house.screens(),
         "faults": faults(),
         "bounds": [
             // demo/b.md's gate, a newcomer from the link to in "within

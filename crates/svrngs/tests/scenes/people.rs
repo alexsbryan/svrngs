@@ -377,20 +377,31 @@ impl Person {
     /// `POST <path>` of `body` at the lend whose origin here is `origin`, as
     /// that lend's own page sends it: its `Host`, and the browser's word that
     /// it came from that origin, which no page's script can set (origin.rs
-    /// `fetch` and `app_of`). What a scene writes before a person arrives,
-    /// as Money's page would have written it. The xenia worlds' alone
-    /// (tests/xenia/main.rs), so unused in the scenes' binary.
+    /// `fetch` and `app_of`), and that host's session, as its browser holds
+    /// it once opened (give-session). What a scene writes before a person
+    /// arrives, as Money's page would have written it. The xenia worlds'
+    /// alone (tests/xenia/main.rs), so unused in the scenes' binary.
     #[allow(dead_code)]
     pub async fn on_lend(&self, origin: &str, path: &str, body: &Value) -> Value {
         let origin = origin.trim_end_matches('/');
         let host = origin.trim_start_matches("http://");
         let name = host.split(':').next().unwrap_or_default();
         let http = reqwest::Client::builder().no_proxy();
+        let http = http.redirect(reqwest::redirect::Policy::none());
         let http = http.resolve(name, self.api).build().unwrap();
+        let (_, open) = open_of(&format!("{origin}/")).expect("svrngs opens the lend");
+        let set = http.get(open).send().await.unwrap();
+        let set = set
+            .headers()
+            .get("set-cookie")
+            .and_then(|c| c.to_str().ok());
+        let session = set.and_then(|c| c.split(';').next());
+        let session = session.expect("an open sets the session").to_string();
         let sent = http.post(format!("{origin}{path}"));
         let sent = sent
             .header("origin", origin)
             .header("sec-fetch-site", "same-origin")
+            .header("cookie", session)
             .header("content-type", "application/json")
             .body(body.to_string());
         let got = sent.send().await.unwrap();
