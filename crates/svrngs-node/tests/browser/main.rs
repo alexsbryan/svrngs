@@ -2855,8 +2855,11 @@ async fn the_home_page_says_a_room_it_cannot_read(engine: Engine) {
     let shelf = page_origin("<!doctype html><title>ada's shelf</title>").await;
     lend(dir.path(), "shelf", shelf.port());
     // "What acts as you", where "On this WiFi" is, opened (folded since
-    // the operator's change of 2026-10-26).
-    let seen = home_page(engine, &ada, json!({ "text": true, "unfold": true })).await;
+    // the operator's change of 2026-10-26). Read once the group's list of
+    // what is open to this WiFi is drawn, which waits on its /v1/lends
+    // (home.js `show`): read sooner, a loaded gate saw it still asking.
+    let args = json!({ "drawn": "#home section ul.wifi li", "text": true, "unfold": true });
+    let seen = home_page(engine, &ada, args).await;
     let text = seen["text"].as_str().unwrap_or_default();
     assert!(text.contains("Open to this WiFi"), "{seen:#}");
     assert!(
