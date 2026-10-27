@@ -47,6 +47,11 @@ still uses it on every Apple target (`netdev-0.46.3/src/os/darwin/ipv6_addr_flag
 iroh 1.0.2 alone fails and passes the same way. The spike's crate keeps a
 lock of its own, so the workspace's is untouched.
 
+**Also answered, the same day: it links, and the path carries on a Mac.**
+The extension links the Rust with `SystemConfiguration.framework` added, and
+the core, driven through its C entry on the Mac, carried `curl` to a lent
+stand-in and refused a stranger's key. `PREFLIGHT.md` has both.
+
 PLAN §2's row "a native phone app" holds a different spike: an endpoint in
 a network extension that answers a computer's dial for 24 hours. This one
 dials out. They share the first half, an endpoint alive in a tunnel under
@@ -126,7 +131,9 @@ own lock holding libc at 0.2.189. It holds:
 5. two plants, chosen when the tunnel starts, not by a build: `stranger`
    dials with a fresh key that stands in no group; `leak` allocates and
    touches 1 MiB a second until the system kills the extension;
-6. a C ABI: `tunnel_start(plant, log_dir)` and `tunnel_stop()`.
+6. a C ABI: `tunnel_start(config_json)` and `tunnel_stop()`, the config
+   `{seed_hex, lender, lend, port, plant, log_dir}`, so the extension passes
+   what `key.sh` wrote and the plant the app chose.
 
 **iOS.** An Xcode project with two targets. The app: one switch, a picker
 for the plant (none, stranger, leak), passed in the tunnel's
@@ -138,13 +145,15 @@ once, with the operator's paid developer account, on their own device; a
 free personal team cannot use Network Extension at all (PHONE_REPLICA,
 source f-746373).
 
-About 250 lines in all: some 100 of Rust, 120 of Swift, 30 of script.
+As built: 287 lines of Rust (44 of them tests), 118 of Swift, 56 of
+script, and the project's 49.
 
 ## 5. The sessions, in order
 
 Each one starts with the sampler running and the phone's screen recording
 on, and ends by saving the sampler's file, the recording, and the lender's
-debug log for target `door`.
+debug log for targets `door` and `transport`: the lender refuses a key it
+doesn't admit under `transport`, at warn (`crates/svrngs-node/src/iroh.rs:554`).
 
 | # | Session | Bars |
 |---|---|---|
@@ -232,6 +241,10 @@ a half hours.
 - How the workspace gets past libc 0.2.190 on iOS: held back, or netdev
   fixed upstream. A report to netdev is outward-facing, so it is the
   operator's to send.
+- `SystemConfiguration`: iroh's netwatch, through netdev and
+  system-configuration, calls `SCDynamicStore` and `SCPreferences`, which
+  the iOS SDK's headers mark unavailable on iOS and its `.tbd` exports. The
+  spike links them; whether App Review accepts them is production's.
 - Names for lends on the phone, in place of 127.0.0.1 and a port, and what
   happens when two lends want one port.
 - Whether the bars above are the operator's.

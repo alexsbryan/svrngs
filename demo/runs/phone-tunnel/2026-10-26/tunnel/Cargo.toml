@@ -1,0 +1,30 @@
+[package]
+name = "phone-tunnel"
+version = "0.0.0"
+edition = "2024"
+license = "AGPL-3.0-or-later"
+publish = false
+description = "The phone's door, a spike (../DESIGN.md): the node's member half of a TCP lend, in an iOS packet tunnel, with a sampler of its memory."
+
+# Its own workspace, as web/ is: outside the gate, with a lock of its own that
+# holds libc at 0.2.189, since 0.2.190 made `in6_ifreq` macOS-only and
+# netdev uses it on every Apple target (../DESIGN.md §1).
+[workspace]
+
+[lib]
+crate-type = ["staticlib", "lib"]
+
+[dependencies]
+svrngs-node = { path = "../../../../../crates/svrngs-node" }
+# The endpoint's address states, by the version svrngs-node pins.
+iroh = "=1.0.2"
+hex = { version = "0.4", features = ["serde"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "net", "sync", "time", "macros"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "registry", "std"] }
+
+[dev-dependencies]
+# The sampler's footprint, checked against the kernel's other reading of it.
+libc = "0.2"

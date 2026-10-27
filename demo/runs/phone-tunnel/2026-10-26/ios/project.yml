@@ -1,0 +1,49 @@
+# The spike's two targets: `xcodegen generate` here writes PhoneTunnel.xcodeproj.
+# Run ../build-xcframework.sh and ../key.sh first.
+name: PhoneTunnel
+options:
+  deploymentTarget:
+    iOS: "16.0"
+settings:
+  base:
+    # The operator's team: Network Extension needs a paid account (../DESIGN.md §4).
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.0.1"
+    CURRENT_PROJECT_VERSION: "1"
+    GENERATE_INFOPLIST_FILE: YES
+    TARGETED_DEVICE_FAMILY: "1"
+targets:
+  PhoneTunnel:
+    type: application
+    platform: iOS
+    sources: [App]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: sh.svrnme.phonetunnel
+        CODE_SIGN_ENTITLEMENTS: App/App.entitlements
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_UIRequiresFullScreen: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Phone tunnel
+    dependencies:
+      - target: TunnelExtension
+  TunnelExtension:
+    type: app-extension
+    platform: iOS
+    sources: [Extension]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: sh.svrnme.phonetunnel.tunnel
+        CODE_SIGN_ENTITLEMENTS: Extension/Extension.entitlements
+        INFOPLIST_FILE: Extension/Info.plist
+        INFOPLIST_KEY_CFBundleDisplayName: Tunnel
+    dependencies:
+      - framework: Tunnel.xcframework
+        embed: false
+      - sdk: NetworkExtension.framework
+      # netdev and system-configuration, through iroh's netwatch, read the
+      # interfaces and DNS by SCDynamicStore and SCPreferences: the iOS SDK's
+      # headers mark them API_UNAVAILABLE(ios), and its .tbd exports them.
+      - sdk: SystemConfiguration.framework
