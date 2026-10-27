@@ -231,7 +231,19 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   `a_move_starts_the_computer_offered_from_the_last_copy`). The fold
   refuses a move with no yes. 0 core, 0 library, `apps/` +303 lines by
   lean_check's rule (the fold +165, keeping +85, the runtime +28, the page
-  +25), and Give's surface unchanged;
+  +25), and Give's surface unchanged. Landed, give-app-takeover: a
+  keeper says each copy in the record (`copied`), and a member whose
+  computer can keep is offered "Keep it here?" with the newest copy once
+  the keeper has not answered for three copies' intervals (fifteen
+  minutes, the fold's `GONE`). A copy that does not start, or exits
+  within a minute, is said (`failed`) and the copy before it offered. A
+  returning keeper copies what it had, listed to "Start instead"; nothing
+  is merged or removed (`apps/give/tests/keep.rs`
+  `the_keeper_gone_then_back`, fold/cases.json 27 to 41 cases, the page's
+  third test). The cost is one record act per kept app every five
+  minutes. 0 core, 0 library, `apps/` +406 lines by lean_check's rule
+  (the fold +144, keeping +201, the runtime +18, the page +43), and Give's
+  surface unchanged;
 - sealing, at its §2 trigger.
 
 The operator's switch stands apart from that order: when they flip

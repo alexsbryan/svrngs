@@ -10,9 +10,9 @@ carried page.
 
 This much has landed: the runtime on the computer that keeps an app, an
 author's check of a card, the one fold of who keeps what, Give's program for
-computers, and the carried page with the shelf, "Start it for the group" and
-"Move it to…". Taking an app over and its copies come next
-(`ralph/next/give/STATE.md`).
+computers, and the carried page with the shelf, "Start it for the group",
+"Move it to…", "Keep it here?" and "Start instead". Give's scenes in the
+gate, and installing its program, come next (`ralph/next/give/STATE.md`).
 
 ## A card
 
@@ -61,9 +61,11 @@ says who keeps the app: "kept by your computer", or "kept by Cy’s computer".
 each app the group's record names this computer for, and only those. It
 lends the app through svrngs (`svrngs share`) once it is healthy, copies
 its state into the group's folder every 5 minutes and as it stops, and
-keeps this computer's 3 newest copies of each app. When the record names
-another computer, it stops lending the app, copies it one last time and
-stops it. Ctrl-C stops everything it keeps the same way.
+keeps this computer's 3 newest copies of each app. Each copy is said in
+the group's record, so everyone can see when the app was last copied.
+When the record names another computer, it stops lending the app, copies
+it one last time and stops it. That last copy is kept apart and never
+removed. Ctrl-C stops everything it keeps, each with a last copy.
 
 **Move it to…** on an app your computer keeps offers it to another computer
 that runs `give keep`. That computer's person is asked what the app's makers
@@ -71,6 +73,23 @@ ask of whoever runs it, and nothing moves without their yes. On the yes,
 your computer stops lending the app, copies it to the group one last time,
 writes the move and stops it. The other computer starts it from that copy,
 and only once its own copy of it is whole.
+
+**Keep it here?** If the computer keeping an app goes 15 minutes without
+copying it, everyone's page says when that computer last answered. Anyone
+whose computer runs `give keep` is offered the newest copy, with the
+app's makers' terms again. On their yes, their computer starts the app
+from that copy once the copy has fully arrived. If the copy doesn't
+become healthy, or stops within a minute, their computer stops it and
+says so. The page then offers the copy before it. A copy that didn't
+start is never tried again unless a person chooses it.
+
+**Start instead.** When a computer that kept an app comes back after
+another took it over, it starts nothing and lends nothing. It copies the
+state it had to the group, and every page lists that copy as "Minecraft
+as Cy’s computer had it at 14:10". Anyone whose computer can keep may
+start that copy instead, which is the same yes as above. Nothing is
+merged and nothing is thrown away: the state the app had before is
+copied too, and listed the same way.
 
 Any member's computer that runs `give keep` may keep an app for now. Who
 may keep is the operator's to decide (`demo/runs/give/2026-10-26-keep/QUESTION.md`).
