@@ -24,7 +24,7 @@ const HERE = new URL('.', import.meta.url).pathname;
 const VENDOR = join(HERE, 'page/vendor');
 const CASES = JSON.parse(readFileSync(join(HERE, 'fold/cases.json'), 'utf8'));
 /** As fold/tests/cases.rs counts them: a case either build skipped would show. */
-const COUNT = 17;
+const COUNT = 27;
 
 const flag = (name) => {
   const at = process.argv.indexOf(name);

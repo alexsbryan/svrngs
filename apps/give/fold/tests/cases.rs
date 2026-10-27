@@ -9,7 +9,7 @@ const CASES: &str = include_str!("../cases.json");
 
 /// How many cases cases.json holds; ../fold.test.mjs counts the same, so a
 /// case either build skipped would show.
-const COUNT: usize = 17;
+const COUNT: usize = 27;
 
 #[test]
 fn every_case_folds_as_written() {

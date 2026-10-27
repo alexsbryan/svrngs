@@ -14,13 +14,21 @@
 //!   keep is the operator's to answer, CHARTER; any member until then).
 //! - `started {app, card, agreed?}`: the writer's computer keeps an app
 //!   nobody keeps, from fresh state.
-//! - `moved {app, card, over, to, from, agreed?}`: the computer that keeps
-//!   it hands it to `to`, which starts from the snapshot `from`.
+//! - `moved {app, card, over, from, sum}`: the computer that keeps it, on
+//!   a yes to an offer, hands it to the computer offered, which starts from
+//!   the snapshot `from` once its copy there sums to `sum`. Every move is a
+//!   person's yes (CHARTER), so a move with none counts nowhere.
 //! - `taken {app, card, over, from, agreed?}`: the writer's computer keeps
 //!   it from the snapshot `from`, the keeper gone.
+//! - `offered {app, over, to}`: the person whose computer keeps it offers
+//!   it to the computer `to` (GIVE.md §3 scene 3, "Move it to…").
+//! - `accepted {app, offer, agreed?}` and `declined {app, offer}`: the
+//!   person of that computer says yes or no to the offer, a yes with their
+//!   own answer to the card's asks, since a game's terms bind whoever runs
+//!   it. A no leaves everything as it was.
 //!
-//! Each of the last three names the keeping it follows, `over` (none for a
-//! start), so two at once stand by admission order: the first follows the
+//! Each of `started`, `moved` and `taken` names the keeping it follows,
+//! `over` (none for a start), so two at once stand by admission order: the first follows the
 //! keeping there was, and the later follows one that is gone (`stale`).
 //! `card` is the card's version and `from` the snapshot each starts from.
 //! An act refused is said with why, never dropped (AGENTS.md 1), and each
@@ -48,6 +56,38 @@ impl How {
     }
 }
 
+/// An offer of an app to another computer, and its answer.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Offer {
+    pub act: String,
+    /// The key of the computer it is offered to, and that computer's person.
+    pub to: String,
+    pub person: String,
+    pub person_key: String,
+    pub since: i64,
+    pub answer: Answer,
+    /// Whether that person said yes to the card's asks with their yes.
+    pub agreed: bool,
+}
+
+/// What the person an offer names has said to it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Answer {
+    Waiting,
+    Yes,
+    No,
+}
+
+impl Answer {
+    fn as_str(self) -> &'static str {
+        match self {
+            Answer::Waiting => "waiting",
+            Answer::Yes => "yes",
+            Answer::No => "no",
+        }
+    }
+}
+
 /// Who keeps one app now, and from what.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Keeping {
@@ -61,11 +101,16 @@ pub struct Keeping {
     /// The snapshot it starts from, a path in the group's folder; none for
     /// fresh state.
     pub from: Option<String>,
+    /// What the snapshot's files sum to, for a move: the keeper starts from
+    /// it only once its copy there sums the same.
+    pub sum: Option<String>,
     /// The card's version it runs.
     pub card: String,
     /// Whether whoever keeps it said yes to the card's asks.
     pub agreed: bool,
     pub since: i64,
+    /// The last offer of it to another computer, while this keeping lasts.
+    pub offer: Option<Offer>,
 }
 
 /// A computer that said it can keep apps.
@@ -104,6 +149,31 @@ pub enum Refusal {
         writer: String,
         keeper: String,
     },
+    /// An offer from a person other than the one whose computer keeps it.
+    NotYours {
+        writer: String,
+        keeper: String,
+    },
+    /// An offer to the computer that keeps it.
+    KeptThere {
+        computer: String,
+    },
+    /// An offer while one said yes to stands: the app is moving.
+    Moving {
+        offer: String,
+    },
+    /// An answer to an offer that is not the one waiting.
+    NotOffered {
+        answers: String,
+        waiting: Option<String>,
+    },
+    /// An answer from a person other than the one the offer names.
+    NotAsked {
+        writer: String,
+        asked: String,
+    },
+    /// A move that follows no yes to an offer.
+    NoYes,
 }
 
 /// An act the fold refused, and why.
@@ -126,6 +196,12 @@ impl Refused {
             Refusal::CannotKeep { .. } => "cannot_keep",
             Refusal::Stale { .. } => "stale",
             Refusal::NotTheKeeper { .. } => "not_the_keeper",
+            Refusal::NotYours { .. } => "not_yours",
+            Refusal::KeptThere { .. } => "kept_there",
+            Refusal::Moving { .. } => "moving",
+            Refusal::NotOffered { .. } => "not_offered",
+            Refusal::NotAsked { .. } => "not_asked",
+            Refusal::NoYes => "no_yes",
         }
     }
 }
@@ -152,6 +228,29 @@ impl std::fmt::Display for Refused {
             Refusal::NotTheKeeper { writer, keeper } => write!(
                 f,
                 "{writer} wrote a move of {app}, which {keeper} keeps: only the computer that keeps an app moves it"
+            ),
+            Refusal::NotYours { writer, keeper } => {
+                write!(
+                    f,
+                    "{writer} offered {app}, which {keeper}’s computer keeps: only {keeper} offers it"
+                )
+            }
+            Refusal::KeptThere { computer } => write!(f, "{act} offers {app} to {computer}, which keeps it"),
+            Refusal::Moving { offer } => write!(f, "{app} is moving already: {offer} was said yes to"),
+            Refusal::NotOffered { answers, waiting } => {
+                let waiting = waiting.as_deref().unwrap_or("none");
+                write!(
+                    f,
+                    "{act} answers {answers}, and the offer of {app} waiting is {waiting}"
+                )
+            }
+            Refusal::NotAsked { writer, asked } => write!(
+                f,
+                "{writer} answered an offer of {app} to {asked}’s computer: only {asked} answers it"
+            ),
+            Refusal::NoYes => write!(
+                f,
+                "{act} moves {app} without a yes from the person of the computer it goes to"
             ),
         }
     }
@@ -211,6 +310,19 @@ fn step(kept: &mut Kept, op: &Value) -> Result<(), Refused> {
             kept.can_keep.entry(writer).or_insert(computer);
             return Ok(());
         }
+        Some(kind @ ("offered" | "accepted" | "declined")) => {
+            let missing = Refusal::Missing {
+                field: "app",
+                kind: own(kind),
+            };
+            let app = text(&payload["app"]).ok_or_else(|| refuse(missing))?;
+            let person = (
+                text(&op["person"]).unwrap_or_default(),
+                text(&op["person_key"]).unwrap_or_default(),
+            );
+            let at = op["ts_unix"].as_i64().unwrap_or_default();
+            return offer(kept, (&act, kind, at), (&app, payload), person).map_err(refuse);
+        }
         Some("started") => (How::Started, "started"),
         Some("moved") => (How::Moved, "moved"),
         Some("taken") => (How::Taken, "taken"),
@@ -226,24 +338,29 @@ fn step(kept: &mut Kept, op: &Value) -> Result<(), Refused> {
     let app = needs("app")?;
     let card = needs("card")?;
     let over = text(&payload["over"]);
-    let to = match how {
-        How::Moved => needs("to")?,
-        How::Started | How::Taken => writer.clone(),
-    };
     let from = match how {
         How::Started => None,
         How::Moved | How::Taken => Some(needs("from")?),
+    };
+    let sum = match how {
+        How::Moved => Some(needs("sum")?),
+        How::Started | How::Taken => None,
     };
     let now = kept.apps.get(&app);
     if now.map(|k| &k.act) != over.as_ref() {
         let kept = now.map(|k| k.act.clone());
         return Err(refuse(Refusal::Stale { kept, over }));
     }
-    if let (How::Moved, Some(now)) = (how, now)
-        && now.keeper != writer
-    {
-        let keeper = now.keeper.clone();
-        return Err(refuse(Refusal::NotTheKeeper { writer, keeper }));
+    let (mut to, mut agreed) = (writer.clone(), payload["agreed"] == true);
+    if let (How::Moved, Some(now)) = (how, now) {
+        if now.keeper != writer {
+            let keeper = now.keeper.clone();
+            return Err(refuse(Refusal::NotTheKeeper { writer, keeper }));
+        }
+        // Where it goes, and its keeper's answer to the card's asks, are the yes's.
+        let yes = (now.offer.as_ref()).filter(|o| o.answer == Answer::Yes);
+        let yes = yes.ok_or_else(|| refuse(Refusal::NoYes))?;
+        (to, agreed) = (yes.to.clone(), yes.agreed);
     }
     let computer = (kept.can_keep.get(&to)).ok_or_else(|| refuse(Refusal::CannotKeep { computer: to.clone() }))?;
     let keeping = Keeping {
@@ -253,11 +370,90 @@ fn step(kept: &mut Kept, op: &Value) -> Result<(), Refused> {
         act,
         how,
         from,
+        sum,
         card,
-        agreed: payload["agreed"] == true,
+        agreed,
         since: op["ts_unix"].as_i64().unwrap_or_default(),
+        offer: None,
     };
     kept.apps.insert(app, keeping);
+    Ok(())
+}
+
+/// An offer's kind, as a refusal names it.
+fn own(kind: &str) -> &'static str {
+    match kind {
+        "offered" => "offered",
+        "accepted" => "accepted",
+        _ => "declined",
+    }
+}
+
+/// An offer of `app`, or an answer to one, folded into its keeping: `act`
+/// being the act's id, kind and time, and `person` its writer's name and
+/// key. Who may write each is a person, not a computer: a page says "your
+/// computer" by its person's key, and a write reaches the record only from
+/// that person's own computer (crates/svrngs-node/src/carried.rs `acts`).
+fn offer(
+    kept: &mut Kept,
+    (act, kind, at): (&str, &str, i64),
+    (app, payload): (&str, &Value),
+    (writer, writer_key): (String, String),
+) -> Result<(), Refusal> {
+    let text = |field: &'static str| {
+        let missing = Refusal::Missing { field, kind: own(kind) };
+        payload[field].as_str().map(String::from).ok_or(missing)
+    };
+    let Some(keeping) = kept.apps.get_mut(app) else {
+        let over = text(if kind == "offered" { "over" } else { "offer" }).ok();
+        return Err(Refusal::Stale { kept: None, over });
+    };
+    if kind == "offered" {
+        let (over, to) = (text("over")?, text("to")?);
+        if over != keeping.act {
+            let kept = Some(keeping.act.clone());
+            return Err(Refusal::Stale { kept, over: Some(over) });
+        }
+        if writer_key != keeping.person_key {
+            let keeper = keeping.person.clone();
+            return Err(Refusal::NotYours { writer, keeper });
+        }
+        if to == keeping.keeper {
+            return Err(Refusal::KeptThere { computer: to });
+        }
+        if let Some(yes) = keeping.offer.as_ref().filter(|o| o.answer == Answer::Yes) {
+            return Err(Refusal::Moving { offer: yes.act.clone() });
+        }
+        let computer = kept
+            .can_keep
+            .get(&to)
+            .ok_or(Refusal::CannotKeep { computer: to.clone() })?;
+        keeping.offer = Some(Offer {
+            act: act.into(),
+            to,
+            person: computer.person.clone(),
+            person_key: computer.person_key.clone(),
+            since: at,
+            answer: Answer::Waiting,
+            agreed: false,
+        });
+        return Ok(());
+    }
+    let answers = text("offer")?;
+    let waiting = keeping.offer.as_mut().filter(|o| o.answer == Answer::Waiting);
+    let Some(offer) = waiting.filter(|o| o.act == answers) else {
+        let waiting = (keeping.offer.as_ref()).filter(|o| o.answer == Answer::Waiting);
+        let waiting = waiting.map(|o| o.act.clone());
+        return Err(Refusal::NotOffered { answers, waiting });
+    };
+    if writer_key != offer.person_key {
+        let asked = offer.person.clone();
+        return Err(Refusal::NotAsked { writer, asked });
+    }
+    (offer.answer, offer.agreed) = match kind {
+        "accepted" => (Answer::Yes, payload["agreed"] == true),
+        _ => (Answer::No, false),
+    };
     Ok(())
 }
 
@@ -269,7 +465,11 @@ impl Kept {
                 let k = json!({
                     "keeper": k.keeper, "person": k.person, "person_key": k.person_key,
                     "act": k.act, "how": k.how.as_str(), "from": k.from, "card": k.card,
-                    "agreed": k.agreed, "since": k.since,
+                    "agreed": k.agreed, "since": k.since, "sum": k.sum,
+                    "offer": k.offer.as_ref().map(|o| json!({
+                        "act": o.act, "to": o.to, "person": o.person, "person_key": o.person_key,
+                        "since": o.since, "answer": o.answer.as_str(), "agreed": o.agreed,
+                    })),
                 });
                 (app.clone(), k)
             })
