@@ -11,8 +11,8 @@ carried page.
 This much has landed: the runtime on the computer that keeps an app, an
 author's check of a card, the one fold of who keeps what, Give's program for
 computers, and the carried page with the shelf, "Start it for the group",
-"Move it to…", "Keep it here?" and "Start instead". Give's scenes in the
-gate, and installing its program, come next (`ralph/next/give/STATE.md`).
+"Move it to…", "Keep it here?" and "Start instead", and Give's scenes in
+the gate. Installing its program comes next (`ralph/next/give/STATE.md`).
 
 ## A card
 
@@ -84,8 +84,9 @@ says so. The page then offers the copy before it. A copy that didn't
 start is never tried again unless a person chooses it.
 
 **Start instead.** When a computer that kept an app comes back after
-another took it over, it starts nothing and lends nothing. It copies the
-state it had to the group, and every page lists that copy as "Minecraft
+another took it over, it starts nothing and lends nothing: svrngs keeps a
+lend across its own restart, so Give unlends the app there first. It
+copies the state it had to the group, and every page lists that copy as "Minecraft
 as Cy’s computer had it at 14:10". Anyone whose computer can keep may
 start that copy instead, which is the same yes as above. Nothing is
 merged and nothing is thrown away: the state the app had before is
@@ -116,8 +117,10 @@ A lend reaches everyone in every group its person is in, under one name
 - `src/page.rs`, `page/`: Give's page, and `give page`, which brings it.
 - `src/main.rs`: the three commands.
 - `tests/`: the stand-in card (busybox's httpd) and the tests;
-  `page.test.mjs`, the page in Chromium; svrngs's scene of Give,
-  `crates/svrngs/tests/scenes/give.rs`, plays it with real svrngs. The tests that
+  `page.test.mjs`, the page in Chromium; svrngs's scenes of Give,
+  `crates/svrngs/tests/scenes/give.rs` (a start), `give_move.rs` and
+  `give_gone.rs` (a computer gone, then back), play it with real svrngs;
+  `demo/give.md` is the run-of-show for people. The tests that
   need Podman name their pods and volumes `svrngs-test-*`, and remove them.
   Where Podman does not answer, each of those tests fails as never-ran and
   gives its reason.

@@ -243,7 +243,16 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   third test). The cost is one record act per kept app every five
   minutes. 0 core, 0 library, `apps/` +406 lines by lean_check's rule
   (the fold +144, keeping +201, the runtime +18, the page +43), and Give's
-  surface unchanged;
+  surface unchanged. Landed, give-app-scenes: the gate's "scenes" step
+  plays Give's scenes 3, 4 and 5 with the stand-in, beside scene 1
+  (`crates/svrngs/tests/scenes/give_move.rs`, `give_gone.rs`), each
+  never-ran without podman. The first run found that a computer back
+  after losing power lent the app again, because svrngs keeps a lend
+  across its restart; Give now unlends it there (4fa9003a). The people
+  runs, a Factorio world kept through a move and a takeover and a
+  newcomer's fluency, are `demo/give.md`, waiting on the operator's bars
+  (`demo/runs/give/2026-10-26-scenes/NEEDS_HUMAN.md`). 0 core, 0 library,
+  `apps/` +7, and Give's surface unchanged;
 - sealing, at its §2 trigger.
 
 The operator's switch stands apart from that order: when they flip
