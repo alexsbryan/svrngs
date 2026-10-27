@@ -34,6 +34,13 @@ Every line and every button: [`demo/start.md`](demo/start.md).
 - **Lend what you run.** Jellyfin, Navidrome, Immich, Actual, llama-server:
   anything on a port. Your home page lists what's running, and one press
   gives it to the group. If you'd rather type: `svrngs share <port> --kind <name>`.
+  A game server or anything else that speaks UDP or TCP is typed the same
+  way, with `--udp` or `--tcp` added: your friends press **Play** and
+  connect to `127.0.0.1`, as if it ran on their own computer.
+- **Keep a game for the group.** [Give](apps/give/README.md) runs an app
+  such as a Minecraft or Factorio server on one of your computers, in
+  Podman, and copies its world to everyone. Move it to another computer,
+  or take it over when its computer is gone, with one yes.
 - **Hack on the examples.** Money splits what you spend; Events plans a
   night and says who came. Bring either to a group in one tap. They're
   small on purpose: not the point of svrngs, just where you start

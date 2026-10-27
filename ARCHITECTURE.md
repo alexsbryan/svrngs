@@ -292,7 +292,13 @@ The record over loopback (PLAN §4, U3's inventory, the rail.rs row) is
 (`api::router`) by `api::serve`, which refuses any address but loopback
 (`check_loopback`). Then it changed: every request's caller is asked the
 same (`from_this_computer`), so a caller elsewhere, or one whose address is
-unknown, is refused 403 `not_loopback`, naming it. Its edits: the doors read the journals from a `RailApi`
+unknown, is refused 403 `not_loopback`, naming it. Then it changed
+(give-token): loopback is not proof of the person, since a container on a
+Mac running podman reaches it, so every record route also asks a program
+for the token in `<data dir>/token` (`api::TOKEN_FILE`), minted once,
+owner-only, and kept across restarts, shown as `Authorization: Bearer`,
+and refuses one without it 401 `no_token`, naming the file
+(`holds_the_token`). Its edits: the doors read the journals from a `RailApi`
 where upstream's read `RailsDaemon`; the roster they read is the group's
 seed file, since upstream's `RingRail::roster` went in U1, and so the
 not-in-roster sentence is the rail's own, where upstream chose it by the
@@ -317,7 +323,7 @@ in upstream's `api.rs`. Then it changed: the append door's
 attestation branch went with `attest`, and `GuestAttestation` from the
 core in core-0. An append's `on_behalf_of` is the
 person an app names when it serves someone else — whom the member door
-verified (DESIGN §3, "Localhost is the trust boundary") — signed by this
+verified (DESIGN §3, "The person's own programs are the trust boundary") — signed by this
 computer, and refused (`not_a_name`, `not_in_group`) unless it parses as a
 person standing in the group; upstream dropped a bare one.
 The register stands where the roster stood: `journal_of` asks
@@ -384,6 +390,28 @@ computer lends (`lend::Offered`: name, kind, limit, upload) read from the
 declarations at each ask, and how many people use each now: `door::Using`,
 a task owning `limit::Counts` and the clock, told by messages, the answer's
 body holding a use until it ends.
+
+A lend may be a port, not a page (give-udp, give-tcp): its declaration's
+`"raw": "udp"` or `"raw": "tcp"` makes its source `lend::Source::Raw`, and
+it travels on a protocol of its own, `Alpn::Port` (`svrngs-core`'s
+`alpn.rs`, dispatched in `node.rs`'s accept), never through the door's
+HTTP. `door/udp.rs` holds both halves of the UDP door and what the TCP one
+shares: the member's computer opens one connection for one lend
+(`udp::carried`), and the lender's `serve` lets each use in by the same
+standing and limit (`admitted`) and asks the dialer's standing again every
+sweep, 1 s, closing the connection once they no longer stand (give-cut).
+Each flow is a socket of its own on 127.0.0.1:0, connected to the lent
+port, closed after `IDLE` idle; its packets cross as QUIC datagrams, one
+larger than a datagram cut into a frame of flow, number, index and count
+(`framed`) and made whole on the far side (`take`), a packet with a
+fragment lost lost whole. `door/tcp.rs` carries each TCP connection on a
+QUIC bi-stream of its own on that connection (`tcp::carried`), a side's
+close its stream's finish. Play (`play.rs`, give-play) is the member's
+half on a person's own computer: one owner on the room's model, binding
+`127.0.0.1:<room::port_of(label)>` for each lend whose Play is on, kept in
+`<data dir>/play.json`, while this computer's person and the lender stand
+in a group held here together, read every 5 s; `/v1/play` turns it, for
+the home page's Play and Stop.
 
 Sign in with svrngs (SIGN_IN_WITH_SVRNGS §5, §6; DESIGN §3, "The room",
 call 6): `crates/svrngs-core/src/token.rs` makes an app's claims from the
@@ -750,6 +778,20 @@ its README), kept until `oidc-retire` removes it, and the drivers of its
 measured runs (`check/`, `folders/`).
 **`apps/tap/`**: only Tap's `nouns.txt`. Tap is a canary PLAN §4 plans,
 after U3, and is not built: nothing runs it (#196).
+**`apps/give/`**: Give (DESIGN §3, "Give"), a crate of the workspace that
+links no svrngs crate (`tests/surface.rs`) and reaches svrngs by the record
+API, `svrngs share` and `unshare`, the synced folder and its carried page
+alone. `src/card.rs` reads a card once, each refusal naming its field;
+`src/runtime.rs` starts, checks, snapshots, restores and stops one on
+Podman's command line (`src/podman.rs`, `src/machine.rs` for a Mac's
+machine), naming no svrngs type; `src/check.rs` is `give check`. `fold/`
+is who keeps each app, from give's acts in the record's order, linked by
+the program and built to `page/vendor/fold.js` by `build.sh`, both held to
+`fold/cases.json`. `src/keep.rs` is `give keep`, its `plan` decided apart
+from doing it, over `src/record.rs` and `src/lend.rs`; `src/page.rs` is
+`give page`, which brings `page/` into a group's folder. `web/install.sh
+--give` installs the program, which `scripts/build-release.sh` builds with
+svrngs. Its scenes are svrngs's (`crates/svrngs/tests/scenes/give*.rs`).
 
 **`demo/`**: how a demo is recorded. **`ralph/`**: the work loop. A queue is a
 directory `ralph/next/<queue>/` holding `queue.toml` (models, timeouts, the

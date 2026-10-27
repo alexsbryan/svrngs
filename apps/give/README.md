@@ -108,8 +108,9 @@ start that copy instead, which is the same yes as above. Nothing is
 merged and nothing is thrown away: the state the app had before is
 copied too, and listed the same way.
 
-Any member's computer that runs `give keep` may keep an app for now. Who
-may keep is the operator's to decide (`demo/runs/give/2026-10-26-keep/QUESTION.md`).
+Any member's computer that runs `give keep` may keep an app (the operator,
+2026-10-26, on `demo/runs/give/2026-10-26-keep/QUESTION.md`: "The first is
+fine"). A successor the house names waits for a group that asks.
 
 A lend reaches everyone in every group its person is in, under one name
 (`svrngs share`), so one computer keeps one app of a kind at a time.
