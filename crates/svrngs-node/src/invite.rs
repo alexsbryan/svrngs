@@ -102,12 +102,7 @@ pub fn draw(issuer: PublicKey, relay: Option<RelayUrl>) -> Token {
 /// and the home relay its endpoint reports: `home`, or the first relay
 /// configured while the endpoint reports none, in either posture.
 pub fn carried(relay: &RelayConfig, home: Option<RelayUrl>) -> Option<RelayUrl> {
-    let configured = || {
-        relay
-            .relay_urls
-            .first()
-            .and_then(|r| crate::relay::parse(r).ok())
-    };
+    let configured = || (relay.relay_urls.first()).and_then(|r| crate::relay::parse(r).ok());
     let carried = home.or_else(configured);
     match &carried {
         Some(url) => {
