@@ -26,14 +26,13 @@ The build takes about 10 minutes, once. Each flag is for a reason:
   read the checkout without relabelling it for SELinux.
 - Chromium wants more shared memory than podman's 64 MB, and a test run
   more threads than its 2,048 pids.
-- The host's network, as the gate has it on a Mac. In podman's own
-  (pasta), the grapevine scene's restarted member was not reached again
-  within its 18 s in 5 runs of 5, and was in 3 of 3 on the host's: Sam's
-  fresh dial to the restarted Jo, through the scene's relay, got no
-  answer in 4 s, though Jo had already dialled Sam through it. So the
-  ephemeral ports are the host's too, 32768-60999 on Linux, which hold
-  the room's 40000-48999 (crates/svrngs-node/src/room.rs `port_of`;
-  docs/PLAN.md, nextest's row).
+- The host's network, as the gate has it on a Mac, so the ephemeral
+  ports are the host's too, 32768-60999 on Linux, which hold the room's
+  40000-48999 (crates/svrngs-node/src/room.rs `port_of`; docs/PLAN.md,
+  nextest's row). Podman's own network (pasta) once failed the grapevine
+  scene 5 runs of 5: Sam's fresh dial to the restarted Jo went to Jo's old
+  address. Since give-redial (bd344e4d), it passes there too
+  (demo/runs/redial/2026-10-27/README.md).
 - The three volumes are the caches every run shares; `podman volume rm`
   them to start clean. `target/` stays the checkout's own: cargo judges a
   build fresh by mtime, so a target shared by two checkouts could keep one
