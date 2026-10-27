@@ -229,3 +229,4 @@ There are seventeen rows:
     - svrn-docs `GIVE.md` gets a closing line pointing at what landed.
   - **(b) A release.** A release is prepared for the operator, and the row stops.
   - **Check:** `scripts/check.sh` once; docs-gate clean.
+  - **CORRECTED, 2026-10-26, by the row's worker: docs-gate.** svrngs has none: `git grep -n docs-gate` finds only this row; it is commonwealth-ai's `cargo xtask docs-gate` (`scripts/ralph-check.sh:76` there). Read by its spirit, what a docs gate guards: every repository path the row's changed documents cite in backticks exists at the commit (a one-off script, `target/give-docs/cites.py`, red on a planted missing path, then green), and every code name they cite is found by `git grep`. No check is weakened, since none existed.
