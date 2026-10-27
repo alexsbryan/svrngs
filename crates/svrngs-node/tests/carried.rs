@@ -1096,3 +1096,66 @@ async fn a_computer_writes_nothing_as_a_phone_s_person() {
     let read: Value = read.json().await.unwrap();
     assert_eq!(live(&read), Vec::<Value>::new(), "nothing written as bo");
 }
+
+/// **An app is told the page its group's https links print on**
+/// (give-page-host (a)): Give's install line names the page this
+/// computer's svrngs came from, not always ours, so the carried route says
+/// beside its group the page `link` prints on: none while neither the group
+/// nor the computer keeps one; this computer's once install.sh has kept it;
+/// the group's own once a link names one (`link --origin`). Red at
+/// 47d46706: the route answered no `page`. Planted: the computer's page
+/// alone, never the group's — the third read is the computer's.
+#[tokio::test]
+async fn an_app_is_told_the_page_its_group_s_links_print_on() {
+    use svrngs_core::link::Origin;
+    let (nodes, _dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 9, ana, &[]);
+    round(ana).await;
+    let root = tempfile::tempdir().unwrap();
+    carry(&synced_in(ana, root.path(), &group).await, "Money");
+    let mut seen = lends(ana, &group).await;
+    for _ in 0..30 {
+        if !of_kind(&seen, "Money").is_empty() {
+            break;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        seen = lends(ana, &group).await;
+    }
+    let origin = of_kind(&seen, "Money")[0]["origin"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let page = || async {
+        let read: Value = at(ana, &origin, "GET", "/svrngs/acts", None)
+            .await
+            .json()
+            .await
+            .unwrap();
+        read.get("page")
+            .cloned()
+            .unwrap_or_else(|| panic!("no page beside the group:\n{read:#}"))
+    };
+    let printed = |given: Option<&Origin>| {
+        let made = ana.host().link(&group, false, given, None).expect("a link");
+        made.page.map(|p| p.as_str().to_string())
+    };
+    assert_eq!(page().await, Value::Null, "neither keeps a page");
+    assert_eq!(printed(None), None);
+
+    let ours = "https://computers.example.org/";
+    std::fs::write(ana.rail().root().join("origin"), ours).unwrap();
+    assert_eq!(page().await, ours, "the page this computer came from");
+    assert_eq!(printed(None).as_deref(), Some(ours));
+
+    let theirs = Origin::parse("https://links.example.org/our/house/").unwrap();
+    assert_eq!(printed(Some(&theirs)).as_deref(), Some(theirs.as_str()));
+    assert_eq!(
+        page().await,
+        theirs.as_str(),
+        "the group's own, once a link names it"
+    );
+    for node in &nodes {
+        node.endpoint().close().await;
+    }
+}

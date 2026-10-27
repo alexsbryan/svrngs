@@ -191,6 +191,18 @@ impl Host {
         Ok(self.link_held(&seed.id(), false, None, None))
     }
 
+    /// The page `group`'s https links print on: its own, else the page this
+    /// computer came from, which install.sh keeps and the home page's groups
+    /// keep (Asking::found), since a joiner by the client's link keeps none
+    /// of the group's and a phone opens only an https link
+    /// (capability-scenes-found (b)); a carried app is told it too
+    /// (give-page-host). The group's own is read first, so a computer's
+    /// unreadable page never hides it.
+    pub(crate) fn printed_page(&self, group: &str) -> Result<Option<Origin>, String> {
+        let dir = self.rail.group_dir(group).map_err(|e| e.to_string())?;
+        kept_page(&dir)?.map_or_else(|| kept_page(self.rail.root()), |p| Ok(Some(p)))
+    }
+
     /// [`Host::link`], its sequencer held.
     #[expect(clippy::disallowed_methods, reason = "a link's life starts now")]
     fn link_held(
@@ -212,14 +224,7 @@ impl Host {
             crate::group::write_origin(&dir, given).map_err(|e| unkept(&e))?;
             tracing::debug!(target: "link", group, origin = given.as_str(), "link: the group's origin changed");
         }
-        // Else the page this computer came from, which install.sh keeps and
-        // the home page's groups keep (Asking::found): a joiner by the
-        // client's link keeps none of the group's, and a phone opens only an
-        // https link (capability-scenes-found (b)).
-        let page = match kept_page(&dir).map_err(|e| unkept(&e))? {
-            None => kept_page(self.rail.root()).map_err(|e| unkept(&e))?,
-            kept => kept,
-        };
+        let page = self.printed_page(group).map_err(|e| unkept(&e))?;
         let (key, device) = device.then(|| self.own_person(group)).transpose()?.unzip();
         let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH);
         let now = now.map_err(|e| unkept(&e))?.as_secs() as i64;

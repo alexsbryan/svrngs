@@ -22,7 +22,9 @@
 //!   the fold keeps them by (keys-names), the people in the group now, and
 //!   `spans`, each person's time in it, `{person, joined, left,
 //!   person_key}`, from svrngs-core's membership (canon-spans), null while
-//!   who stands is unsettled (#124);
+//!   who stands is unsettled (#124); and `page`, the page the group's https
+//!   links print on (`Host::printed_page`), null where none is kept and
+//!   `{unread}` where it cannot be read (give-page-host);
 //!   `POST {op}` records an act, and `{corrects, op}` corrects one of its
 //!   own, `op` null to void it, and absent never (#165): the prefix put on its kind
 //!   ([`svrngs_core::grant::app_act`]), signed by this computer as its own
@@ -334,7 +336,12 @@ impl Folders {
             let register = (admission.as_ref().map(|a| a.membership())).filter(|m| !m.unsettled);
             let spans = register.map(|m| m.spans());
             tracing::debug!(target: "folder", group, %kind, spans = ?spans.as_ref().map(Vec::len), "carried: each person's time in the group, or none, their standing unsettled");
-            let read = json!({ "you": person, "you_key": people[key].person_key, "group": group, "people": all, "spans": spans, "ops": ops });
+            // The page the group's https links print on, as `link` prints
+            // them, so Give names it in its install line (give-page-host).
+            let page = (self.host.printed_page(group)).map(|p| p.map(|p| p.as_str().to_owned()));
+            tracing::debug!(target: "folder", group, %kind, ?page, "carried: the page the group's links print on, none, or why it cannot be read");
+            let page = page.map_or_else(|why| json!({ "unread": why }), |p| json!(p));
+            let read = json!({ "you": person, "you_key": people[key].person_key, "group": group, "page": page, "people": all, "spans": spans, "ops": ops });
             return Ok(Json(read).into_response());
         }
         // A write is its person's own device's (capability-signed): this
