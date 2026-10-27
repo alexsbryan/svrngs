@@ -542,7 +542,7 @@ async function enter(group, asked, joined) {
   list.replaceChildren(
     ...once(lent).map((l) => {
       const button = Object.assign(el('button', named(l)), { onclick: () => saying(l, 'yes').then(() => open(group, key, lent, unanswered, l)) });
-      return row([el('span', '', button, ` ${agreed(l, shelf, group)}${opens(l)[1] === 'full' ? ' Full now.' : ''}`)]);
+      return row([el('span', '', button, ` ${agreed(l, shelf, group)}${opens(l, 'Here, in this tab')[1] === 'full' ? ' Full now.' : ''}`)]);
     }),
   );
   const again = asked?.get('open') && lent.find((l) => label(l.key, l.name) === asked.get('open'));
