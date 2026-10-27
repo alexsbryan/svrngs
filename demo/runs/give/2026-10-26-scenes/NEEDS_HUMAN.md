@@ -99,3 +99,13 @@ Nothing here could run on this host. Factorio is not installed: `ls -d
 with a person at each, and run 2 needs a newcomer, a friend and a judge.
 The command each run starts is the person's own press on Give's page,
 in step 1 of its run.
+
+## The answer
+
+The operator, 2026-10-26: "Go with those". Run 1 takes the candidate bars
+above. Run 2 counts its minutes, decisions and questions, with no pass
+mark. The operator names who plays when the runs are played. Both runs
+wait for another time, never-ran until then. Finding 2 is a row of its
+own, give-page-down, before give-install (`ralph/next/give/STATE.md`).
+Factorio 2.1.23 is installed on this Mac through Steam, outside
+`/Applications`, so a one-host rehearsal of run 1 can be played here.

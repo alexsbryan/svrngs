@@ -6,7 +6,7 @@ svrn-docs `rings/current/GIVE.md` is this queue's exploration, and its §12 list
 - **The record API stops trusting loopback.** `api.rs:12` says "Loopback IS the auth", and on a Mac running podman it is false: a container reaches the Mac's `127.0.0.1` through gvproxy (measured 2026-10-25, GIVE.md §5). This fix is owed whether or not Give exists.
 - **Give ships as its own package.** A group can keep an app in rootless podman, one keeper at a time. Give lives in `apps/give/`, on svrngs's public surface and nothing else.
 
-There are fifteen rows:
+There are sixteen rows:
 
 1. the economizing pass, the estimate, and the ceiling, with the three questions the charter says are awaiting the operator;
 2. the token for programs;
@@ -21,8 +21,9 @@ There are fifteen rows:
 11. moving it;
 12. taking it over, and the stale copy;
 13. Give's scenes and the people runs;
-14. install;
-15. the docs and a release, prepared for the operator.
+14. Give's page saying when it cannot read the record;
+15. install;
+16. the docs and a release, prepared for the operator.
 
 **Waits, each with its trigger:**
 
@@ -187,7 +188,23 @@ There are fifteen rows:
 
     Then stop.
   - **Check:** each scene red on its plant, then green.
-- [ ] give-install — depends [give-app-scenes] — ONE ROW:
+  - **THE OPERATOR DECIDED, 2026-10-26,** on `demo/runs/give/2026-10-26-scenes/NEEDS_HUMAN.md`: "Go with those":
+    1. **Run 1, the kept world:** the candidate bars. Both markers are there after the move and after the takeover, no more than five minutes of play is lost, the later world is listed when Bo's computer comes back, and no terminal is opened past "Before the run".
+    2. **Run 2, fluency:** the minutes, decisions and questions are counted and written down, with no pass mark.
+    3. **Who:** the operator names them when the runs are played.
+    4. **The order:** both runs wait for another time, as the game sessions do, and are never-ran until played. A one-host rehearsal of run 1 is possible here: Factorio 2.1.23 is installed through Steam (`~/Library/Application Support/Steam/steamapps/common/Factorio/factorio.app`, `demo/runs/factorio/2026-10-26-rehearsal.json`), which `ls -d /Applications/Factorio.app` does not find.
+    5. **Finding 2** is a row of its own, give-page-down, before give-install.
+
+    (a) and (b) landed. Close the row once its gate passes, with PLAN §1 saying the people runs wait.
+- [ ] give-page-down — depends [give-app-scenes] — ONE ROW, red first, and `scripts/check.sh` once, at the close (the operator, 2026-10-26, on finding 2 of `demo/runs/give/2026-10-26-scenes/NEEDS_HUMAN.md`):
+  - **The gap.** Give's page, left open while its computer's svrngs is down, says nothing. Each round's read throws "Failed to fetch", and the page goes on showing what it last read (`apps/give/page/index.js` `show`). A person whose svrngs restarts, during an update for example, reads a page that has silently gone stale. AGENTS.md 6: an absence is reported, never defaulted.
+  - **(a) Test: THE PAGE SAYS IT CANNOT READ.** Beside Give's page test (`apps/give/page.test.mjs`, in Chromium), failing at HEAD:
+    - With Give's page open and its computer's svrngs stopped, within one round the page says, in a person's words, that it can't read the group just now and will try again. Nothing it shows from before is offered as current, and no press acts on it.
+    - With svrngs started again, the page reads as before, with no reload.
+    - A plant that swallows the failed read turns it red.
+  - **(b) The change.** In `show`, a failed read is said the way an answer that is not JSON already is.
+  - **Check:** (a) red first, green after; Give's scenes green; the four ledgers, `apps/` reported.
+- [ ] give-install — depends [give-page-down] — ONE ROW:
   - **(a) Getting the keeper program.** `web/install.sh` offers Give's keeper program as an option, or the row gives its reason not to. The keeper program comes from the page host beside svrngs, with its checksum in `SHA256SUMS`. If `scripts/build-release.sh` must build `apps/give` for that, the row says what this couples, in distribution and not in code.
   - **(b) The ask in the page.** The carried page's install ask points at that one line.
   - **Check:** `install.sh` run twice on a clean data dir, with and without the option; the checksum refused on a plant.
