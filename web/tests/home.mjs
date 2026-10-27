@@ -3,7 +3,7 @@
 // `args.ask`, its `/ask?lend=<label>&app=<label>`, it is read for its
 // heading, which the test holds to the one source (question.js).
 //
-//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>? | true, <stays>?], ...], "timed"?: [<selector>, ...], "drawn"?: "<selector>", "text"?: true, "open"?: "<a link's words>", "opens"?: ["<link>", ...], "older"?: true, "unfold"?: true}'
+//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>? | true, <stays>?], ...], "timed"?: [<selector>, ...], "drawn"?: "<selector>", "text"?: true, "open"?: "<a link's words>", "opens"?: ["<link>", ...], "older"?: true, "unfold"?: true, "look"?: <words>}'
 //
 // It also answers `sent`, every request the page made (method, URL and
 // body), and each link's `href`: a page never sends a secret it is shown
@@ -11,7 +11,7 @@
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
-import { launch } from './page.mjs';
+import { firstLook, launch } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const { context, close } = await launch(args.engine);
@@ -65,6 +65,10 @@ try {
   // changed. See what’s new" (capability-what-acts).
   if (args.unfold) await page.evaluate(() => document.querySelectorAll('details').forEach((d) => (d.open = true)));
   const all = args.all ? await page.locator(args.all).allTextContents() : null;
+  // With `look`, a number of words: what one look of the first screen
+  // takes in, as page.mjs `firstLook` reads it, once `all` has waited for
+  // the page to draw.
+  const look = args.look ? await firstLook(page, args.look) : null;
   // With `do`, each [selector, value?, stays?] in turn: filled with the
   // value, else clicked, and `all`'s words read once the page it reloads
   // has listed what this computer lends (bash-limit (b)); with `stays`, a
@@ -95,8 +99,8 @@ try {
       continue;
     }
     await Promise.all([page.waitForEvent('load'), page.locator(selector).first().click()]);
-    await page.locator('#lent h2').waitFor({ timeout: 30_000 });
-    await page.locator('#lent li, #lent p').first().waitFor({ timeout: 30_000 });
+    await page.locator('#lent h2, #home p.none ~ p.address').first().waitFor({ timeout: 30_000 });
+    await page.locator('#lent li, #lent p, #home p.none ~ p.address').first().waitFor({ timeout: 30_000 });
     after.push(await page.locator(args.all).allTextContents());
   }
   const opens = [];
@@ -123,14 +127,16 @@ try {
   // With `text`, the page's words as a person reads them, each cell apart,
   // once what this computer lends is drawn below its heading: a lend made
   // by `do` draws it again (REVIEW-audit-v1ui-auto-1: read loaded, between).
-  if (args.text) await page.locator('#lent h2 ~ *').first().waitFor({ timeout: 30_000 });
+  // In no group there is no "What you lend" (home.js): the page's address,
+  // drawn last, then.
+  if (args.text) await page.locator('#lent h2 ~ *, #home p.none ~ p.address').first().waitFor({ timeout: 30_000 });
   // Opened again, as a press above may have drawn the page again.
   if (args.unfold) await page.evaluate(() => document.querySelectorAll('details').forEach((d) => (d.open = true)));
   const text = args.text ? await page.locator('body').innerText() : null;
   // Every link on the page, its words and where it opens (start-home).
   const links = await page.locator('a').evaluateAll((as) => as.map((a) => ({ text: a.textContent, target: a.target, href: a.href })));
   const timed = Object.fromEntries(await timing);
-  console.log(JSON.stringify({ heading, read, all, after, clipboard, links, timed, drawn, text, opened, opens, sent, logs }));
+  console.log(JSON.stringify({ heading, read, all, look, after, clipboard, links, timed, drawn, text, opened, opens, sent, logs }));
 } catch (e) {
   console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);
   process.exitCode = 1;

@@ -121,8 +121,7 @@ async function show(g, s, room, add, me, plays) {
     const rows = (await get(`/v1/rail/people?namespace=${ns}`)).people;
     const [people, judge] = door(rows);
     add('decides', el('p', `${g.name ?? 'Your group'}: ${deciders(rows, me, 'computer')}.`));
-    // Its screen, in a tab of its own: for a TV, a spare laptop or a projector.
-    s.append(people, el('p', '', Object.assign(el('a', `Show ${g.name ?? 'this group'} on a screen`), { href: `/?screen=${ns}`, target: '_blank' })));
+    s.append(people);
     // Where the group's folder is on this disk (v1-onboarding (d)).
     const its = g.name ? `${g.name}’s folder` : 'The group’s folder';
     if (g.folders === null) s.append(el('p', `This computer cannot say where ${its} is.`));
@@ -136,7 +135,7 @@ async function show(g, s, room, add, me, plays) {
     // a button that copies it.
     const shown = (...words) => s.querySelector('.link').replaceChildren(...words);
     const copy = (link, p) => button('Copy the link', () => Promise.resolve().then(() => navigator.clipboard.writeText(link)).then(() => p.append(' Copied.'), () => p.append(' Select it above to copy it.')));
-    const made = (device, words) => button(words, () => post('/link', { group: g.id, device }).then(({ client, https }) => shown(device ? 'Open this link on your other computer or phone; it joins as you, so send it to nobody else: ' : 'Send this link to the person you are inviting: ', el('code', https ?? client), https ? ' It opens in a browser, which says how to join from there.' : ' They join with svrngs join and this link.', ' It works for a day, while this computer is on. ', copy(https ?? client, s.querySelector('.link'))), (e) => shown(e.message)));
+    const made = (device, words) => button(words, () => post('/link', { group: g.id, device }).then(({ client, https }) => shown(device ? 'Open this link on your other computer or phone; it joins as you, so send it to nobody else: ' : 'Send this link to the person you are inviting: ', el('code', https ?? client), https ? ' It opens in a browser, which says how to join from there.' : ' They join with svrngs join and this link.', ' It works for a day, while this computer is on. A new link stops this one letting anyone new in; everyone it let in stays. ', copy(https ?? client, s.querySelector('.link'))), (e) => shown(e.message)));
     // A guest (guests-link; GUESTS §5): how long asked first, 48 hours
     // chosen to start and nothing longer offered, counted from when the
     // guest opens the link; then the link, for any chat.
@@ -180,12 +179,10 @@ async function show(g, s, room, add, me, plays) {
     judge(lends);
     apart(lends.lent, rows);
     body.replaceChildren();
-    // Each with its address for a program, copied by a button that says
-    // so, then said (start-home): the clipboard may refuse a page.
     for (const l of once(lends.lent)) {
       const [opened, now] = opens(l, 'In a tab');
       // A port is no page: Play, not a tab, and no WiFi (give-play).
-      const how = l.raw ? el('td', '', l.key === me ? 'A port this computer lends.' : play(l, plays)) : el('td', `${opened}. `, button('Copy its address for a program', () => Promise.resolve().then(() => navigator.clipboard.writeText(l.origin)).then(() => how.append(` Copied: ${l.origin}`), () => how.append(` Copy it from here: ${l.origin}`))));
+      const how = l.raw ? el('td', '', l.key === me ? 'A port this computer lends.' : play(l, plays)) : el('td', `${opened}.`);
       body.append(el('tr', '', l.raw ? el('td', named(l)) : el('td', '', opener(l), ` ${agreed(l, lends.shelf, g)}`), el('td', owner(l, g)), how, el('td', now)));
     }
     // Each computer that did not say, by how (bash-first-minute (c)), a row
@@ -195,11 +192,18 @@ async function show(g, s, room, add, me, plays) {
     const unlisted = { unanswered: 'did not answer, so what they lend is not listed', unheard: 'has not heard of yours yet, so what they lend is not listed yet', refused: 'answered without saying what they lend, so it is not listed', older: 'runs an older svrngs, so what they lend is not listed' };
     for (const [how, why] of Object.entries(unlisted)) for (const p of lends[how]) said(`${called(rows, p.person_key) ?? p.person}'s computer ${why}.`);
     if (!body.children.length) said('Nobody lends anything here yet.');
-    // Then each opened to this WiFi or closed, at the section's foot, off
-    // the first screen: in each row, Kim tapped it on the way to Money,
-    // not knowing what it did (demo/xenia/findings/
-    // inert-home-open-it-to-this-wifi.md; the operator, 2026-10-26).
-    s.append(table(g, lends, (apps) => post('/shelf', [g.id, apps]), new URLSearchParams(location.search).getAll('joined').includes(g.name)), Object.assign(el('ul', '', ...once(lends.lent).filter((l) => !l.raw).map((l) => el('li', `${named(l)}:`, wifi(l, room)))), { className: 'wifi' }));
+    // Then, at the section's foot, off the first screen, what is for other
+    // devices and programs: each opened to this WiFi or closed (in each
+    // row, Kim tapped it on the way to Money, not knowing what it did,
+    // demo/xenia/findings/inert-home-open-it-to-this-wifi.md; the operator,
+    // 2026-10-26); its address for a program, copied by a button that says
+    // so, then said (start-home), as the clipboard may refuse a page; and
+    // the group on a screen, in a tab of its own, for a TV, a spare laptop
+    // or a projector. In the row and the page's top they were words read
+    // before Money, and the screen a tap away from it (the fifth set, Kim's
+    // Home 90 words of her 30; demo/xenia/findings/wordy-home.md).
+    const foot = (l, li = el('li', `${named(l)}:`, wifi(l, room), ' ')) => (li.append(button('Copy its address for a program', () => Promise.resolve().then(() => navigator.clipboard.writeText(l.origin)).then(() => li.append(` Copied: ${l.origin}. Paste it where a program on this computer, such as a chat app, asks for an address.`), () => li.append(` Copy it from here: ${l.origin}`)))), li);
+    s.append(table(g, lends, (apps) => post('/shelf', [g.id, apps]), new URLSearchParams(location.search).getAll('joined').includes(g.name)), Object.assign(el('ul', '', ...once(lends.lent).filter((l) => !l.raw).map((l) => foot(l))), { className: 'wifi' }), el('p', '', Object.assign(el('a', `Show ${g.name ?? 'this group'} on a screen`), { href: `/?screen=${ns}`, target: '_blank' })));
     for (const l of once(lends.lent).filter((o) => o.group)) add('reads', el('p', carrying(l.kind, lends.shelf)));
     const changed = changes(g, lends, (app) => post('/runs', [g.id, app]), rows, me);
     if (changed.length) add('reads', ...changed);
@@ -364,15 +368,19 @@ function ask(lent, q) {
     // Said after a group is joined here (arch-command (c)).
     if (q.has('joined')) main.append(el('p', `You’re in ${q.get('joined')}${q.has('person') ? `, as ${q.get('person')}.` : ' already.'} ${unplaced}`));
     if (q.has('left')) main.append(el('p', `You left ${q.get('left')}. Rejoining needs a new invitation, and this computer can’t rejoin yet.`));
-    // With no group, how to make one or join one (start-home; start-group).
-    if (!groups.length) main.append(Object.assign(el('p', 'You’re in no group yet. Make one below, or join one from a link someone sent you.'), { className: 'none' }));
+    // With no group, how to join one or make one (start-home; start-group),
+    // and nothing else: what acts as you, a link from your group, and
+    // lending wait for a group to be in. They were what June read first,
+    // a link pasted into the wrong box (the fifth set, her Home 80-119 words
+    // of her 40; demo/xenia/findings/wordy-home.md, said-almost-left-home.md).
+    if (!groups.length) main.append(Object.assign(el('p', 'You’re in no group yet. Join one below from the link someone sent you, or make your own.'), { className: 'none' }));
     // What acts as you (question.js `acts`): among it what is open to this
     // WiFi (room.rs), each said in its lend's row and all of it here, a
     // lend whose lender is away too.
     const [room, plays] = await Promise.all(['/v1/room', '/v1/play'].map((r) => get(r).catch((e) => e)));
     const [acting, add] = acts({ opens: 'Each Stop holds from the app’s next request.', play: 'Any program on this computer reaches these as you while Play is on.' });
     const lent = Promise.all(groups.filter((g) => !g.left).map((g) => show(g, section(g), room, add, me, plays)));
-    main.append(acting);
+    if (groups.length) main.append(acting);
     add('knows', el('p', 'What you open knows your name.'));
     if (room.length || room.message) add('wifi', el('p', room.message ?? 'Anyone on this WiFi can open these as you while svrngs runs: your TV, a phone, another computer. Each stays on the WiFi where you turned it on.'), Object.assign(el('ul', '', ...(room.map?.((r) => el('li', `${r.person ? `${r.person}’s ` : ''}${r.name}:`, wifi(r, room))) ?? [])), { id: 'room' }));
     // Each Play on (give-play), its Stop the row's own act.
@@ -392,16 +400,7 @@ function ask(lent, q) {
       if (!at) return open.append(' That is not a link to something lent in your groups.');
       window.open(via(lend, path(at)), '_blank');
     }));
-    main.append(Object.assign(el('section', '', el('h2', 'Open a link from your group'), open), { id: 'open' }));
-    // A group made here as `svrngs new` makes one, by the svrngs running
-    // here (start-group): its name and the person's, then the page again,
-    // saying so; a refusal said beside the button. A name a group here has
-    // already is said as it is typed, and again once made (#138).
-    const [name, person] = [['name', 'A name for the group: '], ['person', 'Your name in it: ']].map(([n, w]) => el('label', w, Object.assign(el('input'), { name: n })));
-    const [typed, before] = [name.lastChild, el('p')];
-    typed.oninput = () => ((n) => get(`/group?${new URLSearchParams({ name: n })}`).then((b) => namesakes(b, n, 'This makes'), (e) => (n ? e.message : '')).then((w) => n === typed.value && before.replaceChildren(w)))(typed.value);
-    const make = el('p', '', name, person, button('Make a group', () => post('/group', [name, person].map((l) => l.lastChild.value)).then(([made, unplaced, beside]) => location.assign(`/?${new URLSearchParams({ made, also: namesakes(beside, made, 'This is'), ...(unplaced && { unplaced }) })}`), (e) => make.append(` ${e.message}`))));
-    main.append(Object.assign(el('section', '', el('h2', 'Make a group'), make, before), { id: 'make' }));
+    if (groups.length) main.append(Object.assign(el('section', '', el('h2', 'Open a link from your group'), open), { id: 'open' }));
     // A group joined from a link someone sent, by the svrngs running here
     // as `svrngs join` joins (arch-command (c)): pasted, what it is for
     // asked of the computer that sent it and said on the button before it
@@ -415,8 +414,17 @@ function ask(lent, q) {
     link.lastChild.oninput = () => ((l) => (why.replaceChildren('Asking the computer that sent it what it is for…'), get(`/join?${new URLSearchParams({ link: l })}`).then((a) => l === link.lastChild.value && ((asked = a), (as.hidden = Boolean(a[1])), why.replaceChildren(), says()), (e) => l === link.lastChild.value && (go.remove(), why.replaceChildren(e.message)))))(link.lastChild.value);
     as.lastChild.oninput = () => asked && says();
     main.append(Object.assign(el('section', '', el('h2', 'Join a group from a link'), join, why), { id: 'join' }));
-    running();
-    await lending();
+    // A group made here as `svrngs new` makes one, by the svrngs running
+    // here (start-group): its name and the person's, then the page again,
+    // saying so; a refusal said beside the button. A name a group here has
+    // already is said as it is typed, and again once made (#138).
+    const [name, person] = [['name', 'A name for the group: '], ['person', 'Your name in it: ']].map(([n, w]) => el('label', w, Object.assign(el('input'), { name: n })));
+    const [typed, before] = [name.lastChild, el('p')];
+    typed.oninput = () => ((n) => get(`/group?${new URLSearchParams({ name: n })}`).then((b) => namesakes(b, n, 'This makes'), (e) => (n ? e.message : '')).then((w) => n === typed.value && before.replaceChildren(w)))(typed.value);
+    const make = el('p', '', name, person, button('Make a group', () => post('/group', [name, person].map((l) => l.lastChild.value)).then(([made, unplaced, beside]) => location.assign(`/?${new URLSearchParams({ made, also: namesakes(beside, made, 'This is'), ...(unplaced && { unplaced }) })}`), (e) => make.append(` ${e.message}`))));
+    main.append(Object.assign(el('section', '', el('h2', 'Make a group'), make, before), { id: 'make' }));
+    if (groups.length) running();
+    if (groups.length) await lending();
     await uses((await lent).flatMap((l) => l ?? []), add);
     // Said as the command and install.sh say it: it is kept (start-address).
     main.append(Object.assign(el('p', `Your home page, the same address each time svrngs starts: ${location.origin}/`), { className: 'address' }));

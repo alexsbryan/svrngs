@@ -490,9 +490,13 @@ phone's list.
 **The home page**, `http://svrngs.localhost:<port>/`, at the same address each
 time svrngs starts (§7): the person's own page on their computer, written for
 someone a bit afraid technically, in §1's words
-(`crates/svrngs-node/src/home.rs`). It says at its top what it is for and what
-can be done on it; with no group yet, it says to make one or join one from a
-link. Each group is shown as soon as its people are read, and what they lend
+(`crates/svrngs-node/src/home.rs`). It says at its top whose it is and who
+sees it, and no more: what a link lasts is said where one is made. With no
+group yet it shows joining from a link first, then making a group, and
+nothing else: what acts as you, a link from a group, lending and the
+terminal's line wait for a group (the fifth xenia set: June read 80-119
+words of her 40 there, and pasted Kim's link into the other box,
+`demo/xenia/findings/wordy-home.md`). Each group is shown as soon as its people are read, and what they lend
 is added once each computer has answered or not, so a computer asleep holds
 back only that list. Each group is headed by its name, who made it and since
 when this computer has held it, so two of one name are told apart, in a colour
@@ -506,10 +510,12 @@ first, then who is in it (the operator, 2026-10-26: Money found first):
   by a link of its name, its kind in its lender's word when it differs,
   never one of svrngs's own (`scripts/vocab_check.py` reads the pages'
   scripts too), and beside it what opening it agrees to; whose; how it
-  opens (in a tab, signing you in once when its lender's program does; its
-  address for a program); and on or full now. Below the group's things,
-  off the first screen, each can be opened to this WiFi, or closed
-  (the operator, 2026-10-26). A computer that did not say what it lends is a row of its
+  opens (in a tab, signing you in once when its lender's program does); and
+  on or full now. At the group's foot, off the first screen, what is for
+  other devices and programs: each can be opened to this WiFi, or closed
+  (the operator, 2026-10-26), and its address copied for a program; then
+  the group on a screen. In the row and the page's top they were words
+  read before Money (the fifth xenia set, Kim's Home 90 of her 30). A computer that did not say what it lends is a row of its
   own, by why, so nothing is stale and nobody is left out — among them one
   running an older svrngs, whose answer is not read field by field
   (`crates/svrngs-node/src/version.rs`).
@@ -519,11 +525,12 @@ On it a person can:
   copy its address for a program, such as a chat program pointed at a
   friend's model;
 - open a link to a lent app someone sent in the chat, pasted under "Open a
-  link from your group";
-- make a group, join one from a link someone sent, and make a link to invite
+  link from your group", once in a group;
+- join a group from a link someone sent, make one, and make a link to invite
   someone or to add their phone or another computer;
 - open the group's folder in the computer's file browser;
-- lend what runs on their computer, under "Already running here": only when
+- once in a group, lend what runs on their computer, under "Already running
+  here": only when
   they press "Look for programs running on this computer", never as the
   page loads, since a look is seconds of the computer's work: every port
   from 1024 to 49151 that answers on 127.0.0.1, less svrngs's own, what it
@@ -543,7 +550,7 @@ On it a person can:
 - say yes to an app, or stop it;
 - show a group on a screen — a TV, a spare laptop, a projector — at
   `/?screen=<its id>`, opened in a tab of its own from "Show <group> on a
-  screen": its door alone, big, each person's lends in their window, read
+  screen" at the group's foot: its door alone, big, each person's lends in their window, read
   again a second after each read began, since back to back a 25-computer
   group's founder spent 180% of a core
   (`demo/runs/twentyfive/2026-10-17/README.md`); and beside it who joined

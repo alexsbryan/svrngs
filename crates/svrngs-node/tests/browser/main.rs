@@ -2645,10 +2645,18 @@ in_chromium!(
     /// computer in no group, how to make one (on the page since
     /// start-group) or join one (on the page since arch-command (c)).
     /// And how it opens again (give-session), at the page's foot, off the
-    /// first screen (the operator, 2026-10-26). Planted, watched failing:
-    /// index.html and home.js as c6c2212 left them; red before
+    /// first screen (the operator, 2026-10-26). In no group, joining comes
+    /// first, then making one, and nothing else of the page: no "What acts
+    /// as you", no box for a link from your group, nothing to lend, nobody
+    /// to remove; one look in June's forty words (demo/xenia/people/
+    /// june.md) and xenia's order, things to tap first, starts at the box
+    /// for the link someone sent her. The fifth set's June read 80-119
+    /// words there, and pasted Kim's link into the other box (demo/xenia/
+    /// findings/wordy-home.md, said-almost-left-home.md). Planted, watched
+    /// failing: index.html and home.js as c6c2212 left them; red before
     /// give-session's words, with no `p.open`; red at d736ff18, in the
-    /// intro.
+    /// intro; red at 5c6e3b0d, its line in no group "Make one below, or
+    /// join one", making first.
     the_home_page_says_what_it_is_for
 );
 async fn the_home_page_says_what_it_is_for(engine: Engine) {
@@ -2672,12 +2680,33 @@ async fn the_home_page_says_what_it_is_for(engine: Engine) {
         "{seen:#}"
     );
     let dee = alone(dirs[1].path(), &relay).await;
-    let seen = home_page(engine, &dee, json!({ "read": "#home > p.none" })).await;
+    let args = json!({ "read": "#home > p.none", "all": "#home h2", "look": 40, "text": true });
+    let seen = home_page(engine, &dee, args).await;
     assert_eq!(
         seen["read"],
-        "You’re in no group yet. Make one below, or join one from a link someone sent you.",
+        "You’re in no group yet. Join one below from the link someone sent you, or make your own.",
         "{seen:#}"
     );
+    assert_eq!(
+        seen["all"],
+        json!(["Join a group from a link", "Make a group"]),
+        "{seen:#}"
+    );
+    let look = seen["look"].as_str().unwrap_or_default();
+    assert!(
+        look.starts_with("The link someone sent you: Your name in it:"),
+        "{seen:#}"
+    );
+    let text = seen["text"].as_str().unwrap_or_default();
+    for gone in [
+        "Open a link from your group",
+        "What acts as you",
+        "What you lend",
+        "Already running here",
+        "Done in a terminal",
+    ] {
+        assert!(!text.contains(gone), "{gone}: {seen:#}");
+    }
     drop((ada, dee));
 }
 
@@ -2717,8 +2746,15 @@ in_chromium!(
     /// `demo/runs/start/2026-10-13/README.md` §3 (a) 1-3, which the page
     /// never showed). Ada lends `shelf`; her page's button beside it says
     /// what it copies, and once pressed the page says the address it
-    /// copied, which Chromium's clipboard then holds. Planted, watched
-    /// failing: the page as f898bfd left it, with no such button.
+    /// copied, which Chromium's clipboard then holds, and where a program
+    /// takes it. The button is at the group's foot, off the first screen,
+    /// beside the WiFi: in the index's row it was words read before Money
+    /// (the fifth xenia set, Kim's Home 90 of her 30 words; June: "a lot
+    /// of wording about lending programs and copying addresses for
+    /// programs", demo/xenia/findings/wordy-home.md). Planted, watched
+    /// failing: the page as f898bfd left it, with no such button; as
+    /// 5c6e3b0d left it, the button in the index's row and the screen
+    /// under the group's people.
     the_home_page_copies_a_lend_s_address_for_a_program
 );
 async fn the_home_page_copies_a_lend_s_address_for_a_program(engine: Engine) {
@@ -2736,14 +2772,25 @@ async fn the_home_page_copies_a_lend_s_address_for_a_program(engine: Engine) {
         engine,
         &ada,
         json!({
-            "all": "#home table.index td",
-            "do": [["#home table.index td button:has-text('Copy its address for a program')", null, true]],
+            "all": "#home section ul.wifi li, #home section ul.wifi + p",
+            "do": [["#home section table.index ~ ul.wifi li button:has-text('Copy its address for a program')", null, true]],
         }),
     )
     .await;
     eprintln!("the home page's run: {seen:#}");
+    // The group on a screen there too, last: Kim's first tap in two of the
+    // fifth set's three `together` runs, on her way to Money.
+    let foot = seen["all"]
+        .as_array()
+        .and_then(|a| a.last())
+        .and_then(Value::as_str);
+    assert!(
+        foot.is_some_and(|t| t.ends_with(" on a screen")),
+        "{seen:#}"
+    );
     let said = seen["after"][0].to_string();
-    assert!(said.contains(&format!("Copied: {origin}")), "{seen:#}");
+    let copied = format!("Copied: {origin}. Paste it where a program on this computer, such as a chat app, asks for an address.");
+    assert!(said.contains(&copied), "{seen:#}");
     if matches!(engine, Engine::Chromium) {
         assert_eq!(seen["clipboard"], origin, "{seen:#}");
     }
@@ -2903,8 +2950,13 @@ async fn the_home_page_s_links_say_what_they_open(engine: Engine) {
         "ada’s shelf (k) It writes what you say there into your group’s record, as you.",
         "{seen:#}"
     );
-    // The WiFi is below the group's things, never in the index's row.
+    // The WiFi and the address for a program are below the group's
+    // things, never in the index's row.
     assert!(!seen["all"].to_string().contains("WiFi"), "{seen:#}");
+    assert!(
+        !seen["all"].to_string().contains("Copy its address"),
+        "{seen:#}"
+    );
     drop(ada);
 }
 
@@ -3421,7 +3473,7 @@ async fn the_home_page_makes_a_link_to_invite_someone(engine: Engine) {
         let said = said.as_str().unwrap_or_default();
         assert!(said.starts_with(starts), "{seen:#}");
         assert!(
-            said.ends_with("It works for a day, while this computer is on. Copy the link"),
+            said.ends_with("It works for a day, while this computer is on. A new link stops this one letting anyone new in; everyone it let in stays. Copy the link"),
             "{seen:#}"
         );
         let at = said.find("svrngs://join/").expect("the link is shown");

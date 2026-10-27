@@ -120,6 +120,8 @@ form { display: grid; gap: 0.5rem; justify-items: start; }
    TV, a laptop and a projector each fill theirs. */
 body.screen { max-width: none; height: 100vh; margin: 0; padding: 0; overflow: hidden; font-size: 1.4vw; }
 body.screen #intro, body.screen #terminal, body.screen #again { display: none; }
+/* In no group there is nobody to remove, so nothing to do in a terminal (home.js, `none`). */
+body:has(#home > p.none) #terminal { display: none; }
 body.screen main, body.screen section { height: 100%; }
 body.screen section { display: grid; grid-template: "name count" auto "door since" minmax(0, 1fr) "foot foot" auto / 2fr 1fr; padding: 0; border: 0; }
 body.screen section > h2 { grid-area: name; margin: 0; padding: 1.4vw 2vw 1vw; border: 0; border-bottom: var(--rule); font-size: 5.5vw; line-height: 0.85; letter-spacing: -0.055em; }
