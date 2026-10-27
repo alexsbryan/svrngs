@@ -8,7 +8,7 @@ use std::time::{Duration, Instant};
 
 use axum::body::Bytes;
 
-use super::{framed, past, take, Frame, Whole, HEAD, IDLE, WHOLE_WITHIN};
+use super::{framed, past, take, Fragments, Frame, HEAD, IDLE, WHOLE_WITHIN};
 
 /// What a path carries in one datagram, about QUIC's floor.
 const MAX: usize = 1_200;
@@ -27,7 +27,7 @@ fn a_packet_is_cut_to_fit_and_made_whole_again() {
     let packet: Vec<u8> = (0..5_000u32).map(|i| (i % 251) as u8).collect();
     let parts = frames(7, 1, &packet);
     assert_eq!(parts.len(), packet.len().div_ceil(MAX - HEAD));
-    let (mut whole, now) = (Whole::new(), Instant::now());
+    let (mut whole, now) = (Fragments::new(), Instant::now());
     let mut got = None;
     // Unordered, as datagrams arrive.
     for f in parts.into_iter().rev() {
@@ -44,7 +44,7 @@ fn a_packet_is_cut_to_fit_and_made_whole_again() {
 /// has waited [`WHOLE_WITHIN`].
 #[test]
 fn a_dropped_fragment_drops_that_packet_alone() {
-    let (mut whole, now) = (Whole::new(), Instant::now());
+    let (mut whole, now) = (Fragments::new(), Instant::now());
     let mut lost = frames(3, 1, &[1; 3_000]);
     let late = lost.remove(1);
     for f in lost {

@@ -83,7 +83,7 @@ pub(crate) fn framed(flow: u32, number: u32, packet: &[u8], max: usize) -> Optio
 
 /// The packets waiting for the rest of their fragments, by flow and
 /// number, since their first came.
-pub(crate) type Whole = BTreeMap<(u32, u32), (Instant, Vec<Option<Bytes>>)>;
+pub(crate) type Fragments = BTreeMap<(u32, u32), (Instant, Vec<Option<Bytes>>)>;
 
 /// Whether what came `at` is past `after` at `now`: a flow's last packet
 /// past [`IDLE`], or a packet's first fragment past [`WHOLE_WITHIN`].
@@ -94,7 +94,7 @@ pub(crate) fn past(at: Instant, after: Duration, now: Instant) -> bool {
 /// The flow and packet the datagram `d` completes in `whole`, at `now`;
 /// each packet still missing a fragment past [`WHOLE_WITHIN`] dropped,
 /// traced.
-pub(crate) fn take(whole: &mut Whole, d: Bytes, now: Instant) -> Option<(u32, Vec<u8>)> {
+pub(crate) fn take(whole: &mut Fragments, d: Bytes, now: Instant) -> Option<(u32, Vec<u8>)> {
     let lost = whole.extract_if(.., |_, (at, _)| past(*at, WHOLE_WITHIN, now));
     let lost: Vec<(u32, u32)> = lost.map(|(at, _)| at).collect();
     if !lost.is_empty() {
@@ -178,7 +178,7 @@ async fn carrying(lent: Lending<'_>, raw: Option<Raw>, mut send: SendStream) {
         return super::tcp::serve(lent).await;
     }
     let mut flows = Flows::new();
-    let mut whole = Whole::new();
+    let mut whole = Fragments::new();
     while let Ok(d) = conn.read_datagram().await {
         let Some((flow, packet)) = take(&mut whole, d, now()) else {
             continue;
@@ -339,7 +339,7 @@ pub(super) async fn opening(
 /// The member's loop: `local`'s packets to the lender, each flow's answers
 /// to its port on 127.0.0.1, and the lender's words of a flow refused.
 async fn member(conn: Connection, local: UdpSocket, (_send, mut lines): Opened, tell: Tell) {
-    let (mut whole, mut number, mut buf) = (Whole::new(), 0, vec![0; LARGEST]);
+    let (mut whole, mut number, mut buf) = (Fragments::new(), 0, vec![0; LARGEST]);
     loop {
         tokio::select! {
             Ok((n, from)) = local.recv_from(&mut buf) => {
