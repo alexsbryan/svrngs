@@ -1,36 +1,39 @@
 # Too much: Home
 
-- status: open
+- status: open, not seen since the set `/home/alexbryan/dev/xenia/runs/2026-10-27T03-11-14-983Z`, 3 run(s) by claude-sonnet-5-5, as claude -p, xenia `2a10d4d`, the product `ccd48cb4`
 - found by: the set `/home/alexbryan/dev/xenia/runs/2026-10-26T20-27-16-914Z`, 3 run(s) on sonnet, xenia `7d3e6d3`, the product `bd6f14c9`
-- last seen: the set `/home/alexbryan/dev/xenia/runs/2026-10-27T06-30-27-895Z`, 3 run(s) by claude-sonnet-5-5, as claude -p, xenia `4f12ba4`, the product `bbddad47`
+- last seen: the set `/home/alexbryan/dev/xenia/runs/2026-10-27T03-11-14-983Z`, 3 run(s) by claude-sonnet-5-5, as claude -p, xenia `2a10d4d`, the product `ccd48cb4`
 - kind: soft (the person's): what they said when asked "too much"; never both
 
 ## Where
 
-Home. What was read there first: The link someone sent you: / Your name in it: / A name for the group: / Your name in it: / Make a group / Your groups
+Home. What was read there first: What acts as you / The link: / Open it / Your groups / Open a link from your group / Make a group
 
 ## Who, and how often
 
-- `newcomer`: 1 of 3 accounts (June run 3)
+- `newcomer`: 2 of 3 accounts (June run 2, June run 3)
 
 ## What happened
 
-- `newcomer` run 3, June: passed, reached their goal. their last acts: tap “Join House as June” · tell · tell · tell · tell · tell
+- `newcomer` run 2, June: failed, ran out of patience. their last acts: type “June” into “Your name in it” · tell · tell · tell · tell · tell
+- `newcomer` run 3, June: failed, ran out of patience. their last acts: look · tell · tell · tell · tell · tell
 
 ## What the people said
 
-- June, `newcomer` run 3: “I didn't find it too much. I stopped after joining. The invite, add-a-device and guest buttons would need me to ask someone first, so I left them alone.”
+- June, `newcomer` run 2: “The page has a lot of wording about lending programs and copying addresses for programs. I didn't understand it, and it made me nervous.”
+- June, `newcomer` run 3: “The page was confusing. There were two link boxes that look alike, and I picked the wrong one first. I also don't really know what "lending" my computer means. I'd want Kim to check with me before I go further.”
 
 ## The product source
 
-- `crates/svrngs-node/src/home/home.js:408` holds “The link someone sent you:”
-- `crates/svrngs-node/tests/browser/main.rs:2697` holds “The link someone sent you:”
-- `demo/xenia/findings/findings.json:173` holds “The link someone sent you:”
-- `crates/svrngs-node/src/home/home.js:408` holds “Your name in it:”
-- `crates/svrngs-node/src/home/home.js:421` holds “Your name in it:”
-- `crates/svrngs-node/tests/browser/main.rs:2697` holds “Your name in it:”
-- `crates/svrngs-node/src/home/home.js:421` holds “A name for the group:”
-- `ralph/next/arch/arch-command/b-wip.patch:241` holds “A name for the group:”
+- `RELEASES.md:40` holds “What acts as you”
+- `apps/jellyfin/ROOM.md:17` holds “What acts as you”
+- `crates/svrngs/tests/join_page.rs:203` holds “What acts as you”
+- `crates/svrngs-node/src/home/home.js:388` holds “The link:”
+- `demo/events.md:342` holds “The link:”
+- `demo/xenia/findings/first-set/two-link-boxes.md:9` holds “The link:”
+- `ARCHITECTURE.md:538` holds “Open it”
+- `README.md:9` holds “Open it”
+- `README.md:48` holds “Open it”
 
 ## To reproduce
 
