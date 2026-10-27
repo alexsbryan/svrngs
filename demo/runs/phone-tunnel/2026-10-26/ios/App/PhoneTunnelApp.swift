@@ -34,6 +34,9 @@ final class Tunnel: ObservableObject {
         manager.protocolConfiguration = proto
         manager.localizedDescription = "Phone tunnel spike"
         manager.isEnabled = true
+        // iOS starts it again whenever it stops it, as a shipped app would ask; off with the switch.
+        manager.onDemandRules = [NEOnDemandRuleConnect()]
+        manager.isOnDemandEnabled = on
         do {
             try await manager.saveToPreferences()
             // A manager just saved starts only once loaded again.

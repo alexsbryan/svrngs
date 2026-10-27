@@ -21,6 +21,9 @@ cat > "$out/include/tunnel.h" <<'H'
 // 0 running, 1 no log_dir or no trace file in it, 2 refused (traced), 3 already running.
 int32_t tunnel_start(const char *config_json);
 void tunnel_stop(void);
+// The provider's sleep and wake, counted for the probe.
+void tunnel_slept(void);
+void tunnel_woke(void);
 H
 cat > "$out/include/module.modulemap" <<'M'
 module Tunnel {

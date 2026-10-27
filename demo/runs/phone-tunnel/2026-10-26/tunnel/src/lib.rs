@@ -8,6 +8,7 @@ use std::io::Write;
 use std::net::Ipv4Addr;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use iroh::endpoint::TransportAddrUsage;
@@ -15,6 +16,7 @@ use serde::{Deserialize, Serialize};
 use svrngs_node::door::tcp::{Carried, carried};
 use svrngs_node::iroh::{Endpoint, EndpointAddr, PublicKey, RelayConfig, SecretKey, build_relayed_endpoint};
 use svrngs_node::lend::LendName;
+use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::sync::oneshot;
 use tokio::time::{MissedTickBehavior, interval};
 use tracing::debug;
@@ -38,7 +40,13 @@ pub struct Config {
     port: u16,
     pub plant: Plant,
     log_dir: PathBuf,
+    /// The one key the probe answers (PHONE_REPLICA §5, phase 1); none, no probe.
+    #[serde(default)]
+    probe: Option<PublicKey>,
 }
+
+/// What a probe dial asks on: the phone's vitals, one JSON line.
+pub const PROBE: &[u8] = b"svrngs/probe/0";
 
 #[derive(Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -56,6 +64,10 @@ enum Started {
     Refused = 2,
     Already = 3,
 }
+
+// The extension's sleeps and wakes as iOS tells its provider, counted for the probe.
+static SLEPT: AtomicU64 = AtomicU64::new(0);
+static WOKE: AtomicU64 = AtomicU64::new(0);
 
 // The C caller holds no handle, so the process holds the one tunnel.
 static RUNNING: Mutex<Option<(oneshot::Sender<()>, std::thread::JoinHandle<()>)>> = Mutex::new(None);
@@ -83,6 +95,18 @@ pub extern "C" fn tunnel_stop() {
         let _ = stop.send(());
         let _ = thread.join();
     }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn tunnel_slept() {
+    let n = SLEPT.fetch_add(1, Ordering::Relaxed) + 1;
+    debug!(target: "tunnel", n, "slept: iOS put the provider to sleep");
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn tunnel_woke() {
+    let n = WOKE.fetch_add(1, Ordering::Relaxed) + 1;
+    debug!(target: "tunnel", n, "woke: iOS woke the provider");
 }
 
 pub fn parsed(raw: &str) -> Result<Config, serde_json::Error> {
@@ -148,10 +172,13 @@ async fn run(config: Config, mut stopped: oneshot::Receiver<()>) {
         Plant::None | Plant::Leak => SecretKey::from_bytes(&config.seed),
     };
     debug!(target: "tunnel", key = %key.public(), plant = ?config.plant, "the endpoint's key: the seed's, or under stranger one no group holds");
-    let endpoint = match build_relayed_endpoint(key, Vec::new(), &RelayConfig::default()).await {
+    let alpns = config.probe.map(|_| vec![PROBE.to_vec()]).unwrap_or_default();
+    let endpoint = match build_relayed_endpoint(key, alpns, &RelayConfig::default()).await {
         Ok(endpoint) => endpoint,
         Err(e) => return debug!(target: "tunnel", error = e, "stopped: no endpoint"),
     };
+    let born = std::time::Instant::now();
+    let _probe = config.probe.map(|dialer| tokio::spawn(answering(endpoint.clone(), dialer, born)));
     let (mut lend, mut leaked) = (None::<Carried>, Vec::new());
     let (mut sample, mut leak) = (interval(Duration::from_secs(10)), interval(Duration::from_secs(1)));
     sample.set_missed_tick_behavior(MissedTickBehavior::Delay);
@@ -161,8 +188,9 @@ async fn run(config: Config, mut stopped: oneshot::Receiver<()>) {
             _ = sample.tick() => {
                 let open = lend.as_ref().is_some_and(|(_, task)| !task.is_finished());
                 sampled(&endpoint, &config, open).await;
-                debug!(target: "tunnel", open, "the lend open, or opened again now: a lender closing it or not yet up is tried each sample");
-                if !open { lend = opened(&endpoint, &config).await }
+                debug!(target: "tunnel", open, probe = config.probe.is_some(), "the lend open, or opened again now: a lender closing it or not yet up is tried each sample; none under the probe");
+                // Under the probe the phone only holds its endpoint, so nothing of the door's wakes it (PHONE_REPLICA §5).
+                if !open && config.probe.is_none() { lend = opened(&endpoint, &config).await }
             }
             Some(words) = async { match &mut lend { Some((told, _)) => told.recv().await, None => std::future::pending().await } } => {
                 debug!(target: "tunnel", words, "the lender refused a program's connection");
@@ -177,6 +205,38 @@ async fn run(config: Config, mut stopped: oneshot::Receiver<()>) {
     drop(lend);
     endpoint.close().await;
     debug!(target: "tunnel", "stopped: the lend dropped and the endpoint closed");
+}
+
+/// Each probe dial from `dialer` answered with one line of vitals; any other key closed unanswered.
+async fn answering(endpoint: Endpoint, dialer: PublicKey, born: std::time::Instant) {
+    while let Some(incoming) = endpoint.accept().await {
+        tokio::spawn(async move {
+            let conn = match incoming.await {
+                Ok(conn) => conn,
+                Err(e) => return debug!(target: "tunnel", error = %e, "probe: a dial's handshake failed"),
+            };
+            if conn.remote_id() != dialer {
+                debug!(target: "tunnel", from = %conn.remote_id(), "probe: a dial from a key not the dialer's, closed unanswered");
+                return conn.close(0u32.into(), b"not admitted");
+            }
+            let vitals = serde_json::json!({
+                "t": SystemTime::now().duration_since(UNIX_EPOCH).ok().map(|d| d.as_secs()),
+                "up_s": born.elapsed().as_secs(), "footprint": footprint(), "available": available(),
+                "slept": SLEPT.load(Ordering::Relaxed), "woke": WOKE.load(Ordering::Relaxed),
+            });
+            let answered = async {
+                let (mut send, recv) = conn.accept_bi().await?;
+                BufReader::new(recv).read_line(&mut String::new()).await?;
+                send.write_all(format!("{vitals}\n").as_bytes()).await?;
+                send.finish()?;
+                Ok::<_, std::io::Error>(())
+            };
+            let answered = tokio::time::timeout(Duration::from_secs(10), answered).await;
+            debug!(target: "tunnel", ?answered, "probe: the dialer's dial answered with vitals, or not");
+            // The dialer closes once it has read the line; waiting for that lets the line arrive.
+            let _ = tokio::time::timeout(Duration::from_secs(10), conn.closed()).await;
+        });
+    }
 }
 
 async fn opened(endpoint: &Endpoint, config: &Config) -> Option<Carried> {
@@ -214,6 +274,7 @@ async fn sampled(endpoint: &Endpoint, config: &Config, open: bool) {
     let sample = serde_json::json!({
         "t": t, "footprint": footprint(), "available": available(), "open": open, "path": path, "plant": config.plant,
         // Every QUIC byte the endpoint sent and took in, over IP and relay: it holds the one connection.
+        "slept": SLEPT.load(Ordering::Relaxed), "woke": WOKE.load(Ordering::Relaxed),
         "up": s.send_ipv4.get() + s.send_ipv6.get() + s.send_relay.get(),
         "down": s.recv_data_ipv4.get() + s.recv_data_ipv6.get() + s.recv_data_relay.get(),
     });
@@ -278,6 +339,15 @@ mod tests {
             ours.abs_diff(theirs) < 1 << 20,
             "task_info {ours}, proc_pid_rusage {theirs}"
         );
+    }
+
+    #[test]
+    fn the_probe_is_off_unless_a_dialer_is_named() {
+        let seed = "00".repeat(32);
+        assert!(parsed(&config("none", &seed)).unwrap().probe.is_none());
+        let dialer = SecretKey::generate().public();
+        let named = config("none", &seed).replace("}", &format!(r#","probe":"{dialer}"}}"#));
+        assert_eq!(parsed(&named).unwrap().probe, Some(dialer));
     }
 
     #[test]

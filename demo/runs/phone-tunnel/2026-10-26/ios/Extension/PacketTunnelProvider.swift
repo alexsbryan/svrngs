@@ -23,7 +23,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
             let plant = (self.protocolConfiguration as? NETunnelProviderProtocol)?.providerConfiguration?["plant"]
             let config: [String: Any] = [
                 "seed_hex": Key.seedHex, "lender": Key.lender, "lend": Key.lend,
-                "port": 8096, "plant": plant ?? NSNull(), "log_dir": logs.path,
+                "port": 8096, "plant": plant ?? NSNull(), "log_dir": logs.path, "probe": Key.probe ?? NSNull(),
             ]
             guard let json = try? JSONSerialization.data(withJSONObject: config),
                   let text = String(data: json, encoding: .utf8)
@@ -33,6 +33,16 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
             NSLog("phone-tunnel: tunnel_start %d", started)
             completionHandler(started == 0 ? nil : Refused.started(started))
         }
+    }
+
+    // Counted for the probe's vitals: whether iOS sleeps the provider with a locked phone (PHONE_REPLICA §4).
+    override func sleep(completionHandler: @escaping () -> Void) {
+        tunnel_slept()
+        completionHandler()
+    }
+
+    override func wake() {
+        tunnel_woke()
     }
 
     override func stopTunnel(with reason: NEProviderStopReason, completionHandler: @escaping () -> Void) {
