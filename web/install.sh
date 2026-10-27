@@ -3,7 +3,11 @@
 # "A computer gets svrngs from the group's link"), the line the group's
 # page gives:
 #
-#   curl -fsSL <page>install.sh | sh -s -- '<link>' [--as '<your name>']
+#   curl -fsSL <page>install.sh | sh -s -- '<link>' [--give] [--as '<your name>']
+#
+# (--give: Give's program too, for a computer that keeps apps for its
+# groups, the line Give's page gives with the page's address for the link;
+# apps/give)
 #
 # or, for someone with no link yet, who makes a group on their home page
 # (start-group), the page's address where the link goes:
@@ -24,7 +28,10 @@
 # svrngs running whenever this person logs in (a LaunchAgent on
 # macOS, a systemd --user unit on Linux), puts an opener that runs
 # `svrngs open` in their Applications (a .desktop entry on Linux), and opens
-# their home page with it, a code that becomes its session there. Run
+# their home page with it, a code that becomes its session there. With
+# --give it gets Give's program from the same page, checked by the same
+# sums before either is installed, puts it beside svrngs and keeps `give
+# keep` running at login too, waited for as it stops. Run
 # again, it updates in place, and svrngs joins nothing twice. With
 # --relay it joins nothing and keeps `svrngs relay` running instead, beside
 # any svrngs kept already: a LaunchAgent on macOS; on Linux, where only the
@@ -48,6 +55,8 @@ if [ "${1:-}" = --relay ]; then
   shift 2
   for a in "$@"; do [ "$a" = --open ] || no "a relay takes --open and nothing else, not $a."; done
 fi
+give=""
+[ "${1:-}" != --give ] || { give=give && shift; }
 from="${SVRNGS_FROM:-${link%%#*}}"
 case "$from" in
   http://* | https://*) ;;
@@ -59,21 +68,28 @@ case "$(uname -s)" in Darwin) os=darwin ;; Linux) os=linux ;; *) os="" ;; esac
 case "$(uname -m)" in arm64 | aarch64) arch=aarch64 ;; x86_64 | amd64) arch=x86_64 ;; *) arch="" ;; esac
 [ -n "$os" ] && [ -n "$arch" ] ||
   no "svrngs runs on Mac and Linux computers, Intel or ARM; this one is $(uname -s) on $(uname -m), so nothing was installed."
-tarball="svrngs-$os-$arch.tar.gz"
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
-say "Getting svrngs for this computer from ${from}get/$tarball"
-curl -fsSL "${from}get/$tarball" -o "$tmp/$tarball" ||
-  no "could not get ${from}get/$tarball, so nothing was installed."
 curl -fsSL "${from}get/SHA256SUMS" -o "$tmp/SHA256SUMS" ||
   no "could not get ${from}get/SHA256SUMS to check it against, so nothing was installed."
-want="$(awk -v f="$tarball" '$2 == f || $2 == "*" f { print $1 }' "$tmp/SHA256SUMS")"
 sum=sha256sum && command -v sha256sum >/dev/null 2>&1 || sum="shasum -a 256"
-got="$($sum "$tmp/$tarball" | cut -d' ' -f1)"
-[ -n "$want" ] && [ "$got" = "$want" ] ||
-  no "$tarball is not the one the release lists, so it was refused and nothing was installed."
-say "Checked: $tarball is the one the release lists, unchanged on its way here."
+# Program $1 for this computer, from the page's get/ (scripts/build-release.sh),
+# refused unless it is the one SHA256SUMS lists, and unpacked in $tmp.
+get() {
+  tarball="$1-$os-$arch.tar.gz"
+  say "Getting $1 for this computer from ${from}get/$tarball"
+  curl -fsSL "${from}get/$tarball" -o "$tmp/$tarball" ||
+    no "could not get ${from}get/$tarball, so nothing was installed."
+  want="$(awk -v f="$tarball" '$2 == f || $2 == "*" f { print $1 }' "$tmp/SHA256SUMS")"
+  got="$($sum "$tmp/$tarball" | cut -d' ' -f1)"
+  [ -n "$want" ] && [ "$got" = "$want" ] ||
+    no "$tarball is not the one the release lists, so it was refused and nothing was installed."
+  say "Checked: $tarball is the one the release lists, unchanged on its way here."
+  tar -xzf "$tmp/$tarball" -C "$tmp" "$1" && chmod 755 "$tmp/$1"
+}
+# Both are checked before either is installed, so a refusal installs nothing.
+for p in svrngs $give; do get "$p"; done
 
 dir="${SVRNGS_DIR:-$HOME/.svrngs}"
 bin="$HOME/.local/bin"
@@ -81,26 +97,31 @@ label="sh.svrnme.svrngs"
 unit=svrngs
 run="$bin/svrngs"
 [ -z "$relay" ] || label="$label.relay" unit=svrngs-relay run="$run relay $relay $*"
+# What runs at login finds svrngs and Podman (its installer's place, then
+# Homebrew's) here, since launchd and systemd give it no shell's PATH.
+paths="$bin:/opt/podman/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+# $label's (launchd) or $unit's (systemd) file, and stopping it if kept.
 if [ "$os" = darwin ]; then
-  kept="$HOME/Library/LaunchAgents/$label.plist"
+  at() { kept="$HOME/Library/LaunchAgents/$label.plist"; }
   stop() { launchctl bootout "gui/$(id -u)/$label" 2>/dev/null; }
 else
-  kept="$HOME/.config/systemd/user/$unit.service"
+  at() { kept="$HOME/.config/systemd/user/$unit.service"; }
   stop() { systemctl --user is-active --quiet $unit.service && systemctl --user stop $unit.service; }
 fi
+stopped() { at && if [ -f "$kept" ] && stop; then say "Stopped $unit, to update it."; fi; }
 # A svrngs kept running holds its data, which joining needs: stopped
 # first, started again below on the new one.
-if [ -f "$kept" ] && stop; then say "Stopped $unit, to update it."; fi
+stopped
 
 mkdir -p "$bin" "$dir"
 # The page it came from, by the name the node reads (svrngs-node invite.rs
 # `ORIGIN_FILE`; tests/install.rs reads it by that constant).
 printf '%s' "$from" >"$dir/origin"
-tar -xzf "$tmp/$tarball" -C "$tmp" svrngs
-chmod 755 "$tmp/svrngs"
-if [ -e "$bin/svrngs" ]; then done="Updated"; else done="Installed"; fi
-mv -f "$tmp/svrngs" "$bin/svrngs"
-say "$done svrngs in $bin."
+put() {
+  if [ -e "$bin/$1" ]; then done="Updated"; else done="Installed"; fi
+  mv -f "$tmp/$1" "$bin/$1" && say "$done $1 in $bin."
+}
+for p in svrngs $give; do put "$p"; done
 # Where the person's terminal looks for programs gets $bin, once: the profile
 # their login shell ($SHELL) reads in a new window, as rustup and uv add
 # theirs; any other shell is told the whole path. A `|` keeps $SHELL's part
@@ -130,38 +151,52 @@ if [ "${link#*#}" != "$link" ] && [ -z "$relay" ]; then
     no "svrngs is in $bin, and did not join the group: it said why above."
 fi
 
-mkdir -p "$(dirname "$kept")"
-if [ "$os" = darwin ]; then
-  cat >"$kept" <<EOF
+# $run kept running at login as $label (launchd) or $unit (systemd), with $hold.
+keep() {
+  mkdir -p "$(dirname "$kept")"
+  if [ "$os" = darwin ]; then
+    cat >"$kept" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
   <key>Label</key><string>$label</string>
   <key>ProgramArguments</key><array>$(for a in $run; do printf '<string>%s</string>' "$a"; done)</array>
-  <key>EnvironmentVariables</key><dict><key>SVRNGS_DIR</key><string>$dir</string></dict>
+  <key>EnvironmentVariables</key><dict><key>PATH</key><string>$paths</string><key>SVRNGS_DIR</key><string>$dir</string></dict>
   <key>RunAtLoad</key><true/>
+  ${hold:-}
   <key>KeepAlive</key><true/>
   <key>StandardOutPath</key><string>$dir/$unit.log</string>
   <key>StandardErrorPath</key><string>$dir/$unit.log</string>
 </dict></plist>
 EOF
-  launchctl bootstrap "gui/$(id -u)" "$kept" || no "svrngs could not be kept running at login: launchctl refused $kept."
-else
-  cat >"$kept" <<EOF
+    launchctl bootstrap "gui/$(id -u)" "$kept" || no "$unit could not be kept running at login: launchctl refused $kept."
+  else
+    cat >"$kept" <<EOF
 [Unit]
-Description=svrngs
+Description=$unit
 [Service]
 ExecStart=$run
 Environment=SVRNGS_DIR=$dir
+Environment=PATH=$paths
 Restart=on-failure
+${hold:-}
 [Install]
 WantedBy=default.target
 EOF
-  { systemctl --user daemon-reload && systemctl --user enable --now $unit.service; } ||
-    no "svrngs could not be kept running at login: systemd refused $kept."
-fi
-say "$unit runs now, and whenever you log in ($kept)."
+    { systemctl --user daemon-reload && systemctl --user enable --now $unit.service; } ||
+      no "$unit could not be kept running at login: systemd refused $kept."
+  fi
+  say "$unit runs now, and whenever you log in ($kept)."
+}
+keep
 [ -z "$relay" ] || exit 0
+# Give's program, asked for: `give keep` beside svrngs, waited for as it
+# stops, since it copies each app it keeps to the group then (apps/give).
+if [ -n "$give" ]; then
+  label=sh.svrnme.give unit=give run="$bin/give keep" hold="<key>ExitTimeOut</key><integer>0</integer>"
+  [ "$os" = darwin ] || hold="TimeoutStopSec=infinity"
+  stopped && keep
+fi
 
 # The opener, in the person's Applications on macOS and their applications
 # menu on Linux, where "Open svrngs from your computer" sends them: it runs

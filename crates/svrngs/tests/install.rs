@@ -40,11 +40,16 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 /// This computer's tarball, as install.sh names it from `uname`.
 fn tarball() -> String {
+    tarball_of("svrngs")
+}
+
+/// `program`'s tarball for this computer: svrngs's, or Give's program's.
+fn tarball_of(program: &str) -> String {
     let os = match std::env::consts::OS {
         "macos" => "darwin",
         other => other,
     };
-    format!("svrngs-{os}-{}.tar.gz", std::env::consts::ARCH)
+    format!("{program}-{os}-{}.tar.gz", std::env::consts::ARCH)
 }
 
 /// A page host: `site`'s files at their paths on 127.0.0.1, 404 else.
@@ -88,7 +93,10 @@ async fn host(site: PathBuf) -> u16 {
 }
 
 /// The site: install.sh at its root, and under get/ this build's svrngs
-/// as this computer's tarball, beside `sums`, or its true SHA256SUMS.
+/// and a stand-in for Give's program, each as this computer's tarball, beside
+/// `sums`, or their true SHA256SUMS. The stand-in is a script that says it
+/// ran: install.sh only fetches, checks, places and keeps it, and Give's
+/// own tests run the program itself (apps/give/tests/).
 fn site(sums: Option<&str>) -> tempfile::TempDir {
     let site = tempfile::tempdir().unwrap();
     std::fs::copy(
@@ -108,8 +116,21 @@ fn site(sums: Option<&str>) -> tempfile::TempDir {
         .status()
         .unwrap();
     assert!(made.success());
+    let stand_in = site.path().join("give");
+    std::fs::write(&stand_in, "#!/bin/sh\necho \"give $*\"\n").unwrap();
+    let exec = std::os::unix::fs::PermissionsExt::from_mode(0o755);
+    std::fs::set_permissions(&stand_in, exec).unwrap();
+    let made = std::process::Command::new("tar")
+        .arg("-czf")
+        .arg(get.join(tarball_of("give")))
+        .arg("-C")
+        .arg(site.path())
+        .arg("give")
+        .status()
+        .unwrap();
+    assert!(made.success());
     let summed = std::process::Command::new("shasum")
-        .args(["-a", "256", &tarball()])
+        .args(["-a", "256", &tarball(), &tarball_of("give")])
         .current_dir(&get)
         .output()
         .unwrap();
@@ -129,12 +150,13 @@ fn stubs(home: &Path, uname: Option<&str>) -> PathBuf {
 echo "launchctl $*" >>"$HOME/stubs/said"
 case "$1" in
   bootstrap)
-    grep -q '<string>relay</string>' "$3" && exit 0
+    grep -q '<string>relay</string>\|<string>keep</string>' "$3" && exit 0
     run=$(sed -n 's:.*<array><string>\(.*\)</string></array>.*:\1:p' "$3")
     dir=$(sed -n 's:.*<key>SVRNGS_DIR</key><string>\(.*\)</string>.*:\1:p' "$3")
     SVRNGS_DIR="$dir" "$run" >>"$dir/svrngs.log" 2>&1 &
     echo $! >"$HOME/stubs/pid" ;;
   bootout)
+    case "$2" in */sh.svrnme.give) exit 0 ;; esac
     [ -f "$HOME/stubs/pid" ] || exit 3
     pid=$(cat "$HOME/stubs/pid"); rm "$HOME/stubs/pid"; kill "$pid"
     while kill -0 "$pid" 2>/dev/null; do sleep 0.1; done ;;
@@ -395,9 +417,14 @@ fn as_linux(site: &Path) {
         return;
     }
     let get = site.join("get");
-    std::fs::copy(get.join(tarball()), get.join("svrngs-linux-x86_64.tar.gz")).unwrap();
+    let mut summed = vec!["-a".to_string(), "256".into()];
+    for program in ["svrngs", "give"] {
+        let linux = format!("{program}-linux-x86_64.tar.gz");
+        std::fs::copy(get.join(tarball_of(program)), get.join(&linux)).unwrap();
+        summed.extend([tarball_of(program), linux]);
+    }
     let sums = std::process::Command::new("shasum")
-        .args(["-a", "256", &tarball(), "svrngs-linux-x86_64.tar.gz"])
+        .args(&summed)
         .current_dir(&get)
         .output()
         .unwrap();
@@ -462,6 +489,128 @@ async fn a_founder_s_line_installs_keeps_svrngs_at_login_and_opens_the_home_page
         let origin = std::fs::read_to_string(data.join(ORIGIN_FILE)).unwrap();
         assert_eq!(origin, page, "the page svrngs came from, kept");
     }
+}
+
+/// **Give's program, as an option of the line** (give-install (a)): on a
+/// clean data dir the line without `--give` installs svrngs alone, and
+/// Give's page's line, `curl -fsSL <page>install.sh | sh -s -- '<page>'
+/// --give`, then gets Give's program from the same page's `get/`, checked
+/// against the same SHA256SUMS, puts it beside svrngs and keeps `give
+/// keep` running at login beside it — a LaunchAgent on macOS, a systemd
+/// --user unit on Linux, each recorded by the stand-in, never run, since
+/// it would drive this computer's Podman. The agent finds svrngs and
+/// Podman on its own PATH, which launchd and systemd do not give it, and
+/// is waited for as it stops, since it copies each app it keeps to the
+/// group as it stops. Run again with it, it updates Give's program and
+/// keeps one agent. Planted, watched failing: install.sh as 60565068 left
+/// it, which took `--give` for nothing and installed no program.
+#[tokio::test(flavor = "multi_thread")]
+async fn the_line_without_then_with_give_installs_give_s_program_beside_svrngs() {
+    let site = site(None);
+    as_linux(site.path());
+    let port = host(site.path().to_path_buf()).await;
+    let page = format!("http://127.0.0.1:{port}/");
+    let mac = cfg!(target_os = "macos").then_some(None);
+    for uname in mac.into_iter().chain([Some("Linux x86_64")]) {
+        let home = tempfile::tempdir().unwrap();
+        let _started = Started(home.path().to_path_buf());
+        let bin = home.path().join(".local/bin");
+        let agent = match uname {
+            None => home.path().join("Library/LaunchAgents/sh.svrnme.give.plist"),
+            Some(_) => home.path().join(".config/systemd/user/give.service"),
+        };
+        let without = paste(port, &page, home.path(), uname).await;
+        let said = String::from_utf8_lossy(&without.stdout);
+        assert!(without.status.success(), "{uname:?}: {said}");
+        assert!(!bin.join("give").exists(), "{uname:?}: Give's program, unasked");
+        assert!(!agent.exists(), "{uname:?}: Give's program kept, unasked");
+
+        let platform = match uname {
+            None => tarball_of("give"),
+            Some(_) => "give-linux-x86_64.tar.gz".into(),
+        };
+        for (run, done) in [(1, "Installed"), (2, "Updated")] {
+            let with = paste_more(port, &page, " --give", home.path(), uname).await;
+            let said = String::from_utf8_lossy(&with.stdout);
+            let err = String::from_utf8_lossy(&with.stderr);
+            assert!(with.status.success(), "{uname:?}, run {run}: {said}{err}");
+            for line in [
+                format!("Checked: {platform} is the one the release lists, unchanged on its way here."),
+                "Updated svrngs in".into(),
+                format!("{done} give in {}.", bin.display()),
+                "give runs now, and whenever you log in".into(),
+            ] {
+                assert!(said.contains(&line), "{uname:?}, run {run}, not said: {line}\n{said}");
+            }
+            assert_eq!(
+                said.contains("Stopped give, to update it."),
+                run == 2,
+                "{uname:?}, run {run}: {said}"
+            );
+            assert!(
+                !said.contains("You're in"),
+                "a page's address joins nothing: {said}"
+            );
+        }
+        let placed = std::fs::read_to_string(bin.join("give")).unwrap();
+        assert!(placed.contains("echo \"give $*\""), "{placed}");
+        let kept = std::fs::read_to_string(&agent).unwrap();
+        let path = format!("{}:/opt/podman/bin:", bin.display());
+        let launched = std::fs::read_to_string(home.path().join("stubs/said")).unwrap();
+        match uname {
+            None => {
+                let run = format!("<string>{}/give</string><string>keep</string>", bin.display());
+                for line in [run, path, "<key>ExitTimeOut</key><integer>0</integer>".into()] {
+                    assert!(kept.contains(&line), "not in the agent: {line}\n{kept}");
+                }
+                let n = launched.matches("bootstrap gui/").count();
+                assert_eq!(n, 3 + 2, "svrngs three times, give twice: {launched}");
+            }
+            Some(_) => {
+                let run = format!("ExecStart={}/give keep", bin.display());
+                for line in [run, format!("Environment=PATH={path}"), "TimeoutStopSec=infinity".into()] {
+                    assert!(kept.contains(&line), "not in the unit: {line}\n{kept}");
+                }
+                let n = launched.matches("--user enable --now give.service").count();
+                assert_eq!(n, 2, "{launched}");
+            }
+        }
+        let data = home.path().join(".svrngs");
+        assert!(
+            kept.contains(&data.display().to_string()),
+            "the agent names svrngs's data dir: {kept}"
+        );
+    }
+}
+
+/// **Give's program checked as svrngs is** (give-install (a)): a give
+/// tarball that does not match its sum is refused by name, and nothing is
+/// installed, svrngs included, though svrngs's own tarball matched.
+/// Planted, watched failing: install.sh as 60565068 left it, which fetched
+/// no program and so refused nothing.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_give_tarball_that_does_not_match_its_sum_is_refused_and_nothing_installed() {
+    let site = site(None);
+    let sums = std::fs::read_to_string(site.path().join("get/SHA256SUMS")).unwrap();
+    let give = tarball_of("give");
+    let wrong: String = (sums.lines())
+        .map(|l| match l.ends_with(&give) {
+            true => format!("{}  {give}\n", "0".repeat(64)),
+            false => format!("{l}\n"),
+        })
+        .collect();
+    std::fs::write(site.path().join("get/SHA256SUMS"), wrong).unwrap();
+    let port = host(site.path().to_path_buf()).await;
+    let home = tempfile::tempdir().unwrap();
+    let page = format!("http://127.0.0.1:{port}/");
+    let out = paste_more(port, &page, " --give", home.path(), None).await;
+    let err = String::from_utf8_lossy(&out.stderr);
+    assert_eq!(out.status.code(), Some(1), "{err}");
+    let refused = format!("{give} is not the one the release lists, so it was refused");
+    assert!(err.contains(&refused), "{err}");
+    let bin = home.path().join(".local/bin");
+    assert!(!bin.join("give").exists(), "installed anyway");
+    assert!(!bin.join("svrngs").exists(), "svrngs installed beside a refused program");
 }
 
 /// What svrngs answers the open `url` redeemed in a browser: its status,
