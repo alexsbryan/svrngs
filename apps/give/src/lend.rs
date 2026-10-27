@@ -1,7 +1,8 @@
 //! Lending an app's door through svrngs: `svrngs share` and `svrngs
-//! unshare`, the commands a person runs (CHARTER fence 4). A lend is
-//! asked, not stored, so the svrngs running here lends it from the moment
-//! the command returns and stops when `unshare` does (GIVE.md §7a).
+//! unshare`, the commands a person runs (CHARTER fence 4). Give stores no
+//! lend of its own: the svrngs running here lends it from the moment
+//! `share` returns, keeps it across its own restarts, and stops when
+//! `unshare` does (GIVE.md §7a).
 
 use std::ffi::OsString;
 use std::io::Write;

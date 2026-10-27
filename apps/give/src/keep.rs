@@ -596,8 +596,21 @@ impl Keeper {
     }
 
     /// The state held here for `app`, kept by `act`, which another computer
-    /// keeps now: stopped if it runs, copied as this computer had it, said.
+    /// keeps now: unlent, stopped if it runs, copied as this computer had
+    /// it, said. svrngs keeps a lend across its own restart (its
+    /// `lends/<name>`), so a computer back after losing power lends the app
+    /// again, at a port nothing listens on, until it is unlent here
+    /// (crates/svrngs/tests/scenes/give_gone.rs). `unshare` refusing, exit
+    /// 1, is nothing lent by that name (crates/svrngs/src/cli.rs
+    /// `exit_code`, `NotLent`); any other failure fails the step.
     fn had(&self, me: &str, group: &str, app: &str, act: &str) -> Result<(), StartError> {
+        match self.svrngs.unshare(app) {
+            Ok(()) => tracing::debug!(app, "keep: unlent, as another computer keeps it now"),
+            Err(crate::lend::LendError::Failed { code: 1, said, .. }) => {
+                tracing::debug!(app, said, "keep: nothing lent here by that name")
+            }
+            Err(why) => return Err(why.into()),
+        }
         let card = self.card(app)?;
         App::new(&self.podman, card, self.name(app)?).stop()?;
         let dir = self.snapshot(me, group, app, true)?;
