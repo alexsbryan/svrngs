@@ -110,8 +110,13 @@ test('a group starts an app from the shelf, and every member reads who keeps it 
 
     // Cy's computer can't keep yet: each row asks, once, for the install.
     await as('cy', 'ka', 'a1');
-    assert.match(await row('Minecraft'), /To keep Minecraft on this computer, svrngs needs Podman \(free, one install\) and Give’s program for computers\. Get Podman · Get Give’s program/);
+    assert.match(await row('Minecraft'), /To keep Minecraft on this computer, svrngs needs Podman \(free, one install\) and Give’s program for computers\. Get Podman, then paste this line into a terminal for Give’s program:/);
     assert.equal(await page.getByRole('link', { name: 'Get Podman' }).first().getAttribute('href'), 'https://podman.io/docs/installation');
+    // The one line install.sh takes Give's program by (give-install (b)):
+    // svrngs's own line from the page svrngs is published at (README.md),
+    // with --give (crates/svrngs/tests/install.rs runs it).
+    const line = `curl -fsSL https://group.svrnme.sh/install.sh | sh -s -- 'https://group.svrnme.sh/' --give`;
+    assert.equal(await page.locator('li', { hasText: 'Minecraft' }).locator('code').innerText(), line);
     await press('Not now', 'Minecraft');
     assert.doesNotMatch(await text(), /needs Podman/);
     await as('cy', 'ka', 'a1');

@@ -16,3 +16,5 @@ p { max-width: 72ch; margin: 0.25rem 0 0.5rem; }
 .ask { border-left: var(--rule); padding-left: 0.75rem; }
 button { font: inherit; font-weight: 700; padding: 0.4rem 0.9rem; border: var(--rule); background: yellow; color: black; cursor: pointer; margin-right: 0.5rem; }
 button.quiet { background: Canvas; color: CanvasText; }
+/* The line to paste: one click takes all of it. */
+code { display: block; margin-top: 0.25rem; padding: 0.4rem 0.6rem; border: var(--rule); overflow-wrap: anywhere; user-select: all; }

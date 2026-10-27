@@ -11,8 +11,8 @@ carried page.
 This much has landed: the runtime on the computer that keeps an app, an
 author's check of a card, the one fold of who keeps what, Give's program for
 computers, and the carried page with the shelf, "Start it for the group",
-"Move it to…", "Keep it here?" and "Start instead", and Give's scenes in
-the gate. Installing its program comes next (`ralph/next/give/STATE.md`).
+"Move it to…", "Keep it here?" and "Start instead", Give's scenes in the
+gate, and its program as an option of svrngs's line.
 
 ## A card
 
@@ -46,7 +46,15 @@ missing or stopped, the check makes it or starts it, sized for the card.
 ## Keeping an app
 
 A computer keeps apps for its groups when it has Podman and runs Give's
-program beside svrngs:
+program beside svrngs. svrngs's own line gets the program with `--give`,
+and it is the line Give's page gives a computer that can't keep yet:
+
+    curl -fsSL https://group.svrnme.sh/install.sh | sh -s -- 'https://group.svrnme.sh/' --give
+
+It checks the program against the page's `SHA256SUMS`, puts `give` beside
+svrngs, and keeps `give keep` running whenever you log in
+(`web/install.sh`; `scripts/build-release.sh` builds it with svrngs's
+release). By hand, the same two commands:
 
     give page <group>     # once, by anyone: brings Give to the group
     give keep             # on each computer that keeps apps; leave it running

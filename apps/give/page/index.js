@@ -17,7 +17,10 @@ import * as build from './vendor/fold.js';
 
 const ACTS = 'svrngs/acts';
 const PODMAN = 'https://podman.io/docs/installation';
-const PROGRAM = 'https://github.com/alexsbryan/svrngs/tree/main/apps/give#keeping-an-app';
+// Give's program comes as svrngs does, by svrngs's own line from the page
+// svrngs is published at (README.md), with --give (web/install.sh): it
+// checks the program against the page's SHA256SUMS and keeps it running.
+const LINE = `curl -fsSL https://group.svrnme.sh/install.sh | sh -s -- 'https://group.svrnme.sh/' --give`;
 // Where this page remembers, on this computer, that it asked about the
 // install once and was told "Not now".
 const ASKED = 'give: asked to install';
@@ -60,8 +63,8 @@ function install(why) {
     'p',
     `${why} svrngs needs Podman (free, one install) and Give’s program for computers. `,
     link('Get Podman', PODMAN),
-    ' · ',
-    link('Get Give’s program', PROGRAM),
+    ', then paste this line into a terminal for Give’s program: ',
+    el('code', LINE),
   );
 }
 
