@@ -5,8 +5,9 @@
 //! Then a program on Bo's computer writes a correction of Ada's groceries:
 //! it is not counted, on either page, and says whose it was. Ada's own
 //! correction of an entry of hers still counts. Then Ada names Bo in on
-//! dinner: her line waits on him, his page asks him, and his half counts
-//! once he says "That’s right".
+//! dinner while Bo's Money is open: his page, not opened again, asks him;
+//! her line says what he owes once he says he was in on it; and his half
+//! counts once he says "Yes, I was in on dinner".
 //!
 //! The invariant it relies on: **a correction counts only from its
 //! author** (capability-money; expenses.js `voids`). The record voids an
@@ -56,6 +57,14 @@ const BOTH: [&str; 2] = [
 /// The words `who`'s Money says, opened from their home page (fence 2:
 /// a lend opened from the home page), after `steps` on Money's page.
 async fn opened(engine: Engine, who: &Person, steps: Value) -> Value {
+    let url = money_at(engine, who).await;
+    let seen = sees(engine, "carried.mjs", json!({ "url": url, "do": steps })).await;
+    eprintln!("{}'s Money: {seen:#}", who.name);
+    seen
+}
+
+/// Where `who`'s Money opens from their home page.
+async fn money_at(engine: Engine, who: &Person) -> String {
     let page = who.home_page();
     let opened = sees(
         engine,
@@ -72,9 +81,7 @@ async fn opened(engine: Engine, who: &Person, steps: Value) -> Value {
         "{} opens Money from the home page: {opened:#}",
         who.name
     );
-    let seen = sees(engine, "carried.mjs", json!({ "url": url, "do": steps })).await;
-    eprintln!("{}'s Money: {seen:#}", who.name);
-    seen
+    url
 }
 
 /// Once `who`'s record holds an act of Money's for which `holds` is true,
@@ -139,7 +146,7 @@ async fn money(engine: Engine) {
     })
     .await;
     let steps = json!([
-        ["text=Say you were in on it"],
+        ["text=Say you were in on the groceries"],
         ["text=Say you paid Ada $15.00"]
     ]);
     let seen = opened(engine, &bo, steps).await;
@@ -206,28 +213,48 @@ async fn money(engine: Engine) {
     assert!(said.contains(refused), "{seen:#}");
 
     // Ada names Bo in on dinner (the operator, 2026-10-26; demo/xenia/
-    // findings/split-leaves-out-ana.md): it waits on him, he is asked, and
-    // his half counts only once he says so himself.
+    // findings/split-leaves-out-ana.md) while Bo's Money is open: his page,
+    // not opened again, asks him (the fifth set: Ana never asked, 0 of 6,
+    // demo/xenia/findings/index.md); her line says he owes his half once he
+    // says so, and it counts only then (Kim expected it at once, the fifth
+    // set's `together` run 2). Planted, watched failing: Money's page as
+    // 5c6e3b0d left it, drawn once at load, and "waiting on Bo".
+    let drawn = tempfile::tempdir().unwrap();
+    let ready = drawn.path().join("bo-money-drawn");
+    let url = money_at(engine, &bo).await;
+    let ask = "Ada says you were in on dinner: $10.00.";
+    let watching = sees(
+        engine,
+        "carried.mjs",
+        json!({ "url": url, "do": [["wait", ask]], "ready": ready }),
+    );
     let steps = json!([
         ["#what", "dinner"],
         ["#amount", "20"],
         ["label:has-text('Bo') input", true],
         ["#add"]
     ]);
-    let seen = opened(engine, &ada, steps).await;
+    let adding = async {
+        while !ready.exists() {
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+        opened(engine, &ada, steps).await
+    };
+    let (watched, seen) = tokio::join!(watching, adding);
+    eprintln!("Bo's Money, open as Ada adds dinner: {watched:#}");
     let after = seen["after"][0].as_str().unwrap_or_default();
     assert!(
-        after.contains("You paid $20.00 for dinner, split between Ada; waiting on Bo."),
-        "Ada's line waits on Bo: {seen:#}"
+        after.contains("You paid $20.00 for dinner, split between Ada; Bo owes you $10.00 once they say they were in on it."),
+        "Ada's line says what Bo owes once he says so: {seen:#}"
+    );
+    let first = watched["first"].as_str().unwrap_or_default();
+    assert!(!first.contains("dinner"), "{watched:#}");
+    assert!(
+        watched["after"][0].to_string().contains(ask),
+        "Bo is asked on the page he has open: {watched:#}"
     );
     held(&bo, &house, |o| o["payload"]["description"] == "dinner").await;
-    let seen = opened(engine, &bo, json!([])).await;
-    let said = seen["said"].as_str().unwrap_or_default();
-    assert!(
-        said.contains("Ada says you were in on dinner: $10.00."),
-        "Bo is asked: {seen:#}"
-    );
-    let seen = opened(engine, &bo, json!([["text=That’s right"]])).await;
+    let seen = opened(engine, &bo, json!([["text=Yes, I was in on dinner"]])).await;
     let yes = seen["after"][0].as_str().unwrap_or_default();
     assert!(
         yes.contains("You owe $10.00.") && yes.contains("split between Ada, Bo."),

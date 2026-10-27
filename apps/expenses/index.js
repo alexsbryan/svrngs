@@ -10,7 +10,10 @@
 // computer" (gv-via; the phone's own words, web/app.js). Each entry is
 // checked by expenses.js's one validator before it is sent. Each person is
 // kept by their first key, you by `you_key`, and said by name, two of one
-// name told apart by when each joined (`called`; keys-names).
+// name told apart by when each joined (`called`; keys-names). It is drawn
+// again when the group's money changes, by anyone's computer or phone, so
+// a share someone names you in is asked of you on the page you have open
+// (demo/xenia/findings/index.md, the fifth set: Ana never asked, 0 of 6).
 import { EXPENSE, NOT_IN, SETTLE, SHARE, actsOf, called, init, money, parseCents, reduce, splitShares, transfers, validate } from './expenses.js';
 
 const ACTS = 'svrngs/acts';
@@ -23,9 +26,18 @@ const el = (tag, text, ...kids) => {
 const button = (text, id, act) => Object.assign(el('button', text), { id, onclick: act });
 const field = (words, id) => el('label', words, Object.assign(el('input'), { id }));
 
-async function show() {
+// What the page last drew from, so a read that finds nothing new draws nothing.
+let drawn = null;
+// With `again`, a look for someone else's change: drawn only when the money
+// changed, and never under a person filling in the form, whose words a
+// redraw would lose.
+async function show(again) {
   const r = await fetch(ACTS);
-  const read = await r.json().catch(() => ({}));
+  const text = await r.text();
+  const filling = [...app.querySelectorAll('input')].some((i) => (i.type === 'checkbox' ? i.checked : i.value)) || document.activeElement?.tagName === 'INPUT';
+  if (again && (text === drawn || filling)) return;
+  drawn = text;
+  const read = await Promise.resolve().then(() => JSON.parse(text)).catch(() => ({}));
   if (!r.ok) return app.replaceChildren(el('h1', 'Money'), el('p', `Your group’s money can’t be read just now: ${read.error ?? `it answered ${r.status}`}.`));
   const { you, you_key, people, spans } = read;
   const me = you_key ?? you;
@@ -52,15 +64,25 @@ async function show() {
   });
   // A person's name, and whose computer wrote their part when it was someone else's.
   const through = (name, via) => (via ? `${name}, through ${via === you ? 'your' : `${via}’s`} computer` : name);
-  // Who the payer named and hasn't said yet, and who said not them, by name
-  // (expenses.js `named`): said on the line, never counted.
-  const saying = (names, words) => (names.length ? `; ${words(names.join(', '))}` : '');
+  // Who the payer named and hasn't said yet, with what each owes once they
+  // say they were in on it, and who said not them, by name (expenses.js
+  // `named`): said on the line, never counted. The payer is told nothing is
+  // owed until then: Kim expected "Ana owes me $18" at once (the fifth set,
+  // `together` run 2: "I expected the pizza to be split between me and Ana
+  // right away").
+  const saying = (names, words) => (names.length ? `; ${names.map(words).join('; ')}` : '');
   const spent = Object.entries(state.expenses).map(([id, e]) => {
     const payer = through(e.payer === me ? 'You' : name(e.payer), e.vias[e.payer]);
     const split = e.participants.map((p) => (p === e.payer ? name(p) : through(name(p), e.vias[p])));
-    const others = saying(Object.keys(e.waiting ?? {}), (n) => `waiting on ${n}`) + saying(Object.keys(e.not ?? {}), (n) => `${n} wasn’t in on it`);
+    const [waits, to] = [Object.keys(e.waiting ?? {}), e.payer === me ? 'you' : name(e.payer)];
+    const share = (n) => money(splitShares(e.amount_cents, [...e.participants, ...waits], state.names).find(([p]) => p === n)[1]);
+    const owes = (n) => (n === you ? `you owe ${to} ${share(n)} once you say you were in on it` : `${n} owes ${to} ${share(n)} once they say they were in on it`);
+    const others = saying(waits, owes) + saying(Object.keys(e.not ?? {}), (n) => `${n} wasn’t in on it`);
     const li = el('li', `${payer}${e.vias[e.payer] ? ',' : ''} paid ${money(e.amount_cents)} for ${e.description}, split between ${split.join(split.some((p) => p.includes(',')) ? '; ' : ', ')}${others}. `);
-    if (!e.participants.includes(me)) li.append(button('Say you were in on it', null, () => send({ kind: SHARE, expense: id })));
+    // Its button names what it is for, so it is read for what it does
+    // before the line beside it (the fifth set, `ana`: 60-80 words read
+    // before Ana tapped "Say you were in on it", her budget 20).
+    if (!e.participants.includes(me)) li.append(button(`Say you were in on ${e.description}`, null, () => send({ kind: SHARE, expense: id })));
     return li;
   });
   const everyone = spans?.filter((s) => s.left == null).map((s) => called(spans, s.person_key, s.person)) ?? people;
@@ -74,10 +96,11 @@ async function show() {
     const named = ticks.filter(([, t]) => t.checked).map(([p]) => p);
     return send({ kind: EXPENSE, amount_cents: cents, description: document.getElementById('what').value, ...(named.length && { named }) });
   }));
-  // What someone named you in, asked of you, with what your share would be.
+  // What someone named you in, asked of you, with what your share would be;
+  // its yes says what it says yes to, read before the words beside it.
   const asked = Object.entries(state.expenses).filter(([, e]) => Object.hasOwn(e.waiting ?? {}, you)).map(([id, e]) => {
     const yours = splitShares(e.amount_cents, [...e.participants, me], state.names).find(([p]) => p === me)[1];
-    return el('p', `${name(e.payer)} says you were in on ${e.description}: ${money(yours)}. `, button('That’s right', null, () => send({ kind: SHARE, expense: id })), ' ', button('Not me', null, () => send({ kind: NOT_IN, expense: id })));
+    return el('p', `${name(e.payer)} says you were in on ${e.description}: ${money(yours)}. `, button(`Yes, I was in on ${e.description}`, null, () => send({ kind: SHARE, expense: id })), ' ', button('Not me', null, () => send({ kind: NOT_IN, expense: id })));
   });
   app.replaceChildren(
     el('h1', 'Money'),
@@ -98,3 +121,8 @@ async function show() {
 }
 
 show();
+// Every 5 s, as Money's page holds no socket: soon enough that a share asked
+// of you shows while you look, and a phone reading through the group's
+// computers asks at a fifth of the rate a group's screen reads (home.js
+// `screen`, once a second).
+setInterval(() => show(true).catch(() => {}), 5000);
