@@ -164,7 +164,7 @@ There are fifteen rows:
   - **(b) The open question.** Who may keep is asked here (CHARTER), with any member as the default until the operator answers.
   - **THE OPERATOR DECIDED, 2026-10-26,** on `demo/runs/give/2026-10-26-keep/QUESTION.md`: "The first is fine": any member whose computer has Podman and Give's program may keep, as landed. A successor the house names waits for a group that asks.
   - **Check:** red first, green after; the fold's tests identical across both builds; svrngs's scenes green.
-- [ ] give-app-move — depends [give-app-keep] — ONE ROW, red first (GIVE.md §3 scene 3):
+- [x] give-app-move 6a2893117 — depends [give-app-keep] — ONE ROW, red first (GIVE.md §3 scene 3):
   - **(a) Tests: MOVE IT TO ANOTHER COMPUTER.**
     - "Move it to…" asks the receiving computer's person, with the card's asks.
     - On their yes, the keeper takes a last snapshot, writes the move and stops, and the receiver starts from exactly that snapshot. The stand-in's state after the move equals its state before it.
