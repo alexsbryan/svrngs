@@ -96,7 +96,7 @@ pub struct Service {
     /// published, on this computer's loopback, whatever host port the file
     /// gives; the rest are for `podman compose up` as the author tries it.
     pub ports: Vec<(u16, Transport)>,
-    pub health: Option<Health>,
+    pub health: Option<Healthcheck>,
     pub entrypoint: Option<Vec<String>>,
     pub command: Option<Vec<String>>,
     pub user: Option<String>,
@@ -131,7 +131,7 @@ pub struct Mount {
 
 /// Compose's `healthcheck`, with compose's defaults where the card is silent.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Health {
+pub struct Healthcheck {
     pub test: HealthTest,
     pub interval: Duration,
     pub timeout: Duration,
@@ -416,7 +416,7 @@ fn read_mount(v: &Value, at: &str, volumes: &[String]) -> Result<Mount, Refused>
     }
 }
 
-fn read_health(v: &Value, at: &str) -> Result<Option<Health>, Refused> {
+fn read_health(v: &Value, at: &str) -> Result<Option<Healthcheck>, Refused> {
     let m = mapping(v, at)?;
     for key in keys(m, at)? {
         if !matches!(
@@ -453,7 +453,7 @@ fn read_health(v: &Value, at: &str) -> Result<Option<Health>, Refused> {
         None => Ok(Duration::from_secs(default)),
         Some(v) => duration(v, &format!("{at}.{key}")),
     };
-    Ok(Some(Health {
+    Ok(Some(Healthcheck {
         test,
         // Compose's own defaults (compose-spec, "healthcheck").
         interval: time("interval", 30)?,
