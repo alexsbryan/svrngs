@@ -126,6 +126,9 @@ The clean version:
   gate image: `redial-pod.sh <cmd>` on pasta, and `redial-runs.sh <label>
   <first> <last>`. The iroh copy tried there is in
   `target/redial/vendor/iroh`.
+- `redial.rs` is out of the scenes binary until a remedy lands, so no gate
+  carries it red (`crates/svrngs/tests/scenes/main.rs`, `// mod redial;`).
+  Runs here and on Fedora put the line back first.
 - Once a remedy is chosen, the row's (b) and its check are still to do:
   - red first: the instrument at HEAD, and a plant that restores the cause;
   - the grapevine scene green in ten runs in a row here;
