@@ -208,7 +208,8 @@ There are sixteen rows:
 - [ ] give-install — depends [give-page-down] — ONE ROW:
   - **(a) Getting the keeper program.** `web/install.sh` offers Give's keeper program as an option, or the row gives its reason not to. The keeper program comes from the page host beside svrngs, with its checksum in `SHA256SUMS`. If `scripts/build-release.sh` must build `apps/give` for that, the row says what this couples, in distribution and not in code.
   - **(b) The ask in the page.** The carried page's install ask points at that one line.
-  - **Check:** `install.sh` run twice on a clean data dir, with and without the option; the checksum refused on a plant.
+  - **(c) Rosetta on a Mac with Apple silicon.** Factorio's card runs its amd64 build under Rosetta in Podman's machine, since the arm64 build segfaults making the map (`apps/give/cards/factorio/README.md:15-16`), and Podman 5.6 and later turn Rosetta off by default. The machine Give makes when there is none has Rosetta on. On a machine Give did not make that has it off, a card that needs it is refused before it starts, and Give's page says what to turn on, in a person's words, rather than letting the app crash. Never-ran where the host cannot show it, with its reason (give-app-runtime's "a Mac with Rosetta off", `demo/runs/give/2026-10-26-cards/`).
+  - **Check:** `install.sh` run twice on a clean data dir, with and without the option; the checksum refused on a plant; (c) red first where this host can show it, or never-ran with its reason.
 - [ ] give-docs — depends [give-install] — ONE ROW:
   - **(a) svrngs's documents.**
     - DESIGN §3 says the door carries any port and that the record API asks who is calling. §7 says how a computer gets Give.
