@@ -93,3 +93,11 @@ V1.2's is.
   whose card runs an amd64 build; Give refuses to start it there and its
   page says to turn Rosetta on (give-install (c), 8402864a), never-ran on
   this host, whose machine has it on.
+
+## The answer
+
+The operator, 2026-10-27: "Let's fix the grapevine bug then release", and
+"minor version bump, push main + the tag to github". The release is V1.3,
+published from the commit `scripts/check.sh` passes at once give-redial
+lands (`ralph/next/give/STATE.md`), and main and the `v1.3` tag are pushed
+to GitHub with it. Give's own cap waits.
