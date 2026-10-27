@@ -463,12 +463,20 @@ impl<'a> App<'a> {
     /// killed inside it: podman refuses to stop or remove a paused pod
     /// ("container state improper", tests/check.rs
     /// `an_app_left_paused_is_stopped_and_removed`).
+    ///
+    /// Killed inside `pod pause` itself, it leaves some containers paused
+    /// and the pod's own running, and the pod reads "Degraded"
+    /// (tests/check.rs `an_app_left_half_paused_is_stopped_and_removed`),
+    /// so each paused container is asked for and unpaused, whatever the
+    /// pod's state says.
     fn unpause(&self) -> Result<(), RunError> {
         let name = self.name.as_str();
-        let state = self.podman.run(&["pod", "inspect", "--format", "{{.State}}", name])?;
-        tracing::debug!(app = name, state, "the pod's state, unpaused if paused");
-        if state == "Paused" {
-            self.podman.run(&["pod", "unpause", name])?;
+        let pod = format!("pod={name}");
+        let paused = (self.podman)
+            .run(&["ps", "--all", "--filter", &pod, "--filter", "status=paused", "--format", "{{.Names}}"])?;
+        tracing::debug!(app = name, paused, "the pod's paused containers, unpaused");
+        for c in paused.lines().filter(|c| !c.is_empty()) {
+            self.podman.run(&["unpause", c])?;
         }
         Ok(())
     }

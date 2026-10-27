@@ -209,6 +209,31 @@ fn an_app_left_paused_is_stopped_and_removed() {
     gone(&podman, &name("paused"));
 }
 
+/// Killed inside `pod pause` itself, a keeper leaves the app's container
+/// paused and the pod's own running: the pod reads "Degraded", not
+/// "Paused" (podman 6.0.1, 2026-10-26), and `pod rm` refused it: "cannot
+/// remove container … as it is paused" (keep.rs's move test, at its
+/// cleanup, two runs in three). Stopping it, or removing it, still does so.
+#[test]
+fn an_app_left_half_paused_is_stopped_and_removed() {
+    let podman = podman_here();
+    let card = Card::parse(STANDIN).unwrap();
+    let app = App::new(&podman, &card, name("half"));
+    let _removed = Removed(&app);
+    let web = format!("{}-web", name("half").as_str());
+    app.pull().unwrap();
+    for what in ["stops", "is removed"] {
+        app.start(free_port(), &Agreed::to(&card.asks)).unwrap();
+        app.wait_healthy().unwrap();
+        podman.run(&["pause", &web]).unwrap();
+        let state = podman.run(&["pod", "inspect", "--format", "{{.State}}", name("half").as_str()]);
+        assert_eq!(state.unwrap(), "Degraded", "the plant: half paused");
+        let ended = if what == "stops" { app.stop() } else { app.remove() };
+        ended.unwrap_or_else(|e| panic!("a half-paused app {what}: {e}"));
+    }
+    gone(&podman, &name("half"));
+}
+
 #[test]
 fn give_check_passes_the_stand_in_and_leaves_nothing() {
     let podman = podman_here();
