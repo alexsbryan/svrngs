@@ -15,7 +15,7 @@
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
 import { createInterface } from 'node:readline';
-import { launch, serve } from './page.mjs';
+import { firstLook, launch, serve } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const server = await serve(args.site);
@@ -133,7 +133,13 @@ try {
       await page.click('#join button');
       await page.waitForSelector('#status.good, #status.bad', { timeout: 90_000 });
     }
-    return page.evaluate(([asked, why]) => ({
+    // What one look takes in once in, in Ana's twenty words
+    // (demo/xenia/people/ana.md), as page.mjs `firstLook` reads it.
+    const look = await firstLook(page, 20);
+    return page.evaluate(([asked, why, look]) => ({
+      look,
+      // Who made the group and since when, heading its people.
+      whose: document.querySelector('#door > p')?.textContent ?? null,
       asked,
       why,
       status: document.getElementById('status').textContent,
@@ -145,7 +151,7 @@ try {
       answer: document.getElementById('response').textContent,
       said: window.__said,
       lines: window.__lines,
-    }), [asked, why]);
+    }), [asked, why, look]);
   };
 
   const first = await opening(link);

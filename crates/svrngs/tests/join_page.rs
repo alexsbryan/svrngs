@@ -84,14 +84,17 @@ fn admits(sam: &Node, group: &str) -> Vec<(String, String, Option<Device>)> {
         .collect()
 }
 
-/// Whether the page's heading says the phone is in Sam's house as
-/// `person`: who made the group and since when this phone has held it, as
-/// it kept them when it joined (v1ui-door (d)), the day in the browser's
-/// own words.
-fn in_house(status: &Value, person: &str) -> bool {
-    let status = status.as_str().unwrap_or_default();
-    status.starts_with("You’re in house (Sam’s, since ")
-        && status.ends_with(&format!("), as {person}"))
+/// Whether the page says the phone is in Sam's house as `person`: its
+/// heading that it is in, and above the group's people who made the group
+/// and since when this phone has held it, as it kept them when it joined
+/// (v1ui-door (d)), the day in the browser's own words. Until the fifth
+/// xenia set the heading said both (demo/xenia/findings/
+/// wordy-the-group-s-page.md).
+fn in_house(seen: &Value, person: &str) -> bool {
+    let whose = seen["whose"].as_str().unwrap_or_default();
+    seen["status"] == format!("You’re in house, as {person}")
+        && whose.starts_with("house (Sam’s, since ")
+        && whose.ends_with(')')
 }
 
 in_webkit!(
@@ -191,7 +194,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
         first["why"], "Someone in house already goes by Sam. If that’s you, open your home page on your computer, press “Add your phone or another computer”, and open that link here. Else join under another name.",
         "a name someone goes by is refused, and another asked (bash-person):\n{seen:#}"
     );
-    assert!(in_house(&first["status"], "Pia"), "{seen:#}");
+    assert!(in_house(first, "Pia"), "{seen:#}");
     assert_eq!(first["lent"], json!([SHELF]), "{seen:#}");
     // Just joined, the page leads with the group's things, before its
     // people; the shelf is folded as "Bring more to house", and "What acts
@@ -201,6 +204,17 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
     assert_eq!(
         first["folded"],
         json!(["Bring more to house", "What acts as you"]),
+        "{seen:#}"
+    );
+    // One look, in Ana's twenty words (demo/xenia/people/ana.md) and in
+    // xenia's order, things to tap first, takes in the open and the line
+    // beside it saying what it does: the fifth set's Ana read 60-70 words
+    // before her first tap there, 6 of 6 accounts (demo/xenia/findings/
+    // wordy-the-group-s-page.md). Planted, watched failing: the page as
+    // 5c6e3b0d left it, its heading naming the maker (`in_house` above).
+    assert_eq!(
+        first["look"],
+        "Sam’s shelf Bring more to house What acts as you You’re in house, as Pia It writes what you say",
         "{seen:#}"
     );
 
@@ -236,7 +250,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
     for again in ["again", "alone"] {
         let o = &seen[again];
         assert_eq!(o["asked"], false, "{again}: asked again:\n{seen:#}");
-        assert!(in_house(&o["status"], "Pia"), "{again}:\n{seen:#}");
+        assert!(in_house(o, "Pia"), "{again}:\n{seen:#}");
         assert_eq!(o["lent"], json!([SHELF]), "{again}:\n{seen:#}");
         // In already, the shelf is open as it always was.
         assert_eq!(
@@ -347,7 +361,7 @@ async fn a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name(engine: 
             .contains(&json!("Adding this phone to house as Sam’s…")),
         "the phone reads whose it is being added as:\n{seen:#}"
     );
-    assert!(in_house(&first["status"], "Sam"), "{seen:#}");
+    assert!(in_house(first, "Sam"), "{seen:#}");
 
     let key: [u8; 32] = hex::decode(seen["stored"]["key"].as_str().unwrap())
         .unwrap()

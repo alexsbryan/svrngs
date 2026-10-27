@@ -582,8 +582,14 @@ the same lines (`question.js`), judged by the answer of the computer it
 reached, and brings through that computer, whose door asks that the phone
 stands in the group. One version check, the node's `version.rs` compiled into
 the page, says a computer the page reaches runs an older svrngs, and draws
-nothing of its answer. The group is headed by who made it and since when
-the phone joined it.
+nothing of its answer. Its heading says only "You’re in <group>, as
+<name>"; who made the group and since when the phone joined it heads its
+people, so two of one name are still told apart. Its index is a line each,
+the open and what opening it does, and "Full now." when it is: whose it is
+the open names, and everything opens in that tab, so no column says
+either. The maker in the heading and a head of four columns were words the
+fifth xenia set's Ana read before her first tap, 60-70 of her 20
+(`demo/xenia/findings/wordy-the-group-s-page.md`).
 
 **Asking for a yes.** An app sends its person to a page no app runs at: on a
 computer the home page, `…svrngs.localhost:<port>/ask?lend=<label>&app=<label>`,
@@ -809,9 +815,12 @@ Seven calls:
    group page's open, with the same line beside it, is the yes, as the
    pass it signs names what the app reads. An app this computer lends
    reads what its person declared. Beside the open of an app the group
-   carries is what it reads and writes, the shelf's words or "its own part
-   of the group’s record", so its first version runs as a person once they
-   open it so named (`question.js`, `named` and `agreed`). Each yes is
+   carries is first what it is for, the shelf's words or "its own part of
+   the group’s record", then "Opening it lets it read and write that, as
+   you.", so its first version runs as a person once they open it so named
+   (`question.js`, `named` and `agreed`). Led by "It reads and writes", a
+   newcomer read it as done on her behalf without her yes (the fifth xenia
+   set, `demo/xenia/findings/said-too-much-the-group-s-page.md`). Each yes is
    listed under "What acts as you", folded under its heading, a list to
    look at, never in the way,
    on both pages, with since when and a Stop (`question.js`, `acts`, which

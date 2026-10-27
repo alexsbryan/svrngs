@@ -112,7 +112,7 @@ async fn the_home_page_says_what_acts_as_you_and_its_stop_holds(engine: Engine) 
     for part in [
         "What acts as you\n",
         "Reads and writes for you\n",
-        "Money reads and writes who paid for what, and who owes whom, when you open it.",
+        "Money reads and writes who owes whom, and for what, when you open it.",
         "Opens friends’ things as you\n",
         "Each Stop holds from the app’s next request.",
         &format!(

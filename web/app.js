@@ -56,7 +56,7 @@ import init, {
   sign_line,
 } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
-import { acts, agreed, apart, called, carrying, changes, deciders, door, el, named, once, opens, owner, question, reading, removal, row, spoken, table, unlent, uses as used, visiting, whose } from './question.js?v=__VERSION__';
+import { acts, agreed, apart, called, carrying, changes, deciders, door, el, named, once, opens, question, reading, removal, row, spoken, table, unlent, uses as used, visiting, whose } from './question.js?v=__VERSION__';
 
 const heading = document.getElementById('status');
 const said = document.getElementById('response');
@@ -482,13 +482,18 @@ async function enter(group, asked, joined) {
   const you = people.find((r) => r.key === actor(key))?.person_key;
   const mine = on?.some((v) => (v.host_key ? v.host_key === you : v.host === group.person)) ? [el('p', 'You stop your guest’s visit on the home page of the computer you made their link on.')] : [];
   document.getElementById('visitors').replaceChildren(...(on ? (on.length ? [el('h2', 'Visiting now'), visiting(on, people), ...mine] : []) : [el('p', `Who is visiting ${group.name} cannot be read just now.`)]));
-  show(`You’re in ${titled(group)}, as ${group.person}${via ? `, through ${via.person}’s computer` : ''}`, true);
+  // The heading says only that you are in; who made the group and since
+  // when, which tells two of one name apart (#138), heads its people below
+  // the group's things: in the heading they were words read before the
+  // first tap (the fifth set, Ana 60-70 words of her 20;
+  // demo/xenia/findings/wordy-the-group-s-page.md).
+  show(`You’re in ${group.name}, as ${group.person}${via ? `, through ${via.person}’s computer` : ''}`, true);
   // The door and the index as the home page draws them (question.js;
   // V1_UI_BUILD §3.1), judged by the answer this computer gave: whose
   // computer did not answer it is drawn off.
   const [drawn, judge] = door(people);
   judge({ unanswered });
-  document.getElementById('door').replaceChildren(drawn);
+  document.getElementById('door').replaceChildren(el('p', titled(group)), drawn);
   // The shelf, brought through the computer the page reaches (v1ui-shelf
   // (c)), and a yes to an app's new version through it, under "What acts
   // as you" (canon-pin (c); capability-what-acts).
@@ -529,11 +534,15 @@ async function enter(group, asked, joined) {
   add('knows', el('p', 'What you open knows your name.'));
   // This phone's key, as the ask a link's issuer is sent names it.
   add('decides', el('p', `${deciders(people, me, 'browser')}.`));
+  // The index, one line each on a phone: the open, what it is for and what
+  // opening it lets it do (`agreed`), and whether it is full now. Whose it
+  // is the open names (`named`), and each opens in this tab, so no column
+  // says either: with the head they were words Ana read before her first
+  // tap (the fifth set; demo/xenia/findings/wordy-the-group-s-page.md).
   list.replaceChildren(
-    row(['What', 'Whose', 'How it opens', 'Now'], 'th'),
     ...once(lent).map((l) => {
       const button = Object.assign(el('button', named(l)), { onclick: () => saying(l, 'yes').then(() => open(group, key, lent, unanswered, l)) });
-      return row([el('span', '', button, ` ${agreed(l, shelf, group)}`), owner(l, group), ...opens(l, 'Here, in this tab')]);
+      return row([el('span', '', button, ` ${agreed(l, shelf, group)}${opens(l)[1] === 'full' ? ' Full now.' : ''}`)]);
     }),
   );
   const again = asked?.get('open') && lent.find((l) => label(l.key, l.name) === asked.get('open'));

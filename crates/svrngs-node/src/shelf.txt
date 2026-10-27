@@ -5,10 +5,11 @@
 # vocab_check.py): build.rs embeds each line's files. One app a line, its
 # fields apart by a tab: its name in a group, its folder under apps/, its
 # files beside index.html and index.js, apart by a space, and what it is, in
-# the words the pages say after its name and after "It reads and writes"
-# beside its open (home/question.js `agreed`), so what it holds, a `-` in its name
+# the words the pages say after its name, after "reads and writes" in "What
+# acts as you", and beside its open (home/question.js `agreed`, `carrying`),
+# so what it holds, short, as they are read before a first tap, a `-` in its name
 # said as a space (`spoken`). Each is brought as index.html, index.js, those
 # files and svrngs's look.css.
-Money	expenses	expenses.js	who paid for what, and who owes whom.
+Money	expenses	expenses.js	who owes whom, and for what.
 Events	events	events.js	the get-togethers people post, and who’s coming.
 House-rules	canon	house.js vendor/canon.js vendor/call.mjs vendor/LICENSE	the rules your house agrees, and how you agree them.

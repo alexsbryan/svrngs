@@ -28,9 +28,13 @@ export const named = (l) => (l.group ? spoken(l.kind) : `${l.called ?? l.person}
 // app on a port writes what you say there as you, by naming it
 // (capability-signed, F1); a lend declared to read kinds (`--reads`) opens
 // your friends' lends of them as you. Made from what the lend declares,
-// never its kind of app.
+// never its kind of app. A carried app's says what it is for first, then
+// what opening it lets it do: led by "It reads and writes", Ana read it as
+// done on her behalf without her yes ("Money can read and write who owes
+// whom on my behalf, and I never agreed to that", the fifth set, `together`
+// run 1; demo/xenia/findings/said-too-much-the-group-s-page.md).
 const does = (kind, shelf) => shelf.find((a) => a.name === kind)?.words ?? 'its own part of the group’s record.';
-export const agreed = (l, shelf, g) => (l.group ? `It reads and writes ${does(l.kind, shelf)}` : `It writes what you say there into ${g.name ?? 'your group'}’s record, as you.${l.reads?.length ? ` It also opens your friends’ ${l.reads.map(spoken).join(' and ')} as you.` : ''}`);
+export const agreed = (l, shelf, g) => (l.group ? `${((w) => w[0].toUpperCase() + w.slice(1))(does(l.kind, shelf))} Opening it lets it read and write that, as you.` : `It writes what you say there into ${g.name ?? 'your group'}’s record, as you.${l.reads?.length ? ` It also opens your friends’ ${l.reads.map(spoken).join(' and ')} as you.` : ''}`);
 
 // Who is visiting now (guests-pages; GUESTS §5 "The pages"), from the
 // record, as every member's page shows them: each guest, by host, until a

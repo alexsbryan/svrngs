@@ -195,7 +195,9 @@ document.title = `Money: ${ops.length} by ${ops.map((o) => o.on_behalf_of ?? o.p
     assert_eq!(listed["lent"], json!(["Money"]), "{seen:#}");
     let text = listed["text"].as_str().unwrap_or_default();
     assert!(
-        text.contains("Money It reads and writes who paid for what, and who owes whom.\thouse\t"),
+        text.contains(
+            "Money Who owes whom, and for what. Opening it lets it read and write that, as you."
+        ),
         "{seen:#}"
     );
     assert!(
@@ -439,7 +441,7 @@ async fn the_home_page_brings_things_to_the_table(engine: Engine) {
     eprintln!("the home page's run: {seen:#}");
     let before = seen["all"].to_string();
     assert!(
-        before.contains("Money: who paid for what, and who owes whom."),
+        before.contains("Money: who owes whom, and for what."),
         "{seen:#}"
     );
     assert!(
@@ -495,8 +497,12 @@ async fn the_home_page_brings_things_to_the_table(engine: Engine) {
     )
     .await;
     let rows = index["all"].to_string();
-    for app in ["Money", "Events", "House rules"] {
-        let open = format!("{app} It reads and writes ");
+    for (app, does) in [
+        ("Money", "Who owes"),
+        ("Events", "The get-togethers"),
+        ("House rules", "The rules"),
+    ] {
+        let open = format!("{app} {does}");
         assert!(
             rows.contains(&open),
             "{app} by its name, what it does beside it: {index:#}"

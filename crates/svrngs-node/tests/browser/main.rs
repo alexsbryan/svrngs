@@ -3258,11 +3258,15 @@ in_webkit!(
     /// V1_UI_BUILD §3.1), as on the computer's: pia's phone opens ada's
     /// group, joined from sam's link a day it keeps. Through ada's
     /// computer it draws ada and cy "on now", bo, whose computer never
-    /// answers, off, and pia herself in from a phone; lists cy's shelf in
-    /// one table with what it is, whose, how it opens and whether it is
-    /// full; and heads the group with who made it and since when, so two
-    /// of one name are told apart. Planted, watched failing: the page as
-    /// before this part, a list of buttons and the group by its name.
+    /// answers, off, and pia herself in from a phone; lists cy's shelf, a
+    /// line each, its open naming whose it is and what opening it does
+    /// beside it; and heads the group's people with who made it and since
+    /// when, so two of one name are told apart, its heading saying only
+    /// that pia is in. Planted, watched failing: the page as before this
+    /// part, a list of buttons and the group by its name; then as 5c6e3b0d
+    /// left it, the maker in the heading and a head of four columns, words
+    /// the fifth xenia set's Ana read before her first tap
+    /// (demo/xenia/findings/wordy-the-group-s-page.md).
     the_group_s_page_draws_the_door_and_the_index
 );
 async fn the_group_s_page_draws_the_door_and_the_index(engine: Engine) {
@@ -3288,23 +3292,13 @@ async fn the_group_s_page_draws_the_door_and_the_index(engine: Engine) {
     });
     let seen = drive(engine, "drive.mjs", args, None).await;
     eprintln!("the group's page's run: {seen:#}");
-    let status = seen["status"].as_str().unwrap_or_default();
-    assert!(
-        status.starts_with("You’re in house (sam’s, since ") && status.ends_with("), as pia"),
-        "{seen:#}"
-    );
+    assert_eq!(seen["status"], "You’re in house, as pia", "{seen:#}");
+    let door = seen["door"].as_str().unwrap_or_default();
+    assert!(door.starts_with("house (sam’s, since "), "{seen:#}");
     drew_the_door(&seen);
     assert_eq!(
         seen["index"],
-        json!([
-            ["What", "Whose", "How it opens", "Now"],
-            [
-                "cy’s shelf (k) It writes what you say there into house’s record, as you.",
-                "cy",
-                "Here, in this tab",
-                "on"
-            ]
-        ]),
+        json!([["cy’s shelf (k) It writes what you say there into house’s record, as you."]]),
         "{seen:#}"
     );
     drop((ada, cy));

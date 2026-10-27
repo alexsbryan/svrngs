@@ -121,7 +121,7 @@ async fn house_rules(engine: Engine) {
     let cy = scene.joins("Cy", &ana.invites(&elm).await, "Elm").await;
     // House rules in the index, by its name and what it does beside it,
     // never the shelf's own line of it.
-    let open_it = |who: &Person| json!({ "poll": who.home_page(), "re": "House rules It reads and writes", "within": 60_000, "every": 2_000 });
+    let open_it = |who: &Person| json!({ "poll": who.home_page(), "re": "House rules The rules your house agrees", "within": 60_000, "every": 2_000 });
 
     // 5. Ana brings House rules, its box ticked; none starts ticked (the
     // operator, 2026-10-26; demo/xenia/findings/after-join-reads-as-permissions.md).

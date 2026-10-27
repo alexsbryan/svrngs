@@ -158,6 +158,32 @@ export async function unfold(page) {
   if (!(await acts.evaluate((d) => d.open, null, { timeout: 90_000 }))) await acts.locator('> summary').click({ timeout: 10_000 });
 }
 
+// What a stranger takes in at one look of the screen as it stands, up to
+// `room` words, in the order xenia's stage reads it: things to tap, then
+// headings, then large text, then the rest, each in the document's order,
+// a box's label with whether it is ticked (xenia src/stage.ts `SCAN` and
+// src/core/world.ts `reading`, at 4f12ba4; contrast not judged). Each
+// person's room is their budget, demo/xenia/people/*.md: the words a
+// look read before acting, which the fifth set counted past each budget
+// (demo/xenia/findings/wordy-*.md), checked here with no model run.
+export function firstLook(page, room) {
+  return page.evaluate((room) => {
+    const TAP = 'a[href],button,input,label,select,textarea,summary,[role=button],[role=link],[onclick]';
+    const [pieces, walk, range] = [new Map(), document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), document.createRange()];
+    const shown = (n, m) => (range.setStart(n, m.index), range.setEnd(n, m.index + m[0].length), ((r) => r.width > 0 && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth)(range.getBoundingClientRect()));
+    for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+      const el = n.parentElement;
+      if (!el || ['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(el.tagName) || !el.checkVisibility({ visibilityProperty: true, opacityProperty: true })) continue;
+      const words = [...n.data.matchAll(/\S+/g)].filter((m) => shown(n, m)).map((m) => m[0]);
+      const at = el.closest(TAP) ?? n;
+      if (words.length) pieces.set(at, { el: el.closest(TAP) ?? el, words: [...(pieces.get(at)?.words ?? []), ...words] });
+    }
+    for (const box of document.querySelectorAll('input[type=checkbox]')) pieces.get(box.labels?.[0])?.words.push(box.checked ? '(ticked)' : '(not ticked)');
+    const rank = ({ el }, s = getComputedStyle(el), px = parseFloat(s.fontSize)) => (el.matches(TAP) ? 0 : el.closest('h1,h2,h3,h4,h5,h6,[role=heading]') ? 1 : px >= 24 || (Number(s.fontWeight) >= 600 && px >= 18.66) ? 2 : 3);
+    return [...pieces.values()].sort((a, b) => rank(a) - rank(b)).flatMap((p) => p.words).slice(0, room).join(' ');
+  }, room);
+}
+
 export async function offline(context) {
   const away = [];
   const off = (url) => /^(https?|wss?):$/.test(url.protocol) && !/^(127\.0\.0\.1|\[::1\]|(.+\.)?localhost)$/.test(url.hostname);
