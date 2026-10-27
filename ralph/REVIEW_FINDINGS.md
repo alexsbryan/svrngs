@@ -12518,3 +12518,333 @@ in chromium and webkit among them
 | I34 | 6 | `refresh` | Still present: web's Rust is outside the workspace and not exported; `type At` at web/src/lib.rs:474 was found by hand. |
 | I36 | 6 | `code index --full` | Still present: ~/.svrnmesh/indexes/svrngs holds no `chunks.lance`. |
 | I38 | 6 | `refresh`, which corpus | New: run in a directory under a git work tree, `refresh` takes the tree's repository as the corpus, not the directory or the corpus indexed there. In cap-d35f1d45/ (under ~/dev/svrngs/target/) it printed "✓ SCIP graph at HEAD for "svrngs"" and "Indexing /Users/alexsbryan/dev/svrngs as corpus 'svrngs'", and began re-embedding the whole repository (10240 chunks at 8m46s, refresh.out); it was stopped, leaving the `svrngs` corpus as I36 left it, with its SCIP graph at ee89f674. With `GIT_CEILING_DIRECTORIES=target/capaudit` it refreshed cap-d35f1d45 (refresh2.out). The previous audits ran in /tmp, outside any tree. |
+
+## REVIEW-audit-give-auto-1 (2026-10-27, range 32e33a9b..e38f497e)
+
+The previous `REVIEW-audit-` row is REVIEW-audit-capability-auto-1, its
+hash 32e33a9b8 (ralph/next/capability/STATE.md:68), the latest of every
+queue's audit hashes by commit date (2026-10-25 00:22). The range ends at
+e38f497e, the commit that made this row: `git rev-list --count
+32e33a9b..e38f497e` is 226, none a merge (`--merges`: 0). It holds the
+capability release, keys-names, the xenia and phone-tunnel work, and the
+give queue's seventeen rows. The principles are
+docs/principles/ARCH_PRINCIPLES.md; the instrument is
+~/dev/commonwealth-ai/target/debug/sovereign-cli, sha256 6d95a261b48fcbab…,
+the binary d35f1d45 named (890aa3ee). Every file named below is under
+target/giveaudit/.
+
+This audit's commits before this section: 890aa3ee, 2867e25c, f457ded8,
+f31ac956, 37d108d9 and a8dd8302 ("Fixed here"). e5daca60 and 0a55c0a0,
+between them, are another session's docs work, not this audit's.
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --no-merges --numstat --format='@@%h %s'
+32e33a9b..e38f497e`, summed by the subject's unit (ledger.py,
+ledger.out): the give queue's row id where the subject names one
+anywhere (the give rows wrote `give: … (give-app-keep a)`), else the id
+inside its parentheses, else the word before its colon. Product code is
+lean_check.py's: `.rs`, `.js`, `.mjs`, `.ts`, `.py` and `.sh` under
+`crates/`, `web/` and `scripts/`, tests apart (`*/tests/*`, `*_tests.rs`,
+`tests_*.rs`, `tests.rs`, `*.test.mjs`). `apps/` is outside the budget
+and given in its own columns, with `vendor/` left out:
+apps/give/page/vendor/fold.js, +20,109, is apps/give/build.sh's output
+from fold/src/lib.rs. `demo/runs/`, `ralph/`, `docs/` and the lockfiles
+are out. Raw lines, comments and blanks in:
+
+| unit | commits | src + | src − | src net | test + | test − | test net | apps/ net | apps/ test net |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| ralph, capability, capability-release, release, give, gate, readme, factorio, phone-tunnel, give-docs, this row (no product lines) | 50 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | +10 |
+| keys-names | 17 | 202 | 211 | **−9** | 162 | 20 | +142 | +130 | +130 |
+| lint | 2 | 9 | 1 | **+8** | 0 | 0 | 0 | 0 | 0 |
+| home | 5 | 45 | 30 | **+15** | 121 | 84 | +37 | 0 | 0 |
+| browsers | 1 | 10 | 5 | **+5** | 173 | 83 | +90 | 0 | 0 |
+| build | 1 | 5 | 2 | **+3** | 0 | 0 | 0 | 0 | 0 |
+| give-economize | 8 | 10 | 20 | **−10** | 0 | 0 | 0 | 0 | 0 |
+| give-token | 4 | 110 | 23 | **+87** | 306 | 61 | +245 | +71 | +9 |
+| give-session | 26 | 422 | 66 | **+356** | 1257 | 160 | +1097 | +10 | 0 |
+| tests | 3 | 0 | 0 | **0** | 18 | 3 | +15 | 0 | 0 |
+| films | 1 | 0 | 0 | **0** | 16 | 20 | −4 | +11 | 0 |
+| cli | 1 | 22 | 37 | **−15** | 0 | 0 | 0 | 0 | 0 |
+| give-udp | 6 | 409 | 33 | **+376** | 396 | 45 | +351 | 0 | 0 |
+| give-tcp | 7 | 249 | 66 | **+183** | 346 | 12 | +334 | 0 | 0 |
+| give-play | 8 | 377 | 23 | **+354** | 470 | 13 | +457 | 0 | 0 |
+| give-play-scene | 6 | 0 | 0 | **0** | 203 | 0 | +203 | 0 | 0 |
+| ports | 1 | 1 | 1 | **0** | 0 | 0 | 0 | 0 | 0 |
+| give-cut | 7 | 31 | 4 | **+27** | 179 | 4 | +175 | 0 | 0 |
+| give-app-runtime | 7 | 2 | 2 | **0** | 0 | 0 | 0 | +1744 | +616 |
+| give-app-keep | 8 | 0 | 0 | **0** | 313 | 0 | +313 | +1553 | +1011 |
+| give-app-move | 6 | 0 | 0 | **0** | 0 | 0 | 0 | +373 | +377 |
+| give-app-takeover | 8 | 0 | 0 | **0** | 0 | 0 | 0 | +563 | +574 |
+| xenia | 19 | 0 | 0 | **0** | 584 | 61 | +523 | 0 | 0 |
+| lean | 1 | 1 | 2 | **−1** | 0 | 0 | 0 | 0 | 0 |
+| web | 1 | 1 | 4 | **−3** | 0 | 0 | 0 | 0 | 0 |
+| pages | 3 | 32 | 20 | **+12** | 135 | 29 | +106 | 0 | 0 |
+| money | 2 | 0 | 0 | **0** | 37 | 2 | +35 | +30 | +41 |
+| give-app-scenes | 11 | 0 | 0 | **0** | 694 | 100 | +594 | +14 | +18 |
+| give-page-down | 4 | 0 | 0 | **0** | 0 | 0 | 0 | +17 | +111 |
+| give-install | 10 | 91 | 51 | **+40** | 187 | 14 | +173 | +151 | +105 |
+| give-page-host | 10 | 25 | 20 | **+5** | 63 | 0 | +63 | +13 | +51 |
+| total | 226 | 2054 | 621 | **+1433** | 5660 | 711 | +4949 | +4680 | +3053 |
+
+give-udp, give-play, give-session and give-tcp are 88% of the range's
+product lines (1,269 of 1,433), each inside the operator's ceiling for
+give-token through give-play (ralph/next/give/STATE.md, give-economize,
+"THE OPERATOR DECIDED"). Give itself is apps/: +4,680 and +3,053 in
+tests, give-app-keep's the most, the fold and the keeper program.
+
+What lean_check.py counts, HEAD's script over a `git archive` tree of
+each end (tree-*/, `GIT_DIR=/nonexistent`), in the four ledgers of
+GIVE.md §9:
+
+| ledger | 32e33a9b, range start | e38f497e, range end | net |
+|---|---:|---:|---:|
+| core (crates/svrngs-core) | 3298 | **3241** (cap 3242) | **−57** |
+| library (the repository less core) | 14985 | **15876** | **+891** |
+| repository | 18283 | **19117** (cap 19118) | **+834** |
+| app (apps/, raw, not counted) | — | — | +4680, tests +3053 |
+| surface items | — | — | +8: the `token` file (api.rs:57), `POST /v1/open` (session.rs:222), `/v1/play` (play.rs:43), home's `GET /to` (home.rs), `play.json` (play.rs:46), `svrngs share --udp`/`--tcp` (cli.rs), install.sh `--give`, the raw `Alpn::Port` |
+
+The start's tree read by HEAD's script breaks the core cap it has now
+(3298 ≥ 3242); give-economize's cuts took it down before any row raised.
+This audit's commits move neither count: 3241 / 3242 and 19430 / 19431
+at a8dd8302, the repository's rise since e38f497e being e5daca60 and
+0a55c0a0's (`git log -3 -- scripts/lean_check.py`).
+
+### The instrument
+
+The `svrngs` corpus still has no chunk index (I36: ~/.svrnmesh/indexes/
+svrngs holds `documents.lance`, `scip_graph.db` and `texts`, no
+`chunks.lance`), so the corpus is 890aa3ee's crates/, scripts/, web/,
+the ten apps the range touched (doc, events, expenses, give, grapevine,
+jellyfin, movie-night, on-air, pantry, taste), Cargo.toml and Cargo.lock
+by `git archive` (give-890aa3ee/); 890aa3ee changes only STATE.md over
+e38f497e. Every `vendor/` directory and apps/give/fold/cases.json were
+taken out (458 files): dry-report excludes `vendor` from what it judges,
+and the first index failed on one (I39).
+- `code index . --corpus-id give-890aa3ee`, fenced with
+  `GIT_CEILING_DIRECTORIES` at target/giveaudit (I38): failed at 4608
+  chunks (index.out, I39); run again, 5317 chunks in 783 s
+  (index2.out).
+- `refresh`, fenced the same: rust 25748 symbols and 146790 references;
+  typescript and python "skipped (export failed)" (I4) (refresh.out).
+  apps/give and apps/give/fold are workspace members (Cargo.toml:5), so
+  their Rust is in the graph.
+
+### (2) Clones (`code dry-report`)
+
+The range touched crates/svrngs, svrngs-core, svrngs-node and
+svrngs-runtime, scripts/, web/ and the ten apps (`git diff --name-only
+32e33a9b e38f497e -- crates web scripts apps`). Each was reported at 0.95
+and 0.90 (dry-*.md). Whether a side was added in the range is `git blame
+--porcelain` at e38f497e over each side's lines (sides.py, sides.out; a
+line whose commit is in `git rev-list 32e33a9b..e38f497e` is new).
+
+| scope | exact | near 0.95 | near 0.90 | clusters with a side added in the range |
+|---|---|---:|---:|---:|
+| crates/svrngs/ | 0 | 0 | 0 | 0 |
+| crates/svrngs-core/ | 4 | 4 | 12 | 1 |
+| crates/svrngs-node/ | 2 | 2 | 10 | 3 |
+| crates/svrngs-runtime/ | 1 | 1 | 0 | 0 |
+| scripts/ | could-not-judge (I4) | 0 | 0 | 0 |
+| web/ | could-not-judge (I4, I34) | 0 | 3 | 0 |
+| apps/give/ | 1 (Rust); JS could-not-judge (I4) | 2 | 7 | 8 |
+| apps/on-air/ | could-not-judge (I4) | 0 | 1 | 1 |
+| apps/doc/, events/, grapevine/, jellyfin/, movie-night/ | could-not-judge (I4) | 4 | 11 | 0 |
+| apps/expenses/, pantry/, taste/ | could-not-judge (I4) | 0 | 0 | 0 |
+
+106 sides; 23 have a line from the range, in 13 clusters:
+
+```
+apps/give (0.90)
+- exact · 2 copies × 3 lines
+  - `as_str` — apps/give/src/card.rs:119                       3/3 new    2444d4cd
+  - `as_str` — apps/give/src/runtime.rs:67                     3/3 new    2444d4cd
+- **2 symbols** · ~13 lines · cosine 0.918
+  - pub `data_dir` — apps/give/src/record.rs:55–65 (11 lines)  11/11 new  cf5903e9
+  - `read` — apps/give/src/record.rs:61–73 (13 lines)          13/13 new  cf5903e9
+- **2 symbols** · ~13 lines · cosine 0.908
+  - `press` — apps/give/page.test.mjs:103–115 (13 lines)       13/13 new  4c087103 9ab61bf5
+  - `press` — apps/give/page.test.mjs:202–213 (12 lines)       12/12 new  aed586a8
+- **2 symbols** · ~12 lines · cosine 0.996
+  - `as` — apps/give/page.test.mjs:97–108 (12 lines)           12/12 new  4c087103 9ab61bf5
+  - `as` — apps/give/page.test.mjs:196–207 (12 lines)          12/12 new  aed586a8
+- **2 symbols** · ~11 lines · cosine 0.922
+  - `answer` — apps/give/page/index.js:104–111 (8 lines)       8/8 new    3d700b44 aed586a8 cf5903e9
+  - `take` — apps/give/page/index.js:108–118 (11 lines)        11/11 new  3d700b44 aed586a8
+- **2 symbols** · ~11 lines · cosine 0.922
+  - `mapping` — apps/give/src/card.rs:548–556 (9 lines)        9/9 new    2444d4cd
+  - `keys` — apps/give/src/card.rs:552–562 (11 lines)          11/11 new  2444d4cd
+- **2 symbols** · ~10 lines · cosine 0.930
+  - `last` — apps/give/page.test.mjs:209–218 (10 lines)        10/10 new  aed586a8
+  - `last` — apps/give/page.test.mjs:315–324 (10 lines)        10/10 new  3d700b44
+- **2 symbols** · ~9 lines · cosine 0.901
+  - `chosen` — apps/give/src/machine.rs:105–113 (9 lines)      9/9 new    2444d4cd 8402864a
+  - `gb` — apps/give/src/machine.rs:109–117 (9 lines)          9/9 new    2444d4cd 8402864a
+apps/on-air (0.90)
+- **2 symbols** · ~12 lines · cosine 0.912
+  - pub `token` — apps/on-air/harness/run.py:72–80 (9 lines)   6/9 new    662803be
+  - pub `token_for` — apps/on-air/harness/run.py:77–88 (12 lines) 11/12 new 662803be
+crates/svrngs-core (0.90)
+- **2 symbols** · ~13 lines · cosine 0.916
+  - `decide` — crates/svrngs-core/src/register.rs:257–269 (13 lines) 3/13 new 51337c91
+  - `decide` — crates/svrngs-core/src/register.rs:310–320 (11 lines)
+crates/svrngs-node (0.90)
+- exact · 2 copies × 3 lines
+  - `listed` — crates/svrngs-node/src/play.rs:269              3/3 new    86dd073d
+  - `listed` — crates/svrngs-node/src/room/route.rs:29
+- **2 symbols** · ~18 lines · cosine 0.936
+  - `made` — crates/svrngs-node/src/play.rs:119–136 (18 lines) 18/18 new  86dd073d
+  - `made` — crates/svrngs-node/src/room.rs:163–180 (18 lines)
+- **2 symbols** · ~17 lines · cosine 0.934
+  - pub `carried` — crates/svrngs-node/src/door/tcp.rs:73–89   17/17 new  0847c192
+  - pub `carried` — crates/svrngs-node/src/door/udp.rs:296–312 17/17 new  083cc6b6 0847c192 36471346
+```
+
+Read at HEAD:
+- page.test.mjs `as`, `press`, `last`: one driver typed in three tests,
+  four helpers each. One `drive` now (a8dd8302).
+- play.rs `made` and `listed` against room.rs and room/route.rs: Play
+  is a second owner on the room's model (86dd073d's body says so), and
+  its turn's rule, one lend on once, keyed by (key, name), is typed
+  twice. Recorded, #224.
+- tcp.rs and udp.rs `carried`: each member's half opens through the one
+  `udp::opening` (udp.rs:313) and spawns its own loop over its own
+  socket type; the 3 shared lines are the shape, not a decision.
+- card.rs and runtime.rs `as_str`: two newtypes' `&self.0`.
+- record.rs `data_dir`/`read`, index.js `answer`/`take`, card.rs
+  `mapping`/`keys`, machine.rs `chosen`/`gb`, run.py `token`/`token_for`:
+  each pair's spans overlap, one calling or following the next (I1).
+- register.rs `decide`: 3 of 13 lines re-laid by 51337c91 (keys-names,
+  behaviour kept); the pair is the two `Command`s REVIEW-audit-
+  capability-auto-1 read.
+
+The other exact clones, `is_empty`, `signed_by_link`, `lines` and
+`as_str` in svrngs-core and `addr` in api.rs, are 0 lines new.
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git diff 32e33a9b e38f497e -- crates web scripts
+apps`, vendor/ apart, matched against `(struct|enum|trait|class)
++[A-Z]\w*` and `type [A-Z]\w* =` (nouns-added.txt): 85 lines, 79 names,
+of which `Via` (iroh.rs) and `Codes` (oidc/provider.rs) were there
+before. Each, in give-890aa3ee (noun-*.out): 46 have one product
+definition, 5 none (tests: Places, Removed, Got, Browser, House), and 28
+more than one:
+
+```
+Answer      give-fold lib.rs:113; svrngs-node node.rs:822
+App         give runtime.rs:119; svrngs-core app.rs:21
+Asks        svrngs-node play.rs:140; svrngs-node room/owner.rs:38
+Carried     svrngs-node blob.rs:38; svrngs-node door/udp.rs:289
+Copy        give runtime.rs:85; give-fold lib.rs:176
+Door        give card.rs:40; svrngs-node door.rs:361
+Failed      give check.rs:53; give-fold lib.rs:169
+Group       give record.rs:34; svrngs-core token.rs:28
+Groups      give record.rs:44; svrngs-node node.rs:85
+Health      give card.rs:133; give runtime.rs:106
+Held        give keep.rs:84; svrngs-node surface.rs:83, synced.rs:135; svrngs-runtime journal.rs:92
+Kept        give-fold lib.rs:342; svrngs-node door/choices.rs:69
+LendError   give lend.rs:13; svrngs-node lend.rs:406
+Name        give runtime.rs:50; svrngs-core lib.rs:185
+On          svrngs-node play.rs:50; svrngs-node room.rs:122
+Opened      svrngs-node door/udp.rs:292; svrngs-node play.rs:144
+Opening     svrngs-node home.rs:223; svrngs-node session.rs:205
+Refusal     give-fold lib.rs:204; svrngs cli.rs:565
+Refused     give card.rs:151; give-fold lib.rs:261; svrngs-core command.rs:61
+Step        give check.rs:17; give keep.rs:92
+To          svrngs-node home.rs:249; svrngs-node ring_sync.rs:492
+Token       svrngs-core link.rs:83; svrngs-node api.rs:60
+Turn        svrngs-node play.rs:113; svrngs-node room.rs:156
+TurnAsk     svrngs-node play.rs:137; svrngs-node room/owner.rs:35
+Whole       svrngs-node door/udp.rs:85; svrngs-node iroh.rs:309
+```
+
+(the tool's lines, one early, I1). Adjudicated:
+
+- **Across the system line** (App, Door, Group, Groups, Held's give
+  side, LendError, Name, Answer, Kept, Refusal, Refused's svrngs-core
+  side): Give links no svrngs crate (apps/give/Cargo.toml,
+  tests/surface.rs; fence 4), so a name on each side is a fork across
+  two systems, not two deciders in one (AGENTS.md 8). Not findings.
+  `Made`, f31ac956's new name, is one of these too (svrngs-node
+  group.rs:260).
+- **Token**, both in svrngs-node's reach: join.rs:10 and invite.rs:14
+  import `link::Token` beside api.rs's. The newer is `Bearer`
+  (2867e25c).
+- **Whole**, both in svrngs-node: udp.rs's, the newer, is `Fragments`
+  (f457ded8).
+- **Copy**, in Give, also shadowing std's `Copy` trait inside
+  runtime.rs: runtime.rs's is `Made` (f31ac956).
+- **Health**, both in the give crate, runtime.rs reading the card's
+  beside its own: card.rs's is `Healthcheck` (37d108d9).
+- **On, Turn, TurnAsk, Asks**: Play's owner on the room's model, #224.
+- **Opened, Opening, Carried, To** in svrngs-node, and **Failed,
+  Refused, Step** in Give: each module's own, never imported beside its
+  namesake. #225 and #226.
+
+After, by grep for the definitions (the corpus was not rebuilt; I36):
+`Token` 1 (link.rs:84), `Bearer` 1 (api.rs:61), `Whole` 1 (iroh.rs:310),
+`Fragments` 1 (udp.rs:86), `Copy` 1 (fold lib.rs:177), `Health` 1
+(runtime.rs:107), `Healthcheck` 1 (card.rs:134).
+
+### Reading the range
+
+The range's svrngs product code was read against the queue's fences
+and principles 1, 6 and 8, where the instrument does not judge.
+
+- **Every refusal traced** (principle 1). api.rs `holds_the_token`
+  (:224), `from_this_computer` (:244) and `not_from_a_page` (:210);
+  session.rs `redeem` (:150); origin.rs (:173); home.rs (:189): each
+  traces at debug before it refuses, naming the fact.
+- **One decider for an open** (principle 8). home.rs `GET /to` (a page)
+  and session.rs `POST /v1/open` (a program) take two wire shapes and
+  both mint through `Sessions::open` (session.rs:131), the one place a
+  path is judged. That place substitutes, #227.
+- **One home per threshold** (principle 8). play.rs re-derives the
+  room's `LOOK_EVERY` (play.rs:39, room/owner.rs:32); give's keep.rs
+  takes `EVERY` and `KEEP` from the fold (keep.rs:47, :51; b031afac),
+  which the page also runs.
+- **A surface, not a link** (fence 4). apps/give/src/record.rs:75 reads
+  the `api` and `token` files by name, as every app does (events,
+  grapevine and doc's servers); svrngs's names are api.rs:57 and :116.
+  This is the published contract, one name on each side of it.
+
+### Fixed here
+
+- 890aa3ee: the row's two paths, the principles and the instrument.
+- 2867e25c: api.rs's `Token` → `Bearer`.
+- f457ded8: door/udp.rs's `Whole` → `Fragments`.
+- f31ac956: give runtime.rs's `Copy` → `Made`.
+- 37d108d9: give card.rs's `Health` → `Healthcheck`.
+- a8dd8302: page.test.mjs's driver, one `drive`.
+
+Behaviour kept, each in its commit: `cargo check -p svrngs-node --tests`
+and `cargo fmt --check` clean; `cargo test -p svrngs-node --lib
+door::udp`, 3 passed; `cargo test -p give`, every suite passed (45
+tests, check and keep against podman, no `svrngs-test-*` container
+left: `podman ps -a`); `node --test apps/give/page.test.mjs`, 6 of 6.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 224 | 8 | crates/svrngs-node/src/play.rs:111-134 (`Turn`, `made`), :138-141 (`TurnAsk`, `Asks`), :262-271 (`router`, `listed`), and crates/svrngs-node/src/room.rs:154-178, room/owner.rs:36-39, room/route.rs:22-31 | not fixed (one turn over both `On`s is a parameter through two owners, past small; it would lower the count) | **Collapse the drive.** Play is a second owner on the room's model: the rule of a turn, a lend on once and keyed by (key, name), with off by the same key and a read changing nothing, is typed in each `made`. A change to one (say, a lend's identity gaining its group) and not the other leaves Play and the room disagreeing about what is on, with nothing red. |
+| 225 | 8 | crates/svrngs-node: `Opened` door/udp.rs:293 and play.rs:145; `Opening` home.rs:224 and session.rs:206; `Carried` blob.rs:39 and door/udp.rs:290; `To` home.rs:250 and ring_sync.rs:493 | not fixed (each pair module-scoped; none imported beside its namesake) | **One name, two things, one crate.** Each added in the range on one side. A reader grepping a name finds two meanings; renaming the newer of each costs no counted line, and is the next audit's to weigh against the churn. |
+| 226 | 8 | apps/give: `Failed` src/check.rs:54 and fold/src/lib.rs:170; `Refused` src/card.rs:152 and fold/src/lib.rs:262; `Step` src/check.rs:18 and src/keep.rs:93 | not fixed (never imported together: keep.rs:35 takes only `Keeping`, `Kept` from the fold, main.rs:16 only `check::Step`; a fold rename rebuilds page/vendor/fold.js and its pins) | **One name, two things, one system.** As #225, inside Give. |
+| 227 | 6, 1 | crates/svrngs-node/src/session.rs:131-134 (`Sessions::open`) | not fixed (+1 counted line; the cap has none: 19430 / 19431) | **A path refused is opened as `/`, and traced as none asked.** An `at` not starting with `/`, starting with `//`, or holding a backslash is filtered to `None`, and the open goes to the home or lend's `/`; the trace shows the filtered `at`, so a refused path and no path read alike. Tell the two apart in the trace, and say it to the asker (`svrngs open`, home's `/to`). |
+| 228 | 3 | crates/svrngs-node/src/door/udp.rs:150 | not fixed (+1 counted line for a const; the cap has none) | **An unnamed wait.** `Duration::from_secs(5)`: how long the lender holds a refused raw connection open for the member to read the words. No comment says why 5; iroh.rs:418's `CLOSED_WITHIN` is the other side's 1 s, a different wait. |
+| 80 | — | scripts/lean_check.py:303 BUDGET | not fixed (operator's) | 3241 / 3242 and 19430 / 19431 after this audit. Over the range: core −57, the repository +834, every raise a row's own inside the operator's ceiling. |
+| 211-223 | as recorded | as recorded | as recorded | Open; this range adds nothing to them. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun`, dry-report spans | Still one line early: Copy at runtime.rs:85 for :86, Health at card.rs:133 for :134, Token at api.rs:60 for :61, Whole at udp.rs:85 for :86. Overlapping spans pair a symbol with its neighbour (record.rs, index.js, card.rs, machine.rs, run.py above). |
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)"; scripts/', web/'s and the apps' JS exact tiers could not judge. |
+| I8 | 6 | dry-report scope | Still present: removal_tests.rs, register_tests.rs, membership_tests.rs, membership_invite_tests.rs, tests_support.rs, ring_sync/tests.rs, and now `*.test.mjs` (apps/give/page.test.mjs, apps/doc/doc.test.mjs) reported as production. Here it served: the page tests' driver was worth one. |
+| I34 | 6 | `refresh` | Still present: web's Rust is outside the workspace and not exported. |
+| I36 | 6 | `code index --full` | Still present: ~/.svrnmesh/indexes/svrngs holds no `chunks.lance`. |
+| I38 | 6 | `refresh`, which corpus | Still present; fenced with `GIT_CEILING_DIRECTORIES` here, as before. |
+| I39 | 6 | `code index` | New: one chunk past the embedder's context fails the whole run. With apps/doc/vendor/doc-bundle.js (449,565 bytes, minified) in the corpus, `code index` stopped at 4608 chunks: "request (27950 tokens) exceeds the available context size (8192 tokens)" (index.out:34), exit 1. dry-report excludes `vendor` from what it judges, but the indexer embeds it anyway. With every `vendor/` out, the run resumed and finished, 5317 chunks (index2.out). A chunk too long to embed should be cut or skipped and said, not end the index. |
