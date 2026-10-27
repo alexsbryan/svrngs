@@ -17,6 +17,14 @@ settings:
 targets:
   PhoneTunnel:
     type: application
+    attributes:
+      # So automatic signing registers the app group, which the extension's
+      # samples are shared out through: without it the profile's list is empty.
+      SystemCapabilities:
+        com.apple.ApplicationGroups.iOS:
+          enabled: 1
+        com.apple.NetworkExtensions.iOS:
+          enabled: 1
     platform: iOS
     sources: [App]
     settings:
@@ -31,6 +39,14 @@ targets:
       - target: TunnelExtension
   TunnelExtension:
     type: app-extension
+    attributes:
+      # So automatic signing registers the app group, which the extension's
+      # samples are shared out through: without it the profile's list is empty.
+      SystemCapabilities:
+        com.apple.ApplicationGroups.iOS:
+          enabled: 1
+        com.apple.NetworkExtensions.iOS:
+          enabled: 1
     platform: iOS
     sources: [Extension]
     settings:
