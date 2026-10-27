@@ -273,9 +273,7 @@ impl Host {
     pub fn own_person(&self, group: &str) -> Result<(String, Person), Unminted> {
         let me = actor_of(self.rail.signer());
         let standing = (self.rail.standing(group)).map_err(|e| Unminted::Unkept(e.to_string()))?;
-        let own = standing
-            .member(&me)
-            .map(|m| (m.person_key.clone(), m.person.clone()));
+        let own = (standing.member(&me)).map(|m| (m.person_key.clone(), m.person.clone()));
         tracing::debug!(target: "link", group, ?own, "link: a device link — this computer's person");
         own.ok_or(Unminted::NotIn)
     }
