@@ -203,7 +203,8 @@ There are sixteen rows:
     - With svrngs started again, the page reads as before, with no reload.
     - A plant that swallows the failed read turns it red.
   - **(b) The change.** In `show`, a failed read is said the way an answer that is not JSON already is.
-  - **Check:** (a) red first, green after; Give's scenes green; the four ledgers, `apps/` reported.
+  - **(c) A press while svrngs is down, said too.** Read at bc188e6a: `write()` (`apps/give/page/index.js:69`) lets its fetch throw with nothing to catch it, and the round (`:219`) skips `show()` while an ask, a move or a takeover is open, so a press such as "Agree and start" fails silently and its ask stays on screen as if it were waiting (give-page-down-1's lesson, seq 89). The same finding, so the same row: `write()` catches a failed fetch as `show()` now does and says, in a person's words, that it couldn't reach the group and nothing was done; the ask stays open to press again. A test in `page.test.mjs`, with `server.down()` while an ask is open, red at bc188e6a, and its plant (the catch removed) red again.
+  - **Check:** (a) and (c) red first, green after; Give's scenes green; the four ledgers, `apps/` reported.
 - [ ] give-install — depends [give-page-down] — ONE ROW:
   - **(a) Getting the keeper program.** `web/install.sh` offers Give's keeper program as an option, or the row gives its reason not to. The keeper program comes from the page host beside svrngs, with its checksum in `SHA256SUMS`. If `scripts/build-release.sh` must build `apps/give` for that, the row says what this couples, in distribution and not in code.
   - **(b) The ask in the page.** The carried page's install ask points at that one line.
