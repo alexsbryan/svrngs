@@ -11,7 +11,7 @@
       { "id": "s1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 2, "voided": false, "payload": { "kind": "started", "app": "standin", "card": "v1", "agreed": true } }
     ],
     "kept": {
-      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "card": "v1", "agreed": true, "since": 2, "sum": null, "offer": null } },
+      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "card": "v1", "agreed": true, "since": 2, "sum": null, "offer": null, "answered": 2, "gone": false, "failed": null, "next": null, "had": [] } },
       "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 } },
       "refused": []
     }
@@ -35,7 +35,7 @@
       { "id": "s2", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 3, "voided": false, "payload": { "kind": "started", "app": "standin", "card": "v1", "agreed": true } }
     ],
     "kept": {
-      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s2", "how": "started", "from": null, "card": "v1", "agreed": true, "since": 3, "sum": null, "offer": null } },
+      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s2", "how": "started", "from": null, "card": "v1", "agreed": true, "since": 3, "sum": null, "offer": null, "answered": 3, "gone": false, "failed": null, "next": null, "had": [] } },
       "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 2 } },
       "refused": [ { "act": "s1", "app": "standin", "refusal": "cannot_keep", "why": "a1 has not said it can keep apps: it has no Podman or no keeper program" } ]
     }
@@ -49,7 +49,7 @@
       { "id": "s2", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 2, "voided": false, "payload": { "kind": "started", "app": "standin", "card": "v1", "agreed": true } }
     ],
     "kept": {
-      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "card": "v1", "agreed": true, "since": 2, "sum": null, "offer": null } },
+      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "card": "v1", "agreed": true, "since": 2, "sum": null, "offer": null, "answered": 2, "gone": false, "failed": null, "next": null, "had": [] } },
       "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 } },
       "refused": [ { "act": "s2", "app": "standin", "refusal": "stale", "why": "standin was kept since s1 when s2 followed nothing" } ]
     }
@@ -65,7 +65,7 @@
       { "id": "m1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 9, "voided": false, "payload": { "kind": "moved", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/9000", "sum": "5e1" } }
     ],
     "kept": {
-      "apps": { "standin": { "keeper": "b1", "person": "bo", "person_key": "kb", "act": "m1", "how": "moved", "from": "give/standin/a1/9000", "sum": "5e1", "card": "v1", "agreed": true, "since": 9, "offer": null } },
+      "apps": { "standin": { "keeper": "b1", "person": "bo", "person_key": "kb", "act": "m1", "how": "moved", "from": "give/standin/a1/9000", "sum": "5e1", "card": "v1", "agreed": true, "since": 9, "offer": null, "answered": 9, "gone": false, "failed": null, "next": { "act": "m1", "computer": "a1", "person": "cy", "person_key": "ka", "from": "give/standin/a1/9000", "sum": "5e1", "card": "v1", "since": 9 }, "had": [] } },
       "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 } },
       "refused": []
     }
@@ -81,9 +81,9 @@
       { "id": "m1", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 9, "voided": false, "payload": { "kind": "moved", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/9000", "sum": "5e1" } }
     ],
     "kept": {
-      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": { "act": "o1", "to": "b1", "person": "bo", "person_key": "kb", "since": 5, "answer": "yes", "agreed": true } } },
+      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": { "act": "o1", "to": "b1", "person": "bo", "person_key": "kb", "since": 5, "answer": "yes", "agreed": true }, "answered": 2, "gone": false, "failed": null, "next": null, "had": [] } },
       "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 } },
-      "refused": [ { "act": "m1", "app": "standin", "refusal": "not_the_keeper", "why": "b1 wrote a move of standin, which a1 keeps: only the computer that keeps an app moves it" } ]
+      "refused": [ { "act": "m1", "app": "standin", "refusal": "not_the_keeper", "why": "m1 of standin was written by b1, and a1 keeps it: only the computer that keeps an app moves it, copies it, or says it did not start" } ]
     }
   },
   {
@@ -94,7 +94,7 @@
       { "id": "o1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 5, "voided": false, "payload": { "kind": "offered", "app": "standin", "over": "s1", "to": "b1" } }
     ],
     "kept": {
-      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": null } },
+      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": null, "answered": 2, "gone": false, "failed": null, "next": null, "had": [] } },
       "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 } },
       "refused": [ { "act": "o1", "app": "standin", "refusal": "cannot_keep", "why": "b1 has not said it can keep apps: it has no Podman or no keeper program" } ]
     }
@@ -105,10 +105,10 @@
       { "id": "r1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
       { "id": "r3", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
       { "id": "s1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 2, "voided": false, "payload": { "kind": "started", "app": "standin", "card": "v1", "agreed": true } },
-      { "id": "t1", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 20, "voided": false, "payload": { "kind": "taken", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/5000", "agreed": true } }
+      { "id": "t1", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 20, "voided": false, "payload": { "kind": "taken", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/5000", "agreed": true, "sum": "5e2" } }
     ],
     "kept": {
-      "apps": { "standin": { "keeper": "c1", "person": "dee", "person_key": "kc", "act": "t1", "how": "taken", "from": "give/standin/5000", "card": "v1", "agreed": true, "since": 20, "sum": null, "offer": null } },
+      "apps": { "standin": { "keeper": "c1", "person": "dee", "person_key": "kc", "act": "t1", "how": "taken", "from": "give/standin/5000", "card": "v1", "agreed": true, "since": 20, "sum": "5e2", "offer": null, "answered": 20, "gone": false, "failed": null, "next": null, "had": [] } },
       "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "c1": { "person": "dee", "person_key": "kc", "since": 1 } },
       "refused": []
     }
@@ -120,11 +120,11 @@
       { "id": "r2", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
       { "id": "r3", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
       { "id": "s1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 2, "voided": false, "payload": { "kind": "started", "app": "standin", "card": "v1", "agreed": true } },
-      { "id": "t2", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 21, "voided": false, "payload": { "kind": "taken", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/5000", "agreed": true } },
-      { "id": "t1", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 20, "voided": false, "payload": { "kind": "taken", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/5000", "agreed": true } }
+      { "id": "t2", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 21, "voided": false, "payload": { "kind": "taken", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/5000", "agreed": true, "sum": "5e2" } },
+      { "id": "t1", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 20, "voided": false, "payload": { "kind": "taken", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/5000", "agreed": true, "sum": "5e2" } }
     ],
     "kept": {
-      "apps": { "standin": { "keeper": "c1", "person": "dee", "person_key": "kc", "act": "t2", "how": "taken", "from": "give/standin/5000", "card": "v1", "agreed": true, "since": 21, "sum": null, "offer": null } },
+      "apps": { "standin": { "keeper": "c1", "person": "dee", "person_key": "kc", "act": "t2", "how": "taken", "from": "give/standin/5000", "card": "v1", "agreed": true, "since": 21, "sum": "5e2", "offer": null, "answered": 21, "gone": false, "failed": null, "next": null, "had": [] } },
       "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 }, "c1": { "person": "dee", "person_key": "kc", "since": 1 } },
       "refused": [ { "act": "t1", "app": "standin", "refusal": "stale", "why": "standin was kept since t2 when t1 followed s1" } ]
     }
@@ -133,7 +133,7 @@
     "name": "a takeover of an app nobody keeps is refused",
     "ops": [
       { "id": "r3", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
-      { "id": "t1", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 20, "voided": false, "payload": { "kind": "taken", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/5000", "agreed": true } }
+      { "id": "t1", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 20, "voided": false, "payload": { "kind": "taken", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/5000", "agreed": true, "sum": "5e2" } }
     ],
     "kept": {
       "apps": {},
@@ -203,7 +203,7 @@
       { "id": "s1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 2, "voided": false, "payload": { "kind": "started", "app": "standin", "card": "v1" } }
     ],
     "kept": {
-      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "card": "v1", "agreed": false, "since": 2, "sum": null, "offer": null } },
+      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "card": "v1", "agreed": false, "since": 2, "sum": null, "offer": null, "answered": 2, "gone": false, "failed": null, "next": null, "had": [] } },
       "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 } },
       "refused": []
     }
@@ -218,8 +218,8 @@
     ],
     "kept": {
       "apps": {
-        "other": { "keeper": "b1", "person": "bo", "person_key": "kb", "act": "s2", "how": "started", "from": null, "card": "w1", "agreed": true, "since": 3, "sum": null, "offer": null },
-        "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "card": "v1", "agreed": true, "since": 2, "sum": null, "offer": null }
+        "other": { "keeper": "b1", "person": "bo", "person_key": "kb", "act": "s2", "how": "started", "from": null, "card": "w1", "agreed": true, "since": 3, "sum": null, "offer": null, "answered": 3, "gone": false, "failed": null, "next": null, "had": [] },
+        "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "card": "v1", "agreed": true, "since": 2, "sum": null, "offer": null, "answered": 2, "gone": false, "failed": null, "next": null, "had": [] }
       },
       "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 } },
       "refused": []
@@ -234,7 +234,7 @@
       { "id": "o1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 5, "voided": false, "payload": { "kind": "offered", "app": "standin", "over": "s1", "to": "b1" } }
     ],
     "kept": {
-      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": { "act": "o1", "to": "b1", "person": "bo", "person_key": "kb", "since": 5, "answer": "waiting", "agreed": false } } },
+      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": { "act": "o1", "to": "b1", "person": "bo", "person_key": "kb", "since": 5, "answer": "waiting", "agreed": false }, "answered": 2, "gone": false, "failed": null, "next": null, "had": [] } },
       "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 } },
       "refused": []
     }
@@ -249,7 +249,7 @@
       { "id": "n1", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 6, "voided": false, "payload": { "kind": "declined", "app": "standin", "offer": "o1" } }
     ],
     "kept": {
-      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": { "act": "o1", "to": "b1", "person": "bo", "person_key": "kb", "since": 5, "answer": "no", "agreed": false } } },
+      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": { "act": "o1", "to": "b1", "person": "bo", "person_key": "kb", "since": 5, "answer": "no", "agreed": false }, "answered": 2, "gone": false, "failed": null, "next": null, "had": [] } },
       "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 } },
       "refused": []
     }
@@ -266,7 +266,7 @@
       { "id": "o2", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 10, "voided": false, "payload": { "kind": "offered", "app": "standin", "over": "s1", "to": "b1" } }
     ],
     "kept": {
-      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": { "act": "o2", "to": "b1", "person": "bo", "person_key": "kb", "since": 10, "answer": "waiting", "agreed": false } } },
+      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": { "act": "o2", "to": "b1", "person": "bo", "person_key": "kb", "since": 10, "answer": "waiting", "agreed": false }, "answered": 2, "gone": false, "failed": null, "next": null, "had": [] } },
       "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 } },
       "refused": [ { "act": "m1", "app": "standin", "refusal": "no_yes", "why": "m1 moves standin without a yes from the person of the computer it goes to" } ]
     }
@@ -281,7 +281,7 @@
       { "id": "m1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 9, "voided": false, "payload": { "kind": "moved", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/9000", "sum": "5e1" } }
     ],
     "kept": {
-      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": { "act": "o1", "to": "b1", "person": "bo", "person_key": "kb", "since": 5, "answer": "waiting", "agreed": false } } },
+      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": { "act": "o1", "to": "b1", "person": "bo", "person_key": "kb", "since": 5, "answer": "waiting", "agreed": false }, "answered": 2, "gone": false, "failed": null, "next": null, "had": [] } },
       "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 } },
       "refused": [ { "act": "m1", "app": "standin", "refusal": "no_yes", "why": "m1 moves standin without a yes from the person of the computer it goes to" } ]
     }
@@ -295,7 +295,7 @@
       { "id": "o1", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 5, "voided": false, "payload": { "kind": "offered", "app": "standin", "over": "s1", "to": "b1" } }
     ],
     "kept": {
-      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": null } },
+      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": null, "answered": 2, "gone": false, "failed": null, "next": null, "had": [] } },
       "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 } },
       "refused": [ { "act": "o1", "app": "standin", "refusal": "not_yours", "why": "bo offered standin, which cy’s computer keeps: only cy offers it" } ]
     }
@@ -308,7 +308,7 @@
       { "id": "o1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 5, "voided": false, "payload": { "kind": "offered", "app": "standin", "over": "s1", "to": "a1" } }
     ],
     "kept": {
-      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": null } },
+      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": null, "answered": 2, "gone": false, "failed": null, "next": null, "had": [] } },
       "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 } },
       "refused": [ { "act": "o1", "app": "standin", "refusal": "kept_there", "why": "o1 offers standin to a1, which keeps it" } ]
     }
@@ -324,7 +324,7 @@
       { "id": "y1", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 6, "voided": false, "payload": { "kind": "accepted", "app": "standin", "offer": "o1", "agreed": true } }
     ],
     "kept": {
-      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": { "act": "o1", "to": "b1", "person": "bo", "person_key": "kb", "since": 5, "answer": "waiting", "agreed": false } } },
+      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": { "act": "o1", "to": "b1", "person": "bo", "person_key": "kb", "since": 5, "answer": "waiting", "agreed": false }, "answered": 2, "gone": false, "failed": null, "next": null, "had": [] } },
       "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 }, "c1": { "person": "dee", "person_key": "kc", "since": 1 } },
       "refused": [ { "act": "y1", "app": "standin", "refusal": "not_asked", "why": "dee answered an offer of standin to bo’s computer: only bo answers it" } ]
     }
@@ -340,7 +340,7 @@
       { "id": "y1", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 7, "voided": false, "payload": { "kind": "accepted", "app": "standin", "offer": "o1", "agreed": true } }
     ],
     "kept": {
-      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": { "act": "o2", "to": "b1", "person": "bo", "person_key": "kb", "since": 6, "answer": "waiting", "agreed": false } } },
+      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": { "act": "o2", "to": "b1", "person": "bo", "person_key": "kb", "since": 6, "answer": "waiting", "agreed": false }, "answered": 2, "gone": false, "failed": null, "next": null, "had": [] } },
       "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 } },
       "refused": [ { "act": "y1", "app": "standin", "refusal": "not_offered", "why": "y1 answers o1, and the offer of standin waiting is o2" } ]
     }
@@ -357,7 +357,7 @@
       { "id": "o2", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 7, "voided": false, "payload": { "kind": "offered", "app": "standin", "over": "s1", "to": "c1" } }
     ],
     "kept": {
-      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": { "act": "o1", "to": "b1", "person": "bo", "person_key": "kb", "since": 5, "answer": "yes", "agreed": true } } },
+      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": { "act": "o1", "to": "b1", "person": "bo", "person_key": "kb", "since": 5, "answer": "yes", "agreed": true }, "answered": 2, "gone": false, "failed": null, "next": null, "had": [] } },
       "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 }, "c1": { "person": "dee", "person_key": "kc", "since": 1 } },
       "refused": [ { "act": "o2", "app": "standin", "refusal": "moving", "why": "standin is moving already: o1 was said yes to" } ]
     }
@@ -372,9 +372,252 @@
       { "id": "y1", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 6, "voided": false, "payload": { "kind": "accepted", "app": "standin", "offer": "o1" } }
     ],
     "kept": {
-      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": { "act": "o1", "to": "b1", "person": "bo", "person_key": "kb", "since": 5, "answer": "yes", "agreed": false } } },
+      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": { "act": "o1", "to": "b1", "person": "bo", "person_key": "kb", "since": 5, "answer": "yes", "agreed": false }, "answered": 2, "gone": false, "failed": null, "next": null, "had": [] } },
       "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 } },
       "refused": []
+    }
+  },
+  {
+    "name": "the computer that keeps an app copies it each interval: it has answered then, and its newest copy is the one a takeover starts from",
+    "ops": [
+      { "id": "r1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r2", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r3", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "s1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 2, "voided": false, "payload": { "kind": "started", "app": "standin", "card": "v1", "agreed": true } },
+      { "id": "k1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 300, "voided": false, "payload": { "kind": "copied", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/1", "sum": "sum1" } },
+      { "id": "k2", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 600, "voided": false, "payload": { "kind": "copied", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/2", "sum": "sum2" } }
+    ],
+    "kept": {
+      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": null, "answered": 600, "gone": false, "failed": null, "next": { "act": "k2", "computer": "a1", "person": "cy", "person_key": "ka", "from": "give/standin/a1/2", "sum": "sum2", "card": "v1", "since": 600 }, "had": [] } },
+      "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 }, "c1": { "person": "dee", "person_key": "kc", "since": 1 } },
+      "refused": []
+    }
+  },
+  {
+    "name": "a keeper that has not answered for three of its copies' intervals is gone",
+    "now": 1500,
+    "ops": [
+      { "id": "r1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r2", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r3", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "s1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 2, "voided": false, "payload": { "kind": "started", "app": "standin", "card": "v1", "agreed": true } },
+      { "id": "k1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 300, "voided": false, "payload": { "kind": "copied", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/1", "sum": "sum1" } },
+      { "id": "k2", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 600, "voided": false, "payload": { "kind": "copied", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/2", "sum": "sum2" } }
+    ],
+    "kept": {
+      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": null, "answered": 600, "gone": true, "failed": null, "next": { "act": "k2", "computer": "a1", "person": "cy", "person_key": "ka", "from": "give/standin/a1/2", "sum": "sum2", "card": "v1", "since": 600 }, "had": [] } },
+      "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 }, "c1": { "person": "dee", "person_key": "kc", "since": 1 } },
+      "refused": []
+    }
+  },
+  {
+    "name": "a keeper that answered within three of its copies' intervals is not gone",
+    "now": 1499,
+    "ops": [
+      { "id": "r1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r2", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r3", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "s1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 2, "voided": false, "payload": { "kind": "started", "app": "standin", "card": "v1", "agreed": true } },
+      { "id": "k1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 300, "voided": false, "payload": { "kind": "copied", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/1", "sum": "sum1" } },
+      { "id": "k2", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 600, "voided": false, "payload": { "kind": "copied", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/2", "sum": "sum2" } }
+    ],
+    "kept": {
+      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": null, "answered": 600, "gone": false, "failed": null, "next": { "act": "k2", "computer": "a1", "person": "cy", "person_key": "ka", "from": "give/standin/a1/2", "sum": "sum2", "card": "v1", "since": 600 }, "had": [] } },
+      "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 }, "c1": { "person": "dee", "person_key": "kc", "since": 1 } },
+      "refused": []
+    }
+  },
+  {
+    "name": "a copy over the keeping that stands, from a computer that does not keep it, is refused",
+    "ops": [
+      { "id": "r1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r2", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r3", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "s1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 2, "voided": false, "payload": { "kind": "started", "app": "standin", "card": "v1", "agreed": true } },
+      { "id": "k1", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 300, "voided": false, "payload": { "kind": "copied", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/b1/1", "sum": "sum1" } }
+    ],
+    "kept": {
+      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": null, "answered": 2, "gone": false, "failed": null, "next": null, "had": [] } },
+      "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 }, "c1": { "person": "dee", "person_key": "kc", "since": 1 } },
+      "refused": [ { "act": "k1", "app": "standin", "refusal": "not_the_keeper", "why": "k1 of standin was written by b1, and a1 keeps it: only the computer that keeps an app moves it, copies it, or says it did not start" } ]
+    }
+  },
+  {
+    "name": "a copy of an app nobody keeps is refused",
+    "ops": [
+      { "id": "r1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r2", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r3", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "k1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 300, "voided": false, "payload": { "kind": "copied", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/1", "sum": "sum1" } }
+    ],
+    "kept": {
+      "apps": {},
+      "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 }, "c1": { "person": "dee", "person_key": "kc", "since": 1 } },
+      "refused": [ { "act": "k1", "app": "standin", "refusal": "stale", "why": "standin was kept by nobody when k1 followed s1" } ]
+    }
+  },
+  {
+    "name": "a takeover from a copy keeps it there from that copy and its sum, and the copy stays next until the new keeper copies",
+    "now": 2500,
+    "ops": [
+      { "id": "r1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r2", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r3", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "s1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 2, "voided": false, "payload": { "kind": "started", "app": "standin", "card": "v1", "agreed": true } },
+      { "id": "k1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 300, "voided": false, "payload": { "kind": "copied", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/1", "sum": "sum1" } },
+      { "id": "k2", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 600, "voided": false, "payload": { "kind": "copied", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/2", "sum": "sum2" } },
+      { "id": "t1", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 2000, "voided": false, "payload": { "kind": "taken", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/2", "sum": "sum2", "agreed": true } }
+    ],
+    "kept": {
+      "apps": { "standin": { "keeper": "c1", "person": "dee", "person_key": "kc", "act": "t1", "how": "taken", "from": "give/standin/a1/2", "sum": "sum2", "card": "v1", "agreed": true, "since": 2000, "offer": null, "answered": 2000, "gone": false, "failed": null, "next": { "act": "k2", "computer": "a1", "person": "cy", "person_key": "ka", "from": "give/standin/a1/2", "sum": "sum2", "card": "v1", "since": 600 }, "had": [] } },
+      "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 }, "c1": { "person": "dee", "person_key": "kc", "since": 1 } },
+      "refused": []
+    }
+  },
+  {
+    "name": "a takeover that names no sum is refused, naming the field",
+    "ops": [
+      { "id": "r1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r2", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r3", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "s1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 2, "voided": false, "payload": { "kind": "started", "app": "standin", "card": "v1", "agreed": true } },
+      { "id": "t1", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 2000, "voided": false, "payload": { "kind": "taken", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/1", "agreed": true } }
+    ],
+    "kept": {
+      "apps": { "standin": { "keeper": "a1", "person": "cy", "person_key": "ka", "act": "s1", "how": "started", "from": null, "sum": null, "card": "v1", "agreed": true, "since": 2, "offer": null, "answered": 2, "gone": false, "failed": null, "next": null, "had": [] } },
+      "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 }, "c1": { "person": "dee", "person_key": "kc", "since": 1 } },
+      "refused": [ { "act": "t1", "app": "standin", "refusal": "missing", "why": "t1 names no sum, which a taken act needs" } ]
+    }
+  },
+  {
+    "name": "a copy that did not start, said by the computer that took it over: the copy before it is next",
+    "ops": [
+      { "id": "r1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r2", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r3", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "s1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 2, "voided": false, "payload": { "kind": "started", "app": "standin", "card": "v1", "agreed": true } },
+      { "id": "k1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 300, "voided": false, "payload": { "kind": "copied", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/1", "sum": "sum1" } },
+      { "id": "k2", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 600, "voided": false, "payload": { "kind": "copied", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/2", "sum": "sum2" } },
+      { "id": "k3", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 900, "voided": false, "payload": { "kind": "copied", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/3", "sum": "sum3" } },
+      { "id": "t1", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 2000, "voided": false, "payload": { "kind": "taken", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/3", "sum": "sum3", "agreed": true } },
+      { "id": "f1", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 2030, "voided": false, "payload": { "kind": "failed", "app": "standin", "over": "t1" } }
+    ],
+    "kept": {
+      "apps": { "standin": { "keeper": "c1", "person": "dee", "person_key": "kc", "act": "t1", "how": "taken", "from": "give/standin/a1/3", "sum": "sum3", "card": "v1", "agreed": true, "since": 2000, "offer": null, "answered": 2030, "gone": false, "failed": { "act": "f1", "since": 2030 }, "next": { "act": "k2", "computer": "a1", "person": "cy", "person_key": "ka", "from": "give/standin/a1/2", "sum": "sum2", "card": "v1", "since": 600 }, "had": [] } },
+      "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 }, "c1": { "person": "dee", "person_key": "kc", "since": 1 } },
+      "refused": []
+    }
+  },
+  {
+    "name": "a copy that did not start is never next again: a takeover from the copy before it, gone too, offers the one before that",
+    "now": 9000,
+    "ops": [
+      { "id": "r1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r2", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r3", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "s1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 2, "voided": false, "payload": { "kind": "started", "app": "standin", "card": "v1", "agreed": true } },
+      { "id": "k1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 300, "voided": false, "payload": { "kind": "copied", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/1", "sum": "sum1" } },
+      { "id": "k2", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 600, "voided": false, "payload": { "kind": "copied", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/2", "sum": "sum2" } },
+      { "id": "k3", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 900, "voided": false, "payload": { "kind": "copied", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/3", "sum": "sum3" } },
+      { "id": "t1", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 2000, "voided": false, "payload": { "kind": "taken", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/3", "sum": "sum3", "agreed": true } },
+      { "id": "f1", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 2030, "voided": false, "payload": { "kind": "failed", "app": "standin", "over": "t1" } },
+      { "id": "t2", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 2100, "voided": false, "payload": { "kind": "taken", "app": "standin", "card": "v1", "over": "t1", "from": "give/standin/a1/2", "sum": "sum2", "agreed": true } }
+    ],
+    "kept": {
+      "apps": { "standin": { "keeper": "c1", "person": "dee", "person_key": "kc", "act": "t2", "how": "taken", "from": "give/standin/a1/2", "sum": "sum2", "card": "v1", "agreed": true, "since": 2100, "offer": null, "answered": 2100, "gone": true, "failed": null, "next": { "act": "k2", "computer": "a1", "person": "cy", "person_key": "ka", "from": "give/standin/a1/2", "sum": "sum2", "card": "v1", "since": 600 }, "had": [] } },
+      "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 }, "c1": { "person": "dee", "person_key": "kc", "since": 1 } },
+      "refused": []
+    }
+  },
+  {
+    "name": "a said-not-started from a computer that does not keep the app is refused",
+    "ops": [
+      { "id": "r1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r2", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r3", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "s1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 2, "voided": false, "payload": { "kind": "started", "app": "standin", "card": "v1", "agreed": true } },
+      { "id": "k1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 300, "voided": false, "payload": { "kind": "copied", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/1", "sum": "sum1" } },
+      { "id": "t1", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 2000, "voided": false, "payload": { "kind": "taken", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/1", "sum": "sum1", "agreed": true } },
+      { "id": "f1", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 2030, "voided": false, "payload": { "kind": "failed", "app": "standin", "over": "t1" } }
+    ],
+    "kept": {
+      "apps": { "standin": { "keeper": "c1", "person": "dee", "person_key": "kc", "act": "t1", "how": "taken", "from": "give/standin/a1/1", "sum": "sum1", "card": "v1", "agreed": true, "since": 2000, "offer": null, "answered": 2000, "gone": false, "failed": null, "next": { "act": "k1", "computer": "a1", "person": "cy", "person_key": "ka", "from": "give/standin/a1/1", "sum": "sum1", "card": "v1", "since": 300 }, "had": [] } },
+      "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 }, "c1": { "person": "dee", "person_key": "kc", "since": 1 } },
+      "refused": [ { "act": "f1", "app": "standin", "refusal": "not_the_keeper", "why": "f1 of standin was written by b1, and c1 keeps it: only the computer that keeps an app moves it, copies it, or says it did not start" } ]
+    }
+  },
+  {
+    "name": "a computer's newest three copies stand: when the copy before a failed one is older than those, nothing is next",
+    "ops": [
+      { "id": "r1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r2", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r3", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "s1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 2, "voided": false, "payload": { "kind": "started", "app": "standin", "card": "v1", "agreed": true } },
+      { "id": "k1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 300, "voided": false, "payload": { "kind": "copied", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/1", "sum": "sum1" } },
+      { "id": "k2", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 600, "voided": false, "payload": { "kind": "copied", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/2", "sum": "sum2" } },
+      { "id": "k3", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 900, "voided": false, "payload": { "kind": "copied", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/3", "sum": "sum3" } },
+      { "id": "k4", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 1200, "voided": false, "payload": { "kind": "copied", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/4", "sum": "sum4" } },
+      { "id": "t1", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 2000, "voided": false, "payload": { "kind": "taken", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/2", "sum": "sum2", "agreed": true } },
+      { "id": "f1", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 2030, "voided": false, "payload": { "kind": "failed", "app": "standin", "over": "t1" } }
+    ],
+    "kept": {
+      "apps": { "standin": { "keeper": "c1", "person": "dee", "person_key": "kc", "act": "t1", "how": "taken", "from": "give/standin/a1/2", "sum": "sum2", "card": "v1", "agreed": true, "since": 2000, "offer": null, "answered": 2030, "gone": false, "failed": { "act": "f1", "since": 2030 }, "next": null, "had": [] } },
+      "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 }, "c1": { "person": "dee", "person_key": "kc", "since": 1 } },
+      "refused": []
+    }
+  },
+  {
+    "name": "the old keeper back: its copy over the keeping it lost is kept as it had it, apart, never merged, and never counted as an answer",
+    "now": 9000,
+    "ops": [
+      { "id": "r1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r2", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r3", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "s1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 2, "voided": false, "payload": { "kind": "started", "app": "standin", "card": "v1", "agreed": true } },
+      { "id": "k1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 300, "voided": false, "payload": { "kind": "copied", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/1", "sum": "sum1" } },
+      { "id": "t1", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 2000, "voided": false, "payload": { "kind": "taken", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/1", "sum": "sum1", "agreed": true } },
+      { "id": "k2", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 2400, "voided": false, "payload": { "kind": "copied", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/had/2400", "sum": "sumhad/2400" } }
+    ],
+    "kept": {
+      "apps": { "standin": { "keeper": "c1", "person": "dee", "person_key": "kc", "act": "t1", "how": "taken", "from": "give/standin/a1/1", "sum": "sum1", "card": "v1", "agreed": true, "since": 2000, "offer": null, "answered": 2000, "gone": true, "failed": null, "next": { "act": "k1", "computer": "a1", "person": "cy", "person_key": "ka", "from": "give/standin/a1/1", "sum": "sum1", "card": "v1", "since": 300 }, "had": [ { "act": "k2", "computer": "a1", "person": "cy", "person_key": "ka", "from": "give/standin/a1/had/2400", "sum": "sumhad/2400", "card": "v1", "since": 2400 } ] } },
+      "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 }, "c1": { "person": "dee", "person_key": "kc", "since": 1 } },
+      "refused": []
+    }
+  },
+  {
+    "name": "starting instead from a copy as a computer had it is a takeover from that copy, and the copy stays listed",
+    "ops": [
+      { "id": "r1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r2", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r3", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "s1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 2, "voided": false, "payload": { "kind": "started", "app": "standin", "card": "v1", "agreed": true } },
+      { "id": "k1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 300, "voided": false, "payload": { "kind": "copied", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/1", "sum": "sum1" } },
+      { "id": "t1", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 2000, "voided": false, "payload": { "kind": "taken", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/1", "sum": "sum1", "agreed": true } },
+      { "id": "k2", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 2400, "voided": false, "payload": { "kind": "copied", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/had/2400", "sum": "sumhad/2400" } },
+      { "id": "t2", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 2500, "voided": false, "payload": { "kind": "taken", "app": "standin", "card": "v1", "over": "t1", "from": "give/standin/a1/had/2400", "sum": "sumhad/2400", "agreed": true } }
+    ],
+    "kept": {
+      "apps": { "standin": { "keeper": "b1", "person": "bo", "person_key": "kb", "act": "t2", "how": "taken", "from": "give/standin/a1/had/2400", "sum": "sumhad/2400", "card": "v1", "agreed": true, "since": 2500, "offer": null, "answered": 2500, "gone": false, "failed": null, "next": { "act": "k1", "computer": "a1", "person": "cy", "person_key": "ka", "from": "give/standin/a1/1", "sum": "sum1", "card": "v1", "since": 300 }, "had": [ { "act": "k2", "computer": "a1", "person": "cy", "person_key": "ka", "from": "give/standin/a1/had/2400", "sum": "sumhad/2400", "card": "v1", "since": 2400 } ] } },
+      "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 }, "c1": { "person": "dee", "person_key": "kc", "since": 1 } },
+      "refused": []
+    }
+  },
+  {
+    "name": "two takeovers at once: the later one's computer, having started, copies it, and that copy is kept as it had it",
+    "ops": [
+      { "id": "r1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r2", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "r3", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 1, "voided": false, "payload": { "kind": "ready" } },
+      { "id": "s1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 2, "voided": false, "payload": { "kind": "started", "app": "standin", "card": "v1", "agreed": true } },
+      { "id": "k1", "actor": "a1", "person": "cy", "person_key": "ka", "ts_unix": 300, "voided": false, "payload": { "kind": "copied", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/1", "sum": "sum1" } },
+      { "id": "t1", "actor": "c1", "person": "dee", "person_key": "kc", "ts_unix": 2000, "voided": false, "payload": { "kind": "taken", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/1", "sum": "sum1", "agreed": true } },
+      { "id": "t2", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 2001, "voided": false, "payload": { "kind": "taken", "app": "standin", "card": "v1", "over": "s1", "from": "give/standin/a1/1", "sum": "sum1", "agreed": true } },
+      { "id": "k2", "actor": "b1", "person": "bo", "person_key": "kb", "ts_unix": 2100, "voided": false, "payload": { "kind": "copied", "app": "standin", "card": "v1", "over": "t2", "from": "give/standin/b1/had/2100", "sum": "sumhad/2100" } }
+    ],
+    "kept": {
+      "apps": { "standin": { "keeper": "c1", "person": "dee", "person_key": "kc", "act": "t1", "how": "taken", "from": "give/standin/a1/1", "sum": "sum1", "card": "v1", "agreed": true, "since": 2000, "offer": null, "answered": 2000, "gone": false, "failed": null, "next": { "act": "k1", "computer": "a1", "person": "cy", "person_key": "ka", "from": "give/standin/a1/1", "sum": "sum1", "card": "v1", "since": 300 }, "had": [ { "act": "k2", "computer": "b1", "person": "bo", "person_key": "kb", "from": "give/standin/b1/had/2100", "sum": "sumhad/2100", "card": "v1", "since": 2100 } ] } },
+      "can_keep": { "a1": { "person": "cy", "person_key": "ka", "since": 1 }, "b1": { "person": "bo", "person_key": "kb", "since": 1 }, "c1": { "person": "dee", "person_key": "kc", "since": 1 } },
+      "refused": [ { "act": "t2", "app": "standin", "refusal": "stale", "why": "standin was kept since t1 when t2 followed s1" } ]
     }
   }
 ]

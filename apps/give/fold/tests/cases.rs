@@ -9,7 +9,7 @@ const CASES: &str = include_str!("../cases.json");
 
 /// How many cases cases.json holds; ../fold.test.mjs counts the same, so a
 /// case either build skipped would show.
-const COUNT: usize = 27;
+const COUNT: usize = 41;
 
 #[test]
 fn every_case_folds_as_written() {
@@ -17,7 +17,8 @@ fn every_case_folds_as_written() {
     assert_eq!(cases.len(), COUNT, "cases.json holds {COUNT} cases");
     let mut failed = Vec::new();
     for case in &cases {
-        let asked = json!({ "ops": case["ops"] }).to_string();
+        // A case with `now` asks at that time, as the page asks with its clock.
+        let asked = json!({ "ops": case["ops"], "now": case["now"] }).to_string();
         let answered: Value = serde_json::from_str(&give_fold::answer(&asked)).expect("an answer is JSON");
         if answered != json!({ "ok": case["kept"] }) {
             failed.push(format!(

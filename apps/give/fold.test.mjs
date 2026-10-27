@@ -24,7 +24,7 @@ const HERE = new URL('.', import.meta.url).pathname;
 const VENDOR = join(HERE, 'page/vendor');
 const CASES = JSON.parse(readFileSync(join(HERE, 'fold/cases.json'), 'utf8'));
 /** As fold/tests/cases.rs counts them: a case either build skipped would show. */
-const COUNT = 27;
+const COUNT = 41;
 
 const flag = (name) => {
   const at = process.argv.indexOf(name);
@@ -47,9 +47,9 @@ async function builds() {
 for (const [name, fold] of await builds()) {
   test(`every case folds as written, in the ${name} build`, () => {
     assert.equal(CASES.length, COUNT, `fold/cases.json holds ${COUNT} cases`);
-    const failed = CASES.filter((c) => JSON.stringify(sorted(fold(c.ops))) !== JSON.stringify(sorted(c.kept)));
+    const failed = CASES.filter((c) => JSON.stringify(sorted(fold(c.ops, c.now))) !== JSON.stringify(sorted(c.kept)));
     assert.deepEqual(
-      failed.map((c) => `${c.name}\n  wanted ${JSON.stringify(c.kept)}\n  folded ${JSON.stringify(fold(c.ops))}`),
+      failed.map((c) => `${c.name}\n  wanted ${JSON.stringify(c.kept)}\n  folded ${JSON.stringify(fold(c.ops, c.now))}`),
       [],
     );
   });

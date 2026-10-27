@@ -1,7 +1,7 @@
 //! Who keeps each app: give's one fold (svrn-docs rings/current/GIVE.md §7,
 //! §7a decision 2). The keeper program folds it to know whether to lend an
-//! app; the carried page folds it to say who keeps one, and later to offer a
-//! takeover when the keeper is gone. Two implementations would be two
+//! app; the carried page folds it to say who keeps one, and to offer a
+//! takeover when the keeper is gone (GIVE.md §3 scenes 4 and 5). Two implementations would be two
 //! deciders (AGENTS.md 8), so this one is built twice: linked by the keeper
 //! program, and to plain JavaScript for the page (apps/give/build.sh).
 //!
@@ -18,14 +18,31 @@
 //!   a yes to an offer, hands it to the computer offered, which starts from
 //!   the snapshot `from` once its copy there sums to `sum`. Every move is a
 //!   person's yes (CHARTER), so a move with none counts nowhere.
-//! - `taken {app, card, over, from, agreed?}`: the writer's computer keeps
-//!   it from the snapshot `from`, the keeper gone.
+//! - `taken {app, card, over, from, sum, agreed?}`: the writer's computer
+//!   keeps it from the copy `from`, once its copy there sums to `sum`: the
+//!   keeper gone, a copy that did not start, or a copy as a computer had it
+//!   started instead. It is a person's yes, as every takeover is.
+//! - `copied {app, card, over, from, sum}`: the writer's computer took a
+//!   copy of the app's state, kept by the act `over`, into the group's
+//!   folder at `from`. Over the keeping that stands, it is the keeper's own
+//!   copy, and its answer that it is still there; over any other, it is the
+//!   state a computer had after another took the app over, kept apart as
+//!   that computer had it (`had`), never merged (GIVE.md §3 scene 5).
+//! - `failed {app, over}`: the computer that keeps it says the copy it
+//!   started from did not start, so the copy before it is offered.
 //! - `offered {app, over, to}`: the person whose computer keeps it offers
 //!   it to the computer `to` (GIVE.md §3 scene 3, "Move it to…").
 //! - `accepted {app, offer, agreed?}` and `declined {app, offer}`: the
 //!   person of that computer says yes or no to the offer, a yes with their
 //!   own answer to the card's asks, since a game's terms bind whoever runs
 //!   it. A no leaves everything as it was.
+//!
+//! A `moved` is a copy too, the keeper's last. Each of the keeper's copies
+//! stands while it is among that computer's newest [`KEEP`]; one that did
+//! not start never stands again. What a takeover starts from now is `next`:
+//! the newest copy standing, or, once a copy did not start, the newest
+//! before it. Whether the keeper is gone needs a clock, so it is asked
+//! with one: `now`, and [`GONE`].
 //!
 //! Each of `started`, `moved` and `taken` names the keeping it follows,
 //! `over` (none for a start), so two at once stand by admission order: the first follows the
@@ -52,6 +69,13 @@ pub const EVERY: u64 = 5 * 60;
 /// start (GIVE.md §3 scene 4), and one more for a second failure. Older
 /// ones are removed, so the folder every member holds stays bounded.
 pub const KEEP: usize = 3;
+
+/// How long the computer that keeps an app may go without answering, in
+/// seconds, before the page offers to keep it elsewhere: three of its
+/// copies missed. One missed copy is a computer asleep for a few minutes
+/// or a copy slow to write; three is fifteen minutes of a group's game
+/// gone, and still short of a person giving up on it (GIVE.md §3 scene 4).
+pub const GONE: u64 = 3 * EVERY;
 
 /// How an app came to its keeper.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -126,6 +150,46 @@ pub struct Keeping {
     pub since: i64,
     /// The last offer of it to another computer, while this keeping lasts.
     pub offer: Option<Offer>,
+    /// When the computer that keeps it last said anything of it: this
+    /// keeping's act, a copy, or that its copy did not start.
+    pub answered: i64,
+    /// That the copy it started from did not start, as its computer said.
+    pub failed: Option<Failed>,
+}
+
+impl Keeping {
+    /// Whether the computer that keeps it has gone [`GONE`] without
+    /// answering, at `now` in seconds.
+    pub fn gone(&self, now: i64) -> bool {
+        now.saturating_sub(self.answered) >= GONE as i64
+    }
+}
+
+/// A computer's word that the copy it started from did not start.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Failed {
+    pub act: String,
+    pub since: i64,
+}
+
+/// A copy of an app's state in the group's folder.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Copy {
+    /// The act that names it: a `copied`, or a `moved`.
+    pub act: String,
+    /// The computer that took it, and its person.
+    pub computer: String,
+    pub person: String,
+    pub person_key: String,
+    pub from: String,
+    pub sum: String,
+    pub card: String,
+    pub since: i64,
+    /// Taken after another computer took the app over: the state its
+    /// computer had, kept apart.
+    pub had: bool,
+    /// A keeper started from it, and it did not start.
+    pub failed: bool,
 }
 
 /// A computer that said it can keep apps.
@@ -160,6 +224,8 @@ pub enum Refusal {
         kept: Option<String>,
         over: Option<String>,
     },
+    /// A move, a copy over the keeping that stands, or a word that it did
+    /// not start, from a computer that does not keep the app.
     NotTheKeeper {
         writer: String,
         keeper: String,
@@ -242,7 +308,7 @@ impl std::fmt::Display for Refused {
             }
             Refusal::NotTheKeeper { writer, keeper } => write!(
                 f,
-                "{writer} wrote a move of {app}, which {keeper} keeps: only the computer that keeps an app moves it"
+                "{act} of {app} was written by {writer}, and {keeper} keeps it: only the computer that keeps an app moves it, copies it, or says it did not start"
             ),
             Refusal::NotYours { writer, keeper } => {
                 write!(
@@ -277,6 +343,8 @@ impl std::fmt::Display for Refused {
 pub struct Kept {
     pub apps: BTreeMap<String, Keeping>,
     pub can_keep: BTreeMap<String, Computer>,
+    /// Each app's copies, in the record's order.
+    pub copies: BTreeMap<String, Vec<Copy>>,
     pub refused: Vec<Refused>,
 }
 
@@ -338,6 +406,10 @@ fn step(kept: &mut Kept, op: &Value) -> Result<(), Refused> {
             let at = op["ts_unix"].as_i64().unwrap_or_default();
             return offer(kept, (&act, kind, at), (&app, payload), person).map_err(refuse);
         }
+        Some(kind @ ("copied" | "failed")) => {
+            let at = op["ts_unix"].as_i64().unwrap_or_default();
+            return copied(kept, (&act, kind, at), payload, writer).map_err(refuse);
+        }
         Some("started") => (How::Started, "started"),
         Some("moved") => (How::Moved, "moved"),
         Some("taken") => (How::Taken, "taken"),
@@ -358,8 +430,8 @@ fn step(kept: &mut Kept, op: &Value) -> Result<(), Refused> {
         How::Moved | How::Taken => Some(needs("from")?),
     };
     let sum = match how {
-        How::Moved => Some(needs("sum")?),
-        How::Started | How::Taken => None,
+        How::Moved | How::Taken => Some(needs("sum")?),
+        How::Started => None,
     };
     let now = kept.apps.get(&app);
     if now.map(|k| &k.act) != over.as_ref() {
@@ -378,6 +450,23 @@ fn step(kept: &mut Kept, op: &Value) -> Result<(), Refused> {
         (to, agreed) = (yes.to.clone(), yes.agreed);
     }
     let computer = (kept.can_keep.get(&to)).ok_or_else(|| refuse(Refusal::CannotKeep { computer: to.clone() }))?;
+    let since = op["ts_unix"].as_i64().unwrap_or_default();
+    if let (How::Moved, Some(now)) = (how, now) {
+        // The keeper's last copy, which the next keeper starts from.
+        let copy = Copy {
+            act: act.clone(),
+            computer: now.keeper.clone(),
+            person: now.person.clone(),
+            person_key: now.person_key.clone(),
+            from: from.clone().unwrap_or_default(),
+            sum: sum.clone().unwrap_or_default(),
+            card: card.clone(),
+            since,
+            had: false,
+            failed: false,
+        };
+        kept.copies.entry(app.clone()).or_default().push(copy);
+    }
     let keeping = Keeping {
         keeper: to,
         person: computer.person.clone(),
@@ -388,10 +477,65 @@ fn step(kept: &mut Kept, op: &Value) -> Result<(), Refused> {
         sum,
         card,
         agreed,
-        since: op["ts_unix"].as_i64().unwrap_or_default(),
+        since,
         offer: None,
+        answered: since,
+        failed: None,
     };
     kept.apps.insert(app, keeping);
+    Ok(())
+}
+
+/// A `copied` or a `failed` of an app, folded: `act` being the act's id,
+/// kind and time, and `writer` the computer that wrote it.
+fn copied(kept: &mut Kept, (act, kind, at): (&str, &str, i64), payload: &Value, writer: String) -> Result<(), Refusal> {
+    let kind: &'static str = if kind == "copied" { "copied" } else { "failed" };
+    let text = |field: &'static str| {
+        let missing = Refusal::Missing { field, kind };
+        payload[field].as_str().map(String::from).ok_or(missing)
+    };
+    let (app, over) = (text("app")?, text("over")?);
+    let Some(keeping) = kept.apps.get_mut(&app) else {
+        return Err(Refusal::Stale { kept: None, over: Some(over) });
+    };
+    let stands = over == keeping.act;
+    if stands && writer != keeping.keeper {
+        let keeper = keeping.keeper.clone();
+        return Err(Refusal::NotTheKeeper { writer, keeper });
+    }
+    let copies = kept.copies.entry(app).or_default();
+    if kind == "failed" {
+        if !stands {
+            let kept = Some(keeping.act.clone());
+            return Err(Refusal::Stale { kept, over: Some(over) });
+        }
+        keeping.failed = Some(Failed { act: act.into(), since: at });
+        keeping.answered = at;
+        let from = keeping.from.as_ref();
+        copies.iter_mut().filter(|c| Some(&c.from) == from).for_each(|c| c.failed = true);
+        return Ok(());
+    }
+    let (from, sum, card) = (text("from")?, text("sum")?, text("card")?);
+    // The writer's person, as it said it can keep; a copy's writer kept
+    // the app once, so it did.
+    let (person, person_key) = (kept.can_keep.get(&writer))
+        .map(|c| (c.person.clone(), c.person_key.clone()))
+        .unwrap_or_default();
+    if stands {
+        keeping.answered = at;
+    }
+    copies.push(Copy {
+        act: act.into(),
+        computer: writer,
+        person,
+        person_key,
+        from,
+        sum,
+        card,
+        since: at,
+        had: !stands,
+        failed: false,
+    });
     Ok(())
 }
 
@@ -473,8 +617,56 @@ fn offer(
 }
 
 impl Kept {
-    /// The fold as JSON, the shape cases.json holds and the page reads.
-    pub fn to_json(&self) -> Value {
+    /// The copies of `app` that stand: each computer's newest [`KEEP`] of
+    /// its own while it kept it, none that did not start, in the record's
+    /// order. Copies as a computer had it are [`Kept::had`]'s.
+    pub fn standing(&self, app: &str) -> Vec<&Copy> {
+        let mut per: BTreeMap<&str, usize> = BTreeMap::new();
+        let copies = self.copies.get(app).map_or(&[][..], |c| &c[..]);
+        let mut out: Vec<&Copy> = (copies.iter().rev())
+            .filter(|c| !c.had)
+            .filter(|c| {
+                let n = per.entry(&c.computer).or_default();
+                *n += 1;
+                *n <= KEEP
+            })
+            .filter(|c| !c.failed)
+            .collect();
+        out.reverse();
+        out
+    }
+
+    /// The copy a takeover of `app` starts from now: the newest standing,
+    /// or, once the copy its keeper started from did not start, the
+    /// newest standing before that one.
+    pub fn next(&self, app: &str) -> Option<&Copy> {
+        let keeping = self.apps.get(app)?;
+        let standing = self.standing(app);
+        let Some(_) = keeping.failed else {
+            return standing.last().copied();
+        };
+        let copies = self.copies.get(app)?;
+        let at = copies.iter().position(|c| Some(&c.from) == keeping.from.as_ref());
+        let before = |c: &&Copy| at.is_none_or(|at| copies[..at].iter().any(|b| b.act == c.act));
+        standing.into_iter().rfind(before)
+    }
+
+    /// The copies of `app` as a computer had it after another took it over,
+    /// in the record's order: every one stands, since nothing is merged and
+    /// nothing is thrown away.
+    pub fn had(&self, app: &str) -> Vec<&Copy> {
+        (self.copies.get(app).into_iter().flatten()).filter(|c| c.had).collect()
+    }
+
+    /// The fold as JSON, the shape cases.json holds and the page reads; at
+    /// `now`, in seconds, it says whether each keeper is gone.
+    pub fn to_json(&self, now: Option<i64>) -> Value {
+        let copy = |c: &Copy| {
+            json!({
+                "act": c.act, "computer": c.computer, "person": c.person, "person_key": c.person_key,
+                "from": c.from, "sum": c.sum, "card": c.card, "since": c.since,
+            })
+        };
         let apps: serde_json::Map<_, _> = (self.apps.iter())
             .map(|(app, k)| {
                 let k = json!({
@@ -485,6 +677,11 @@ impl Kept {
                         "act": o.act, "to": o.to, "person": o.person, "person_key": o.person_key,
                         "since": o.since, "answer": o.answer.as_str(), "agreed": o.agreed,
                     })),
+                    "answered": k.answered,
+                    "gone": now.is_some_and(|now| k.gone(now)),
+                    "failed": k.failed.as_ref().map(|f| json!({ "act": f.act, "since": f.since })),
+                    "next": self.next(app).map(copy),
+                    "had": self.had(app).into_iter().map(copy).collect::<Vec<_>>(),
                 });
                 (app.clone(), k)
             })
@@ -502,12 +699,13 @@ impl Kept {
     }
 }
 
-/// The JSON boundary both builds answer: `{"ops": [...]}` in, `{"ok":
-/// kept}` or `{"error": why}` out.
+/// The JSON boundary both builds answer: `{"ops": [...], "now"?}` in,
+/// `{"ok": kept}` or `{"error": why}` out, `now` the asker's clock in
+/// seconds, without which no keeper is gone.
 pub fn answer(request: &str) -> String {
     let asked: Option<Value> = serde_json::from_str(request).ok();
     let answer = match asked.as_ref().and_then(|a| a["ops"].as_array()) {
-        Some(ops) => json!({ "ok": fold(ops).to_json() }),
+        Some(ops) => json!({ "ok": fold(ops).to_json(asked.as_ref().and_then(|a| a["now"].as_i64())) }),
         None => json!({ "error": "a request is {\"ops\": [...]}, the acts in the record's order" }),
     };
     answer.to_string()

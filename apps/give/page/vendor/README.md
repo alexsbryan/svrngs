@@ -14,7 +14,7 @@ time.
 | proven | every case in `apps/give/fold/cases.json`, answered alike by the wasm and this file (`apps/give/fold.test.mjs`, which `build.sh` runs on each build) |
 
 - `fold.js` is the module `wasm2js` wrote, unchanged.
-- `call.mjs` is the glue, `bind(exports)` to `fold(ops)`.
+- `call.mjs` is the glue, `bind(exports)` to `fold(ops, now)`.
 
 `apps/give/fold.test.mjs` checks each file against its sha256 below, and the
 fold's source against the sha256s it was built from, so a change to the
@@ -22,9 +22,9 @@ fold that is not built again fails the gate:
 
 | file | sha256 |
 |---|---|
-| `fold.js` | `4959762fac5f25e9efdd513a77918d574fedab8d9551d611f6ca29e400cd3d66` |
-| `call.mjs` | `33c2643acf58911ff16a03b760022165b4b4de984988451c3bcd229ff42de713` |
-| `../../fold/src/lib.rs` | `3090c527b2f612f4b24fae5cbc275d64593880e75ad97766da24403c9663ebf0` |
+| `fold.js` | `66824451d6c5c4d97e88a10b14bbd151c33975d5ca8ca5ee1a590f46b29a0e2a` |
+| `call.mjs` | `f3bd898ffeb3db23c5a541457e9e15afade89e4f1fe4bbcc1f230d0d07a04039` |
+| `../../fold/src/lib.rs` | `9fa39d4ced9547a65f887b944f47d42e047552007a99c6728c0587e5f6bda6d5` |
 | `../../fold/Cargo.toml` | `b2819db50e7a6207321f305d6e0472828a85cb457de9cea5359a893ddb065ccf` |
 
 To build it again and check it is these bytes:
