@@ -250,8 +250,11 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   after losing power lent the app again, because svrngs keeps a lend
   across its restart; Give now unlends it there (4fa9003a). The people
   runs, a Factorio world kept through a move and a takeover and a
-  newcomer's fluency, are `demo/give.md`, waiting on the operator's bars
-  (`demo/runs/give/2026-10-26-scenes/NEEDS_HUMAN.md`). 0 core, 0 library,
+  newcomer's fluency, are `demo/give.md`, their bars the operator's
+  (`demo/runs/give/2026-10-26-scenes/NEEDS_HUMAN.md`, "Go with those"):
+  both wait for another time, as the game sessions do, never-ran until
+  played. The scenes name their pods by scene and person, since the
+  gate plays two at once and scenes 3 and 4 each have a Bo. 0 core, 0 library,
   `apps/` +7, and Give's surface unchanged;
 - sealing, at its §2 trigger.
 
