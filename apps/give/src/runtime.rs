@@ -83,7 +83,7 @@ impl Agreed {
 
 /// How a snapshot's copy was made.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Copy {
+pub enum Made {
     /// The filesystem shares the blocks: milliseconds, whatever the size.
     Reflink,
     /// The filesystem has no reflink (ext4), so the app stays paused as
@@ -97,7 +97,7 @@ pub enum Copy {
 #[derive(Debug, Clone)]
 pub struct Snapshot {
     pub dir: PathBuf,
-    pub copies: Vec<(String, Copy)>,
+    pub copies: Vec<(String, Made)>,
     /// How long the app was paused.
     pub paused: Duration,
 }
@@ -445,12 +445,12 @@ impl<'a> App<'a> {
 
     /// Copy one volume to `<volume>-snapshot`: a reflink if the filesystem
     /// takes one, else a plain copy into a fresh volume.
-    fn copy(&self, shell: &[&str], volume: &str) -> Result<Copy, RunError> {
+    fn copy(&self, shell: &[&str], volume: &str) -> Result<Made, RunError> {
         let (from, to) = (self.volume(volume), format!("{}-snapshot", self.volume(volume)));
         let from = self
             .podman
             .run(&["volume", "inspect", "--format", "{{.Mountpoint}}", &from])?;
-        for (copy, flag) in [(Copy::Reflink, "--reflink=always"), (Copy::Plain, "--reflink=never")] {
+        for (copy, flag) in [(Made::Reflink, "--reflink=always"), (Made::Plain, "--reflink=never")] {
             if self.podman.answers(&["volume", "exists", &to])? {
                 self.podman.run(&["volume", "rm", &to])?;
             }
@@ -462,8 +462,8 @@ impl<'a> App<'a> {
             let args: Vec<&str> = shell.iter().copied().chain(["cp", "-a", flag, &src, &dst]).collect();
             match (copy, self.podman.run(&args)) {
                 (_, Ok(_)) => return Ok(copy),
-                (Copy::Reflink, Err(why)) => tracing::debug!(volume, %why, "no reflink here, so a plain copy"),
-                (Copy::Plain, Err(why)) => return Err(why.into()),
+                (Made::Reflink, Err(why)) => tracing::debug!(volume, %why, "no reflink here, so a plain copy"),
+                (Made::Plain, Err(why)) => return Err(why.into()),
             }
         }
         unreachable!("the plain copy returns")
