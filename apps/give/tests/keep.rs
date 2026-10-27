@@ -935,8 +935,18 @@ fn the_keeper_gone_then_back() {
         !had(&b, "standin", "b1").is_empty(),
         "bo's later state kept as bo's had it"
     );
-    let listed = kept().had("standin").len();
-    assert_eq!(listed, 2, "both copies as each had it stand: nothing thrown away");
+    // By computer, not by count: a copy bo's keeper began under t3 can be
+    // said after the takeover lands, and folds as one more as bo's had it
+    // (give-docs's gate, 2026-10-26: op15, begun 06:02:50.57, its pause
+    // 3.1 s, said 06:02:54.0 after op14).
+    let listed = (kept().had("standin").into_iter())
+        .map(|c| c.computer.clone())
+        .collect::<std::collections::BTreeSet<_>>();
+    assert_eq!(
+        listed,
+        ["a1".to_string(), "b1".to_string()].into(),
+        "both copies as each had it stand: nothing thrown away"
+    );
     let _ = std::fs::remove_dir_all(&a.root);
     let _ = std::fs::remove_dir_all(&b.root);
 }
