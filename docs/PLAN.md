@@ -255,7 +255,21 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   both wait for another time, as the game sessions do, never-ran until
   played. The scenes name their pods by scene and person, since the
   gate plays two at once and scenes 3 and 4 each have a Bo. 0 core, 0 library,
-  `apps/` +7, and Give's surface unchanged;
+  `apps/` +7, and Give's surface unchanged. Landed, give-install: svrngs's
+  line takes `--give`, which gets Give's program from the same page's
+  `get/`, checked by the same `SHA256SUMS` before anything is installed,
+  and keeps `give keep` running at login beside svrngs, waited for as it
+  stops (`web/install.sh`; `crates/svrngs/tests/install.rs`, the line
+  without then with it, and its sum refused); `scripts/build-release.sh`
+  builds Give beside svrngs, a coupling of distribution, not code. Give's
+  page gives that line, from the page svrngs is published at. The machine
+  Give makes has Rosetta on; where a machine has it off, a card that runs
+  an amd64 build, as Factorio's does, is refused before it starts on a Mac
+  with Apple silicon and the page says to turn it on (`apps/give/src/
+  machine.rs`), making such machines never-ran here. 0 core, +13 library
+  after its pass's -7, `apps/` +101, and the line one option more,
+  the cap's raise to 19,121 the operator's
+  (`demo/runs/give/2026-10-26-install/NEEDS_HUMAN.md`);
 - sealing, at its §2 trigger.
 
 The operator's switch stands apart from that order: when they flip
