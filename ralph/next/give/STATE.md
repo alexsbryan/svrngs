@@ -179,7 +179,7 @@ There are sixteen rows:
     - The returning keeper stops, and its later state is kept as "<app> as <computer> had it at <time>", which anyone can Start instead.
     - Nothing is merged, and nothing is deleted.
   - **Check:** red first, green after.
-- [ ] give-app-scenes — depends [give-app-takeover] — ONE ROW, its plants red first:
+- [x] give-app-scenes 7dd887994 — depends [give-app-takeover] — ONE ROW, its plants red first:
   - **(a) The scenes, played.** Give's scenes 1, 3, 4 and 5 join the gate's "scenes" suite with the stand-in. They are never-ran without podman, with their reason.
   - **(b) Run-of-show.** `demo/give.md`, written before any run.
   - **(c) The people runs.** NEEDS_HUMAN.md asks the operator to set the bars, then to run:
