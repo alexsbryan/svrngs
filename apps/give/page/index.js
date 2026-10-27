@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Give's page, carried in a group (give-app-keep; svrn-docs
-// rings/current/GIVE.md §3 scene 1, §7a): the shelf of apps the group can
-// keep, who keeps each, and "Start it for the group", which asks what the
-// app's makers ask of whoever runs it. It reads the group at its own
+// rings/current/GIVE.md §3 scenes 1 and 3, §7a): the shelf of apps the
+// group can keep, who keeps each, "Start it for the group", which asks what
+// the app's makers ask of whoever runs it, and "Move it to…", which asks the
+// same of the person whose computer it goes to. It reads the group at its own
 // origin, `svrngs/acts`, and writes there; svrngs writes each act as this
 // computer's person. Nothing here decides who keeps an app: the fold does,
 // the vendored build of the one the keeper program runs (vendor/), and this
@@ -30,8 +31,10 @@ const el = (tag, text, ...kids) => {
 };
 const button = (text, act, quiet) => Object.assign(el('button', text), { onclick: act, className: quiet ? 'quiet' : '' });
 const link = (text, href) => Object.assign(el('a', text), { href, target: '_blank', rel: 'noopener' });
-// Which card's asks are shown, and what the last write was refused with.
+// Which card's asks are shown, which card's computers to move it to, and
+// what the last write was refused with.
 let asking = null;
+let moving = null;
 let refused = null;
 let cards = null;
 
@@ -49,14 +52,43 @@ function install(why) {
   );
 }
 
-async function start(card, agreed) {
-  const op = { kind: 'started', app: card.kind, card: card.version, agreed };
+/** `op` written as this computer's person; `failed` says what didn't happen, if svrngs refuses it. */
+async function write(op, failed) {
   const r = await fetch(ACTS, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op }) });
   const said = await r.json().catch(() => null);
-  trace('started, written or refused', { app: card.kind, status: r.status, error: said?.error ?? null });
-  refused = r.ok ? null : `${card.title} didn’t start: ${said?.error ?? `this computer answered ${r.status}`}`;
-  asking = null;
+  trace(`${op.kind}, written or refused`, { app: op.app, status: r.status, error: said?.error ?? null });
+  refused = r.ok ? null : `${failed}: ${said?.error ?? `this computer answered ${r.status}`}`;
+  asking = moving = null;
   await show();
+}
+
+const start = (card, agreed) => write({ kind: 'started', app: card.kind, card: card.version, agreed }, `${card.title} didn’t start`);
+const offer = (card, keeping, to) => write({ kind: 'offered', app: card.kind, over: keeping.act, to }, `${card.title} wasn’t offered`);
+const answer = (card, o, yes) =>
+  write(yes ? { kind: 'accepted', app: card.kind, offer: o.act, agreed: card.asks.length > 0 } : { kind: 'declined', app: card.kind, offer: o.act }, `Your answer wasn’t saved`);
+
+/** The card's asks, each with its link. */
+const asks = (card) => card.asks.map((ask) => Object.assign(el('p', `${ask.say} `, link('Read them', ask.link)), { className: 'ask' }));
+
+/** A kept app's row past who keeps it: the move, as the fold says it stands for the person reading. */
+function move(card, keeping, kept, read, out) {
+  const o = keeping.offer;
+  const mine = keeping.person_key === read.you_key;
+  trace('the offer, as it stands', { app: card.kind, offer: o?.act ?? null, answer: o?.answer ?? null, mine });
+  if (o?.answer === 'yes') return out.append(el('p', `Moving to ${o.person_key === read.you_key ? 'your' : `${o.person}’s`} computer…`));
+  if (o?.answer === 'waiting' && o.person_key === read.you_key) {
+    out.append(el('p', `${mine ? 'You want' : `${keeping.person} wants`} to move ${card.title} to your computer.`), ...asks(card));
+    return out.append(button(card.asks.length ? 'Agree and keep it here' : 'Keep it here', () => answer(card, o, true)), button('Not now', () => answer(card, o, false), true));
+  }
+  if (!mine) return;
+  if (o?.answer === 'waiting') return out.append(el('p', `Waiting for ${o.person} to say yes.`));
+  if (o?.answer === 'no') out.append(el('p', `${o.person} said not now.`));
+  const others = Object.entries(kept.can_keep).filter(([key]) => key !== keeping.keeper);
+  if (others.length === 0) return;
+  if (moving !== card.kind) return out.append(button('Move it to…', () => ((moving = card.kind), show()), true));
+  out.append(el('p', `Move ${card.title} to:`));
+  for (const [key, c] of others) out.append(button(c.person_key === read.you_key ? 'Your other computer' : `${c.person}’s computer`, () => offer(card, keeping, key)));
+  out.append(button('Not now', () => ((moving = null), show()), true));
 }
 
 /** One card's row: its name and line, and who keeps it, or how to start it. */
@@ -66,6 +98,7 @@ function row(card, kept, read) {
   if (keeping) {
     out.append(el('p', `${card.title} · kept by ${who(keeping, read)}`));
     out.lastChild.className = 'kept';
+    move(card, keeping, kept, read, out);
     return out;
   }
   // This person's own start of it, refused because the computer it was
@@ -84,7 +117,7 @@ function row(card, kept, read) {
     out.append(button('Start it for the group', () => (card.asks.length ? ((asking = card.kind), show()) : start(card, false))));
     return out;
   }
-  for (const ask of card.asks) out.append(Object.assign(el('p', `${ask.say} `, link('Read them', ask.link)), { className: 'ask' }));
+  out.append(...asks(card));
   out.append(button('Agree and start', () => start(card, true)), button('Not now', () => ((asking = null), show()), true));
   return out;
 }
@@ -118,4 +151,4 @@ async function show() {
 }
 
 show();
-setInterval(() => asking === null && show(), 3000);
+setInterval(() => asking === null && moving === null && show(), 3000);

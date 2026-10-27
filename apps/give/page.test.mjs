@@ -150,3 +150,97 @@ test('a group starts an app from the shelf, and every member reads who keeps it 
     server.stop();
   }
 });
+
+// Scene 3 (give-app-move): cy moves Minecraft to bo's computer. "Move it
+// to…" offers it to a computer that can keep; bo is asked, with Minecraft's
+// makers' terms. Bo's no leaves everything as it was, and cy is told. On
+// bo's yes the row says it is moving, and once cy's computer writes the
+// move, every member reads it kept by bo's.
+test('a member moves an app to another computer on its person’s yes, and a no leaves it as it was (chromium)', async () => {
+  const server = await serve();
+  const { context, close } = await launch('chromium');
+  const errors = [];
+  try {
+    const page = await context.newPage();
+    page.on('pageerror', (e) => errors.push(String(e)));
+    const traced = [];
+    page.on('console', (m) => m.type() === 'debug' && traced.push(m.text()));
+    const said = [];
+    const text = () => page.innerText('main');
+    const as = async (person, key, computer) => {
+      await context.setExtraHTTPHeaders({ 'x-person': person, 'x-key': key, 'x-computer': computer });
+      await page.goto(server.at);
+      await page.waitForFunction(() => !document.body.innerText.includes('Reading what your group keeps'), null, { timeout: 60_000 });
+      said.push(await text());
+    };
+    const press = async (name, row) => {
+      const before = await text();
+      await page.locator('li', { hasText: row }).getByRole('button', { name, exact: true }).first().click();
+      await page.waitForFunction((b) => document.querySelector('main').innerText !== b, before, { timeout: 30_000 });
+      said.push(await text());
+    };
+    const row = (title) => page.locator('li', { hasText: title }).innerText();
+    const last = () => {
+      const op = server.ops.at(-1);
+      return [op.actor, op.payload];
+    };
+
+    server.record('a1', 'cy', 'ka', { kind: 'ready' });
+    server.record('b1', 'bo', 'kb', { kind: 'ready' });
+    server.record('a1', 'cy', 'ka', { kind: 'started', app: 'minecraft', card: 'm1', agreed: true });
+    const started = server.ops.at(-1).id;
+
+    // Bo, whose computer doesn't keep it, has nothing to move.
+    await as('bo', 'kb', 'b1');
+    assert.doesNotMatch(await row('Minecraft'), /Move it to/);
+
+    // Cy offers it to bo's computer.
+    await as('cy', 'ka', 'a1');
+    await press('Move it to…', 'Minecraft');
+    assert.match(await row('Minecraft'), /Move Minecraft to:/);
+    await press('bo’s computer', 'Minecraft');
+    assert.deepEqual(last(), ['a1', { kind: 'offered', app: 'minecraft', over: started, to: 'b1' }]);
+    assert.match(await row('Minecraft'), /Minecraft · kept by your computer[\s\S]*Waiting for bo to say yes\./);
+
+    // Bo is asked, with Minecraft's makers' terms, and says not now.
+    await as('bo', 'kb', 'b1');
+    assert.match(await row('Minecraft'), new RegExp(`cy wants to move Minecraft to your computer\\.[\\s\\S]*${MINECRAFT_TERMS} Read them`));
+    await press('Not now', 'Minecraft');
+    const first = server.ops.at(-2).id;
+    assert.deepEqual(last(), ['b1', { kind: 'declined', app: 'minecraft', offer: first }]);
+    assert.match(await row('Minecraft'), /Minecraft · kept by cy’s computer/);
+    assert.doesNotMatch(await row('Minecraft'), /wants to move|Agree/, 'a no: bo is not asked again');
+
+    // Cy is told, and everything is as it was: cy offers it again.
+    await as('cy', 'ka', 'a1');
+    assert.match(await row('Minecraft'), /Minecraft · kept by your computer[\s\S]*bo said not now\./);
+    await press('Move it to…', 'Minecraft');
+    await press('bo’s computer', 'Minecraft');
+    const second = server.ops.at(-1).id;
+
+    // Bo agrees, and keeps it.
+    await as('bo', 'kb', 'b1');
+    await press('Agree and keep it here', 'Minecraft');
+    assert.deepEqual(last(), ['b1', { kind: 'accepted', app: 'minecraft', offer: second, agreed: true }]);
+    assert.match(await row('Minecraft'), /Moving to your computer…/);
+    await as('cy', 'ka', 'a1');
+    assert.match(await row('Minecraft'), /Moving to bo’s computer…/);
+    assert.doesNotMatch(await row('Minecraft'), /Move it to/, 'nothing more to offer while it moves');
+
+    // Cy's computer writes the move, as Give's program does.
+    server.record('a1', 'cy', 'ka', { kind: 'moved', app: 'minecraft', card: 'm1', over: started, from: 'give/minecraft/a1/9000', sum: 'f00' });
+    await as('bo', 'kb', 'b1');
+    assert.match(await row('Minecraft'), /Minecraft · kept by your computer/);
+    await as('cy', 'ka', 'a1');
+    assert.match(await row('Minecraft'), /Minecraft · kept by bo’s computer/);
+
+    for (const words of said) assert.doesNotMatch(words, NOT_SAID);
+    for (const what of ['offered, written or refused', 'declined, written or refused', 'accepted, written or refused', 'the offer, as it stands']) {
+      assert.ok(traced.some((l) => l.startsWith(`Give: ${what} `)), `traced: ${what}`);
+    }
+    assert.deepEqual(errors, []);
+  } finally {
+    await close();
+    server.stop();
+  }
+});
