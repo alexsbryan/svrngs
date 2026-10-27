@@ -10,8 +10,8 @@ carried page.
 
 This much has landed: the runtime on the computer that keeps an app, an
 author's check of a card, the one fold of who keeps what, Give's program for
-computers, and the carried page with the shelf and "Start it for the group".
-Moving an app, taking it over and its copies come next
+computers, and the carried page with the shelf, "Start it for the group" and
+"Move it to…". Taking an app over and its copies come next
 (`ralph/next/give/STATE.md`).
 
 ## A card
@@ -64,6 +64,13 @@ its state into the group's folder every 5 minutes and as it stops, and
 keeps this computer's 3 newest copies of each app. When the record names
 another computer, it stops lending the app, copies it one last time and
 stops it. Ctrl-C stops everything it keeps the same way.
+
+**Move it to…** on an app your computer keeps offers it to another computer
+that runs `give keep`. That computer's person is asked what the app's makers
+ask of whoever runs it, and nothing moves without their yes. On the yes,
+your computer stops lending the app, copies it to the group one last time,
+writes the move and stops it. The other computer starts it from that copy,
+and only once its own copy of it is whole.
 
 Any member's computer that runs `give keep` may keep an app for now. Who
 may keep is the operator's to decide (`demo/runs/give/2026-10-26-keep/QUESTION.md`).

@@ -222,7 +222,16 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   Give's surface gains `give keep` and `give page`. Any member may keep,
   the operator's answer to `demo/runs/give/2026-10-26-keep/QUESTION.md`
   (2026-10-26: "The first is fine"); a successor the house names waits
-  for a group that asks;
+  for a group that asks. Landed, give-app-move: "Move it to…" on Give's
+  page offers an app to another computer that can keep, and its person is
+  asked with the card's asks; a no leaves it as it was, and on a yes the
+  keeper unlends it, takes a last snapshot, writes the move naming it and
+  its sum, and stops it, and the receiver starts only from a copy that
+  sums the same (`apps/give/tests/keep.rs`
+  `a_move_starts_the_computer_offered_from_the_last_copy`). The fold
+  refuses a move with no yes. 0 core, 0 library, `apps/` +303 lines by
+  lean_check's rule (the fold +165, keeping +85, the runtime +28, the page
+  +25), and Give's surface unchanged;
 - sealing, at its §2 trigger.
 
 The operator's switch stands apart from that order: when they flip
