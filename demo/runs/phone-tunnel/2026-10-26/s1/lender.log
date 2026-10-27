@@ -172,3 +172,12 @@
 2026-10-27T06:31:49.861323Z DEBUG transport: iroh: dialled by key, iroh holding these addresses for it peer=fe352c1f7b alpn=Member known=["Ip(69.181.177.160:50019) Active", "Relay(https://usw1-1.relay.n0.iroh.link/) Inactive", "Ip(71.140.180.29:1309) Active", "Ip(192.168.1.14:50019) Inactive"]
 2026-10-27T06:31:51.126125Z DEBUG door: tcp: a connection opened to the lent port actor="fe352c1f7b799c5ec9bf34d7ef8825c55961f60131542a32e05a3746cae20452" lend=jellyfin port=8096 counted=true
 2026-10-27T06:31:53.863626Z DEBUG transport: iroh: a dial, answered or not; one not answered in time is a computer taken as asleep peer=fe352c1f7b within=Some(4s) error=Some(Failed("timed out"))
+2026-10-27T06:32:32.280197Z DEBUG door: tcp: a connection closed, both its sides or by a failure actor="fe352c1f7b799c5ec9bf34d7ef8825c55961f60131542a32e05a3746cae20452" lend=jellyfin copied=Ok((2248, 819))
+2026-10-27T06:32:32.280323Z DEBUG door: tcp: a connection closed, both its sides or by a failure actor="fe352c1f7b799c5ec9bf34d7ef8825c55961f60131542a32e05a3746cae20452" lend=jellyfin copied=Ok((333, 2499))
+2026-10-27T06:32:53.865250Z DEBUG transport: iroh: a request on the connection kept to it, else on one dialled (#178) peer=fe352c1f7b alpn=Member kept=false
+2026-10-27T06:32:53.865302Z DEBUG transport: iroh: dialled by key, iroh holding these addresses for it peer=fe352c1f7b alpn=Member known=["Ip(69.181.177.160:50019) Active", "Relay(https://usw1-1.relay.n0.iroh.link/) Inactive", "Ip(71.140.180.29:1309) Active", "Ip(192.168.1.14:50019) Inactive"]
+2026-10-27T06:32:57.866839Z DEBUG transport: iroh: a dial, answered or not; one not answered in time is a computer taken as asleep peer=fe352c1f7b within=Some(4s) error=Some(Asleep(4s))
+2026-10-27T06:33:57.868630Z DEBUG transport: iroh: a request on the connection kept to it, else on one dialled (#178) peer=fe352c1f7b alpn=Member kept=false
+2026-10-27T06:33:57.868713Z DEBUG transport: iroh: dialled by key, iroh holding these addresses for it peer=fe352c1f7b alpn=Member known=["Ip(69.181.177.160:50019) Active", "Relay(https://usw1-1.relay.n0.iroh.link/) Inactive", "Ip(71.140.180.29:1309) Active", "Ip(192.168.1.14:50019) Inactive"]
+2026-10-27T06:34:01.870504Z DEBUG transport: iroh: a dial, answered or not; one not answered in time is a computer taken as asleep peer=fe352c1f7b within=Some(4s) error=Some(Asleep(4s))
+2026-10-27T06:34:29.216921Z DEBUG door: tcp: the member's connection closed, and its streams with it actor="fe352c1f7b799c5ec9bf34d7ef8825c55961f60131542a32e05a3746cae20452" lend=jellyfin
