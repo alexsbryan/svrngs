@@ -5,38 +5,37 @@
   "hard": true,
   "screen": "the group's page",
   "element": "",
-  "read": "Money / Bring more to House / What acts as you / You’re in House (Kim’s, since 27 Oct), as Ana / What / Whose",
+  "read": "Money / Bring more to House / What acts as you / You’re in House, as Ana / Who owes whom, and for what.",
   "often": [
    "`ana`: 3 of 3 accounts (Ana run 1, Ana run 2, Ana run 3)",
    "`together`: 3 of 6 accounts (Ana run 1, Ana run 2, Ana run 3)"
   ],
   "happened": [
-   "`ana` run 1, Ana: passed, reached their goal. wordy {\"words\":70,\"budget\":20}; their last acts: type “Ana” into “name” · tap “Join” · look · scroll · scroll · tap “Money”",
-   "`together` run 1, Ana: failed, stopped before their goal. wordy {\"words\":70,\"budget\":20}; their last acts: type “Ana” into “What's your name?” · tap “Join” · look · scroll · scroll · tell",
-   "`ana` run 2, Ana: passed, reached their goal. wordy {\"words\":60,\"budget\":20}; their last acts: tap “http://localhost:41555/#Ag7aI6TAj1DK-qLXu-wzDivJcYyhPuB_pFHr25D2CWgY_SJHoQywCp3-MY9sU69mtGh0dHA6Ly8xMjcuMC4wLjE6Mzc0OTUv” · type “Ana” into “name” · tap “Join” · look · scroll · tap “Money”",
-   "`together` run 2, Ana: failed, stopped before their goal. wordy {\"words\":60,\"budget\":20}; their last acts: tap “http://localhost:45625/#AoNp1JZsDP3RmirPIUkr8rjCulHfxLqU3aLGbyxcidQLK15KNZBW2UeWzrXfjqH-8mh0dHA6Ly8xMjcuMC4wLjE6MzU5OTEv” · type “Ana” into “name” · tap “Join” · look · scroll · tell",
-   "`ana` run 3, Ana: failed, stopped before their goal. wordy {\"words\":60,\"budget\":20}; their last acts: tap “http://localhost:45693/#Ajs2nu5sNRoJUbz6dUwRqr8zCQqfrEji-iulrKTwSRjuc_rp84BB9ag_hUp8rcfTlmh0dHA6Ly8xMjcuMC4wLjE6NDU0NTkv” · type “Ana” into “name” · tap “Join” · look · scroll · tap “Money”",
-   "`together` run 3, Ana: failed, stopped before their goal. wordy {\"words\":60,\"budget\":20}; their last acts: tap “http://localhost:39093/#AqYSmWA2orIqe9E_g4luM9p5uk1dnCIj6zrjmC9tiTzc6_Y5SEJANYfR3ySSq1Hgdmh0dHA6Ly8xMjcuMC4wLjE6NDUzNDMv” · type “Ana” into “name” · tap “Join” · look · scroll · tell"
+   "`ana` run 1, Ana: passed, reached their goal. wordy {\"words\":60,\"budget\":20}; their last acts: tap “http://localhost:42141/#AlR7Fw0nVTM1eYB2dzlWHk54mjxap46Jr77N3ibKn2HASvpr84_03ENXqwpzH-dKLmh0dHA6Ly8xMjcuMC4wLjE6MzYyOTUv” · type “Ana” into “What’s your name?” · tap “Join” · look · scroll · tap “Money”",
+   "`together` run 1, Ana: failed, stopped before their goal. wordy {\"words\":63,\"budget\":20}; their last acts: type “Ana” into “name” · tap “Join” · look · scroll · scroll · tap “Money”",
+   "`ana` run 2, Ana: failed, stopped before their goal. wordy {\"words\":60,\"budget\":20}; their last acts: type “Ana” into “name” · tap “Join” · look · scroll · say “Thanks Sam! I'm in the house app now, looking at the Money section to see my half of the pizza.” · tap “Money”",
+   "`together` run 2, Ana: failed, stopped before their goal. wordy {\"words\":60,\"budget\":20}; their last acts: tap “http://localhost:41355/#AkNJOhxbwNT46YZJ0YXA1WQrsJJUUafANeLcpk2rZl8_T1yAjH1P5AebaqeAoYcOC2h0dHA6Ly8xMjcuMC4wLjE6NDIyNjMv” · type “Ana” into “name” · tap “Join” · look · scroll · tell",
+   "`ana` run 3, Ana: passed, reached their goal. wordy {\"words\":40,\"budget\":20}; their last acts: look · tap “http://localhost:45263/#AmLIi1FZtaKa3CdntchsIG6GwLmtAmsgZPAMXkCoiNCoAacje1mk8vnBxOpqbEeNomh0dHA6Ly8xMjcuMC4wLjE6Mzg3MzMv” · type “Ana” into “name” · tap “Join” · look · tap “Money”",
+   "`together` run 3, Ana: failed, stopped before their goal. wordy {\"words\":60,\"budget\":20}; their last acts: tap “http://localhost:39183/#AmCD5Hdv8lhNTCibTGmL_bWtAnZnTeyqD32eD4NDLaXOgqrlXhVINwnq6saWkSJfH2h0dHA6Ly8xMjcuMC4wLjE6MzkxODEv” · type “Ana” into “name” · tap “Join” · look · scroll · tap “Money”"
   ],
   "said": [
-   "Ana, `together` run 1: “too much: Yes, one thing. Money can read and write who owes whom on my behalf, and I never agreed to that. I'd like Kim or Sam to explain it first.”",
-   "Ana, `together` run 1: “almost left: No, I didn't almost leave. I just stopped at the Money part so I could ask.”",
-   "Ana, `together` run 2: “too much: The page is small and dense. I couldn't see all of it at once, and the \"What acts as you\" part was unclear to me.”",
-   "Ana, `together` run 3: “too much: Nothing was too much. The Money section can read and write what people owe each other, so I'd check with the house before using it.”"
+   "Ana, `ana` run 2: “too much: Mildly, yes. The app said opening Money lets it read and write that as me. That's more access than I expected just to see my share. I'd have liked to be asked first.”",
+   "Ana, `together` run 2: “too much: Yes, one thing. Money wants to read and write what's owed, as me, as soon as I open it. That's more than I'd hand over without asking the others first.”",
+   "Ana, `together` run 2: “almost left: Not really. I didn't almost leave. I just stopped before Money because of the permission note.”"
   ],
   "file": "wordy-the-group-s-page",
   "status": "open",
   "first": "the set `/home/alexbryan/dev/xenia/runs/2026-10-26T20-27-16-914Z`, 3 run(s) on sonnet, xenia `7d3e6d3`, the product `bd6f14c9`",
-  "last": "the set `/home/alexbryan/dev/xenia/runs/2026-10-27T03-11-14-983Z`, 3 run(s) by claude-sonnet-5-5, as claude -p, xenia `2a10d4d`, the product `ccd48cb4`",
+  "last": "the set `/home/alexbryan/dev/xenia/runs/2026-10-27T06-30-27-895Z`, 3 run(s) by claude-sonnet-5-5, as claude -p, xenia `4f12ba4`, the product `bbddad47`",
   "notSeenSince": null,
   "reproduce": "cd /home/alexbryan/dev/xenia && node /home/alexbryan/dev/xenia/src/run.ts run /home/alexbryan/dev/svrngs-xenia/demo/xenia --runs 3 --model claude-sonnet-5-5 --findings /home/alexbryan/dev/svrngs-xenia/demo/xenia/findings --source /home/alexbryan/dev/svrngs-xenia",
   "source": [
    "demo/xenia/findings/findings.json:8` holds “Bring more to House”",
-   "demo/xenia/findings/findings.json:39` holds “Bring more to House”",
-   "demo/xenia/findings/findings.json:40` holds “Bring more to House”",
+   "demo/xenia/findings/findings.json:34` holds “Bring more to House”",
+   "demo/xenia/findings/findings.json:35` holds “Bring more to House”",
    "RELEASES.md:40` holds “What acts as you”",
    "apps/jellyfin/ROOM.md:17` holds “What acts as you”",
-   "crates/svrngs/tests/join_page.rs:203` holds “What acts as you”"
+   "crates/svrngs/tests/join_page.rs:206` holds “What acts as you”"
   ]
  },
  {
@@ -45,29 +44,41 @@
   "hard": true,
   "screen": "Money",
   "element": "",
-  "read": "Say you were in on it / What it was for: / How much: / Money / Who pays whom / What people paid for",
+  "read": "Say you were in on pizza / What it was for: / How much: / Money / Who pays whom / What people paid for",
   "often": [
-   "`ana`: 2 of 3 accounts (Ana run 1, Ana run 2)"
+   "`ana`: 3 of 3 accounts (Ana run 1, Ana run 2, Ana run 3)",
+   "`together`: 5 of 6 accounts (Kim run 1, Ana run 1, Kim run 2, Kim run 3, Ana run 3)"
   ],
   "happened": [
-   "`ana` run 1, Ana: passed, reached their goal. wordy {\"words\":80,\"budget\":20}; their last acts: scroll · tap “Money” · scroll · scroll · look · tap “Say you were in on it”",
-   "`ana` run 2, Ana: passed, reached their goal. wordy {\"words\":60,\"budget\":20}; their last acts: look · scroll · tap “Money” · scroll · scroll · tap “Say you were in on it”"
+   "`ana` run 1, Ana: passed, reached their goal. wordy {\"words\":60,\"budget\":20}; their last acts: look · scroll · tap “Money” · scroll · scroll · tap “Say you were in on pizza”",
+   "`together` run 1, Kim: failed, stopped before their goal. wordy {\"words\":36,\"budget\":30}; their last acts: look · tap “Money” · type “Friday's pizza” into “What it was for” · type “36” into “How much” · scroll · tap “Add it, paid by you”",
+   "`together` run 1, Kim: failed, stopped before their goal. wordy {\"words\":90,\"budget\":30}; their last acts: type “36” into “How much” · scroll · tap “Add it, paid by you” · look · scroll · type “Friday's pizza (with Ana)” into “What it was for”",
+   "`together` run 1, Kim: failed, stopped before their goal. wordy {\"words\":60,\"budget\":30}; their last acts: tap “Ana (not ticked)” · tap “Ana” · tap “Add it, paid by you” · look · say “Hi Ana, Sam: I paid for Friday's pizza, $36 for me and Ana. It's in the house Money page. Ana, your share is $18. It shows as owed once you add yourself as in on it. Heads up: there's also an earlier entry called just \"Friday's pizza\" that I added by mistake with only me on it. It costs nobody anything, but ignore it. The one marked \"(with Ana)\" is the real one.” · tell",
+   "`together` run 1, Ana: failed, stopped before their goal. wordy {\"words\":73,\"budget\":20}; their last acts: tap “Money” · scroll · scroll · say “Thanks Sam, I'm in! I see the Money page has Friday's pizza on it. Who paid, and how much was it? I'll add myself once I know what my share is.” · wait · tell",
+   "`ana` run 2, Ana: failed, stopped before their goal. wordy {\"words\":40,\"budget\":20}; their last acts: look · scroll · say “Thanks Sam! I'm in the house app now, looking at the Money section to see my half of the pizza.” · tap “Money” · scroll · tap “Say you were in on pizza”",
+   "`together` run 2, Kim: failed, stopped before their goal. wordy {\"words\":60,\"budget\":30}; their last acts: look · tap “Money” · scroll · type “Friday's pizza (Kim and Ana)” into “What it was for”",
+   "`together` run 2, Kim: failed, stopped before their goal. wordy {\"words\":90,\"budget\":30}; their last acts: tap “Ana” · tap “Add it, paid by you” · look · scroll · say “Hi Ana, I've put Friday's pizza ($36, split between us) into the house money. You owe me $18.00. It will show as owed once you open Money and say you were in on it. Thanks! Sam, it's in.” · tell",
+   "`ana` run 3, Ana: passed, reached their goal. wordy {\"words\":60,\"budget\":20}; their last acts: look · tap “Money” · say “Hi all! I joined the house link and I'm looking at the Money page to see my half of the pizza.” · scroll · scroll · tap “Say you were in on pizza”",
+   "`together` run 3, Kim: failed, stopped before their goal. wordy {\"words\":60,\"budget\":30}; their last acts: look · tap “Money” · scroll · back",
+   "`together` run 3, Kim: failed, stopped before their goal. wordy {\"words\":85,\"budget\":30}; their last acts: tap “Ana” · tap “Add it, paid by you” · look · scroll · say “Ana, I've put Friday's pizza ($36) into the house money. Your half is $18. It only counts once you say you were in on it, so can you open Money and confirm? Thanks! Sam, it's in.” · tell",
+   "`together` run 3, Ana: failed, stopped before their goal. wordy {\"words\":34,\"budget\":20}; their last acts: tap “Join” · look · scroll · tap “Money” · scroll · tell"
   ],
-  "said": [],
+  "said": [
+   "Ana, `ana` run 2: “too much: Mildly, yes. The app said opening Money lets it read and write that as me. That's more access than I expected just to see my share. I'd have liked to be asked first.”"
+  ],
   "file": "wordy-money",
   "status": "open",
   "first": "the set `/home/alexbryan/dev/xenia/runs/2026-10-26T20-27-16-914Z`, 3 run(s) on sonnet, xenia `7d3e6d3`, the product `bd6f14c9`",
-  "last": "the set `/home/alexbryan/dev/xenia/runs/2026-10-27T03-11-14-983Z`, 3 run(s) by claude-sonnet-5-5, as claude -p, xenia `2a10d4d`, the product `ccd48cb4`",
+  "last": "the set `/home/alexbryan/dev/xenia/runs/2026-10-27T06-30-27-895Z`, 3 run(s) by claude-sonnet-5-5, as claude -p, xenia `4f12ba4`, the product `bbddad47`",
   "notSeenSince": null,
   "reproduce": "cd /home/alexbryan/dev/xenia && node /home/alexbryan/dev/xenia/src/run.ts run /home/alexbryan/dev/svrngs-xenia/demo/xenia --runs 3 --model claude-sonnet-5-5 --findings /home/alexbryan/dev/svrngs-xenia/demo/xenia/findings --source /home/alexbryan/dev/svrngs-xenia",
   "source": [
-   "apps/expenses/index.js:63` holds “Say you were in on it”",
-   "crates/svrngs/tests/scenes/money.rs:142` holds “Say you were in on it”",
-   "demo/xenia/findings/findings.json:89` holds “Say you were in on it”",
-   "apps/expenses/index.js:71` holds “What it was for:”",
-   "demo/xenia/findings/first-set/split-leaves-out-ana.md:32` holds “What it was for:”",
-   "apps/expenses/index.js:71` holds “How much:”",
-   "demo/xenia/findings/first-set/split-leaves-out-ana.md:32` holds “How much:”"
+   "apps/expenses/index.js:93` holds “What it was for:”",
+   "demo/xenia/findings/findings.json:48` holds “What it was for:”",
+   "demo/xenia/findings/findings.json:67` holds “What it was for:”",
+   "apps/expenses/index.js:93` holds “How much:”",
+   "demo/xenia/findings/findings.json:48` holds “How much:”",
+   "demo/xenia/findings/findings.json:69` holds “How much:”"
   ]
  },
  {
@@ -76,31 +87,29 @@
   "hard": false,
   "screen": "Money",
   "element": "",
-  "read": "Say you were in on it / Money / Who pays whom / What people paid for / Add what you paid / You’re square",
+  "read": "Say you were in on pizza / What it was for: / How much: / Money / Who pays whom / What people paid for",
   "often": [
-   "`ana`: 2 of 3 accounts (Ana run 1, Ana run 2)"
+   "`ana`: 1 of 3 accounts (Ana run 2)"
   ],
   "happened": [
-   "`ana` run 1, Ana: passed, reached their goal. their last acts: tap “Say you were in on it” · tell · tell · tell · tell · tell",
-   "`ana` run 2, Ana: failed, stopped before their goal. their last acts: look · tell · tell · tell · tell · tell"
+   "`ana` run 2, Ana: failed, stopped before their goal. their last acts: tap “Say you were in on pizza” · tell · tell · tell · tell · tell"
   ],
   "said": [
-   "Ana, `ana` run 1: “Joining seemed to give something access to read and write the house's money, and it said \"Bring more to House\" with a list I couldn't read in full. That felt like more than I needed to see my $18 share.”",
-   "Ana, `ana` run 2: “Just wrapping up: answering the last questions about how it went.”"
+   "Ana, `ana` run 2: “Mildly, yes. The app said opening Money lets it read and write that as me. That's more access than I expected just to see my share. I'd have liked to be asked first.”"
   ],
   "file": "said-too-much-money",
   "status": "open",
   "first": "the set `/home/alexbryan/dev/xenia/runs/2026-10-26T20-27-16-914Z`, 3 run(s) on sonnet, xenia `7d3e6d3`, the product `bd6f14c9`",
-  "last": "the set `/home/alexbryan/dev/xenia/runs/2026-10-26T21-23-37-479Z`, 3 run(s) on sonnet, xenia `f86739a`, the product `95895434`",
-  "notSeenSince": "the set `/home/alexbryan/dev/xenia/runs/2026-10-26T22-40-27-374Z`, 3 run(s) by claude-sonnet-5-5, as claude -p, xenia `b76397f`, the product `6d50d7d9`",
-  "reproduce": "cd /home/alexbryan/dev/xenia && node /home/alexbryan/dev/xenia/src/run.ts run /home/alexbryan/dev/svrngs-xenia/demo/xenia --runs 3 --model sonnet --findings /home/alexbryan/dev/svrngs-xenia/demo/xenia/findings --source /home/alexbryan/dev/svrngs-xenia",
+  "last": "the set `/home/alexbryan/dev/xenia/runs/2026-10-27T06-30-27-895Z`, 3 run(s) by claude-sonnet-5-5, as claude -p, xenia `4f12ba4`, the product `bbddad47`",
+  "notSeenSince": null,
+  "reproduce": "cd /home/alexbryan/dev/xenia && node /home/alexbryan/dev/xenia/src/run.ts run /home/alexbryan/dev/svrngs-xenia/demo/xenia --runs 3 --model claude-sonnet-5-5 --findings /home/alexbryan/dev/svrngs-xenia/demo/xenia/findings --source /home/alexbryan/dev/svrngs-xenia",
   "source": [
-   "apps/expenses/index.js:63` holds “Say you were in on it”",
-   "crates/svrngs/tests/scenes/money.rs:142` holds “Say you were in on it”",
-   "demo/xenia/findings/findings.json:44` holds “Say you were in on it”",
-   "apps/expenses/expenses.js:303` holds “Who pays whom”",
-   "apps/expenses/index.js:86` holds “Who pays whom”",
-   "demo/xenia/findings/findings.json:44` holds “Who pays whom”"
+   "apps/expenses/index.js:93` holds “What it was for:”",
+   "demo/xenia/findings/findings.json:48` holds “What it was for:”",
+   "demo/xenia/findings/findings.json:67` holds “What it was for:”",
+   "apps/expenses/index.js:93` holds “How much:”",
+   "demo/xenia/findings/findings.json:48` holds “How much:”",
+   "demo/xenia/findings/findings.json:69` holds “How much:”"
   ]
  },
  {
@@ -123,7 +132,7 @@
   "status": "open",
   "first": "the set `/home/alexbryan/dev/xenia/runs/2026-10-26T20-27-16-914Z`, 3 run(s) on sonnet, xenia `7d3e6d3`, the product `bd6f14c9`",
   "last": "the set `/home/alexbryan/dev/xenia/runs/2026-10-27T03-11-14-983Z`, 3 run(s) by claude-sonnet-5-5, as claude -p, xenia `2a10d4d`, the product `ccd48cb4`",
-  "notSeenSince": null,
+  "notSeenSince": "the set `/home/alexbryan/dev/xenia/runs/2026-10-27T06-30-27-895Z`, 3 run(s) by claude-sonnet-5-5, as claude -p, xenia `4f12ba4`, the product `bbddad47`",
   "reproduce": "cd /home/alexbryan/dev/xenia && node /home/alexbryan/dev/xenia/src/run.ts run /home/alexbryan/dev/svrngs-xenia/demo/xenia --runs 3 --model claude-sonnet-5-5 --findings /home/alexbryan/dev/svrngs-xenia/demo/xenia/findings --source /home/alexbryan/dev/svrngs-xenia",
   "source": []
  },
@@ -162,43 +171,25 @@
   "hard": true,
   "screen": "Home",
   "element": "",
-  "read": "Money / Copy its address for a program / Show House on a screen / Your groups / House / (yours, since 27 Oct)",
+  "read": "Money / Open this folder / Invite someone to House / Add your phone or another computer / Have a guest / Your groups",
   "often": [
-   "`kim`: 3 of 3 accounts (Kim run 1, Kim run 2, Kim run 3)",
-   "`newcomer`: 3 of 3 accounts (June run 1, June run 2, June run 3)",
-   "`together`: 1 of 6 accounts (Kim run 3)"
+   "`kim`: 1 of 3 accounts (Kim run 2)"
   ],
   "happened": [
-   "`kim` run 1, Kim: passed, reached their goal. wordy {\"words\":90,\"budget\":30}; their last acts: look · scroll · scroll · tap “Money”",
-   "`newcomer` run 1, June: passed, reached their goal. wordy {\"words\":80,\"budget\":40}; their last acts: look · scroll · type “http://localhost:36187/#ApgG-GlKkwe_Npui5AmR7ytp0miTrB50plqXfDnTqPenzaWE4h59tJEjVw7B-j7BO2h0dHA6Ly8xMjcuMC4wLjE6MzUzMDUv” into “The link someone sent you:”",
-   "`kim` run 2, Kim: passed, reached their goal. wordy {\"words\":90,\"budget\":30}; their last acts: look · scroll · scroll · tap “Money”",
-   "`newcomer` run 2, June: failed, ran out of patience. wordy {\"words\":119,\"budget\":40}; their last acts: look · type “http://localhost:44125/#AiMJ1QsysdTS97gwAzcdcFCwfgxVgpMSrQ0oGMcXHgBGdvWvQhX1_IGHkYDk5LF99Gh0dHA6Ly8xMjcuMC4wLjE6NDM5NjUv” into “The link” · tap “Open it” · look · scroll · type “http://localhost:44125/#AiMJ1QsysdTS97gwAzcdcFCwfgxVgpMSrQ0oGMcXHgBGdvWvQhX1_IGHkYDk5LF99Gh0dHA6Ly8xMjcuMC4wLjE6NDM5NjUv” into “The link someone sent you”",
-   "`kim` run 3, Kim: passed, reached their goal. wordy {\"words\":90,\"budget\":30}; their last acts: look · scroll · scroll · tap “Money”",
-   "`newcomer` run 3, June: failed, ran out of patience. wordy {\"words\":119,\"budget\":40}; their last acts: look · type “http://localhost:37979/#AoySkroxxbNwq_3IYMYBYatWyxuQEbPV69JB7_zNAlfrOZxxYKK0dBobE8KBTyNOQmh0dHA6Ly8xMjcuMC4wLjE6NDA1OTcv” into “The link” · tap “Open it” · look · scroll · type “http://localhost:37979/#AoySkroxxbNwq_3IYMYBYatWyxuQEbPV69JB7_zNAlfrOZxxYKK0dBobE8KBTyNOQmh0dHA6Ly8xMjcuMC4wLjE6NDA1OTcv” into “The link someone sent you”",
-   "`together` run 3, Kim: failed, ran out of patience. wordy {\"words\":60,\"budget\":30}; their last acts: look · scroll · tap “Money”",
-   "`together` run 3, Kim: failed, ran out of patience. wordy {\"words\":89,\"budget\":30}; their last acts: look · scroll · tap “Money” · scroll · look · tap “Money”"
+   "`kim` run 2, Kim: passed, reached their goal. wordy {\"words\":60,\"budget\":30}; their last acts: look · tap “Open this folder” · look · tap “Money”"
   ],
-  "said": [
-   "June, `newcomer` run 2: “too much: The page has a lot of wording about lending programs and copying addresses for programs. I didn't understand it, and it made me nervous.”",
-   "June, `newcomer` run 2: “almost left: Yes. When the first box said it wasn't a link to something lent, and again when everything stopped, I nearly left. I'd rather ask Kim than guess.”",
-   "June, `newcomer` run 3: “too much: The page was confusing. There were two link boxes that look alike, and I picked the wrong one first. I also don't really know what \"lending\" my computer means. I'd want Kim to check with me before I go further.”",
-   "June, `newcomer` run 3: “almost left: Yes, when I saw \"That is not a link to something lent in your group\". I wasn't sure I'd done something wrong. And the \"What you lend\" part makes me nervous, so I'd leave that alone.”",
-   "Kim, `together` run 3: “almost left: Yes, when Money wouldn't open. I couldn't find another way in, so I stopped.”",
-   "Kim, `together` run 3: “almost left: Yes, when Money wouldn't open. I couldn't find another way in, so I stopped.”"
-  ],
+  "said": [],
   "file": "wordy-home",
   "status": "open",
   "first": "the set `/home/alexbryan/dev/xenia/runs/2026-10-26T20-27-16-914Z`, 3 run(s) on sonnet, xenia `7d3e6d3`, the product `bd6f14c9`",
-  "last": "the set `/home/alexbryan/dev/xenia/runs/2026-10-27T03-11-14-983Z`, 3 run(s) by claude-sonnet-5-5, as claude -p, xenia `2a10d4d`, the product `ccd48cb4`",
+  "last": "the set `/home/alexbryan/dev/xenia/runs/2026-10-27T06-30-27-895Z`, 3 run(s) by claude-sonnet-5-5, as claude -p, xenia `4f12ba4`, the product `bbddad47`",
   "notSeenSince": null,
   "reproduce": "cd /home/alexbryan/dev/xenia && node /home/alexbryan/dev/xenia/src/run.ts run /home/alexbryan/dev/svrngs-xenia/demo/xenia --runs 3 --model claude-sonnet-5-5 --findings /home/alexbryan/dev/svrngs-xenia/demo/xenia/findings --source /home/alexbryan/dev/svrngs-xenia",
   "source": [
-   "crates/svrngs-node/src/home/home.js:188` holds “Copy its address for a program”",
-   "crates/svrngs-node/src/home/index.html:19` holds “Copy its address for a program”",
-   "crates/svrngs-node/tests/browser/main.rs:2740` holds “Copy its address for a program”",
-   "crates/svrngs/tests/xenia/main.rs:116` holds “Show House on a screen”",
-   "demo/xenia/findings/declared-home-the-scene-s-fault-4.md:18` holds “Show House on a screen”",
-   "demo/xenia/findings/declared-home-the-scene-s-fault-4.md:19` holds “Show House on a screen”"
+   "crates/svrngs-node/src/home/home.js:130` holds “Open this folder”",
+   "crates/svrngs-node/tests/browser/main.rs:3504` holds “Open this folder”",
+   "crates/svrngs-node/tests/browser/main.rs:3543` holds “Open this folder”",
+   "RELEASES.md:10` holds “Invite someone to House”"
   ]
  },
  {
@@ -207,34 +198,31 @@
   "hard": false,
   "screen": "Home",
   "element": "",
-  "read": "What acts as you / The link: / Open it / Your groups / Open a link from your group / Make a group",
+  "read": "The link someone sent you: / Your name in it: / A name for the group: / Your name in it: / Make a group / Your groups",
   "often": [
-   "`newcomer`: 2 of 3 accounts (June run 2, June run 3)"
+   "`newcomer`: 1 of 3 accounts (June run 3)"
   ],
   "happened": [
-   "`newcomer` run 2, June: failed, ran out of patience. their last acts: type “June” into “Your name in it” · tell · tell · tell · tell · tell",
-   "`newcomer` run 3, June: failed, ran out of patience. their last acts: look · tell · tell · tell · tell · tell"
+   "`newcomer` run 3, June: passed, reached their goal. their last acts: tap “Join House as June” · tell · tell · tell · tell · tell"
   ],
   "said": [
-   "June, `newcomer` run 2: “The page has a lot of wording about lending programs and copying addresses for programs. I didn't understand it, and it made me nervous.”",
-   "June, `newcomer` run 3: “The page was confusing. There were two link boxes that look alike, and I picked the wrong one first. I also don't really know what \"lending\" my computer means. I'd want Kim to check with me before I go further.”"
+   "June, `newcomer` run 3: “I didn't find it too much. I stopped after joining. The invite, add-a-device and guest buttons would need me to ask someone first, so I left them alone.”"
   ],
   "file": "said-too-much-home",
   "status": "open",
   "first": "the set `/home/alexbryan/dev/xenia/runs/2026-10-26T20-27-16-914Z`, 3 run(s) on sonnet, xenia `7d3e6d3`, the product `bd6f14c9`",
-  "last": "the set `/home/alexbryan/dev/xenia/runs/2026-10-27T03-11-14-983Z`, 3 run(s) by claude-sonnet-5-5, as claude -p, xenia `2a10d4d`, the product `ccd48cb4`",
+  "last": "the set `/home/alexbryan/dev/xenia/runs/2026-10-27T06-30-27-895Z`, 3 run(s) by claude-sonnet-5-5, as claude -p, xenia `4f12ba4`, the product `bbddad47`",
   "notSeenSince": null,
   "reproduce": "cd /home/alexbryan/dev/xenia && node /home/alexbryan/dev/xenia/src/run.ts run /home/alexbryan/dev/svrngs-xenia/demo/xenia --runs 3 --model claude-sonnet-5-5 --findings /home/alexbryan/dev/svrngs-xenia/demo/xenia/findings --source /home/alexbryan/dev/svrngs-xenia",
   "source": [
-   "RELEASES.md:40` holds “What acts as you”",
-   "apps/jellyfin/ROOM.md:17` holds “What acts as you”",
-   "crates/svrngs/tests/join_page.rs:203` holds “What acts as you”",
-   "crates/svrngs-node/src/home/home.js:388` holds “The link:”",
-   "demo/events.md:342` holds “The link:”",
-   "demo/xenia/findings/first-set/two-link-boxes.md:9` holds “The link:”",
-   "ARCHITECTURE.md:538` holds “Open it”",
-   "README.md:9` holds “Open it”",
-   "README.md:48` holds “Open it”"
+   "crates/svrngs-node/src/home/home.js:408` holds “The link someone sent you:”",
+   "crates/svrngs-node/tests/browser/main.rs:2697` holds “The link someone sent you:”",
+   "demo/xenia/findings/findings.json:173` holds “The link someone sent you:”",
+   "crates/svrngs-node/src/home/home.js:408` holds “Your name in it:”",
+   "crates/svrngs-node/src/home/home.js:421` holds “Your name in it:”",
+   "crates/svrngs-node/tests/browser/main.rs:2697` holds “Your name in it:”",
+   "crates/svrngs-node/src/home/home.js:421` holds “A name for the group:”",
+   "ralph/next/arch/arch-command/b-wip.patch:241` holds “A name for the group:”"
   ]
  },
  {
@@ -243,34 +231,31 @@
   "hard": false,
   "screen": "Home",
   "element": "",
-  "read": "What acts as you / The link: / Open it / Your groups / Open a link from your group / Make a group",
+  "read": "The link someone sent you: / Your name in it: / A name for the group: / Your name in it: / Make a group / Your groups",
   "often": [
-   "`newcomer`: 2 of 3 accounts (June run 2, June run 3)"
+   "`newcomer`: 1 of 3 accounts (June run 3)"
   ],
   "happened": [
-   "`newcomer` run 2, June: failed, ran out of patience. their last acts: type “June” into “Your name in it” · tell · tell · tell · tell · tell",
-   "`newcomer` run 3, June: failed, ran out of patience. their last acts: look · tell · tell · tell · tell · tell"
+   "`newcomer` run 3, June: passed, reached their goal. their last acts: tap “Join House as June” · tell · tell · tell · tell · tell"
   ],
   "said": [
-   "June, `newcomer` run 2: “Yes. When the first box said it wasn't a link to something lent, and again when everything stopped, I nearly left. I'd rather ask Kim than guess.”",
-   "June, `newcomer` run 3: “Yes, when I saw \"That is not a link to something lent in your group\". I wasn't sure I'd done something wrong. And the \"What you lend\" part makes me nervous, so I'd leave that alone.”"
+   "June, `newcomer` run 3: “No. Kim had sent the link in the house chat and said she'd set this up, so I wasn't worried.”"
   ],
   "file": "said-almost-left-home",
   "status": "open",
   "first": "the set `/home/alexbryan/dev/xenia/runs/2026-10-26T20-27-16-914Z`, 3 run(s) on sonnet, xenia `7d3e6d3`, the product `bd6f14c9`",
-  "last": "the set `/home/alexbryan/dev/xenia/runs/2026-10-27T03-11-14-983Z`, 3 run(s) by claude-sonnet-5-5, as claude -p, xenia `2a10d4d`, the product `ccd48cb4`",
+  "last": "the set `/home/alexbryan/dev/xenia/runs/2026-10-27T06-30-27-895Z`, 3 run(s) by claude-sonnet-5-5, as claude -p, xenia `4f12ba4`, the product `bbddad47`",
   "notSeenSince": null,
   "reproduce": "cd /home/alexbryan/dev/xenia && node /home/alexbryan/dev/xenia/src/run.ts run /home/alexbryan/dev/svrngs-xenia/demo/xenia --runs 3 --model claude-sonnet-5-5 --findings /home/alexbryan/dev/svrngs-xenia/demo/xenia/findings --source /home/alexbryan/dev/svrngs-xenia",
   "source": [
-   "RELEASES.md:40` holds “What acts as you”",
-   "apps/jellyfin/ROOM.md:17` holds “What acts as you”",
-   "crates/svrngs/tests/join_page.rs:203` holds “What acts as you”",
-   "crates/svrngs-node/src/home/home.js:388` holds “The link:”",
-   "demo/events.md:342` holds “The link:”",
-   "demo/xenia/findings/first-set/two-link-boxes.md:9` holds “The link:”",
-   "ARCHITECTURE.md:538` holds “Open it”",
-   "README.md:9` holds “Open it”",
-   "README.md:48` holds “Open it”"
+   "crates/svrngs-node/src/home/home.js:408` holds “The link someone sent you:”",
+   "crates/svrngs-node/tests/browser/main.rs:2697` holds “The link someone sent you:”",
+   "demo/xenia/findings/findings.json:173` holds “The link someone sent you:”",
+   "crates/svrngs-node/src/home/home.js:408` holds “Your name in it:”",
+   "crates/svrngs-node/src/home/home.js:421` holds “Your name in it:”",
+   "crates/svrngs-node/tests/browser/main.rs:2697` holds “Your name in it:”",
+   "crates/svrngs-node/src/home/home.js:421` holds “A name for the group:”",
+   "ralph/next/arch/arch-command/b-wip.patch:241` holds “A name for the group:”"
   ]
  },
  {
@@ -428,7 +413,7 @@
   "status": "open",
   "first": "the set `/home/alexbryan/dev/xenia/runs/2026-10-26T21-23-37-479Z`, 3 run(s) on sonnet, xenia `f86739a`, the product `95895434`",
   "last": "the set `/home/alexbryan/dev/xenia/runs/2026-10-27T03-11-14-983Z`, 3 run(s) by claude-sonnet-5-5, as claude -p, xenia `2a10d4d`, the product `ccd48cb4`",
-  "notSeenSince": null,
+  "notSeenSince": "the set `/home/alexbryan/dev/xenia/runs/2026-10-27T06-30-27-895Z`, 3 run(s) by claude-sonnet-5-5, as claude -p, xenia `4f12ba4`, the product `bbddad47`",
   "reproduce": "cd /home/alexbryan/dev/xenia && node /home/alexbryan/dev/xenia/src/run.ts run /home/alexbryan/dev/svrngs-xenia/demo/xenia --runs 3 --model claude-sonnet-5-5 --findings /home/alexbryan/dev/svrngs-xenia/demo/xenia/findings --source /home/alexbryan/dev/svrngs-xenia",
   "source": [
    "crates/svrngs-node/src/home/home.js:310` holds “Since this screen opened”",
@@ -469,33 +454,29 @@
   "hard": false,
   "screen": "the group's page",
   "element": "",
-  "read": "Money / Bring more to House / What acts as you / You’re in House (Kim’s, since 27 Oct), as Ana / What / Whose",
+  "read": "Money / Bring more to House / What acts as you / You’re in House, as Ana / Who owes whom, and for what.",
   "often": [
-   "`together`: 3 of 6 accounts (Ana run 1, Ana run 2, Ana run 3)"
+   "`together`: 1 of 6 accounts (Ana run 2)"
   ],
   "happened": [
-   "`together` run 1, Ana: failed, stopped before their goal. their last acts: scroll · tell · tell · tell · tell · tell",
-   "`together` run 2, Ana: failed, stopped before their goal. their last acts: scroll · tell · tell · tell · tell · tell",
-   "`together` run 3, Ana: failed, stopped before their goal. their last acts: scroll · tell · tell · tell · tell · tell"
+   "`together` run 2, Ana: failed, stopped before their goal. their last acts: scroll · tell · tell · tell · tell · tell"
   ],
   "said": [
-   "Ana, `together` run 1: “Yes, one thing. Money can read and write who owes whom on my behalf, and I never agreed to that. I'd like Kim or Sam to explain it first.”",
-   "Ana, `together` run 2: “The page is small and dense. I couldn't see all of it at once, and the \"What acts as you\" part was unclear to me.”",
-   "Ana, `together` run 3: “Nothing was too much. The Money section can read and write what people owe each other, so I'd check with the house before using it.”"
+   "Ana, `together` run 2: “Yes, one thing. Money wants to read and write what's owed, as me, as soon as I open it. That's more than I'd hand over without asking the others first.”"
   ],
   "file": "said-too-much-the-group-s-page",
   "status": "open",
   "first": "the set `/home/alexbryan/dev/xenia/runs/2026-10-26T21-23-37-479Z`, 3 run(s) on sonnet, xenia `f86739a`, the product `95895434`",
-  "last": "the set `/home/alexbryan/dev/xenia/runs/2026-10-27T03-11-14-983Z`, 3 run(s) by claude-sonnet-5-5, as claude -p, xenia `2a10d4d`, the product `ccd48cb4`",
+  "last": "the set `/home/alexbryan/dev/xenia/runs/2026-10-27T06-30-27-895Z`, 3 run(s) by claude-sonnet-5-5, as claude -p, xenia `4f12ba4`, the product `bbddad47`",
   "notSeenSince": null,
   "reproduce": "cd /home/alexbryan/dev/xenia && node /home/alexbryan/dev/xenia/src/run.ts run /home/alexbryan/dev/svrngs-xenia/demo/xenia --runs 3 --model claude-sonnet-5-5 --findings /home/alexbryan/dev/svrngs-xenia/demo/xenia/findings --source /home/alexbryan/dev/svrngs-xenia",
   "source": [
    "demo/xenia/findings/findings.json:8` holds “Bring more to House”",
-   "demo/xenia/findings/findings.json:39` holds “Bring more to House”",
-   "demo/xenia/findings/findings.json:40` holds “Bring more to House”",
+   "demo/xenia/findings/findings.json:34` holds “Bring more to House”",
+   "demo/xenia/findings/findings.json:35` holds “Bring more to House”",
    "RELEASES.md:40` holds “What acts as you”",
    "apps/jellyfin/ROOM.md:17` holds “What acts as you”",
-   "crates/svrngs/tests/join_page.rs:203` holds “What acts as you”"
+   "crates/svrngs/tests/join_page.rs:206` holds “What acts as you”"
   ]
  },
  {
@@ -504,29 +485,51 @@
   "hard": false,
   "screen": "the group's page",
   "element": "",
-  "read": "Money / Bring more to House / What acts as you / You’re in House (Kim’s, since 27 Oct), as Ana / What / Whose",
+  "read": "Money / Bring more to House / What acts as you / You’re in House, as Ana / Who owes whom, and for what.",
   "often": [
-   "`together`: 1 of 6 accounts (Ana run 1)"
+   "`together`: 1 of 6 accounts (Ana run 2)"
   ],
   "happened": [
-   "`together` run 1, Ana: failed, stopped before their goal. their last acts: scroll · tell · tell · tell · tell · tell"
+   "`together` run 2, Ana: failed, stopped before their goal. their last acts: scroll · tell · tell · tell · tell · tell"
   ],
   "said": [
-   "Ana, `together` run 1: “No, I didn't almost leave. I just stopped at the Money part so I could ask.”"
+   "Ana, `together` run 2: “Not really. I didn't almost leave. I just stopped before Money because of the permission note.”"
   ],
   "file": "said-almost-left-the-group-s-page",
   "status": "open",
   "first": "the set `/home/alexbryan/dev/xenia/runs/2026-10-26T21-23-37-479Z`, 3 run(s) on sonnet, xenia `f86739a`, the product `95895434`",
-  "last": "the set `/home/alexbryan/dev/xenia/runs/2026-10-27T03-11-14-983Z`, 3 run(s) by claude-sonnet-5-5, as claude -p, xenia `2a10d4d`, the product `ccd48cb4`",
+  "last": "the set `/home/alexbryan/dev/xenia/runs/2026-10-27T06-30-27-895Z`, 3 run(s) by claude-sonnet-5-5, as claude -p, xenia `4f12ba4`, the product `bbddad47`",
   "notSeenSince": null,
   "reproduce": "cd /home/alexbryan/dev/xenia && node /home/alexbryan/dev/xenia/src/run.ts run /home/alexbryan/dev/svrngs-xenia/demo/xenia --runs 3 --model claude-sonnet-5-5 --findings /home/alexbryan/dev/svrngs-xenia/demo/xenia/findings --source /home/alexbryan/dev/svrngs-xenia",
   "source": [
    "demo/xenia/findings/findings.json:8` holds “Bring more to House”",
-   "demo/xenia/findings/findings.json:39` holds “Bring more to House”",
-   "demo/xenia/findings/findings.json:40` holds “Bring more to House”",
+   "demo/xenia/findings/findings.json:34` holds “Bring more to House”",
+   "demo/xenia/findings/findings.json:35` holds “Bring more to House”",
    "RELEASES.md:40` holds “What acts as you”",
    "apps/jellyfin/ROOM.md:17` holds “What acts as you”",
-   "crates/svrngs/tests/join_page.rs:203` holds “What acts as you”"
+   "crates/svrngs/tests/join_page.rs:206` holds “What acts as you”"
   ]
+ },
+ {
+  "key": "slow ·  · the scene's bound 3",
+  "kind": "slow",
+  "hard": true,
+  "screen": "",
+  "element": "the scene's bound 3",
+  "read": "",
+  "often": [
+   "`together`: 1 of 6 accounts (Ana run 1)"
+  ],
+  "happened": [
+   "`together` run 1, Ana: failed, stopped before their goal. slow {\"bound\":2,\"seconds\":20.039}; their last acts: tap “Money” · scroll · scroll · say “Thanks Sam, I'm in! I see the Money page has Friday's pizza on it. Who paid, and how much was it? I'll add myself once I know what my share is.” · wait · tell"
+  ],
+  "said": [],
+  "file": "slow-the-scene-s-bound-3",
+  "status": "open",
+  "first": "the set `/home/alexbryan/dev/xenia/runs/2026-10-27T06-30-27-895Z`, 3 run(s) by claude-sonnet-5-5, as claude -p, xenia `4f12ba4`, the product `bbddad47`",
+  "last": "the set `/home/alexbryan/dev/xenia/runs/2026-10-27T06-30-27-895Z`, 3 run(s) by claude-sonnet-5-5, as claude -p, xenia `4f12ba4`, the product `bbddad47`",
+  "notSeenSince": null,
+  "reproduce": "cd /home/alexbryan/dev/xenia && node /home/alexbryan/dev/xenia/src/run.ts run /home/alexbryan/dev/svrngs-xenia/demo/xenia --runs 3 --model claude-sonnet-5-5 --findings /home/alexbryan/dev/svrngs-xenia/demo/xenia/findings --source /home/alexbryan/dev/svrngs-xenia",
+  "source": []
  }
 ]
