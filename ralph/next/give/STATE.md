@@ -154,7 +154,7 @@ There are fifteen rows:
   - **(b) The runtime.** One module naming no svrngs type: `start`, `health`, `snapshot`, `restore` and `stop` over a card and a state directory, on podman's CLI. Containers are named `svrngs-test-*` in tests and removed by the test that made them.
   - **(c) The two cards.** `apps/give/cards/minecraft/compose.yaml` and `apps/give/cards/factorio/compose.yaml`, as GIVE.md §4 gives them, with their digests pinned. Minecraft's `VERSION` is pinned, and its EULA is an ask. Each card carries its `nouns.txt`. Each passes `give check` on this host, or is never-ran with its reason.
   - **Check:** `give check` on the stand-in red on its plant, then green; both cards checked.
-- [ ] give-app-keep — depends [give-app-runtime] — ONE ROW, red first (GIVE.md §3 scenes 1 and 2, §7, §7a):
+- [x] give-app-keep 33bf0eadb — depends [give-app-runtime] — ONE ROW, red first (GIVE.md §3 scenes 1 and 2, §7, §7a):
   - **(a) Tests: THE GROUP STARTS AN APP.**
     - **The fold.** The keeper fact folds over Give's own acts: started, moved and taken over, each naming the snapshot and the card version it starts from. Two takeovers at once stand by admission order.
     - **The same fold, twice.** The fold is one module, built to JavaScript for the page as `apps/canon/build.sh` builds canon-core. Its tests run against both the page's build and the keeper program's.
