@@ -19,6 +19,10 @@
 //! group's record names to keep it** (apps/give/fold, the one fold the page
 //! and the program both run), so every member reaches the one copy there
 //! is.
+//!
+//! What it shares with Give's scenes 3 to 5 (give_move.rs, give_gone.rs)
+//! is here: Give built, brought and run beside a person's svrngs, its pods
+//! removed, and the steps pressed on its page.
 
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
@@ -32,7 +36,7 @@ use crate::people::{late, Browsers, Person, Scene};
 
 /// What the scene names the stand-in's pod and volume by on `who`'s
 /// computer: the two share this host's podman.
-fn prefix(who: &str) -> String {
+pub(crate) fn prefix(who: &str) -> String {
     format!(
         "svrngs-test-scene-{}-{}-",
         std::process::id(),
@@ -41,13 +45,13 @@ fn prefix(who: &str) -> String {
 }
 
 /// The stand-in card's folder.
-fn standin() -> PathBuf {
+pub(crate) fn standin() -> PathBuf {
     repo().join("apps/give/tests/standin")
 }
 
 /// Give's program, built from this commit, as `cargo build -p give` leaves
 /// it: where it is.
-async fn give_built() -> PathBuf {
+pub(crate) async fn give_built() -> PathBuf {
     let built = Command::new(env!("CARGO"))
         .args(["build", "--quiet", "-p", "give"])
         .current_dir(repo())
@@ -65,7 +69,7 @@ async fn give_built() -> PathBuf {
 /// the person's own home (on a Mac, `~/.config/containers`), and with a
 /// person's HOME of the scene's it answered "unable to connect to Podman
 /// socket" (target/scenes/give-chromium/cy-give/keep.log, 2026-10-26).
-fn run_give(program: &Path, who: &Person, scratch: &Path, args: &[&str]) -> Command {
+pub(crate) fn run_give(program: &Path, who: &Person, scratch: &Path, args: &[&str]) -> Command {
     let svrngs = Path::new(env!("CARGO_BIN_EXE_svrngs")).parent().unwrap();
     let path = format!(
         "{}:{}",
@@ -86,23 +90,23 @@ fn run_give(program: &Path, who: &Person, scratch: &Path, args: &[&str]) -> Comm
     c
 }
 
-/// The scene's pods and volumes removed, and each program stopped,
-/// however the scene ends.
-struct Removed(Vec<Child>);
+/// The scene's pods and volumes removed, on each of the computers it
+/// names, and each program stopped, however the scene ends.
+pub(crate) struct Removed(pub Vec<Child>, pub &'static [&'static str]);
 
 impl Drop for Removed {
     fn drop(&mut self) {
         for keeper in &mut self.0 {
             let _ = keeper.start_kill();
         }
-        for who in ["cy", "bo"] {
+        for who in self.1 {
             remove(&format!("{}standin", prefix(who)));
         }
     }
 }
 
 /// The pod `pod` and its volumes, removed.
-fn remove(pod: &str) {
+pub(crate) fn remove(pod: &str) {
     let podman = |args: &[&str]| std::process::Command::new("podman").args(args).output();
     if podman(&["pod", "exists", pod]).is_ok_and(|o| o.status.success()) {
         let _ = podman(&["pod", "stop", "--time", "0", pod]);
@@ -113,12 +117,26 @@ fn remove(pod: &str) {
     }
 }
 
-/// `who` runs Give's program for computers, `give keep`, beside svrngs.
-fn keeps(program: &Path, who: &Person, scratch: &Path, card: &str) -> Child {
+/// `who` runs Give's program for computers, `give keep`, beside svrngs,
+/// copying what it keeps each `every` seconds where given (Give's
+/// `GIVE_TEST_EVERY`), else as often as a person's does. Its log is
+/// appended to, so a program run again keeps what it said before.
+pub(crate) fn keeps(
+    program: &Path,
+    who: &Person,
+    scratch: &Path,
+    card: &str,
+    every: Option<u64>,
+) -> Child {
     std::fs::create_dir_all(scratch).unwrap();
-    let log = std::fs::File::create(scratch.join("keep.log")).unwrap();
-    run_give(program, who, scratch, &["keep", "--card", card])
-        .stdin(Stdio::null())
+    let log = (std::fs::OpenOptions::new().create(true).append(true))
+        .open(scratch.join("keep.log"))
+        .unwrap();
+    let mut run = run_give(program, who, scratch, &["keep", "--card", card]);
+    if let Some(every) = every {
+        run.env("GIVE_TEST_EVERY", every.to_string());
+    }
+    run.stdin(Stdio::null())
         .stdout(log.try_clone().unwrap())
         .stderr(log)
         .spawn()
@@ -127,7 +145,7 @@ fn keeps(program: &Path, who: &Person, scratch: &Path, card: &str) -> Child {
 
 /// The steps the run's driver presses on `who`'s one page (house_rules.rs
 /// `steps`): each step's words; a step that fails fails the scene.
-async fn steps(browsers: &mut Browsers, who: &str, steps: Value) -> Vec<Value> {
+pub(crate) async fn steps(browsers: &mut Browsers, who: &str, steps: Value) -> Vec<Value> {
     let got = browsers
         .tell(json!({ "do": "steps", "who": who, "steps": steps }))
         .await;
@@ -138,13 +156,13 @@ async fn steps(browsers: &mut Browsers, who: &str, steps: Value) -> Vec<Value> {
         && (error.contains(" ms") && error.contains("within") || error.contains("Timeout"))
     {
         late(format!(
-            "{who}'s steps did not go as scene 1 says within their bound: {last:#}"
+            "{who}'s steps did not go as the scene says within their bound: {last:#}"
         ))
         .await;
     }
     assert!(
         got["failed"] != true && got["errors"].as_array().is_none_or(|e| e.is_empty()),
-        "{who}'s steps did not go as scene 1 says: {last:#}"
+        "{who}'s steps did not go as the scene says: {last:#}"
     );
     done
 }
@@ -152,7 +170,7 @@ async fn steps(browsers: &mut Browsers, who: &str, steps: Value) -> Vec<Value> {
 /// Where `who`'s browser opens their own computer's copy of Give, as their
 /// home page lists it: a write is signed by the computer the page is open
 /// on (crates/svrngs-node/src/carried.rs `acts`), so Cy starts it there.
-async fn give_at(who: &Person, group: &str) -> String {
+pub(crate) async fn give_at(who: &Person, group: &str) -> String {
     let people = who.get(&format!("/v1/rail/people?namespace={group}")).await;
     let people = people["people"].as_array().cloned().unwrap_or_default();
     let key = (people.iter())
@@ -185,24 +203,63 @@ scene!(
     /// stand-in too.
     give
 );
-async fn give(engine: Engine) {
+/// Why no app can be kept on this host, or none when podman answers.
+pub(crate) fn no_podman() -> Option<String> {
     let ready = std::process::Command::new("podman")
         .args(["info", "--format", "{{.Host.Security.Rootless}}"])
         .output();
-    let scene = Scene::new("give", engine).await;
     match ready {
-        Ok(o) if o.status.success() => {}
-        Ok(o) => {
-            return scene.never_ran(&format!(
-                "podman does not answer here: {}",
-                String::from_utf8_lossy(&o.stderr).trim()
-            ))
-        }
-        Err(e) => {
-            return scene.never_ran(&format!(
-                "podman is not installed here ({e}), so no app can be kept"
-            ))
-        }
+        Ok(o) if o.status.success() => None,
+        Ok(o) => Some(format!(
+            "podman does not answer here: {}",
+            String::from_utf8_lossy(&o.stderr).trim()
+        )),
+        Err(e) => Some(format!(
+            "podman is not installed here ({e}), so no app can be kept"
+        )),
+    }
+}
+
+/// `who` brings Give to `group` (`give page <group>`), as its README says
+/// anyone does once.
+pub(crate) async fn brings(program: &Path, who: &Person, scratch: &Path, group: &str, card: &str) {
+    std::fs::create_dir_all(scratch).unwrap();
+    let brought = run_give(program, who, scratch, &["page", group, "--card", card])
+        .output()
+        .await
+        .unwrap();
+    let said = String::from_utf8_lossy(&brought.stdout);
+    assert!(
+        brought.status.success() && said.contains(&format!("Give is in {group}")),
+        "{} brings Give to {group}: {said}{}",
+        who.name,
+        String::from_utf8_lossy(&brought.stderr)
+    );
+}
+
+/// Each program, asked to stop, stops cleanly, with a last copy of what
+/// it keeps; then the pods and volumes removed.
+pub(crate) async fn stop_cleanly(mut removed: Removed) {
+    for mut keeper in std::mem::take(&mut removed.0) {
+        let id = keeper.id().unwrap().to_string();
+        assert!(std::process::Command::new("kill")
+            .args(["-TERM", &id])
+            .status()
+            .unwrap()
+            .success());
+        let stopped = tokio::time::timeout(Duration::from_secs(120), keeper.wait()).await;
+        assert!(
+            stopped.is_ok_and(|s| s.is_ok_and(|s| s.success())),
+            "each program stops cleanly"
+        );
+    }
+    drop(removed);
+}
+
+async fn give(engine: Engine) {
+    let scene = Scene::new("give", engine).await;
+    if let Some(why) = no_podman() {
+        return scene.never_ran(&why);
     }
     let program = give_built().await;
     let mut browsers = Browsers::driven(
@@ -220,21 +277,14 @@ async fn give(engine: Engine) {
 
     // Cy brings Give to Elm; Cy and Bo each run its program for computers.
     let scratch = scene.scratch("cy-give");
-    std::fs::create_dir_all(&scratch).unwrap();
-    let brought = run_give(&program, &cy, &scratch, &["page", "Elm", "--card", card])
-        .output()
-        .await
-        .unwrap();
-    let said = String::from_utf8_lossy(&brought.stdout);
-    assert!(
-        brought.status.success() && said.contains("Give is in Elm"),
-        "Cy brings Give to Elm: {said}{}",
-        String::from_utf8_lossy(&brought.stderr)
+    brings(&program, &cy, &scratch, "Elm", card).await;
+    let removed = Removed(
+        vec![
+            keeps(&program, &cy, &scratch, card, None),
+            keeps(&program, &bo, &scene.scratch("bo-give"), card, None),
+        ],
+        &["cy", "bo"],
     );
-    let mut removed = Removed(vec![
-        keeps(&program, &cy, &scratch, card),
-        keeps(&program, &bo, &scene.scratch("bo-give"), card),
-    ]);
 
     // Cy starts the stand-in for the group, on Cy's computer's own Give.
     let at = give_at(&cy, &elm).await;
@@ -294,18 +344,5 @@ async fn give(engine: Engine) {
     );
 
     // Each program, asked to stop, stops cleanly: Cy's with a last copy.
-    for mut keeper in std::mem::take(&mut removed.0) {
-        let id = keeper.id().unwrap().to_string();
-        assert!(std::process::Command::new("kill")
-            .args(["-TERM", &id])
-            .status()
-            .unwrap()
-            .success());
-        let stopped = tokio::time::timeout(Duration::from_secs(120), keeper.wait()).await;
-        assert!(
-            stopped.is_ok_and(|s| s.is_ok_and(|s| s.success())),
-            "each program stops cleanly"
-        );
-    }
-    drop(removed);
+    stop_cleanly(removed).await;
 }
