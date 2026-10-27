@@ -74,7 +74,12 @@ async function serve() {
     }
   });
   await new Promise((done) => server.listen(0, '127.0.0.1', done));
-  return { at: `http://127.0.0.1:${server.address().port}/`, ops, record, stop: () => server.close() };
+  const port = server.address().port;
+  // svrngs stopped, as an update restarts it: nothing answers at the
+  // page's origin, and every connection open to it is dropped.
+  const down = () => new Promise((done) => (server.close(done), server.closeAllConnections()));
+  const up = () => new Promise((done) => server.listen(port, '127.0.0.1', done));
+  return { at: `http://127.0.0.1:${port}/`, ops, record, down, up, stop: () => server.close() };
 }
 
 test('a group starts an app from the shelf, and every member reads who keeps it (chromium)', async () => {
@@ -350,6 +355,61 @@ test('a member keeps an app whose computer stopped answering, and a returning co
     for (const what of ['taken, written or refused', 'who answers, as it stands']) {
       assert.ok(traced.some((l) => l.startsWith(`Give: ${what} `)), `traced: ${what}`);
     }
+    assert.deepEqual(errors, []);
+  } finally {
+    await close();
+    server.stop();
+  }
+});
+
+// Give's page left open while its computer's svrngs is down (give-page-down;
+// finding 2 of demo/runs/give/2026-10-26-scenes/NEEDS_HUMAN.md): each
+// round's read can't reach svrngs. The page says so within one round, in a
+// person's words, and shows nothing from before as current, so no press
+// acts on what it last read (AGENTS.md 6: an absence is reported, never
+// defaulted). Refused is a page that goes on showing its last read, as it
+// did when the failed read threw out of `show`. Once svrngs answers again
+// the page reads as before, with no reload.
+test('a page left open while svrngs is down says it can’t read the group, and reads it again once svrngs is back (chromium)', async () => {
+  const server = await serve();
+  const { context, close } = await launch('chromium');
+  const errors = [];
+  try {
+    const page = await context.newPage();
+    page.on('pageerror', (e) => errors.push(String(e)));
+    const traced = [];
+    page.on('console', (m) => m.type() === 'debug' && traced.push(m.text()));
+    const text = () => page.innerText('main');
+    const row = (title) => page.locator('li', { hasText: title }).innerText();
+    const buttons = () => page.getByRole('button').count();
+    // One round is 3 seconds (index.js `setInterval`); a read that can't
+    // connect fails at once, so a round and its read fit in this.
+    const ROUND = 6_000;
+
+    server.record('a1', 'cy', 'ka', { kind: 'ready' });
+    server.record('b1', 'bo', 'kb', { kind: 'ready' });
+    server.record('a1', 'cy', 'ka', { kind: 'started', app: 'minecraft', card: 'm1', agreed: true });
+    await context.setExtraHTTPHeaders({ 'x-person': 'cy', 'x-key': 'ka', 'x-computer': 'a1' });
+    await page.goto(server.at);
+    await page.waitForFunction(() => document.body.innerText.includes('kept by'), null, { timeout: 60_000 });
+    assert.match(await row('Minecraft'), /Minecraft · kept by your computer[\s\S]*Move it to…/);
+    assert.ok((await buttons()) > 0, 'the page offers its presses while svrngs answers');
+    await page.evaluate(() => (window.loaded = 'once'));
+
+    await server.down();
+    await page.waitForFunction(() => document.body.innerText.includes('can’t be read just now'), null, { timeout: ROUND });
+    const said = await text();
+    assert.match(said, /What your group keeps can’t be read just now: svrngs on this computer isn’t answering\. This page will try again by itself\./);
+    assert.doesNotMatch(said, /kept by|Minecraft|Stand-in/, 'nothing from before is offered as current');
+    assert.equal(await buttons(), 0, 'no press acts on what the page last read');
+    assert.doesNotMatch(said, NOT_SAID);
+    assert.ok(traced.some((l) => l.startsWith('Give: svrngs/acts not reached ')), 'traced: svrngs/acts not reached');
+
+    await server.up();
+    await page.waitForFunction(() => document.body.innerText.includes('kept by'), null, { timeout: ROUND });
+    assert.match(await row('Minecraft'), /Minecraft · kept by your computer[\s\S]*Move it to…/);
+    assert.doesNotMatch(await text(), /can’t be read/);
+    assert.equal(await page.evaluate(() => window.loaded), 'once', 'read again with no reload');
     assert.deepEqual(errors, []);
   } finally {
     await close();

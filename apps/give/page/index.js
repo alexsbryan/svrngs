@@ -188,7 +188,13 @@ async function show() {
     trace('cards.json read', { status: c.status, cards: cards?.length ?? null });
     if (!Array.isArray(cards)) return app.replaceChildren(el('h1', 'Give'), el('p', 'The shelf can’t be read just now: bring Give to your group again.'));
   }
-  const r = await fetch(ACTS);
+  // A read that can't reach svrngs, as while it restarts for an update, is
+  // said, and what the page last read goes with it: never shown as current
+  // (give-page-down). The next round reads again.
+  const r = await fetch(ACTS).catch((e) => (trace('svrngs/acts not reached', { error: String(e) }), null));
+  if (r === null) {
+    return app.replaceChildren(el('h1', 'Give'), el('p', 'What your group keeps can’t be read just now: svrngs on this computer isn’t answering. This page will try again by itself.'));
+  }
   // A body that is not JSON is said as that, never read as nothing kept.
   const read = await r.json().catch((e) => (trace('the answer is not JSON', { status: r.status, error: String(e) }), null));
   trace('svrngs/acts answered', { status: r.status, ops: read?.ops?.length ?? null });
