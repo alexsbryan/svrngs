@@ -110,9 +110,9 @@ scene!(
     /// Planted, each watched failing alone: the page never says a computer
     /// stopped answering (apps/give/page/index.js `takeover`, `if
     /// (!keeping.gone) return false` made `return false`), and Dee is never
-    /// asked; then the computer that comes back keeps nothing of what it
-    /// had (apps/give/src/keep.rs `plan`, its `Step::Had` never pushed),
-    /// and no row lists "as Bo’s computer had it".
+    /// asked; then the computer that comes back never unlends the app
+    /// (apps/give/src/keep.rs `had`, its `unshare` dropped), and svrngs,
+    /// which keeps a lend across its restart, lends Bo's again.
     give_gone
 );
 async fn give_gone(engine: Engine) {
@@ -211,14 +211,36 @@ async fn give_gone(engine: Engine) {
         "the copy Dee is offered is the one that reached Dee's computer"
     );
 
-    // Fifteen minutes later, Dee is asked, and keeps it here.
-    steps(
+    // Fifteen minutes later, Dee is asked, and keeps it here. Bo's copy
+    // is in Dee's record already, so the page that reads who keeps it
+    // says, as it reads it, that Bo's computer stopped answering.
+    let read = steps(
         &mut browsers,
         "dee",
         json!([
             { "clock": GONE + 60_000 },
             { "goto": dees },
-            { "poll": dees, "re": r"Stand-in’s computer hasn’t answered since \d{2}:\d{2}\. You have a copy from \d{2}:\d{2}\. Keep it here\?", "within": 60_000, "every": 2_000 },
+            { "poll": dees, "re": "Stand-in · kept by Bo’s computer", "within": 60_000, "every": 2_000 },
+        ]),
+    )
+    .await;
+    let row = read
+        .last()
+        .and_then(|d| d["text"].as_str())
+        .unwrap_or_default();
+    let asked = [
+        "Stand-in’s computer hasn’t answered since ",
+        ". You have a copy from ",
+        ". Keep it here?",
+    ];
+    assert!(
+        asked.iter().all(|w| row.contains(w)),
+        "Dee's page, fifteen minutes on, asks Dee to keep it: {row}"
+    );
+    steps(
+        &mut browsers,
+        "dee",
+        json!([
             { "click": "Keep it here", "in": "Stand-in", "until": "Stand-in · kept by your computer" },
             { "clock": 0 },
         ]),
