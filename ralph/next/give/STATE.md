@@ -196,7 +196,7 @@ There are sixteen rows:
     5. **Finding 2** is a row of its own, give-page-down, before give-install.
 
     (a) and (b) landed. Close the row once its gate passes, with PLAN §1 saying the people runs wait.
-- [ ] give-page-down — depends [give-app-scenes] — ONE ROW, red first, and `scripts/check.sh` once, at the close (the operator, 2026-10-26, on finding 2 of `demo/runs/give/2026-10-26-scenes/NEEDS_HUMAN.md`):
+- [x] give-page-down de180c825 — depends [give-app-scenes] — ONE ROW, red first, and `scripts/check.sh` once, at the close (the operator, 2026-10-26, on finding 2 of `demo/runs/give/2026-10-26-scenes/NEEDS_HUMAN.md`):
   - **The gap.** Give's page, left open while its computer's svrngs is down, says nothing. Each round's read throws "Failed to fetch", and the page goes on showing what it last read (`apps/give/page/index.js` `show`). A person whose svrngs restarts, during an update for example, reads a page that has silently gone stale. AGENTS.md 6: an absence is reported, never defaulted.
   - **(a) Test: THE PAGE SAYS IT CANNOT READ.** Beside Give's page test (`apps/give/page.test.mjs`, in Chromium), failing at HEAD:
     - With Give's page open and its computer's svrngs stopped, within one round the page says, in a person's words, that it can't read the group just now and will try again. Nothing it shows from before is offered as current, and no press acts on it.
