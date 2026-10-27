@@ -2,7 +2,7 @@
 //! A browser told from a program (give-session; svrn-docs
 //! `rings/current/GIVE.md` §5): the home page and each lend's origin answer
 //! a browser only with this computer's session for that host, and a program
-//! only with its token ([`crate::api::Token`]). Loopback alone let in a
+//! only with its token ([`crate::api::Bearer`]). Loopback alone let in a
 //! container on a Mac running podman, which reaches the Mac's `127.0.0.1`
 //! through gvproxy (GIVE.md §5, measured 2026-10-25).
 //!
@@ -30,7 +30,7 @@ use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use std::sync::Arc;
 use svrngs_core::pass::Label;
 
-use crate::api::Token;
+use crate::api::Bearer;
 use crate::oidc::provider::{same, Codes};
 
 /// Where an open's code is redeemed, on the host it opens: a path no app
@@ -74,7 +74,7 @@ pub(crate) enum Shown {
 /// This computer's opens and sessions, one for every host it answers.
 #[derive(Clone)]
 pub(crate) struct Sessions {
-    token: Token,
+    token: Bearer,
     key: ring::hmac::Key,
     codes: Arc<Codes<(String, String)>>,
     port: u16,
@@ -82,7 +82,7 @@ pub(crate) struct Sessions {
 
 impl Sessions {
     /// The sessions for hosts at `port`, each derived from `token`.
-    pub(crate) fn new(token: Token, port: u16) -> Self {
+    pub(crate) fn new(token: Bearer, port: u16) -> Self {
         let key = ring::hmac::Key::new(ring::hmac::HMAC_SHA256, token.secret().as_bytes());
         let codes = Arc::new(Codes::new());
         Self {

@@ -58,9 +58,9 @@ pub const TOKEN_FILE: &str = "token";
 
 /// This computer's token, and the file a refusal names for it.
 #[derive(Clone)]
-pub struct Token(std::sync::Arc<(String, std::path::PathBuf)>);
+pub struct Bearer(std::sync::Arc<(String, std::path::PathBuf)>);
 
-impl Token {
+impl Bearer {
     /// Whether `headers` show it, as `Authorization: Bearer <token>`,
     /// compared in constant time by the sign-in provider's `same`.
     pub(crate) fn shown(&self, headers: &axum::http::HeaderMap) -> bool {
@@ -83,7 +83,7 @@ impl Token {
 /// that cannot be read, or holds no token svrngs made, is refused, never
 /// replaced: a program that read it would be refused in silence.
 #[expect(clippy::disallowed_methods, reason = "draws the record's token")]
-pub fn kept_token(data_dir: &std::path::Path) -> Result<Token, ApiError> {
+pub fn kept_token(data_dir: &std::path::Path) -> Result<Bearer, ApiError> {
     use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
     let path = data_dir.join(TOKEN_FILE);
     let text = match std::fs::read_to_string(&path) {
@@ -103,7 +103,7 @@ pub fn kept_token(data_dir: &std::path::Path) -> Result<Token, ApiError> {
         .decode(text.trim())
         .is_ok_and(|b| b.len() == 32);
     tracing::debug!(target: "rails", path = %path.display(), made, "api: read this computer's token");
-    made.then(|| Token(std::sync::Arc::new((text.trim().into(), path.clone()))))
+    made.then(|| Bearer(std::sync::Arc::new((text.trim().into(), path.clone()))))
         .ok_or(ApiError::NoToken(path))
 }
 
@@ -151,7 +151,7 @@ pub fn write_address(data_dir: &std::path::Path, addr: SocketAddr) -> Result<(),
 /// ([`not_from_a_page`]); and, for a request whose `Host` names a lend,
 /// `lends`, the lend's origin ([`crate::origin`], u5-2), which answers no
 /// route of the record's. All behind the one loopback check.
-pub fn router(api: RailApi, apps: Router, signin: Router, lends: Router, token: Token) -> Router {
+pub fn router(api: RailApi, apps: Router, signin: Router, lends: Router, token: Bearer) -> Router {
     Router::new()
         // The ring rail's doors (FIVE_PROGRAMS fp-44): durable append and
         // the log, and the live lane's local buffer half. The bodies mirror
@@ -221,7 +221,7 @@ async fn not_from_a_page(request: Request, next: Next) -> Response {
 /// Serve the record only to a program that shows this computer's token
 /// (give-token): a caller showing none, or another, is refused 401 naming
 /// the file that holds it, before any door runs.
-async fn holds_the_token(State(token): State<Token>, request: Request, next: Next) -> Response {
+async fn holds_the_token(State(token): State<Bearer>, request: Request, next: Next) -> Response {
     let holds = token.shown(request.headers());
     tracing::debug!(target: "rails", holds, path = %request.uri().path(), "api: whether the caller showed this computer's token");
     if holds {
