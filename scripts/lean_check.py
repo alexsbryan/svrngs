@@ -295,7 +295,7 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # login by the functions svrngs's own steps became, and built beside
 # svrngs in build-release.sh (2d68d696): +13 net and 0, at 19,120
 # (demo/runs/give/2026-10-26-install/NEEDS_HUMAN.md).
-BUDGET = {"crates/svrngs-core": 3242, ".": 19121}
+BUDGET = {"crates/svrngs-core": 3242, ".": 19118}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
