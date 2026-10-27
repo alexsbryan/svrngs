@@ -64,3 +64,7 @@ mod pantry;
 mod ports;
 // Give, scene 1 (apps/give): Cy starts an app for the group, Bo opens it.
 mod give;
+// Give, scene 3: Cy moves it to Bo's computer, its state with it.
+mod give_move;
+// Give, scenes 4 and 5: Bo's computer gone, Dee keeps it; Bo's back.
+mod give_gone;

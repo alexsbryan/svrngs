@@ -162,7 +162,8 @@ pub(crate) async fn steps(browsers: &mut Browsers, who: &str, steps: Value) -> V
     }
     assert!(
         got["failed"] != true && got["errors"].as_array().is_none_or(|e| e.is_empty()),
-        "{who}'s steps did not go as the scene says: {last:#}"
+        "{who}'s steps did not go as the scene says: {last:#}; the page's errors: {:#}",
+        got["errors"]
     );
     done
 }
