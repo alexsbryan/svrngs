@@ -57,9 +57,8 @@ case "$from" in */) ;; *) from="$from/" ;; esac
 
 case "$(uname -s)" in Darwin) os=darwin ;; Linux) os=linux ;; *) os="" ;; esac
 case "$(uname -m)" in arm64 | aarch64) arch=aarch64 ;; x86_64 | amd64) arch=x86_64 ;; *) arch="" ;; esac
-if [ -z "$os" ] || [ -z "$arch" ]; then
+[ -n "$os" ] && [ -n "$arch" ] ||
   no "svrngs runs on Mac and Linux computers, Intel or ARM; this one is $(uname -s) on $(uname -m), so nothing was installed."
-fi
 tarball="svrngs-$os-$arch.tar.gz"
 
 tmp="$(mktemp -d)"
@@ -70,14 +69,10 @@ curl -fsSL "${from}get/$tarball" -o "$tmp/$tarball" ||
 curl -fsSL "${from}get/SHA256SUMS" -o "$tmp/SHA256SUMS" ||
   no "could not get ${from}get/SHA256SUMS to check it against, so nothing was installed."
 want="$(awk -v f="$tarball" '$2 == f || $2 == "*" f { print $1 }' "$tmp/SHA256SUMS")"
-if command -v sha256sum >/dev/null 2>&1; then
-  got="$(sha256sum "$tmp/$tarball" | cut -d' ' -f1)"
-else
-  got="$(shasum -a 256 "$tmp/$tarball" | cut -d' ' -f1)"
-fi
-if [ -z "$want" ] || [ "$got" != "$want" ]; then
+sum=sha256sum && command -v sha256sum >/dev/null 2>&1 || sum="shasum -a 256"
+got="$($sum "$tmp/$tarball" | cut -d' ' -f1)"
+[ -n "$want" ] && [ "$got" = "$want" ] ||
   no "$tarball is not the one the release lists, so it was refused and nothing was installed."
-fi
 say "Checked: $tarball is the one the release lists, unchanged on its way here."
 
 dir="${SVRNGS_DIR:-$HOME/.svrngs}"
@@ -85,9 +80,7 @@ bin="$HOME/.local/bin"
 label="sh.svrnme.svrngs"
 unit=svrngs
 run="$bin/svrngs"
-if [ -n "$relay" ]; then
-  label="$label.relay" unit=svrngs-relay run="$run relay $relay $*"
-fi
+[ -z "$relay" ] || label="$label.relay" unit=svrngs-relay run="$run relay $relay $*"
 if [ "$os" = darwin ]; then
   kept="$HOME/Library/LaunchAgents/$label.plist"
   stop() { launchctl bootout "gui/$(id -u)/$label" 2>/dev/null; }
