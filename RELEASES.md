@@ -2,6 +2,57 @@
 
 ## Next, not released yet
 
+**Lend a game, or anything on a port.** svrngs carried only pages before.
+Now a program that speaks UDP or TCP, such as a Factorio or Minecraft
+server, is lent with `svrngs share <port> --udp --kind <name>`, or
+`--tcp`. On each friend's home page its row has **Play**. Pressing it
+opens the game on their own computer and copies the address to paste into
+the game: "Connect to 127.0.0.1:41821." The address is the same each
+time, so the game's list of servers keeps working. While Play is on, any
+program on that computer can reach the game as that person, so it is
+listed under "What acts as you" with its Stop, and nothing listens once
+it's off. Someone removed from the group is cut off within seconds,
+whatever their own computer does. Not yet played between two homes: one
+rehearsal ran 9 minutes of Factorio with both computers on one desk, with
+no desync and no drop. How a game plays through a relay is still to be
+seen.
+
+**Keep a game for the group.** [Give](apps/give/README.md) keeps an app
+such as a Minecraft or Factorio server on one of your computers at a time,
+in Podman, and copies its world to everyone every five minutes and
+whenever it stops. Someone brings Give to the group once, with `give page
+<group>`, and then everyone has its page. **Start it for the group** asks
+only what the game's makers ask of whoever runs it, such as Minecraft's
+terms. Moving out? **Move it to…** another computer: its person says yes,
+and it starts there from the last copy, so nothing is lost. If the
+computer keeping it goes quiet for fifteen minutes, anyone whose computer
+can keep it is asked **Keep it here?**, with the newest copy. When the old
+computer comes back, what it had since is kept as a copy anyone can
+**Start instead**. Nothing is merged and nothing is thrown away. A
+computer that keeps needs Podman and Give's program, and Give's page gives
+the line for the program: svrngs's own line with `--give` at the end, from
+your group's page. Computers without them still play and still hold the
+copies. That's the trade: a game kept by whichever of you is on, a few
+minutes of play at risk when its computer dies, for a server nobody rents.
+
+**Open svrngs from your computer.** Your home page, and each app your
+computer opens, now open only from svrngs on this computer. svrngs puts an
+opener in your Applications, or on Linux in your applications menu: open
+it, and your home page opens. After that your bookmarks keep working,
+across restarts. Reached any other way, the page says "Open svrngs from
+your computer". Before, a program in a container on a Mac could reach your
+home page and act as you. Now it is refused.
+
+**For developers.** A program on this computer that uses the record API
+shows the token in svrngs's data folder, `Authorization: Bearer <the
+token file>`; without it every route answers 401 `no_token`, naming the
+file. svrngs's command and its own apps already do. `svrngs open` opens
+the home page from a terminal. A carried app's `svrngs/acts` says the page
+its group's links are on, as `page`. Give links no part of svrngs: it
+uses the record API, `svrngs share`, the group's folder and its own page,
+and an app joins its shelf as one `compose.yaml` with five lines of
+`x-svrngs` (`apps/give/README.md`).
+
 **Your home page leads with what's in your group.** Each app is a link
 of its name, such as **Money**, with what it does as you beside it: "It
 reads and writes who paid for what, and who owes whom." Pressing it is
