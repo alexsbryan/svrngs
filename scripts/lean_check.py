@@ -289,7 +289,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # just joined, folded; "What acts as you" folded; the group's things
 # first), after its own economizing pass, the page's heading set by one
 # assignment (-3): +1, at 19,108, so the cap lowered to one past it.
-BUDGET = {"crates/svrngs-core": 3242, ".": 19109}
+# give-install, after its own economizing pass over install.sh (-7,
+# demo/runs/economize/2026-10-26-give-install/SURVEY.md, 60565068): Give's
+# program as install.sh's --give, fetched, checked, placed and kept at
+# login by the functions svrngs's own steps became, and built beside
+# svrngs in build-release.sh (2d68d696): +13 net and 0, at 19,120
+# (demo/runs/give/2026-10-26-install/NEEDS_HUMAN.md).
+BUDGET = {"crates/svrngs-core": 3242, ".": 19121}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
