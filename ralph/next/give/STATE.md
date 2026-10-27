@@ -170,7 +170,7 @@ There are fifteen rows:
     - On their yes, the keeper takes a last snapshot, writes the move and stops, and the receiver starts from exactly that snapshot. The stand-in's state after the move equals its state before it.
     - A no leaves everything as it was.
   - **Check:** red first, green after.
-- [ ] give-app-takeover — depends [give-app-move] — ONE ROW, red first (GIVE.md §3 scenes 4 and 5):
+- [x] give-app-takeover d069d0286 — depends [give-app-move] — ONE ROW, red first (GIVE.md §3 scenes 4 and 5):
   - **(a) Tests: THE KEEPER IS GONE, THEN BACK.**
     - A member whose computer has a copy is offered "Keep it here?" with the copy's time and the card's asks, once the keeper has not answered for the interval the row decides.
     - A copy that fails health, or exits within a minute, is offered the copy before it.
