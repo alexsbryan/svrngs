@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Give's page, carried in a group (give-app-keep; svrn-docs
-// rings/current/GIVE.md §3 scenes 1 and 3, §7a): the shelf of apps the
-// group can keep, who keeps each, "Start it for the group", which asks what
-// the app's makers ask of whoever runs it, and "Move it to…", which asks the
-// same of the person whose computer it goes to. It reads the group at its own
+// rings/current/GIVE.md §3 scenes 1, 3, 4 and 5, §7a): the shelf of apps
+// the group can keep, who keeps each, "Start it for the group", which asks
+// what the app's makers ask of whoever runs it, and "Move it to…", which
+// asks the same of the person whose computer it goes to. When the computer
+// that keeps one stops answering, or a copy doesn't start, "Keep it here?"
+// offers the copy the fold names, with the same question; a computer's
+// state from before another kept it is listed, to "Start instead". It reads the group at its own
 // origin, `svrngs/acts`, and writes there; svrngs writes each act as this
 // computer's person. Nothing here decides who keeps an app: the fold does,
 // the vendored build of the one the keeper program runs (vendor/), and this
@@ -31,12 +34,22 @@ const el = (tag, text, ...kids) => {
 };
 const button = (text, act, quiet) => Object.assign(el('button', text), { onclick: act, className: quiet ? 'quiet' : '' });
 const link = (text, href) => Object.assign(el('a', text), { href, target: '_blank', rel: 'noopener' });
-// Which card's asks are shown, which card's computers to move it to, and
-// what the last write was refused with.
+// Which card's asks are shown, which card's computers to move it to,
+// which copy's asks are shown to start it instead, and what the last write
+// was refused with.
 let asking = null;
 let moving = null;
+let taking = null;
 let refused = null;
 let cards = null;
+
+/** A time as a person reads it: hours and minutes today, with the day before. */
+function when(ts) {
+  const d = new Date(ts * 1000);
+  const today = d.toDateString() === new Date().toDateString();
+  const hm = { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' };
+  return d.toLocaleString([], today ? hm : { month: 'short', day: 'numeric', ...hm });
+}
 
 /** Who keeps an app, in the group's words. */
 const who = (keeping, read) => (keeping.person_key === read.you_key ? 'your computer' : `${keeping.person}’s computer`);
@@ -58,7 +71,7 @@ async function write(op, failed) {
   const said = await r.json().catch(() => null);
   trace(`${op.kind}, written or refused`, { app: op.app, status: r.status, error: said?.error ?? null });
   refused = r.ok ? null : `${failed}: ${said?.error ?? `this computer answered ${r.status}`}`;
-  asking = moving = null;
+  asking = moving = taking = null;
   await show();
 }
 
@@ -66,6 +79,13 @@ const start = (card, agreed) => write({ kind: 'started', app: card.kind, card: c
 const offer = (card, keeping, to) => write({ kind: 'offered', app: card.kind, over: keeping.act, to }, `${card.title} wasn’t offered`);
 const answer = (card, o, yes) =>
   write(yes ? { kind: 'accepted', app: card.kind, offer: o.act, agreed: card.asks.length > 0 } : { kind: 'declined', app: card.kind, offer: o.act }, `Your answer wasn’t saved`);
+
+/** Keep `card` here from `copy`, the keeping it follows being `keeping`'s. */
+const take = (card, keeping, copy) =>
+  write(
+    { kind: 'taken', app: card.kind, card: copy.card, over: keeping.act, from: copy.from, sum: copy.sum, agreed: card.asks.length > 0 },
+    `${card.title} wasn’t kept here`,
+  );
 
 /** The card's asks, each with its link. */
 const asks = (card) => card.asks.map((ask) => Object.assign(el('p', `${ask.say} `, link('Read them', ask.link)), { className: 'ask' }));
@@ -91,21 +111,60 @@ function move(card, keeping, kept, read, out) {
   out.append(button('Not now', () => ((moving = null), show()), true));
 }
 
+/**
+ * A kept app's row past who keeps it, when its computer has stopped
+ * answering or its copy didn't start: the copy the fold offers, to keep
+ * here, for a person whose computer can keep. True when that is the row.
+ */
+function takeover(card, keeping, canKeep, out) {
+  const next = keeping.next;
+  const keep = () => {
+    if (!next || !canKeep) return;
+    out.append(...asks(card), button(card.asks.length ? 'Agree and keep it here' : 'Keep it here', () => take(card, keeping, next)));
+  };
+  if (keeping.failed) {
+    out.append(el('p', next ? `This copy didn’t start. Try the copy from ${when(next.since)}?` : 'This copy didn’t start, and there’s no copy before it.'));
+    keep();
+    return true;
+  }
+  if (!keeping.gone) return false;
+  const offer = next && canKeep ? ` You have a copy from ${when(next.since)}. Keep it here?` : '';
+  out.append(el('p', `${card.title}’s computer hasn’t answered since ${when(keeping.answered)}.${offer}`));
+  keep();
+  return true;
+}
+
+/** Each state a computer had after another kept the app, to start instead. */
+function had(card, keeping, canKeep, read, out) {
+  for (const c of keeping.had) {
+    const whose = c.person_key === read.you_key ? 'your' : `${c.person}’s`;
+    out.append(el('p', `${card.title} as ${whose} computer had it at ${when(c.since)}`));
+    if (!canKeep) continue;
+    if (taking !== c.act) {
+      out.append(button('Start instead', () => (card.asks.length ? ((taking = c.act), show()) : take(card, keeping, c)), true));
+      continue;
+    }
+    out.append(...asks(card), button('Agree and start', () => take(card, keeping, c)), button('Not now', () => ((taking = null), show()), true));
+  }
+}
+
 /** One card's row: its name and line, and who keeps it, or how to start it. */
 function row(card, kept, read) {
   const keeping = kept.apps[card.kind];
   const out = el('li', '', el('h2', card.title), el('p', card.about));
+  const canKeep = Object.values(kept.can_keep).some((c) => c.person_key === read.you_key);
   if (keeping) {
     out.append(el('p', `${card.title} · kept by ${who(keeping, read)}`));
     out.lastChild.className = 'kept';
-    move(card, keeping, kept, read, out);
+    trace('who answers, as it stands', { app: card.kind, answered: keeping.answered, gone: keeping.gone, failed: keeping.failed?.act ?? null, next: keeping.next?.act ?? null, had: keeping.had.length });
+    if (!takeover(card, keeping, canKeep, out)) move(card, keeping, kept, read, out);
+    had(card, keeping, canKeep, read, out);
     return out;
   }
   // This person's own start of it, refused because the computer it was
   // written on can't keep apps: said, with what it needs.
   const mine = kept.refused.findLast((r) => r.app === card.kind && read.ops.some((o) => o.id === r.act && o.person_key === read.you_key));
   if (mine?.refusal === 'cannot_keep') out.append(install('This computer can’t keep apps yet. To keep them,'));
-  const canKeep = Object.values(kept.can_keep).some((c) => c.person_key === read.you_key);
   if (!canKeep && !mine && localStorage.getItem(ASKED) === null) {
     out.append(
       install(`To keep ${card.title} on this computer,`),
@@ -136,7 +195,7 @@ async function show() {
   if (!r.ok || read === null || !Array.isArray(read.ops)) {
     return app.replaceChildren(el('h1', 'Give'), el('p', `What your group keeps can’t be read just now: ${read?.error ?? `this computer answered ${r.status}`}.`));
   }
-  const kept = fold(read.ops);
+  const kept = fold(read.ops, Math.floor(Date.now() / 1000));
   for (const r of kept.refused.filter((r) => !told.has(r.act))) {
     told.add(r.act);
     trace('the fold refused an act', r);
@@ -151,4 +210,4 @@ async function show() {
 }
 
 show();
-setInterval(() => asking === null && moving === null && show(), 3000);
+setInterval(() => asking === null && moving === null && taking === null && show(), 3000);

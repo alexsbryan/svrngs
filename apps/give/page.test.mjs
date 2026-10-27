@@ -48,8 +48,10 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; ch
 async function serve() {
   const policy = await carriedPolicy();
   const ops = [];
-  const record = (actor, person, person_key, payload) =>
-    ops.push({ id: `op${ops.length + 1}`, actor, person, person_key, ts_unix: ops.length + 1, voided: false, payload });
+  // Each act at its time, now unless the test names one: the page reads
+  // the clock to say whether a computer has stopped answering.
+  const record = (actor, person, person_key, payload, ts = Math.floor(Date.now() / 1000)) =>
+    ops.push({ id: `op${ops.length + 1}`, actor, person, person_key, ts_unix: ts, voided: false, payload });
   const server = http.createServer(async (req, res) => {
     res.setHeader('content-security-policy', policy);
     const [you, key, computer] = ['x-person', 'x-key', 'x-computer'].map((h) => req.headers[h]);
@@ -236,6 +238,116 @@ test('a member moves an app to another computer on its person’s yes, and a no 
 
     for (const words of said) assert.doesNotMatch(words, NOT_SAID);
     for (const what of ['offered, written or refused', 'declined, written or refused', 'accepted, written or refused', 'the offer, as it stands']) {
+      assert.ok(traced.some((l) => l.startsWith(`Give: ${what} `)), `traced: ${what}`);
+    }
+    assert.deepEqual(errors, []);
+  } finally {
+    await close();
+    server.stop();
+  }
+});
+
+/** A time as the page says it: hours and minutes today, with the day before. */
+function when(ts) {
+  const d = new Date(ts * 1000);
+  const today = d.toDateString() === new Date().toDateString();
+  const hm = { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' };
+  return d.toLocaleString([], today ? hm : { month: 'short', day: 'numeric', ...hm });
+}
+
+// Scenes 4 and 5 (give-app-takeover): cy's computer keeps Minecraft and
+// copies it every five minutes, then stops answering. Dee, whose computer
+// can keep, is asked "Keep it here?" with the newest copy's time and its
+// makers' terms; Ed, whose computer can't, reads only that it stopped
+// answering. Dee says yes; the copy doesn't start, and dee is offered the
+// copy before it. Then cy's computer comes back and keeps what it had as
+// a copy: every member reads it, and bo starts it instead, which asks the
+// same terms. Nothing is merged and nothing is taken away: the copy is
+// still listed after.
+test('a member keeps an app whose computer stopped answering, and a returning computer’s state can be started instead (chromium)', async () => {
+  const server = await serve();
+  const { context, close } = await launch('chromium');
+  const errors = [];
+  try {
+    const page = await context.newPage();
+    page.on('pageerror', (e) => errors.push(String(e)));
+    const traced = [];
+    page.on('console', (m) => m.type() === 'debug' && traced.push(m.text()));
+    const said = [];
+    const text = () => page.innerText('main');
+    const as = async (person, key, computer) => {
+      await context.setExtraHTTPHeaders({ 'x-person': person, 'x-key': key, 'x-computer': computer });
+      await page.goto(server.at);
+      await page.waitForFunction(() => !document.body.innerText.includes('Reading what your group keeps'), null, { timeout: 60_000 });
+      said.push(await text());
+    };
+    const press = async (name, row) => {
+      const before = await text();
+      await page.locator('li', { hasText: row }).getByRole('button', { name, exact: true }).first().click();
+      await page.waitForFunction((b) => document.querySelector('main').innerText !== b, before, { timeout: 30_000 });
+      said.push(await text());
+    };
+    const row = (title) => page.locator('li', { hasText: title }).innerText();
+    const last = () => {
+      const op = server.ops.at(-1);
+      return [op.actor, op.payload];
+    };
+
+    const now = Math.floor(Date.now() / 1000);
+    const at = now - 3600;
+    server.record('a1', 'cy', 'ka', { kind: 'ready' }, at - 10);
+    server.record('b1', 'bo', 'kb', { kind: 'ready' }, at - 10);
+    server.record('c1', 'dee', 'kc', { kind: 'ready' }, at - 10);
+    server.record('a1', 'cy', 'ka', { kind: 'started', app: 'minecraft', card: 'm1', agreed: true }, at);
+    const started = server.ops.at(-1).id;
+    const copy = (n, ts, over = started, dir = `give/minecraft/a1/${n}`) =>
+      server.record('a1', 'cy', 'ka', { kind: 'copied', app: 'minecraft', card: 'm1', over, from: dir, sum: `sum${n}` }, ts);
+    copy(1, at + 300);
+    copy(2, at + 600);
+
+    // Cy's computer's last copy, then nothing for three of its intervals.
+    copy(3, now - 901);
+    await as('ed', 'ke', 'e1');
+    assert.match(await row('Minecraft'), new RegExp(`Minecraft’s computer hasn’t answered since ${when(now - 901)}\\.`));
+    assert.doesNotMatch(await row('Minecraft'), /Keep it here|You have a copy/, 'a computer that can’t keep is not asked');
+
+    await as('dee', 'kc', 'c1');
+    assert.match(
+      await row('Minecraft'),
+      new RegExp(`Minecraft’s computer hasn’t answered since ${when(now - 901)}\\. You have a copy from ${when(now - 901)}\\. Keep it here\\?[\\s\\S]*${MINECRAFT_TERMS} Read them`),
+    );
+    await press('Agree and keep it here', 'Minecraft');
+    assert.deepEqual(last(), ['c1', { kind: 'taken', app: 'minecraft', card: 'm1', over: started, from: 'give/minecraft/a1/3', sum: 'sum3', agreed: true }]);
+    const t1 = server.ops.at(-1).id;
+    assert.match(await row('Minecraft'), /Minecraft · kept by your computer/);
+    assert.doesNotMatch(await row('Minecraft'), /hasn’t answered|Keep it here/, 'a computer that answers: nobody is asked');
+
+    // The copy doesn't start on dee's computer, as Give's program says.
+    server.record('c1', 'dee', 'kc', { kind: 'failed', app: 'minecraft', over: t1 });
+    await as('dee', 'kc', 'c1');
+    assert.match(await row('Minecraft'), new RegExp(`This copy didn’t start\\. Try the copy from ${when(at + 600)}\\?`));
+    await press('Agree and keep it here', 'Minecraft');
+    assert.deepEqual(last(), ['c1', { kind: 'taken', app: 'minecraft', card: 'm1', over: t1, from: 'give/minecraft/a1/2', sum: 'sum2', agreed: true }]);
+    const t2 = server.ops.at(-1).id;
+    assert.match(await row('Minecraft'), /Minecraft · kept by your computer/);
+    assert.doesNotMatch(await row('Minecraft'), /didn’t start/);
+
+    // Cy's computer comes back, and keeps what it had as a copy.
+    copy(4, now, started, 'give/minecraft/a1/had/4');
+    await as('cy', 'ka', 'a1');
+    assert.match(await row('Minecraft'), /Minecraft · kept by dee’s computer/);
+    assert.match(await row('Minecraft'), new RegExp(`Minecraft as your computer had it at ${when(now)}`));
+    await as('bo', 'kb', 'b1');
+    assert.match(await row('Minecraft'), new RegExp(`Minecraft as cy’s computer had it at ${when(now)}`));
+    await press('Start instead', 'Minecraft');
+    assert.match(await row('Minecraft'), new RegExp(`${MINECRAFT_TERMS} Read them`), 'the same question');
+    await press('Agree and start', 'Minecraft');
+    assert.deepEqual(last(), ['b1', { kind: 'taken', app: 'minecraft', card: 'm1', over: t2, from: 'give/minecraft/a1/had/4', sum: 'sum4', agreed: true }]);
+    assert.match(await row('Minecraft'), /Minecraft · kept by your computer/);
+    assert.match(await row('Minecraft'), /Minecraft as cy’s computer had it/, 'nothing taken away');
+
+    for (const words of said) assert.doesNotMatch(words, NOT_SAID);
+    for (const what of ['taken, written or refused', 'who answers, as it stands']) {
       assert.ok(traced.some((l) => l.startsWith(`Give: ${what} `)), `traced: ${what}`);
     }
     assert.deepEqual(errors, []);
