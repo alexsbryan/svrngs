@@ -269,7 +269,19 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   machine.rs`), making such machines never-ran here. 0 core, +13 library
   after its pass's -7, `apps/` +101, and the line one option more,
   the cap's raise to 19,121 the operator's
-  (`demo/runs/give/2026-10-26-install/NEEDS_HUMAN.md`);
+  (`demo/runs/give/2026-10-26-install/NEEDS_HUMAN.md`). Landed,
+  give-page-host: Give's install line names the page this computer's
+  group links are on, ours where it keeps none, from `page` beside the
+  group on the carried route `svrngs/acts`, which `Host::printed_page`
+  (`invite.rs`) decides for `svrngs link` too (db1130b3, 527db088;
+  `crates/svrngs-node/tests/carried.rs` `an_app_is_told_the_page`,
+  `apps/give/page.test.mjs` test 6); 0 core, +4 library after its pass's
+  -7, the cap lowered to 19,118 (2ba463a5), `apps/` about +30, one
+  surface item. Landed, give-docs: DESIGN §1, §3 and §7, ARCHITECTURE,
+  the README and `RELEASES.md` say the queue, and the release is
+  prepared for the operator to publish, never run
+  (`demo/runs/give/2026-10-26-release/`). What the queue left waits in
+  §2, each with its trigger;
 - sealing, at its §2 trigger.
 
 The operator's switch stands apart from that order: when they flip
@@ -287,6 +299,15 @@ The grapevine's standing carries are a row after V1 too (GRAPEVINE_DEMO
 | the phone's door, a spike: an iOS packet tunnel extension holding the node's endpoint with a member's key, serving a group's raw TCP lend on the phone's 127.0.0.1 to the phone's own apps, from anywhere, the app closed: Jellyfin's app playing a film over WiFi and cellular, music through a locked phone, memory against the tunnel's cap, a stranger refused and a leak's kill seen first. The node already builds for iOS with libc held at 0.2.189. Its design, bars proposed and cost (about $99, one row, three and a half to four and a half hours of the operator's), is `demo/runs/phone-tunnel/2026-10-26/DESIGN.md`; its case is svrn-docs `rings/current/WITHOUT_BEING_WATCHED.md` §8. It dials out where the row above answers, and shares that row's first half: an endpoint alive in a tunnel under its cap | the operator's Apple developer account is settled and the operator sets the bars (operator, 2026-10-26: "I'll get the developer account settled before we start") |
 | a chat's own door: a package that posts a group's link for a person, names a group for its channel, or follows a channel's members (E0's, at tag `e0-bot`, DESIGN §3) | a group asks for one that a pasted link cannot answer, counted |
 | Windows | a group asks |
+| automatic failover for an app Give keeps: today a takeover is always a person's yes, offered once the keeper has not copied the app for fifteen minutes (`apps/give/fold`, `GONE`); a house rule in canon would let the group say when a computer takes it over unasked (svrn-docs `rings/current/GIVE.md` §10) | a group asks for it, as a house rule |
+| shipping a kept app's write-ahead log: a copy is minutes old, every 5 minutes and one at each clean stop (`apps/give/src/keep.rs`, `EVERY`), so a takeover loses what was written since the last | a group loses data it cared about to a takeover, counted |
+| members carrying an app's image: a takeover pulls the card's pinned digest from its registry, and members carry state only (GIVE.md §10) | a takeover fails because the registry was down, counted |
+| holders of a kept app's copies who opt in: every member holds every copy, through the group's folder | a kept app's state too large for every member to hold |
+| a player's real address passed to a lent port (HAProxy's PROXY protocol): every player arrives from 127.0.0.1, so bans and limits by address cannot tell them apart (GIVE.md §6) | a group asks |
+| LAN discovery, consoles and Bedrock through a lent port | a group asks, counted |
+| a successor the house names, who keeps: today any member whose computer has Podman and Give's program may (the operator, 2026-10-26, "The first is fine"; `demo/runs/give/2026-10-26-keep/QUESTION.md`) | a group asks |
+| a size cap on Give's own lines, `apps/give/` beside the repository's and the core's: lean_check counts no `apps/` and the queue reported it each row (PLAN §1, give-app-runtime to give-page-host) | Give has landed, so the trigger has come; the cap is the operator's to set (`demo/runs/give/2026-10-26-release/NEEDS_HUMAN.md`) |
+| Give's people runs, `demo/give.md`: a Factorio world kept through a move and a takeover against the bars the operator chose, and a newcomer's fluency counted, once with Podman installed and once without. Never-ran (`demo/runs/give/2026-10-26-scenes/NEEDS_HUMAN.md`, "Go with those") | the operator names who and plays them |
 | the two-home game sessions of `demo/factorio.md` and `demo/minecraft.md`: each game 30 minutes between two homes, once on a direct path and once with the relay forced, desyncs, drops and the game's ping counted per path. Never-ran: no bars are set, and the one rehearsal (`demo/runs/factorio/2026-10-26-rehearsal.json`) ran both computers on one host, so neither path | the operator sets the bars and plays them (2026-10-26: "we can do the two-home session another time"), or a group playing through a lent port reports a desync or a drop |
 | the switch to svrngs's relay, parked at the gate (relay-park; §3, 2026-10-13): the build's one constant flipped from n0's to svrngs's at `relay.svrnme.sh`, then `scripts/deploy-relay.sh`, then `scripts/deploy-page.sh`, in that order (DESIGN §7), each the operator's; n0's relays and lookup the command's default until then, and nothing else changed by it; with it, #134 and #135 (`ralph/REVIEW_FINDINGS.md`), whose moment is the switch | V1 released on n0's relays (§1, "V1"; §3, 2026-10-15), and the operator starts paying for svrngs's relay (the operator, 2026-10-13: "until I'm actually ready to start paying / flip the switch for production") |
 | AirPlay and Cast from a page, and DLNA: a screen handed a lend's address by a phone, for an app with no client of its own on it. In the reads (`demo/runs/u6/2026-10-05-screen/reads.json`) AirPlay from Safari on an iPhone showed the LG no video three ways — the page's address, which only the phone's worker answers; jellyfin-web, whose hls.js sets `disableRemotePlayback`; a plain LAN file, which the TV never fetched — and iOS has no Cast sender. Until 2026-10-05 this was U6 (DESIGN §3, "The room", call 1) | an app with no client of its own for a screen is asked for on one, counted |
