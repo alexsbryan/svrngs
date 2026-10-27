@@ -73,7 +73,16 @@ the reading is the operator's.
 4. **App groups need the Xcode app once:** `xcodebuild
    -allowProvisioningUpdates` makes the team profiles but won't register a
    new app group (`ios/project.yml`).
-5. **Not measured:** a stream through a relay, for a carrier where
+5. **The listener is what Apple's TN3120 rules out:** "Do not use a packet
+   tunnel provider to host a network listener" (svrn-docs
+   `rings/current/PHONE_REPLICA.md` §4, [tn3120]). The spike's
+   `127.0.0.1:8096` is one. For review, production carries the lends as
+   the tunnel's own packets instead: the packet path of `e2b1a158` §4.1,
+   as a VPN carries traffic to private addresses. A packet arriving
+   through the tunnel may also be what wakes a provider iOS has put to
+   sleep with a locked phone; traffic to a loopback listener may not, so
+   S3 would have been testing the path production won't use.
+6. **Not measured:** a stream through a relay, for a carrier where
    holepunching fails; 30 minutes on any network; and a locked phone. The
    design reads a relayed cellular failure as the relay's, not the
    tunnel's (DESIGN.md §7).
