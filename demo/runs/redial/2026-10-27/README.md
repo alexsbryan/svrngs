@@ -105,3 +105,33 @@ labelled `b-`.
 | the plant (A's call skipped) | not run: it is HEAD, 9 of 10 above | 0 of 1, 60.01 s |
 | the grapevine scene, plant | not run, as above | failed: "not in Jo's copy 18s after Jo restarted" |
 | the grapevine scene, A | 10 of 10 in a row, 39.6-40.8 s each | 1 of 1, 39.11 s |
+
+## The close, at d21578a6
+
+`target/redial-close.sh` ran this Mac's gate and the Fedora box's gate
+image on podman's own network, the same commit on each
+(give-redial-3.await.log).
+
+- **This Mac:** `scripts/check.sh` exited 0. The grapevine scene and the
+  instrument (`scene redial (alone)`) both passed.
+- **Fedora, the gate image, pasta:** the grapevine scene and the instrument
+  passed. The whole gate exited 1, on two failures that are not this row's:
+  - `apps/give/tests/check.rs`: 7 tests panic at `:22`, "podman does not
+    answer on this computer". The image has no podman (`scripts/gate/
+    Containerfile`), so these fail in every run of the image, on any
+    network. The give scenes there are never-ran for the same reason.
+  - `crates/svrngs-node/tests/browser`, two WebKit tests:
+    `a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it`
+    (`main.rs:1265`, the film does not play again after the hand-over
+    page) and `a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself`
+    (`main.rs:951`, the seeks to 40 s and 52 s do not play again within
+    5 s). These are not caused by the network or by A. Run alone in the
+    image (`cargo test -p svrngs-node --test browser --
+    lend_worker_that_reads_no_store a_lent_film_plays_and_seeks`), both
+    failed 2 of 2 with `--network=host` and 2 of 2 on pasta at d21578a6,
+    and 1 of 1 with `--network=host` at a46029a8, before A. Both pass in
+    this Mac's gate.
+
+So (a)'s cause is gone from the image on pasta. The image's other two
+failures are follow-ups: podman inside the image for Give's tests, and
+WebKit's replay in the Ubuntu image.
