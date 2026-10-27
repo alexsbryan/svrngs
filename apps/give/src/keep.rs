@@ -35,17 +35,12 @@ use crate::runtime::{Agreed, App, Name};
 use crate::shelf::Shelf;
 
 /// How often a kept app's state is snapshotted into the group's folder:
-/// minutes apart, as the operator conceded (CHARTER, "snapshots are minutes
-/// apart, plus one at each clean stop"). Five minutes loses at most that
-/// much play to a computer that goes away, and writes twelve copies an hour
-/// for the folder to carry, of which [`KEEP`] stay.
-pub const EVERY: Duration = Duration::from_secs(5 * 60);
+/// [`give_fold::EVERY`], whose doc says why.
+pub const EVERY: Duration = Duration::from_secs(give_fold::EVERY);
 
 /// How many of its own snapshots of an app this computer leaves in the
-/// folder: the newest, the one before it for when the newest does not
-/// start (GIVE.md §3 scene 4), and one more for a second failure. Older
-/// ones are removed, so the folder every member holds stays bounded.
-pub const KEEP: usize = 3;
+/// folder: [`give_fold::KEEP`], whose doc says why.
+pub use give_fold::KEEP;
 
 /// How long a start that failed waits before the same act is tried again.
 pub const RETRY: Duration = Duration::from_secs(60);

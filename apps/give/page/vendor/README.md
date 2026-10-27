@@ -22,9 +22,9 @@ fold that is not built again fails the gate:
 
 | file | sha256 |
 |---|---|
-| `fold.js` | `ba145234019d1bf204b45d52f993edf6641536a3023dce4f8df03bb0eeb89d0f` |
+| `fold.js` | `4959762fac5f25e9efdd513a77918d574fedab8d9551d611f6ca29e400cd3d66` |
 | `call.mjs` | `33c2643acf58911ff16a03b760022165b4b4de984988451c3bcd229ff42de713` |
-| `../../fold/src/lib.rs` | `3dcb966bd5d0cb0910ba089057ec9d4fa8dde45ba0d60c700ddb24125adf814e` |
+| `../../fold/src/lib.rs` | `3090c527b2f612f4b24fae5cbc275d64593880e75ad97766da24403c9663ebf0` |
 | `../../fold/Cargo.toml` | `b2819db50e7a6207321f305d6e0472828a85cb457de9cea5359a893ddb065ccf` |
 
 To build it again and check it is these bytes:

@@ -38,6 +38,21 @@ use std::collections::BTreeMap;
 
 use serde_json::{Value, json};
 
+/// How often the computer that keeps an app snapshots its state into the
+/// group's folder, in seconds: minutes apart, as the operator conceded
+/// (CHARTER, "snapshots are minutes apart, plus one at each clean stop").
+/// Five minutes loses at most that much play to a computer that goes away,
+/// and writes twelve copies an hour for the folder to carry, of which
+/// [`KEEP`] stay. Here, beside the fold, because the keeper program takes
+/// its copies this often and the page reads them.
+pub const EVERY: u64 = 5 * 60;
+
+/// How many of its own snapshots of an app a computer leaves in the
+/// folder: the newest, the one before it for when the newest does not
+/// start (GIVE.md §3 scene 4), and one more for a second failure. Older
+/// ones are removed, so the folder every member holds stays bounded.
+pub const KEEP: usize = 3;
+
 /// How an app came to its keeper.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum How {
