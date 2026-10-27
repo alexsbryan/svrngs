@@ -408,6 +408,7 @@ impl Node {
         let gone = ring_routes::router(inbound).fallback(|| async { crate::door::gone() });
         let acceptor = IrohAcceptor::spawn(
             endpoint.clone(),
+            host.transport.accepted.clone(),
             move |alpn: &[u8], dialer: &PublicKey| match admit_dialer(&admitting, alpn, dialer) {
                 Some(Alpn::Member) => Admit::Serve(members.clone()),
                 Some(Alpn::Redeem) => Admit::Serve(redeem.clone()),

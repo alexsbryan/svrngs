@@ -14,3 +14,17 @@ mac-exp-closeall 3 load=[1.56 2.63 3.51] redial: Sam's write reached Jo, restart
 mac-exp-iroh 1 load=[7.39 3.80 3.83] redial: Sam's write reached Jo, restarted, in Some(4.072051542s) test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 11.53s 
 mac-exp-iroh 2 load=[6.04 3.67 3.78] redial: Sam's write reached Jo, restarted, in Some(6.731916625s) test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 14.20s 
 mac-exp-iroh 3 load=[5.06 3.58 3.75] redial: Sam's write reached Jo, restarted, in Some(4.076251875s) test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 11.52s 
+mac-grapevine-a 1 load=[2.38 2.33 2.61] test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 40.75s 
+mac-grapevine-a 2 load=[2.88 2.45 2.63] test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 39.61s 
+mac-grapevine-a 3 load=[2.64 2.44 2.62] test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 40.09s 
+mac-grapevine-a 4 load=[2.40 2.37 2.58] test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 39.98s 
+mac-grapevine-a 5 load=[3.58 2.66 2.68] test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 40.11s 
+mac-grapevine-a 6 load=[2.72 2.54 2.63] test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 39.93s 
+mac-grapevine-a 7 load=[2.42 2.49 2.61] test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 39.60s 
+mac-grapevine-a 8 load=[2.52 2.49 2.60] test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 39.99s 
+mac-grapevine-a 9 load=[2.10 2.38 2.55] test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 39.76s 
+mac-grapevine-a 10 load=[1.94 2.31 2.52] test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 39.63s 
+mac-b-head 1 redial: Sam's write reached Jo, restarted, in Some(5.116799542s) test result: ok. 1 passed; finished in 12.67s
+mac-b-a 1 redial: Sam's write reached Jo, restarted, in Some(4.033319375s) test result: ok. 1 passed; finished in 11.59s
+mac-b-a 2 redial: Sam's write reached Jo, restarted, in Some(4.050841833s) test result: ok. 1 passed; finished in 11.38s
+mac-b-a 3 redial: Sam's write reached Jo, restarted, in Some(4.062281125s) test result: ok. 1 passed; finished in 11.40s

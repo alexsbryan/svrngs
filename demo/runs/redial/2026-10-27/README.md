@@ -90,3 +90,18 @@ Each was applied to 15cacd50 alone, then reverted. The diffs are in
 
 The 6.7 s runs are ones where the kept connection took longer to fail. Under
 either remedy, the dial after it was answered at once.
+
+## (b): A landed
+
+The director chose A (`DECISION.md`). `fetch` now closes every connection
+to the computer, dialled or accepted, before its fresh dial (`iroh.rs`
+`close_every`). The lines are in `runs-mac.txt` and `runs-fedora.txt`,
+labelled `b-`.
+
+| | this Mac | Fedora, pasta |
+|---|---|---|
+| the instrument at HEAD | 1 of 1 passed, 5.12 s (the race won) | 0 of 1, 59.97 s |
+| the instrument with A | 3 of 3, 4.03-4.06 s | 3 of 3, 4.05-6.68 s |
+| the plant (A's call skipped) | not run: it is HEAD, 9 of 10 above | 0 of 1, 60.01 s |
+| the grapevine scene, plant | not run, as above | failed: "not in Jo's copy 18s after Jo restarted" |
+| the grapevine scene, A | 10 of 10 in a row, 39.6-40.8 s each | 1 of 1, 39.11 s |

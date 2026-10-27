@@ -140,7 +140,14 @@ pub struct IrohTransport {
     /// closes, or fails a request, is let go, so a member that restarted at
     /// another address is dialled anew where its contact says.
     pub(crate) conns: tokio::sync::watch::Sender<Connections>,
+    /// The connections this computer's acceptor took, which [`Self::fetch`]
+    /// closes with those it dialled.
+    pub(crate) accepted: Accepted,
 }
+
+/// The connections an acceptor took, each by the key its handshake verified
+/// ([`Connection::remote_id`]), shared with the transport that closes them.
+pub type Accepted = tokio::sync::watch::Sender<Vec<Connection>>;
 
 /// Each connection kept, by the computer's key and the protocol's bytes.
 pub(crate) type Connections = std::collections::BTreeMap<([u8; 32], &'static [u8]), Connection>;
@@ -152,6 +159,7 @@ impl IrohTransport {
             endpoint,
             known_addrs: std::sync::Mutex::new(HashMap::new()),
             conns: tokio::sync::watch::Sender::new(Connections::new()),
+            accepted: Accepted::default(),
         }
     }
 
@@ -290,7 +298,28 @@ impl IrohTransport {
             return answered;
         };
         tracing::debug!(target: "transport", peer = %peer.key.fmt_short(), failed, "iroh: a request failed on the connection kept to it, as one to a computer that restarted does: sent again, once, on one dialled afresh");
+        self.close_every(&peer.key);
         whole(self.send(peer, again.map(Into::into))).await
+    }
+
+    /// Every connection to `key` closed, dialled or accepted. iroh 1.0.2
+    /// lets go of the address it sends a key's packets to only when no
+    /// connection to the key is left
+    /// (`src/socket/remote_map/remote_state.rs:486-488`), and a new
+    /// connection's handshake goes to that address alone (`:799-809`). So
+    /// while a restarted computer's dial into this one is open, a dial
+    /// afresh goes to its old self's address, and is not answered
+    /// (demo/runs/redial/2026-10-27). A lend it opened here is cut once.
+    fn close_every(&self, key: &PublicKey) {
+        let (conns, accepted) = (self.conns.borrow(), self.accepted.borrow());
+        let dialled = conns.iter().filter(|((k, _), _)| k == key.as_bytes());
+        let open = (dialled.map(|(_, c)| c))
+            .chain(accepted.iter().filter(|c| c.remote_id() == *key))
+            .filter(|c| c.close_reason().is_none());
+        let closed = open
+            .map(|c| c.close(0u32.into(), b"dialled afresh"))
+            .count();
+        tracing::debug!(target: "transport", peer = %key.fmt_short(), closed, "iroh: every connection to it closed before the dial afresh, so iroh picks its address anew; a lend on one is cut once");
     }
 }
 
@@ -524,14 +553,15 @@ impl IrohAcceptor {
     /// not a credential; the verified key is the evidence `admit` decides
     /// on. It is called again for every connection, so a decision that
     /// consults live state sees membership change between dials.
-    pub fn spawn<F>(endpoint: iroh::Endpoint, admit: F) -> Self
+    /// Each connection is added to `accepted` ([`IrohTransport::fetch`]).
+    pub fn spawn<F>(endpoint: iroh::Endpoint, accepted: Accepted, admit: F) -> Self
     where
         F: Fn(&[u8], &PublicKey) -> Admit + Send + Sync + 'static,
     {
         let admit = Arc::new(admit);
         let task = tokio::spawn(async move {
             while let Some(incoming) = endpoint.accept().await {
-                let admit = admit.clone();
+                let (admit, accepted) = (admit.clone(), accepted.clone());
                 tokio::spawn(async move {
                     let conn = match incoming.await {
                         Ok(c) => c,
@@ -544,6 +574,10 @@ impl IrohAcceptor {
                             return;
                         }
                     };
+                    accepted.send_modify(|a| {
+                        a.retain(|c| c.close_reason().is_none());
+                        a.push(conn.clone());
+                    });
                     // A fully-accepted connection has a negotiated ALPN and
                     // a verified dialer key (from the peer's TLS
                     // certificate). Admit this connection's streams by both.

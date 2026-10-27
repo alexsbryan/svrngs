@@ -300,7 +300,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # it can be drawn again from that commit (e5daca60), +406 and 0, at 19,523.
 # Its economizing pass, the set cut to one point a picture and the kit to
 # what that set draws: -93, at 19,430, so the cap lowered to one past it.
-BUDGET = {"crates/svrngs-core": 3242, ".": 19431}
+# give-redial, the operator's raise (2026-10-27, "30 lines approved", up to
+# +30 and 0 core) on the director's A (demo/runs/redial/2026-10-27/
+# DECISION.md): a request that fails on the connection kept to a computer
+# closes every connection to it, the acceptor's included, before the dial
+# afresh (iroh.rs `close_every`). Its economizing pass, the close folded
+# into the count it traces (-2): +20 and 0, at 19,450.
+BUDGET = {"crates/svrngs-core": 3242, ".": 19451}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
