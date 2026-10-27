@@ -26,6 +26,13 @@
 //                                               list, until its words match
 //     {"count": selector}                       how many match, as `value`
 //     {"read": true}                            the page's words now
+//     {"clock": ms}                             the page's clock held `ms`
+//                                               ahead of this computer's
+//                                               from now on, its timers
+//                                               running (Give's scene 4:
+//                                               the page read as it reads
+//                                               fifteen minutes later);
+//                                               0 holds it at now
 //
 // Every step's answer is how long after the command began it ended and the
 // page's words then; a step that fails ends the command, said with the
@@ -95,6 +102,7 @@ async function step(page, s) {
   }
   if (s.count) return page.locator(s.count).count();
   if (s.read) return;
+  if (s.clock !== undefined) return page.clock.setFixedTime(Date.now() + s.clock);
   throw new Error(`no such step: ${JSON.stringify(s)}`);
 }
 
