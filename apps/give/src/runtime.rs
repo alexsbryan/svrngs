@@ -349,7 +349,9 @@ impl<'a> App<'a> {
     /// Snapshot the state volumes into a new directory under `into`: the app
     /// paused, each volume copied inside podman's storage (a reflink where
     /// the filesystem has one), the app unpaused, then each copy written out
-    /// as `<volume>.tar`. The directory appears whole or not at all.
+    /// as `<volume>.tar`. The directory appears whole or not at all. An app
+    /// with no pod, stopped, or gone with a computer that lost power, has
+    /// nothing writing its volumes, so they are copied with no pause.
     #[expect(
         clippy::disallowed_methods,
         reason = "a snapshot is named for when it was taken, and times its pause"
@@ -364,14 +366,22 @@ impl<'a> App<'a> {
         std::fs::create_dir_all(&partial).map_err(|e| file(&partial, e))?;
         let name = self.name.as_str();
         let paused = Instant::now();
-        self.podman.run(&["pod", "pause", name])?;
+        let live = self.podman.answers(&["pod", "exists", name])?;
+        tracing::debug!(app = name, live, "a pod to pause while it is copied, or none");
+        if live {
+            self.podman.run(&["pod", "pause", name])?;
+        }
         let copies: Result<Vec<_>, RunError> = self
             .card
             .state
             .iter()
             .map(|v| Ok((v.clone(), self.copy(&shell, v)?, self.root_of(&shell, &self.volume(v))?)))
             .collect();
-        let unpaused = self.podman.run(&["pod", "unpause", name]);
+        let unpaused = if live {
+            self.podman.run(&["pod", "unpause", name]).map(drop)
+        } else {
+            Ok(())
+        };
         let paused = paused.elapsed();
         let copies = copies?;
         unpaused?;
@@ -472,8 +482,16 @@ impl<'a> App<'a> {
     fn unpause(&self) -> Result<(), RunError> {
         let name = self.name.as_str();
         let pod = format!("pod={name}");
-        let paused = (self.podman)
-            .run(&["ps", "--all", "--filter", &pod, "--filter", "status=paused", "--format", "{{.Names}}"])?;
+        let paused = (self.podman).run(&[
+            "ps",
+            "--all",
+            "--filter",
+            &pod,
+            "--filter",
+            "status=paused",
+            "--format",
+            "{{.Names}}",
+        ])?;
         tracing::debug!(app = name, paused, "the pod's paused containers, unpaused");
         for c in paused.lines().filter(|c| !c.is_empty()) {
             self.podman.run(&["unpause", c])?;

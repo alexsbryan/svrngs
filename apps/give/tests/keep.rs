@@ -305,6 +305,7 @@ fn snapshots(p: &Places, app: &str) -> Vec<PathBuf> {
             d.flatten()
                 .map(|e| e.path())
                 .filter(|p| !p.file_name().unwrap().to_string_lossy().starts_with('.'))
+                .filter(|p| p.file_name().unwrap() != "had")
                 .collect()
         })
         .unwrap_or_default();
@@ -332,7 +333,8 @@ fn signal(child: &Child, signal: &str) {
 /// The keeper says it can keep, keeps the app the record names it for and
 /// not the one it names another computer for, copies its state to the
 /// group each interval, each copy naming its card version, and unlends and
-/// stops it, with a last copy, once another computer takes it over.
+/// stops it, with a last copy of the state it had, kept apart under
+/// `had/`, once another computer takes it over.
 #[test]
 fn the_keeper_keeps_only_what_the_record_names_it_for() {
     let podman = podman_here();
@@ -415,7 +417,8 @@ fn the_keeper_keeps_only_what_the_record_names_it_for() {
     // more as it stops, and stops it.
     let newest = snapshots(&p, "standin").pop().unwrap();
     let from = newest.strip_prefix(&p.folder).unwrap().to_string_lossy().to_string();
-    svrngs.act(BO, json!({ "kind": "taken", "app": "standin", "card": card.version, "over": started, "from": from, "agreed": true }));
+    let sum = give::runtime::sum(&newest).unwrap();
+    svrngs.act(BO, json!({ "kind": "taken", "app": "standin", "card": card.version, "over": started, "from": from, "sum": sum, "agreed": true }));
     until("the keeper unlends standin", Duration::from_secs(30), || {
         asked(&p).contains(&"unshare standin".to_string()).then_some(())
     });
@@ -423,8 +426,10 @@ fn the_keeper_keeps_only_what_the_record_names_it_for() {
     until("the keeper stops standin", Duration::from_secs(60), || {
         (!podman.answers(&["pod", "exists", &standin]).unwrap()).then_some(())
     });
-    let last = snapshots(&p, "standin").pop().unwrap();
-    assert!(last > newest, "a last copy as it stopped: {last:?} after {newest:?}");
+    let last = had(&p, "standin", "a1")
+        .pop()
+        .expect("a last copy as it stopped, as it had it");
+    assert_eq!(std::fs::read_to_string(last.join("card")).unwrap(), card.version);
     assert!(snapshots(&p, "standin").len() <= 3, "older copies past three removed");
     std::thread::sleep(Duration::from_secs(5));
     assert_eq!(
@@ -662,6 +667,258 @@ fn a_move_starts_the_computer_offered_from_the_last_copy() {
         "cy's computer lends it no more: {:?}",
         asked(&a)
     );
+    let _ = std::fs::remove_dir_all(&a.root);
+    let _ = std::fs::remove_dir_all(&b.root);
+}
+
+/// The copies of `app` that `actor`'s computer wrote as it had it after
+/// another took the app over, oldest first.
+fn had(p: &Places, app: &str, actor: &str) -> Vec<PathBuf> {
+    let mut out: Vec<PathBuf> = std::fs::read_dir(p.folder.join("give").join(app).join(actor).join("had"))
+        .map(|d| d.flatten().map(|e| e.path()).collect())
+        .unwrap_or_default();
+    out.retain(|p| !p.file_name().unwrap().to_string_lossy().starts_with('.'));
+    out.sort();
+    out
+}
+
+/// The stand-in's `starts`, as a copy holds it.
+fn starts_in(copy: &Path) -> String {
+    let mut tar = tar::Archive::new(std::fs::File::open(copy.join("data.tar")).unwrap());
+    for e in tar.entries().unwrap() {
+        let mut e = e.unwrap();
+        if e.path().unwrap().file_name().is_some_and(|n| n == "starts") {
+            let mut out = String::new();
+            e.read_to_string(&mut out).unwrap();
+            return out;
+        }
+    }
+    panic!("{} holds no starts", copy.display());
+}
+
+/// `copy`, written again beside itself as a copy that does not start: its
+/// state's `starts` a folder, so the stand-in's `date >> /data/starts`
+/// fails and it exits. Its folder, relative to the group's.
+fn broken(p: &Places, copy: &Path) -> String {
+    let dir = copy.with_file_name("99999999999999");
+    std::fs::create_dir_all(&dir).unwrap();
+    for f in ["card", "data.root"] {
+        std::fs::copy(copy.join(f), dir.join(f)).unwrap();
+    }
+    let mut tar = tar::Builder::new(std::fs::File::create(dir.join("data.tar")).unwrap());
+    let mut h = tar::Header::new_gnu();
+    h.set_entry_type(tar::EntryType::Directory);
+    h.set_path("starts/").unwrap();
+    h.set_mode(0o755);
+    h.set_uid(1000);
+    h.set_gid(1000);
+    h.set_size(0);
+    h.set_cksum();
+    tar.append(&h, std::io::empty()).unwrap();
+    tar.finish().unwrap();
+    dir.strip_prefix(&p.folder).unwrap().to_string_lossy().to_string()
+}
+
+/// The keeper is gone, then back (give-app-takeover; GIVE.md §3 scenes 4
+/// and 5). Cy's computer keeps the stand-in, copying it each interval, and
+/// loses power. Bo's takes it over from Cy's newest copy, which does not
+/// start: Bo's says so, and lends nothing. Bo's takes it from the copy
+/// before; that one starts, and exits within a minute: Bo's says so again,
+/// and unlends it. From the copy before that it starts and stays. Cy's
+/// computer comes back: it lends nothing and starts nothing, and keeps the
+/// state it had as a copy of its own, apart. Bo's state is untouched by it:
+/// nothing is merged. Starting that copy instead is a takeover from it, and
+/// Bo's own later state is kept as Bo's had it: nothing is thrown away.
+#[test]
+fn the_keeper_gone_then_back() {
+    let podman = podman_here();
+    let card = Card::parse(STANDIN).unwrap();
+    let (a, b) = (places("gone-a"), places("gone-b"));
+    let svrngs = record(vec![(TOKEN, CY, a.folder.clone()), (BOS, BO, b.folder.clone())]);
+    point(&a, &svrngs, TOKEN);
+    point(&b, &svrngs, BOS);
+    let mut removed = Removed {
+        podman: &podman,
+        card: card.clone(),
+        test: "gone-a".into(),
+        keeper: None,
+        root: a.root.clone(),
+        more: Vec::new(),
+    };
+    removed.keeper = Some(keep(&a, "gone-a"));
+    removed
+        .more
+        .push(("gone-b".into(), Some(keep(&b, "gone-b")), b.root.clone()));
+    let of = |kind: &str, actor: &str| {
+        (svrngs.ops().into_iter())
+            .filter(|o| o["payload"]["kind"] == format!("give/{kind}") && o["actor"] == actor)
+            .collect::<Vec<_>>()
+    };
+    let kept = || give_fold::fold(&give::record::gives(&svrngs.ops()));
+    until("both computers say they can keep", Duration::from_secs(30), || {
+        (!of("ready", "a1").is_empty() && !of("ready", "b1").is_empty()).then_some(())
+    });
+    let started = svrngs.act(
+        CY,
+        json!({ "kind": "started", "app": "standin", "card": card.version, "agreed": true }),
+    );
+    until("cy's computer lends standin", Duration::from_secs(180), || {
+        asked(&a).into_iter().find(|l| l.starts_with("share "))
+    });
+    // Three copies, each said in the record, the keeper's answer that it is there.
+    let copies = until("three copies of cy's, each said", Duration::from_secs(60), || {
+        let said = of("copied", "a1");
+        (said.len() >= 3).then_some(said)
+    });
+    for c in &copies {
+        assert_eq!(c["payload"]["over"], json!(started), "{c}");
+        assert_eq!(c["payload"]["card"], json!(card.version));
+        let dir = a.folder.join(c["payload"]["from"].as_str().unwrap());
+        assert_eq!(
+            c["payload"]["sum"].as_str().unwrap(),
+            give::runtime::sum(&dir).unwrap(),
+            "a copy's sum is its files'"
+        );
+    }
+
+    // Cy's computer loses power: its keeper and its app stop at once.
+    let mut cys = removed.keeper.take().unwrap();
+    signal(&cys, "-KILL");
+    let _ = cys.wait();
+    let pod = |test: &str| format!("{}standin", prefix(test));
+    podman.run(&["pod", "stop", &pod("gone-a")]).unwrap();
+    let cy_starts = {
+        let newest = kept().next("standin").unwrap().from.clone();
+        std::fs::metadata(a.folder.join(&newest)).unwrap();
+        newest
+    };
+
+    // Its newest copy is one that does not start.
+    let newest = a.folder.join(&cy_starts);
+    let bad = broken(&a, &newest);
+    let bad_sum = give::runtime::sum(&a.folder.join(&bad)).unwrap();
+    svrngs.act(CY, json!({ "kind": "copied", "app": "standin", "card": card.version, "over": started, "from": bad, "sum": bad_sum }));
+    for c in snapshots(&a, "standin") {
+        let rel = c.strip_prefix(&a.folder).unwrap().to_string_lossy().to_string();
+        carry(&a, &b, &rel, true);
+    }
+
+    // Bo keeps it there, from the newest copy: it does not start.
+    let next = kept().next("standin").unwrap().clone();
+    assert_eq!(next.from, bad, "the newest copy is the one offered");
+    let t1 = svrngs.act(BO, json!({ "kind": "taken", "app": "standin", "card": card.version, "over": started, "from": next.from, "sum": next.sum, "agreed": true }));
+    let failed = until(
+        "bo's computer says the copy did not start",
+        Duration::from_secs(180),
+        || of("failed", "b1").pop(),
+    );
+    assert_eq!(failed["payload"]["over"], json!(t1));
+    assert!(
+        asked(&b).is_empty(),
+        "a copy that did not start is not lent: {:?}",
+        asked(&b)
+    );
+    std::thread::sleep(Duration::from_secs(5));
+    assert_eq!(of("failed", "b1").len(), 1, "nor tried again: the person chooses");
+
+    // The copy before it is offered, and starts; then exits within a minute.
+    let before = kept().next("standin").unwrap().clone();
+    assert_eq!(before.from, cy_starts, "the copy before the one that did not start");
+    let t2 = svrngs.act(BO, json!({ "kind": "taken", "app": "standin", "card": card.version, "over": t1, "from": before.from, "sum": before.sum, "agreed": true }));
+    until("bo's computer lends standin", Duration::from_secs(180), || {
+        asked(&b).into_iter().find(|l| l.starts_with("share "))
+    });
+    podman.run(&["kill", &format!("{}-web", pod("gone-b"))]).unwrap();
+    let exited = until("bo's computer says it exited", Duration::from_secs(60), || {
+        of("failed", "b1")
+            .into_iter()
+            .find(|f| f["payload"]["over"] == json!(t2))
+    });
+    assert!(
+        asked(&b).contains(&"unshare standin".to_string()),
+        "an app that exited is unlent: {:?} ({exited})",
+        asked(&b)
+    );
+
+    // The one before that starts, and stays.
+    let third = kept().next("standin").unwrap().clone();
+    assert!(third.from < cy_starts, "{} before {cy_starts}", third.from);
+    let t3 = svrngs.act(BO, json!({ "kind": "taken", "app": "standin", "card": card.version, "over": t2, "from": third.from, "sum": third.sum, "agreed": true }));
+    let shared = until("bo's computer lends standin again", Duration::from_secs(180), || {
+        asked(&b).into_iter().filter(|l| l.starts_with("share ")).nth(1)
+    });
+    let port: u16 = shared.split(' ').nth(1).unwrap().parse().unwrap();
+    let bos = until("bo's lent port answers", Duration::from_secs(30), || {
+        get(port, "/starts")
+    });
+    assert_eq!(kept().apps["standin"].act, t3);
+
+    // Cy's computer comes back: it sees Bo's keeps it, lends nothing,
+    // starts nothing, and keeps the state it had as a copy, apart.
+    let shares = asked(&a).iter().filter(|l| l.starts_with("share ")).count();
+    removed.keeper = Some(keep(&a, "gone-a"));
+    let mine = until(
+        "cy's computer copies the state it had",
+        Duration::from_secs(120),
+        || {
+            of("copied", "a1")
+                .into_iter()
+                .find(|c| c["payload"]["from"].as_str().unwrap().contains("/had/"))
+        },
+    );
+    assert_eq!(
+        mine["payload"]["over"],
+        json!(started),
+        "the state as cy's keeping had it"
+    );
+    let cys_had = had(&a, "standin", "a1").pop().expect("in cy's folder");
+    assert_eq!(a.folder.join(mine["payload"]["from"].as_str().unwrap()), cys_had);
+    let listed = kept()
+        .had("standin")
+        .into_iter()
+        .map(|c| c.act.clone())
+        .collect::<Vec<_>>();
+    assert_eq!(listed, [mine["id"].as_str().unwrap()], "listed as cy's computer had it");
+    std::thread::sleep(Duration::from_secs(5));
+    assert_eq!(
+        asked(&a).iter().filter(|l| l.starts_with("share ")).count(),
+        shares,
+        "cy's computer lends nothing once back: {:?}",
+        asked(&a)
+    );
+    assert!(
+        !podman.answers(&["pod", "exists", &pod("gone-a")]).unwrap(),
+        "nor runs it"
+    );
+    assert_eq!(
+        get(port, "/starts").as_deref(),
+        Some(bos.as_str()),
+        "bo's state is untouched: nothing merged"
+    );
+
+    // Starting cy's copy instead is a takeover from it: bo's computer
+    // keeps its own later state as it had it, and starts from cy's.
+    let rel = cys_had.strip_prefix(&a.folder).unwrap().to_string_lossy().to_string();
+    carry(&a, &b, &rel, true);
+    let cys = kept().had("standin")[0].clone();
+    svrngs.act(BO, json!({ "kind": "taken", "app": "standin", "card": card.version, "over": t3, "from": cys.from, "sum": cys.sum, "agreed": true }));
+    let shared = until("bo's computer lends cy's copy", Duration::from_secs(180), || {
+        asked(&b).into_iter().filter(|l| l.starts_with("share ")).nth(2)
+    });
+    let port: u16 = shared.split(' ').nth(1).unwrap().parse().unwrap();
+    let now = until("its port answers", Duration::from_secs(30), || get(port, "/starts"));
+    let cy_lines = starts_in(&cys_had);
+    assert!(
+        now.starts_with(&cy_lines) && now.lines().count() == cy_lines.lines().count() + 1,
+        "started from cy's copy, and one start more:\ncy's  {cy_lines:?}\nnow   {now:?}"
+    );
+    assert_ne!(now, bos, "not bo's state");
+    assert!(
+        !had(&b, "standin", "b1").is_empty(),
+        "bo's later state kept as bo's had it"
+    );
+    let listed = kept().had("standin").len();
+    assert_eq!(listed, 2, "both copies as each had it stand: nothing thrown away");
     let _ = std::fs::remove_dir_all(&a.root);
     let _ = std::fs::remove_dir_all(&b.root);
 }
