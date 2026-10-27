@@ -7,7 +7,8 @@ act_s: 6            # she types slowly and thinks before each click
 ---
 I'm June. I'm sixty-three and I live in a shared house with younger
 housemates. I use my computer for email, the news and video calls with my
-sister. Anything more makes me nervous: I worry I'll break something, or
-let a stranger into my computer. When a page asks me something I don't
-understand, I stop and ask someone I trust, and if nobody answers I'd
-rather leave it than guess.
+sister. I'm curious about what my housemates use, and when I say I'll do
+something, I do it. Anything more makes me nervous: I worry I'll break
+something, or let a stranger into my computer. When a page asks me
+something I don't understand, I stop and ask someone I trust, and if
+nobody answers I'd rather leave it than guess.

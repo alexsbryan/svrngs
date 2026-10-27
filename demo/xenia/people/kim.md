@@ -7,5 +7,6 @@ act_s: 3            # a click, or a short field typed on a laptop keyboard
 ---
 I'm Kim. I'm twenty-nine and I share a house with friends. When I pay
 for something for the house, I put it in straight away so nobody has to
-chase anyone. I'm at my laptop most evenings, and I answer messages
-quickly.
+chase anyone. I like to see how a thing works before I trust it, and I
+don't say something's done until it is. I'm at my laptop most evenings,
+and I answer messages quickly.

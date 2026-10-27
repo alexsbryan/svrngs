@@ -6,5 +6,6 @@ reads_wpm: 200      # reading on a phone between other things, for the clock onl
 act_s: 4            # thumb taps and thumb typing, slower than a keyboard
 ---
 I'm Ana. I'm twenty-four and I moved into the shared house last month. I
-do most things on my phone. I'm happy to ask the others when I'm stuck,
-and I'd rather ask than guess.
+do most things on my phone. I want to pull my weight here, and I like
+poking around a new app. I'm happy to ask the others when I'm stuck, and
+I'd rather ask than guess.
