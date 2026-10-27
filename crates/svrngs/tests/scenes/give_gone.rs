@@ -44,6 +44,9 @@ use crate::give_move::{lenders, runs, starts};
 use crate::harness::Engine;
 use crate::people::{late, Browsers, Person, Scene};
 
+/// What this scene's pods are named by (give.rs `prefix`).
+const SCENE: &str = "gone";
+
 /// apps/give/fold `GONE`, in milliseconds, and a minute past it: how far
 /// ahead Dee's page reads its clock. The scenes link no part of Give.
 const GONE: u64 = 15 * 60 * 1000;
@@ -135,12 +138,13 @@ async fn give_gone(engine: Engine) {
     let card = standin();
     let card = card.to_str().unwrap();
     let (dees_scratch, bos_scratch) = (scene.scratch("dee-give"), scene.scratch("bo-give"));
-    brings(&program, &dee, &dees_scratch, "Elm", card).await;
+    brings(&program, SCENE, &dee, &dees_scratch, "Elm", card).await;
     let mut removed = Removed(
         vec![
-            keeps(&program, &dee, &dees_scratch, card, None),
-            keeps(&program, &bo, &bos_scratch, card, Some(EVERY)),
+            keeps(&program, SCENE, &dee, &dees_scratch, card, None),
+            keeps(&program, SCENE, &bo, &bos_scratch, card, Some(EVERY)),
         ],
+        SCENE,
         &["dee", "bo"],
     );
 
@@ -192,7 +196,7 @@ async fn give_gone(engine: Engine) {
     let mut bos_program = removed.0.pop().unwrap();
     let _ = bos_program.start_kill();
     let _ = bos_program.wait().await;
-    let pod = format!("{}standin", prefix("Bo"));
+    let pod = format!("{}standin", prefix(SCENE, "Bo"));
     let killed = std::process::Command::new("podman")
         .args(["pod", "kill", &pod])
         .output()
@@ -263,7 +267,7 @@ async fn give_gone(engine: Engine) {
     let bo = scene.start("Bo", &[]).await;
     removed
         .0
-        .push(keeps(&program, &bo, &bos_scratch, card, Some(EVERY)));
+        .push(keeps(&program, SCENE, &bo, &bos_scratch, card, Some(EVERY)));
     let bos = give_at(&bo, &elm).await;
     steps(
         &mut browsers,
@@ -278,7 +282,7 @@ async fn give_gone(engine: Engine) {
     )
     .await;
     lenders(&dee, &elm, &["Dee"]).await;
-    assert!(!runs("Bo"), "Bo's computer, back, runs nothing");
+    assert!(!runs(SCENE, "Bo"), "Bo's computer, back, runs nothing");
     let on_dees = dee.lent_by(&elm, "Dee", "standin").await;
     let still = starts(&mut browsers, "dee", &on_dees).await;
     assert_eq!(

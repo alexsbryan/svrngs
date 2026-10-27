@@ -34,11 +34,20 @@ use tokio::process::{Child, Command};
 use crate::harness::{repo, Engine};
 use crate::people::{late, Browsers, Person, Scene};
 
-/// What the scene names the stand-in's pod and volume by on `who`'s
-/// computer: the two share this host's podman.
-pub(crate) fn prefix(who: &str) -> String {
+/// What this scene's pods are named by (give.rs `prefix`).
+const SCENE: &str = "give";
+
+/// What the scene `scene` names the stand-in's pod and volume by on
+/// `who`'s computer. Every computer of every scene shares this host's
+/// podman, and the gate plays Give's scenes at once in one process, each
+/// with its own Bo: named by the person alone, scene 3's Bo and scene 4's
+/// ran one pod, and scene 4's Dee started from scene 3's state
+/// (ralph/next/give/ctl/log/sessions/give-app-scenes-1.await.log). Give
+/// takes a name of 40 bytes at most (apps/give/src/runtime.rs
+/// `Name::new`), so `scene` is a word of four letters.
+pub(crate) fn prefix(scene: &str, who: &str) -> String {
     format!(
-        "svrngs-test-scene-{}-{}-",
+        "svrngs-test-{}-{scene}-{}-",
         std::process::id(),
         who.to_lowercase()
     )
@@ -69,7 +78,13 @@ pub(crate) async fn give_built() -> PathBuf {
 /// the person's own home (on a Mac, `~/.config/containers`), and with a
 /// person's HOME of the scene's it answered "unable to connect to Podman
 /// socket" (target/scenes/give-chromium/cy-give/keep.log, 2026-10-26).
-pub(crate) fn run_give(program: &Path, who: &Person, scratch: &Path, args: &[&str]) -> Command {
+pub(crate) fn run_give(
+    program: &Path,
+    scene: &str,
+    who: &Person,
+    scratch: &Path,
+    args: &[&str],
+) -> Command {
     let svrngs = Path::new(env!("CARGO_BIN_EXE_svrngs")).parent().unwrap();
     let path = format!(
         "{}:{}",
@@ -84,7 +99,7 @@ pub(crate) fn run_give(program: &Path, who: &Person, scratch: &Path, args: &[&st
         .env("USER", who.name.to_lowercase())
         .env("PATH", path)
         .env("GIVE_DIR", scratch.join("give"))
-        .env("GIVE_TEST_PREFIX", prefix(&who.name))
+        .env("GIVE_TEST_PREFIX", prefix(scene, &who.name))
         .env("RUST_LOG", "give=debug")
         .kill_on_drop(true);
     c
@@ -92,15 +107,19 @@ pub(crate) fn run_give(program: &Path, who: &Person, scratch: &Path, args: &[&st
 
 /// The scene's pods and volumes removed, on each of the computers it
 /// names, and each program stopped, however the scene ends.
-pub(crate) struct Removed(pub Vec<Child>, pub &'static [&'static str]);
+pub(crate) struct Removed(
+    pub Vec<Child>,
+    pub &'static str,
+    pub &'static [&'static str],
+);
 
 impl Drop for Removed {
     fn drop(&mut self) {
         for keeper in &mut self.0 {
             let _ = keeper.start_kill();
         }
-        for who in self.1 {
-            remove(&format!("{}standin", prefix(who)));
+        for who in self.2 {
+            remove(&format!("{}standin", prefix(self.1, who)));
         }
     }
 }
@@ -123,6 +142,7 @@ pub(crate) fn remove(pod: &str) {
 /// appended to, so a program run again keeps what it said before.
 pub(crate) fn keeps(
     program: &Path,
+    scene: &str,
     who: &Person,
     scratch: &Path,
     card: &str,
@@ -132,7 +152,7 @@ pub(crate) fn keeps(
     let log = (std::fs::OpenOptions::new().create(true).append(true))
         .open(scratch.join("keep.log"))
         .unwrap();
-    let mut run = run_give(program, who, scratch, &["keep", "--card", card]);
+    let mut run = run_give(program, scene, who, scratch, &["keep", "--card", card]);
     if let Some(every) = every {
         run.env("GIVE_TEST_EVERY", every.to_string());
     }
@@ -223,12 +243,25 @@ pub(crate) fn no_podman() -> Option<String> {
 
 /// `who` brings Give to `group` (`give page <group>`), as its README says
 /// anyone does once.
-pub(crate) async fn brings(program: &Path, who: &Person, scratch: &Path, group: &str, card: &str) {
+pub(crate) async fn brings(
+    program: &Path,
+    scene: &str,
+    who: &Person,
+    scratch: &Path,
+    group: &str,
+    card: &str,
+) {
     std::fs::create_dir_all(scratch).unwrap();
-    let brought = run_give(program, who, scratch, &["page", group, "--card", card])
-        .output()
-        .await
-        .unwrap();
+    let brought = run_give(
+        program,
+        scene,
+        who,
+        scratch,
+        &["page", group, "--card", card],
+    )
+    .output()
+    .await
+    .unwrap();
     let said = String::from_utf8_lossy(&brought.stdout);
     assert!(
         brought.status.success() && said.contains(&format!("Give is in {group}")),
@@ -278,12 +311,13 @@ async fn give(engine: Engine) {
 
     // Cy brings Give to Elm; Cy and Bo each run its program for computers.
     let scratch = scene.scratch("cy-give");
-    brings(&program, &cy, &scratch, "Elm", card).await;
+    brings(&program, SCENE, &cy, &scratch, "Elm", card).await;
     let removed = Removed(
         vec![
-            keeps(&program, &cy, &scratch, card, None),
-            keeps(&program, &bo, &scene.scratch("bo-give"), card, None),
+            keeps(&program, SCENE, &cy, &scratch, card, None),
+            keeps(&program, SCENE, &bo, &scene.scratch("bo-give"), card, None),
         ],
+        SCENE,
         &["cy", "bo"],
     );
 
@@ -334,7 +368,7 @@ async fn give(engine: Engine) {
         [json!("Cy")],
         "one copy, lent by the computer that keeps it: {lends:#}"
     );
-    let bos_pod = format!("{}standin", prefix("Bo"));
+    let bos_pod = format!("{}standin", prefix(SCENE, "Bo"));
     let runs = std::process::Command::new("podman")
         .args(["pod", "exists", &bos_pod])
         .status()

@@ -29,6 +29,9 @@ use crate::give::{
 use crate::harness::Engine;
 use crate::people::{Browsers, Person, Scene};
 
+/// What this scene's pods are named by (give.rs `prefix`).
+const SCENE: &str = "move";
+
 /// The stand-in's starts, as `who`'s browser reads them at `lent`, once
 /// it serves them: each start adds its line before the app answers, so
 /// what it serves is its whole state.
@@ -72,10 +75,10 @@ pub(crate) async fn lenders(who: &Person, group: &str, want: &[&str]) {
     );
 }
 
-/// Whether the stand-in's pod runs on `who`'s computer: a pod Give
-/// stopped stays, its state in its volumes, until it starts again.
-pub(crate) fn runs(who: &str) -> bool {
-    let pod = format!("{}standin", prefix(who));
+/// Whether the stand-in's pod runs on `who`'s computer in `scene`: a pod
+/// Give stopped stays, its state in its volumes, until it starts again.
+pub(crate) fn runs(scene: &str, who: &str) -> bool {
+    let pod = format!("{}standin", prefix(scene, who));
     let state = std::process::Command::new("podman")
         .args(["pod", "inspect", "--format", "{{.State}}", &pod])
         .output();
@@ -116,12 +119,13 @@ async fn give_move(engine: Engine) {
     let card = standin();
     let card = card.to_str().unwrap();
     let scratch = scene.scratch("cy-give");
-    brings(&program, &cy, &scratch, "Elm", card).await;
+    brings(&program, SCENE, &cy, &scratch, "Elm", card).await;
     let removed = Removed(
         vec![
-            keeps(&program, &cy, &scratch, card, None),
-            keeps(&program, &bo, &scene.scratch("bo-give"), card, None),
+            keeps(&program, SCENE, &cy, &scratch, card, None),
+            keeps(&program, SCENE, &bo, &scene.scratch("bo-give"), card, None),
         ],
+        SCENE,
         &["cy", "bo"],
     );
 
@@ -191,7 +195,7 @@ async fn give_move(engine: Engine) {
         "and one start more: {after:?}"
     );
     assert!(
-        !runs("Cy"),
+        !runs(SCENE, "Cy"),
         "Cy's computer, which keeps it no more, runs nothing"
     );
 
