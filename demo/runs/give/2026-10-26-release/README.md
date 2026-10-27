@@ -55,3 +55,23 @@ in `NEEDS_HUMAN.md`, never run.
 `scripts/check.sh`, once, at the commit that carries this file; its result
 is in the row's await log (CHARTER fence 12), and `NEEDS_HUMAN.md`'s
 `<commit>` is that commit.
+
+## Published, 27 October 2026
+
+The operator: "Let's fix the grapevine bug then release" and "minor version
+bump, push main + the tag to github". give-redial landed first (bd344e4d);
+its gate passed whole on this Mac at `d21578a6` (give-redial-3.await.log,
+1,111 s), and no code changed after it (`git diff --stat d21578a6 HEAD --
+crates web scripts apps Cargo.toml Cargo.lock` empty).
+
+- A worktree detached at `d21578a6`, `npm ci --prefix web`, then
+  `CARGO_INCREMENTAL=0 scripts/deploy-page.sh`, exit 0: eight tarballs,
+  svrngs and give for darwin-aarch64, darwin-x86_64, linux-x86_64 and
+  linux-aarch64, give cross-built for all four; deployment
+  `dpl_J42faEd6upwwtjcb2pBxocy42qEC`, production.
+- Read back: the live `get/SHA256SUMS` equals the built one; the
+  darwin-aarch64 tarballs of svrngs and give hash to their lines;
+  `https://group.svrnme.sh/` and a name under it send
+  `Content-Security-Policy: frame-ancestors 'none'`; the live `install.sh`
+  has `--give`. The upload directory's `.vercel` and `.env.local` removed.
+- `git tag v1.3 d21578a6`; main and the tag pushed to GitHub.

@@ -1,6 +1,12 @@
 # svrngs releases
 
-## Next, not released yet
+## V1.3, 27 October 2026
+
+V1.3 lends anything on a port, a game included, and Give keeps one for
+your group on whichever of your computers is on. svrngs now opens only
+from your own computer, and a program shows its token. Update every
+computer in your group: a computer still on V1.2 shows a port a friend
+lends as an app it can't open, and has no Play.
 
 **Lend a game, or anything on a port.** svrngs carried only pages before.
 Now a program that speaks UDP or TCP, such as a Factorio or Minecraft
@@ -53,13 +59,29 @@ uses the record API, `svrngs share`, the group's folder and its own page,
 and an app joins its shelf as one `compose.yaml` with five lines of
 `x-svrngs` (`apps/give/README.md`).
 
+**A friend's computer that restarts is found again in seconds.** Before,
+when a friend's computer restarted, yours could go on trying the way it
+had reached the old one, and what you wrote waited a minute or more to
+reach them. Now yours lets that go and finds them again, in about 4
+seconds (`demo/runs/redial/2026-10-27/`).
+
+**In Money, the payer names who was in on it.** Money's form asks "Who
+was in on it?", with each other person by name. Each one named sees
+"Kim says you were in on Friday’s pizza: $18.00." on their own Money
+page, with "Yes, I was in on pizza" and "Not me". The payer names, but
+never signs for anyone: a share is yours only once you say so. Money's
+page shows it as soon as you're named, with no reload.
+
 **Your home page leads with what's in your group.** Each app is a link
 of its name, such as **Money**, with what it does as you beside it: "It
 reads and writes who paid for what, and who owes whom." Pressing it is
 still your yes, and nothing else is asked; the phone's group page says it
 the same way. Opening an app to this WiFi has moved below your group's
 list. The buttons say **Invite someone to House** and **Add your phone or
-another computer**, and how to open the page again is at its foot.
+another computer**, and how to open the page again is at its foot. In
+no group yet, it shows only how to join a group from a link, or make
+one. After you join, the group's page says "You’re in House, as Ana",
+and each app says what it's for before what opening it lets it do.
 
 **Two people with one name stay two in Money and Events too.** Money keeps
 a balance for each person, and Events lists each person who's coming, even
@@ -68,8 +90,10 @@ joined: "sam (joined 3 Oct)". So do the lists of who's visiting, who was
 removed, and whose computer didn't answer. An entry a computer wrote for
 someone before V1.2 still counts as theirs. If an older Money said someone
 paid sam back while two people are called sam, Money says it can't tell
-which sam, and the payer can say it again. It's in this repository, and not
-yet in the build at `group.svrnme.sh`.
+which sam, and the payer can say it again.
+
+V1.3 is the build at `group.svrnme.sh`, from commit `d21578a6`, tagged
+`v1.3`.
 
 ## V1.2, 25 October 2026
 

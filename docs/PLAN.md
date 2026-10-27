@@ -279,9 +279,15 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   -7, the cap lowered to 19,118 (2ba463a5), `apps/` about +30, one
   surface item. Landed, give-docs: DESIGN §1, §3 and §7, ARCHITECTURE,
   the README and `RELEASES.md` say the queue, and the release is
-  prepared for the operator to publish, never run
-  (`demo/runs/give/2026-10-26-release/`). What the queue left waits in
-  §2, each with its trigger;
+  prepared for the operator to publish
+  (`demo/runs/give/2026-10-26-release/`). Landed, give-redial: a computer
+  that restarts is reached again in about 4 s, where the connection kept
+  to its old self held a dead path (bd344e4d;
+  `demo/runs/redial/2026-10-27/`), +20 library inside the operator's +30.
+  Its release is V1.3, published 27 October 2026 from `d21578a6`, tagged
+  `v1.3` (the operator: "Let's fix the grapevine bug then release", "minor
+  version bump, push main + the tag to github"). What the queue left waits
+  in §2, each with its trigger;
 - sealing, at its §2 trigger.
 
 The operator's switch stands apart from that order: when they flip
