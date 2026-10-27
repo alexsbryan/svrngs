@@ -62,3 +62,23 @@ change before the run lands here first.
 computer stays the answer to risk 1, and the phone stays a door that dials
 out. PHONE_REPLICA's phase 2 and its risks 4 to 6 aren't spent on. **If
 it passes:** phase 2, the 24-hour pocket run, is worth its cost.
+
+## The pocket day, added at 10:40 before it runs
+
+The operator, 2026-10-27, after the locked hour: "I can keep the tunnel on
+while using the phone throughout the day with normal use patterns". The
+dialer keeps running, from slot 137 until the operator stops it tonight.
+This is PHONE_REPLICA §5's phase 2, at its suggested bars, with the
+operator's ordinary day as the routine.
+
+| Bar | Suggested | Expected | Chance | Why |
+|---|---|---|---|---|
+| answered | at least 90% of judged dials within 30 s, and no run of misses past 15 min | passes | 55% | The locked hour answered every dial. A day adds cellular, moving between networks, and iOS stopping the tunnel under memory pressure from other apps; the on-demand rule restarts it, but each restart costs a dial or two, and `up_s` shows it. |
+| memory | peak at most half the 50 MiB cap, no termination | passes | 90% | 4.6 to 6.4 MiB in every run so far. |
+| battery | at most 5 points over the day beyond a baseline day | could-not-judge | 80% | No baseline day was recorded. Settings › Battery's per-app share is recorded instead. |
+| data | at most 10 MB in 24 h | fails | 55% | 1,440 dials a day, each a QUIC handshake of a few KB each way, plus iroh's relay pings every 15 s and net reports every 20 to 26 s (PHONE_REPLICA §4). |
+
+**Tonight, the operator records:** Settings › Battery's share for Phone
+tunnel over the last 24 hours, Settings › Cellular's figure for Phone
+tunnel, the tunnel's samples and trace, and any reboot or time the tunnel
+was switched off.
