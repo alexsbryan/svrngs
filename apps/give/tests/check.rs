@@ -187,6 +187,28 @@ fn gone(podman: &Podman, name: &Name) {
     assert_eq!(volumes, "", "{} left volumes", name.as_str());
 }
 
+/// A keeper program killed in a snapshot's pause leaves its app paused
+/// (keep.rs's move test, killed at its bound, left
+/// `svrngs-test-move-a-33371-standin` "Paused", and `pod stop` refused it:
+/// "container state improper"). Stopping it, or removing it, still does so.
+#[test]
+fn an_app_left_paused_is_stopped_and_removed() {
+    let podman = podman_here();
+    let card = Card::parse(STANDIN).unwrap();
+    let app = App::new(&podman, &card, name("paused"));
+    let _removed = Removed(&app);
+    app.pull().unwrap();
+    app.start(free_port(), &Agreed::to(&card.asks)).unwrap();
+    app.wait_healthy().unwrap();
+    podman.run(&["pod", "pause", name("paused").as_str()]).unwrap();
+    app.stop().expect("a paused app stops");
+    podman.run(&["pod", "rm", "--force", name("paused").as_str()]).ok();
+    app.start(free_port(), &Agreed::to(&card.asks)).unwrap();
+    podman.run(&["pod", "pause", name("paused").as_str()]).unwrap();
+    app.remove().expect("a paused app is removed");
+    gone(&podman, &name("paused"));
+}
+
 #[test]
 fn give_check_passes_the_stand_in_and_leaves_nothing() {
     let podman = podman_here();

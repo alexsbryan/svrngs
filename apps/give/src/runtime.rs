@@ -459,6 +459,20 @@ impl<'a> App<'a> {
         unreachable!("the plain copy returns")
     }
 
+    /// The app unpaused, if a snapshot's pause was left by a keeper program
+    /// killed inside it: podman refuses to stop or remove a paused pod
+    /// ("container state improper", tests/check.rs
+    /// `an_app_left_paused_is_stopped_and_removed`).
+    fn unpause(&self) -> Result<(), RunError> {
+        let name = self.name.as_str();
+        let state = self.podman.run(&["pod", "inspect", "--format", "{{.State}}", name])?;
+        tracing::debug!(app = name, state, "the pod's state, unpaused if paused");
+        if state == "Paused" {
+            self.podman.run(&["pod", "unpause", name])?;
+        }
+        Ok(())
+    }
+
     /// Stop the app and remove its pod and containers. Its volumes stay.
     pub fn stop(&self) -> Result<(), RunError> {
         let name = self.name.as_str();
@@ -466,6 +480,7 @@ impl<'a> App<'a> {
             tracing::debug!(app = name, "not running, so nothing to stop");
             return Ok(());
         }
+        self.unpause()?;
         let grace = self
             .card
             .services
@@ -573,6 +588,7 @@ impl<'a> App<'a> {
             // 125 here on netavark's teardown ("nft" did not return
             // successfully) and left the pod, where stop then rm went
             // cleanly (podman 6.0.1 on a Mac, 2026-10-26).
+            self.unpause()?;
             self.podman.run(&["pod", "stop", "--time", "0", name])?;
             self.podman.run(&["pod", "rm", name])?;
         }
