@@ -69,8 +69,10 @@ catalogue run's (`demo/runs/catalogue/2026-10-05/`).
 app, for the next developer to copy and bend: Money, a group's shared book
 (`apps/expenses/`); Events, a post and who came (`apps/events/`); the
 grapevine, an ask carried from group to group by the people in both, where
-a developer adds a kind of ask in one file (`apps/grapevine/`); and House
-rules, where a house decides its rules (`apps/canon/`). Never the finished
+a developer adds a kind of ask in one file (`apps/grapevine/`); House
+rules, where a house decides its rules (`apps/canon/`); and Give, an app
+the group keeps on one member's computer at a time, a carried page and a
+program of its own beside svrngs (`apps/give/`). Never the finished
 apps: the community builds those. "The iOS of groups" is an analogy for
 being the thing others build on, not a plan to ship an iPhone app first.
 
@@ -320,6 +322,23 @@ say in memory — a `house:<group>` grant at each `joined`, a withdrawal at
 each `left` — and records none of them. The first person to open it answers
 "How does your house decide its rules?", and that answer is itself a rule
 the house can change.
+
+**Give** is the app a group keeps: an app whose state is one directory runs
+on one member's computer at a time, in rootless Podman from the app's own
+published image, and copies of its state reach every member through the
+group's folder (`apps/give/README.md`; svrn-docs `rings/current/GIVE.md`).
+It is its own package on this surface alone — the record API, `svrngs
+share` and `svrngs unshare`, the synced folder and its own carried page —
+and links no svrngs crate (`apps/give/tests/surface.rs`). Who keeps what is
+Give's fact, not the group's: one fold (`apps/give/fold/`), which its
+program links and its page runs built to JavaScript, as House rules runs
+canon-core. svrngs learns no keeping; it lends what Give's program shares,
+a page or a port. An app is a card, its own `compose.yaml` with an
+`x-svrngs` block of five fields: `title`, `about`, `door`, `state` and
+`asks`. Every move and every takeover is a person's yes, and a keeper that
+comes back after another took over keeps its later state as a copy anyone
+may start instead, never merged. Any member whose computer has Podman and
+Give's program may keep (the operator, 2026-10-26).
 
 **What runs as you is what your group brought, and each new version is your
 own yes.** Bringing an app pins it: the folder acts that place its files
@@ -1492,6 +1511,18 @@ make their group. With `--relay <name> [--open]` after it, it keeps `svrngs
 relay` running instead: a LaunchAgent of its own on macOS; on Linux, where
 only the system gives ports 80 and 443, it prints a system unit for whoever
 runs the server to install as root, and installs none.
+
+*A computer that keeps apps* gets Give's program from the same line, with
+`--give` after the link or the page's address. The page host serves it
+beside svrngs, a tarball per platform under `get/` listed in the same
+`SHA256SUMS`, built with svrngs's release (`scripts/build-release.sh`), so
+the two ship together, a coupling of distribution and not of code.
+`install.sh` checks both against the sums before it installs either, puts
+`give` beside `svrngs` and keeps `give keep` running at login, waited for
+as it stops, since it copies each app it keeps to the group then. Give's
+page gives that line, from the page its group's https links are on, ours
+where the computer keeps none, to a computer that cannot keep yet, with
+the one other install it needs, Podman (`apps/give/page/index.js`).
 
 Publishing the binaries with the page is the operator's
 (`scripts/deploy-page.sh`). It reads `cli::SHIPPED` (§3, "Where a computer
