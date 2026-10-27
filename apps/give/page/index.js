@@ -17,10 +17,16 @@ import * as build from './vendor/fold.js';
 
 const ACTS = 'svrngs/acts';
 const PODMAN = 'https://podman.io/docs/installation';
-// Give's program comes as svrngs does, by svrngs's own line from the page
-// svrngs is published at (README.md), with --give (web/install.sh): it
-// checks the program against the page's SHA256SUMS and keeps it running.
-const LINE = `curl -fsSL https://group.svrnme.sh/install.sh | sh -s -- 'https://group.svrnme.sh/' --give`;
+// Give's program comes as svrngs does, by svrngs's own line with --give
+// (web/install.sh, web/app.js `line`): it checks the program against the
+// page's SHA256SUMS and keeps it running. The page is the one the group's
+// https links print on, which svrngs says beside the group
+// (crates/svrngs-node/src/carried.rs `acts`, give-page-host), else the
+// page svrngs is published at (README.md), our default.
+const OURS = 'https://group.svrnme.sh/';
+// What a terminal reads as one address and nothing more: no quote, space,
+// `$`, `&` or `;` that would run what the address spells.
+const PLAIN = /^https?:\/\/[\w.~:/%@-]+$/;
 // Where this page remembers, on this computer, that it asked about the
 // install once and was told "Not now".
 const ASKED = 'give: asked to install';
@@ -57,15 +63,22 @@ function when(ts) {
 /** Who keeps an app, in the group's words. */
 const who = (keeping, read) => (keeping.person_key === read.you_key ? 'your computer' : `${keeping.person}’s computer`);
 
-/** The install a computer needs to keep apps, said once. */
-function install(why) {
-  return el(
-    'p',
-    `${why} svrngs needs Podman (free, one install) and Give’s program for computers. `,
-    link('Get Podman', PODMAN),
-    ', then paste this line into a terminal for Give’s program: ',
-    el('code', LINE),
-  );
+/**
+ * The install a computer needs to keep apps, said once, with the line from
+ * `page`, svrngs's word on the group's page: none is ours, and so is no
+ * word, from a svrngs before give-page-host, as the line was then; one it
+ * can't read, or one that is not a plain address, gives no line, never
+ * ours in its place (AGENTS.md 6).
+ */
+function install(why, page) {
+  if (page === undefined) trace('svrngs says no page beside the group, as one before give-page-host: ours, as then');
+  const at = page == null ? OURS : typeof page === 'string' && PLAIN.test(page) ? page.replace(/\/?$/, '/') : null;
+  const said = [`${why} svrngs needs Podman (free, one install) and Give’s program for computers. `, link('Get Podman', PODMAN)];
+  if (at === null) {
+    trace('no line for Give’s program: the page the group’s links are on', { page });
+    return el('p', ...said, '. The line for Give’s program can’t be given here just now: this computer can’t read the page your group’s links are on.');
+  }
+  return el('p', ...said, ', then paste this line into a terminal for Give’s program: ', el('code', `curl -fsSL ${at}install.sh | sh -s -- '${at}' --give`));
 }
 
 /** `op` written as this computer's person; `failed` says what didn't happen, if svrngs refuses it. */
@@ -178,10 +191,10 @@ function row(card, kept, read) {
   // This person's own start of it, refused because the computer it was
   // written on can't keep apps: said, with what it needs.
   const mine = kept.refused.findLast((r) => r.app === card.kind && read.ops.some((o) => o.id === r.act && o.person_key === read.you_key));
-  if (mine?.refusal === 'cannot_keep') out.append(install('This computer can’t keep apps yet. To keep them,'));
+  if (mine?.refusal === 'cannot_keep') out.append(install('This computer can’t keep apps yet. To keep them,', read.page));
   if (!canKeep && !mine && localStorage.getItem(ASKED) === null) {
     out.append(
-      install(`To keep ${card.title} on this computer,`),
+      install(`To keep ${card.title} on this computer,`, read.page),
       button('Not now', () => (localStorage.setItem(ASKED, 'yes'), show()), true),
     );
     return out;

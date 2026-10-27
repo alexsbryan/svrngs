@@ -48,6 +48,10 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; ch
 async function serve() {
   const policy = await carriedPolicy();
   const ops = [];
+  // The page the group's https links print on, as svrngs says it beside
+  // the group (carried.rs `acts`, give-page-host): none here unless a test
+  // names one.
+  const said = { page: null };
   // Each act at its time, now unless the test names one: the page reads
   // the clock to say whether a computer has stopped answering.
   const record = (actor, person, person_key, payload, ts = Math.floor(Date.now() / 1000)) =>
@@ -58,7 +62,7 @@ async function serve() {
     const path = new URL(req.url, 'http://app').pathname;
     const json = (status, body) => res.writeHead(status, { 'content-type': 'application/json' }).end(JSON.stringify(body));
     if (path === '/svrngs/acts') {
-      if (req.method === 'GET') return json(200, { you, you_key: key, group: 'elm', people: ['cy', 'bo'], spans: null, ops });
+      if (req.method === 'GET') return json(200, { you, you_key: key, group: 'elm', page: said.page, people: ['cy', 'bo'], spans: null, ops });
       let body = '';
       for await (const chunk of req) body += chunk;
       if (computer === 'phone') return json(403, { error: 'Open give from your home page to write in it.' });
@@ -79,7 +83,7 @@ async function serve() {
   // page's origin, and every connection open to it is dropped.
   const down = () => new Promise((done) => (server.close(done), server.closeAllConnections()));
   const up = () => new Promise((done) => server.listen(port, '127.0.0.1', done));
-  return { at: `http://127.0.0.1:${port}/`, ops, record, down, up, stop: () => server.close() };
+  return { at: `http://127.0.0.1:${port}/`, ops, said, record, down, up, stop: () => server.close() };
 }
 
 test('a group starts an app from the shelf, and every member reads who keeps it (chromium)', async () => {
@@ -113,8 +117,9 @@ test('a group starts an app from the shelf, and every member reads who keeps it 
     assert.match(await row('Minecraft'), /To keep Minecraft on this computer, svrngs needs Podman \(free, one install\) and Give’s program for computers\. Get Podman, then paste this line into a terminal for Give’s program:/);
     assert.equal(await page.getByRole('link', { name: 'Get Podman' }).first().getAttribute('href'), 'https://podman.io/docs/installation');
     // The one line install.sh takes Give's program by (give-install (b)):
-    // svrngs's own line from the page svrngs is published at (README.md),
-    // with --give (crates/svrngs/tests/install.rs runs it).
+    // svrngs's own line, with --give (crates/svrngs/tests/install.rs runs
+    // it), from the page svrngs is published at (README.md), as this
+    // computer keeps no page of its own (give-page-host).
     const line = `curl -fsSL https://group.svrnme.sh/install.sh | sh -s -- 'https://group.svrnme.sh/' --give`;
     assert.equal(await page.locator('li', { hasText: 'Minecraft' }).locator('code').innerText(), line);
     await press('Not now', 'Minecraft');
@@ -479,6 +484,52 @@ test('a press while svrngs is down says nothing reached the group, and the ask s
     assert.doesNotMatch(await text(), /nothing reached your group/);
     assert.deepEqual(server.ops.slice(written).map((o) => o.payload), [{ kind: 'started', app: 'minecraft', card: 'm1', agreed: true }], 'started once');
     assert.deepEqual(errors, []);
+  } finally {
+    await close();
+    server.stop();
+  }
+});
+
+test('Give’s install line names the page this computer’s group links are on, ours where it keeps none (chromium)', async () => {
+  // give-page-host: a group on a page host of its own gets svrngs and
+  // Give's program from it, so the line names the page svrngs says beside
+  // the group, with the slash install.sh puts after it; none, ours (the
+  // first test), as is no word from a svrngs before this row. One svrngs can't read, or one a terminal would read as
+  // more than an address, gives no line: never ours in its place (AGENTS.md
+  // 6), never a line that runs what the address spells. Red at 47d46706:
+  // the line was ours whatever the page.
+  const server = await serve();
+  const { context, close } = await launch('chromium');
+  try {
+    const page = await context.newPage();
+    const traced = [];
+    page.on('console', (m) => m.type() === 'debug' && traced.push(m.text()));
+    await context.setExtraHTTPHeaders({ 'x-person': 'cy', 'x-key': 'ka', 'x-computer': 'a1' });
+    const open = async (said) => {
+      server.said.page = said;
+      await page.goto(server.at);
+      await page.waitForSelector('li');
+      return page.locator('li', { hasText: 'Minecraft' });
+    };
+    let row = await open('https://links.example.org/our/house');
+    const theirs = 'https://links.example.org/our/house/';
+    assert.equal(await row.locator('code').innerText(), `curl -fsSL ${theirs}install.sh | sh -s -- '${theirs}' --give`);
+
+    // A svrngs from before give-page-host says no page: ours, as it was.
+    row = await open(undefined);
+    const ours = 'https://group.svrnme.sh/';
+    assert.equal(await row.locator('code').innerText(), `curl -fsSL ${ours}install.sh | sh -s -- '${ours}' --give`);
+    assert.ok(traced.some((t) => t.includes('as one before give-page-host')), traced.join('\n'));
+
+    row = await open({ unread: 'not an http(s) address without a \'#\'' });
+    assert.equal(await row.locator('code').count(), 0, 'no line, never ours in its place');
+    assert.match(await row.innerText(), /Get Podman\. The line for Give’s program can’t be given here just now: this computer can’t read the page your group’s links are on\./);
+    assert.ok(traced.some((t) => t.includes('no line for Give’s program') && t.includes('not an http(s) address')), traced.join('\n'));
+
+    row = await open("https://links.example.org/$(touch x)'/");
+    assert.equal(await row.locator('code').count(), 0, 'no line a terminal would run more of');
+    assert.match(await row.innerText(), /The line for Give’s program can’t be given here just now/);
+    assert.doesNotMatch(await page.innerText('main'), NOT_SAID);
   } finally {
     await close();
     server.stop();
