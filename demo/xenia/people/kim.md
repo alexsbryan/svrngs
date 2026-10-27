@@ -5,6 +5,7 @@ wait_s: 15          # on her laptop, a page that hangs fifteen seconds is broken
 reads_wpm: 230      # a quick reader skimming an app's labels, for the clock only
 act_s: 3            # a click, or a short field typed on a laptop keyboard
 ---
-I'm Kim. I'm twenty-nine and I live in a shared house. I'm the one who
-keeps track of things: the bills, who paid for what, the house chat. I'm
-at my laptop most evenings, and I answer messages quickly.
+I'm Kim. I'm twenty-nine and I share a house with friends. When I pay
+for something for the house, I put it in straight away so nobody has to
+chase anyone. I'm at my laptop most evenings, and I answer messages
+quickly.
