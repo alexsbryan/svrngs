@@ -1,0 +1,16 @@
+mac-head 1 load=[15.88 8.32 4.93] redial: Sam's write reached Jo, restarted, in Some(5.122966709s) test result: ok. 1 passed; finished in 12.65s
+mac-head 2 load=[5.83 6.35 4.80] redial: Sam's write reached Jo, restarted, in Some(5.094066583s) test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 12.54s 
+mac-head 3 load=[5.12 6.15 4.76] redial: Sam's write reached Jo, restarted, in Some(59.974412792s) thread 'tokio-rt-worker' (323842946) panicked at crates/svrngs/tests/scenes/people.rs:48:17: redial::restarted::alone --- FAILED test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 13 filtered out; finished in 67.41s 
+mac-head 4 load=[2.45 5.19 4.50] redial: Sam's write reached Jo, restarted, in Some(5.283299625s) test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 12.79s 
+mac-head 5 load=[4.73 5.54 4.64] redial: Sam's write reached Jo, restarted, in Some(5.060024s) test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 12.79s 
+mac-head 6 load=[5.98 5.79 4.74] redial: Sam's write reached Jo, restarted, in Some(5.140666s) test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 12.53s 
+mac-head 7 load=[2.30 3.11 3.55] redial: Sam's write reached Jo, restarted, in Some(5.072533042s) test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 12.62s 
+mac-head 8 load=[2.42 3.08 3.53] redial: Sam's write reached Jo, restarted, in Some(5.047075917s) test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 12.50s 
+mac-head 9 load=[2.19 2.99 3.49] redial: Sam's write reached Jo, restarted, in Some(5.051030583s) test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 12.49s 
+mac-head 10 load=[2.16 2.96 3.47] redial: Sam's write reached Jo, restarted, in Some(5.077205291s) test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 12.52s 
+mac-exp-closeall 1 load=[1.73 2.76 3.59] redial: Sam's write reached Jo, restarted, in Some(4.078771917s) test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 11.64s 
+mac-exp-closeall 2 load=[1.63 2.69 3.55] redial: Sam's write reached Jo, restarted, in Some(6.744420417s) test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 14.18s 
+mac-exp-closeall 3 load=[1.56 2.63 3.51] redial: Sam's write reached Jo, restarted, in Some(4.088759416s) test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 11.65s 
+mac-exp-iroh 1 load=[7.39 3.80 3.83] redial: Sam's write reached Jo, restarted, in Some(4.072051542s) test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 11.53s 
+mac-exp-iroh 2 load=[6.04 3.67 3.78] redial: Sam's write reached Jo, restarted, in Some(6.731916625s) test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 14.20s 
+mac-exp-iroh 3 load=[5.06 3.58 3.75] redial: Sam's write reached Jo, restarted, in Some(4.076251875s) test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 11.52s 

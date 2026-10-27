@@ -1,0 +1,295 @@
+2026-10-27T15:15:06.674111Z  INFO svrngs::identity: node_key: generated + persisted identity key (first boot) node_pubkey=ac6476d8d95b84d530a85429f6eaccfeea4a47c987104ebbc55ed60f7c0ca123
+2026-10-27T15:15:06.677638Z  INFO transport: iroh egress posture (no relay named is n0's with n0_services, none without it; n0_services=false severs all n0 contact) n0_services=true loopback_only=false relays=["http://127.0.0.1:50546/"]
+2026-10-27T15:15:06.701634Z DEBUG endpoint{id=ac6476d8d9}: iroh::_events::direct_addrs: addrs={DirectAddr { addr: 100.104.36.28:52751, typ: Local }, DirectAddr { addr: 192.168.1.11:52751, typ: Local }}
+2026-10-27T15:15:06.741925Z  INFO folder: folder: the store is open untagged=0
+2026-10-27T15:15:06.745734Z  INFO rails: api: serving the record to this computer's apps addr=127.0.0.1:50547
+2026-10-27T15:15:06.746078Z  INFO node: node: endpoint bound with the signing key actor="ac6476d8d95b84d530a85429f6eaccfeea4a47c987104ebbc55ed60f7c0ca123" data_dir=/Users/alexsbryan/dev/svrngs/crates/svrngs/../../target/scenes/redial-chromium/sam/.svrngs dial=Some("ac6476d8d95b84d530a85429f6eaccfeea4a47c987104ebbc55ed60f7c0ca123@100.104.36.28:52751,192.168.1.11:52751") api=127.0.0.1:50547
+2026-10-27T15:15:06.746593Z  INFO svrngs_node::ring_sync: ring sync: loop started interval_secs=60
+2026-10-27T15:15:06.748361Z DEBUG home: home: answered only to an open, then only with its session or the token, from itself, a typed address or, to read, a navigation path=/svrngs-open method=GET at_own=true site=None mode=None origin=None answers=false shown=Neither opening=true
+2026-10-27T15:15:07.787213Z DEBUG folder: folder: what the store keeps changed, so it drops every other version kept=0
+2026-10-27T15:15:08.815964Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:08.816127Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:09.704991Z  INFO endpoint{id=ac6476d8d9}:relay-actor: iroh::socket::transports::relay::actor: home is now relay http://127.0.0.1:50546/, was None
+2026-10-27T15:15:09.705850Z DEBUG endpoint{id=ac6476d8d9}:relay-actor:active-relay{url=http://127.0.0.1:50546/}:dialing: iroh::_events::relay::home_changed: url=http://127.0.0.1:50546/ home_relay=true
+2026-10-27T15:15:09.707623Z DEBUG endpoint{id=ac6476d8d9}:relay-actor:active-relay{url=http://127.0.0.1:50546/}:connected: iroh::_events::relay::connected: url=http://127.0.0.1:50546/ home_relay=true
+2026-10-27T15:15:09.740602Z  INFO folder: synced: the directory kept in step with the group's folder namespace="d68c513659b80a51d057d5ba4302e72ca621c56182ca25c57b70f0f9e83dfda0" folder="1400 Page" dir=/Users/alexsbryan/dev/svrngs/crates/svrngs/../../target/scenes/redial-chromium/sam/svrngs/1400 Page
+2026-10-27T15:15:09.743958Z DEBUG folder: synced: the OS's file events watched, the directory walked whole each 600s namespace="d68c513659b80a51d057d5ba4302e72ca621c56182ca25c57b70f0f9e83dfda0" folder="1400 Page"
+2026-10-27T15:15:09.746097Z DEBUG folder: folder: the layout read again, the record having moved namespace="d68c513659b80a51d057d5ba4302e72ca621c56182ca25c57b70f0f9e83dfda0" placed=0
+2026-10-27T15:15:09.746217Z DEBUG folder: synced: the layout read folder="1400 Page" placed=0 holders=1 ms=2
+2026-10-27T15:15:09.746458Z DEBUG folder: synced: the layout to write folder="1400 Page" placed=0
+2026-10-27T15:15:09.746530Z DEBUG folder: synced: a step folder="1400 Page" files=0 sent=0 unwritten=0 read_ms=2 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=2
+2026-10-27T15:15:09.794767Z DEBUG home: home: answered only to an open, then only with its session or the token, from itself, a typed address or, to read, a navigation path=/link method=POST at_own=true site=Some("same-origin") mode=None origin=Some("http://svrngs.localhost:50547") answers=true shown=Session opening=false
+2026-10-27T15:15:09.806428Z DEBUG folder: synced: the step woken, the group's record having taken an act namespace="d68c513659b80a51d057d5ba4302e72ca621c56182ca25c57b70f0f9e83dfda0" folder="1400 Page"
+2026-10-27T15:15:09.810778Z DEBUG folder: folder: the layout read again, the record having moved namespace="d68c513659b80a51d057d5ba4302e72ca621c56182ca25c57b70f0f9e83dfda0" placed=0
+2026-10-27T15:15:09.810944Z DEBUG folder: synced: the layout read folder="1400 Page" placed=0 holders=1 ms=4
+2026-10-27T15:15:09.811184Z DEBUG folder: synced: the layout to write folder="1400 Page" placed=0
+2026-10-27T15:15:09.811246Z DEBUG folder: synced: a step folder="1400 Page" files=0 sent=0 unwritten=0 read_ms=4 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=4
+2026-10-27T15:15:09.837182Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:10.874007Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:10.874182Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:11.898953Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:11.899092Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:12.859386Z DEBUG iroh::_events::conn::incoming: remote_addr=Relay { url: RelayUrl("http://127.0.0.1:50546/"), endpoint_id: PublicKey(83af78896377d879a3831c9e0ab76646a1861dc550edaadf29ab50ec9ca072fc) }
+2026-10-27T15:15:12.863120Z DEBUG iroh::_events::conn::connected: conn_id=513467308336 side=Server remote_id=83af788963 alpn=svrngs/redeem/0
+2026-10-27T15:15:12.864461Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_message{msg=AddConnection(513467308336)}: iroh::_events::path::open: remote=83af788963 conn_id=513467308336 path_id=0 network_path=Relay(http://127.0.0.1:50546/, 83af788963)
+2026-10-27T15:15:12.864550Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_message{msg=AddConnection(513467308336)}: iroh::_events::path::set_status: remote=83af788963 conn_id=513467308336 path_id=0 network_path=Relay(http://127.0.0.1:50546/, 83af788963) status=Backup prev_status=Available
+2026-10-27T15:15:12.864629Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_message{msg=AddConnection(513467308336)}:select_path: iroh::_events::path::selected: remote=83af788963 network_path=Relay(http://127.0.0.1:50546/, 83af788963) prev_network_path=None
+2026-10-27T15:15:12.864667Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_message{msg=AddConnection(513467308336)}:select_path: iroh::_events::path::set_status: remote=83af788963 conn_id=513467308336 path_id=0 network_path=Relay(http://127.0.0.1:50546/, 83af788963) status=Available prev_status=Backup
+2026-10-27T15:15:12.864816Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=svrngs/redeem/0 dialer=83af78896377d879a3831c9e0ab76646a1861dc550edaadf29ab50ec9ca072fc
+2026-10-27T15:15:12.865825Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467308336) event=Ok(Established { id: PathId(1) })}: iroh::_events::path::open: remote=83af788963 conn_id=513467308336 path_id=1 network_path=Ip(192.168.1.11->192.168.1.11:59817)
+2026-10-27T15:15:12.866180Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467308336) event=Ok(Established { id: PathId(1) })}: iroh::_events::path::set_status: remote=83af788963 conn_id=513467308336 path_id=1 network_path=Ip(192.168.1.11->192.168.1.11:59817) status=Backup prev_status=Available
+2026-10-27T15:15:12.866243Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467308336) event=Ok(Established { id: PathId(1) })}:select_path: iroh::_events::path::selected: remote=83af788963 network_path=Ip(192.168.1.11->192.168.1.11:59817) prev_network_path=Relay(http://127.0.0.1:50546/, 83af788963)
+2026-10-27T15:15:12.866281Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467308336) event=Ok(Established { id: PathId(1) })}:select_path: iroh::_events::path::set_status: remote=83af788963 conn_id=513467308336 path_id=0 network_path=Relay(http://127.0.0.1:50546/, 83af788963) status=Backup prev_status=Available
+2026-10-27T15:15:12.866346Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467308336) event=Ok(Established { id: PathId(1) })}:select_path: iroh::_events::path::set_status: remote=83af788963 conn_id=513467308336 path_id=1 network_path=Ip(192.168.1.11->192.168.1.11:59817) status=Available prev_status=Backup
+2026-10-27T15:15:12.866402Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467308336) event=Ok(Established { id: PathId(2) })}: iroh::_events::path::open: remote=83af788963 conn_id=513467308336 path_id=2 network_path=Ip(100.104.36.28->100.104.36.28:59817)
+2026-10-27T15:15:12.866437Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467308336) event=Ok(Established { id: PathId(2) })}: iroh::_events::path::set_status: remote=83af788963 conn_id=513467308336 path_id=2 network_path=Ip(100.104.36.28->100.104.36.28:59817) status=Backup prev_status=Available
+2026-10-27T15:15:12.867472Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467308336) event=Ok(Abandoned { id: PathId(2), reason: RemoteAbandoned { error_code: 62 } })}: iroh::_events::path::abandoned: remote=83af788963 conn_id=513467308336 path_id=2 network_path=Ip(100.104.36.28->100.104.36.28:59817) reason=RemoteAbandoned { error_code: 62 }
+2026-10-27T15:15:12.868712Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467308336) event=Ok(Established { id: PathId(3) })}: iroh::_events::path::open: remote=83af788963 conn_id=513467308336 path_id=3 network_path=Ip(100.104.36.28->100.104.36.28:59817)
+2026-10-27T15:15:12.868752Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467308336) event=Ok(Established { id: PathId(3) })}: iroh::_events::path::set_status: remote=83af788963 conn_id=513467308336 path_id=3 network_path=Ip(100.104.36.28->100.104.36.28:59817) status=Backup prev_status=Available
+2026-10-27T15:15:12.869261Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467308336) event=Ok(Abandoned { id: PathId(3), reason: RemoteAbandoned { error_code: 62 } })}: iroh::_events::path::abandoned: remote=83af788963 conn_id=513467308336 path_id=3 network_path=Ip(100.104.36.28->100.104.36.28:59817) reason=RemoteAbandoned { error_code: 62 }
+2026-10-27T15:15:12.870110Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}: iroh::_events::conn::closed: conn_id=513467308336 remote_id=83af788963 reason=ApplicationClosed(ApplicationClose { error_code: 0, reason: b"" })
+2026-10-27T15:15:12.870730Z DEBUG iroh::_events::conn::incoming: remote_addr=Ip(192.168.1.11:59817)
+2026-10-27T15:15:12.871888Z DEBUG iroh::_events::conn::connected: conn_id=513467317872 side=Server remote_id=83af788963 alpn=svrngs/redeem/0
+2026-10-27T15:15:12.872027Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_message{msg=AddConnection(513467317872)}: iroh::_events::path::open: remote=83af788963 conn_id=513467317872 path_id=0 network_path=Ip(192.168.1.11->192.168.1.11:59817)
+2026-10-27T15:15:12.872065Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_message{msg=AddConnection(513467317872)}: iroh::_events::path::set_status: remote=83af788963 conn_id=513467317872 path_id=0 network_path=Ip(192.168.1.11->192.168.1.11:59817) status=Backup prev_status=Available
+2026-10-27T15:15:12.872098Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_message{msg=AddConnection(513467317872)}:select_path: iroh::_events::path::selected: remote=83af788963 network_path=Ip(192.168.1.11->192.168.1.11:59817) prev_network_path=None
+2026-10-27T15:15:12.872123Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_message{msg=AddConnection(513467317872)}:select_path: iroh::_events::path::set_status: remote=83af788963 conn_id=513467317872 path_id=0 network_path=Ip(192.168.1.11->192.168.1.11:59817) status=Available prev_status=Backup
+2026-10-27T15:15:12.872185Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=svrngs/redeem/0 dialer=83af78896377d879a3831c9e0ab76646a1861dc550edaadf29ab50ec9ca072fc
+2026-10-27T15:15:12.882794Z DEBUG svrngs_node::ring_sync: ring sync: woken by a local write rather than the interval
+2026-10-27T15:15:12.882795Z DEBUG folder: synced: the step woken, the group's record having taken an act namespace="d68c513659b80a51d057d5ba4302e72ca621c56182ca25c57b70f0f9e83dfda0" folder="1400 Page"
+2026-10-27T15:15:12.883296Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}: iroh::_events::conn::closed: conn_id=513467317872 remote_id=83af788963 reason=ApplicationClosed(ApplicationClose { error_code: 0, reason: b"" })
+2026-10-27T15:15:12.884479Z DEBUG transport: transport: the group names no relay for this computer — its key alone, which only an address lookup finds peer=83af788963
+2026-10-27T15:15:12.884532Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Jo/83af7889"] skipped_offline=[]
+2026-10-27T15:15:12.884665Z DEBUG svrngs_node::ring_sync: ring sync: namespace register namespace="d68c513659b80a51d057d5ba4302e72ca621c56182ca25c57b70f0f9e83dfda0" offered_to=["Jo/83af7889"] skipped_not_standing=[]
+2026-10-27T15:15:12.884894Z DEBUG transport: iroh: a request on the connection kept to it, else on one dialled (#178) peer=83af788963 alpn=Member kept=false
+2026-10-27T15:15:12.884954Z DEBUG transport: iroh: dialled by key, iroh holding these addresses for it peer=83af788963 alpn=Member known=["Relay(http://127.0.0.1:50546/) Active", "Ip(192.168.1.11:59817) Active", "Ip(100.104.36.28:59817) Inactive"]
+2026-10-27T15:15:12.884979Z DEBUG transport: iroh: a bare key — dialled through the endpoint's address lookup when it has one transport="iroh" peer=83af7889 lookup=true
+2026-10-27T15:15:12.884992Z DEBUG iroh::_events::conn::incoming: remote_addr=Ip(192.168.1.11:59817)
+2026-10-27T15:15:12.885034Z DEBUG connect{me=ac6476d8d9 alpn=cwth/http/0 remote=83af788963}: iroh::_events::conn::connecting: remote_id=83af788963 alpn=cwth/http/0
+2026-10-27T15:15:12.886023Z DEBUG folder: folder: the layout read again, the record having moved namespace="d68c513659b80a51d057d5ba4302e72ca621c56182ca25c57b70f0f9e83dfda0" placed=0
+2026-10-27T15:15:12.886082Z DEBUG folder: synced: the layout read folder="1400 Page" placed=0 holders=2 ms=3
+2026-10-27T15:15:12.886325Z DEBUG folder: synced: the layout to write folder="1400 Page" placed=0
+2026-10-27T15:15:12.886388Z DEBUG folder: synced: a step folder="1400 Page" files=0 sent=0 unwritten=0 read_ms=3 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=3
+2026-10-27T15:15:12.886399Z DEBUG iroh::_events::conn::connected: conn_id=513467317552 side=Server remote_id=83af788963 alpn=cwth/http/0
+2026-10-27T15:15:12.886677Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_message{msg=AddConnection(513467317552)}: iroh::_events::path::open: remote=83af788963 conn_id=513467317552 path_id=0 network_path=Ip(192.168.1.11->192.168.1.11:59817)
+2026-10-27T15:15:12.886717Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_message{msg=AddConnection(513467317552)}: iroh::_events::path::set_status: remote=83af788963 conn_id=513467317552 path_id=0 network_path=Ip(192.168.1.11->192.168.1.11:59817) status=Backup prev_status=Available
+2026-10-27T15:15:12.886749Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_message{msg=AddConnection(513467317552)}:select_path: iroh::_events::path::selected: remote=83af788963 network_path=Ip(192.168.1.11->192.168.1.11:59817) prev_network_path=None
+2026-10-27T15:15:12.886772Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_message{msg=AddConnection(513467317552)}:select_path: iroh::_events::path::set_status: remote=83af788963 conn_id=513467317552 path_id=0 network_path=Ip(192.168.1.11->192.168.1.11:59817) status=Available prev_status=Backup
+2026-10-27T15:15:12.887169Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=83af78896377d879a3831c9e0ab76646a1861dc550edaadf29ab50ec9ca072fc
+2026-10-27T15:15:12.887229Z DEBUG iroh::_events::conn::connected: conn_id=513467317200 side=Client remote_id=83af788963 alpn=cwth/http/0
+2026-10-27T15:15:12.887300Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_message{msg=AddConnection(513467317200)}: iroh::_events::path::open: remote=83af788963 conn_id=513467317200 path_id=0 network_path=Relay(http://127.0.0.1:50546/, 83af788963)
+2026-10-27T15:15:12.887323Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_message{msg=AddConnection(513467317200)}: iroh::_events::path::set_status: remote=83af788963 conn_id=513467317200 path_id=0 network_path=Relay(http://127.0.0.1:50546/, 83af788963) status=Backup prev_status=Available
+2026-10-27T15:15:12.887353Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_message{msg=AddConnection(513467317200)}:do_holepunching: iroh::_events::qnt::init: remote=83af788963 local_candidates={100.104.36.28:52751, 192.168.1.11:52751} remote_candidates={}
+2026-10-27T15:15:12.887393Z DEBUG transport: iroh: a dial, answered or not; one not answered in time is a computer taken as asleep peer=83af788963 within=Some(4s) error=None
+2026-10-27T15:15:12.888439Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467317552) event=Ok(Established { id: PathId(1) })}: iroh::_events::path::open: remote=83af788963 conn_id=513467317552 path_id=1 network_path=Relay(http://127.0.0.1:50546/, 83af788963)
+2026-10-27T15:15:12.888471Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467317552) event=Ok(Established { id: PathId(1) })}: iroh::_events::path::set_status: remote=83af788963 conn_id=513467317552 path_id=1 network_path=Relay(http://127.0.0.1:50546/, 83af788963) status=Backup prev_status=Available
+2026-10-27T15:15:12.888914Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:do_holepunching: iroh::_events::qnt::init: remote=83af788963 local_candidates={100.104.36.28:52751, 192.168.1.11:52751} remote_candidates={100.104.36.28:59817, 192.168.1.11:59817}
+2026-10-27T15:15:12.889392Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467317200) event=Ok(Established { id: PathId(1) })}: iroh::_events::path::open: remote=83af788963 conn_id=513467317200 path_id=1 network_path=Ip(192.168.1.11->192.168.1.11:59817)
+2026-10-27T15:15:12.890775Z DEBUG transport: iroh: a request on the connection kept to it, else on one dialled (#178) peer=83af788963 alpn=Member kept=true
+2026-10-27T15:15:12.891763Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467317200) event=Ok(Established { id: PathId(2) })}: iroh::_events::path::open: remote=83af788963 conn_id=513467317200 path_id=2 network_path=Ip(100.104.36.28->100.104.36.28:59817)
+2026-10-27T15:15:12.892025Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467317200) event=Ok(Abandoned { id: PathId(2), reason: ApplicationClosed { error_code: 62 } })}: iroh::_events::path::abandoned: remote=83af788963 conn_id=513467317200 path_id=2 network_path=Ip(100.104.36.28->100.104.36.28:59817) reason=ApplicationClosed { error_code: 62 }
+2026-10-27T15:15:12.896500Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="d68c513659b80a51d057d5ba4302e72ca621c56182ca25c57b70f0f9e83dfda0" peer=83af78896377d879a3831c9e0ab76646a1861dc550edaadf29ab50ec9ca072fc chunk=1 pulled=0 pushed=0 peer_sent=0 offered=5 more_for_peer=false
+2026-10-27T15:15:12.896567Z DEBUG transport: iroh: a request on the connection kept to it, else on one dialled (#178) peer=83af788963 alpn=Member kept=true
+2026-10-27T15:15:12.897167Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="d68c513659b80a51d057d5ba4302e72ca621c56182ca25c57b70f0f9e83dfda0" peer=83af78896377d879a3831c9e0ab76646a1861dc550edaadf29ab50ec9ca072fc chunk=2 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-27T15:15:12.897188Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=0 round_ms=14
+2026-10-27T15:15:12.911673Z DEBUG folder: synced: the step woken, the group's record having taken an act namespace="d68c513659b80a51d057d5ba4302e72ca621c56182ca25c57b70f0f9e83dfda0" folder="1400 Page"
+2026-10-27T15:15:12.911854Z DEBUG svrngs_node::ring_sync: ring sync: woken by a local write rather than the interval
+2026-10-27T15:15:12.913481Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Jo/83af7889"] skipped_offline=[]
+2026-10-27T15:15:12.913670Z DEBUG svrngs_node::ring_sync: ring sync: namespace register namespace="d68c513659b80a51d057d5ba4302e72ca621c56182ca25c57b70f0f9e83dfda0" offered_to=["Jo/83af7889"] skipped_not_standing=[]
+2026-10-27T15:15:12.913833Z DEBUG transport: iroh: a request on the connection kept to it, else on one dialled (#178) peer=83af788963 alpn=Member kept=true
+2026-10-27T15:15:12.914866Z DEBUG folder: folder: the layout read again, the record having moved namespace="d68c513659b80a51d057d5ba4302e72ca621c56182ca25c57b70f0f9e83dfda0" placed=0
+2026-10-27T15:15:12.914929Z DEBUG folder: synced: the layout read folder="1400 Page" placed=0 holders=2 ms=3
+2026-10-27T15:15:12.915042Z DEBUG folder: synced: the layout to write folder="1400 Page" placed=0
+2026-10-27T15:15:12.915080Z DEBUG folder: synced: a step folder="1400 Page" files=0 sent=0 unwritten=0 read_ms=3 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=3
+2026-10-27T15:15:12.915407Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="d68c513659b80a51d057d5ba4302e72ca621c56182ca25c57b70f0f9e83dfda0" peer=83af78896377d879a3831c9e0ab76646a1861dc550edaadf29ab50ec9ca072fc chunk=1 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-27T15:15:12.915448Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=0 round_ms=3
+2026-10-27T15:15:12.921915Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:12.989848Z  INFO rails: ring sync: an append woke the round
+2026-10-27T15:15:12.989881Z DEBUG folder: synced: the step woken, the group's record having taken an act namespace="d68c513659b80a51d057d5ba4302e72ca621c56182ca25c57b70f0f9e83dfda0" folder="1400 Page"
+2026-10-27T15:15:12.990116Z DEBUG svrngs_node::ring_sync: ring sync: woken by a local write rather than the interval
+2026-10-27T15:15:12.991605Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Jo/83af7889"] skipped_offline=[]
+2026-10-27T15:15:12.991820Z DEBUG svrngs_node::ring_sync: ring sync: namespace register namespace="d68c513659b80a51d057d5ba4302e72ca621c56182ca25c57b70f0f9e83dfda0" offered_to=["Jo/83af7889"] skipped_not_standing=[]
+2026-10-27T15:15:12.992059Z DEBUG transport: iroh: a request on the connection kept to it, else on one dialled (#178) peer=83af788963 alpn=Member kept=true
+2026-10-27T15:15:12.994077Z DEBUG folder: folder: the layout read again, the record having moved namespace="d68c513659b80a51d057d5ba4302e72ca621c56182ca25c57b70f0f9e83dfda0" placed=0
+2026-10-27T15:15:12.994147Z DEBUG folder: synced: the layout read folder="1400 Page" placed=0 holders=2 ms=4
+2026-10-27T15:15:12.994312Z DEBUG folder: synced: the layout to write folder="1400 Page" placed=0
+2026-10-27T15:15:12.994359Z DEBUG folder: synced: a step folder="1400 Page" files=0 sent=0 unwritten=0 read_ms=4 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=4
+2026-10-27T15:15:12.998953Z DEBUG transport: iroh: a request on the connection kept to it, else on one dialled (#178) peer=83af788963 alpn=Member kept=true
+2026-10-27T15:15:13.005147Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="d68c513659b80a51d057d5ba4302e72ca621c56182ca25c57b70f0f9e83dfda0" peer=83af78896377d879a3831c9e0ab76646a1861dc550edaadf29ab50ec9ca072fc chunk=1 pulled=0 pushed=1 peer_sent=5 offered=1 more_for_peer=false
+2026-10-27T15:15:13.005381Z DEBUG transport: iroh: a request on the connection kept to it, else on one dialled (#178) peer=83af788963 alpn=Member kept=true
+2026-10-27T15:15:13.006437Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="d68c513659b80a51d057d5ba4302e72ca621c56182ca25c57b70f0f9e83dfda0" peer=83af78896377d879a3831c9e0ab76646a1861dc550edaadf29ab50ec9ca072fc chunk=2 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-27T15:15:13.006493Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=1 round_ms=16
+2026-10-27T15:15:13.064379Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}: transport: relay: a lookup's answer, its relays read dotless peer=83af788963 relays=["http://127.0.0.1:50546/"]
+2026-10-27T15:15:13.170097Z DEBUG iroh::_events::conn::incoming: remote_addr=Relay { url: RelayUrl("http://127.0.0.1:50546/"), endpoint_id: PublicKey(83af78896377d879a3831c9e0ab76646a1861dc550edaadf29ab50ec9ca072fc) }
+2026-10-27T15:15:13.170117Z DEBUG iroh::_events::conn::incoming: remote_addr=Relay { url: RelayUrl("http://127.0.0.1:50546/"), endpoint_id: PublicKey(83af78896377d879a3831c9e0ab76646a1861dc550edaadf29ab50ec9ca072fc) }
+2026-10-27T15:15:13.170899Z DEBUG iroh::_events::conn::connected: conn_id=513467908112 side=Server remote_id=83af788963 alpn=cwth/http/0
+2026-10-27T15:15:13.171013Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_message{msg=AddConnection(513467908112)}: iroh::_events::path::open: remote=83af788963 conn_id=513467908112 path_id=0 network_path=Relay(http://127.0.0.1:50546/, 83af788963)
+2026-10-27T15:15:13.171066Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_message{msg=AddConnection(513467908112)}: iroh::_events::path::set_status: remote=83af788963 conn_id=513467908112 path_id=0 network_path=Relay(http://127.0.0.1:50546/, 83af788963) status=Backup prev_status=Available
+2026-10-27T15:15:13.171215Z DEBUG iroh::_events::conn::connected: conn_id=513467908144 side=Server remote_id=83af788963 alpn=cwth/http/0
+2026-10-27T15:15:13.171264Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_message{msg=AddConnection(513467908144)}: iroh::_events::path::open: remote=83af788963 conn_id=513467908144 path_id=0 network_path=Relay(http://127.0.0.1:50546/, 83af788963)
+2026-10-27T15:15:13.171278Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_message{msg=AddConnection(513467908144)}: iroh::_events::path::set_status: remote=83af788963 conn_id=513467908144 path_id=0 network_path=Relay(http://127.0.0.1:50546/, 83af788963) status=Backup prev_status=Available
+2026-10-27T15:15:13.171472Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=83af78896377d879a3831c9e0ab76646a1861dc550edaadf29ab50ec9ca072fc
+2026-10-27T15:15:13.171499Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=83af78896377d879a3831c9e0ab76646a1861dc550edaadf29ab50ec9ca072fc
+2026-10-27T15:15:13.172103Z DEBUG folder: carried: the apps the groups' folders carry here found=[]
+2026-10-27T15:15:13.172119Z DEBUG door: door: lends — answered what this computer lends, each carried app only to its own group actor="83af78896377d879a3831c9e0ab76646a1861dc550edaadf29ab50ec9ca072fc" lends=0
+2026-10-27T15:15:13.172464Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467908112) event=Ok(Established { id: PathId(1) })}: iroh::_events::path::open: remote=83af788963 conn_id=513467908112 path_id=1 network_path=Ip(192.168.1.11->192.168.1.11:50987)
+2026-10-27T15:15:13.172579Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467908112) event=Ok(Established { id: PathId(1) })}: iroh::_events::path::set_status: remote=83af788963 conn_id=513467908112 path_id=1 network_path=Ip(192.168.1.11->192.168.1.11:50987) status=Backup prev_status=Available
+2026-10-27T15:15:13.172802Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467908112) event=Ok(Established { id: PathId(2) })}: iroh::_events::path::open: remote=83af788963 conn_id=513467908112 path_id=2 network_path=Ip(100.104.36.28->100.104.36.28:50987)
+2026-10-27T15:15:13.172813Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467908112) event=Ok(Established { id: PathId(2) })}: iroh::_events::path::set_status: remote=83af788963 conn_id=513467908112 path_id=2 network_path=Ip(100.104.36.28->100.104.36.28:50987) status=Backup prev_status=Available
+2026-10-27T15:15:13.173160Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467908144) event=Ok(Established { id: PathId(1) })}: iroh::_events::path::open: remote=83af788963 conn_id=513467908144 path_id=1 network_path=Ip(192.168.1.11->192.168.1.11:50987)
+2026-10-27T15:15:13.173171Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467908144) event=Ok(Established { id: PathId(1) })}: iroh::_events::path::set_status: remote=83af788963 conn_id=513467908144 path_id=1 network_path=Ip(192.168.1.11->192.168.1.11:50987) status=Backup prev_status=Available
+2026-10-27T15:15:13.173319Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467908144) event=Ok(Established { id: PathId(2) })}: iroh::_events::path::open: remote=83af788963 conn_id=513467908144 path_id=2 network_path=Ip(100.104.36.28->100.104.36.28:50987)
+2026-10-27T15:15:13.173331Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467908144) event=Ok(Established { id: PathId(2) })}: iroh::_events::path::set_status: remote=83af788963 conn_id=513467908144 path_id=2 network_path=Ip(100.104.36.28->100.104.36.28:50987) status=Backup prev_status=Available
+2026-10-27T15:15:13.173668Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}: iroh::_events::conn::closed: conn_id=513467908112 remote_id=83af788963 reason=ApplicationClosed(ApplicationClose { error_code: 0, reason: b"" })
+2026-10-27T15:15:13.173895Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467908144) event=Ok(Abandoned { id: PathId(2), reason: RemoteAbandoned { error_code: 62 } })}: iroh::_events::path::abandoned: remote=83af788963 conn_id=513467908144 path_id=2 network_path=Ip(100.104.36.28->100.104.36.28:50987) reason=RemoteAbandoned { error_code: 62 }
+2026-10-27T15:15:13.227900Z  INFO rails: ring sync: an append woke the round
+2026-10-27T15:15:13.227933Z DEBUG folder: synced: the step woken, the group's record having taken an act namespace="d68c513659b80a51d057d5ba4302e72ca621c56182ca25c57b70f0f9e83dfda0" folder="1400 Page"
+2026-10-27T15:15:13.228056Z DEBUG svrngs_node::ring_sync: ring sync: woken by a local write rather than the interval
+2026-10-27T15:15:13.229182Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Jo/83af7889"] skipped_offline=[]
+2026-10-27T15:15:13.229341Z DEBUG svrngs_node::ring_sync: ring sync: namespace register namespace="d68c513659b80a51d057d5ba4302e72ca621c56182ca25c57b70f0f9e83dfda0" offered_to=["Jo/83af7889"] skipped_not_standing=[]
+2026-10-27T15:15:13.229523Z DEBUG transport: iroh: a request on the connection kept to it, else on one dialled (#178) peer=83af788963 alpn=Member kept=true
+2026-10-27T15:15:13.231009Z DEBUG folder: folder: the layout read again, the record having moved namespace="d68c513659b80a51d057d5ba4302e72ca621c56182ca25c57b70f0f9e83dfda0" placed=0
+2026-10-27T15:15:13.231073Z DEBUG folder: synced: the layout read folder="1400 Page" placed=0 holders=2 ms=3
+2026-10-27T15:15:13.231196Z DEBUG folder: synced: the layout to write folder="1400 Page" placed=0
+2026-10-27T15:15:13.231270Z DEBUG folder: synced: a step folder="1400 Page" files=0 sent=0 unwritten=0 read_ms=3 walk_ms=0 take_ms=0 write_ms=0 apply_ms=0 kept_ms=0 ms=3
+2026-10-27T15:15:13.946162Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:14.957442Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:14.957630Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:15.984534Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:15.984612Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:16.915310Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}: iroh::_events::conn::closed: conn_id=513467317552 remote_id=83af788963 reason=TimedOut
+2026-10-27T15:15:17.007417Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:17.007579Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:17.891371Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:do_holepunching: iroh::_events::qnt::init: remote=83af788963 local_candidates={100.104.36.28:52751, 192.168.1.11:52751} remote_candidates={100.104.36.28:59817, 192.168.1.11:59817}
+2026-10-27T15:15:18.010705Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:18.010915Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:18.175628Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467908144) event=Ok(Established { id: PathId(3) })}: iroh::_events::path::open: remote=83af788963 conn_id=513467908144 path_id=3 network_path=Ip(100.104.36.28->100.104.36.28:50987)
+2026-10-27T15:15:18.175735Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467908144) event=Ok(Established { id: PathId(3) })}: iroh::_events::path::set_status: remote=83af788963 conn_id=513467908144 path_id=3 network_path=Ip(100.104.36.28->100.104.36.28:50987) status=Backup prev_status=Available
+2026-10-27T15:15:18.176026Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467908144) event=Ok(Abandoned { id: PathId(3), reason: RemoteAbandoned { error_code: 62 } })}: iroh::_events::path::abandoned: remote=83af788963 conn_id=513467908144 path_id=3 network_path=Ip(100.104.36.28->100.104.36.28:50987) reason=RemoteAbandoned { error_code: 62 }
+2026-10-27T15:15:19.067281Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:19.067482Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:19.925949Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}: iroh::_events::conn::closed: conn_id=513467317200 remote_id=83af788963 reason=TimedOut
+2026-10-27T15:15:19.926077Z DEBUG transport: iroh: whether the peer closes this computer's connection as not admitted peer=83af788963 unadmitted=false closed=Some(TimedOut)
+2026-10-27T15:15:19.926275Z DEBUG transport: iroh: a request had no answer peer=83af788963 unadmitted=false failed="connection error"
+2026-10-27T15:15:19.926653Z DEBUG transport: iroh: a request failed on the connection kept to it, as one to a computer that restarted does: sent again, once, on one dialled afresh peer=83af788963 failed="connection error"
+2026-10-27T15:15:19.926741Z DEBUG transport: iroh: a request on the connection kept to it, else on one dialled (#178) peer=83af788963 alpn=Member kept=false
+2026-10-27T15:15:19.926941Z DEBUG transport: iroh: dialled by key, iroh holding these addresses for it peer=83af788963 alpn=Member known=["Ip(100.104.36.28:50987) Inactive", "Relay(http://127.0.0.1:50546/) Active", "Ip(192.168.1.11:59817) Active", "Ip(100.104.36.28:59817) Inactive", "Ip(192.168.1.11:50987) Active"]
+2026-10-27T15:15:19.927170Z DEBUG connect{me=ac6476d8d9 alpn=cwth/http/0 remote=83af788963}: iroh::_events::conn::connecting: remote_id=83af788963 alpn=cwth/http/0
+2026-10-27T15:15:20.086474Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:20.086559Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:21.113643Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:21.113823Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:22.130950Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:22.131104Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:23.145907Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:23.146079Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:23.929853Z DEBUG transport: iroh: a dial, answered or not; one not answered in time is a computer taken as asleep peer=83af788963 within=Some(4s) error=Some(Asleep(4s))
+2026-10-27T15:15:23.930173Z DEBUG svrngs_node::ring_sync: ring sync: exchange failed, so the member is unreachable this round peer=83af78896377d879a3831c9e0ab76646a1861dc550edaadf29ab50ec9ca072fc detail="not answered within 4s"
+2026-10-27T15:15:23.930307Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=0 peers_unreachable=1 peers_refused=0 ops_pulled=0 ops_pushed=0 round_ms=10702
+2026-10-27T15:15:24.187430Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:24.187630Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:25.204290Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:25.204454Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:26.238626Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:26.238784Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:27.249216Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:27.249419Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:28.279071Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:28.279198Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:29.205981Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467908144) event=Ok(Abandoned { id: PathId(1), reason: RemoteAbandoned { error_code: 15990 } })}: iroh::_events::path::abandoned: remote=83af788963 conn_id=513467908144 path_id=1 network_path=Ip(192.168.1.11->192.168.1.11:50987) reason=RemoteAbandoned { error_code: 15990 }
+2026-10-27T15:15:29.206084Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467908144) event=Ok(Abandoned { id: PathId(1), reason: RemoteAbandoned { error_code: 15990 } })}:select_path: iroh::_events::path::selected: remote=83af788963 network_path=Relay(http://127.0.0.1:50546/, 83af788963) prev_network_path=Ip(192.168.1.11->192.168.1.11:59817)
+2026-10-27T15:15:29.206193Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467908144) event=Ok(Abandoned { id: PathId(1), reason: RemoteAbandoned { error_code: 15990 } })}:select_path: iroh::_events::path::set_status: remote=83af788963 conn_id=513467908144 path_id=0 network_path=Relay(http://127.0.0.1:50546/, 83af788963) status=Available prev_status=Backup
+2026-10-27T15:15:29.320049Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:29.320174Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:30.395639Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:30.395780Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:31.445389Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:31.445548Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:32.505696Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:32.505845Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:33.579627Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:33.579760Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:34.614499Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:34.614667Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:35.634042Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:35.634237Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:36.664502Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:36.664634Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:37.679641Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:37.679817Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:38.708349Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:38.708718Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:39.734693Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:39.734858Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:40.760278Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:40.760361Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:41.786137Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:41.786267Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:42.792062Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:42.792188Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:43.813943Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:43.814076Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:44.858221Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:44.858456Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:45.864244Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:45.864473Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:46.905726Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:46.905947Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:47.927205Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:47.927401Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:48.935586Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:48.935770Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:49.974118Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:49.974363Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:51.014748Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:51.014880Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:52.029367Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:52.031798Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:53.102159Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:53.102308Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:54.130848Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:54.130987Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:55.151815Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:55.151928Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:56.188885Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:56.189095Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:57.207886Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:57.208041Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:58.228626Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:58.228749Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:15:59.258167Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:15:59.258385Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:16:00.279983Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:16:00.280210Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:16:01.308293Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:16:01.308485Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:16:02.323015Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:16:02.323169Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:16:03.348666Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:16:03.348876Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:16:04.366380Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:16:04.366503Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:16:05.379990Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:16:05.380137Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:16:06.427776Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:16:06.427990Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:16:07.451311Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:16:07.451397Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:16:08.471785Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:16:08.471883Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:16:09.497976Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:16:09.498263Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:16:10.532357Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:16:10.532488Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:16:11.548777Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:16:11.548913Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:16:12.570421Z DEBUG folder: folder: the store's sweep drops nothing — no record and no directory moved since what it keeps was read
+2026-10-27T15:16:12.570558Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-27T15:16:13.173803Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467908144) event=Ok(Established { id: PathId(4) })}: iroh::_events::path::open: remote=83af788963 conn_id=513467908144 path_id=4 network_path=Ip(100.104.36.28->100.104.36.28:50987)
+2026-10-27T15:16:13.173869Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467908144) event=Ok(Established { id: PathId(4) })}: iroh::_events::path::set_status: remote=83af788963 conn_id=513467908144 path_id=4 network_path=Ip(100.104.36.28->100.104.36.28:50987) status=Backup prev_status=Available
+2026-10-27T15:16:13.173926Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467908144) event=Ok(Established { id: PathId(4) })}:select_path: iroh::_events::path::selected: remote=83af788963 network_path=Ip(100.104.36.28->100.104.36.28:50987) prev_network_path=Relay(http://127.0.0.1:50546/, 83af788963)
+2026-10-27T15:16:13.173951Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467908144) event=Ok(Established { id: PathId(4) })}:select_path: iroh::_events::path::set_status: remote=83af788963 conn_id=513467908144 path_id=0 network_path=Relay(http://127.0.0.1:50546/, 83af788963) status=Backup prev_status=Available
+2026-10-27T15:16:13.174001Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467908144) event=Ok(Established { id: PathId(4) })}:select_path: iroh::_events::path::set_status: remote=83af788963 conn_id=513467908144 path_id=4 network_path=Ip(100.104.36.28->100.104.36.28:50987) status=Available prev_status=Backup
+2026-10-27T15:16:13.174244Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467908144) event=Ok(Established { id: PathId(5) })}: iroh::_events::path::open: remote=83af788963 conn_id=513467908144 path_id=5 network_path=Ip(192.168.1.11->192.168.1.11:50987)
+2026-10-27T15:16:13.174358Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467908144) event=Ok(Established { id: PathId(5) })}: iroh::_events::path::set_status: remote=83af788963 conn_id=513467908144 path_id=5 network_path=Ip(192.168.1.11->192.168.1.11:50987) status=Backup prev_status=Available
+2026-10-27T15:16:13.174409Z DEBUG endpoint{id=ac6476d8d9}:RemoteStateActor{remote=83af788963}:handle_path_event{conn_id=ConnId(513467908144) event=Ok(Abandoned { id: PathId(5), reason: RemoteAbandoned { error_code: 62 } })}: iroh::_events::path::abandoned: remote=83af788963 conn_id=513467908144 path_id=5 network_path=Ip(192.168.1.11->192.168.1.11:50987) reason=RemoteAbandoned { error_code: 62 }
