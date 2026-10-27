@@ -8,7 +8,6 @@
 export const C = {
   paper: 'white',
   ink: 'black',
-  soft: '#444',
   people: 'salmon',      // people, and the computers and phones they hold
   record: 'gold',        // the group's record: signed acts
   app: 'plum',           // apps: anything on a port
@@ -16,7 +15,6 @@ export const C = {
   ok: 'lightgreen',      // let in, passed
   no: 'tomato',          // refused, failed
   lit: 'yellow',         // the one thing to keep from a figure
-  maybe: 'khaki',        // could not judge
 };
 
 export const FACE = `system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif`;
@@ -50,19 +48,17 @@ export function arrow(x1, y1, x2, y2, { stroke = C.ink, sw = 3, dash = null, hea
 }
 
 export function text(x, y, str, {
-  size = 18, weight = 400, anchor = 'start', mono = false, italic = false, fill = C.ink, strike = false,
+  size = 18, weight = 400, anchor = 'start', mono = false, fill = C.ink,
 } = {}) {
-  const st = italic ? ' font-style="italic"' : '';
-  const dec = strike ? ' text-decoration="line-through"' : '';
   const fam = mono ? MONO : FACE;
-  return `<text x="${x}" y="${y}" font-family="${fam}" font-size="${size}" font-weight="${weight}" text-anchor="${anchor}" fill="${fill}"${st}${dec}>${esc(str)}</text>`;
+  return `<text x="${x}" y="${y}" font-family="${fam}" font-size="${size}" font-weight="${weight}" text-anchor="${anchor}" fill="${fill}">${esc(str)}</text>`;
 }
 
 // Width of a line, estimated: there is no DOM to measure against, so each
 // face carries an average advance per character.
 export const width = (str, size, mono = false) => str.length * size * (mono ? 0.6 : 0.5);
 
-export function wrap(str, w, size, mono = false) {
+function wrap(str, w, size, mono = false) {
   const budget = Math.max(8, Math.floor(w / (size * (mono ? 0.6 : 0.5))));
   const lines = []; let cur = '';
   for (const word of str.split(' ')) {
@@ -118,10 +114,9 @@ export function heading(x, y, w, n, str) {
     text(x + 26, y, str, { size: 22, weight: 900 });
 }
 
-// The legend and the figure's test, along its foot.
-export function foot(W, H, test) {
+// The legend, along a figure's foot.
+export function foot(W, H) {
   let s = line(24, H - 64, W - 24, H - 64, { sw: 3 });
-  s += text(40, H - 32, test, { size: 15, mono: true });
   const keys = [[C.people, 'people'], [C.record, 'the record'], [C.app, 'apps'], [C.wire, 'wire & hosts'], [C.ok, 'let in'], [C.no, 'refused']];
   let x = W - 40;
   for (const [fill, label] of keys.reverse()) {

@@ -152,6 +152,7 @@ at `~/dev/commonwealth-ai`, or its path in `COMMONWEALTH_AI`,
 `scripts/principles_check.py --sync` re-pins `docs/principles/`.
 
 The rest of the map:
+- [`docs/OVERVIEW.md`](docs/OVERVIEW.md): svrngs in three pictures.
 - [`NORTH_STAR.md`](NORTH_STAR.md): what we answer to.
 - [`docs/DESIGN.md`](docs/DESIGN.md): what svrngs is, and how we build it.
 - [`docs/PLAN.md`](docs/PLAN.md): what we build next, and in what order.

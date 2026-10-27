@@ -297,9 +297,10 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # (demo/runs/give/2026-10-26-install/NEEDS_HUMAN.md).
 # The diagrams' generator (docs/diagrams/src/), the operator's raise
 # (2026-10-27, "raise the budget for the generator"): its first set, kept so
-# it can be drawn again from this commit, +406 and 0, at 19,523; the set
-# after it cuts that set down and lowers the cap.
-BUDGET = {"crates/svrngs-core": 3242, ".": 19524}
+# it can be drawn again from that commit (e5daca60), +406 and 0, at 19,523.
+# Its economizing pass, the set cut to one point a picture and the kit to
+# what that set draws: -93, at 19,430, so the cap lowered to one past it.
+BUDGET = {"crates/svrngs-core": 3242, ".": 19431}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 

@@ -810,3 +810,7 @@ page's policy and every listener to `trust_floor.txt`, their one home, and
 the floor to a reason for each change; `ports.py` lists the fork's pairs;
 `principles_check.py` keeps `docs/principles/` pinned; `build-web.sh` builds
 and lints the page (`web/`).
+
+**`docs/diagrams/`**: the three pictures `docs/OVERVIEW.md` shows, drawn by
+`src/build.mjs` from scenes as data over one kit of shapes (`src/kit.mjs`);
+no check runs it, and oxlint lints it with every other script.
