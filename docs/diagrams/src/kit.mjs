@@ -4,6 +4,8 @@
 // fonts, hard black rules, square corners, and colour by the names a browser
 // knows. Nothing imitates a hand, paper or a stamp.
 
+import { place } from '../../brand/src/mark.mjs';
+
 // One legend for every figure.
 export const C = {
   paper: 'white',
@@ -114,9 +116,11 @@ export function heading(x, y, w, n, str) {
     text(x + 26, y, str, { size: 22, weight: 900 });
 }
 
-// The legend, along a figure's foot.
+// The legend, along a figure's foot, signed at its left with the svrngs mark
+// (docs/brand/), whose gold ring and salmon people are this legend's.
 export function foot(W, H) {
   let s = line(24, H - 64, W - 24, H - 64, { sw: 3 });
+  s += place(36, H - 56, 34, 'medium', { ink: C.ink, people: C.people }) + text(78, H - 32, 'svrngs', { size: 18, weight: 900 });
   const keys = [[C.people, 'people'], [C.record, 'the record'], [C.app, 'apps'], [C.wire, 'wire & hosts'], [C.ok, 'let in'], [C.no, 'refused']];
   let x = W - 40;
   for (const [fill, label] of keys.reverse()) {

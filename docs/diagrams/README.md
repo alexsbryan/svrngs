@@ -19,7 +19,9 @@ commonwealth-ai's `docs/diagrams/`.
 
 **One legend for every picture:** salmon is people, gold the record, plum
 apps, sky blue the wire and what we host, light green let in, tomato refused.
-Yellow marks the one line to keep.
+Yellow marks the one line to keep. Each picture's foot is signed with the
+svrngs mark, whose colors are this legend's; it is drawn from
+[`../brand/`](../brand/), its one home.
 
 **Two depths.** Plain words make each point. svrngs's own names are in
 monospace, so a newcomer can skip them and an engineer can look them up.
