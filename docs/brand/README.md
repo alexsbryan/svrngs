@@ -33,6 +33,10 @@ The overview's diagrams sign their foot with it, from the same file
   | [`mark-small.svg`](mark-small.svg) | under 32 px | thin lines, which vanish |
 
 - **On the salmon band, people are white**, or they disappear into it.
+- **The favicon is the small cut** ([`favicon.svg`](favicon.svg)), its ink
+  white when the browser is dark, or it vanishes into a dark tab bar. The
+  home page serves it (`home.rs`), and `scripts/build-web.sh` puts it beside
+  the group's page; each page's policy allows an image from its own origin.
 - **The app icon is white on black** ([`icon.svg`](icon.svg)), where the
   gold reads best. Gold on salmon goes muddy.
 - **The name goes with what it's short for:** "svrngs" alone reads as

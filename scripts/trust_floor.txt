@@ -61,7 +61,7 @@ page group web/index.html <meta http-equiv="Content-Security-Policy" content=
   default-src 'none'
   script-src 'self' 'wasm-unsafe-eval' | svrngs's own wasm (web/src), the phone's iroh endpoint; no other code
   connect-src 'self' wss: https: | the relays a link names: their WebSocket, and iroh's probe of each one's /ping (web/index.html:21-24)
-  img-src 'none'
+  img-src 'self' | the tab's icon, svrngs's mark (favicon.svg) from the page's own origin; an image runs nothing
   style-src 'self'
   base-uri 'none'
   form-action 'none'
@@ -70,6 +70,7 @@ page group-host web/vercel.json "key": "Content-Security-Policy", "value":
 page open web/open.html <meta http-equiv="Content-Security-Policy" content=
   default-src 'none'
   script-src 'self'
+  img-src 'self' | the tab's icon, svrngs's mark (favicon.svg) from the page's own origin; an image runs nothing
   base-uri 'none'
   form-action 'none'
 

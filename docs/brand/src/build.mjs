@@ -22,6 +22,10 @@ write('lockup.svg', '0 0 560 180', 'svrngs, sovereign rings', place(10, 10, 160,
   `<text x="192" y="104" font-family="${FACE}" font-size="104" font-weight="900" letter-spacing="-4.7" fill="currentColor">svrngs</text>` +
   `<text x="196" y="150" font-family="${FACE}" font-size="33" fill="currentColor">sovereign rings</text>`);
 
+// The favicon: the small cut, its ink white when the browser is dark, or it
+// vanishes into a dark tab bar. A page links it as /favicon.svg.
+write('favicon.svg', Object.values(box('small')).join(' '), 'svrngs', `<style>svg{color:black}@media (prefers-color-scheme:dark){svg{color:white}}</style>${shapes('small')}`);
+
 // The app icon: white on black, where the gold reads best. A platform rounds
 // the corners itself.
 write('icon.svg', '0 0 1024 1024', 'svrngs', `<rect width="1024" height="1024" fill="black"/>${place(113, 113, 798, 'large', { ink: 'white' })}`);

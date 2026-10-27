@@ -312,7 +312,10 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # file wrapper for all five files in place of three, and the unused cutFor
 # dropped (-21): +53 and 0, at 19,503. The rest is arcs the diagram kit has
 # no helper for, and a mark the kit's figure frame must not wrap.
-BUDGET = {"crates/svrngs-core": 3242, ".": 19504}
+# The favicon, the operator's raise (2026-10-27, "Approve +6"): the mark's
+# small cut as favicon.svg, white ink when the browser is dark, and the home
+# page's route for it (home.rs `ICON`): +6 and 0, at 19,509.
+BUDGET = {"crates/svrngs-core": 3242, ".": 19510}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 

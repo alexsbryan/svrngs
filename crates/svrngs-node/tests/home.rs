@@ -187,6 +187,23 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
         (module.status, module.header("content-type")),
         (200, Some("text/javascript"))
     );
+    // The tab's icon, which the page links: the mark's small cut, from its
+    // own origin, as its policy allows. Red with the route planted out.
+    let icon = ask(browser, "GET", &home, "/favicon.svg", typed, "").await;
+    assert_eq!(
+        (icon.status, icon.header("content-type")),
+        (200, Some("image/svg+xml"))
+    );
+    assert!(
+        page.body.contains(r#"href="/favicon.svg""#),
+        "{}",
+        page.body
+    );
+    assert!(
+        icon.body.contains(r#"aria-label="svrngs""#),
+        "{}",
+        icon.body
+    );
     let navigated = format!(
         "Sec-Fetch-Site: same-site\r\nSec-Fetch-Mode: navigate\r\nOrigin: http://{}\r\n",
         at(&night)

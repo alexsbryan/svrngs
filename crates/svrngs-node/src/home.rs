@@ -104,6 +104,12 @@ const LOOK: ([(header::HeaderName, &str); 1], &str) = (
     include_str!("home/look.css"),
 );
 
+/// The tab's icon: the svrngs mark's small cut, from its one home (docs/brand/).
+const ICON: ([(header::HeaderName, &str); 1], &str) = (
+    [(header::CONTENT_TYPE, "image/svg+xml")],
+    include_str!("../../../docs/brand/favicon.svg"),
+);
+
 /// Whether `host` names the home page, at any port: [`only_itself`] holds
 /// it to this listener's.
 pub(crate) fn named(host: Option<&HeaderValue>) -> bool {
@@ -135,6 +141,7 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
         .route("/home.js", get(|| async { MODULE }))
         .route("/question.js", get(|| async { QUESTION }))
         .route("/look.css", get(|| async { LOOK }))
+        .route("/favicon.svg", get(|| async { ICON }))
         .route("/choices", get(choices).post(choose))
         .route("/reaching", get(reached).post(reaching))
         .route("/lent", get(lent).post(change))
