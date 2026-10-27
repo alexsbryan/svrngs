@@ -295,7 +295,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # login by the functions svrngs's own steps became, and built beside
 # svrngs in build-release.sh (2d68d696): +13 net and 0, at 19,120
 # (demo/runs/give/2026-10-26-install/NEEDS_HUMAN.md).
-BUDGET = {"crates/svrngs-core": 3242, ".": 19118}
+# The diagrams' generator (docs/diagrams/src/), the operator's raise
+# (2026-10-27, "raise the budget for the generator"): its first set, kept so
+# it can be drawn again from this commit, +406 and 0, at 19,523; the set
+# after it cuts that set down and lowers the cap.
+BUDGET = {"crates/svrngs-core": 3242, ".": 19524}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
