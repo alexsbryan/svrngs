@@ -496,7 +496,10 @@ fn copied(kept: &mut Kept, (act, kind, at): (&str, &str, i64), payload: &Value, 
     };
     let (app, over) = (text("app")?, text("over")?);
     let Some(keeping) = kept.apps.get_mut(&app) else {
-        return Err(Refusal::Stale { kept: None, over: Some(over) });
+        return Err(Refusal::Stale {
+            kept: None,
+            over: Some(over),
+        });
     };
     let stands = over == keeping.act;
     if stands && writer != keeping.keeper {
@@ -509,10 +512,16 @@ fn copied(kept: &mut Kept, (act, kind, at): (&str, &str, i64), payload: &Value, 
             let kept = Some(keeping.act.clone());
             return Err(Refusal::Stale { kept, over: Some(over) });
         }
-        keeping.failed = Some(Failed { act: act.into(), since: at });
+        keeping.failed = Some(Failed {
+            act: act.into(),
+            since: at,
+        });
         keeping.answered = at;
         let from = keeping.from.as_ref();
-        copies.iter_mut().filter(|c| Some(&c.from) == from).for_each(|c| c.failed = true);
+        copies
+            .iter_mut()
+            .filter(|c| Some(&c.from) == from)
+            .for_each(|c| c.failed = true);
         return Ok(());
     }
     let (from, sum, card) = (text("from")?, text("sum")?, text("card")?);
