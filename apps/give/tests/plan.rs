@@ -138,3 +138,87 @@ fn a_start_that_failed_waits_before_the_same_act_is_tried_again() {
     let again = plan("a1", &folds, &BTreeMap::new(), &failed, 100 + RETRY.as_secs(), EVERY);
     assert!(matches!(&again[..], [Step::Start { .. }]), "{again:?}");
 }
+
+fn offered(id: &str, actor: &str, app: &str, over: &str, to: &str) -> Value {
+    op(
+        id,
+        actor,
+        json!({ "kind": "offered", "app": app, "over": over, "to": to }),
+    )
+}
+
+fn answered(id: &str, actor: &str, kind: &str, app: &str, offer: &str) -> Value {
+    op(
+        id,
+        actor,
+        json!({ "kind": kind, "app": app, "offer": offer, "agreed": true }),
+    )
+}
+
+/// On the yes of the person of the computer it is offered to, the
+/// computer that keeps an app moves it there (GIVE.md §3 scene 3).
+#[test]
+fn on_a_yes_it_moves_what_it_keeps_to_the_computer_offered() {
+    let kept = fold(&[
+        ready("r1", "a1"),
+        ready("r2", "b1"),
+        started("s1", "a1", "mine"),
+        offered("o1", "a1", "mine", "s1", "b1"),
+        answered("y1", "b1", "accepted", "mine", "o1"),
+    ]);
+    let here = BTreeMap::from([("mine".to_string(), running("g1", "s1", 100))]);
+    let steps = plan("a1", &[("g1".into(), kept.clone())], &here, &NONE, 101, EVERY);
+    assert_eq!(
+        steps,
+        [Step::Move {
+            app: "mine".into(),
+            keeping: kept.apps["mine"].clone()
+        }]
+    );
+    // The computer offered starts nothing until the move is written.
+    assert_eq!(
+        plan("b1", &[("g1".into(), kept)], &BTreeMap::new(), &NONE, 101, EVERY),
+        []
+    );
+}
+
+/// An offer waiting, or said no to, moves nothing: the app stays kept
+/// where it is, and is copied each interval as before.
+#[test]
+fn an_offer_waiting_or_said_no_to_moves_nothing() {
+    let waiting = [
+        ready("r1", "a1"),
+        ready("r2", "b1"),
+        started("s1", "a1", "mine"),
+        offered("o1", "a1", "mine", "s1", "b1"),
+    ];
+    let mut no = waiting.to_vec();
+    no.push(answered("n1", "b1", "declined", "mine", "o1"));
+    let here = BTreeMap::from([("mine".to_string(), running("g1", "s1", 100))]);
+    for ops in [waiting.to_vec(), no] {
+        let folds = [("g1".to_string(), fold(&ops))];
+        assert_eq!(plan("a1", &folds, &here, &NONE, 101, EVERY), []);
+        assert_eq!(
+            plan("a1", &folds, &here, &NONE, 100 + EVERY.as_secs(), EVERY),
+            [Step::Snapshot { app: "mine".into() }]
+        );
+    }
+}
+
+/// A move that failed here waits before it is tried again, as a start does.
+#[test]
+fn a_move_that_failed_waits_before_it_is_tried_again() {
+    let kept = fold(&[
+        ready("r1", "a1"),
+        ready("r2", "b1"),
+        started("s1", "a1", "mine"),
+        offered("o1", "a1", "mine", "s1", "b1"),
+        answered("y1", "b1", "accepted", "mine", "o1"),
+    ]);
+    let folds = [("g1".to_string(), kept)];
+    let here = BTreeMap::from([("mine".to_string(), running("g1", "s1", 100))]);
+    let failed = BTreeMap::from([("mine".to_string(), ("o1".to_string(), 100))]);
+    assert_eq!(plan("a1", &folds, &here, &failed, 100 + RETRY.as_secs() - 1, EVERY), []);
+    let again = plan("a1", &folds, &here, &failed, 100 + RETRY.as_secs(), EVERY);
+    assert!(matches!(&again[..], [Step::Move { .. }]), "{again:?}");
+}

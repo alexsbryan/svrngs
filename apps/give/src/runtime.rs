@@ -603,6 +603,28 @@ impl<'a> App<'a> {
     }
 }
 
+/// What a snapshot's files sum to: each file's name, length and bytes, in
+/// name order, hashed (blake3, hex). A move names it, so the computer it
+/// goes to starts from exactly that snapshot and never from a copy the
+/// group's folder is still carrying.
+pub fn sum(snapshot: &Path) -> Result<String, RunError> {
+    let mut files: Vec<PathBuf> = (std::fs::read_dir(snapshot).map_err(|e| file(snapshot, e))?)
+        .flatten()
+        .map(|e| e.path())
+        .filter(|p| p.is_file())
+        .collect();
+    files.sort();
+    let mut hasher = blake3::Hasher::new();
+    for at in files {
+        let name = at.file_name().unwrap_or_default().to_string_lossy().to_string();
+        let mut f = std::fs::File::open(&at).map_err(|e| file(&at, e))?;
+        let len = f.metadata().map_err(|e| file(&at, e))?.len();
+        hasher.update(name.as_bytes()).update(&[0]).update(&len.to_le_bytes());
+        std::io::copy(&mut f, &mut hasher).map_err(|e| file(&at, e))?;
+    }
+    Ok(hasher.finalize().to_hex().to_string())
+}
+
 /// A volume's tar, read as path → kind, owner, mode and a hash of the bytes.
 /// Times are left out: a restored directory is touched as it is made.
 fn contents(tar: &Path) -> Result<BTreeMap<String, String>, RunError> {

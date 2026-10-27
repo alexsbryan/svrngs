@@ -9,7 +9,12 @@
 //!   `<folder>/give/<app>/<this computer's key>/<time>/`, at each
 //!   [`EVERY`] and at a clean stop, each naming its card version;
 //! - it unlends and stops an app the fold names another computer for, with
-//!   a last snapshot.
+//!   a last snapshot;
+//! - on a yes to an offer of an app it keeps, it unlends it, takes a last
+//!   snapshot, writes the move naming that snapshot and its sum, and stops
+//!   it (GIVE.md §3 scene 3, §7 "Moving");
+//! - it starts an app moved to it only from that snapshot, once its copy
+//!   in the group's folder here sums to what the move names.
 //!
 //! It says `ready` in each group once, so the fold counts this computer
 //! among those that can keep. What to do is [`plan`], pure over the folds
@@ -75,6 +80,12 @@ pub enum Step {
     Snapshot {
         app: String,
     },
+    /// Unlend it, snapshot it, write its move to the computer whose person
+    /// said yes, and stop it.
+    Move {
+        app: String,
+        keeping: Keeping,
+    },
     /// Unlend it, snapshot it and stop it.
     Stop {
         app: String,
@@ -89,8 +100,8 @@ pub enum Step {
 }
 
 /// What this computer does now: `folds` being each group's fold, `running`
-/// what it keeps now, `failed` each app's last start that failed (its act,
-/// and when), and `now` the time in seconds. Stops come first, so an app
+/// what it keeps now, `failed` each app's last start or move that failed
+/// (its act or its offer's, and when), and `now` the time in seconds. Stops come first, so an app
 /// that changes keeping here stops before it starts again.
 pub fn plan(
     me: &str,
@@ -121,10 +132,22 @@ pub fn plan(
             wanted.insert(app, (group, keeping));
         }
     }
+    let waits = |app: &str, act: &str| {
+        (failed.get(app)).is_some_and(|(a, at)| a == act && now.saturating_sub(*at) < RETRY.as_secs())
+    };
     for (app, r) in running {
         match wanted.get(app.as_str()) {
             Some((g, k)) if *g == r.group && k.act == r.act => {
-                if now.saturating_sub(r.snapshot) >= every.as_secs() {
+                let yes = (k.offer.as_ref()).filter(|o| o.answer == give_fold::Answer::Yes);
+                if let Some(yes) = yes {
+                    if !waits(app, &yes.act) {
+                        let keeping = (*k).clone();
+                        steps.push(Step::Move {
+                            app: app.clone(),
+                            keeping,
+                        });
+                    }
+                } else if now.saturating_sub(r.snapshot) >= every.as_secs() {
                     steps.push(Step::Snapshot { app: app.clone() });
                 }
             }
@@ -140,10 +163,7 @@ pub fn plan(
     }
     for (app, (group, k)) in wanted {
         let same = running.get(app).is_some_and(|r| r.group == group && r.act == k.act);
-        let waits = failed
-            .get(app)
-            .is_some_and(|(act, at)| *act == k.act && now.saturating_sub(*at) < RETRY.as_secs());
-        if !same && !waits {
+        if !same && !waits(app, &k.act) {
             starts.push(Step::Start {
                 group: group.into(),
                 app: app.into(),
@@ -166,6 +186,9 @@ pub enum StartError {
     NotAgreed(String),
     #[error("this computer keeps no folder of {0}, so it has nowhere to keep copies of the app")]
     NoFolder(String),
+    /// Not a failure: the copy it moves from is still on its way here.
+    #[error("{app}'s last copy, {from}, has not all reached this computer yet")]
+    NotHereYet { app: String, from: String },
     #[error("{0}")]
     Runtime(#[from] crate::runtime::RunError),
     #[error("{0}")]
@@ -252,6 +275,18 @@ impl Keeper {
                     self.failed.remove(&app);
                     self.running.insert(app, r);
                 }
+                Err(StartError::NotHereYet { app, from }) => {
+                    tracing::debug!(
+                        group,
+                        app,
+                        from,
+                        act = keeping.act,
+                        "keep: waits for the copy it moves from"
+                    );
+                    if self.told.insert(format!("{}#here", keeping.act)) {
+                        println!("Waiting for {app}'s last copy to reach this computer.");
+                    }
+                }
                 Err(why) => {
                     tracing::debug!(group, app, act = keeping.act, %why, "keep: refused or failed to start");
                     eprintln!("give: {app} did not start here: {why}");
@@ -266,6 +301,7 @@ impl Keeper {
                     r.snapshot = now;
                 }
             }
+            Step::Move { app, keeping } => self.hand(me, &app, &keeping, now),
             Step::Stop { app, why } => {
                 tracing::debug!(app, why, "keep: stopping");
                 self.stop(me, &app);
@@ -306,13 +342,22 @@ impl Keeper {
             .folders
             .get(group)
             .ok_or_else(|| StartError::NoFolder(group.into()))?;
+        let held = self.dir.join(format!("{app}.act"));
+        let holds = std::fs::read_to_string(&held).ok().is_some_and(|h| h == k.act);
+        // A move names its snapshot's sum: start only from exactly that.
+        if let (Some(from), Some(sum), false) = (&k.from, &k.sum, holds) {
+            let here = crate::runtime::sum(&folder.join(from)).ok();
+            tracing::debug!(app, from, sum, ?here, "keep: the copy it moves from, as it is here");
+            if here.as_ref() != Some(sum) {
+                let (app, from) = (app.into(), from.clone());
+                return Err(StartError::NotHereYet { app, from });
+            }
+        }
         crate::machine::ensure(&self.podman, card.memory())?;
         let run = App::new(&self.podman, card, self.name(app)?);
         run.pull()?;
         run.stop()?;
-        let held = self.dir.join(format!("{app}.act"));
-        let holds = std::fs::read_to_string(&held).ok();
-        match (&k.from, holds.as_deref() == Some(k.act.as_str())) {
+        match (&k.from, holds) {
             // The volumes here are this keeping's already: a restart.
             (_, true) => tracing::debug!(app, act = k.act, "keep: the state here is this keeping's"),
             (Some(from), false) => run.restore(&folder.join(from))?,
@@ -352,6 +397,63 @@ impl Keeper {
         tracing::debug!(app, dir = %snapshot.dir.display(), paused = ?snapshot.paused, "keep: copied to the group");
         prune(&into, KEEP);
         Ok(snapshot.dir)
+    }
+
+    /// Move `app` on the yes to its offer: unlend it, take a last snapshot,
+    /// write the move naming it and its sum, and stop it. A step that fails
+    /// is said, the app lent again where it still runs, and the move tried
+    /// again after [`RETRY`].
+    fn hand(&mut self, me: &str, app: &str, k: &Keeping, now: u64) {
+        let Some((yes, r)) = k.offer.clone().zip(self.running.get(app).cloned()) else {
+            return tracing::debug!(app, "keep: no yes, or not kept here, so not moved");
+        };
+        let failed = |keeper: &mut Keeper, why: String| {
+            tracing::debug!(
+                app,
+                offer = yes.act,
+                why,
+                "keep: the move failed, so it waits to be tried again"
+            );
+            eprintln!("give: {app} did not move to {}’s computer: {why}", yes.person);
+            keeper.failed.insert(app.into(), (yes.act.clone(), now));
+            let lent = (keeper.card(app)).map(|card| keeper.svrngs.share(r.at, app, card.door.protocol));
+            if !matches!(lent, Ok(Ok(()))) {
+                eprintln!("give: {app} could not be lent again here");
+            }
+        };
+        if let Err(why) = self.svrngs.unshare(app) {
+            return failed(self, format!("it could not be unlent: {why}"));
+        }
+        let last = self.snapshot(me, app).and_then(|dir| {
+            let sum = crate::runtime::sum(&dir)?;
+            let folder = self
+                .folders
+                .get(&r.group)
+                .ok_or_else(|| StartError::NoFolder(r.group.clone()))?;
+            let from = dir.strip_prefix(folder).unwrap_or(&dir).to_string_lossy().to_string();
+            Ok((from, sum))
+        });
+        let (from, sum) = match last {
+            Ok(last) => last,
+            Err(why) => return failed(self, format!("its last copy was not taken: {why}")),
+        };
+        let moved = json!({ "kind": "moved", "app": app, "card": k.card, "over": k.act, "from": from, "sum": sum });
+        if let Err(why) = self.record.write(&r.group, moved) {
+            return failed(self, format!("the move was not written: {why}"));
+        }
+        tracing::debug!(app, to = yes.to, from, sum, "keep: moved, from its last copy");
+        let stopped = self
+            .card(app)
+            .and_then(|card| Ok(App::new(&self.podman, card, self.name(app)?).stop()?));
+        match stopped {
+            Ok(()) => {
+                self.running.remove(app);
+                println!("Moved {app} to {}’s computer, from its last copy.", yes.person);
+            }
+            // Kept as running, so the next round stops it: the record names
+            // another computer now.
+            Err(why) => eprintln!("give: {app} moved, and could not be stopped here: {why}"),
+        }
     }
 
     /// Unlend `app`, snapshot it, stop it: each step said if it fails, and
