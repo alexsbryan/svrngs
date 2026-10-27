@@ -67,3 +67,8 @@ Fences the rows keep:
       `.env("SVRNGS_BROWSERS", harness::browsers())`.
     - Never run `scripts/check.sh` while another gate is running on this
       host.
+    - Every gate takes the host's one lock (agreed with the other svrngs
+      sessions, 2026-10-26): run `lockf -k /tmp/svrngs-gate.lock bash
+      scripts/check.sh`, and close with `ralph-result await <budget> --
+      lockf -k /tmp/svrngs-gate.lock bash scripts/check.sh`. `lockf` waits
+      for the lock, so a gate in another svrngs tree runs first.
