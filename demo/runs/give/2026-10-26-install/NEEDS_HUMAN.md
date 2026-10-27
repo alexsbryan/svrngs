@@ -71,3 +71,33 @@ copies; copying the steps for Give would be about 30 lines.
   again") was not opened here.
 - **The gate:** `scripts/check.sh` once, at the close; its size step fails
   until the raise lands (the await log keeps the run).
+
+## The director's verdict, 2026-10-26
+
+Reproduced: `python3 scripts/lean_check.py` in a detached worktree at each
+commit gives `.` 19,107 at 2ce1fb4c, 19,100 at 60565068 (the pass, -7) and
+19,120 at 2d68d696 and at HEAD 34c80912; core 3,241 of 3,242. `cargo fmt
+--all --check` is clean at HEAD, so the count is the one the raise lands on.
+
+Why this is the operator's: the ceiling (STATE.md give-economize, THE
+OPERATOR DECIDED 1) covers give-token through give-play, and give-install
+names no range of its own. CHARTER, "Leave for the operator": a row past its
+ceiling or its estimate's range. AGENTS.md "Done": a size-budget raise is the
+operator's.
+
+The options:
+
+1. **Land the raise, 19,109 to 19,121** (the ready diff above). Cost: +12 on
+   the cap; 19,121 is still under the ceiling's 19,233.
+2. **Land it and widen the ceiling's rows** to give-install and give-docs,
+   inside 19,233. Cost: the same +12; give-docs (documents, expected 0) then
+   needs no park on size.
+3. **No `--give` in install.sh**: Give's program a separate download a person
+   fetches by hand. Cost: reverts 2d68d696 and 2e6ca3b6 and saves 20 lines,
+   but the page asks a lightly technical person for a second step, against
+   the charter's "clean and fluent interface".
+
+**Recommendation: 1.** The pass is on record (SURVEY.md), the growth shares
+svrngs's steps rather than copying them, and the total stays inside what the
+operator already allowed the give work. Then the row's one `scripts/check.sh`
+closes it.
