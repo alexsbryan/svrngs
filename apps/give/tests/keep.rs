@@ -247,9 +247,8 @@ impl Drop for Removed<'_> {
     fn drop(&mut self) {
         let first = (self.test.clone(), self.keeper.take(), self.root.clone());
         for (test, keeper, root) in [first].into_iter().chain(self.more.drain(..)) {
-            if let Some(mut k) = keeper {
-                let _ = k.kill();
-                let _ = k.wait();
+            if let Some(k) = keeper {
+                stopped(k);
             }
             for kind in ["standin", "other"] {
                 let name = Name::new(&format!("{}{kind}", prefix(&test))).unwrap();
@@ -276,6 +275,25 @@ impl Drop for Removed<'_> {
             }
         }
     }
+}
+
+/// A keeper asked to stop, and killed only if it has not within a minute.
+/// Killed at once, it can be inside a copy's `podman pod pause`, which
+/// runs on as its own process and pauses the pod after `remove` has
+/// unpaused it, and `pod rm` refuses a paused pod: "cannot remove
+/// container ... as it is paused" (ralph/next/give/ctl/log/sessions/
+/// give-app-scenes-1.await.log, the pod still paused after the run).
+/// Asked, it finishes the copy, unpausing the pod, before it exits.
+fn stopped(mut k: Child) {
+    let _ = Command::new("kill").args(["-TERM", &k.id().to_string()]).status();
+    for _ in 0..240 {
+        if k.try_wait().is_ok_and(|s| s.is_some()) {
+            return;
+        }
+        std::thread::sleep(Duration::from_millis(250));
+    }
+    let _ = k.kill();
+    let _ = k.wait();
 }
 
 fn until<T>(what: &str, within: Duration, mut f: impl FnMut() -> Option<T>) -> T {
