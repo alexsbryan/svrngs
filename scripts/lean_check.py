@@ -306,7 +306,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # closes every connection to it, the acceptor's included, before the dial
 # afresh (iroh.rs `close_every`). Its economizing pass, the close folded
 # into the count it traces (-2): +20 and 0, at 19,450.
-BUDGET = {"crates/svrngs-core": 3242, ".": 19451}
+# The svrngs mark's generator (docs/brand/src/), the operator's raise
+# (2026-10-27, "Approve +53"): its geometry, three cuts, the lockup and the
+# icon, and the diagrams' foot signed from it. Its economizing pass, one
+# file wrapper for all five files in place of three, and the unused cutFor
+# dropped (-21): +53 and 0, at 19,503. The rest is arcs the diagram kit has
+# no helper for, and a mark the kit's figure frame must not wrap.
+BUDGET = {"crates/svrngs-core": 3242, ".": 19504}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
