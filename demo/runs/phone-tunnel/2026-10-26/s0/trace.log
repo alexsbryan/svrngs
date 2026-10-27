@@ -1,0 +1,117 @@
+2026-10-27T06:08:37.822481Z DEBUG tunnel: traced: a second start in one process keeps the first start's file first=true
+2026-10-27T06:08:37.825547Z DEBUG tunnel: start: a runtime on a thread of its own plant=None lender=b8109133b834b277d63de0d4a132e5638624f14e448891676b2b78fe2ba76abe lend=jellyfin port=8096
+2026-10-27T06:08:37.831028Z DEBUG tunnel: the endpoint's key: the seed's, or under stranger one no group holds key=fe352c1f7b799c5ec9bf34d7ef8825c55961f60131542a32e05a3746cae20452 plant=None
+2026-10-27T06:08:37.919379Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:08:37.919421Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=false
+2026-10-27T06:08:38.839948Z DEBUG door: raw: the lend opened, or refused lend=jellyfin refused=None
+2026-10-27T06:08:38.840149Z DEBUG tunnel: the lend opened on 127.0.0.1 and carried to its lender, or not lend=jellyfin port=8096 refused=None
+2026-10-27T06:08:47.917968Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:08:47.918029Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:08:57.920250Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:08:57.924557Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:09:07.917023Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:09:07.917093Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:09:09.414434Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Ok((609, 255))
+2026-10-27T06:09:10.602746Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Ok((609, 255))
+2026-10-27T06:09:12.202771Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Ok((609, 255))
+2026-10-27T06:09:14.590626Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Ok((609, 255))
+2026-10-27T06:09:17.918246Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:09:17.918362Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:09:18.139410Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Ok((609, 255))
+2026-10-27T06:09:23.449357Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Ok((609, 255))
+2026-10-27T06:09:27.917027Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:09:27.917111Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:09:31.130482Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Ok((609, 254))
+2026-10-27T06:09:37.917677Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:09:37.917772Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:09:38.565082Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Ok((9697, 354264))
+2026-10-27T06:09:38.565125Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Ok((11027, 219077))
+2026-10-27T06:09:38.565157Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Ok((7721, 278101))
+2026-10-27T06:09:38.565191Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Ok((7931, 822067))
+2026-10-27T06:09:38.565215Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Ok((8289, 177115))
+2026-10-27T06:09:38.606404Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Ok((8291, 401931))
+2026-10-27T06:09:47.916995Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:09:47.917142Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:09:52.556465Z DEBUG door: tcp: the lender closed the lend
+2026-10-27T06:09:52.556499Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Err(Custom { kind: NotConnected, error: ConnectionLost(TimedOut) })
+2026-10-27T06:09:57.917471Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:09:57.917567Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=false
+2026-10-27T06:09:58.206837Z DEBUG door: raw: the lend opened, or refused lend=jellyfin refused=None
+2026-10-27T06:09:58.207014Z DEBUG tunnel: the lend opened on 127.0.0.1 and carried to its lender, or not lend=jellyfin port=8096 refused=None
+2026-10-27T06:10:07.916390Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:10:07.916483Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:10:09.781289Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Ok((609, 255))
+2026-10-27T06:10:17.917031Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:10:17.917135Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:10:27.917824Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:10:27.918174Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:10:35.575202Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Ok((609, 255))
+2026-10-27T06:10:37.915741Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:10:37.915841Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:10:47.269772Z DEBUG door: tcp: the lender closed the lend
+2026-10-27T06:10:47.916402Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:10:47.916499Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=false
+2026-10-27T06:10:47.951516Z DEBUG door: raw: the lend opened, or refused lend=jellyfin refused=None
+2026-10-27T06:10:47.951705Z DEBUG tunnel: the lend opened on 127.0.0.1 and carried to its lender, or not lend=jellyfin port=8096 refused=None
+2026-10-27T06:10:57.916244Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:10:57.916333Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:11:07.915758Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:11:07.915856Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:11:17.986610Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:11:17.986824Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:11:27.989840Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:11:27.990204Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:11:37.988525Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:11:37.988840Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:11:47.988369Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:11:47.988646Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:11:57.987487Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:11:57.987586Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:12:07.989954Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:12:07.990559Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:12:17.987979Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:12:17.988268Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:12:27.988524Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:12:27.988791Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:12:37.986648Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:12:37.986970Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:12:47.987193Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:12:47.987505Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:12:57.985422Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:12:57.985470Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:13:04.572413Z DEBUG door: tcp: the lender closed the lend
+2026-10-27T06:13:07.986527Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:13:07.986585Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=false
+2026-10-27T06:13:08.180185Z DEBUG door: raw: the lend opened, or refused lend=jellyfin refused=None
+2026-10-27T06:13:08.181763Z DEBUG tunnel: the lend opened on 127.0.0.1 and carried to its lender, or not lend=jellyfin port=8096 refused=None
+2026-10-27T06:13:17.986238Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:13:17.986531Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:13:18.936430Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Ok((581, 254))
+2026-10-27T06:13:20.055926Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Ok((581, 255))
+2026-10-27T06:13:21.663955Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Ok((581, 255))
+2026-10-27T06:13:24.113261Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Ok((581, 255))
+2026-10-27T06:13:27.714211Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Ok((581, 255))
+2026-10-27T06:13:27.986443Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:13:27.986493Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:13:33.013638Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Ok((581, 255))
+2026-10-27T06:13:37.986842Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:13:37.986896Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:13:40.953393Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Ok((581, 255))
+2026-10-27T06:13:43.859180Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Err(Os { code: 54, kind: ConnectionReset, message: "Connection reset by peer" })
+2026-10-27T06:13:43.859901Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Err(Os { code: 54, kind: ConnectionReset, message: "Connection reset by peer" })
+2026-10-27T06:13:43.858483Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Err(Os { code: 54, kind: ConnectionReset, message: "Connection reset by peer" })
+2026-10-27T06:13:43.859153Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Err(Os { code: 54, kind: ConnectionReset, message: "Connection reset by peer" })
+2026-10-27T06:13:43.859112Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Err(Os { code: 54, kind: ConnectionReset, message: "Connection reset by peer" })
+2026-10-27T06:13:43.859555Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Err(Os { code: 54, kind: ConnectionReset, message: "Connection reset by peer" })
+2026-10-27T06:13:43.860643Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Err(Os { code: 54, kind: ConnectionReset, message: "Connection reset by peer" })
+2026-10-27T06:13:47.987186Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:13:47.987272Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:13:52.542113Z DEBUG door: tcp: a program's connection closed, both its sides or by a failure copied=Ok((581, 254))
+2026-10-27T06:13:57.986700Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:13:57.986804Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:14:07.986359Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:14:07.986775Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:14:17.986059Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:14:17.986154Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
+2026-10-27T06:14:27.985622Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:14:27.986146Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=true
