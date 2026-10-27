@@ -24,6 +24,15 @@ use crate::harness::{browsers, relay, relay_url, repo, site, Engine};
 const TRACED: &str =
     "info,door=debug,origin=debug,folder=debug,home=debug,removal=debug,svrngs_node::ring_sync=debug,transport=warn";
 
+/// [`TRACED`], and the filters `SCENES_TRACED` names after it, as a run
+/// that reads iroh's path choices adds `iroh::_events=debug` (give-redial).
+fn traced() -> String {
+    match std::env::var("SCENES_TRACED") {
+        Ok(more) => format!("{TRACED},{more}"),
+        Err(_) => TRACED.to_string(),
+    }
+}
+
 /// A wait in a scene that ran out on a host past the load bar: could not
 /// be judged, so the scene ends there, never a pass ([`judged`]).
 pub struct Unjudged(String);
@@ -288,7 +297,7 @@ fn svrngs(home: &std::path::Path, name: &str, args: &[&str]) -> Command {
         .env("HOME", home)
         .env("USER", name.to_lowercase())
         .env("PATH", std::env::var_os("PATH").unwrap_or_default())
-        .env("RUST_LOG", TRACED)
+        .env("RUST_LOG", traced())
         .env("NO_COLOR", "1")
         .kill_on_drop(true);
     c

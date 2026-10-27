@@ -50,6 +50,8 @@ mod events;
 mod house_rules;
 // Grapevine (demo/grapevine.md): an ask carried a ring away, sealed replies.
 mod grapevine;
+// Grapevine's step 12 alone: a computer restarted, written to at once.
+mod redial;
 // Doc (apps/doc): two editors converge, each line noted as its writer's.
 mod doc;
 // The group's life (demo/c.md): a link, a phone, a removal, a lid shut.

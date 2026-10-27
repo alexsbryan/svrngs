@@ -280,6 +280,6 @@ async fn grapevine(engine: Engine) {
 /// silence (dial.rs `held`), the one dialled again answers within
 /// `DIAL_WITHIN`, and the exchange on it within `ANSWERED_WITHIN`, well
 /// inside the round's 60 s.
-const RESTARTED_WITHIN: std::time::Duration = std::time::Duration::from_secs(
+pub(crate) const RESTARTED_WITHIN: std::time::Duration = std::time::Duration::from_secs(
     2 * svrngs_node::dial::DIAL_WITHIN.as_secs() + svrngs_node::iroh::ANSWERED_WITHIN.as_secs(),
 );
