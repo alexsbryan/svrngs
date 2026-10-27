@@ -416,3 +416,54 @@ test('a page left open while svrngs is down says it can’t read the group, and 
     server.stop();
   }
 });
+
+// A press while svrngs is down (give-page-down (c)): cy has Minecraft's
+// makers' terms open, svrngs stops, and cy presses "Agree and start". The
+// round reads nothing while an ask is open (index.js `setInterval`), so the
+// press is the only thing that can say it. Refused is a press that fails
+// silently, its ask left on screen as if it were waiting, as when the failed
+// write threw out of `write`. The page says nothing reached the group, the
+// ask stays open, and once svrngs answers the same press starts it, once.
+test('a press while svrngs is down says nothing reached the group, and the ask stays open to press again (chromium)', async () => {
+  const server = await serve();
+  const { context, close } = await launch('chromium');
+  const errors = [];
+  try {
+    const page = await context.newPage();
+    page.on('pageerror', (e) => errors.push(String(e)));
+    const traced = [];
+    page.on('console', (m) => m.type() === 'debug' && traced.push(m.text()));
+    const text = () => page.innerText('main');
+    const row = (title) => page.locator('li', { hasText: title }).innerText();
+    const press = (name) => page.locator('li', { hasText: 'Minecraft' }).getByRole('button', { name, exact: true }).click();
+
+    server.record('a1', 'cy', 'ka', { kind: 'ready' });
+    await context.setExtraHTTPHeaders({ 'x-person': 'cy', 'x-key': 'ka', 'x-computer': 'a1' });
+    await page.goto(server.at);
+    await page.waitForFunction(() => document.body.innerText.includes('Start it for the group'), null, { timeout: 60_000 });
+    await press('Start it for the group');
+    await page.waitForFunction(() => document.body.innerText.includes('Agree and start'), null, { timeout: 30_000 });
+    const written = server.ops.length;
+
+    await server.down();
+    await press('Agree and start');
+    await page.waitForFunction(() => document.body.innerText.includes('nothing reached your group'), null, { timeout: 30_000 });
+    const said = await text();
+    assert.match(said, /Minecraft didn’t start: svrngs on this computer isn’t answering, so nothing reached your group\. Press again in a moment\./);
+    assert.match(await row('Minecraft'), new RegExp(`${MINECRAFT_TERMS} Read them[\\s\\S]*Agree and start`), 'the ask stays open to press again');
+    assert.equal(server.ops.length, written, 'nothing was written');
+    assert.doesNotMatch(said, NOT_SAID);
+    assert.ok(traced.some((l) => l.startsWith('Give: started, not written: svrngs not reached ')), 'traced: not written');
+
+    await server.up();
+    await press('Agree and start');
+    await page.waitForFunction(() => document.body.innerText.includes('kept by'), null, { timeout: 30_000 });
+    assert.match(await row('Minecraft'), /Minecraft · kept by your computer/);
+    assert.doesNotMatch(await text(), /nothing reached your group/);
+    assert.deepEqual(server.ops.slice(written).map((o) => o.payload), [{ kind: 'started', app: 'minecraft', card: 'm1', agreed: true }], 'started once');
+    assert.deepEqual(errors, []);
+  } finally {
+    await close();
+    server.stop();
+  }
+});

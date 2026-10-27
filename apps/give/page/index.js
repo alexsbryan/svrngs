@@ -67,7 +67,18 @@ function install(why) {
 
 /** `op` written as this computer's person; `failed` says what didn't happen, if svrngs refuses it. */
 async function write(op, failed) {
-  const r = await fetch(ACTS, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op }) });
+  const r = await fetch(ACTS, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op }) }).catch(
+    (e) => (trace(`${op.kind}, not written: svrngs not reached`, { app: op.app, error: String(e) }), null),
+  );
+  // A write that can't reach svrngs wrote nothing, and is said where the
+  // page stands: what was open stays open to press again (give-page-down
+  // (c)). The round reads nothing while an ask is open, so only this says it;
+  // the next read, once svrngs answers, drops it.
+  if (r === null) {
+    const p = Object.assign(el('p', `${failed}: svrngs on this computer isn’t answering, so nothing reached your group. Press again in a moment.`), { id: 'unsent' });
+    document.getElementById('unsent')?.remove();
+    return app.querySelector('h1 + p').after(p);
+  }
   const said = await r.json().catch(() => null);
   trace(`${op.kind}, written or refused`, { app: op.app, status: r.status, error: said?.error ?? null });
   refused = r.ok ? null : `${failed}: ${said?.error ?? `this computer answered ${r.status}`}`;
