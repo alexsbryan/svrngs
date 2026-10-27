@@ -6,7 +6,7 @@ svrn-docs `rings/current/GIVE.md` is this queue's exploration, and its §12 list
 - **The record API stops trusting loopback.** `api.rs:12` says "Loopback IS the auth", and on a Mac running podman it is false: a container reaches the Mac's `127.0.0.1` through gvproxy (measured 2026-10-25, GIVE.md §5). This fix is owed whether or not Give exists.
 - **Give ships as its own package.** A group can keep an app in rootless podman, one keeper at a time. Give lives in `apps/give/`, on svrngs's public surface and nothing else.
 
-There are sixteen rows:
+There are seventeen rows:
 
 1. the economizing pass, the estimate, and the ceiling, with the three questions the charter says are awaiting the operator;
 2. the token for programs;
@@ -23,7 +23,8 @@ There are sixteen rows:
 13. Give's scenes and the people runs;
 14. Give's page saying when it cannot read the record;
 15. install;
-16. the docs and a release, prepared for the operator.
+16. Give's install line on the group's own page host, ours the default;
+17. the docs and a release, prepared for the operator.
 
 **Waits, each with its trigger:**
 
@@ -211,7 +212,16 @@ There are sixteen rows:
   - **(c) Rosetta on a Mac with Apple silicon.** Factorio's card runs its amd64 build under Rosetta in Podman's machine, since the arm64 build segfaults making the map (`apps/give/cards/factorio/README.md:15-16`), and Podman 5.6 and later turn Rosetta off by default. The machine Give makes when there is none has Rosetta on. On a machine Give did not make that has it off, a card that needs it is refused before it starts, and Give's page says what to turn on, in a person's words, rather than letting the app crash. Never-ran where the host cannot show it, with its reason (give-app-runtime's "a Mac with Rosetta off", `demo/runs/give/2026-10-26-cards/`).
   - **Check:** `install.sh` run twice on a clean data dir, with and without the option; the checksum refused on a plant; (c) red first where this host can show it, or never-ran with its reason.
   - **THE DIRECTOR, 2026-10-26:** (a), (b) and (c) are committed (2d68d696, 2e6ca3b6, 8402864a), and `.` is at 19,120 of 19,109, reproduced. The raise to 19,121 is past the ceiling's rows (give-token through give-play), and the row names no range, so it is the operator's (CHARTER; AGENTS.md "Done"). The package is `demo/runs/give/2026-10-26-install/NEEDS_HUMAN.md`, and it recommends the raise land. Once it lands, the row's one `scripts/check.sh` closes it.
-- [ ] give-docs — depends [give-install] — ONE ROW:
+  - **THE OPERATOR DECIDED, 2026-10-26,** on `demo/runs/give/2026-10-26-install/NEEDS_HUMAN.md`: "Raise the cap". The cap is 19,121, landed by the operator's session (e5e113e7). What remains is `scripts/check.sh` once, at the close. Their answer on the install line's host is give-page-host, next.
+- [ ] give-page-host — depends [give-install] — ONE ROW, red first, and `scripts/check.sh` once, at the close (the operator, 2026-10-26: "always make the group.svrnme.sh configurable -- that's just our batteries included option"):
+  - **The gap.** Give's install line names `https://group.svrnme.sh/` alone (`apps/give/page/index.js:23`, 2e6ca3b6), since Give's page cannot see where this computer's svrngs came from. A group on a page host of its own (README, "Run it with nobody in the middle"; `svrngs new --origin`, `svrngs link --origin`, install.sh's `<data dir>/origin`) would get svrngs and Give from ours. `git grep` over the product finds no other place where ours is the only choice: `cli.rs`'s mentions are help text, `DEFAULT_RELAY` gives way to a group's `--relay`, and the deploy scripts are the operator's, with their own flags.
+  - **(a) Tests: GIVE'S LINE NAMES THIS COMPUTER'S PAGE.** These fail at HEAD:
+    - A computer whose group's links carry another page (a stand-in https origin) is shown that page's install line on Give's page, with `--give`.
+    - A computer that keeps no page is shown group.svrnme.sh's, the default.
+    - A plant that fixes the line again turns them red.
+  - **(b) The change.** The page address reaches Give on svrngs's public surface (fence 4), as one surface item: the record API says, beside each group it lists, the page that group's https links are printed on (the one `svrngs link` and the home page's `/link` print), and nothing where there is none. Give's line uses it, else ours.
+  - **Check:** (a) red first, green after; the four ledgers. Its range is +5 to +25 library and 0 core. A raise is the operator's: commit the row's work, write the raise as a ready diff in `NEEDS_HUMAN.md`, and stop; the operator's session lands it on their yes.
+- [ ] give-docs — depends [give-page-host] — ONE ROW:
   - **(a) svrngs's documents.**
     - DESIGN §3 says the door carries any port and that the record API asks who is calling. §7 says how a computer gets Give.
     - `ARCHITECTURE.md`, `README.md` ("Lend what you run" names UDP and TCP), and PLAN §1 and §2 are updated.

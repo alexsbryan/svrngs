@@ -101,3 +101,11 @@ The options:
 svrngs's steps rather than copying them, and the total stays inside what the
 operator already allowed the give work. Then the row's one `scripts/check.sh`
 closes it.
+
+## The answer
+
+The operator, 2026-10-26: "Raise the cap and yes always make the
+group.svrnme.sh configurable -- that's just our batteries included
+option." The cap is 19,121 (e5e113e7). Give's install line on the
+group's own page host, ours the default, is give-page-host
+(`ralph/next/give/STATE.md`).
