@@ -139,6 +139,18 @@ test('a group starts an app from the shelf, and every member reads who keeps it 
     );
     assert.match(await row('Stand-in'), /Start it for the group/, 'the other app is still to start');
 
+    // Cy's computer says again, as Give's program does when it changes, that
+    // it can't run Stand-in here for want of Rosetta (give-install (c)): the
+    // row says what to turn on, and offers no start until it says it can.
+    server.record('a1', 'cy', 'ka', { kind: 'ready', cannot: { standin: 'rosetta' } });
+    await as('cy', 'ka', 'a1');
+    assert.match(await row('Stand-in'), /To keep Stand-in on this computer, turn on Rosetta in Podman Desktop’s settings, then start Podman again\./);
+    assert.doesNotMatch(await row('Stand-in'), /Start it for the group/);
+    assert.match(await row('Minecraft'), /Minecraft · kept by your computer/);
+    server.record('a1', 'cy', 'ka', { kind: 'ready', cannot: {} });
+    await as('cy', 'ka', 'a1');
+    assert.match(await row('Stand-in'), /Start it for the group/, 'said it can run it, so it can be started');
+
     // Bo reads who keeps it; Bo's own start, on a computer that can't keep,
     // is told what that computer needs.
     await as('bo', 'kb', 'b1');
@@ -153,7 +165,7 @@ test('a group starts an app from the shelf, and every member reads who keeps it 
     assert.match(await text(), /Stand-in didn’t start: Open give from your home page to write in it\./);
 
     for (const words of said) assert.doesNotMatch(words, NOT_SAID);
-    for (const what of ['cards.json read', 'svrngs/acts answered', 'folded', 'started, written or refused', 'the fold refused an act']) {
+    for (const what of ['cards.json read', 'svrngs/acts answered', 'folded', 'started, written or refused', 'the fold refused an act', 'this computer can’t run it']) {
       assert.ok(traced.some((l) => l.startsWith(`Give: ${what} `)), `traced: ${what}`);
     }
     assert.deepEqual(errors, []);

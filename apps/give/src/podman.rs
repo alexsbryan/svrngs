@@ -18,17 +18,17 @@ pub enum PodmanError {
     },
 }
 
-/// The podman program give runs: `podman` on the PATH, or another for a test.
+/// The podman program give runs: `podman` on the PATH, or another for a test,
+/// with what it adds to podman's environment.
 #[derive(Debug, Clone)]
 pub struct Podman {
     program: OsString,
+    env: Vec<(OsString, OsString)>,
 }
 
 impl Default for Podman {
     fn default() -> Self {
-        Podman {
-            program: "podman".into(),
-        }
+        Podman::at("podman")
     }
 }
 
@@ -36,7 +36,15 @@ impl Podman {
     pub fn at(program: impl Into<OsString>) -> Podman {
         Podman {
             program: program.into(),
+            env: Vec::new(),
         }
+    }
+
+    /// The same podman, run with `key` set to `value`.
+    pub fn with(&self, key: &str, value: impl Into<OsString>) -> Podman {
+        let mut with = self.clone();
+        with.env.push((key.into(), value.into()));
+        with
     }
 
     /// Run it; its output, trimmed, when it exits 0.
@@ -69,6 +77,7 @@ impl Podman {
     fn exec(&self, args: &[&str]) -> Result<(i32, String, String), PodmanError> {
         let out = Command::new(&self.program)
             .args(args)
+            .envs(self.env.iter().map(|(k, v)| (k, v)))
             .stdin(Stdio::null())
             .output()
             .map_err(|e| PodmanError::Missing(format!("{}: {e}", self.program.to_string_lossy())))?;

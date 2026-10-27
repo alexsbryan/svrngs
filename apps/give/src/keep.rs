@@ -33,7 +33,7 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use give_fold::{Keeping, Kept};
-use serde_json::json;
+use serde_json::{Value, json};
 
 use crate::card::Card;
 use crate::lend::Svrngs;
@@ -133,6 +133,17 @@ pub enum Step {
         app: String,
         why: String,
     },
+}
+
+/// Whether this computer, `me`, has to say again in a group what it can't
+/// run: what its latest `ready` among `acts` said, none being nothing, is
+/// not `cannot`. The page reads that latest `ready` (page/index.js `row`).
+pub fn resay(acts: &[Value], me: &str, cannot: &Value) -> bool {
+    let said = (acts.iter().rev())
+        .find(|op| op["actor"] == me && op["payload"]["kind"] == "ready")
+        .map(|op| &op["payload"]["cannot"]);
+    let none = json!({});
+    said.map(|c| if c.is_null() { &none } else { c }) != Some(cannot)
 }
 
 /// What this computer does now: `folds` being each group's fold, `running`
@@ -316,8 +327,16 @@ impl Keeper {
     pub fn round(&mut self, now: u64) -> Result<String, crate::record::RecordError> {
         let groups = self.record.groups()?;
         let mut folds = Vec::new();
+        let cannot = self.cannot();
         for Group { id, folder, .. } in &groups.groups {
-            let kept = give_fold::fold(&self.record.acts(id)?);
+            let acts = self.record.acts(id)?;
+            let kept = give_fold::fold(&acts);
+            if kept.can_keep.contains_key(&groups.key) && resay(&acts, &groups.key, &cannot) {
+                tracing::debug!(group = id, %cannot, "keep: what this computer can't run changed, so said again");
+                if let Err(why) = self.record.write(id, json!({ "kind": "ready", "cannot": cannot })) {
+                    eprintln!("give: could not say in {id} what this computer can't run: {why}");
+                }
+            }
             for r in kept.refused.iter().filter(|r| self.told.insert(r.act.clone())) {
                 tracing::debug!(group = id, act = r.act, refusal = r.code(), why = %r, "keep: the fold refused an act");
             }
@@ -338,7 +357,10 @@ impl Keeper {
     fn step(&mut self, me: &str, step: Step, now: u64) {
         match step {
             Step::Ready { group } => match self.ready() {
-                Ok(()) => match self.record.write(&group, json!({ "kind": "ready" })) {
+                Ok(()) => match self
+                    .record
+                    .write(&group, json!({ "kind": "ready", "cannot": self.cannot() }))
+                {
                     Ok(()) => println!("This computer can keep apps for {group} now."),
                     Err(why) => eprintln!("give: could not say so in {group}: {why}"),
                 },
@@ -401,6 +423,29 @@ impl Keeper {
                     self.failed.insert(app, (act, now));
                 }
             },
+        }
+    }
+
+    /// The cards on the shelf this computer can't run now, each with why: one
+    /// that needs Rosetta where podman's machine has it off (give-install
+    /// (c)). Said with `ready`, so the page says what to turn on; where it
+    /// can't be read, nothing is said of it, and why is traced.
+    fn cannot(&self) -> Value {
+        let (os, arch) = (std::env::consts::OS, std::env::consts::ARCH);
+        let needs: serde_json::Map<_, _> = (self.shelf.cards())
+            .filter(|(_, card)| crate::machine::needs_rosetta(card, os, arch))
+            .map(|(kind, _)| (kind.clone(), json!("rosetta")))
+            .collect();
+        if needs.is_empty() {
+            return json!({});
+        }
+        match crate::machine::rosetta_off(&self.podman) {
+            Ok(true) => Value::Object(needs),
+            Ok(false) => json!({}),
+            Err(why) => {
+                tracing::debug!(%why, "keep: whether podman's machine has Rosetta on can't be read, so nothing is said of it");
+                json!({})
+            }
         }
     }
 
@@ -468,7 +513,7 @@ impl Keeper {
                 return Err(StartError::NotHereYet { app, from });
             }
         }
-        crate::machine::ensure(&self.podman, card.memory())?;
+        crate::machine::ensure(&self.podman, card)?;
         let run = App::new(&self.podman, card, self.name(app)?);
         run.pull()?;
         run.stop()?;

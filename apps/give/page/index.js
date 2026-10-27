@@ -186,6 +186,15 @@ function row(card, kept, read) {
     );
     return out;
   }
+  // What this computer's program last said it can't run here, and why
+  // (give-install (c)): Give's program decides it, from the card and
+  // Podman, and says it with its `ready`; the page says it in words.
+  const ready = read.ops.findLast((o) => o.payload.kind === 'ready' && o.person_key === read.you_key);
+  if (canKeep && ready?.payload.cannot?.[card.kind] === 'rosetta') {
+    trace('this computer can’t run it', { app: card.kind, why: 'rosetta' });
+    out.append(el('p', `To keep ${card.title} on this computer, turn on Rosetta in Podman Desktop’s settings, then start Podman again.`));
+    return out;
+  }
   if (asking !== card.kind) {
     out.append(button('Start it for the group', () => (card.asks.length ? ((asking = card.kind), show()) : start(card, false))));
     return out;

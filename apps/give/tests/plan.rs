@@ -5,7 +5,7 @@
 use std::collections::BTreeMap;
 use std::time::Duration;
 
-use give::keep::{EARLY, EVERY, Held, RETRY, Running, Step, plan};
+use give::keep::{EARLY, EVERY, Held, RETRY, Running, Step, plan, resay};
 use give_fold::fold;
 use serde_json::{Value, json};
 
@@ -400,4 +400,27 @@ fn the_later_of_two_takeovers_stops_with_a_copy_of_what_it_had() {
     let here = BTreeMap::from([("mine".to_string(), running("g1", "t2", 100))]);
     let steps = plan("b1", &[("g1".into(), kept)], &here, &HELD, &NONE, 1000, EVERY);
     assert!(matches!(&steps[..], [Step::Stop { copy: true, .. }]), "{steps:?}");
+}
+
+/// What a computer can't run here is said again only when it changes
+/// (give-install (c)): its latest `ready` is what the page reads, an older
+/// one with nothing said being nothing it can't run. Planted, watched
+/// failing: the latest `ready` read as the first.
+#[test]
+fn what_a_computer_cannot_run_is_said_again_only_when_it_changes() {
+    let ready = |actor: &str, cannot: Option<Value>| {
+        let mut payload = json!({ "kind": "ready" });
+        if let Some(c) = cannot {
+            payload["cannot"] = c;
+        }
+        json!({ "actor": actor, "payload": payload })
+    };
+    let off = json!({ "factorio": "rosetta" });
+    let acts = [ready("a1", None), ready("b1", Some(off.clone()))];
+    assert!(!resay(&acts, "a1", &json!({})), "nothing said is nothing it can't run");
+    assert!(resay(&acts, "a1", &off));
+    assert!(!resay(&acts, "b1", &off));
+    let later = [ready("b1", Some(off.clone())), ready("b1", Some(json!({})))];
+    assert!(resay(&later, "b1", &off), "its latest said it can run it");
+    assert!(!resay(&later, "b1", &json!({})));
 }

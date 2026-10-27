@@ -113,7 +113,7 @@ fn steps(
             why: why.to_string(),
         }
     };
-    machine::ensure(podman, card.memory()).map_err(|e| fail(Step::Machine)(&e))?;
+    machine::ensure(podman, card).map_err(|e| fail(Step::Machine)(&e))?;
     passed(Step::Machine, String::new());
     app.pull().map_err(|e| fail(Step::Pull)(&e))?;
     passed(

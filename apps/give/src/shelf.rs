@@ -56,6 +56,11 @@ impl Shelf {
         self.0.get(kind)
     }
 
+    /// Each card, by kind, in the shelf's order.
+    pub fn cards(&self) -> impl Iterator<Item = (&String, &Card)> {
+        self.0.iter()
+    }
+
     /// What the page shows of each card, in the shelf's order: its kind,
     /// title, about, door, the say and link of each ask, and its version,
     /// which a start names.

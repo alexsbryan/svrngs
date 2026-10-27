@@ -41,7 +41,11 @@ snapshot, compares the restored state with the snapshot file by file, and
 starts the app again until it is healthy. Last, it removes everything it
 made. If a step fails, the check names it. `--agree` is your yes to the
 card's asks, once you have read them. On a Mac, if Podman's machine is
-missing or stopped, the check makes it or starts it, sized for the card.
+missing or stopped, the check makes it or starts it, sized for the card,
+and a machine it makes has Rosetta on. A card that runs an amd64 build, as
+Factorio's does, needs Rosetta on a Mac with Apple silicon: where the
+machine has it off, the check, `give keep` and the page each refuse to
+start it and say to turn it on.
 
 ## Keeping an app
 
