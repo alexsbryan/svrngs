@@ -516,13 +516,18 @@ async fn the_line_without_then_with_give_installs_give_s_program_beside_svrngs()
         let _started = Started(home.path().to_path_buf());
         let bin = home.path().join(".local/bin");
         let agent = match uname {
-            None => home.path().join("Library/LaunchAgents/sh.svrnme.give.plist"),
+            None => home
+                .path()
+                .join("Library/LaunchAgents/sh.svrnme.give.plist"),
             Some(_) => home.path().join(".config/systemd/user/give.service"),
         };
         let without = paste(port, &page, home.path(), uname).await;
         let said = String::from_utf8_lossy(&without.stdout);
         assert!(without.status.success(), "{uname:?}: {said}");
-        assert!(!bin.join("give").exists(), "{uname:?}: Give's program, unasked");
+        assert!(
+            !bin.join("give").exists(),
+            "{uname:?}: Give's program, unasked"
+        );
         assert!(!agent.exists(), "{uname:?}: Give's program kept, unasked");
 
         let platform = match uname {
@@ -535,12 +540,17 @@ async fn the_line_without_then_with_give_installs_give_s_program_beside_svrngs()
             let err = String::from_utf8_lossy(&with.stderr);
             assert!(with.status.success(), "{uname:?}, run {run}: {said}{err}");
             for line in [
-                format!("Checked: {platform} is the one the release lists, unchanged on its way here."),
+                format!(
+                    "Checked: {platform} is the one the release lists, unchanged on its way here."
+                ),
                 "Updated svrngs in".into(),
                 format!("{done} give in {}.", bin.display()),
                 "give runs now, and whenever you log in".into(),
             ] {
-                assert!(said.contains(&line), "{uname:?}, run {run}, not said: {line}\n{said}");
+                assert!(
+                    said.contains(&line),
+                    "{uname:?}, run {run}, not said: {line}\n{said}"
+                );
             }
             assert_eq!(
                 said.contains("Stopped give, to update it."),
@@ -559,8 +569,15 @@ async fn the_line_without_then_with_give_installs_give_s_program_beside_svrngs()
         let launched = std::fs::read_to_string(home.path().join("stubs/said")).unwrap();
         match uname {
             None => {
-                let run = format!("<string>{}/give</string><string>keep</string>", bin.display());
-                for line in [run, path, "<key>ExitTimeOut</key><integer>0</integer>".into()] {
+                let run = format!(
+                    "<string>{}/give</string><string>keep</string>",
+                    bin.display()
+                );
+                for line in [
+                    run,
+                    path,
+                    "<key>ExitTimeOut</key><integer>0</integer>".into(),
+                ] {
                     assert!(kept.contains(&line), "not in the agent: {line}\n{kept}");
                 }
                 let n = launched.matches("bootstrap gui/").count();
@@ -568,7 +585,11 @@ async fn the_line_without_then_with_give_installs_give_s_program_beside_svrngs()
             }
             Some(_) => {
                 let run = format!("ExecStart={}/give keep", bin.display());
-                for line in [run, format!("Environment=PATH={path}"), "TimeoutStopSec=infinity".into()] {
+                for line in [
+                    run,
+                    format!("Environment=PATH={path}"),
+                    "TimeoutStopSec=infinity".into(),
+                ] {
                     assert!(kept.contains(&line), "not in the unit: {line}\n{kept}");
                 }
                 let n = launched.matches("--user enable --now give.service").count();
@@ -610,7 +631,10 @@ async fn a_give_tarball_that_does_not_match_its_sum_is_refused_and_nothing_insta
     assert!(err.contains(&refused), "{err}");
     let bin = home.path().join(".local/bin");
     assert!(!bin.join("give").exists(), "installed anyway");
-    assert!(!bin.join("svrngs").exists(), "svrngs installed beside a refused program");
+    assert!(
+        !bin.join("svrngs").exists(),
+        "svrngs installed beside a refused program"
+    );
 }
 
 /// What svrngs answers the open `url` redeemed in a browser: its status,
