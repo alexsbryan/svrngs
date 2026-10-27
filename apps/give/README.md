@@ -51,9 +51,13 @@ start it and say to turn it on.
 
 A computer keeps apps for its groups when it has Podman and runs Give's
 program beside svrngs. svrngs's own line gets the program with `--give`,
-and it is the line Give's page gives a computer that can't keep yet:
+and it is the line Give's page gives a computer that can't keep yet, from
+the page your group's links are on, ours where it keeps none:
 
     curl -fsSL https://group.svrnme.sh/install.sh | sh -s -- 'https://group.svrnme.sh/' --give
+
+A group on a page host of its own (`svrngs link --origin`) is given that
+page in both places.
 
 It checks the program against the page's `SHA256SUMS`, puts `give` beside
 svrngs, and keeps `give keep` running whenever you log in

@@ -256,7 +256,9 @@ another of the group's computers when this one never held it — and from
 - `GET` answers the app's own acts — each whose `kind` begins `<kind>/`,
   the prefix taken off — and each correction of one, voided ones too, in
   the shape `/v1/rail/log` gives, so an app's fold reads them as it reads
-  the record. Beside them: `you`; the group's id as `group`; its `people`
+  the record. Beside them: `you`; the group's id as `group`; `page`, the
+  page its https links print on, as `svrngs link` prints them, null where
+  none is kept (Give's install line names it); its `people`
   now; and `spans`, each person's stretches in the group, `{person, joined,
   left}`, so a house's rules count a past act with whoever stood when it
   was written (`Membership::spans`, the one decider of who stood when).
