@@ -86,6 +86,36 @@ async function serve() {
   return { at: `http://127.0.0.1:${port}/`, ops, said, record, down, up, stop: () => server.close() };
 }
 
+/**
+ * One page, opened as each person at each computer: `as` opens it, `press`
+ * presses a button, in the row named or else anywhere, and waits for the
+ * page to change. Each says in `said` what the page showed then; `last` is
+ * the newest act's computer and payload.
+ */
+function drive(page, context, server) {
+  const said = [];
+  const text = () => page.innerText('main');
+  const as = async (person, key, computer) => {
+    await context.setExtraHTTPHeaders({ 'x-person': person, 'x-key': key, 'x-computer': computer });
+    await page.goto(server.at);
+    await page.waitForFunction(() => !document.body.innerText.includes('Reading what your group keeps'), null, { timeout: 60_000 });
+    said.push(await text());
+  };
+  const press = async (name, row) => {
+    const before = await text();
+    const scope = row ? page.locator('li', { hasText: row }) : page;
+    await scope.getByRole('button', { name, exact: true }).first().click();
+    await page.waitForFunction((b) => document.querySelector('main').innerText !== b, before, { timeout: 30_000 });
+    said.push(await text());
+  };
+  const row = (title) => page.locator('li', { hasText: title }).innerText();
+  const last = () => {
+    const op = server.ops.at(-1);
+    return [op.actor, op.payload];
+  };
+  return { said, text, as, press, row, last };
+}
+
 test('a group starts an app from the shelf, and every member reads who keeps it (chromium)', async () => {
   const server = await serve();
   const { context, close } = await launch('chromium');
@@ -95,22 +125,7 @@ test('a group starts an app from the shelf, and every member reads who keeps it 
     page.on('pageerror', (e) => errors.push(String(e)));
     const traced = [];
     page.on('console', (m) => m.type() === 'debug' && traced.push(m.text()));
-    const said = [];
-    const text = () => page.innerText('main');
-    const as = async (person, key, computer) => {
-      await context.setExtraHTTPHeaders({ 'x-person': person, 'x-key': key, 'x-computer': computer });
-      await page.goto(server.at);
-      await page.waitForFunction(() => !document.body.innerText.includes('Reading what your group keeps'), null, { timeout: 60_000 });
-      said.push(await text());
-    };
-    const press = async (name, row) => {
-      const before = await text();
-      const scope = row ? page.locator('li', { hasText: row }) : page;
-      await scope.getByRole('button', { name, exact: true }).first().click();
-      await page.waitForFunction((b) => document.querySelector('main').innerText !== b, before, { timeout: 30_000 });
-      said.push(await text());
-    };
-    const row = (title) => page.locator('li', { hasText: title }).innerText();
+    const { said, text, as, press, row } = drive(page, context, server);
 
     // Cy's computer can't keep yet: each row asks, once, for the install.
     await as('cy', 'ka', 'a1');
@@ -194,25 +209,7 @@ test('a member moves an app to another computer on its person’s yes, and a no 
     page.on('pageerror', (e) => errors.push(String(e)));
     const traced = [];
     page.on('console', (m) => m.type() === 'debug' && traced.push(m.text()));
-    const said = [];
-    const text = () => page.innerText('main');
-    const as = async (person, key, computer) => {
-      await context.setExtraHTTPHeaders({ 'x-person': person, 'x-key': key, 'x-computer': computer });
-      await page.goto(server.at);
-      await page.waitForFunction(() => !document.body.innerText.includes('Reading what your group keeps'), null, { timeout: 60_000 });
-      said.push(await text());
-    };
-    const press = async (name, row) => {
-      const before = await text();
-      await page.locator('li', { hasText: row }).getByRole('button', { name, exact: true }).first().click();
-      await page.waitForFunction((b) => document.querySelector('main').innerText !== b, before, { timeout: 30_000 });
-      said.push(await text());
-    };
-    const row = (title) => page.locator('li', { hasText: title }).innerText();
-    const last = () => {
-      const op = server.ops.at(-1);
-      return [op.actor, op.payload];
-    };
+    const { said, as, press, row, last } = drive(page, context, server);
 
     server.record('a1', 'cy', 'ka', { kind: 'ready' });
     server.record('b1', 'bo', 'kb', { kind: 'ready' });
@@ -300,25 +297,7 @@ test('a member keeps an app whose computer stopped answering, and a returning co
     page.on('pageerror', (e) => errors.push(String(e)));
     const traced = [];
     page.on('console', (m) => m.type() === 'debug' && traced.push(m.text()));
-    const said = [];
-    const text = () => page.innerText('main');
-    const as = async (person, key, computer) => {
-      await context.setExtraHTTPHeaders({ 'x-person': person, 'x-key': key, 'x-computer': computer });
-      await page.goto(server.at);
-      await page.waitForFunction(() => !document.body.innerText.includes('Reading what your group keeps'), null, { timeout: 60_000 });
-      said.push(await text());
-    };
-    const press = async (name, row) => {
-      const before = await text();
-      await page.locator('li', { hasText: row }).getByRole('button', { name, exact: true }).first().click();
-      await page.waitForFunction((b) => document.querySelector('main').innerText !== b, before, { timeout: 30_000 });
-      said.push(await text());
-    };
-    const row = (title) => page.locator('li', { hasText: title }).innerText();
-    const last = () => {
-      const op = server.ops.at(-1);
-      return [op.actor, op.payload];
-    };
+    const { said, as, press, row, last } = drive(page, context, server);
 
     const now = Math.floor(Date.now() / 1000);
     const at = now - 3600;
