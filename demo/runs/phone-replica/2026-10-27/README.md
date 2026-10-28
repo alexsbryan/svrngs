@@ -28,3 +28,30 @@ the phone awake; it is the rate a group's computers would dial a replica
 
 Not settled: cellular locked; a day in a pocket; battery and data; the
 record on the phone (PHONE_REPLICA §5, phases 2 and 3).
+
+## The pocket day, 10:35 to 20:58 Pacific
+
+The operator carried the phone through an ordinary day with the tunnel on:
+4 h 31 min with the screen on and 7 h 2 min off, by Settings › Battery.
+The dialer ran from slot 137 to 760 and was stopped at 20:58. The phone's
+own record is in `phone/`: `samples.jsonl`, a line every 10 s with no gap
+over a minute, and `trace.log`.
+
+| Bar | Suggested | Verdict | What it rests on |
+|---|---|---|---|
+| answered | at least 90% of judged dials within 30 s, and no run of misses past 15 min | **passed** | 617 of 624 answered (98.9%), none could-not-judge; the 7 misses were single dials, one at 15:07 and six between 18:15 and 18:35, so the longest gap was 2 minutes. Median 169 ms, 90th percentile 813 ms, slowest 19.6 s. 337 direct, 280 relay. |
+| memory | peak at most half the 50 MiB cap, no termination | **passed** | Peak footprint 7.2 MiB, the least `available` 43.0 MiB. `up_s` never reset, so iOS never stopped the tunnel all day. |
+| battery | at most 5 points over the day beyond a baseline day | **failed** | No baseline day was recorded, but none is needed to judge it: Settings › Battery charged Phone tunnel with 10% of the day's use, against Firefox's 12% and Qobuz's 11%, on a day that went from a full charge to 4%. That's about 9 to 10 points, roughly twice the bar. The screenshot isn't committed, since it names the operator's other apps. |
+| data | at most 10 MB in 24 h | **failed** | The endpoint's own socket counters: 158 MB in 10.4 hours (104 MB up, 54 MB down), about 365 MB a day. It was steady at 11 to 15 MB an hour through the day, and 19 to 26 MB an hour after 18:00 on relay paths, so it's what the endpoint does at rest, not the operator's use. Settings › Cellular's figure wasn't recorded. |
+
+**iOS slept the provider and dials woke it.** `slept` and `woke` stayed
+at 0 until 16:42, then reached 571 each by evening (`phone/trace.log`),
+and the dials kept being answered throughout. The prediction that a sleep
+would make the phone unreachable was wrong both ways: it slept, and was
+still reached.
+
+**Where the bytes go isn't attributed.** The counters are every byte the
+endpoint's sockets carried: the probe's dials, holepunching on each new
+connection, relay pings, and iroh's net reports, every 20 to 26 s
+(PHONE_REPLICA §4). An hour of iroh's per-kind metrics at a desk
+attributes them.
