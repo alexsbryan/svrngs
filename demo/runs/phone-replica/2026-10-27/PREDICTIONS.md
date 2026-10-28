@@ -82,3 +82,36 @@ operator's ordinary day as the routine.
 tunnel over the last 24 hours, Settings › Cellular's figure for Phone
 tunnel, the tunnel's samples and trace, and any reboot or time the tunnel
 was switched off.
+
+## Two more runs, added 2026-10-27 at 21:10 before either starts
+
+The operator asked for the simpler plan ("Can you do it more simply, more
+resourcefully?") and chose it: "Yes, let's do that". Both runs reuse the
+build already on the phone and the same dialer. Each writes its own
+`dials.jsonl` on the Fedora box.
+
+**The night: is a replica affordable on a charger?** The phone charges on
+WiFi overnight with the tunnel on, and the dialer calls every 60 s, from
+tonight until the operator turns the tunnel off in the morning. The night
+is when laptops sleep, so it is the hours risk 1 is about. Battery and
+data aren't judged, since a phone on a charger and WiFi doesn't pay them.
+
+| Bar | Expected | Chance | Why |
+|---|---|---|---|
+| answered: at least 90% of judged dials within 30 s, and no run of misses past 15 min | passes | 80% | The locked hour and the day both passed; a still phone on power and WiFi is the easiest case. The risk is iOS's overnight maintenance, a software update or a restart. |
+
+**The day: are the dials the cost, or iroh's timers?** The day after, an
+ordinary day as on 2026-10-27, but the dialer calls every 900 s instead
+of every 60 s. Judged against the first day's 10% of the battery and
+about 365 MB a day (README.md, "The pocket day").
+
+| What | Expected | Chance | Why |
+|---|---|---|---|
+| answered | passes, with each miss a 15-minute gap | 60% | One miss now fails the 15-minute rule. |
+| bytes a day, by the endpoint's counters | falls by less than half, to over 180 MB | 60% | iroh's own timers run without any dial: a relay ping every 15 s, net reports every 20 to 26 s with HTTPS probes, and a path heartbeat every 5 s (iroh-1.0.2 `relay/actor.rs:71`, `socket.rs:109`). |
+| battery share | falls by less than half, to over 5% | 60% | A relay ping every 15 s keeps the radio from resting, dials or not. |
+
+**What each decides.** If the bytes and battery fall by more than half,
+the dials were the cost, and the fix is ours: dial phones less often. If
+not, iroh's timers are the cost: the replica is a charger-only feature
+until n0 offers a low-power setting, which we ask for with these numbers.
