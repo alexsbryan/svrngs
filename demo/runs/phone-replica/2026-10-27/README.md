@@ -55,3 +55,22 @@ endpoint's sockets carried: the probe's dials, holepunching on each new
 connection, relay pings, and iroh's net reports, every 20 to 26 s
 (PHONE_REPLICA §4). An hour of iroh's per-kind metrics at a desk
 attributes them.
+
+## The night on a charger, 2026-10-27 21:09 to 2026-10-28 07:43 Pacific
+
+The phone charged overnight on WiFi with the tunnel on. The record is in
+`night/`: `dials.jsonl` (the dialer's), `samples.jsonl` and `trace.log`
+(the phone's, cut to the night).
+
+| Bar | Verdict | What it rests on |
+|---|---|---|
+| answered | **passed** | 634 of 635 answered (99.8%), the one miss at 21:59 (`connect: timed out`). Median 139 ms, 90th percentile 243 ms, slowest 1.5 s. 417 direct, 217 relay. |
+
+`up_s` ran unbroken from 36,859 to 74,108 s: the same tunnel since the
+first day's 09:45. iOS slept the provider 110 more times overnight (611
+to 721), and every dial still woke it. Peak footprint 7.8 MiB.
+
+**The bytes didn't care that the phone was idle:** 132.9 MB over 10.6
+hours, 12.6 MB an hour, the same rate as the day of ordinary use. So the
+cost is what the endpoint does at rest, dialed once a minute. Battery and
+data aren't judged on a charger and WiFi, by the predictions.
