@@ -301,3 +301,26 @@ sleeping phone. Not checked further.
 4. **Not settled:** energy (no Power Profiler trace yet), a whole day on
    the patched build, Android, and any other phone. One phone, short
    steps: a sampling, not a rate.
+
+## A second pair, stock then relay, 2026-10-28 20:43 to 21:16
+
+Run by the operator after the ladder, with the Power Profiler on: "stock
+and relay for about 20 minutes -- the performance trace for some reason
+didn't log even though it was on and I had restarted". So energy is still
+unmeasured. The dialer had been stopped, so there are no dials. The record
+is in `pair/`.
+
+| Step | Minutes | Wakes an hour | MB an hour | Reports | Link changes (major, minor) | Relay connections lost | Home relay swaps |
+|---|---|---|---|---|---|---|---|
+| stock | 17 | 156 | 12.06 | 41 | 6, 20 | 0 | 1 |
+| relay | 16 | 325 | 0.34 | 1 | 0, 0 | 9 | 1 |
+
+**The gap holds, and stock's cost moves with the conditions.** This stock
+step had far fewer link changes than the ladder's (26 against 220), so
+most of its 41 reports were the periodic one every 20 to 26 s. It came in
+at 12 MB an hour, against the ladder's 40, near the first day's awake
+rate. The relay step was 0.34 MB an hour, against 1.10 in the ladder.
+Across both pairs, relay costs 12 to 120 times less than stock on the same
+phone the same evening. The relay step's 9 lost connections are the
+relay closing a sleeping client, as before ("Client stream read failed",
+"Ping timeout").
