@@ -30,6 +30,18 @@ pub enum Plant {
     Leak,
 }
 
+/// The ladder's step (../../phone-replica/2026-10-27/PREDICTIONS.md, "The ladder"): no endpoint at all, or
+/// one whose net reports run as a patched iroh reads `SVRNGS_IROH_REPORTS`; stock iroh ignores it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Rung {
+    Bare,
+    Relay,
+    Periodic,
+    #[default]
+    Stock,
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
@@ -43,6 +55,8 @@ pub struct Config {
     /// The one key the probe answers (PHONE_REPLICA §5, phase 1); none, no probe.
     #[serde(default)]
     probe: Option<PublicKey>,
+    #[serde(default)]
+    pub rung: Rung,
 }
 
 /// What a probe dial asks on: the phone's vitals, one JSON line.
@@ -134,7 +148,14 @@ fn started(raw: &str) -> Started {
         debug!(target: "tunnel", "refused: a tunnel already runs in this process");
         return Started::Already;
     }
-    debug!(target: "tunnel", plant = ?config.plant, lender = %config.lender, lend = %config.lend, port = config.port, "start: a runtime on a thread of its own");
+    debug!(target: "tunnel", plant = ?config.plant, rung = ?config.rung, lender = %config.lender, lend = %config.lend, port = config.port, "start: a runtime on a thread of its own");
+    let reports = match config.rung {
+        Rung::Relay => "relay",
+        Rung::Periodic => "periodic",
+        Rung::Bare | Rung::Stock => "stock",
+    };
+    // Before the runtime's threads exist, since setting the environment races any other thread reading it.
+    unsafe { std::env::set_var("SVRNGS_IROH_REPORTS", reports) };
     let (stop, stopped) = oneshot::channel();
     let thread = std::thread::spawn(
         move || match tokio::runtime::Builder::new_multi_thread().enable_all().build() {
@@ -175,12 +196,20 @@ async fn run(config: Config, mut stopped: oneshot::Receiver<()>) {
     };
     debug!(target: "tunnel", key = %key.public(), plant = ?config.plant, "the endpoint's key: the seed's, or under stranger one no group holds");
     let alpns = config.probe.map(|_| vec![PROBE.to_vec()]).unwrap_or_default();
-    let endpoint = match build_relayed_endpoint(key, alpns, &RelayConfig::default()).await {
-        Ok(endpoint) => endpoint,
-        Err(e) => return debug!(target: "tunnel", error = e, "stopped: no endpoint"),
+    // The bare step holds no endpoint: what iOS does with an idle tunnel, the floor the others stand on.
+    let endpoint = match config.rung {
+        Rung::Bare => None,
+        _ => match build_relayed_endpoint(key, alpns, &RelayConfig::default()).await {
+            Ok(endpoint) => Some(endpoint),
+            Err(e) => return debug!(target: "tunnel", error = e, "stopped: no endpoint"),
+        },
     };
+    debug!(target: "tunnel", rung = ?config.rung, endpoint = endpoint.is_some(), "the ladder's step: an endpoint, or none on the bare step");
     let born = std::time::Instant::now();
-    let _probe = config.probe.map(|dialer| tokio::spawn(answering(endpoint.clone(), dialer, born)));
+    let _probe = config
+        .probe
+        .zip(endpoint.clone())
+        .map(|(dialer, e)| tokio::spawn(answering(e, dialer, born)));
     let (mut lend, mut leaked) = (None::<Carried>, Vec::new());
     let (mut sample, mut leak) = (interval(Duration::from_secs(10)), interval(Duration::from_secs(1)));
     sample.set_missed_tick_behavior(MissedTickBehavior::Delay);
@@ -189,10 +218,10 @@ async fn run(config: Config, mut stopped: oneshot::Receiver<()>) {
             _ = &mut stopped => break,
             _ = sample.tick() => {
                 let open = lend.as_ref().is_some_and(|(_, task)| !task.is_finished());
-                sampled(&endpoint, &config, open).await;
+                sampled(endpoint.as_ref(), &config, open).await;
                 debug!(target: "tunnel", open, probe = config.probe.is_some(), "the lend open, or opened again now: a lender closing it or not yet up is tried each sample; none under the probe");
                 // Under the probe the phone only holds its endpoint, so nothing of the door's wakes it (PHONE_REPLICA §5).
-                if !open && config.probe.is_none() { lend = opened(&endpoint, &config).await }
+                if let (false, None, Some(e)) = (open, config.probe, &endpoint) { lend = opened(e, &config).await }
             }
             Some(words) = async { match &mut lend { Some((told, _)) => told.recv().await, None => std::future::pending().await } } => {
                 debug!(target: "tunnel", words, "the lender refused a program's connection");
@@ -205,7 +234,9 @@ async fn run(config: Config, mut stopped: oneshot::Receiver<()>) {
         }
     }
     drop(lend);
-    endpoint.close().await;
+    if let Some(endpoint) = endpoint {
+        endpoint.close().await;
+    }
     debug!(target: "tunnel", "stopped: the lend dropped and the endpoint closed");
 }
 
@@ -254,9 +285,11 @@ async fn opened(endpoint: &Endpoint, config: &Config) -> Option<Carried> {
     carried.ok()
 }
 
-async fn sampled(endpoint: &Endpoint, config: &Config, open: bool) {
-    let s = &endpoint.metrics().socket;
-    let info = endpoint.remote_info(config.lender).await;
+async fn sampled(endpoint: Option<&Endpoint>, config: &Config, open: bool) {
+    let info = match endpoint {
+        Some(e) => e.remote_info(config.lender).await,
+        None => None,
+    };
     let paths: Vec<_> = info
         .into_iter()
         .flat_map(|i| i.into_addrs())
@@ -275,10 +308,10 @@ async fn sampled(endpoint: &Endpoint, config: &Config, open: bool) {
     let t = SystemTime::now().duration_since(UNIX_EPOCH).ok().map(|d| d.as_secs());
     let sample = serde_json::json!({
         "t": t, "footprint": footprint(), "available": available(), "open": open, "path": path, "plant": config.plant,
-        // Every QUIC byte the endpoint sent and took in, over IP and relay: it holds the one connection.
-        "slept": SLEPT.load(Ordering::Relaxed), "woke": WOKE.load(Ordering::Relaxed),
-        "up": s.send_ipv4.get() + s.send_ipv6.get() + s.send_relay.get(),
-        "down": s.recv_data_ipv4.get() + s.recv_data_ipv6.get() + s.recv_data_relay.get(),
+        "rung": config.rung, "slept": SLEPT.load(Ordering::Relaxed), "woke": WOKE.load(Ordering::Relaxed),
+        // Every byte the endpoint's sockets sent and took in, over IP and relay; null with no endpoint, never 0.
+        "up": endpoint.map(|e| { let s = &e.metrics().socket; s.send_ipv4.get() + s.send_ipv6.get() + s.send_relay.get() }),
+        "down": endpoint.map(|e| { let s = &e.metrics().socket; s.recv_data_ipv4.get() + s.recv_data_ipv6.get() + s.recv_data_relay.get() }),
     });
     // Opened, written and closed each time, unbuffered, so the last sample before a kill is on disk (P5).
     let file = std::fs::OpenOptions::new()
@@ -341,6 +374,16 @@ mod tests {
             ours.abs_diff(theirs) < 1 << 20,
             "task_info {ours}, proc_pid_rusage {theirs}"
         );
+    }
+
+    #[test]
+    fn the_rung_is_stock_unless_named_and_a_stray_one_is_refused() {
+        let seed = "00".repeat(32);
+        assert_eq!(parsed(&config("none", &seed)).unwrap().rung, Rung::Stock);
+        let named = |r: &str| config("none", &seed).replace("}", &format!(r#","rung":"{r}"}}"#));
+        assert_eq!(parsed(&named("bare")).unwrap().rung, Rung::Bare);
+        assert_eq!(parsed(&named("periodic")).unwrap().rung, Rung::Periodic);
+        assert!(parsed(&named("Relay")).is_err());
     }
 
     #[test]

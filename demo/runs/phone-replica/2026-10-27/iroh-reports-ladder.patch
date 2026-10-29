@@ -1,0 +1,48 @@
+--- a/iroh-1.0.2/src/socket.rs	2006-07-23 18:21:28
++++ b/iroh-1.0.2/src/socket.rs	2026-10-28 19:46:20
+@@ -1669,9 +1669,13 @@
+ 
+             #[cfg(not(wasm_browser))]
+             self.sock.dns_resolver.reset();
+-            self.re_stun(UpdateReason::LinkChangeMajor);
+-        } else {
++            if svrngs_reports() == "stock" {
++                self.re_stun(UpdateReason::LinkChangeMajor);
++            }
++        } else if svrngs_reports() == "stock" {
+             self.re_stun(UpdateReason::LinkChangeMinor);
++        } else {
++            debug!("svrngs: no report on a minor link change");
+         }
+ 
+         if self.has_usable_network() {
+@@ -2001,11 +2005,28 @@
+     }
+ }
+ 
++/// svrngs phone spike (svrngs demo/runs/phone-replica/2026-10-27/PREDICTIONS.md, "The ladder"):
++/// how net reports run, from `SVRNGS_IROH_REPORTS`, read once. Unset or "stock": iroh's own.
++/// "periodic": every 5 minutes, none on a link change. "relay": one at start, none after.
++fn svrngs_reports() -> &'static str {
++    static MODE: std::sync::OnceLock<String> = std::sync::OnceLock::new();
++    MODE.get_or_init(|| {
++        let mode = std::env::var("SVRNGS_IROH_REPORTS").unwrap_or_else(|_| "stock".into());
++        debug!(mode, "svrngs: net report mode");
++        mode
++    })
++}
++
+ fn new_re_stun_timer(initial_delay: bool) -> time::Interval {
+     // Pick a random duration between 20 and 26 seconds (just under 30s,
+     // a common UDP NAT timeout on Linux,etc)
+     let mut rng = rand::rng();
+-    let d: Duration = rng.random_range(Duration::from_secs(20)..=Duration::from_secs(26));
++    let (lo, hi) = match svrngs_reports() {
++        "periodic" => (300, 306),
++        "relay" => (86_400, 86_406),
++        _ => (20, 26),
++    };
++    let d: Duration = rng.random_range(Duration::from_secs(lo)..=Duration::from_secs(hi));
+     if initial_delay {
+         debug!("scheduling periodic_stun to run in {}s", d.as_secs());
+         time::interval_at(time::Instant::now() + d, d)

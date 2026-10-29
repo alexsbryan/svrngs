@@ -20,10 +20,11 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
             let container = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.sh.svrnme.phonetunnel")
             guard let logs = container else { return completionHandler(Refused.noContainer) }
             // An absent plant goes as null, for the Rust to refuse: never a default.
-            let plant = (self.protocolConfiguration as? NETunnelProviderProtocol)?.providerConfiguration?["plant"]
+            let given = (self.protocolConfiguration as? NETunnelProviderProtocol)?.providerConfiguration
+            let (plant, rung) = (given?["plant"], given?["rung"])
             let config: [String: Any] = [
                 "seed_hex": Key.seedHex, "lender": Key.lender, "lend": Key.lend,
-                "port": 8096, "plant": plant ?? NSNull(), "log_dir": logs.path, "probe": Key.probe ?? NSNull(),
+                "port": 8096, "plant": plant ?? NSNull(), "log_dir": logs.path, "probe": Key.probe ?? NSNull(), "rung": rung ?? NSNull(),
             ]
             guard let json = try? JSONSerialization.data(withJSONObject: config),
                   let text = String(data: json, encoding: .utf8)

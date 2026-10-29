@@ -11,10 +11,17 @@ enum Plant: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+/// The ladder's step (../../../phone-replica/2026-10-27/PREDICTIONS.md, "The ladder").
+enum Rung: String, CaseIterable, Identifiable {
+    case bare, relay, periodic, stock
+    var id: String { rawValue }
+}
+
 @MainActor
 final class Tunnel: ObservableObject {
     @Published var on = false
     @Published var plant = Plant.none
+    @Published var rung = Rung.stock
     @Published var said = ""
     private var manager: NETunnelProviderManager?
 
@@ -22,6 +29,8 @@ final class Tunnel: ObservableObject {
         manager = (try? await NETunnelProviderManager.loadAllFromPreferences())?.first
         let given = (manager?.protocolConfiguration as? NETunnelProviderProtocol)?.providerConfiguration?["plant"]
         plant = (given as? String).flatMap(Plant.init(rawValue:)) ?? .none
+        let step = (manager?.protocolConfiguration as? NETunnelProviderProtocol)?.providerConfiguration?["rung"]
+        rung = (step as? String).flatMap(Rung.init(rawValue:)) ?? .stock
         on = [.connected, .connecting, .reasserting].contains(manager?.connection.status)
     }
 
@@ -30,7 +39,7 @@ final class Tunnel: ObservableObject {
         let proto = NETunnelProviderProtocol()
         proto.providerBundleIdentifier = "sh.svrnme.phonetunnel.tunnel"
         proto.serverAddress = "127.0.0.1"
-        proto.providerConfiguration = ["plant": plant.rawValue]
+        proto.providerConfiguration = ["plant": plant.rawValue, "rung": rung.rawValue]
         manager.protocolConfiguration = proto
         manager.localizedDescription = "Phone tunnel spike"
         manager.isEnabled = true
@@ -43,7 +52,7 @@ final class Tunnel: ObservableObject {
             try await manager.loadFromPreferences()
             self.manager = manager
             if on { try manager.connection.startVPNTunnel() } else { manager.connection.stopVPNTunnel() }
-            said = on ? "Started, with the plant \(plant.rawValue)" : "Stopped"
+            said = on ? "Started, with the plant \(plant.rawValue), on the step \(rung.rawValue)" : "Stopped"
         } catch {
             self.on = !on
             said = error.localizedDescription
@@ -65,6 +74,9 @@ struct PhoneTunnelApp: App {
                 }))
                 Picker("Plant", selection: $tunnel.plant) {
                     ForEach(Plant.allCases) { Text($0.rawValue).tag($0) }
+                }.disabled(tunnel.on)
+                Picker("Step", selection: $tunnel.rung) {
+                    ForEach(Rung.allCases) { Text($0.rawValue).tag($0) }
                 }.disabled(tunnel.on)
                 if let logs {
                     ShareLink(items: [logs.appending(path: "samples.jsonl"), logs.appending(path: "trace.log")]) {

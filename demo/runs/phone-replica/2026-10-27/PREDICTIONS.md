@@ -155,3 +155,40 @@ a fresh start, locked on cellular for 20 to 30 minutes, dialed every 300 s.
 | bytes an hour | under 2 MB, against 21.6 with the loop and 13.0 awake | 70% | no per-wake report or relay reconnect, and a report every 5 minutes |
 | sleeps and wakes | some or none; either way cheap | — | whether iOS sleeps the provider isn't ours; what each wake costs is |
 | answered, of the dials | all after the tunnel starts | 75% | the relay connection is no longer torn down at each wake |
+
+## The ladder, added 2026-10-28 at 20:40 before it runs
+
+The operator asked for "a comprehensive measurement" in place of one more
+patch ("Rather than whack a mole …"), then "Do it". One build carries
+`netwatch-trim-digits.patch` and `iroh-reports-ladder.patch`: a fresh copy
+of iroh 1.0.2 whose net reports run as `SVRNGS_IROH_REPORTS` says, set by
+the tunnel from the step the app's picker names. Stock iroh ignores it.
+Checked on the Mac first: in 70 s, the relay step ran 1 report and the
+stock step 3.
+
+Each step is a fresh start of the tunnel, locked on cellular for 20
+minutes, dialed every 300 s. The samples carry the step, so the record
+splits itself.
+
+| Step | What runs |
+|---|---|
+| bare | the tunnel up, no endpoint at all |
+| relay | an endpoint and its relay connection; one report at start, none after, none on a link change |
+| periodic | the relay step, plus a report every 300 to 306 s |
+| stock | iroh's own reports, every 20 to 26 s and on every link change; the trim fix stays in |
+
+| What | Expected | Chance | Why |
+|---|---|---|---|
+| wakes an hour, bare | under 60 | 60% | iOS's own wakes of an idle phone, with nothing of ours to answer |
+| **wakes an hour, relay, against stock** | **under a third of stock's** | 60% | the traces put an iroh report on each side of most sleeps (`restun/`, `fixed/`): if its replies are what wake the phone, removing the reports breaks the loop. If not, the relay's pings, every 15 s from the phone and 16 to 20 s from the server, may be enough to keep waking it. |
+| bytes an hour, relay | under 1 MB | 70% | relay pings and pongs are tens of bytes |
+| bytes an hour, periodic | under 2 MB | 65% | 12 reports an hour at about 82 KB each, plus the relay step |
+| bytes an hour, stock | 13 to 21 MB | 75% | the earlier runs |
+| answered | none on bare; all on the other steps after their first minute | 75% | bare has no endpoint; the others keep their relay connection |
+
+**What it decides.** If relay's wakes and bytes are both small, an
+all-day replica is viable on iroh once reports stop reacting to link
+changes and the interval can be set, and n0 gets that request with this
+table. If relay's wakes stay high, the floor is the relay keep-alive, and
+the request is a keep-alive a phone can afford, or a replica only on the
+charger.
