@@ -200,3 +200,32 @@ Neither is a setting in iroh 1.0.2. Both are fixable there: a report
 interval a caller can set; and on iOS, a link change that leaves the
 default route and the public address as they were treated as minor, with
 the relay's check not failed by a sleep.
+
+## netwatch's trim fixed, 2026-10-28 19:11 to 19:39
+
+Both patches, `iroh-restun-5min.patch` and `netwatch-trim-digits.patch`,
+a fresh start locked on cellular for 28 minutes, dialed every 300 s. The
+record is in `fixed/`.
+
+**The fix did what it was for, and the bytes didn't move.** Major link
+changes fell from 129 to 2, as predicted. The loop still ran: 53 sleeps
+and wakes. The bytes were **20.5 MB an hour**, against 21.6 before the fix
+and a prediction of under 2. All 7 dials were answered, in 0.47 to 2.2 s.
+
+**Why** (`fixed/trace.log`):
+- **A minor link change still runs a report.** iroh's
+  `handle_network_change` calls `re_stun(LinkChangeMinor)` for a minor
+  change too (`iroh-1.0.2/src/socket.rs:1661-1675`), and netwatch still
+  signals a change whenever any interface's flags move, AWDL's included,
+  since its watched state compares every interface. So 109 minor changes
+  ran 109 reports (`starting direct addr update (LinkChangeMinor)`), some
+  full, against 4 periodic ones.
+- **A report that straddles a sleep misreads the relays.** Latencies of
+  1.1 to 1.2 s were measured across a sleep, against 40 to 90 ms awake, and
+  the preferred relay swapped each time: `home is now relay` 63 times,
+  between usw1 and use1. Each swap republished to pkarr (`Publish endpoint
+  info to pkarr (info changed)`, 63 times) and moved the relay connection
+  (14 lost, 25 redialed).
+
+So the classification bug was real but not the whole cost. Each wake still
+pays a report, and a report taken across a sleep moves the home relay.
