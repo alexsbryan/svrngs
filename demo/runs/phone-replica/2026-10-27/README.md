@@ -151,3 +151,52 @@ only off the charger and only after hours: none on the first day until
 22:36 to 07:41 on the charger; on 2026-10-28, from 07:44, minutes after
 the phone came off the charger at 07:11, rising from 50 to 320 an hour
 by 15:00. A fresh start locked on cellular for 22 minutes had none.
+
+## The net report at 5 minutes, and the loop seen from inside, 2026-10-28 17:54 to 18:22
+
+The tunnel built with `iroh-restun-5min.patch`, a fresh start locked on
+cellular for 28 minutes, dialed every 300 s. The record is in `restun/`.
+
+**The patch held, and didn't help.** The periodic report was scheduled at
+300 to 306 s, and ran twice (`starting direct addr update (Periodic)`).
+But the bytes rose to **21.6 MB an hour** (9.98 MB in 28 minutes), since
+this time **the loop happened**: 64 sleeps and 64 wakes. The predictions
+for bytes and reports failed. Of the dials, 6 of 7 were answered, in 0.5 to
+3.6 s; the first, `failed`, came before the tunnel was restarted.
+
+**What each cycle does** (`restun/trace.log`, around wake 20 at 01:09:25):
+1. iOS wakes the provider, and the cellular interfaces it lists have
+   changed: iOS keeps eleven, `pdp_ip0` to `pdp_ip10`, and brings data
+   contexts up and down as the modem sleeps.
+2. iroh's netwatch reads that as **`link change detected is_major=true`**
+   and runs a full net report (`do_full=true`): QUIC probes to the relays
+   over v4 and v6, HTTPS probes, a captive-portal check. Then, often, a
+   second full report straight after.
+3. On a link change iroh pings the relay to check the connection, and
+   waits half a second (`Sending ping` 31.137, `Ping timeout` 31.639). iOS
+   has already put the provider back to sleep by then, so the pong can't
+   arrive: **`Lost connection to relay server: Ping timeout`**, and a new
+   relay connection, TCP, TLS and a websocket, on the next wake.
+4. Going to sleep changes the interfaces again: another major link change.
+
+Counted over the 28 minutes: 129 major link changes and 129 full reports
+(`starting direct addr update (LinkChangeMajor)`), 64 relay reconnects
+after a ping timeout, against 2 periodic reports. About 150 KB a cycle.
+The phone's public address answered by every probe stayed the same
+(`71.140.182.158:5823`): the network didn't change, only the interface
+list did.
+
+**So the cost has two causes, and the loop's is not the report's
+interval:**
+1. **Awake at rest, about 13 MB an hour:** the net report every 20 to 26
+   s (`What iroh does at rest`). The 5-minute patch removes it; no wake
+   then pays it.
+2. **Each sleep and wake, about 150 KB:** iOS's cellular interfaces flap
+   with the modem, and iroh treats each flap as a major network change:
+   a full report each time, and a relay reconnect when its half-second
+   check straddles a sleep.
+
+Neither is a setting in iroh 1.0.2. Both are fixable there: a report
+interval a caller can set; and on iOS, a link change that leaves the
+default route and the public address as they were treated as minor, with
+the relay's check not failed by a sleep.
