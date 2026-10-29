@@ -135,3 +135,23 @@ by the same dialer.
 answered, the report's interval is the phone's lever: we ask n0 to make it
 configurable, with these numbers. If the bytes don't fall, the cost is
 elsewhere, and the trace says where.
+
+## netwatch's trim fixed, with the 5-minute report, added 2026-10-28 at 19:15 before it runs
+
+The operator: "second patch". netwatch 0.19.1's `is_interesting_interface`
+means to ignore Apple's AWDL, low-latency WLAN and IPsec interfaces, but
+`name.trim_end_matches("0123456789")` trims that whole string, never
+trailing digits, so `awdl0` counts (`rustc` on the four names, as written
+and fixed; the same line is in 0.19.3 and 0.20.0). In `restun/`, awdl0's
+flags alternate between 34915 and 34850, up and running toggled, exactly
+129 times, against 129 major link changes. `netwatch-trim-digits.patch`
+trims the digits instead. The build carries it and `iroh-restun-5min.patch`
+(`IROH_PATCH=… NETWATCH_PATCH=… build-xcframework.sh`). The same routine:
+a fresh start, locked on cellular for 20 to 30 minutes, dialed every 300 s.
+
+| What | Expected | Chance | Why |
+|---|---|---|---|
+| major link changes | 0 to 2, against 129 | 80% | awdl0's flapping no longer counts; a real change, say a cell handover, still would |
+| bytes an hour | under 2 MB, against 21.6 with the loop and 13.0 awake | 70% | no per-wake report or relay reconnect, and a report every 5 minutes |
+| sleeps and wakes | some or none; either way cheap | — | whether iOS sleeps the provider isn't ours; what each wake costs is |
+| answered, of the dials | all after the tunnel starts | 75% | the relay connection is no longer torn down at each wake |

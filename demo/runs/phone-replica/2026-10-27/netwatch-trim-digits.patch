@@ -1,0 +1,12 @@
+--- a/netwatch-0.19.1/src/netmon/bsd.rs	2006-07-23 18:21:28
++++ b/netwatch-0.19.1/src/netmon/bsd.rs	2026-10-28 19:06:54
+@@ -184,7 +184,8 @@
+ }
+ 
+ pub(crate) fn is_interesting_interface(name: &str) -> bool {
+-    let base_name = name.trim_end_matches("0123456789");
++    // A &str pattern trims that whole string, never trailing digits, so "awdl0" stayed "awdl0".
++    let base_name = name.trim_end_matches(|c: char| c.is_ascii_digit());
+     if base_name == "llw" || base_name == "awdl" || base_name == "ipsec" {
+         return false;
+     }
