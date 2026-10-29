@@ -229,3 +229,75 @@ and a prediction of under 2. All 7 dials were answered, in 0.47 to 2.2 s.
 
 So the classification bug was real but not the whole cost. Each wake still
 pays a report, and a report taken across a sleep moves the home relay.
+
+## The ladder, 2026-10-28 19:57 to 20:36
+
+One build with `netwatch-trim-digits.patch` and
+`iroh-reports-ladder.patch`; each step a fresh start of the tunnel, locked
+on cellular, dialed every 300 s. Shorter than the 20 minutes planned: the
+operator, "not perfect, but there's a sampling". No Power Profiler trace,
+so energy is not measured; wakes and bytes are. The record is in
+`ladder/`, with the step on every sample.
+
+| Step | Minutes | Wakes an hour | MB an hour | Reports | Relay connections lost | Home relay swaps | Peak footprint | Dials answered |
+|---|---|---|---|---|---|---|---|---|
+| bare (no endpoint) | 6 | 194 | — | 0 | 0 | 0 | 2.5 MiB | 0 of 1, as it must |
+| relay | 8 | 239 | 1.10 | 1 | 4 | 1 | 4.8 MiB | 2 of 2 |
+| periodic | 7 | 257 | 1.31 | 1 | 4 | 1 | 4.9 MiB | 1 of 1 |
+| stock (trim fix in) | 15 | 217 | 40.17 | 123 | 13 | 69 | 6.5 MiB | 3 of 3 |
+
+Wakes and MB an hour are from `ladder/samples.jsonl`. The rest are counted in
+`ladder/trace.log`: `net_report starting`, `Lost connection to relay`,
+`home is now relay`.
+
+**The prediction at the center of it failed, and that is the finding.**
+The relay step was to wake the phone under a third as often as stock, if
+iroh's reports were what woke it. They weren't: **iOS wakes this idle
+phone about 200 times an hour whether an endpoint exists or not.** The
+bare step, with no endpoint at all, woke 194 times an hour. The loop was
+never self-inflicted. iOS wakes the phone, and the cellular interfaces
+shift as it does.
+
+**What we control is what each wake costs:**
+- **stock iroh, about 185 KB a wake:** each wake's interface flap runs a
+  report (123 in 15 minutes, with minor changes reporting too). Reports
+  taken across a sleep misread the relays, so the home relay swaps (69)
+  and is republished. 40 MB an hour.
+- **reports off link changes, about 5 KB a wake:** 1.1 to 1.3 MB an hour,
+  with every dial answered. The minor changes still came (138 and 132 in
+  the two steps) and were let pass.
+
+**What is left at the relay step is the relay's own timeout.** The
+connection dropped 4 times in 8 minutes: 6 "Client stream read failed"
+(the server closed it) and 2 ping timeouts across the relay and periodic
+steps. An iroh relay pings each client every 16 to 20 s and gives it 5 s
+to answer (PHONE_REPLICA §4); a sleeping phone can't, so it is dropped
+and redials on its next wake. That bound belongs to the relay, so
+svrngs's own relay (built, parked) could set it.
+
+**A nuance for the periodic step:** it ran no periodic report in 7.6
+minutes, against an interval of 300 s. On this evidence iroh's timers
+count only time awake, so a 5-minute interval runs less often on a
+sleeping phone. Not checked further.
+
+## What this spike concludes
+
+1. **A phone can be a replica that's reachable all day:** 98.9% of dials
+   answered through an ordinary day, 99.8% overnight, and every dial in
+   the ladder's relay and periodic steps.
+2. **Its cost today is iroh's reaction to iOS waking the phone,** about
+   200 times an hour on this phone whatever we do. A wake costs about
+   185 KB on stock iroh and about 5 KB with reports kept off link
+   changes: from 40 MB an hour to 1.1.
+3. **Three changes upstream carry most of it:**
+   - netwatch's trim bug, which counts AWDL, low-latency WLAN and IPsec
+     interfaces (0.19.1 to 0.20.0);
+   - no report on a link change that leaves the default route and the
+     public address as they were;
+   - a report interval a caller can set.
+
+   A fourth is ours: a relay timeout that tolerates a sleeping phone,
+   through svrngs's own relay.
+4. **Not settled:** energy (no Power Profiler trace yet), a whole day on
+   the patched build, Android, and any other phone. One phone, short
+   steps: a sampling, not a rate.
