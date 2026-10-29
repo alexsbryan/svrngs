@@ -63,7 +63,7 @@ computer stays the answer to risk 1, and the phone stays a door that dials
 out. PHONE_REPLICA's phase 2 and its risks 4 to 6 aren't spent on. **If
 it passes:** phase 2, the 24-hour pocket run, is worth its cost.
 
-## The pocket day, added at 10:40 before it runs
+## The pocket day, committed 2026-10-27 10:35 (`4dcf165c`), before it ran
 
 The operator, 2026-10-27, after the locked hour: "I can keep the tunnel on
 while using the phone throughout the day with normal use patterns". The
@@ -83,7 +83,7 @@ tunnel over the last 24 hours, Settings › Cellular's figure for Phone
 tunnel, the tunnel's samples and trace, and any reboot or time the tunnel
 was switched off.
 
-## Two more runs, added 2026-10-27 at 21:10 before either starts
+## Two more runs, committed 2026-10-27 21:09 (`5223095e`), before either ran
 
 The operator asked for the simpler plan ("Can you do it more simply, more
 resourcefully?") and chose it: "Yes, let's do that". Both runs reuse the
@@ -116,7 +116,7 @@ the dials were the cost, and the fix is ours: dial phones less often. If
 not, iroh's timers are the cost: the replica is a charger-only feature
 until n0 offers a low-power setting, which we ask for with these numbers.
 
-## The net report at 5 minutes, added 2026-10-28 at 17:55 before it runs
+## The net report at 5 minutes, committed 2026-10-28 17:50 (`4fcfea3f`), before it ran
 
 The operator: "Build it". The tunnel built against iroh 1.0.2 with one
 constant changed, the net report's interval from 20 to 26 s to 300 to 306 s
@@ -136,7 +136,7 @@ answered, the report's interval is the phone's lever: we ask n0 to make it
 configurable, with these numbers. If the bytes don't fall, the cost is
 elsewhere, and the trace says where.
 
-## netwatch's trim fixed, with the 5-minute report, added 2026-10-28 at 19:15 before it runs
+## netwatch's trim fixed, with the 5-minute report, committed 2026-10-28 19:07 (`cc48ee75`), before it ran
 
 The operator: "second patch". netwatch 0.19.1's `is_interesting_interface`
 means to ignore Apple's AWDL, low-latency WLAN and IPsec interfaces, but
@@ -156,7 +156,7 @@ a fresh start, locked on cellular for 20 to 30 minutes, dialed every 300 s.
 | sleeps and wakes | some or none; either way cheap | — | whether iOS sleeps the provider isn't ours; what each wake costs is |
 | answered, of the dials | all after the tunnel starts | 75% | the relay connection is no longer torn down at each wake |
 
-## The ladder, added 2026-10-28 at 20:40 before it runs
+## The ladder, committed 2026-10-28 19:53 (`d556847b`), before it ran
 
 The operator asked for "a comprehensive measurement" in place of one more
 patch ("Rather than whack a mole …"), then "Do it". One build carries
