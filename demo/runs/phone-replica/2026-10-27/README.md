@@ -74,3 +74,48 @@ to 721), and every dial still woke it. Peak footprint 7.8 MiB.
 hours, 12.6 MB an hour, the same rate as the day of ordinary use. So the
 cost is what the endpoint does at rest, dialed once a minute. Battery and
 data aren't judged on a charger and WiFi, by the predictions.
+
+## The day at a 15-minute dial, 2026-10-28 07:43 to 16:58 Pacific
+
+The same tunnel, never restarted (`up_s` from 74,154 to 97,256), carried
+through an ordinary day, dialed every 900 s. The record is in `day15/`.
+The operator ended it at 17:05: "I think we've learned what we needed for
+the day".
+
+| What | Verdict | What it rests on |
+|---|---|---|
+| answered | **failed** by the letter | 37 of 38 answered. The one miss, at 15:14, is a 15-minute gap, and the bar allows none past 15 minutes. The answers either side took 11.4 s and 6.5 s. |
+| bytes | **the prediction failed, the other way** | 247.0 MB in 9.3 hours, **26.6 MB an hour**, against 12.6 dialed every minute. It went up, not down. |
+| battery | the same | Settings › Battery: Phone tunnel **30%** of the day's use by 17:03, flagged "Poor coverage during use"; the phone used 71% by then, against its 38% average. |
+
+## Diagnosis: the cost is waking, not dialing
+
+- **iOS put the provider to sleep and woke it 1,741 times in 9.3 hours,**
+  against 571 on the first day and 112 overnight (`day15/trace.log`).
+- **The rhythm is a loop.** After a wake the provider stays up a median
+  2.9 s (10th percentile also 2.9 s: a fixed grace), sleeps, and is woken
+  again a median 4.5 s later. The gap between wakes is 9.0 s at the
+  median (5.4 to 23.7 s, 10th to 90th percentile).
+- **The bytes sit at the wakes.** Of the day's 247 MB, 208.7 MB (84%)
+  fell in 10-second sample windows that held a wake: 135.5 KB a window
+  with one wake, 234.7 KB with two or more, against 30.4 KB with none
+  (`day15/samples.jsonl`, `day15/trace.log`).
+- **A dial each minute hid it.** The first day and the night, dialed
+  every minute, had a third and a fifteenth as many wakes. Steady traffic
+  kept iOS from putting the provider to sleep, so they paid only the
+  awake rate, about 11 to 13 MB an hour: the same 30 KB per 10 s the
+  wakeless windows show today.
+
+**The likeliest mechanism, not yet confirmed.** iroh is written for a
+process that never stops. Asleep, its timers stand still; woken, every
+overdue one fires at once inside the 2.9 s grace: a relay ping (every
+15 s), a path heartbeat (every 5 s), a net report with QUIC and HTTPS
+probes to every relay (every 20 to 26 s), maybe a reconnect to the relay.
+The provider is asleep again before the answers arrive, and the answers
+wake it. Poor coverage stretches every exchange, and so the loop.
+
+**Two costs, then, each with its own cure:**
+1. **Awake at rest, about 11 to 13 MB an hour:** iroh's timers. Fine on a
+   charger and WiFi, as the night showed.
+2. **Each wake, about 100 to 200 KB, and a radio that never rests:** the
+   loop. It is what made today 30% of the battery.
