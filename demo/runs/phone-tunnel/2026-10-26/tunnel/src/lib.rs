@@ -157,7 +157,9 @@ fn traced(log_dir: &Path) -> bool {
     let Ok(file) = file else { return false };
     let targets = Targets::new()
         .with_target("tunnel", tracing::Level::DEBUG)
-        .with_target("door", tracing::Level::DEBUG);
+        .with_target("door", tracing::Level::DEBUG)
+        // What iroh does in the 2.9 s iOS grants each wake (../../phone-replica/2026-10-27/README.md, "Diagnosis").
+        .with_target("iroh", tracing::Level::DEBUG);
     let layer = tracing_subscriber::fmt::layer()
         .with_ansi(false)
         .with_writer(Mutex::new(file));
