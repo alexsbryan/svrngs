@@ -119,3 +119,35 @@ wake it. Poor coverage stretches every exchange, and so the loop.
    charger and WiFi, as the night showed.
 2. **Each wake, about 100 to 200 KB, and a radio that never rests:** the
    loop. It is what made today 30% of the battery.
+
+## What iroh does at rest, from its own trace, 2026-10-28 17:16 to 17:39
+
+A fresh start of the tunnel with iroh's trace at debug (`74a3c65a`),
+locked on cellular for 22 minutes and never dialed. The record is in
+`iroh-trace/`. **The loop didn't reproduce:** iOS never slept the provider
+(`slept` 0, a sample every 10 s), so this run shows the awake cost alone.
+13.0 MB an hour, the first day's and the night's rate.
+
+Counted in `iroh-trace/trace.log` over the 22 minutes:
+- **58 net reports**, one every 20 to 26 s ("scheduling periodic_stun to
+  run in 23s"). The first probed all four of n0's relays; after that,
+  three probes a report, QUIC address discovery (QAD) over v4 and v6 to
+  the nearest two relays (118 to usw1, 61 to use1), plus 12 HTTPS probes.
+  Each QAD probe is a fresh QUIC handshake with a relay.
+- **90 relay pings and pongs,** one every 15 s: tiny.
+- **12 pkarr publishes:** tiny.
+
+So the net reports carry nearly all of it: about 82 KB a report, 158 an
+hour. Their interval is a constant, "Pick a random duration between 20
+and 26 seconds (just under 30s, a common UDP NAT timeout on Linux, etc)"
+(`iroh-1.0.2/src/socket.rs:2004-2008`, `new_re_stun_timer`): the report
+doubles as the keep-alive of the UDP socket's NAT mapping, so direct paths
+can be punched. `NetReportConfig` can turn off the HTTPS probes and the
+captive-portal check, not the interval.
+
+**When the loop happens is still open.** Across the runs, wakes come
+only off the charger and only after hours: none on the first day until
+16:42, then 32 to 179 an hour as the day wore on; overnight, none from
+22:36 to 07:41 on the charger; on 2026-10-28, from 07:44, minutes after
+the phone came off the charger at 07:11, rising from 50 to 320 an hour
+by 15:00. A fresh start locked on cellular for 22 minutes had none.
