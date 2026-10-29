@@ -115,3 +115,23 @@ about 365 MB a day (README.md, "The pocket day").
 the dials were the cost, and the fix is ours: dial phones less often. If
 not, iroh's timers are the cost: the replica is a charger-only feature
 until n0 offers a low-power setting, which we ask for with these numbers.
+
+## The net report at 5 minutes, added 2026-10-28 at 17:55 before it runs
+
+The operator: "Build it". The tunnel built against iroh 1.0.2 with one
+constant changed, the net report's interval from 20 to 26 s to 300 to 306 s
+(`iroh-restun-5min.patch`, built by `IROH_PATCH=<patched copy>
+../../phone-tunnel/2026-10-26/build-xcframework.sh`), iroh's trace still
+on. A fresh start, locked on cellular for 20 minutes, dialed every 300 s
+by the same dialer.
+
+| What | Expected | Chance | Why |
+|---|---|---|---|
+| bytes an hour, awake | under 3 MB, against 13.0 | 75% | the reports were about 82 KB each, 158 an hour; at 5 minutes, 12 an hour, with relay pings and pkarr left |
+| net reports in the trace | 4 to 6 in 20 minutes, against 58 in 22 | 90% | the patch, plus one at start and one on a link change |
+| answered, of the 4 dials | all 4 | 70% | the relay keeps the phone reachable whatever the UDP mapping does; a direct path may be lost between reports, so answers may be relayed |
+
+**What each decides.** If the bytes fall as expected and the dials are
+answered, the report's interval is the phone's lever: we ask n0 to make it
+configurable, with these numbers. If the bytes don't fall, the cost is
+elsewhere, and the trace says where.

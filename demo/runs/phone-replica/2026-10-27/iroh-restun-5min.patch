@@ -1,0 +1,16 @@
+--- a/iroh-1.0.2/src/socket.rs	2006-07-23 18:21:28
++++ b/iroh-1.0.2/src/socket.rs	2026-10-28 17:47:37
+@@ -2002,10 +2002,10 @@
+ }
+ 
+ fn new_re_stun_timer(initial_delay: bool) -> time::Interval {
+-    // Pick a random duration between 20 and 26 seconds (just under 30s,
+-    // a common UDP NAT timeout on Linux,etc)
++    // svrngs phone spike: 5 minutes, to measure what the 20-26 s report costs a phone
++    // (svrngs demo/runs/phone-replica/2026-10-27/README.md, "What iroh does at rest").
+     let mut rng = rand::rng();
+-    let d: Duration = rng.random_range(Duration::from_secs(20)..=Duration::from_secs(26));
++    let d: Duration = rng.random_range(Duration::from_secs(300)..=Duration::from_secs(306));
+     if initial_delay {
+         debug!("scheduling periodic_stun to run in {}s", d.as_secs());
+         time::interval_at(time::Instant::now() + d, d)
