@@ -39,22 +39,7 @@
 // what they said, each yes with Stop. On the page host this page is never
 // framed (vercel.json's `frame-ancestors 'none'`): a lent page is a name
 // under that host and could frame it at `#ask=` to borrow a click.
-import init, {
-  actor,
-  ask,
-  believe,
-  carried_label,
-  connect_to_join,
-  endpoint,
-  issuer_of,
-  label,
-  links,
-  older,
-  pass,
-  redemption,
-  relay_of,
-  sign_line,
-} from './wasm/svrngs_web.js?v=__VERSION__';
+import init, { actor, ask, believe, carried_label, connect_to_join, endpoint, issuer_of, label, links, older, pass, redemption, relay_of, sign_line } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
 import { acts, agreed, apart, called, carrying, changes, deciders, door, el, named, once, opens, question, reading, removal, row, spoken, table, unlent, uses as used, visiting, whose } from './question.js?v=__VERSION__';
 
