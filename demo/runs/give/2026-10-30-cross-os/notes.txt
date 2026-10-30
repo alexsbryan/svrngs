@@ -1,0 +1,232 @@
+Cross-OS copy of the 7333 program's state, 2026-10-30. Raw outputs, trimmed.
+Mac: podman 6.0.1, applehv machine, arm64; svrngs at ac91d77e, target/debug/give
+(cargo build -p give: up to date). Box: ssh alexbryan@fedora, podman 5.8.7
+rootless, x86_64, SELinux Enforcing; give built from an rsync of apps/give
+(fold included) with `cargo build`, no change.
+"xos-tool" is a scratch binary (never in the repo) linking the give crate and
+calling Card::parse(..).version, App::snapshot, App::restore + App::differs,
+App::pull + App::start + App::wait_healthy, and App::stop, so every copy below
+is written and read by Give's own code.
+
+== 1. Digests ==============================================================
+
+box$ skopeo inspect --raw docker://docker.io/library/node@sha256:a217980f…
+mediaType: application/vnd.oci.image.manifest.v1+json        <- one platform
+box$ skopeo inspect --raw docker://docker.io/alpine/socat@sha256:603174b7…
+mediaType: application/vnd.oci.image.index.v1+json
+  92cf394b arm/v7, ed137dc2 arm64, 774a7b78 arm/v6, 24adf1bf amd64, e2125789 ppc64le, d7a061ad s390x
+box$ skopeo inspect --raw docker://docker.io/library/node:24.22.1
+mediaType: application/vnd.oci.image.index.v1+json
+  0925478b amd64, a217980f arm64/v8, b4fe4f72 ppc64le (+3 attestation manifests)
+box$ skopeo inspect --format '{{.Digest}}' docker://docker.io/library/node:24.22.1
+sha256:d862bb5d082c5ae0210ac07e8c0344cb8cf7bef6d78e9b8c50c179da923108ea   <- the index
+
+mac$ podman image inspect --format 'Digest={{.Digest}} RepoDigests={{.RepoDigests}} Arch={{.Architecture}}' …
+node:24.22.1   Digest=sha256:a217980f…  RepoDigests=[…@a217980f… …@d862bb5d…] Arch=arm64
+alpine/socat   Digest=sha256:ed137dc2…  RepoDigests=[…@603174b7… …@ed137dc2…] Arch=arm64
+mac$ podman images --digests
+docker.io/library/node:24.22.1 sha256:d862bb5d…
+docker.io/alpine/socat:latest  sha256:603174b7…
+
+mac$ podman manifest inspect docker.io/library/node@sha256:d862bb5d…   -> exit 0, index, amd64/arm64/ppc64le
+mac$ podman manifest inspect docker.io/library/node@sha256:a217980f…   -> exit 125
+  Error: … parsing manifest blob … as a "application/vnd.oci.image.manifest.v1+json":
+  Treating single images as manifest lists is not implemented
+box$ (the same two calls)                                               -> exit 0 index / exit 125, same error
+
+box$ podman pull --quiet docker.io/library/node@sha256:a217980f…
+c9d0482ad88a…
+level=warning msg="image platform (linux/arm64/v8) does not match the expected platform (linux/amd64)"
+box$ podman run --rm --name svrngs-xos-arch docker.io/library/node@sha256:a217980f… node -p process.arch
+{"msg": "exec container process `/usr/local/bin/docker-entrypoint.sh`: Exec format error", "level": "error"}
+exit=1
+box$ podman pull --quiet docker.io/library/node@sha256:d862bb5d…  -> 8279a176db0a
+box$ podman image inspect … d862bb5d…  -> linux/amd64 Digest=sha256:d862bb5d… RepoDigests=[…@0925478b… …@d862bb5d…]
+box$ podman run … node@sha256:d862bb5d… node -p 'process.arch+" "+process.version'   -> x64 v24.22.1
+box$ podman run … node@sha256:d862bb5d… python3 --version                              -> Python 3.11.2
+box$ podman pull --quiet docker.io/alpine/socat@sha256:603174b7…  -> linux/amd64 Digest=sha256:603174b7…
+box$ podman run --entrypoint uname … socat@sha256:603174b7… -m                         -> x86_64
+
+Card hash (Card::parse(..).version), corrected compose.yaml, both machines:
+c7194a81e983f9f6d8073b3a01a8c79efd7c014f14cc680376e1fbcb8cf1d1a8
+
+box$ give check --name svrngs-check-xos ./spike-card     (the spike's card, arm64 pin, from empty)
+passed  read the card: canon-term
+passed  its asks: 0 agreed
+passed  podman's machine
+passed  pull by digest: docker.io/library/node:24.22.1@sha256:a217980f…, docker.io/alpine/socat@sha256:603174b7…
+passed  start: its door on 127.0.0.1:36939
+failed  healthy: app stopped, exit 1. Its last lines:
+                                                         <- empty; the exec format error is not shown
+(Loading the Mac copy first was refused by Give's restore, because the copy was
+written under the corrected card:
+OtherCard { wrote: "c7194a81…", runs: "a8431101ed4074d59f1db34561871077b255a1f611abfccdf8b90788acac13f6" })
+
+== 2. Mac -> Linux ========================================================
+
+mac$ podman volume create svrngs-xos-code
+mac$ COPYFILE_DISABLE=1 tar --no-xattrs --no-mac-metadata -C /private/tmp/canon-term -cf - . | podman volume import svrngs-xos-code -
+mac$ podman machine ssh -- podman unshare ls -laZn <mountpoint>
+drwxr-xr-x. 5   0 0 system_u:object_r:container_file_t:s0      189 Oct 30 11:32 .
+-rw-r--r--. 1 502 0 unconfined_u:object_r:container_file_t:s0 1165 Oct 28 08:55 ev.log
+drwxr-xr-x. 2 502 0 unconfined_u:object_r:container_file_t:s0   21 Oct 28 08:52 home
+… (every file 502:0, container_file_t)
+mac$ xos-tool snapshot <card> svrngs-xos <dir>      (App::snapshot, no pod, so no pause)
+snapshot …/mac-copy/1793385131002 [("code", Reflink)] paused 741.13175ms
+code.root: 0:0:755     card: c7194a81…     code.tar: 22016 bytes, POSIX (ustar) tar
+mac$ tar -tvf code.tar
+-rw-r--r--  0 502 0  1165 Oct 28 08:55 ev.log
+-rw-r--r--  0 502 0     6 Oct 28 08:55 ev.pid
+drwxr-xr-x  0 502 0     0 Oct 28 08:52 home/
+-rw-r--r--  0 502 0    68 Oct 28 08:52 home/.bashrc
+drwxr-xr-x  0 502 0     0 Oct 28 08:55 homes/
+drwxr-xr-x  0 502 0     0 Oct 28 08:55 homes/draft/
+-rw-r--r--  0 502 0    57 Oct 28 08:55 homes/draft/.bashrc
+drwxr-xr-x  0 502 0     0 Oct 28 08:52 homes/lee/
+-rw-r--r--  0 502 0    57 Oct 28 08:52 homes/lee/.bashrc
+drwxr-xr-x  0 502 0     0 Oct 28 08:52 people/
+-rw-r--r--  0 502 0   829 Oct 28 08:51 pty-test.mjs
+-rw-r--r--  0 502 0   886 Oct 28 08:52 pty-test2.mjs
+-rw-r--r--  0 502 0   752 Oct 28 08:52 pty-test3.mjs
+-rw-r--r--  0 502 0    35 Oct 28 08:52 server.log
+-rw-r--r--  0 502 0  5011 Oct 28 08:53 server.mjs
+-rw-r--r--  0 502 0     6 Oct 28 08:52 server.pid
+sha256 (both ends after scp): card a585d90b…, code.root 090bf40f…, code.tar b6c3a9b7…
+
+box$ xos-tool restore ./card svrngs-check-xos ./mac-copy      (App::restore, then App::differs)
+restored; differs: []
+box$ ls -laZn <mountpoint>         (host view)
+drwxr-xr-x. 1   1000 1000 system_u:object_r:container_file_t:s0      190 Oct 30 11:32 .
+-rw-r--r--. 1 524789 1000 unconfined_u:object_r:container_file_t:s0 1165 Oct 28 08:55 ev.log
+drwxr-xr-x. 1 524789 1000 unconfined_u:object_r:container_file_t:s0   14 Oct 28 08:52 home
+box$ podman unshare ls -lan <mountpoint>
+drwxr-xr-x. 1   0 0  190 Oct 30 11:32 .
+-rw-r--r--. 1 502 0 1165 Oct 28 08:55 ev.log
+box$ podman run --rm -v svrngs-check-xos-code:/c node@d862bb5d… sh -c 'id; ls -lan /c; stat …'
+uid=0(root) gid=0(root) groups=0(root)
+drwxr-xr-x. 1   0 0  190 Oct 30 18:32 .
+-rw-r--r--. 1 502 0 1165 Oct 28 15:55 ev.log
+/c/server.mjs 502:0 644 2026-10-28 15:53:24.000000000 +0000
+box$ grep alexbryan /etc/subuid; podman unshare cat /proc/self/uid_map
+alexbryan:524288:131072
+         0       1000          1
+         1     524288     131072          (ns 502 -> host 524288+501 = 524789)
+
+box$ RUST_LOG=give=debug give check --name svrngs-check-xos ./card
+passed  read the card: canon-term
+passed  its asks: 0 agreed
+passed  podman's machine
+passed  pull by digest: docker.io/library/node:24.22.1@sha256:d862bb5d…, docker.io/alpine/socat@sha256:603174b7…
+passed  start: its door on 127.0.0.1:36955
+passed  healthy
+passed  snapshot: [("code", Reflink)], paused 306.495224ms
+passed  stop
+passed  restore: the state is the snapshot's
+passed  start again
+passed  healthy again
+passed  remove what the check made
+canon-term can go on the shelf.
+exit=0   real 0m12.540s
+DEBUG give::runtime: already here image="…node:24.22.1@sha256:d862bb5d…" here="linux/amd64"
+DEBUG give::runtime: already here image="…socat@sha256:603174b7…" here="linux/amd64"
+box$ podman ps --all --filter name=svrngs; podman pod ps; podman volume ls | grep svrngs-check   -> nothing
+
+== 3. Exercise and re-copy on Linux =======================================
+
+box$ xos-tool restore ./card svrngs-xos ./mac-copy        -> restored; differs: []
+box$ xos-tool start ./card svrngs-xos 17334               -> started and healthy on 127.0.0.1:17334
+box$ podman port svrngs-xos-door                          -> 7334/tcp -> 127.0.0.1:17334
+box$ curl http://127.0.0.1:17334/                         -> GET / 200 1749
+box$ curl -sN 'http://127.0.0.1:17334/events?as=xos' > events.txt &
+box$ curl -X POST --data-binary 'echo from-linux > note.txt; id -u; pwd; ls -la' 'http://127.0.0.1:17334/cmd?as=xos'
+okPOST 200
+events.txt:
+data: {"line":"$ echo from-linux > note.txt; id -u; pwd; ls -la"}
+data: {"line":"0"}
+data: {"line":"/tmp/canon-term/homes/xos"}
+data: {"line":"drwxr-xr-x. 1 root root 30 Oct 30 18:33 ."}
+data: {"line":"drwxr-xr-x. 1  502 root 22 Oct 30 18:33 .."}
+data: {"line":"-rw-r--r--. 1 root root 57 Oct 30 18:33 .bashrc"}
+data: {"line":"-rw-r--r--. 1 root root 11 Oct 30 18:33 note.txt"}
+box$ podman exec svrngs-xos-app sh -c 'cat /tmp/canon-term/homes/xos/note.txt; ls -lan /private/tmp/canon-term/homes/'
+from-linux
+drwxr-xr-x. 1 502 0  14 Oct 28 15:55 draft
+drwxr-xr-x. 1 502 0  14 Oct 28 15:52 lee
+drwxr-xr-x. 1   0 0  30 Oct 30 18:33 xos
+(the shell wrote through /tmp/canon-term; the file is in the volume mounted at /private/tmp/canon-term)
+box$ xos-tool stop ./card svrngs-xos                       -> stopped
+  (a `pkill -f 'events\?as=xos'` meant for the curl also matched this run's own
+   ssh shell and ended it before the stop; the stop was run in the next call)
+box$ xos-tool snapshot ./card svrngs-xos ./linux-copy
+snapshot ./linux-copy/1793385243850 [("code", Reflink)] paused 185.670176ms
+code.root: 0:0:755     card: c7194a81…     code.tar: 24576 bytes
+box$ podman volume rm svrngs-xos-code
+
+Listing diff, Mac copy -> Linux copy (tar -tvf):
+< drwxr-xr-x  0 502 0  0 Oct 28 08:55 homes/
+> drwxr-xr-x  0 502 0  0 Oct 30 11:33 homes/
+> drwxr-xr-x  0 0   0  0 Oct 30 11:33 homes/xos/
+> -rw-r--r--  0 0   0 57 Oct 30 11:33 homes/xos/.bashrc
+> -rw-r--r--  0 0   0 11 Oct 30 11:33 homes/xos/note.txt
+grep -a -c -E 'SCHILY.xattr|security.selinux|LIBARCHIVE.xattr' code.tar  -> 0 in both copies
+
+== 4. Linux -> Mac ========================================================
+
+sha256 after scp: card a585d90b…, code.root 090bf40f…, code.tar a9b42c69… (equal to the box's)
+mac$ xos-tool restore <card> svrngs-xos ./linux-copy      -> restored; differs: []
+mac$ podman machine ssh -- podman unshare ls -laZn <mountpoint> <mountpoint>/homes/xos
+drwxr-xr-x. 5   0 0 system_u:object_r:container_file_t:s0      189 Oct 30 11:34 .
+drwxr-xr-x. 5 502 0 unconfined_u:object_r:container_file_t:s0   41 Oct 30 11:33 homes
+drwxr-xr-x. 2   0 0 unconfined_u:object_r:container_file_t:s0 37 Oct 30 11:33 .   (homes/xos)
+-rw-r--r--. 1   0 0 unconfined_u:object_r:container_file_t:s0 11 Oct 30 11:33 note.txt
+mac$ podman machine ssh -- 'podman unshare cat /proc/self/uid_map'
+         0        502          1
+         1     100000    1000000
+mac$ xos-tool start <card> svrngs-xos 17334              -> started and healthy on 127.0.0.1:17334
+mac$ curl http://127.0.0.1:17334/                        -> GET / 200 1749
+mac$ POST /cmd?as=xos 'cat note.txt; id -u; pwd; ls -la'  -> ok 200
+data: {"line":"from-linux"}
+data: {"line":"0"}
+data: {"line":"/tmp/canon-term/homes/xos"}
+mac$ podman exec svrngs-xos-app stat -c '%n %u:%g %a %y' …
+/private/tmp/canon-term/homes/xos/note.txt 0:0 644 2026-10-30 18:33:39.000000000 +0000
+/private/tmp/canon-term/server.mjs 502:0 644 2026-10-28 15:53:24.000000000 +0000
+mac$ stat -f '%N %Fm' /private/tmp/canon-term/server.mjs     (the original)
+/private/tmp/canon-term/server.mjs 1793202804.042641485      <- nanoseconds; the copy has .000000000
+mac$ xos-tool stop …; podman volume rm svrngs-xos-code
+
+mac$ xos-tool restore <card> svrngs-check-xos ./linux-copy  -> restored; differs: []
+mac$ podman run --rm --entrypoint cat -v svrngs-check-xos-code:/c socat@603174b7… /c/homes/xos/note.txt
+from-linux
+(a first look container, run by mistake with socat's own entrypoint, exited at
+once; its --rm printed netavark's `nftables error: "nft" did not return
+successfully`, the teardown error runtime.rs:612-615 already records. It left nothing.)
+mac$ RUST_LOG=give=debug target/debug/give check --name svrngs-check-xos demo/runs/give/2026-10-30-cross-os
+passed  read the card: canon-term
+passed  its asks: 0 agreed
+passed  podman's machine
+passed  pull by digest: docker.io/library/node:24.22.1@sha256:d862bb5d…, docker.io/alpine/socat@sha256:603174b7…
+passed  start: its door on 127.0.0.1:61324
+passed  healthy
+passed  snapshot: [("code", Reflink)], paused 920.974875ms
+passed  stop
+passed  restore: the state is the snapshot's
+passed  start again
+passed  healthy again
+passed  remove what the check made
+canon-term can go on the shelf.
+exit=0   25.499 total
+DEBUG give::runtime: already here image="…node:24.22.1@sha256:d862bb5d…" here="linux/arm64"
+DEBUG give::runtime: already here image="…socat@sha256:603174b7…" here="linux/arm64"
+
+== Cleanup ================================================================
+
+box$ rm -rf ~/svrngs-xos; podman ps --all; podman pod ps; podman volume ls
+  containers: sovereign-vulkan, sovereign-rocm-7.2.4, cw-jellyfin, palim (there before),
+  and a pod svrngs-churn-trial-owui with volume svrngs-churn-trial-owui-data,
+  created "About a minute ago" by another session during this run: not this run's, untouched.
+  volumes: svrngs-gate-cargo-registry, svrngs-gate-cargo-git, svrngs-gate-npm (there before)
+  images left: node@d862bb5d (amd64, 1.16 GB), node@a217980f (arm64, 1.16 GB, pulled for step 1),
+               alpine/socat@603174b7 (10.1 MB)
+mac$ podman ps --all; podman pod ps; podman volume ls     -> all empty
+mac$ lsof -nP -iTCP:7333 -sTCP:LISTEN                     -> node 84105, as before
