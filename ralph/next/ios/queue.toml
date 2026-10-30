@@ -1,0 +1,23 @@
+# svrngs ios — the phone's door as an iPhone app, to a demo the house can hold (the operator, 2026-10-30: "plan out the ralph rows for this work -- scrappy startup scope"; svrn-docs rings/current/ROAD_TO_IOS_GA.md §2, §6 v0). Not launched. Launch, from anywhere, once the tree is clean and HUMAN-ios-observe is ticked (one loop per tree):
+#
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py supervise --workdir ~/dev/svrngs \
+#     --queue ios --install-launchd -- python3 ~/dev/commonwealth-ai/scripts/ralph.py \
+#     run --workdir ~/dev/svrngs --queue ios --max-stall 3
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py start --workdir ~/dev/svrngs --queue ios
+#
+# The plist the first command writes carries no CARGO_INCREMENTAL=0. Add it
+# under EnvironmentVariables after any reinstall, because the host's disk is
+# shared. The rows build for iOS, so the loop runs on this Mac, never the
+# Fedora box.
+label = "svrngs-ios"
+session_timeout = 5400
+# One closing audit for the queue, none inside it (audits at the queue's end).
+audit_every = 20
+worker_bin = "/Users/alexsbryan/dev/commonwealth-ai/scripts/ralph-claude-shim.sh"
+settings = "ralph/claude-settings.json"
+
+[models]
+worker = "claude-opus-5-5"
+review = "claude-opus-5-5"
+resolve = "claude-opus-5-5"
+variant = "medium"
