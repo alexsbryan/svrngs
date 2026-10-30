@@ -53,6 +53,49 @@ with nothing to turn on, and a stranger's key is refused.
    spike sits outside the budget under `demo/runs/`; made product, it
    counts.
 
+## Settled before launch, 2026-10-30, from what exists
+
+- **The loop can build the app unattended.** `xcodebuild` for
+  `generic/platform=iOS` with `CODE_SIGNING_ALLOWED=NO` built the spike
+  in 9.5 s on this Mac with no keychain or phone. The gate's iOS step needs
+  no signing.
+- **Joining is reuse.** The page's join is three requests to the issuer
+  (`web/app.js:81`, `:172`, `:204`) over `svrngs_core::joining`'s types
+  and `Device::Browser`, which build natively. `web/src/join.rs` is 78
+  counted lines of wasm glue around them.
+- **The team is an individual's** (the local provisioning profiles'
+  TeamName). Guideline 5.4 holds a VPN app on the store to an
+  organization's account, so:
+  - the demo goes by TestFlight's internal testers or an ad hoc build,
+    neither reviewed;
+  - the operator starts the organization enrollment (D-U-N-S, weeks) now,
+    in parallel, since it is GA's longest wait.
+
+## Estimates: lines added, by `scripts/lean_check.py`'s count
+
+The cap stands at 19,509 of 19,510 lines, with svrngs-core at 3,241 of
+3,242. The budget counts `.rs`, `.js`, `.mjs`, `.ts`, `.py` and `.sh`, not
+`.swift` (`lean_check.py` `CODE`), so Swift is shown apart.
+
+| Row | Counted | Swift | From |
+|---|---|---|---|
+| ios-move | +200 to +250 | +120 | The spike's `lib.rs` is 313 counted lines, about 50 of them inline tests, which move to `tests/` and stop counting. `build-xcframework.sh` is 33 and `key.sh` 21. The probe, plants and steps (about 60) are cut. Swift: the app's 76 and the extension's 42. |
+| ios-patches | +30 to +45 | 0 | Fetch by the lock's checksum, apply, the patch flags; one policy constant. |
+| ios-lazy | +40 to +70 | 0 | A listener that starts the endpoint, an idle timer, the stop; a silence limit, about 5. |
+| ios-join | +40 to +80 | +60 to +90 | Native requests over svrngs-core's types, against the wasm glue's 78, less `key.sh`'s 21. Swift: the Keychain, the universal link, the Join screen. |
+| ios-lends | +80 to +130 | 0 | `GET /people/lends`, a listener per lend, ports, the list to the app group. |
+| ios-screens | +20 to +40 | +300 to +450 | The list and the leave across the FFI. Swift: House, This phone, the sheet. |
+| **The queue** | **+410 to +615** | **+480 to +660** | svrngs-core: 0. |
+
+These are judgments from the spike's sizes, not counts of written code;
+`ios-economize` (d) corrects them. Past passes cut 3 to 93 lines, so
+the raise asked lands near the counted range.
+
+**For the operator: does Swift count?** The budget's own words are "the
+budget counts the product" (`lean_check.py`, item 4), and the app is
+product. Adding `.swift` to `CODE` would make the raise about +900 to
++1,275. Either way, the decision is part of HUMAN-ios-budget.
+
 ## Decide
 
 - **Where the app lives.** Suggested: `phone/`, its own Cargo workspace as
