@@ -1,0 +1,251 @@
+{
+ "copies": [
+  {
+   "tar": "snaps/0.tar",
+   "bytes": 6647296,
+   "sha256": "e4578a44a33098aab82d38d48b651bd8e34b9046eb4911346fa0beecd687db66",
+   "entries": 9,
+   "files": 7,
+   "file_bytes": 6639826,
+   "manifest_bytes": 625
+  },
+  {
+   "tar": "snaps/1.tar",
+   "bytes": 6647296,
+   "sha256": "e4578a44a33098aab82d38d48b651bd8e34b9046eb4911346fa0beecd687db66",
+   "entries": 9,
+   "files": 7,
+   "file_bytes": 6639826,
+   "manifest_bytes": 625
+  },
+  {
+   "tar": "snaps/2.tar",
+   "bytes": 6647296,
+   "sha256": "e4578a44a33098aab82d38d48b651bd8e34b9046eb4911346fa0beecd687db66",
+   "entries": 9,
+   "files": 7,
+   "file_bytes": 6639826,
+   "manifest_bytes": 625
+  },
+  {
+   "tar": "snaps/3.tar",
+   "bytes": 6647808,
+   "sha256": "308dedc274301bbe33f82d8e5525a6cdcbaf778477e538547c3d7989dac239cb",
+   "entries": 9,
+   "files": 7,
+   "file_bytes": 6640404,
+   "manifest_bytes": 626
+  },
+  {
+   "tar": "snaps/4.tar",
+   "bytes": 6647808,
+   "sha256": "308dedc274301bbe33f82d8e5525a6cdcbaf778477e538547c3d7989dac239cb",
+   "entries": 9,
+   "files": 7,
+   "file_bytes": 6640404,
+   "manifest_bytes": 626
+  },
+  {
+   "tar": "snaps/5.tar",
+   "bytes": 6647808,
+   "sha256": "308dedc274301bbe33f82d8e5525a6cdcbaf778477e538547c3d7989dac239cb",
+   "entries": 9,
+   "files": 7,
+   "file_bytes": 6640404,
+   "manifest_bytes": 626
+  },
+  {
+   "tar": "snaps/6.tar",
+   "bytes": 6647808,
+   "sha256": "308dedc274301bbe33f82d8e5525a6cdcbaf778477e538547c3d7989dac239cb",
+   "entries": 9,
+   "files": 7,
+   "file_bytes": 6640404,
+   "manifest_bytes": 626
+  },
+  {
+   "tar": "det/copy-a.tar",
+   "bytes": 6647296,
+   "sha256": "e19c8a333f3cd93ba388488d8a73a9ce09e22cef41180772e9233d370373e299",
+   "entries": 8,
+   "files": 6,
+   "file_bytes": 6640404,
+   "manifest_bytes": 545
+  },
+  {
+   "tar": "det/copy-b.tar",
+   "bytes": 6647296,
+   "sha256": "e19c8a333f3cd93ba388488d8a73a9ce09e22cef41180772e9233d370373e299",
+   "entries": 8,
+   "files": 6,
+   "file_bytes": 6640404,
+   "manifest_bytes": 545
+  },
+  {
+   "tar": "det/export-a.tar",
+   "bytes": 6647296,
+   "sha256": "e19c8a333f3cd93ba388488d8a73a9ce09e22cef41180772e9233d370373e299",
+   "entries": 8,
+   "files": 6,
+   "file_bytes": 6640404,
+   "manifest_bytes": 545
+  },
+  {
+   "tar": "det/export-b.tar",
+   "bytes": 6647296,
+   "sha256": "e19c8a333f3cd93ba388488d8a73a9ce09e22cef41180772e9233d370373e299",
+   "entries": 8,
+   "files": 6,
+   "file_bytes": 6640404,
+   "manifest_bytes": 545
+  }
+ ],
+ "windows": [
+  {
+   "added": [],
+   "removed": [],
+   "changed": [],
+   "header_only": [],
+   "order_changed": false,
+   "bytes_added": 0,
+   "bytes_changed": 0,
+   "bytes_changed_blocks": 0,
+   "window": "0->1",
+   "tar_identical": true
+  },
+  {
+   "added": [],
+   "removed": [],
+   "changed": [],
+   "header_only": [],
+   "order_changed": false,
+   "bytes_added": 0,
+   "bytes_changed": 0,
+   "bytes_changed_blocks": 0,
+   "window": "1->2",
+   "tar_identical": true
+  },
+  {
+   "added": [],
+   "removed": [],
+   "changed": [
+    [
+     "database.sqlite-shm",
+     32768,
+     32768,
+     5
+    ],
+    [
+     "database.sqlite-wal",
+     4136512,
+     4136512,
+     20
+    ],
+    [
+     "n8nEventLog.log",
+     530,
+     1108,
+     1
+    ]
+   ],
+   "header_only": [],
+   "order_changed": false,
+   "bytes_added": 0,
+   "bytes_changed": 4170388,
+   "bytes_changed_blocks": 106496,
+   "window": "2->3",
+   "tar_identical": false
+  },
+  {
+   "added": [],
+   "removed": [],
+   "changed": [],
+   "header_only": [],
+   "order_changed": false,
+   "bytes_added": 0,
+   "bytes_changed": 0,
+   "bytes_changed_blocks": 0,
+   "window": "3->4",
+   "tar_identical": true
+  },
+  {
+   "added": [],
+   "removed": [],
+   "changed": [],
+   "header_only": [],
+   "order_changed": false,
+   "bytes_added": 0,
+   "bytes_changed": 0,
+   "bytes_changed_blocks": 0,
+   "window": "4->5",
+   "tar_identical": true
+  },
+  {
+   "added": [],
+   "removed": [],
+   "changed": [],
+   "header_only": [],
+   "order_changed": false,
+   "bytes_added": 0,
+   "bytes_changed": 0,
+   "bytes_changed_blocks": 0,
+   "window": "5->6",
+   "tar_identical": true
+  }
+ ],
+ "determinism": [
+  {
+   "added": [],
+   "removed": [],
+   "changed": [],
+   "header_only": [],
+   "order_changed": false,
+   "bytes_added": 0,
+   "bytes_changed": 0,
+   "bytes_changed_blocks": 0,
+   "pair": "det/export-a.tar vs det/export-b.tar",
+   "tar_identical": true
+  },
+  {
+   "added": [],
+   "removed": [],
+   "changed": [],
+   "header_only": [],
+   "order_changed": false,
+   "bytes_added": 0,
+   "bytes_changed": 0,
+   "bytes_changed_blocks": 0,
+   "pair": "det/copy-a.tar vs det/copy-b.tar",
+   "tar_identical": true
+  },
+  {
+   "added": [],
+   "removed": [],
+   "changed": [],
+   "header_only": [],
+   "order_changed": false,
+   "bytes_added": 0,
+   "bytes_changed": 0,
+   "bytes_changed_blocks": 0,
+   "pair": "det/export-a.tar vs det/copy-a.tar",
+   "tar_identical": true
+  },
+  {
+   "added": [],
+   "removed": [
+    [
+     "crash.journal",
+     0
+    ]
+   ],
+   "changed": [],
+   "header_only": [],
+   "order_changed": false,
+   "bytes_added": 0,
+   "bytes_changed": 0,
+   "bytes_changed_blocks": 0,
+   "pair": "snaps/6.tar vs det/export-a.tar",
+   "tar_identical": false
+  }
+ ]
+}

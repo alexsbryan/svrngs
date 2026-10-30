@@ -1,0 +1,272 @@
+.webui_secret_key 33 (secret: hash withheld)
+cache/ dir
+cache/audio/ dir
+cache/audio/speech/ dir
+cache/embedding/ dir
+cache/embedding/models/ dir
+cache/embedding/models/.locks/ dir
+cache/embedding/models/.locks/models--TaylorAI--bge-micro-v2/ dir
+cache/embedding/models/.locks/models--TaylorAI--bge-micro-v2/1b785f6193bf4edf079179bbbe8eaac19bb14cdc.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--TaylorAI--bge-micro-v2/792472b64c3ca1c725e55f6a9d2a58143d4ce6b3ffde05bf55bc8427cb3733c8.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--TaylorAI--bge-micro-v2/8e5082c800f715935ea0eb822faad62f4fac1ada.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--TaylorAI--bge-micro-v2/8f778e7d950e055b18b53222c75d2c54c3732df5.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--TaylorAI--bge-micro-v2/986dd3157a88e4b467f1c32148f0c78c885369f9.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--TaylorAI--bge-micro-v2/9a78f869de1daa8247f333233bd8846501445035.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--TaylorAI--bge-micro-v2/b32748d3452a847c100441ad3e97e6c7d9a397bf.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--TaylorAI--bge-micro-v2/f2faee376e3337d8ad7f688b29c388609c4aaf5f.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--TaylorAI--bge-micro-v2/f7640f94e81bb7f4f04daf1668850b38763a13d9.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--TaylorAI--bge-micro-v2/f789d99277496b282d19020415c5ba9ca79ac875.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--TaylorAI--bge-micro-v2/f84095a3e2962f44bdd2f865e4333c35ae95d73f.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--TaylorAI--bge-micro-v2/fb140275c155a9c7c5a3b3e0e77a9e839594a938.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/ dir
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/1391c6fc20b5530250bc15cbe1f47578ffeca55ab0551d335cc668b6299a88ec.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/1667d7f3ba669048b13a96ee3a44456d5e42c8f44588ae8b603430e16160c485.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/1de3905029190b398c7d300b530e320cf4b5e7d3dfb9af1429ebd73fd9a16faf.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/24c06a7429b843d46e40c6b167122053921bf94dce2e5550ea5c07fabc597646.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/2bf99854609538f90af03c921c41a0cbde670b2f.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/2d98d96d278348988f2744e6445b8bc16d921c3f6e17c667362f3cb353007aea.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/2e85f0eac205cf444bdf97ede4935603ca6a0416.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/4278337fd0ff3c68bfb6291042cad8ab363e1d9fbc43dcb499fe91c871902474.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/44af2e3b0fa3a0b6239e48422972bf755f28fde0.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/53aa51172d142c89d9012cce15ae4d6cc0ca6895895114379cacb4fab128d9db.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/59d594003bf59880a884c574bf88ef7555bb0202.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/5d24a16700f0198908929370f59330fb8d486b1b.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/6fd5d72fe4589f189f8ebc006442dbb529bb7ce38f8082112682524616046452.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/7152d195a075cf3f3dc3c3d6308d845f88e0117f.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/72b987fd805cfa2b58c4c8c952b274a11bfd5a00.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/82b47b6277499b8f17d139d0c651a6f961c06124.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/8b86cab4722e2aefab310cf96d4d5a9eb3b187f7d9670a082afc55c7fa0d392a.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/952a9b81c0bfd99800fabf352f69c7ccd46c5e43.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/a44f671e364dddbac31f203f07b91be6b0a35e51936e5ebfab65b6d9538b83ff.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/b941bf19f1f1283680f449fa6a7336bb5600bdcd5f84d10ddc5cd72218a0fd21.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/c3a85f238711653950f6a79ece63eb0ea93d76f6a6284be04019c53733baf256.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/c79f2b6a0cea6f4b564fed1938984bace9d30ff0.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/c92ea4af3c6bc7b4a0f3b3d61b147c850f4dbdd7c9e7beee0c0c70dc12da289b.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/cb202bfe2e3c98645018a6d12f182a434c9d3e02.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/d1514c3162bbe87b343f565fadc62e6c06f04f03.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/e7b0375001f109a6b8873d756ad4f7bbb15fbaa5.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/fb140275c155a9c7c5a3b3e0e77a9e839594a938.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/.locks/models--sentence-transformers--all-MiniLM-L6-v2/fd1b291129c607e5d49799f87cb219b27f98acdf.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/CACHEDIR.TAG 191 f6572428f6d5e1575e73a1502895a8731f10757dfbb634909c6e154b849af91d
+cache/embedding/models/blobs/ dir
+cache/embedding/models/blobs/.huggingface-shared-blobs 2 4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865
+cache/embedding/models/blobs/17/ dir
+cache/embedding/models/blobs/17/17b2e95d67485210bf83575de4de17cad219aa0c3f5b1b2bc38aa12221d69b3d 23046789 b941bf19f1f1283680f449fa6a7336bb5600bdcd5f84d10ddc5cd72218a0fd21
+cache/embedding/models/blobs/17/17b2e95d67485210bf83575de4de17cad219aa0c3f5b1b2bc38aa12221d69b3d.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/blobs/17/17b2e95d67485210bf83575de4de17cad219aa0c3f5b1b2bc38aa12221d69b3d.refs 119 df8c9e1c38b7c855e18a0b27f4ae0d7782fceb02aa7589a9005d9c16b26e9d66
+cache/embedding/models/blobs/34/ dir
+cache/embedding/models/blobs/34/340c711f718dcb27266d7d6584492af3d2384e6f5ce3cbdc8d11761cefb033d5 90888945 c3a85f238711653950f6a79ece63eb0ea93d76f6a6284be04019c53733baf256
+cache/embedding/models/blobs/34/340c711f718dcb27266d7d6584492af3d2384e6f5ce3cbdc8d11761cefb033d5.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/blobs/34/340c711f718dcb27266d7d6584492af3d2384e6f5ce3cbdc8d11761cefb033d5.refs 119 aa2a7b0570c719c731c4ca1289dbecc1f20bd6d9bcc7f6299a12e46fab96c79b
+cache/embedding/models/blobs/35/ dir
+cache/embedding/models/blobs/35/35b363afb9df4b2003fa3154c65b08833ba4632fc938a11d5f0dcadd966dfe4a 23026053 4278337fd0ff3c68bfb6291042cad8ab363e1d9fbc43dcb499fe91c871902474
+cache/embedding/models/blobs/35/35b363afb9df4b2003fa3154c65b08833ba4632fc938a11d5f0dcadd966dfe4a.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/blobs/35/35b363afb9df4b2003fa3154c65b08833ba4632fc938a11d5f0dcadd966dfe4a.refs 119 f6d4d1518a8669e15772748d09ff7cccc731f7d9c1f2e93cbc02ec4d76cf3f05
+cache/embedding/models/blobs/50/ dir
+cache/embedding/models/blobs/50/50328f4d0be4a9f30ef32a2580fcf3bbf509032a9b2a1beafa3cb6bd6efb1b1a 91005696 24c06a7429b843d46e40c6b167122053921bf94dce2e5550ea5c07fabc597646
+cache/embedding/models/blobs/50/50328f4d0be4a9f30ef32a2580fcf3bbf509032a9b2a1beafa3cb6bd6efb1b1a.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/blobs/50/50328f4d0be4a9f30ef32a2580fcf3bbf509032a9b2a1beafa3cb6bd6efb1b1a.refs 119 33b0e3bd0419ff9ca099a83c8e549455881d358b42baf3e1d2fc538f6860848f
+cache/embedding/models/blobs/51/ dir
+cache/embedding/models/blobs/51/512c239c65ad424aecb6defcf3c2625d2b9d90a1897cf6279d91fbb3225df0fa 90360328 1391c6fc20b5530250bc15cbe1f47578ffeca55ab0551d335cc668b6299a88ec
+cache/embedding/models/blobs/51/512c239c65ad424aecb6defcf3c2625d2b9d90a1897cf6279d91fbb3225df0fa.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/blobs/51/512c239c65ad424aecb6defcf3c2625d2b9d90a1897cf6279d91fbb3225df0fa.refs 119 5ac1a661d9b614071c69af2b4f4e7f5bbdb729468acab11c01ea877aac931357
+cache/embedding/models/blobs/78/ dir
+cache/embedding/models/blobs/78/789fdf16a3e59f4fbfb6002967ecee539a198dadb5be74ca549aa7dc9b1b55fb 90868376 53aa51172d142c89d9012cce15ae4d6cc0ca6895895114379cacb4fab128d9db
+cache/embedding/models/blobs/78/789fdf16a3e59f4fbfb6002967ecee539a198dadb5be74ca549aa7dc9b1b55fb.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/blobs/78/789fdf16a3e59f4fbfb6002967ecee539a198dadb5be74ca549aa7dc9b1b55fb.refs 119 9508213476241977320122a252062979dc1170c708930d5d076223b400a5438e
+cache/embedding/models/blobs/82/ dir
+cache/embedding/models/blobs/82/82b70afedf6cc476b395f810066653b2010605cbee3212a371ab0cd754e389aa 90326566 1de3905029190b398c7d300b530e320cf4b5e7d3dfb9af1429ebd73fd9a16faf
+cache/embedding/models/blobs/82/82b70afedf6cc476b395f810066653b2010605cbee3212a371ab0cd754e389aa.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/blobs/82/82b70afedf6cc476b395f810066653b2010605cbee3212a371ab0cd754e389aa.refs 119 98c801778ae8022b53fa8bf7d50046cf49b5e8660e7e3790cddddfc958721697
+cache/embedding/models/blobs/8f/ dir
+cache/embedding/models/blobs/8f/8f7f133acdbb8a2c2b8caa119b9f026d34180abdd2d1076bde4066dde9b2f0e5 34785664 792472b64c3ca1c725e55f6a9d2a58143d4ce6b3ffde05bf55bc8427cb3733c8
+cache/embedding/models/blobs/8f/8f7f133acdbb8a2c2b8caa119b9f026d34180abdd2d1076bde4066dde9b2f0e5.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/blobs/8f/8f7f133acdbb8a2c2b8caa119b9f026d34180abdd2d1076bde4066dde9b2f0e5.refs 102 ad58216daa5ee6b5cc5f04a0f83516a1eed32c0a2b48dd91a32e1c32eb5c85bd
+cache/embedding/models/blobs/93/ dir
+cache/embedding/models/blobs/93/938fa026d38b01b5048a0ee1597e3a5f76838e08814688064b98d4fd08080d69 22933664 c92ea4af3c6bc7b4a0f3b3d61b147c850f4dbdd7c9e7beee0c0c70dc12da289b
+cache/embedding/models/blobs/93/938fa026d38b01b5048a0ee1597e3a5f76838e08814688064b98d4fd08080d69.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/blobs/93/938fa026d38b01b5048a0ee1597e3a5f76838e08814688064b98d4fd08080d69.refs 119 057bbf43ac3ec6ccb2e069c49a1fd09aa5d19fac0ff1933f081a5276a41c243c
+cache/embedding/models/blobs/97/ dir
+cache/embedding/models/blobs/97/97c0cbab0dbbb7921fe6ea37b56d165265205edd81ae3cf7a85155649efc7cb8 45212349 1667d7f3ba669048b13a96ee3a44456d5e42c8f44588ae8b603430e16160c485
+cache/embedding/models/blobs/97/97c0cbab0dbbb7921fe6ea37b56d165265205edd81ae3cf7a85155649efc7cb8.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/blobs/97/97c0cbab0dbbb7921fe6ea37b56d165265205edd81ae3cf7a85155649efc7cb8.refs 119 c9cfbe99fd0a2cd32397432d124493a7353dd3ce680b452887c07b01d0408ed2
+cache/embedding/models/blobs/a7/ dir
+cache/embedding/models/blobs/a7/a7e4db70dd8ee1937cd9cce4014cc71260971a0ac88d43590de99de465389ee2 90265744 8b86cab4722e2aefab310cf96d4d5a9eb3b187f7d9670a082afc55c7fa0d392a
+cache/embedding/models/blobs/a7/a7e4db70dd8ee1937cd9cce4014cc71260971a0ac88d43590de99de465389ee2.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/blobs/a7/a7e4db70dd8ee1937cd9cce4014cc71260971a0ac88d43590de99de465389ee2.refs 119 a845807e2e067b38402a39c7a68b6e42ed2e8a2944b5746c1c45d7da4e85b6cd
+cache/embedding/models/blobs/aa/ dir
+cache/embedding/models/blobs/aa/aaa2be7dcf4d404276b27028488280e13965c96819346a4e5ad67095d7990aa5 90887379 2d98d96d278348988f2744e6445b8bc16d921c3f6e17c667362f3cb353007aea
+cache/embedding/models/blobs/aa/aaa2be7dcf4d404276b27028488280e13965c96819346a4e5ad67095d7990aa5.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/blobs/aa/aaa2be7dcf4d404276b27028488280e13965c96819346a4e5ad67095d7990aa5.refs 119 bfb852be5894f1683ddfad37c4638ea4adb37e06913d4b67d95950ba64445e33
+cache/embedding/models/blobs/b6/ dir
+cache/embedding/models/blobs/b6/b63e855b8e4b66733438f476d33cce359708286954270f059c68f1aeda197920 90326497 a44f671e364dddbac31f203f07b91be6b0a35e51936e5ebfab65b6d9538b83ff
+cache/embedding/models/blobs/b6/b63e855b8e4b66733438f476d33cce359708286954270f059c68f1aeda197920.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/blobs/b6/b63e855b8e4b66733438f476d33cce359708286954270f059c68f1aeda197920.refs 119 aab59f1c3106a517b02431e581bde51fabe1967d0a27e2a8ebe34a76b44de82d
+cache/embedding/models/blobs/f6/ dir
+cache/embedding/models/blobs/f6/f6041cb139310735d267939642554a0199a828a08edc37b0ddaf3b035eea5df4 90405214 6fd5d72fe4589f189f8ebc006442dbb529bb7ce38f8082112682524616046452
+cache/embedding/models/blobs/f6/f6041cb139310735d267939642554a0199a828a08edc37b0ddaf3b035eea5df4.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/blobs/f6/f6041cb139310735d267939642554a0199a828a08edc37b0ddaf3b035eea5df4.refs 119 6c13ad23b53c07ebfef00e0a1bbce7561b592f423dd22d98a4fb097574785b8a
+cache/embedding/models/models--TaylorAI--bge-micro-v2/ dir
+cache/embedding/models/models--TaylorAI--bge-micro-v2/.no_exist/ dir
+cache/embedding/models/models--TaylorAI--bge-micro-v2/.no_exist/3edf6d7de0faa426b09780416fe61009f26ae589/ dir
+cache/embedding/models/models--TaylorAI--bge-micro-v2/.no_exist/3edf6d7de0faa426b09780416fe61009f26ae589/adapter_config.json 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/models--TaylorAI--bge-micro-v2/.no_exist/3edf6d7de0faa426b09780416fe61009f26ae589/chat_template.jinja 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/models--TaylorAI--bge-micro-v2/.no_exist/3edf6d7de0faa426b09780416fe61009f26ae589/preprocessor_config.json 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/models--TaylorAI--bge-micro-v2/.no_exist/3edf6d7de0faa426b09780416fe61009f26ae589/processor_config.json 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/models--TaylorAI--bge-micro-v2/.no_exist/3edf6d7de0faa426b09780416fe61009f26ae589/video_preprocessor_config.json 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/models--TaylorAI--bge-micro-v2/blobs/ dir
+cache/embedding/models/models--TaylorAI--bge-micro-v2/blobs/1b785f6193bf4edf079179bbbe8eaac19bb14cdc 1564 dd949ead2951e7ea7d28aa67da9c351d09563b424bc9747115f4660a826390ea
+cache/embedding/models/models--TaylorAI--bge-micro-v2/blobs/792472b64c3ca1c725e55f6a9d2a58143d4ce6b3ffde05bf55bc8427cb3733c8 -> ../../blobs/8f/8f7f133acdbb8a2c2b8caa119b9f026d34180abdd2d1076bde4066dde9b2f0e5
+cache/embedding/models/models--TaylorAI--bge-micro-v2/blobs/8e5082c800f715935ea0eb822faad62f4fac1ada 228 cb63d0cbbf45160dc9cd786a257759593b798ae0c72957011016dbc3972df4e4
+cache/embedding/models/models--TaylorAI--bge-micro-v2/blobs/8f778e7d950e055b18b53222c75d2c54c3732df5 711661 cb374d6bc042c22455946f4e09a89d29882a199fdaf8fb25be00dc8b8857a448
+cache/embedding/models/models--TaylorAI--bge-micro-v2/blobs/986dd3157a88e4b467f1c32148f0c78c885369f9 65541 3a99b392d660c400f6181105b9859e211b2c72f75dca84ce1c50b813b0382b60
+cache/embedding/models/models--TaylorAI--bge-micro-v2/blobs/9a78f869de1daa8247f333233bd8846501445035 123 6efc9d8e58a5c54ff067ba10b6803650757a872fe1854a0ea512571f195826cb
+cache/embedding/models/models--TaylorAI--bge-micro-v2/blobs/b32748d3452a847c100441ad3e97e6c7d9a397bf 745 86d7047bf568a9263c7020fb4950741b19b1df3de3539385d83d9e3df1e56c5b
+cache/embedding/models/models--TaylorAI--bge-micro-v2/blobs/f2faee376e3337d8ad7f688b29c388609c4aaf5f 270 4fff808dd5634889dc20e89268de2b842b8ff4345519ecc5d71985cdaf124c5b
+cache/embedding/models/models--TaylorAI--bge-micro-v2/blobs/f7640f94e81bb7f4f04daf1668850b38763a13d9 229 8f4b264b80206c830bebbdcae377e137925650a433b689343a63bdc9b3145460
+cache/embedding/models/models--TaylorAI--bge-micro-v2/blobs/f789d99277496b282d19020415c5ba9ca79ac875 53 ec8e29d6dcb61b611b7d3fdd2982c4524e6ad985959fa7194eacfb655a8d0d51
+cache/embedding/models/models--TaylorAI--bge-micro-v2/blobs/f84095a3e2962f44bdd2f865e4333c35ae95d73f 82 909e96cb32d92ce728a01bc99850cbba26196d74115c17ebeb019275412588f2
+cache/embedding/models/models--TaylorAI--bge-micro-v2/blobs/fb140275c155a9c7c5a3b3e0e77a9e839594a938 231508 07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3
+cache/embedding/models/models--TaylorAI--bge-micro-v2/refs/ dir
+cache/embedding/models/models--TaylorAI--bge-micro-v2/refs/main 40 38473be9329fd3b6fdb751028de6052371454de81735b818769d0a709974b042
+cache/embedding/models/models--TaylorAI--bge-micro-v2/snapshots/ dir
+cache/embedding/models/models--TaylorAI--bge-micro-v2/snapshots/3edf6d7de0faa426b09780416fe61009f26ae589/ dir
+cache/embedding/models/models--TaylorAI--bge-micro-v2/snapshots/3edf6d7de0faa426b09780416fe61009f26ae589/1_Pooling/ dir
+cache/embedding/models/models--TaylorAI--bge-micro-v2/snapshots/3edf6d7de0faa426b09780416fe61009f26ae589/1_Pooling/config.json -> ../../../blobs/f2faee376e3337d8ad7f688b29c388609c4aaf5f
+cache/embedding/models/models--TaylorAI--bge-micro-v2/snapshots/3edf6d7de0faa426b09780416fe61009f26ae589/README.md -> ../../blobs/986dd3157a88e4b467f1c32148f0c78c885369f9
+cache/embedding/models/models--TaylorAI--bge-micro-v2/snapshots/3edf6d7de0faa426b09780416fe61009f26ae589/added_tokens.json -> ../../blobs/f84095a3e2962f44bdd2f865e4333c35ae95d73f
+cache/embedding/models/models--TaylorAI--bge-micro-v2/snapshots/3edf6d7de0faa426b09780416fe61009f26ae589/config.json -> ../../blobs/b32748d3452a847c100441ad3e97e6c7d9a397bf
+cache/embedding/models/models--TaylorAI--bge-micro-v2/snapshots/3edf6d7de0faa426b09780416fe61009f26ae589/config_sentence_transformers.json -> ../../blobs/9a78f869de1daa8247f333233bd8846501445035
+cache/embedding/models/models--TaylorAI--bge-micro-v2/snapshots/3edf6d7de0faa426b09780416fe61009f26ae589/model.safetensors -> ../../blobs/792472b64c3ca1c725e55f6a9d2a58143d4ce6b3ffde05bf55bc8427cb3733c8
+cache/embedding/models/models--TaylorAI--bge-micro-v2/snapshots/3edf6d7de0faa426b09780416fe61009f26ae589/modules.json -> ../../blobs/f7640f94e81bb7f4f04daf1668850b38763a13d9
+cache/embedding/models/models--TaylorAI--bge-micro-v2/snapshots/3edf6d7de0faa426b09780416fe61009f26ae589/sentence_bert_config.json -> ../../blobs/f789d99277496b282d19020415c5ba9ca79ac875
+cache/embedding/models/models--TaylorAI--bge-micro-v2/snapshots/3edf6d7de0faa426b09780416fe61009f26ae589/special_tokens_map.json -> ../../blobs/8e5082c800f715935ea0eb822faad62f4fac1ada
+cache/embedding/models/models--TaylorAI--bge-micro-v2/snapshots/3edf6d7de0faa426b09780416fe61009f26ae589/tokenizer.json -> ../../blobs/8f778e7d950e055b18b53222c75d2c54c3732df5
+cache/embedding/models/models--TaylorAI--bge-micro-v2/snapshots/3edf6d7de0faa426b09780416fe61009f26ae589/tokenizer_config.json -> ../../blobs/1b785f6193bf4edf079179bbbe8eaac19bb14cdc
+cache/embedding/models/models--TaylorAI--bge-micro-v2/snapshots/3edf6d7de0faa426b09780416fe61009f26ae589/vocab.txt -> ../../blobs/fb140275c155a9c7c5a3b3e0e77a9e839594a938
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/ dir
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/.no_exist/ dir
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/.no_exist/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/ dir
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/.no_exist/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/adapter_config.json 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/.no_exist/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/added_tokens.json 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/.no_exist/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/chat_template.jinja 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/.no_exist/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/preprocessor_config.json 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/.no_exist/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/processor_config.json 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/.no_exist/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/video_preprocessor_config.json 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/ dir
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/1391c6fc20b5530250bc15cbe1f47578ffeca55ab0551d335cc668b6299a88ec -> ../../blobs/51/512c239c65ad424aecb6defcf3c2625d2b9d90a1897cf6279d91fbb3225df0fa
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/1667d7f3ba669048b13a96ee3a44456d5e42c8f44588ae8b603430e16160c485 -> ../../blobs/97/97c0cbab0dbbb7921fe6ea37b56d165265205edd81ae3cf7a85155649efc7cb8
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/1de3905029190b398c7d300b530e320cf4b5e7d3dfb9af1429ebd73fd9a16faf -> ../../blobs/82/82b70afedf6cc476b395f810066653b2010605cbee3212a371ab0cd754e389aa
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/24c06a7429b843d46e40c6b167122053921bf94dce2e5550ea5c07fabc597646 -> ../../blobs/50/50328f4d0be4a9f30ef32a2580fcf3bbf509032a9b2a1beafa3cb6bd6efb1b1a
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/2bf99854609538f90af03c921c41a0cbde670b2f 1229 98ccb431c012ebfe976280fbd45aea4cec7409935868ccecf3954370f96732a1
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/2d98d96d278348988f2744e6445b8bc16d921c3f6e17c667362f3cb353007aea -> ../../blobs/aa/aaa2be7dcf4d404276b27028488280e13965c96819346a4e5ad67095d7990aa5
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/2e85f0eac205cf444bdf97ede4935603ca6a0416 39265 32edcb108fc2516b920734a862ae0692bcae1c5d45d5f8d972cb0d53434a4c54
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/4278337fd0ff3c68bfb6291042cad8ab363e1d9fbc43dcb499fe91c871902474 -> ../../blobs/35/35b363afb9df4b2003fa3154c65b08833ba4632fc938a11d5f0dcadd966dfe4a
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/44af2e3b0fa3a0b6239e48422972bf755f28fde0 10502 dcd602d2fd35c203a247304a06fec6654a12f7941b739f9221a064fe8dc3b7f0
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/53aa51172d142c89d9012cce15ae4d6cc0ca6895895114379cacb4fab128d9db -> ../../blobs/78/789fdf16a3e59f4fbfb6002967ecee539a198dadb5be74ca549aa7dc9b1b55fb
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/59d594003bf59880a884c574bf88ef7555bb0202 53 fc1993fde0a95c24ec6c022539d41cf6e2f7c9721e5415d6fb6897472a9cd4b7
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/5d24a16700f0198908929370f59330fb8d486b1b 211315 f87dd1482b2a745f8c699b81ddd9cbcad666a193be4693abcea44b7ac8c67c1e
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/6fd5d72fe4589f189f8ebc006442dbb529bb7ce38f8082112682524616046452 -> ../../blobs/f6/f6041cb139310735d267939642554a0199a828a08edc37b0ddaf3b035eea5df4
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/7152d195a075cf3f3dc3c3d6308d845f88e0117f 368006 a19425e3f56f7736f752923f0a0b5a8d61c7878017f02e1fc9086615391105dd
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/72b987fd805cfa2b58c4c8c952b274a11bfd5a00 612 953f9c0d463486b10a6871cc2fd59f223b2c70184f49815e7efbcab5d8908b41
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/82b47b6277499b8f17d139d0c651a6f961c06124 13156 f9b98b9d203d728cbf93ccdbae84131ab926541b56196f11d1385fed0b4d1a07
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/8b86cab4722e2aefab310cf96d4d5a9eb3b187f7d9670a082afc55c7fa0d392a -> ../../blobs/a7/a7e4db70dd8ee1937cd9cce4014cc71260971a0ac88d43590de99de465389ee2
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/952a9b81c0bfd99800fabf352f69c7ccd46c5e43 349 84e40c8e006c9b1d6c122e02cba9b02458120b5fb0c87b746c41e0207cf642cf
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/a44f671e364dddbac31f203f07b91be6b0a35e51936e5ebfab65b6d9538b83ff -> ../../blobs/b6/b63e855b8e4b66733438f476d33cce359708286954270f059c68f1aeda197920
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/b941bf19f1f1283680f449fa6a7336bb5600bdcd5f84d10ddc5cd72218a0fd21 -> ../../blobs/17/17b2e95d67485210bf83575de4de17cad219aa0c3f5b1b2bc38aa12221d69b3d
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/c3a85f238711653950f6a79ece63eb0ea93d76f6a6284be04019c53733baf256 -> ../../blobs/34/340c711f718dcb27266d7d6584492af3d2384e6f5ce3cbdc8d11761cefb033d5
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/c79f2b6a0cea6f4b564fed1938984bace9d30ff0 350 acb92769e8195aabd29b7b2137a9e6d6e25c476a4f15aa4355c233426c61576b
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/c92ea4af3c6bc7b4a0f3b3d61b147c850f4dbdd7c9e7beee0c0c70dc12da289b -> ../../blobs/93/938fa026d38b01b5048a0ee1597e3a5f76838e08814688064b98d4fd08080d69
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/cb202bfe2e3c98645018a6d12f182a434c9d3e02 466247 be50c3628f2bf5bb5e3a7f17b1f74611b2561a3a27eeab05e5aa30f411572037
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/d1514c3162bbe87b343f565fadc62e6c06f04f03 190 4be450dde3b0273bb9787637cfbd28fe04a7ba6ab9d36ac48e92b11e350ffc23
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/e7b0375001f109a6b8873d756ad4f7bbb15fbaa5 112 303df45a03609e4ead04bc3dc1536d0ab19b5358db685b6f3da123d05ec200e3
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/fb140275c155a9c7c5a3b3e0e77a9e839594a938 231508 07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/blobs/fd1b291129c607e5d49799f87cb219b27f98acdf 116 061ca9d39661d6c6d6de5ba27f79a1cd5770ea247f8d46412a68a498dc5ac9f3
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/refs/ dir
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/refs/main 40 d36d67e02523717e3871dbcce928f122ed24afbcd375ca81600d4474cb618134
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/ dir
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/ dir
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/.gitattributes -> ../../blobs/2bf99854609538f90af03c921c41a0cbde670b2f
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/1_Pooling/ dir
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/1_Pooling/config.json -> ../../../blobs/d1514c3162bbe87b343f565fadc62e6c06f04f03
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/README.md -> ../../blobs/44af2e3b0fa3a0b6239e48422972bf755f28fde0
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config.json -> ../../blobs/72b987fd805cfa2b58c4c8c952b274a11bfd5a00
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config_sentence_transformers.json -> ../../blobs/fd1b291129c607e5d49799f87cb219b27f98acdf
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/data_config.json -> ../../blobs/2e85f0eac205cf444bdf97ede4935603ca6a0416
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/model.safetensors -> ../../blobs/53aa51172d142c89d9012cce15ae4d6cc0ca6895895114379cacb4fab128d9db
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/modules.json -> ../../blobs/952a9b81c0bfd99800fabf352f69c7ccd46c5e43
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/onnx/ dir
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/onnx/model.onnx -> ../../../blobs/6fd5d72fe4589f189f8ebc006442dbb529bb7ce38f8082112682524616046452
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/onnx/model_O1.onnx -> ../../../blobs/1391c6fc20b5530250bc15cbe1f47578ffeca55ab0551d335cc668b6299a88ec
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/onnx/model_O2.onnx -> ../../../blobs/1de3905029190b398c7d300b530e320cf4b5e7d3dfb9af1429ebd73fd9a16faf
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/onnx/model_O3.onnx -> ../../../blobs/a44f671e364dddbac31f203f07b91be6b0a35e51936e5ebfab65b6d9538b83ff
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/onnx/model_O4.onnx -> ../../../blobs/1667d7f3ba669048b13a96ee3a44456d5e42c8f44588ae8b603430e16160c485
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/onnx/model_qint8_arm64.onnx -> ../../../blobs/4278337fd0ff3c68bfb6291042cad8ab363e1d9fbc43dcb499fe91c871902474
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/onnx/model_qint8_avx512.onnx -> ../../../blobs/4278337fd0ff3c68bfb6291042cad8ab363e1d9fbc43dcb499fe91c871902474
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/onnx/model_qint8_avx512_vnni.onnx -> ../../../blobs/4278337fd0ff3c68bfb6291042cad8ab363e1d9fbc43dcb499fe91c871902474
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/onnx/model_quint8_avx2.onnx -> ../../../blobs/b941bf19f1f1283680f449fa6a7336bb5600bdcd5f84d10ddc5cd72218a0fd21
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/openvino/ dir
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/openvino/openvino_model.bin -> ../../../blobs/8b86cab4722e2aefab310cf96d4d5a9eb3b187f7d9670a082afc55c7fa0d392a
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/openvino/openvino_model.xml -> ../../../blobs/5d24a16700f0198908929370f59330fb8d486b1b
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/openvino/openvino_model_qint8_quantized.bin -> ../../../blobs/c92ea4af3c6bc7b4a0f3b3d61b147c850f4dbdd7c9e7beee0c0c70dc12da289b
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/openvino/openvino_model_qint8_quantized.xml -> ../../../blobs/7152d195a075cf3f3dc3c3d6308d845f88e0117f
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/pytorch_model.bin -> ../../blobs/c3a85f238711653950f6a79ece63eb0ea93d76f6a6284be04019c53733baf256
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/rust_model.ot -> ../../blobs/2d98d96d278348988f2744e6445b8bc16d921c3f6e17c667362f3cb353007aea
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/sentence_bert_config.json -> ../../blobs/59d594003bf59880a884c574bf88ef7555bb0202
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/special_tokens_map.json -> ../../blobs/e7b0375001f109a6b8873d756ad4f7bbb15fbaa5
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/tf_model.h5 -> ../../blobs/24c06a7429b843d46e40c6b167122053921bf94dce2e5550ea5c07fabc597646
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/tokenizer.json -> ../../blobs/cb202bfe2e3c98645018a6d12f182a434c9d3e02
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/tokenizer_config.json -> ../../blobs/c79f2b6a0cea6f4b564fed1938984bace9d30ff0
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/train_script.py -> ../../blobs/82b47b6277499b8f17d139d0c651a6f961c06124
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/vocab.txt -> ../../blobs/fb140275c155a9c7c5a3b3e0e77a9e839594a938
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/trees/ dir
+cache/embedding/models/models--sentence-transformers--all-MiniLM-L6-v2/trees/1110a243fdf4706b3f48f1d95db1a4f5529b4d41.json 6230 ffde918af41fb7f718dcf0592de7e6dfe5ef0b44bcb64b25d1709752eba93cf5
+cache/embedding/models/xet/ dir
+cache/embedding/models/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/ dir
+cache/embedding/models/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/staging/ dir
+cache/embedding/models/xet/logs/ dir
+cache/embedding/models/xet/logs/xet_20261029T091735735+0000_90.log 38636 2cab98248cc864a1ce092d0cab04af0c0384be08d83fbe22f799439f7e248704
+cache/embedding/models/xet/logs/xet_20261029T091747242+0000_118.log 37421 b6dea88881df23c805701ef49b1a1d265392fd72528eab14392bc4e66fba47f7
+cache/embedding/models/xet/logs/xet_20261029T091751624+0000_149.log 39157 6945391d0700cecc08a7773b1b90aa8deb7fd53035428d6d316d60f6e470306d
+cache/embedding/models/xet/logs/xet_20261030T183909167+0000_1.log 348037 4e8cf726bc53c86eb7ba8757f374f2d2594d484c95a64b50ca87681312852f74
+cache/image/ dir
+cache/image/generations/ dir
+cache/tiktoken/ dir
+cache/tiktoken/9b5ad71b2ce5302211f9c61530b329a4922fc6a4 1681126 223921b76ee99bde995b7ff738513eef100fb51d18c93597a113bcffe865b2a7
+cache/whisper/ dir
+cache/whisper/models/ dir
+cache/whisper/models/.locks/ dir
+cache/whisper/models/.locks/models--Systran--faster-whisper-base/ dir
+cache/whisper/models/.locks/models--Systran--faster-whisper-base/7818adb6de9fa3064d3ff81226fdd675be1f6344.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/whisper/models/.locks/models--Systran--faster-whisper-base/867cf1a0fece1394e01d55e287ba2f09a577c046.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/whisper/models/.locks/models--Systran--faster-whisper-base/c9074644d9d1205686f16d411564729461324b75.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/whisper/models/.locks/models--Systran--faster-whisper-base/d01c3014881c9c6f3133c182f3d2887eb6ca1c789a7538c5c007196857a0a6a9.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/whisper/models/CACHEDIR.TAG 191 f6572428f6d5e1575e73a1502895a8731f10757dfbb634909c6e154b849af91d
+cache/whisper/models/blobs/ dir
+cache/whisper/models/blobs/.huggingface-shared-blobs 2 4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865
+cache/whisper/models/blobs/0c/ dir
+cache/whisper/models/blobs/0c/0c4d8d814973160f53608ff0aa1618a90abbce9ed632bbc54930475ba82ce973 145217532 d01c3014881c9c6f3133c182f3d2887eb6ca1c789a7538c5c007196857a0a6a9
+cache/whisper/models/blobs/0c/0c4d8d814973160f53608ff0aa1618a90abbce9ed632bbc54930475ba82ce973.lock 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+cache/whisper/models/blobs/0c/0c4d8d814973160f53608ff0aa1618a90abbce9ed632bbc54930475ba82ce973.refs 108 b92394c6d05e2fea520154e5e29f6aed2f8829049de7e312712c2e3995e3b462
+cache/whisper/models/models--Systran--faster-whisper-base/ dir
+cache/whisper/models/models--Systran--faster-whisper-base/blobs/ dir
+cache/whisper/models/models--Systran--faster-whisper-base/blobs/7818adb6de9fa3064d3ff81226fdd675be1f6344 2203239 fb7b63191e9bb045082c79fd742a3106a12c99513ab30df4a0d47fa6cb6fd0ab
+cache/whisper/models/models--Systran--faster-whisper-base/blobs/867cf1a0fece1394e01d55e287ba2f09a577c046 2309 56a6d8110d311f19c8f0471e562832c7527f146b567275bfca59fcf7c184da9a
+cache/whisper/models/models--Systran--faster-whisper-base/blobs/c9074644d9d1205686f16d411564729461324b75 459861 34ce3fe1c5041027b3f8d42912270993f986dbc4bb34cf27f951e34a1e453913
+cache/whisper/models/models--Systran--faster-whisper-base/blobs/d01c3014881c9c6f3133c182f3d2887eb6ca1c789a7538c5c007196857a0a6a9 -> ../../blobs/0c/0c4d8d814973160f53608ff0aa1618a90abbce9ed632bbc54930475ba82ce973
+cache/whisper/models/models--Systran--faster-whisper-base/refs/ dir
+cache/whisper/models/models--Systran--faster-whisper-base/refs/main 40 a071211ff6001a1e7b512994cb14383d454762c634b7ea03651a2c7de41b5117
+cache/whisper/models/models--Systran--faster-whisper-base/snapshots/ dir
+cache/whisper/models/models--Systran--faster-whisper-base/snapshots/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/ dir
+cache/whisper/models/models--Systran--faster-whisper-base/snapshots/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/config.json -> ../../blobs/867cf1a0fece1394e01d55e287ba2f09a577c046
+cache/whisper/models/models--Systran--faster-whisper-base/snapshots/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/model.bin -> ../../blobs/d01c3014881c9c6f3133c182f3d2887eb6ca1c789a7538c5c007196857a0a6a9
+cache/whisper/models/models--Systran--faster-whisper-base/snapshots/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/tokenizer.json -> ../../blobs/7818adb6de9fa3064d3ff81226fdd675be1f6344
+cache/whisper/models/models--Systran--faster-whisper-base/snapshots/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/vocabulary.txt -> ../../blobs/c9074644d9d1205686f16d411564729461324b75
+cache/whisper/models/models--Systran--faster-whisper-base/trees/ dir
+cache/whisper/models/models--Systran--faster-whisper-base/trees/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66.json 836 219adf3edfac3bc1ec61e231dbdc2429f248d5ce56d31f6ff22eed3b05275c34
+uploads/ dir
+vector_db/ dir
+vector_db/chroma.sqlite3 188416 c3d69ee5615752e34acc008671580de2fca13ad4341b910d061ef96439817ed6
+webui.db 729088 a9e7bae7818860a82e87f772d4bf441071723288b9c7419b163900f2da0a82f7
+webui.db-shm 32768 ee541aa781153d3e0b4cb252e075335cde12f353b93c22e35eb476e92a6a1fcd
+webui.db-wal 53592 11f61703c8c064ee7c1917d9e9b1c2383ccd0f92ea2b80c794e0213d0b919d1e

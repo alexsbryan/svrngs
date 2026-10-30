@@ -1,0 +1,24 @@
+== n8n
+0: database.sqlite folded 2650112 bytes, page 4096, integrity ok, sha256 df120dd23471
+1: database.sqlite folded 2650112 bytes, page 4096, integrity ok, sha256 df120dd23471; vs 0: 0 pages differ = 0 bytes
+2: database.sqlite folded 2650112 bytes, page 4096, integrity ok, sha256 df120dd23471; vs 1: 0 pages differ = 0 bytes
+3: database.sqlite folded 2650112 bytes, page 4096, integrity ok, sha256 18d175833d89; vs 2: 18 pages differ = 73728 bytes
+4: database.sqlite folded 2650112 bytes, page 4096, integrity ok, sha256 18d175833d89; vs 3: 0 pages differ = 0 bytes
+5: database.sqlite folded 2650112 bytes, page 4096, integrity ok, sha256 18d175833d89; vs 4: 0 pages differ = 0 bytes
+6: database.sqlite folded 2650112 bytes, page 4096, integrity ok, sha256 18d175833d89; vs 5: 0 pages differ = 0 bytes
+== kuma
+0: kuma.db folded 233472 bytes, page 4096, integrity ok, sha256 797b05a24273
+1: kuma.db folded 233472 bytes, page 4096, integrity ok, sha256 df4c8ff391bd; vs 0: 6 pages differ = 24576 bytes
+2: kuma.db folded 233472 bytes, page 4096, integrity ok, sha256 50ce87668ae1; vs 1: 6 pages differ = 24576 bytes
+3: kuma.db folded 233472 bytes, page 4096, integrity ok, sha256 2d3e5e15ad59; vs 2: 10 pages differ = 40960 bytes
+4: kuma.db folded 241664 bytes, page 4096, integrity ok, sha256 13eac3ba15b4; vs 3: 11 pages differ = 45056 bytes
+5: kuma.db folded 241664 bytes, page 4096, integrity ok, sha256 35680b01add8; vs 4: 8 pages differ = 32768 bytes
+6: kuma.db folded 245760 bytes, page 4096, integrity ok, sha256 6639b2027da1; vs 5: 11 pages differ = 45056 bytes
+== owui
+0: webui.db folded 770048 bytes, page 4096, integrity ok, sha256 74522c9a0527
+1: webui.db folded 770048 bytes, page 4096, integrity ok, sha256 74522c9a0527; vs 0: 0 pages differ = 0 bytes
+2: webui.db folded 770048 bytes, page 4096, integrity ok, sha256 74522c9a0527; vs 1: 0 pages differ = 0 bytes
+3: webui.db folded 770048 bytes, page 4096, integrity ok, sha256 abaabb98bfd0; vs 2: 26 pages differ = 106496 bytes
+4: webui.db folded 770048 bytes, page 4096, integrity ok, sha256 abaabb98bfd0; vs 3: 0 pages differ = 0 bytes
+5: webui.db folded 770048 bytes, page 4096, integrity ok, sha256 abaabb98bfd0; vs 4: 0 pages differ = 0 bytes
+6: webui.db folded 770048 bytes, page 4096, integrity ok, sha256 abaabb98bfd0; vs 5: 0 pages differ = 0 bytes

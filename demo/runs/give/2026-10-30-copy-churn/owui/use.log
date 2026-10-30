@@ -1,0 +1,4 @@
+signup 200 role admin token
+new chat 200 c70d80b1-2bc7-4092-9dd6-1a1c7c1e482b
+settings 200 
+list chats 200 1

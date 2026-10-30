@@ -1,0 +1,9 @@
+config 56 (secret: hash withheld)
+crash.journal 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+database.sqlite 2469888 d4c075468e38b57860b1b54f24d3c3528731af6d4c9ffe36a97c6012b81c643f
+database.sqlite-shm 32768 048e3685876c7b665476bc2acb906c09d7174929e16be5fae9be90f7dcd7a816
+database.sqlite-wal 4136512 0e48507530d68b27e27c84ca2d4c5d2721eaf78bfd71fd9fdf99c1d9d425fedb
+n8nEventLog.log 530 002effb003fa7554cbf8ac307ae8b2583e63062c799dda7f829bd2ceae37fbe8
+nodes/ dir
+nodes/package.json 72 67df4a5e97253a7dbb9018b811892c3c2182738af0323f0d3ac6aac961b666d8
+storage/ dir
