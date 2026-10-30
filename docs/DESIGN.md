@@ -1166,8 +1166,10 @@ a host whose load is past 3 a core (`crates/svrngs-node/tests/browser/load.rs`,
 `BUSY`) a miss is could-not-judge and fails nothing. Tap, a third canary once
 named, is not built, and nothing runs it.
 
-**Lean, and kept lean.** `svrngs-core` and the repository stay under the
-caps in `scripts/lean_check.py`'s `BUDGET`, their one home; its comment says
+**Lean, and kept lean.** `svrngs-core`, the repository and its Swift stay
+under the caps in `scripts/lean_check.py`'s `BUDGET`, their one home. Swift
+is first-party code kept whole, on a rung of its own between the core's and
+the repository's, never counted in either; its comment says
 each move, and PLAN §4 the moves before it. A raise is the operator's, and
 is asked only after an economizing pass: its commit gives the reason, names
 what the pass cut, and says why the rest could not be found in the code

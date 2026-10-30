@@ -315,7 +315,14 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # The favicon, the operator's raise (2026-10-27, "Approve +6"): the mark's
 # small cut as favicon.svg, white ink when the browser is dark, and the home
 # page's route for it (home.rs `ICON`): +6 and 0, at 19,509.
-BUDGET = {"crates/svrngs-core": 3242, ".": 19510}
+# Swift on a rung of its own, the operator's (2026-10-30, ralph/next/ios/
+# CHARTER.md): "Swift should count in its own rung. It will now be first
+# party code that we maintain fully so we should account for it. It's not
+# just demo code. But it's not the core core library which we're the utmost
+# precious about". It counts .swift across the repository, and the other two
+# caps count CODE, never Swift. The phone's app is the first; none is product
+# yet, so the cap is one past 0, raised as the core's and the repository's are.
+BUDGET = {"crates/svrngs-core": 3242, ".": 19510, "swift": 1}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
@@ -332,11 +339,11 @@ def files(base):
     return (ROOT / p for p in r.stdout.decode().split("\0") if p)
 
 
-def code_lines(base):
+def code_lines(base, kinds=CODE):
     n = 0
     for f in files(base):
         rel = f.relative_to(ROOT).as_posix()
-        if (f.suffix not in CODE or not f.is_file() or "/tests/" in f"/{rel}"
+        if (f.suffix not in kinds or not f.is_file() or "/tests/" in f"/{rel}"
                 or "/node_modules/" in f"/{rel}"
                 or rel.startswith(("apps/", "target/", "demo/runs/"))
                 or re.search(r"(^|/)tests?(_\w+)?\.rs$|_tests?\.rs$|\.test\.m?js$", rel)):
@@ -379,11 +386,11 @@ def main():
     core_lib = ROOT / "crates" / "svrngs-core" / "src" / "lib.rs"
     if core_lib.exists() and "#![cfg_attr(not(test), no_std)]" not in core_lib.read_text():
         broken.append("crates/svrngs-core/src/lib.rs lost #![cfg_attr(not(test), no_std)]: the core is no_std")
-    for path, cap in BUDGET.items():
-        n = code_lines(ROOT / path)
-        print(f"{path:<20} {n:>6} / {cap} lines")
+    for rung, cap in BUDGET.items():
+        n = code_lines(ROOT, {".swift"}) if rung == "swift" else code_lines(ROOT / rung)
+        print(f"{rung:<20} {n:>6} / {cap} lines")
         if n >= cap:
-            broken.append(f"{path} has {n} lines of code, budget {cap}: raised only by the operator, with the reason in the commit")
+            broken.append(f"{rung} has {n} lines of code, budget {cap}: raised only by the operator, with the reason in the commit")
     for b in broken:
         print(f"BROKEN  {b}")
     return 1 if broken else 0

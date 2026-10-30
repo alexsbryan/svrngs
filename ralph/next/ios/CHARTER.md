@@ -74,8 +74,8 @@ with nothing to turn on, and a stranger's key is refused.
 ## Estimates: lines added, by `scripts/lean_check.py`'s count
 
 The cap stands at 19,509 of 19,510 lines, with svrngs-core at 3,241 of
-3,242. The budget counts `.rs`, `.js`, `.mjs`, `.ts`, `.py` and `.sh`, not
-`.swift` (`lean_check.py` `CODE`), so Swift is shown apart.
+3,242. The repository's cap counts `.rs`, `.js`, `.mjs`, `.ts`, `.py` and
+`.sh` (`lean_check.py` `CODE`); Swift has its own cap, at 0 of 1.
 
 | Row | Counted | Swift | From |
 |---|---|---|---|
@@ -91,10 +91,13 @@ These are judgments from the spike's sizes, not counts of written code;
 `ios-economize` (d) corrects them. Past passes cut 3 to 93 lines, so
 the raise asked lands near the counted range.
 
-**For the operator: does Swift count?** The budget's own words are "the
-budget counts the product" (`lean_check.py`, item 4), and the app is
-product. Adding `.swift` to `CODE` would make the raise about +900 to
-+1,275. Either way, the decision is part of HUMAN-ios-budget.
+**Swift counts, on its own rung** (the operator, 2026-10-30: "Swift should
+count in its own rung. It will now be first party code that we maintain
+fully so we should account for it. It's not just demo code. But it's not
+the core core library which we're the utmost precious about").
+`lean_check.py`'s `BUDGET` has a `swift` cap, one past 0, so HUMAN-ios-budget
+sets two raises: the repository's, from the counted column, and Swift's,
+from its own.
 
 ## Decide
 
