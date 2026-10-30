@@ -1,0 +1,36 @@
+Q2: from a port to its process on Linux, as the person (uid 1000), no root,
+no lsof, never reading /proc/<pid>/environ. Recipe: observe.sh (here).
+Program observed: ~/svrngs-pass/q2/prog/app.py, a python3 http.server on
+127.0.0.1:18100 that appends to app.log; started by me over ssh.
+$ bash observe.sh 18100
+## ss -ltnpH sport = :18100
+LISTEN 0      5      127.0.0.1:18100 0.0.0.0:* users:(("python3",pid=2232320,fd=4))
+pid from ss: 2232320
+## without ss: /proc/net/tcp{,6} inode -> /proc/*/fd socket:[inode]
+inode 56165804 -> /proc/2232320/fd/4
+/proc/net/tcp: local 0100007F:46B4 uid 1000
+## owner
+uid=1000 user=alexbryan
+## cmdline
+python3 app.py 
+## cwd
+/home/alexbryan/svrngs-pass/q2/prog
+## exe
+/usr/bin/python3.14
+## parent
+ppid=2232062 comm=bash cmd=bash -c mkdir -p ~/svrngs-pass/q2/prog && cd ... (the ssh command that started it; trimmed)
+## ancestors
+2232062:bash 2232061:sshd-session 2232058:sshd-session 921335:sshd 1:systemd 
+## cgroup (systemd unit, if any)
+0::/user.slice/user-1000.slice/session-1388.scope
+## started
+Fri Oct 30 09:55:47 2026
+## threads/children
+## files open for writing (fdinfo flags & O_ACCMODE in {1,2}), regular files only
+fd 3 flags=02102001 acc=1 /home/alexbryan/svrngs-pass/q2/prog/app.log
+## mmapped files under cwd/home (read side, first 15)
+## a socket of another user (sshd, root): ss -ltnpH sport = :22
+LISTEN 0      128                 100.115.12.21:22 0.0.0.0:*
+LISTEN 0      128    [fd7a:115c:a1e0::693a:c15]:22    [::]:*
+## /proc/<root pid>/cwd as the person:
+ls: cannot open directory '/proc/1/fd': Permission denied

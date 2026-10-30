@@ -1,0 +1,27 @@
+default-lo (net=default, bind=127.0.0.1): curl: (56) Recv failure: Connection reset by peer http=000 size=0 
+  network mode: pasta
+  listens (in container): ['   0: 0100007F:1F40 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 56156739 1 000000009472399c 100 0 0 10 0                  ']
+default-any (net=default, bind=0.0.0.0): http=200 size=832 
+  network mode: pasta
+  listens (in container): ['   0: 00000000:1F40 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 56151724 1 000000009255b92f 100 0 0 10 0                  ', '   1: 0C01A8C0:1F40 0C01A8C0:939E 06 00000000:00000000 03:00001768 00000000     0        0 0 3 00000000c92f723a                                  
+pasta-lo (net=--network pasta, bind=127.0.0.1): curl: (56) Recv failure: Connection reset by peer http=000 size=0 
+  network mode: pasta
+  listens (in container): ['   0: 0100007F:1F40 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 56156802 1 00000000f5ac2df7 100 0 0 10 0                  ']
+pasta-any (net=--network pasta, bind=0.0.0.0): http=200 size=832 
+  network mode: pasta
+  listens (in container): ['   0: 00000000:1F40 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 56150635 1 00000000a00d2484 100 0 0 10 0                  ', '   1: 0C01A8C0:1F40 0C01A8C0:93AC 06 00000000:00000000 03:00001767 00000000     0        0 0 3 00000000f8e84ae2                                  
+bridge-lo (net=--network bridge, bind=127.0.0.1): curl: (56) Recv failure: Connection reset by peer http=000 size=0 
+  network mode: bridge
+  listens (in container): ['   0: 0100007F:1F40 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 56149935 1 00000000e6b3c3a3 100 0 0 10 0                  ']
+bridge-any (net=--network bridge, bind=0.0.0.0): http=200 size=832 
+  network mode: bridge
+  listens (in container): ['   0: 00000000:1F40 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 56150701 1 0000000057043172 100 0 0 10 0                  ', '   1: 0300580A:1F40 0300580A:CF58 06 00000000:00000000 03:00001766 00000000     0        0 0 3 00000000970fc55e                                  
+pod pod-default via forwarder 8001 (podnet=default): http=200 size=832 
+  pod infra network mode: pasta
+pod pod-pasta via forwarder 8001 (podnet=--network pasta): http=200 size=832 
+  pod infra network mode: pasta
+pod pod-bridge via forwarder 8001 (podnet=--network bridge): http=200 size=832 
+  pod infra network mode: bridge
+pod default, no forwarder, publish straight to loopback 8000: curl: (56) Recv failure: Connection reset by peer http=000 size=0 
+pasta:--host-lo-to-ns-lo bind=127.0.0.1: http=200 size=832
+127.0.0.1 - - [30/Oct/2026 16:54:02] "GET / HTTP/1.1" 200 -

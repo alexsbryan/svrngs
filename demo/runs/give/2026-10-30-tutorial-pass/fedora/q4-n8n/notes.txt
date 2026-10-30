@@ -1,0 +1,51 @@
+n8n 2.8.4 via `N8N_LISTEN_ADDRESS=127.0.0.1 N8N_PORT=18678 npx --yes n8n`, run
+from an empty folder ~/svrngs-pass/q4/run, 2026-10-30 09:56-10:00 PDT.
+$ bash ../q2-observe/observe.sh 18678
+
+## ss -ltnpH sport = :18678
+LISTEN 0      511    127.0.0.1:18678 0.0.0.0:* users:(("node",pid=2249353,fd=19))
+pid from ss: 2249353
+## without ss: /proc/net/tcp{,6} inode -> /proc/*/fd socket:[inode]
+inode 56134572 -> /proc/2249353/fd/19
+/proc/net/tcp: local 0100007F:48F6 uid 1000
+## owner
+uid=1000 user=alexbryan
+## cmdline
+node /home/alexbryan/.npm/_npx/a8a7eec953f1f314/node_modules/.bin/n8n 
+## cwd
+/home/alexbryan/svrngs-pass/q4/run
+## exe
+/home/alexbryan/.nvm/versions/node/v20.20.2/bin/node
+## parent
+ppid=2247662 comm=npm exec n8n cmd=npm exec n8n                                                       
+## ancestors
+2247662:npm exec n8n 2247660:bash 1:systemd 
+## cgroup (systemd unit, if any)
+0::/user.slice/user-1000.slice/session-1392.scope
+## started
+Fri Oct 30 09:58:38 2026
+## threads/children
+2249369 node
+## files open for writing (fdinfo flags & O_ACCMODE in {1,2}), regular files only
+fd 1 flags=02100001 acc=1 /home/alexbryan/svrngs-pass/logs/n8n.log
+fd 17 flags=02500002 acc=2 /home/alexbryan/.n8n/database.sqlite
+fd 2 flags=02100001 acc=1 /home/alexbryan/svrngs-pass/logs/n8n.log
+fd 22 flags=02500002 acc=2 /home/alexbryan/.n8n/database.sqlite-shm
+fd 23 flags=02500002 acc=2 /home/alexbryan/.n8n/database.sqlite-wal
+fd 37 flags=02500002 acc=2 /home/alexbryan/.n8n/database.sqlite-wal
+## mmapped files under cwd/home (read side, first 15)
+/home/alexbryan/.n8n/database.sqlite-shm
+/home/alexbryan/.npm/_npx/a8a7eec953f1f314/node_modules/sqlite3/build/Release/node_sqlite3.node
+/home/alexbryan/.nvm/versions/node/v20.20.2/bin/node
+
+$ stat -c "%n birth=%w" ~/.n8n ~/.npm/_npx/a8a7eec953f1f314
+/home/alexbryan/.n8n birth=2026-10-30 09:58:39   (made by this run; removed at the end)
+/home/alexbryan/.npm/_npx/a8a7eec953f1f314 birth=2026-10-30 09:56:12   (npx's cache, kept)
+$ ls ~/.npm/_npx/a8a7eec953f1f314       -> node_modules package.json package-lock.json   (2.2G)
+$ ls ~/svrngs-pass/q4/run | wc -l       -> 0   (the folder it ran in stays empty)
+$ ls ~/.n8n -> config database.sqlite{,-shm,-wal} n8nEventLog.log nodes/ storage/
+$ ~/.n8n/config keys -> ['encryptionKey']   (value not read)
+child 2249369: node ... node_modules/@n8n/task-runner/dist/start.js
+$ curl 127.0.0.1:18678/ -> http=200 type=text/html; charset=utf-8 size=13505
+Stopped by `kill -TERM -- -2247662` (the setsid group npm exec n8n leads);
+all three processes exited.

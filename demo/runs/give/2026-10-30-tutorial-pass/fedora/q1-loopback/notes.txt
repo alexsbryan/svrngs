@@ -1,0 +1,43 @@
+Q1: a program that listens on 127.0.0.1 only, inside a rootless container on
+Fedora (podman 5.8.7, netavark, pasta 0^20260728.gf8df3f1-2.fc44), published
+with -p 127.0.0.1:<hostport>:8000. Run 2026-10-30 ~09:52 PDT by q1.sh (here).
+
+$ podman info | grep -iE 'networkBackend|rootlessNetworkCmd'
+  networkBackend: netavark
+  rootlessNetworkCmd: pasta
+
+Program: docker.io/library/python@sha256:1148dbb0...dd0b (python:3.12-slim),
+  python3 -m http.server --bind <addr> 8000
+Forwarder: docker.io/alpine/socat@sha256:603174b7...0287 (same digest as the
+  Mac spike), TCP-LISTEN:8001,fork,reuseaddr TCP:127.0.0.1:8000
+
+Raw lines from raw.txt (curl from the host to 127.0.0.1:<hostport>):
+
+default-lo  (net=default, bind=127.0.0.1): curl: (56) Recv failure: Connection reset by peer http=000
+  network mode: pasta
+default-any (net=default, bind=0.0.0.0):   http=200 size=832
+pasta-lo    (net=--network pasta, bind=127.0.0.1): curl: (56) Recv failure: Connection reset by peer http=000
+pasta-any   (net=--network pasta, bind=0.0.0.0):   http=200 size=832
+bridge-lo   (net=--network bridge, bind=127.0.0.1): curl: (56) Recv failure: Connection reset by peer http=000
+bridge-any  (net=--network bridge, bind=0.0.0.0):   http=200 size=832
+pod pod-default via forwarder 8001: http=200 size=832   (pod infra network mode: pasta)
+pod pod-pasta   via forwarder 8001: http=200 size=832   (pod infra network mode: pasta)
+pod pod-bridge  via forwarder 8001: http=200 size=832   (pod infra network mode: bridge)
+pod default, no forwarder, publish straight to loopback 8000: curl: (56) Recv failure: Connection reset by peer http=000
+pasta:--host-lo-to-ns-lo bind=127.0.0.1: http=200 size=832
+
+Why the reset (from /proc/net/tcp inside default-any during the curl):
+  0C01A8C0:1F40 <- 0C01A8C0:939E   i.e. 192.168.1.12:8000 from 192.168.1.12
+pasta copies the host's address into the container's namespace and delivers
+a forwarded connection to that address, not to the namespace's loopback; a
+socket bound to 127.0.0.1 never sees it. (bridge: the container's 10.88.0.3,
+0300580A, same result.)
+
+pasta --help:
+  --host-lo-to-ns-lo	Translate host-loopback forwards to namespace loopback
+With it (`--network pasta:--host-lo-to-ns-lo`) the loopback-only program
+answers 200 with no forwarder. A card can't use it: card.rs refuses every
+`network_mode` (card.rs:296-302).
+
+Teardown note: `python3 -m http.server` as PID 1 ignores SIGTERM; podman rm -f
+fell back to SIGKILL after 10 s for each (expected, not a finding).

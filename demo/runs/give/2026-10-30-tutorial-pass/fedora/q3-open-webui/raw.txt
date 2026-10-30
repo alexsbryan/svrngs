@@ -1,0 +1,196 @@
+=== observe-owui.txt
+## ss -ltnpH sport = :18080
+LISTEN 0      2048   127.0.0.1:18080 0.0.0.0:* users:(("python",pid=2267527,fd=33))
+pid from ss: 2267527
+## without ss: /proc/net/tcp{,6} inode -> /proc/*/fd socket:[inode]
+inode 56218005 -> /proc/2267527/fd/33
+/proc/net/tcp: local 0100007F:46A0 uid 1000
+## owner
+uid=1000 user=alexbryan
+## cmdline
+/home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/bin/python /home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/bin/open-webui serve --host 127.0.0.1 --port 18080 
+## cwd
+/home/alexbryan/svrngs-pass/q3/run
+## exe
+/home/alexbryan/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/bin/python3.11
+## parent
+ppid=2226395 comm=uv cmd=/home/alexbryan/.local/bin/uv tool uvx --python 3.11 open-webui@latest serve --host 127.0.0.1 --port 18080 
+## ancestors
+2226395:uv 1:systemd 
+## cgroup (systemd unit, if any)
+0::/user.slice/user-1000.slice/session-1381.scope
+## started
+Fri Oct 30 10:02:45 2026
+## threads/children
+## files open for writing (fdinfo flags & O_ACCMODE in {1,2}), regular files only
+fd 1 flags=0100001 acc=1 /home/alexbryan/svrngs-pass/logs/owui.log
+fd 10 flags=02500002 acc=2 /home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/open_webui/data/vector_db/chroma.sqlite3
+fd 11 flags=02500002 acc=2 /home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/open_webui/data/vector_db/chroma.sqlite3
+fd 2 flags=0100001 acc=1 /home/alexbryan/svrngs-pass/logs/owui.log
+fd 21 flags=02500002 acc=2 /home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/open_webui/data/webui.db
+fd 22 flags=02500002 acc=2 /home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/open_webui/data/webui.db-wal
+fd 23 flags=02500002 acc=2 /home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/open_webui/data/webui.db-shm
+fd 25 flags=02500002 acc=2 /home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/open_webui/data/webui.db
+fd 26 flags=02500002 acc=2 /home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/open_webui/data/webui.db
+fd 27 flags=02500002 acc=2 /home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/open_webui/data/webui.db-wal
+fd 28 flags=02500002 acc=2 /home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/open_webui/data/webui.db-wal
+fd 29 flags=02500002 acc=2 /home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/open_webui/data/webui.db
+fd 30 flags=02500002 acc=2 /home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/open_webui/data/webui.db
+fd 31 flags=02500002 acc=2 /home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/open_webui/data/webui.db-wal
+fd 32 flags=02500002 acc=2 /home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/open_webui/data/webui.db-wal
+fd 34 flags=02102001 acc=1 /home/alexbryan/.cache/huggingface/xet/logs/xet_20261030T100301237-0700_2267527.log
+## mmapped files under cwd/home (read side, first 15)
+/dev/shm/sem.yvYLg4
+/home/alexbryan/.cache/huggingface/hub/blobs/78/789fdf16a3e59f4fbfb6002967ecee539a198dadb5be74ca549aa7dc9b1b55fb
+/home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/30fcd23745efe32ce681__mypyc.cpython-311-x86_64-linux-gnu.so
+/home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/4ef79d6367bb14396397__mypyc.cpython-311-x86_64-linux-gnu.so
+/home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/aiohttp/_http_parser.cpython-311-x86_64-linux-gnu.so
+/home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/aiohttp/_http_writer.cpython-311-x86_64-linux-gnu.so
+/home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/aiohttp/_websocket/mask.cpython-311-x86_64-linux-gnu.so
+/home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/aiohttp/_websocket/reader_c.cpython-311-x86_64-linux-gnu.so
+/home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/bcrypt/_bcrypt.abi3.so
+/home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/black/handle_ipynb_magics.cpython-311-x86_64-linux-gnu.so
+/home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/black/__init__.cpython-311-x86_64-linux-gnu.so
+/home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/brotlicffi/_brotlicffi.abi3.so
+/home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/_brotli.cpython-311-x86_64-linux-gnu.so
+/home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/_cffi_backend.cpython-311-x86_64-linux-gnu.so
+/home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/chardet/pipeline/orchestrator.cpython-311-x86_64-linux-gnu.so
+=== model-a.txt
++ E=/home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR
++ R=/home/alexbryan/svrngs-pass/q3/run
++ IMG=docker.io/library/python:3.11.15-slim@sha256:78b39ef14d8e2b4d71f8dc304f1328c37df95fe0ef99477c2ae6bd3d03784553
++ podman volume create svrngs-pass-owui-a-home
++ tar -C /home/alexbryan/svrngs-pass/q3/run -cf - .
++ podman volume import svrngs-pass-owui-a-home -
++ podman run --name svrngs-pass-owui-a -v svrngs-pass-owui-a-home:/home/alexbryan/svrngs-pass/q3/run -w /home/alexbryan/svrngs-pass/q3/run docker.io/library/python:3.11.15-slim@sha256:78b39ef14d8e2b4d71f8dc304f1328c37df95fe0ef99477c2ae6bd3d03784553 /home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/bin/python /home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/bin/open-webui serve --host 127.0.0.1 --port 18080
+Error: crun: executable file `/home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/bin/python` not found: No such file or directory: OCI runtime attempted to invoke a command that was not found
+exit=127
++ echo exit=127
++ podman run --rm -v svrngs-pass-owui-a-home:/home/alexbryan/svrngs-pass/q3/run -w /home/alexbryan/svrngs-pass/q3/run docker.io/library/python:3.11.15-slim@sha256:78b39ef14d8e2b4d71f8dc304f1328c37df95fe0ef99477c2ae6bd3d03784553 sh -c 'ls -la; open-webui --version'
+total 4
+drwxr-xr-x. 1 1000 1000 34 Oct 30 17:02 .
+drwxr-xr-t. 1 root root  6 Oct 30 17:07 ..
+-rw-r--r--. 1 1000 1000 32 Oct 30 17:02 .webui_secret_key
+sh: 1: open-webui: not found
+exit=127
++ echo exit=127
++ podman rm svrngs-pass-owui-a
+=== model-b.txt
++ podman volume create svrngs-pass-owui-data
+svrngs-pass-owui-data
++ tar -C /home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/open_webui/data -cf - .
++ podman volume import svrngs-pass-owui-data -
++ podman volume create svrngs-pass-owui-home
+svrngs-pass-owui-home
++ tar -C /home/alexbryan/svrngs-pass/q3/run -cf - .
++ podman volume import svrngs-pass-owui-home -
++ podman volume create svrngs-pass-owui-hf
+svrngs-pass-owui-hf
++ podman pod create --name svrngs-pass-owui-b -p 127.0.0.1:18081:18090
+9a8dd93732f7652b119d1bcdfdce8b20aa032588428c88bbd660d6b00b8edf71
++ podman run -d --pod svrngs-pass-owui-b --name svrngs-pass-owui-b-app -v svrngs-pass-owui-deps:/home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR -v svrngs-pass-owui-data:/home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/open_webui/data -v svrngs-pass-owui-home:/home/alexbryan/svrngs-pass/q3/run -v svrngs-pass-owui-hf:/root/.cache/huggingface -w /home/alexbryan/svrngs-pass/q3/run docker.io/library/python:3.11.15-slim@sha256:78b39ef14d8e2b4d71f8dc304f1328c37df95fe0ef99477c2ae6bd3d03784553 /home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/bin/python /home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/bin/open-webui serve --host 127.0.0.1 --port 18080
+57e10fb62103312b2d44f3e37768c74dd4197ac09b3dde693f73195892fdea48
++ podman run -d --pod svrngs-pass-owui-b --name svrngs-pass-owui-b-door docker.io/alpine/socat@sha256:603174b77eebaba25ba8f8ebb15e1234d6600409554e95d6fb203fd106150287 TCP-LISTEN:18090,fork,reuseaddr TCP:127.0.0.1:18080
+9dbb4b20642f56fcdef9bfaa116521195542c64bacd21e1d92df0c293bffafd5
++ stat -c '%n %s' /home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/open_webui/data/readme.txt
+/home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/open_webui/data/readme.txt 50
++ podman rm svrngs-pass-owui-b-app
++ podman run --rm -v svrngs-pass-owui-deps:/home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR docker.io/library/python:3.11.15-slim@sha256:78b39ef14d8e2b4d71f8dc304f1328c37df95fe0ef99477c2ae6bd3d03784553 rm -r /home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/data
++ podman volume rm svrngs-pass-owui-data
++ podman volume create svrngs-pass-owui-data
++ tar -C /home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/open_webui/data -cf - .
++ podman volume import svrngs-pass-owui-data -
++ podman run -d --pod svrngs-pass-owui-b --name svrngs-pass-owui-b-app -v svrngs-pass-owui-deps:/home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR -v svrngs-pass-owui-data:/home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/open_webui/data -v svrngs-pass-owui-home:/home/alexbryan/svrngs-pass/q3/run -v svrngs-pass-owui-hf:/root/.cache/huggingface -w /home/alexbryan/svrngs-pass/q3/run docker.io/library/python:3.11.15-slim@sha256:78b39ef14d8e2b4d71f8dc304f1328c37df95fe0ef99477c2ae6bd3d03784553 /home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/bin/python /home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/bin/open-webui serve --host 127.0.0.1 --port 18080
++ set +x
+up after 116s, running=true
+=== model-c.txt
++ podman volume create svrngs-pass-owui-c-data
+svrngs-pass-owui-c-data
++ tar -C /home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/open_webui/data -cf - .
++ podman volume import svrngs-pass-owui-c-data -
++ podman run --rm -i -v svrngs-pass-owui-c-data:/d docker.io/library/python:3.11.15-slim@sha256:78b39ef14d8e2b4d71f8dc304f1328c37df95fe0ef99477c2ae6bd3d03784553 tar -C /d -xf -
++ tar -C /home/alexbryan/svrngs-pass/q3/run -cf - .webui_secret_key
++ podman run -d --name svrngs-pass-owui-c -p 127.0.0.1:18082:8080 -e WEBUI_SECRET_KEY_FILE=/app/backend/data/.webui_secret_key -v svrngs-pass-owui-c-data:/app/backend/data ghcr.io/open-webui/open-webui@sha256:0caf3d68199bcd8b7051775778691dfa5f3c8a355d1d6484000171b2974f40f9
+5df00e718700e111e8291f2d8b6fe5b54acecb358949f6addc9b2d55df0763c4
+=== write-b.txt
+## signup at :18081
+role: admin
+token: received (not printed)
+## a chat
+chat id: 6b5b9624-c8c6-404f-9b88-c4ecf9183e03 title: svrngs-pass chat
+## in the volume svrngs-pass-owui-data (read from a copy of its files, read-only)
+users with that email: 1
+chats titled svrngs-pass chat: 1
+## podman restart svrngs-pass-owui-b-app
+## after restart: sign in with the same account, list chats
+signin: ok
+chats: ['svrngs-pass chat']
+=== write-c.txt
+## signup at :18082
+role: admin
+token: received (not printed)
+## a chat
+chat id: 5c2480fc-e933-4d39-ba6c-ccf70f97ee3d title: svrngs-pass chat
+## in the volume svrngs-pass-owui-c-data (read from a copy of its files, read-only)
+users with that email: 1
+chats titled svrngs-pass chat: 1
+## podman restart svrngs-pass-owui-c
+## after restart: sign in with the same account, list chats
+signin: ok
+chats: ['svrngs-pass chat']
+=== h18080.txt
+HTTP/1.1 200 OK
+date: Fri, 30 Oct 2026 17:27:12 GMT
+server: uvicorn
+content-type: text/html; charset=utf-8
+accept-ranges: bytes
+content-length: 11775
+last-modified: Fri, 30 Oct 2026 17:02:44 GMT
+etag: "1027b7386ce1772c9fafb3bb09769506"
+cache-control: no-cache
+vary: Accept-Encoding, Origin
+x-process-time: 0.001886
+
+=== h18081.txt
+HTTP/1.1 200 OK
+date: Fri, 30 Oct 2026 17:27:12 GMT
+server: uvicorn
+content-type: text/html; charset=utf-8
+accept-ranges: bytes
+content-length: 11775
+last-modified: Fri, 30 Oct 2026 17:20:53 GMT
+etag: "7905912e596a125b8484d2955072a8c2"
+cache-control: no-cache
+vary: Accept-Encoding, Origin
+x-process-time: 0.001784
+
+=== h18082.txt
+HTTP/1.1 200 OK
+date: Fri, 30 Oct 2026 17:19:49 GMT
+server: uvicorn
+content-type: text/html; charset=utf-8
+accept-ranges: bytes
+content-length: 11775
+last-modified: Thu, 29 Oct 2026 09:19:40 GMT
+etag: "a725a60eed5dbed86c5e6558b77efcb0"
+cache-control: no-cache
+vary: Accept-Encoding, Origin
+x-process-time: 0.001841
+
+=== install.log (head/tail)
+
+[notice] A new release of pip is available: 24.0 -> 26.2.2
+[notice] To update, run: pip install --upgrade pip
+Resolved 261 packages in 3.91s
+Prepared 261 packages in 13m 30s
+Installed 261 packages in 4.24s
+open-webui 0.12.5
+real	13m44.945s
+=== startup log of the original, without huggingface lines
+Installed 261 packages in 953ms
+Loading WEBUI_SECRET_KEY from file, not provided as an environment variable.
+Generating a new secret key and saving it to /home/alexbryan/svrngs-pass/q3/run/.webui_secret_key
+Loading WEBUI_SECRET_KEY from /home/alexbryan/svrngs-pass/q3/run/.webui_secret_key
+INFO:     Started server process [2267527]
+2026-10-30 10:03:00.745 | INFO     | open_webui.utils.logger:start_logger:225 - GLOBAL_LOG_LEVEL: INFO
+2026-10-30 10:03:00.774 | INFO     | open_webui.models.config:seed_defaults:274 - Seeded 381 new config defaults

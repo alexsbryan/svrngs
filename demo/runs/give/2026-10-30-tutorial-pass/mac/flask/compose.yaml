@@ -1,0 +1,35 @@
+# Derived by hand from the process on 127.0.0.1:5055: `Python app.py` (the
+# framework's Python.app stub; the venv is seen only through a .so it loaded
+# from .venv/lib/python3.13/site-packages) in /private/tmp/svrngs-pass/flask/work,
+# Python 3.13.3 (2026-10-30 tutorial pass).
+services:
+  app:
+    image: docker.io/library/python:3.13.3-slim@sha256:56a11364ffe0fee3bd60af6d6d5209eba8a99c2c16dc4c7c5861dc06261503cc
+    # The venv's python: .venv is a deps volume, a venv made in this image
+    # with the versions the Mac's .venv/lib/*/site-packages/*.dist-info name.
+    command: [".venv/bin/python", "app.py"]
+    working_dir: /private/tmp/svrngs-pass/flask/work
+    # The folder at the path it ran at and its /tmp alias; the venv over it.
+    volumes:
+      - "code:/private/tmp/svrngs-pass/flask/work"
+      - "code:/tmp/svrngs-pass/flask/work"
+      - "deps:/private/tmp/svrngs-pass/flask/work/.venv"
+    ports: ["5055:5055/tcp"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:5055/').status==200 else 1)"]
+      interval: 5s
+      retries: 6
+  # It listens on 127.0.0.1 alone, so the pod's door forwards to it.
+  door:
+    image: docker.io/alpine/socat@sha256:603174b77eebaba25ba8f8ebb15e1234d6600409554e95d6fb203fd106150287
+    command: ["TCP-LISTEN:5056,fork,reuseaddr", "TCP:127.0.0.1:5055"]
+    ports: ["5056:5056/tcp"]
+volumes:
+  code: {}
+  deps: {}
+x-svrngs:
+  title: flask-notes
+  about: "python app.py, given by Alex's computer"
+  door: { port: 5056, protocol: http }
+  state: [code, deps]
+  asks: []

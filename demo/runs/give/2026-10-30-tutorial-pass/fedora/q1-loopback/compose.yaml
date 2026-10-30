@@ -1,0 +1,21 @@
+# The shape Q1 shows a card needs on Linux too: the program, unchanged, on
+# loopback; a pinned socat in the same pod; the door on the forwarder's port.
+# Written in the 2026-10-28 spike's card shape; NOT run through give check
+# (the box's svrngs checkout, 3bc6e27b, has no apps/give). Hand-run
+# equivalent: q1.sh `pod pod-default` (200 through 127.0.0.1:18011). q1.sh
+# ran python:3.12-slim by its amd64 manifest (1148dbb0…); a card names the
+# multi-arch index (aa943ce4…, `skopeo inspect --raw` says image.index).
+services:
+  app:
+    image: docker.io/library/python@sha256:aa943ce411423c7582288f18707ff66eddcbaeb510502d747a72aeb34f30d159
+    command: ["python3", "-m", "http.server", "--bind", "127.0.0.1", "8000"]
+  door:
+    image: docker.io/alpine/socat@sha256:603174b77eebaba25ba8f8ebb15e1234d6600409554e95d6fb203fd106150287
+    command: ["TCP-LISTEN:8001,fork,reuseaddr", "TCP:127.0.0.1:8000"]
+    ports: ["8001:8001/tcp"]
+x-svrngs:
+  title: q1-loopback
+  about: "python3 -m http.server on loopback, behind a forwarder"
+  door: { port: 8001, protocol: http }
+  state: []
+  asks: []

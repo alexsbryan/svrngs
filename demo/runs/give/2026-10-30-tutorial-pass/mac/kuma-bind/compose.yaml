@@ -1,0 +1,25 @@
+# Derived by hand, as derive.rs would, from `podman container inspect
+# svrngs-pass-kuma-bind` and `podman image inspect docker.io/louislam/uptime-kuma:1`
+# (2026-10-30 tutorial pass). Started as its README says, with a bind mount:
+#   podman run -d --restart=always -p 127.0.0.1:3002:3001 \
+#     -v ./data:/app/data --name svrngs-pass-kuma-bind docker.io/louislam/uptime-kuma:1
+# entrypoint, command, working_dir and user are the image's own, so the card
+# leaves them out. The bind mount of /private/tmp/svrngs-pass/kuma/work/data
+# becomes the named volume `data`, filled from a copy of that folder.
+# The restart policy is the keeper's to decide, so it is dropped.
+# The image has no healthcheck (its OCI manifest carries none), so none is set:
+# running is healthy.
+services:
+  app:
+    # The tag's multi-arch index, as the container's ImageDigest names it.
+    image: docker.io/louislam/uptime-kuma:1@sha256:70233f4acb5163fd2a59a49909cf01e44415cecff13dba69e3a86647a2919f83
+    volumes: ["data:/app/data"]
+    ports: ["3001:3001/tcp"]
+volumes:
+  data: {}
+x-svrngs:
+  title: uptime-kuma-bind
+  about: "louislam/uptime-kuma:1, given by Alex's computer"
+  door: { port: 3001, protocol: http }
+  state: [data]
+  asks: []

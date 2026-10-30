@@ -1,0 +1,244 @@
+# Uptime Kuma in Podman, 2026-10-30. Raw outputs, trimmed. No environment was read: inspect was read field by field, never .Config.Env.
+
+## The README's step, named and on loopback
+podman run -d --restart=always -p 127.0.0.1:3001:3001 -v svrngs-pass-kuma-data:/app/data --name svrngs-pass-kuma docker.io/louislam/uptime-kuma:1
+$ podman image inspect --format '{{index .RepoDigests 0}} {{.Os}}/{{.Architecture}} {{.Size}}' docker.io/louislam/uptime-kuma:1
+docker.io/louislam/uptime-kuma@sha256:70233f4acb5163fd2a59a49909cf01e44415cecff13dba69e3a86647a2919f83 linux/arm64 469081521
+$ podman image inspect --format '{{.Digest}} {{.ManifestType}}'
+sha256:7752fbff2af719c1aa40c80d50ab36cd15edd582ff0cd8aadc4f6cdeca0c221e application/vnd.oci.image.manifest.v1+json
+(RepoDigests[0] and the container's ImageDigest are 70233f4a..., the tag's multi-arch index; 7752fbff... is the arm64 manifest pulled)
+
+## Observation from port 3001
+$ lsof -nP -iTCP:3001 -sTCP:LISTEN
+COMMAND   PID       USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+gvproxy 89959 alexsbryan   31u  IPv4 0x4f2c5a7f085096da      0t0  TCP 127.0.0.1:3001 (LISTEN)
+$ ps -o pid,ppid,lstart,command -p 89959
+  PID  PPID STARTED                      COMMAND
+89959     1 Sun Oct 25 14:46:26 2026     /opt/homebrew/Cellar/podman/6.0.1/libexec/podman/gvproxy -mtu 1500 -ssh-port 62636 -listen-vfkit unixgram:///var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/podman/podman-machine-default-gvproxy.sock -forward-user core -forward-identity /Users/alexsbryan/.local/share/containers/podman/machine/machine -forward-sock /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/podman/podman-machine-default-api.sock -forward-dest /run/user/502/podman/podman.sock -pid-file /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/podman/gvproxy.pid -log-file /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/podman/gvproxy.log
+$ ps -o pid,ppid,command -p 1  (parent)
+  PID  PPID COMMAND
+    1     0 /sbin/launchd
+$ lsof -a -p 89959 -d cwd
+COMMAND   PID       USER   FD   TYPE DEVICE SIZE/OFF     NODE NAME
+gvproxy 89959 alexsbryan  cwd    DIR   1,15     2656 53034916 /Users/alexsbryan/dev/commonwealth-ai
+$ lsof -a -p 89959 -d txt
+COMMAND   PID       USER   FD   TYPE DEVICE SIZE/OFF                NODE NAME
+gvproxy 89959 alexsbryan  txt    REG   1,15 12301810            80040598 /opt/homebrew/Cellar/podman/6.0.1/libexec/podman/gvproxy
+$ lsof -p 89959 | regular files open w/u
+COMMAND   PID       USER   FD      TYPE             DEVICE SIZE/OFF                NODE NAME
+(the listener is gvproxy, Podman's machine forwarder, shared by every published port; never the app. The way to the app is Podman's own table:)
+$ podman ps --format '{{.Names}} {{.Ports}}' | grep 3001
+svrngs-pass-kuma 127.0.0.1:3001->3001/tcp
+
+## podman container inspect svrngs-pass-kuma (selected fields)
+{
+    "Image": "028be0b1781a557fce6a7d4609c54d4c52fa204a6236fc826f0be96df76f9365",
+    "ImageName": "docker.io/louislam/uptime-kuma:1",
+    "ImageDigest": "sha256:70233f4acb5163fd2a59a49909cf01e44415cecff13dba69e3a86647a2919f83",
+    "Path": "/usr/bin/dumb-init",
+    "Args": [
+        "--",
+        "extra/entrypoint.sh",
+        "node",
+        "server/server.js"
+    ],
+    "Config.Cmd": [
+        "node",
+        "server/server.js"
+    ],
+    "Config.Entrypoint": [
+        "/usr/bin/dumb-init",
+        "--",
+        "extra/entrypoint.sh"
+    ],
+    "Config.WorkingDir": "/app",
+    "Config.User": "",
+    "Config.Healthcheck": null,
+    "Mounts": [
+        {
+            "Type": "volume",
+            "Name": "svrngs-pass-kuma-data",
+            "Source": "/var/home/core/.local/share/containers/storage/volumes/svrngs-pass-kuma-data/_data",
+            "Destination": "/app/data",
+            "Driver": "local",
+            "Mode": "",
+            "Options": [
+                "nosuid",
+                "nodev",
+                "rbind"
+            ],
+            "RW": true,
+            "Propagation": "rprivate"
+        }
+    ],
+    "HostConfig.Binds": [
+        "svrngs-pass-kuma-data:/app/data:rprivate,nosuid,nodev,rbind"
+    ],
+    "HostConfig.PortBindings": {
+        "3001/tcp": [
+            {
+                "HostIp": "127.0.0.1",
+                "HostPort": "3001"
+            }
+        ]
+    },
+    "HostConfig.NetworkMode": "bridge",
+    "HostConfig.Privileged": false,
+    "HostConfig.RestartPolicy": {
+        "Name": "always",
+        "MaximumRetryCount": 0
+    }
+}
+
+## podman image inspect docker.io/louislam/uptime-kuma:1 (selected fields)
+{
+    "RepoDigests": [
+        "docker.io/louislam/uptime-kuma@sha256:70233f4acb5163fd2a59a49909cf01e44415cecff13dba69e3a86647a2919f83",
+        "docker.io/louislam/uptime-kuma@sha256:7752fbff2af719c1aa40c80d50ab36cd15edd582ff0cd8aadc4f6cdeca0c221e"
+    ],
+    "Os": "linux",
+    "Architecture": "arm64",
+    "Config.Cmd": [
+        "node",
+        "server/server.js"
+    ],
+    "Config.Entrypoint": [
+        "/usr/bin/dumb-init",
+        "--",
+        "extra/entrypoint.sh"
+    ],
+    "Config.WorkingDir": "/app",
+    "Config.User": "",
+    "Config.Volumes": {
+        "/app/data": {}
+    },
+    "Config.ExposedPorts": {
+        "3001/tcp": {}
+    },
+    "HealthCheck": null
+}
+Config keys present: ['ArgsEscaped', 'Cmd', 'Entrypoint', 'Env', 'ExposedPorts', 'Volumes', 'WorkingDir'] -- no Healthcheck, though /app/extra/healthcheck exists in the image
+
+## Before copying: the original given state
+GET / (original) 302 -> /dashboard ; GET /dashboard 200 text/html; charset=utf-8 2493
+Kuma's writes are socket.io events, so a client script (kuma.js, run with the image's own socket.io-client:
+`podman exec -i -w /app <container> node - <action> < kuma.js`) did them:
+setup (original) -> {"setup":{"ok":true,"msg":"Added Successfully."}}
+
+## The copy (paused for it, as Give pauses)
+podman pause svrngs-pass-kuma; podman volume export svrngs-pass-kuma-data | podman volume import svrngs-pass-kuma-copy -; podman unpause svrngs-pass-kuma
+
+## Start test (podman run -p 127.0.0.1:13001:3001 -v svrngs-pass-kuma-copy:/app/data <the card's image>)
+http://127.0.0.1:3001/  302 text/plain; charset=utf-8 32 -> /dashboard
+http://127.0.0.1:13001/ 302 text/plain; charset=utf-8 32 -> /dashboard
+orig /dashboard 200 text/html; charset=utf-8 2493
+cont /dashboard 200 text/html; charset=utf-8 2493
+cmp -> bodies-identical
+login-add, first try -> "SQLITE_ERROR: table monitor has no column named conditions"  (my script sent a 2.x field to 1.x; removed)
+login-add (the original's admin) -> {"login":true,"add":{"ok":true,"msg":"Added Successfully.","monitorID":1}}
+podman restart svrngs-pass-kuma-given; login-list -> {"monitors":["written-in-container"]}
+original: login-list -> {"monitors":[]}
+(sqlite3 on the copy's kuma.db) select id,name from monitor -> [(1, 'written-in-container')]
+
+## give check, from empty (a published image starts from nothing)
+passed  read the card: uptime-kuma
+passed  its asks: 0 agreed
+passed  podman's machine
+passed  pull by digest: docker.io/louislam/uptime-kuma:1@sha256:70233f4a...
+passed  start: its door on 127.0.0.1:62142
+passed  healthy
+passed  snapshot: [("data", Reflink)], paused 798.45075ms
+passed  stop
+passed  restore: the state is the snapshot's
+passed  start again
+passed  healthy again
+passed  remove what the check made
+uptime-kuma can go on the shelf.   (8.1 s; "healthy" is "running", the image has no healthcheck, so the snapshot
+                                    was taken while Kuma may still have been starting)
+
+## give check, svrngs-check-kuma-data preloaded from the copy
+(same twelve lines, all passed; snapshot paused 791.758667ms; 9.0 s)
+
+# ---- Variant: the bind mount (card in ../kuma-bind/compose.yaml) ----
+$ cd /private/tmp/svrngs-pass/kuma/work
+$ podman run -d --restart=always -p 127.0.0.1:3002:3001 -v ./data:/app/data --name svrngs-pass-kuma-bind docker.io/louislam/uptime-kuma:1
+Error: lstat data: no such file or directory
+(Podman does not make a missing bind source, where Docker would; `mkdir data` first, then the same command started)
+$ ls -la data   (on the Mac, through the machine's file share)
+-rwxr-xr-x  1 alexsbryan  wheel   61440 kuma.db / kuma.db-shm / kuma.db-wal, docker-tls/ screenshots/ upload/   992K
+setup (original) -> {"setup":{"ok":true,"msg":"Added Successfully."}}
+## podman container inspect svrngs-pass-kuma-bind (selected fields)
+{
+    "Mounts": [
+        {
+            "Type": "bind",
+            "Source": "/private/tmp/svrngs-pass/kuma/work/data",
+            "Destination": "/app/data",
+            "Driver": "",
+            "Mode": "",
+            "Options": [
+                "rbind"
+            ],
+            "RW": true,
+            "Propagation": "rprivate"
+        }
+    ],
+    "HostConfig.Binds": [
+        "/private/tmp/svrngs-pass/kuma/work/data:/app/data:rprivate,rbind"
+    ],
+    "HostConfig.PortBindings": {
+        "3001/tcp": [
+            {
+                "HostIp": "127.0.0.1",
+                "HostPort": "3002"
+            }
+        ]
+    },
+    "ImageDigest": "sha256:70233f4acb5163fd2a59a49909cf01e44415cecff13dba69e3a86647a2919f83",
+    "Config.Cmd": [
+        "node",
+        "server/server.js"
+    ],
+    "Config.Entrypoint": [
+        "/usr/bin/dumb-init",
+        "--",
+        "extra/entrypoint.sh"
+    ],
+    "Config.WorkingDir": "/app",
+    "Config.User": "",
+    "HostConfig.NetworkMode": "bridge",
+    "HostConfig.Privileged": false
+}
+The derivation: the one mount is Type bind, Source /private/tmp/svrngs-pass/kuma/work/data -> the named volume `data`
+at the same Destination, filled with the Mac folder's copy. Everything else as the named variant.
+
+## The literal card, the bind kept
+failed  read the card: services.app.volumes: a bind mount reaches this computer's own files; the app's state is a named volume
+
+## The copy, from the Mac's folder
+podman pause svrngs-pass-kuma-bind
+COPYFILE_DISABLE=1 tar --no-xattrs --no-mac-metadata -C /private/tmp/svrngs-pass/kuma/work/data -cf - . | podman volume import svrngs-pass-kuma-bindcopy -
+podman unpause svrngs-pass-kuma-bind
+(in the volume after the copy started once: owner 0:0 -- Kuma's entrypoint, "Starting application with user 0 group 0", owns its data dir)
+
+## Start test (podman run -p 127.0.0.1:13002:3001 -v svrngs-pass-kuma-bindcopy:/app/data <the card's image>)
+orig /dashboard 200 text/html; charset=utf-8 2493
+cont /dashboard 200 text/html; charset=utf-8 2493
+cmp -> bodies-identical
+login-add -> {"login":true,"add":{"ok":true,"msg":"Added Successfully.","monitorID":1}}
+podman restart; login-list -> {"monitors":["written-in-container"]} ; original -> {"monitors":[]}
+
+## give check (kuma-bind), svrngs-check-kuma-bind-data preloaded from the copy
+passed  read the card: uptime-kuma-bind
+passed  its asks: 0 agreed
+passed  podman's machine
+passed  pull by digest: docker.io/louislam/uptime-kuma:1@sha256:70233f4a...
+passed  start: its door on 127.0.0.1:62700
+passed  healthy
+passed  snapshot: [("data", Reflink)], paused 812.766291ms
+passed  stop
+passed  restore: the state is the snapshot's
+passed  start again
+passed  healthy again
+passed  remove what the check made
+uptime-kuma-bind can go on the shelf.   (9.0 s)
