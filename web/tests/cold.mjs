@@ -26,12 +26,12 @@ const args = JSON.parse(process.argv[2]);
 // Where `page` lands: a lent page (titled "the app…"), the group's page
 // refusing or saying why it opened nothing, or a lend's start saying it
 // could not; what it says either way.
-async function landed(page) {
+async function landed(page, within = 90_000) {
   await page
     .waitForFunction(
       () => document.title.startsWith('the app') || document.querySelector('#status.bad') || /[^…]$/.test(document.getElementById('response')?.textContent ?? '') || /[^…]$/.test(document.getElementById('said')?.textContent ?? ''),
       null,
-      { timeout: 90_000 },
+      { timeout: within },
     )
     .catch(() => {});
   return page.evaluate(() => ({
@@ -67,7 +67,7 @@ await driving(args, async ({ page, origin }) => {
   for (const alias of args.aliases ?? []) {
     await page.goto('about:blank');
     await page.goto(`${origin}#open=${alias}`);
-    seen.aliases.push({ alias, ...(await landed(page)) });
+    seen.aliases.push({ alias, ...(await landed(page, 45_000)) });
   }
   return seen;
 });

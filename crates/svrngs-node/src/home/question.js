@@ -107,13 +107,16 @@ export const el = (tag, text, ...kids) => {
 // locale, which differs from it (#157).
 const day = (t, d = new Date(t * 1000)) => `${d.getDate()} ${'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[d.getMonth()]}`;
 
+// When someone joined, as both pages tell two of one name apart.
+const joinedSaid = (j) => (j === 'started' ? 'started the group' : `joined ${day(j.at)}`);
+
 // The person whose first key is `key`, as the people rows `rows`
 // (/v1/rail/people) name them (capability-keys; svrn-docs
 // WHAT_CAN_ACT_AS_YOU §9): their name, and where someone else in `rows`
 // shares it, when they joined, `when` saying it, "ada (joined 3 Oct)", as
 // the command tells them apart (cli.rs `joined_said`); undefined for a key
 // no row holds. Who did something is told by key, never by name.
-export const called = (rows, key, when = (j) => (j === 'started' ? 'started the group' : `joined ${day(j.at)}`)) => {
+export const called = (rows, key, when = joinedSaid) => {
   const p = rows.find((r) => r.person_key === key);
   return p && (rows.some((r) => r.person === p.person && r.person_key !== key) ? `${p.person} (${when(p.joined)})` : p.person);
 };
@@ -122,6 +125,27 @@ export const called = (rows, key, when = (j) => (j === 'started' ? 'started the 
 // key of the computer lending it, so `named` and `owner` tell two lenders
 // of one name apart.
 export const apart = (lent, rows) => lent.forEach((l) => (l.called = called(rows, rows.find((r) => r.key === l.key)?.person_key)));
+
+// A lend's alias (svrn-docs rings/current/IN_THE_BROWSER.md, "Decided";
+// DESIGN §3, "Lent apps", call 1), what the group's page opens by name at
+// `#open=<alias>`: its name at whose it is, "films@Sam", whose as `apart`
+// says it, so two lenders of one name are told apart by when each joined,
+// "films@Sam (joined 24 Oct)", and two computers of one person lending one
+// name by when each computer joined, "films@Sam (computer joined 25 Oct)";
+// an app the group carries by its kind, "Money", as `once` lists one copy.
+// Every page reads the same record, so an alias names the same lend on
+// each, its day said in the browser's own time. `rows` the people rows.
+export function alias(l, lent, rows) {
+  if (l.group) return l.kind;
+  const at = (o) => `${o.name}@${o.called ?? o.person}`;
+  const computer = rows.find((r) => r.key === l.key);
+  const twin = lent.some((o) => !o.group && o.key !== l.key && at(o) === at(l));
+  return twin && computer ? `${at(l)} (computer ${joinedSaid(computer.joined)})` : at(l);
+}
+
+// The lends of `lent` the alias `a` names: one, else none or more than
+// one, which the page says, never a nearest match.
+export const aliased = (a, lent, rows) => once(lent).filter((l) => alias(l, lent, rows) === a);
 
 // Who made a group and since when this computer or phone has held it, so
 // two of one name are told apart (#138): "sam’s, since 14 Oct".

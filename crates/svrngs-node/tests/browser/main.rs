@@ -1689,6 +1689,141 @@ async fn a_lends_address_opens_cold_in_a_browser_that_joined(engine: Engine) {
     drop(ada);
 }
 
+in_both_engines!(
+    /// **A lend's alias opens it from the group's page** (svrn-docs
+    /// `rings/current/IN_THE_BROWSER.md`, "Decided"; DESIGN §3, "Lent
+    /// apps", call 1). Two people called ada each lend `app` in the house,
+    /// the second let in by hand. Bo's page opens each by its alias at
+    /// `#open=<alias>`, the name at whose it is, told apart as the page
+    /// tells the two adas apart, by when each joined: `app@ada (started
+    /// the group)` the founder's app, `app@ada (joined <day>)` the
+    /// other's, each at its own origin. The bare `app@ada`, which names
+    /// both, and `nothing@ada`, which names nothing, are said in the
+    /// page's words, never opened as a nearest match. Red on 3587c98f,
+    /// where `#open=` read a label alone, so every alias opened nothing
+    /// and said nothing.
+    a_lends_alias_opens_it_from_the_groups_page
+);
+async fn a_lends_alias_opens_it_from_the_groups_page(engine: Engine) {
+    let site = site();
+    let relay = relay().await;
+    let bo = signing(7);
+    let (dir, other_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let ada = node(dir.path(), &relay, &bo).await;
+    let other = joined(other_dir.path(), &relay, &ada, 2, "ada").await;
+    let (app, _) = linking_app().await;
+    lend(dir.path(), "app", app.port());
+    let second = page_origin("<!doctype html><title>the app of the other ada</title>").await;
+    lend(other_dir.path(), "app", second.port());
+    let today = chrono::Local::now().format("%-d %b").to_string();
+    let theirs = format!("app@ada (joined {today})");
+    let aliases = [
+        "app@ada (started the group)",
+        theirs.as_str(),
+        "app@ada",
+        "nothing@ada",
+    ];
+    let args = json!({
+        "site": site,
+        "key": hex::encode(bo.to_bytes()),
+        "token": token(&signing(1), &relay),
+        "aliases": aliases,
+    });
+    let seen = drive(engine, "cold.mjs", args, None).await;
+    eprintln!("the aliases' run: {seen:#}");
+    let landed = |i: usize| &seen["aliases"][i];
+    assert!(
+        at_origin(&landed(0)["url"], &label(1, "app")) && landed(0)["title"] == "the app",
+        "the founder's app by its alias:\n{seen:#}"
+    );
+    assert!(
+        at_origin(&landed(1)["url"], &label(2, "app"))
+            && landed(1)["title"] == "the app of the other ada",
+        "the other ada's app by its alias, told apart by when she joined:\n{seen:#}"
+    );
+    for (i, alias) in [(2, "app@ada"), (3, "nothing@ada")] {
+        let status = landed(i)["status"].as_str().unwrap_or_default();
+        assert!(
+            status.starts_with("You’re in house, as bo")
+                && landed(i)["said"] == format!("Nothing in house goes by {alias} now."),
+            "{alias} opens nothing, and is said:\n{seen:#}"
+        );
+    }
+    drop((ada, other));
+}
+
+/// **A lend's alias never collides within a group** (svrn-docs
+/// `rings/current/IN_THE_BROWSER.md`, "Decided"; question.js `alias`, the
+/// one decider both pages load). Two people called ada each lend `app`:
+/// each alias tells them apart as the page names them, by when each
+/// joined, and the bare `app@ada` names neither. Sam lends `films` from
+/// two computers: each alias tells them apart by when each computer
+/// joined. Money, which the group carries on two computers, is named by
+/// its kind, one copy. Every alias names one lend, and an alias of
+/// nothing names none, never a nearest match. Red on 3587c98f, which had
+/// no alias (`q.alias is not a function`); planted, watched failing: the
+/// alias by its lender's name alone (`o.person` for `o.called`), which
+/// told the two adas apart by their computers, not as the page names them.
+#[test]
+fn a_lends_alias_never_collides_within_a_group() {
+    let (t1, t2, t3) = (1_791_100_000_i64, 1_791_200_000_i64, 1_791_300_000_i64);
+    let row = |person: &str, key: &str, first: &str, joined: Value| json!({ "person": person, "key": key, "person_key": first, "joined": joined, "device": "computer" });
+    let rows = json!([
+        row("ada", "a1", "a1", json!("started")),
+        row("ada", "a2", "a2", json!({ "at": t1 })),
+        row("sam", "s1", "s1", json!({ "at": t2 })),
+        row("sam", "s2", "s1", json!({ "at": t3 })),
+    ]);
+    let lend = |key: &str, person: &str, name: &str| json!({ "key": key, "person": person, "name": name, "kind": "k" });
+    let money = |key: &str| json!({ "key": key, "person": "ada", "name": "g Money", "kind": "Money", "group": "g" });
+    let lent = json!([
+        lend("a1", "ada", "app"),
+        lend("a2", "ada", "app"),
+        lend("s1", "sam", "films"),
+        lend("s2", "sam", "films"),
+        money("a1"),
+        money("s1"),
+    ]);
+    let day = |t: i64| {
+        chrono::DateTime::from_timestamp(t, 0)
+            .unwrap()
+            .with_timezone(&chrono::Local)
+            .format("%-d %b")
+            .to_string()
+    };
+    let said = in_question(
+        "(q.apart(args[0], args[1]), q.once(args[0]).map((l) => q.alias(l, args[0], args[1])))",
+        json!([lent, rows]),
+    );
+    let expected = json!([
+        "app@ada (started the group)",
+        format!("app@ada (joined {})", day(t1)),
+        format!("films@sam (computer joined {})", day(t2)),
+        format!("films@sam (computer joined {})", day(t3)),
+        "Money",
+    ]);
+    assert_eq!(said, expected, "each alias, by the page's own words");
+    let mut asked: Vec<String> = serde_json::from_value(expected).unwrap();
+    asked.extend(
+        [
+            "app@ada",
+            "films@sam",
+            "app@Ada (started the group)",
+            "nothing@ada",
+        ]
+        .map(String::from),
+    );
+    let named = in_question(
+        "(q.apart(args[0], args[1]), args[2].map((a) => q.aliased(a, args[0], args[1]).map((l) => l.key)))",
+        json!([lent, rows, asked]),
+    );
+    assert_eq!(
+        named,
+        json!([["a1"], ["a2"], ["s1"], ["s2"], ["a1"], [], [], [], []]),
+        "each alias names one lend; a bare name of two, a near one and none name nothing: {asked:?}"
+    );
+}
+
 in_webkit!(
     /// A lent page asks its person through the group's page, and is stopped
     /// (sup-3; DESIGN §3, "What an app gets"). Ada lends a page reading kind

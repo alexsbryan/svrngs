@@ -44,7 +44,7 @@
 // under that host and could frame it at `#ask=` to borrow a click.
 import init, { actor, ask, believe, carried_label, connect_to_join, endpoint, is_label, issuer_of, label, links, older, pass, redemption, relay_of, sign_line } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
-import { acts, agreed, apart, called, carrying, changes, deciders, door, el, named, once, opens, question, reading, removal, row, spoken, table, unlent, uses as used, visiting, whose } from './question.js?v=__VERSION__';
+import { acts, agreed, aliased, apart, called, carrying, changes, deciders, door, el, named, once, opens, question, reading, removal, row, spoken, table, unlent, uses as used, visiting, whose } from './question.js?v=__VERSION__';
 
 const heading = document.getElementById('status');
 const said = document.getElementById('response');
@@ -514,13 +514,22 @@ async function enter(group, asked, joined) {
       return row([el('span', '', button, ` ${agreed(l, shelf, group)}${opens(l, 'Here, in this tab')[1] === 'full' ? ' Full now.' : ''}`)]);
     }),
   );
-  const again = asked?.get('open') && lent.find((l) => label(l.key, l.name) === asked.get('open'));
+  // What `#open=` names (DESIGN §3, "Lent apps", call 1): a lend by its
+  // label, else by its alias (question.js `alias`), one of what the group
+  // lends now; none, or more than one, is said, never a nearest match.
+  const wanted = asked?.get('open');
+  const byLabel = lent.filter((l) => label(l.key, l.name) === wanted);
+  const by = byLabel.length || !wanted ? byLabel : aliased(wanted, lent, people);
+  const missed = !wanted || by.length === 1 ? '' : by.length ? `${by.length} things in ${group.name} go by ${wanted}. Open the one you mean from the list.` : is_label(wanted) ? `What that address opens is not lent in ${group.name} now.` : `Nothing in ${group.name} goes by ${wanted} now.`;
+  if (wanted) trace(`PAGE: #open=${wanted} names ${by.length} of what ${group.name} lends${byLabel.length ? ', by its label' : ', by its alias'}`);
+  const again = by.length === 1 && by[0];
+  const its = again && label(again.key, again.name);
   // A lend's origin holding no key its pass names asks for a new one
   // (open.js), never from a window another page opened, which could read
   // its bytes as they arrive.
-  if (again && asked.has('anew') && !window.opener) await store.holder(asked.get('open'), null);
+  if (again && asked.has('anew') && !window.opener) await store.holder(its, null);
   // One opened here before its open was kept as the yes is that yes.
-  if (again && !group.reads?.[asked.get('open')]) await saying(again, 'yes');
+  if (again && !group.reads?.[its]) await saying(again, 'yes');
   if (again) open(group, key, lent, unanswered, again, asked.get('at') ?? '/');
   const using = document.getElementById('uses');
   using.hidden = !lent.some((l) => l.asks);
@@ -532,7 +541,7 @@ async function enter(group, asked, joined) {
   // version 2 by name.
   const how = [[unanswered, 'did not answer, so what they lend is not listed'], [unheard, 'has not heard of the computer you reached yet, so what they lend is not listed yet'], [refused, 'answered without saying what they lend, so it is not listed'], [behind, 'runs an older svrngs, so what they lend is not listed']];
   const unlisted = how.flatMap(([ps, why]) => ps.map((p) => `${called(people, p.person_key) ?? p.person ?? p}’s computer ${why}.`));
-  said.textContent = (lent.length || unlisted.length ? unlisted : [`Nobody in ${group.name} lends anything yet.`]).join('\n');
+  said.textContent = [missed, ...(lent.length || unlisted.length ? unlisted : [`Nobody in ${group.name} lends anything yet.`])].filter(Boolean).join('\n');
   if (asked?.has('ask')) asking(group, key, lent, unanswered, dialler, asked);
 }
 

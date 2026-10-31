@@ -742,6 +742,30 @@ Seven calls:
    of either the client typed displaced (`door::tell_origin`). An app that trusts its proxy builds its pages on
    the lend's own origin, as Jellyfin's SSO plugin does once the lender
    sets its stock `KnownProxies` (`demo/runs/oidc/2026-10-21-jellyfin-2/`).
+
+   A lend's address is its bookmark, and never changes: its label is its
+   lender's key and its name. Opened where its worker is not, a browser
+   that never opened it or cleared it, the page's host answers with the
+   group's page, which sends the browser on to the group's page at
+   `#open=<label>&at=<path>&cold`: holding the group it signs a pass and
+   comes back at the path, and holding none it says this browser hasn't
+   joined. A tab is sent on at most once a minute, so a worker that never
+   takes its pass is said, not bounced again (`web/app.js`, `cold`). The
+   page's host serves only its own files, so a path of the app's own, such
+   as Jellyfin's `/web/`, answers 404 there; the lend's root opens.
+
+   A lend also has an alias, its name at whose it is, opened on the group's
+   page at `#open=films@Sam`, read as `URLSearchParams` reads a fragment
+   (a space as `+` or `%20`). Whose is said as the page names people: two
+   of one name told apart by when each joined, `films@Sam (joined 24 Oct)`,
+   and two computers of one person lending one name by when each computer
+   joined, `films@Sam (computer joined 25 Oct)`; an app the group carries
+   is its kind, `#open=Money`, any copy. One decider for both pages
+   (`question.js`, `alias`): an alias names one of what the group lends now,
+   or it is said that it names none or more than one, never a nearest
+   match. Every page reads the same record, so it names the same lend on
+   each, its day in the browser's own time. It is unique within a group
+   only: across groups, or as a name of its own, it would need a centre.
 2. *Jellyfin as it comes.* A lend serves stock jellyfin-web from the
    lender's Jellyfin; nothing in svrngs renders a library of its own.
 3. *The infra learns no Jellyfin.* Anything that knows an app's API lives
