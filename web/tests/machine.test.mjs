@@ -6,7 +6,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { ask, go, late, machine, no } from '../../crates/svrngs-node/src/home/ui/machine.js';
+import { ask, go, late, machine, no } from '../../crates/svrngs-node/src/home/ui/machine.js?v=__VERSION__';
 
 // The toy: `list` reads a list, `send` posts one thing at a time.
 const states = { list: ['reading', 'read', 'unread'], send: ['idle', 'sending', 'sent'] };
