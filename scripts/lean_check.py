@@ -331,8 +331,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # from the operator's iPhone: a deep path opened cold by the site's
 # 404.html (+2) and the join's Home Screen line in place of a phone's
 # address to keep (+2), after `hex` said once and the cold guard folded
-# (-4): at 19,488 again, the cap unchanged.
-BUDGET = {"crates/svrngs-core": 3242, ".": 19489, "swift": 1}
+# (-4): at 19,488 again, the cap unchanged. The follow-ups after their own
+# pass, uses, el and the worker's small functions each one expression (-28,
+# demo/runs/economize/2026-10-30-browser/SURVEY.md): the alias's day in UTC
+# (0), a computer's cold bookmark by the home page's /to (+8) and a person in
+# two groups (+12), at 19,480, so the cap lowered to one past it.
+BUDGET = {"crates/svrngs-core": 3242, ".": 19481, "swift": 1}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
