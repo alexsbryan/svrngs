@@ -5,6 +5,8 @@ own phone or other computer, having a guest over, removing someone, and
 leaving. `svrngs` below means `~/.local/bin/svrngs` if your terminal doesn't
 find it.
 
+![Three links let in three different people: Invite someone to House lets in a new person, who opens the record and what everyone lends; Add your phone or another computer lets in you again; Have a guest lets in a guest, who opens only what Cy lends and never the record.](../diagrams/guide/people-links.svg)
+
 ## Invite someone
 
 On your home page, in your group's section, press **Invite someone to
@@ -77,6 +79,8 @@ A guest's link lets one guest in, once, within a day, while your computer
 is on.
 
 ## Remove someone
+
+![One person decides who is removed: Bo's ask goes to Sam, Sam removes Dee, and Dee is out on every device while what Dee already has stays.](../diagrams/guide/people-remove.svg)
 
 One person decides who is removed from a group: whoever made it, until they
 hand that on. Sam made House, so Sam runs:

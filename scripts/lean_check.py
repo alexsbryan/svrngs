@@ -12,7 +12,8 @@
 4. Lines of code — not blank, not a comment, not a test — stay under the
    caps `BUDGET` holds below, their one home (#197), scripts included. The
    budget counts the product: apps/, installed packages (any
-   node_modules/) and demo/runs/ apart. A recorded run's driver is what ran,
+   node_modules/), demo/runs/ and the pictures' generators
+   (docs/diagrams/src/, docs/brand/src/) apart. A recorded run's driver is what ran,
    kept byte for byte so its data reads against it (ralph/REVIEW_FINDINGS.md
    #61), and no check runs one; code elsewhere under demo/ counts.
 """
@@ -336,7 +337,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # demo/runs/economize/2026-10-30-browser/SURVEY.md): the alias's day in UTC
 # (0), a computer's cold bookmark by the home page's /to (+8) and a person in
 # two groups (+12), at 19,480, so the cap lowered to one past it.
-BUDGET = {"crates/svrngs-core": 3242, ".": 19481, "swift": 1}
+# The pictures' generators uncounted, the operator's (2026-10-31, "Don't
+# count diagram code"), when the guide's 15 pictures (docs/diagrams/guide/)
+# came to +486 after their own economizing pass (-87, every SVG byte for
+# byte): docs/diagrams/src/ and docs/brand/src/ draw pictures, not the
+# product, as apps/ is not. The 10-27 raises for them (+406, +53) leave with
+# them: -366 at c0c466fe, at 19,114, so the cap lowered to one past it.
+BUDGET = {"crates/svrngs-core": 3242, ".": 19115, "swift": 1}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
@@ -359,7 +366,7 @@ def code_lines(base, kinds=CODE):
         rel = f.relative_to(ROOT).as_posix()
         if (f.suffix not in kinds or not f.is_file() or "/tests/" in f"/{rel}"
                 or "/node_modules/" in f"/{rel}"
-                or rel.startswith(("apps/", "target/", "demo/runs/"))
+                or rel.startswith(("apps/", "target/", "demo/runs/", "docs/diagrams/src/", "docs/brand/src/"))
                 or re.search(r"(^|/)tests?(_\w+)?\.rs$|_tests?\.rs$|\.test\.m?js$", rel)):
             continue
         for line in f.read_text(errors="replace").splitlines():

@@ -1,6 +1,8 @@
 # Lend something you run
 
-Anything running on your computer at an address like `http://localhost:8096` can be lent to your group. Your friends open it in their browser, as themselves, through your computer. This page shows how, with Jellyfin, Navidrome and others as examples.
+Anything running on your computer at an address like `http://localhost:8096` can be lent to your group. Your friends open it in their browser, as themselves, through your computer; anyone outside your groups gets nothing, and you open no port on your router. This page shows how, with Jellyfin, Navidrome and others as examples.
+
+![Sam lends Jellyfin once; Bo and Ana open Sam’s jellyfin as themselves, Sam’s computer checks each ask and keeps the app’s password, someone not in the group gets nothing, and no port is opened on Sam’s router.](../diagrams/guide/lend.svg)
 
 In the commands below, `svrngs` means `~/.local/bin/svrngs` if your terminal doesn't find it.
 

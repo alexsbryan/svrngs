@@ -71,17 +71,17 @@ function wrap(str, w, size, mono = false) {
   return lines;
 }
 
-// A paragraph from its first baseline; gives its markup and where it ends.
+// A paragraph from its first baseline.
 export function para(x, y, str, { w = 300, size = 17, lh = 1.3, ...o } = {}) {
-  const lines = wrap(str, w, size, o.mono);
-  const s = lines.map((ln, i) => text(x, y + i * size * lh, ln, { size, ...o })).join('');
-  return { s, end: y + (lines.length - 1) * size * lh };
+  return wrap(str, w, size, o.mono).map((ln, i) => text(x, y + i * size * lh, ln, { size, ...o })).join('');
 }
 
 // A highlight drawn under a line of text, as `mark` does.
 export function mark(x, y, str, size, { mono = false, fill = C.lit } = {}) {
   return `<rect x="${x - 4}" y="${y - size * 0.86}" width="${width(str, size, mono) + 8}" height="${size * 1.18}" fill="${fill}"/>`;
 }
+// The one line to keep: bold, over the highlight.
+export const lit = (x, y, str, size, mono = false) => mark(x, y, str, size, { mono }) + text(x, y, str, { size, weight: 700, mono });
 
 export function tick(cx, cy, s = 9, stroke = C.ink) {
   return `<path d="M${cx - s} ${cy} L${cx - s * 0.3} ${cy + s * 0.75} L${cx + s} ${cy - s * 0.8}" fill="none" stroke="${stroke}" stroke-width="3.2"/>`;
@@ -91,15 +91,21 @@ export function cross(cx, cy, s = 8, stroke = C.ink) {
 }
 
 // A computer: its screen and the line of its base.
-export function computer(x, y, w, { fill = C.paper } = {}) {
+export function computer(x, y, w, { fill = C.paper, dash = null } = {}) {
   const h = Math.round(w * 0.6);
-  return rect(x, y, w, h, { fill, sw: 3 }) + line(x - w * 0.1, y + h + 6, x + w * 1.1, y + h + 6, { sw: 4 });
+  return rect(x, y, w, h, { fill, sw: 3, dash }) + line(x - w * 0.1, y + h + 6, x + w * 1.1, y + h + 6, { sw: 4 });
 }
 // A phone: a tall box with a home bar.
 export function phone(x, y, w, { fill = C.paper } = {}) {
   const h = Math.round(w * 1.8);
   return rect(x, y, w, h, { fill, sw: 3 }) + line(x + w * 0.35, y + h - 8, x + w * 0.65, y + h - 8, { sw: 3 });
 }
+
+// A frame with its owner's name on a tab: someone's computer, someone's phone.
+export const owned = (x, y, w, h, name, tab = width(name, 17)) => rect(x, y, w, h, { fill: C.paper }) +
+  rect(x, y, tab + 28, 34, { fill: C.people }) + text(x + 13, y + 23, name, { size: 17, weight: 700 });
+// svrngs at work on a computer: a box with the door's heavy rule.
+export const door = (x, y, w, h) => rect(x, y, w, h, { fill: C.paper, sw: 5 });
 
 // The figure's name in a band of colour, as the pages' h1 is.
 export function band(W, title, sub, n, of) {
@@ -142,4 +148,11 @@ export function svg(W, H, body, title, desc) {
 ${body}
 </svg>
 `;
+}
+
+// A folder: a box with a tab on its top left.
+export function folder(x, y, w, h, { fill = C.paper, sw = 3, dash = null } = {}) {
+  const t = Math.min(90, Math.round(w * 0.35));
+  const d = dash ? ` stroke-dasharray="${dash}"` : '';
+  return `<path d="M${x} ${y} L${x + t} ${y} L${x + t + 10} ${y + 10} L${x + w} ${y + 10} L${x + w} ${y + h} L${x} ${y + h} Z" fill="${fill}" stroke="${C.ink}" stroke-width="${sw}"${d}/>`;
 }

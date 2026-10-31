@@ -6,6 +6,8 @@ In the commands below, `svrngs` means `~/.local/bin/svrngs` if your terminal doe
 
 ## Open a lend to your WiFi
 
+![A TV, a phone and a laptop on the home WiFi open Sam’s Jellyfin through Cy’s computer at http://192.168.1.4:48719/, as Cy; when Cy’s computer is on another WiFi, it is closed.](../diagrams/guide/tv.svg)
+
 On your home page, below your group's list, each lend has its own line. Find the one you want, say *"Sam’s jellyfin"*, and press **Open it to this WiFi**. The line then says:
 
 ```

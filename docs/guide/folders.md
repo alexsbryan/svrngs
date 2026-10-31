@@ -24,6 +24,8 @@ you mean to change an app.
 
 ## Share another folder
 
+![Folders are matched by their last name: Ana's ~/Music/rehearsals and Bo's and Cy's ~/Band/rehearsals are one folder, while Bo's ~/Band/recordings stays Bo's own.](../diagrams/guide/folders-match.svg)
+
 Ana's band keeps its recordings in `~/Music/rehearsals`. Ana types:
 
 ```
@@ -75,6 +77,8 @@ photos went from one computer to the others.
   them.
 
 ## When two people change the same file
+
+![Bo and Cy both edit setlist.txt; every computer ends with setlist.txt and setlist (conflict Cy).txt, so neither edit is lost.](../diagrams/guide/folders-conflict.svg)
 
 Bo and Cy both edit `setlist.txt` before either sees the other's change.
 Neither edit is lost: one keeps the name `setlist.txt`, and the other is

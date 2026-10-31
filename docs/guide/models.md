@@ -53,6 +53,8 @@ On your home page, under your group, click *"Sam’s coder (llama-server)"* (*"S
 
 A chat app, an editor's assistant or a script on your computer can call Sam's model as an OpenAI-compatible server.
 
+![A program on Bo’s computer calls the copied address with Bo’s svrngs token; the token stops at Bo’s computer, and Sam’s computer checks it is Bo before llama-server answers.](../diagrams/guide/models.svg)
+
 1. On your home page, below your group's list, find Sam's model and press **Copy its address for a program**. The page says *"Copied: http://….localhost:…/. Paste it where a program on this computer, such as a chat app, asks for an address."* The address stays the same when svrngs or your computer restarts.
 2. In the program, set the OpenAI base URL to that address with `v1` on the end.
 3. For the API key, give it your svrngs token: the text in `~/.svrngs/token`. svrngs lets a program on your computer through only with it, and doesn't pass it on to Sam.
@@ -97,6 +99,8 @@ Or on your home page, under **What you lend**, type `2` in **How many people at 
 ## The pantry: every friend's model behind one address
 
 When Ana lends a coder, Sam a voice and Bo some tools, the pantry gathers them into one address on your computer for your chat app. It comes with svrngs's source, in `apps/pantry/`, and needs Node 18 or later.
+
+![A chat app on your computer points at the pantry’s one address; picking Ana/coder sends the chat to Ana’s computer and Sam/voice to Sam’s, while a friend’s tools are reached at their own address.](../diagrams/guide/pantry.svg)
 
 ```
 node apps/pantry/pantry.mjs list

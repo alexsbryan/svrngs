@@ -13,7 +13,11 @@ On this page: [what your app gets](#what-your-app-gets) ·
 [svrngs's answers](#telling-svrngss-answer-from-your-apps) ·
 [apps to copy](#copy-one-to-start).
 
+![The two shapes: a lent server goes with its lender and opens while that computer is on; a carried folder, an index.html under apps/ in the group's folder, is served by every computer and reads and writes svrngs/acts.](../diagrams/guide/build-shapes.svg)
+
 ## What your app gets
+
+![A request from Bo's browser reaches Ana's computer, which strips any x-svrngs- header sent and sets x-svrngs-key, x-svrngs-person and x-svrngs-user before your app on 127.0.0.1:4400 sees it; entries your answer names in x-svrngs-append are signed by Bo's own computer into the group's record.](../diagrams/guide/build-headers.svg)
 
 Three things, and no login, SDK or bundle:
 

@@ -8,6 +8,8 @@ something from a terminal.
 
 ## Bring an app to your group
 
+![An app Ana lends opens only while Ana's computer is on; Money, brought to Elm, is in Elm's folder on every computer, so it opens while any of them is on.](../diagrams/guide/apps-carried.svg)
+
 On your home page, under your group, find **Bring things to the table**.
 Each app is listed with a tick box and a line saying what it's for:
 
@@ -40,14 +42,18 @@ you to it.
 
 ## Money: split a bill
 
+![Kim adds pizza and names Ana and Bo; each says yes themselves, and until Ana says yes, Ana owes nothing.](../diagrams/guide/apps-money.svg)
+
 Kim pays $54.00 for Friday's pizza. Kim opens **Money**, and under **Add
 what you paid** types `pizza` in **What it was for**, `54` in **How
 much**, ticks Ana and Bo under **Who was in on it?**, and presses **Add it,
 paid by you**.
 
-Ana's Money page then asks: *"Kim says you were in on pizza: $18.00."*
-with **Yes, I was in on pizza** and **Not me**. Nobody owes anything until
-they say yes themselves. Kim can name people, but never signs for them.
+Bo says yes first. Ana's Money page then asks: *"Kim says you were in on
+pizza: $18.00."* with **Yes, I was in on pizza** and **Not me**. The share
+it asks counts only the people who have said yes so far, plus you: had Bo
+not answered yet, Ana would see $27.00. Nobody owes anything until they
+say yes themselves. Kim can name people, but never signs for them.
 
 What the page shows:
 

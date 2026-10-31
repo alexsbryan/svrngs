@@ -4,6 +4,8 @@ This page takes you from nothing to a group with your friends in it, on
 computers and phones, and to opening the first thing someone lends. It
 takes a few minutes. [How it works](how-it-works.md) explains the ideas.
 
+![Sam pastes one line, makes Lab and puts its link in the chat; Bo joins on a computer with one line and Ana on a phone with a name and Join. Sam’s and Bo’s computers keep Lab; Ana’s phone opens it.](../diagrams/guide/start.svg)
+
 ## Start a group on your computer
 
 On a Mac or a Linux computer, open Terminal (on a Mac: Applications, then

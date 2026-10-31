@@ -8,6 +8,12 @@ one, edit its scene and draw them all again:
 node docs/diagrams/src/build.mjs
 ```
 
+`guide/` holds the pictures in the guide ([`../guide/`](../guide/)), drawn
+by the same command. Those for the people, folders, apps and build pages
+are `src/guide-build.mjs`'s; they are smaller than the overview's, sized to
+sit inside a page. Those for the start, lend, models, games and tv pages
+are `src/guide-use.mjs`'s, the same size.
+
 It needs Node.js and nothing installed. Each SVG carries its own white
 background, so it reads the same on a light or a dark page.
 

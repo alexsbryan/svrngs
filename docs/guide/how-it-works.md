@@ -17,6 +17,8 @@ it, gives a name, and is in. So does Ana, from a phone.
   new link stops the old one letting anyone new in; everyone it already
   let in stays.
 
+![A link in your chat lets you in from a phone or a computer. Every computer in the group keeps the whole record. You stand at the center of your own groups.](../diagrams/01-group.svg)
+
 ## Your home page, and the group's page
 
 There are two pages, and they do different jobs.
@@ -74,11 +76,15 @@ who is asking. Anyone else gets nothing. If Sam's Jellyfin needs a
 password, Sam's computer adds it; Bo never receives it. Someone removed
 from the group is shut out at their next request.
 
+![Ana lends an app on a port. Ana's computer checks who is asking, keeps the app's secret and shuts out anyone removed. Ben opens it in a browser; Cy opens it on a phone.](../diagrams/02-door.svg)
+
 ## The group's record, kept on every computer
 
 What the group keeps together lives on its people's own computers: who is
 in the group, and what Money, Events and House rules hold. Every computer
 in the group keeps a whole copy. There is no server with the master copy.
+
+![Each device signs what its person does; every copy puts it all in one order and comes to the same answer.](../diagrams/03-record.svg)
 
 Example: Ana writes down a $60 pizza in Money, from a phone. It reaches Sam's,
 Bo's and Cy's computers. Later Sam's laptop dies. Bo's and Cy's still have

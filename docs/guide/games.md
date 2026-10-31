@@ -38,6 +38,8 @@ Ana opens the home page. Sam's row reads *Sam’s minecraft*, with
 *Play opens it on this computer, for a program here to connect to.* and a
 **Play** button.
 
+![Ana’s Minecraft connects to 127.0.0.1:41821 on Ana’s own computer, and svrngs carries it to Sam’s server on 25565.](../diagrams/guide/play.svg)
+
 1. Ana presses **Play**. The row now says *Connect to 127.0.0.1:41821.
    Copied.* (the number will differ), with **Stop**.
 2. In Minecraft, Ana picks Multiplayer, then Add Server, pastes the address,
@@ -73,6 +75,8 @@ Some things to know:
 A lent server stops when Sam's computer sleeps. Give keeps a game on one of
 your computers at a time and copies its world to the group, so anyone whose
 computer can keep it can pick it up.
+
+![Over time: Cy’s computer keeps the game and copies it to every computer; it moves to Bo with Bo’s yes; when Bo’s computer goes quiet, Dee starts the newest copy; when Bo comes back, Bo’s copy is listed with Start instead.](../diagrams/guide/give.svg)
 
 **Each computer that will keep games needs:**
 
