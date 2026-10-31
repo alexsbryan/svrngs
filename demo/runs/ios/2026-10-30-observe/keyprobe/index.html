@@ -1,0 +1,35 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>key probe</title><style>body{font:16px -apple-system;margin:16px}li{margin:6px 0}</style>
+<h3>Can Safari hand a key to its worker?</h3><ol id="out"></ol>
+<script type="module">
+const out = document.getElementById('out');
+const say = (t) => { const li = document.createElement('li'); li.textContent = t; out.append(li); fetch('/log?' + encodeURIComponent(t)).catch(() => {}); };
+say(navigator.userAgent);
+const errs = [];
+navigator.serviceWorker.addEventListener('message', (e) => e.data?.messageerror && errs.push(1));
+const reg = await navigator.serviceWorker.register('/sw.js?v=' + Date.now(), { scope: '/', type: 'module' });
+const w = reg.installing ?? reg.waiting ?? reg.active;
+await new Promise((ok) => w.state === 'activated' ? ok() : w.addEventListener('statechange', () => w.state === 'activated' && ok()));
+function ask(name, msg) {
+  const { port1, port2 } = new MessageChannel();
+  const before = errs.length;
+  return new Promise((ok) => {
+    port1.onmessage = (e) => ok(`${name}: ARRIVED, ${e.data}`);
+    setTimeout(() => ok(`${name}: LOST${errs.length > before ? ' (messageerror in worker)' : ''}`), 3000);
+    try { w.postMessage(msg, [port2]); } catch (e) { ok(`${name}: postMessage threw ${e}`); }
+  });
+}
+const ed = (x) => crypto.subtle.generateKey('Ed25519', x, ['sign', 'verify']);
+const nx = await ed(false), ex = await ed(true);
+const hm = await crypto.subtle.generateKey({ name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+const pk = new Uint8Array(await crypto.subtle.exportKey('pkcs8', ex.privateKey));
+say(await ask('A plain message', { n: 1 }));
+say(await ask('B Ed25519, cannot be copied (as open.js)', { key: nx.privateKey }));
+say(await ask('C Ed25519, can be copied', { key: ex.privateKey }));
+say(await ask('D HMAC, cannot be copied', { key: hm }));
+say(await ask('E the key as pkcs8 bytes', { bytes: pk }));
+const db = await new Promise((ok, no) => { const r = indexedDB.open('probe', 1); r.onupgradeneeded = () => r.result.createObjectStore('k'); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); });
+await new Promise((ok, no) => { const t = db.transaction('k', 'readwrite'); t.objectStore('k').put(nx.privateKey, 'nx'); t.oncomplete = ok; t.onerror = () => no(t.error); }).then(() => say('F page kept the key in IndexedDB'), (e) => say('F page could not keep it: ' + e));
+say(await ask('F worker reads it from IndexedDB', { fromDb: true }));
+say('done');
+</script>
