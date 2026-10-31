@@ -155,7 +155,12 @@ fn brought(at: &Asking, group: &str, asker: &str, apps: &[String]) -> Given {
     let stands = at.host.rail.standing(group).is_ok_and(|s| s.names(asker));
     stands.then_some(()).ok_or(NOT_IN)?;
     let dirs = dirs_of(&at.folders.data_dir, group).map_err(|e| traced(group, NO_FOLDER, &e))?;
-    let dir = dirs.first().ok_or(NO_FOLDER)?;
+    let own = crate::surface::seed_of(at, group).map(|s| crate::group::folder_name(&s));
+    let dir = dirs
+        .iter()
+        .find(|d| own == Some(super::synced::folder_of(d, group)));
+    tracing::debug!(target: "folder", group, ?own, ?dir, kept = dirs.len(), "shelf: brought into the group's own folder, never another it shares; refused when this computer keeps none of its own");
+    let dir = dir.ok_or(NO_FOLDER)?;
     let mut said = Vec::new();
     for (name, _, files) in SHELF.iter().filter(|(n, ..)| apps.iter().any(|a| a == n)) {
         let at = dir.join("apps").join(name);
