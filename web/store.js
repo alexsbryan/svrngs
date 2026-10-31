@@ -210,8 +210,6 @@ export async function runtime() {
   const hit = await cache?.match(RUNTIME);
   if (hit) return hit;
   const res = await fetch(RUNTIME);
-  if (cache && res.ok) {
-    cache.put(RUNTIME, res.clone()).catch((e) => console.debug(`STORE: the runtime's module was not kept: ${e}`));
-  }
+  if (cache && res.ok) cache.put(RUNTIME, res.clone()).catch((e) => console.debug(`STORE: the runtime's module was not kept: ${e}`));
   return res;
 }
