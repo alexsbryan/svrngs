@@ -6,7 +6,8 @@
   people lend (app.js); it asks the person's yes when an app sends them
   here, and lists what apps use (sup-3), who was removed from the
   group or asked to be (v1-keeper-office (b)), and who is visiting it
-  (guests-pages). Static files any origin
+  (guests-pages); each lend's address to keep, and on a computer how this
+  reaches you (svrn-docs rings/current/IN_THE_BROWSER.md §3, §4). Static files any origin
   can serve — no server, no certificate, no data. The FRAGMENT carries the link's token, and a browser never sends
   the fragment to the origin, so the page loads from public static hosting
   while the link stays on the phone; `no-referrer` keeps it out of every
@@ -78,6 +79,15 @@
 <ul id="removals"></ul>
 <section id="visitors"></section>
 <section id="acts"></section>
+<details id="how" hidden>
+  <summary>How this reaches you</summary>
+  <p>The link from the chat keeps its code after the #, which your browser never sends to the site this page comes from.</p>
+  <p>This browser keeps who you are. There is no account anywhere.</p>
+  <p>The site this page comes from sends only files. It does see which thing’s address you open, as each has a name under it. Your group can serve this page from a site of its own.</p>
+  <p>Between you and the computer lending a thing, a server passes it along sealed, and can’t read it. Your group can run its own.</p>
+  <p>That computer is someone’s in your group. It checks it’s you before it answers, and tells the app there who you are: some apps let you straight in, others ask you to sign in once.</p>
+  <p>What your group keeps together is on its people’s own computers, and can leave with the group, whole.</p>
+</details>
 <details id="uses" hidden><summary>What apps use</summary><ul id="used"></ul></details>
 <pre id="response"></pre>
 <script type="module" src="./app.js?v=__VERSION__"></script>

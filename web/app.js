@@ -44,7 +44,7 @@
 // under that host and could frame it at `#ask=` to borrow a click.
 import init, { actor, ask, believe, carried_label, connect_to_join, endpoint, is_label, issuer_of, label, links, older, pass, redemption, relay_of, sign_line } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
-import { acts, agreed, aliased, apart, called, carrying, changes, deciders, door, el, named, once, opens, question, reading, removal, row, spoken, table, unlent, uses as used, visiting, whose } from './question.js?v=__VERSION__';
+import { acts, agreed, alias, aliased, apart, called, carrying, changes, deciders, door, el, keeping, named, once, opens, question, reading, removal, row, spoken, table, unlent, uses as used, visiting, whose } from './question.js?v=__VERSION__';
 
 const heading = document.getElementById('status');
 const said = document.getElementById('response');
@@ -503,15 +503,23 @@ async function enter(group, asked, joined) {
   add('knows', el('p', 'What you open knows your name.'));
   // This phone's key, as the ask a link's issuer is sent names it.
   add('decides', el('p', `${deciders(people, me, 'browser')}.`));
+  // How this reaches you (IN_THE_BROWSER §3), for someone at a computer
+  // who likes to see how a thing works; on a phone it is left out of the
+  // first look, which Ana spends on the group's things (join_page.rs).
+  document.getElementById('how').hidden = !computer();
   // The index, one line each on a phone: the open, what it is for and what
   // opening it lets it do (`agreed`), and whether it is full now. Whose it
   // is the open names (`named`), and each opens in this tab, so no column
   // says either: with the head they were words Ana read before her first
   // tap (the fifth set; demo/xenia/findings/wordy-the-group-s-page.md).
+  // Last, the address to keep (svrn-docs rings/current/IN_THE_BROWSER.md
+  // §4): its alias at this page, or, where two share one, its label, which
+  // never collides; the alias as the page reads it, a space as `+`.
+  const kept = (l, a = alias(l, lent, people)) => `${location.origin}${location.pathname}#open=${aliased(a, lent, people).length === 1 ? encodeURIComponent(a).replaceAll('%20', '+').replaceAll('%40', '@') : label(l.key, l.name)}`;
   list.replaceChildren(
     ...once(lent).map((l) => {
       const button = Object.assign(el('button', named(l)), { onclick: () => saying(l, 'yes').then(() => open(group, key, lent, unanswered, l)) });
-      return row([el('span', '', button, ` ${agreed(l, shelf, group)}${opens(l, 'Here, in this tab')[1] === 'full' ? ' Full now.' : ''}`)]);
+      return row([el('span', '', button, ` ${agreed(l, shelf, group)}${opens(l, 'Here, in this tab')[1] === 'full' ? ' Full now.' : ''} `, keeping(kept(l), !computer()))]);
     }),
   );
   // What `#open=` names (DESIGN §3, "Lent apps", call 1): a lend by its
@@ -579,6 +587,10 @@ function line(words, text) {
 // it imports the dial. Registered after load: joining and the list work
 // without it. Asked for before joining awaits anyone, so a person typing
 // their name does not miss the load.
+// An address typed or tapped on this page, such as an alias kept, is a
+// new fragment on the same page, which the browser opens without loading
+// it: so the page loads again, to open what it asks.
+window.addEventListener('hashchange', () => (trace('PAGE: the address changed here, so the page opens it'), location.reload()));
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js', { type: 'module' }).catch((e) => trace(`PAGE: the service worker did not register: ${e}`)));
 
 // A lend's address with nothing serving it in this browser (svrn-docs

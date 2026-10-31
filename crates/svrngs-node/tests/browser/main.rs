@@ -1699,9 +1699,12 @@ in_both_engines!(
     /// the group)` the founder's app, `app@ada (joined <day>)` the
     /// other's, each at its own origin. The bare `app@ada`, which names
     /// both, and `nothing@ada`, which names nothing, are said in the
-    /// page's words, never opened as a nearest match. Red on 3587c98f,
-    /// where `#open=` read a label alone, so every alias opened nothing
-    /// and said nothing.
+    /// page's words, never opened as a nearest match. Each row of the
+    /// page gives its alias as the address to keep, with the one line for
+    /// it, and each opened lands on its own app; on a computer "How this
+    /// reaches you" is there, in the page's words. Red on 3587c98f, where
+    /// `#open=` read a label alone, so every alias opened nothing and said
+    /// nothing; the keeping red on a27fd4a5, which gave no address.
     a_lends_alias_opens_it_from_the_groups_page
 );
 async fn a_lends_alias_opens_it_from_the_groups_page(engine: Engine) {
@@ -1728,9 +1731,61 @@ async fn a_lends_alias_opens_it_from_the_groups_page(engine: Engine) {
         "key": hex::encode(bo.to_bytes()),
         "token": token(&signing(1), &relay),
         "aliases": aliases,
+        "keep": true,
     });
     let seen = drive(engine, "cold.mjs", args, None).await;
     eprintln!("the aliases' run: {seen:#}");
+    // Each row's address to keep, its alias, and the one line for it
+    // (IN_THE_BROWSER §4, "Saying it"); each opened lands on its own app.
+    let line = match engine {
+        Engine::Webkit => " Add to Home Screen to keep it.",
+        Engine::Chromium => " Bookmark this.",
+    };
+    let kept: Vec<String> = serde_json::from_value(seen["keep"].clone()).unwrap_or_default();
+    let mut shown: Vec<String> = kept
+        .iter()
+        .map(|k| k.strip_suffix(line).unwrap_or(k).to_string())
+        .collect();
+    shown.sort();
+    let at = |a: &str| {
+        a.split_once("/#open=")
+            .map(|(_, a)| a.to_string())
+            .unwrap_or_default()
+    };
+    assert_eq!(
+        shown.iter().map(|a| at(a)).collect::<Vec<_>>(),
+        [
+            "app@ada+(joined+".to_string() + &today.replace(' ', "+") + ")",
+            "app@ada+(started+the+group)".into()
+        ],
+        "each row's alias to keep, told apart, with its line:\n{seen:#}"
+    );
+    assert!(kept.iter().all(|k| k.ends_with(line)), "{seen:#}");
+    let mut opened: Vec<(bool, Value)> =
+        (seen["kept"].as_array().cloned().unwrap_or_default().iter())
+            .map(|k| (at_origin(&k["url"], &label(1, "app")), k["title"].clone()))
+            .collect();
+    opened.sort_by_key(|(first, _)| *first);
+    assert_eq!(
+        opened,
+        [
+            (false, json!("the app of the other ada")),
+            (true, json!("the app"))
+        ],
+        "each address kept opens its own app:\n{seen:#}"
+    );
+    // How this reaches you, for someone at a computer, in the page's words
+    // (DESIGN §1); on a phone, out of Ana's first look.
+    let how = &seen["how"];
+    assert_eq!(how["hidden"], matches!(engine, Engine::Webkit), "{seen:#}");
+    let told = how["text"].as_str().unwrap_or_default().to_lowercase();
+    let universe = [
+        "key", "member", "ring", "sync", "journal", "node", "relay", "vpn", "tunnel",
+    ];
+    assert!(
+        told.contains("how this reaches you") && words_said(&told, &universe).is_empty(),
+        "{seen:#}"
+    );
     let landed = |i: usize| &seen["aliases"][i];
     assert!(
         at_origin(&landed(0)["url"], &label(1, "app")) && landed(0)["title"] == "the app",
@@ -3042,6 +3097,15 @@ async fn the_home_page_copies_a_lend_s_address_for_a_program(engine: Engine) {
         foot.is_some_and(|t| t.ends_with(" on a screen")),
         "{seen:#}"
     );
+    // The address to keep, the same words as the group's page on a
+    // computer (question.js `keeping`; IN_THE_BROWSER §4). Red on
+    // a27fd4a5, which gave none.
+    assert!(
+        seen["all"][0]
+            .as_str()
+            .is_some_and(|t| t.contains(&format!("{origin} Bookmark this."))),
+        "{seen:#}"
+    );
     let said = seen["after"][0].to_string();
     let copied = format!("Copied: {origin}. Paste it where a program on this computer, such as a chat app, asks for an address.");
     assert!(said.contains(&copied), "{seen:#}");
@@ -3602,9 +3666,20 @@ async fn the_group_s_page_draws_the_door_and_the_index(engine: Engine) {
     let door = seen["door"].as_str().unwrap_or_default();
     assert!(door.starts_with("house (sam’s, since "), "{seen:#}");
     drew_the_door(&seen);
+    // The row's words, then the address to keep, a link on a computer
+    // (question.js `keeping`).
+    let index = seen["index"][0][0].as_str().unwrap_or_default();
+    let (row, kept) = index.split_once(" http://").unwrap_or((index, ""));
     assert_eq!(
-        seen["index"],
-        json!([["cy’s shelf (k) It writes what you say there into house’s record, as you."]]),
+        row, "cy’s shelf (k) It writes what you say there into house’s record, as you.",
+        "{seen:#}"
+    );
+    let line = match engine {
+        Engine::Webkit => " Add to Home Screen to keep it.",
+        Engine::Chromium => " Bookmark this.",
+    };
+    assert!(
+        kept.contains("/#open=shelf@cy ") && kept.ends_with(line),
         "{seen:#}"
     );
     drop((ada, cy));

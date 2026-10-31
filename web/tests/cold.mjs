@@ -9,7 +9,8 @@
 //   is, and where it lands; then, with the lend's worker taken away again
 //   at once, its address opened a second time, `/?n=2`, and where that
 //   lands: never sent to the group's page twice;
-// - `keep`: the addresses the group's page shows to keep, a row each;
+// - `keep`: the addresses the group's page shows to keep, a row each,
+//   each then opened and where it lands, and "How this reaches you";
 // - `aliases`: each opened on the group's page at `#open=<alias>`, and
 //   where it lands.
 //
@@ -62,6 +63,15 @@ await driving(args, async ({ page, origin }) => {
     await page.locator('#lent tr').first().waitFor({ timeout: 90_000 });
     seen.keep = await page.evaluate(() => [...document.querySelectorAll('#lent tr')].map((r) => r.querySelector('small')?.textContent ?? null));
     seen.index = await page.evaluate(() => [...document.querySelectorAll('#lent tr')].map((r) => r.textContent));
+    seen.how = await page.evaluate(() => ((d) => d && { hidden: d.hidden, text: d.textContent })(document.getElementById('how')));
+    // Each address shown, opened as a bookmark of it is: the first from
+    // the group's page itself, a new fragment on the same page.
+    seen.kept = [];
+    for (const [i, at] of seen.keep.filter(Boolean).map((k) => k.split(' ')[0]).entries()) {
+      if (i) await page.goto('about:blank');
+      await page.goto(at);
+      seen.kept.push({ at, ...(await landed(page, 45_000)) });
+    }
   }
   seen.aliases = [];
   for (const alias of args.aliases ?? []) {

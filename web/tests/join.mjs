@@ -143,7 +143,10 @@ try {
       asked,
       why,
       status: document.getElementById('status').textContent,
-      lent: [...document.querySelectorAll('#lent button')].map((b) => b.parentElement.textContent),
+      // Each row's words, then apart the address it gives to keep
+      // (question.js `keeping`).
+      lent: [...document.querySelectorAll('#lent button')].map((b) => [...b.parentElement.childNodes].filter((n) => !n.matches?.('small.keep')).map((n) => n.textContent).join('').trim()),
+      kept: [...document.querySelectorAll('#lent small.keep')].map((k) => k.textContent),
       // What is folded, by its heading, and whether the group's things come
       // before its people (the operator, 2026-10-26: the page after joining).
       folded: [...document.querySelectorAll('#shelf details, #acts details')].filter((d) => !d.open).map((d) => d.querySelector('summary').textContent),

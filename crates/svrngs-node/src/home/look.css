@@ -148,3 +148,7 @@ body.screen footer p { max-width: none; margin: 0; }
 
 /* "What acts as you": a Stop beside its line (home.js `reach`). */
 #acts form { display: inline; }
+
+/* The address to keep (question.js `keeping`): its own line, in the
+   address's face, broken anywhere, as a label is 62 letters long. */
+small.keep { display: block; font-family: var(--mono); overflow-wrap: anywhere; }

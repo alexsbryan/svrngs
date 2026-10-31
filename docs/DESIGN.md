@@ -766,6 +766,16 @@ Seven calls:
    match. Every page reads the same record, so it names the same lend on
    each, its day in the browser's own time. It is unique within a group
    only: across groups, or as a name of its own, it would need a centre.
+   Each row of the group's page gives the address to keep, its alias, or
+   its label where two lends share one, with one line in the same words as
+   the home page gives a lend's `<label>.localhost` address (`question.js`,
+   `keeping`): "Add to Home Screen to keep it." on a phone, "Bookmark
+   this." on a computer. An address typed or tapped on the group's page is
+   a new fragment the browser does not load, so the page loads again to
+   open it. On a computer the group's page also says how it reaches you,
+   from the chat link to the computer lending a thing, each link in the
+   page's words (svrn-docs `rings/current/IN_THE_BROWSER.md` §3); on a
+   phone it is left out of the first look, which is the group's things'.
 2. *Jellyfin as it comes.* A lend serves stock jellyfin-web from the
    lender's Jellyfin; nothing in svrngs renders a library of its own.
 3. *The infra learns no Jellyfin.* Anything that knows an app's API lives

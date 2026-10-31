@@ -18,7 +18,7 @@
 // lent opened on this computer with Play or closed (/v1/play, play.rs). Its words are
 // DESIGN §1's: groups, people, what they lend, computer; its question and
 // what apps use and its removals are question.js's, the group's page's too.
-import { acts, agreed, apart, called, carrying, changes, deciders, door, el, named, namesakes, once, opens, owner, question, reading, removal, row, table, unlent, until, uses as used, visiting, whose } from './question.js';
+import { acts, agreed, apart, called, carrying, changes, deciders, door, el, keeping, named, namesakes, once, opens, owner, question, reading, removal, row, table, unlent, until, uses as used, visiting, whose } from './question.js';
 
 const main = document.getElementById('home');
 const button = (text, act) => Object.assign(el('button', text), { onclick: act });
@@ -199,7 +199,7 @@ async function show(g, s, room, add, me, plays) {
     // or a projector. In the row and the page's top they were words read
     // before Money, and the screen a tap away from it (the fifth set, Kim's
     // Home 90 words of her 30; demo/xenia/findings/wordy-home.md).
-    const foot = (l, li = el('li', `${named(l)}:`, wifi(l, room), ' ')) => (li.append(button('Copy its address for a program', () => Promise.resolve().then(() => navigator.clipboard.writeText(l.origin)).then(() => li.append(` Copied: ${l.origin}. Paste it where a program on this computer, such as a chat app, asks for an address.`), () => li.append(` Copy it from here: ${l.origin}`)))), li);
+    const foot = (l, li = el('li', `${named(l)}:`, wifi(l, room), ' ')) => (li.append(button('Copy its address for a program', () => Promise.resolve().then(() => navigator.clipboard.writeText(l.origin)).then(() => li.append(` Copied: ${l.origin}. Paste it where a program on this computer, such as a chat app, asks for an address.`), () => li.append(` Copy it from here: ${l.origin}`))), ' ', keeping(l.origin, false)), li);
     s.append(table(g, lends, (apps) => post('/shelf', [g.id, apps]), new URLSearchParams(location.search).getAll('joined').includes(g.name)), Object.assign(el('ul', '', ...once(lends.lent).filter((l) => !l.raw).map((l) => foot(l))), { className: 'wifi' }), el('p', '', Object.assign(el('a', `Show ${g.name ?? 'this group'} on a screen`), { href: `/?screen=${ns}`, target: '_blank' })));
     for (const l of once(lends.lent).filter((o) => o.group)) add('reads', el('p', carrying(l.kind, lends.shelf)));
     const changed = changes(g, lends, (app) => post('/runs', [g.id, app]), rows, me);
