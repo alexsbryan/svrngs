@@ -37,7 +37,11 @@ Sealing is not built yet (PLAN §2).
 **For people:** *keep talking where you talk; keep what your group owns —
 money, plans, files, the library — on your own computers, not a platform's.*
 A group is a house, a team, a party: about twenty-five people who already
-share a chat.
+share a chat. Its story in 2026 is the browser on phones and the
+computers that lend: *join once from the chat link; everything your group
+lends has an address that never changes; bookmark it on your phone or your
+laptop, and it opens* (svrn-docs `rings/current/IN_THE_BROWSER.md`; §3,
+"Lent apps", call 1). Nothing is installed on a phone.
 
 **For developers:** *anything you can run on localhost, you can share with
 your group.* The group is the platform. An app gets three things and needs

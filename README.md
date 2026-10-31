@@ -29,6 +29,11 @@ us.
 
 Every line and every button: [`demo/start.md`](demo/start.md).
 
+Join once from the chat link. Everything your group lends has an address
+that never changes. Bookmark it on your phone or your laptop, and it opens.
+`https://group.svrnme.sh/#open=films@Sam` opens Sam's films; on a phone,
+add it to your Home Screen to keep it.
+
 ## Then
 
 - **Lend what you run.** Jellyfin, Navidrome, Immich, Actual, llama-server:
