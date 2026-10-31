@@ -288,23 +288,6 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   `v1.3` (the operator: "Let's fix the grapevine bug then release", "minor
   version bump, push main + the tag to github"). What the queue left waits
   in §2, each with its trigger;
-- the ios queue (`ralph/next/ios/`, its `CHARTER.md`; the operator,
-  2026-10-28, "One app with both, fixed", and 2026-10-30, "plan out the
-  ralph rows for this work -- scrappy startup scope"; svrn-docs
-  `rings/current/ROAD_TO_IOS_GA.md` §2): the phone's door as an iPhone
-  app, as far as a demo the house can hold, and no further (DESIGN §7).
-  The demo it moves: Ana taps the chat link on her iPhone, types her name
-  and presses Continue once; Jellyfin's app then plays Sam's film over
-  cellular with nothing to turn on, and a stranger's key is refused. The
-  operator's observations came first
-  (`demo/runs/ios/2026-10-30-observe/README.md`), then the design, which
-  the operator agrees to before any builder runs; then an economizing
-  pass and the raise, the spike moved in with its behaviour kept, the
-  patches, an endpoint started on use, joining, the lends, the screens,
-  the recorded run, and TestFlight. What it leaves waits in §2, each with
-  its trigger: the replica on the charger, "Ask the house", a yes given in
-  the app, the packet path, on-demand by domain, the App Store, and
-  Android;
 - sealing, at its §2 trigger.
 
 The operator's switch stands apart from that order: when they flip
@@ -318,6 +301,7 @@ The grapevine's standing carries are a row after V1 too (GRAPEVINE_DEMO
 | Waits | Trigger |
 |---|---|
 | an app SDK, a sandboxed fold engine, signed manifests and install acts (QuickJS behind an `Engine` trait was `crates/svrngs-engine`, deleted 2026-10-04 with no user; it is at tag `e0-bot`); and the runner that would carry an app's function to a person's data, its yes to that code at a version — scoped use's spike served its operation from a program its owner runs, as the survey orders (`rings/current/ACL_AND_SCOPED_USE.md` §4: "a subsequent convenience to earn with a real distributed app"; `demo/runs/su/2026-10-09/` §7) | an app needs its state offline on a device that is not its host, or strangers' code runs on members' devices, or an app sends its function to run beside a person's data |
+| the phone's app, built: the ios queue (`ralph/next/ios/`, its `CHARTER.md` and `STATE.md`), designed in DESIGN §7 and parked after its design. The demo it would move: Ana taps the chat link on her iPhone, types her name and presses Continue once; Jellyfin's app then plays Sam's film over cellular with nothing to turn on, and a stranger's key is refused. Its observations are `demo/runs/ios/2026-10-30-observe/README.md`; a TestFlight build of the spike installs from an individual's team. Until it is built, a phone is the group's page in its browser, and a lend stops when the browser leaves the screen | the operator resources it (the operator, 2026-10-30: "we aren't shipping a mobile app until 2027"; "finish the iOS design then park it until we can resource it") |
 | the replica on the charger: a member's phone keeps the group's record passing between computers awake at different hours while it charges on WiFi, one line on the app's This phone, off by default (svrn-docs `rings/current/ROAD_TO_IOS_GA.md` §2.3; its design `rings/current/PHONE_REPLICA.md`). Its spike answered 98.9% of dials through a day and 99.8% overnight, and with iroh's reports off link changes cost 1.1 to 1.3 MB an hour (`demo/runs/phone-replica/2026-10-27/README.md`, the ladder). It left the ios queue because no one in xenia's cast feels it working or missing (ROAD_TO_IOS_GA §2.1); groups of phones only follow it | a group finds an act late because the computers that hold it were never awake at once, counted; or the operator moves it in |
 | "Ask the house": an App Intent in the phone's app, from Siri, Shortcuts and the Action button, to a model the group lends at the phone's loopback (ROAD_TO_IOS_GA §7, steps 3 and 4) | the ios queue's recorded run passes, and a group that lends a model asks for it on a phone, counted |
 | a yes given in the phone's app, for a lend that asks one: until then its line on House says the app can't give the yes yet and where it can be given, and never opens it without the yes (DESIGN §3, "Asking for a yes"; `ralph/next/ios/CHARTER.md`, "Decide") | a person in a group stops at that line, counted |
@@ -823,7 +807,7 @@ sizes are lines of code, as the survey counted them.
 | `mesh-join-vocab/src/deep_link.rs:228-300` | the https link's build and parse, never reading left of the `#` | forked already (U2): `crates/svrngs/src/link.rs`; u4-2 moved the token's parse, now `crates/svrngs-core/src/link.rs`, and the signing of the ask and the redemption into svrngs-core (call 5), leaving the command `issuer.rs`: the issuer as iroh dials it; a fresh token's secret, drawn there until start-home moved it beside the link's `Invite` into the node (`crates/svrngs-node/src/invite.rs`), where `svrngs link` and the home page both make a link |
 | `sovereign/crates/sovereign-contracts/src/guest_pages/ring_shim.js:1-171` (105), with `shim.rs` and `guest_pages.rs` | `window.ring` over plain `fetch` to a LAN door: the bearer from `location.hash` (`:5`); a name claimed by `window.prompt` and `POST /v1/guest/session`, its handle kept in `localStorage` (`:30-61`) | not forked: a guest on a LAN door, which never dials iroh and for whom the host signs. svrngs's phone is a person with a key in the register. Both retire on svrngs's bar (`docs/RING_SPEC.md:26`) |
 | `sovereign/crates/sovereign-daemon/src/guest_door.rs:617-729` (104) | the LAN door's proxy: the request body buffered to 16 MiB (`:619`, `:646`); headers forwarded but `host`, `connection`, `content-length` and `accept-encoding` (`:659-667`); the response buffered whole (`:689`) and only its status, `content-type` and body returned (`:681-696`) | not forked: it drops `Content-Range` and streams nothing. The other end of a phone's streams is U3's door (`crates/svrngs-node/src/door.rs`) |
-| `sovereign-mobile/src-tauri/src/iroh_bridge.rs:14-17`; `scripts/ring-room-phone/phone.mjs` | a native Tauri app's iroh, its key "ephemeral (fresh key per app run)"; a Node stand-in for a phone browser, with a fake `location`, `localStorage` and `fetch` | not forked: the phone's app is the ios queue's (§1), its key kept in the Keychain. The browser tests drive real engines with Playwright, Chromium and WebKit with iPhone emulation (u4-7) |
+| `sovereign-mobile/src-tauri/src/iroh_bridge.rs:14-17`; `scripts/ring-room-phone/phone.mjs` | a native Tauri app's iroh, its key "ephemeral (fresh key per app run)"; a Node stand-in for a phone browser, with a fake `location`, `localStorage` and `fetch` | not forked: the phone's app is the ios queue's, parked (§2), its key kept in the Keychain. The browser tests drive real engines with Playwright, Chromium and WebKit with iPhone emulation (u4-7) |
 | nothing | an HTTP client over iroh in wasm; fetch interception; byte ranges in a browser; request bodies; a key a browser keeps; redemption from a browser; a dial by bare key from wasm; any measurement on a phone (the survey searched every `.js`, `.ts`, `.html` and `.rs` file for each) | built new: the client (u4-4), the key and joining (u4-5), the runtime (u4-6), the measurement and the operator's package (u4-8) |
 
 Seven facts follow. *The page holds the key's bytes* (call 1): iroh's

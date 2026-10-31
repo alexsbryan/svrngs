@@ -1509,7 +1509,8 @@ lent app is a name under its host and could frame the page where a person
 says yes; a host a group names in its place must send it too.
 
 **The phone's app adds what the page can't; the page stays the way in.**
-Designed, not built: the ios queue builds it (PLAN §1). The chat link
+Designed, not built: it waits in PLAN §2 until it is resourced, not
+before 2027 (the operator, 2026-10-30). The chat link
 opens the page in the browser and the person is in, so the app is never
 the first ask and never required. It earns its place by four things a page
 can't do (svrn-docs `rings/current/ROAD_TO_IOS_GA.md` §2.1):

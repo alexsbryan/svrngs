@@ -1,4 +1,4 @@
-# svrngs ios — the phone's door as an iPhone app, to a demo the house can hold (the operator, 2026-10-30: "plan out the ralph rows for this work -- scrappy startup scope"; svrn-docs rings/current/ROAD_TO_IOS_GA.md §2, §6 v0). Launched 2026-10-30. Launch, from anywhere, once the tree is clean and HUMAN-ios-observe is ticked (one loop per tree):
+# svrngs ios — the phone's door as an iPhone app, to a demo the house can hold (the operator, 2026-10-30: "plan out the ralph rows for this work -- scrappy startup scope"; svrn-docs rings/current/ROAD_TO_IOS_GA.md §2, §6 v0). Parked 2026-10-30 after ios-design, until the operator resources it (STATE.md; PLAN §2, "the phone's app, built"). To relaunch, from anywhere, once the tree is clean and HUMAN-ios-observe is ticked (one loop per tree):
 #
 #   python3 ~/dev/commonwealth-ai/scripts/ralph.py supervise --workdir ~/dev/svrngs \
 #     --queue ios --install-launchd -- python3 ~/dev/commonwealth-ai/scripts/ralph.py \
