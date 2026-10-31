@@ -172,10 +172,7 @@ async function show(g, s, room, add, me, plays) {
     // kind its lender's word, never a word of svrngs's own
     // (scripts/vocab_check.py); whose; how it opens; and whether it is full
     // now.
-    const lends = await get(`/v1/lends?namespace=${ns}`).catch((e) => {
-      judge();
-      throw e;
-    });
+    const lends = await get(`/v1/lends?namespace=${ns}`).catch((e) => (judge(), Promise.reject(e)));
     judge(lends);
     apart(lends.lent, rows);
     body.replaceChildren();
