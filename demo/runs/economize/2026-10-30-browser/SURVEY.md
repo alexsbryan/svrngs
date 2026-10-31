@@ -110,3 +110,16 @@ behaviour kept:
 | `web/lend.js` | `onward` one expression, its `there` and `tail` a default parameter (both callers pass two), and `keepJar` | -6 |
 
 **-12**, 19,492 to 19,480 with the guard; `oxlint` exit 0 over the tree.
+
+## Cut for the way back's clippy and the fragment, 2026-10-31
+
+The way back's two answers each traced on their own branch (clippy refused
+`then(..).unwrap_or_else(..)`, `obfuscated_if_else`: +2), and the group's
+page reading a link's token with what it opens (`#<token>&open=`) and
+saying a fragment it cannot read: room again from 19,480 of 19,481.
+
+| Where | What | Lines |
+|---|---|---:|
+| `crates/svrngs-node/src/home/question.js` | `reading` and `deciders` one expression each, their bindings default parameters (every caller passes two and three: web/app.js, home.js, acts.rs) | -9 |
+
+**-9**, 19,480 to 19,471; `oxlint` exit 0; `what_acts_as_you_is_said_in_one_wording` passed.

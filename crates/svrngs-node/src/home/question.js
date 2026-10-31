@@ -248,21 +248,12 @@ export const carrying = (kind, shelf) => `${spoken(kind)} reads and writes ${doe
 // What the person said, `c`, of lend `l` opening their friends' lends of
 // the kinds it reads as them (capability-open), since or on its day; `l`
 // undefined when it is not lent now.
-export const reading = (l, c) => {
-  const [who, what] = l ? [named(l), `your friends’ ${l.reads.map(spoken).join(' and ')}`] : ['An app not lent now', 'your friends’ things'];
-  return c.said === 'yes' ? `${who} opens ${what} as you. Since ${day(c.at)}. ` : `${who} stopped opening ${what} as you on ${day(c.at)}. Opening it again says yes again.`;
-};
+export const reading = (l, c, [who, what] = l ? [named(l), `your friends’ ${l.reads.map(spoken).join(' and ')}`] : ['An app not lent now', 'your friends’ things']) => c.said === 'yes' ? `${who} opens ${what} as you. Since ${day(c.at)}. ` : `${who} stopped opening ${what} as you on ${day(c.at)}. Opening it again says yes again.`;
 
 // Who can decide for you (§4): the devices holding a key of the person
 // whose device key is `me`, of the people rows, this one, a `here`, first
 // and nobody else's, a namesake's included, by key, never by name.
-export function deciders(rows, me, here) {
-  const first = rows.find((r) => r.key === me)?.person_key;
-  const own = (d) => rows.filter((r) => r.person_key === first && r.key !== me && r.device === d).length;
-  const said = (n, d, one) => (n ? [`your ${here === d ? 'other ' : ''}${n > 1 ? `${n} ${one}s` : one}`] : []);
-  const all = [`This ${here === 'computer' ? 'computer' : 'phone'}`, ...said(own('computer'), 'computer', 'computer'), ...said(own('browser'), 'browser', 'phone')];
-  return all.join(', ').replace(/, ([^,]*)$/, ', and $1');
-}
+export const deciders = (rows, me, here, first = rows.find((r) => r.key === me)?.person_key, own = (d) => rows.filter((r) => r.person_key === first && r.key !== me && r.device === d).length, said = (n, d, one) => (n ? [`your ${here === d ? 'other ' : ''}${n > 1 ? `${n} ${one}s` : one}`] : [])) => [`This ${here === 'computer' ? 'computer' : 'phone'}`, ...said(own('computer'), 'computer', 'computer'), ...said(own('browser'), 'browser', 'phone')].join(', ').replace(/, ([^,]*)$/, ', and $1');
 
 // How lend `l` opens, `where`, and whether it is full now: the index's row
 // as both pages judge it, so a change to either lands on both (#158).
