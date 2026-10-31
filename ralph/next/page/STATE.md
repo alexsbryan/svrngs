@@ -187,6 +187,7 @@ brackets.
       - `Page` draws `i:62-98` in its order, inside `#page`, with `#computer`'s three paragraphs and `#how`'s six byte for byte. `useEffect` sets `document.title` (`a:405`, `:422`).
       - A failed effect with no words is drawn as "This browser could not open the page." (`a:88`).
       - Stubs: `web/v2/{enter,computer,shelf,index,door,visit,join,among,acts,uses,ask}.js`, each take answering `no(s, 'not built yet: <flow>')`.
+      - **Where it landed** (corrected, page-scaffold (e), 0d9e1c95): `compose` and `Page` are `web/v2/page.js`, page-scaffold's like app.js, apart from app.js's edge so node tests them. A flow leaves out what it has none of. A stub is `export const unbuilt = [types]`, refused by `compose`, and `view` draws its places as `i:` draws them, so a row starts from v1's markup. A take may be keyed by a part's name, `fold <fold>` or `typed <field>`, so two flows can each draw a Fold. A slot is shared: a flow with no slot of its own, such as index's unlisted lines, answers in `enter`.
     - **The build.** `scripts/build-web.sh` takes `--ui v1|v2`, `v1` by default, a closed set. `v2` sources `web/v2/build.sh`, which:
       - derives `index.html` from `web/index.html`, with `body.html` between `<body>` and the `<script` line, and fails unless `<head>` is byte-equal (`cmp`);
       - copies `web/v2/app.js` to `$OUT/app.js`, `web/v2/*.js` to `$OUT/v2/`, and `vendor/` and `ui/` with their paths kept;
