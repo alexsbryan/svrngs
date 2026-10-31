@@ -5,11 +5,11 @@
 // URLs load Preact twice and its hooks then fail. Served at /ui/ beside
 // /vendor/ on each page.
 import { h, render } from '../vendor/preact.js?v=__VERSION__';
-import { useLayoutEffect, useState } from '../vendor/hooks.js?v=__VERSION__';
+import { useEffect, useLayoutEffect, useState } from '../vendor/hooks.js?v=__VERSION__';
 import htm from '../vendor/htm.js?v=__VERSION__';
 
 export const html = htm.bind(h);
-export { render };
+export { render, useEffect };
 
 // A machine's state (ui/machine.js), the view drawn again on each change.
 // `useSyncExternalStore` is preact/compat's alone, so it is `useState` with
