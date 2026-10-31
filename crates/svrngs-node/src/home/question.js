@@ -88,20 +88,25 @@ export async function uses(lent, labelOf, choicesOf, line, stop) {
 // An element: `tag`, its words and then `kids`.
 export const el = (tag, text, ...kids) => ((e) => (e.append(text ?? '', ...kids), e))(document.createElement(tag));
 
-// A day, from seconds, in this computer's or phone's time: its number and
-// its month's first three letters, "3 Oct", as the command says it
-// (chrono's `%-d %b`, cli.rs `namesakes_said`), never the browser's
-// locale, which differs from it (#157).
-const day = (t, d = new Date(t * 1000)) => `${d.getDate()} ${'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[d.getMonth()]}`;
+// A day, from seconds, in this computer's or phone's time, or in UTC when
+// `utc`: its number and its month's first three letters, "3 Oct", as the
+// command says it (chrono's `%-d %b`, cli.rs `namesakes_said`), never the
+// browser's locale, which differs from it (#157).
+const day = (t, utc, d = new Date(t * 1000)) => `${utc ? d.getUTCDate() : d.getDate()} ${'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[utc ? d.getUTCMonth() : d.getMonth()]}`;
 
-// When someone joined, as both pages tell two of one name apart.
-const joinedSaid = (j) => (j === 'started' ? 'started the group' : `joined ${day(j.at)}`);
+// When someone joined, as both pages tell two of one name apart: its day
+// in UTC, one for everyone, as a lend's alias carries it from one person's
+// browser to another's (`alias`), where two browsers' own days near
+// midnight differ, one at UTC+14 and one at UTC-11 always. So the name the
+// page shows beside a lend and the alias it gives to keep say one day.
+const joinedSaid = (j) => (j === 'started' ? 'started the group' : `joined ${day(j.at, true)}`);
 
 // The person whose first key is `key`, as the people rows `rows`
 // (/v1/rail/people) name them (capability-keys; svrn-docs
 // WHAT_CAN_ACT_AS_YOU §9): their name, and where someone else in `rows`
-// shares it, when they joined, `when` saying it, "ada (joined 3 Oct)", as
-// the command tells them apart (cli.rs `joined_said`); undefined for a key
+// shares it, when they joined, `when` saying it, "ada (joined 3 Oct)" (its
+// day in UTC, `joinedSaid`), as the command tells them apart (cli.rs
+// `joined_said`); undefined for a key
 // no row holds. Who did something is told by key, never by name.
 export const called = (rows, key, when = joinedSaid) => {
   const p = rows.find((r) => r.person_key === key);
@@ -121,7 +126,8 @@ export const apart = (lent, rows) => lent.forEach((l) => (l.called = called(rows
 // name by when each computer joined, "films@Sam (computer joined 25 Oct)";
 // an app the group carries by its kind, "Money", as `once` lists one copy.
 // Every page reads the same record, so an alias names the same lend on
-// each, its day said in the browser's own time. `rows` the people rows.
+// each, its day in UTC (`joinedSaid`) whatever the browser's time zone.
+// `rows` the people rows.
 export function alias(l, lent, rows) {
   if (l.group) return l.kind;
   const at = (o) => `${o.name}@${o.called ?? o.person}`;

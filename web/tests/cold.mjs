@@ -17,9 +17,11 @@
 // - `aliases`: each opened on the group's page at `#open=<alias>`, and
 //   where it lands.
 //
+// With `zone`, the browser's clock reads in that time zone.
+//
 //   node web/tests/cold.mjs '{"engine": ..., "site": ..., "port": N,
 //     "key": ..., "token": ..., "cold": "<label>", "keep": true,
-//     "aliases": ["app@ada", ...]}'
+//     "aliases": ["app@ada", ...], "zone": "Pacific/Kiritimati"}'
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.

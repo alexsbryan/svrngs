@@ -398,12 +398,22 @@ fn question(app: [&str; 3], lend: [&str; 3]) -> String {
 /// `call`, an expression of question.js as `q` and of `args`, answered by
 /// node as JSON: the one source both pages draw their words from.
 fn in_question(call: &str, args: Value) -> Value {
+    in_question_at(None, call, args)
+}
+
+/// [`in_question`] with node's clock in the time zone `zone`, an IANA
+/// name, as a browser elsewhere reads it; this computer's own for `None`.
+fn in_question_at(zone: Option<&str>, call: &str, args: Value) -> Value {
     let source = repo().join("crates/svrngs-node/src/home/question.js");
     let script = format!(
         "const q = await import({:?}); const args = JSON.parse(process.argv[1]); console.log(JSON.stringify({call}));",
         format!("file://{}", source.display())
     );
-    let out = std::process::Command::new("node")
+    let mut node = std::process::Command::new("node");
+    if let Some(zone) = zone {
+        node.env("TZ", zone);
+    }
+    let out = node
         .args(["--input-type=module", "-e", &script])
         .arg(args.to_string())
         .output()
@@ -1741,7 +1751,7 @@ async fn a_lends_alias_opens_it_from_the_groups_page(engine: Engine) {
     lend(dir.path(), "app", app.port());
     let second = page_origin("<!doctype html><title>the app of the other ada</title>").await;
     lend(other_dir.path(), "app", second.port());
-    let today = chrono::Local::now().format("%-d %b").to_string();
+    let today = chrono::Utc::now().format("%-d %b").to_string();
     let theirs = format!("app@ada (joined {today})");
     let aliases = [
         "app@ada (started the group)",
@@ -1832,6 +1842,67 @@ async fn a_lends_alias_opens_it_from_the_groups_page(engine: Engine) {
     drop((ada, other));
 }
 
+in_both_engines!(
+    /// **A lend's alias is one in every time zone** (question.js `alias`,
+    /// its day in UTC; DESIGN §3, "Lent apps", call 1). Two people called
+    /// ada each lend `app`, the second joined today. Bo's page in a browser
+    /// whose clock reads at UTC+14 (Pacific/Kiritimati), and in one at
+    /// UTC-11 (Pacific/Pago_Pago), 25 hours apart so their days always
+    /// differ, opens `app@ada (joined <today in UTC>)`, and each lands on
+    /// the second ada's app; in a computer's browser each gives the same
+    /// addresses to keep. Red on a0132a41, the day the browser's own: one
+    /// of the two said another day and opened nothing.
+    a_lends_alias_is_one_in_every_time_zone
+);
+async fn a_lends_alias_is_one_in_every_time_zone(engine: Engine) {
+    let site = site();
+    let relay = relay().await;
+    let bo = signing(7);
+    let (dir, other_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let ada = node(dir.path(), &relay, &bo).await;
+    let other = joined(other_dir.path(), &relay, &ada, 2, "ada").await;
+    let (app, _) = linking_app().await;
+    lend(dir.path(), "app", app.port());
+    let second = page_origin("<!doctype html><title>the app of the other ada</title>").await;
+    lend(other_dir.path(), "app", second.port());
+    let theirs = format!("app@ada (joined {})", chrono::Utc::now().format("%-d %b"));
+    let mut kept = Vec::new();
+    for zone in ["Pacific/Kiritimati", "Pacific/Pago_Pago"] {
+        let args = json!({
+            "site": site,
+            "key": hex::encode(bo.to_bytes()),
+            "token": token(&signing(1), &relay),
+            "aliases": [theirs],
+            "keep": true,
+            "zone": zone,
+        });
+        let seen = drive(engine, "cold.mjs", args, None).await;
+        eprintln!("the alias's run in {zone}: {seen:#}");
+        let landed = &seen["aliases"][0];
+        assert!(
+            at_origin(&landed["url"], &label(2, "app"))
+                && landed["title"] == "the app of the other ada",
+            "in {zone}, {theirs} opens the other ada's app:\n{seen:#}"
+        );
+        // Each address to keep past its page's own, which each run serves
+        // at a port of its own.
+        let keep: Vec<Option<String>> =
+            serde_json::from_value(seen["keep"].clone()).unwrap_or_default();
+        let mut keep: Vec<Option<String>> = (keep.into_iter())
+            .map(|k| Some(k?.split_once("#open=")?.1.to_string()))
+            .collect();
+        keep.sort();
+        kept.push(keep);
+    }
+    assert_eq!(kept[0], kept[1], "the addresses to keep, in both zones");
+    let encoded = format!("{} Bookmark this.", theirs.replace(' ', "+"));
+    assert!(
+        matches!(engine, Engine::Webkit) || kept[0].contains(&Some(encoded.clone())),
+        "{theirs} is an address to keep, as {encoded}: {kept:?}"
+    );
+    drop((ada, other));
+}
+
 /// **A lend's alias never collides within a group** (svrn-docs
 /// `rings/current/IN_THE_BROWSER.md`, "Decided"; question.js `alias`, the
 /// one decider both pages load). Two people called ada each lend `app`:
@@ -1844,6 +1915,9 @@ async fn a_lends_alias_opens_it_from_the_groups_page(engine: Engine) {
 /// no alias (`q.alias is not a function`); planted, watched failing: the
 /// alias by its lender's name alone (`o.person` for `o.called`), which
 /// told the two adas apart by their computers, not as the page names them.
+/// Each alias is the same in a zone at UTC+14 and one at UTC-11, and so is
+/// the ada it tells apart (`called`): its day in UTC. Red on a0132a41, the
+/// day the browser's own.
 #[test]
 fn a_lends_alias_never_collides_within_a_group() {
     let (t1, t2, t3) = (1_791_100_000_i64, 1_791_200_000_i64, 1_791_300_000_i64);
@@ -1867,14 +1941,27 @@ fn a_lends_alias_never_collides_within_a_group() {
     let day = |t: i64| {
         chrono::DateTime::from_timestamp(t, 0)
             .unwrap()
-            .with_timezone(&chrono::Local)
             .format("%-d %b")
             .to_string()
     };
-    let said = in_question(
-        "(q.apart(args[0], args[1]), q.once(args[0]).map((l) => q.alias(l, args[0], args[1])))",
-        json!([lent, rows]),
-    );
+    let aliases =
+        "(q.apart(args[0], args[1]), q.once(args[0]).map((l) => q.alias(l, args[0], args[1])))";
+    let said = in_question(aliases, json!([lent, rows]));
+    // The alias is one for everyone (the day in UTC): two browsers 25 hours
+    // apart, whose days always differ, say each the same; and the people
+    // its day tells apart are said with that day too (`called`).
+    for zone in ["Pacific/Kiritimati", "Pacific/Pago_Pago"] {
+        assert_eq!(
+            in_question_at(Some(zone), aliases, json!([lent, rows])),
+            said,
+            "the aliases in {zone}, as in this computer's zone"
+        );
+        assert_eq!(
+            in_question_at(Some(zone), "q.called(args[0], 'a2')", json!([rows])),
+            format!("ada (joined {})", day(t1)),
+            "the ada an alias tells apart, in {zone}"
+        );
+    }
     let expected = json!([
         "app@ada (started the group)",
         format!("app@ada (joined {})", day(t1)),

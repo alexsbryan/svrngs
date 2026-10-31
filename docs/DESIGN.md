@@ -792,7 +792,9 @@ Seven calls:
    (`question.js`, `alias`): an alias names one of what the group lends now,
    or it is said that it names none or more than one, never a nearest
    match. Every page reads the same record, so it names the same lend on
-   each, its day in the browser's own time. It is unique within a group
+   each, and its day is UTC's, as two browsers' own days near midnight
+   differ: the alias one person sends opens for another anywhere, and the
+   name the page shows beside a lend says the same day. It is unique within a group
    only: across groups, or as a name of its own, it would need a centre.
    In a computer's browser each row of the group's page gives the address
    to keep, its alias, or its label where two lends share one, with one
