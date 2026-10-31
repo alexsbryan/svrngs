@@ -103,32 +103,20 @@ const bound = (id, iv) => ({ name: 'AES-GCM', iv, additionalData: new TextEncode
 // Keep a group joined: `key` is the person's 32 bytes, kept sealed alone;
 // `maker`, who made the group, and `since`, when this phone joined it, in
 // seconds, so two of one name are told apart (v1ui-door (d)).
-export async function keep({ id, name, person, token, key, maker, since }) {
-  const kept = await sealed(id, key);
-  await run('groups', 'readwrite', (s) => s.put({ id, name, person, token, ...kept, opened: Date.now(), maker, since }));
-}
+export const keep = ({ id, name, person, token, key, maker, since }) => sealed(id, key).then((kept) => run('groups', 'readwrite', (s) => s.put({ id, name, person, token, ...kept, opened: Date.now(), maker, since })));
 
 // `key` sealed, bound to `id`: its `iv` and `sealed`.
-async function sealed(id, key) {
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  return { iv, sealed: new Uint8Array(await crypto.subtle.encrypt(bound(id, iv), await sealingKey(true), key)) };
-}
+const sealed = async (id, key, iv = crypto.getRandomValues(new Uint8Array(12))) => ({ iv, sealed: new Uint8Array(await crypto.subtle.encrypt(bound(id, iv), await sealingKey(true), key)) });
 
 // A visit (guests-link; GUESTS §3.9), kept never as a group, so no group
 // lists it: beside the sealing key, under `visit <token>`, what the host's
 // computer answered and the visit's key, sealed as a group's is, bound to
 // the link's token. So the link opened again shows the visit again, or
 // says it has ended.
-export async function keepVisit(token, visit, key) {
-  const kept = await sealed(token, key);
-  await run('seal', 'readwrite', (s) => s.put({ ...visit, ...kept }, `visit ${token}`));
-}
+export const keepVisit = (token, visit, key) => sealed(token, key).then((kept) => run('seal', 'readwrite', (s) => s.put({ ...visit, ...kept }, `visit ${token}`)));
 
 // The visit the link `token` made here, its key unsealed; else undefined.
-export async function visitOf(token) {
-  const v = await run('seal', 'readonly', (s) => s.get(`visit ${token}`));
-  return v && { ...v, key: await unseal({ ...v, id: token }) };
-}
+export const visitOf = (token) => run('seal', 'readonly', (s) => s.get(`visit ${token}`)).then(async (v) => v && { ...v, key: await unseal({ ...v, id: token }) });
 
 // The holder a lend's origin keeps, its public key by the lend's label
 // (capability-signed (H); DESIGN §3), beside the sealing key, apart from
@@ -138,18 +126,11 @@ export const holder = (label, key) =>
   key === undefined ? run('seal', 'readonly', (s) => s.get(`holder ${label}`)) : run('seal', 'readwrite', (s) => s.put(key, `holder ${label}`));
 
 // Every group kept, the last opened first. Their keys stay sealed.
-export async function groups() {
-  const all = await run('groups', 'readonly', (s) => s.getAll());
-  return all.sort((a, b) => b.opened - a.opened);
-}
+export const groups = async () => (await run('groups', 'readonly', (s) => s.getAll())).sort((a, b) => b.opened - a.opened);
 
 // The group was opened now, as `group` says it: it is the one the page
 // opens without a link. Answers the group as kept.
-export async function opened(group) {
-  const now = { ...group, opened: Date.now() };
-  await run('groups', 'readwrite', (s) => s.put(now));
-  return now;
-}
+export const opened = (group, now = { ...group, opened: Date.now() }) => run('groups', 'readwrite', (s) => s.put(now)).then(() => now);
 
 // The person's key in `group`, unsealed: 32 bytes, held only in memory.
 export async function unseal(group) {
@@ -190,9 +171,7 @@ export function handOver(worker, message, wait = 5_000) {
 // cookies its worker keeps for each lend (`cookies <label>`), an app's
 // own worker (`worker <label>`), and the worker's trace (`trace <label>`,
 // lend.js). Never the person's key.
-function lendDb() {
-  return openDb('svrngs-lend', 1, (db) => db.createObjectStore('kept'));
-}
+const lendDb = () => openDb('svrngs-lend', 1, (db) => db.createObjectStore('kept'));
 
 export const lendKept = (name) => run('kept', 'readonly', (s) => s.get(name), lendDb);
 export const lendKeep = (name, value) => run('kept', 'readwrite', (s) => s.put(value, name), lendDb);
