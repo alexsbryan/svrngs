@@ -126,9 +126,9 @@ brackets.
     - **Plant:** the ratchet's own, a cap one under the count. **Byte for byte:** v1's served bytes, with `tests/home.rs` unchanged by name.
   - **(b) Vendor Preact 11.1.1 and htm 3.1.1, with nothing loading them.**
     - **The files:**
-      - `web/vendor/preact.js` (`dist/preact.module.js`), `hooks.js` (`hooks/dist/hooks.module.js`) and `htm.js` (htm@3.1.1 `dist/htm.module.js`);
+      - `web/vendor/preact.js` (`dist/preact.mjs`), `hooks.js` (`hooks/dist/hooks.mjs`) and `htm.js` (htm@3.1.1 `dist/htm.module.js`): Preact 11.1.1's tarball has no `.module.js`, only `.mjs` (corrected, page-scaffold (b));
       - `LICENSE.preact` (MIT), from the tarball;
-      - `LICENSE.htm` (Apache-2.0), from github.com/developit/htm at `3.1.1`, with its NOTICE if that tree has one.
+      - `LICENSE.htm` (Apache-2.0), from htm's tarball, which does carry one, byte-equal to github.com/developit/htm's at `3.1.1`, whose tree has no NOTICE (corrected, page-scaffold (b)).
     - **The README** follows `apps/grapevine/vendor/README.md`. It gives:
       - each tarball's `dist.integrity` and its sha256;
       - each file's upstream path and its sha256;
