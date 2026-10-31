@@ -194,9 +194,7 @@ function setCookie(jar, line) {
 const cookieFor = (jar, path, page) =>
   jar.filter((c) => live(c) && path.startsWith(c.path) && (c.page || !page)).map((c) => `${c.name}=${c.value}`).join('; ');
 
-async function keepJar(label) {
-  await store.lendKeep(`cookies ${label}`, await jarOf(label)).catch((e) => trace(`RUNTIME: cookies not kept: ${e}`));
-}
+const keepJar = async (label) => void (await store.lendKeep(`cookies ${label}`, await jarOf(label)).catch((e) => trace(`RUNTIME: cookies not kept: ${e}`)));
 
 // ── a request, through the door ─────────────────────────────────────────
 
@@ -519,11 +517,7 @@ async function told() {
 // The group's page at `to`, then `then` and the fragment this page was
 // opened with, which the browser keeps from a worker; so a page of this
 // worker's own sends it on, `<` escaped.
-function onward(to, then) {
-  const [there, tail] = [to, then].map((x) => JSON.stringify(x).replace(/</g, '\\u003c'));
-  const page = `<!doctype html><script>location.replace(${there} + encodeURIComponent(${tail} + location.hash))</script>`;
-  return new Response(page, { headers: { 'content-type': 'text/html; charset=utf-8' } });
-}
+const onward = (to, then, [there, tail] = [to, then].map((x) => JSON.stringify(x).replace(/</g, '\\u003c'))) => new Response(`<!doctype html><script>location.replace(${there} + encodeURIComponent(${tail} + location.hash))</script>`, { headers: { 'content-type': 'text/html; charset=utf-8' } });
 
 // A page navigated to `where`, a lend it reads: the group's page opens that
 // lend at the path.

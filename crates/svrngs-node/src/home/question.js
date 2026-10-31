@@ -128,13 +128,7 @@ export const apart = (lent, rows) => lent.forEach((l) => (l.called = called(rows
 // Every page reads the same record, so an alias names the same lend on
 // each, its day in UTC (`joinedSaid`) whatever the browser's time zone.
 // `rows` the people rows.
-export function alias(l, lent, rows) {
-  if (l.group) return l.kind;
-  const at = (o) => `${o.name}@${o.called ?? o.person}`;
-  const computer = rows.find((r) => r.key === l.key);
-  const twin = lent.some((o) => !o.group && o.key !== l.key && at(o) === at(l));
-  return twin && computer ? `${at(l)} (computer ${joinedSaid(computer.joined)})` : at(l);
-}
+export const alias = (l, lent, rows, at = (o) => `${o.name}@${o.called ?? o.person}`, computer = rows.find((r) => r.key === l.key)) => l.group ? l.kind : lent.some((o) => !o.group && o.key !== l.key && at(o) === at(l)) && computer ? `${at(l)} (computer ${joinedSaid(computer.joined)})` : at(l);
 
 // The lends of `lent` the alias `a` names: one, else none or more than
 // one, which the page says, never a nearest match.

@@ -96,3 +96,17 @@ same order, answering the same values.
 
 **-28**, 19,488 to 19,460 (`python3 scripts/lean_check.py`); `oxlint`
 exit 0 over the tree.
+
+## Cut for the session's way back, 2026-10-31
+
+The guard on a computer's cold bookmark (an open coming back to see its
+session kept, `crates/svrngs-node/src/session.rs` `redeem`) adds 12, and
+the repository stood at 19,480 of 19,481. Three more of the same kind,
+behaviour kept:
+
+| Where | What | Lines |
+|---|---|---:|
+| `crates/svrngs-node/src/home/question.js` | `alias` one expression, its `at` and `computer` default parameters (every caller passes three: `aliased`, app.js `kept` and `enter`) | -6 |
+| `web/lend.js` | `onward` one expression, its `there` and `tail` a default parameter (both callers pass two), and `keepJar` | -6 |
+
+**-12**, 19,492 to 19,480 with the guard; `oxlint` exit 0 over the tree.
