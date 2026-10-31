@@ -414,6 +414,11 @@ function elsewhere(group, asked) {
 // an app may use a lend.
 async function enter(group, asked, joined) {
   group = await store.opened(group);
+  // Asked on each open, a join's first among them, so a phone that joined
+  // before the page asked asks too (store.js `persist`); never awaited, so
+  // a browser asking its person first holds no open on the answer, and a
+  // failure only traced.
+  store.persist().catch((e) => `asking the browser to keep the page's storage failed: ${e}`).then((s) => trace(`PAGE: ${s}`));
   document.title = group.name;
   const key = await store.unseal(group);
   heading.textContent = `Reaching ${group.name}…`;

@@ -679,6 +679,17 @@ in a Home Screen web app and undefined in every other browser, never by
 its user agent (`web/app.js`, `askName`). The link's token stays in the
 page's address, which the Home Screen copy keeps.
 
+*The page asks the browser to keep its storage.* Each time it opens a group
+the browser does not keep the storage of already, a join's first open among
+them, the page asks it to (`navigator.storage.persist`; `web/store.js`,
+`persist`): a Home Screen web app never asked forgot its person within some
+ten hours, its `groups` store empty, and iOS keeps a web app's storage when
+asked (measured on the operator's iPhone, iOS 18.7, 2026-10-31:
+`[false, true, true]` for persisted, persist, persisted). It never waits on
+the answer, and where the browser offers no asking, its trace says so and
+the group opens regardless. A guest's visit, never kept as a group, does
+not ask (`web/app.js`, `visit`).
+
 *A name binds once where a stranger gives one.* A key is who someone is, a
 name is a claim, and a claim on a name someone already holds counts only
 with that someone's key. A link lets no one in under a name a standing
@@ -1729,7 +1740,9 @@ not answer (`scripts/relay-answers.sh`); a switch it cannot read it refuses.
    site's storage, and the person's key with it, since its sealed bytes and
    the key that seals them are both in IndexedDB; a web app added to the Home
    Screen keeps its own, apart from Safari's, so the person joins inside it
-   (§3, "Joining"), and a lost key means joining again by link. Whether a
+   (§3, "Joining"), and a lost key means joining again by link. The page
+   asks the browser to keep its storage (§3, "Joining"); whether storage
+   kept so is never cleared is not observed yet. Whether a
    lend opened from a Home Screen web app stays in it, or opens in Safari
    with Safari's storage, is not observed yet. WebKit, every
    iOS browser's engine, asks a closed range to a film's end where Chromium

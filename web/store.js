@@ -125,6 +125,15 @@ export const visitOf = (token) => run('seal', 'readonly', (s) => s.get(`visit ${
 export const holder = (label, key) =>
   key === undefined ? run('seal', 'readonly', (s) => s.get(`holder ${label}`)) : run('seal', 'readwrite', (s) => s.put(key, `holder ${label}`));
 
+// Whether the browser keeps this page's storage, asking it to where it
+// does not yet: a Home Screen web app on the operator's iPhone (iOS 18.7,
+// 2026-10-31) forgot its person within some ten hours, its `groups` store
+// empty and nothing here deleting one, and there `navigator.storage`
+// answered persisted, persist, persisted with `[false, true, true]`: iOS
+// keeps it when asked, and the page had not asked. Answered as the page's
+// trace says it, a browser that offers no asking among them.
+export const persist = async (s = navigator.storage) => (!s?.persist ? "this browser offers no way to ask it to keep the page's storage" : (await s.persisted()) ? "the browser keeps the page's storage already" : `asked the browser to keep the page's storage: ${(await s.persist()) ? 'granted' : 'refused'}`);
+
 // Every group kept, the last opened first. Their keys stay sealed.
 export const groups = async () => (await run('groups', 'readonly', (s) => s.getAll())).sort((a, b) => b.opened - a.opened);
 
