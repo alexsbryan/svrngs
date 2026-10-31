@@ -15,7 +15,12 @@
 // - `keep`: the addresses the group's page shows to keep, a row each,
 //   each then opened and where it lands, and "How this reaches you";
 // - `aliases`: each opened on the group's page at `#open=<alias>`, and
-//   where it lands.
+//   where it lands, with the buttons it offers; one whose words hold
+//   `choose` pressed, and where that lands.
+//
+// With `second`, `{token, id, name}`, the browser holds a second group
+// too, joined by the same key, and opens it once after the first, so the
+// steps start with it the group last opened.
 //
 // With `zone`, the browser's clock reads in that time zone.
 //
@@ -25,7 +30,7 @@
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
-import { driving } from './page.mjs';
+import { driving, hold } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 
@@ -51,6 +56,13 @@ async function landed(page, within = 90_000) {
 await driving(args, async ({ page, origin }) => {
   const seen = {};
   const port = new URL(origin).port;
+  if (args.second) {
+    await page.evaluate(hold, { hex: args.key, ...args.second });
+    await page.goto('about:blank');
+    await page.goto(`${origin}#${args.second.token}`);
+    await page.locator('#lent tr').first().waitFor({ timeout: 90_000 });
+    seen.second = await page.evaluate(() => document.getElementById('status').textContent);
+  }
   if (args.cold) {
     const at = `http://${args.cold}.localhost:${port}`;
     await page.goto(`${at}/?n=1`);
@@ -93,7 +105,10 @@ await driving(args, async ({ page, origin }) => {
   for (const alias of args.aliases ?? []) {
     await page.goto('about:blank');
     await page.goto(`${origin}#open=${alias}`);
-    seen.aliases.push({ alias, ...(await landed(page, 45_000)) });
+    const there = { alias, ...(await landed(page, 45_000)), buttons: await page.locator('#door button').allTextContents() };
+    const pick = args.choose && there.buttons.find((b) => b.includes(args.choose));
+    if (pick) await page.locator('#door button', { hasText: pick }).click();
+    seen.aliases.push(pick ? { ...there, chosen: await landed(page, 45_000) } : there);
   }
   return seen;
 });

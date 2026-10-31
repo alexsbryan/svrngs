@@ -1903,6 +1903,94 @@ async fn a_lends_alias_is_one_in_every_time_zone(engine: Engine) {
     drop((ada, other));
 }
 
+in_both_engines!(
+    /// **A person in two groups opens each one's lend where it is lent**
+    /// (svrn-docs `rings/current/IN_THE_BROWSER.md` §4; DESIGN §3, "Lent
+    /// apps", call 1). Bo's browser holds house, ada's, and club, founded
+    /// by another ada, each lending `app`, and opened club last. House's
+    /// app's address, opened cold, lands on house's app: the group's page
+    /// finds the group whose lends, as it last listed them, name it. The
+    /// alias `app@ada`, which names a lend in each, is
+    /// said so, each group offered, and none opened until bo picks house,
+    /// which opens house's app. A label lent in neither is said so, of
+    /// both. Red on a45e7937, the cold address sent to club, the group last
+    /// opened: "What that address opens is not lent in club now."
+    a_person_in_two_groups_opens_each_ones_lend_where_it_is_lent
+);
+async fn a_person_in_two_groups_opens_each_ones_lend_where_it_is_lent(engine: Engine) {
+    let site = site();
+    let relay = relay().await;
+    let bo = signing(7);
+    let (dir, club_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let ada = node(dir.path(), &relay, &bo).await;
+    let club = computer(club_dir.path(), &relay, &bo, 3, "ada").await;
+    let house_app = page_origin("<!doctype html><title>the app of house</title>").await;
+    let club_app = page_origin("<!doctype html><title>the app of club</title>").await;
+    lend(dir.path(), "app", house_app.port());
+    lend(club_dir.path(), "app", club_app.port());
+    let both = "app@ada";
+    let nothing = label(5, "nothing");
+    let args = json!({
+        "site": site,
+        "key": hex::encode(bo.to_bytes()),
+        "token": token(&signing(1), &relay),
+        "second": { "token": token(&signing(3), &relay), "id": "club", "name": "club" },
+        "cold": label(1, "app"),
+        "aliases": [both, nothing],
+        "choose": "house",
+    });
+    let seen = drive(engine, "cold.mjs", args, None).await;
+    eprintln!("the two groups' run: {seen:#}");
+    assert!(
+        seen["second"]
+            .as_str()
+            .is_some_and(|s| s.starts_with("You’re in club")),
+        "club opened last:\n{seen:#}"
+    );
+    let cold = &seen["cold"];
+    assert!(
+        at_origin(&cold["url"], &label(1, "app")) && cold["title"] == "the app of house",
+        "house's app's address opens it, though club was opened last:\n{seen:#}"
+    );
+    // Each offered, the group last opened first.
+    let offered = &seen["aliases"][0];
+    let mut buttons: Vec<String> =
+        serde_json::from_value(offered["buttons"].clone()).unwrap_or_default();
+    buttons.sort();
+    let said = ["house and in club", "club and in house"]
+        .map(|g| json!(format!("What that address opens is lent in {g}.")));
+    assert!(
+        said.contains(&offered["status"]) && buttons == ["Open it in club", "Open it in house"],
+        "an alias lent in both is said, and each offered:\n{seen:#}"
+    );
+    assert!(
+        !offered["url"]
+            .as_str()
+            .unwrap_or_default()
+            .contains(".localhost:")
+            || offered["url"]
+                .as_str()
+                .unwrap_or_default()
+                .starts_with("http://localhost:"),
+        "none opened before bo picks:\n{seen:#}"
+    );
+    let chosen = &offered["chosen"];
+    assert!(
+        at_origin(&chosen["url"], &label(1, "app")) && chosen["title"] == "the app of house",
+        "picked, house's app opens:\n{seen:#}"
+    );
+    let none = &seen["aliases"][1];
+    assert!(
+        none["said"]
+            .as_str()
+            .is_some_and(|s| s.starts_with("What that address opens is not lent in ")
+                && s.contains("house")
+                && s.contains("club")),
+        "a label lent in neither is said so, of both:\n{seen:#}"
+    );
+    drop((ada, club));
+}
+
 /// **A lend's alias never collides within a group** (svrn-docs
 /// `rings/current/IN_THE_BROWSER.md`, "Decided"; question.js `alias`, the
 /// one decider both pages load). Two people called ada each lend `app`:

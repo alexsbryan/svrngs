@@ -30,8 +30,10 @@
 // (mnp-2, lend.js `READS`), and the lend's start page goes there. A lend's
 // address opened where its worker is not, a bookmark in a browser that
 // never opened it, opens this page there, which goes on to the group's
-// page at `#open=<label>&at=<path>&cold` (`cold`). Either way this page
-// steps aside, so the browser's Back skips it.
+// page at `#open=<label>&at=<path>&cold` (`cold`). `#open=` opens in the
+// group held here whose lends, as last listed, name it (`opening`,
+// `among`). Either way this page steps aside, so the browser's Back
+// skips it.
 //
 // Asking the person (sup-3; DESIGN §3, "What an app gets"): a lent page
 // sends its person here at `#ask=<lend>&app=<its label>&at=<path>` (lend.js
@@ -443,9 +445,12 @@ async function enter(group, asked, joined) {
   trace(`PAGE: ${PEOPLE_LENDS} answered, at version ${version}`);
   if (older(version)) throw new Said(`${whom} runs an older svrngs, so this page cannot show what ${group.name} lends. Installing svrngs again there updates it.`);
   // The computers that lend, kept to reach the group through next time.
+  // And the addresses of what it lends, each label and alias (`addresses`),
+  // so a lend's address finds its group among those this browser holds
+  // (`opening`).
   const computers = new Map(lent.map((l) => [l.key, { key: l.key, relay: l.relay ?? null, person: l.person }]));
-  group = await store.opened({ ...group, computers: [...computers.values()] });
   apart(lent, people);
+  group = await store.opened({ ...group, computers: [...computers.values()], addresses: [...lent.map((l) => label(l.key, l.name)), ...once(lent).map((l) => alias(l, lent, people))] });
   // Who was removed or asked to be, shown to everyone in the group
   // (v1-keeper-office (b)); `null` when the computer could not read it.
   const gone = (removals ?? [null]).map((r) => el('li', r ? removal(r, people) : `Who was removed from ${group.name} cannot be read just now.`));
@@ -536,7 +541,11 @@ async function enter(group, asked, joined) {
   const wanted = asked?.get('open');
   const byLabel = lent.filter((l) => label(l.key, l.name) === wanted);
   const by = byLabel.length || !wanted ? byLabel : aliased(wanted, lent, people);
-  const missed = !wanted || by.length === 1 ? '' : by.length ? `${by.length} things in ${group.name} go by ${wanted}. Open the one you mean from the list.` : is_label(wanted) ? `What that address opens is not lent in ${group.name} now.` : `Nothing in ${group.name} goes by ${wanted} now.`;
+  // Naming none here, it is said of the other groups held here too, as
+  // each was last listed (`opening` found it in none of them).
+  const others = wanted && !by.length ? (await store.groups()).filter((g) => g.id !== group.id && g.addresses).map(titled) : [];
+  const nor = others.length ? `, nor in ${others.join(' or ')} when you last opened ${others.length > 1 ? 'them' : 'it'}` : '';
+  const missed = !wanted || by.length === 1 ? '' : by.length ? `${by.length} things in ${group.name} go by ${wanted}. Open the one you mean from the list.` : is_label(wanted) ? `What that address opens is not lent in ${group.name} now${nor}.` : `Nothing in ${group.name} goes by ${wanted} now${nor}.`;
   if (wanted) trace(`PAGE: #open=${wanted} names ${by.length} of what ${group.name} lends${byLabel.length ? ', by its label' : ', by its alias'}`);
   const again = by.length === 1 && by[0];
   const its = again && label(again.key, again.name);
@@ -559,6 +568,17 @@ async function enter(group, asked, joined) {
   const unlisted = how.flatMap(([ps, why]) => ps.map((p) => `${called(people, p.person_key) ?? p.person ?? p}’s computer ${why}.`));
   said.textContent = [missed, ...(lent.length || unlisted.length ? unlisted : [`Nobody in ${group.name} lends anything yet.`])].filter(Boolean).join('\n');
   if (asked?.has('ask')) asking(group, key, lent, unanswered, dialler, asked);
+}
+
+// What `#open=` names, lent in each of `groups` as this browser last
+// listed them: said, and each offered, opened in the one the person picks,
+// never one picked for them.
+function among(groups, asked) {
+  trace(`PAGE: #open=${asked.get('open')} is lent in ${groups.length} groups held here, so each is offered`);
+  show(`What that address opens is lent in ${groups.map(titled).join(' and in ')}.`, true);
+  said.textContent = 'Open it in the one you mean.';
+  const door = document.getElementById('door');
+  door.replaceChildren(...groups.map((g) => el('p', '', Object.assign(el('button', `Open it in ${titled(g)}`), { onclick: () => (door.replaceChildren(), (said.textContent = ''), hold(g, asked).catch(failed)) }))));
 }
 
 // On a computer, the one line that gets svrngs and joins it by this link
@@ -647,7 +667,14 @@ async function opening(fragment) {
     const token = asked ? '' : fragment;
     if (token) offer(token);
     const kept = await store.groups();
-    let group = token ? kept.find((g) => g.token === token) : kept[0];
+    // What `#open=` names opens in the group whose addresses, as this
+    // browser last listed them (`enter`), hold it: one, or each offered
+    // when more do (`among`), never one picked; none, the group last
+    // opened, which says so.
+    const lending = asked?.has('open') ? kept.filter((g) => g.addresses?.includes(asked.get('open'))) : [];
+    if (asked?.has('open')) trace(`PAGE: #open=${asked.get('open')} is lent in ${lending.length} of the ${kept.length} groups held here, as each was last listed`);
+    if (lending.length > 1) return among(lending, asked);
+    let group = token ? kept.find((g) => g.token === token) : (lending[0] ?? kept[0]);
     const joined = Boolean(token && !group);
     if (joined) group = await join(token, kept);
     if (!group && !asked) offer('');

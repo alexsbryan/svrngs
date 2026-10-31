@@ -766,7 +766,13 @@ Seven calls:
    `#open=<label>&at=<path>&cold`: holding the group it signs a pass and
    comes back at the path, and holding none it says this browser hasn't
    joined. A tab is sent on at most once a minute, so a worker that never
-   takes its pass is said, not bounced again (`web/app.js`, `cold`). A
+   takes its pass is said, not bounced again (`web/app.js`, `cold`).
+   Holding more than one group, the page opens `#open=`, a label or an
+   alias, in the group whose lends name it, as the page last listed each
+   (each group keeps its lends' labels and aliases, `addresses`, when its
+   page lists them): in more than one, it says so and offers each, never
+   picking one; in none, the group last opened says it is not lent there
+   now, nor in the others when last opened (`web/app.js`, `among`). A
    path of the app's own, such as Jellyfin's `/web/`, is no file of the
    page's host, which answers it with the site's `404.html`, as Vercel,
    Netlify, Cloudflare Pages and GitHub Pages serve one for a missing path:
