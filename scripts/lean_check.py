@@ -322,7 +322,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # precious about". It counts .swift across the repository, and the other two
 # caps count CODE, never Swift. The phone's app is the first; none is product
 # yet, so the cap is one past 0, raised as the core's and the repository's are.
-BUDGET = {"crates/svrngs-core": 3242, ".": 19510, "swift": 1}
+# The browser rows (svrn-docs rings/current/IN_THE_BROWSER.md, 2026-10-30),
+# after their own economizing pass, the store's, the page's and the index's
+# statements each said once (-56, demo/runs/economize/2026-10-30-browser/
+# SURVEY.md): a lend's address opened cold through the group's page (+16),
+# its alias (+15) and the address to keep (+4), at 19,488, so the cap
+# lowered to one past it; svrngs-core's left at one past, unchanged.
+BUDGET = {"crates/svrngs-core": 3242, ".": 19489, "swift": 1}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
