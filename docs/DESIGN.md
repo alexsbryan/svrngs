@@ -683,6 +683,20 @@ already in the group on its own stays as it joined, and a phone that lost
 its key joins again by a device link. Only a computer makes one, as only a
 computer redeems a link.
 
+*The phone's app joins by the same link* (designed, not built; §7). On our
+page host the chat link is a universal link, so with the app installed it
+opens in the app in place of the page, by the
+`apple-app-site-association` file the host serves beside it. A group on a page host of its own
+gets none: its link opens the page, and the app's "Paste a link" takes it.
+The app asks the name as the page asks it, in the page's words
+(`web/app.js`, `askName`), and makes the same two calls to the issuer,
+`/ask` and `/redeem` (`join`), over svrngs-core's `joining`, with a key of
+its own kept in the Keychain. Its redemption names `Device::Browser`
+(call 2). A device link opened in the app joins as that link's person,
+asked no name, as on the page. A person already in through the page who
+joins from the app is in twice, told apart by when each joined. Joining as
+their page's self waits for a phone that makes a device link (PLAN §2).
+
 **Lent apps, as they come.** North star 2 holds for the apps people already
 self-host: `svrngs share 8096` lends Jellyfin as it comes, and someone who
 never used it opens it from the list, plays and seeks, on a computer or a
