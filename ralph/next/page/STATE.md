@@ -33,6 +33,21 @@ There is one row per feature across both pages, not one per flow per page
 - On the computer, the same bring shows in the index with no reload.
 - Then the whole gate passes on v2 before anything switches.
 
+**THE OPERATOR DECIDED, 2026-10-31,** to the six below: "1. Accept 2.
+Three parallel when we get there 3. Approved -- the other main work
+doesn't block us, it's just docs".
+- **1 and 2:** the rung at 1,150, and the switchover's pass then a raise.
+  Landed in 510e4a0e. `.`'s cap is now 19,115, at 19,114, since the
+  diagrams' generators went uncounted (963dcdac). The room is still one
+  line, and every estimate here is relative to it.
+- **3:** run as a pool of 3 lanes. The base runs one row at a time by its
+  dependencies, and the six features take the 3 lanes when page-open
+  lands.
+- **4 to 6, and CHARTER's settled list:** approved as written.
+- **Lanes, not the main tree,** because the main tree holds another
+  session's uncommitted work. Each lane is a clean worktree of `main`, and
+  the loop merges into `main`.
+
 **Decided before launch, no row.** The queue does not launch until the
 operator has answered these. The watching session writes the answers here
 and lands `BUDGET` from the operator seat (cap raises land from the
