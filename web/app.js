@@ -215,8 +215,6 @@ async function visit(token) {
   said.textContent = lent.length ? '' : `${v.host} lends nothing yet.`;
 }
 
-const hex = (bytes) => [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
-
 // Open `l`, one of `lent`, as the person whose key is `key` in `group`: a
 // pass to its origin's holder for it and the lends of each kind it reads,
 // handed to its origin in the fragment, which no origin is sent (the
@@ -262,7 +260,7 @@ async function open(group, key, lent, unanswered, l, at, until = Math.floor(Date
     writes: l.group || !group.id ? null : pass(key, holder, carried_label(l.key, l.kind, group.id), [], until),
     group: group.id,
     holder,
-    seed: seed && hex(seed),
+    seed: seed && store.hex(seed),
     raw,
     relay: relay_of(group.token) ?? null,
     page: `${location.origin}${location.pathname}`,
@@ -605,10 +603,7 @@ if ('serviceWorker' in navigator) window.addEventListener('load', () => navigato
 const ONCE = 60_000;
 function cold() {
   const [at, last] = [location.href.slice(location.origin.length), Number(sessionStorage.getItem('svrngs cold'))];
-  if (Date.now() - last < ONCE) {
-    trace(`PAGE: a lend's address with nothing serving it, sent to the group's page ${Date.now() - last} ms ago, so not again`);
-    throw new Said('This could not be opened. Open it again from your group’s page.');
-  }
+  if (Date.now() - last < ONCE) throw (trace(`PAGE: a lend's address with nothing serving it, sent to the group's page ${Date.now() - last} ms ago, so not again`), new Said('This could not be opened. Open it again from your group’s page.'));
   sessionStorage.setItem('svrngs cold', String(Date.now()));
   const page = `${location.protocol}//${location.host.slice(location.host.indexOf('.') + 1)}/`;
   trace(`PAGE: a lend's address with nothing serving it: to the group's page, ${page}, to come back at ${at}`);

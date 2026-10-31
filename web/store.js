@@ -189,6 +189,9 @@ export const lendKeep = (name, value) => run('kept', 'readwrite', (s) => s.put(v
 // A lend's address on a phone, `<label>.<the page's host>` (#49): built by
 // the page for a lend and by a lend's worker for another, read back by its
 // first name — here alone in the page's files.
+// Bytes as hex, as the page hands a holder's seed and the worker signs a line.
+export const hex = (bytes) => [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
+
 export const lendOrigin = (protocol, label, pageHost) => `${protocol}//${label}.${pageHost}`;
 export const labelOf = (hostname) => hostname.split('.')[0];
 

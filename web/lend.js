@@ -168,8 +168,6 @@ async function passed(h) {
   return [['x-svrngs-pass', h.pass], ...(linked ? [['x-svrngs-link', linked]] : [])];
 }
 
-const hex = (bytes) => [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
-
 // ── cookies, a jar per lend ─────────────────────────────────────────────
 
 async function jarOf(label) {
@@ -463,7 +461,7 @@ async function appended(lend, named) {
 async function signed(lend, group, act, grant) {
   const at = handed.line ?? { seq: -1, id: null };
   const [unsigned, message] = unsigned_line(handed.holder, group, Math.floor(Date.now() / 1000), at.seq + 1, at.id, act, grant);
-  const line = { ...JSON.parse(unsigned), sig: hex(new Uint8Array(await crypto.subtle.sign('Ed25519', handed.key, message))) };
+  const line = { ...JSON.parse(unsigned), sig: store.hex(new Uint8Array(await crypto.subtle.sign('Ed25519', handed.key, message))) };
   handed = { ...handed, line: { seq: line.seq, id: line.id }, unsent: [...(handed.unsent ?? []), [group, line]] };
   await store.lendKeep(`pass ${OWN}`, handed);
   trace(`RUNTIME: an act of ${lend.kind} signed as line ${line.seq}, ${handed.unsent.length} to carry`);
