@@ -196,9 +196,9 @@ async fn only_itself(State(at): State<Asking>, req: Request, next: Next) -> Resp
     tracing::debug!(target: "home", path = %req.uri().path(), method = %req.method(), at_own, ?site, ?mode, ?origin, answers, ?shown, opening,
         "home: answered only to an open, then only with its session or the token, from itself, a typed address or, to read, a navigation");
     let mut answer = if opening {
-        at.sessions.redeem(crate::session::HOME, req.uri().query())
+        at.sessions.redeem(crate::session::HOME, &req)
     } else if shown == crate::session::Shown::Neither {
-        at.sessions.refused()
+        at.sessions.refused("")
     } else if answers {
         next.run(req).await
     } else {

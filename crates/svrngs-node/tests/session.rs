@@ -101,6 +101,11 @@ fn path_of(url: &str) -> String {
 const TYPED: &str =
     "Sec-Fetch-Site: none\r\nSec-Fetch-Mode: navigate\r\nSec-Fetch-Dest: document\r\n";
 
+/// What a browser sends of the tab's navigation from another site: a
+/// link followed, or a redirect from another host.
+const CROSS: &str =
+    "Sec-Fetch-Site: cross-site\r\nSec-Fetch-Mode: navigate\r\nSec-Fetch-Dest: document\r\n";
+
 /// What a browser sends of a frame's navigation from another site: never
 /// sent on to the home page (origin.rs `lent`).
 const FRAMED: &str =
@@ -258,7 +263,7 @@ async fn an_open_s_code_becomes_the_session_once_and_each_lend_gets_its_own() {
     let opened = ask(api, "GET", &home, &path_of(&url), TYPED, "").await;
     assert_eq!(
         (opened.status, opened.header("location")),
-        (303, Some("/")),
+        (303, Some("/svrngs-open?kept=%2F")),
         "{}",
         opened.head
     );
@@ -321,12 +326,27 @@ async fn an_open_s_code_becomes_the_session_once_and_each_lend_gets_its_own() {
     let landed = ask(api, "GET", &lend, &path_of(&there), TYPED, "").await;
     assert_eq!(
         (landed.status, landed.header("location")),
-        (303, Some(at)),
+        (303, Some("/svrngs-open?kept=%2Ffilms%3Fx%3D1")),
         "{}",
         landed.head
     );
     let lends = landed.cookie();
     assert_ne!(lends, session, "each origin its own session");
+    // Back to see the session kept (session.rs `redeem`), then on to the
+    // path; a way back naming another host's path goes to this one's root.
+    for (back, on) in [
+        ("%2Ffilms%3Fx%3D1", at),
+        ("%2F%2Felsewhere.example%2F", "/"),
+    ] {
+        let kept = format!("/svrngs-open?kept={back}");
+        let kept = ask(api, "GET", &lend, &kept, &format!("{TYPED}{lends}"), "").await;
+        assert_eq!(
+            (kept.status, kept.header("location")),
+            (303, Some(on)),
+            "{}",
+            kept.head
+        );
+    }
     let reached = ask(api, "GET", &lend, at, &format!("{TYPED}{lends}"), "").await;
     assert_eq!(
         (reached.status, reached.body.as_str()),
@@ -426,4 +446,101 @@ async fn a_read_s_address_is_held_to_its_capability_and_never_a_session() {
         followed.head
     );
     assert!(followed.header("set-cookie").is_none(), "{}", followed.head);
+}
+
+/// **A browser keeping no cookie for a lend is told why, after one hop,
+/// never sent round again** (origin.rs `homeward`; session.rs `redeem`).
+/// Alex's browser holds the home page's session and keeps no cookie for
+/// `night`'s host, as one refusing cookies there does: its bookmark of
+/// `night` at a path, followed as the browser follows each 303, a
+/// navigation of the tab each time, goes once by the home page's `/to` and
+/// the lend's open, which comes back to see its session kept, and finding
+/// none says why, in the home page's words. Red on 3934e7c6: the lend's
+/// open went straight on to the path, which sent it to `/to` again, round
+/// to any browser's redirect limit. Planted: the way back to see it kept
+/// taken out (the open going straight on), red the same way. Kept: a
+/// browser that keeps it reaches the path, by one more hop.
+#[tokio::test]
+async fn a_browser_keeping_no_cookie_for_a_lend_is_told_why_never_sent_round() {
+    let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (alex, _sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
+    let (service, _heads) = origins::head_origin().await;
+    declare(alex_dir.path(), service.port());
+    let api = alex.api_addr();
+    let port = api.port();
+    let night = Label::of(&signing(1).verifying_key().to_bytes(), "night");
+    let (home, lend) = (
+        format!("svrngs.localhost:{port}"),
+        format!("{night}.localhost:{port}"),
+    );
+    let bearer = format!("Authorization: Bearer {}\r\n", alex.token().trim());
+    let open = ask(api, "POST", &api.to_string(), "/v1/open", &bearer, "{}").await;
+    let url: serde_json::Value = serde_json::from_str(&open.body).unwrap();
+    let opened = ask(
+        api,
+        "GET",
+        &home,
+        &path_of(url["open"].as_str().unwrap()),
+        TYPED,
+        "",
+    )
+    .await;
+    let session = opened.cookie();
+
+    // Each 303 followed as a browser follows it, a navigation of the tab,
+    // the home page's session sent to its host, and the lend's cookie kept
+    // only when `keeps`: where it lands, and the hops on the way.
+    let follow = |keeps: bool| {
+        let (home, lend, session) = (home.clone(), lend.clone(), session.clone());
+        async move {
+            let (mut host, mut path, mut kept, mut hops) = (
+                lend.clone(),
+                "/films?x=1".to_string(),
+                String::new(),
+                Vec::new(),
+            );
+            loop {
+                let cookie = if host == home {
+                    session.clone()
+                } else {
+                    kept.clone()
+                };
+                let got = ask(api, "GET", &host, &path, &format!("{CROSS}{cookie}"), "").await;
+                hops.push(format!("{} {host}{path}", got.status));
+                if keeps && host == lend && got.header("set-cookie").is_some() {
+                    kept = got.cookie();
+                }
+                let Some(to) = got
+                    .header("location")
+                    .filter(|_| got.status == 303 && hops.len() < 20)
+                else {
+                    return (got, hops);
+                };
+                match to.strip_prefix("http://") {
+                    Some(rest) => {
+                        let (h, p) = rest.split_once('/').unwrap();
+                        (host, path) = (h.to_string(), format!("/{p}"));
+                    }
+                    None => path = to.to_string(),
+                }
+            }
+        }
+    };
+    let (got, hops) = follow(false).await;
+    assert!(
+        got.status == 401
+            && opener_named(&got.body)
+            && got
+                .body
+                .contains("This browser didn’t keep what svrngs needs to open this page")
+            && hops.len() <= 5,
+        "told why, after one hop, never sent round: {hops:#?}\n{}",
+        got.body
+    );
+    let (got, hops) = follow(true).await;
+    assert_eq!(
+        (got.status, got.body.as_str()),
+        (200, "ok"),
+        "a browser that keeps it reaches the path: {hops:#?}"
+    );
 }

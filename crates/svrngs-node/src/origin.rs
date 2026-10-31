@@ -156,7 +156,7 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
         return Err(LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here"));
     };
     if req.uri().path() == crate::session::OPEN_PATH {
-        return Ok(at.sessions.redeem(label.as_str(), req.uri().query()));
+        return Ok(at.sessions.redeem(label.as_str(), &req));
     }
     // A page's read of this lend, by the capability in its address
     // (`crate::surface::reads`), is taken off before anything is decided.
@@ -187,7 +187,7 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
     }
     if shown == Shown::Neither {
         tracing::debug!(target: "origin", %label, "origin: refused — neither this origin's session nor the token, and no whole tab's navigation");
-        return Err(at.sessions.refused());
+        return Err(at.sessions.refused(""));
     }
     if req.uri().path() == crate::surface::READS_PATH {
         tracing::debug!(target: "origin", %label, "origin: the lend's page asks the lends it reads, answered from the record");

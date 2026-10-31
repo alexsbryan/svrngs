@@ -10,7 +10,8 @@
 //! provider's `Codes`), minted by `POST /v1/open` behind the token
 //! (`svrngs open`, install.sh's open) or by the home page for a lend it
 //! opens (`crate::home`'s `/to`), and redeemed at [`OPEN_PATH`] on the host
-//! it names, where it becomes that host's cookie. A host's cookie is the
+//! it names, where it becomes that host's cookie, the browser coming back
+//! there once to show it kept it before going on. A host's cookie is the
 //! token's HMAC over the host's first name: none is kept, a restart keeps
 //! every browser opened (a bookmark keeps working), and one host's cookie
 //! opens no other. Neither the cookie nor the token is carried on to a
@@ -36,6 +37,10 @@ use crate::oidc::provider::{same, Codes};
 /// Where an open's code is redeemed, on the host it opens: a path no app
 /// serves, as the reads' (`crate::surface::READS_PATH`).
 pub(crate) const OPEN_PATH: &str = "/svrngs-open";
+
+/// Why a browser that came back to [`OPEN_PATH`] showing no session has
+/// none ([`Sessions::redeem`]), in the person's words.
+const UNKEPT: &str = "<p>This browser didn’t keep what svrngs needs to open this page: it keeps no cookies for sites on localhost. Let it keep them, then open this again.</p>";
 
 /// Where a lend's page reads another lend, `<AS_PATH><cap>/<path>` at that
 /// lend's origin ([`Sessions::cap`]; DESIGN §3, "Lent apps", call 6).
@@ -129,7 +134,7 @@ impl Sessions {
     /// The address that opens the host first named `name` at `at`, a path
     /// there ("/" unless one is given), with a code for that host alone.
     pub(crate) fn open(&self, name: &str, at: Option<&str>) -> String {
-        let at = at.filter(|a| a.starts_with('/') && !a.starts_with("//") && !a.contains('\\'));
+        let at = at.filter(|a| local(a));
         let code = self.codes.mint((name.into(), at.unwrap_or("/").into()));
         tracing::debug!(target: "session", name, ?at, "session: an open minted, single-use");
         format!(
@@ -139,24 +144,35 @@ impl Sessions {
     }
 
     /// The code in `query` redeemed at the host first named `name`: its
-    /// session set, and on to the path it was minted for; a code spent,
-    /// lapsed or minted for another host refused.
-    pub(crate) fn redeem(&self, name: &str, query: Option<&str>) -> Response {
-        let code = (query.unwrap_or_default().split('&')).find_map(|p| p.strip_prefix("code="));
+    /// session set, and back here, `?kept=<path>`, to see `req` show it
+    /// before going on to the path it was minted for, or say why not: a
+    /// browser keeping no cookie for a lend would go from it to the home
+    /// page's `/to` and back without end (`crate::origin`'s `homeward`). A
+    /// code spent, lapsed or minted for another host refused.
+    pub(crate) fn redeem(&self, name: &str, req: &axum::extract::Request) -> Response {
+        let query = req.uri().query().unwrap_or_default();
+        if let Some((_, at)) = form_urlencoded::parse(query.as_bytes()).find(|(k, _)| k == "kept") {
+            let kept = self.shown(req.headers(), name) != Shown::Neither;
+            tracing::debug!(target: "session", name, kept, "session: an open back to see its session kept, on to its path if so, else said why");
+            let on = Redirect::to(Some(at.as_ref()).filter(|a| local(a)).unwrap_or("/"));
+            return (kept.then(|| on.into_response())).unwrap_or_else(|| self.refused(UNKEPT));
+        }
+        let code = query.split('&').find_map(|p| p.strip_prefix("code="));
         let redeemed = self.codes.redeem(code.unwrap_or_default());
         let at = match redeemed {
             Ok((host, at)) if host == name => at,
             other => {
                 tracing::debug!(target: "session", name, ?other, "session: refused — no open, or one minted for another host, and spent");
-                return self.refused();
+                return self.refused("");
             }
         };
-        tracing::debug!(target: "session", name, at, "session: opened, its cookie set");
+        tracing::debug!(target: "session", name, at, "session: opened, its cookie set, back here to see it kept");
+        let back: String = form_urlencoded::byte_serialize(at.as_bytes()).collect();
         let set = format!(
             "{COOKIE}={}; Path=/; Max-Age={KEPT_FOR}; HttpOnly; SameSite=Lax",
             self.value(name)
         );
-        let mut answer = Redirect::to(&at).into_response();
+        let mut answer = Redirect::to(&format!("{OPEN_PATH}?kept={back}")).into_response();
         let set = HeaderValue::from_str(&set).expect("base64 is a header's");
         answer.headers_mut().insert(header::SET_COOKIE, set);
         answer
@@ -180,17 +196,23 @@ impl Sessions {
 
     /// The one answer to a caller that showed neither: the person told to
     /// open svrngs from their computer, by the opener install.sh put in
-    /// place, which needs no terminal; a program told where the token is.
-    pub(crate) fn refused(&self) -> Response {
+    /// place, which needs no terminal, after `why` when there is one; a
+    /// program told where the token is.
+    pub(crate) fn refused(&self, why: &str) -> Response {
         let page = format!(
             "<!doctype html><meta charset=\"utf-8\"><title>Open svrngs from your computer</title>\
-             <h1>Open svrngs from your computer</h1>\
+             <h1>Open svrngs from your computer</h1>{why}\
              <p>This page opens only from svrngs on this computer. Open svrngs from your {OPENER}, and it opens here.</p>\
              <p>A program on this computer shows the token in {} instead.</p>",
             self.token.file().display()
         );
         (StatusCode::UNAUTHORIZED, Html(page)).into_response()
     }
+}
+
+/// Whether `at` is a path on the host it is said at, never another's.
+fn local(at: &str) -> bool {
+    at.starts_with('/') && !at.starts_with("//") && !at.contains('\\')
 }
 
 /// Each cookie a request sent, `name=value`.

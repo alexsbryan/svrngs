@@ -1654,8 +1654,12 @@ browser that holds no session there, a bookmark of a lend it never opened,
 sends the whole tab, a `GET` navigation of a document and nothing else, to
 the home page's `/to`, which opens the lend as its own links do, by a code
 for that origin alone, only with the home page's session, and back at the
-path (`origin.rs`, `homeward`). It is the navigation any page could already
-make to `/to`, so it grants nothing new; a frame, a fetch or a form there
+path (`origin.rs`, `homeward`). Every open comes back once to
+`/svrngs-open?kept=<path>` to see the browser kept its session before going
+on, so a browser keeping no cookies for `*.localhost` is told so in the home
+page's words, never sent round to its redirect limit (`session.rs`,
+`redeem`). It is the navigation any page could already make to `/to`, so it
+grants nothing new; a frame, a fetch or a form there
 is refused as before, and a browser svrngs never opened is refused by the
 home page in the same words.
 
