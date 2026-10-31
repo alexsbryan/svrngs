@@ -1,0 +1,36 @@
+# svrngs page — v2 of both pages, Preact 11.1.1 and htm 3.1.1 vendored with one hand-written machine each, built beside v1, run against every browser test by one switch, then one atomic switchover (the operator, 2026-10-31: "Do the work in parallel, then we do an atomic switchover when this v2 UI is done"; svrn-docs rings/current/PAGE_STATE.md). One loop per tree. The main tree must be clean before launch.
+#
+# Serial, the default until the operator says pool (STATE's open choice 3):
+#
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py run --workdir ~/dev/svrngs \
+#     --queue page --install-launchd --max-stall 3
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py start --workdir ~/dev/svrngs --queue page
+#
+# In parallel, ONLY AFTER THE OPERATOR'S GO (CHARTER, "Running rows in
+# parallel"). The lanes are worktrees in ~/dev/svrngs-lanes/<row> on
+# ralph/<row>, merged into main by the loop. Every gate in every lane waits
+# on /tmp/svrngs-gate.lock, so a fourth lane only waits:
+#
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py pool --workdir ~/dev/svrngs \
+#     --queue page --lanes 3 --install-launchd --max-lane-failures 3
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py start --workdir ~/dev/svrngs --queue page
+#
+# The plist the install writes carries no CARGO_INCREMENTAL=0. Add it under
+# EnvironmentVariables after any reinstall, because the host's disk is
+# shared (plutil -insert EnvironmentVariables.CARGO_INCREMENTAL -string 0
+# <plist>). The pool's own disk floor is 5 GB, so the watching session holds
+# this host's 15/10 GB floors itself.
+label = "svrngs-page"
+session_timeout = 5400
+# One closing audit for the queue, none inside it (the operator, 2026-10-15
+# and 2026-10-16). Forty-two rows and their closing audit, so a cadence of 45
+# never comes due inside it.
+audit_every = 45
+worker_bin = "/Users/alexsbryan/dev/commonwealth-ai/scripts/ralph-claude-shim.sh"
+settings = "ralph/claude-settings.json"
+
+[models]
+worker = "claude-opus-5-5"
+review = "claude-opus-5-5"
+resolve = "claude-opus-5-5"
+variant = "high"
