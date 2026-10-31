@@ -29,10 +29,7 @@ import * as store from './store.js?v=__VERSION__';
 
 const say = (words) => (document.getElementById('said').textContent = words);
 
-function decode(fragment) {
-  const bytes = Uint8Array.from(atob(fragment.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
-  return JSON.parse(new TextDecoder().decode(bytes));
-}
+const decode = (fragment) => JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(fragment.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0))));
 
 // An Ed25519 key's 32 bytes, `hex`, as PKCS #8 (RFC 8410): the one form
 // WebCrypto imports a private Ed25519 key from in both engines.

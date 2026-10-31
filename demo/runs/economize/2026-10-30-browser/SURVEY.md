@@ -72,3 +72,27 @@ statement (-3). The rows closed at 19,488 again.
 
 Said in each row's commit, counted by lean_check after it; the cap comes
 down to one past where the last lands, if it lands under 19,510.
+
+## Cut for the follow-ups, 2026-10-30
+
+Three gaps after the rows (the alias's day the browser's time zone, a
+computer's `<label>.localhost` bookmark refused cold, a person in two
+groups sent to the last opened) add to `question.js`, `web/app.js` and
+`crates/svrngs-node/src/origin.rs`, and the repository stood at 19,488 of
+19,489. The instruments again, from give-economize's scripts:
+`jsnames.py` ("13 files, every top-level name is said again") and
+`windows.py 3` over `crates/svrngs-node/src/**/*.rs`, whose runs said twice
+are `use` lines, argument lists and closing braces, as before. So the cuts
+are again of a kind they do not see: a function body of a binding or two
+and a return, said as one expression, as `cookieFor`, `live` and
+`button` beside them are. Behaviour kept in each: the same calls in the
+same order, answering the same values.
+
+| Where | What | Lines |
+|---|---|---:|
+| `crates/svrngs-node/src/home/question.js` | `uses`: the `try` around `choicesOf`, whose functions are async on both pages (app.js `choicesOf`, home.js's), its `.catch` saying the line and answering no choices; the Stop by `el`, as `table`'s buttons are made; `el` one expression | -11 |
+| `web/lend.js` | `passed`, `jarOf` (its store asked only when the jar is not held, by `\|\|`), `shim` (its nonce a default parameter) and `opening` each one expression; each called only once the worker runs, never while its module loads | -14 |
+| `web/open.js` | `decode` one expression | -3 |
+
+**-28**, 19,488 to 19,460 (`python3 scripts/lean_check.py`); `oxlint`
+exit 0 over the tree.

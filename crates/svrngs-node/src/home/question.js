@@ -76,30 +76,17 @@ export const unlent = 'That app, or what it asks to use, is not lent here now.';
 // whose choices cannot be asked said so, with why.
 export async function uses(lent, labelOf, choicesOf, line, stop) {
   for (const l of lent.filter((o) => o.asks)) {
-    let choices;
-    try {
-      choices = await choicesOf(l);
-    } catch (e) {
-      line(`${unasked(l)} ${e.message ?? ''}`.trim());
-      continue;
-    }
+    const choices = await choicesOf(l).catch((e) => (line(`${unasked(l)} ${e.message ?? ''}`.trim()), {}));
     for (const [app, c] of Object.entries(choices)) {
       const by = lent.find((o) => labelOf(o) === app);
       const item = line(`${by ? named(by) : 'An app'} ${c.said === 'yes' ? 'uses' : 'was stopped using'} ${named(l)}. `);
-      if (c.said !== 'yes') continue;
-      const button = Object.assign(document.createElement('button'), { textContent: 'Stop' });
-      button.onclick = () => stop(l, app, item);
-      item.append(button);
+      if (c.said === 'yes') item.append(Object.assign(el('button', 'Stop'), { onclick: () => stop(l, app, item) }));
     }
   }
 }
 
 // An element: `tag`, its words and then `kids`.
-export const el = (tag, text, ...kids) => {
-  const e = document.createElement(tag);
-  e.append(text ?? '', ...kids);
-  return e;
-};
+export const el = (tag, text, ...kids) => ((e) => (e.append(text ?? '', ...kids), e))(document.createElement(tag));
 
 // A day, from seconds, in this computer's or phone's time: its number and
 // its month's first three letters, "3 Oct", as the command says it

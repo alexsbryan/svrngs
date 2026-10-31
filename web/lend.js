@@ -163,17 +163,11 @@ async function opened() {
 
 // The pass a request carries, and the link naming this run's endpoint
 // when the holder signed one (`opened`).
-async function passed(h) {
-  await (endpoint ??= opened());
-  return [['x-svrngs-pass', h.pass], ...(linked ? [['x-svrngs-link', linked]] : [])];
-}
+const passed = async (h) => (await (endpoint ??= opened()), [['x-svrngs-pass', h.pass], ...(linked ? [['x-svrngs-link', linked]] : [])]);
 
 // ── cookies, a jar per lend ─────────────────────────────────────────────
 
-async function jarOf(label) {
-  if (!jars.has(label)) jars.set(label, (await store.lendKept(`cookies ${label}`).catch(() => null)) ?? []);
-  return jars.get(label);
-}
+const jarOf = async (label) => (jars.has(label) || jars.set(label, (await store.lendKept(`cookies ${label}`).catch(() => null)) ?? []), jars.get(label));
 
 const live = (c) => c.expires === null || c.expires > Date.now();
 
@@ -311,10 +305,7 @@ const closed = () => say(403, 'This is not open to this page.', 'closed');
 // and the nonce of the page's script policy when it names one: under
 // `script-src 'nonce-…' 'strict-dynamic'` (Nextcloud's) a script without
 // it does not run (u5-catalogue-dry).
-const shim = (label, jar, policy) => {
-  const nonce = /'nonce-([^']+)'/.exec(policy ?? '')?.[1];
-  return `<script${nonce ? ` nonce="${nonce}"` : ''} src="${SITE}shim.js?v=__VERSION__&l=${label}&c=${encodeURIComponent(cookieFor(jar, '/', true))}"></script>`;
-};
+const shim = (label, jar, policy, nonce = /'nonce-([^']+)'/.exec(policy ?? '')?.[1]) => `<script${nonce ? ` nonce="${nonce}"` : ''} src="${SITE}shim.js?v=__VERSION__&l=${label}&c=${encodeURIComponent(cookieFor(jar, '/', true))}"></script>`;
 
 // Serve `request`, at `url`, from the lend `where` names.
 async function lent(request, url, where) {
@@ -536,10 +527,7 @@ function onward(to, then) {
 
 // A page navigated to `where`, a lend it reads: the group's page opens that
 // lend at the path.
-function opening(h, where) {
-  trace(`RUNTIME: a page opens ${where.label}, which it reads, at ${where.path}: through the group's page`);
-  return onward(`${h.page}#open=${where.label}&at=`, where.path);
-}
+const opening = (h, where) => (trace(`RUNTIME: a page opens ${where.label}, which it reads, at ${where.path}: through the group's page`), onward(`${h.page}#open=${where.label}&at=`, where.path));
 
 // A page sends its person to say yes to this lend using `lend`, one it
 // reads: the group's page asks, then opens this lend again at `back`.
