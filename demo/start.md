@@ -75,8 +75,8 @@ where the group's folder is on this computer.
 
 Under Lab, below the table of what's lent, the home page shows **Bring
 things to the table**: Money, Events and House rules, which come with
-svrngs, each ticked. This walk doesn't need them, so leave them. Pressing
-**Bring the ticked ones to Lab** brings them, and everyone in Lab can open
+svrngs, each with a box to tick. This walk doesn't need them, so leave them. Ticking one
+and pressing **Bring the ticked ones to Lab** brings it, and everyone in Lab can open
 them. House rules is where a group agrees on its rules: someone proposes, the
 rest agree or object, and canon, the library under it, decides when a rule
 holds (`../RELEASES.md`, "Next"). (Not in the run, which came before House
@@ -168,13 +168,16 @@ script — can ask Sam's model too. Press **Copy its address for a
 program**, beside **Sam’s llama-server**: the page says *"Copied:"*
 and the address. Paste it where the program asks for an address (often
 called its *base URL*, or *OpenAI-compatible API*). The address stays the
-same when svrngs or the computer starts again. Many programs also ask for
-a key: type anything, such as `none` — svrngs asks for none. The run's
-program, in Python:
+same when svrngs or the computer starts again. For its key, give it Bo's
+svrngs token, the text in `~/.svrngs/token`: since V1.3 a program on Bo's
+computer reaches a lend only with it (`crates/svrngs-node/src/session.rs`),
+and it goes no further than Bo's computer. The run, before V1.3, passed
+`none`. Its program, in Python, with the token:
 
 ```python
-import openai
-client = openai.OpenAI(base_url="<the address you copied>", api_key="none")
+import openai, pathlib
+token = pathlib.Path("~/.svrngs/token").expanduser().read_text().strip()
+client = openai.OpenAI(base_url="<the address you copied>", api_key=token)
 for chunk in client.chat.completions.create(model="any", stream=True,
         messages=[{"role": "user", "content": "Name three rivers in Spain."}]):
     print(chunk.choices[0].delta.content or "", end="") if chunk.choices else None
@@ -197,8 +200,9 @@ do.
 - **The terminal waits after `svrngs share`**, its last line asking
   about a password. Press Enter.
 - **A program says "Missing credentials. Please pass an `api_key`"**
-  (Python's `openai`). It wants a key before it asks anything. Give it any
-  key, such as `none` (step 9).
+  (Python's `openai`), or a page saying *"Open svrngs from your
+  computer"*. Give it the svrngs token, the text in `~/.svrngs/token`, as
+  its key (step 9).
 - **A program gets `{"error":"this page answers only itself"}`.** It was
   given the home page's address. Give it the address **Copy its address
   for a program** copies instead (step 9).
@@ -224,7 +228,7 @@ do.
 
 ## Serving the page from a checkout
 
-`https://group.svrnme.sh/` serves the published build (V1.1.2, aacb3fe5, 18 Oct
+`https://group.svrnme.sh/` serves the published build (V1.3.1, 086e216b, 31 Oct
 2026). To try a build of your own checkout instead, serve the page from it,
 on the computer Sam and Bo can reach, as the run did:
 

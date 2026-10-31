@@ -81,8 +81,8 @@ terminal after this.
 ## The scene
 
 **5. Ana brings House rules.** On Ana's home page, under Elm, **Bring
-things to the table** lists Money, Events and House rules, each ticked.
-Untick Money and Events, and press **Bring the ticked ones to Elm**. The
+things to the table** lists Money, Events and House rules, each with a box to tick.
+Tick House rules, and press **Bring the ticked ones to Elm**. The
 page says *"You brought House rules to Elm: everyone in it can open it in
 a few seconds."* (221 ms in the run).
 

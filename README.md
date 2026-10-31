@@ -27,7 +27,7 @@ Friends on a computer paste the line the link shows them. Friends on a
 phone type their name and tap **Join**. Nobody signs up, and nobody asks
 us.
 
-Every line and every button: [`demo/start.md`](demo/start.md).
+Every step, with what the pages say: [`docs/guide/start.md`](docs/guide/start.md).
 
 Join once from the chat link. Everything your group lends has an address
 that never changes. Bookmark it on your phone or your laptop, and it opens.
@@ -35,39 +35,41 @@ that never changes. Bookmark it on your phone or your laptop, and it opens.
 iPhone, add the group's page to your Home Screen first and join from
 there: a Home Screen app keeps its own storage, apart from Safari's.
 
-## Then
+## What you can do
 
-- **Lend what you run.** Jellyfin, Navidrome, Immich, Actual, llama-server:
-  anything on a port. Your home page lists what's running, and one press
-  gives it to the group. If you'd rather type: `svrngs share <port> --kind <name>`.
-  A game server or anything else that speaks UDP or TCP is typed the same
-  way, with `--udp` or `--tcp` added: your friends press **Play** and
-  connect to `127.0.0.1`, as if it ran on their own computer.
-- **Keep a game for the group.** [Give](apps/give/README.md) runs an app
-  such as a Minecraft or Factorio server on one of your computers, in
-  Podman, and copies its world to everyone. Move it to another computer,
-  or take it over when its computer is gone, with one yes.
-- **Hack on the examples.** Money splits what you spend; Events plans a
-  night and says who came. Bring either to a group in one tap. They're
-  small on purpose: not the point of svrngs, just where you start
-  building what your group actually needs.
-- **Agree on your house's rules.** House rules comes with svrngs too. Someone
-  proposes, the rest of you agree or object, and the page says when it
-  holds. [canon](https://github.com/alexsbryan/canon) decides; svrngs only
-  shows it. See [`demo/house-rules.md`](demo/house-rules.md).
-- **Have a guest.** Your home page makes a link for someone outside the
-  group. For up to 48 hours they open what you lend, and everyone sees
-  they're your guest. They never read the group's record.
-- **Open it to your WiFi.** A lend's row on your home page opens it to the
-  devices on your WiFi, as you: your TV's own app, a phone, another
-  computer. It stays open on that WiFi alone, until you close it.
-- **Put your group on a screen.** Your home page opens any group on a TV
-  or a projector: who's on now, what each lends, and who arrived since it
-  opened.
+[The guide](docs/guide/README.md) has a page for each of these, with
+examples. New to it? [How it works](docs/guide/how-it-works.md) takes five
+minutes.
+
+- **Lend what you run.** Jellyfin, Navidrome, Immich, Actual: anything on
+  a port. Your home page lists what's running, and one press gives it to
+  the group. Or type `svrngs share 8096`. [Lend](docs/guide/lend.md).
+- **Share a model.** Lend your llama-server; friends chat with it, and
+  their programs call it at an address that doesn't change.
+  [Models](docs/guide/models.md).
+- **Play together.** Lend a Minecraft or Factorio server with `--tcp` or
+  `--udp`; friends press **Play**. [Give](apps/give/README.md) keeps a game
+  for the group and moves it to another computer with one yes.
+  [Games](docs/guide/games.md).
+- **Watch on the TV.** Open a lend to your WiFi, so the TV's own app opens
+  it as you, or put your group on a screen. [TV](docs/guide/tv.md).
+- **Split money, plan a night, agree on house rules.** Money, Events and
+  House rules come with svrngs, one tap to bring to a group. They're small
+  on purpose: where you start building what your group needs.
+  [Apps](docs/guide/apps.md).
+- **Keep a folder the same on everyone's computer.**
+  [Folders](docs/guide/folders.md).
+- **Invite, add your phone, have a guest, remove someone, leave.** A guest
+  opens what you lend for up to 48 hours, and never reads the group's
+  record. What you already have stays yours when you leave.
+  [People](docs/guide/people.md).
 - **Ask a friend of a friend.** The grapevine carries an ask from one group
-  to another, through someone who's in both. See [`demo/grapevine.md`](demo/grapevine.md).
-- **Leave.** Whenever you like. What you already have stays yours.
+  to another, through someone who's in both.
+  [`demo/grapevine.md`](demo/grapevine.md).
+- **Build an app.** If it runs on localhost, your group can use it.
+  [Build](docs/guide/build.md).
 
+Something not working? [Troubleshooting](docs/guide/troubleshooting.md).
 It's early. [`RELEASES.md`](RELEASES.md) says what works and what doesn't
 yet.
 
@@ -158,6 +160,7 @@ at `~/dev/commonwealth-ai`, or its path in `COMMONWEALTH_AI`,
 `scripts/principles_check.py --sync` re-pins `docs/principles/`.
 
 The rest of the map:
+- [`docs/guide/`](docs/guide/README.md): how to use svrngs, page by page.
 - [`docs/OVERVIEW.md`](docs/OVERVIEW.md): svrngs in three pictures.
 - [`NORTH_STAR.md`](NORTH_STAR.md): what we answer to.
 - [`docs/DESIGN.md`](docs/DESIGN.md): what svrngs is, and how we build it.
