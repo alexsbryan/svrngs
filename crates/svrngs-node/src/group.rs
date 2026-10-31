@@ -222,10 +222,7 @@ impl crate::folder::Folders {
         let apart = PathBuf::from(format!("{}-{}", dir.display(), &seed.id()[..8]));
         let dir = if taken { apart } else { dir };
         let placed = std::fs::create_dir_all(&dir).map_err(|e| e.to_string());
-        let kept = |()| {
-            self.both_ways(dir.clone(), seed.id())
-                .map_err(|e| e.to_string())
-        };
+        let kept = |()| (self.both_ways(dir.clone(), seed.id())).map_err(|e| e.to_string());
         let placed = placed.and_then(kept).map(drop);
         tracing::debug!(target: "group", group = %seed.id(), dir = %dir.display(), taken, ?placed, "group: the group's folder placed, beside another's if its place was taken, or why not");
         (dir, placed)
