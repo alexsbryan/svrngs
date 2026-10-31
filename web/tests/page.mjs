@@ -58,12 +58,15 @@ export function serve(dir, { worker, port = 0 } = {}) {
     if (!file.startsWith(root)) return res.writeHead(403).end();
     try {
       let body = await readFile(file);
-      if (file.endsWith('/index.html')) body = tests(body);
+      if (/\/(index|404)\.html$/.test(file)) body = tests(body);
       if (worker && path === '/lend.js') body = `${worker}\n${body}`;
       res.writeHead(200, { 'content-type': TYPES[extname(file)] ?? 'application/octet-stream' });
       res.end(body);
     } catch {
-      res.writeHead(404).end();
+      // A path with no file: the site's 404.html, as a static host serves
+      // it (Vercel, Netlify, Cloudflare Pages, GitHub Pages), else nothing.
+      const missing = await readFile(join(root, '404.html')).catch(() => null);
+      res.writeHead(404, { 'content-type': TYPES['.html'] }).end(missing ? tests(missing) : '');
     }
   });
   server.asked = asked;

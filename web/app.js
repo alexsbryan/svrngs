@@ -629,6 +629,9 @@ async function opening(fragment) {
     // too (store.js `runtime`, u4-9).
     await init({ module_or_path: store.runtime() });
     if (is_label(store.labelOf(location.hostname))) return cold();
+    // A path the page's host has no file for, at the group's own address
+    // (404.html, scripts/build-web.sh): there is no page there.
+    if (document.body.id === 'missing') throw new Said('There’s no page at this address. Open your group’s link to reach your group.');
     if (fragment.startsWith('visit=')) return await visit(fragment.slice('visit='.length));
     const asked = /^(open|ask)=/.test(fragment) ? new URLSearchParams(fragment) : null;
     const token = asked ? '' : fragment;

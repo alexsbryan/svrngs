@@ -129,6 +129,10 @@ for f in "${PAGE[@]}"; do
   sed -i.bak "s/__VERSION__/${VERSION}/g" "$OUT/$f"
   rm -f "$OUT/$f.bak"
 done
+# 404.html, what a static host serves for a path it has no file for, such as
+# a lend's own deep path where its worker is not (DESIGN §3, "Lent apps",
+# call 1): the page, from the root, with its policy, marked `missing`.
+sed -e 's#="\./#="/#g' -e 's#<body>#<body id="missing">#' "$OUT/index.html" >"$OUT/404.html"
 
 echo
 echo "built: $OUT  (version ${VERSION})"

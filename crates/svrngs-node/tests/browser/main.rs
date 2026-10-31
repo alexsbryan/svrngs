@@ -1648,8 +1648,13 @@ in_both_engines!(
     /// which signs a pass and comes back: the app, at that path, at its own
     /// origin. With the worker taken away again at once, its address opened
     /// a second time is said, and never sent to the group's page twice
-    /// within the minute. Red on 07eafbd7, the address's page saying
-    /// "Open this page from your group’s link.".
+    /// within the minute. A deep path of it, which the page's host has no
+    /// file for, opens the same way in a tab of its own, as the site's
+    /// 404.html is the page (scripts/build-web.sh); at the group's own
+    /// address such a path says there is no page there. Red on 07eafbd7,
+    /// the address's page saying "Open this page from your group’s link.";
+    /// the deep path red on 597a8d70, answered 404 with nothing (the
+    /// operator's iPhone and curl at group.svrnme.sh: Vercel's NOT_FOUND).
     a_lends_address_opens_cold_in_a_browser_that_joined
 );
 async fn a_lends_address_opens_cold_in_a_browser_that_joined(engine: Engine) {
@@ -1666,6 +1671,7 @@ async fn a_lends_address_opens_cold_in_a_browser_that_joined(engine: Engine) {
         "key": hex::encode(bo.to_bytes()),
         "token": token(&signing(1), &relay),
         "cold": label,
+        "missing": true,
     });
     let seen = drive(engine, "cold.mjs", args, None).await;
     eprintln!("the cold address's run: {seen:#}");
@@ -1686,6 +1692,21 @@ async fn a_lends_address_opens_cold_in_a_browser_that_joined(engine: Engine) {
         "a second cold open within the minute is said, never sent on again:\n{seen:#}"
     );
     assert!(at_origin(&again["url"], &label), "{seen:#}");
+    let deep = &seen["deep"];
+    assert!(
+        at_origin(&deep["url"], &label)
+            && deep["url"]
+                .as_str()
+                .unwrap()
+                .ends_with("/at/a/deep/path?n=3")
+            && deep["title"] == "the app at a path",
+        "a deep path the page's host has no file for opens cold too, by its 404.html:\n{seen:#}"
+    );
+    assert_eq!(
+        seen["missing"]["status"],
+        "There’s no page at this address. Open your group’s link to reach your group.",
+        "a path of the group's own address that is no page is said so:\n{seen:#}"
+    );
     drop(ada);
 }
 

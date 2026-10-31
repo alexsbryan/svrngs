@@ -7,7 +7,10 @@
   here, and lists what apps use (sup-3), who was removed from the
   group or asked to be (v1-keeper-office (b)), and who is visiting it
   (guests-pages); each lend's address to keep, and on a computer how this
-  reaches you (svrn-docs rings/current/IN_THE_BROWSER.md §3, §4). Static files any origin
+  reaches you (svrn-docs rings/current/IN_THE_BROWSER.md §3, §4). It is
+  also the site's 404.html (scripts/build-web.sh), its paths from the root
+  and its body `missing`, with this policy: a static host serves that for a
+  path it has no file for, a lend's deep path among them. Static files any origin
   can serve — no server, no certificate, no data. The FRAGMENT carries the link's token, and a browser never sends
   the fragment to the origin, so the page loads from public static hosting
   while the link stays on the phone; `no-referrer` keeps it out of every

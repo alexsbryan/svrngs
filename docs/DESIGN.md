@@ -754,9 +754,21 @@ Seven calls:
    `#open=<label>&at=<path>&cold`: holding the group it signs a pass and
    comes back at the path, and holding none it says this browser hasn't
    joined. A tab is sent on at most once a minute, so a worker that never
-   takes its pass is said, not bounced again (`web/app.js`, `cold`). The
-   page's host serves only its own files, so a path of the app's own, such
-   as Jellyfin's `/web/`, answers 404 there; the lend's root opens.
+   takes its pass is said, not bounced again (`web/app.js`, `cold`). A
+   path of the app's own, such as Jellyfin's `/web/`, is no file of the
+   page's host, which answers it with the site's `404.html`, as Vercel,
+   Netlify, Cloudflare Pages and GitHub Pages serve one for a missing path:
+   `scripts/build-web.sh` makes it from `index.html`, its paths from the
+   root and its policy the same, so at a lend's origin it sends the browser
+   on as above, and at the group's own address it says there is no page
+   there.
+
+   On an iPhone each web app added to the Home Screen keeps a storage of
+   its own, apart from Safari's. A lend's own address added there is a
+   browser that has not joined: its first open lands on the group's page
+   holding no group, which says so. The way to keep the house on a phone is
+   the group's page added to the Home Screen and joined from there
+   ("Joining").
 
    A lend also has an alias, its name at whose it is, opened on the group's
    page at `#open=films@Sam`, read as `URLSearchParams` reads a fragment

@@ -15,7 +15,7 @@
       "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
     },
     {
-      "source": "/(index.html|open.html|sw.js)",
+      "source": "/(index.html|open.html|sw.js|404.html)",
       "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
     }
   ]
