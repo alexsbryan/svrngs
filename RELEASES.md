@@ -42,7 +42,7 @@ reaches you**. An address the page can't read says why. A browser that
 keeps no cookies for sites on localhost is told so, in place of going round
 and round.
 
-V1.3.1 is the build at `group.svrnme.sh`, from commit `<commit>`, tagged
+V1.3.1 is the build at `group.svrnme.sh`, from commit `086e216b`, tagged
 `v1.3.1`.
 
 ## V1.3, 27 October 2026
