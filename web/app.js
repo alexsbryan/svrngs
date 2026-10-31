@@ -640,6 +640,12 @@ function cold() {
   location.replace(`${page}#${new URLSearchParams({ open: store.labelOf(location.hostname), at })}&cold`);
 }
 
+// The parts of a fragment this page reads, besides a link's token.
+const READ = ['open', 'at', 'anew', 'cold', 'ask', 'app'];
+// The key of the computer that made the link `token`, as svrngs-core reads
+// a link; none when it reads none.
+const linkOf = (token) => { try { return issuer_of(token); } catch { return null; } };
+
 // The link's fragment is its token, `<origin>#<token>`, which svrngs-core
 // parses as the command does (DESIGN §3, call 5). The fragment is never
 // sent to this page's origin, which is why the link rides there and not in
@@ -663,8 +669,16 @@ async function opening(fragment) {
     // (404.html, scripts/build-web.sh): there is no page there.
     if (document.body.id === 'missing') throw new Said('There’s no page at this address. Open your group’s link to reach your group.');
     if (fragment.startsWith('visit=')) return await visit(fragment.slice('visit='.length));
-    const asked = /^(open|ask)=/.test(fragment) ? new URLSearchParams(fragment) : null;
-    const token = asked ? '' : fragment;
+    // A link's token first, if any, then what it opens or asks, as the
+    // group's link with `&open=<alias>` added reads (the operator's iPhone,
+    // 2026-10-31); a part this page cannot read, or a token svrngs-core
+    // cannot, is said, never joined as a token (AGENTS.md 6).
+    const [parts, first] = [new URLSearchParams(fragment), fragment.split('&')[0]];
+    const token = first.includes('=') ? '' : first;
+    const unread = [...parts.keys()].filter((k) => k !== token && !READ.includes(k));
+    if (unread.length) throw (trace(`PAGE: the fragment has parts this page cannot read: ${unread.join(', ')}`), new Said(`This address asks for something this page can’t read: ${unread.join(', ')}. Open your group’s link again.`));
+    if (token && !linkOf(token)) throw (trace('PAGE: the fragment starts with no link svrngs-core can read'), new Said('This link isn’t one svrngs can read. Ask whoever sent it for a new one.'));
+    const asked = parts.has('open') || parts.has('ask') ? parts : null;
     if (token) offer(token);
     const kept = await store.groups();
     // What `#open=` names opens in the group whose addresses, as this
@@ -673,7 +687,7 @@ async function opening(fragment) {
     // opened, which says so.
     const lending = asked?.has('open') ? kept.filter((g) => g.addresses?.includes(asked.get('open'))) : [];
     if (asked?.has('open')) trace(`PAGE: #open=${asked.get('open')} is lent in ${lending.length} of the ${kept.length} groups held here, as each was last listed`);
-    if (lending.length > 1) return among(lending, asked);
+    if (!token && lending.length > 1) return among(lending, asked);
     let group = token ? kept.find((g) => g.token === token) : (lending[0] ?? kept[0]);
     const joined = Boolean(token && !group);
     if (joined) group = await join(token, kept);

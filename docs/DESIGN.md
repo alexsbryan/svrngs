@@ -790,7 +790,11 @@ Seven calls:
 
    A lend also has an alias, its name at whose it is, opened on the group's
    page at `#open=films@Sam`, read as `URLSearchParams` reads a fragment
-   (a space as `+` or `%20`). Whose is said as the page names people: two
+   (a space as `+` or `%20`), and after the group's link too,
+   `#<token>&open=films@Sam&at=<path>`: the token joins or finds the group,
+   then the alias opens. A part of a fragment the page cannot read, or a
+   token svrngs-core cannot, is said in the page's words, never joined as
+   a token. Whose is said as the page names people: two
    of one name told apart by when each joined, `films@Sam (joined 24 Oct)`,
    and two computers of one person lending one name by when each computer
    joined, `films@Sam (computer joined 25 Oct)`; an app the group carries

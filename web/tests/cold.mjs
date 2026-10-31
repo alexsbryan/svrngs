@@ -18,6 +18,9 @@
 //   where it lands, with the buttons it offers; one whose words hold
 //   `choose` pressed, and where that lands.
 //
+// - `fragments`: each opened on the group's page at `#<fragment>`, and
+//   where it lands.
+//
 // With `second`, `{token, id, name}`, the browser holds a second group
 // too, joined by the same key, and opens it once after the first, so the
 // steps start with it the group last opened.
@@ -100,6 +103,12 @@ await driving(args, async ({ page, origin }) => {
       await page.goto(at);
       seen.kept.push({ at, ...(await landed(page, 45_000)) });
     }
+  }
+  seen.fragments = [];
+  for (const fragment of args.fragments ?? []) {
+    await page.goto('about:blank');
+    await page.goto(`${origin}#${fragment}`);
+    seen.fragments.push({ fragment, ...(await landed(page, 45_000)) });
   }
   seen.aliases = [];
   for (const alias of args.aliases ?? []) {

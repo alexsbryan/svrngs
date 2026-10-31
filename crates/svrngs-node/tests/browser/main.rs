@@ -1991,6 +1991,62 @@ async fn a_person_in_two_groups_opens_each_ones_lend_where_it_is_lent(engine: En
     drop((ada, club));
 }
 
+in_both_engines!(
+    /// **A link's token with what it opens opens it, and a fragment the
+    /// page cannot read says why** (the operator's iPhone, 2026-10-31: the
+    /// group's link, `#<token>`, with `&open=films@<name>` added, said
+    /// "This browser could not open the page."). Bo's page, holding house
+    /// by ada's link, opens `#<token>&open=app@ada` on ada's app, and with
+    /// `&at=/a/path?n=1` at that path; `#not-a-token` says it is no link
+    /// svrngs can read, and `#opne=app@ada` names the part it cannot read,
+    /// each in the page's words, never the browser's line. Red on
+    /// 15460c1e: each read as one token, joined, and said "This browser
+    /// could not open the page."
+    a_links_token_with_what_it_opens_opens_it_and_a_garbled_fragment_says_why
+);
+async fn a_links_token_with_what_it_opens_opens_it_and_a_garbled_fragment_says_why(engine: Engine) {
+    let site = site();
+    let relay = relay().await;
+    let bo = signing(7);
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &bo).await;
+    let app = page_origin("<!doctype html><title>the app of ada</title>").await;
+    lend(dir.path(), "app", app.port());
+    let link = token(&signing(1), &relay);
+    let args = json!({
+        "site": site,
+        "key": hex::encode(bo.to_bytes()),
+        "token": link,
+        "fragments": [
+            format!("{link}&open=app@ada"),
+            format!("{link}&open=app@ada&at=/a/path?n=1"),
+            "not-a-token",
+            "opne=app@ada",
+        ],
+    });
+    let seen = drive(engine, "cold.mjs", args, None).await;
+    eprintln!("the fragments' run: {seen:#}");
+    let landed = |i: usize| &seen["fragments"][i];
+    assert!(
+        at_origin(&landed(0)["url"], &label(1, "app")) && landed(0)["title"] == "the app of ada",
+        "the link's token with what it opens opens it:\n{seen:#}"
+    );
+    assert!(
+        at_origin(&landed(1)["url"], &label(1, "app"))
+            && landed(1)["url"].as_str().unwrap().ends_with("/a/path?n=1"),
+        "and at its path:\n{seen:#}"
+    );
+    assert_eq!(
+        (&landed(2)["status"], &landed(3)["status"]),
+        (
+            &json!("This link isn’t one svrngs can read. Ask whoever sent it for a new one."),
+            &json!("This address asks for something this page can’t read: opne. Open your group’s link again.")
+        ),
+        "a fragment the page cannot read says why:\n{seen:#}"
+    );
+    drop(ada);
+}
+
 /// **A lend's alias never collides within a group** (svrn-docs
 /// `rings/current/IN_THE_BROWSER.md`, "Decided"; question.js `alias`, the
 /// one decider both pages load). Two people called ada each lend `app`:
