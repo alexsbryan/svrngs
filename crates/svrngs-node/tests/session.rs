@@ -101,6 +101,11 @@ fn path_of(url: &str) -> String {
 const TYPED: &str =
     "Sec-Fetch-Site: none\r\nSec-Fetch-Mode: navigate\r\nSec-Fetch-Dest: document\r\n";
 
+/// What a browser sends of a frame's navigation from another site: never
+/// sent on to the home page (origin.rs `lent`).
+const FRAMED: &str =
+    "Sec-Fetch-Site: cross-site\r\nSec-Fetch-Mode: navigate\r\nSec-Fetch-Dest: iframe\r\n";
+
 /// The words a browser with no session is answered, naming the opener in
 /// the person's words, which need no terminal (WHAT_CAN_ACT_AS_YOU §9).
 fn opener_named(body: &str) -> bool {
@@ -143,8 +148,8 @@ async fn a_browser_with_no_session_and_a_program_with_no_token_are_told_to_open_
             "/v1/groups",
             "Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\n",
         ),
-        (&lend, "/", TYPED),
         (&lend, "/", ""),
+        (&lend, "/", FRAMED),
     ] {
         let got = ask(api, "GET", host, path, extra, "").await;
         assert_eq!(
@@ -158,6 +163,23 @@ async fn a_browser_with_no_session_and_a_program_with_no_token_are_told_to_open_
             got.body
         );
     }
+    // A typed address at a lend's origin, a bookmark, goes by the home
+    // page's `/to` (origin.rs `homeward`), which refuses a browser with no
+    // session there in the same words.
+    let typed = ask(api, "GET", &lend, "/", TYPED, "").await;
+    let to = format!("http://{home}/to?lend={night}&at=%2F");
+    assert_eq!(
+        (typed.status, typed.header("location")),
+        (303, Some(to.as_str())),
+        "{}",
+        typed.head
+    );
+    let refused = ask(api, "GET", &home, &to[to.find("/to").unwrap()..], TYPED, "").await;
+    assert!(
+        refused.status == 401 && opener_named(&refused.body),
+        "{}",
+        refused.body
+    );
     let program = ask(api, "GET", &lend, "/", "", "").await;
     let token_file = alex_dir.path().join("token");
     assert!(
@@ -329,9 +351,14 @@ async fn an_open_s_code_becomes_the_session_once_and_each_lend_gets_its_own() {
         "a replayed code is refused: {}",
         replay.head
     );
+    // The home page's session opens no lend: shown there, it is no session,
+    // and the tab is sent to the home page's `/to` (origin.rs `homeward`).
     let homes = ask(api, "GET", &lend, at, &format!("{TYPED}{session}"), "").await;
-    assert_eq!(
-        homes.status, 401,
+    assert!(
+        homes.status == 303
+            && homes
+                .header("location")
+                .is_some_and(|l| l.starts_with(&format!("http://{home}/to?"))),
         "the home page's session opens no lend: {}",
         homes.head
     );

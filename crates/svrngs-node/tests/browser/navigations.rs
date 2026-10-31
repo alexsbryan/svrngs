@@ -119,3 +119,85 @@ async fn a_navigation_from_another_lend_s_page_is_judged_as_its_fetch(engine: En
     }
     drop(ada);
 }
+
+in_both_engines!(
+    /// **A lend's bookmark opens cold on a computer** (svrn-docs
+    /// `rings/current/IN_THE_BROWSER.md` §4; DESIGN §7, "On a computer";
+    /// `origin.rs`'s `lent`). Ada's browser, which svrngs opened its home
+    /// page in and no lend, goes to the address of her lend `app` at a deep
+    /// path, as a bookmark opens it: the lend's origin, showing no session,
+    /// sends the whole tab to the home page's `/to`, which grants it as the
+    /// home page's own open does, with the home page's session, and it lands
+    /// on the app at that path. Kept: a frame from there of another lend
+    /// opened nowhere is refused there, never sent on to the home page; a
+    /// browser svrngs opened nothing in is refused by the home page, in its
+    /// words. Red on 1b1a4a5d, the lend's origin refusing the bookmark:
+    /// "Open svrngs from your computer". Planted: the hop for any request,
+    /// and the frame is sent on to the home page.
+    a_lends_bookmark_opens_cold_on_a_computer
+);
+async fn a_lends_bookmark_opens_cold_on_a_computer(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &signing(7)).await;
+    let (app, on_app) = kept_page("<!doctype html><title>ada's app</title><body>the app").await;
+    let other = page_origin("<!doctype html><title>the other</title><body>").await;
+    declare(dir.path(), "app", app.port(), json!({ "kind": "k" }));
+    declare(dir.path(), "other", other.port(), json!({ "kind": "k" }));
+    let port = ada.api_addr().port();
+    let at = "/at/a/deep/path?n=1";
+
+    let seen = drive(
+        engine,
+        "bookmark.mjs",
+        json!({
+            "home": format!("http://svrngs.localhost:{port}/"),
+            "port": port,
+            "label": label(1, "app"),
+            "other": label(1, "other"),
+            "at": at,
+        }),
+        None,
+    )
+    .await;
+    eprintln!("the bookmark's run: {seen:#}");
+
+    assert_eq!(seen["error"], Value::Null, "{seen:#}");
+    let opened = &seen["opened"];
+    assert_eq!(
+        (&opened["url"], &opened["title"]),
+        (
+            &json!(format!("http://{}.localhost:{port}{at}", label(1, "app"))),
+            &json!("ada's app")
+        ),
+        "the bookmark lands on the app, at its path:\n{seen:#}"
+    );
+    assert!(
+        asked(&on_app).iter().any(|l| l == &format!("GET {at}")),
+        "the app is asked the bookmark's path: {seen:#}"
+    );
+    let hops = opened["answered"].to_string();
+    assert!(
+        hops.contains(&format!("svrngs.localhost:{port}/to?lend=")),
+        "through the home page's /to: {seen:#}"
+    );
+    let framed = seen["framed"].as_array().cloned().unwrap_or_default();
+    assert!(
+        framed
+            .iter()
+            .any(|n| n.as_str().is_some_and(|n| n.ends_with("/framed 401")))
+            && !framed
+                .iter()
+                .any(|n| n.to_string().contains("svrngs.localhost")),
+        "a frame of a lend opened nowhere is refused there, never sent on:\n{seen:#}"
+    );
+    let unopened = &seen["unopened"];
+    assert!(
+        unopened["title"] == "Open svrngs from your computer"
+            && unopened["url"]
+                .as_str()
+                .is_some_and(|u| u.starts_with(&format!("http://svrngs.localhost:{port}/to?"))),
+        "a browser svrngs opened nothing in is refused by the home page:\n{seen:#}"
+    );
+    drop(ada);
+}

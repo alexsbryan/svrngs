@@ -126,6 +126,17 @@ fn own_pass(at: &Asking, app: &Label, label: &Label) -> Option<HeaderValue> {
     HeaderValue::from_str(&pass.encode()).ok()
 }
 
+/// The person sent to the home page's `/to`, the lend `label` at `uri`,
+/// which opens it with a code for its origin only if the home page's own
+/// session or rule lets it (`crate::home`'s `only_itself`): a navigation,
+/// with the home page's session, which a lent page's fetch or frame never
+/// sends (DESIGN §7, "On a computer"). It says no yes.
+fn homeward(at: &Asking, label: &Label, uri: &Uri) -> Response {
+    let tail: String = form_urlencoded::byte_serialize(uri.to_string().as_bytes()).collect();
+    let home = crate::home::address(at.host.api_port) + "to?lend=" + label.as_str();
+    Redirect::to(&(home + "&at=" + &tail)).into_response()
+}
+
 /// Where this computer's browser opens the lend `label`, with the record
 /// API listening on `port`.
 pub fn origin(label: &Label, port: u16) -> String {
@@ -158,10 +169,7 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
         let app = app_of(req.headers(), &label);
         if app.as_ref() == Some(&label) {
             tracing::debug!(target: "origin", %label, "origin: the person going to a read's address, opened by the home page, whose session decides; a capability is never a session");
-            let tail = req.uri().to_string();
-            let tail: String = form_urlencoded::byte_serialize(tail.as_bytes()).collect();
-            let home = crate::home::address(at.host.api_port) + "to?lend=" + label.as_str();
-            return Ok(Redirect::to(&(home + "&at=" + &tail)).into_response());
+            return Ok(homeward(&at, &label, req.uri()));
         }
         let held = app
             .as_ref()
@@ -169,8 +177,16 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
         tracing::debug!(target: "origin", %label, ?app, held, "origin: a page's read by the capability in its address, refused unless this computer's for that page");
         shown = if held { Shown::Session } else { Shown::Neither };
     }
+    // A bookmark in a browser that never opened this lend: the whole tab,
+    // and only it, goes by the home page's `/to`, as a read's address does.
+    let dest = (req.headers().get("sec-fetch-dest")).and_then(|v| v.to_str().ok());
+    let tab = (fetch(req.headers()).0[1], dest) == (Some("navigate"), Some("document"));
+    if shown == Shown::Neither && tab && req.method() == Method::GET {
+        tracing::debug!(target: "origin", %label, "origin: the whole tab here with neither this origin's session nor the token, so on to the home page's /to, whose session decides");
+        return Ok(homeward(&at, &label, req.uri()));
+    }
     if shown == Shown::Neither {
-        tracing::debug!(target: "origin", %label, "origin: refused — neither this origin's session nor the token");
+        tracing::debug!(target: "origin", %label, "origin: refused — neither this origin's session nor the token, and no whole tab's navigation");
         return Err(at.sessions.refused());
     }
     if req.uri().path() == crate::surface::READS_PATH {
