@@ -55,6 +55,13 @@ step "app nouns"        python3 scripts/vocab_check.py
 # Money's page from bb8d4a3e to 7dfc59c6 declared `said` twice). Without it installed
 # the step fails naming the install, never skipping.
 step "lint" sh -c 'test -x web/node_modules/.bin/oxlint || { echo "oxlint is not installed here: npm ci --prefix web"; exit 1; }; web/node_modules/.bin/oxlint'
+# The pages' laws, what of the pages node can judge with no browser
+# (web/tests/*.test.mjs: the vendored libraries' pins, and v2's core as it
+# lands; page-scaffold): a step of its own, since apps' laws are apps'
+# (AGENTS.md 12), never-ran when none is found, as theirs.
+laws=$(find web/tests -name '*.test.mjs' 2>/dev/null)
+if [ -n "$laws" ]; then step "page laws" node --test $laws
+else echo "never-ran  page laws: none in web/tests"; failed=1; fi
 if [ -f Cargo.toml ]; then
   step "rustfmt"  cargo fmt --all --check
   # Then the test targets `cargo test` skips (`test = false`), which
