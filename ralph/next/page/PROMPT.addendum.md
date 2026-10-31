@@ -11,6 +11,12 @@ Before a row, read:
 - `STATE.md`'s opening;
 - svrn-docs `rings/current/PAGE_STATE.md` §3, the rules.
 
+A row is one feature across both pages, and it carries its parts as
+(a), (b), …, each its own commit. A row runs over several sessions:
+- commit whole parts;
+- end a session with `ralph-result continue`, naming the next part;
+- run `scripts/check.sh` once, at the row's close.
+
 Fences the rows keep:
 
 1. **Red first** (AGENTS.md 2, 5). Each row's first test fails at HEAD.
@@ -66,8 +72,8 @@ Fences the rows keep:
      `tap`, `piece`, `guests` or `hop`.
    - States are named such as `reading`, `read` and `unread`.
 8. **Touch only the files your row owns** (CHARTER, "Who owns each file").
-   - A primitive you need that `ui/parts.js` lacks goes in your own flow
-     file. page-components folds it in.
+   - A primitive you need that `ui/parts.js` lacks goes in one of your own
+     files. page-switchover's pass folds the duplicates in.
    - A message to another flow goes through the frame (`{run: 'send', m}`)
      or GROUP's `again`, never by writing its region.
    - A stub you depend on answers `no(s, 'not built yet: <flow>')`, so you

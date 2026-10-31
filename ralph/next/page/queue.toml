@@ -1,4 +1,4 @@
-# svrngs page — v2 of both pages, Preact 11.1.1 and htm 3.1.1 vendored with one hand-written machine each, built beside v1, run against every browser test by one switch, then one atomic switchover (the operator, 2026-10-31: "Do the work in parallel, then we do an atomic switchover when this v2 UI is done"; svrn-docs rings/current/PAGE_STATE.md). One loop per tree. The main tree must be clean before launch.
+# svrngs page — v2 of both pages, Preact 11.1.1 and htm 3.1.1 vendored with one hand-written machine each, built beside v1, run against every browser test by one switch, then one atomic switchover (the operator, 2026-10-31: "Do the work in parallel, then we do an atomic switchover when this v2 UI is done"; svrn-docs rings/current/PAGE_STATE.md). Thirteen rows, one per feature across both pages (the operator, 2026-10-31: "42 rows. That's absurd. Cut it in half."). One loop per tree. The main tree must be clean before launch, and the rung and STATE's open choices answered (STATE.md, "Decided before launch").
 #
 # Serial, the default until the operator says pool (STATE's open choice 3):
 #
@@ -8,8 +8,9 @@
 #
 # In parallel, ONLY AFTER THE OPERATOR'S GO (CHARTER, "Running rows in
 # parallel"). The lanes are worktrees in ~/dev/svrngs-lanes/<row> on
-# ralph/<row>, merged into main by the loop. Every gate in every lane waits
-# on /tmp/svrngs-gate.lock, so a fourth lane only waits:
+# ralph/<row>, merged into main by the loop. Only the six feature rows run
+# at once, so 3 lanes take them in two waves. Every gate in every lane waits
+# on /tmp/svrngs-gate.lock:
 #
 #   python3 ~/dev/commonwealth-ai/scripts/ralph.py pool --workdir ~/dev/svrngs \
 #     --queue page --lanes 3 --install-launchd --max-lane-failures 3
@@ -21,11 +22,18 @@
 # <plist>). The pool's own disk floor is 5 GB, so the watching session holds
 # this host's 15/10 GB floors itself.
 label = "svrngs-page"
-session_timeout = 5400
+# 7200, not give's 5400. A merged row runs over several sessions, each
+# committing whole parts and ending with `ralph-result continue`, so no
+# session holds a whole row. But a session must carry its largest part to a
+# commit: page-scaffold (e), the frame and the build, or page-open (b), the
+# phone's enter with its six pinned tests. In a lane it can also wait out
+# another lane's gate at the lock, 15 to 30 min (check.sh:29), before a
+# targeted browser run. 5400 s leaves too little for both.
+session_timeout = 7200
 # One closing audit for the queue, none inside it (the operator, 2026-10-15
-# and 2026-10-16). Forty-two rows and their closing audit, so a cadence of 45
+# and 2026-10-16). Thirteen rows and their closing audit, so a cadence of 15
 # never comes due inside it.
-audit_every = 45
+audit_every = 15
 worker_bin = "/Users/alexsbryan/dev/commonwealth-ai/scripts/ralph-claude-shim.sh"
 settings = "ralph/claude-settings.json"
 

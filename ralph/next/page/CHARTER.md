@@ -109,7 +109,8 @@ operator's to answer.
    - **v2-only tests: one mechanism, a test target of their own,
      `crates/svrngs/tests/page_v2/`.**
      - Its `main.rs` holds `const UI: Ui = Ui::V2;` and one `mod` per
-       flow: `phone_<flow>.rs`, `home_<flow>.rs`.
+       feature row: `open`, `shelf`, `index`, `members`, `join`, `acts`,
+       `rooms`.
      - It is `test = false` with its own gate step, `page v2`, so it runs
        on every gate whatever the switch says.
      - It lives in `crates/svrngs` because the home page's leave and join
@@ -119,19 +120,23 @@ operator's to answer.
        names that run in the commit, and restores it.
      - Superseded: scaffold.md's `v2_only!` macro and home.md's
        `#![cfg(feature = "ui-v2")]` files under `tests/browser/v2/`.
-7. **The order** is STATE.md's dependency graph:
-   - the serial base: economize, the rung, vendor beside machine, skeleton,
-     parts, frame beside switch, copy, then the phone's enter and the home's
-     drive and root;
-   - every flow row in parallel, each depending only on the base and on the
-     row that builds a shared part it names;
-   - then page-components, parity, the operator's go, one atomic
-     switchover, and the operator's deploy.
-8. **Two test-driver edits, each its own row, green on v1 first, with
-   assertions unchanged.**
-   - `web/tests/home.mjs:101` waits for a reload or a redraw (page-home-drive).
+7. **The order** is STATE.md's dependency graph, one row per feature
+   across both pages (the operator, 2026-10-31: "42 rows. That's absurd.
+   Cut it in half."):
+   - the serial base: page-scaffold, page-switch and page-open;
+   - six feature rows in parallel, each depending only on page-open:
+     page-shelf, page-index, page-members, page-join, page-acts and
+     page-home-rooms;
+   - then page-parity, the operator's go, one atomic switchover, and the
+     operator's deploy.
+
+   The rung is set before launch, not by a row. Components land inside the
+   feature rows that build them, so no components row stands between.
+8. **Two test-driver edits, each its own part of page-switch, green on
+   v1 first, with assertions unchanged.**
+   - `web/tests/home.mjs:101` waits for a reload or a redraw.
    - `web/tests/tabs.mjs:47` waits for a fresh answer, in place of
-     writing `#used`'s DOM under Preact's tree (page-tabs-drive).
+     writing `#used`'s DOM under Preact's tree.
 
    These are the only v1 test files v2 changes.
 9. **The home page's query-string notices may go in v2.** That covers
@@ -157,8 +162,8 @@ The session also settled these, from what the four plans left open:
     list, Reading's Stop.
   - Unifying those is after the switchover. So home rows need no layout
     prop from a phone row.
-- **`web/v2/computer.js`** (the computer's line) is page-copy's, then
-  page-v2-join's. Ownership passes along a dependency, never between
+- **`web/v2/computer.js`** (the computer's line) is page-open's, then
+  page-join's. Ownership passes along a dependency, never between
   rows running at once.
 - **After the switchover** the flows live in `web/page/` and
   `home/page/`, served at `/page/`. `ui/` keeps its name.
@@ -167,7 +172,7 @@ The session also settled these, from what the four plans left open:
 
 Each primitive and shared part is a pure view: props in, vnodes out, and
 `send` for what it asks. It replaces the v1 code named.
-- **Primitives** (`ui/parts.js`, page-parts):
+- **Primitives** (`ui/parts.js`, page-scaffold (d)):
   - `Act`: a button with its answer beside it, or in its place;
   - `Said`;
   - `Fold`: a `<details>` whose open is in the store. A driver's `open =`
@@ -176,12 +181,13 @@ Each primitive and shared part is a pure view: props in, vnodes out, and
   - `Row`;
   - `Keep`;
   - `Heading`.
-- **`ui/copy.js`** (page-copy).
-- **Shared parts**, each built by its phone row:
-  - `ui/shelf.js` (page-v2-shelf);
-  - `ui/door.js` and `ui/visitors.js` (page-v2-door);
-  - `ui/acts.js` and `ui/changes.js` (page-v2-acts);
-  - `ui/uses.js` (page-v2-uses).
+- **`ui/copy.js`** (page-open (a)).
+- **Shared parts**, each built by the feature row that first needs it:
+  - `ui/shelf.js` (page-shelf);
+  - `ui/door.js` and `ui/visitors.js` (page-members);
+  - `ui/acts.js`, `ui/changes.js` and `ui/uses.js` (page-acts).
+- A primitive a feature row needs that `parts.js` lacks goes in that row's
+  own file. page-switchover's pass folds duplicates into `parts.js`.
 - The page-only compositions (NameForm, Line, Choose, Group, Links, Leave,
   Wifi, Play, Running, Lending, JoinLink, MakeGroup, OpenLink, Notices,
   Screen) are in each flow's file (components.md §1, the last list).
@@ -192,22 +198,19 @@ Each primitive and shared part is a pure view: props in, vnodes out, and
 
 | File | Owner | Others |
 |---|---|---|
-| `web/vendor/*`, `web/tests/vendor.test.mjs`, check.sh's `page laws` step | page-vendor | none |
-| `ui/machine.js`, `web/tests/machine.test.mjs` | page-machine | none |
-| `ui/view.js`, `ui/trace.js`, `web/v2/body.html`, `web/v2/build.sh`, `home/v2/serve.rs`, `home/v2/index.html`, build-web.sh's `--ui`, build-release.sh's marker refusal, home.rs's v2 merge line, cli.rs's `--ui`, `web/tests/{v1,release,policy,specifiers}.test.mjs`, tests/home.rs's v2 cases | page-skeleton | none |
-| `lean_check.py` `BUDGET` and the rung's paths | HUMAN-page-rung (the operator's seat) | none |
-| `ui/parts.js`, `web/tests/parts.test.mjs` | page-parts, then page-components | a flow that needs a primitive writes it in its own file; page-components folds it |
-| `web/v2/app.js` (`Page`, the composition, heading and response order), a stub `web/v2/<flow>.js` for each phone flow, `web/tests/v2/frame.test.mjs` | page-frame | none |
-| `harness.rs` (`Ui`, `ui()`, `site_of`, the marker checks, each node start), `scripts/parity.sh`, `crates/svrngs/tests/page_v2/main.rs` with an empty `mod` file for every flow, its `[[test]]` entry, check.sh's `page v2` step | page-switch | each flow row fills only its own `mod` file |
-| `ui/copy.js`, `web/tests/copy.test.mjs`, `web/v2/computer.js` | page-copy | `computer.js` passes to page-v2-join |
-| `web/tests/home.mjs` | page-home-drive | none after it; every flag a home row needs is added there |
-| `web/tests/tabs.mjs` | page-tabs-drive | none |
-| `home/v2/home.js`, `home/v2/group.js`, a stub `home/v2/<flow>.js` for each home flow | page-home-root | flows send GROUP `again` and never edit these |
-| `web/v2/<flow>.js`, `page_v2/phone_<flow>.rs`, `web/tests/v2/<flow>.mjs` and `.test.mjs` | that phone row | none |
-| `home/v2/<flow>.js`, `page_v2/home_<flow>.rs`, `web/tests/v2/home-<flow>.test.mjs` | that home row | none |
-| `ui/shelf.js`, `ui/door.js`, `ui/visitors.js`, `ui/acts.js`, `ui/changes.js`, `ui/uses.js` | the phone row named in "The parts" | home rows import them and never edit them |
+| `lean_check.py` `BUDGET` and the rung's paths | the operator's seat, before launch | none |
+| `web/vendor/*`, `ui/machine.js`, `ui/view.js`, `ui/trace.js`, `ui/parts.js`, `web/v2/body.html`, `web/v2/app.js` (`Page`, the composition, heading and response order), `web/v2/build.sh`, a stub `web/v2/<flow>.js` for each phone flow, `home/v2/index.html`, `home/v2/serve.rs`, build-web.sh's `--ui`, build-release.sh's marker refusal, home.rs's v2 merge line and table, cli.rs's `--ui`, check.sh's `page laws` step, `web/tests/{vendor,machine,parts,v1,release,policy,specifiers}.test.mjs`, `web/tests/v2/frame.test.mjs`, tests/home.rs's v2 cases | page-scaffold | `ui/parts.js` is next touched by page-switchover's pass |
+| `harness.rs` (`Ui`, `ui()`, `site_of`, the marker checks, each node start), `scripts/parity.sh`, `crates/svrngs/tests/page_v2/main.rs` with an empty `mod` file per feature row, its `[[test]]` entry, check.sh's `page v2` step, `web/tests/home.mjs`, `web/tests/tabs.mjs` | page-switch | each feature row fills only its own `mod` file; no row edits the two drivers after |
+| `ui/copy.js`, `web/tests/copy.test.mjs`, `web/v2/enter.js`, `web/v2/computer.js`, `home/v2/home.js`, `home/v2/group.js`, a stub `home/v2/<file>.js` for each home feature, `page_v2/open.rs` | page-open | `computer.js` passes to page-join; features send `again` and never edit `home.js` or `group.js` |
+| `ui/shelf.js`, `web/v2/shelf.js`, `home/v2/shelf.js`, `page_v2/shelf.rs` | page-shelf | none |
+| `web/v2/index.js`, `home/v2/{index,running,lending}.js`, `page_v2/index.rs` | page-index | none |
+| `ui/door.js`, `ui/visitors.js`, `web/v2/{door,visit}.js`, `home/v2/{door,visits,leave,screen}.js`, `page_v2/members.rs` | page-members | home acts reads `decides` through GROUP |
+| `web/v2/{join,among}.js`, `home/v2/{join,make,links,open}.js`, `page_v2/join.rs`, `home-join.test.mjs`, `home-make.test.mjs` | page-join | none |
+| `ui/acts.js`, `ui/changes.js`, `ui/uses.js`, `web/v2/{acts,uses,ask}.js`, `home/v2/{acts,ask}.js`, `page_v2/acts.rs`, `acts.test.mjs` | page-acts | none |
+| `home/v2/{wifi,play}.js`, `page_v2/rooms.rs` | page-home-rooms | `index.js` imports Play's cell, `acts.js` the two parts, stubs until then |
+| `web/tests/v2/<row>.mjs` | that row | none |
 | check.sh's `parity` step, `demo/runs/page/<date>-parity/` | page-parity | none |
-| every v1 file, `docs/DESIGN.md`, `ARCHITECTURE.md` | page-switchover | DESIGN's gate paragraph is page-switch's; PLAN §1's line is page-economize's |
+| every v1 file, `docs/DESIGN.md`, `ARCHITECTURE.md` | page-switchover | DESIGN's gate paragraph is page-switch's; PLAN §1's line is page-scaffold's |
 
 `SHELL` is written by v2's build from what it copies, and `serve.rs` serves
 `home/v2/`, `ui/` and `vendor/` by name (`^[a-z0-9-]+\.(js|css|html)$`).
@@ -235,28 +238,25 @@ home.md's "−430 home.js, −110 question.js" counted physical lines (`wc -l`:
 **The `v2` rung while both live** (it counts `web/v2/`, `home/v2/`,
 `home/ui/`, `web/vendor/` and `scripts/parity.sh`, and `.` skips them):
 
-| Rows | Lines |
-|---|---|
-| page-vendor (three minified modules) | +3 to +6 |
-| page-machine | +18 to +25 |
-| page-skeleton (view, trace, `build.sh`, `serve.rs`, the two stubs) | +68 to +92 |
-| page-parts (seven primitives; the session's estimate, components.md gives none) | +30 to +45 |
-| page-frame | +30 to +40 |
-| page-switch (`parity.sh`) | +25 to +40 |
-| page-copy | +18 to +26 |
-| page-v2-enter | +65 to +80 |
-| the nine phone flows | +248 to +320 |
-| page-home-root | +70 to +90 |
-| the fifteen home flows | +235 to +317 |
-| page-components | 0 to −20 |
-| **The rung** | **+810 to +1,081** |
+| Row | Lines | From the plans |
+|---|---|---|
+| page-scaffold | +149 to +208 | vendor +3 to +6, machine +18 to +25, view, trace, build and serve +68 to +92, primitives +30 to +45 (the session's: components.md gives none), phone frame +30 to +40 |
+| page-switch (`parity.sh`) | +25 to +40 | scaffold.md |
+| page-open | +153 to +196 | Copy +18 to +26, phone enter +65 to +80, home root +70 to +90 |
+| page-shelf | +40 to +58 | phone +30 to +40, home shelf less its index +10 to +18 |
+| page-index | +78 to +108 | phone index less `#open=` naming +34 to +44, home's wide index +10 to +18, running +18 to +24, lending +16 to +22 |
+| page-members | +110 to +152 | phone door +22 to +30, visit +20 to +26, home door +20 to +30, visits +12 to +18, leave +18 to +24, screen +18 to +24 |
+| page-join | +120 to +160 | phone join +40 to +50, among, cold and `#open=` +22 to +28, home join +16 to +22, make +14 to +20, links +20 to +28, open +8 to +12 |
+| page-acts | +108 to +144 | phone acts +38 to +48, uses +18 to +24, ask +24 to +30, home acts +20 to +30, ask +8 to +12 |
+| page-home-rooms | +32 to +46 | wifi +18 to +26, play +14 to +20 |
+| **The rung** | **+815 to +1,112** | |
 
-That is scaffold's +130 to +190 (vendor, machine, skeleton, switch, copy:
-+132 to +189), phone's +350 to +440 (frame, enter and flows: +343 to
-+440), home's +300 to +410 (root and flows: +305 to +407), and the
-primitives, which no plan sized. **Proposed cap: 1,100**, the sum's top
-and 19 lines more. Each row reports where it lands against its range. A row
-past its range stops.
+That is scaffold's +130 to +190, phone's +350 to +440 and home's +300 to
++410, plus the primitives no plan sized. The rows that are now one row
+carry their parts' ranges summed. page-components' 0 to −20 is gone with
+its row: its folds are the switchover pass's first candidates.
+**Proposed cap: 1,150**, the sum's top and 38 lines more. Each row reports
+where it lands against its range, and a row past its range stops.
 
 **`.` while both live: +14 to +17**, lines the switchover deletes:
 - `lean_check.py`'s rung, +3;
@@ -266,23 +266,23 @@ past its range stops.
 - home.rs's v2 merge, +1;
 - cli.rs's `--ui`, +2 to +3.
 
-`.` has one line of room, so page-economize must cut 13 to 16. home.rs's
+`.` has one line of room, so page-scaffold (a) must cut 13 to 16. home.rs's
 four served-file consts and their routes (`home.rs:90-111`, `:141-144`, 15
 counted lines) as one table give −5 to −8. The survey finds the rest, or
 asks a raise of what is left, returned at the switchover.
 
 **The switchover's bar: `.` at or under 19,481 once v1 is deleted.**
 - `.` after = 19,480 − E + S + T − D, where:
-  - E, economize's cuts, kept: about 15;
+  - E, page-scaffold (a)'s cuts, kept: about 15;
   - S, v2's lines that stay: the rung less `parity.sh`, `serve.rs` and the
     part of `build.sh` that does not fold into build-web.sh, about −45 to
-    −70, so +740 to +1,035;
+    −70, so +770 to +1,042;
   - T, home.rs's table of v2's files once `serve.rs` is gone: about 31
     modules, through one `macro_rules!` over their names, +8 to +30;
   - D, v1 deleted: 412 + 231 + 59 + 1 (sw.js's hand `SHELL`) = 703.
-- So `.` lands at **19,510 to 19,827**, which is 29 to 346 over.
+- So `.` lands at **19,540 to 19,834**, which is 59 to 353 over.
 - It breaks even only if S + T is at most about 719: v2 at most about 700
-  lines, 5% under the low end.
+  lines, about 9% under the low end.
 - **Plainly: the bar is not reachable on these estimates.**
   - The switchover runs an economizing pass first.
   - Past passes cut 3 to 93 lines (ralph/next/ios/CHARTER.md, "Estimates").
@@ -295,6 +295,35 @@ asks a raise of what is left, returned at the switchover.
 
   So each home row aims below its range, and every move aims shorter than
   what it replaces (BRIEF).
+
+## What the merge moved, 2026-10-31
+
+The operator: "42 rows. That's absurd. Cut it in half." The 42 rows became
+13: one row per feature across both pages. Every part kept its plant, its
+byte-for-byte list, its files, its demo and its range. What moved:
+- **HUMAN-page-rung** is no row. The rung, its cap and STATE's open choices
+  are answered before launch; until they are, the queue does not launch.
+  page-scaffold (a) stops only if it cannot find `.`'s room.
+- **page-components** is no row. A primitive a feature needs goes in that
+  row's own file, and page-switchover's pass folds the duplicates into
+  `ui/parts.js`, with the same `dry-report` and plant.
+- **The screen** moved from page-home-rooms to page-members. It draws
+  `ui/door.js` (`h:316-327`), so page-home-rooms still depends on
+  page-open alone.
+- **`#open=` naming and aliases** (`a:546-563`) moved from the index to
+  page-join, beside `among` and cold, as the operator's shape lists them.
+- **The home's wide index** moved from the home shelf to page-index.
+- **A latent flaw, closed.** The 42-row plan had the shelf's test assert
+  Events in `#lent`, which the index row draws, so it could only pass once
+  both rows had landed. Now page-shelf asserts the read again by its lines,
+  and page-index asserts that the bring is drawn.
+- **Lost by the merge:**
+  - A full gate between parts: 9 `check.sh` closes, not 39. `parity.sh`
+    and the targeted runs stand between parts instead.
+  - Parallelism: 6 units at once, not 24. With the gate lock and 3 lanes,
+    24 never ran at once anyway.
+  - A finer stop: a row past its range now stops a whole feature, not one
+    flow.
 
 ## Running rows in parallel: a proposal, until the operator's go
 
@@ -324,7 +353,8 @@ the operator's go.
   that loop's own worktree.
 - **Work lands on `main` in the real checkout**, by the loop's merge. The
   branches are the loop's and go once they are merged.
-- **The cost in history:** about 40 merge commits on `main`. svrngs has
+- **The cost in history:** about 9 merge commits on `main`, one per row
+  that is not a HUMAN- row. svrngs has
   merged before (`efadec28`, `4475a898`). If the operator wants a linear
   `main`, run serially.
 - **Disk.** `target/` is 20 GB, and 134 GB is free (`df`, 2026-10-31).
@@ -340,13 +370,19 @@ the operator's go.
   - A gate takes 15 to 30 min (`check.sh:29`'s slowest: tests 307 s,
     browser 246, scenes 544, canary 178, before the build), so at most 2 to
     4 gates an hour.
-  - The 24 flow rows need at least 8 to 12 hours of the lock alone. That
-    is about 12 to 16 hours with 3 lanes, against 30 to 40 serially.
-  - A fourth lane only waits at the lock.
+  - Only the six feature rows run at once. Each spans several sessions,
+    about 4 to 8 hours of work, with one closing gate and a few targeted
+    browser runs under the lock. So the lock is busy about 3 to 5 hours in
+    all, and is not the bound: the work is.
+  - Serially the six take about 24 to 48 hours. With 3 lanes they take two
+    waves, about 8 to 16 hours, plus waits at the lock. page-shelf goes
+    first, as the first lane's.
+  - Six lanes would make one wave, but they double the disk (30 to 60 GB)
+    and the host's load beside every gate. Three is the proposal.
   - Lanes compiling beside a gate load the host, and the grapevine scene
     failed at a load of 6.96 (give STATE, give-docs NOTE). Fewer lanes, or
     a lighter cargo share, are the levers.
-- **Merges.** The ownership table makes the flow rows disjoint by file, so
+- **Merges.** The ownership table makes the six feature rows disjoint by file, so
   `conflicts.txt` names none at the start.
   - What a file table cannot see is two rows that each pass alone and break
     together.
@@ -359,17 +395,18 @@ the operator's go.
   `README.md`, `demo/*.md` and `docs/guide/`.
 - **The alternative, not recommended:** two serial queues, `page-phone`
   and `page-home`, in two clones, as `~/dev/svrngs-folders` ran syp.
-  - It gives two at once, not three.
+  - It gives two at once, not three, and the six feature rows do not split
+    by page: each covers both.
   - It costs a second `target/`.
   - Its main reaches `main` only by hand merges (`05eee01e`, `fb98c92b`).
 
 ## Decide
 
 - the region, state and message names, held to `vocab_check.py:62`'s nouns;
-- what a row splits into when it cannot execute; the order of ready flow
-  rows;
-- whether a primitive a flow needs goes page-local now, and is folded by
-  page-components;
+- what a row splits into when it cannot execute; the order of ready
+  feature rows;
+- whether a primitive a feature needs goes in its own file now, to be
+  folded by page-switchover's pass;
 - the smaller reversible step;
 - a v1 test that cannot pass on v2 with its assertions unchanged. The
   director names it and the reason, and it is the operator's
@@ -388,7 +425,7 @@ For each of these, write `NEEDS_HUMAN.md` and stop:
   policy. None is planned;
 - **v1:** any edit to a v1 file before the switchover, beyond a gate fix
   whose pin updates in the same commit (PROMPT fence 2);
-- **a v1 test changed** beyond the two driver rows;
+- **a v1 test changed** beyond page-switch's two driver edits;
 - **a dependency** beyond Preact 11.1.1 and htm 3.1.1, vendored;
 - **the people runs:** the iPhone run in page-parity, and the switchover's
   go;
