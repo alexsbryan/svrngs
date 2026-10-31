@@ -343,7 +343,14 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # byte): docs/diagrams/src/ and docs/brand/src/ draw pictures, not the
 # product, as apps/ is not. The 10-27 raises for them (+406, +53) leave with
 # them: -366 at c0c466fe, at 19,114, so the cap lowered to one past it.
-BUDGET = {"crates/svrngs-core": 3242, ".": 19115, "swift": 1}
+# The pages' v2 on a rung of its own while it is built beside v1, the
+# operator's (2026-10-31, "Accept", ralph/next/page/STATE.md "Decided before
+# launch" 1): v2's files, its vendored libraries and the parity report count
+# on `v2`, capped at 1,150 (the queue's estimate, +815 to +1,112), and `.`
+# skips them. page-switchover deletes the rung: `.` takes v2 back once v1 is
+# deleted, after its own economizing pass, and asks a raise for what is left.
+BUDGET = {"crates/svrngs-core": 3242, ".": 19115, "swift": 1, "v2": 1150}
+V2 = ("web/v2/", "web/vendor/", "crates/svrngs-node/src/home/v2/", "crates/svrngs-node/src/home/ui/", "scripts/parity.sh")
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
@@ -360,11 +367,11 @@ def files(base):
     return (ROOT / p for p in r.stdout.decode().split("\0") if p)
 
 
-def code_lines(base, kinds=CODE):
+def code_lines(base, kinds=CODE, v2=False):
     n = 0
     for f in files(base):
         rel = f.relative_to(ROOT).as_posix()
-        if (f.suffix not in kinds or not f.is_file() or "/tests/" in f"/{rel}"
+        if (f.suffix not in kinds or not f.is_file() or "/tests/" in f"/{rel}" or rel.startswith(V2) != v2
                 or "/node_modules/" in f"/{rel}"
                 or rel.startswith(("apps/", "target/", "demo/runs/", "docs/diagrams/src/", "docs/brand/src/"))
                 or re.search(r"(^|/)tests?(_\w+)?\.rs$|_tests?\.rs$|\.test\.m?js$", rel)):
@@ -408,12 +415,11 @@ def main():
     if core_lib.exists() and "#![cfg_attr(not(test), no_std)]" not in core_lib.read_text():
         broken.append("crates/svrngs-core/src/lib.rs lost #![cfg_attr(not(test), no_std)]: the core is no_std")
     for rung, cap in BUDGET.items():
-        n = code_lines(ROOT, {".swift"}) if rung == "swift" else code_lines(ROOT / rung)
+        n = code_lines(ROOT, {".swift"}) if rung == "swift" else code_lines(ROOT, v2=True) if rung == "v2" else code_lines(ROOT / rung)
         print(f"{rung:<20} {n:>6} / {cap} lines")
         if n >= cap:
             broken.append(f"{rung} has {n} lines of code, budget {cap}: raised only by the operator, with the reason in the commit")
-    for b in broken:
-        print(f"BROKEN  {b}")
+    for b in broken: print(f"BROKEN  {b}")
     return 1 if broken else 0
 
 
