@@ -11,6 +11,12 @@ cd "$(dirname "$0")/.."
 soft=$(ulimit -n)
 ulimit -Sn 10240 2>/dev/null || ulimit -Sn "$(ulimit -Hn)"
 echo "note       open files: $soft, raised to $(ulimit -n)"
+# Awake while this runs, on a Mac: an idle Mac slept 3.16 h of a run on
+# 2026-10-30 (`pmset -g log`), its steps going on only in the dark wakes, and
+# `tests` said "passed (10396 s)" against a limit of 1535 s, since a step's
+# limit is a `sleep`, which stops while the Mac sleeps, and its time is
+# $SECONDS, which does not. Idle sleep only: a closed lid on battery still sleeps.
+command -v caffeinate >/dev/null && { caffeinate -i -w $$ & echo "note       kept awake while this runs (caffeinate, pid $!)"; }
 failed=0
 # Each step's time limit, so a hung step fails in minutes, not when the
 # loop's budget ends (capability-step-limit: `app laws` held 2h35m, its
