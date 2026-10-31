@@ -43,11 +43,7 @@ for t in "${TARGETS[@]}"; do
   read -r platform triple build <<<"$t"
   echo "build-release: $platform ($triple) by ${build}…"
   # shellcheck disable=SC2086 # $build is a command and its subcommand
-  if ! CARGO_INCREMENTAL=0 $build --release --locked -p svrngs -p give --target "$triple"; then
-    echo "build-release: $platform did not build" >&2
-    failed+=("$platform")
-    continue
-  fi
+  CARGO_INCREMENTAL=0 $build --release --locked -p svrngs -p give --target "$triple" || { echo "build-release: $platform did not build" >&2; failed+=("$platform"); continue; }
   for p in svrngs give; do
     COPYFILE_DISABLE=1 tar --no-xattrs -czf "$GET/$p-$platform.tar.gz" -C "target/$triple/release" $p
   done
@@ -59,7 +55,4 @@ if [ ${#failed[@]} -lt ${#TARGETS[@]} ]; then
   echo "built: $GET"
   cat "$GET/SHA256SUMS"
 fi
-if [ ${#failed[@]} -gt 0 ]; then
-  echo "build-release: not built: ${failed[*]}" >&2
-  exit 1
-fi
+[ ${#failed[@]} -eq 0 ] || { echo "build-release: not built: ${failed[*]}" >&2; exit 1; }
