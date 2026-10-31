@@ -80,6 +80,11 @@ const UNCHANGED: &str = "that cannot be changed on this computer";
 
 const POLICY: &str = "default-src 'self'; frame-ancestors 'none'";
 
+/// The home's v2 page, beside v1 until the switchover, in a test build only.
+#[cfg(feature = "test-support")]
+#[path = "home/v2/serve.rs"]
+pub mod v2;
+
 /// When a person joined, as the page says it (home.js `people`) and
 /// `svrngs remove --joined` takes it: this computer's time to the second
 /// with its offset, so the hour a fall-back night repeats reads back to one
@@ -153,8 +158,10 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
     .merge(crate::surface::router(at.clone()))
     .merge(crate::removal::router(at.clone()))
     .merge(crate::room::route::router(at.clone()))
-    .merge(crate::play::router(at.clone()))
-    .layer(axum::middleware::from_fn_with_state(
+    .merge(crate::play::router(at.clone()));
+    #[cfg(feature = "test-support")]
+    let home = home.layer(axum::middleware::from_fn_with_state(at.clone(), v2::serve));
+    let home = home.layer(axum::middleware::from_fn_with_state(
         at.clone(),
         only_itself,
     ));

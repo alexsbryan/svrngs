@@ -347,6 +347,8 @@ impl Node {
             room,
             plays,
             sessions: crate::session::Sessions::new(token.clone(), host.api_port),
+            #[cfg(feature = "test-support")]
+            ui: Default::default(),
         };
         let room = crate::room::owner::spawn(asking.clone(), owner);
         let play = crate::play::spawn(asking.clone(), player);
@@ -885,6 +887,9 @@ pub(crate) struct Asking {
     pub(crate) plays: crate::play::Plays,
     /// Who opened the home page and each lend's origin ([`crate::session`]).
     pub(crate) sessions: crate::session::Sessions,
+    /// Which home page this node serves, chosen once ([`crate::home::v2`]).
+    #[cfg(feature = "test-support")]
+    pub(crate) ui: crate::home::v2::Chosen,
 }
 
 fn people_router(asking: Asking) -> axum::Router {

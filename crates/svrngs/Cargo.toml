@@ -40,6 +40,14 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 [target.'cfg(target_env = "musl")'.dependencies]
 mimalloc = { version = "0.1.52", default-features = false }
 
+[features]
+# The home's v2 page, chosen by `--ui v2` (cli.rs), in a test build only:
+# svrngs-node's test support, which only a test asks of a node. A test's
+# binary carries it only when its run names it (`--features
+# svrngs/test-support`), since dev-dependencies' features never reach a
+# bin; no release names it (web/tests/release.test.mjs).
+test-support = ["svrngs-node/test-support"]
+
 [dev-dependencies]
 tempfile = "3"
 # join_by_link.rs dials as a stranger, as svrngs-node's own tests do.
