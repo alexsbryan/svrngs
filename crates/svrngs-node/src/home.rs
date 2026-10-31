@@ -87,28 +87,18 @@ const POLICY: &str = "default-src 'self'; frame-ancestors 'none'";
 /// it by hand.
 pub const WHEN: &str = "%Y-%m-%d %H:%M:%S %z";
 
-/// A script's type, as the page's module and its question are served.
-const JS: [(header::HeaderName, &str); 1] = [(header::CONTENT_TYPE, "text/javascript")];
-
-/// The home page's one module.
-const MODULE: ([(header::HeaderName, &str); 1], &str) = (JS, include_str!("home/home.js"));
-
-/// svrngs's question and what apps use, in the one wording the group's page
-/// loads too (`scripts/build-web.sh` gives it the same file).
-const QUESTION: ([(header::HeaderName, &str); 1], &str) = (JS, include_str!("home/question.js"));
-
-/// Its look, svrngs's one look, a file of its own since its policy runs no
-/// inline style; the group's page is given the same file (`scripts/build-web.sh`).
-const LOOK: ([(header::HeaderName, &str); 1], &str) = (
-    [(header::CONTENT_TYPE, "text/css")],
-    include_str!("home/look.css"),
-);
-
-/// The tab's icon: the svrngs mark's small cut, from its one home (docs/brand/).
-const ICON: ([(header::HeaderName, &str); 1], &str) = (
-    [(header::CONTENT_TYPE, "image/svg+xml")],
-    include_str!("../../../docs/brand/favicon.svg"),
-);
+/// The home page's files, one table of each one's path, type and body, as
+/// built in: its one module; svrngs's question and what apps use, in the
+/// one wording the group's page loads too (`scripts/build-web.sh` gives it
+/// the same file); its look, svrngs's one look, a file of its own since its
+/// policy runs no inline style, which the group's page is given too; and
+/// the tab's icon, the svrngs mark's small cut, from its one home
+/// (docs/brand/).
+macro_rules! served {
+    ($($path:literal $kind:literal $body:literal)*) => {
+        Router::new()$(.route($path, get(|| async { ([(header::CONTENT_TYPE, $kind)], include_str!($body)) })))*
+    };
+}
 
 /// Whether `host` names the home page, at any port: [`only_itself`] holds
 /// it to this listener's.
@@ -134,39 +124,40 @@ pub(crate) fn ask_address(port: u16, lend: &Label, app: &Label) -> String {
 /// is answered here, any other at its lend's origin.
 pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
     let page = || async { axum::response::Html(include_str!("home/index.html")) };
-    let home = Router::new()
-        .route("/", get(page))
-        .route("/ask", get(page))
-        .route("/to", get(to))
-        .route("/home.js", get(|| async { MODULE }))
-        .route("/question.js", get(|| async { QUESTION }))
-        .route("/look.css", get(|| async { LOOK }))
-        .route("/favicon.svg", get(|| async { ICON }))
-        .route("/choices", get(choices).post(choose))
-        .route("/reaching", get(reached).post(reaching))
-        .route("/lent", get(lent).post(change))
-        .route("/running", get(running).post(lend_one))
-        .route("/link", axum::routing::post(link))
-        .route("/visits", axum::routing::post(stop))
-        .route("/folder", axum::routing::post(open))
-        .route("/shelf", axum::routing::post(crate::folder::bring))
-        .route("/runs", axum::routing::post(crate::folder::yes))
-        .route("/group", get(namesakes).post(found))
-        .route("/join", get(asked).post(join))
-        .with_state(at.clone())
-        .merge(
-            Router::new()
-                .route("/v1/rail/people", get(crate::rail::people))
-                .with_state(rail),
-        )
-        .merge(crate::surface::router(at.clone()))
-        .merge(crate::removal::router(at.clone()))
-        .merge(crate::room::route::router(at.clone()))
-        .merge(crate::play::router(at.clone()))
-        .layer(axum::middleware::from_fn_with_state(
-            at.clone(),
-            only_itself,
-        ));
+    let home = served! {
+        "/home.js" "text/javascript" "home/home.js"
+        "/question.js" "text/javascript" "home/question.js"
+        "/look.css" "text/css" "home/look.css"
+        "/favicon.svg" "image/svg+xml" "../../../docs/brand/favicon.svg"
+    }
+    .route("/", get(page))
+    .route("/ask", get(page))
+    .route("/to", get(to))
+    .route("/choices", get(choices).post(choose))
+    .route("/reaching", get(reached).post(reaching))
+    .route("/lent", get(lent).post(change))
+    .route("/running", get(running).post(lend_one))
+    .route("/link", axum::routing::post(link))
+    .route("/visits", axum::routing::post(stop))
+    .route("/folder", axum::routing::post(open))
+    .route("/shelf", axum::routing::post(crate::folder::bring))
+    .route("/runs", axum::routing::post(crate::folder::yes))
+    .route("/group", get(namesakes).post(found))
+    .route("/join", get(asked).post(join))
+    .with_state(at.clone())
+    .merge(
+        Router::new()
+            .route("/v1/rail/people", get(crate::rail::people))
+            .with_state(rail),
+    )
+    .merge(crate::surface::router(at.clone()))
+    .merge(crate::removal::router(at.clone()))
+    .merge(crate::room::route::router(at.clone()))
+    .merge(crate::play::router(at.clone()))
+    .layer(axum::middleware::from_fn_with_state(
+        at.clone(),
+        only_itself,
+    ));
     let lends = crate::origin::router(at);
     Router::new().fallback(|req: Request| async move {
         use tower::ServiceExt;
