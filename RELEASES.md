@@ -1,5 +1,50 @@
 # svrngs releases
 
+## V1.3.1, 31 October 2026
+
+V1.3.1 makes everything your group lends something you can bookmark, on a
+phone and on a computer, and opens lends in Safari on an iPhone again. The
+group's page has the phone half already. Update your computers for the
+rest; a computer still on V1.3 works with everyone as before.
+
+**Bookmark what your group lends.** Every lend has an address that doesn't
+change. Open it any time in a browser that has joined, and it opens, even
+after the browser has stopped it or its pass has run out: svrngs takes you
+through your group's page and back to the same place. On a computer, each
+lend's row has a link to keep, with **Bookmark this**, and a lend's address
+on your own computer, `http://<label>.localhost:<port>/`, now opens there
+too, through your home page. A browser that hasn't joined says so, in
+place of a page that doesn't exist.
+
+**Open a lend by its name.** `films@Sam` opens Sam's films: add
+`#open=films@Sam` to your group's page, or `&open=films@Sam` to the end of
+your group's link. Two people with one name are told apart by when each
+joined, `films@Sam (joined 24 Oct)`, so a name never opens the wrong thing,
+and a name that matches nothing says so. The day someone joined is now
+counted in UTC on every page, so a name works the same in every time zone.
+
+**On an iPhone, keep your group on the Home Screen.** Safari can forget a
+site, and you with it. A page on the Home Screen keeps its own, but it
+doesn't share Safari's, so add your group's page to the Home Screen first
+and join from there. The page says so before it asks your name, and the
+Home Screen shows svrngs's mark.
+
+**Lends open in Safari on an iPhone again.** Since V1.2, Safari on an
+iPhone said "This could not be opened" for every lend, while other phone
+browsers opened them.
+
+**In two groups?** A lend's address opens in the group that lends it. If
+both lend it, the page asks which.
+
+**Smaller things.** Every page shows svrngs's mark in its tab. On a
+computer, the group's page says how a lend reaches you, under **How this
+reaches you**. An address the page can't read says why. A browser that
+keeps no cookies for sites on localhost is told so, in place of going round
+and round.
+
+V1.3.1 is the build at `group.svrnme.sh`, from commit `<commit>`, tagged
+`v1.3.1`.
+
 ## V1.3, 27 October 2026
 
 V1.3 lends anything on a port, a game included, and Give keeps one for
