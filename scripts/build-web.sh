@@ -125,11 +125,7 @@ cp "${SHARED[@]}" "$OUT/"
 # install.sh, the line a computer pastes, served at the page's address with
 # what scripts/build-release.sh puts under get/ (DESIGN §7).
 cp "$APP/install.sh" "$OUT/"
-for f in "${PAGE[@]}"; do
-  cp "$APP/$f" "$OUT/"
-  sed -i.bak "s/__VERSION__/${VERSION}/g" "$OUT/$f"
-  rm -f "$OUT/$f.bak"
-done
+for f in "${PAGE[@]}"; do sed "s/__VERSION__/${VERSION}/g" "$APP/$f" >"$OUT/$f"; done
 # 404.html, what a static host serves for a path it has no file for, such as
 # a lend's own deep path where its worker is not (DESIGN §3, "Lent apps",
 # call 1): the page, from the root, with its policy, marked `missing`.
