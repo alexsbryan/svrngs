@@ -221,6 +221,12 @@ brackets.
       - a planted `../x.js` gets 404, named in `tests/home.rs`;
       - `features = ["test-support"]` under svrngs's `[dependencies]` turns `release` red;
       - a bare `../vendor/preact.js` turns `specifiers` red.
+    - **Where it landed** (corrected, page-scaffold (g), 6f998f80..34297d41):
+      - `policy.test.mjs` runs `web/v2/build.sh` itself, sourced as build-web.sh sources it over a stand-in for the wasm, so the derived `<head>` it reads is the build's, in about 0.3 s, with no wasm compiled. A `<head>` in `body.html` and `ui/` left out of `STAMPED` are kept as its own cases.
+      - The refusal decides on `grep -qa`'s exit status, not on `grep -c`'s count: this Mac's interactive grep is ugrep, which prints no count for a binary (`grep -c svrngs-ui-v2 target/debug/svrngs`: nothing, exit 1).
+      - The `../` plant asks for files that are there (`/v2/../home.js`, `/ui/../question.js`), since a 404 for a missing `x.js` proves nothing. The case carries no `#[cfg]`, so it can never quietly not compile.
+      - The trust floor is unchanged against the base: `git diff 3df32f1f HEAD -- scripts/trust_floor.txt` is empty.
+      - `.`'s hooks are +14 (build-web.sh +3, build-release.sh +1, check.sh +3, home.rs +2, node.rs +2, cli.rs +3), net −2 against (a)'s 16 cut. That is past +9 to +11 by node.rs's choice and home.rs's layer, which no estimate sized. The operator's widening (47552a83) approved the package that showed `.` at 19,118 and named (g)'s one line. `.` is 19,119 of 19,122, so its room of 3 covers page-switch's `page v2` and page-parity's `parity`, +1 each.
   - **Byte for byte:** all of v1, and every test name.
   - **Moves:** `page laws`, and both v2 pages served empty. +149 to +250 (rung; the operator widened it from +208, 2026-10-31: the phone frame 92 against +30 to +40, serve 62; demo/runs/page/2026-10-31-scaffold-range/NEEDS_HUMAN.md), +9 to +11 (`.`), against (a)'s cuts [`a:47-117`, about 40].
 - [ ] page-switch — depends [page-scaffold] — ONE ROW, each part its own commit, its plants red first, and `scripts/check.sh` once, at the close — one switch for what the v1 tests drive, which fails loudly while v2 is short, and the two driver edits, green on v1 first:
