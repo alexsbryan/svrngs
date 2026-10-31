@@ -942,3 +942,75 @@ async fn looking_for_what_runs_here_says_which_read_failed_and_traces_why() {
     );
     alex.endpoint().close().await;
 }
+
+/// **The home's v2 page is served from its sources to a node chosen v2,
+/// and to no other** (page-scaffold (g); home/v2/serve.rs). A node chosen
+/// v2, once (a second choice, v1, is refused), answers `/` and `/ask` with
+/// home/v2/index.html, marked `svrngs-ui-v2`, under the page's one policy,
+/// and `/v2/`, `/ui/`, `/vendor/` and `/question.js` with each file's
+/// bytes as they are in the tree; v1's `/home.js` stays served beside them.
+/// A node left v1 serves v1's page, unmarked, and none of v2's files. A
+/// name outside `^[a-z0-9-]+\.(js|css|html)$`, a file not there, and a
+/// `../` up to a file that is there (`/v2/../home.js`, home/home.js) are
+/// each 404. Red on the plant: serve.rs taking any directory under `/v2`,
+/// which answered `/v2/../home.js` with v1's home.js.
+#[tokio::test]
+async fn the_home_s_v2_page_is_served_from_its_sources_to_a_node_chosen_v2_and_no_other() {
+    use svrngs_node::home::v2::Ui;
+    let (v1_dir, v2_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let v1 = start(1, v1_dir.path()).await;
+    let v2 = start(2, v2_dir.path()).await.ui(Ui::V2).ui(Ui::V1);
+    let typed = "Sec-Fetch-Site: none\r\nSec-Fetch-Mode: navigate\r\n";
+    let own = "Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\n";
+    let source = |f: &str| std::fs::read_to_string(format!("{}/{f}", env!("CARGO_MANIFEST_DIR")));
+    let js = "text/javascript";
+    for (node, chosen) in [(&v1, false), (&v2, true)] {
+        let (browser, port) = (&Browser::of(node), node.api_addr().port());
+        let home = format!("svrngs.localhost:{port}");
+        let page = ask(browser, "GET", &home, "/", typed, "").await;
+        assert_eq!(page.status, 200, "{}", page.body);
+        assert_eq!(page.body.contains("svrngs-ui-v2"), chosen, "{}", page.body);
+        assert_eq!(
+            page.header("content-security-policy"),
+            Some("default-src 'self'; frame-ancestors 'none'"),
+            "{}",
+            page.head
+        );
+        let v1s = ask(browser, "GET", &home, "/home.js", own, "").await;
+        assert_eq!(
+            (v1s.status, v1s.body),
+            (200, source("src/home/home.js").unwrap())
+        );
+        let files = [
+            ("/ask", "src/home/v2/index.html", "text/html; charset=utf-8"),
+            ("/v2/home.js", "src/home/v2/home.js", js),
+            ("/ui/machine.js", "src/home/ui/machine.js", js),
+            ("/ui/view.js", "src/home/ui/view.js", js),
+            ("/vendor/preact.js", "../../web/vendor/preact.js", js),
+            ("/question.js", "src/home/question.js", js),
+        ];
+        for (path, file, kind) in files {
+            let got = ask(browser, "GET", &home, path, own, "").await;
+            match chosen {
+                true => assert_eq!(
+                    (got.status, got.header("content-type"), &got.body),
+                    (200, Some(kind), &source(file).unwrap()),
+                    "{path}"
+                ),
+                false if path == "/question.js" => assert_eq!(got.status, 200, "v1's own"),
+                false => assert_ne!(got.body, source(file).unwrap(), "{path} at a node left v1"),
+            }
+        }
+        for path in [
+            "/v2/../home.js",
+            "/ui/../question.js",
+            "/v2/Home.js",
+            "/v2/home.mjs",
+            "/ui/gone.js",
+        ] {
+            let got = ask(browser, "GET", &home, path, own, "").await;
+            assert_eq!(got.status, 404, "{path}: {}", got.body);
+        }
+        node.endpoint().close().await;
+    }
+}
