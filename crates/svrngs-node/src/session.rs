@@ -152,10 +152,13 @@ impl Sessions {
     pub(crate) fn redeem(&self, name: &str, req: &axum::extract::Request) -> Response {
         let query = req.uri().query().unwrap_or_default();
         if let Some((_, at)) = form_urlencoded::parse(query.as_bytes()).find(|(k, _)| k == "kept") {
-            let kept = self.shown(req.headers(), name) != Shown::Neither;
-            tracing::debug!(target: "session", name, kept, "session: an open back to see its session kept, on to its path if so, else said why");
-            let on = Redirect::to(Some(at.as_ref()).filter(|a| local(a)).unwrap_or("/"));
-            return (kept.then(|| on.into_response())).unwrap_or_else(|| self.refused(UNKEPT));
+            if self.shown(req.headers(), name) == Shown::Neither {
+                tracing::debug!(target: "session", name, "session: an open back to see its session kept, and none shown, so said why, never sent round again");
+                return self.refused(UNKEPT);
+            }
+            tracing::debug!(target: "session", name, "session: an open back to see its session kept, and kept, so on to its path");
+            return Redirect::to(Some(at.as_ref()).filter(|a| local(a)).unwrap_or("/"))
+                .into_response();
         }
         let code = query.split('&').find_map(|p| p.strip_prefix("code="));
         let redeemed = self.codes.redeem(code.unwrap_or_default());
