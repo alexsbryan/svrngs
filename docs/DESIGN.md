@@ -74,7 +74,8 @@ rules, where a house decides its rules (`apps/canon/`); and Give, an app
 the group keeps on one member's computer at a time, a carried page and a
 program of its own beside svrngs (`apps/give/`). Never the finished
 apps: the community builds those. "The iOS of groups" is an analogy for
-being the thing others build on, not a plan to ship an iPhone app first.
+being the thing others build on. The iPhone app is a door beside the
+group's page, never the way in: it adds only what a page can't (§7).
 
 **Three rules for anything a person reads.**
 1. *No universe to explain.* A person sees their group's name, people's
@@ -1473,8 +1474,7 @@ that names a page origin: no install, no store, the same token. Computers
 run the node — the `svrngs` process on macOS and Linux — and an always-on
 one is the group's meeting point, its port mapped by iroh; relays carry what
 cannot go direct. A TV is reached through a member's computer on its network,
-never by a page (§3, "The room"). A native phone app and Windows wait in
-PLAN §2. A svrn daemon on the same computer is an optional neighbour for
+never by a page (§3, "The room"). Windows waits in PLAN §2. A svrn daemon on the same computer is an optional neighbour for
 local AI; it holds no group state.
 
 **A phone's apps open apart from its page.** The page a group's link opens
@@ -1493,6 +1493,64 @@ is opened, since its label names its lender's key and the app. The host
 sends `frame-ancestors 'none'` on every answer (`web/vercel.json`), since a
 lent app is a name under its host and could frame the page where a person
 says yes; a host a group names in its place must send it too.
+
+**The phone's app adds what the page can't; the page stays the way in.**
+Designed, not built: the ios queue builds it (PLAN §1). The chat link
+opens the page in the browser and the person is in, so the app is never
+the first ask and never required. It earns its place by four things a page
+can't do (svrn-docs `rings/current/ROAD_TO_IOS_GA.md` §2.1):
+- it opens a lend in the phone's own app, Jellyfin in Jellyfin, at an
+  address a page can't give another app;
+- it remembers the person: its key is in the Keychain, where Safari may
+  clear the page's (§8, risk 4);
+- it goes direct over cellular, where the page is relay-only;
+- it keeps a lend playing with the phone locked, where the page's stops at
+  the lock (`demo/runs/ios/2026-10-30-observe/README.md` §3).
+
+The app's network extension, an iOS packet tunnel, holds an iroh endpoint
+with the person's own key. That key stands as a browser's (`Device::Browser`,
+§3 "Joining", call 2): it dials and is never dialled. So the app is no new
+kind of device and adds no line to svrngs-core. A tunnel's key admitted as
+a computer made its person "did not answer" on the page, since the list of
+what members lend dialled it (the same README, "Found on the way").
+
+Each lend the group's people lend is at `127.0.0.1:<port>` on the phone, a
+port of its own each, kept so an address saved in another app survives. A
+port another app holds is said in the app's words, never moved in silence.
+The tunnel stays up by iOS's on-demand rule, so there is nothing to turn on.
+The endpoint starts at the first connection to a lend and stops when idle.
+Starting it took under 1 s of the 10 s from the switch to a film's first
+frame (that README §1), so it is not kept warm. When the phone's link
+changes, the door reopens at once, before its silence limit runs out: a
+walk off WiFi lost 5.6 s, 4 of them `dial::held()`'s limit (that README §2).
+
+The app's build alone patches iroh and netwatch. It takes the exact crates
+from the registry by their checksums and applies the patches at build, so
+no vendored iroh is in the tree, and the computers' build stays stock. The
+patches:
+- netwatch ignores AirDrop's interfaces;
+- iroh takes no net report on a link change that keeps the route and
+  public address, and reports on the ladder's periodic step, which
+  refreshes a direct path every 300 s
+  (`demo/runs/phone-replica/2026-10-27/`, its patches and ladder).
+
+The app lives in `phone/`, its own Cargo workspace as `web/` is, since it
+holds libc at 0.2.189 for iOS; the Xcode project is under `phone/ios/`.
+
+Its words follow §1's three rules: never VPN, tunnel, key, relay or node,
+iOS's own prompt the one place "VPN" appears. It has two screens and a
+sheet in iOS's own controls (ROAD_TO_IOS_GA §2.3):
+- **House**, the lends;
+- **This phone**, what acts as you, with the page's words and Stop;
+- **the sheet** before iOS's prompt, the first time a lend is opened or
+  copied.
+
+It asks a name and iOS's prompt, nothing else: no account, notifications,
+location or contacts. No lend opens inside it (App Review guideline 4.7).
+An asleep lender, a lend that asks a yes, a refused link and a taken port
+are each said in its words and traced. The house gets it by TestFlight's
+internal testers or an ad hoc build, since a VPN app on the store needs an
+organization's account (guideline 5.4); the store waits in PLAN §2.
 
 **On a computer** each app opens at `http://<label>.localhost:<port>/` on its
 own loopback (`crates/svrngs-node/src/origin.rs`). Its port is the record
