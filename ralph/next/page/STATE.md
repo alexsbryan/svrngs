@@ -222,7 +222,7 @@ brackets.
       - `features = ["test-support"]` under svrngs's `[dependencies]` turns `release` red;
       - a bare `../vendor/preact.js` turns `specifiers` red.
   - **Byte for byte:** all of v1, and every test name.
-  - **Moves:** `page laws`, and both v2 pages served empty. +149 to +208 (rung), +9 to +11 (`.`), against (a)'s cuts [`a:47-117`, about 40].
+  - **Moves:** `page laws`, and both v2 pages served empty. +149 to +250 (rung; the operator widened it from +208, 2026-10-31: the phone frame 92 against +30 to +40, serve 62; demo/runs/page/2026-10-31-scaffold-range/NEEDS_HUMAN.md), +9 to +11 (`.`), against (a)'s cuts [`a:47-117`, about 40].
 - [ ] page-switch — depends [page-scaffold] — ONE ROW, each part its own commit, its plants red first, and `scripts/check.sh` once, at the close — one switch for what the v1 tests drive, which fails loudly while v2 is short, and the two driver edits, green on v1 first:
   - **Owns:** CHARTER's page-switch line.
   - **(a) The switch.**
