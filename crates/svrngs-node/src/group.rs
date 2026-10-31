@@ -202,6 +202,14 @@ pub fn folder_place(seed: &Seed) -> Option<PathBuf> {
     Some(PathBuf::from(home).join("svrngs").join(name))
 }
 
+/// What a group's folder's name is followed by where its place is taken
+/// ([`crate::folder::Folders::place`]): `-` and the start of `id`, the
+/// group's, which synced.rs `folder_of` takes off again, so the folder
+/// lines up with everyone's of the group's name.
+pub(crate) fn apart(id: &str) -> String {
+    format!("-{}", id.get(..8).unwrap_or(id))
+}
+
 impl crate::folder::Folders {
     /// The group's folder kept the same at [`folder_place`] as everyone's,
     /// as `share --folder` keeps one; or why not, said beside the join or
@@ -219,7 +227,7 @@ impl crate::folder::Folders {
         // its name, so no two groups ever share one (#138).
         let ours = crate::folder::dirs_of(&self.data_dir, &seed.id());
         let taken = dir.exists() && !ours.is_ok_and(|d| d.contains(&dir));
-        let apart = PathBuf::from(format!("{}-{}", dir.display(), &seed.id()[..8]));
+        let apart = PathBuf::from(format!("{}{}", dir.display(), apart(&seed.id())));
         let dir = if taken { apart } else { dir };
         let placed = std::fs::create_dir_all(&dir).map_err(|e| e.to_string());
         let kept = |()| (self.both_ways(dir.clone(), seed.id())).map_err(|e| e.to_string());

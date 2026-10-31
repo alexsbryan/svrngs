@@ -100,12 +100,15 @@ fn under(rel: &SyncPath, scope: &str) -> bool {
 /// or why the list kept cannot be read, so no ask writes over it.
 pub(super) type Syncing = Result<BTreeMap<(String, String), PathBuf>, (PathBuf, String)>;
 
-/// The folder `dir` keeps: its name.
-fn folder_of(dir: &Path) -> String {
-    dir.file_name()
-        .unwrap_or_default()
-        .to_string_lossy()
-        .into_owned()
+/// The folder `dir` keeps in `group`, the one rule for which folder of
+/// everyone's a directory lines up with: its name, less what
+/// [`crate::group::apart`] puts after the name of a group's folder whose
+/// place was taken, so that folder is everyone's and not one of its own.
+fn folder_of(dir: &Path, group: &str) -> String {
+    let name = dir.file_name().unwrap_or_default().to_string_lossy();
+    let placed = name.strip_suffix(&crate::group::apart(group));
+    tracing::debug!(target: "folder", namespace = group, dir = %dir.display(), apart = placed.is_some(), "synced: the folder a directory keeps — its name, less the id's start a group's folder beside another's carries");
+    placed.unwrap_or(&name).to_string()
 }
 
 /// The directories kept under `data_dir`: none when none was ever kept, and
@@ -117,10 +120,10 @@ pub(super) fn syncing_in(data_dir: &Path) -> Syncing {
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Vec::new(),
         Err(e) => return Err((at, e.to_string())),
     };
-    let kept = asks
-        .into_iter()
-        .map(|a| ((a.group, folder_of(&a.dir)), a.dir));
-    Ok(kept.collect())
+    let key = |a: &FolderAsk| (a.group.clone(), folder_of(&a.dir, &a.group));
+    let kept: BTreeMap<_, _> = asks.iter().map(|a| (key(a), a.dir.clone())).collect();
+    asks.iter().filter(|a| kept.get(&key(a)) != Some(&a.dir)).for_each(|a| tracing::warn!(target: "folder", namespace = a.group, dir = %a.dir.display(), "synced: a directory left out — a later one in the list keeps the same folder of the group, as a share from before a group's folder beside another's lined up with everyone's may"));
+    Ok(kept)
 }
 
 /// `bytes` at `path` whole or not at all ([`crate::declared::write_whole`]):
@@ -158,7 +161,7 @@ impl Folders {
     /// syncs cannot be read, or the folder or the directory is synced
     /// already elsewhere. Asked again as it is, it is answered as it is.
     pub fn both_ways(&self, dir: PathBuf, group: String) -> Result<String, FolderError> {
-        let folder = folder_of(&dir);
+        let folder = folder_of(&dir, &group);
         let standing = self.host.rail.standing(&group);
         let standing = standing.map_err(|e| FolderError::Unread(group.clone(), e.to_string()))?;
         if !standing.names(&self.host.actor) {

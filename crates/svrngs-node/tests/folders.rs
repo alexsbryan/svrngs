@@ -946,6 +946,39 @@ async fn one_directory_keeps_one_group_s_folder() {
     group.close().await;
 }
 
+/// **A group's folder placed beside another's is still everyone's**
+/// (#138's place): Ana's `films` folder is at `~/svrngs/films`, so on a
+/// computer where that place is taken — here Ben's, one `$HOME` for both —
+/// Ben's goes beside it, its id's start after its name; a file Ana puts in
+/// hers reaches his. `$HOME` is this test binary's own, and no other test
+/// here reads it. Planted: the folder named by its directory's last name
+/// alone (`films-<id8>`), which no member's `films` lines up with.
+#[tokio::test]
+async fn a_group_s_folder_placed_beside_another_s_syncs_with_everyone_s() {
+    let home = tempfile::tempdir().unwrap();
+    std::env::set_var("HOME", home.path());
+    let group = Group::new().await;
+    let films = seed("films", 9);
+    let (ana, placed) = group.ana.folders().place(&films);
+    assert_eq!(placed, Ok(()), "Ana's folder placed");
+    let (ben, placed) = group.ben.folders().place(&films);
+    assert_eq!(placed, Ok(()), "Ben's folder placed");
+    let apart = home
+        .path()
+        .join(format!("svrngs/films-{}", &films.id()[..8]));
+    assert_eq!(ben, apart, "Ben's place is Ana's, so his goes beside it");
+
+    let bytes = noise(10_000, b"beside");
+    std::fs::write(ana.join("a.bin"), &bytes).unwrap();
+    let at_ben = || std::fs::read(ben.join("a.bin")).ok() == Some(bytes.clone());
+    assert!(
+        until(&group, at_ben).await,
+        "Ana's file reaches Ben's folder beside hers: {:?}",
+        names(&ben)
+    );
+    group.close().await;
+}
+
 // ── A holder that sends wrong bytes (syp-4 f; gf's row 6) ─────────────
 
 /// The encoding of `bytes` a holder sends for a get of them whole, and

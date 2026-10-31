@@ -575,7 +575,8 @@ A group's folder goes where a joiner's does (`Folders::place`, one home for
 `new`, `join` and the page); a place another group's folder holds already,
 by its name or, on a disk that ignores case, a name differing only in case,
 stays its, and this group's goes beside it with its id's start after its
-name. A name one of their groups already has makes another
+name, which the folder's name between computers leaves off, so it is still
+everyone's folder of the group's name (`synced.rs`, `folder_of`). A name one of their groups already has makes another
 group all the same, said as the command says it — "You’re already in Trip
 (Sam’s, since 3 Oct). This makes a second group called Trip." — by one rule
 (`group::namesakes`). What the page cannot do it names under "Done in a
