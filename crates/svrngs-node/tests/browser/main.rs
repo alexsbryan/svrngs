@@ -1638,6 +1638,57 @@ async fn linking_app() -> (std::net::SocketAddr, KeptHeads) {
     (addr, heads)
 }
 
+in_both_engines!(
+    /// **A lend's address opens cold in a browser that joined** (svrn-docs
+    /// `rings/current/IN_THE_BROWSER.md` §4, the cold bookmark; DESIGN §3,
+    /// "Lent apps", call 1). Bo's browser holds the house and has opened
+    /// no lend, so no lend's worker is in it: its address, as a bookmark
+    /// opens it, at a path, `/?n=1`, reaches the page's host, whose page
+    /// sends the browser to the group's page at `#open=<label>&at=<path>`,
+    /// which signs a pass and comes back: the app, at that path, at its own
+    /// origin. With the worker taken away again at once, its address opened
+    /// a second time is said, and never sent to the group's page twice
+    /// within the minute. Red on 07eafbd7, the address's page saying
+    /// "Open this page from your group’s link.".
+    a_lends_address_opens_cold_in_a_browser_that_joined
+);
+async fn a_lends_address_opens_cold_in_a_browser_that_joined(engine: Engine) {
+    let site = site();
+    let relay = relay().await;
+    let bo = signing(7);
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &bo).await;
+    let (app, _) = linking_app().await;
+    lend(dir.path(), "app", app.port());
+    let label = label(1, "app");
+    let args = json!({
+        "site": site,
+        "key": hex::encode(bo.to_bytes()),
+        "token": token(&signing(1), &relay),
+        "cold": label,
+    });
+    let seen = drive(engine, "cold.mjs", args, None).await;
+    eprintln!("the cold address's run: {seen:#}");
+    let cold = &seen["cold"];
+    assert!(
+        at_origin(&cold["url"], &label)
+            && cold["url"].as_str().unwrap().ends_with("/?n=1")
+            && cold["title"] == "the app at a path",
+        "a lend's address opens cold, at its path, at its own origin:\n{seen:#}"
+    );
+    let again = &seen["again"];
+    assert_eq!(
+        (&again["title"], &again["status"]),
+        (
+            &json!("You’re invited to a group"),
+            &json!("This could not be opened. Open it again from your group’s page.")
+        ),
+        "a second cold open within the minute is said, never sent on again:\n{seen:#}"
+    );
+    assert!(at_origin(&again["url"], &label), "{seen:#}");
+    drop(ada);
+}
+
 in_webkit!(
     /// A lent page asks its person through the group's page, and is stopped
     /// (sup-3; DESIGN §3, "What an app gets"). Ada lends a page reading kind

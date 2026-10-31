@@ -379,6 +379,15 @@ pub fn label(lender: String, name: String) -> Result<String, JsError> {
     Ok(label.to_string())
 }
 
+/// Whether `raw` is a lend's label, as svrngs-core reads one
+/// (`Label::parse`): a host whose first name is one is a lend's origin, so
+/// the group's page there is one the lend's worker is not serving
+/// (web/app.js `cold`).
+#[wasm_bindgen]
+pub fn is_label(raw: String) -> bool {
+    Label::parse(&raw).is_some()
+}
+
 /// The label of the app `kind` carried in `group` and lent by `lender`, 64
 /// hex: what a write pass names, so the fold lets its holder write `kind`'s
 /// part as its person (svrngs-core's `Label::carried`; capability-signed).

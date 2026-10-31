@@ -27,8 +27,11 @@
 // `<label>.<this page's host>`. A lend's origin whose pass has lapsed,
 // or is gone, opens this page at `#open=<label>`, and the page signs again;
 // a page that reads a lend opens it at a path by `#open=<label>&at=<path>`
-// (mnp-2, lend.js `READS`), and the lend's start page goes there. Either
-// way this page steps aside, so the browser's Back skips it.
+// (mnp-2, lend.js `READS`), and the lend's start page goes there. A lend's
+// address opened where its worker is not, a bookmark in a browser that
+// never opened it, opens this page there, which goes on to the group's
+// page at `#open=<label>&at=<path>&cold` (`cold`). Either way this page
+// steps aside, so the browser's Back skips it.
 //
 // Asking the person (sup-3; DESIGN §3, "What an app gets"): a lent page
 // sends its person here at `#ask=<lend>&app=<its label>&at=<path>` (lend.js
@@ -39,7 +42,7 @@
 // what they said, each yes with Stop. On the page host this page is never
 // framed (vercel.json's `frame-ancestors 'none'`): a lent page is a name
 // under that host and could frame it at `#ask=` to borrow a click.
-import init, { actor, ask, believe, carried_label, connect_to_join, endpoint, issuer_of, label, links, older, pass, redemption, relay_of, sign_line } from './wasm/svrngs_web.js?v=__VERSION__';
+import init, { actor, ask, believe, carried_label, connect_to_join, endpoint, is_label, issuer_of, label, links, older, pass, redemption, relay_of, sign_line } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
 import { acts, agreed, apart, called, carrying, changes, deciders, door, el, named, once, opens, question, reading, removal, row, spoken, table, unlent, uses as used, visiting, whose } from './question.js?v=__VERSION__';
 
@@ -569,6 +572,28 @@ function line(words, text) {
 // their name does not miss the load.
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js', { type: 'module' }).catch((e) => trace(`PAGE: the service worker did not register: ${e}`)));
 
+// A lend's address with nothing serving it in this browser (svrn-docs
+// rings/current/IN_THE_BROWSER.md §4; DESIGN §3, "Lent apps", call 1): its
+// worker is not here, as in a browser that never opened it or cleared it,
+// so the page's host answered with this page. It sends the browser to the
+// group's page, this host past its first name, at `#open=<label>&at=<path>`,
+// which signs a pass and comes back at the path, or says why it cannot
+// (`cold` asked). At most once within ONCE from one tab, marked in this
+// origin's session: a lend whose worker never takes its pass comes back
+// here, and is said, never sent on again.
+const ONCE = 60_000;
+function cold() {
+  const [at, last] = [location.href.slice(location.origin.length), Number(sessionStorage.getItem('svrngs cold'))];
+  if (Date.now() - last < ONCE) {
+    trace(`PAGE: a lend's address with nothing serving it, sent to the group's page ${Date.now() - last} ms ago, so not again`);
+    throw new Said('This could not be opened. Open it again from your group’s page.');
+  }
+  sessionStorage.setItem('svrngs cold', String(Date.now()));
+  const page = `${location.protocol}//${location.host.slice(location.host.indexOf('.') + 1)}/`;
+  trace(`PAGE: a lend's address with nothing serving it: to the group's page, ${page}, to come back at ${at}`);
+  location.replace(`${page}#${new URLSearchParams({ open: store.labelOf(location.hostname), at })}&cold`);
+}
+
 // The link's fragment is its token, `<origin>#<token>`, which svrngs-core
 // parses as the command does (DESIGN §3, call 5). The fragment is never
 // sent to this page's origin, which is why the link rides there and not in
@@ -587,6 +612,7 @@ async function opening(fragment) {
     // The wasm by its one URL, from the cache the worker reads it from
     // too (store.js `runtime`, u4-9).
     await init({ module_or_path: store.runtime() });
+    if (is_label(store.labelOf(location.hostname))) return cold();
     if (fragment.startsWith('visit=')) return await visit(fragment.slice('visit='.length));
     const asked = /^(open|ask)=/.test(fragment) ? new URLSearchParams(fragment) : null;
     const token = asked ? '' : fragment;
@@ -599,7 +625,9 @@ async function opening(fragment) {
     // A link into a lend on a computer keeping no group here, its person's
     // svrngs elsewhere on it: opened from its home page (events-links (c)).
     if (!group && asked?.has('open') && computer()) return (line('opens', location.href), show('This link opens in svrngs on your computer.', true));
-    if (!group) throw new Said('Open this page from your group’s link.');
+    // A lend asked for in a browser holding no group, a cold address's
+    // among them: said why, and what to do.
+    if (!group) throw new Said(asked?.has('open') ? 'This browser hasn’t joined your group yet, so it can’t open this. Open your group’s link from the chat here first, then this again.' : 'Open this page from your group’s link.');
     await hold(group, asked, false, joined);
   } catch (e) {
     failed(e);
