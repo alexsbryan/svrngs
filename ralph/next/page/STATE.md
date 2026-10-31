@@ -203,6 +203,10 @@ brackets.
       - Names must match `^[a-z0-9-]+\.(js|css|html)$`, so no row adds a route.
       - It sits behind `only_itself`, under `POLICY` (`home.rs:81`), and holds the string `svrngs-ui-v2`.
     - It is chosen per node by a builder method in `serve.rs`, and in the binary by `--ui v2` (`cli.rs`), both under `test-support`. home.rs merges its routes in one line. v1's `/home.js` and `/question.js` stay served (`tests/home.rs:185-189`).
+    - **Where it landed** (corrected, page-scaffold (f), 7156bbd2):
+      - The builder method is `Node::ui(self, Ui) -> Self`, a write-once choice. The binary's choice is `--ui v1|v2`, anywhere in its arguments (`Ui::asked`).
+      - home.rs's one line is a `.layer`, not a merge, inside `only_itself`: axum panics on a second `/` route. The layer answers v2's paths at a node chosen v2 and passes every other request to v1's routes.
+      - `cargo test` never gives a bin target the features of its dev-dependencies. So a test that runs the binary on v2 builds it with `--features svrngs/test-support` (svrngs's own feature, `crates/svrngs/Cargo.toml`), which page-switch (b)'s mismatch words name.
   - **(g) The guards.**
     - **`web/tests/v1.test.mjs`** pins the sha256 of `web/index.html`, `app.js`, `sw.js`, `store.js`, `open.html`, `open.js`, `lend.js` and `shim.js`, and of `home/index.html`, `home.js`, `question.js`, `look.css` and `away.html`.
     - **In the row,** the two `shasum` lists of `target/web/site`, built at the base and at the close, are equal, `VERSION` included, and the diff goes in the commit body.
