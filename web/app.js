@@ -96,31 +96,15 @@ function relayed(token) {
 const whoseComputer = (c) => (c ? `${c.person}’s computer` : 'The computer that sent your link');
 const unanswered = (computers) => `${computers.map((c) => `${whoseComputer(c)} did not answer.`).join(' ')} Try again later.`;
 
-async function reach(dialling, away) {
-  const timeout = new Promise((_, no) => setTimeout(() => no(new Error('no answer')), PATIENCE));
-  try {
-    return await Promise.race([dialling, timeout]);
-  } catch (e) {
-    trace(`PAGE: the dial failed: ${e}`);
-    throw new Said(away);
-  }
-}
+const reach = (dialling, away) => Promise.race([dialling, new Promise((_, no) => setTimeout(() => no(new Error('no answer')), PATIENCE))]).catch((e) => Promise.reject((trace(`PAGE: the dial failed: ${e}`), new Said(away))));
 
-const joining = (status) =>
-  status === 403
-    ? 'This link lets nobody in. Ask for a new one.'
-    : 'The computer that sent this link cannot let anyone in just now. Try again later.';
+const joining = (status) => (status === 403 ? 'This link lets nobody in. Ask for a new one.' : 'The computer that sent this link cannot let anyone in just now. Try again later.');
 
 // POST `body`, JSON, on `dialled`: the answer's text, or the computer's
 // refusal in the words `refused` gives its status and text.
 async function post(dialled, path, body, refused = joining) {
   const bytes = new TextEncoder().encode(body);
-  const res = await dialled.fetch(
-    'POST',
-    path,
-    [['content-type', 'application/json'], ['content-length', String(bytes.length)]],
-    new Blob([bytes]).stream(),
-  );
+  const res = await dialled.fetch('POST', path, [['content-type', 'application/json'], ['content-length', String(bytes.length)]], new Blob([bytes]).stream());
   const text = await res.text();
   if (res.ok) return text;
   trace(`PAGE: ${path} answered ${res.status}: ${text}`);
@@ -181,10 +165,7 @@ async function join(token, kept) {
     issuer = await reach(connect_to_join(key, token), away);
     // 409: someone in the group goes by the name (bash-person), so another
     // is asked, saying whose it is and how to add this phone if it is theirs.
-    const taken = (status, text) =>
-      status === 409
-        ? `Someone in ${group.name} already goes by ${JSON.parse(text).error}. If that’s you, open your home page on your computer, press “Add your phone or another computer”, and open that link here. Else join under another name.`
-        : joining(status);
+    const taken = (status, text) => (status === 409 ? `Someone in ${group.name} already goes by ${JSON.parse(text).error}. If that’s you, open your home page on your computer, press “Add your phone or another computer”, and open that link here. Else join under another name.` : joining(status));
     try {
       await post(issuer, '/redeem', body, taken);
     } catch (e) {
@@ -574,14 +555,7 @@ function line(words, text) {
   document.getElementById(words).hidden = false;
   document.getElementById('line').textContent = text;
   const copy = document.getElementById('copy');
-  copy.onclick = () =>
-    navigator.clipboard.writeText(text).then(
-      () => (copy.textContent = 'Copied'),
-      (e) => {
-        trace(`PAGE: the line was not copied: ${e}`);
-        copy.textContent = 'Select the line and copy it';
-      },
-    );
+  copy.onclick = () => navigator.clipboard.writeText(text).then(() => (copy.textContent = 'Copied'), (e) => (trace(`PAGE: the line was not copied: ${e}`), (copy.textContent = 'Select the line and copy it')));
   document.getElementById('computer').hidden = false;
   trace(`PAGE: the line offered, for a computer: ${words}`);
 }
@@ -593,13 +567,7 @@ function line(words, text) {
 // it imports the dial. Registered after load: joining and the list work
 // without it. Asked for before joining awaits anyone, so a person typing
 // their name does not miss the load.
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('./sw.js', { type: 'module' })
-      .catch((e) => trace(`PAGE: the service worker did not register: ${e}`));
-  });
-}
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js', { type: 'module' }).catch((e) => trace(`PAGE: the service worker did not register: ${e}`)));
 
 // The link's fragment is its token, `<origin>#<token>`, which svrngs-core
 // parses as the command does (DESIGN §3, call 5). The fragment is never
