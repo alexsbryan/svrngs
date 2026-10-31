@@ -39,6 +39,11 @@ The overview's diagrams sign their foot with it, from the same file
   the group's page; each page's policy allows an image from its own origin.
 - **The app icon is white on black** ([`icon.svg`](icon.svg)), where the
   gold reads best. Gold on salmon goes muddy.
+  An iPhone's Home Screen takes it as a PNG, never an SVG:
+  [`apple-touch-icon.png`](apple-touch-icon.png), `icon.svg` drawn at
+  180 px with no transparency (iOS fills transparency black). The group's
+  page links it, and `scripts/build-web.sh` puts it beside the page, so a
+  group's page added to the Home Screen shows the mark.
 - **The name goes with what it's short for:** "svrngs" alone reads as
   "savings" ([`lockup.svg`](lockup.svg)).
 

@@ -116,8 +116,9 @@ if command -v sha256sum >/dev/null; then SHA_CMD="sha256sum"; else SHA_CMD="shas
 # page too: question.js, svrngs's question and what apps use, so both ask in
 # one wording (#110), look.css, svrngs's one look, so both look one way, and
 # away.html, a lend's computer that did not answer, so both say it one way;
-# and the tab's icon, the svrngs mark from its one home (docs/brand/).
-SHARED=(crates/svrngs-node/src/home/question.js crates/svrngs-node/src/home/look.css crates/svrngs-node/src/home/away.html docs/brand/favicon.svg)
+# and the tab's icon and the Home Screen's, the svrngs mark from its one
+# home (docs/brand/).
+SHARED=(crates/svrngs-node/src/home/question.js crates/svrngs-node/src/home/look.css crates/svrngs-node/src/home/away.html docs/brand/favicon.svg docs/brand/apple-touch-icon.png)
 PAGE=(index.html app.js store.js sw.js open.html open.js lend.js shim.js)
 VERSION="$(cat "$OUT/wasm/svrngs_web_bg.wasm" "$OUT/wasm/svrngs_web.js" "${PAGE[@]/#/$APP/}" "${SHARED[@]}" | $SHA_CMD | cut -c1-12)"
 cp "${SHARED[@]}" "$OUT/"
