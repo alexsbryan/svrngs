@@ -49,9 +49,17 @@ calls, in the same order, answering the same values to their callers.
 `oxlint` passed each file (exit 0). One fold was tried and undone: `Said`'s
 constructor as one sequence, which oxlint refuses (`constructor-super`).
 
+## Cut later, for the operator's iPhone findings
+
+The deep path's 404.html and the join's Home Screen line (+4) came after
+the cap was lowered to 19,489, one past 19,488. Two more cuts, behaviour
+kept (78b8669f): `hex` said once, in `web/store.js`, which the page and
+the worker both import (-1), and `cold`'s guard traced and refused in one
+statement (-3). The rows closed at 19,488 again.
+
 ## Not cut
 
-- `hex`, twice (above): -1 net, and a worker's and a page's helper.
+- `hex`, twice (above): at first, as -1 net; cut later (above).
 - `web/lend.js`: the four `catch` blocks that drop a lender's dial each
   trace and answer differently (`windows.py 2`'s one run there is their
   first line alike).
