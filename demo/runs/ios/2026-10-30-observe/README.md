@@ -11,10 +11,10 @@ agent, Safari 26.6.1), the spike's tunnel at the ladder's framework, step
 |---|---|---|---|---|
 | 1. Cold start | 3 to 6 s | 65% | The door's part is under 1 s; the whole, toggle to frame, about 10 s on WiFi and 20 to 30 s on cellular (the operator's count) | failed, and the door is not the cost |
 | 2. Handoff | drops at least once | 60% | one gap of 5.6 s, under the music's buffer; nothing heard | passed, as a drop |
-| 3. Locked | stops within a minute of its buffer | 70% | stops at the lock | passed, and sooner; in Firefox, Safari's could-not-judge |
+| 3. Locked | stops within a minute of its buffer | 70% | stops at the lock, or when the browser leaves the screen, in Firefox and in Safari | passed, and sooner |
 | 4a. Upload scan | accepted | 75% | accepted ("Ready to Submit"), after one refusal for a missing icon | passed |
 | 4b. TestFlight internal | installs, the tunnel runs | 80% | installed from TestFlight; 29 connections from the tunnel's key in a minute | passed |
-| 5. The house's chat | not predicted | — | not asked yet | never-ran |
+| 5. The house's chat | not predicted | — | asked; the operator: "Check 5 is done". The answers are not in this record yet | could-not-judge here |
 
 ## 1. The cold start
 
@@ -53,8 +53,8 @@ console: `WebSocket connection to 'wss://usw1-1.relay.n0.iroh.link/relay'
 failed: WebSocket is closed due to suspension`. The lender's log agrees: the
 person "Fepp" carried a request every few seconds, and nothing after
 21:28:02, 21:36:22 and 21:38:38. Firefox on iOS is WebKit, as Safari is, and
-the suspension is iOS's, so Safari is expected the same; it was not run
-locked after its fix.
+the suspension is iOS's. After the fix (below) the operator ran Safari too:
+"The videos stop on safari when I minimize the app or lock the phone".
 
 **What it decides:** a lend does not play in the pocket from the page. That
 is a reason for the app.
@@ -98,7 +98,8 @@ individual's team gives the house the app by TestFlight's internal testers
 
 ## Left
 
-- Check 5, the house's two questions: who runs a VPN on their phone already,
-  and who would take a TestFlight invite or give a phone's identifier. The
-  row stays open until the answers are in.
-- Check 3 in Safari, now that it opens.
+- Check 5's answers (who runs a VPN on their phone already; who would take a
+  TestFlight invite or give a phone's identifier): the operator reported the
+  check done on 2026-10-30, and the row is ticked on that word. Until the
+  answers are written here, on-demand by domain stays in the CHARTER's "What
+  waits", and HUMAN-ios-testflight asks which way each person installs.
