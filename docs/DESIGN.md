@@ -667,6 +667,18 @@ A phone joins by five calls:
    the ask and the redemption with the same code, in svrngs-core: bytes and
    keys in, bytes out.
 
+*On an iPhone, join from the Home Screen.* A web app added to the Home
+Screen keeps a storage of its own, so the person's key kept by Safari is
+not there: opened from the Home Screen after joining in Safari, the page
+joins again, as a second person of the same name, and a phone cannot make
+the device link that would join as the first (measured on the operator's
+iPhone, iOS 18.7, 2026-10-30). So before the name is asked, in iPhone
+Safari alone, the page says to add it to the Home Screen first and join
+from there; it knows Safari by `navigator.standalone`, false there, true
+in a Home Screen web app and undefined in every other browser, never by
+its user agent (`web/app.js`, `askName`). The link's token stays in the
+page's address, which the Home Screen copy keeps.
+
 *A name binds once where a stranger gives one.* A key is who someone is, a
 name is a claim, and a claim on a name someone already holds counts only
 with that someone's key. A link lets no one in under a name a standing
@@ -782,11 +794,12 @@ Seven calls:
    match. Every page reads the same record, so it names the same lend on
    each, its day in the browser's own time. It is unique within a group
    only: across groups, or as a name of its own, it would need a centre.
-   Each row of the group's page gives the address to keep, its alias, or
-   its label where two lends share one, with one line in the same words as
-   the home page gives a lend's `<label>.localhost` address (`question.js`,
-   `keeping`): "Add to Home Screen to keep it." on a phone, "Bookmark
-   this." on a computer. An address typed or tapped on the group's page is
+   In a computer's browser each row of the group's page gives the address
+   to keep, its alias, or its label where two lends share one, with one
+   line in the same words as the home page gives a lend's
+   `<label>.localhost` address (`question.js`, `keeping`): "Bookmark
+   this." A phone's rows say none, as a Home Screen copy of the page made
+   after joining joins again, as someone new. An address typed or tapped on the group's page is
    a new fragment the browser does not load, so the page loads again to
    open it. On a computer the group's page also says how it reaches you,
    from the chat link to the computer lending a thing, each link in the
@@ -1690,8 +1703,11 @@ not answer (`scripts/relay-answers.sh`); a switch it cannot read it refuses.
    svrngs hosts nothing, and its relays carry only ciphertext.
 4. **Phone browsers forget, and seek their own way.** Safari may clear a
    site's storage, and the person's key with it, since its sealed bytes and
-   the key that seals them are both in IndexedDB; a web app added to the home
-   screen keeps it, and a lost key means joining again by link. WebKit, every
+   the key that seals them are both in IndexedDB; a web app added to the Home
+   Screen keeps its own, apart from Safari's, so the person joins inside it
+   (§3, "Joining"), and a lost key means joining again by link. Whether a
+   lend opened from a Home Screen web app stays in it, or opens in Safari
+   with Safari's storage, is not observed yet. WebKit, every
    iOS browser's engine, asks a closed range to a film's end where Chromium
    asks an open one, so the worker asks the door for either in parts of
    2 MiB (`web/lend.js`, `PART`), and a seek waits at most for the part being

@@ -26,7 +26,7 @@ const told = await new Promise((done) => input.once('line', done));
 input.close();
 // `taken`, when told, is typed first: a name someone in the group goes by,
 // which the page refuses and asks again, saying why (bash-person).
-const { link, name, taken } = JSON.parse(told);
+const { link, name, taken, hint: probe } = JSON.parse(told);
 
 // In the page: the person's key as the page's store unseals it, and where
 // else its 32 bytes appear — raw, hex, base64 or as a list of numbers — in
@@ -157,6 +157,24 @@ try {
     }), [asked, why, look]);
   };
 
+  // With `hint` told, for a link that asks a name (a device link joins as
+  // it opens, so is never probed): before the name is asked, the line about
+  // the Home Screen, with navigator.standalone as iPhone Safari says it
+  // (false), a Home Screen web app (true) and every other browser
+  // (undefined), each in a context of its own that joins nothing.
+  const hint = probe ? {} : null;
+  for (const standalone of probe ? [false, true, undefined] : []) {
+    const other = await launch(args.engine);
+    try {
+      await other.context.addInitScript((s) => Object.defineProperty(Navigator.prototype, 'standalone', { get: () => s, configurable: true }), standalone);
+      const p = await other.context.newPage();
+      await p.goto(link);
+      await p.waitForFunction(() => !document.getElementById('join').hidden, null, { timeout: 90_000 });
+      hint[String(standalone)] = await p.evaluate(() => ((k) => (k.hidden ? null : k.textContent))(document.getElementById('keep')));
+    } finally {
+      await other.close();
+    }
+  }
   const first = await opening(link);
   const stored = await page.evaluate(scan);
   const again = await opening(link);
@@ -171,7 +189,7 @@ try {
     await page.waitForFunction(() => document.body?.innerText.includes('hi'), null, { timeout: 60_000 }).catch(() => {});
     opened = { origin: new URL(page.url()).origin, text: await page.evaluate(() => document.body.innerText) };
   }
-  console.log(JSON.stringify({ first, stored, again, alone, opened, lines, logs }));
+  console.log(JSON.stringify({ hint, first, stored, again, alone, opened, lines, logs }));
 } catch (e) {
   console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);
   process.exitCode = 1;

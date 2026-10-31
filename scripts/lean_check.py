@@ -327,7 +327,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # statements each said once (-56, demo/runs/economize/2026-10-30-browser/
 # SURVEY.md): a lend's address opened cold through the group's page (+16),
 # its alias (+15) and the address to keep (+4), at 19,488, so the cap
-# lowered to one past it; svrngs-core's left at one past, unchanged.
+# lowered to one past it; svrngs-core's left at one past, unchanged. Then,
+# from the operator's iPhone: a deep path opened cold by the site's
+# 404.html (+2) and the join's Home Screen line in place of a phone's
+# address to keep (+2), after `hex` said once and the cold guard folded
+# (-4): at 19,488 again, the cap unchanged.
 BUDGET = {"crates/svrngs-core": 3242, ".": 19489, "swift": 1}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 

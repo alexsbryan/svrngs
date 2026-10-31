@@ -31,8 +31,9 @@ Every line and every button: [`demo/start.md`](demo/start.md).
 
 Join once from the chat link. Everything your group lends has an address
 that never changes. Bookmark it on your phone or your laptop, and it opens.
-`https://group.svrnme.sh/#open=films@Sam` opens Sam's films; on a phone,
-add it to your Home Screen to keep it.
+`https://group.svrnme.sh/#open=films@Sam` opens Sam's films. On an
+iPhone, add the group's page to your Home Screen first and join from
+there: a Home Screen app keeps its own storage, apart from Safari's.
 
 ## Then
 

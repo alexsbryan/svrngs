@@ -162,7 +162,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
         .write_all(
             format!(
                 "{}\n",
-                json!({ "link": link, "name": "Pia", "taken": "sam" })
+                json!({ "link": link, "name": "Pia", "taken": "sam", "hint": true })
             )
             .as_bytes(),
         )
@@ -196,14 +196,21 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
     );
     assert!(in_house(first, "Pia"), "{seen:#}");
     assert_eq!(first["lent"], json!([SHELF]), "{seen:#}");
-    // Its address to keep, by its alias, and the phone's one line for it
-    // (svrn-docs rings/current/IN_THE_BROWSER.md §4, "Saying it"; question.js
-    // `keeping`). Red on a27fd4a5, which gave none.
-    assert!(
-        first["kept"][0]
-            .as_str()
-            .is_some_and(|k| k.contains("/#open=shelf@Sam ")
-                && k.ends_with(" Add to Home Screen to keep it.")),
+    // No row says to keep a lend on a phone: a Home Screen web app keeps
+    // a storage of its own, so one added after joining joins again, as
+    // someone new (the operator's iPhone, iOS 18.7, 2026-10-30).
+    assert_eq!(first["kept"], json!([]), "{seen:#}");
+    // So before the name is asked, in iPhone Safari alone, whose
+    // `navigator.standalone` is false, the page says to join from the Home
+    // Screen; in a Home Screen web app (true) and any other browser
+    // (undefined) nothing. Red on c31c666b, which said nothing.
+    assert_eq!(
+        seen["hint"],
+        json!({
+            "false": "To keep house on this phone, add this page to your Home Screen first, and join from there.",
+            "true": null,
+            "undefined": null,
+        }),
         "{seen:#}"
     );
     // Just joined, the page leads with the group's things, before its

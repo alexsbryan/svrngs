@@ -114,9 +114,17 @@ async function post(dialled, path, body, refused = joining) {
   throw new Said(refused(res.status, text), res.status);
 }
 
-// The person's name, asked once, in the group's name.
-function askName(group, why) {
-  trace(`PAGE: asking the person's name to join ${group}`);
+// The person's name, asked once, in the group's name. In iPhone Safari,
+// the one browser defining `navigator.standalone`, false outside a Home
+// Screen web app, the person is first told to join from the Home Screen:
+// each web app there keeps a storage of its own, so one added after
+// joining joins again, as someone new (the operator's iPhone, iOS 18.7,
+// 2026-10-30). Nothing here takes the link's token out of the address, so a
+// copy made from it before joining holds the link it joins by.
+function askName(group, why, member = true) {
+  const keep = member && navigator.standalone === false;
+  trace(`PAGE: asking the person's name to join ${group}${keep ? ', after saying to join from the Home Screen' : ''}`);
+  Object.assign(document.getElementById('keep'), { hidden: !keep, textContent: `To keep ${group} on this phone, add this page to your Home Screen first, and join from there.` });
   document.getElementById('group').textContent = group;
   document.getElementById('why').textContent = why ?? '';
   heading.textContent = `Join ${group}`;
@@ -198,7 +206,7 @@ async function visit(token) {
   let { key, ...v } = (await store.visitOf(token)) ?? {};
   if (!key) {
     key = crypto.getRandomValues(new Uint8Array(32));
-    const asking = askName('the group you’re visiting');
+    const asking = askName('the group you’re visiting', undefined, false);
     heading.textContent = 'You’re invited over as a guest';
     const guest = await asking;
     heading.textContent = 'Opening your link…';
@@ -510,14 +518,16 @@ async function enter(group, asked, joined) {
   // is the open names (`named`), and each opens in this tab, so no column
   // says either: with the head they were words Ana read before her first
   // tap (the fifth set; demo/xenia/findings/wordy-the-group-s-page.md).
-  // Last, the address to keep (svrn-docs rings/current/IN_THE_BROWSER.md
-  // §4): its alias at this page, or, where two share one, its label, which
-  // never collides; the alias as the page reads it, a space as `+`.
+  // Last, in a computer's browser, the address to keep (svrn-docs
+  // rings/current/IN_THE_BROWSER.md §4): its alias at this page, or, where
+  // two share one, its label, which never collides; the alias as the page
+  // reads it, a space as `+`. A phone keeps the group's page on its Home
+  // Screen instead (`askName`).
   const kept = (l, a = alias(l, lent, people)) => `${location.origin}${location.pathname}#open=${aliased(a, lent, people).length === 1 ? encodeURIComponent(a).replaceAll('%20', '+').replaceAll('%40', '@') : label(l.key, l.name)}`;
   list.replaceChildren(
     ...once(lent).map((l) => {
       const button = Object.assign(el('button', named(l)), { onclick: () => saying(l, 'yes').then(() => open(group, key, lent, unanswered, l)) });
-      return row([el('span', '', button, ` ${agreed(l, shelf, group)}${opens(l, 'Here, in this tab')[1] === 'full' ? ' Full now.' : ''} `, keeping(kept(l), !computer()))]);
+      return row([el('span', '', button, ` ${agreed(l, shelf, group)}${opens(l, 'Here, in this tab')[1] === 'full' ? ' Full now.' : ''}`, ...(computer() ? [' ', keeping(kept(l))] : []))]);
     }),
   );
   // What `#open=` names (DESIGN §3, "Lent apps", call 1): a lend by its

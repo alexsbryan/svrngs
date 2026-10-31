@@ -147,11 +147,10 @@ export function alias(l, lent, rows) {
 // one, which the page says, never a nearest match.
 export const aliased = (a, lent, rows) => once(lent).filter((l) => alias(l, lent, rows) === a);
 
-// The address to keep for a lend, `at`, and the one line saying how, in
-// the same words on both pages (svrn-docs rings/current/IN_THE_BROWSER.md
-// §4, "Saying it"): on a phone the address to read, and "Add to Home
-// Screen to keep it."; in a computer's browser a link, "Bookmark this."
-export const keeping = (at, phone) => Object.assign(el('small', '', phone ? at : Object.assign(el('a', at), { href: at }), phone ? ' Add to Home Screen to keep it.' : ' Bookmark this.'), { className: 'keep' });
+// The address to keep for a lend, `at`, a link, and the one line saying
+// how, in the same words on both pages in a computer's browser (svrn-docs
+// rings/current/IN_THE_BROWSER.md §4, "Saying it"): "Bookmark this."
+export const keeping = (at) => Object.assign(el('small', '', Object.assign(el('a', at), { href: at }), ' Bookmark this.'), { className: 'keep' });
 
 // Who made a group and since when this computer or phone has held it, so
 // two of one name are told apart (#138): "sam’s, since 14 Oct".
