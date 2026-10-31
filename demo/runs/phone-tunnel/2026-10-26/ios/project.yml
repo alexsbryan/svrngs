@@ -35,6 +35,9 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
         INFOPLIST_KEY_UIRequiresFullScreen: YES
         INFOPLIST_KEY_CFBundleDisplayName: Phone tunnel
+        # The store refuses an upload with no icon (2026-10-30, ITMS: no 120x120,
+        # no CFBundleIconName): the brand's app icon, docs/brand/icon.svg at 1024.
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     dependencies:
       - target: TunnelExtension
   TunnelExtension:
