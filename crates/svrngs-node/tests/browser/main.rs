@@ -1191,7 +1191,8 @@ in_webkit!(
     /// reads the pass, hands it over and opens the address again, and the
     /// film plays; before that, a fetch from a page it serves is answered
     /// by the worker itself, 503, marked svrngs's, a pass refused (mnp-1).
-    /// The group's page's own unseal still opens bo's key after. Planted:
+    /// The group's page's own unseal still opens bo's key after, and the
+    /// lend's origin keeps the holder as a key, never its bytes. Planted:
     /// the handed pass ignored (lend.js reading only its store); the
     /// worker's mark off.
     a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it
@@ -1199,6 +1200,32 @@ in_webkit!(
 async fn a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it(
     engine: Engine,
 ) {
+    handed_over(engine, false).await
+}
+
+in_webkit!(
+    /// Safari's worker on the operator's iPhone 2026-10-30, iOS Safari
+    /// 26.6.1, as the last test's and more: every CryptoKey sent to it is
+    /// lost, `messageerror` in its place (web/tests/handover.mjs
+    /// `KEYS_LOST`; demo/runs/ios/2026-10-30-observe/keyprobe/phone.log),
+    /// which no lend opened (open.js: "the lend's worker did not say it
+    /// holds the pass"). The start page hands the holder's bytes in memory
+    /// instead, which the worker imports, and the film plays; the stopped
+    /// worker's start page has no bytes to hand, so the group's page signs
+    /// a pass to a new holder (`anew`) and the film plays again. The lend's
+    /// origin keeps the holder as a key, never its bytes. Red at cad47f80,
+    /// which hands only the key: the film never plays.
+    a_lend_worker_that_loses_every_key_handed_it_takes_the_holders_bytes_in_memory
+);
+async fn a_lend_worker_that_loses_every_key_handed_it_takes_the_holders_bytes_in_memory(
+    engine: Engine,
+) {
+    handed_over(engine, true).await
+}
+
+/// The two tests above, Safari's worker losing every key handed it when
+/// `keys_lost`.
+async fn handed_over(engine: Engine, keys_lost: bool) {
     let site = site();
     let relay = relay().await;
     let bo = signing(7);
@@ -1221,6 +1248,7 @@ async fn a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_ha
             "key": hex::encode(bo.to_bytes()),
             "token": token(&signing(1), &relay),
             "open": "page",
+            "keysLost": keys_lost,
         }),
         None,
     )
@@ -1251,20 +1279,60 @@ async fn a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_ha
         json!({ "status": 503, "refused": "pass" }),
         "a worker holding no pass must answer a fetch itself, marked svrngs's:\n{shown:#}"
     );
+    // Where keys are lost the restarted worker's run can end while its
+    // page is at the group's, and the plant reads no last run's lines: its
+    // start page's word stands for it.
     let stopped = trace_of(&seen, "stoppedTrace");
+    let logged = |words: &str| {
+        seen["logs"].as_array().is_some_and(|l| {
+            l.iter()
+                .any(|m| m.as_str().is_some_and(|m| m.contains(words)))
+        })
+    };
     assert!(
-        stopped.contains("is not kept here"),
+        keys_lost || stopped.contains("is not kept here"),
         "the restarted worker must read nothing of its origin's store (the plant):\n{shown:#}"
     );
     assert!(
-        stopped.contains("its start page reads it again")
+        (keys_lost || stopped.contains("its start page reads it again"))
             && stopped.contains("the page handed over the pass"),
         "the lend's address must go through its start page, which hands the pass over:\n{shown:#}"
+    );
+    assert_eq!(
+        logged("no bytes of it are here: the group’s page signs a pass to a new holder"),
+        keys_lost,
+        "the restarted worker's start page, its kept key lost, must ask the group's page for a new holder, and only then:\n{shown:#}"
     );
     assert_eq!(seen["reopened"], seen["opened"], "{shown:#}");
     assert!(
         seen["replayed"]["ms"].is_u64(),
         "the film must play after the hand-over page:\n{shown:#}"
+    );
+    let bytes = "and its holder’s bytes, imported here and kept nowhere";
+    for (key, words) in [
+        ("handedTrace", "the first"),
+        ("stoppedTrace", "the stopped"),
+    ] {
+        assert_eq!(
+            trace_of(&seen, key).contains(bytes),
+            keys_lost,
+            "{words} worker must take the holder's bytes only where the key was lost:\n{shown:#}"
+        );
+    }
+    assert_eq!(
+        logged("STORE: the worker said a message was lost"),
+        keys_lost,
+        "the start page must hear at once that its key was lost, and only then:\n{shown:#}"
+    );
+    assert_eq!(
+        seen["kept"]["key"], "CryptoKey",
+        "the lend's origin must keep the holder as a key:\n{shown:#}"
+    );
+    assert!(
+        seen["kept"]["fields"]
+            .as_array()
+            .is_some_and(|f| !f.contains(&json!("seed"))),
+        "the lend's origin must never keep the holder's bytes:\n{shown:#}"
     );
     assert!(
         keys(&film_heads).iter().all(|k| *k == actor_of(&bo)),

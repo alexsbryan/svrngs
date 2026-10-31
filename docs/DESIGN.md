@@ -771,7 +771,15 @@ Seven calls:
    own, and the holder names it in a link, a short pass the door checks
    beside the pass (`x-svrngs-link`; `Pass::carries`). An origin holding no
    key its pass names asks the group's page for a new one (`#open=<label>
-   &anew`), which a window another page opened is never given. A lend at a
+   &anew`), which a window another page opened is never given. Where the
+   browser loses that key on its way to the origin's worker — Safari on an
+   iPhone does, any CryptoKey, `messageerror` in its place
+   (`demo/runs/ios/2026-10-30-observe/keyprobe/`) — the start page hands the
+   worker the bytes it was given, in memory alone, and the worker imports
+   them; they are kept nowhere at the origin, so a worker the browser
+   stopped holds no key, its start page asks for a new holder, and a request
+   in flight as it stopped fails once (held by `web/tests/handover.mjs`,
+   `KEYS_LOST`). A lend at a
    computer on an older svrngs, whose door takes no link, is opened as
    before, its holder's bytes kept at the origin for the worker to dial as,
    and the writes the worker signs wait until a computer on the new svrngs

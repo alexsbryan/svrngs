@@ -164,13 +164,18 @@ export async function unseal(group) {
   }
 }
 
+// What a lend's worker tells its pages when a message to it was lost.
+export const LOST = 'a message was lost on its way to the worker';
+
 // Hand `message` to `worker` in memory, never storage (u4-10: Safari's
 // worker on an iPhone read nothing its page had kept); answers whether it
-// said it holds it within `wait` ms.
+// said it holds it within `wait` ms, or no at once when it says a message
+// was lost on its way (lend.js, `messageerror`).
 export function handOver(worker, message, wait = 5_000) {
   const { port1, port2 } = new MessageChannel();
   const held = new Promise((done) => {
     port1.onmessage = () => done(true);
+    navigator.serviceWorker.addEventListener('message', (e) => e.data === LOST && (console.debug(`STORE: the worker said ${LOST}`), done(false)));
     setTimeout(() => done(false), wait);
   });
   worker.postMessage(message, [port2]);

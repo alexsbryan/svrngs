@@ -641,14 +641,18 @@ self.addEventListener('fetch', (e) => {
 
 // ── what a lend's page hands over ───────────────────────────────────────
 
-self.addEventListener('message', (e) => {
+self.addEventListener('message', async (e) => {
   const reply = e.ports[0];
   const { handed: given, cookie, worker, socket: asked } = e.data ?? {};
   if (given?.label === OWN && typeof given.pass === 'string') {
+    // The holder's bytes, where its key was lost on the way (below):
+    // imported here as a key no script can copy, held in memory alone.
+    const bytes = given.key instanceof Uint8Array;
+    if (bytes) given.key = await crypto.subtle.importKey('pkcs8', given.key, 'Ed25519', false, ['sign']);
     handed = given;
     dials.clear();
     endpoint = null;
-    trace(`RUNTIME: the page handed over the pass for ${OWN}, ${given.lends.length} lend(s)`);
+    trace(`RUNTIME: the page handed over the pass for ${OWN}, ${given.lends.length} lend(s)${bytes ? ', and its holder’s bytes, imported here and kept nowhere' : ''}`);
     return reply?.postMessage('held');
   }
   if (typeof cookie === 'string') {
@@ -670,6 +674,15 @@ self.addEventListener('message', (e) => {
   }
   if (asked && reply) return e.waitUntil(socket(asked, reply));
   trace(`RUNTIME: a message that hands over nothing, refused: ${Object.keys(e.data ?? {})}`);
+});
+
+// Safari on an iPhone loses a message carrying a CryptoKey, the holder's,
+// and fires this in its place (2026-10-30, demo/runs/ios/2026-10-30-observe/
+// keyprobe/phone.log): its pages are told, so the start page hands the
+// key's bytes at once (open.js).
+self.addEventListener('messageerror', async () => {
+  trace('RUNTIME: a message was lost on its way here: its pages are told');
+  for (const c of await self.clients.matchAll({ includeUncontrolled: true })) c.postMessage(store.LOST);
 });
 
 // ── a WebSocket, over a socket the door switches ────────────────────────

@@ -17,6 +17,14 @@
 // stopped it, and it could not read this origin's store — it reads the pass
 // here and hands it over again (`for`, then `back`); or, its pass lapsed
 // (`again`), it opens the group's page to sign another.
+//
+// Safari on an iPhone loses any CryptoKey sent to the worker, `messageerror`
+// in its place, while Firefox on the same phone and WebKit on a Mac take it
+// (2026-10-30, demo/runs/ios/2026-10-30-observe/keyprobe/phone.log). Where
+// the worker does not say it holds the key, the holder's bytes the group's
+// page handed go to it in memory alone, never this origin's store, which
+// the lent app's scripts read; a pass with no bytes here, the group's page
+// signs another, to a new holder (`anew`).
 import * as store from './store.js?v=__VERSION__';
 
 const say = (words) => (document.getElementById('said').textContent = words);
@@ -41,7 +49,7 @@ function running(reg) {
 
 async function start() {
   const asked = new URLSearchParams(location.search);
-  let handed;
+  let handed, seed;
   if (location.hash.length > 1) {
     handed = decode(location.hash.slice(1));
     history.replaceState(null, '', `${location.pathname}${location.search}`);
@@ -59,6 +67,7 @@ async function start() {
     if (handed.seed) handed.key = await crypto.subtle.importKey('pkcs8', pkcs8(handed.seed), 'Ed25519', false, ['sign']);
     else if (was?.key && was.holder === handed.holder) [handed.key, handed.line] = [was.key, was.line];
     else return location.replace(`${handed.page}#open=${handed.label}&anew`);
+    seed = handed.seed;
     if (!handed.raw) delete handed.seed;
     await store.lendKeep(`pass ${handed.label}`, handed);
   } else {
@@ -69,7 +78,12 @@ async function start() {
   if (!('serviceWorker' in navigator)) return say('This browser cannot open it.');
   const script = new URL('./lend.js?v=__VERSION__', import.meta.url).pathname;
   const worker = await running(await navigator.serviceWorker.register(script, { scope: '/', type: 'module' }));
-  if (!(await store.handOver(worker, { handed }))) throw new Error('the lend’s worker did not say it holds the pass');
+  const held = (await store.handOver(worker, { handed })) || (seed && (await store.handOver(worker, { handed: { ...handed, key: pkcs8(seed) } })));
+  if (!held && !seed) {
+    console.debug('OPEN: the worker did not take the holder’s key, and no bytes of it are here: the group’s page signs a pass to a new holder');
+    return location.replace(`${handed.page}#open=${handed.label}&anew&at=${encodeURIComponent(asked.get('back') ?? '/')}`);
+  }
+  if (!held) throw new Error('the lend’s worker did not say it holds the pass');
   // A path of this origin's alone: the group's page hands one a lend asked for.
   const back = new URL(asked.get('back') ?? '/', location.href);
   location.replace(back.origin === location.origin ? back.href : '/');
