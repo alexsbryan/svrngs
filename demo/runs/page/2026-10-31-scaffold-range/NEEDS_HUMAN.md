@@ -83,3 +83,34 @@ switchover's economizing pass.
 - Next is (g), the guards, then `scripts/check.sh` once, under the gate lock.
 - `.` has 4 lines left. (g)'s refusal takes 1, and page-switch's `page v2`
   step takes 1.
+
+## The director's check, 2026-10-31
+
+**Reproduced.** At 174038cf, `python3 scripts/lean_check.py` prints
+`v2 250 / 1150`. The tree is clean. Counting each file under lean_check's
+`V2` paths (`scripts/lean_check.py:358`) by its rule (`:384-387`) gives the
+same parts:
+- vendor 3;
+- machine 23 and parts 21;
+- view 17, trace 8, build.sh 19, serve.rs 62 and home.js 5;
+- app.js 23, page.js 43 and the eleven stubs 26.
+
+The total is 250.
+
+**Why it is yours.** CHARTER "Leave for the operator" names "a row past
+its range" under the budget. So the director does not widen the range,
+and does not cut a settled premise (`--ui v2`, settled 5) to get under
+it. The `SVRNGS_UI` cut would land at about +238, still past +208.
+
+**The recommendation: widen to +250 (the diff above).**
+- The cap, 1,150, does not move.
+- page.js's 43 lines are the refusals and orders that settled 4 and the
+  row ask for (read at `web/v2/page.js`). I found none of them redundant.
+- The cost is 4 lines against the later rows' summed tops. The rows that
+  aim below their range (CHARTER, "Estimates": each home row) carry that,
+  or the switchover's pass does.
+
+**What would make this wrong:** a later row landing past its own top for
+the same reason this one did, which is a frame the estimates never sized.
+In that case, the rung's estimates should be resized as a whole, not
+widened row by row.
