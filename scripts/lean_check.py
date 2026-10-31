@@ -343,13 +343,18 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # byte): docs/diagrams/src/ and docs/brand/src/ draw pictures, not the
 # product, as apps/ is not. The 10-27 raises for them (+406, +53) leave with
 # them: -366 at c0c466fe, at 19,114, so the cap lowered to one past it.
+# The operator's raise (2026-10-31, refuse rather than fall back): an app
+# brought from the shelf lands in the group's own folder, found by the
+# folder's name from the group's seed, and is refused where this computer
+# keeps none (carried.rs `brought`, group.rs `folder_name`): +7, 0 core, at
+# 19,121.
 # The pages' v2 on a rung of its own while it is built beside v1, the
 # operator's (2026-10-31, "Accept", ralph/next/page/STATE.md "Decided before
 # launch" 1): v2's files, its vendored libraries and the parity report count
 # on `v2`, capped at 1,150 (the queue's estimate, +815 to +1,112), and `.`
 # skips them. page-switchover deletes the rung: `.` takes v2 back once v1 is
 # deleted, after its own economizing pass, and asks a raise for what is left.
-BUDGET = {"crates/svrngs-core": 3242, ".": 19115, "swift": 1, "v2": 1150}
+BUDGET = {"crates/svrngs-core": 3242, ".": 19122, "swift": 1, "v2": 1150}
 V2 = ("web/v2/", "web/vendor/", "crates/svrngs-node/src/home/v2/", "crates/svrngs-node/src/home/ui/", "scripts/parity.sh")
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 

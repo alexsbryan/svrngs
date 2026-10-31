@@ -104,7 +104,7 @@ pub(super) type Syncing = Result<BTreeMap<(String, String), PathBuf>, (PathBuf, 
 /// everyone's a directory lines up with: its name, less what
 /// [`crate::group::apart`] puts after the name of a group's folder whose
 /// place was taken, so that folder is everyone's and not one of its own.
-fn folder_of(dir: &Path, group: &str) -> String {
+pub(super) fn folder_of(dir: &Path, group: &str) -> String {
     let name = dir.file_name().unwrap_or_default().to_string_lossy();
     let placed = name.strip_suffix(&crate::group::apart(group));
     tracing::debug!(target: "folder", namespace = group, dir = %dir.display(), apart = placed.is_some(), "synced: the folder a directory keeps — its name, less the id's start a group's folder beside another's carries");

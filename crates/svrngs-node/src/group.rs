@@ -194,12 +194,17 @@ impl crate::node::Host {
 /// dropped, so the name stays one directory under it, else the id's start.
 pub fn folder_place(seed: &Seed) -> Option<PathBuf> {
     let home = std::env::var_os("HOME").filter(|h| !h.is_empty())?;
+    Some(PathBuf::from(home).join("svrngs").join(folder_name(seed)))
+}
+
+/// The name of `seed`'s group's folder, which every member derives alike
+/// ([`folder_place`]), and which brought apps go into (carried.rs `brought`).
+pub(crate) fn folder_name(seed: &Seed) -> String {
     let name = seed.name().as_str().replace(['/', '\\', ':'], "-");
-    let name = match name.trim_start_matches('.') {
+    match name.trim_start_matches('.') {
         "" => seed.id()[..8].to_string(),
         name => name.to_string(),
-    };
-    Some(PathBuf::from(home).join("svrngs").join(name))
+    }
 }
 
 /// What a group's folder's name is followed by where its place is taken

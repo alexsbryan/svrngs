@@ -545,7 +545,10 @@ On it a person can:
 - bring things to the table: the shelf, svrngs's own apps (Money, Events,
   House rules), listed as data in `crates/svrngs-node/src/shelf.txt` and
   embedded at build so svrngs's code names none, each brought into the
-  group's folder by one button, never over one there already. Its boxes
+  group's own folder by one button, never over one there already: the
+  folder of the group's name (or that name and `-<id8>` where it was
+  placed apart), never another folder shared in the group, and refused
+  when this computer keeps none of its own (`carried.rs` `brought`). Its boxes
   start unticked, and for a group just joined it is folded as "Bring more
   to <group>": a newcomer read the ticked boxes as a grant asked of them
   (the operator, 2026-10-26; `demo/xenia/findings/

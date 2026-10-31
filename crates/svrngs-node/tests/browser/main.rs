@@ -246,6 +246,54 @@ async fn home_page(engine: Engine, at: &Node, mut args: Value) -> Value {
 
 /// `folder` kept as group `NS`'s on `at`, as `share --folder` asks it.
 async fn keep_folder(at: &Node, folder: &Path) {
+    keep_folder_in(at, folder, NS).await;
+}
+
+/// A node as [`node`] makes it, but its group a real one, as production
+/// holds it: house's seed drawn by ada, `signing(1)`, kept and read back
+/// by `seed_text`, so the node knows the group's name and its own folder's;
+/// `admitted` let in as bo. The node, once online, and the group's id. No
+/// seed can have `NS` as its id, so a test that needs the group's name
+/// holds this group, not `NS`.
+async fn house(dir: &Path, relay: &Server, admitted: &SigningKey) -> (Node, String) {
+    use svrngs_node::group::{draw, Name};
+    let node = Node::start(
+        dir.to_path_buf(),
+        signing(1),
+        &RelayConfig {
+            relay_urls: vec![relay_url(relay)],
+            n0_services: false,
+            loopback_only: true,
+        },
+        svrngs_node::group::seed_text,
+        "127.0.0.1:0".parse().unwrap(),
+    )
+    .await
+    .expect("a node starts");
+    drive::opens_at(node.api_addr().port(), &node.token());
+    let ada = Name::parse("ada").unwrap();
+    let seed = draw(
+        Name::parse("house").unwrap(),
+        ada,
+        signing(1).verifying_key(),
+    );
+    node.host().keep_group(&seed, None, None).unwrap();
+    let fixture = svrngs_core::tests_support::Fixture {
+        act: RailAct::Admit {
+            person: Person::parse("bo").unwrap(),
+            key: actor_of(admitted),
+            invite: None,
+        },
+    };
+    node.rail().commit(&seed.id(), &fixture).unwrap().unwrap();
+    tokio::time::timeout(Duration::from_secs(20), node.endpoint().online())
+        .await
+        .expect("the node reaches the relay on 127.0.0.1");
+    (node, seed.id())
+}
+
+/// `folder` kept as `group`'s on `at`, as `share --folder` asks it.
+async fn keep_folder_in(at: &Node, folder: &Path, group: &str) {
     let kept = reqwest::Client::builder()
         .no_proxy()
         .build()
@@ -254,7 +302,7 @@ async fn keep_folder(at: &Node, folder: &Path) {
         .bearer_auth(at.token())
         .json(&svrngs_node::folder::FolderAsk {
             dir: folder.to_path_buf(),
-            group: NS.into(),
+            group: group.into(),
         })
         .send()
         .await

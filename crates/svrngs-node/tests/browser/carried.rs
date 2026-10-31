@@ -19,7 +19,12 @@ pub(super) fn carry(folder: &Path, app: &str, files: &[(&str, String)]) {
 /// Where `at`'s browser opens the app `app` house carries, once its
 /// folder has taken the app and `at` lists it, within 30 s.
 pub(super) async fn carried_at(at: &Node, app: &str) -> String {
-    let url = format!("http://{}/v1/lends?namespace={NS}", at.api_addr());
+    carried_in(at, app, NS).await
+}
+
+/// [`carried_at`], the app carried by `group`.
+async fn carried_in(at: &Node, app: &str, group: &str) -> String {
+    let url = format!("http://{}/v1/lends?namespace={group}", at.api_addr());
     let http = reqwest::Client::builder().no_proxy().build().unwrap();
     for _ in 0..60 {
         let lends: Value = (http.get(&url).bearer_auth(at.token()).send().await)
@@ -410,8 +415,9 @@ in_chromium!(
     /// unticked, so the button alone brings nothing and says to tick
     /// something first (the operator, 2026-10-26; demo/xenia/findings/
     /// after-join-reads-as-permissions.md); she ticks them, one tap brings
-    /// them, the page says so, and her computer lists each as house's. House keeps no seed here, so the page calls
-    /// it "your group". Red before (c): no shelf on the page. Then the
+    /// them, the page says so, and her computer lists each as house's, the page calling the group by its
+    /// name. House is a group held from its seed (`house`), so the apps land
+    /// in house's own folder. Red before (c): no shelf on the page. Then the
     /// index, the page opened again, draws each by its kind's own name and
     /// as the group's, no word holding its lend name, `<kind>-<the group's
     /// id>` (v1ui-polish (b); `demo/runs/v1ui/2026-10-15/README.md` finding
@@ -424,17 +430,17 @@ in_chromium!(
 async fn the_home_page_brings_things_to_the_table(engine: Engine) {
     let relay = relay().await;
     let dir = tempfile::tempdir().unwrap();
-    let ada = node(dir.path(), &relay, &signing(7)).await;
+    let (ada, id) = house(dir.path(), &relay, &signing(7)).await;
     let folder = dir.path().join("house");
     std::fs::create_dir(&folder).unwrap();
-    keep_folder(&ada, &folder).await;
+    keep_folder_in(&ada, &folder, &id).await;
     let tick = |app: &str| json!([format!("#home label:has-text('{app}') input"), true]);
     let bring = json!([
-        ["text=Bring the ticked ones to your group", null, true],
+        ["text=Bring the ticked ones to house", null, true],
         tick("Money"),
         tick("Events"),
         tick("House rules"),
-        ["text=Bring the ticked ones to your group", null, true]
+        ["text=Bring the ticked ones to house", null, true]
     ]);
     let args = json!({ "all": "#home section h3 ~ p", "do": bring });
     let seen = home_page(engine, &ada, args).await;
@@ -459,14 +465,13 @@ async fn the_home_page_brings_things_to_the_table(engine: Engine) {
     );
     let after = seen["after"][1].to_string();
     assert!(
-        after.contains(
-            "You brought Money to your group: everyone in it can open it in a few seconds."
-        ) && after.contains("You brought Events to your group")
-            && after.contains("You brought House rules to your group"),
+        after.contains("You brought Money to house: everyone in it can open it in a few seconds.")
+            && after.contains("You brought Events to house")
+            && after.contains("You brought House rules to house"),
         "{seen:#}"
     );
     for app in ["Money", "Events", "House-rules"] {
-        carried_at(&ada, app).await;
+        carried_in(&ada, app, &id).await;
         assert!(folder.join("apps").join(app).join("look.css").exists());
     }
     let canon = folder.join("apps/House-rules/vendor/canon.js");
@@ -475,7 +480,7 @@ async fn the_home_page_brings_things_to_the_table(engine: Engine) {
         std::fs::read(repo().join("apps/canon/vendor/canon.js")).unwrap(),
         "House rules brings canon's build as vendored"
     );
-    let rules = carried_at(&ada, "House-rules").await;
+    let rules = carried_in(&ada, "House-rules", &id).await;
     let opened = drive(
         engine,
         "carried.mjs",
@@ -509,12 +514,12 @@ async fn the_home_page_brings_things_to_the_table(engine: Engine) {
         );
     }
     assert_eq!(
-        rows.matches(".your groupIn a tab").count(),
+        rows.matches(".houseIn a tab").count(),
         3,
         "each the group's: {index:#}"
     );
     assert!(
-        !rows.contains(&format!("-{NS}")) && !rows.contains("ada"),
+        !rows.contains(&format!("-{id}")) && !rows.contains("ada"),
         "{index:#}"
     );
     drop(ada);
@@ -525,22 +530,23 @@ in_webkit!(
     /// phone, in house through ada's computer, finds the shelf's boxes
     /// unticked (the operator, 2026-10-26), ticks them, and brings the
     /// shelf's two apps by the one button; the page says so, and ada's computer lists each
-    /// as house's. Red before (c): the page has no shelf.
+    /// as house's, in house's own folder: house is a group held from its
+    /// seed (`house`). Red before (c): the page has no shelf.
     the_phone_brings_things_to_the_table
 );
 async fn the_phone_brings_things_to_the_table(engine: Engine) {
     let relay = relay().await;
     let dir = tempfile::tempdir().unwrap();
     let bo = signing(7);
-    let ada = node(dir.path(), &relay, &bo).await;
+    let (ada, id) = house(dir.path(), &relay, &bo).await;
     let folder = dir.path().join("house");
     std::fs::create_dir(&folder).unwrap();
-    keep_folder(&ada, &folder).await;
+    keep_folder_in(&ada, &folder, &id).await;
     let args = json!({
         "site": site(),
         "key": hex::encode(bo.to_bytes()),
         "token": token(&signing(1), &relay),
-        "id": NS,
+        "id": id,
     });
     let seen = drive(engine, "shelf.mjs", args, None).await;
     eprintln!("the phone's run: {seen:#}");
@@ -555,7 +561,7 @@ async fn the_phone_brings_things_to_the_table(engine: Engine) {
         "{seen:#}"
     );
     for app in ["Money", "Events"] {
-        carried_at(&ada, app).await;
+        carried_in(&ada, app, &id).await;
     }
     drop(ada);
 }

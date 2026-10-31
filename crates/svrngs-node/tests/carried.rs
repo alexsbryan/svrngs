@@ -35,7 +35,11 @@ async fn computers() -> (Vec<Node>, Vec<tempfile::TempDir>) {
 /// `who` syncs a directory of its own under `root` in `group`, as
 /// `share --folder` asks it: the directory.
 async fn synced_in(who: &Node, root: &Path, group: &str) -> PathBuf {
-    let dir = root.join("Shared");
+    synced_at(who, root.join("Shared"), group).await
+}
+
+/// `who` syncs `dir` in `group`, as `share --folder` asks it: the directory.
+async fn synced_at(who: &Node, dir: PathBuf, group: &str) -> PathBuf {
     std::fs::create_dir_all(&dir).unwrap();
     let said = http()
         .post(format!("http://{}/v1/folders", who.api_addr()))
@@ -500,7 +504,7 @@ async fn bringing_from_the_shelf_traces_why_it_could_not_write() {
     let group = found("house", 9, ana, &[]);
     round(ana).await;
     let root = tempfile::tempdir().unwrap();
-    let folder = synced_in(ana, root.path(), &group).await;
+    let folder = synced_at(ana, root.path().join("house"), &group).await;
     std::fs::set_permissions(&folder, std::fs::Permissions::from_mode(0o555)).unwrap();
     let home = format!("svrngs.localhost:{}", ana.api_addr().port());
     let answer = http()
@@ -528,6 +532,72 @@ async fn bringing_from_the_shelf_traces_why_it_could_not_write() {
         traced.lines().any(why),
         "the write's error traced:\n{traced}"
     );
+    ana.endpoint().close().await;
+}
+
+/// **An app brought from the shelf lands in the group's own folder**
+/// (docs/guide/folders.md, "The apps you bring from your home page live
+/// here too, under `apps/`"): Ana keeps `house`'s folder and shares
+/// another, `drop`, in it; Money brought lands in `house/apps/`, never in
+/// `drop/`. Planted: the app written into the group's first folder by
+/// name, `drop`.
+#[tokio::test]
+async fn an_app_brought_lands_in_the_group_s_own_folder() {
+    let (nodes, _dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 9, ana, &[]);
+    round(ana).await;
+    let root = tempfile::tempdir().unwrap();
+    let own = synced_at(ana, root.path().join("house"), &group).await;
+    let drop = synced_at(ana, root.path().join("drop"), &group).await;
+    let home = format!("svrngs.localhost:{}", ana.api_addr().port());
+    let answer = http()
+        .post(format!("http://{}/shelf", ana.api_addr()))
+        .header("host", &home)
+        .header("cookie", common::opened(ana, None).await)
+        .header("sec-fetch-site", "same-origin")
+        .header("sec-fetch-mode", "cors")
+        .header("origin", format!("http://{home}"))
+        .json(&json!([group, ["Money"]]))
+        .send()
+        .await
+        .unwrap();
+    let status = answer.status();
+    assert_eq!(status, 200, "{}", answer.text().await.unwrap());
+    let money = |dir: &Path| dir.join("apps/Money/index.html").is_file();
+    assert!(money(&own), "Money in house's own folder");
+    assert!(!money(&drop), "Money not in the folder shared beside it");
+    ana.endpoint().close().await;
+}
+
+/// **A group's own folder placed apart takes what is brought** (group.rs
+/// `apart`): where `house` was taken, Ana's folder of the group is
+/// `house-<id8>`; Money brought lands there. Planted: the folder matched
+/// by its directory's name alone, which refused it 409.
+#[tokio::test]
+async fn an_app_brought_lands_in_the_group_s_own_folder_placed_apart() {
+    let (nodes, _dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 9, ana, &[]);
+    round(ana).await;
+    let root = tempfile::tempdir().unwrap();
+    let placed = root.path().join(format!("house-{}", &group[..8]));
+    let own = synced_at(ana, placed, &group).await;
+    let home = format!("svrngs.localhost:{}", ana.api_addr().port());
+    let answer = http()
+        .post(format!("http://{}/shelf", ana.api_addr()))
+        .header("host", &home)
+        .header("cookie", common::opened(ana, None).await)
+        .header("sec-fetch-site", "same-origin")
+        .header("sec-fetch-mode", "cors")
+        .header("origin", format!("http://{home}"))
+        .json(&json!([group, ["Money"]]))
+        .send()
+        .await
+        .unwrap();
+    let status = answer.status();
+    assert_eq!(status, 200, "{}", answer.text().await.unwrap());
+    assert!(own.join("apps/Money/index.html").is_file());
     ana.endpoint().close().await;
 }
 
