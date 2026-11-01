@@ -9,10 +9,36 @@
 //
 //   node web/tests/v2/acts.mjs '{"engine": ..., "home": <url>, "shown": <selector>, "forget"?: true, "press": [{"at": <selector>, "traced"?: [<start>, <n>]}, ...], "at": <selector>, "within": <ms>}'
 //
+// Or the group's page (`site`, `key`, `token`, `id`, held as page.mjs
+// `driving` holds it): with `ask`, a fragment, opened at it until #ask is
+// shown, then, once the test, told so (`<hold>.shown`), has written `hold`,
+// Yes pressed, and within `within` ms the heading changed (`went`): the
+// heading as it asked (`asked`) and then (`status`), and whether #ask is
+// hidden.
+//
+//   node web/tests/v2/acts.mjs '{"engine": ..., "site": ..., "key": ..., "token": ..., "id": ..., "ask": <fragment>, "hold": <path>, "within": <ms>}'
+//
 // Exit 0 with the JSON line; 1 on anything else.
-import { launch } from '../page.mjs';
+import { existsSync } from 'node:fs';
+import { writeFile } from 'node:fs/promises';
+import { driving, launch } from '../page.mjs';
 
 const args = JSON.parse(process.argv[2]);
+const status = (page) => page.locator('#status').textContent();
+if (args.site) {
+  await driving(args, async ({ page, origin }) => {
+    await page.goto('about:blank');
+    await page.goto(`${origin}#${args.ask}`);
+    await page.locator('#ask:not([hidden])').waitFor({ timeout: 90_000 });
+    const asked = await status(page);
+    await writeFile(`${args.hold}.shown`, '');
+    for (let t = 0; !existsSync(args.hold); t += 100) await (t > 60_000 ? Promise.reject(new Error(`${args.hold} never written`)) : new Promise((r) => setTimeout(r, 100)));
+    await page.locator('#ask button:text-is("Yes")').click({ timeout: 10_000 });
+    const went = await page.waitForFunction((a) => document.getElementById('status')?.textContent !== a, asked, { timeout: args.within, polling: 100 }).then(() => true, () => false);
+    return { asked, went, status: await status(page), hidden: await page.locator('#ask').evaluate((f) => f.hidden), lines: await page.evaluate(() => window.__lines ?? []) };
+  });
+  process.exit();
+}
 const { context, close } = await launch(args.engine);
 const logs = [];
 context.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));

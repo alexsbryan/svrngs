@@ -24,8 +24,8 @@ fn label(name: &str) -> String {
 
 /// Ada's computer, `signing(1)`'s, holding house from its seed, on
 /// `crate::UI`, lending `page`, which reads kind `k`, and `shelf`, of
-/// kind `k`, which asks; and her home page's address.
-async fn ada(dir: &Path, relay: &iroh_relay::server::Server) -> (Node, String) {
+/// kind `k`, which asks, bo let in; her home page's address, and house's id.
+async fn ada(dir: &Path, relay: &iroh_relay::server::Server) -> (Node, String, String) {
     use svrngs_node::group::{draw, Name};
     let key = SigningKey::from_bytes(&[1; 32]);
     let config = RelayConfig {
@@ -50,6 +50,14 @@ async fn ada(dir: &Path, relay: &iroh_relay::server::Server) -> (Node, String) {
         key.verifying_key(),
     );
     node.host().keep_group(&seed, None, None).unwrap();
+    let bo = svrngs_core::tests_support::Fixture {
+        act: svrngs_node::RailAct::Admit {
+            person: svrngs_node::Person::parse("bo").unwrap(),
+            key: svrngs_node::actor_of(&SigningKey::from_bytes(&[7; 32])),
+            invite: None,
+        },
+    };
+    node.rail().commit(&seed.id(), &bo).unwrap().unwrap();
     let lends = svrngs_node::lend::lends_dir(dir);
     std::fs::create_dir_all(&lends).unwrap();
     for (name, more) in [("page", json!({ "reads": ["k"] })), ("shelf", json!({ "asks": ASKS }))] {
@@ -61,7 +69,20 @@ async fn ada(dir: &Path, relay: &iroh_relay::server::Server) -> (Node, String) {
         .await
         .expect("the node reaches the relay on 127.0.0.1");
     let home = format!("http://svrngs.localhost:{}/", node.api_addr().port());
-    (node, home)
+    (node, home, seed.id())
+}
+
+/// Bo's phone, in house through ada's computer (page_v2/index.rs
+/// `bo_s_phone`): the page.mjs `driving` args for group `id`.
+fn bo_s_phone(relay: &iroh_relay::server::Server, id: &str) -> Value {
+    let token = svrngs_core::link::Token {
+        issuer: SigningKey::from_bytes(&[1; 32]).verifying_key(),
+        secret: [0; 16],
+        relay: Some(relay_url(relay).parse().expect("a URL")),
+    }
+    .encode();
+    let bo = hex::encode(SigningKey::from_bytes(&[7; 32]).to_bytes());
+    json!({ "site": crate::harness::site_of(crate::UI), "key": bo, "token": token, "id": id })
 }
 
 /// A page on a port of this host, each request answered with one.
@@ -108,7 +129,7 @@ in_chromium!(
 async fn two_refusals_on_ask_are_said_once(engine: Engine) {
     let relay = relay().await;
     let dir = tempfile::tempdir().unwrap();
-    let (ada, home) = ada(dir.path(), &relay).await;
+    let (ada, home, _) = ada(dir.path(), &relay).await;
     let ask = format!("{home}ask?lend={}&app={}&back=/", label("shelf"), label("page"));
     let yes = "#home section button:text-is('Yes')";
     let press = |n: u8| json!({ "at": yes, "traced": ["ASK: unsaid", n] });
@@ -157,7 +178,7 @@ async fn a_stop_on_what_apps_use_is_read_again_in_place(engine: Engine) {
     let dir = tempfile::tempdir().unwrap();
     let shelf = svrngs_node::lend::LendName::try_from("shelf".to_string()).unwrap();
     kept_yes(&svrngs_node::lend::choices_path(dir.path(), &shelf), &label("page"));
-    let (ada, home) = ada(dir.path(), &relay).await;
+    let (ada, home, _) = ada(dir.path(), &relay).await;
     let stop = "#acts p:has-text('uses') button:text-is('Stop')";
     let args = json!({ "home": home, "shown": "#acts summary", "press": ["#acts summary", stop], "said": "was stopped using", "at": "#acts", "within": 30_000 });
     let seen = drive(engine, "v2/members.mjs", args, None).await;
@@ -184,7 +205,7 @@ in_chromium!(
 async fn a_yes_in_another_tab_is_shown_on_visible(engine: Engine) {
     let relay = relay().await;
     let dir = tempfile::tempdir().unwrap();
-    let (ada, home) = ada(dir.path(), &relay).await;
+    let (ada, home, _) = ada(dir.path(), &relay).await;
     let hold = dir.path().join("hold");
     let args = json!({ "home": home, "shown": "#acts summary", "press": ["#acts summary"], "hold": hold, "said": "opens your friends’ k as you. Since", "at": "#acts", "within": 30_000 });
     let driven = tokio::spawn(drive(engine, "v2/members.mjs", args, None));
@@ -202,6 +223,48 @@ async fn a_yes_in_another_tab_is_shown_on_visible(engine: Engine) {
         &[
             (seen["went"] != true, "shown again, the yes is said"),
             (seen["reloads"] != 0, "with no reload"),
+        ],
+        &seen,
+    );
+    drop(ada);
+}
+
+in_webkit!(
+    /// **A refused yes keeps the ask shown, with why** (page-acts (d)).
+    /// Bo's phone asks, at `#ask=`, whether ada's page may use her shelf;
+    /// once it asks, ada stops lending the shelf, and bo presses Yes: her
+    /// computer refuses it, and the page says so in its heading with the
+    /// ask still shown, so bo can say it again. Watched failing on v1
+    /// (`UI` flipped), whose form is hidden on Yes and left so (app.js:316).
+    a_refused_yes_keeps_the_ask_shown
+);
+async fn a_refused_yes_keeps_the_ask_shown(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let (ada, _, id) = ada(dir.path(), &relay).await;
+    let hold = dir.path().join("hold");
+    let mut args = bo_s_phone(&relay, &id);
+    let ask = format!("ask={}&app={}&at=/", label("shelf"), label("page"));
+    args.as_object_mut().unwrap().extend(json!({ "ask": ask, "hold": hold, "within": 60_000 }).as_object().unwrap().clone());
+    let driven = tokio::spawn(drive(engine, "v2/acts.mjs", args, None));
+    let shown = hold.with_extension("shown");
+    let told = tokio::time::timeout(Duration::from_secs(120), async {
+        while !shown.exists() {
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+    });
+    assert!(told.await.is_ok(), "bo's page asks within 120 s");
+    std::fs::remove_file(svrngs_node::lend::lends_dir(dir.path()).join("shelf.json")).unwrap();
+    std::fs::write(&hold, "").unwrap();
+    let seen = driven.await.unwrap();
+    none_wrong(
+        &[
+            (
+                !seen["asked"].as_str().is_some_and(|t| t.starts_with("Let ")),
+                "bo is asked",
+            ),
+            (seen["went"] != true, "the refusal is said in the heading"),
+            (seen["hidden"] != false, "the ask stays shown"),
         ],
         &seen,
     );
