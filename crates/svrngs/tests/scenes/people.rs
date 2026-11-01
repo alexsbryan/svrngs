@@ -257,6 +257,7 @@ impl Scene {
         // A browser half `sees` runs on this computer is opened by it, as
         // `svrngs open` and its home page open one (give-session).
         let token = std::fs::read_to_string(home.join(".svrngs/token")).unwrap_or_default();
+        crate::harness::home_is(api.port(), &token, crate::harness::ui()).await;
         crate::drive::opens_at(api.port(), &token);
         let page = format!("svrngs.localhost:{}", api.port());
         let http = reqwest::Client::builder()

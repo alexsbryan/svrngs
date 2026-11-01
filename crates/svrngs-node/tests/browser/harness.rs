@@ -131,20 +131,78 @@ pub fn ui() -> Ui {
 
 /// `node`, its home page the run's [`ui`]: chosen v2 under v2, and left
 /// unchosen under v1, as a release leaves it, so a v2-only test
-/// (crates/svrngs/tests/page_v2) can still choose it once.
-pub fn with_ui(node: svrngs_node::node::Node) -> svrngs_node::node::Node {
-    match ui() {
+/// (crates/svrngs/tests/page_v2) can still choose it once; then its `/`
+/// held to it ([`home_is`]).
+pub async fn with_ui(node: svrngs_node::node::Node) -> svrngs_node::node::Node {
+    let node = match ui() {
         Ui::V1 => node,
         Ui::V2 => node.ui(Ui::V2),
+    };
+    home_is(node.api_addr().port(), &node.token(), ui()).await;
+    node
+}
+
+/// The words `svrngs-ui-v2` marks v2 by, in web/v2/body.html and
+/// home/v2/index.html, and the trace a binary that can serve v2 carries
+/// (serve.rs; build-release.sh's refusal).
+const MARK: &str = "svrngs-ui-v2";
+
+/// Whether `page`, from `whose`, is `ui`'s: it carries [`MARK`] if and only
+/// if `ui` is v2, so a v2 run never silently tests v1, nor v1 a v2 page.
+pub fn page_is(page: &str, ui: Ui, whose: &str) {
+    match (ui, page.contains(MARK)) {
+        (Ui::V2, false) => panic!("the run is v2 (SVRNGS_UI=v2), but {whose} is v1's, with no {MARK}, so a pass here would be v1's"),
+        (Ui::V1, true) => panic!("the run is v1, but {whose} is v2's, marked {MARK}: SVRNGS_UI is unset or v1 here"),
+        _ => {}
     }
+}
+
+/// The home page at `port`, as a person's typed address opens it, `token`
+/// shown as a program shows it (home.rs `only_itself`), held to `ui`
+/// ([`page_is`]): where the harness first hands out its address.
+pub async fn home_is(port: u16, token: &str, ui: Ui) {
+    let home = format!("svrngs.localhost:{port}");
+    let http = reqwest::Client::builder()
+        .no_proxy()
+        .resolve("svrngs.localhost", ([127, 0, 0, 1], port).into())
+        .build()
+        .unwrap();
+    let asked = http
+        .get(format!("http://{home}/"))
+        .bearer_auth(token.trim());
+    let asked = asked
+        .header("sec-fetch-site", "none")
+        .header("sec-fetch-mode", "navigate");
+    let got = asked
+        .send()
+        .await
+        .unwrap_or_else(|e| panic!("{home}'s home page did not answer: {e}"));
+    let page = got
+        .text()
+        .await
+        .unwrap_or_else(|e| panic!("{home}'s home page: {e}"));
+    page_is(&page, ui, &format!("the home page at {home}"));
 }
 
 /// What a `svrngs` this run starts is given beside its own words for the
 /// run's [`ui`]: nothing under v1, as a person runs it; `--ui v2` under v2,
-/// which only a binary built with `--features svrngs/test-support` takes
-/// (cli.rs `parse`). The browser and conformance targets start none.
+/// which only a binary built with svrngs's test-support takes (cli.rs
+/// `parse`), so one built without it stops the run here, in words, and
+/// not as a node that never answers. The browser and conformance targets
+/// start none.
 #[allow(dead_code)]
 pub fn ui_args() -> &'static [&'static str] {
+    static HELD: std::sync::Once = std::sync::Once::new();
+    let bin = option_env!("CARGO_BIN_EXE_svrngs");
+    HELD.call_once(|| {
+        if let (Ui::V2, Some(bin)) = (ui(), bin) {
+            let grep = std::process::Command::new("grep").args(["-qa", MARK, bin]).status();
+            assert!(
+                grep.expect("grep runs").success(),
+                "the run is v2 (SVRNGS_UI=v2), but {bin} was built without svrngs's test-support, so it cannot serve v2's home page: run cargo test with --features svrngs/test-support"
+            );
+        }
+    });
     match ui() {
         Ui::V1 => &[],
         Ui::V2 => &["--ui", "v2"],
@@ -178,6 +236,8 @@ pub fn site_of(ui: Ui) -> &'static Path {
             "scripts/build-web.sh --ui {name} failed, so the page cannot be tested:\n{}",
             String::from_utf8_lossy(&built.stderr)
         );
+        let page = std::fs::read_to_string(out.join("index.html")).expect("the built page");
+        page_is(&page, ui, &format!("{}/index.html", out.display()));
         out
     })
 }

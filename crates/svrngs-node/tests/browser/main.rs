@@ -132,7 +132,7 @@ async fn seeded(dir: &Path, relay: String, me: u8, founder: &str, founder_key: u
     )
     .await
     .expect("a node starts");
-    let node = harness::with_ui(node);
+    let node = harness::with_ui(node).await;
     drive::opens_at(node.api_addr().port(), &node.token());
     let seed = Roster::new(
         [(
@@ -271,7 +271,7 @@ async fn house(dir: &Path, relay: &Server, admitted: &SigningKey) -> (Node, Stri
     )
     .await
     .expect("a node starts");
-    let node = harness::with_ui(node);
+    let node = harness::with_ui(node).await;
     drive::opens_at(node.api_addr().port(), &node.token());
     let ada = Name::parse("ada").unwrap();
     let seed = draw(
@@ -3247,7 +3247,7 @@ async fn alone(dir: &Path, relay: &Server) -> Node {
     )
     .await
     .expect("a node starts");
-    let node = harness::with_ui(node);
+    let node = harness::with_ui(node).await;
     drive::opens_at(node.api_addr().port(), &node.token());
     node
 }
@@ -3899,7 +3899,7 @@ async fn the_home_page_tells_two_groups_of_one_name_apart(engine: Engine) {
     )
     .await
     .expect("a node starts");
-    let ada = harness::with_ui(ada);
+    let ada = harness::with_ui(ada).await;
     drive::opens_at(ada.api_addr().port(), &ada.token());
     let trip = || Name::parse("Trip").unwrap();
     for (founder, key) in [("ada", 1), ("sam", 5)] {

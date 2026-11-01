@@ -119,6 +119,8 @@ async fn run(home: &Path) -> (tokio::process::Child, String) {
     .await
     .expect("svrngs answers at the API it wrote");
     let port = api.rsplit(':').next().unwrap();
+    let token = std::fs::read_to_string(home.join(".svrngs/token")).unwrap();
+    harness::home_is(port.parse().unwrap(), &token, harness::ui()).await;
     (running, format!("http://svrngs.localhost:{port}/"))
 }
 
