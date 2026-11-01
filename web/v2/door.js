@@ -1,8 +1,26 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// The group's door, its removals and who is visiting: page-members', a stub
-// until then (web/v2/page.js `compose`), its places as web/index.html:83, :85-86
-// draw them; #door holds enter's choice of tab too (web/v2/enter.js `chosen`).
+// The group's door, its removals and who is visiting (page-members (a);
+// web/app.js:459-481), each drawn once the group is read (web/v2/enter.js),
+// in its place as web/index.html:83, :85-86 has it: #door, the group
+// titled and its door (ui/door.js), judged by the answer the computer
+// reached gave, so whose computer did not answer is drawn off; #removals,
+// each removal and ask, or a line when they cannot be read (`null`); and
+// #visitors, who is visiting now (ui/visitors.js), with a line for you when
+// a guest is yours, whose Stop is on the home page that made their link.
+// #door holds enter's choice of tab too (enter.js `chosen`).
 import { html } from '../ui/view.js?v=__VERSION__';
+import { Door } from '../ui/door.js?v=__VERSION__';
+import { Visiting } from '../ui/visitors.js?v=__VERSION__';
 import { chosen } from './enter.js?v=__VERSION__';
+import { removal, whose } from '../question.js?v=__VERSION__';
 
-export const view = { door: ({ s, send }) => html`<div id="door">${chosen(s, send)}</div>`, removals: () => html`<ul id="removals"></ul>`, visitors: () => html`<section id="visitors"></section>` };
+const titled = (g) => `${g.name}${g.maker ? ` (${whose(g)})` : ''}`;
+// Yours by your first key (keys-names), from a computer at version 2 by name (a:466-468).
+const yours = (s, you = s.people.find((r) => r.key === s.me)?.person_key) => s.visiting.some((v) => (v.host_key ? v.host_key === you : v.host === s.group.person));
+const visitors = (s) => (s.visiting ? s.visiting.length > 0 && html`<h2>Visiting now</h2><${Visiting} vs=${s.visiting} rows=${s.people} />${yours(s) && html`<p>You stop your guest’s visit on the home page of the computer you made their link on.</p>`}` : html`<p>Who is visiting ${s.group.name} cannot be read just now.</p>`);
+
+export const view = {
+  door: ({ s, send }) => html`<div id="door">${chosen(s, send)}${s.lent && html`<p>${titled(s.group)}</p><${Door} rows=${s.people} lends=${{ unanswered: s.unanswered }} />`}</div>`,
+  removals: ({ s }) => html`<ul id="removals">${s.lent && (s.removals ?? [null]).map((r) => html`<li>${r ? removal(r, s.people) : `Who was removed from ${s.group.name} cannot be read just now.`}</li>`)}</ul>`,
+  visitors: ({ s }) => html`<section id="visitors">${s.lent && visitors(s)}</section>`,
+};
