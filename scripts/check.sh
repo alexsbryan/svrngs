@@ -100,6 +100,9 @@ if [ -f Cargo.toml ]; then
   # A phone joining by the link `svrngs new --origin` prints (u4-5), in
   # WebKit as an iPhone.
   step "joining in a browser" cargo test --quiet --workspace --test join_page
+  # What only v2 does, on v2 whatever SVRNGS_UI says (crates/svrngs/tests/
+  # page_v2), the binary built to serve it; until page-switchover.
+  step "page v2" cargo test --quiet --workspace --features svrngs/test-support --test page_v2
   # The demo scenes, played (capability-scenes; crates/svrngs/tests/
   # scenes): each scene end to end, every person this build's svrngs with
   # a HOME of their own, played once, each person's browser the engine

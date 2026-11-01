@@ -1279,6 +1279,24 @@ a host whose load is past 3 a core (`crates/svrngs-node/tests/browser/load.rs`,
 `BUSY`) a miss is could-not-judge and fails nothing. Tap, a third canary once
 named, is not built, and nothing runs it.
 
+**Two pages, one gate, until v2 replaces v1.** The pages' second UI is built
+beside the live one (PLAN §1), and every browser test drives the page
+`SVRNGS_UI` names: v1 unless it says `v2`, read once in
+`crates/svrngs-node/tests/browser/harness.rs` into the node's own `Ui`. Any
+other value stops the run. Each built page, and each home page the harness
+hands out, is held to its mark, `svrngs-ui-v2`: present under v2 and absent
+under v1, so a v2 run never passes on v1's page. A command built without its
+test-support, the only build that serves v2's home page, stops a v2 run in
+words. `scripts/parity.sh` runs every target `check.sh` runs that drives a
+page, on v2 and under the gate lock. It writes each test's verdict to
+`target/parity/verdicts.tsv`: passed, failed, could-not-judge or never-ran.
+A pass the empty pages also had (`demo/runs/page/2026-10-31-baseline/`) is
+counted apart, since v2 did not earn it. What only v2 does is tested in
+`crates/svrngs/tests/page_v2/`, in a step of its own, `page v2`, on every
+gate. `check.sh` runs parity only once the features are built. v2 becomes
+the pages in one commit, once parity passes, and the switch, parity and
+`page_v2` go with v1.
+
 **Lean, and kept lean.** `svrngs-core`, the repository and its Swift stay
 under the caps in `scripts/lean_check.py`'s `BUDGET`, their one home. Swift
 is first-party code kept whole, on a rung of its own between the core's and

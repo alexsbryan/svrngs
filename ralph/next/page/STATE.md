@@ -253,7 +253,7 @@ brackets.
     - `home.mjs:101`'s press without `stays` waits for `Promise.race([load, changed])`, where `changed` is the `stays` rule (`:96`) caught across a navigation.
     - It adds the outputs `loads` (1 means it never reloaded) and `lines`, and the flags `until`, `visible` and `after`.
     - It keeps unchanged `b:main.rs:2376`, `b:play.rs:92`, `b:guests.rs:267` and `:349`, `leave_page.rs:113` and `:391`, and `home_group.rs:187` and `:301`.
-    - **Plant:** a `changed` with no catch turns `b:main.rs:2360` red on v1 ("Execution context was destroyed").
+    - **Plant:** home.js's lend `change` (`h:283`) planted to redraw in place (`lending()`) for its reload: the base `home.mjs` turns `b:main.rs:2360` red on v1 (waiting for `load`), this one green. (Corrected: a `changed` with no catch stayed green, since Playwright's `waitForFunction` re-runs across a navigation; d847e479.)
   - **(f) `tabs.mjs` waits for a fresh answer** (`web/tests/tabs.mjs`).
     - `:45-47` shuts `#uses` and writes `#used.replaceChildren()`, a DOM write under Preact's tree. In its place is a wait both UIs satisfy that guards the same thing: the list read after the click is an answer given after it.
     - The part reads `a:329-345` and `:564-567` first. v2's `asking` draws `#used` empty.

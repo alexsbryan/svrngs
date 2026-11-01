@@ -44,9 +44,13 @@ async function asked(page) {
   await unfold(page);
   await page.evaluate(() => (document.getElementById('uses').open = false));
   await page.waitForTimeout(200);
-  await page.evaluate(() => document.getElementById('used').replaceChildren());
+  // The lines it showed, held here and never written in the page: what is
+  // read is an answer drawn after the click, every line a new one, as v1
+  // draws it (app.js `uses` empties #used and asks again) and as v2 does
+  // (its asking draws #used empty).
+  const before = await page.$$('#used li');
   await page.locator('#uses summary').click();
-  await page.waitForSelector('#used li', { timeout: 30_000 });
+  await page.waitForFunction((old) => ((li) => li.length > 0 && li.every((e) => !old.includes(e)))([...document.querySelectorAll('#used li')]), before, { timeout: 30_000 });
   return page.locator('#used').innerText();
 }
 

@@ -3,7 +3,14 @@
 // `args.ask`, its `/ask?lend=<label>&app=<label>`, it is read for its
 // heading, which the test holds to the one source (question.js).
 //
-//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>? | true, <stays>?], ...], "timed"?: [<selector>, ...], "drawn"?: "<selector>", "text"?: true, "open"?: "<a link's words>", "opens"?: ["<link>", ...], "older"?: true, "unfold"?: true, "look"?: <words>}'
+//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>? | true, <stays>?], ...], "timed"?: [<selector>, ...], "drawn"?: "<selector>", "text"?: true, "open"?: "<a link's words>", "opens"?: ["<link>", ...], "older"?: true, "unfold"?: true, "look"?: <words>, "visible"?: true, "after"?: <selector> | [<selector>, <words>]}'
+//
+// A `do` step's fourth element, `until`, is words `all`'s text holds before
+// it is read. `visible` hides the page, then shows it, once the `do` steps
+// are done, as a person comes back to its tab; `after`, a selector, is then
+// read into `later`, once its text holds the words beside it. It answers
+// `loads`, the `load` events the page fired (1: it never reloaded), and
+// `lines`, the page's `window.__lines` (ui/trace.js; v1 has none).
 //
 // It also answers `sent`, every request the page made (method, URL and
 // body), and each link's `href`: a page never sends a secret it is shown
@@ -45,6 +52,8 @@ try {
   const page = await context.newPage();
   page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
   const sent = [];
+  let loads = 0;
+  page.on('load', () => loads++);
   page.on('request', (r) => sent.push([r.method(), r.url(), r.postData() ?? '']));
   // With `timed`, selectors: how long after the page was asked for each
   // first showed (start-home: a group shown before its slowest computer).
@@ -77,7 +86,11 @@ try {
   // (b): what runs here) — and in Chromium the clipboard then.
   const after = [];
   let clipboard = null;
-  for (const [selector, value, stays] of args.do ?? []) {
+  // `all`'s words changed from `b` and no longer "…": what a press says.
+  const settled = ([s, b]) => ((t) => t !== b && !t.includes('…'))([...document.querySelectorAll(s)].map((e) => e.textContent).join('\n'));
+  const holds = ([s, w]) => [...document.querySelectorAll(s)].map((e) => e.textContent).join('\n').includes(w);
+  const until = (s, w) => w && page.waitForFunction(holds, [s, w], { timeout: 30_000 });
+  for (const [selector, value, stays, words] of args.do ?? []) {
     // A value `true` ticks the box (the shelf, its boxes unticked to start).
     if (value === true) {
       await page.locator(selector).first().check({ timeout: 30_000 });
@@ -93,16 +106,37 @@ try {
     if (stays) {
       const before = (await page.locator(args.all).allTextContents()).join('\n');
       await (filled ? page.locator(selector).first().fill(value) : page.locator(selector).first().click());
-      await page.waitForFunction(([s, b]) => ((t) => t !== b && !t.includes('…'))([...document.querySelectorAll(s)].map((e) => e.textContent).join('\n')), [args.all, before], { timeout: 30_000 });
+      await page.waitForFunction(settled, [args.all, before], { timeout: 30_000 });
+      await until(args.all, words);
       after.push(await page.locator(args.all).allTextContents());
       if (args.engine === 'chromium') clipboard = await page.evaluate(() => navigator.clipboard.readText()).catch((e) => `unread: ${e}`);
       continue;
     }
-    await Promise.all([page.waitForEvent('load'), page.locator(selector).first().click()]);
+    // A reload, or a redraw in place as v2 draws (it never reloads to
+    // redraw): whichever comes first. The redraw is `stays`'s rule, which a
+    // reload's navigation ends with "Execution context was destroyed", so
+    // caught, and then never settled, leaving the reload's `load` to win.
+    const never = new Promise(() => {});
+    const before = args.all && (await page.locator(args.all).allTextContents()).join('\n');
+    const changed = args.all ? page.waitForFunction(settled, [args.all, before], { timeout: 30_000 }).catch(() => never) : never;
+    await Promise.all([Promise.race([page.waitForEvent('load'), changed]), page.locator(selector).first().click()]);
     await page.locator('#lent h2, #home p.none ~ p.address').first().waitFor({ timeout: 30_000 });
     await page.locator('#lent li, #lent p, #home p.none ~ p.address').first().waitFor({ timeout: 30_000 });
+    await until(args.all, words);
     after.push(await page.locator(args.all).allTextContents());
   }
+  // As spike run.mjs shows a page again: hidden, then visible, each said.
+  if (args.visible) {
+    for (const state of ['hidden', 'visible']) {
+      await page.evaluate((v) => {
+        Object.defineProperty(document, 'visibilityState', { value: v, configurable: true });
+        document.dispatchEvent(new Event('visibilitychange'));
+      }, state);
+    }
+  }
+  const [afterAt, laterWords] = [args.after].flat();
+  await until(afterAt, laterWords);
+  const later = afterAt ? await page.locator(afterAt).allTextContents() : null;
   const opens = [];
   for (const link of args.opens ?? []) {
     await page.locator('#open input').fill(link, { timeout: 30_000 });
@@ -136,7 +170,8 @@ try {
   // Every link on the page, its words and where it opens (start-home).
   const links = await page.locator('a').evaluateAll((as) => as.map((a) => ({ text: a.textContent, target: a.target, href: a.href })));
   const timed = Object.fromEntries(await timing);
-  console.log(JSON.stringify({ heading, read, all, look, after, clipboard, links, timed, drawn, text, opened, opens, sent, logs }));
+  const lines = await page.evaluate(() => window.__lines ?? null);
+  console.log(JSON.stringify({ heading, read, all, look, after, later, clipboard, links, timed, drawn, text, opened, opens, sent, logs, loads, lines }));
 } catch (e) {
   console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);
   process.exitCode = 1;
