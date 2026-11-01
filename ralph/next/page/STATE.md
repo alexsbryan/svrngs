@@ -439,8 +439,9 @@ brackets.
       - **`a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone`:** (a) moves its computer part ("This link opens in svrngs on your computer.", the link shown). It is red at `main.rs:1619`, the phone's `#open=` by label, until (b), and the home's paste until (f).
       - **cold.mjs `how`** holds on webkit; on chromium `a_lends_alias_opens_it_from_the_groups_page` is red before it, at `main.rs:1853`, (b)'s.
       - `the_page_opened_with_no_link_offers_a_founder_s_line` passed on v2 before (a), page-open's.
-      - NameForm is exported from `web/v2/join.js`, pure, for visit.js's guest form (page-members (c)); the place `join` is join's, so a guest's form is drawn there through a message to join, or by moving the place, page-members' choice.
+      - **A merge to keep both sides of:** page-members' lane (`f5c240fb`, on `ralph/page-members`) draws a guest's form in join's place as `join: ({ s, send }) => naming(s, send) || <the stub's form>` (visit.js `naming`). Merged, join's view is `naming(s, send) || NameForm(…)`, the guest's form first; `NameForm` is exported, pure, should visit.js draw through it.
   - **(b) `#open=` across groups, its aliases, and cold** (`among.js`).
+    - **Where it landed** (corrected, page-join (b), 7b78b2a2): enter.js, page-open's, is the only sender, so two of its lines are page-join's: `kept` sends `wanted` when `#open=` is asked, and `chosen` draws among's offer in `#door`. `a_lends_bookmark_opens_cold_on_a_computer` drives the home page's `/to` alone and passed on v2 before (b).
     - The naming: by label, else alias, `missed`, `nor`, `anew` and its yes (`a:546-563`).
     - `among` (`a:581-587`).
     - `cold` (`a:638-646`) at the edge, never named `hop`.
