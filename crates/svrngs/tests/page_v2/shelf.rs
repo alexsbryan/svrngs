@@ -121,7 +121,7 @@ fn brought_on_v2(seen: &Value, home: bool) {
         ),
         (home && posts != 1, "the home page posts /shelf once"),
         (
-            !(seen["table"] == true && seen["reloads"] == 0) || !read_after(&lines, home),
+            !(seen["table"] == true && seen["reloads"] == 0 && read_after(&lines, home)),
             "then the group is read again, Money on the table, with no reload",
         ),
         (
