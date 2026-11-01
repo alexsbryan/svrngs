@@ -89,7 +89,7 @@ bar is 19,122.
   build-web.sh (copying `v2/`, `ui/` and `vendor/`, and the `SHELL` line).
   CHARTER estimated 770 to 1,042, so S is 34 to 37 over the top of that
   range. Per path, counted by lean_check's own rules: `web/v2/` 503 less
-  build.sh, `home/v2/` 470 less serve.rs, `home/ui/` 164, `web/vendor/` 3
+  build.sh, `home/v2/` 482 less serve.rs, `home/ui/` 164, `web/vendor/` 3
   (each vendored file is one line).
 - **T, home.rs's table of v2's files:** +8 to +30, as CHARTER has it. There
   are 31 modules under `home/v2/` and `home/ui/`.
