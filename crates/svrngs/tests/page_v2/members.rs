@@ -168,3 +168,80 @@ async fn a_guest_s_stop_ends_the_visit_with_no_reload(engine: Engine) {
     );
     drop(ada);
 }
+
+/// Ada lending notes and a guest's link to house for `secs` made, as her
+/// home page makes one (`/link` with `visit`), its page any https one: the
+/// token, which the phone opens as `#visit=<token>`.
+fn ada_has_a_guest(dir: &Path, ada: &Node, id: &str, secs: i64) -> String {
+    let lends = svrngs_node::lend::lends_dir(dir);
+    std::fs::create_dir_all(&lends).unwrap();
+    let body = json!({ "port": 22999, "kind": "k", "limit": 3, "refused": [], "reads": [] });
+    std::fs::write(lends.join("notes.json"), body.to_string()).unwrap();
+    let page = svrngs_core::link::Origin::parse("https://house.example/").unwrap();
+    let linked = (ada.host().link(id, false, Some(&page), Some(secs))).expect("a guest's link");
+    linked.token.encode()
+}
+
+/// Sam, in a browser holding nothing, at ada's guest's link of `secs`,
+/// their name given once asked, then `watch` as members.mjs says.
+/// Ada's computer, the group's id, what was seen, and ada's data dir, held.
+async fn sam_at_the_link(
+    engine: Engine,
+    secs: i64,
+    watch: Value,
+) -> (Node, String, Value, tempfile::TempDir) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let (ada, id, _) = house(dir.path(), &relay).await;
+    let site = site_of(crate::UI);
+    let mut args = json!({ "site": site, "visit": ada_has_a_guest(dir.path(), &ada, &id, secs), "name": "Sam" });
+    args.as_object_mut()
+        .unwrap()
+        .extend(watch.as_object().unwrap().clone());
+    let seen = drive(engine, "v2/members.mjs", args, None).await;
+    drop(relay);
+    (ada, id, seen, dir)
+}
+
+in_webkit!(
+    /// **A guest at their link is asked their name once, and is in**
+    /// (page-members (c), web/app.js `visit`, :206-226, moved). Ada lends
+    /// notes and makes a guest's link of an hour; Sam opens it in a browser
+    /// holding nothing, is told "You’re invited over as a guest" and asked
+    /// their name, gives it, and is in as ada's guest, ada's notes listed;
+    /// ada's record holds one visit, Sam's. Red on v2 against the stub.
+    a_guest_at_their_link_is_asked_their_name_once_and_is_in
+);
+async fn a_guest_at_their_link_is_asked_their_name_once_and_is_in(engine: Engine) {
+    let watch =
+        json!({ "shown": "#status.good, #status.bad", "said": "", "at": "#lent", "within": 1_000 });
+    let (ada, id, seen, _dir) = sam_at_the_link(engine, 3600, watch).await;
+    let shown = seen["shown"].as_array().cloned().unwrap_or_default();
+    let visits = ada.rail().register(&id).unwrap().visits;
+    let wrong: Vec<&str> = [
+        (
+            seen["asking"] != "You’re invited over as a guest",
+            "Sam is invited over as a guest, asked their name",
+        ),
+        (
+            !(shown.len() == 1
+                && shown[0]
+                    .as_str()
+                    .is_some_and(|h| h.starts_with("You’re ada’s guest until "))),
+            "Sam is in as ada's guest",
+        ),
+        (
+            seen["text"].as_str().map(str::trim) != Some("ada’s notes (k)"),
+            "ada's notes are listed for Sam to open",
+        ),
+        (
+            !(visits.len() == 1 && visits.values().all(|g| g.visit.guest.as_str() == "Sam")),
+            "ada's record holds one visit, Sam's",
+        ),
+    ]
+    .into_iter()
+    .filter_map(|(failed, what)| failed.then_some(what))
+    .collect();
+    assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
+    drop(ada);
+}
