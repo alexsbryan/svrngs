@@ -288,6 +288,7 @@ brackets.
   - **(b) The phone's enter, the spine every phone feature reads** (`web/v2/enter.js`).
     - **The regions:** `tab: [unheld, holding, elsewhere, taking]` and `list: [unasked, reading, read, unread]`. Together they own `group`, `lent`, `people`, `shelf`, `unanswered`, `unheard`, `refused`, `behind`, `removals`, `visiting` and `changed`.
     - **The routing:** the fragment's (`a:681-699`), `hold`, `elsewhere` with Choose's "Open it here" `Act`, and `enter`'s persist, unseal and endpoint.
+    - **Choose is drawn in `#door`** (`tabs.mjs:79` finds it there), a place `web/v2/door.js` draws, which is page-members'. So door.js's place draws enter's `chosen(s, send)`, one line, and page-members keeps it (corrected, page-open (b)).
     - **The read:** its next-to-answer fallback (`a:433-436`); the refusals removed, said no and older (`a:438-451`); and the kept `computers` and `addresses` (`a:456-458`).
     - **At the edge:** the key and the endpoint are held by the io, never in state (`a:427-428`). `navigator.locks.request` with its hold-forever promise (`a:391`), the AbortError reload (`a:393-397`) and the no-locks path (`a:386`) stay there too.
     - **Red under the switch:**
