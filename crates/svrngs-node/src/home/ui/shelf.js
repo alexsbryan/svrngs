@@ -7,21 +7,22 @@
 // where it is looked for, not over the words above the boxes, which v1
 // replaced (page-shelf (b)). Folded as "Bring more to <group>" for someone
 // who has just `joined` (question.js:195-198). Its machine, SHELF, is the
-// part's own (ui/view.js `useMachine`), its trace `SHELF:`. Moved with v1's
-// faults kept, each fixed in its own commit after: the button is never
-// disabled, and a second tap brings again.
+// part's own (ui/view.js `useMachine`), its trace `SHELF:`. While it
+// brings, the button and the boxes are held and a second bring is refused,
+// where v1's second tap brought again (page-shelf (b)).
 import { html, useMachine } from './view.js?v=__VERSION__';
 import { go, machine, no } from './machine.js?v=__VERSION__';
 import { Act, Fold } from './parts.js?v=__VERSION__';
 import { spoken } from '../question.js?v=__VERSION__';
 
 const done = (name) => (r) => (r.already ? `${spoken(r.app)} is on the table already.` : `You brought ${spoken(r.app)} to ${name}: everyone in it can open it in a few seconds.`);
+const BUSY = 'a bring is under way, and is answered first';
 export const SHELF = (bring) => ({
   states: { bring: ['idle', 'bringing', 'brought', 'refused'] },
   step: (s, m) => ({
-    tick: () => go(s, {}, { ticked: m.on ? [...s.ticked, m.app] : s.ticked.filter((a) => a !== m.app) }),
+    tick: () => (s.at.bring === 'bringing' ? no(s, BUSY) : go(s, {}, { ticked: m.on ? [...s.ticked, m.app] : s.ticked.filter((a) => a !== m.app) })),
     fold: () => go(s, {}, { open: m.open }),
-    bring: () => go(s, { bring: 'bringing' }, { name: m.name }, { run: 'bring', g: m.g, apps: m.apps, failed: 'unbrought' }),
+    bring: () => (s.at.bring === 'bringing' ? no(s, BUSY) : go(s, { bring: 'bringing' }, { name: m.name }, { run: 'bring', g: m.g, apps: m.apps, failed: 'unbrought' })),
     brought: () => go(s, { bring: 'brought' }, { said: m.answers.map(done(s.name)).join(' ') || 'Tick something to bring first.' }),
     unbrought: () => go(s, { bring: 'refused' }, { said: `Nothing was brought: ${m.why}` }),
   })[m.type]?.() ?? no(s, `the shelf takes no ${m.type}`),
@@ -35,6 +36,6 @@ export const Shelf = (props) => drawn(...useMachine(() => machine('SHELF', SHELF
 export function drawn(s, send, { g, lent, shelf, joined }) {
   const name = g.name ?? 'your group', on = (a) => lent.some((l) => l.group === g.id && l.kind === a.name), offered = shelf.filter((a) => !on(a));
   const tick = (a) => (e) => send({ type: 'tick', app: a, on: e.currentTarget.checked });
-  const section = html`<section><h3>Bring things to the table</h3>${shelf.filter(on).map((a) => html`<p>${spoken(a.name)} is on the table.</p>`)}<p>${offered.length ? `These come with svrngs. Bring one, and everyone in ${name} opens it on their own computer or phone, while any computer in ${name} is on.` : ''}</p>${offered.map((a) => html`<p><label><input type="checkbox" checked=${s.ticked.includes(a.name)} onChange=${tick(a.name)} />${` ${spoken(a.name)}: ${a.words}`}</label></p>`)}${offered.length > 0 && html`<p><${Act} words=${`Bring the ticked ones to ${name}`} doing=${{ state: s.at.bring, said: s.said && ` ${s.said}` }} on=${{ type: 'bring', g, name, apps: offered.map((a) => a.name).filter((a) => s.ticked.includes(a)) }} send=${send} /></p>`}</section>`;
+  const section = html`<section><h3>Bring things to the table</h3>${shelf.filter(on).map((a) => html`<p>${spoken(a.name)} is on the table.</p>`)}<p>${offered.length ? `These come with svrngs. Bring one, and everyone in ${name} opens it on their own computer or phone, while any computer in ${name} is on.` : ''}</p>${offered.map((a) => html`<p><label><input type="checkbox" disabled=${s.at.bring === 'bringing'} checked=${s.ticked.includes(a.name)} onChange=${tick(a.name)} />${` ${spoken(a.name)}: ${a.words}`}</label></p>`)}${offered.length > 0 && html`<p><${Act} words=${`Bring the ticked ones to ${name}`} doing=${{ state: s.at.bring === 'bringing' ? 'busy' : s.at.bring, said: s.said && ` ${s.said}` }} on=${{ type: 'bring', g, name, apps: offered.map((a) => a.name).filter((a) => s.ticked.includes(a)) }} send=${send} /></p>`}</section>`;
   return joined ? html`<${Fold} summary=${`Bring more to ${name}`} fold="shelf" open=${s.open} send=${send}>${section}<//>` : section;
 }

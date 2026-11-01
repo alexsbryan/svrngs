@@ -75,13 +75,36 @@ async fn house(dir: &Path, relay: &iroh_relay::server::Server) -> (Node, String)
 }
 
 /// What `seen` (web/tests/v2/shelf.mjs) shows of the bring, each wrong
-/// one said, so one run says all a page did not do.
-fn brought_on_v2(seen: &Value) {
+/// one said, so one run says all a page did not do. The button pressed
+/// twice at once: held while it brings, then given back, and the second
+/// press refused by SHELF, so the home page posts /shelf once.
+fn brought_on_v2(seen: &Value, home: bool) {
     let next = seen["next"].as_str().unwrap_or_default();
-    let wrong: Vec<&str> = [(
-        !next.contains("You brought Money to house: everyone in it can open it in a few seconds."),
-        "the answer is the button's next sibling",
-    )]
+    let lines: Vec<&str> = (seen["lines"].as_array().into_iter().flatten())
+        .filter_map(|l| l.as_str())
+        .collect();
+    let traced = |start: &str| lines.iter().filter(|l| l.starts_with(start)).count();
+    let posts = (seen["sent"].as_array().into_iter().flatten())
+        .filter(|r| *r == "POST /shelf")
+        .count();
+    let wrong: Vec<&str> = [
+        (
+            !next.contains(
+                "You brought Money to house: everyone in it can open it in a few seconds.",
+            ),
+            "the answer is the button's next sibling",
+        ),
+        (
+            seen["busy"] != json!([true, false]),
+            "the button is held while it brings, then given back",
+        ),
+        (
+            traced("SHELF: bring: idle -> bringing") != 1
+                || traced("SHELF: bring refused in bringing") != 1,
+            "the second press is refused while the first brings",
+        ),
+        (home && posts != 1, "the home page posts /shelf once"),
+    ]
     .into_iter()
     .filter_map(|(failed, what)| failed.then_some(what))
     .collect();
@@ -108,7 +131,7 @@ async fn the_phone_s_bring_is_answered_beside_its_button(engine: Engine) {
     let bo = hex::encode(SigningKey::from_bytes(&[7; 32]).to_bytes());
     let args = json!({ "site": site_of(crate::UI), "key": bo, "token": token, "id": id, "apps": ["Money"], "table": "Money is on the table." });
     let seen = drive(engine, "v2/shelf.mjs", args, None).await;
-    brought_on_v2(&seen);
+    brought_on_v2(&seen, false);
     drop(ada);
 }
 
@@ -125,6 +148,6 @@ async fn the_home_page_s_bring_is_answered_beside_its_button(engine: Engine) {
     let home = format!("http://svrngs.localhost:{}/", ada.api_addr().port());
     let args = json!({ "home": home, "apps": ["Money"], "table": "Money is on the table." });
     let seen = drive(engine, "v2/shelf.mjs", args, None).await;
-    brought_on_v2(&seen);
+    brought_on_v2(&seen, true);
     drop(ada);
 }

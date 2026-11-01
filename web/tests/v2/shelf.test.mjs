@@ -92,9 +92,15 @@ test('each answer said beside the button, in v1’s words, the words above the b
   assert.equal(step(FIRST, { type: 'yes' }).refused, 'the shelf takes no yes');
 });
 
-test('moved with v1’s faults: a second tap while bringing brings again', () => {
+test('while it brings, a second bring and a tick are refused, the button and the boxes held', () => {
   const bringing = step(FIRST, { type: 'bring', g: house, name: 'house', apps: ['Money'] }).state;
-  assert.equal(step(bringing, { type: 'bring', g: house, name: 'house', apps: ['Money'] }).effects.length, 1);
+  assert.equal(step(bringing, { type: 'bring', g: house, name: 'house', apps: ['Money'] }).refused, 'a bring is under way, and is answered first');
+  assert.equal(step(bringing, { type: 'tick', app: 'Events', on: true }).refused, 'a bring is under way, and is answered first');
+  const drawing = out(drawn(bringing, send, { g: house, lent: [], shelf: SHELVED }));
+  assert.equal(drawing.match(/<input disabled type="checkbox">/g)?.length, 3, drawing);
+  assert.ok(drawing.endsWith('<p><button disabled>Bring the ticked ones to house</button></p></section>'), drawing);
+  const brought = step(bringing, { type: 'brought', answers: [{ app: 'Money' }] }).state;
+  assert.equal(step(brought, { type: 'bring', g: house, name: 'house', apps: [] }).effects.length, 1, 'answered, it brings again');
 });
 
 test('the io answers brought, with what it brought as why', async () => {
