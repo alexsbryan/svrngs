@@ -514,3 +514,41 @@ async fn the_door_is_judged_again_when_shown_again(engine: Engine) {
     assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
     drop(ada);
 }
+
+in_chromium!(
+    /// **Ten screen ticks never read "asking…" again** (page-members (e)).
+    /// ada opens house on a screen, `/?screen=<id>`; once its door is drawn,
+    /// ada lit and bo, whose computer never answers, off, the screen reads
+    /// the group ten times more by itself (SCREEN's `tick`), and no change to
+    /// the page in all that time leaves a window "asking…": each door is
+    /// judged before it takes the last one's place (home.js:299-301).
+    /// Watched failing on v1 (`UI` flipped), whose screen is no machine and
+    /// traces no tick; and on a planted v2 screen.js that draws the door
+    /// unjudged while each tick's read is out.
+    ten_screen_ticks_never_read_asking_again
+);
+async fn ten_screen_ticks_never_read_asking_again(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let (ada, id, _) = house(dir.path(), &relay).await;
+    let port = ada.api_addr().port();
+    let screen = format!("http://svrngs.localhost:{port}/?screen={id}");
+    let args = json!({ "home": screen, "shown": "#home .door li.on", "never": "asking…", "said": "", "at": "#home", "traced": ["SCREEN: tick", 10], "within": 90_000 });
+    let seen = drive(engine, "v2/members.mjs", args, None).await;
+    let wrong: Vec<&str> = [
+        (
+            !seen["shown"][0]
+                .as_str()
+                .is_some_and(|t| t.starts_with("ada")),
+            "ada is lit",
+        ),
+        (seen["went"] != true, "ten ticks, each read"),
+        (seen["never"] != 0, "no window reads \"asking…\" again"),
+        (seen["reloads"] != 0, "with no reload"),
+    ]
+    .into_iter()
+    .filter_map(|(failed, what)| failed.then_some(what))
+    .collect();
+    assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
+    drop(ada);
+}

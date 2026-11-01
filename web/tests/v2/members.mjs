@@ -11,9 +11,11 @@
 // `name`, given once asked; then the same, with the heading as it asked
 // (`asking`). With `forget`, the session cookies are cleared before the
 // presses, as a session lapses; with `hold`, the page is hidden and shown
-// again once the test, told it is shown, says so (`watch`).
+// again once the test, told it is shown, says so (`watch`). With `never`,
+// words, each change after `shown` that leaves them in `at`'s text is
+// counted (`never`, 0 when none did).
 //
-//   node web/tests/v2/members.mjs '{"engine": ..., "shown": <selector>, "press"?: [<selector> | [<selector>, <gone>], ...], "gone"?: <selector>, "said"?: <words>, "at"?: <selector>, "traced"?: [<start>, <n>], "within": <ms>, "forget"?: true, "hold"?: <path>, "home"?: <url> | "visit": <token>, "name": ..., "site": ... | "site": ..., "key": ..., "token": ...}'
+//   node web/tests/v2/members.mjs '{"engine": ..., "shown": <selector>, "press"?: [<selector> | [<selector>, <gone>], ...], "gone"?: <selector>, "said"?: <words>, "at"?: <selector>, "traced"?: [<start>, <n>], "within": <ms>, "forget"?: true, "hold"?: <path>, "never"?: <words>, "home"?: <url> | "visit": <token>, "name": ..., "site": ... | "site": ..., "key": ..., "token": ...}'
 //
 // Exit 0 with the JSON line; 1 on anything else.
 import { existsSync } from 'node:fs';
@@ -25,6 +27,7 @@ const at = args.at ?? 'body';
 async function watch(page, reloads) {
   await page.locator(args.shown).first().waitFor({ timeout: 60_000 });
   const shown = await page.locator(args.shown).allTextContents();
+  if (args.never) await page.evaluate(([at, w]) => ((window.__never = 0), new MutationObserver(() => document.querySelector(at)?.textContent.includes(w) && window.__never++).observe(document.body, { subtree: true, childList: true, characterData: true })), [at, args.never]);
   // With `forget`, the page's session forgotten before any press, as one lapses.
   if (args.forget) await page.context().clearCookies();
   // A press `[selector, gone]` is waited on, before the next, until `gone` is gone: whether it went, and `at`'s text then.
@@ -44,7 +47,7 @@ async function watch(page, reloads) {
   const there = ([gone, said, at, [start, n]]) => (gone ? !document.querySelector(gone) : document.querySelector(at)?.innerText.includes(said)) && (window.__lines ?? []).filter((l) => !start || l.startsWith(start)).length >= (n ?? 0);
   const went = await page.waitForFunction(there, [args.gone, args.said, at, args.traced ?? []], { timeout: args.within, polling: 100 }).then(() => true, () => false);
   const text = await page.locator(at).first().innerText().catch(() => null);
-  return { shown, waited, went, text, reloads: reloads(), lines: await page.evaluate(() => window.__lines ?? []) };
+  return { shown, waited, went, text, never: await page.evaluate(() => window.__never ?? null), reloads: reloads(), lines: await page.evaluate(() => window.__lines ?? []) };
 }
 // The page's loads from now on.
 const counted = (page, n = { loads: 0 }) => (page.on('load', () => n.loads++), () => n.loads);
