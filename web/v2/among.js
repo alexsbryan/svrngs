@@ -15,7 +15,7 @@ import * as store from '../store.js?v=__VERSION__';
 import { aliased, whose } from '../question.js?v=__VERSION__';
 
 export const owns = ['offered', 'missed'];
-export const states = { among: ['unasked', 'offered', 'named', 'sent'] };
+export const states = { among: ['unasked', 'offered', 'picked', 'named', 'sent'] };
 const titled = (g) => `${g.name}${g.maker ? ` (${whose(g)})` : ''}`, send = (type, m) => ({ run: 'send', m: { type, ...m } });
 export const takes = {
   among: (s, { groups, wants }) => go(s, { among: 'offered' }, { offered: { groups, wants } }),
@@ -31,6 +31,8 @@ export const takes = {
   // Naming none here, it is said of the other groups held here too, as each was last listed.
   others: (s, { open, label, others }, nor = others.length ? `, nor in ${others.map(titled).join(' or ')} when you last opened ${others.length > 1 ? 'them' : 'it'}` : '') =>
     go(s, {}, { missed: label ? `What that address opens is not lent in ${s.group.name} now${nor}.` : `Nothing in ${s.group.name} goes by ${open} now${nor}.` }),
+  // Picked, the offer goes in the click's own draw, as v1's did (web/app.js:586), before `hold` is answered.
+  pick: (s, { group, wants }) => (s.at.among === 'offered' ? go(s, { among: 'picked' }, {}, send('hold', { group, wants })) : no(s, `nothing is offered: among is ${s.at.among}`)),
   cold: (s) => go(s, { among: 'sent' }, {}, { run: 'cold', failed: 'failed' }),
   sent: (s) => go(s, {}),
 };
@@ -38,7 +40,7 @@ const choosing = (s) => s.at.among === 'offered' && s.at.tab === 'unheld';
 export const heading = { among: (s) => choosing(s) && [`What that address opens is lent in ${s.offered.groups.map(titled).join(' and in ')}.`, 'good'] };
 export const response = { among: (s) => (choosing(s) ? ['Open it in the one you mean.'] : s.missed && [s.missed]) };
 // Each group offered, drawn in #door (enter.js `chosen`).
-export const offered = (s, send) => choosing(s) && s.offered.groups.map((g) => html`<p><button onClick=${() => send({ type: 'hold', group: g, wants: s.offered.wants })}>Open it in ${titled(g)}</button></p>`);
+export const offered = (s, send) => choosing(s) && s.offered.groups.map((g) => html`<p><button onClick=${() => send({ type: 'pick', group: g, wants: s.offered.wants })}>Open it in ${titled(g)}</button></p>`);
 
 // The edge. `forget`: never from a window another page opened, which could
 // read its bytes as they arrive. `cold`: the group's page is this host past

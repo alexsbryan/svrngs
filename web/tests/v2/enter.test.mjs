@@ -85,3 +85,16 @@ test('back on screen the list is read again, and a read again that fails keeps t
   assert.equal(parts.response(back), '', 'read again: the line goes, and what is lent now is in the list');
   assert.deepEqual(back.group.addresses, ['l', 'notes@ada']);
 });
+
+// Picked, the offer and its line go in the click's own step, as v1's click
+// emptied #door and #said before `hold` (web/app.js:586): the browser
+// driver reads the next line once `hold`'s lock answers (cold.mjs `landed`).
+test('a group picked from the offer leaves it in the same step', () => {
+  const offered = through(first, { type: 'among', groups: [house, lake], wants: { open: 'notes@ada' } });
+  assert.equal(parts.response(offered), 'Open it in the one you mean.');
+  const r = parts.step(offered, { type: 'pick', group: house, wants: { open: 'notes@ada' } });
+  assert.equal(r.refused, undefined, r.refused);
+  assert.equal(parts.response(r.state), '', 'no line left to read as the answer');
+  assert.deepEqual(r.effects.map((f) => [f.run, f.m?.type, f.m?.group?.id]), [['send', 'hold', 'g1']]);
+  assert.match(parts.step(r.state, { type: 'pick', group: lake }).refused, /nothing is offered/);
+});
