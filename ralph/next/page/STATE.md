@@ -324,6 +324,10 @@ brackets.
     - The answer goes where v1 puts it: the `p` above the boxes (`q:203`, `:207`).
     - The phone's `#shelf` and the home's group section each mount it.
     - **Red under the switch:** `the_phone_brings_things_to_the_table`; `b:carried.rs:439-469`; `money.rs:123`; `house_rules.rs:134-140`.
+    - **Where it landed** (corrected, page-shelf (a), bf54bc80):
+      - The phone brings through `web/v2/enter.js` `through(group, path, body)`, an edge function page-shelf added to page-open's file (02f78828): the key and the one endpoint are enter.js's, and a flow's own endpoint of the key would displace it at the relay (`a:352`). Every phone write after it uses it.
+      - The home's newcomer fold reads `?joined=` as v1 does (`h:203`), as `home/v2/shelf.js` loads, before `home.js` forgets it: a group's place is given GROUP's state, not HOME's `said`, and `home.js` is page-open's.
+      - Green on v2: `the_phone_brings_things_to_the_table`, and `the_home_page_brings_things_to_the_table` through every shelf assertion, red then at `b:carried.rs:511`, the index, page-index's. `money.rs` and `house_rules.rs` make and join their groups on the home page first, so stay red until page-join.
   - **(b) The fixes, each its own commit, both pages:**
     - the answer in the `Act`, beside the button;
     - the button and the boxes disabled while bringing, where today a second tap posts twice;
