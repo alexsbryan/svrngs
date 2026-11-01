@@ -461,6 +461,9 @@ brackets.
     - `visit.mjs:66-74`;
     - `home_group.rs:188`.
   - **(f) "Open a link from your group"** (`open.js`): `within` (`h:335`) as a pure function, with `window.open` at the edge. **Fix, its own commit:** the refusal said once (`h:397`). **Red:** `b:main.rs:3616`, `links.mjs:46`.
+  - **Where (c) to (f) landed** (corrected, page-join, 0c5467c8..517b6568): each move, the two zero-line fixes (make's refusal, 65b635aa; open's, c0dfbc95), `join.rs`'s two "said once" tests and both node tests are in. Green on v2: `the_home_page_makes_a_link_to_invite_someone`, `the_home_page_opens_a_link_only_within_its_lend`, and `a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone` whole. Red on v2, past this row's parts, on page-members' (parked): `home_group.rs` join at `:337` and make at the folder line, both the folder lines (`h:126-132`); `leave_page.rs` before `:167`, its Leave; the guest's link (`visit.mjs:66-74`) then the phone's `visit`.
+    - **The premise of (c)'s fix is false at HEAD:** with no reload, the shelf of a group just joined is not folded, as `home_group.rs:335` asks ("Bring more to Trip"), since `home/v2/shelf.js` (page-shelf's) reads `?joined=` once, as its module loads, and nothing of HOME reaches a group's places. The fold needs HOME's `q.joined` passed through `home.js` and `group.js` (page-open's) to `shelf.js`, one prop each. That is three files of two other rows, and is asked (target/page-join/NEEDS_HUMAN.md).
+    - **The range:** the row is at +163 after (f)'s move (v2 791 / 1150), past its +160; the three fixes left cost about +2 net (+1 each for join's and make's in place and " Copied." once, -1 from shelf.js's `JOINED`).
   - **v2-only:**
     - `home-join.test.mjs` and `home-make.test.mjs`, whose plants remove `late` and the counter;
     - `join.rs`: joining with `loads == 1`, one " Copied.", one refusal on make and on open. Each is red with `UI` flipped.
