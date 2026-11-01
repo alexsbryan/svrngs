@@ -16,7 +16,7 @@ import { get } from './group.js?v=__VERSION__';
 import { post } from './running.js?v=__VERSION__';
 
 const who = (s) => s.for?.[1] ?? s.person.trim();
-const JOIN = { states: { join: ['typing', 'checking', 'checked', 'refused', 'joining'] },
+export const JOIN = { states: { join: ['typing', 'checking', 'checked', 'refused', 'joining'] },
   io: { check: ({ link, n }) => get(`/join?${new URLSearchParams({ link })}`).then((a) => ({ type: 'checked', n, for: a, why: a[0] })),
     join: ({ link, person }) => post('/join', { link, person }).then(([joined, person, unplaced]) => (location.assign(`/?${new URLSearchParams({ joined, ...(person && { person }), ...(unplaced && { unplaced }) })}`), { type: 'joined', why: 'the page opened again' })) },
   step: (s, m, old = ['checked', 'refused'].includes(m.type) && late(s, 'link', m.n)) => (old ? no(s, old) : ({

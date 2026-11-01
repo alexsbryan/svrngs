@@ -16,7 +16,7 @@ import { namesakes } from '../question.js?v=__VERSION__';
 import { get } from './group.js?v=__VERSION__';
 import { post } from './running.js?v=__VERSION__';
 
-const MAKE = { states: { make: ['typing', 'checking', 'checked', 'making', 'refused'] },
+export const MAKE = { states: { make: ['typing', 'checking', 'checked', 'making', 'refused'] },
   io: { check: ({ name, n }) => get(`/group?${new URLSearchParams({ name })}`).then((b) => namesakes(b, name, 'This makes'), (e) => (name ? e.message : '')).then((words) => ({ type: 'checked', n, words })),
     make: ({ name, person }) => post('/group', [name, person]).then(([made, unplaced, beside]) => (location.assign(`/?${new URLSearchParams({ made, also: namesakes(beside, made, 'This is'), ...(unplaced && { unplaced }) })}`), { type: 'made', why: 'the page opened again' })) },
   step: (s, m) => ({
