@@ -22,8 +22,9 @@ export const get = (path) => fetch(path).then(async (r) => (r.ok ? r.json() : Pr
 
 // Each place of a group's section, in v1's order (home.js:116-232): the
 // index, its people, its folder, the links made here, leaving, removals,
-// who is visiting, the shelf, what is open to this WiFi, and its link to a screen (`show`).
-const PLACES = ['index', 'people', 'folder', 'links', 'leave', 'removals', 'visits', 'shelf', 'wifi', 'show'], ROUTES = { people: '/v1/rail/people', lends: '/v1/lends' };
+// who is visiting, the shelf, what is open to this WiFi, and its link to a screen (`show`);
+// then what it read, told to HOME for "What acts as you" (home/v2/acts.js `Told`), drawing nothing.
+const PLACES = ['index', 'people', 'folder', 'links', 'leave', 'removals', 'visits', 'shelf', 'wifi', 'show', 'told'], ROUTES = { people: '/v1/rail/people', lends: '/v1/lends' };
 // Both read, each counted (ui/machine.js `ask`), the round's why traced.
 const reading = (s, m, [a, p] = ask(s, 'people'), [asked, l] = ask({ asked: a }, 'lends')) =>
   go(s, { people: 'reading', lends: 'reading' }, { asked }, ...[['people', p], ['lends', l]].map(([kind, n]) => ({ run: 'get', kind, n, id: s.id, failed: 'unread' })));
