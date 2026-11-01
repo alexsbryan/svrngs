@@ -6,11 +6,13 @@
 // drawn from state's `lent`, so each read draws it again. `open` takes a
 // lend's label and, from `#open=` (page-join), the path to go to, never a
 // closure's lend. The pass, the holder and the hand-off are the edge's.
+// A guest's lends are drawn here too (web/v2/visit.js `listed`).
 import { html } from '../ui/view.js?v=__VERSION__';
 import { go, no } from '../ui/machine.js?v=__VERSION__';
 import { Keep, Row } from '../ui/parts.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
 import { agreed, alias, aliased, named, once, opens } from '../question.js?v=__VERSION__';
+import { listed } from './visit.js?v=__VERSION__';
 
 // How long a pass opens a lend, in seconds (a:75): its origin asks for
 // another after, which the page signs without a word to the person.
@@ -36,7 +38,7 @@ export const response = { enter: (s, l = s.lent?.find((o) => o.label === s.openi
 const here = () => `${location.origin}${location.pathname}`;
 const kept = (s, l, a = alias(l, s.lent, s.people)) => `${here()}#open=${aliased(a, s.lent, s.people).length === 1 ? encodeURIComponent(a).replaceAll('%20', '+').replaceAll('%40', '@') : l.label}`;
 export const view = {
-  lent: ({ s, send }) => html`<table class="index"><tbody id="lent">${once(s.lent ?? []).map((l) => html`<${Row} key=${l.label} cells=${[html`<span><button onClick=${() => send({ type: 'open', label: l.label })}>${named(l)}</button>${` ${agreed(l, s.shelf, s.group)}${opens(l)[1] === 'full' ? ' Full now.' : ''}`}${s.fine && html`${' '}<${Keep} at=${kept(s, l)} />`}</span>`]} />`)}</tbody></table>`,
+  lent: ({ s, send }) => html`<table class="index"><tbody id="lent">${listed(s, send)}${once(s.lent ?? []).map((l) => html`<${Row} key=${l.label} cells=${[html`<span><button onClick=${() => send({ type: 'open', label: l.label })}>${named(l)}</button>${` ${agreed(l, s.shelf, s.group)}${opens(l)[1] === 'full' ? ' Full now.' : ''}`}${s.fine && html`${' '}<${Keep} at=${kept(s, l)} />`}</span>`]} />`)}</tbody></table>`,
 };
 
 // The edge (a:234-284): the yes the open is, kept with the group when the
