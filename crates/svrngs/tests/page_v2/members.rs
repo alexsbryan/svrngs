@@ -245,3 +245,42 @@ async fn a_guest_at_their_link_is_asked_their_name_once_and_is_in(engine: Engine
     assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
     drop(ada);
 }
+
+in_webkit!(
+    /// **A guest's visit of 5 s ends while their page is shown**
+    /// (page-members (c)'s fix). Sam, ada's guest, sees ada's notes
+    /// listed; as the visit ends, the page says so and lists nothing, with
+    /// no reload. Watched failing on v1 (`UI` flipped), which listed the
+    /// lends until the link was opened again (web/app.js:221-224).
+    a_guest_s_visit_of_5_s_ends_while_shown
+);
+async fn a_guest_s_visit_of_5_s_ends_while_shown(engine: Engine) {
+    let watch = json!({ "shown": "#lent button", "gone": "#lent button", "at": "#status", "within": 15_000 });
+    let (ada, _, seen, _dir) = sam_at_the_link(engine, 5, watch).await;
+    let wrong: Vec<&str> = [
+        (
+            seen["shown"] != json!(["ada’s notes (k)"]),
+            "ada's notes are listed while Sam visits",
+        ),
+        (
+            seen["went"] != true,
+            "nothing is listed once the visit ends",
+        ),
+        (
+            !seen["text"]
+                .as_str()
+                .is_some_and(|t| t.starts_with("Your visit as ada’s guest ended ")),
+            "the page says the visit has ended",
+        ),
+        (seen["reloads"] != 0, "with no reload"),
+        (
+            traced(&seen, "PAGE: ended") != 1,
+            "the visit ended at its end, on the page's timer",
+        ),
+    ]
+    .into_iter()
+    .filter_map(|(failed, what)| failed.then_some(what))
+    .collect();
+    assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
+    drop(ada);
+}

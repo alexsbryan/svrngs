@@ -24,8 +24,12 @@ const at = (regions, f) => (s, m) => (regions.includes(s.at.visit) ? f(s, m) : n
 export const takes = {
   visit: at(['none'], (s, { token }) => go(s, {}, { invited: token }, { run: 'recall', token, failed: 'failed' })), unkept: at(['none'], (s) => go(s, { visit: 'naming' }, { guest: '' })),
   'typed name': at(['naming'], (s, { value }) => go(s, {}, { guest: value })), named: at(['naming'], (s) => go(s, { visit: 'redeeming' }, {}, { run: 'redeem', token: s.invited, guest: s.guest, failed: 'failed' })),
-  // `ended` is the edge's, which alone reads the clock.
-  redeemed: at(['none', 'redeeming'], (s, { stay, ended }) => go(s, { visit: ended ? 'ended' : 'on' }, { stay })), called: (s) => go(s, {}),
+  // Whether it has ended is the edge's, which alone reads the clock; one
+  // that has not ends on its timer (`over`), and its lends go from the
+  // page with it, where web/app.js listed them until the link was opened
+  // again (:221-224).
+  redeemed: at(['none', 'redeeming'], (s, { stay, ended }) => go(s, { visit: ended ? 'ended' : 'on' }, { stay }, ...(ended ? [] : [{ run: 'over', until: stay.until, failed: 'failed' }]))),
+  ended: at(['on'], (s) => go(s, { visit: 'ended' })), called: (s) => go(s, {}),
   call: at(['on'], (s, { label }) => go(s, {}, {}, { run: 'call', token: s.invited, lent: s.stay.lent, label, until: s.stay.until + PASS_LIFE, failed: 'failed' })),
 };
 const host = (s) => s.stay?.host, until = (s) => s.stay && new Date(s.stay.until * 1000).toLocaleString();
@@ -53,5 +57,6 @@ export const io = {
   recall: ({ token }) => wasm().then((w) => (w.relay_of(token) ? store.visitOf(token) : said('This link was made by an older svrngs. Ask whoever sent it for a new one.'))
     .then((kept) => (kept ? ((key = kept.key), stay(w, token, kept)) : { type: 'unkept', why: 'no visit is kept for this link' }))).catch(failing),
   redeem: ({ token, guest }) => wasm().then(async (w, v) => ((key = crypto.getRandomValues(new Uint8Array(32))), (v = await visiting(w, token, guest)), await store.keepVisit(token, v, key), stay(w, token, v))).catch(failing),
+  over: ({ until }) => new Promise((r) => setTimeout(r, until * 1000 - Date.now())).then(() => ({ type: 'ended', why: `the visit ended at ${until}` })),
   call: ({ token, lent, label, until }) => handing({ group: { token }, lent, unanswered: [], label }, key, until).then((m) => (m.type === 'handed' ? { ...m, type: 'called' } : { type: 'failed', said: m.said, why: m.said })),
 };
