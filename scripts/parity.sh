@@ -15,6 +15,12 @@
 set -uo pipefail
 [ -n "${PARITY_LOCKED:-}" ] || PARITY_LOCKED=1 exec lockf -k /tmp/svrngs-gate.lock "$0" "$@"
 cd "$(dirname "$0")/.."
+# The open files check.sh raises (check.sh:7-13), raised here too: under
+# launchd's soft limit of 256, a loop's await, the browser target's 94
+# tests in one process fail at spawning node ("Too many open files",
+# drive.rs:96) and four hang, by the launcher, not the page.
+soft=$(ulimit -n) && { ulimit -Sn 10240 2>/dev/null || ulimit -Sn "$(ulimit -Hn)"; }
+echo "parity: open files: $soft, raised to $(ulimit -n)"
 out=target/parity base=demo/runs/page/2026-10-31-baseline/verdicts.tsv
 rm -rf "$out" target/could-not-judge target/conformance target/scenes && mkdir -p "$out"
 # Each target, and what check.sh gives its tests after `--`.
