@@ -2,7 +2,8 @@
 // with no browser: each name typed is asked for its namesakes, counted
 // (`ask` on `name`), and an older answer refused by name, where
 // home.js:420 compared the typed value; a second press refused while it
-// makes; a refusal said once. Each step's effects are read as data. Plant,
+// makes; a refusal said once; made, the form empty again and HOME saying
+// so (`take`). Each step's effects are read as data. Plant,
 // watched failing: the counter taken out (`ask(s, 'name')` read as
 // `[s.asked, 1]`), so every name is ask 1 and the older answer is drawn.
 
@@ -11,9 +12,9 @@ import { register } from 'node:module';
 import { test } from 'node:test';
 
 register('./layout.mjs', import.meta.url);
-const { MAKE } = await import('../../../crates/svrngs-node/src/home/v2/make.js?v=__VERSION__');
+const { MAKE: made, take } = await import('../../../crates/svrngs-node/src/home/v2/make.js?v=__VERSION__');
 
-const FIRST = { at: { make: 'typing' }, name: '', person: '', before: '', said: '' };
+const MAKE = made(() => {}), FIRST = { at: { make: 'typing' }, name: '', person: '', before: '', said: '' };
 const run = (s, ...ms) => ms.reduce(([s, out], m) => ((r) => [r.state, [...out, r.refused ?? r.effects]])(MAKE.step(s, m)), [s, []]);
 
 test('an older answer of namesakes is refused by name', () => {
@@ -29,4 +30,11 @@ test('a second press is refused while it makes, and a refusal is said once', () 
   assert.deepEqual(out[2], [{ run: 'make', name: 'Trip', person: 'Dee', failed: 'refused' }]);
   assert.equal(out[3], 'a group is being made, and is answered first');
   assert.deepEqual([s.at.make, s.said], ['refused', ' a name cannot be empty']);
+});
+
+test('made, the form is empty again, and HOME says so from what was made', () => {
+  const [s] = run(FIRST, { type: 'typed', field: 'name', value: 'Lab' }, { type: 'make' }, { type: 'made' });
+  assert.deepEqual([s.at.make, s.name, s.asked], ['typing', '', { name: 1 }]);
+  const q = { made: 'Lab', also: '', unplaced: null };
+  assert.deepEqual(take({ at: { groups: 'read', said: 'joined' }, q: { joined: 'Trip' } }, { type: 'made', flow: 'make', q }).state, { at: { groups: 'read', said: 'made' }, q });
 });

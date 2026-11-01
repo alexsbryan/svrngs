@@ -1,5 +1,5 @@
 //! page-join's v2-only tests (main.rs): on the home page, what is
-//! refused is said once, and a group joined is drawn with no
+//! refused is said once, and a group joined or made is drawn with no
 //! reload.
 
 use std::path::Path;
@@ -169,6 +169,32 @@ async fn a_group_joined_is_drawn_with_no_reload(engine: Engine) {
     let wrong: Vec<&str> = [
         (!words.contains("You’re in Trip, as Dee."), "said joined"),
         (!words.contains("Bring more to Trip"), "Trip drawn, folded"),
+        (seen["loads"] != 1, "with no reload"),
+    ]
+    .into_iter()
+    .filter_map(|(failed, what)| failed.then_some(what))
+    .collect();
+    assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
+}
+
+in_chromium!(
+    /// **A group made is drawn with no reload** (page-join (d)'s second
+    /// fix). Ada makes Lab: the page says "You made Lab." and draws Lab,
+    /// with its links, having loaded once. Watched failing on v1 (`UI`
+    /// flipped), which opens the page again (home.js:364).
+    a_group_made_is_drawn_with_no_reload
+);
+async fn a_group_made_is_drawn_with_no_reload(engine: Engine) {
+    let steps = json!([
+        ["#make input[name=name]", "Lab"],
+        ["#make input[name=person]", "Ada"],
+        ["#make button:has-text('Make a group')", null, "MAKE: made", "Invite someone to Lab"]
+    ]);
+    let seen = drawn(engine, "#home > p, #home section button", steps).await;
+    let words = seen["after"][0]["words"].to_string();
+    let wrong: Vec<&str> = [
+        (!words.contains("You made Lab."), "said made"),
+        (!words.contains("Invite someone to Lab"), "Lab drawn"),
         (seen["loads"] != 1, "with no reload"),
     ]
     .into_iter()
