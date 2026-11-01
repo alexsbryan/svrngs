@@ -521,7 +521,7 @@ brackets.
     - `#acts > details`, `summary > h2`, and "Each Stop holds from the app’s next request.";
     - `#used li`, `#used button` "Stop", `#ask:not([hidden])`, `#words` and `#home h2` as `question()`;
     - `UNLENT`.
-  - **Moves:** the yes to a new version, and Stops that hold, on both pages. +108 to +144 [about 72 phone, `q:77-88`, `:220-245` 25, about 22 home].
+  - **Moves:** the yes to a new version, and Stops that hold, on both pages. +108 to +190 (the operator widened it from +144, 2026-11-01: the shared parts 23 with no estimate, the home 70 against +28 to +42, and (d)'s five fixes; demo/runs/page/2026-11-01-acts-range/NEEDS_HUMAN.md) [about 72 phone, `q:77-88`, `:220-245` 25, about 22 home].
 - [ ] page-home-rooms — depends [page-open] — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — WiFi and Play on the computer, each one region feeding both of its lists:
   - **Owns:** `home/v2/wifi.js`, `home/v2/play.js`, `page_v2/rooms.rs`.
   - **(a) WiFi.**
