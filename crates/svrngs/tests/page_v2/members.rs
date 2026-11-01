@@ -379,3 +379,59 @@ async fn hand_on_then_leave_with_no_reload(engine: Engine) {
     assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
     drop(ada);
 }
+
+in_chromium!(
+    /// **Two folder presses are said once** (page-members (f)). ada keeps
+    /// house's folder; her home page offers to open it, and she presses
+    /// "Open this folder" twice, each answered: the page says it opened
+    /// once, the last press's answer, never one after the other. The
+    /// openers are planted first on `PATH`, each answering done, so no
+    /// window opens (browser/main.rs `the_home_page_opens_the_group_s_folder`).
+    /// Watched failing on v1 (`UI` flipped), whose `p.append` (home.js:130)
+    /// says each answer after the one before.
+    two_folder_presses_are_said_once
+);
+async fn two_folder_presses_are_said_once(engine: Engine) {
+    use std::os::unix::fs::PermissionsExt;
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let (ada, id, _) = house(dir.path(), &relay).await;
+    let (folder, bin) = (dir.path().join("house"), dir.path().join("bin"));
+    std::fs::create_dir(&folder).unwrap();
+    std::fs::create_dir(&bin).unwrap();
+    for opener in ["open", "xdg-open"] {
+        std::fs::write(bin.join(opener), "#!/bin/sh\nexit 0\n").unwrap();
+        std::fs::set_permissions(bin.join(opener), std::fs::Permissions::from_mode(0o755)).unwrap();
+    }
+    let path = std::env::var_os("PATH").unwrap_or_default();
+    let paths = std::iter::once(bin.clone()).chain(std::env::split_paths(&path));
+    std::env::set_var("PATH", std::env::join_paths(paths).unwrap());
+    let kept = reqwest::Client::builder().no_proxy().build().unwrap();
+    let kept = kept
+        .post(format!("http://{}/v1/folders", ada.api_addr()))
+        .bearer_auth(ada.token())
+        .header("content-type", "application/json")
+        .body(json!({ "dir": folder, "group": id }).to_string())
+        .send()
+        .await
+        .unwrap();
+    assert!(kept.status().is_success(), "{:?}", kept.text().await);
+    let home = format!("http://svrngs.localhost:{}/", ada.api_addr().port());
+    let open = "#home section button:text-is('Open this folder')";
+    let args = json!({ "home": home, "shown": open, "press": [open, open], "said": "", "at": "#home p.folder + p", "traced": ["FOLDER: opened", 2], "within": 15_000 });
+    let seen = drive(engine, "v2/members.mjs", args, None).await;
+    let text = seen["text"].as_str().unwrap_or_default();
+    let wrong: Vec<&str> = [
+        (seen["went"] != true, "both presses are answered"),
+        (
+            text != "Open this folder Opened, in a window of its own.",
+            "the page says it opened once",
+        ),
+        (seen["reloads"] != 0, "with no reload"),
+    ]
+    .into_iter()
+    .filter_map(|(failed, what)| failed.then_some(what))
+    .collect();
+    assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
+    drop(ada);
+}

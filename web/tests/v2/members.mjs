@@ -12,7 +12,7 @@
 // (`asking`). With `forget`, the session cookies are cleared before the
 // presses, as a session lapses.
 //
-//   node web/tests/v2/members.mjs '{"engine": ..., "shown": <selector>, "press"?: [<selector> | [<selector>, <gone>], ...], "gone"?: <selector>, "said"?: <words>, "at"?: <selector>, "within": <ms>, "forget"?: true, "home"?: <url> | "visit": <token>, "name": ..., "site": ... | "site": ..., "key": ..., "token": ...}'
+//   node web/tests/v2/members.mjs '{"engine": ..., "shown": <selector>, "press"?: [<selector> | [<selector>, <gone>], ...], "gone"?: <selector>, "said"?: <words>, "at"?: <selector>, "traced"?: [<start>, <n>], "within": <ms>, "forget"?: true, "home"?: <url> | "visit": <token>, "name": ..., "site": ... | "site": ..., "key": ..., "token": ...}'
 //
 // Exit 0 with the JSON line; 1 on anything else.
 import { driving, launch, serve } from '../page.mjs';
@@ -30,8 +30,9 @@ async function watch(page, reloads) {
     await page.locator(press).first().click({ timeout: 30_000 });
     if (gone) waited.push({ went: await page.waitForFunction((g) => !document.querySelector(g), gone, { timeout: args.within, polling: 100 }).then(() => true, () => false), text: await page.locator(at).first().innerText() });
   }
-  const there = ([gone, said, at]) => (gone ? !document.querySelector(gone) : document.querySelector(at)?.innerText.includes(said));
-  const went = await page.waitForFunction(there, [args.gone, args.said, at], { timeout: args.within, polling: 100 }).then(() => true, () => false);
+  // With `traced`, [start, n]: until the trace holds n lines that start so, too.
+  const there = ([gone, said, at, [start, n]]) => (gone ? !document.querySelector(gone) : document.querySelector(at)?.innerText.includes(said)) && (window.__lines ?? []).filter((l) => !start || l.startsWith(start)).length >= (n ?? 0);
+  const went = await page.waitForFunction(there, [args.gone, args.said, at, args.traced ?? []], { timeout: args.within, polling: 100 }).then(() => true, () => false);
   const text = await page.locator(at).first().innerText().catch(() => null);
   return { shown, waited, went, text, reloads: reloads(), lines: await page.evaluate(() => window.__lines ?? []) };
 }
