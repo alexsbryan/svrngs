@@ -354,7 +354,7 @@ brackets.
     - "Tick something to bring first.";
     - the `details` for a newcomer, from `said: joined`.
   - **Moves:** the house demo's bring, on an iPhone and on the computer. +40 to +58 [`q:199-210` 12, `a:485-489`, `h:203`].
-- [ ] page-index — depends [page-open] — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — what the group lends, drawn from each fresh read, on both pages; and on the computer, what it runs and lends:
+- [x] page-index 769b9e3f — depends [page-open] — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — what the group lends, drawn from each fresh read, on both pages; and on the computer, what it runs and lends:
   - **Owns:** `web/v2/index.js`, `home/v2/index.js`, `home/v2/running.js`, `home/v2/lending.js`, `page_v2/index.rs`, and `web/tests/v2/index.mjs`.
   - **(a) The phone's index** (`a:537-541`, page-local).
     - Each row is `span > button`, named, then `agreed`, " Full now.", and `Keep` on a fine pointer, keyed by label.
