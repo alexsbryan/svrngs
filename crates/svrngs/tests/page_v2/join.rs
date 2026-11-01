@@ -133,9 +133,10 @@ async fn a_link_to_nothing_lent_is_said_once(engine: Engine) {
     assert_eq!(said, [1, 1], "said once, at each press: {seen:#}");
 }
 
-/// Ada's home page, the `steps` taken, its last read when `until`'s words
-/// hold it: the reads, and whether the page loaded once.
-async fn drawn(engine: Engine, read: &str, steps: Value) -> Value {
+/// Ada's home page, with Sam's computer holding Trip, the `steps` taken,
+/// given Sam's link to Trip, each read once `until`'s words hold it: the
+/// reads, and whether the page loaded once.
+async fn drawn(engine: Engine, read: &str, steps: impl FnOnce(&str) -> Value) -> Value {
     let relay = relay().await;
     let dir = tempfile::tempdir().unwrap();
     let (ada, home) = house(dir.path(), &relay).await;
@@ -143,8 +144,7 @@ async fn drawn(engine: Engine, read: &str, steps: Value) -> Value {
     let (sam, _, trip) = computer(sam_dir.path(), &relay, 2, "Trip", "Sam").await;
     let made = (sam.host().link(&trip, false, None, None)).expect("Sam makes a link to Trip");
     let link = svrngs_node::link::client_link(&made.token);
-    let steps = serde_json::to_string(&steps).unwrap().replace("LINK", &link);
-    let args = json!({ "home": home, "read": read, "steps": serde_json::from_str::<Value>(&steps).unwrap() });
+    let args = json!({ "home": home, "read": read, "steps": steps(&link) });
     let seen = drive(engine, "v2/index.mjs", args, None).await;
     drop((ada, sam));
     seen
@@ -159,11 +159,18 @@ in_chromium!(
     a_group_joined_is_drawn_with_no_reload
 );
 async fn a_group_joined_is_drawn_with_no_reload(engine: Engine) {
-    let steps = json!([
-        ["#join input[name=link]", "LINK"],
-        ["#join input[name=person]", "Dee"],
-        ["#join button:has-text('Join Trip as Dee')", null, "JOIN: joined", "Bring more to Trip"]
-    ]);
+    let steps = |link: &str| {
+        json!([
+            ["#join input[name=link]", link],
+            ["#join input[name=person]", "Dee"],
+            [
+                "#join button:has-text('Join Trip as Dee')",
+                null,
+                "JOIN: joined",
+                "Bring more to Trip"
+            ]
+        ])
+    };
     let seen = drawn(engine, "#home > p, #home summary", steps).await;
     let words = seen["after"][0]["words"].to_string();
     let wrong: Vec<&str> = [
@@ -185,11 +192,18 @@ in_chromium!(
     a_group_made_is_drawn_with_no_reload
 );
 async fn a_group_made_is_drawn_with_no_reload(engine: Engine) {
-    let steps = json!([
-        ["#make input[name=name]", "Lab"],
-        ["#make input[name=person]", "Ada"],
-        ["#make button:has-text('Make a group')", null, "MAKE: made", "Invite someone to Lab"]
-    ]);
+    let steps = |_: &str| {
+        json!([
+            ["#make input[name=name]", "Lab"],
+            ["#make input[name=person]", "Ada"],
+            [
+                "#make button:has-text('Make a group')",
+                null,
+                "MAKE: made",
+                "Invite someone to Lab"
+            ]
+        ])
+    };
     let seen = drawn(engine, "#home > p, #home section button", steps).await;
     let words = seen["after"][0]["words"].to_string();
     let wrong: Vec<&str> = [
@@ -214,7 +228,11 @@ in_chromium!(
     a_link_s_copy_is_answered_once
 );
 async fn a_link_s_copy_is_answered_once(engine: Engine) {
-    let invite = json!(["#home button:has-text('Invite someone to house')", null, "LINK: made"]);
+    let invite = json!([
+        "#home button:has-text('Invite someone to house')",
+        null,
+        "LINK: made"
+    ]);
     let (said, seen) = twice(
         engine,
         invite,
