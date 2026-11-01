@@ -384,7 +384,7 @@ brackets.
     - "Let in this many", "Let everyone in", "Stop lending", "You lend nothing yet." and `section#lent`;
     - a `sent` holding no secret.
   - **Moves:** scene `films`, the night demo, and Events or Money seen without a reload. +78 to +108 [about 62 phone, `h:118-119`, `:178-191`, about 15, and about 28 running and lending].
-- [ ] page-members — depends [page-open] — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — who is in, who left, who is visiting, a guest's own visit, leaving, and the screen:
+- [x] page-members 39674ee8 — depends [page-open] — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — who is in, who left, who is visiting, a guest's own visit, leaving, and the screen:
   - **Owns:** `ui/door.js`, `ui/visitors.js`, `web/v2/door.js`, `web/v2/visit.js`, `home/v2/door.js`, `home/v2/visits.js`, `home/v2/leave.js`, `home/v2/screen.js`, `page_v2/members.rs`, and `web/tests/v2/members.mjs`.
   - **(a) The door, both pages.**
     - **The shared parts:** `ui/door.js` `Door` is `q:161-198`, judged by `unanswered`, with "asking…" and "not known now". `ui/visitors.js` is `q:43`.
@@ -395,14 +395,24 @@ brackets.
       - `the_group_s_page_shows_every_removal_and_ask`;
       - `a_phone_is_shown_a_lend_s_computer_that_did_not_answer_as_its_window_dark`;
       - `b:main.rs:3697`, `:3058`, `:4097`, `:2876`, `:2523`, `:2566`, `:2616`, `:2690` and `:3834`.
+    - **Where it landed** (corrected, page-members (a), fa07bb80):
+      - The line numbers above had moved; the red set run was by name: both `every_removal_and_ask`, `the_door_draws_who_is_on_now`, `the_home_page_tells_two_people_of_one_name_apart`, `the_home_page_says_where_the_groups_folder_is`, `the_home_page_opens_the_group_s_folder`, `the_group_s_page_draws_the_door_and_the_index` and `whose_computer_did_not_answer_and_who_asked_are_told_by_key`.
+      - Three stay red past every door assertion until page-index lands: `whose_computer…` at `table.index td[colspan]`, `…draws_the_door_and_the_index` at its index row, `the_door_draws_who_is_on_now` at home.mjs's `text` wait for `#lent h2 ~ *`.
+      - The phone's "your guest" line needs the key's public spelling: `web/v2/enter.js`'s `read` answers `me`, `w.actor(key)`, a field enter owns (b5c4e397), as page-shelf added `through` there.
+      - The home's folder button is FOLDER, a machine of its own in `home/v2/door.js`, which also exports `post` and `decides(g, rows, me)` for page-acts.
   - **(b) Visits, both pages.**
     - **The phone:** an end timer at the earliest `until` sends `reread`, its own commit.
     - **The home:** `visits.js` (not `guests.js`, a vocab noun). "Who you have over", `ul.yours`, and a Stop `Act` whose effect is `{run: 'wait', until: ts}`, then a read again, in place of `h:163`'s reload, its own commit.
     - **Red:** `the_phones_page_shows_sam_visiting_and_kims_stop_ends_it` (`guests.rs:323`), `b:guests.rs:268`, `:349`.
+    - **Where it landed** (corrected, page-members (b), c642e7d2): both guests tests pass every visits assertion on v2, then wait in home.mjs for `#lent h2` after Kim's Stop, page-index's section, so stay red until it lands. The phone's end timer is `ends`/`end` in `web/v2/door.js`, asked by `Ends`, a part drawing nothing, since `web/tests/v2/frame.test.mjs` draws each place as a plain function. Its v2-only tests, `a_visit_ended_while_open_drops_on_the_phone` and `a_guest_s_stop_ends_the_visit_with_no_reload`, drive `web/tests/v2/members.mjs`.
   - **(c) A guest's own visit** (`visit.js`, `a:206-226`): `visit: [none, naming, redeeming, on, ended]`, NameForm as a guest, and its key kept apart. **Fix, its own commit:** an edge timer at `v.until` sends `ended`, and the guest's index empties. **Red:** `visit.mjs:52-56`, `:93-99`, and `sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest`.
+    - **Where it lands** (corrected, page-members (c)): the guest's name is asked in `form#join`, in `web/v2/join.js`'s place (page-join's), and what the visit opens is listed in `#lent`, `web/v2/index.js`'s place (page-index's), so each place draws visit.js's part, `naming` and `listed`, one line each, as `#door` draws enter's `chosen`. page-join's NameForm takes a guest's form over, `typed name` with it. `sam_opens_the_link_kim_sent…` stops first at Kim's "Have a guest", `home/v2/links.js`, page-join's stub (target/page-members/red-c.log, `guests.rs:103`), so it stays red until page-join lands; the move's red is the v2-only `a_guest_at_their_link_is_asked_their_name_once_and_is_in`, against the stub.
   - **(d) Leaving and handing on** (`leave.js`): `leave: [idle, asking, handed, decides, refused]`, where `left` sets `said: left`. **Fixes, each its own commit:** the refusal read through `answer` (`h:28-31`, where `h:42` swallows it), and `handed` sending `again`. **Red:** `leave_page.rs:102-122`, `:391`.
+    - **Where it landed** (corrected, page-members (d), f1188f42, b7f773b6, 8e0af161): HOME's `left` is taken by leave.js's `take` (group.js `offered`), which sets `groups: reading` with `said: left`, so the page says it once the groups are read. The refusal is read by LEAVE's own io, not by `answer`: removal.rs's outcomes are 409s that are read (`decides`), so a reply is its outcome, or a 401 said in group.js's words, or its `error`. `a_leave_reaches_the_leavers_other_computer` is green on v2. `leaving_on_the_home_page…` passes every leave assertion, then stops at `#join`, page-join's stub, so it stays red until page-join lands (target/page-members/green-d4.log). Its v2-only tests are `a_refused_leave_is_said_in_its_own_words` and `hand_on_then_leave_with_no_reload`.
   - **(e) A group on a screen** (`screen.js`), on `Door`: `SCREEN: [reading, read, unread]`, with `seen` and `newest` in state. The poll (`h:328`) becomes an edge timer answering `tick`, and the door is judged before it takes the last one's place. **Red:** `b:main.rs:3753`, xenia's `/?screen=` (`xenia/main.rs:265`). No visible fix.
+    - **Where it landed** (corrected, page-members (e), 0f05e0fe, 650e8d6a): the group's link to a screen, `show`, the last of GROUP's places, is screen.js's too: `the_home_page_copies_a_lend_s_address_for_a_program` stopped at it (`main.rs:3403`) and is green on v2 with `the_screen_shows_what_is_lent_after_it_opened` (target/page-members/green-e.log). The page's class and title are SCREEN's `look` effect; ui/door.js gains the newest mark and `counted`. xenia's `/?screen=` is matched by its title, "House on a screen", which `look` sets as v1 did; xenia runs only by name, so it was not run here. The v2-only test is `ten_screen_ticks_never_read_asking_again`, its plant a screen.js drawing the door unjudged while a tick's read is out. **Lines:** screen.js and door.js +31, so the row is +176 (v2 847 of 1,207).
   - **(f) The home door's fixes, each its own commit:** the folder's answer said once (`h:130`), and the door judged again on `visible`.
+    - **Where it landed** (corrected, page-members (f), c0f51b0f, e1f03249): (f) landed before (e), as it fit the row's room and (e) did not (demo/runs/page/2026-10-31-members-range/NEEDS_HUMAN.md). Judging the door again on `visible` was page-open's already (home.js and group.js `visible`), so its commit is a test alone, `the_door_is_judged_again_when_shown_again`. It draws a computer that went off as "did not answer", not one that came back on, as nothing in `page_v2` restarts a node in process. The folder's test is `two_folder_presses_are_said_once`.
   - **v2-only:** each red with `UI` flipped to `Ui::V1`:
     - a visit ended while open drops on the phone;
     - a Stop with `loads == 1` and `VISITS: waited`;
@@ -418,7 +428,7 @@ brackets.
     - "You’re invited over as a guest";
     - "Leave ${name}", "You left Trip.", "Groups you left", "Trip (Sam’s, since" and `p.leave`;
     - `body.screen`, "Since this screen opened", `mark`, and "3 people · 2 on now · 2 things lent".
-  - **Moves:** scene `life`'s removal, and the guests scenes. +110 to +152 [about 31 phone, `q:43`, `:161-198` 19, about 62 home].
+  - **Moves:** scene `life`'s removal, and the guests scenes. +110 to +180 (the operator widened it from +152, 2026-11-01: leave 24, the screen v1's 22 with its machine, +24 to +32; demo/runs/page/2026-10-31-members-range/NEEDS_HUMAN.md) [about 31 phone, `q:43`, `:161-198` 19, about 62 home].
 - [ ] page-join — depends [page-open] — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — coming in by a link, and making and sharing links, on both pages:
   - **Owns:** `web/v2/join.js`, `web/v2/computer.js` (from page-open), `web/v2/among.js`, `home/v2/join.js`, `home/v2/make.js`, `home/v2/links.js`, `home/v2/open.js`, `page_v2/join.rs`, `web/tests/v2/join.mjs`, `home-join.test.mjs` and `home-make.test.mjs`.
   - **(a) The phone joins** (`join.js`): `join: [unasked, asking, naming, redeeming, taken, joined]`, owning `why`.
@@ -522,16 +532,28 @@ brackets.
     - `#used li`, `#used button` "Stop", `#ask:not([hidden])`, `#words` and `#home h2` as `question()`;
     - `UNLENT`.
   - **Moves:** the yes to a new version, and Stops that hold, on both pages. +108 to +190 (the operator widened it from +144, 2026-11-01: the shared parts 23 with no estimate, the home 70 against +28 to +42, and (d)'s five fixes; demo/runs/page/2026-11-01-acts-range/NEEDS_HUMAN.md) [about 72 phone, `q:77-88`, `:220-245` 25, about 22 home].
-- [ ] page-home-rooms — depends [page-open] — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — WiFi and Play on the computer, each one region feeding both of its lists:
+- [x] page-home-rooms 1372867c — depends [page-open] — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — WiFi and Play on the computer, each one region feeding both of its lists:
   - **Owns:** `home/v2/wifi.js`, `home/v2/play.js`, `page_v2/rooms.rs`.
   - **(a) WiFi.**
     - `ROOM: [reading, read, unread, turning]`. It exports the foot (`h:202`, `ul.wifi`) and `WifiPart` for "Open to this WiFi" (`h:382`, `ul#room`), both drawn from one read of `/v1/room` (`h:377`).
     - **Red:** `b:main.rs:3392` (two runs), `:3467`, `:3325`.
     - **Fixes, each its own commit:** both lists from `ROOM`, where today a press in the foot leaves `#room` stale, and the copy said once.
+  - **Where (a) landed** (corrected, page-home-rooms (a), eb251576..e781274e):
+    - Nothing on v2 draws "What acts as you" yet: `home/v2/acts.js` is page-acts's, a stub (`acts.js:3`), and page-acts is parked. So `#acts #room li` cannot be read on v2 in this row, the same latent flaw CHARTER's "What the merge moved" closed for the shelf. This row asserts what it draws; drawing `part` is page-acts's (its (c) names `WifiPart` and `PlayPart`).
+    - The v2-only test is **opened in one group's foot, said open in another's**: ada in house and flat, each foot listing her shelf, one ROOM feeding both, `loads == 1` (`page_v2/rooms.rs`). `part` is held without a browser by `web/tests/v2/rooms.test.mjs`: ROOM's steps, and "Open to this WiFi" listing what is open and what a press here closed.
+    - `part` is a hook acts.js calls on each draw, unconditionally; `rooms(s)` its pure view.
+    - ROOM's first read starts as wifi.js loads, as v1 reads the room before drawing a group (`h:377`): asked by the first foot, a run read the foot before the room answered.
+    - The v1 tests under the switch go as far as other rows' places: `b:main.rs:3403` (the group's "on a screen" link, page-members's `show`), `:3495` and `:3536` (`#acts`).
+    - **Lines:** wifi.js 26, v2 at 653, +25 against +18 to +26.
   - **(b) Play.**
     - `PLAY: [reading, read, unread, turning]`, with the clipboard at the edge. It exports the index's cell and `PlayPart`.
     - **Red:** `b:play.rs:57-111`, `ports.rs:84`, `:183`.
     - **Fix, its own commit:** one region and no reload, where the cell (`h:91`) and the acts Stop (`h:384`) tell each other nothing.
+  - **Where (b) landed** (corrected, page-home-rooms (b), 565c6e05..7c2e2273):
+    - The move (565c6e05) kept v1's faults: a `TURN` per cell and per Stop. The fix (d1704786) gives every turn to `PLAY`, `turning` in its region, what a press copied kept per lend (`copied`, key:name) and each refusal appended to its lend's (`said`); `TURN` is deleted.
+    - As for (a), `#acts` is not drawn on v2 (page-acts parked), so the v2-only test is **Play in one group's index, said on in the other's**: cy in ada's house and flat lends `played`, a UDP port; Play in house's cell, flat's says "Connect to"; Stop in flat's, house's offers Play; `loads == 1` (`page_v2/rooms.rs`). `plays(s)`, the Stops' pure view, and PLAY's steps are held without a browser by `web/tests/v2/play.test.mjs`.
+    - The v1 tests under the switch go as far as `#acts`: `b:play.rs`'s first run, and `ports.rs`'s two Plays, pass; its second run and `ports.rs:183` wait on page-acts.
+    - **Lines:** play.js 22, v2 at 671, +18 for (b), the row +43 against +32 to +46.
   - **v2-only:** each red with `UI` flipped:
     - opened in the foot, shown in `#acts #room li` in the same page, `loads == 1`;
     - Play and its Stop in one page, `loads == 1`.

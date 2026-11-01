@@ -14,7 +14,7 @@ import { Act } from '../ui/parts.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
 import { alias, apart, called, once, whose } from '../question.js?v=__VERSION__';
 
-export const owns = ['group', 'wants', 'joined', 'via', 'stale', 'lent', 'people', 'shelf', 'unanswered', 'unheard', 'refused', 'behind', 'removals', 'visiting', 'changed'];
+export const owns = ['group', 'wants', 'joined', 'via', 'stale', 'lent', 'people', 'shelf', 'unanswered', 'unheard', 'refused', 'behind', 'removals', 'visiting', 'changed', 'me'];
 export const states = { tab: ['unheld', 'holding', 'elsewhere', 'taking'], list: ['unasked', 'reading', 'read', 'unread'] };
 
 // The parts of a fragment this page reads, besides a link's token (a:665).
@@ -69,7 +69,7 @@ export const takes = {
     const { lent, body: { unanswered, unheard, refused, older: behind, removals, visiting, people, shelf, changed } } = m;
     const computers = [...new Map(lent.map((l) => [l.key, { key: l.key, relay: l.relay ?? null, person: l.person }])).values()],
       group = { ...s.group, computers, addresses: [...lent.map((l) => l.label), ...once(lent).map((l) => alias(l, lent, people))] };
-    return go(s, { list: 'read' }, { group, via: m.via, stale: '', lent, people, shelf, unanswered, unheard, refused, behind, removals, visiting, changed }, { run: 'keep', group, failed: 'failed' });
+    return go(s, { list: 'read' }, { group, via: m.via, stale: '', lent, people, shelf, unanswered, unheard, refused, behind, removals, visiting, changed, me: m.me }, { run: 'keep', group, failed: 'failed' });
   },
   unread: (s, m) => (late(s, 'list', m.n) ? no(s, late(s, 'list', m.n)) : failing(s, m.said, m.said ?? m.why)),
   kept: (s) => go(s, {}),
@@ -133,12 +133,14 @@ export const io = {
   // Asked on each open, never awaited, so a browser asking its person first holds nothing (a:417-421).
   open: ({ group }) => store.opened(group).then(async (g) => (store.persist().catch((e) => `asking the browser to keep the page's storage failed: ${e}`).then((l) => trace(`PAGE: ${l}`)),
     ([key, bound] = [await store.unseal(g), null]), { type: 'opened', group: g })),
-  // Each lend with its label, and whose lender `apart` says.
+  // Each lend with its label, and whose lender `apart` says; and `me`, the
+  // key this page holds as the record spells it, public, which the record's
+  // rows name (a:467), never the key itself.
   read: ({ group, n }) => wasm().then(async (w) => {
     const [d, via, res] = await lends(w, group, []), body = res.ok ? await res.json() : {}, refusal = res.headers.get('x-svrngs-refused');
     const lent = (await d.close(), body.lent ?? []).map((l) => ({ ...l, label: w.label(l.key, l.name) })), link = group.computers?.find((c) => c.key === w.issuer_of(group.token));
     apart(lent, body.people ?? []);
-    return { type: 'read', n, ok: res.ok, refusal, via, link, body, lent, older: res.ok && w.older(body.version), why: `${res.status}${refusal ? `, refused ${refusal}` : ''}, at version ${body.version}, ${lent.length} lent` };
+    return { type: 'read', n, ok: res.ok, refusal, via, link, body, lent, me: w.actor(key), older: res.ok && w.older(body.version), why: `${res.status}${refusal ? `, refused ${refusal}` : ''}, at version ${body.version}, ${lent.length} lent` };
   }).catch((e) => ({ type: 'unread', n, said: e.said, why: String(e) })),
   keep: ({ group }) => store.opened(group).then(() => ({ type: 'kept' })),
 };

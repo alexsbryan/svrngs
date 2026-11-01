@@ -354,7 +354,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # on `v2`, capped at 1,150 (the queue's estimate, +815 to +1,112), and `.`
 # skips them. page-switchover deletes the rung: `.` takes v2 back once v1 is
 # deleted, after its own economizing pass, and asks a raise for what is left.
-BUDGET = {"crates/svrngs-core": 3242, ".": 19122, "swift": 1, "v2": 1150}
+# The operator's raise (2026-11-01, "Raise the counts"): page-members to
+# +180, page-join to +165 and page-acts to +190, each past its range after
+# its own economizing pass (demo/runs/page/2026-10-31-members-range,
+# 2026-11-01-join-range, 2026-11-01-acts-range). v2 671 landed and those
+# three tops come to 1,206, so the cap is one past it.
+BUDGET = {"crates/svrngs-core": 3242, ".": 19122, "swift": 1, "v2": 1207}
 V2 = ("web/v2/", "web/vendor/", "crates/svrngs-node/src/home/v2/", "crates/svrngs-node/src/home/ui/", "scripts/parity.sh")
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
