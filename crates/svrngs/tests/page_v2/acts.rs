@@ -60,9 +60,14 @@ async fn ada(dir: &Path, relay: &iroh_relay::server::Server) -> (Node, String, S
     node.rail().commit(&seed.id(), &bo).unwrap().unwrap();
     let lends = svrngs_node::lend::lends_dir(dir);
     std::fs::create_dir_all(&lends).unwrap();
-    for (name, more) in [("page", json!({ "reads": ["k"] })), ("shelf", json!({ "asks": ASKS }))] {
+    for (name, more) in [
+        ("page", json!({ "reads": ["k"] })),
+        ("shelf", json!({ "asks": ASKS })),
+    ] {
         let mut body = json!({ "port": serving().await, "kind": "k", "limit": 3, "refused": [] });
-        body.as_object_mut().unwrap().extend(more.as_object().unwrap().clone());
+        body.as_object_mut()
+            .unwrap()
+            .extend(more.as_object().unwrap().clone());
         std::fs::write(lends.join(format!("{name}.json")), body.to_string()).unwrap();
     }
     tokio::time::timeout(Duration::from_secs(20), node.endpoint().online())
@@ -130,7 +135,11 @@ async fn two_refusals_on_ask_are_said_once(engine: Engine) {
     let relay = relay().await;
     let dir = tempfile::tempdir().unwrap();
     let (ada, home, _) = ada(dir.path(), &relay).await;
-    let ask = format!("{home}ask?lend={}&app={}&back=/", label("shelf"), label("page"));
+    let ask = format!(
+        "{home}ask?lend={}&app={}&back=/",
+        label("shelf"),
+        label("page")
+    );
     let yes = "#home section button:text-is('Yes')";
     let press = |n: u8| json!({ "at": yes, "traced": ["ASK: unsaid", n] });
     let args = json!({ "home": ask, "shown": "#home section h2", "forget": true, "press": [press(1), press(2)], "at": "#home section", "within": 15_000 });
@@ -138,11 +147,17 @@ async fn two_refusals_on_ask_are_said_once(engine: Engine) {
     let texts: Vec<&str> = (seen["texts"].as_array().into_iter().flatten())
         .filter_map(Value::as_str)
         .collect();
-    let first = texts.first().and_then(|t| t.split("Not now").nth(1)).unwrap_or_default();
+    let first = texts
+        .first()
+        .and_then(|t| t.split("Not now").nth(1))
+        .unwrap_or_default();
     none_wrong(
         &[
             (seen["went"] != json!([true, true]), "each Yes is refused"),
-            (first.trim().is_empty(), "the refusal is said after the buttons"),
+            (
+                first.trim().is_empty(),
+                "the refusal is said after the buttons",
+            ),
             (
                 texts.len() != 2 || texts[0] != texts[1],
                 "the second refusal said in place of the first",
@@ -177,14 +192,20 @@ async fn a_stop_on_what_apps_use_is_read_again_in_place(engine: Engine) {
     let relay = relay().await;
     let dir = tempfile::tempdir().unwrap();
     let shelf = svrngs_node::lend::LendName::try_from("shelf".to_string()).unwrap();
-    kept_yes(&svrngs_node::lend::choices_path(dir.path(), &shelf), &label("page"));
+    kept_yes(
+        &svrngs_node::lend::choices_path(dir.path(), &shelf),
+        &label("page"),
+    );
     let (ada, home, _) = ada(dir.path(), &relay).await;
     let stop = "#acts p:has-text('uses') button:text-is('Stop')";
     let args = json!({ "home": home, "shown": "#acts summary", "press": ["#acts summary", stop], "said": "was stopped using", "at": "#acts", "within": 30_000 });
     let seen = drive(engine, "v2/members.mjs", args, None).await;
     none_wrong(
         &[
-            (seen["went"] != true, "after the Stop, the section says it was stopped"),
+            (
+                seen["went"] != true,
+                "after the Stop, the section says it was stopped",
+            ),
             (seen["reloads"] != 0, "with no reload"),
         ],
         &seen,
@@ -215,7 +236,10 @@ async fn a_yes_in_another_tab_is_shown_on_visible(engine: Engine) {
             tokio::time::sleep(Duration::from_millis(100)).await;
         }
     });
-    assert!(told.await.is_ok(), "ada's page shows what acts as her within 90 s");
+    assert!(
+        told.await.is_ok(),
+        "ada's page shows what acts as her within 90 s"
+    );
     kept_yes(&dir.path().join("reaching.json"), &label("page"));
     std::fs::write(&hold, "").unwrap();
     let seen = driven.await.unwrap();
@@ -245,7 +269,12 @@ async fn a_refused_yes_keeps_the_ask_shown(engine: Engine) {
     let hold = dir.path().join("hold");
     let mut args = bo_s_phone(&relay, &id);
     let ask = format!("ask={}&app={}&at=/", label("shelf"), label("page"));
-    args.as_object_mut().unwrap().extend(json!({ "ask": ask, "hold": hold, "within": 60_000 }).as_object().unwrap().clone());
+    args.as_object_mut().unwrap().extend(
+        json!({ "ask": ask, "hold": hold, "within": 60_000 })
+            .as_object()
+            .unwrap()
+            .clone(),
+    );
     let driven = tokio::spawn(drive(engine, "v2/acts.mjs", args, None));
     let shown = hold.with_extension("shown");
     let told = tokio::time::timeout(Duration::from_secs(120), async {
@@ -260,7 +289,9 @@ async fn a_refused_yes_keeps_the_ask_shown(engine: Engine) {
     none_wrong(
         &[
             (
-                !seen["asked"].as_str().is_some_and(|t| t.starts_with("Let ")),
+                !seen["asked"]
+                    .as_str()
+                    .is_some_and(|t| t.starts_with("Let ")),
                 "bo is asked",
             ),
             (seen["went"] != true, "the refusal is said in the heading"),
@@ -291,7 +322,9 @@ async fn a_line_left_unsent_is_carried_on_the_next_open(engine: Engine) {
     let line = svrngs_core::sign_act(&bo, &id, now, 0, None, act, None, None, None);
     let mut args = bo_s_phone(&relay, &id);
     let plant = json!({ "plant": line, "line": { "seq": 0, "id": line.id }, "carried": "PAGE: acted (1 line(s) unsent, and carried)", "within": 60_000 });
-    args.as_object_mut().unwrap().extend(plant.as_object().unwrap().clone());
+    args.as_object_mut()
+        .unwrap()
+        .extend(plant.as_object().unwrap().clone());
     let seen = drive(engine, "v2/acts.mjs", args, None).await;
     none_wrong(
         &[
