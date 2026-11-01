@@ -6,6 +6,7 @@ use std::path::Path;
 use std::time::Duration;
 
 use serde_json::{json, Value};
+use svrngs_node::group::Seed;
 use svrngs_node::iroh::RelayConfig;
 use svrngs_node::node::Node;
 use svrngs_node::SigningKey;
@@ -14,11 +15,19 @@ use tokio::io::AsyncWriteExt;
 use crate::drive::drive;
 use crate::harness::{relay, relay_url, Engine};
 
-/// Ada's computer, on `crate::UI`, holding a group from each name in
-/// `groups`, each from her own seed, and her home page's address.
-async fn ada(dir: &Path, relay: &iroh_relay::server::Server, groups: &[&str]) -> (Node, String) {
+/// A group of ada's, `signing(1)`'s, for each name in `names`, each from
+/// a seed of its own.
+fn groups(names: &[&str]) -> Vec<Seed> {
     use svrngs_node::group::{draw, Name};
-    let ada = SigningKey::from_bytes(&[1; 32]);
+    let ada = SigningKey::from_bytes(&[1; 32]).verifying_key();
+    (names.iter())
+        .map(|g| draw(Name::parse(g).unwrap(), Name::parse("ada").unwrap(), ada))
+        .collect()
+}
+
+/// A computer of the key drawn from `me`, holding `seeds`, online at
+/// `relay`, on `crate::UI`.
+async fn computer(dir: &Path, relay: &iroh_relay::server::Server, me: u8, seeds: &[Seed]) -> Node {
     let config = RelayConfig {
         relay_urls: vec![relay_url(relay)],
         n0_services: false,
@@ -26,7 +35,7 @@ async fn ada(dir: &Path, relay: &iroh_relay::server::Server, groups: &[&str]) ->
     };
     let node = Node::start(
         dir.to_path_buf(),
-        ada.clone(),
+        SigningKey::from_bytes(&[me; 32]),
         &config,
         svrngs_node::group::seed_text,
         "127.0.0.1:0".parse().unwrap(),
@@ -35,25 +44,79 @@ async fn ada(dir: &Path, relay: &iroh_relay::server::Server, groups: &[&str]) ->
     .expect("a node starts")
     .ui(crate::UI);
     crate::drive::opens_at(node.api_addr().port(), &node.token());
-    for group in groups {
-        let seed = draw(
-            Name::parse(group).unwrap(),
-            Name::parse("ada").unwrap(),
-            ada.verifying_key(),
-        );
-        node.host().keep_group(&seed, None, None).unwrap();
+    for seed in seeds {
+        node.host().keep_group(seed, None, None).unwrap();
     }
     tokio::time::timeout(Duration::from_secs(20), node.endpoint().online())
         .await
         .expect("the node reaches the relay on 127.0.0.1");
+    node
+}
+
+/// Ada's computer, holding a group from each name in `groups`, and her
+/// home page's address.
+async fn ada(dir: &Path, relay: &iroh_relay::server::Server, groups: &[&str]) -> (Node, String) {
+    ada_in(dir, relay, &self::groups(groups)).await
+}
+
+/// [`ada`], holding `seeds`.
+async fn ada_in(dir: &Path, relay: &iroh_relay::server::Server, seeds: &[Seed]) -> (Node, String) {
+    let node = computer(dir, relay, 1, seeds).await;
     let home = format!("http://svrngs.localhost:{}/", node.api_addr().port());
     (node, home)
+}
+
+/// Cy's computer, the key drawn from 44, let into each of `seeds` by ada
+/// and her record of each synced to it once, so ada's page lists what cy
+/// lends in each group (browser/main.rs `joined`).
+async fn cy(dir: &Path, relay: &iroh_relay::server::Server, ada: &Node, seeds: &[Seed]) -> Node {
+    use svrngs_node::{actor_of, Person, RailAct};
+    for seed in seeds {
+        let act = svrngs_core::tests_support::Fixture {
+            act: RailAct::Admit {
+                person: Person::parse("cy").unwrap(),
+                key: actor_of(&SigningKey::from_bytes(&[44; 32])),
+                invite: None,
+            },
+        };
+        ada.rail().commit(&seed.id(), &act).unwrap().unwrap();
+    }
+    let node = computer(dir, relay, 44, seeds).await;
+    for seed in seeds {
+        let synced = node
+            .host()
+            .sync_with(&seed.id(), &ada.endpoint().addr())
+            .await;
+        assert!(synced.stop.is_none(), "cy syncs ada's record: {synced:?}");
+    }
+    let addrs = node.endpoint().addr().ip_addrs().copied().collect();
+    ada.transport().add_known_peer(node.endpoint().id(), addrs);
+    node
+}
+
+/// A UDP program on this host that answers each packet with itself, lent
+/// from `dir` as `name`, a raw port (browser/play.rs `udp_echo`).
+async fn lends_a_udp_port(dir: &Path, name: &str) {
+    let socket = tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap();
+    let port = socket.local_addr().unwrap().port();
+    tokio::spawn(async move {
+        let mut buf = vec![0; 65_535];
+        while let Ok((n, from)) = socket.recv_from(&mut buf).await {
+            let _ = socket.send_to(&buf[..n], from).await;
+        }
+    });
+    let lends = svrngs_node::lend::lends_dir(dir);
+    std::fs::create_dir_all(&lends).unwrap();
+    let body = json!({ "port": port, "raw": "udp", "kind": "echo", "limit": 3 });
+    std::fs::write(lends.join(format!("{name}.json")), body.to_string()).unwrap();
 }
 
 /// A page on a port of this host, each request answered with one titled
 /// `title`, lent from `dir` as `name`.
 async fn lends_a_page(dir: &Path, name: &str, title: &'static str) {
-    let listener = tokio::net::TcpListener::bind(("127.0.0.1", 0)).await.unwrap();
+    let listener = tokio::net::TcpListener::bind(("127.0.0.1", 0))
+        .await
+        .unwrap();
     let port = listener.local_addr().unwrap().port();
     tokio::spawn(async move {
         while let Ok((mut sock, _)) = listener.accept().await {
@@ -148,7 +211,9 @@ async fn opened_in_one_foot_is_said_open_in_every_list(engine: Engine) {
         ),
         (seen["loads"] != 1, "with no reload"),
         (
-            !lines.iter().any(|l| l.starts_with("ROOM: turn: read -> turning")),
+            !lines
+                .iter()
+                .any(|l| l.starts_with("ROOM: turn: read -> turning")),
             "each turn is ROOM's",
         ),
     ]
@@ -195,4 +260,71 @@ async fn a_copied_address_is_said_once(engine: Engine) {
     .collect();
     assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
     drop(ada);
+}
+
+in_chromium!(
+    /// **Play in one group's index, said on in the other's, and its Stop
+    /// there drawn in the first** (page-home-rooms (b)'s fix). Cy is in
+    /// ada's house and flat and lends `played`, a UDP port, so each group's
+    /// index lists it with Play. Ada presses Play in house's, and flat's
+    /// says "Connect to", from PLAY's one answer, with no reload; she
+    /// presses Stop in flat's, and house's offers Play again. Watched
+    /// failing on v1 (`UI` flipped), whose cell is drawn again in place
+    /// alone (home.js:91), the other left as it was read.
+    play_in_one_index_is_said_on_in_every_list
+);
+async fn play_in_one_index_is_said_on_in_every_list(engine: Engine) {
+    let relay = relay().await;
+    let (ada_dir, cy_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let seeds = groups(&["house", "flat"]);
+    let (ada, home) = ada_in(ada_dir.path(), &relay, &seeds).await;
+    let cy = cy(cy_dir.path(), &relay, &ada, &seeds).await;
+    lends_a_udp_port(cy_dir.path(), "played").await;
+    // The cell with Play or Stop, a port's alone.
+    let row = "#home section table.index td:has(button)";
+    // Each press read once the cell pressed says what it answered.
+    let press = |nth: usize, words: &str, until: &str| {
+        json!([
+            format!("#home section:nth-of-type({nth}) table.index tr:has-text('played') button:has-text('{words}')"),
+            null,
+            true,
+            until,
+        ])
+    };
+    let args = json!({
+        "ask": home,
+        "all": row,
+        "do": [press(1, "Play", "Connect to"), press(2, "Stop", "Play opens it")],
+    });
+    let seen = drive(engine, "home.mjs", args, None).await;
+    let said = |i: usize| {
+        (seen["after"][i].as_array().into_iter().flatten())
+            .filter_map(Value::as_str)
+            .collect::<Vec<_>>()
+    };
+    let (on, off) = (said(0), said(1));
+    let at = "Connect to 127.0.0.1:";
+    let lines = lines(&seen);
+    let wrong: Vec<&str> = [
+        (
+            on.len() != 2 || !on.iter().all(|t| t.contains(at) && t.ends_with("Stop")),
+            "Play in house's: both groups' cells say where to connect, with Stop",
+        ),
+        (
+            off.len() != 2 || !off.iter().all(|t| !t.contains(at) && t.ends_with("Play")),
+            "Stop in flat's, both offer Play again",
+        ),
+        (seen["loads"] != 1, "with no reload"),
+        (
+            !lines
+                .iter()
+                .any(|l| l.starts_with("PLAY: turn: read -> turning")),
+            "each turn is PLAY's",
+        ),
+    ]
+    .into_iter()
+    .filter_map(|(failed, what)| failed.then_some(what))
+    .collect();
+    assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
+    drop((ada, cy));
 }
