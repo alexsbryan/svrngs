@@ -435,3 +435,82 @@ async fn two_folder_presses_are_said_once(engine: Engine) {
     assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
     drop(ada);
 }
+
+in_chromium!(
+    /// **The door is judged again when the page is shown again**
+    /// (page-members (f)). cy joins ada's house; ada's home page lights cy,
+    /// "on now", bo drawn off beside, as bo's computer never answers.
+    /// cy's computer goes off while the page is open; ada's page is hidden
+    /// and shown again, and its door draws cy "did not answer", with no
+    /// reload. The page read again on `visible` is page-open's (home.js
+    /// `visible`, group.js GROUP), so this part is its test alone. Off, not
+    /// back on, as nothing here restarts a node in process. Watched
+    /// failing on v1 (`UI` flipped), whose page judges its door once.
+    the_door_is_judged_again_when_shown_again
+);
+async fn the_door_is_judged_again_when_shown_again(engine: Engine) {
+    use svrngs_node::group::Name;
+    use svrngs_node::link::{client_link, Link};
+    let relay = relay().await;
+    let (dir, cy_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (ada, id, _) = house(dir.path(), &relay).await;
+    let config = RelayConfig {
+        relay_urls: vec![relay_url(&relay)],
+        n0_services: false,
+        loopback_only: true,
+    };
+    let cy = Node::start(
+        cy_dir.path().to_path_buf(),
+        SigningKey::from_bytes(&[3; 32]),
+        &config,
+        svrngs_node::group::seed_text,
+        "127.0.0.1:0".parse().unwrap(),
+    )
+    .await
+    .expect("cy's computer starts");
+    tokio::time::timeout(Duration::from_secs(20), cy.endpoint().online())
+        .await
+        .expect("cy's computer reaches the relay on 127.0.0.1");
+    let made = ada.host().link(&id, false, None, None).expect("a link");
+    let sent = Link::parse(&client_link(&made.token)).unwrap();
+    cy.host()
+        .join(&sent, &Name::parse("cy").unwrap())
+        .await
+        .expect("cy joins house");
+    let home = format!("http://svrngs.localhost:{}/", ada.api_addr().port());
+    let hold = dir.path().join("hold");
+    let args = json!({ "home": home, "shown": "#home .door li.off + li.on", "hold": hold, "gone": "#home .door li.off + li.on", "traced": ["GROUP: answered (lends 2)", 1], "at": "#home .door", "within": 30_000 });
+    let driven = tokio::spawn(drive(engine, "v2/members.mjs", args, None));
+    let shown = hold.with_extension("shown");
+    let told = tokio::time::timeout(Duration::from_secs(90), async {
+        while !shown.exists() {
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+    });
+    assert!(told.await.is_ok(), "ada's page lights cy within 90 s");
+    cy.endpoint().close().await;
+    drop(cy);
+    std::fs::write(&hold, "").unwrap();
+    let seen = driven.await.unwrap();
+    let wrong: Vec<&str> = [
+        (
+            !seen["shown"][0]
+                .as_str()
+                .is_some_and(|t| t.starts_with("cy")),
+            "cy is lit",
+        ),
+        (seen["went"] != true, "shown again, the door is read again"),
+        (
+            !seen["text"]
+                .as_str()
+                .is_some_and(|t| t.ends_with("cy\ndid not answer")),
+            "cy did not answer",
+        ),
+        (seen["reloads"] != 0, "with no reload"),
+    ]
+    .into_iter()
+    .filter_map(|(failed, what)| failed.then_some(what))
+    .collect();
+    assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
+    drop(ada);
+}

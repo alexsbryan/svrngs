@@ -10,11 +10,14 @@
 // the page `site` serves, in a browser holding nothing, and their name,
 // `name`, given once asked; then the same, with the heading as it asked
 // (`asking`). With `forget`, the session cookies are cleared before the
-// presses, as a session lapses.
+// presses, as a session lapses; with `hold`, the page is hidden and shown
+// again once the test, told it is shown, says so (`watch`).
 //
-//   node web/tests/v2/members.mjs '{"engine": ..., "shown": <selector>, "press"?: [<selector> | [<selector>, <gone>], ...], "gone"?: <selector>, "said"?: <words>, "at"?: <selector>, "traced"?: [<start>, <n>], "within": <ms>, "forget"?: true, "home"?: <url> | "visit": <token>, "name": ..., "site": ... | "site": ..., "key": ..., "token": ...}'
+//   node web/tests/v2/members.mjs '{"engine": ..., "shown": <selector>, "press"?: [<selector> | [<selector>, <gone>], ...], "gone"?: <selector>, "said"?: <words>, "at"?: <selector>, "traced"?: [<start>, <n>], "within": <ms>, "forget"?: true, "hold"?: <path>, "home"?: <url> | "visit": <token>, "name": ..., "site": ... | "site": ..., "key": ..., "token": ...}'
 //
 // Exit 0 with the JSON line; 1 on anything else.
+import { existsSync } from 'node:fs';
+import { writeFile } from 'node:fs/promises';
 import { driving, launch, serve } from '../page.mjs';
 
 const args = JSON.parse(process.argv[2]);
@@ -29,6 +32,13 @@ async function watch(page, reloads) {
   for (const [press, gone] of (args.press ?? []).map((p) => [p].flat())) {
     await page.locator(press).first().click({ timeout: 30_000 });
     if (gone) waited.push({ went: await page.waitForFunction((g) => !document.querySelector(g), gone, { timeout: args.within, polling: 100 }).then(() => true, () => false), text: await page.locator(at).first().innerText() });
+  }
+  // With `hold`, a path: `<hold>.shown` written, then, once the test has
+  // written `hold`, the page hidden and shown again (home.mjs `visible`).
+  if (args.hold) {
+    await writeFile(`${args.hold}.shown`, '');
+    for (let t = 0; !existsSync(args.hold); t += 100) await (t > 60_000 ? Promise.reject(new Error(`${args.hold} never written`)) : new Promise((r) => setTimeout(r, 100)));
+    for (const v of ['hidden', 'visible']) await page.evaluate((v) => (Object.defineProperty(document, 'visibilityState', { value: v, configurable: true }), document.dispatchEvent(new Event('visibilitychange'))), v);
   }
   // With `traced`, [start, n]: until the trace holds n lines that start so, too.
   const there = ([gone, said, at, [start, n]]) => (gone ? !document.querySelector(gone) : document.querySelector(at)?.innerText.includes(said)) && (window.__lines ?? []).filter((l) => !start || l.startsWith(start)).length >= (n ?? 0);
