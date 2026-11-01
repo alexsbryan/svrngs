@@ -395,10 +395,16 @@ brackets.
       - `the_group_s_page_shows_every_removal_and_ask`;
       - `a_phone_is_shown_a_lend_s_computer_that_did_not_answer_as_its_window_dark`;
       - `b:main.rs:3697`, `:3058`, `:4097`, `:2876`, `:2523`, `:2566`, `:2616`, `:2690` and `:3834`.
+    - **Where it landed** (corrected, page-members (a), fa07bb80):
+      - The line numbers above had moved; the red set run was by name: both `every_removal_and_ask`, `the_door_draws_who_is_on_now`, `the_home_page_tells_two_people_of_one_name_apart`, `the_home_page_says_where_the_groups_folder_is`, `the_home_page_opens_the_group_s_folder`, `the_group_s_page_draws_the_door_and_the_index` and `whose_computer_did_not_answer_and_who_asked_are_told_by_key`.
+      - Three stay red past every door assertion until page-index lands: `whose_computer…` at `table.index td[colspan]`, `…draws_the_door_and_the_index` at its index row, `the_door_draws_who_is_on_now` at home.mjs's `text` wait for `#lent h2 ~ *`.
+      - The phone's "your guest" line needs the key's public spelling: `web/v2/enter.js`'s `read` answers `me`, `w.actor(key)`, a field enter owns (b5c4e397), as page-shelf added `through` there.
+      - The home's folder button is FOLDER, a machine of its own in `home/v2/door.js`, which also exports `post` and `decides(g, rows, me)` for page-acts.
   - **(b) Visits, both pages.**
     - **The phone:** an end timer at the earliest `until` sends `reread`, its own commit.
     - **The home:** `visits.js` (not `guests.js`, a vocab noun). "Who you have over", `ul.yours`, and a Stop `Act` whose effect is `{run: 'wait', until: ts}`, then a read again, in place of `h:163`'s reload, its own commit.
     - **Red:** `the_phones_page_shows_sam_visiting_and_kims_stop_ends_it` (`guests.rs:323`), `b:guests.rs:268`, `:349`.
+    - **Where it landed** (corrected, page-members (b), c642e7d2): both guests tests pass every visits assertion on v2, then wait in home.mjs for `#lent h2` after Kim's Stop, page-index's section, so stay red until it lands. The phone's end timer is `ends`/`end` in `web/v2/door.js`, asked by `Ends`, a part drawing nothing, since `web/tests/v2/frame.test.mjs` draws each place as a plain function. Its v2-only tests, `a_visit_ended_while_open_drops_on_the_phone` and `a_guest_s_stop_ends_the_visit_with_no_reload`, drive `web/tests/v2/members.mjs`.
   - **(c) A guest's own visit** (`visit.js`, `a:206-226`): `visit: [none, naming, redeeming, on, ended]`, NameForm as a guest, and its key kept apart. **Fix, its own commit:** an edge timer at `v.until` sends `ended`, and the guest's index empties. **Red:** `visit.mjs:52-56`, `:93-99`, and `sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest`.
   - **(d) Leaving and handing on** (`leave.js`): `leave: [idle, asking, handed, decides, refused]`, where `left` sets `said: left`. **Fixes, each its own commit:** the refusal read through `answer` (`h:28-31`, where `h:42` swallows it), and `handed` sending `again`. **Red:** `leave_page.rs:102-122`, `:391`.
   - **(e) A group on a screen** (`screen.js`), on `Door`: `SCREEN: [reading, read, unread]`, with `seen` and `newest` in state. The poll (`h:328`) becomes an edge timer answering `tick`, and the door is judged before it takes the last one's place. **Red:** `b:main.rs:3753`, xenia's `/?screen=` (`xenia/main.rs:265`). No visible fix.
