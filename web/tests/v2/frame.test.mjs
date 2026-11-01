@@ -13,6 +13,7 @@ import { test } from 'node:test';
 register('./layout.mjs', import.meta.url);
 const { compose, ORDER } = await import('../../v2/page.js?v=__VERSION__');
 const { machine, go } = await import('../../../crates/svrngs-node/src/home/ui/machine.js?v=__VERSION__');
+const { Copy, drawn } = await import('../../../crates/svrngs-node/src/home/ui/copy.js?v=__VERSION__');
 const FLOWS = ['enter', 'computer', 'join', 'ask', 'index', 'door', 'shelf', 'visit', 'among', 'acts', 'uses'];
 const stubs = Object.fromEntries(await Promise.all(FLOWS.map(async (f) => [f, await import(`../../v2/${f}.js?v=__VERSION__`)])));
 
@@ -95,19 +96,23 @@ const out = (v) => {
   if (v == null || typeof v === 'boolean') return '';
   if (Array.isArray(v)) return v.map(out).join('');
   if (typeof v !== 'object') return String(v);
-  const a = Object.entries(v.props).filter(([k, x]) => k !== 'children' && x != null && x !== false).map(([k, x]) => (x === true ? k : `${k}="${x}"`));
+  // A part with a machine of its own (ui/view.js `useMachine`) as it is first drawn.
+  if (v.type === Copy) return out(drawn({ at: { copy: 'idle' }, said: [] }, () => {}, v.props));
+  const a = Object.entries(v.props).filter(([k, x]) => k !== 'children' && x != null && x !== false && typeof x !== 'function').map(([k, x]) => (x === true ? k : `${k}="${x}"`));
   return `<${v.type}${sorted(a.join(' '))}>${out(v.props.children)}</${v.type}>`;
 };
 
-test('the stubs compose, each take refused by name, their places web/index.html’s body in its order', async () => {
+test('the flows compose, each take not built yet refused by name, their places web/index.html’s body in its order as first drawn', async () => {
   const parts = compose(stubs);
   for (const [name, f] of Object.entries(stubs)) {
     for (const type of f.unbuilt ?? []) assert.equal(parts.step(parts.first({}), { type }).refused, `not built yet: ${name}`);
   }
-  assert.deepEqual(stubs.enter.unbuilt, ['start', 'hold', 'reread'], 'the frame’s `start`, among’s `hold`, the shelf’s `reread`');
+  const enters = [...(stubs.enter.unbuilt ?? []), ...Object.keys(stubs.enter.takes ?? {})];
+  assert.deepEqual(['start', 'hold', 'reread'].filter((t) => !enters.includes(t)), [], 'the frame’s `start`, among’s `hold`, the shelf’s `reread`, each enter’s, built or not');
   const page = await readFile(new URL('../../index.html', import.meta.url), 'utf8');
   const body = page.slice(page.indexOf('<section id="computer"'), page.indexOf('<pre id="response">'))
     .replace(/>\s*\n\s*</g, '><').trim().replace(/<input([^>]*)>/g, '<input$1></input>').replace(/<(\w+)([^>]*)>/g, (_, t, a) => `<${t}${sorted(a)}>`);
-  assert.equal(parts.places.map((P) => out(P({}))).join(''), body);
-  assert.deepEqual(Object.keys(stubs).filter((f) => stubs[f].takes), [], 'a stub takes nothing of its own');
+  assert.equal(parts.places.map((P) => out(P({ s: parts.first({}) }))).join(''), body);
+  // compose lets a type not built yet stand over a take of the same name.
+  assert.deepEqual(Object.entries(stubs).flatMap(([n, f]) => (f.unbuilt ?? []).filter((t) => f.takes?.[t]).map((t) => `${n} ${t}`)), [], 'no type is both taken and not built yet');
 });
