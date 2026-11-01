@@ -339,6 +339,12 @@ brackets.
     - the bring is followed by a read whose answer holds the brought app (`SHELF: brought: …`, then `LIST:` and `GROUP: again:` lines, with `loads == 1`).
 
     That it is drawn in the index is page-index's test (CHARTER, "What the merge moved").
+  - **Where (b) landed** (corrected, page-shelf (b), 0560da0d..5695e619):
+    - The read right after a bring does not hold the app: the node lists a carried app once the folder has placed its files in the record (`carried.rs:234-246`, woken by file events, `synced.rs:286-289`), and the first run read "0 lent". So each read after a bring that does not list what it brought is followed by another, 1, 2, 4 and 8 s on, the wait at the edge, then refused with why (`SHELF: listed`). "<app> is on the table." is drawn from the read alone.
+    - The trace is `SHELF: brought (`, then `PAGE: reread: ` on the phone, or `HOME: again: ` and `GROUP: again: ` on the home page; there is no `LIST:` machine.
+    - While it brings, the shelf says " Bringing…" beside the held button: Act is silent while busy, so v1's `home.mjs` `settled` read the second press mid-bring (5695e619).
+    - `web/tests/v2/shelf.test.mjs` (8 tests, `page laws`) holds the move to question.js `table` byte for byte and every SHELF step. One run on V1 (`target/page-shelf/red-b.log`) fails every v2-only check on both pages.
+    - **Lines:** v2 at 521, +44 against +40 to +58; `.` unchanged.
   - **Byte for byte:**
     - `Bring the ticked ones to ${name}` (`carried.rs:433`);
     - "You brought … to house: everyone in it can open it in a few seconds." (`carried.rs:551-554`);
