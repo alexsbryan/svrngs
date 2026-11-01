@@ -27,9 +27,5 @@ export const JOIN = (home) => ({ states: { join: ['typing', 'checking', 'checked
     joined: () => go(s, FIRST.at, FIRST), unjoined: () => go(s, { join: 'refused' }, { why: m.why }) })[m.type]?.() ?? no(s, `joining takes no ${m.type}`)) });
 export const take = (s, m) => go(s, { said: 'joined' }, { q: m.q });
 
-function Join({ home }) {
-  const [s, send] = useMachine(() => machine('JOIN', JOIN(home), FIRST));
-  const typed = (e) => send({ type: 'typed', field: 'person', value: e.currentTarget.value });
-  return html`<section id="join"><h2>Join a group from a link</h2><p><${Field} name="link" words="The link someone sent you: " value=${s.link} send=${send} /><label hidden=${Boolean(s.for?.[1])}>${'Your name in it: '}<input name="person" value=${s.person} onInput=${typed} /></label>${s.for && html`<${Act} words=${`Join ${s.for[0]}${who(s) ? ` as ${who(s)}` : ''}`} doing=${{ state: s.at.join === 'joining' ? 'busy' : 'idle' }} on=${{ type: 'join' }} send=${send} />`}</p><p>${s.why}</p></section>`;
-}
+const Join = ({ home }) => ((s, send, typed = (e) => send({ type: 'typed', field: 'person', value: e.currentTarget.value })) => html`<section id="join"><h2>Join a group from a link</h2><p><${Field} name="link" words="The link someone sent you: " value=${s.link} send=${send} /><label hidden=${Boolean(s.for?.[1])}>${'Your name in it: '}<input name="person" value=${s.person} onInput=${typed} /></label>${s.for && html`<${Act} words=${`Join ${s.for[0]}${who(s) ? ` as ${who(s)}` : ''}`} doing=${{ state: s.at.join === 'joining' ? 'busy' : 'idle' }} on=${{ type: 'join' }} send=${send} />`}</p><p>${s.why}</p></section>`)(...useMachine(() => machine('JOIN', JOIN(home), FIRST)));
 export const view = { join: ({ home }) => html`<${Join} home=${home} />` };

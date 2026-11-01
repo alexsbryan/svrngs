@@ -29,8 +29,5 @@ export const MAKE = (home) => ({ states: { make: ['typing', 'checking', 'checked
     made: () => go(s, FIRST.at, FIRST), refused: () => go(s, { make: 'refused' }, { said: ` ${m.why}` }) })[m.type]?.() ?? no(s, `making a group takes no ${m.type}`) });
 export const take = (s, m) => go(s, { said: 'made' }, { q: m.q });
 
-function Make({ home }) {
-  const [s, send] = useMachine(() => machine('MAKE', MAKE(home), FIRST));
-  return html`<section id="make"><h2>Make a group</h2><p>${[['name', 'A name for the group: '], ['person', 'Your name in it: ']].map(([n, w]) => html`<${Field} name=${n} words=${w} value=${s[n]} send=${send} />`)}<${Act} words="Make a group" doing=${{ state: s.at.make === 'making' ? 'busy' : 'idle', said: s.said }} on=${{ type: 'make' }} send=${send} /></p><p>${s.before}</p></section>`;
-}
+const Make = ({ home }) => ((s, send) => html`<section id="make"><h2>Make a group</h2><p>${[['name', 'A name for the group: '], ['person', 'Your name in it: ']].map(([n, w]) => html`<${Field} name=${n} words=${w} value=${s[n]} send=${send} />`)}<${Act} words="Make a group" doing=${{ state: s.at.make === 'making' ? 'busy' : 'idle', said: s.said }} on=${{ type: 'make' }} send=${send} /></p><p>${s.before}</p></section>`)(...useMachine(() => machine('MAKE', MAKE(home), FIRST)));
 export const view = { make: ({ home }) => html`<${Make} home=${home} />` };
