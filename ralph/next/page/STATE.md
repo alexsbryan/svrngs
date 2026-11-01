@@ -384,7 +384,7 @@ brackets.
     - "Let in this many", "Let everyone in", "Stop lending", "You lend nothing yet." and `section#lent`;
     - a `sent` holding no secret.
   - **Moves:** scene `films`, the night demo, and Events or Money seen without a reload. +78 to +108 [about 62 phone, `h:118-119`, `:178-191`, about 15, and about 28 running and lending].
-- [ ] page-members — depends [page-open] — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — who is in, who left, who is visiting, a guest's own visit, leaving, and the screen:
+- [x] page-members 39674ee8 — depends [page-open] — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — who is in, who left, who is visiting, a guest's own visit, leaving, and the screen:
   - **Owns:** `ui/door.js`, `ui/visitors.js`, `web/v2/door.js`, `web/v2/visit.js`, `home/v2/door.js`, `home/v2/visits.js`, `home/v2/leave.js`, `home/v2/screen.js`, `page_v2/members.rs`, and `web/tests/v2/members.mjs`.
   - **(a) The door, both pages.**
     - **The shared parts:** `ui/door.js` `Door` is `q:161-198`, judged by `unanswered`, with "asking…" and "not known now". `ui/visitors.js` is `q:43`.
