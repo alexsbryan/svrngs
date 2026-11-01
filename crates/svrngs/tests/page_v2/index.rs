@@ -140,3 +140,132 @@ async fn a_lend_from_what_runs_here_is_in_the_index_at_once(engine: Engine) {
     assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
     drop(ada);
 }
+
+/// Ada's computer lending `shelf`, a page of its own, as `body` declares it
+/// (browser/main.rs's lend tests), and her home page's address.
+async fn lending(dir: &Path, relay: &iroh_relay::server::Server, body: Value) -> (Node, String) {
+    let (ada, home) = house(dir, relay).await;
+    let mut body = body;
+    body["port"] = json!(serving(22000, "ada's shelf").await);
+    let lends = svrngs_node::lend::lends_dir(dir);
+    std::fs::create_dir_all(&lends).unwrap();
+    std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
+    (ada, home)
+}
+
+/// What web/tests/v2/index.mjs read after step `i`, its first line.
+fn first(seen: &Value, i: usize) -> String {
+    seen["after"][i]["words"][0]
+        .as_str()
+        .unwrap_or_default()
+        .into()
+}
+
+in_chromium!(
+    /// **Three changes to what ada lends, each read again in place**
+    /// (page-index (e)'s fix). Ada lends `shelf` to one person at once;
+    /// she sets four, then everyone, then stops lending it, and after each
+    /// "What you lend" is read again through HOME's `again`, never a load
+    /// of the page. Watched failing on v1 (`UI` flipped), which loads the
+    /// page again after each (home.js:283).
+    three_changes_to_a_lend_are_read_again_in_place
+);
+async fn three_changes_to_a_lend_are_read_again_in_place(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let body = json!({ "kind": "books", "limit": 1 });
+    let (ada, home) = lending(dir.path(), &relay, body).await;
+    let press = |words: &str| {
+        json!([
+            format!("#lent button:has-text('{words}')"),
+            null,
+            "LENDING: answered"
+        ])
+    };
+    let steps = json!([
+        ["#lent input", "4"],
+        press("Let in this many"),
+        press("Let everyone in"),
+        press("Stop lending")
+    ]);
+    let args = json!({ "home": home, "read": "#lent li, #lent p", "steps": steps });
+    let seen = drive(engine, "v2/index.mjs", args, None).await;
+    let wrong: Vec<&str> = [
+        (
+            !first(&seen, 0).starts_with("shelf: up to 4 people at once"),
+            "four, read again",
+        ),
+        (
+            !first(&seen, 1).starts_with("shelf: everyone in your groups at once"),
+            "everyone, read again",
+        ),
+        (
+            seen["after"][2]["words"] != json!(["You lend nothing yet."]),
+            "stopped, read again",
+        ),
+        (seen["loads"] != 1, "with no load of the page"),
+        (
+            !(seen["after"].as_array().into_iter().flatten()).all(|a| a["how"] == "settled"),
+            "each read again by LENDING",
+        ),
+    ]
+    .into_iter()
+    .filter_map(|(failed, what)| failed.then_some(what))
+    .collect();
+    assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
+    drop(ada);
+}
+
+in_chromium!(
+    /// **The secret stays shown when the page is read again** (page-index
+    /// (e)). Ada turns on signing people in with svrngs for `shelf`; its
+    /// secret is shown in the row, then the page is hidden and shown, and
+    /// read again: the row now says it signs people in, its button gone,
+    /// and still shows the secret, which no request, link or trace line
+    /// carries. Watched failing on v1 (`UI` flipped), which never reads
+    /// again on coming back.
+    the_secret_stays_shown_when_the_page_is_read_again
+);
+async fn the_secret_stays_shown_when_the_page_is_read_again(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let (ada, home) = lending(dir.path(), &relay, json!({ "kind": "books" })).await;
+    let sign = json!([
+        "#lent button:has-text('Sign people in with svrngs')",
+        null,
+        "CHANGE: signed"
+    ]);
+    let args = json!({ "home": home, "read": "#lent li", "steps": [sign], "visible": true });
+    let seen = drive(engine, "v2/index.mjs", args, None).await;
+    let name = svrngs_node::lend::LendName::parse("shelf").unwrap();
+    let secret = (svrngs_node::lend::read(dir.path(), &name).unwrap().unwrap())
+        .sign_in_with_svrngs
+        .expect("the declaration holds the client")
+        .client_secret
+        .expect("a secret");
+    let later = seen["later"]["words"][0].as_str().unwrap_or_default();
+    let wrong: Vec<&str> = [
+        (!first(&seen, 0).contains(&secret), "shown once turned on"),
+        (
+            seen["later"]["how"] != "settled",
+            "read again on coming back",
+        ),
+        (
+            !later.contains("Signs people in with svrngs.")
+                || later.contains("Sign people in with svrngs"),
+            "said as on, its button gone",
+        ),
+        (!later.contains(&secret), "the secret still shown"),
+        (
+            [&seen["sent"], &seen["links"], &seen["lines"]]
+                .iter()
+                .any(|v| v.to_string().contains(&secret)),
+            "no request, link or trace line carries it",
+        ),
+    ]
+    .into_iter()
+    .filter_map(|(failed, what)| failed.then_some(what))
+    .collect();
+    assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
+    drop(ada);
+}

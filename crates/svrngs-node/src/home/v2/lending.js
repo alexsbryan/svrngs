@@ -10,7 +10,9 @@
 // rounds (`again`, `visible`), and the last read stays drawn while the next
 // is asked. Each lend is a row with a machine of its own, CHANGE, its
 // region `change`: a second press while one change is under way is refused.
-// A change is answered by the page loading again, as v1 does (h:283). The
+// A change is answered by HOME's `again`, the groups and this read again,
+// where v1 loaded the page again (h:283; page-index (e)'s fix), and the
+// typed number and what was said go with it, as v1's load drops them. The
 // secret from "Sign people in with svrngs" is shown in its row's `shown`,
 // once, and nowhere else: never in a request, a link or a trace line
 // (SIGN_IN_WITH_SVRNGS §5 "Turning it on"); a read again keeps the row, so
@@ -26,24 +28,24 @@ const LENDING = { states: { lent: ['reading', 'read', 'unread'] }, io: { read: (
     answered: () => go(s, { lent: 'read' }, { lent: m.lent, signing: m.signing ?? [] }), unread: () => go(s, { lent: 'unread' }, { why: m.why }) })[m.type]?.() ?? no(s, `what you lend takes no ${m.type}`)) };
 // The change asked, `run` with what it carries, unless one is under way.
 const changing = (s, effect) => (s.at.change === 'changing' ? no(s, 'a change is under way, and is answered first') : go(s, { change: 'changing' }, {}, effect));
-const CHANGE = (lend) => ({ states: { change: ['idle', 'changing', 'refused'] },
-  io: { change: ({ to }) => post('/lent', { lend, to }).then(() => (location.reload(), { type: 'changed', why: 'the page loads again' })), sign: () => post('/lent', { lend, to: 'sign-in' }).then((c) => ({ type: 'signed', c, why: 'its secret shown here once' })) },
+const CHANGE = (lend, home) => ({ states: { change: ['idle', 'changing', 'refused'] },
+  io: { change: ({ to }) => post('/lent', { lend, to }).then(() => (home({ type: 'again' }), { type: 'changed', why: 'the groups read again' })), sign: () => post('/lent', { lend, to: 'sign-in' }).then((c) => ({ type: 'signed', c, why: 'its secret shown here once' })) },
   step: (s, m) => ({ typed: () => go(s, {}, { many: m.value }), change: () => changing(s, { run: 'change', to: m.to, failed: 'refused' }), sign: () => changing(s, { run: 'sign', failed: 'unsigned' }),
     many: () => (/^[1-9][0-9]*$/.test(m.value) ? changing(s, { run: 'change', to: { limit: Number(m.value) }, failed: 'refused' }) : go(s, { change: 'refused' }, { said: `${s.said}Say how many: 1 or more. ` })),
-    changed: () => go(s, { change: 'idle' }), signed: () => go(s, { change: 'idle' }, { shown: m.c }), refused: () => go(s, { change: 'refused' }, { said: `${s.said}${m.why}` }), unsigned: () => go(s, { change: 'refused' }, { said: `${s.said} ${m.why}` }) })[m.type]?.() ?? no(s, `a lend here takes no ${m.type}`) });
+    changed: () => go(s, { change: 'idle' }, { many: undefined, said: '' }), signed: () => go(s, { change: 'idle' }, { shown: m.c }), refused: () => go(s, { change: 'refused' }, { said: `${s.said}${m.why}` }), unsigned: () => go(s, { change: 'refused' }, { said: `${s.said} ${m.why}` }) })[m.type]?.() ?? no(s, `a lend here takes no ${m.type}`) });
 
 // What a lend's app form is filled with, the one time its lender turns
 // signing people in with svrngs on: the issuer, the client and its secret,
 // and the deviations in their words (h:256).
 const signed = (c) => html`<p>Signing people in with svrngs. In the app’s own settings, choose OpenID Connect, and fill in: issuer <code>${c.issuer}</code>, client id <code>${c.client_id}</code>, client secret <code>${c.client_secret}</code>${`. ${c.deviations} Copy the secret now: it is not shown again. `}</p>`;
-function Lent({ l, signs }) {
-  const [s, send] = useMachine(() => machine('CHANGE', CHANGE(l.name), { at: { change: 'idle' }, said: '' })), n = l.limit, value = s.many ?? String(n ?? '');
+function Lent({ l, signs, home }) {
+  const [s, send] = useMachine(() => machine('CHANGE', CHANGE(l.name, home), { at: { change: 'idle' }, said: '' })), n = l.limit, value = s.many ?? String(n ?? '');
   const act = (words, on) => html`<${Act} words=${words} doing=${{ state: s.at.change === 'changing' ? 'busy' : 'idle' }} on=${on} send=${send} />`;
   return html`<li>${`${l.name}: ${n ? `up to ${n} ${n === 1 ? 'person' : 'people'}` : 'everyone in your groups'} at once, ${l.using} using it now. `}<${Field} words="How many people at once: " value=${value} attrs=${{ type: 'number', min: 1 }} send=${send} />${act('Let in this many', { type: 'many', value })}${n && act('Let everyone in', { type: 'change', to: { limit: null } })}${signs ? 'Signs people in with svrngs. ' : act('Sign people in with svrngs', { type: 'sign' })}${act('Stop lending', { type: 'change', to: 'stop' })}${s.said}${s.shown && signed(s.shown)}</li>`;
 }
-function Lending({ round }) {
+function Lending({ round, home }) {
   const [s, send] = useMachine(() => machine('LENDING', LENDING, { at: { lent: 'reading' } }));
   useEffect(() => send({ type: 'read' }), [round]);
-  return html`<section id="lent"><h2>What you lend</h2>${s.at.lent === 'unread' ? html`<p>This computer cannot read what you lend: ${s.why}</p>` : s.lent && html`${!s.lent.length && html`<p>You lend nothing yet.</p>`}<ul>${s.lent.map((l) => html`<${Lent} key=${l.name} l=${l} signs=${s.signing.includes(l.name)} />`)}</ul>`}</section>`;
+  return html`<section id="lent"><h2>What you lend</h2>${s.at.lent === 'unread' ? html`<p>This computer cannot read what you lend: ${s.why}</p>` : s.lent && html`${!s.lent.length && html`<p>You lend nothing yet.</p>`}<ul>${s.lent.map((l) => html`<${Lent} key=${l.name} l=${l} signs=${s.signing.includes(l.name)} home=${home} />`)}</ul>`}</section>`;
 }
-export const view = { lent: ({ s }) => s.groups.length > 0 && html`<${Lending} round=${s.round} />` };
+export const view = { lent: ({ s, home }) => s.groups.length > 0 && html`<${Lending} round=${s.round} home=${home} />` };
