@@ -40,7 +40,7 @@ export function Home({ store, flows, places }) {
   if (s.at.groups !== 'read') return html`<p class=${s.at.groups === 'reading' ? 'said' : undefined}>${s.at.groups === 'reading' ? 'Reading your groups…' : `This computer cannot read your groups: ${s.why}`}</p>`;
   if (s.ask || q.screen) return P(s.ask ? 'ask' : 'screen');
   const said = SAID[s.at.said](q, q.unplaced ? `Its folder could not be made: ${q.unplaced}. ` : '');
-  return html`${said && html`<p>${said}</p>`}${!s.groups.length && html`<p class="none">You’re in no group yet. Join one below from the link someone sent you, or make your own.</p>`}${s.groups.filter((g) => !g.left).map((g) => html`<${Group} key=${g.id} g=${g} me=${s.key} round=${s.round} places=${places} flows=${flows} home=${home} />`)}${PLACES.map(P)}<p class="address">Your home page, the same address each time svrngs starts: ${s.origin}/</p>`;
+  return html`${said && html`<p>${said}</p>`}${!s.groups.length && html`<p class="none">You’re in no group yet. Join one below from the link someone sent you, or make your own.</p>`}${s.groups.filter((g) => !g.left).map((g) => html`<${Group} key=${g.id} g=${g} joined=${q.joined} me=${s.key} round=${s.round} places=${places} flows=${flows} home=${home} />`)}${PLACES.map(P)}<p class="address">Your home page, the same address each time svrngs starts: ${s.origin}/</p>`;
 }
 
 // The edge: each feature's file, by its one URL, then HOME, its first read
