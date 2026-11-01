@@ -518,16 +518,28 @@ brackets.
     - `#used li`, `#used button` "Stop", `#ask:not([hidden])`, `#words` and `#home h2` as `question()`;
     - `UNLENT`.
   - **Moves:** the yes to a new version, and Stops that hold, on both pages. +108 to +144 [about 72 phone, `q:77-88`, `:220-245` 25, about 22 home].
-- [ ] page-home-rooms — depends [page-open] — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — WiFi and Play on the computer, each one region feeding both of its lists:
+- [x] page-home-rooms 1372867c — depends [page-open] — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — WiFi and Play on the computer, each one region feeding both of its lists:
   - **Owns:** `home/v2/wifi.js`, `home/v2/play.js`, `page_v2/rooms.rs`.
   - **(a) WiFi.**
     - `ROOM: [reading, read, unread, turning]`. It exports the foot (`h:202`, `ul.wifi`) and `WifiPart` for "Open to this WiFi" (`h:382`, `ul#room`), both drawn from one read of `/v1/room` (`h:377`).
     - **Red:** `b:main.rs:3392` (two runs), `:3467`, `:3325`.
     - **Fixes, each its own commit:** both lists from `ROOM`, where today a press in the foot leaves `#room` stale, and the copy said once.
+  - **Where (a) landed** (corrected, page-home-rooms (a), eb251576..e781274e):
+    - Nothing on v2 draws "What acts as you" yet: `home/v2/acts.js` is page-acts's, a stub (`acts.js:3`), and page-acts is parked. So `#acts #room li` cannot be read on v2 in this row, the same latent flaw CHARTER's "What the merge moved" closed for the shelf. This row asserts what it draws; drawing `part` is page-acts's (its (c) names `WifiPart` and `PlayPart`).
+    - The v2-only test is **opened in one group's foot, said open in another's**: ada in house and flat, each foot listing her shelf, one ROOM feeding both, `loads == 1` (`page_v2/rooms.rs`). `part` is held without a browser by `web/tests/v2/rooms.test.mjs`: ROOM's steps, and "Open to this WiFi" listing what is open and what a press here closed.
+    - `part` is a hook acts.js calls on each draw, unconditionally; `rooms(s)` its pure view.
+    - ROOM's first read starts as wifi.js loads, as v1 reads the room before drawing a group (`h:377`): asked by the first foot, a run read the foot before the room answered.
+    - The v1 tests under the switch go as far as other rows' places: `b:main.rs:3403` (the group's "on a screen" link, page-members's `show`), `:3495` and `:3536` (`#acts`).
+    - **Lines:** wifi.js 26, v2 at 653, +25 against +18 to +26.
   - **(b) Play.**
     - `PLAY: [reading, read, unread, turning]`, with the clipboard at the edge. It exports the index's cell and `PlayPart`.
     - **Red:** `b:play.rs:57-111`, `ports.rs:84`, `:183`.
     - **Fix, its own commit:** one region and no reload, where the cell (`h:91`) and the acts Stop (`h:384`) tell each other nothing.
+  - **Where (b) landed** (corrected, page-home-rooms (b), 565c6e05..7c2e2273):
+    - The move (565c6e05) kept v1's faults: a `TURN` per cell and per Stop. The fix (d1704786) gives every turn to `PLAY`, `turning` in its region, what a press copied kept per lend (`copied`, key:name) and each refusal appended to its lend's (`said`); `TURN` is deleted.
+    - As for (a), `#acts` is not drawn on v2 (page-acts parked), so the v2-only test is **Play in one group's index, said on in the other's**: cy in ada's house and flat lends `played`, a UDP port; Play in house's cell, flat's says "Connect to"; Stop in flat's, house's offers Play; `loads == 1` (`page_v2/rooms.rs`). `plays(s)`, the Stops' pure view, and PLAY's steps are held without a browser by `web/tests/v2/play.test.mjs`.
+    - The v1 tests under the switch go as far as `#acts`: `b:play.rs`'s first run, and `ports.rs`'s two Plays, pass; its second run and `ports.rs:183` wait on page-acts.
+    - **Lines:** play.js 22, v2 at 671, +18 for (b), the row +43 against +32 to +46.
   - **v2-only:** each red with `UI` flipped:
     - opened in the foot, shown in `#acts #room li` in the same page, `loads == 1`;
     - Play and its Stop in one page, `loads == 1`.
