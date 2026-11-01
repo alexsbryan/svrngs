@@ -266,7 +266,7 @@ brackets.
     - one test planted failing makes `parity.sh` exit 1, naming it.
   - **Byte for byte:** every v1 test, its default run, and every Rust assertion. (e) and (f) are the only v1 test files changed in this queue.
   - **Moves:** the parity report and its baseline. +25 to +40 (rung), +1 (`.`).
-- [ ] page-open — depends [page-switch] — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — the phone page opens into its group, and the home page reads its groups. After it, the browser tests can drive both v2 pages into a group:
+- [x] page-open 99a42027 — depends [page-switch] — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — the phone page opens into its group, and the home page reads its groups. After it, the browser tests can drive both v2 pages into a group:
   - **Owns:** CHARTER's page-open line.
   - **(a) `ui/copy.js`, the first component, and the phone's computer line.**
     - `COPY` is `{ copy: ['idle', 'copying', 'copied', 'unwritten'] }`, its io `write`, with `failed: 'unwritten'`.
