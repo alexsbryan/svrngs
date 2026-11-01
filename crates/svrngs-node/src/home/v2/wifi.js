@@ -1,0 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// page-home-rooms's, not built yet (page-open (d)): it draws nothing, and
+// HOME refuses each message to it by its `unbuilt` (group.js `offered`).
+// Its part of "What acts as you", empty, for acts.js.
+export const unbuilt = 'home/v2/wifi.js', part = () => [];
