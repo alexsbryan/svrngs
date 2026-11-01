@@ -526,6 +526,11 @@ brackets.
     - `PLAY: [reading, read, unread, turning]`, with the clipboard at the edge. It exports the index's cell and `PlayPart`.
     - **Red:** `b:play.rs:57-111`, `ports.rs:84`, `:183`.
     - **Fix, its own commit:** one region and no reload, where the cell (`h:91`) and the acts Stop (`h:384`) tell each other nothing.
+  - **Where (b) landed** (corrected, page-home-rooms (b), 565c6e05..7c2e2273):
+    - The move (565c6e05) kept v1's faults: a `TURN` per cell and per Stop. The fix (d1704786) gives every turn to `PLAY`, `turning` in its region, what a press copied kept per lend (`copied`, key:name) and each refusal appended to its lend's (`said`); `TURN` is deleted.
+    - As for (a), `#acts` is not drawn on v2 (page-acts parked), so the v2-only test is **Play in one group's index, said on in the other's**: cy in ada's house and flat lends `played`, a UDP port; Play in house's cell, flat's says "Connect to"; Stop in flat's, house's offers Play; `loads == 1` (`page_v2/rooms.rs`). `plays(s)`, the Stops' pure view, and PLAY's steps are held without a browser by `web/tests/v2/play.test.mjs`.
+    - The v1 tests under the switch go as far as `#acts`: `b:play.rs`'s first run, and `ports.rs`'s two Plays, pass; its second run and `ports.rs:183` wait on page-acts.
+    - **Lines:** play.js 22, v2 at 671, +18 for (b), the row +43 against +32 to +46.
   - **v2-only:** each red with `UI` flipped:
     - opened in the foot, shown in `#acts #room li` in the same page, `loads == 1`;
     - Play and its Stop in one page, `loads == 1`.
