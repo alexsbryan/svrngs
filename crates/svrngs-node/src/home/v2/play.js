@@ -36,10 +36,7 @@ const on = (s, l) => (s.at.play === 'unread' ? undefined : s.plays?.find(same(l)
 const Turn = ({ l, words }) => ((s, r = on(s, l)) => html`<${words ? 'p' : 'span'}>${words ? words(l) : `${r ? `${r.said}${s.copied[k(l)] ?? ''}` : 'Play opens it on this computer, for a program here to connect to.'} `}<${Act} words=${r ? 'Stop' : 'Play'} doing=${{ state: s.at.play === 'turning' ? 'busy' : 'idle' }} on=${{ type: 'turn', l: { key: l.key, name: l.name }, off: Boolean(r) }} send=${play.dispatch} />${s.said[k(l)]}<//>`)(useStore(play));
 // The index's cell for a port another computer lends (h:182), asking
 // PLAY again on each round of its group's reads.
-export function cell({ l, s }) {
-  useEffect(() => play.dispatch({ type: 'read', round: s.asked?.lends ?? 1 }), [s.asked?.lends]);
-  return html`<${Turn} l=${l} />`;
-}
+export const cell = ({ l, s }) => (useEffect(() => play.dispatch({ type: 'read', round: s.asked?.lends ?? 1 }), [s.asked?.lends]), html`<${Turn} l=${l} />`);
 
 // Each Play on, for acts.js, with its Stop, or why what has Play on cannot
 // be read; none when nothing has. A hook: acts.js calls it on each of its
