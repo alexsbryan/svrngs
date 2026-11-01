@@ -19,8 +19,7 @@ import { called, named, once } from '../question.js?v=__VERSION__';
 import { get } from './group.js?v=__VERSION__';
 import { post } from './running.js?v=__VERSION__';
 
-const answer = (n, turned) => (room) => ({ type: 'answered', n, room, turned, why: `${room.length} open` });
-const same = (a) => (b) => a.key === b.key && a.name === b.name, k = (l) => `${l.key}:${l.name}`;
+const answer = (n, turned) => (room) => ({ type: 'answered', n, room, turned, why: `${room.length} open` }), same = (a) => (b) => a.key === b.key && a.name === b.name, k = (l) => `${l.key}:${l.name}`;
 // A turn is answered by what is open then, written over what was read, and
 // what it closed is kept, said closed in both lists until the page is left.
 export const ROOM = { states: { room: ['reading', 'read', 'unread', 'turning'] },
@@ -36,27 +35,21 @@ const on = (s, l) => (s.at.room === 'unread' ? undefined : s.room?.find(same(l))
 // (h:202).
 const COPY = (at) => ({ states: { copy: ['uncopied', 'copied'] }, io: { copy: () => Promise.resolve().then(() => navigator.clipboard.writeText(at)).then(() => ({ type: 'copied', words: ` Copied: ${at}. Paste it where a program on this computer, such as a chat app, asks for an address.` }), () => ({ type: 'copied', why: 'the clipboard refused' })) },
   step: (s, m) => ({ copy: () => go(s, {}, {}, { run: 'copy', failed: 'copied' }), copied: () => go(s, { copy: 'copied' }, { said: m.words ?? ` Copy it from here: ${at}` }) })[m.type]?.() ?? no(s, `a copy takes no ${m.type}`) });
-function Copy({ at }) {
-  const [s, send] = useMachine(() => machine('COPY', COPY(at), { at: { copy: 'uncopied' }, said: '' }));
-  return html`${' '}<${Act} words="Copy its address for a program" on=${{ type: 'copy' }} send=${send} />${' '}<${Keep} at=${at} />${s.said}`;
-}
+const Copy = ({ at }) => (([s, send]) => html`${' '}<${Act} words="Copy its address for a program" on=${{ type: 'copy' }} send=${send} />${' '}<${Keep} at=${at} />${s.said}`)(useMachine(() => machine('COPY', COPY(at), { at: { copy: 'uncopied' }, said: '' })));
 // One lend's line, in either list, drawn from ROOM alone: what is open
 // said, or closed, if a press here closed it, and why a turn was refused.
-function Line({ l, words, foot }) {
-  const s = useStore(room), r = on(s, l);
-  return html`<li>${words}<span>${` ${r?.said ?? `${s.closed.some(same(l)) ? 'Closed to this WiFi: nobody on it can open it through this computer now. ' : ''}Open it to this WiFi, and anyone on it can open it as you while svrngs runs.`} `}<${Act} words=${r ? 'Close it to this WiFi' : 'Open it to this WiFi'} doing=${{ state: s.at.room === 'turning' ? 'busy' : 'idle' }} on=${{ type: 'turn', l: r ?? { key: l.key, name: l.name }, off: Boolean(r) }} send=${room.dispatch} />${s.said[k(l)]}</span>${foot && html`<${Copy} at=${l.origin} />`}</li>`;
-}
+const Line = ({ l, words, foot }) => ((s, r = on(s, l)) => html`<li>${words}<span>${` ${r?.said ?? `${s.closed.some(same(l)) ? 'Closed to this WiFi: nobody on it can open it through this computer now. ' : ''}Open it to this WiFi, and anyone on it can open it as you while svrngs runs.`} `}<${Act} words=${r ? 'Close it to this WiFi' : 'Open it to this WiFi'} doing=${{ state: s.at.room === 'turning' ? 'busy' : 'idle' }} on=${{ type: 'turn', l: r ?? { key: l.key, name: l.name }, off: Boolean(r) }} send=${room.dispatch} />${s.said[k(l)]}</span>${foot && html`<${Copy} at=${l.origin} />`}</li>`)(useStore(room));
 // Each lend of the group's that is a page, at the section's foot (h:202),
 // once the room has answered, as v1 draws none before (h:377).
 function Foot({ s }) {
   useEffect(() => room.dispatch({ type: 'read', round: s.asked?.lends ?? 1 }), [s.asked?.lends]);
   const r = useStore(room), people = s.people?.people ?? [], whose = (l) => ({ ...l, called: called(people, people.find((r) => r.key === l.key)?.person_key) });
-  return s.lends && (r.room || r.at.room === 'unread') && html`<ul class="wifi">${once(s.lends.lent).filter((l) => !l.raw).map((l) => ((w) => html`<${Line} key=${`${l.key}:${l.name}`} l=${w} words=${`${named(w)}:`} foot />`)(whose(l)))}</ul>`;
+  return s.lends && (r.room || r.at.room === 'unread') && html`<ul class="wifi">${once(s.lends.lent).filter((l) => !l.raw).map((l) => ((w) => html`<${Line} key=${k(l)} l=${w} words=${`${named(w)}:`} foot />`)(whose(l)))}</ul>`;
 }
 export const view = { wifi: Foot };
 
 // "Open to this WiFi", for acts.js: what ROOM read, each with its line, or
 // why it cannot be read; none when nothing is open. A hook: acts.js calls
 // it on each of its draws, so it is drawn again with each read.
-export const rooms = (s, all = [...(s.at.room === 'unread' ? [] : s.room ?? []), ...s.closed.filter((c) => !on(s, c))]) => (s.at.room === 'unread' || all.length ? [html`<p>${s.at.room === 'unread' ? s.why : 'Anyone on this WiFi can open these as you while svrngs runs: your TV, a phone, another computer. Each stays on the WiFi where you turned it on.'}</p>`, html`<ul id="room">${all.map((r) => html`<${Line} key=${`${r.key}:${r.name}`} l=${r} words=${`${r.person ? `${r.person}’s ` : ''}${r.name}:`} />`)}</ul>`] : []);
+export const rooms = (s, all = [...(s.at.room === 'unread' ? [] : s.room ?? []), ...s.closed.filter((c) => !on(s, c))]) => (s.at.room === 'unread' || all.length ? [html`<p>${s.at.room === 'unread' ? s.why : 'Anyone on this WiFi can open these as you while svrngs runs: your TV, a phone, another computer. Each stays on the WiFi where you turned it on.'}</p>`, html`<ul id="room">${all.map((r) => html`<${Line} key=${k(r)} l=${r} words=${`${r.person ? `${r.person}’s ` : ''}${r.name}:`} />`)}</ul>`] : []);
 export const part = () => rooms(useStore(room));
