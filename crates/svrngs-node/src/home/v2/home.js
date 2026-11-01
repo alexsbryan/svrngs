@@ -35,12 +35,14 @@ const SAID = { none: () => '', made: (q, u) => `You made ${q.made}. ${q.also ? `
 // The groups you left, with what stays of each here (home.js:385-388).
 const left = ({ s }) => ((gone) => gone.length > 0 && html`<section id="left"><h2>Groups you left</h2>${gone.map((g) => html`<p>${g.name ?? 'A group'}${g.made ? ` (${whose(g.made)})` : ''}: what you have of it stays on this computer${g.folders?.length ? `, its folder at ${g.folders.join(' and ')}` : ''}, and nothing new of it reaches you.</p>`)}</section>`)(s.groups.filter((g) => g.left));
 
+// The page's foot, last, once no feature's file `holds` it while it reads, as
+// v1 drew it after every read (home.js:326-328).
 export function Home({ store, flows, places }) {
   const s = useStore(store), q = s.q, home = store.dispatch, P = (k) => places[k] && html`<${places[k]} s=${s} home=${home} />`;
   if (s.at.groups !== 'read') return html`<p class=${s.at.groups === 'reading' ? 'said' : undefined}>${s.at.groups === 'reading' ? 'Reading your groups…' : `This computer cannot read your groups: ${s.why}`}</p>`;
   if (s.ask || q.screen) return P(s.ask ? 'ask' : 'screen');
   const said = SAID[s.at.said](q, q.unplaced ? `Its folder could not be made: ${q.unplaced}. ` : '');
-  return html`${said && html`<p>${said}</p>`}${!s.groups.length && html`<p class="none">You’re in no group yet. Join one below from the link someone sent you, or make your own.</p>`}${s.groups.filter((g) => !g.left).map((g) => html`<${Group} key=${g.id} g=${g} joined=${q.joined} me=${s.key} round=${s.round} places=${places} flows=${flows} home=${home} />`)}${PLACES.map(P)}<p class="address">Your home page, the same address each time svrngs starts: ${s.origin}/</p>`;
+  return html`${said && html`<p>${said}</p>`}${!s.groups.length && html`<p class="none">You’re in no group yet. Join one below from the link someone sent you, or make your own.</p>`}${s.groups.filter((g) => !g.left).map((g) => html`<${Group} key=${g.id} g=${g} joined=${q.joined} me=${s.key} round=${s.round} places=${places} flows=${flows} home=${home} />`)}${PLACES.map(P)}${!Object.values(flows).some((f) => f.holds?.(s)) && html`<p class="address">Your home page, the same address each time svrngs starts: ${s.origin}/</p>`}`;
 }
 
 // The edge: each feature's file, by its one URL, then HOME, its first read

@@ -488,7 +488,7 @@ brackets.
     - "That is not a link to something lent in your groups.";
     - "This link opens in svrngs on your computer."
   - **Moves:** both `join_page.rs` tests, and joining and making a group on the computer with no reload. +120 to +165 (the operator widened it from +160, 2026-11-01: among, cold and `#open=` 37 against +22 to +28, and three fixes; demo/runs/page/2026-11-01-join-range/NEEDS_HUMAN.md) [about 97 phone, about 36 home].
-- [ ] page-acts — depends [page-open] — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — "What acts as you", the yes and the Stop, what apps use, and the person asked, on both pages:
+- [x] page-acts f7d76cfb — depends [page-open] — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — "What acts as you", the yes and the Stop, what apps use, and the person asked, on both pages:
   - **Owns:** `ui/acts.js`, `ui/changes.js`, `ui/uses.js`, `web/v2/acts.js`, `web/v2/uses.js`, `web/v2/ask.js`, `home/v2/acts.js`, `home/v2/ask.js`, `page_v2/acts.rs`, `web/tests/v2/acts.mjs` and `acts.test.mjs`.
   - **(a) The shared parts.**
     - `ui/acts.js` is `q:237-245`.
@@ -498,6 +498,19 @@ brackets.
     - **`acts.js`:** a `doing` region keyed by act, `[idle, busy, done, refused]`, and Reading's Stop as an `Act` (`a:512-518`). The yes keeps `/runs`, `sign_line`, `line` and `unsent` before the send (`a:501-508`), with the signing at the edge.
     - **`uses.js`:** `uses: [shut, asking, asked]`, the `Fold` `details#uses` over `ul#used`, given to `opens` through `acts(s)`. `fold` asks `choices` per lend, `asking` draws `#used` empty, and a Stop asks again. It never reads `#used`'s DOM.
     - **`ask.js`:** `ask: [none, asking, sending, refused]`, `form#ask`, `blockquote#words`, Yes and `button#not`. `question()` is the heading, Yes and Not now send `open`, and `choose` dials at the edge.
+    - **Where (b) landed** (corrected, page-acts (b), 8c8da32a):
+      - **`choose` and `uses`' reads dial a lender through the one endpoint**, which is enter's alone (`web/v2/enter.js:93` `bound`); a second endpoint of the key displaces it at the relay (`:115`). So `web/v2/enter.js` gains one export, `dialled`, page-acts' for that line only.
+      - **Nothing sends `ask`:** enter's `looked` sends `visit`, `join`, `among`, `offer` and `failed` (`enter.js:38-50`), and the read is enter's. So `form#ask` sends it once the list is read and the address asks.
+      - **`acts(s)` gives no `send`** (`web/v2/page.js:111`), and every act here has a button. So `acts.js` draws the parts itself, `uses.js`'s Fold among them; the phone has no wifi or play part.
+      - **After a yes or a Stop, enter is sent `opened` with the group as kept,** and reads again: enter's `keep` after each read writes `s.group` back (`enter.js:72`), so a stale `line` would sign a seq twice. `acted` keeps each answer, so a yes stays said after the read no longer lists the change.
+      - **`me`**, this phone's key in the ask a link's issuer is sent (`a:509`), is asked of the edge once the tab holds the group (`whoami`).
+      - **Red, green:** `acts.rs` passes to `:242`, whose last step opens `#open=<label>` after the read, page-join's. `carried.rs:640`'s phone half runs after its home half, (c).
+      - **Lines:** v2 739, the row at +111 of +108 to +144 with (c) and (d) to come.
+    - **Where (c) landed** (corrected, page-acts (c), 9b049558):
+      - **Nothing of GROUP's reaches a HOME place:** group.js gives its places only `g`, `s`, `send`, `home` and `me` (`group.js:46`), and HOME's places get HOME's state alone (`home.js:40`). So `group.js`'s PLACES gains `told` (`:26`), acts.js's `Told`, which draws nothing and tells HOME each group's people and lends as GROUP reads them.
+      - **The foot waits:** v1 drew `p.address` after every read (`h:326-328`), and home.mjs opens every `<details>` as it shows (`home.mjs:72-75`). So Home draws it once no feature's file `holds` it (`home.js:43`), and acts.js holds it until its section has read.
+      - **`b:opens.rs:41` is green at the stub:** its yes is index.js's `Reach`, page-index's, so it is not this row's to earn.
+      - **Lines:** v2 809, the row at +181 of +108 to +144, so it stops for its range (`demo/runs/page/2026-11-01-acts-range/NEEDS_HUMAN.md`). (d) is next.
   - **(c) The home.**
     - **`acts.js`:** the parts derived, in place of `add` pushes (`h:123`, `:204-206`, `:381-385`):
       - reads, from `GROUP`;
@@ -522,15 +535,21 @@ brackets.
     - `the_group_page_says_what_acts_as_you_and_its_stop_holds_at_the_next_pass`;
     - `a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped`;
     - `b:acts.rs:68`, `b:carried.rs:640`, `b:opens.rs:41` and `b:main.rs:2315`.
+  - **Where (d) landed** (corrected, page-acts (d), 47ede414..c34cdfc0):
+    - **`me` is enter's:** the merge of main brought page-members' b5c4e397, which made `me` a field enter owns (`web/v2/enter.js:72`), and compose refused it claimed by acts.js too (`node --test web/tests/v2/enter.test.mjs`: "field me is claimed by enter and by acts"). acts.js reads enter's; its `whoami` is gone (47ede414).
+    - **`read` is enter's take** (`enter.js:63`), so acts.js cannot answer it: the page sends `carry` on each read holding unsent lines (acts.js `Drawn`), and `acts.test.mjs` holds that `carry` answers `carrying`, refused with none.
+    - **`visible` needs no code:** HOME's `visible` is a new round (`home/v2/home.js:26-27`), and ACTS reads on each; its commit is its test alone (f9a36431).
+    - **The home's uses Stop** has a v2-only test of its own, `a_stop_on_what_apps_use_is_read_again_in_place` (c3816ca2), as the list below names none.
+    - **Lines:** v2 1029, the row at +182 of +108 to +190.
   - **v2-only:**
-    - `acts.test.mjs`: a `read` holding `unsent` answers `carry`;
+    - `acts.test.mjs`: a `carry` on a group holding `unsent` answers `carrying` (corrected above);
     - `acts.rs`, each red with `UI` flipped: a planted failed carry is carried on the next open; a refused yes leaves the form; a yes in another tab is shown on `visible`; two refusals on `/ask` are said once.
   - **Byte for byte:**
     - `See what’s new`, `Open the new version`, `new version for you now` and "Money opens at its new version for you now.";
     - `#acts > details`, `summary > h2`, and "Each Stop holds from the app’s next request.";
     - `#used li`, `#used button` "Stop", `#ask:not([hidden])`, `#words` and `#home h2` as `question()`;
     - `UNLENT`.
-  - **Moves:** the yes to a new version, and Stops that hold, on both pages. +108 to +144 [about 72 phone, `q:77-88`, `:220-245` 25, about 22 home].
+  - **Moves:** the yes to a new version, and Stops that hold, on both pages. +108 to +190 (the operator widened it from +144, 2026-11-01: the shared parts 23 with no estimate, the home 70 against +28 to +42, and (d)'s five fixes; demo/runs/page/2026-11-01-acts-range/NEEDS_HUMAN.md) [about 72 phone, `q:77-88`, `:220-245` 25, about 22 home].
 - [x] page-home-rooms 1372867c — depends [page-open] — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — WiFi and Play on the computer, each one region feeding both of its lists:
   - **Owns:** `home/v2/wifi.js`, `home/v2/play.js`, `page_v2/rooms.rs`.
   - **(a) WiFi.**
