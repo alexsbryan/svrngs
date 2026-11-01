@@ -3,12 +3,13 @@
 // `table`, :190-210, which it moves): the shelf, svrngs's own apps as
 // `shelf` lists them, each not on group `g`'s table yet unticked, and one
 // button bringing the ticked ones by the page's `bring(g, names)`, which
-// answers each `{app, already}`; what happened said in the paragraph above
-// the boxes, in its place, as v1 says it. Folded as "Bring more to <group>"
-// for someone who has just `joined` (question.js:195-198). Its machine,
-// SHELF, is the part's own (ui/view.js `useMachine`), its trace `SHELF:`.
-// Moved with v1's faults kept, each fixed in its own commit after: the
-// button is never disabled, and a second tap brings again.
+// answers each `{app, already}`; what happened said beside the button,
+// where it is looked for, not over the words above the boxes, which v1
+// replaced (page-shelf (b)). Folded as "Bring more to <group>" for someone
+// who has just `joined` (question.js:195-198). Its machine, SHELF, is the
+// part's own (ui/view.js `useMachine`), its trace `SHELF:`. Moved with v1's
+// faults kept, each fixed in its own commit after: the button is never
+// disabled, and a second tap brings again.
 import { html, useMachine } from './view.js?v=__VERSION__';
 import { go, machine, no } from './machine.js?v=__VERSION__';
 import { Act, Fold } from './parts.js?v=__VERSION__';
@@ -34,6 +35,6 @@ export const Shelf = (props) => drawn(...useMachine(() => machine('SHELF', SHELF
 export function drawn(s, send, { g, lent, shelf, joined }) {
   const name = g.name ?? 'your group', on = (a) => lent.some((l) => l.group === g.id && l.kind === a.name), offered = shelf.filter((a) => !on(a));
   const tick = (a) => (e) => send({ type: 'tick', app: a, on: e.currentTarget.checked });
-  const section = html`<section><h3>Bring things to the table</h3>${shelf.filter(on).map((a) => html`<p>${spoken(a.name)} is on the table.</p>`)}<p>${s.said || (offered.length ? `These come with svrngs. Bring one, and everyone in ${name} opens it on their own computer or phone, while any computer in ${name} is on.` : '')}</p>${offered.map((a) => html`<p><label><input type="checkbox" checked=${s.ticked.includes(a.name)} onChange=${tick(a.name)} />${` ${spoken(a.name)}: ${a.words}`}</label></p>`)}${offered.length > 0 && html`<p><${Act} words=${`Bring the ticked ones to ${name}`} on=${{ type: 'bring', g, name, apps: offered.map((a) => a.name).filter((a) => s.ticked.includes(a)) }} send=${send} /></p>`}</section>`;
+  const section = html`<section><h3>Bring things to the table</h3>${shelf.filter(on).map((a) => html`<p>${spoken(a.name)} is on the table.</p>`)}<p>${offered.length ? `These come with svrngs. Bring one, and everyone in ${name} opens it on their own computer or phone, while any computer in ${name} is on.` : ''}</p>${offered.map((a) => html`<p><label><input type="checkbox" checked=${s.ticked.includes(a.name)} onChange=${tick(a.name)} />${` ${spoken(a.name)}: ${a.words}`}</label></p>`)}${offered.length > 0 && html`<p><${Act} words=${`Bring the ticked ones to ${name}`} doing=${{ state: s.at.bring, said: s.said && ` ${s.said}` }} on=${{ type: 'bring', g, name, apps: offered.map((a) => a.name).filter((a) => s.ticked.includes(a)) }} send=${send} /></p>`}</section>`;
   return joined ? html`<${Fold} summary=${`Bring more to ${name}`} fold="shelf" open=${s.open} send=${send}>${section}<//>` : section;
 }

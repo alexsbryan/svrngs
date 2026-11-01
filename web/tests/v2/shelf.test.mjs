@@ -77,13 +77,15 @@ test('a tick is kept, and the button brings the ticked ones still offered', () =
   assert.deepEqual(sent, [{ type: 'bring', g: house, name: 'house', apps: ['House-rules'] }]);
 });
 
-test('each answer said in the paragraph above the boxes, in v1’s words', () => {
+test('each answer said beside the button, in v1’s words, the words above the boxes kept', () => {
   const bringing = step(FIRST, { type: 'bring', g: house, name: 'house', apps: ['Money', 'Events'] });
   assert.deepEqual(bringing.effects, [{ run: 'bring', g: house, apps: ['Money', 'Events'], failed: 'unbrought' }]);
   assert.equal(bringing.state.at.bring, 'bringing');
   const brought = step(bringing.state, { type: 'brought', answers: [{ app: 'Money' }, { app: 'Events', already: true }] }).state;
   assert.equal(brought.said, 'You brought Money to house: everyone in it can open it in a few seconds. Events is on the table already.');
-  assert.ok(out(drawn(brought, send, { g: house, lent: [], shelf: SHELVED })).includes(`<p>${brought.said}</p><p><label>`));
+  const drawing = out(drawn(brought, send, { g: house, lent: [], shelf: SHELVED }));
+  assert.ok(drawing.endsWith(`<p><button>Bring the ticked ones to house</button> ${brought.said}</p></section>`), drawing);
+  assert.ok(drawing.includes('<p>These come with svrngs.'), drawing);
   assert.equal(step(bringing.state, { type: 'brought', answers: [] }).state.said, 'Tick something to bring first.');
   const refused = step(bringing.state, { type: 'unbrought', why: 'the group is not held here' }).state;
   assert.deepEqual([refused.at.bring, refused.said], ['refused', 'Nothing was brought: the group is not held here']);
