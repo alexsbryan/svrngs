@@ -434,6 +434,12 @@ brackets.
       - `the_page_offers_a_computer_one_line_and_sends_the_token_nowhere`;
       - `the_page_opened_with_no_link_offers_a_founder_s_line`;
       - `a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone`.
+    - **Where it landed** (corrected, page-join (a), df07ef99):
+      - **Both `join_page.rs` tests** hold every join assertion on v2 (asked, the 409's why, the hint, the storage line, the key in no storage, again and alone asked nothing, the lend opened at its origin; "Adding this phone to house as Sam’s…"). Each stays red at `in_house` (`join_page.rs:197`, `:393`), which reads `#door > p`, page-members' door, then at `folded` and `look`'s "What acts as you", page-acts'. So they go green on v2 only once both of those land; page-parity judges them.
+      - **`a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone`:** (a) moves its computer part ("This link opens in svrngs on your computer.", the link shown). It is red at `main.rs:1619`, the phone's `#open=` by label, until (b), and the home's paste until (f).
+      - **cold.mjs `how`** holds on webkit; on chromium `a_lends_alias_opens_it_from_the_groups_page` is red before it, at `main.rs:1853`, (b)'s.
+      - `the_page_opened_with_no_link_offers_a_founder_s_line` passed on v2 before (a), page-open's.
+      - NameForm is exported from `web/v2/join.js`, pure, for visit.js's guest form (page-members (c)); the place `join` is join's, so a guest's form is drawn there through a message to join, or by moving the place, page-members' choice.
   - **(b) `#open=` across groups, its aliases, and cold** (`among.js`).
     - The naming: by label, else alias, `missed`, `nor`, `anew` and its yes (`a:546-563`).
     - `among` (`a:581-587`).
