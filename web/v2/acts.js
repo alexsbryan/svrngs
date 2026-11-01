@@ -5,7 +5,8 @@
 // (ui/changes.js), what opens friends' things as you, by the yes kept with
 // the group (`reads`), each with Stop, then what apps use (web/v2/uses.js),
 // what you open knowing your name, and who decides for you, of the people
-// by this phone's key, `me`, asked of the edge once the group is opened.
+// by this phone's key, `me`, as enter reads it with the group (enter.js
+// `read`), as page-members needed it too.
 // DOING is one act at a time, keyed by what it acts on, `acting`; each
 // act's answer kept in `acted` by that key, so a yes said "opens at its
 // new version for you now" stays said once the group, read again, lists
@@ -26,7 +27,7 @@ import { through } from './enter.js?v=__VERSION__';
 import { PASS_LIFE } from './index.js?v=__VERSION__';
 import { Used } from './uses.js?v=__VERSION__';
 
-export const owns = ['folds', 'acting', 'acted', 'me'];
+export const owns = ['folds', 'acting', 'acted'];
 export const states = { doing: ['idle', 'busy', 'done', 'refused'] };
 const acting = (s, key, effect, patch = {}) => (s.at.doing === 'busy' ? no(s, `${s.acting} is under way, and is answered first`) : go(s, { doing: 'busy' }, { acting: key, acted: { ...s.acted, [key]: { ...s.acted?.[key], ...patch } } }, effect));
 const answered = (s, m, state) => (s.at.doing !== 'busy' ? no(s, 'no act is under way') : go(s, { doing: state }, { acted: { ...s.acted, [s.acting]: { ...s.acted[s.acting], state, said: state === 'refused' ? `${s.acted[s.acting].said ?? ''} ${m.why}` : '' } } }, ...(m.group ? [{ run: 'send', m: { type: 'opened', group: m.group, why: 'kept here, so read again' } }] : [])));
@@ -36,7 +37,6 @@ export const takes = {
   yes: (s, { app }) => acting(s, `yes ${app}`, { run: 'runs', group: s.group, app, failed: 'unacted' }, { c: s.changed?.find((c) => c.group === s.group.id && c.app === app) }),
   'stop reads': (s, { label }) => acting(s, `stop ${label}`, { run: 'stopping', group: s.group, label, failed: 'unacted' }),
   acted: (s, m) => answered(s, m, 'done'), unacted: (s, m) => answered(s, m, 'refused'),
-  whoami: (s) => (s.group ? go(s, {}, {}, { run: 'me', group: s.group, failed: 'known' }) : no(s, 'no group is open')), known: (s, { me = null }) => go(s, {}, { me }),
 };
 
 const NOTES = { opens: `A Stop here holds from the next pass this phone signs for the app, within ${PASS_LIFE / 3600} hours.` };
@@ -46,7 +46,6 @@ const doing = (s, key) => (s.acting === key && s.at.doing === 'busy' ? { state: 
 const read = (s, send, l, c = s.group.reads[l.label], d = doing(s, `stop ${l.label}`)) => (d.state === 'done' ? html`<p>${named(l)} stops opening your friends’ ${l.reads.map(spoken).join(' and ')} as you within ${PASS_LIFE / 3600} hours, when the pass it holds ends.</p>`
   : html`<p>${reading(l, c)}${c.said === 'yes' && html`<${Act} words="Stop" doing=${d} on=${{ type: 'stop reads', label: l.label }} send=${send} />`}</p>`);
 function Drawn({ s, send }) {
-  useEffect(() => void (s.at.tab === 'holding' && s.me === undefined && send({ type: 'whoami' })), [s.at.tab]);
   if (!s.lent) return html`<section id="acts"></section>`;
   const done = Object.values(s.acted ?? {}).filter((a) => a.c && a.state === 'done' && !s.changed?.some((c) => c.app === a.c.app && c.group === a.c.group)).map((a) => a.c);
   const parts = {
@@ -71,5 +70,4 @@ export const io = {
     return store.opened({ ...group, line: { seq: line.seq, id: line.id }, unsent: [...(group.unsent ?? []), line] }).then((g) => carry(g, `line ${line.seq} signed`));
   }),
   stopping: ({ group, label }) => store.opened({ ...group, reads: { ...group.reads, [label]: { said: 'stop', at: Math.floor(Date.now() / 1000) } } }).then((g) => ({ type: 'acted', group: g, why: `${label}'s reads stopped here` })),
-  me: ({ group }) => Promise.all([wasm(), store.unseal(group)]).then(([w, key]) => ({ type: 'known', me: JSON.parse(w.ask(key, group.token)).key, why: "this phone's key" })),
 };
