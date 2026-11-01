@@ -14,8 +14,8 @@ use crate::drive::drive;
 use crate::harness::{relay, relay_url, Engine};
 
 /// Ada's computer holding house from its seed (browser/main.rs `house`),
-/// on `crate::UI`, and her home page's address.
-async fn house(dir: &Path, relay: &iroh_relay::server::Server) -> (Node, String) {
+/// on `crate::UI`, her home page's address, and the group's id.
+async fn house(dir: &Path, relay: &iroh_relay::server::Server) -> (Node, String, String) {
     use svrngs_node::group::{draw, Name};
     let ada = SigningKey::from_bytes(&[1; 32]);
     let config = RelayConfig {
@@ -44,7 +44,7 @@ async fn house(dir: &Path, relay: &iroh_relay::server::Server) -> (Node, String)
         .await
         .expect("the node reaches the relay on 127.0.0.1");
     let home = format!("http://svrngs.localhost:{}/", node.api_addr().port());
-    (node, home)
+    (node, home, seed.id())
 }
 
 /// A page at a port from `from` up, inside /running's look (browser/main.rs
@@ -97,7 +97,7 @@ in_chromium!(
 async fn a_lend_from_what_runs_here_is_in_the_index_at_once(engine: Engine) {
     let relay = relay().await;
     let dir = tempfile::tempdir().unwrap();
-    let (ada, home) = house(dir.path(), &relay).await;
+    let (ada, home, _) = house(dir.path(), &relay).await;
     let port = serving(21000, "notes").await;
     let row = format!("#running li:has-text('localhost:{port}')");
     let seen = drive(
@@ -144,7 +144,7 @@ async fn a_lend_from_what_runs_here_is_in_the_index_at_once(engine: Engine) {
 /// Ada's computer lending `shelf`, a page of its own, as `body` declares it
 /// (browser/main.rs's lend tests), and her home page's address.
 async fn lending(dir: &Path, relay: &iroh_relay::server::Server, body: Value) -> (Node, String) {
-    let (ada, home) = house(dir, relay).await;
+    let (ada, home, _) = house(dir, relay).await;
     let mut body = body;
     body["port"] = json!(serving(22000, "ada's shelf").await);
     let lends = svrngs_node::lend::lends_dir(dir);
@@ -296,6 +296,125 @@ async fn why_a_number_is_refused_is_said_once(engine: Engine) {
             !(seen["after"].as_array().into_iter().flatten()).all(|a| a["how"] == "settled"),
             "each press taken by CHANGE",
         ),
+    ]
+    .into_iter()
+    .filter_map(|(failed, what)| failed.then_some(what))
+    .collect();
+    assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
+    drop(ada);
+}
+
+/// House as `house` holds it, bo let in, and house's own folder kept,
+/// where the shelf's apps are brought (page_v2/shelf.rs `house`).
+async fn kept(dir: &Path, relay: &iroh_relay::server::Server) -> (Node, String, String) {
+    use svrngs_node::{actor_of, Person, RailAct};
+    let (node, home, id) = house(dir, relay).await;
+    let bo = svrngs_core::tests_support::Fixture {
+        act: RailAct::Admit {
+            person: Person::parse("bo").unwrap(),
+            key: actor_of(&SigningKey::from_bytes(&[7; 32])),
+            invite: None,
+        },
+    };
+    node.rail().commit(&id, &bo).unwrap().unwrap();
+    let folder = dir.join("house");
+    std::fs::create_dir(&folder).unwrap();
+    let ask = svrngs_node::folder::FolderAsk {
+        dir: folder,
+        group: id.clone(),
+    };
+    let asked = reqwest::Client::builder()
+        .no_proxy()
+        .build()
+        .unwrap()
+        .post(format!("http://{}/v1/folders", node.api_addr()))
+        .bearer_auth(node.token())
+        .header("content-type", "application/json")
+        .body(serde_json::to_vec(&ask).unwrap())
+        .send()
+        .await
+        .unwrap();
+    assert!(asked.status().is_success(), "{:?}", asked.text().await);
+    (node, home, id)
+}
+
+in_chromium!(
+    /// **A bring is in the home's index with no reload** (page-index
+    /// (c)). Ada ticks Money on her home page and brings it: house's
+    /// index lists "Money Who owes" with the page loaded once, read again
+    /// by HOME's `again`. Watched failing on v1 (`UI` flipped), whose
+    /// bring redraws only the shelf (question.js:207).
+    a_bring_is_in_the_home_s_index_with_no_reload
+);
+async fn a_bring_is_in_the_home_s_index_with_no_reload(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let (ada, home, _) = kept(dir.path(), &relay).await;
+    let seen = drive(
+        engine,
+        "home.mjs",
+        json!({
+            "ask": home,
+            "all": "table.index tr",
+            "do": [["#home label:has-text('Money') input", true],
+                ["#home button:has-text('Bring the ticked ones')", null, true, "Money Who owes"]],
+        }),
+        None,
+    )
+    .await;
+    let wrong: Vec<&str> = [
+        (
+            !seen["after"][0].to_string().contains("Money Who owes"),
+            "the index lists Money",
+        ),
+        (seen["loads"] != 1, "with no reload"),
+    ]
+    .into_iter()
+    .filter_map(|(failed, what)| failed.then_some(what))
+    .collect();
+    assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
+    drop(ada);
+}
+
+in_webkit!(
+    /// **A bring is in the phone's index with no reload** (page-index
+    /// (c)). Bo's phone, in house through ada's computer, ticks Money and
+    /// brings it: `#lent` lists Money with the page loaded once, read
+    /// again by the page's `reread`. Watched failing on v1 (`UI` flipped).
+    a_bring_is_in_the_phone_s_index_with_no_reload
+);
+async fn a_bring_is_in_the_phone_s_index_with_no_reload(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let (ada, _, id) = kept(dir.path(), &relay).await;
+    let token = svrngs_core::link::Token {
+        issuer: SigningKey::from_bytes(&[1; 32]).verifying_key(),
+        secret: [0; 16],
+        relay: Some(relay_url(&relay).parse().expect("a URL")),
+    }
+    .encode();
+    let bo = hex::encode(SigningKey::from_bytes(&[7; 32]).to_bytes());
+    let steps = json!([
+        ["#shelf label:has-text('Money') input", true],
+        [
+            "#shelf button:has-text('Bring the ticked ones')",
+            null,
+            "PAGE: reread: ",
+            "Money"
+        ]
+    ]);
+    let args = json!({ "site": crate::harness::site_of(crate::UI), "key": bo, "token": token, "id": id, "read": "#lent tr", "steps": steps });
+    let seen = drive(engine, "v2/index.mjs", args, None).await;
+    let wrong: Vec<&str> = [
+        (
+            !first(&seen, 0).starts_with("Money"),
+            "the index lists Money",
+        ),
+        (
+            seen["after"][0]["how"] != "settled",
+            "read again by the page",
+        ),
+        (seen["loads"] != 1, "with no reload"),
     ]
     .into_iter()
     .filter_map(|(failed, what)| failed.then_some(what))
