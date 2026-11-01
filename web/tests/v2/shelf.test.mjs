@@ -49,7 +49,7 @@ const SHELVED = [
 ];
 const house = { id: 'g1', name: 'house' };
 const money = { group: 'g1', kind: 'Money' };
-const FIRST = { at: { bring: 'idle' }, ticked: [], open: false, said: '' };
+const FIRST = { at: { bring: 'idle' }, ticked: [], brought: [], open: false, said: '' };
 const sent = [];
 const send = (m) => sent.push(m);
 const step = SHELF(async () => []).step;
@@ -101,6 +101,18 @@ test('while it brings, a second bring and a tick are refused, the button and the
   assert.ok(drawing.endsWith('<p><button disabled>Bring the ticked ones to house</button></p></section>'), drawing);
   const brought = step(bringing, { type: 'brought', answers: [{ app: 'Money' }] }).state;
   assert.equal(step(brought, { type: 'bring', g: house, name: 'house', apps: [] }).effects.length, 1, 'answered, it brings again');
+});
+
+test('what it brought is offered no more, its tick gone; all brought, the answer stands alone', () => {
+  const ticked = ['Money', 'Events'].reduce((s, app) => step(s, { type: 'tick', app, on: true }).state, FIRST);
+  const bringing = step(ticked, { type: 'bring', g: house, name: 'house', apps: ['Money'] }).state;
+  const brought = step(bringing, { type: 'brought', answers: [{ app: 'Money' }] }).state;
+  assert.deepEqual([brought.brought, brought.ticked], [['Money'], ['Events']]);
+  const drawing = out(drawn(brought, send, { g: house, lent: [], shelf: SHELVED }));
+  assert.ok(!drawing.includes('Money: who owes') && !drawing.includes('Money is on the table.'), drawing);
+  const all = step(step(brought, { type: 'bring', g: house, name: 'house', apps: ['Events', 'House-rules'] }).state, { type: 'brought', answers: [{ app: 'Events' }, { app: 'House-rules', already: true }] }).state;
+  const alone = out(drawn(all, send, { g: house, lent: [], shelf: SHELVED }));
+  assert.ok(alone.endsWith('<p></p><p> You brought Events to house: everyone in it can open it in a few seconds. House rules is on the table already.</p></section>'), alone);
 });
 
 test('the io answers brought, with what it brought as why', async () => {

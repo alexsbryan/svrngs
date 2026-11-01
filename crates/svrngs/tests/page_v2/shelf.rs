@@ -77,7 +77,8 @@ async fn house(dir: &Path, relay: &iroh_relay::server::Server) -> (Node, String)
 /// What `seen` (web/tests/v2/shelf.mjs) shows of the bring, each wrong
 /// one said, so one run says all a page did not do. The button pressed
 /// twice at once: held while it brings, then given back, and the second
-/// press refused by SHELF, so the home page posts /shelf once.
+/// press refused by SHELF, so the home page posts /shelf once; then
+/// Money, brought, offered no more.
 fn brought_on_v2(seen: &Value, home: bool) {
     let next = seen["next"].as_str().unwrap_or_default();
     let lines: Vec<&str> = (seen["lines"].as_array().into_iter().flatten())
@@ -104,6 +105,13 @@ fn brought_on_v2(seen: &Value, home: bool) {
             "the second press is refused while the first brings",
         ),
         (home && posts != 1, "the home page posts /shelf once"),
+        (
+            seen["shelf"]
+                .as_str()
+                .unwrap_or_default()
+                .contains("Money: who owes"),
+            "Money, brought, is offered no more",
+        ),
     ]
     .into_iter()
     .filter_map(|(failed, what)| failed.then_some(what))
