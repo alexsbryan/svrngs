@@ -8,8 +8,8 @@
 // replaced (page-shelf (b)). Folded as "Bring more to <group>" for someone
 // who has just `joined` (question.js:195-198). Its machine, SHELF, is the
 // part's own (ui/view.js `useMachine`), its trace `SHELF:`. While it
-// brings, the button and the boxes are held and a second bring is refused,
-// where v1's second tap brought again; then what it brought is offered no
+// brings, the button and the boxes are held, "Bringing…" said beside it,
+// and a second bring is refused, where v1's second tap brought again; then what it brought is offered no
 // more, and the page's `after()` reads the group again, so it is said on
 // the table from the group's own answer, never a reload (page-shelf (b)).
 // The group lists an app brought once its folder has placed the files in
@@ -51,6 +51,6 @@ export function Shelf(props) {
 export function drawn(s, send, { g, lent, shelf, joined }) {
   const name = g.name ?? 'your group', listed = (a) => on(g, lent)(a.name), offered = shelf.filter((a) => !listed(a) && !s.brought.includes(a.name));
   const tick = (a) => (e) => send({ type: 'tick', app: a, on: e.currentTarget.checked });
-  const section = html`<section><h3>Bring things to the table</h3>${shelf.filter(listed).map((a) => html`<p>${spoken(a.name)} is on the table.</p>`)}<p>${offered.length ? `These come with svrngs. Bring one, and everyone in ${name} opens it on their own computer or phone, while any computer in ${name} is on.` : ''}</p>${offered.map((a) => html`<p><label><input type="checkbox" disabled=${s.at.bring === 'bringing'} checked=${s.ticked.includes(a.name)} onChange=${tick(a.name)} />${` ${spoken(a.name)}: ${a.words}`}</label></p>`)}${(offered.length > 0 || s.said) && html`<p><${Act} answer=${offered.length ? 'beside' : 'instead'} words=${`Bring the ticked ones to ${name}`} doing=${{ state: s.at.bring === 'bringing' ? 'busy' : s.at.bring, said: s.said && ` ${s.said}` }} on=${{ type: 'bring', g, name, apps: offered.map((a) => a.name).filter((a) => s.ticked.includes(a)) }} send=${send} /></p>`}</section>`;
+  const section = html`<section><h3>Bring things to the table</h3>${shelf.filter(listed).map((a) => html`<p>${spoken(a.name)} is on the table.</p>`)}<p>${offered.length ? `These come with svrngs. Bring one, and everyone in ${name} opens it on their own computer or phone, while any computer in ${name} is on.` : ''}</p>${offered.map((a) => html`<p><label><input type="checkbox" disabled=${s.at.bring === 'bringing'} checked=${s.ticked.includes(a.name)} onChange=${tick(a.name)} />${` ${spoken(a.name)}: ${a.words}`}</label></p>`)}${(offered.length > 0 || s.said) && html`<p><${Act} answer=${offered.length ? 'beside' : 'instead'} words=${`Bring the ticked ones to ${name}`} doing=${{ state: s.at.bring === 'bringing' ? 'busy' : s.at.bring, said: s.said && ` ${s.said}` }} on=${{ type: 'bring', g, name, apps: offered.map((a) => a.name).filter((a) => s.ticked.includes(a)) }} send=${send} />${s.at.bring === 'bringing' && ' Bringing…'}</p>`}</section>`;
   return joined ? html`<${Fold} summary=${`Bring more to ${name}`} fold="shelf" open=${s.open} send=${send}>${section}<//>` : section;
 }

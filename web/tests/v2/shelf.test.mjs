@@ -72,7 +72,7 @@ test('a tick is kept, and the button brings the ticked ones still offered', () =
   const drawing = out(drawn(ticked, send, { g: house, lent: [], shelf: SHELVED }));
   assert.ok(drawing.includes('<label><input checked type="checkbox"></input> House rules: the rules your house agrees.</label>'), drawing);
   sent.length = 0;
-  const act = drawn(ticked, send, { g: house, lent: [], shelf: SHELVED }).props.children.at(-1).props.children;
+  const act = drawn(ticked, send, { g: house, lent: [], shelf: SHELVED }).props.children.at(-1).props.children[0];
   act.type(act.props)[0].props.onClick();
   assert.deepEqual(sent, [{ type: 'bring', g: house, name: 'house', apps: ['House-rules'] }]);
 });
@@ -98,7 +98,7 @@ test('while it brings, a second bring and a tick are refused, the button and the
   assert.equal(step(bringing, { type: 'tick', app: 'Events', on: true }).refused, 'a bring is under way, and is answered first');
   const drawing = out(drawn(bringing, send, { g: house, lent: [], shelf: SHELVED }));
   assert.equal(drawing.match(/<input disabled type="checkbox">/g)?.length, 3, drawing);
-  assert.ok(drawing.endsWith('<p><button disabled>Bring the ticked ones to house</button></p></section>'), drawing);
+  assert.ok(drawing.endsWith('<p><button disabled>Bring the ticked ones to house</button> Bringing…</p></section>'), drawing);
   const brought = step(bringing, { type: 'brought', answers: [{ app: 'Money' }] }).state;
   assert.equal(step(brought, { type: 'bring', g: house, name: 'house', apps: [] }).effects.length, 1, 'answered, it brings again');
 });
