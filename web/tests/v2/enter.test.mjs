@@ -70,5 +70,18 @@ test('the read: its refusals said, an older answer refused by name, and what it 
   assert.deepEqual(parts.heading(again.state), ['You’re in house, as bo, through ada’s computer', 'good'], 'the last read stands while it is read again');
   assert.equal(parts.response(again.state), 'cy’s computer did not answer, so what they lend is not listed.');
   assert.equal(parts.step(again.state, { type: 'read', n: 1, ok: true, body, lent: [] }).refused, 'list 1 answered after list 2 was asked');
-  assert.deepEqual(parts.step(again.state, { type: 'unread', n: 2, said: 'ada’s computer did not answer. Try again later.' }).effects.map((f) => f.m?.said ?? f.run), ['release', 'ada’s computer did not answer. Try again later.']);
+});
+
+test('back on screen the list is read again, and a read again that fails keeps the list, saying why', () => {
+  const read = through(first, { type: 'hold', group: house }, { type: 'held' }, { type: 'opened', group: house }, { type: 'read', n: 1, ok: true, body, lent: [] });
+  assert.equal(parts.step(first, { type: 'shown' }).refused, 'the list is unasked, in a tab unheld', 'nothing to read again before the first');
+  const again = parts.step(read, { type: 'shown' });
+  assert.deepEqual(again.effects, [{ run: 'read', group: read.group, n: 2, failed: 'unread' }]);
+  const failed = parts.step(again.state, { type: 'unread', n: 2, said: 'ada’s computer did not answer. Try again later.' });
+  assert.deepEqual(failed.effects, [], 'the tab keeps the group, and nothing is said over the heading');
+  assert.deepEqual(parts.heading(failed.state), ['You’re in house, as bo', 'good']);
+  assert.equal(parts.response(failed.state), 'What house lends cannot be read again just now: ada’s computer did not answer. Try again later.\ncy’s computer did not answer, so what they lend is not listed.');
+  const back = through(failed.state, { type: 'shown' }, { type: 'read', n: 3, ok: true, body: { ...body, unanswered: [] }, lent: [{ key: 'ka', name: 'notes', person: 'ada', label: 'l' }] });
+  assert.equal(parts.response(back), '', 'read again: the line goes, and what is lent now is in the list');
+  assert.deepEqual(back.group.addresses, ['l', 'notes@ada']);
 });

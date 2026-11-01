@@ -62,3 +62,122 @@ async fn the_computer_s_line_is_offered_and_copied_on_v2(engine: Engine) {
         "{seen:#}"
     );
 }
+
+in_webkit!(
+    /// **Back on screen, the phone reads its group again** (page-open
+    /// (c); PAGE_STATE §3, 6). Bo's phone opens house through ada's
+    /// computer, which lends nothing: "Nobody in house lends anything
+    /// yet." The page is hidden, ada lends a shelf, and the page is shown
+    /// again: it reads the group a second time, through the endpoint it
+    /// bound, and the shelf is in that read (`list`'s lines), so the
+    /// response no longer says nobody lends. Watched failing on v1 (`UI`
+    /// flipped), which reads the group once (web/app.js:436).
+    the_phone_reads_its_group_again_when_shown
+);
+async fn the_phone_reads_its_group_again_when_shown(engine: Engine) {
+    use std::time::Duration;
+    use svrngs_node::{actor_of, iroh::RelayConfig, node::Node, Person, RailAct, Roster};
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let (ada, bo) = (
+        SigningKey::from_bytes(&[1; 32]),
+        SigningKey::from_bytes(&[7; 32]),
+    );
+    let config = RelayConfig {
+        relay_urls: vec![relay_url(&relay)],
+        n0_services: false,
+        loopback_only: true,
+    };
+    let no_seed = |_: &std::path::Path| Ok(None);
+    let node = Node::start(
+        dir.path().to_path_buf(),
+        ada.clone(),
+        &config,
+        no_seed,
+        "127.0.0.1:0".parse().unwrap(),
+    )
+    .await
+    .expect("a node starts");
+    let seed = Roster::new(
+        [(Person::parse("ada").unwrap(), vec![actor_of(&ada)])]
+            .into_iter()
+            .collect(),
+    );
+    node.rail().set_seed("house", &seed).unwrap();
+    let admit = svrngs_core::tests_support::Fixture {
+        act: RailAct::Admit {
+            person: Person::parse("bo").unwrap(),
+            key: actor_of(&bo),
+            invite: None,
+        },
+    };
+    node.rail().commit("house", &admit).unwrap().unwrap();
+    tokio::time::timeout(Duration::from_secs(20), node.endpoint().online())
+        .await
+        .expect("the node reaches the relay on 127.0.0.1");
+    let token = Token {
+        issuer: ada.verifying_key(),
+        secret: [0; 16],
+        relay: Some(relay_url(&relay).parse().expect("a URL")),
+    }
+    .encode();
+    let ready = dir.path().join("ready");
+    let (go, release) = tokio::sync::oneshot::channel();
+    let args = json!({ "site": site_of(crate::UI), "key": hex::encode(bo.to_bytes()), "token": token, "ready": ready });
+    let phone = tokio::spawn(drive(engine, "v2/open-shown.mjs", args, Some(release)));
+    tokio::time::timeout(Duration::from_secs(120), async {
+        while !ready.exists() {
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+    })
+    .await
+    .expect("the phone opens house, and is hidden");
+    // Something lent while the page is hidden: a lend's file, as `svrngs
+    // share` writes it, its port one that listens.
+    let shelf = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let lends = svrngs_node::lend::lends_dir(dir.path());
+    std::fs::create_dir_all(&lends).unwrap();
+    let body = json!({ "port": shelf.local_addr().unwrap().port(), "kind": "k", "refused": [] });
+    std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
+    go.send(()).unwrap();
+    let seen = phone.await.unwrap();
+    assert_eq!(
+        seen["before"]["status"], "You’re in house, as bo",
+        "{seen:#}"
+    );
+    assert_eq!(
+        seen["before"]["response"], "Nobody in house lends anything yet.",
+        "{seen:#}"
+    );
+    assert_eq!(
+        seen["after"]["status"], "You’re in house, as bo",
+        "{seen:#}"
+    );
+    assert_eq!(
+        seen["after"]["response"], "",
+        "the shelf is lent now: {seen:#}"
+    );
+    let lines: Vec<&str> = seen["lines"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(|l| l.as_str())
+        .collect();
+    let reads: Vec<&&str> = lines
+        .iter()
+        .filter(|l| l.starts_with("PAGE: read ("))
+        .collect();
+    assert_eq!(reads.len(), 2, "read once, then again when shown: {seen:#}");
+    assert!(
+        reads[0].contains(", 0 lent)") && reads[1].contains(", 1 lent)"),
+        "{reads:?}"
+    );
+    assert!(
+        lines
+            .iter()
+            .any(|l| l.starts_with("PAGE: shown: opening/holding/read/")
+                && l.ends_with("running read")),
+        "{seen:#}"
+    );
+    drop((node, shelf));
+}

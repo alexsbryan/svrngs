@@ -14,7 +14,7 @@ import { Act } from '../ui/parts.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
 import { alias, apart, called, once, whose } from '../question.js?v=__VERSION__';
 
-export const owns = ['group', 'wants', 'joined', 'via', 'lent', 'people', 'shelf', 'unanswered', 'unheard', 'refused', 'behind', 'removals', 'visiting', 'changed'];
+export const owns = ['group', 'wants', 'joined', 'via', 'stale', 'lent', 'people', 'shelf', 'unanswered', 'unheard', 'refused', 'behind', 'removals', 'visiting', 'changed'];
 export const states = { tab: ['unheld', 'holding', 'elsewhere', 'taking'], list: ['unasked', 'reading', 'read', 'unread'] };
 
 // The parts of a fragment this page reads, besides a link's token (a:665).
@@ -22,7 +22,8 @@ const READ = ['open', 'at', 'anew', 'cold', 'ask', 'app'], send = (type, m) => (
 const titled = (g) => `${g.name}${g.maker ? ` (${whose(g)})` : ''}`, whoseComputer = (c) => (c ? `${c.person}’s computer` : 'The computer that sent your link');
 // The read, of `group` as kept: counted, so an older answer is refused by name.
 const reading = (s, patch) => ((asked, n) => go(s, { list: 'reading' }, { ...patch, asked }, { run: 'read', group: patch.group ?? s.group, n, failed: 'unread' }))(...ask(s, 'list')),
-  failing = (s, words) => go(s, { list: 'unread' }, {}, { run: 'release', failed: 'failed' }, say(words));
+  // A read again that fails keeps the list drawn, and says why (page-open (c)).
+  failing = (s, said, why = said) => (s.lent ? go(s, { list: 'unread' }, { stale: why }) : go(s, { list: 'unread' }, {}, { run: 'release', failed: 'failed' }, say(said)));
 const HOW = { unanswered: 'did not answer, so what they lend is not listed', unheard: 'has not heard of the computer you reached yet, so what they lend is not listed yet', refused: 'answered without saying what they lend, so it is not listed', behind: 'runs an older svrngs, so what they lend is not listed' };
 
 export const takes = {
@@ -55,7 +56,8 @@ export const takes = {
   take: (s) => (s.at.tab === 'elsewhere' ? go(s, { tab: 'taking' }, {}, { run: 'lock', id: s.group.id, steal: true, failed: 'failed' }) : no(s, 'the group is not open in another tab')),
   released: (s) => go(s, { tab: 'unheld' }),
   opened: (s, { group }) => (s.at.tab === 'holding' ? reading(s, { group }) : no(s, 'this tab holds no lock')),
-  // Read again, after a write here or on coming back (PAGE_STATE §3, 6).
+  // Read again, after a write here or on coming back on screen (PAGE_STATE §3, 6).
+  shown: (s) => takes.reread(s),
   reread: (s) => (s.at.tab === 'holding' && ['read', 'unread'].includes(s.at.list) ? reading(s, {}) : no(s, `the list is ${s.at.list}, in a tab ${s.at.tab}`)),
   // What the group lends, its refusals said by whose computer gave them
   // (a:438-451), and the computers and addresses kept (a:456-458).
@@ -67,9 +69,9 @@ export const takes = {
     const { lent, body: { unanswered, unheard, refused, older: behind, removals, visiting, people, shelf, changed } } = m;
     const computers = [...new Map(lent.map((l) => [l.key, { key: l.key, relay: l.relay ?? null, person: l.person }])).values()],
       group = { ...s.group, computers, addresses: [...lent.map((l) => l.label), ...once(lent).map((l) => alias(l, lent, people))] };
-    return go(s, { list: 'read' }, { group, via: m.via, lent, people, shelf, unanswered, unheard, refused, behind, removals, visiting, changed }, { run: 'keep', group, failed: 'failed' });
+    return go(s, { list: 'read' }, { group, via: m.via, stale: '', lent, people, shelf, unanswered, unheard, refused, behind, removals, visiting, changed }, { run: 'keep', group, failed: 'failed' });
   },
-  unread: (s, m) => (late(s, 'list', m.n) ? no(s, late(s, 'list', m.n)) : failing(s, m.said)),
+  unread: (s, m) => (late(s, 'list', m.n) ? no(s, late(s, 'list', m.n)) : failing(s, m.said, m.said ?? m.why)),
   kept: (s) => go(s, {}),
 };
 
@@ -78,7 +80,7 @@ export const heading = { elsewhere: (s) => s.at.tab === 'elsewhere' && [`You hav
 // Each computer that did not say by how, and nobody lending said only when
 // every computer did (a:578-581).
 const unlisted = (s) => Object.entries(HOW).flatMap(([k, why]) => s[k].map((p) => `${called(s.people, p.person_key) ?? p.person ?? p}’s computer ${why}.`));
-export const response = { enter: (s, u = s.lent && unlisted(s)) => s.lent && (s.lent.length || u.length ? u : [`Nobody in ${s.group.name} lends anything yet.`]) };
+export const response = { enter: (s, u = s.lent && unlisted(s)) => s.lent && [...(s.stale ? [`What ${s.group.name} lends cannot be read again just now: ${s.stale}`] : []), ...(s.lent.length || u.length ? u : [`Nobody in ${s.group.name} lends anything yet.`])] };
 // The group open in another tab, and taking it here (a:403-410), drawn in #door.
 export const chosen = (s, send) => s.at.tab === 'elsewhere' && html`<p>One tab at a time reaches ${s.group.name}. Open it here, and the other tab stops reaching it.</p><${Act} words="Open it here" on=${{ type: 'take' }} send=${send} />`;
 
@@ -122,7 +124,7 @@ export const io = {
     const [d, via, res] = await lends(w, group, []), body = res.ok ? await res.json() : {}, refusal = res.headers.get('x-svrngs-refused');
     const lent = (await d.close(), body.lent ?? []).map((l) => ({ ...l, label: w.label(l.key, l.name) })), link = group.computers?.find((c) => c.key === w.issuer_of(group.token));
     apart(lent, body.people ?? []);
-    return { type: 'read', n, ok: res.ok, refusal, via, link, body, lent, older: res.ok && w.older(body.version), why: `${res.status}${refusal ? `, refused ${refusal}` : ''}, at version ${body.version}` };
+    return { type: 'read', n, ok: res.ok, refusal, via, link, body, lent, older: res.ok && w.older(body.version), why: `${res.status}${refusal ? `, refused ${refusal}` : ''}, at version ${body.version}, ${lent.length} lent` };
   }).catch((e) => ({ type: 'unread', n, said: e.said, why: String(e) })),
   keep: ({ group }) => store.opened(group).then(() => ({ type: 'kept' })),
 };
