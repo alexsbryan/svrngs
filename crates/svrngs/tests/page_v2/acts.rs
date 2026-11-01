@@ -132,3 +132,41 @@ async fn two_refusals_on_ask_are_said_once(engine: Engine) {
     );
     drop(ada);
 }
+
+/// Ada's yes kept, `{label: {said, at}}` by her key, at `path`, as her
+/// computer's door keeps a choice (door/choices.rs `Kept`).
+fn kept_yes(path: &Path, app: &str) {
+    let ada = svrngs_node::actor_of(&SigningKey::from_bytes(&[1; 32]));
+    let at = chrono::Local::now().timestamp();
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    let kept = json!({ ada: { app: { "said": "yes", "at": at } } });
+    std::fs::write(path, kept.to_string()).unwrap();
+}
+
+in_chromium!(
+    /// **A Stop on what apps use is read again in place** (page-acts (d)).
+    /// Ada said yes to her page using her shelf, which asks; her home
+    /// page's "What acts as you" says her page uses the shelf, with Stop.
+    /// She presses it, and the section, read again, says her page was
+    /// stopped using the shelf, with no reload. Watched failing on v1
+    /// (`UI` flipped), whose Stop reloads the page (home.js:221).
+    a_stop_on_what_apps_use_is_read_again_in_place
+);
+async fn a_stop_on_what_apps_use_is_read_again_in_place(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let shelf = svrngs_node::lend::LendName::try_from("shelf".to_string()).unwrap();
+    kept_yes(&svrngs_node::lend::choices_path(dir.path(), &shelf), &label("page"));
+    let (ada, home) = ada(dir.path(), &relay).await;
+    let stop = "#acts p:has-text('uses') button:text-is('Stop')";
+    let args = json!({ "home": home, "shown": "#acts summary", "press": ["#acts summary", stop], "said": "was stopped using", "at": "#acts", "within": 30_000 });
+    let seen = drive(engine, "v2/members.mjs", args, None).await;
+    none_wrong(
+        &[
+            (seen["went"] != true, "after the Stop, the section says it was stopped"),
+            (seen["reloads"] != 0, "with no reload"),
+        ],
+        &seen,
+    );
+    drop(ada);
+}

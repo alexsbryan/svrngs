@@ -14,7 +14,8 @@
 // own (ui/view.js `useMachine`), each read counted, read again on each of
 // HOME's rounds; a yes to a new version is posted to /runs, kept in
 // `acted` by what it acts on, so it stays said once read again; a Stop on
-// what apps use reloads the page, as v1 does (h:122).
+// what apps use reads the groups again, and so the section, where v1
+// reloaded the page (h:221; page-acts (d)).
 import { html, useEffect, useMachine } from '../ui/view.js?v=__VERSION__';
 import { ask, go, late, machine, no } from '../ui/machine.js?v=__VERSION__';
 import { Acts } from '../ui/acts.js?v=__VERSION__';
@@ -35,7 +36,7 @@ const Told = ({ g, s, home }) => (useEffect(() => void (s.at.people !== 'reading
 
 const ACTS = { states: { reaching: ['reading', 'read', 'unread'], doing: ['idle', 'busy', 'done', 'refused'] },
   io: { read: ({ n, asking }) => Promise.all([get('/reaching').catch((e) => ({ why: e.message })), ...asking.map((l) => get(`/choices?lend=${l}`).then(({ choices }) => [l, { choices }], (e) => [l, { why: e.message }]))]).then(([yeses, ...choices]) => ({ type: 'reached', n, yeses, choices: Object.fromEntries(choices), why: `${choices.length} asking` })),
-    yes: ({ g, app }) => post('/runs', [g, app]).then(() => ({ type: 'acted', why: `${app} at its new version` })), stop: ({ lend, app }) => post('/choices', { lend, app, said: 'stop' }).then(() => (location.reload(), { type: 'told', why: 'the page loads again' })) },
+    yes: ({ g, app }) => post('/runs', [g, app]).then(() => ({ type: 'acted', why: `${app} at its new version` })), stop: ({ lend, app }) => post('/choices', { lend, app, said: 'stop' }).then(() => ({ type: 'stopped', why: `${app} stopped using ${lend}` })) },
   step: (s, m) => ({
     read: () => ((asked, n) => go(s, {}, { asked }, { run: 'read', n, asking: m.asking, failed: 'unreached' }))(...ask(s, 'reaching')),
     reached: () => (late(s, 'reaching', m.n) ? no(s, late(s, 'reaching', m.n)) : go(s, { reaching: 'read' }, { yeses: m.yeses, choices: m.choices })),
@@ -45,6 +46,7 @@ const ACTS = { states: { reaching: ['reading', 'read', 'unread'], doing: ['idle'
     acted: () => go(s, { doing: 'done' }, { acted: { ...s.acted, [s.acting]: { ...s.acted[s.acting], state: 'done' } } }, { run: 'again', failed: 'told' }),
     unacted: () => go(s, { doing: 'refused' }, { acted: { ...s.acted, [s.acting]: { ...s.acted[s.acting], state: 'refused', said: `${s.acted[s.acting].said ?? ''} ${m.why}` } } }),
     stop: () => go(s, {}, {}, { run: 'stop', lend: m.lend, app: m.app, failed: 'unstopped' }),
+    stopped: () => go(s, {}, {}, { run: 'again', failed: 'told' }),
     unstopped: () => go(s, {}, { said: { ...s.said, [`${m.lend} ${m.app}`]: m.why } }), told: () => go(s, {}),
   })[m.type]?.() ?? no(s, `what acts as you takes no ${m.type}`) };
 const NOTES = { opens: 'Each Stop holds from the app’s next request.', play: 'Any program on this computer reaches these as you while Play is on.' };
