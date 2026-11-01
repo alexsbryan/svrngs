@@ -476,6 +476,14 @@ brackets.
     - **`acts.js`:** a `doing` region keyed by act, `[idle, busy, done, refused]`, and Reading's Stop as an `Act` (`a:512-518`). The yes keeps `/runs`, `sign_line`, `line` and `unsent` before the send (`a:501-508`), with the signing at the edge.
     - **`uses.js`:** `uses: [shut, asking, asked]`, the `Fold` `details#uses` over `ul#used`, given to `opens` through `acts(s)`. `fold` asks `choices` per lend, `asking` draws `#used` empty, and a Stop asks again. It never reads `#used`'s DOM.
     - **`ask.js`:** `ask: [none, asking, sending, refused]`, `form#ask`, `blockquote#words`, Yes and `button#not`. `question()` is the heading, Yes and Not now send `open`, and `choose` dials at the edge.
+    - **Where (b) landed** (corrected, page-acts (b), 8c8da32a):
+      - **`choose` and `uses`' reads dial a lender through the one endpoint**, which is enter's alone (`web/v2/enter.js:93` `bound`); a second endpoint of the key displaces it at the relay (`:115`). So `web/v2/enter.js` gains one export, `dialled`, page-acts' for that line only.
+      - **Nothing sends `ask`:** enter's `looked` sends `visit`, `join`, `among`, `offer` and `failed` (`enter.js:38-50`), and the read is enter's. So `form#ask` sends it once the list is read and the address asks.
+      - **`acts(s)` gives no `send`** (`web/v2/page.js:111`), and every act here has a button. So `acts.js` draws the parts itself, `uses.js`'s Fold among them; the phone has no wifi or play part.
+      - **After a yes or a Stop, enter is sent `opened` with the group as kept,** and reads again: enter's `keep` after each read writes `s.group` back (`enter.js:72`), so a stale `line` would sign a seq twice. `acted` keeps each answer, so a yes stays said after the read no longer lists the change.
+      - **`me`**, this phone's key in the ask a link's issuer is sent (`a:509`), is asked of the edge once the tab holds the group (`whoami`).
+      - **Red, green:** `acts.rs` passes to `:242`, whose last step opens `#open=<label>` after the read, page-join's. `carried.rs:640`'s phone half runs after its home half, (c).
+      - **Lines:** v2 739, the row at +111 of +108 to +144 with (c) and (d) to come.
   - **(c) The home.**
     - **`acts.js`:** the parts derived, in place of `add` pushes (`h:123`, `:204-206`, `:381-385`):
       - reads, from `GROUP`;
