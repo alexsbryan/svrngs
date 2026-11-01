@@ -12,7 +12,10 @@
 // region `change`: a second press while one change is under way is refused.
 // A change is answered by HOME's `again`, the groups and this read again,
 // where v1 loaded the page again (h:283; page-index (e)'s fix), and the
-// typed number and what was said go with it, as v1's load drops them. The
+// typed number and what was said go with it, as v1's load drops them. Why
+// a change or the number is refused is said once, beside the buttons, the
+// last in place of the one before, where v1 appended each again (h:283,
+// :285; page-index (e)'s second fix). The
 // secret from "Sign people in with svrngs" is shown in its row's `shown`,
 // once, and nowhere else: never in a request, a link or a trace line
 // (SIGN_IN_WITH_SVRNGS §5 "Turning it on"); a read again keeps the row, so
@@ -30,9 +33,9 @@ const LENDING = { states: { lent: ['reading', 'read', 'unread'] }, io: { read: (
 const changing = (s, effect) => (s.at.change === 'changing' ? no(s, 'a change is under way, and is answered first') : go(s, { change: 'changing' }, {}, effect));
 const CHANGE = (lend, home) => ({ states: { change: ['idle', 'changing', 'refused'] },
   io: { change: ({ to }) => post('/lent', { lend, to }).then(() => (home({ type: 'again' }), { type: 'changed', why: 'the groups read again' })), sign: () => post('/lent', { lend, to: 'sign-in' }).then((c) => ({ type: 'signed', c, why: 'its secret shown here once' })) },
-  step: (s, m) => ({ typed: () => go(s, {}, { many: m.value }), change: () => changing(s, { run: 'change', to: m.to, failed: 'refused' }), sign: () => changing(s, { run: 'sign', failed: 'unsigned' }),
-    many: () => (/^[1-9][0-9]*$/.test(m.value) ? changing(s, { run: 'change', to: { limit: Number(m.value) }, failed: 'refused' }) : go(s, { change: 'refused' }, { said: `${s.said}Say how many: 1 or more. ` })),
-    changed: () => go(s, { change: 'idle' }, { many: undefined, said: '' }), signed: () => go(s, { change: 'idle' }, { shown: m.c }), refused: () => go(s, { change: 'refused' }, { said: `${s.said}${m.why}` }), unsigned: () => go(s, { change: 'refused' }, { said: `${s.said} ${m.why}` }) })[m.type]?.() ?? no(s, `a lend here takes no ${m.type}`) });
+  step: (s, m) => ({ typed: () => go(s, {}, { many: m.value }), change: () => changing(s, { run: 'change', to: m.to, failed: 'refused' }), sign: () => changing(s, { run: 'sign', failed: 'refused' }),
+    many: () => (/^[1-9][0-9]*$/.test(m.value) ? changing(s, { run: 'change', to: { limit: Number(m.value) }, failed: 'refused' }) : go(s, { change: 'refused' }, { said: ' Say how many: 1 or more.' })),
+    changed: () => go(s, { change: 'idle' }, { many: undefined, said: '' }), signed: () => go(s, { change: 'idle' }, { shown: m.c }), refused: () => go(s, { change: 'refused' }, { said: ` ${m.why}` }) })[m.type]?.() ?? no(s, `a lend here takes no ${m.type}`) });
 
 // What a lend's app form is filled with, the one time its lender turns
 // signing people in with svrngs on: the issuer, the client and its secret,

@@ -269,3 +269,37 @@ async fn the_secret_stays_shown_when_the_page_is_read_again(engine: Engine) {
     assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
     drop(ada);
 }
+
+in_chromium!(
+    /// **Why a number is refused is said once** (page-index (e)'s second
+    /// fix). Ada asks `shelf` to let in 0 at once, twice: the row says
+    /// "Say how many: 1 or more." once. Watched failing on v1 (`UI`
+    /// flipped), which appends it at each press (home.js:285).
+    why_a_number_is_refused_is_said_once
+);
+async fn why_a_number_is_refused_is_said_once(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let (ada, home) = lending(dir.path(), &relay, json!({ "kind": "books" })).await;
+    let press = json!([
+        "#lent button:has-text('Let in this many')",
+        null,
+        "CHANGE: many: "
+    ]);
+    let steps = json!([["#lent input", "0"], press, press]);
+    let args = json!({ "home": home, "read": "#lent li", "steps": steps });
+    let seen = drive(engine, "v2/index.mjs", args, None).await;
+    let said = |i: usize| first(&seen, i).matches("Say how many: 1 or more.").count();
+    let wrong: Vec<&str> = [
+        (said(0) != 1 || said(1) != 1, "said once, at each press"),
+        (
+            !(seen["after"].as_array().into_iter().flatten()).all(|a| a["how"] == "settled"),
+            "each press taken by CHANGE",
+        ),
+    ]
+    .into_iter()
+    .filter_map(|(failed, what)| failed.then_some(what))
+    .collect();
+    assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
+    drop(ada);
+}
