@@ -95,3 +95,26 @@ async fn a_group_not_made_is_said_once(engine: Engine) {
     .await;
     assert_eq!(said, [1, 1], "said once, at each press: {seen:#}");
 }
+
+in_chromium!(
+    /// **A link to nothing lent is said once** (page-join (f)'s fix). Ada
+    /// pastes a link that opens nothing lent in her groups and presses
+    /// "Open it" twice: "That is not a link to something lent in your
+    /// groups." is said once. Watched failing on v1 (`UI` flipped), which
+    /// appends it at each press (home.js:397).
+    a_link_to_nothing_lent_is_said_once
+);
+async fn a_link_to_nothing_lent_is_said_once(engine: Engine) {
+    let fill = json!(["#open input", "http://page.example/#open=no-such"]);
+    let words = "That is not a link to something lent in your groups.";
+    let (said, seen) = twice(
+        engine,
+        fill,
+        "#open button:has-text('Open it')",
+        "#open p",
+        "OPEN: open",
+        words,
+    )
+    .await;
+    assert_eq!(said, [1, 1], "said once, at each press: {seen:#}");
+}

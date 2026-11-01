@@ -6,7 +6,8 @@
 // phone. Where it opens is `to`, pure, and only within the lend (`within`,
 // #153); the tab is opened at the edge. Its machine, OPEN, is the place's
 // own (ui/view.js `useMachine`). A link to nothing lent here is said beside
-// the button, each after the last, as h:397 appends it.
+// the button once, the last in place of the one before, where v1 appended
+// each (h:397; page-join (f)'s fix).
 import { html, useMachine } from '../ui/view.js?v=__VERSION__';
 import { go, machine, no } from '../ui/machine.js?v=__VERSION__';
 import { Act, Field } from '../ui/parts.js?v=__VERSION__';
@@ -20,8 +21,8 @@ const to = (link, port, q = new URLSearchParams(link.split('#')[1] ?? ''), lend 
   ((at) => at && `/to?${new URLSearchParams({ lend, at: ((u) => u.pathname + u.search + u.hash)(new URL(at)) })}`)(/^[a-z0-9]+$/.test(lend) && within(q.get('at'), `http://${lend}.localhost:${port}`));
 const OPEN = { states: { open: ['typing', 'opened', 'refused'] }, io: { open: ({ at }) => (window.open(at, '_blank'), { type: 'opened', why: at }) },
   step: (s, m) => ({ typed: () => go(s, { open: 'typing' }, { link: m.value }), opened: () => go(s, {}),
-    open: () => ((at) => (at ? go(s, { open: 'opened' }, {}, { run: 'open', at, failed: 'refused' }) : go(s, { open: 'refused' }, { said: `${s.said} That is not a link to something lent in your groups.` })))(to(s.link, s.port)),
-    refused: () => go(s, { open: 'refused' }, { said: `${s.said} ${m.why}` }) })[m.type]?.() ?? no(s, `opening a link takes no ${m.type}`) };
+    open: () => ((at) => (at ? go(s, { open: 'opened' }, {}, { run: 'open', at, failed: 'refused' }) : go(s, { open: 'refused' }, { said: ' That is not a link to something lent in your groups.' })))(to(s.link, s.port)),
+    refused: () => go(s, { open: 'refused' }, { said: ` ${m.why}` }) })[m.type]?.() ?? no(s, `opening a link takes no ${m.type}`) };
 
 function Open({ origin }) {
   const [s, send] = useMachine(() => machine('OPEN', OPEN, { at: { open: 'typing' }, link: '', said: '', port: new URL(origin).port }));
