@@ -515,6 +515,13 @@ brackets.
     - `ROOM: [reading, read, unread, turning]`. It exports the foot (`h:202`, `ul.wifi`) and `WifiPart` for "Open to this WiFi" (`h:382`, `ul#room`), both drawn from one read of `/v1/room` (`h:377`).
     - **Red:** `b:main.rs:3392` (two runs), `:3467`, `:3325`.
     - **Fixes, each its own commit:** both lists from `ROOM`, where today a press in the foot leaves `#room` stale, and the copy said once.
+  - **Where (a) landed** (corrected, page-home-rooms (a), eb251576..e781274e):
+    - Nothing on v2 draws "What acts as you" yet: `home/v2/acts.js` is page-acts's, a stub (`acts.js:3`), and page-acts is parked. So `#acts #room li` cannot be read on v2 in this row, the same latent flaw CHARTER's "What the merge moved" closed for the shelf. This row asserts what it draws; drawing `part` is page-acts's (its (c) names `WifiPart` and `PlayPart`).
+    - The v2-only test is **opened in one group's foot, said open in another's**: ada in house and flat, each foot listing her shelf, one ROOM feeding both, `loads == 1` (`page_v2/rooms.rs`). `part` is held without a browser by `web/tests/v2/rooms.test.mjs`: ROOM's steps, and "Open to this WiFi" listing what is open and what a press here closed.
+    - `part` is a hook acts.js calls on each draw, unconditionally; `rooms(s)` its pure view.
+    - ROOM's first read starts as wifi.js loads, as v1 reads the room before drawing a group (`h:377`): asked by the first foot, a run read the foot before the room answered.
+    - The v1 tests under the switch go as far as other rows' places: `b:main.rs:3403` (the group's "on a screen" link, page-members's `show`), `:3495` and `:3536` (`#acts`).
+    - **Lines:** wifi.js 26, v2 at 653, +25 against +18 to +26.
   - **(b) Play.**
     - `PLAY: [reading, read, unread, turning]`, with the clipboard at the edge. It exports the index's cell and `PlayPart`.
     - **Red:** `b:play.rs:57-111`, `ports.rs:84`, `:183`.
