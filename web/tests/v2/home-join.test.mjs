@@ -2,17 +2,18 @@
 // with no browser: each link typed is asked of the computer that sent it,
 // counted, and an older answer refused by name (`late`), where home.js:411
 // compared the typed value; a second press refused while it joins. Each
-// step's effects are read as data. Plant, watched failing: `late` taken
-// out of JOIN's step (`old = false`), so the older answer is drawn.
+// step's effects are read as data; joined, the form is empty again and HOME
+// says so (`take`). Plant, watched failing: `late` taken out of JOIN's step
+// (`old = false`), so the older answer is drawn.
 
 import assert from 'node:assert/strict';
 import { register } from 'node:module';
 import { test } from 'node:test';
 
 register('./layout.mjs', import.meta.url);
-const { JOIN } = await import('../../../crates/svrngs-node/src/home/v2/join.js?v=__VERSION__');
+const { JOIN: made, take } = await import('../../../crates/svrngs-node/src/home/v2/join.js?v=__VERSION__');
 
-const FIRST = { at: { join: 'typing' }, link: '', person: '', why: '' };
+const JOIN = made(() => {}), FIRST = { at: { join: 'typing' }, link: '', person: '', why: '' };
 // Each message in turn from `s`: the state, and every effect and refusal.
 const run = (s, ...ms) => ms.reduce(([s, out], m) => ((r) => [r.state, [...out, r.refused ?? r.effects]])(JOIN.step(s, m)), [s, []]);
 
@@ -40,4 +41,11 @@ test('a refusal is said in place of the last, the link checked kept to press aga
   assert.deepEqual([s.at.join, s.why, s.for], ['refused', 'Sam’s computer did not answer', ['Trip', null]]);
   assert.equal(JOIN.step(s, { type: 'join' }).state.at.join, 'joining');
   assert.equal(JOIN.step(s, { type: 'opened' }).refused, 'joining takes no opened');
+});
+
+test('joined, the form is empty again, and HOME says so from what was joined', () => {
+  const [s] = run(FIRST, { type: 'typed', field: 'link', value: 'l' }, { type: 'checked', n: 1, for: ['Trip', null] }, { type: 'join' }, { type: 'joined' });
+  assert.deepEqual([s.at.join, s.link, s.for, s.asked], ['typing', '', undefined, { link: 1 }]);
+  const q = { joined: 'Trip', person: 'Dee', unplaced: null };
+  assert.deepEqual(take({ at: { groups: 'read', said: 'made' }, q: { made: 'Lab' } }, { type: 'joined', flow: 'join', q }).state, { at: { groups: 'read', said: 'joined' }, q });
 });
