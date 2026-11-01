@@ -39,10 +39,12 @@ use tokio::io::AsyncBufReadExt;
 
 /// `svrngs <args>`, this build's, with `home` its `HOME` and nothing else
 /// of this computer's environment but its `PATH`, and the group's traces
-/// at debug on its stderr: a name's one rule (#138).
+/// at debug on its stderr: a name's one rule (#138). Each call starts a
+/// node (`new`, the bare command), so each takes the run's page.
 fn svrngs(home: &Path, args: &[&str]) -> tokio::process::Command {
     let mut c = tokio::process::Command::new(env!("CARGO_BIN_EXE_svrngs"));
     c.args(args)
+        .args(harness::ui_args())
         .env_clear()
         .env("HOME", home)
         .env("PATH", std::env::var_os("PATH").unwrap_or_default())

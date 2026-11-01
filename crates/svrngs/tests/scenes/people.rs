@@ -217,6 +217,7 @@ impl Scene {
             .open(home.join("svrngs.log"))
             .unwrap();
         let child = svrngs(&home, name, args)
+            .args(crate::harness::ui_args())
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(log)

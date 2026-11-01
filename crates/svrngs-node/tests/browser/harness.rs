@@ -112,19 +112,70 @@ pub fn repo() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
 
-/// The page, built by `scripts/build-web.sh` once per run of this binary.
+/// Which page a test drives: the node's own choice (src/home/v2/serve.rs),
+/// so one enum decides it.
+pub use svrngs_node::home::v2::Ui;
+
+/// The page this run drives: `SVRNGS_UI`, read once, v1 the live one when
+/// unset (ralph/next/page/CHARTER.md, "What is settled" 6). Any other value
+/// stops the run in its words, so a typo never runs v1 as if it were v2.
+pub fn ui() -> Ui {
+    static UI: OnceLock<Ui> = OnceLock::new();
+    *UI.get_or_init(|| match std::env::var("SVRNGS_UI") {
+        Err(std::env::VarError::NotPresent) => Ui::V1,
+        Ok(v) if v == "v1" => Ui::V1,
+        Ok(v) if v == "v2" => Ui::V2,
+        other => panic!("SVRNGS_UI is v1 or v2, or unset for v1; it is {other:?}"),
+    })
+}
+
+/// `node`, its home page the run's [`ui`]: chosen v2 under v2, and left
+/// unchosen under v1, as a release leaves it, so a v2-only test
+/// (crates/svrngs/tests/page_v2) can still choose it once.
+pub fn with_ui(node: svrngs_node::node::Node) -> svrngs_node::node::Node {
+    match ui() {
+        Ui::V1 => node,
+        Ui::V2 => node.ui(Ui::V2),
+    }
+}
+
+/// What a `svrngs` this run starts is given beside its own words for the
+/// run's [`ui`]: nothing under v1, as a person runs it; `--ui v2` under v2,
+/// which only a binary built with `--features svrngs/test-support` takes
+/// (cli.rs `parse`). The browser and conformance targets start none.
+#[allow(dead_code)]
+pub fn ui_args() -> &'static [&'static str] {
+    match ui() {
+        Ui::V1 => &[],
+        Ui::V2 => &["--ui", "v2"],
+    }
+}
+
+/// The page of the run's [`ui`] ([`site_of`]).
 pub fn site() -> &'static Path {
-    static SITE: OnceLock<PathBuf> = OnceLock::new();
-    SITE.get_or_init(|| {
-        let out = repo().join("target/web/site");
+    site_of(ui())
+}
+
+/// The page `ui`, built by `scripts/build-web.sh --ui <ui>` once per run of
+/// this binary: v1 into target/web/site, v2 into target/web/site-v2.
+pub fn site_of(ui: Ui) -> &'static Path {
+    static V1: OnceLock<PathBuf> = OnceLock::new();
+    static V2: OnceLock<PathBuf> = OnceLock::new();
+    let (once, dir, name) = match ui {
+        Ui::V1 => (&V1, "site", "v1"),
+        Ui::V2 => (&V2, "site-v2", "v2"),
+    };
+    once.get_or_init(|| {
+        let out = repo().join("target/web").join(dir);
         let built = std::process::Command::new(repo().join("scripts/build-web.sh"))
             .arg("--out")
             .arg(&out)
+            .args(["--ui", name])
             .output()
             .expect("scripts/build-web.sh runs");
         assert!(
             built.status.success(),
-            "scripts/build-web.sh failed, so the page cannot be tested:\n{}",
+            "scripts/build-web.sh --ui {name} failed, so the page cannot be tested:\n{}",
             String::from_utf8_lossy(&built.stderr)
         );
         out

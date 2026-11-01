@@ -31,6 +31,7 @@ pub async fn sams_computer(seed: u8) -> (Server, RelayConfig, tempfile::TempDir,
     )
     .await
     .expect("Sam's computer starts");
+    let sam = harness::with_ui(sam);
     tokio::time::timeout(Duration::from_secs(20), sam.endpoint().online())
         .await
         .expect("Sam's computer reaches the relay on 127.0.0.1");
