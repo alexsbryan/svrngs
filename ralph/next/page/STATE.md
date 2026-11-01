@@ -230,7 +230,7 @@ brackets.
       - `.`'s hooks are +14 (build-web.sh +3, build-release.sh +1, check.sh +3, home.rs +2, node.rs +2, cli.rs +3), net −2 against (a)'s 16 cut. That is past +9 to +11 by node.rs's choice and home.rs's layer, which no estimate sized. The operator's widening (47552a83) approved the package that showed `.` at 19,118 and named (g)'s one line. `.` is 19,119 of 19,122, so its room of 3 covers page-switch's `page v2` and page-parity's `parity`, +1 each.
   - **Byte for byte:** all of v1, and every test name.
   - **Moves:** `page laws`, and both v2 pages served empty. +149 to +250 (rung; the operator widened it from +208, 2026-10-31: the phone frame 92 against +30 to +40, serve 62; demo/runs/page/2026-10-31-scaffold-range/NEEDS_HUMAN.md), +9 to +11 (`.`), against (a)'s cuts [`a:47-117`, about 40].
-- [ ] page-switch — depends [page-scaffold] — ONE ROW, each part its own commit, its plants red first, and `scripts/check.sh` once, at the close — one switch for what the v1 tests drive, which fails loudly while v2 is short, and the two driver edits, green on v1 first:
+- [x] page-switch 3d459972 — depends [page-scaffold] — ONE ROW, each part its own commit, its plants red first, and `scripts/check.sh` once, at the close — one switch for what the v1 tests drive, which fails loudly while v2 is short, and the two driver edits, green on v1 first:
   - **Owns:** CHARTER's page-switch line.
   - **(a) The switch.**
     - `harness.rs` gains `enum Ui { V1, V2 }` and `ui()`, which reads `SVRNGS_UI` once (`OnceLock`): unset means V1, and any other value panics naming `v1` and `v2`.
