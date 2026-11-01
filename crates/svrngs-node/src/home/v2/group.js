@@ -16,9 +16,9 @@ import { whose } from '../question.js?v=__VERSION__';
 // (home.js:25-30); refused as the page's session lapsed (home.rs:198,
 // session.rs `refused`), said as how to open it again.
 // A message to a feature (`m.flow`, its file's name) is taken by its
-// `take`, or refused by the file not built yet, as its `unbuilt` names it.
+// `take`, or refused by name.
 export const get = (path) => fetch(path).then(async (r) => (r.ok ? r.json() : Promise.reject(new Error(r.status === 401 ? 'this page’s session has ended. Open svrngs from your Applications, or on Linux your applications menu, and it opens here again' : (await r.json().catch(() => ({}))).error || `answered ${r.status}`)))),
-  offered = (flows, s, m, f = flows[m.flow]) => (f?.unbuilt ? no(s, `not built yet: ${f.unbuilt}`) : f?.take ? f.take(s, m) : no(s, `nothing here takes ${m.type}`));
+  offered = (flows, s, m, f = flows[m.flow]) => (f?.take ? f.take(s, m) : no(s, `nothing here takes ${m.type}`));
 
 // Each place of a group's section, in v1's order (home.js:116-232): the
 // index, its people, its folder, the links made here, leaving, removals,

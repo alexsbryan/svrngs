@@ -6,8 +6,8 @@
 // a screen (?screen=), or the page, with what was just done here said
 // (?made=, ?joined=, ?left=; home.js:363-367), said once. It draws in v1's order, each
 // group's section (home/v2/group.js), then each feature's place, from
-// home/v2/<file>.js, which a feature row fills; a file not built yet draws
-// nothing, and a message to it is refused by name (group.js `offered`). It
+// home/v2/<file>.js; a message no file takes is refused by name
+// (group.js `offered`). It
 // takes one fixed message, `again`, after a write, and `visible`, on
 // coming back on screen: each reads the groups again, then each group.
 // The edge, below the page, reads the address and forgets a notice in it.

@@ -2,7 +2,7 @@
 // PAGE composed from its flows refuses what two flows claim and a take
 // that moves what its flow does not own; its heading is the first a slot
 // gives, in ORDER, and its response every slot's lines in that order; and
-// the stubs compose, each take refused by name, their places drawing
+// the flows compose, none left a stub, their places drawing
 // web/index.html's body, word for word, in its order.
 
 import assert from 'node:assert/strict';
@@ -102,17 +102,12 @@ const out = (v) => {
   return `<${v.type}${sorted(a.join(' '))}>${out(v.props.children)}</${v.type}>`;
 };
 
-test('the flows compose, each take not built yet refused by name, their places web/index.html’s body in its order as first drawn', async () => {
+test('the flows compose, every flow built, their places web/index.html’s body in its order as first drawn', async () => {
   const parts = compose(stubs);
-  for (const [name, f] of Object.entries(stubs)) {
-    for (const type of f.unbuilt ?? []) assert.equal(parts.step(parts.first({}), { type }).refused, `not built yet: ${name}`);
-  }
-  const enters = [...(stubs.enter.unbuilt ?? []), ...Object.keys(stubs.enter.takes ?? {})];
-  assert.deepEqual(['start', 'hold', 'reread'].filter((t) => !enters.includes(t)), [], 'the frame’s `start`, among’s `hold`, the shelf’s `reread`, each enter’s, built or not');
+  assert.deepEqual(Object.entries(stubs).filter(([, f]) => 'unbuilt' in f).map(([n]) => n), [], 'no flow is left a stub (page-parity (e))');
+  assert.deepEqual(['start', 'hold', 'reread'].filter((t) => !(t in (stubs.enter.takes ?? {}))), [], 'the frame’s `start`, among’s `hold`, the shelf’s `reread`, each enter’s');
   const page = await readFile(new URL('../../index.html', import.meta.url), 'utf8');
   const body = page.slice(page.indexOf('<section id="computer"'), page.indexOf('<pre id="response">'))
     .replace(/>\s*\n\s*</g, '><').trim().replace(/<input([^>]*)>/g, '<input$1></input>').replace(/<(\w+)([^>]*)>/g, (_, t, a) => `<${t}${sorted(a)}>`);
   assert.equal(parts.places.map((P) => out(P({ s: parts.first({}) }))).join(''), body);
-  // compose lets a type not built yet stand over a take of the same name.
-  assert.deepEqual(Object.entries(stubs).flatMap(([n, f]) => (f.unbuilt ?? []).filter((t) => f.takes?.[t]).map((t) => `${n} ${t}`)), [], 'no type is both taken and not built yet');
 });
