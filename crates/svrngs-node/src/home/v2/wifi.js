@@ -31,10 +31,11 @@ export const ROOM = { states: { room: ['reading', 'read', 'unread', 'turning'] }
 const room = machine('ROOM', ROOM, { at: { room: 'reading' }, asked: { room: 1 }, round: 1, closed: [], said: {} }, [{ run: 'read', n: 1, failed: 'unread' }]);
 const on = (s, l) => (s.at.room === 'unread' ? undefined : s.room?.find(same(l)));
 
-// A copy of the lend's address for a program, said beside it, each press
-// appended as v1 appends it (h:202).
+// A copy of the lend's address for a program, said beside it once, the
+// last press's words in place of the one before, where v1 appends each
+// (h:202).
 const COPY = (at) => ({ states: { copy: ['uncopied', 'copied'] }, io: { copy: () => Promise.resolve().then(() => navigator.clipboard.writeText(at)).then(() => ({ type: 'copied', words: ` Copied: ${at}. Paste it where a program on this computer, such as a chat app, asks for an address.` }), () => ({ type: 'copied', why: 'the clipboard refused' })) },
-  step: (s, m) => ({ copy: () => go(s, {}, {}, { run: 'copy', failed: 'copied' }), copied: () => go(s, { copy: 'copied' }, { said: s.said + (m.words ?? ` Copy it from here: ${at}`) }) })[m.type]?.() ?? no(s, `a copy takes no ${m.type}`) });
+  step: (s, m) => ({ copy: () => go(s, {}, {}, { run: 'copy', failed: 'copied' }), copied: () => go(s, { copy: 'copied' }, { said: m.words ?? ` Copy it from here: ${at}` }) })[m.type]?.() ?? no(s, `a copy takes no ${m.type}`) });
 function Copy({ at }) {
   const [s, send] = useMachine(() => machine('COPY', COPY(at), { at: { copy: 'uncopied' }, said: '' }));
   return html`${' '}<${Act} words="Copy its address for a program" on=${{ type: 'copy' }} send=${send} />${' '}<${Keep} at=${at} />${s.said}`;

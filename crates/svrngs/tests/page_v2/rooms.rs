@@ -158,3 +158,41 @@ async fn opened_in_one_foot_is_said_open_in_every_list(engine: Engine) {
     assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
     drop(ada);
 }
+
+in_chromium!(
+    /// **A lend's address, copied twice, is said copied once**
+    /// (page-home-rooms (a)'s second fix). Ada lends `shelf`; she presses
+    /// "Copy its address for a program" in its line at her group's foot
+    /// twice, and the line says it copied the address once, whether the
+    /// clipboard took it or not. Watched failing on v1 (`UI` flipped),
+    /// which appends what it says at each press (home.js:202).
+    a_copied_address_is_said_once
+);
+async fn a_copied_address_is_said_once(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let (ada, home) = ada(dir.path(), &relay, &["house"]).await;
+    lends_a_page(dir.path(), "shelf", "ada's shelf").await;
+    let press = json!([
+        "#home section ul.wifi li button:has-text('Copy its address for a program')",
+        null,
+        "COPY: copied"
+    ]);
+    let args = json!({ "home": home, "read": "#home section ul.wifi li", "steps": [press, press] });
+    let seen = drive(engine, "v2/index.mjs", args, None).await;
+    let line = seen["after"][1]["words"][0].as_str().unwrap_or_default();
+    let said = line.matches(" Copied: ").count() + line.matches(" Copy it from here: ").count();
+    let wrong: Vec<&str> = [
+        (said != 1, "said copied once, after two presses"),
+        (
+            seen["after"][1]["how"] != "settled",
+            "each press answered by COPY",
+        ),
+        (seen["loads"] != 1, "with no reload"),
+    ]
+    .into_iter()
+    .filter_map(|(failed, what)| failed.then_some(what))
+    .collect();
+    assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
+    drop(ada);
+}
