@@ -476,7 +476,7 @@ brackets.
     - "That is not a link to something lent in your groups.";
     - "This link opens in svrngs on your computer."
   - **Moves:** both `join_page.rs` tests, and joining and making a group on the computer with no reload. +120 to +160 [about 97 phone, about 36 home].
-- [ ] page-acts — depends [page-open] — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — "What acts as you", the yes and the Stop, what apps use, and the person asked, on both pages:
+- [x] page-acts f7d76cfb — depends [page-open] — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — "What acts as you", the yes and the Stop, what apps use, and the person asked, on both pages:
   - **Owns:** `ui/acts.js`, `ui/changes.js`, `ui/uses.js`, `web/v2/acts.js`, `web/v2/uses.js`, `web/v2/ask.js`, `home/v2/acts.js`, `home/v2/ask.js`, `page_v2/acts.rs`, `web/tests/v2/acts.mjs` and `acts.test.mjs`.
   - **(a) The shared parts.**
     - `ui/acts.js` is `q:237-245`.
