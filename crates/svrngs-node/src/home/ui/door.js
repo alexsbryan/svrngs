@@ -9,8 +9,10 @@
 // could not be read (null); then lit, "on now", while their computer
 // answers, drawn off when it did not, and one in only from a phone marked
 // so, with no presence claimed. Given `lent`, as the screen gives it, each
-// person's own lends in their window, a link each, opened in a tab; an app
-// the group carries is the group's, in nobody's window.
+// person's own lends in their window, a link each, opened in a tab, the
+// screen's `newest` marked new (home.js:322); an app the group carries is
+// the group's, in nobody's window. `counted` is what the screen counts of
+// it (home.js:324): its people, those on now, and the things in their windows.
 import { html } from './view.js?v=__VERSION__';
 import { called } from '../question.js?v=__VERSION__';
 
@@ -30,6 +32,7 @@ function judged(p, devices, lends) {
 }
 
 // A person's window: their name, their own lends, and how they are judged.
-const theirs = (rows, lent, p) => lent.filter((l) => !l.group && rows.find((r) => r.key === l.key)?.person_key === p.person_key).map((l) => html`${' '}<a href=${l.origin} target="_blank">${l.name}</a>`);
-const cell = (rows, lent, lends) => ([p, name, devices], [drawn, words] = judged(p, devices, lends)) => html`<li class=${drawn || undefined}><strong>${name}</strong>${theirs(rows, lent, p)}${' '}<small>${words}</small></li>`;
-export const Door = ({ rows, lent = [], lends }) => html`<ul class="door">${people(rows).map((p) => cell(rows, lent, lends)(p))}</ul>`;
+const theirs = (rows, lent, p, newest) => lent.filter((l) => !l.group && rows.find((r) => r.key === l.key)?.person_key === p.person_key).map((l) => html`${' '}<a href=${l.origin} target="_blank">${l.name}</a>${l.origin === newest && html`${' '}<mark>new</mark>`}`);
+const cell = (rows, lent, lends, newest) => ([p, name, devices], [drawn, words] = judged(p, devices, lends)) => html`<li class=${drawn || undefined}><strong>${name}</strong>${theirs(rows, lent, p, newest)}${' '}<small>${words}</small></li>`;
+export const Door = ({ rows, lent = [], lends, newest }) => html`<ul class="door">${people(rows).map((p) => cell(rows, lent, lends, newest)(p))}</ul>`;
+export const counted = (rows, lent, lends, ps = people(rows)) => [ps.length, ps.filter(([p, , d]) => judged(p, d, lends)[0] === 'on').length, ps.flatMap(([p]) => theirs(rows, lent, p)).length];
