@@ -116,7 +116,7 @@ brackets.
 - **A newer Preact.** A fix v2 needs, and page-scaffold (b)'s commands run
   again.
 
-- [ ] page-scaffold — depends [] — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — room in `.`, the vendored bytes, the pure core, the primitives, and both v2 pages empty, built and served beside v1, with v1 frozen:
+- [x] page-scaffold 8f0c512c — depends [] — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — room in `.`, the vendored bytes, the pure core, the primitives, and both v2 pages empty, built and served beside v1, with v1 frozen:
   - **Owns:** CHARTER's page-scaffold line.
   - **(a) Economize, for `.`'s hooks** (AGENTS.md "Done").
     - **The survey:** run the instruments of `demo/runs/economize/2026-10-25-give/scripts/` again, into `demo/runs/economize/2026-10-31-page/SURVEY.md`. It is scoped to what `.` gains, +14 to +17 (CHARTER, "Estimates"), and looks first in `home.rs`, `build-web.sh`, `check.sh`, `build-release.sh`, `lean_check.py` and `cli.rs`. v1's page files are frozen and go whole later, so none is cut.
