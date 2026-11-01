@@ -113,6 +113,10 @@ const lends = (w, group, tried) => reach(w, group, tried).then(([d, via]) => d.f
 // read, or the computer's refusal in its own words (a:110-116, :485-488).
 // Here, as the key and the one endpoint are: a second endpoint of the key
 // would displace this one at the relay, which keeps one per key (a:352).
+// One lender's computer, `l`, dialled as the person through that one
+// endpoint, for another flow's io (page-acts: what apps use, and the ask's
+// yes, posted to its door's /choices; a:288-296), within PATIENCE.
+export const dialled = (group, l) => wasm().then((w) => Promise.race([Promise.resolve(bound ??= w.endpoint(key, group.token)).then((e) => e.dial(l.key, l.relay ?? null)), new Promise((_, n) => setTimeout(() => n(new Error('no answer')), PATIENCE))]));
 export const through = (group, path, body) => wasm().then(async (w) => {
   const [d] = await reach(w, group, []), bytes = new TextEncoder().encode(JSON.stringify([group.id, body]));
   const [ok, status, text] = await d.fetch('POST', path, [['content-type', 'application/json'], ['content-length', String(bytes.length)]], new Blob([bytes]).stream()).then(async (r) => [r.ok, r.status, await r.text()]).finally(() => d.close());
