@@ -9,9 +9,10 @@
 // trace. Or a guest (`visit`, a guest's link's token): the link opened on
 // the page `site` serves, in a browser holding nothing, and their name,
 // `name`, given once asked; then the same, with the heading as it asked
-// (`asking`).
+// (`asking`). With `forget`, the session cookies are cleared before the
+// presses, as a session lapses.
 //
-//   node web/tests/v2/members.mjs '{"engine": ..., "shown": <selector>, "press"?: [<selector>, ...], "gone"?: <selector>, "said"?: <words>, "at"?: <selector>, "within": <ms>, "home"?: <url> | "visit": <token>, "name": ..., "site": ... | "site": ..., "key": ..., "token": ...}'
+//   node web/tests/v2/members.mjs '{"engine": ..., "shown": <selector>, "press"?: [<selector>, ...], "gone"?: <selector>, "said"?: <words>, "at"?: <selector>, "within": <ms>, "forget"?: true, "home"?: <url> | "visit": <token>, "name": ..., "site": ... | "site": ..., "key": ..., "token": ...}'
 //
 // Exit 0 with the JSON line; 1 on anything else.
 import { driving, launch, serve } from '../page.mjs';
@@ -21,6 +22,8 @@ const at = args.at ?? 'body';
 async function watch(page, reloads) {
   await page.locator(args.shown).first().waitFor({ timeout: 60_000 });
   const shown = await page.locator(args.shown).allTextContents();
+  // With `forget`, the page's session forgotten before any press, as one lapses.
+  if (args.forget) await page.context().clearCookies();
   for (const press of args.press ?? []) await page.locator(press).first().click({ timeout: 30_000 });
   const there = ([gone, said, at]) => (gone ? !document.querySelector(gone) : document.querySelector(at)?.innerText.includes(said));
   const went = await page.waitForFunction(there, [args.gone, args.said, at], { timeout: args.within, polling: 100 }).then(() => true, () => false);

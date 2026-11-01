@@ -284,3 +284,36 @@ async fn a_guest_s_visit_of_5_s_ends_while_shown(engine: Engine) {
     assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
     drop(ada);
 }
+
+in_chromium!(
+    /// **A refused leave is said in its own words** (page-members (d)).
+    /// ada's home page shows "Leave house"; its session lapses (its
+    /// cookies cleared) and ada presses it: beside the button, house
+    /// cannot be changed, as the session has ended, said as how to open
+    /// it again. Watched failing on v1 (`UI` flipped), whose `asked`
+    /// (home.js:42) reads the 401's page as JSON and says a parse error.
+    a_refused_leave_is_said_in_its_own_words
+);
+async fn a_refused_leave_is_said_in_its_own_words(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let (ada, _, _) = house(dir.path(), &relay).await;
+    let home = format!("http://svrngs.localhost:{}/", ada.api_addr().port());
+    let leave = "#home section button:text-is('Leave house')";
+    let args = json!({ "home": home, "shown": leave, "forget": true, "press": [leave], "said": "this page’s session has ended", "at": "#home .leave", "within": 15_000 });
+    let seen = drive(engine, "v2/members.mjs", args, None).await;
+    let said = "house cannot be changed on this computer now: this page’s session has ended. Open svrngs from your Applications";
+    let wrong: Vec<&str> = [
+        (seen["went"] != true, "the refusal is said beside Leave"),
+        (
+            !seen["text"].as_str().is_some_and(|t| t.contains(said)),
+            "in its own words, how to open the page again",
+        ),
+        (seen["reloads"] != 0, "with no reload"),
+    ]
+    .into_iter()
+    .filter_map(|(failed, what)| failed.then_some(what))
+    .collect();
+    assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
+    drop(ada);
+}
