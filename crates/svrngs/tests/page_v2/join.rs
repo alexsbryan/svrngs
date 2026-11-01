@@ -202,3 +202,27 @@ async fn a_group_made_is_drawn_with_no_reload(engine: Engine) {
     .collect();
     assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
 }
+
+in_chromium!(
+    /// **A link's copy is answered once** (page-join (e)'s fix). Ada makes
+    /// a link to invite someone to house and presses "Copy the link"
+    /// twice: the answer is said once beside it, here " Select it above to
+    /// copy it.", as the test's browser refuses the clipboard, and
+    /// " Copied." where it takes it (ui/copy.js, one answer of two). Watched
+    /// failing on v1 (`UI` flipped), which appends it at each press
+    /// (home.js:137).
+    a_link_s_copy_is_answered_once
+);
+async fn a_link_s_copy_is_answered_once(engine: Engine) {
+    let invite = json!(["#home button:has-text('Invite someone to house')", null, "LINK: made"]);
+    let (said, seen) = twice(
+        engine,
+        invite,
+        "#home p.link button:has-text('Copy the link')",
+        "#home p.link",
+        "COPY: unwritten",
+        " Select it above to copy it.",
+    )
+    .await;
+    assert_eq!(said, [0, 1, 1], "said once, at each press: {seen:#}");
+}

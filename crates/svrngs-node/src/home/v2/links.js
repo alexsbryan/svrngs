@@ -6,12 +6,12 @@
 // offered (guests-link; GUESTS §5). Its machine, LINK, is the place's own
 // (ui/view.js `useMachine`), one per group, and a second press while one
 // is made is refused. The link is then said in p.link, in its words, with
-// Copy (ui/copy.js) beside it, each answer after the last, as h:137
-// appends them; a refusal said there in its place.
+// Copy (ui/copy.js) beside it, its last answer alone, where h:137 appends
+// each (page-join (e)'s fix); a refusal said there in its place.
 import { html, useMachine } from '../ui/view.js?v=__VERSION__';
 import { go, machine, no } from '../ui/machine.js?v=__VERSION__';
 import { Act, Field } from '../ui/parts.js?v=__VERSION__';
-import { Copy } from '../ui/copy.js?v=__VERSION__';
+import { COPY, drawn } from '../ui/copy.js?v=__VERSION__';
 import { post } from './running.js?v=__VERSION__';
 
 const LINK = (group) => ({ states: { link: ['none', 'making', 'made', 'refused'] },
@@ -19,6 +19,7 @@ const LINK = (group) => ({ states: { link: ['none', 'making', 'made', 'refused']
   step: (s, m) => ({ guest: () => go(s, {}, { guest: true }), typed: () => go(s, {}, { visit: m.value }),
     make: () => (s.at.link === 'making' ? no(s, 'a link is being made, and is answered first') : go(s, { link: 'making' }, {}, { run: 'make', asked: m, visit: m.guest && s.visit, failed: 'refused' })),
     made: () => go(s, { link: 'made' }, { shown: m }), refused: () => go(s, { link: 'refused' }, { why: m.why }) })[m.type]?.() ?? no(s, `a link takes no ${m.type}`) });
+const Copy = (props) => ((s, send) => drawn({ ...s, said: s.said.slice(-1) }, send, props))(...useMachine(() => machine('COPY', COPY, { at: { copy: 'idle' }, said: [] })));
 const WORDS = { copy: 'Copy the link', copied: ' Copied.', unwritten: ' Select it above to copy it.' }, LAST = ' It works for a day, while this computer is on. A new link stops this one letting anyone new in; everyone it let in stays. ';
 // The link made, in the words of whom it is for (h:134, :139), kept while
 // the next is made, as v1 keeps it until the answer (h:135).
