@@ -8,6 +8,9 @@
 #
 #   target/web/site/   <- upload this
 #
+# `--ui v2` builds the page's v2 beside it instead, into target/web/site-v2
+# (web/v2/build.sh): for the tests until the switchover, never uploaded.
+#
 # Needs the wasm-bindgen CLI matching the crate's wasm-bindgen pin (0.2.128)
 # and the wasm32-unknown-unknown target. Both are checked, not assumed. On
 # macOS the wasm C sources also need an LLVM clang (Apple's has no wasm32
@@ -18,7 +21,7 @@ cd "$(dirname "$0")/.."
 # The output directory is the deployable static site. Overridable so a consumer
 # (landing/scripts/build-ring-runtime.sh → landing/ring/) can place it where
 # its host serves it; default is this repo's target/.
-OUT="target/web/site"
+OUT="" UI=""
 # --lint holds the crate to rustfmt and clippy instead of building it: it is
 # its own workspace, which scripts/check.sh's workspace steps never reach.
 LINT=""
@@ -26,9 +29,11 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --out) OUT="${2:?--out needs a directory}"; shift 2 ;;
     --lint) LINT=1; shift ;;
-    *) echo "build-web: unknown argument $1 (only --out <dir>, --lint)" >&2; exit 2 ;;
+    --ui) UI="${2:?--ui needs v1 or v2}"; shift 2 ;;
+    *) echo "build-web: unknown argument $1 (only --out <dir>, --lint, --ui v1|v2)" >&2; exit 2 ;;
   esac
 done
+case "${UI:=v1}" in v1) : "${OUT:=target/web/site}" ;; v2) : "${OUT:=target/web/site-v2}" ;; *) echo "build-web: --ui is v1 or v2, not $UI" >&2; exit 2 ;; esac
 
 APP="web"
 WASM_BINDGEN_MIN="0.2.128"
@@ -125,15 +130,13 @@ cp "${SHARED[@]}" "$OUT/"
 # install.sh, the line a computer pastes, served at the page's address with
 # what scripts/build-release.sh puts under get/ (DESIGN §7).
 cp "$APP/install.sh" "$OUT/"
-for f in "${PAGE[@]}"; do
-  cp "$APP/$f" "$OUT/"
-  sed -i.bak "s/__VERSION__/${VERSION}/g" "$OUT/$f"
-  rm -f "$OUT/$f.bak"
-done
+for f in "${PAGE[@]}"; do sed "s/__VERSION__/${VERSION}/g" "$APP/$f" >"$OUT/$f"; done
 # 404.html, what a static host serves for a path it has no file for, such as
 # a lend's own deep path where its worker is not (DESIGN §3, "Lent apps",
 # call 1): the page, from the root, with its policy, marked `missing`.
 sed -e 's#="\./#="/#g' -e 's#<body>#<body id="missing">#' "$OUT/index.html" >"$OUT/404.html"
+# v2, from its own sources over what v1 wrote: web/v2/build.sh.
+[ "$UI" = v1 ] || . "$APP/v2/build.sh"
 
 echo
 echo "built: $OUT  (version ${VERSION})"

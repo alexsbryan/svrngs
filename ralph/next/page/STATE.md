@@ -126,9 +126,9 @@ brackets.
     - **Plant:** the ratchet's own, a cap one under the count. **Byte for byte:** v1's served bytes, with `tests/home.rs` unchanged by name.
   - **(b) Vendor Preact 11.1.1 and htm 3.1.1, with nothing loading them.**
     - **The files:**
-      - `web/vendor/preact.js` (`dist/preact.module.js`), `hooks.js` (`hooks/dist/hooks.module.js`) and `htm.js` (htm@3.1.1 `dist/htm.module.js`);
+      - `web/vendor/preact.js` (`dist/preact.mjs`), `hooks.js` (`hooks/dist/hooks.mjs`) and `htm.js` (htm@3.1.1 `dist/htm.module.js`): Preact 11.1.1's tarball has no `.module.js`, only `.mjs` (corrected, page-scaffold (b));
       - `LICENSE.preact` (MIT), from the tarball;
-      - `LICENSE.htm` (Apache-2.0), from github.com/developit/htm at `3.1.1`, with its NOTICE if that tree has one.
+      - `LICENSE.htm` (Apache-2.0), from htm's tarball, which does carry one, byte-equal to github.com/developit/htm's at `3.1.1`, whose tree has no NOTICE (corrected, page-scaffold (b)).
     - **The README** follows `apps/grapevine/vendor/README.md`. It gives:
       - each tarball's `dist.integrity` and its sha256;
       - each file's upstream path and its sha256;
@@ -187,6 +187,7 @@ brackets.
       - `Page` draws `i:62-98` in its order, inside `#page`, with `#computer`'s three paragraphs and `#how`'s six byte for byte. `useEffect` sets `document.title` (`a:405`, `:422`).
       - A failed effect with no words is drawn as "This browser could not open the page." (`a:88`).
       - Stubs: `web/v2/{enter,computer,shelf,index,door,visit,join,among,acts,uses,ask}.js`, each take answering `no(s, 'not built yet: <flow>')`.
+      - **Where it landed** (corrected, page-scaffold (e), 0d9e1c95): `compose` and `Page` are `web/v2/page.js`, page-scaffold's like app.js, apart from app.js's edge so node tests them. A flow leaves out what it has none of. A stub is `export const unbuilt = [types]`, refused by `compose`, and `view` draws its places as `i:` draws them, so a row starts from v1's markup. A take may be keyed by a part's name, `fold <fold>` or `typed <field>`, so two flows can each draw a Fold. A slot is shared: a flow with no slot of its own, such as index's unlisted lines, answers in `enter`.
     - **The build.** `scripts/build-web.sh` takes `--ui v1|v2`, `v1` by default, a closed set. `v2` sources `web/v2/build.sh`, which:
       - derives `index.html` from `web/index.html`, with `body.html` between `<body>` and the `<script` line, and fails unless `<head>` is byte-equal (`cmp`);
       - copies `web/v2/app.js` to `$OUT/app.js`, `web/v2/*.js` to `$OUT/v2/`, and `vendor/` and `ui/` with their paths kept;
@@ -202,6 +203,10 @@ brackets.
       - Names must match `^[a-z0-9-]+\.(js|css|html)$`, so no row adds a route.
       - It sits behind `only_itself`, under `POLICY` (`home.rs:81`), and holds the string `svrngs-ui-v2`.
     - It is chosen per node by a builder method in `serve.rs`, and in the binary by `--ui v2` (`cli.rs`), both under `test-support`. home.rs merges its routes in one line. v1's `/home.js` and `/question.js` stay served (`tests/home.rs:185-189`).
+    - **Where it landed** (corrected, page-scaffold (f), 7156bbd2):
+      - The builder method is `Node::ui(self, Ui) -> Self`, a write-once choice. The binary's choice is `--ui v1|v2`, anywhere in its arguments (`Ui::asked`).
+      - home.rs's one line is a `.layer`, not a merge, inside `only_itself`: axum panics on a second `/` route. The layer answers v2's paths at a node chosen v2 and passes every other request to v1's routes.
+      - `cargo test` never gives a bin target the features of its dev-dependencies. So a test that runs the binary on v2 builds it with `--features svrngs/test-support` (svrngs's own feature, `crates/svrngs/Cargo.toml`), which page-switch (b)'s mismatch words name.
   - **(g) The guards.**
     - **`web/tests/v1.test.mjs`** pins the sha256 of `web/index.html`, `app.js`, `sw.js`, `store.js`, `open.html`, `open.js`, `lend.js` and `shim.js`, and of `home/index.html`, `home.js`, `question.js`, `look.css` and `away.html`.
     - **In the row,** the two `shasum` lists of `target/web/site`, built at the base and at the close, are equal, `VERSION` included, and the diff goes in the commit body.
@@ -216,8 +221,15 @@ brackets.
       - a planted `../x.js` gets 404, named in `tests/home.rs`;
       - `features = ["test-support"]` under svrngs's `[dependencies]` turns `release` red;
       - a bare `../vendor/preact.js` turns `specifiers` red.
+    - **Where it landed** (corrected, page-scaffold (g), 6f998f80..34297d41):
+      - `policy.test.mjs` runs `web/v2/build.sh` itself, sourced as build-web.sh sources it over a stand-in for the wasm, so the derived `<head>` it reads is the build's, in about 0.3 s, with no wasm compiled. A `<head>` in `body.html` and `ui/` left out of `STAMPED` are kept as its own cases.
+      - The refusal decides on `grep -qa`'s exit status, not on `grep -c`'s count: this Mac's interactive grep is ugrep, which prints no count for a binary (`grep -c svrngs-ui-v2 target/debug/svrngs`: nothing, exit 1).
+      - The `../` plant asks for files that are there (`/v2/../home.js`, `/ui/../question.js`), since a 404 for a missing `x.js` proves nothing. The case carries no `#[cfg]`, so it can never quietly not compile.
+      - The two `shasum` lists sit in this row, not in a commit body: a gate's result has no commit of its own (fence 14). `target/page-scaffold/base.sha` (built at b50592ca, whose diff from 3df32f1f touches nothing under `web/` or svrngs-web) and `close.sha` (the closing gate's `target/web/site` at 5809ca63, page-scaffold-6.await.log, exit 0) are 19 lines each, every page at `v=8c6090c43f4f`, and `diff` prints nothing.
+      - The trust floor is unchanged against the base: `git diff 3df32f1f HEAD -- scripts/trust_floor.txt` is empty.
+      - `.`'s hooks are +14 (build-web.sh +3, build-release.sh +1, check.sh +3, home.rs +2, node.rs +2, cli.rs +3), net −2 against (a)'s 16 cut. That is past +9 to +11 by node.rs's choice and home.rs's layer, which no estimate sized. The operator's widening (47552a83) approved the package that showed `.` at 19,118 and named (g)'s one line. `.` is 19,119 of 19,122, so its room of 3 covers page-switch's `page v2` and page-parity's `parity`, +1 each.
   - **Byte for byte:** all of v1, and every test name.
-  - **Moves:** `page laws`, and both v2 pages served empty. +149 to +208 (rung), +9 to +11 (`.`), against (a)'s cuts [`a:47-117`, about 40].
+  - **Moves:** `page laws`, and both v2 pages served empty. +149 to +250 (rung; the operator widened it from +208, 2026-10-31: the phone frame 92 against +30 to +40, serve 62; demo/runs/page/2026-10-31-scaffold-range/NEEDS_HUMAN.md), +9 to +11 (`.`), against (a)'s cuts [`a:47-117`, about 40].
 - [ ] page-switch — depends [page-scaffold] — ONE ROW, each part its own commit, its plants red first, and `scripts/check.sh` once, at the close — one switch for what the v1 tests drive, which fails loudly while v2 is short, and the two driver edits, green on v1 first:
   - **Owns:** CHARTER's page-switch line.
   - **(a) The switch.**

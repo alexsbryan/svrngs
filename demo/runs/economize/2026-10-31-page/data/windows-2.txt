@@ -1,0 +1,15 @@
+crates/svrngs-node/src/home.rs:353 crates/svrngs-node/src/home.rs:376 | return LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, UNCHANGED); ⏎ }
+crates/svrngs-node/src/home.rs:695 crates/svrngs-node/src/home.rs:716 | at: &Asking, ⏎ lend: &Label,
+crates/svrngs-node/src/home.rs:699 crates/svrngs-node/src/home.rs:719 | pass: Option<HeaderValue>, ⏎ ) -> Response {
+scripts/build-web.sh:15 scripts/build-release.sh:21 | set -euo pipefail ⏎ cd "$(dirname "$0")/.."
+scripts/build-web.sh:16 scripts/build-release.sh:22 | cd "$(dirname "$0")/.." ⏎ OUT="target/web/site"
+scripts/build-web.sh:25 scripts/build-release.sh:24 | while [ $# -gt 0 ]; do ⏎ case "$1" in
+scripts/build-web.sh:26 scripts/build-release.sh:25 | case "$1" in ⏎ --out) OUT="${2:?--out needs a directory}"; shift 2 ;;
+crates/svrngs/src/cli.rs:1127 crates/svrngs/src/cli.rs:1191 | lend: Lend, ⏎ secret: bool,
+crates/svrngs/src/cli.rs:1128 crates/svrngs/src/cli.rs:1192 | secret: bool, ⏎ accounts: Option<share::Signs>,
+crates/svrngs/src/cli.rs:1157 crates/svrngs/src/cli.rs:1164 | seed: Seed, ⏎ link: Printed,
+crates/svrngs/src/cli.rs:1224 crates/svrngs/src/cli.rs:1237 | writeln!(f)?; ⏎ write!(f, "{link}")
+crates/svrngs/src/cli.rs:1543 crates/svrngs/src/cli.rs:1628 | node: &Node, ⏎ key: &SigningKey,
+crates/svrngs/src/cli.rs:1558 crates/svrngs/src/cli.rs:1592 | let page = match origin { ⏎ Some(page) => Some(checked_page(page).await?),
+crates/svrngs/src/cli.rs:1559 crates/svrngs/src/cli.rs:1593 | Some(page) => Some(checked_page(page).await?), ⏎ None => None,
+crates/svrngs/src/cli.rs:1576 crates/svrngs/src/cli.rs:1585 | folder_at_join(node, &seed) ⏎ }
