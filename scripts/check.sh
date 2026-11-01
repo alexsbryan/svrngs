@@ -26,7 +26,7 @@ failed=0
 # up to 2.7 times (scenes, 204 to 544 s) with the host's load, and 5 leaves
 # room past the slowest seen while ending a hang in about 45 min at most. Every
 # step not named passed in at most 59 s there (app laws), so has 300 s.
-slowest() { case $1 in tests) echo 307 ;; browser) echo 246 ;; scenes) echo 544 ;; "conformance canary") echo 178 ;; *) echo 60 ;; esac; }
+slowest() { case $1 in tests) echo 307 ;; browser) echo 246 ;; scenes) echo 544 ;; "conformance canary") echo 178 ;; parity) echo 514 ;; *) echo 60 ;; esac; }
 # Each step runs in a process group of its own (set -m), ended whole at its
 # limit and when it ends, so no server or browser it started outlives it
 # (Playwright's browsers close as their driver is told TERM); the loop's
@@ -138,6 +138,11 @@ if [ -f Cargo.toml ]; then
     cut -f1,2,4,5,7,8 target/conformance/seeks-*.tsv | sed 's/^/           /'
     awk -F'\t' -v cores="$(getconf _NPROCESSORS_ONLN)" '{n++; l+=$5=="failed"; s+=$8=="failed"; split($10, a, "averages?: "); hot+=a[2]+0>cores} END {printf "           of %d here since %s: %d missed 5 s through a lend, %d straight; %d ended at a load above %d cores\n", n, f, l, s, hot, cores} NR==1 {f=substr($9,1,20)}' target/seeks-webkit.log
   else echo "never-ran  WebKit's seeks back to back, a rate: nothing kept"; failed=1; fi
+  # Every test above that drives a page, again on v2, each test's verdict
+  # in target/parity/verdicts.tsv (page-parity (d)), so v2 cannot slip back
+  # before page-switchover makes it the pages. Its 514 s is its one passing
+  # run (demo/runs/page/2026-11-01-parity/). Under this run's gate lock.
+  step "parity" env PARITY_LOCKED=1 SVRNGS_UI=v2 bash scripts/parity.sh
 else
   echo "never-ran  rustfmt, clippy, tests: no Cargo workspace yet"; failed=1
 fi

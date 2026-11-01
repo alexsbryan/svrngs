@@ -11,7 +11,9 @@
 # (demo/runs/page/2026-10-31-baseline/verdicts.tsv, the empty pages) also
 # had is counted apart: v2 did not earn it. xenia is not here: check.sh
 # does not run it. Targets named as arguments run alone. Under the host's
-# one gate lock (PROMPT fence 12).
+# one gate lock (PROMPT fence 12). On v2 unless SVRNGS_UI=v1, which runs the
+# same tests on v1 for the record's side by side (page-parity (c)), with no
+# baseline: a v1 pass is not v2's to earn.
 set -uo pipefail
 [ -n "${PARITY_LOCKED:-}" ] || PARITY_LOCKED=1 exec lockf -k /tmp/svrngs-gate.lock "$0" "$@"
 cd "$(dirname "$0")/.."
@@ -21,7 +23,7 @@ cd "$(dirname "$0")/.."
 # drive.rs:96) and four hang, by the launcher, not the page.
 soft=$(ulimit -n) && { ulimit -Sn 10240 2>/dev/null || ulimit -Sn "$(ulimit -Hn)"; }
 echo "parity: open files: $soft, raised to $(ulimit -n)"
-out=target/parity base=demo/runs/page/2026-10-31-baseline/verdicts.tsv
+out=target/parity base=demo/runs/page/2026-10-31-baseline/verdicts.tsv ui=${SVRNGS_UI:-v2}
 rm -rf "$out" target/could-not-judge target/conformance target/scenes && mkdir -p "$out"
 # Each target, and what check.sh gives its tests after `--`.
 for t in browser conformance join_page scenes:--test-threads=2 home_group install leave_page phone_dry relay; do
@@ -33,8 +35,8 @@ for t in browser conformance join_page scenes:--test-threads=2 home_group instal
   fi
   env -u SVRNGS_UI "${run[@]}" -- --list --ignored 2>/dev/null | sed -n 's/: test$//p' | sort >"$out/$name.ignored"
   sed -n 's/: test$//p' "$out/$name.list" | sort | comm -23 - "$out/$name.ignored" | sed "s/^/$name /" >>"$out/listed"
-  echo "parity: $name on v2"
-  SVRNGS_UI=v2 "${run[@]}" -- ${after#:} 2>&1 | tee "$out/$name.log" | sed -nE "s/^test (.*) \.\.\. (ok|FAILED)\$/$name \1 \2/p" >>"$out/ran"
+  echo "parity: $name on $ui"
+  SVRNGS_UI=$ui "${run[@]}" -- ${after#:} 2>&1 | tee "$out/$name.log" | sed -nE "s/^test (.*) \.\.\. (ok|FAILED)\$/$name \1 \2/p" >>"$out/ran"
 done
 # What check.sh reads as could-not-judge and never-ran, by the test it names.
 sed -nE 's/^([a-z_]+::[a-z]+)[: ].*/browser	\1	could-not-judge	browser.txt/p' target/could-not-judge/browser.txt >>"$out/notes" 2>/dev/null
@@ -51,7 +53,7 @@ awk -F'\t' -v out="$out/verdicts.tsv" '
   { was[$2 "\t" $3] = $1 }
   END { for (k in v) { printf "%s\t%s\t%s\n", v[k], k, why[k] > out; n[v[k]]++; if (v[k] == "passed" && was[k] == "passed") apart++ }
     printf "parity: %d passed (%d of them passed with no v2, in the baseline), %d failed, %d could-not-judge, %d never-ran\n", n["passed"], apart, n["failed"], n["could-not-judge"], n["never-ran"] }
-' "$out/listed" "$out/ran" "$out/notes" $( [ -f "$base" ] && echo "$base")
+' "$out/listed" "$out/ran" "$out/notes" $( [ -f "$base" ] && [ "$ui" = v2 ] && echo "$base")
 sort -o "$out/verdicts.tsv" "$out/verdicts.tsv"
 grep -v '^passed' "$out/verdicts.tsv" | sed 's/^/parity: /'
 [ -s "$out/verdicts.tsv" ] && ! grep -qv '^passed' "$out/verdicts.tsv"
