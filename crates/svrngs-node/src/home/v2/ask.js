@@ -5,8 +5,9 @@
 // lender's words, or why it is not asked (`unlent`). Yes posts the yes to
 // /choices, then leaves for the app at `back` through /to, as Not now
 // leaves at once, by location.assign at the edge; a refusal is said after
-// the buttons, after any before it, as v1 appends each. Its machine, ASK,
-// is the place's own (ui/view.js `useMachine`).
+// the buttons, in place of any before it, where v1 appended each (h:343;
+// page-acts (d)). Its machine, ASK, is the place's own (ui/view.js
+// `useMachine`).
 import { html, useMachine } from '../ui/view.js?v=__VERSION__';
 import { go, machine, no } from '../ui/machine.js?v=__VERSION__';
 import { question, unlent } from '../question.js?v=__VERSION__';
@@ -24,7 +25,7 @@ const ASK = (q) => ({ states: { ask: ['reading', 'asking', 'sending', 'unlent'] 
     lent: () => ((lend, app) => (!lend || !app || !lend.asks ? go(s, { ask: 'unlent' }) : go(s, { ask: 'asking' }, { lend, app })))(...[q.lend, q.app].map((x) => (m.lent ?? []).find((l) => label(l) === x))),
     yes: () => (s.at.ask === 'asking' ? go(s, { ask: 'sending' }, {}, { run: 'yes', lend: s.lend, app: s.app, failed: 'unsaid' }) : no(s, `the ask is ${s.at.ask}`)),
     not: () => (s.lend ? go(s, {}, {}, { run: 'leave', app: s.app, failed: 'unsaid' }) : no(s, 'nothing is asked')),
-    unsaid: () => go(s, { ask: 'asking' }, { said: `${s.said}${m.why}` }), gone: () => go(s, {}),
+    unsaid: () => go(s, { ask: 'asking' }, { said: m.why }), gone: () => go(s, {}),
   })[m.type]?.() ?? no(s, `the ask takes no ${m.type}`) });
 
 function Asked({ s: h }) {
