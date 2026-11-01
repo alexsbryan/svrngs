@@ -7,6 +7,9 @@
 // asked again, saying why, when svrngs-core refuses it or someone in the
 // group goes by it (409). Joined, the group is held as enter.js holds any
 // (`hold`). The key is made, used and kept at the edge, never in state.
+// A guest's name is asked in this form too, first (web/v2/visit.js), with
+// no Home Screen line, as a visit is kept apart from every group, and sent
+// to the visit as `guest named`.
 import { html } from '../ui/view.js?v=__VERSION__';
 import { go, no } from '../ui/machine.js?v=__VERSION__';
 import { Field } from '../ui/parts.js?v=__VERSION__';
@@ -17,16 +20,16 @@ import * as store from '../store.js?v=__VERSION__';
 export const owns = ['joining', 'typed', 'why'];
 export const states = { join: ['unasked', 'asking', 'naming', 'redeeming', 'taken', 'joined'] };
 const send = (type, m) => ({ run: 'send', m: { type, ...m } });
-const redeem = (s, joining, name) => go(s, { join: 'redeeming' }, { joining }, { run: 'redeem', token: joining.token, told: joining.told, group: joining.group, name, failed: 'unjoined' });
-const asks = (s) => ['naming', 'taken'].includes(s.at.join);
+const redeem = (s, joining, name) => go(s, { join: 'redeeming' }, { joining }, { run: 'admit', token: joining.token, told: joining.told, group: joining.group, name, failed: 'unjoined' });
+const asks = (s) => ['naming', 'taken'].includes(s.at.join), guest = (s) => s.at.visit === 'naming';
 export const takes = {
   join: (s, { token, kept, wants }) => (s.at.join === 'unasked' ? go(s, { join: 'asking' }, { joining: { token, kept, wants } }, { run: 'ask', token, failed: 'unjoined' }) : no(s, `a link is ${s.at.join} already`)),
   asked: (s, { group, told }, known = s.joining?.kept.find((g) => g.id === group.id), joining = { ...s.joining, group, told, known }) => (s.at.join !== 'asking' ? no(s, `no link is asked of, it is ${s.at.join}`)
     : known ? go(s, { join: 'joined' }, { joining }, send('hold', { group: known, wants: joining.wants, joined: true, why: `this phone is in ${group.id} already, by another link` })) : group.person ? redeem(s, joining, group.person) : go(s, { join: 'naming' }, { joining })),
-  'typed name': (s, { value }) => (asks(s) ? go(s, {}, { typed: value }) : no(s, `no name is asked: the link is ${s.at.join}`)),
-  named: (s) => (asks(s) ? redeem(s, s.joining, s.typed ?? '') : no(s, `no name is asked: the link is ${s.at.join}`)),
+  'typed name': (s, { value }) => (guest(s) || asks(s) ? go(s, {}, { typed: value }) : no(s, `no name is asked: the link is ${s.at.join}`)),
+  named: (s) => (guest(s) ? go(s, {}, {}, send('guest named', { guest: s.typed ?? '' })) : asks(s) ? redeem(s, s.joining, s.typed ?? '') : no(s, `no name is asked: the link is ${s.at.join}`)),
   taken: (s, { why }) => (s.at.join === 'redeeming' ? go(s, { join: 'taken' }, { why }) : no(s, 'no name was sent')),
-  redeemed: (s, { group }) => (s.at.join === 'redeeming' ? go(s, { join: 'joined' }, {}, send('hold', { group, wants: s.joining.wants, joined: true })) : no(s, 'no name was sent')),
+  admitted: (s, { group }) => (s.at.join === 'redeeming' ? go(s, { join: 'joined' }, {}, send('hold', { group, wants: s.joining.wants, joined: true })) : no(s, 'no name was sent')),
   // Why it did not join, said as the page's failure, in words (a:78).
   unjoined: (s, { said, why }) => go(s, { join: 'unasked' }, {}, send('failed', { said, why })),
 };
@@ -47,7 +50,7 @@ export const heading = {
 // so it is drawn as web/index.html:70-76 has it (web/tests/v2/frame.test.mjs).
 const ATTRS = { autocomplete: 'name', maxlength: 64, required: true };
 export const NameForm = ({ shown, group = '', keep, why, value, send, on }) => html`<form key=${`${shown} ${why}`} id="join" hidden=${!shown} onSubmit=${(e) => (e.preventDefault(), send(on))}><p id="keep" hidden=${!keep}>${keep && `To keep ${group} on this phone, add this page to your Home Screen first, and join from there.`}</p>${Field({ shape: 'for', id: 'name', words: html`What’s your name? Everyone in <span id="group">${group}</span> sees it.`, value, attrs: ATTRS, send })}<p id="why" class="bad">${why}</p><button>Join</button></form>`;
-export const view = { join: ({ s, send }) => NameForm({ shown: asks(s), group: s.joining?.group?.name, keep: s.standalone === false, why: s.why, value: s.typed, send, on: { type: 'named' } }) };
+export const view = { join: ({ s, send }) => NameForm({ value: s.typed, send, on: { type: 'named' }, ...(guest(s) ? { shown: true, group: 'the group you’re visiting' } : { shown: asks(s), group: s.joining?.group?.name, keep: s.standalone === false, why: s.why }) }) };
 
 // The edge: the key made fresh for this link, the issuer dialled as it
 // (`connect_to_join`) within PATIENCE, and the ask and the redemption
@@ -72,13 +75,13 @@ export const io = {
   }).catch(unjoined),
   // 409: someone in the group goes by the name (bash-person), so another is
   // asked, saying whose it is and how to add this phone if it is theirs.
-  redeem: ({ token, told, group, name }) => wasm().then(async (w) => {
+  admit: ({ token, told, group, name }) => wasm().then(async (w) => {
     let body;
     try { body = w.redemption(key, token, told, name); } catch (e) { return { type: 'taken', why: `${e.message[0].toUpperCase()}${e.message.slice(1)}.` }; }
     await posted(w, token, '/redeem', body, (status, text) => (status === 409 ? `Someone in ${group.name} already goes by ${JSON.parse(text).error}. If that’s you, open your home page on your computer, press “Add your phone or another computer”, and open that link here. Else join under another name.` : joining(status)));
     const person = JSON.parse(body).person;
     await store.keep({ id: group.id, name: group.name, person, token, key, maker: group.maker, since: Math.floor(Date.now() / 1000) });
     trace(`PAGE: joined ${group.id} as ${person}; the key is kept sealed`);
-    return { type: 'redeemed', group: (await store.groups()).find((g) => g.id === group.id) };
+    return { type: 'admitted', group: (await store.groups()).find((g) => g.id === group.id) };
   }).catch((e) => (e.status === 409 ? { type: 'taken', why: e.said } : unjoined(e))),
 };
