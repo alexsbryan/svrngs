@@ -316,7 +316,7 @@ brackets.
     - **Byte for byte:** `h:100-104`'s shape, `p.none`, `section#left`, `p.address` and `h:429`'s words.
   - **(e) The fix: the query notices** (`h:363-367`) become `HOME`'s `said`, said once (CHARTER 9). **v2-only:** one `/v1/groups` read, with people before lends, and a reload of `/?made=Trip` that does not say it again. Red with `UI` flipped.
   - **Moves:** scene `life` (Cy's phone in lake-trip), the computer line, and the computer's home page on v2 showing its groups. +153 to +196 [`a:355-369`, `:385-458`, `:595-614`, `:667-706`, about 120; `h:21-66`, `:347-429`, about 75].
-- [ ] page-shelf — depends [page-open] — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — the first feature, and the bring bug on both pages:
+- [x] page-shelf 97eac838 — depends [page-open] — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — the first feature, and the bring bug on both pages:
   - **Owns:** `ui/shelf.js`, `web/v2/shelf.js`, `home/v2/shelf.js`, `page_v2/shelf.rs`, and `web/tests/v2/shelf.mjs`.
   - **(a) The move.**
     - `ui/shelf.js` `Shelf`, on `Act` and `Fold`, is `q:199-210` `table()`, which both pages call (`h:203`). It includes "Bring more to <name>", folded for someone who just joined.
