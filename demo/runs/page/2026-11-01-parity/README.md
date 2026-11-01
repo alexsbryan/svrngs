@@ -122,3 +122,69 @@ larger than any of them, and it has not been tried. A pass that does
 everything above lands at about 19,350 to 19,410. That leaves an
 expected raise of **about +230 to +290**, which is the operator's, set at
 HUMAN-page-switchover after the pass.
+
+## Two more records, v1 and v2 side by side (c)
+
+One run is not a rate (AGENTS.md 7), so parity was run again at 0689f43d,
+on this Mac and on the Fedora box's gate image, each on v1 and on v2. The
+loop ran `target/page-parity/run.sh` as `ralph-result await`
+(ctl/log/sessions/page-parity-4.await.log). It did this:
+
+- **Mac, v2:** `SVRNGS_UI=v2 bash scripts/check.sh` under
+  `lockf -k /tmp/svrngs-gate.lock`. Its `parity` step is
+  `PARITY_LOCKED=1 SVRNGS_UI=v2 bash scripts/parity.sh` (check.sh:150).
+- **Mac, v1:** then, under the same lock,
+  `SVRNGS_UI=v1 PARITY_LOCKED=1 bash scripts/parity.sh`.
+- **Fedora:** at the same time, in `svrngs-gate:fc3e9790a4c2` (the first 12
+  of `shasum -a 256 scripts/gate/Containerfile`), with `scripts/gate/README.md`'s
+  `podman run` flags. It ran `npm ci --prefix web`, then
+  `PARITY_LOCKED=1 bash scripts/parity.sh`, then the same with
+  `SVRNGS_UI=v1`. The box has 32 cores (`nproc`).
+
+`verdicts.tsv` has one row per test and one column per run: mac v1,
+mac v2, fedora v1, fedora v2. It was joined from each run's
+`target/parity/verdicts.tsv`.
+
+| run | passed | failed | could-not-judge | never-ran |
+|---|---|---|---|---|
+| mac v1 | 141 | 1 | 0 | 0 |
+| mac v2 | 142 | 0 | 0 | 0 |
+| fedora v1 | 133 | 3 | 1 | 3 |
+| fedora v2 | 135 | 1 | 1 | 3 |
+
+**No test failed on v2 and passed on v1, in either place.** The tests that
+were not passed:
+
+- **`play::a_member_presses_play_and_its_stop_is_listed_under_what_acts_as_you::chromium`,
+  failed on mac v1 only.** The Play was pressed, and the row said
+  "Connect to 127.0.0.1:41897. Copied. Stop". But the clipboard held
+  `http://umfrj1nx….localhost:49851/`, which is another test's lend origin
+  (`target/page-parity/mac-v1/browser.log:306`), and play.rs:84 failed. The
+  browser tests share one Chromium (harness.rs:90), and on a Mac its
+  clipboard is the system's, so two tests that copy at once can read each
+  other's copy. This is the harness, not v1's page. It was not fixed here,
+  because it was seen once and the files are v1's tests (fence 3).
+- **`a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself::webkit`,
+  failed on fedora v1 and v2.** A seek missed five seconds with a load
+  average of 16.32 on the host (main.rs:1011).
+- **`a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it::webkit`,
+  failed on fedora v1 only.** "the film must play after the hand-over page"
+  (main.rs:1367), in the same minute as the seek above.
+- **`ports::ports::chromium`, failed on fedora v1 only.** Bo's board said
+  "Closed for now: another program on this computer holds 127.0.0.1:47682",
+  so ports.rs:96 found no "Connect to". The container shares the host's
+  network.
+- **`the_home_page_lends_what_runs_here::chromium`, could-not-judge on
+  fedora v1 and v2:** "something on this host holds 8096, Jellyfin's".
+- **give, give_gone and give_move, never-ran on fedora v1 and v2:** "podman
+  is not installed here", inside the gate image.
+- **Two install tests are not listed on fedora:**
+  `a_relay_is_kept_running_beside_svrngs_on_a_mac` and
+  `the_line_run_twice_installs_runs_at_login_opens_home_and_joins_once` are
+  `#[cfg(target_os = "macos")]` (install.rs:318, :940). So Fedora lists
+  140 tests, and the Mac lists 142.
+
+The Mac's v2 `check.sh` run in that await exited 1, but not because of the
+pages. `tests` (home_group) and `scenes` (all 14) stopped at harness.rs:200,
+since those two steps built svrngs without test-support. 7be5b227 makes
+them build with it under v2. Every other step passed on v2.
