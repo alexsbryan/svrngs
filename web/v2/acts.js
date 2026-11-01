@@ -16,6 +16,9 @@
 // sent, so no seq is signed twice, then carries every line not yet taken
 // (a:497-508). A Stop is kept with the group (a:495). After either, enter
 // is given the group as kept, and reads it again; the key stays the edge's.
+// Lines a carry left unsent are carried again on each read that holds
+// them, where v1 carried them only at the next yes (a:506; page-acts (d)):
+// refused, that carry asks no read again, so it is tried once a read.
 import { html, useEffect } from '../ui/view.js?v=__VERSION__';
 import { go, no } from '../ui/machine.js?v=__VERSION__';
 import { Act } from '../ui/parts.js?v=__VERSION__';
@@ -37,6 +40,7 @@ export const takes = {
   yes: (s, { app }) => acting(s, `yes ${app}`, { run: 'runs', group: s.group, app, failed: 'unacted' }, { c: s.changed?.find((c) => c.group === s.group.id && c.app === app) }),
   'stop reads': (s, { label }) => acting(s, `stop ${label}`, { run: 'stopping', group: s.group, label, failed: 'unacted' }),
   acted: (s, m) => answered(s, m, 'done'), unacted: (s, m) => answered(s, m, 'refused'),
+  carry: (s) => (s.group?.unsent?.length ? acting(s, 'carry', { run: 'carrying', group: s.group, failed: 'unacted' }) : no(s, 'no line is unsent')),
 };
 
 const NOTES = { opens: `A Stop here holds from the next pass this phone signs for the app, within ${PASS_LIFE / 3600} hours.` };
@@ -46,6 +50,7 @@ const doing = (s, key) => (s.acting === key && s.at.doing === 'busy' ? { state: 
 const read = (s, send, l, c = s.group.reads[l.label], d = doing(s, `stop ${l.label}`)) => (d.state === 'done' ? html`<p>${named(l)} stops opening your friends’ ${l.reads.map(spoken).join(' and ')} as you within ${PASS_LIFE / 3600} hours, when the pass it holds ends.</p>`
   : html`<p>${reading(l, c)}${c.said === 'yes' && html`<${Act} words="Stop" doing=${d} on=${{ type: 'stop reads', label: l.label }} send=${send} />`}</p>`);
 function Drawn({ s, send }) {
+  useEffect(() => void (s.at.list === 'read' && s.group.unsent?.length && send({ type: 'carry', why: `${s.group.unsent.length} line(s) unsent` })), [s.lent]);
   if (!s.lent) return html`<section id="acts"></section>`;
   const done = Object.values(s.acted ?? {}).filter((a) => a.c && a.state === 'done' && !s.changed?.some((c) => c.app === a.c.app && c.group === a.c.group)).map((a) => a.c);
   const parts = {
@@ -62,12 +67,13 @@ export const view = { acts: ({ s, send }) => (s.group ? html`<${Drawn} s=${s} se
 // only once app.js has run its init.
 const wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__');
 // Every line not yet taken carried, in order, then none kept as unsent; or
-// why not, with the group as kept, its unsent lines in it.
-const carry = (g, why) => g.unsent.reduce((p, l) => p.then(() => through(g, '/carry', l)), Promise.resolve()).then(() => store.opened({ ...g, unsent: [] })).then((kept) => ({ type: 'acted', group: kept, why: `${why}, and carried` }), (e) => ({ type: 'unacted', group: g, why: e.message }));
+// why not, with `kept`, the group as kept, its unsent lines in it.
+const carry = (g, why, kept = g) => g.unsent.reduce((p, l) => p.then(() => through(g, '/carry', l)), Promise.resolve()).then(() => store.opened({ ...g, unsent: [] })).then((g) => ({ type: 'acted', group: g, why: `${why}, and carried` }), (e) => ({ type: 'unacted', group: kept, why: e.message }));
 export const io = {
   runs: ({ group, app }) => Promise.all([wasm(), store.unseal(group), through(group, '/runs', app)]).then(([w, key, { sign }], at = group.line ?? { seq: -1, id: null }) => {
     const line = JSON.parse(w.sign_line(key, group.id, Math.floor(Date.now() / 1000), at.seq + 1, at.id, JSON.stringify(sign)));
     return store.opened({ ...group, line: { seq: line.seq, id: line.id }, unsent: [...(group.unsent ?? []), line] }).then((g) => carry(g, `line ${line.seq} signed`));
   }),
+  carrying: ({ group }) => carry(group, `${group.unsent.length} line(s) unsent`, null),
   stopping: ({ group, label }) => store.opened({ ...group, reads: { ...group.reads, [label]: { said: 'stop', at: Math.floor(Date.now() / 1000) } } }).then((g) => ({ type: 'acted', group: g, why: `${label}'s reads stopped here` })),
 };

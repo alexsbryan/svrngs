@@ -130,3 +130,20 @@ test('what apps use drawn as question.js `uses` draws it, a line each, as `li` a
   const stopped = out(Uses({ lent, labelOf, choices: answers, tag: 'li', said: { [`${labelOf(film)} ${labelOf(page)}`]: 'cy’s computer did not keep your answer.' }, send }));
   assert.ok(stopped.startsWith('<li>ada’s page (k) uses cy’s shelf (k). <button>Stop</button>cy’s computer did not keep your answer.</li>'), stopped);
 });
+
+// The phone's PAGE composed from its flows (enter.test.mjs), each effect read as data.
+const { compose } = await import('../../v2/page.js?v=__VERSION__');
+const FLOWS = ['enter', 'computer', 'join', 'ask', 'index', 'door', 'shelf', 'visit', 'among', 'acts', 'uses'];
+const parts = compose(Object.fromEntries(await Promise.all(FLOWS.map(async (f) => [f, await import(`../../v2/${f}.js?v=__VERSION__`)]))));
+
+test('a group read holding unsent lines answers their carry, then nothing once none is left (page-acts (d))', () => {
+  const line = { seq: 0, id: 'l0' };
+  const s = parts.first({ group: { ...house, token: 'TOKEN', unsent: [line] } });
+  const r = parts.step(s, { type: 'carry' });
+  assert.equal(r.refused, undefined, r.refused);
+  assert.deepEqual(r.effects.map((f) => [f.run, f.group?.unsent]), [['carrying', [line]]]);
+  assert.equal(parts.step(r.state, { type: 'carry' }).refused, 'carry is under way, and is answered first');
+  const refused = parts.step(r.state, { type: 'unacted', why: 'ada’s computer did not answer.' });
+  assert.deepEqual(refused.effects, [], 'a carry refused asks no read again, so it is tried once a read');
+  assert.equal(parts.step(parts.first({ group: { ...house, unsent: [] } }), { type: 'carry' }).refused, 'no line is unsent');
+});

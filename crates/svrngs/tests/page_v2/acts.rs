@@ -270,3 +270,35 @@ async fn a_refused_yes_keeps_the_ask_shown(engine: Engine) {
     );
     drop(ada);
 }
+
+in_webkit!(
+    /// **A line left unsent is carried on the next open** (page-acts (d)).
+    /// Bo's phone keeps house with a line of his own signed and left
+    /// unsent, as a carry that failed leaves it (app.js:506); the page
+    /// opened again reads house, carries the line to ada's computer, and
+    /// keeps none unsent. Watched failing on v1 (`UI` flipped), which
+    /// carries unsent lines only at the next yes.
+    a_line_left_unsent_is_carried_on_the_next_open
+);
+async fn a_line_left_unsent_is_carried_on_the_next_open(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let (ada, _, id) = ada(dir.path(), &relay).await;
+    let payload = svrngs_core::Payload::new(json!({ "kind": "planted" })).unwrap();
+    let act = svrngs_node::RailAct::Record { payload };
+    let bo = SigningKey::from_bytes(&[7; 32]);
+    let now = chrono::Local::now().timestamp();
+    let line = svrngs_core::sign_act(&bo, &id, now, 0, None, act, None, None, None);
+    let mut args = bo_s_phone(&relay, &id);
+    let plant = json!({ "plant": line, "line": { "seq": 0, "id": line.id }, "carried": "PAGE: acted (1 line(s) unsent, and carried)", "within": 60_000 });
+    args.as_object_mut().unwrap().extend(plant.as_object().unwrap().clone());
+    let seen = drive(engine, "v2/acts.mjs", args, None).await;
+    none_wrong(
+        &[
+            (seen["went"] != true, "the open carries the line"),
+            (seen["unsent"] != 0, "and keeps none unsent"),
+        ],
+        &seen,
+    );
+    drop(ada);
+}
