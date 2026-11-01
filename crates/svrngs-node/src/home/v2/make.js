@@ -7,8 +7,8 @@
 // older answer is refused by name (`late`), where v1 compared the typed
 // value (h:420). Pressed, a second press is refused while it makes; made,
 // the page opens again saying so, and again whose namesakes there are, as
-// v1 does (h:421); a refusal is said beside the button, each after the
-// last, as v1 appends them.
+// v1 does (h:421); a refusal is said beside the button once, the last in
+// place of the one before, where v1 appended each (h:421; page-join (d)'s fix).
 import { html, useMachine } from '../ui/view.js?v=__VERSION__';
 import { ask, go, late, machine, no } from '../ui/machine.js?v=__VERSION__';
 import { Act, Field } from '../ui/parts.js?v=__VERSION__';
@@ -23,7 +23,7 @@ const MAKE = { states: { make: ['typing', 'checking', 'checked', 'making', 'refu
     typed: () => (m.field === 'person' ? go(s, {}, { person: m.value }) : ((asked, n) => go(s, { make: 'checking' }, { name: m.value, asked }, { run: 'check', name: m.value, n, failed: 'checked' }))(...ask(s, 'name'))),
     checked: () => (late(s, 'name', m.n) ? no(s, late(s, 'name', m.n)) : go(s, { make: s.at.make === 'checking' ? 'checked' : s.at.make }, { before: m.words ?? m.why })),
     make: () => (s.at.make === 'making' ? no(s, 'a group is being made, and is answered first') : go(s, { make: 'making' }, {}, { run: 'make', name: s.name, person: s.person, failed: 'refused' })),
-    made: () => go(s, {}), refused: () => go(s, { make: 'refused' }, { said: `${s.said} ${m.why}` }) })[m.type]?.() ?? no(s, `making a group takes no ${m.type}`) };
+    made: () => go(s, {}), refused: () => go(s, { make: 'refused' }, { said: ` ${m.why}` }) })[m.type]?.() ?? no(s, `making a group takes no ${m.type}`) };
 
 function Make() {
   const [s, send] = useMachine(() => machine('MAKE', MAKE, { at: { make: 'typing' }, name: '', person: '', before: '', said: '' }));
