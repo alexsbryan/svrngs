@@ -74,11 +74,26 @@ async fn house(dir: &Path, relay: &iroh_relay::server::Server) -> (Node, String)
     (node, seed.id())
 }
 
+/// Whether the page asked its group again after SHELF's `brought`: the
+/// phone's `reread` (web/v2/enter.js), the home's `again`, HOME's then
+/// each GROUP's (home/v2/home.js, group.js).
+fn read_after(lines: &[&str], home: bool) -> bool {
+    let at = |start: &str| lines.iter().position(|l| l.starts_with(start));
+    let asked: &[&str] = if home {
+        &["HOME: again: ", "GROUP: again: "]
+    } else {
+        &["PAGE: reread: "]
+    };
+    let brought = at("SHELF: brought (");
+    brought.is_some() && asked.iter().all(|a| at(a) > brought)
+}
+
 /// What `seen` (web/tests/v2/shelf.mjs) shows of the bring, each wrong
 /// one said, so one run says all a page did not do. The button pressed
 /// twice at once: held while it brings, then given back, and the second
 /// press refused by SHELF, so the home page posts /shelf once; then
-/// Money, brought, offered no more.
+/// Money, brought, offered no more, and the group read again, which says
+/// Money is on the table, with no reload.
 fn brought_on_v2(seen: &Value, home: bool) {
     let next = seen["next"].as_str().unwrap_or_default();
     let lines: Vec<&str> = (seen["lines"].as_array().into_iter().flatten())
@@ -105,6 +120,10 @@ fn brought_on_v2(seen: &Value, home: bool) {
             "the second press is refused while the first brings",
         ),
         (home && posts != 1, "the home page posts /shelf once"),
+        (
+            !(seen["table"] == true && seen["reloads"] == 0) || !read_after(&lines, home),
+            "then the group is read again, Money on the table, with no reload",
+        ),
         (
             seen["shelf"]
                 .as_str()

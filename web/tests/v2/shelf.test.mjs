@@ -115,6 +115,28 @@ test('what it brought is offered no more, its tick gone; all brought, the answer
   assert.ok(alone.endsWith('<p></p><p> You brought Events to house: everyone in it can open it in a few seconds. House rules is on the table already.</p></section>'), alone);
 });
 
+test('brought, the page reads its group again, by the `after` it gives', async () => {
+  const bringing = step(FIRST, { type: 'bring', g: house, name: 'house', apps: ['Money'] }).state;
+  const brought = step(bringing, { type: 'brought', answers: [{ app: 'Money' }] });
+  assert.deepEqual(brought.effects, [{ run: 'after', ms: 0, failed: 'told' }]);
+  assert.deepEqual(step(bringing, { type: 'unbrought', why: 'no' }).effects, [], 'refused, nothing was written to read');
+  let asked = 0;
+  assert.deepEqual(await SHELF(null, () => asked++).io.after({ run: 'after', ms: 0 }), { type: 'told', why: 'the group is read again, 0 ms on' });
+  assert.equal(asked, 1);
+  assert.equal(step(brought.state, { type: 'told' }).state.at.bring, 'brought');
+  // Each read not listing Money yet asks another, a second on, then two, four, eight; then no more, said why.
+  let s = brought.state;
+  const waits = [];
+  for (let i = 0; i < 4; i++) {
+    const r = step(s, { type: 'listed', missing: ['Money'], why: 'Money' });
+    waits.push(r.effects[0].ms);
+    s = r.state;
+  }
+  assert.deepEqual(waits, [1000, 2000, 4000, 8000]);
+  assert.equal(step(s, { type: 'listed', missing: ['Money'], why: 'Money' }).refused, 'Money not listed after 4 reads again; the next read says it');
+  assert.deepEqual(step(brought.state, { type: 'listed', missing: [], why: 'all listed' }).effects, [], 'listed: nothing more asked');
+});
+
 test('the io answers brought, with what it brought as why', async () => {
   const asked = [];
   const io = SHELF(async (g, apps) => (asked.push([g.id, apps]), [{ app: 'Money' }, { app: 'Events', already: true }])).io;
