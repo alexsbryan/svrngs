@@ -73,7 +73,13 @@ if [ -f Cargo.toml ]; then
   # The canaries, browser, joining and conformance targets are `test = false`
   # (crates/svrngs-node/Cargo.toml, crates/svrngs/Cargo.toml), so each runs
   # once, in its own step below, and not again here.
-  step "tests"    cargo test --quiet
+  # A run on v2 (SVRNGS_UI=v2) starts svrngs with `--ui v2`, which only a
+  # binary built with svrngs's test-support takes (harness.rs `ui_args`), so
+  # under v2 the tests and scenes that start svrngs build with it, as
+  # parity.sh's do. On v1 they build as before. Red without it: home_group
+  # and every scene stopped at harness.rs:200 (page-parity-4.await.log).
+  v2=; [ "${SVRNGS_UI-}" = v2 ] && v2="--features svrngs/test-support"
+  step "tests"    cargo test --quiet $v2
   # The canaries (DESIGN §5), by name: the apps that keep the infra general.
   step "canaries" cargo test --quiet --workspace --test canaries
   # The ceiling's canary (DESIGN §5, "The canaries"; PLAN §4, "The ceiling";
@@ -120,7 +126,7 @@ if [ -f Cargo.toml ]; then
   # 5 s): 12 threads 162 s, peak 140, 29 of 32 samples past; 4, 201 s, peak
   # 66, 28 of 40; 2, 319 s, peak 44, 6 of 63; 1, 560 s, peak 21, none. At 2
   # a timing is now and then could-not-judge, never a false failure.
-  step "scenes" cargo test -p svrngs --test scenes -- --test-threads=2
+  step "scenes" cargo test -p svrngs --test scenes $v2 -- --test-threads=2
   awk '/^test .* \.\.\. / {split($2, n, "::"); k = n[1]; if (!(k in s)) o[++m] = k; e[k] = e[k] (e[k] ? ", " : "") n[3]; if (!(k in s) || $NF != "ok") s[k] = $NF == "ok" ? "passed" : "failed"} FILENAME ~ /never-ran/ {k = FILENAME; sub(/.*scenes\//, "", k); sub(/-[a-z]+\/never-ran.txt$/, "", k); if (!(k in s)) o[++m] = k; s[k] = "never-ran"; w[k] = ": " $0; x = 1} FILENAME ~ /could-not-judge/ {k = FILENAME; sub(/.*scenes\//, "", k); sub(/-[a-z]+\/could-not-judge.txt$/, "", k); if (s[k] == "passed") {s[k] = "could-not-judge"; w[k] = ": " $0}} END {for (i = 1; i <= m; i++) printf "%-10s scene %s (%s)%s\n", s[o[i]], o[i], e[o[i]], w[o[i]]; exit x}' /tmp/svrngs-check.$$ $(ls target/scenes/*/never-ran.txt target/scenes/*/could-not-judge.txt 2>/dev/null) || failed=1
   # The conformance canary (DESIGN §5; u5-2): apps/web-conformance, lent by
   # two computers, opened from a computer and from a phone, each app at an
