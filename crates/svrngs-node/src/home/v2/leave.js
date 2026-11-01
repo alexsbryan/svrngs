@@ -10,18 +10,21 @@
 // home.rs:198) said as group.js `get` says it, where v1 read every
 // answer as JSON (home.js:42) and said a parse error. A leave goes on to
 // the page saying so: HOME takes `left` here (`take`), which says it and
-// reads the groups again, never a reload (v1's `location.assign`).
+// reads the groups again, never a reload (v1's `location.assign`). A
+// hand-on reads them again too (HOME's `again`), so the hand-on, no
+// longer this computer's, goes, and what it did is said beside Leave,
+// where v1 went on saying "You keep the order of removals" until a reload.
 import { html, useMachine } from '../ui/view.js?v=__VERSION__';
 import { ask, go, machine, no } from '../ui/machine.js?v=__VERSION__';
 import { called } from '../question.js?v=__VERSION__';
 
-const SAYS = { handed: (s) => `${s.person} keeps the order of removals in ${s.name} now, so you can leave it.`, decides: (s) => `You keep the order of removals in ${s.name}: choose who keeps it after you, then leave.`, not_in: (s) => `You are no longer in ${s.name}.` };
+const SAYS = { handed: (s) => `${s.person} keeps the order of removals in ${s.name} now, so you can leave it.`, decides: (s) => `You keep the order of removals in ${s.name}: choose who keeps it after you, then leave.`, not_in: (s) => `You are no longer in ${s.name}.` }, TELLS = { left: (s) => ({ type: 'left', flow: 'leave', name: s.name }), handed: () => ({ type: 'again' }) };
 const LEAVE = (home) => ({
   states: { leave: ['idle', 'asking', 'handed', 'decides', 'refused'] },
-  step: (s, m, said = (w) => ({ said: [...s.said, [s.on, ` ${w}`]] })) => ({
+  step: (s, m, said = (w, on = s.on) => ({ said: [...s.said, [on, ` ${w}`]] })) => ({
     to: () => go(s, {}, { to: m.i }),
     ask: () => go(s, { leave: 'asking' }, { on: m.on, person: m.body.person }, { run: 'ask', path: m.path, body: m.body, failed: 'refused' }),
-    answered: () => (m.o === 'left' ? go(s, { leave: 'idle' }, {}, { run: 'send', m: { type: 'left', flow: 'leave', name: s.name } }) : go(s, { leave: { handed: 'handed', decides: 'decides' }[m.o] ?? 'refused' }, said(SAYS[m.o]?.(s) ?? `${s.name} cannot be changed on this computer now.`))),
+    answered: () => go(s, { leave: { handed: 'handed', decides: 'decides', left: 'idle' }[m.o] ?? 'refused' }, m.o === 'left' ? {} : said(SAYS[m.o]?.(s) ?? `${s.name} cannot be changed on this computer now.`, m.o === 'handed' ? 'leave' : s.on), ...(TELLS[m.o] ? [{ run: 'send', m: TELLS[m.o](s) }] : [])),
     refused: () => go(s, { leave: 'refused' }, said(`${s.name} cannot be changed on this computer now: ${m.why}`)),
     sent: () => go(s, {}),
   })[m.type]?.() ?? no(s, `leaving takes no ${m.type}`),

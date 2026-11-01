@@ -317,3 +317,65 @@ async fn a_refused_leave_is_said_in_its_own_words(engine: Engine) {
     assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
     drop(ada);
 }
+
+in_chromium!(
+    /// **Hand on, then leave, with no reload** (page-members (d)). ada
+    /// keeps the order of removals in house, bo in it too; her home page
+    /// offers to hand it on to bo. She presses "Hand it on": the groups
+    /// are read again, so the offer goes, and beside Leave the page says
+    /// bo keeps it now; she presses "Leave house", and the page says she
+    /// left and lists house under "Groups you left", never reloading.
+    /// Watched failing on v1 (`UI` flipped), whose offer stays until a
+    /// reload (home.js:42 appends its words) and whose leave reloads.
+    hand_on_then_leave_with_no_reload
+);
+async fn hand_on_then_leave_with_no_reload(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let (ada, _, _) = house(dir.path(), &relay).await;
+    let home = format!("http://svrngs.localhost:{}/", ada.api_addr().port());
+    let (hand, leave) = ("#home section p:has(> select)", "#home section p.leave");
+    let press = json!([
+        [format!("{hand} button"), hand],
+        [format!("{leave} button"), leave]
+    ]);
+    let args = json!({ "home": home, "shown": hand, "press": press, "said": "Groups you left", "at": "#home", "within": 20_000 });
+    let seen = drive(engine, "v2/members.mjs", args, None).await;
+    let offered =
+        "You keep the order of removals in house. Choose who keeps it after you, then leave: bo";
+    let (handed, left) = (&seen["waited"][0], &seen["waited"][1]);
+    let wrong: Vec<&str> = [
+        (
+            !seen["shown"][0]
+                .as_str()
+                .is_some_and(|t| t.starts_with(offered)),
+            "ada is offered to hand it on to bo",
+        ),
+        (handed["went"] != true, "the offer goes once handed on"),
+        (
+            !handed["text"].as_str().is_some_and(|t| {
+                t.contains(
+                    "Leave house bo keeps the order of removals in house now, so you can leave it.",
+                )
+            }),
+            "beside Leave, bo keeps it now",
+        ),
+        (left["went"] != true, "house's section goes once left"),
+        (
+            seen["went"] != true,
+            "house is listed under Groups you left",
+        ),
+        (
+            !seen["text"]
+                .as_str()
+                .is_some_and(|t| t.contains("You left house.")),
+            "the page says ada left",
+        ),
+        (seen["reloads"] != 0, "with no reload"),
+    ]
+    .into_iter()
+    .filter_map(|(failed, what)| failed.then_some(what))
+    .collect();
+    assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
+    drop(ada);
+}
