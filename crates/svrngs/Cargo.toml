@@ -79,6 +79,14 @@ name = "scenes"
 path = "tests/scenes/main.rs"
 test = false
 
+# The v2-only page tests (ralph/next/page/CHARTER.md, "What is settled"
+# 6): run once, by name, in scripts/check.sh's "page v2" step, with this
+# crate's test-support, until page-switchover.
+[[test]]
+name = "page_v2"
+path = "tests/page_v2/main.rs"
+test = false
+
 # The worlds of svrngs's xenia scenes (demo/xenia/README.md): run one at a
 # time, by its scene's command in demo/xenia/; no step of scripts/check.sh
 # runs them, and its clippy step lints them. No harness, so libtest writes
