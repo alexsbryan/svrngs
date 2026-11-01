@@ -11,6 +11,9 @@
 #[macro_use]
 #[allow(unused_macros, dead_code)]
 mod harness;
+#[path = "../../../svrngs-node/tests/browser/drive.rs"]
+#[allow(dead_code)]
+mod drive;
 
 /// The page these tests drive: v2, never the switch's ([`harness::ui`]):
 /// `harness::site_of(UI)`, a node's `.ui(UI)`, and `harness::home_is`.

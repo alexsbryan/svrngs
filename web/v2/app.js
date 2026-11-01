@@ -36,5 +36,7 @@ render(html`<${Page} parts=${parts} store=${page} />`, document.getElementById('
 
 // An address typed or tapped on this page is a new fragment on the same
 // page, which the browser opens without loading it (web/app.js:626).
+// Back on screen, the group is read again (page-open (c); web/v2/enter.js `shown`).
+document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && page.dispatch({ type: 'shown' }));
 window.addEventListener('hashchange', () => (trace('PAGE: the address changed here, so the page opens it'), location.reload()));
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js', { type: 'module' }).catch((e) => trace(`PAGE: the service worker did not register: ${e}`)));

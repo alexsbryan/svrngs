@@ -13,6 +13,8 @@ const KEPT = [
   // The phone's frame, web/v2/app.js, is served as /app.js, beside ui/ and v2/.
   ['/web/v2/ui/', UI],
   ['/web/v2/v2/', '/web/v2/'],
+  // question.js is served beside app.js on the phone, kept with the home page.
+  ['/web/question.js', '/crates/svrngs-node/src/home/question.js'],
 ];
 
 export async function resolve(spec, ctx, next) {
