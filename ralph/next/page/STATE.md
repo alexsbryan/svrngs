@@ -523,8 +523,14 @@ brackets.
     - `the_group_page_says_what_acts_as_you_and_its_stop_holds_at_the_next_pass`;
     - `a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped`;
     - `b:acts.rs:68`, `b:carried.rs:640`, `b:opens.rs:41` and `b:main.rs:2315`.
+  - **Where (d) landed** (corrected, page-acts (d), 47ede414..c34cdfc0):
+    - **`me` is enter's:** the merge of main brought page-members' b5c4e397, which made `me` a field enter owns (`web/v2/enter.js:72`), and compose refused it claimed by acts.js too (`node --test web/tests/v2/enter.test.mjs`: "field me is claimed by enter and by acts"). acts.js reads enter's; its `whoami` is gone (47ede414).
+    - **`read` is enter's take** (`enter.js:63`), so acts.js cannot answer it: the page sends `carry` on each read holding unsent lines (acts.js `Drawn`), and `acts.test.mjs` holds that `carry` answers `carrying`, refused with none.
+    - **`visible` needs no code:** HOME's `visible` is a new round (`home/v2/home.js:26-27`), and ACTS reads on each; its commit is its test alone (f9a36431).
+    - **The home's uses Stop** has a v2-only test of its own, `a_stop_on_what_apps_use_is_read_again_in_place` (c3816ca2), as the list below names none.
+    - **Lines:** v2 1029, the row at +182 of +108 to +190.
   - **v2-only:**
-    - `acts.test.mjs`: a `read` holding `unsent` answers `carry`;
+    - `acts.test.mjs`: a `carry` on a group holding `unsent` answers `carrying` (corrected above);
     - `acts.rs`, each red with `UI` flipped: a planted failed carry is carried on the next open; a refused yes leaves the form; a yes in another tab is shown on `visible`; two refusals on `/ask` are said once.
   - **Byte for byte:**
     - `See what’s new`, `Open the new version`, `new version for you now` and "Money opens at its new version for you now.";
