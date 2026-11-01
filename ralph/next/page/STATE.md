@@ -316,7 +316,7 @@ brackets.
     - **Byte for byte:** `h:100-104`'s shape, `p.none`, `section#left`, `p.address` and `h:429`'s words.
   - **(e) The fix: the query notices** (`h:363-367`) become `HOME`'s `said`, said once (CHARTER 9). **v2-only:** one `/v1/groups` read, with people before lends, and a reload of `/?made=Trip` that does not say it again. Red with `UI` flipped.
   - **Moves:** scene `life` (Cy's phone in lake-trip), the computer line, and the computer's home page on v2 showing its groups. +153 to +196 [`a:355-369`, `:385-458`, `:595-614`, `:667-706`, about 120; `h:21-66`, `:347-429`, about 75].
-- [ ] page-shelf — depends [page-open] — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — the first feature, and the bring bug on both pages:
+- [x] page-shelf 97eac838 — depends [page-open] — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — the first feature, and the bring bug on both pages:
   - **Owns:** `ui/shelf.js`, `web/v2/shelf.js`, `home/v2/shelf.js`, `page_v2/shelf.rs`, and `web/tests/v2/shelf.mjs`.
   - **(a) The move.**
     - `ui/shelf.js` `Shelf`, on `Act` and `Fold`, is `q:199-210` `table()`, which both pages call (`h:203`). It includes "Bring more to <name>", folded for someone who just joined.
@@ -324,6 +324,10 @@ brackets.
     - The answer goes where v1 puts it: the `p` above the boxes (`q:203`, `:207`).
     - The phone's `#shelf` and the home's group section each mount it.
     - **Red under the switch:** `the_phone_brings_things_to_the_table`; `b:carried.rs:439-469`; `money.rs:123`; `house_rules.rs:134-140`.
+    - **Where it landed** (corrected, page-shelf (a), bf54bc80):
+      - The phone brings through `web/v2/enter.js` `through(group, path, body)`, an edge function page-shelf added to page-open's file (02f78828): the key and the one endpoint are enter.js's, and a flow's own endpoint of the key would displace it at the relay (`a:352`). Every phone write after it uses it.
+      - The home's newcomer fold reads `?joined=` as v1 does (`h:203`), as `home/v2/shelf.js` loads, before `home.js` forgets it: a group's place is given GROUP's state, not HOME's `said`, and `home.js` is page-open's.
+      - Green on v2: `the_phone_brings_things_to_the_table`, and `the_home_page_brings_things_to_the_table` through every shelf assertion, red then at `b:carried.rs:511`, the index, page-index's. `money.rs` and `house_rules.rs` make and join their groups on the home page first, so stay red until page-join.
   - **(b) The fixes, each its own commit, both pages:**
     - the answer in the `Act`, beside the button;
     - the button and the boxes disabled while bringing, where today a second tap posts twice;
@@ -335,6 +339,12 @@ brackets.
     - the bring is followed by a read whose answer holds the brought app (`SHELF: brought: …`, then `LIST:` and `GROUP: again:` lines, with `loads == 1`).
 
     That it is drawn in the index is page-index's test (CHARTER, "What the merge moved").
+  - **Where (b) landed** (corrected, page-shelf (b), 0560da0d..5695e619):
+    - The read right after a bring does not hold the app: the node lists a carried app once the folder has placed its files in the record (`carried.rs:234-246`, woken by file events, `synced.rs:286-289`), and the first run read "0 lent". So each read after a bring that does not list what it brought is followed by another, 1, 2, 4 and 8 s on, the wait at the edge, then refused with why (`SHELF: listed`). "<app> is on the table." is drawn from the read alone.
+    - The trace is `SHELF: brought (`, then `PAGE: reread: ` on the phone, or `HOME: again: ` and `GROUP: again: ` on the home page; there is no `LIST:` machine.
+    - While it brings, the shelf says " Bringing…" beside the held button: Act is silent while busy, so v1's `home.mjs` `settled` read the second press mid-bring (5695e619).
+    - `web/tests/v2/shelf.test.mjs` (8 tests, `page laws`) holds the move to question.js `table` byte for byte and every SHELF step. One run on V1 (`target/page-shelf/red-b.log`) fails every v2-only check on both pages.
+    - **Lines:** v2 at 521, +44 against +40 to +58; `.` unchanged.
   - **Byte for byte:**
     - `Bring the ticked ones to ${name}` (`carried.rs:433`);
     - "You brought … to house: everyone in it can open it in a few seconds." (`carried.rs:551-554`);
