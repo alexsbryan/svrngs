@@ -4,12 +4,13 @@
 // and drawn into home/v2/index.html's #home. HOME reads the person's
 // groups from /v1/groups, and the address once: the ask (/ask), a group on
 // a screen (?screen=), or the page, with what was just done here said
-// (?made=, ?joined=, ?left=; home.js:363-367). It draws in v1's order, each
+// (?made=, ?joined=, ?left=; home.js:363-367), said once. It draws in v1's order, each
 // group's section (home/v2/group.js), then each feature's place, from
 // home/v2/<file>.js, which a feature row fills; a file not built yet draws
 // nothing, and a message to it is refused by name (group.js `offered`). It
 // takes one fixed message, `again`, after a write, and `visible`, on
 // coming back on screen: each reads the groups again, then each group.
+// The edge, below the page, reads the address and forgets a notice in it.
 import { trace } from '../ui/trace.js?v=__VERSION__';
 import { html, render, useStore } from '../ui/view.js?v=__VERSION__';
 import { ask, go, late, machine, no } from '../ui/machine.js?v=__VERSION__';
@@ -48,6 +49,9 @@ export function Home({ store, flows, places }) {
 Promise.all(FILES.map((f) => import(`./${f}.js?v=__VERSION__`))).then((mods) => {
   const flows = Object.fromEntries(FILES.map((f, i) => [f, mods[i]])), places = Object.assign({ left }, ...mods.map((f) => f.view));
   const store = machine('HOME', HOME(flows), first(location), [{ run: 'groups', n: 1, round: 'read', failed: 'unread' }]);
+  // What was done here is said once (page-open (e); CHARTER 9): the address
+  // forgets it, so a reload, or the page opened again, says it no more.
+  if (store.get().at.said !== 'none') history.replaceState(null, '', (trace(`HOME: ${store.get().at.said} said, once`), location.pathname));
   render(html`<${Home} store=${store} flows=${flows} places=${places} />`, document.getElementById('home'));
   document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && store.dispatch({ type: 'visible' }));
 }).catch((e) => (trace(`HOME: its files did not load: ${e}`), render(html`<p>This computer cannot read your groups: ${e.message}</p>`, document.getElementById('home'))));
