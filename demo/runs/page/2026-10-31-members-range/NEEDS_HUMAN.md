@@ -98,3 +98,56 @@ raised at the switchover's economizing pass. The `v2` rung itself is about
   `leaving_on_the_home_page_is_said_as_a_leave_everywhere` stops at `#join
   input[name=link]`, page-join's stub (target/page-members/green-d4.log).
 - Left: (e), then `scripts/check.sh` once, at the close.
+
+## The director's reading, 2026-10-31
+
+**Why this is yours.** The charter leaves "a row past its range" to the
+operator ("Leave for the operator", the budget). Landing (e) at its estimate
+puts the row past +152, and the charter gives the director no way to move a
+range. Splitting (e) into a row of its own, or handing it back to
+page-home-rooms, would also move a range. So would a cut that drops one of
+(e)'s byte-for-byte items (`mark`, "Since this screen opened"), and that one
+weakens a bar as well.
+
+**What I reproduced** in the lane at 8c3f2761:
+- `python3 scripts/lean_check.py` prints `v2 773 / 1150`. In the main tree
+  at d8009598, the merge base, it prints `v2 628 / 1150`. The row is +145.
+- Each file in the table above, counted as `code_lines` counts them: 16, 3,
+  21, 37, 26, 23, 24, 1. They match.
+- v1's `screen` is `home.js:307-329`. Of its counted lines, several pack
+  two or three statements into one (`:309`, `:311`, `:318`). The row's rule
+  forbids that packing in v2. So v1's 22 is a floor for (e), not its estimate.
+
+**A correction to "what it costs the queue."** Measured from the counts,
+not from the summed tops, the rows that have landed (scaffold, switch,
+open, shelf, index) came in 24 under their tops combined (652 of tops,
+628 landed). With (e) at +24 to +32, v2 stands at 797 to 805. page-join,
+page-acts and page-home-rooms have tops of 350 together. The cap holds if
+they come in at least 5 under those tops in all, not 29. At their range
+midpoints they land about 1,110 of 1,150.
+
+**Not about the range, but you should see it before page-join runs.**
+Session 2 (f5c240fb) changed two files that page-join and page-index own.
+In `web/v2/join.js` the guest's name form is drawn through `visit.js`
+`naming`. In `web/v2/index.js` the guest's lends are drawn through
+`listed`. Each is one counted line. The session said why: two flows that
+claim one place make the page throw at load. Its lesson tells page-join
+to take over the guest's form. page-index has merged already. page-join has
+not started (`git worktree list`), so it branches after this row merges and
+inherits the change. Only a page-join lane started before this merge would
+conflict.
+
+**Recommendation: widen the range to +180 and apply the ready diff
+above.** The cap is not touched. The economizing pass was run and is
+named above. The screen is needed for parity (`main.rs:3753`, xenia's
+`/?screen=`). The scaffold range was widened on the same grounds. A
+worker then lands (e) and runs the closing `scripts/check.sh`. If (e)
+goes past +180, the row stops again.
+
+**The other options and their costs:**
+- **Name a cut.** The pass found none that keeps behavior. Dropping
+  `mark` or the newest-first list fails a byte-for-byte bar.
+- **Close the row without (e)** and add a `page-screen` row with
+  +24 to +32, depending on page-members. It costs the same lines, adds
+  one more closing gate (15 to 30 min under the lock), and the queue
+  gains a row.
