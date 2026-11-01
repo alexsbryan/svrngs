@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Bringing things to the group: page-shelf's, a stub until then
-// (web/v2/page.js `compose`), its place as web/index.html:84 draws it.
+// Bringing things to the group (page-shelf (a); web/app.js:482-489): the
+// shelf (ui/shelf.js), drawn in #shelf once the group is read, and brought
+// through the computer the page reaches (web/v2/enter.js `through`); then
+// the group read again (enter.js `reread`).
 import { html } from '../ui/view.js?v=__VERSION__';
+import { Shelf } from '../ui/shelf.js?v=__VERSION__';
+import { through } from './enter.js?v=__VERSION__';
 
-export const view = { shelf: () => html`<div id="shelf"></div>` };
+const bring = (g, apps) => through(g, '/shelf', apps);
+export const view = { shelf: ({ s, send }) => html`<div id="shelf">${s.lent && s.shelf && html`<${Shelf} g=${s.group} lent=${s.lent} shelf=${s.shelf} joined=${s.joined} bring=${bring} after=${() => send({ type: 'reread' })} />`}</div>` };

@@ -108,6 +108,16 @@ async function reach(w, group, tried) {
 // Its lends, asked of the next to answer when an answer fails (a:430-436).
 const lends = (w, group, tried) => reach(w, group, tried).then(([d, via]) => d.fetch('GET', PEOPLE_LENDS, [['accept', 'application/json']], null).then((res) => [d, via, res], (e) => (
   trace(`PAGE: ${PEOPLE_LENDS} failed through ${whoseComputer(via)}, so the next to answer is asked: ${e}`), d.close(), lends(w, group, [...tried, via?.key ?? w.issuer_of(group.token)]).catch(() => Promise.reject(e)))));
+// A write through the computer the page reaches, for another flow's io
+// (page-shelf): `body` posted with the group's id, as JSON, and its answer
+// read, or the computer's refusal in its own words (a:110-116, :485-488).
+// Here, as the key and the one endpoint are: a second endpoint of the key
+// would displace this one at the relay, which keeps one per key (a:352).
+export const through = (group, path, body) => wasm().then(async (w) => {
+  const [d] = await reach(w, group, []), bytes = new TextEncoder().encode(JSON.stringify([group.id, body]));
+  const [ok, status, text] = await d.fetch('POST', path, [['content-type', 'application/json'], ['content-length', String(bytes.length)]], new Blob([bytes]).stream()).then(async (r) => [r.ok, r.status, await r.text()]).finally(() => d.close());
+  return ok ? JSON.parse(text) : Promise.reject((trace(`PAGE: ${path} answered ${status}: ${text}`), new Error(JSON.parse(text).error)));
+});
 export const io = {
   look: ({ fragment }, token = fragment.split('&')[0]) => Promise.all([wasm(), store.groups()]).then(([w, kept]) => ({ type: 'looked', fragment, kept, missing: document.body.id === 'missing',
     cold: w.is_label(store.labelOf(location.hostname)), linked: (() => { try { return Boolean(w.issuer_of(token)); } catch { return false; } })() })),
