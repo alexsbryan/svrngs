@@ -74,3 +74,51 @@ They still run on v2, and check.sh still runs every one of them.
   and it passed on the empty frame because the policy comes from the head
   that v1 and v2 share. page-scaffold earned it when it kept that head
   (`web/v2/body.html` has no `<head>` of its own).
+
+## The count beside the bar (f)
+
+The counts below are from `scripts/lean_check.py` at d3d255c6: `.` is at
+19,121 of 19,122 and `v2` at 1,189 of 1,207. The switchover's bar is `.`
+at or under its cap once v1 is deleted. CHARTER's 19,481 was that cap
+before 963dcdac stopped counting the diagrams' generators, so today the
+bar is 19,122.
+
+- **S, v2's lines that stay: 1,076 to 1,079.** That is the rung's 1,189,
+  less `scripts/parity.sh` (37), `home/v2/serve.rs` (62) and
+  `web/v2/build.sh` (19), plus the 5 to 8 lines of build.sh that fold into
+  build-web.sh (copying `v2/`, `ui/` and `vendor/`, and the `SHELL` line).
+  CHARTER estimated 770 to 1,042, so S is 34 to 37 over the top of that
+  range. Per path, counted by lean_check's own rules: `web/v2/` 503 less
+  build.sh, `home/v2/` 470 less serve.rs, `home/ui/` 164, `web/vendor/` 3
+  (each vendored file is one line).
+- **T, home.rs's table of v2's files:** +8 to +30, as CHARTER has it. There
+  are 31 modules under `home/v2/` and `home/ui/`.
+- **H, the both-live hooks the switchover deletes:** 13 to 16. That is
+  the 14 in STATE's page-scaffold row, plus `page v2` and `parity`, +1
+  each. The low end applies if check.sh's `page laws` (+3) stays.
+- **D, v1 deleted:** 703.
+
+So `.` after the switchover = 19,121 − H + S + T − 703, which comes to
+**19,486 to 19,514**. That is **364 to 392 over** the cap of 19,122, and
+past CHARTER's 59 to 353. On the current base, `.` breaks even only if
+S + T is at most about 717 to 720.
+
+**Sizing the switchover's pass.** These are the candidates the code shows:
+
+- **Imports: 185 of the 1,076 lines** (`grep -c ^import` over `web/v2`,
+  `home/v2` and `home/ui`). The 45 modules were split by who owned each
+  flow, so that rows could run in parallel (CHARTER, "Who owns each
+  file"), not by need. Folding each page's flows into a few modules
+  could cut 100 to 130 lines. It would also shrink T, since there would be
+  fewer modules to table.
+- **POST helpers, four of them** (`home/v2/door.js`, `leave.js`,
+  `running.js`, `shelf.js`): one helper would cut 3.
+- **Duplicated primitives** that fence 8 put in each row's own files, for
+  the pass to fold. None was found in a single read, beyond the POST
+  helpers.
+
+Past passes cut 3 to 93 lines (CHARTER). This pass's import fold is
+larger than any of them, and it has not been tried. A pass that does
+everything above lands at about 19,350 to 19,410. That leaves an
+expected raise of **about +230 to +290**, which is the operator's, set at
+HUMAN-page-switchover after the pass.
