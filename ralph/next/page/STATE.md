@@ -484,6 +484,11 @@ brackets.
       - **`me`**, this phone's key in the ask a link's issuer is sent (`a:509`), is asked of the edge once the tab holds the group (`whoami`).
       - **Red, green:** `acts.rs` passes to `:242`, whose last step opens `#open=<label>` after the read, page-join's. `carried.rs:640`'s phone half runs after its home half, (c).
       - **Lines:** v2 739, the row at +111 of +108 to +144 with (c) and (d) to come.
+    - **Where (c) landed** (corrected, page-acts (c), 9b049558):
+      - **Nothing of GROUP's reaches a HOME place:** group.js gives its places only `g`, `s`, `send`, `home` and `me` (`group.js:46`), and HOME's places get HOME's state alone (`home.js:40`). So `group.js`'s PLACES gains `told` (`:26`), acts.js's `Told`, which draws nothing and tells HOME each group's people and lends as GROUP reads them.
+      - **The foot waits:** v1 drew `p.address` after every read (`h:326-328`), and home.mjs opens every `<details>` as it shows (`home.mjs:72-75`). So Home draws it once no feature's file `holds` it (`home.js:43`), and acts.js holds it until its section has read.
+      - **`b:opens.rs:41` is green at the stub:** its yes is index.js's `Reach`, page-index's, so it is not this row's to earn.
+      - **Lines:** v2 809, the row at +181 of +108 to +144, so it stops for its range (`demo/runs/page/2026-11-01-acts-range/NEEDS_HUMAN.md`). (d) is next.
   - **(c) The home.**
     - **`acts.js`:** the parts derived, in place of `add` pushes (`h:123`, `:204-206`, `:381-385`):
       - reads, from `GROUP`;
