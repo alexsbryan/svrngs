@@ -427,7 +427,7 @@ brackets.
     - "You’re invited over as a guest";
     - "Leave ${name}", "You left Trip.", "Groups you left", "Trip (Sam’s, since" and `p.leave`;
     - `body.screen`, "Since this screen opened", `mark`, and "3 people · 2 on now · 2 things lent".
-  - **Moves:** scene `life`'s removal, and the guests scenes. +110 to +152 [about 31 phone, `q:43`, `:161-198` 19, about 62 home].
+  - **Moves:** scene `life`'s removal, and the guests scenes. +110 to +180 (the operator widened it from +152, 2026-11-01: leave 24, the screen v1's 22 with its machine, +24 to +32; demo/runs/page/2026-10-31-members-range/NEEDS_HUMAN.md) [about 31 phone, `q:43`, `:161-198` 19, about 62 home].
 - [ ] page-join — depends [page-open] — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — coming in by a link, and making and sharing links, on both pages:
   - **Owns:** `web/v2/join.js`, `web/v2/computer.js` (from page-open), `web/v2/among.js`, `home/v2/join.js`, `home/v2/make.js`, `home/v2/links.js`, `home/v2/open.js`, `page_v2/join.rs`, `web/tests/v2/join.mjs`, `home-join.test.mjs` and `home-make.test.mjs`.
   - **(a) The phone joins** (`join.js`): `join: [unasked, asking, naming, redeeming, taken, joined]`, owning `why`.
