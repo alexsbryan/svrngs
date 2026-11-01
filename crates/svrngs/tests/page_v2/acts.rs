@@ -170,3 +170,40 @@ async fn a_stop_on_what_apps_use_is_read_again_in_place(engine: Engine) {
     );
     drop(ada);
 }
+
+in_chromium!(
+    /// **A yes in another tab is shown on `visible`** (page-acts (d)).
+    /// Ada's home page is open, her page said yes to nowhere; she says yes
+    /// to it elsewhere (its yes kept, as /to keeps it), and her page,
+    /// hidden and shown again, says in "What acts as you" that her page
+    /// opens her friends' k as her, with no reload. Watched failing on v1
+    /// (`UI` flipped), which reads /reaching once a load (acts.mjs:60
+    /// reloads it).
+    a_yes_in_another_tab_is_shown_on_visible
+);
+async fn a_yes_in_another_tab_is_shown_on_visible(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let (ada, home) = ada(dir.path(), &relay).await;
+    let hold = dir.path().join("hold");
+    let args = json!({ "home": home, "shown": "#acts summary", "press": ["#acts summary"], "hold": hold, "said": "opens your friends’ k as you. Since", "at": "#acts", "within": 30_000 });
+    let driven = tokio::spawn(drive(engine, "v2/members.mjs", args, None));
+    let shown = hold.with_extension("shown");
+    let told = tokio::time::timeout(Duration::from_secs(90), async {
+        while !shown.exists() {
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+    });
+    assert!(told.await.is_ok(), "ada's page shows what acts as her within 90 s");
+    kept_yes(&dir.path().join("reaching.json"), &label("page"));
+    std::fs::write(&hold, "").unwrap();
+    let seen = driven.await.unwrap();
+    none_wrong(
+        &[
+            (seen["went"] != true, "shown again, the yes is said"),
+            (seen["reloads"] != 0, "with no reload"),
+        ],
+        &seen,
+    );
+    drop(ada);
+}
