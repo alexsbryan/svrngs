@@ -6,16 +6,20 @@
 // traced one more line starting with `line` (ui/machine.js), or has loaded
 // again, as v1 does, and drawn "What you lend" again; one neither did in
 // 10 s is "unsettled". With `until`, it is read once `read`'s words hold
-// it too, or as it stands 30 s on, "unsettled". With `visible`, the page is then
-// hidden and shown again, as a person comes back to its tab, and read once
-// more after one more "LENDING: answered". It answers each read of
+// it too, or as it stands 30 s on, "unsettled". With `ready`, a file,
+// `read`'s words are then read into `shown`, the file written, and a line
+// `go` waited for on stdin (drive.rs `release`). With `visible`, [line,
+// until?], the page is then hidden and shown again, as a person comes back
+// to its tab, and read once more as a step is. It answers each read of
 // `read`'s words, the page's loads (1: it never reloaded; on the group's
 // page, `driving`'s own load counted), every request it sent with its
 // body, each link, and the trace.
 //
-//   node web/tests/v2/index.mjs '{"engine": ..., "home": <url> | "site": ..., "key": ..., "token": ..., "read": <selector>, "steps": [[<selector>, <value>|true|null, <line>?, <until>?], ...], "visible"?: true}'
+//   node web/tests/v2/index.mjs '{"engine": ..., "home": <url> | "site": ..., "key": ..., "token": ..., "read": <selector>, "steps": [[<selector>, <value>|true|null, <line>?, <until>?], ...], "ready"?: <file>, "visible"?: [<line>, <until>?]}'
 //
 // Exit 0 with the JSON line; 1 on anything else.
+import { writeFileSync } from 'node:fs';
+import { createInterface } from 'node:readline';
 import { driving, launch } from '../page.mjs';
 
 const args = JSON.parse(process.argv[2]);
@@ -44,8 +48,9 @@ async function run(page, ready, loaded, go) {
     return Promise.race([traced, reloaded]).then(() => 'settled', () => 'unsettled');
   }
   const holds = ([s, w]) => [...document.querySelectorAll(s)].map((e) => e.textContent).join('\n').includes(w);
+  const until = (how, w) => (w ? page.waitForFunction(holds, [args.read, w], { timeout: 30_000 }).then(() => how, () => 'unsettled') : how);
   const after = [];
-  for (const [selector, value, line, until] of args.steps) {
+  for (const [selector, value, line, words] of args.steps) {
     if (value === true) {
       await page.locator(selector).first().check({ timeout: 30_000 });
       continue;
@@ -55,20 +60,29 @@ async function run(page, ready, loaded, go) {
       continue;
     }
     let how = await settled(line, () => page.locator(selector).first().click({ timeout: 30_000 }));
-    if (until) how = await page.waitForFunction(holds, [args.read, until], { timeout: 30_000 }).then(() => how, () => 'unsettled');
+    how = await until(how, words);
     after.push({ how, words: await read() });
+  }
+  let shown = null;
+  if (args.ready) {
+    shown = await read();
+    const told = createInterface({ input: process.stdin });
+    writeFileSync(args.ready, '');
+    await new Promise((done) => told.on('line', (l) => l.includes('go') && done()));
+    told.close();
   }
   let later = null;
   if (args.visible) {
-    const how = await settled('LENDING: answered', () => page.evaluate(() => ['hidden', 'visible'].forEach((v) => {
+    const [line, words] = args.visible;
+    const how = await settled(line, () => page.evaluate(() => ['hidden', 'visible'].forEach((v) => {
       Object.defineProperty(document, 'visibilityState', { value: v, configurable: true });
       document.dispatchEvent(new Event('visibilitychange'));
     })));
-    later = { how, words: await read() };
+    later = { how: await until(how, words), words: await read() };
   }
   const links = await page.locator('a').evaluateAll((as) => as.map((a) => a.href));
   const lines = await page.evaluate(() => window.__lines ?? null);
-  return { after, later, loads, sent, links, lines };
+  return { after, shown, later, loads, sent, links, lines };
 }
 
 if (args.home) {
@@ -87,5 +101,5 @@ if (args.home) {
     await close();
   }
 } else {
-  await driving(args, ({ page }) => run(page, '#shelf button', 1, async () => {}));
+  await driving(args, ({ page }) => run(page, '#lent tr, #shelf button', 1, async () => {}));
 }

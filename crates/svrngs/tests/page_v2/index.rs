@@ -142,15 +142,20 @@ async fn a_lend_from_what_runs_here_is_in_the_index_at_once(engine: Engine) {
 }
 
 /// Ada's computer lending `shelf`, a page of its own, as `body` declares it
-/// (browser/main.rs's lend tests), and her home page's address.
-async fn lending(dir: &Path, relay: &iroh_relay::server::Server, body: Value) -> (Node, String) {
-    let (ada, home, _) = house(dir, relay).await;
+/// (browser/main.rs's lend tests), her home page's address, and the
+/// group's id.
+async fn lending(
+    dir: &Path,
+    relay: &iroh_relay::server::Server,
+    body: Value,
+) -> (Node, String, String) {
+    let (ada, home, id) = house(dir, relay).await;
     let mut body = body;
     body["port"] = json!(serving(22000, "ada's shelf").await);
     let lends = svrngs_node::lend::lends_dir(dir);
     std::fs::create_dir_all(&lends).unwrap();
     std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
-    (ada, home)
+    (ada, home, id)
 }
 
 /// What web/tests/v2/index.mjs read after step `i`, its first line.
@@ -174,7 +179,7 @@ async fn three_changes_to_a_lend_are_read_again_in_place(engine: Engine) {
     let relay = relay().await;
     let dir = tempfile::tempdir().unwrap();
     let body = json!({ "kind": "books", "limit": 1 });
-    let (ada, home) = lending(dir.path(), &relay, body).await;
+    let (ada, home, _) = lending(dir.path(), &relay, body).await;
     let press = |words: &str| {
         json!([
             format!("#lent button:has-text('{words}')"),
@@ -229,13 +234,13 @@ in_chromium!(
 async fn the_secret_stays_shown_when_the_page_is_read_again(engine: Engine) {
     let relay = relay().await;
     let dir = tempfile::tempdir().unwrap();
-    let (ada, home) = lending(dir.path(), &relay, json!({ "kind": "books" })).await;
+    let (ada, home, _) = lending(dir.path(), &relay, json!({ "kind": "books" })).await;
     let sign = json!([
         "#lent button:has-text('Sign people in with svrngs')",
         null,
         "CHANGE: signed"
     ]);
-    let args = json!({ "home": home, "read": "#lent li", "steps": [sign], "visible": true });
+    let args = json!({ "home": home, "read": "#lent li", "steps": [sign], "visible": ["LENDING: answered"] });
     let seen = drive(engine, "v2/index.mjs", args, None).await;
     let name = svrngs_node::lend::LendName::parse("shelf").unwrap();
     let secret = (svrngs_node::lend::read(dir.path(), &name).unwrap().unwrap())
@@ -280,7 +285,7 @@ in_chromium!(
 async fn why_a_number_is_refused_is_said_once(engine: Engine) {
     let relay = relay().await;
     let dir = tempfile::tempdir().unwrap();
-    let (ada, home) = lending(dir.path(), &relay, json!({ "kind": "books" })).await;
+    let (ada, home, _) = lending(dir.path(), &relay, json!({ "kind": "books" })).await;
     let press = json!([
         "#lent button:has-text('Let in this many')",
         null,
@@ -304,19 +309,37 @@ async fn why_a_number_is_refused_is_said_once(engine: Engine) {
     drop(ada);
 }
 
-/// House as `house` holds it, bo let in, and house's own folder kept,
-/// where the shelf's apps are brought (page_v2/shelf.rs `house`).
-async fn kept(dir: &Path, relay: &iroh_relay::server::Server) -> (Node, String, String) {
+/// `who`, holding the key drawn from `seed`, let into group `id` on `node`.
+fn admit(node: &Node, id: &str, who: &str, seed: u8) {
     use svrngs_node::{actor_of, Person, RailAct};
-    let (node, home, id) = house(dir, relay).await;
-    let bo = svrngs_core::tests_support::Fixture {
+    let act = svrngs_core::tests_support::Fixture {
         act: RailAct::Admit {
-            person: Person::parse("bo").unwrap(),
-            key: actor_of(&SigningKey::from_bytes(&[7; 32])),
+            person: Person::parse(who).unwrap(),
+            key: actor_of(&SigningKey::from_bytes(&[seed; 32])),
             invite: None,
         },
     };
-    node.rail().commit(&id, &bo).unwrap().unwrap();
+    node.rail().commit(id, &act).unwrap().unwrap();
+}
+
+/// Bo's phone, in house through ada's computer (page_v2/shelf.rs): the
+/// page.mjs `driving` args for group `id`, reading `read`.
+fn bo_s_phone(relay: &iroh_relay::server::Server, id: &str, read: &str) -> Value {
+    let token = svrngs_core::link::Token {
+        issuer: SigningKey::from_bytes(&[1; 32]).verifying_key(),
+        secret: [0; 16],
+        relay: Some(relay_url(relay).parse().expect("a URL")),
+    }
+    .encode();
+    let bo = hex::encode(SigningKey::from_bytes(&[7; 32]).to_bytes());
+    json!({ "site": crate::harness::site_of(crate::UI), "key": bo, "token": token, "id": id, "read": read })
+}
+
+/// House as `house` holds it, bo let in, and house's own folder kept,
+/// where the shelf's apps are brought (page_v2/shelf.rs `house`).
+async fn kept(dir: &Path, relay: &iroh_relay::server::Server) -> (Node, String, String) {
+    let (node, home, id) = house(dir, relay).await;
+    admit(&node, &id, "bo", 7);
     let folder = dir.join("house");
     std::fs::create_dir(&folder).unwrap();
     let ask = svrngs_node::folder::FolderAsk {
@@ -387,14 +410,8 @@ async fn a_bring_is_in_the_phone_s_index_with_no_reload(engine: Engine) {
     let relay = relay().await;
     let dir = tempfile::tempdir().unwrap();
     let (ada, _, id) = kept(dir.path(), &relay).await;
-    let token = svrngs_core::link::Token {
-        issuer: SigningKey::from_bytes(&[1; 32]).verifying_key(),
-        secret: [0; 16],
-        relay: Some(relay_url(&relay).parse().expect("a URL")),
-    }
-    .encode();
-    let bo = hex::encode(SigningKey::from_bytes(&[7; 32]).to_bytes());
-    let steps = json!([
+    let mut args = bo_s_phone(&relay, &id, "#lent tr");
+    args["steps"] = json!([
         ["#shelf label:has-text('Money') input", true],
         [
             "#shelf button:has-text('Bring the ticked ones')",
@@ -403,7 +420,6 @@ async fn a_bring_is_in_the_phone_s_index_with_no_reload(engine: Engine) {
             "Money"
         ]
     ]);
-    let args = json!({ "site": crate::harness::site_of(crate::UI), "key": bo, "token": token, "id": id, "read": "#lent tr", "steps": steps });
     let seen = drive(engine, "v2/index.mjs", args, None).await;
     let wrong: Vec<&str> = [
         (
@@ -421,4 +437,105 @@ async fn a_bring_is_in_the_phone_s_index_with_no_reload(engine: Engine) {
     .collect();
     assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
     drop(ada);
+}
+
+in_webkit!(
+    /// **A lend filled while shown reads "Full now." on coming back**
+    /// (page-index (c)). Ada lends `shelf` to one person at once; bo's
+    /// phone shows it, open to him. While it is shown, cy opens it from
+    /// his own computer, through ada's door, so it is full (door/limit.rs
+    /// `ask`, counted for `WINDOW`); bo's phone is hidden and shown again,
+    /// as he comes back to its tab, and reads `shelf` "Full now.", with
+    /// the page loaded once. Watched failing on v1 (`UI` flipped).
+    a_lend_filled_while_shown_reads_full_now_on_coming_back
+);
+async fn a_lend_filled_while_shown_reads_full_now_on_coming_back(engine: Engine) {
+    use svrngs_node::iroh::Contact;
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let body = json!({ "kind": "books", "limit": 1 });
+    let (ada, _, id) = lending(dir.path(), &relay, body).await;
+    admit(&ada, &id, "bo", 7);
+    admit(&ada, &id, "cy", 8);
+    let ready = dir.path().join("ready");
+    let mut args = bo_s_phone(&relay, &id, "#lent tr");
+    args["steps"] = json!([]);
+    args["ready"] = json!(ready);
+    args["visible"] = json!(["PAGE: read", "Full now."]);
+    let (go, release) = tokio::sync::oneshot::channel();
+    let phone = tokio::spawn(drive(engine, "v2/index.mjs", args, Some(release)));
+    tokio::time::timeout(Duration::from_secs(60), async {
+        while !ready.exists() {
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+    })
+    .await
+    .expect("bo's phone shows what house lends");
+    // Cy's computer, dialling ada's over loopback, which the door counts
+    // as away (network.rs `guess`).
+    let cy_dir = tempfile::tempdir().unwrap();
+    let cy = Node::start(
+        cy_dir.path().to_path_buf(),
+        SigningKey::from_bytes(&[8; 32]),
+        &RelayConfig {
+            relay_urls: Vec::new(),
+            n0_services: false,
+            loopback_only: true,
+        },
+        |_| Ok(None),
+        "127.0.0.1:0".parse().unwrap(),
+    )
+    .await
+    .expect("cy's node starts");
+    let to = Contact {
+        key: ada.endpoint().id(),
+        relay_url: None,
+        iroh_direct_addrs: (ada.endpoint().bound_sockets().into_iter())
+            .map(|mut a| {
+                if a.ip().is_unspecified() {
+                    a.set_ip(
+                        if a.is_ipv4() { "127.0.0.1" } else { "::1" }
+                            .parse()
+                            .unwrap(),
+                    );
+                }
+                a
+            })
+            .collect(),
+    };
+    let base = cy.transport().spliced(&to).await.expect("cy reaches ada");
+    let opened = reqwest::Client::builder()
+        .no_proxy()
+        .build()
+        .unwrap()
+        .get(format!("{base}/lend/shelf/"))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(
+        opened.status(),
+        200,
+        "cy opens shelf: {:?}",
+        opened.text().await
+    );
+    go.send(()).unwrap();
+    let seen = phone.await.unwrap();
+    let shown = seen["shown"].to_string();
+    let later = seen["later"]["words"].to_string();
+    let wrong: Vec<&str> = [
+        (
+            !shown.contains("shelf") || shown.contains("Full now."),
+            "shelf shown, open to bo",
+        ),
+        (
+            seen["later"]["how"] != "settled" || !later.contains("Full now."),
+            "full now, on coming back",
+        ),
+        (seen["loads"] != 1, "with no reload"),
+    ]
+    .into_iter()
+    .filter_map(|(failed, what)| failed.then_some(what))
+    .collect();
+    assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
+    drop((ada, cy));
 }
