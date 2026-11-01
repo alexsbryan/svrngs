@@ -123,3 +123,48 @@ async fn a_visit_ended_while_open_drops_on_the_phone(engine: Engine) {
     assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
     drop(ada);
 }
+
+in_chromium!(
+    /// **A guest's Stop on the home page ends the visit with no reload**
+    /// (page-members (b)). Sam is ada's guest for an hour; ada's home page
+    /// lists Sam under "Who you have over"; ada presses Stop, and once
+    /// the Stop's own time has come the groups are read again and Sam is
+    /// listed nowhere, where v1 reloaded the page (home.js:163). Watched
+    /// failing on v1 (`UI` flipped).
+    a_guest_s_stop_ends_the_visit_with_no_reload
+);
+async fn a_guest_s_stop_ends_the_visit_with_no_reload(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let (ada, id, _) = house(dir.path(), &relay).await;
+    sam_visits(&ada, &id, 3600);
+    let home = format!("http://svrngs.localhost:{}/", ada.api_addr().port());
+    let args = json!({ "home": home, "shown": "#home .yours li", "press": ["#home .yours button"], "gone": "#home .yours li, #home .visiting li", "within": 20_000 });
+    let seen = drive(engine, "v2/members.mjs", args, None).await;
+    let shown = seen["shown"].as_array().cloned().unwrap_or_default();
+    let wrong: Vec<&str> = [
+        (
+            !(shown.len() == 1
+                && shown[0].as_str().is_some_and(|l| {
+                    l.starts_with("Sam, until ") && l.ends_with("Stop Sam’s visit")
+                })),
+            "Sam is listed under Who you have over, with Stop",
+        ),
+        (seen["went"] != true, "Sam is listed nowhere once stopped"),
+        (seen["reloads"] != 0, "with no reload"),
+        (
+            traced(&seen, "VISITS: waited") != 1,
+            "the Stop waited for its time, then read again",
+        ),
+    ]
+    .into_iter()
+    .filter_map(|(failed, what)| failed.then_some(what))
+    .collect();
+    assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
+    let stopped = ada.rail().register(&id).unwrap();
+    assert!(
+        stopped.visits.values().all(|g| g.stopped.is_some()),
+        "{stopped:#?}"
+    );
+    drop(ada);
+}
