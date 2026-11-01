@@ -5,14 +5,15 @@
 // `tab` is the group's one lock, held by one tab of this browser (#176);
 // `list` its read, of the first computer to answer, then the next (#205).
 // What the address asks is decided here; what it opens elsewhere is sent to
-// its flow (`visit`, `join`, `among`, `offer`; `cold` and `opens` are
-// page-join's, which no flow takes yet, refused as nothing here takes them).
+// its flow (`visit`, `join`, `among`, `cold`, `opens`, `offer`), and what
+// `#open=` names, once the group is read (`wanted`).
 // The key and the endpoint are the edge's (`io`), never in state.
 import { html } from '../ui/view.js?v=__VERSION__';
 import { ask, go, late, no } from '../ui/machine.js?v=__VERSION__';
 import { Act } from '../ui/parts.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
 import { alias, apart, called, once, whose } from '../question.js?v=__VERSION__';
+import { offered } from './among.js?v=__VERSION__';
 
 export const owns = ['group', 'wants', 'joined', 'via', 'stale', 'lent', 'people', 'shelf', 'unanswered', 'unheard', 'refused', 'behind', 'removals', 'visiting', 'changed', 'me'];
 export const states = { tab: ['unheld', 'holding', 'elsewhere', 'taking'], list: ['unasked', 'reading', 'read', 'unread'] };
@@ -72,7 +73,8 @@ export const takes = {
     return go(s, { list: 'read' }, { group, via: m.via, stale: '', lent, people, shelf, unanswered, unheard, refused, behind, removals, visiting, changed, me: m.me }, { run: 'keep', group, failed: 'failed' });
   },
   unread: (s, m) => (late(s, 'list', m.n) ? no(s, late(s, 'list', m.n)) : failing(s, m.said, m.said ?? m.why)),
-  kept: (s) => go(s, {}),
+  // Read, what `#open=` names is sent to be named (among.js `wanted`).
+  kept: (s) => go(s, {}, {}, ...(s.wants?.open ? [send('wanted', { wants: s.wants })] : [])),
 };
 
 export const heading = { elsewhere: (s) => s.at.tab === 'elsewhere' && [`You have ${titled(s.group)} open in another tab`, 'good'],
@@ -81,8 +83,9 @@ export const heading = { elsewhere: (s) => s.at.tab === 'elsewhere' && [`You hav
 // every computer did (a:578-581).
 const unlisted = (s) => Object.entries(HOW).flatMap(([k, why]) => s[k].map((p) => `${called(s.people, p.person_key) ?? p.person ?? p}’s computer ${why}.`));
 export const response = { enter: (s, u = s.lent && unlisted(s)) => s.lent && [...(s.stale ? [`What ${s.group.name} lends cannot be read again just now: ${s.stale}`] : []), ...(s.lent.length || u.length ? u : [`Nobody in ${s.group.name} lends anything yet.`])] };
-// The group open in another tab, and taking it here (a:403-410), drawn in #door.
-export const chosen = (s, send) => s.at.tab === 'elsewhere' && html`<p>One tab at a time reaches ${s.group.name}. Open it here, and the other tab stops reaching it.</p><${Act} words="Open it here" on=${{ type: 'take' }} send=${send} />`;
+// The group open in another tab, and taking it here (a:403-410), drawn in
+// #door, as is the group to open `#open=` in, when more than one lends it.
+export const chosen = (s, send) => offered(s, send) || s.at.tab === 'elsewhere' && html`<p>One tab at a time reaches ${s.group.name}. Open it here, and the other tab stops reaching it.</p><${Act} words="Open it here" on=${{ type: 'take' }} send=${send} />`;
 
 // The edge: the wasm, imported here only once app.js has run its init,
 // the key unsealed and the one endpoint bound as the person (a:427-428),

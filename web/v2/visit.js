@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // A guest's visit (page-members (c); web/app.js `visit`, :198-226;
 // GUESTS §5, "How a visit is made"): a link a member made for a guest,
-// `#visit=<token>`. The guest's name is asked once, in #join (`naming`,
-// which web/v2/join.js's place draws until page-join's NameForm takes a
-// guest's), a key made fresh for this visit, never one kept for a group
+// `#visit=<token>`. The guest's name is asked once, in #join, by
+// web/v2/join.js's NameForm, which sends it here (`guest named`), a key made fresh for this visit, never one kept for a group
 // (§3.9), and the link redeemed at the member's computer, which writes the
 // visit. It is kept apart from every group (store.js `keepVisit`), so the
 // link opened again shows it again, or says it has ended. What the visit
@@ -12,18 +11,18 @@
 // has ended. The key never enters state: the edge holds it.
 import { html } from '../ui/view.js?v=__VERSION__';
 import { go, no } from '../ui/machine.js?v=__VERSION__';
-import { Field, Row } from '../ui/parts.js?v=__VERSION__';
+import { Row } from '../ui/parts.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
 import { named } from '../question.js?v=__VERSION__';
 import { PASS_LIFE, handing } from './index.js?v=__VERSION__';
 
-export const owns = ['invited', 'guest', 'stay'];
+export const owns = ['invited', 'stay'];
 export const states = { visit: ['none', 'naming', 'redeeming', 'on', 'ended'] };
 // Each take in the states it is asked in, else refused saying where the visit is.
 const at = (regions, f) => (s, m) => (regions.includes(s.at.visit) ? f(s, m) : no(s, `the visit is ${s.at.visit}`));
 export const takes = {
-  visit: at(['none'], (s, { token }) => go(s, {}, { invited: token }, { run: 'recall', token, failed: 'failed' })), unkept: at(['none'], (s) => go(s, { visit: 'naming' }, { guest: '' })),
-  'typed name': at(['naming'], (s, { value }) => go(s, {}, { guest: value })), named: at(['naming'], (s) => go(s, { visit: 'redeeming' }, {}, { run: 'redeem', token: s.invited, guest: s.guest, failed: 'failed' })),
+  visit: at(['none'], (s, { token }) => go(s, {}, { invited: token }, { run: 'recall', token, failed: 'failed' })), unkept: at(['none'], (s) => go(s, { visit: 'naming' })),
+  'guest named': at(['naming'], (s, { guest }) => go(s, { visit: 'redeeming' }, {}, { run: 'redeem', token: s.invited, guest, failed: 'failed' })),
   // Whether it has ended is the edge's, which alone reads the clock; one
   // that has not ends on its timer (`over`), and its lends go from the
   // page with it, where web/app.js listed them until the link was opened
@@ -35,9 +34,6 @@ export const takes = {
 const host = (s) => s.stay?.host, until = (s) => s.stay && new Date(s.stay.until * 1000).toLocaleString();
 export const heading = { visit: (s) => ({ naming: ['You’re invited over as a guest'], redeeming: ['Opening your link…'], on: [`You’re ${host(s)}’s guest until ${until(s)}`, 'good'], ended: [`Your visit as ${host(s)}’s guest ended ${until(s)}.`, 'bad'] })[s.at.visit] };
 export const response = { visit: (s) => s.at.visit === 'on' && !s.stay.lent.length && [`${host(s)} lends nothing yet.`] };
-// The guest's name, asked as web/app.js `askName` asks it (:124-146), with
-// no Home Screen line, as a visit is kept apart from every group.
-export const naming = (s, send) => s.at.visit === 'naming' && html`<form id="join" onSubmit=${(e) => (e.preventDefault(), send({ type: 'named' }))}><p id="keep" hidden></p><${Field} shape="for" id="name" words=${html`What’s your name? Everyone in <span id="group">the group you’re visiting</span> sees it.`} value=${s.guest} attrs=${{ autocomplete: 'name', maxlength: 64, required: true }} send=${send} /><p id="why" class="bad"></p><button>Join</button></form>`;
 export const listed = (s, send) => s.at.visit === 'on' && s.stay.lent.map((l) => html`<${Row} key=${l.label} cells=${[html`<button onClick=${() => send({ type: 'call', label: l.label })}>${named(l)}</button>`]} />`);
 
 // The edge: the key, made here and kept sealed with the visit, or unsealed

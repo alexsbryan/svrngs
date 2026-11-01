@@ -41,8 +41,8 @@ const GROUP = (flows) => ({
 // unread, or the person removed, said and nothing read (home.js:113-114).
 export const Group = ({ g, ...props }) => ((name) =>
   html`<section data-colour=${[...g.id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 12, 0)}><h2>${g.name ?? 'A group whose name this computer cannot read'}${g.made && html`<small> (${whose(g.made)})</small>`}</h2>${g.removed === null ? html`<p>This computer could not read who is in ${name}.</p>` : g.removed ? html`<p>You are no longer in ${name}. What you already have stays on this computer; nothing new reaches it.</p>` : html`<${Read} g=${g} ...${props} />`}</section>`)(g.name ?? 'this group');
-function Read({ g, round, places, flows, home, me }) {
+function Read({ g, round, places, flows, home, me, joined }) {
   const [s, send] = useMachine(() => machine('GROUP', GROUP(flows), { at: { people: 'reading', lends: 'reading' }, id: g.id }));
   useEffect(() => send({ type: round.type }), [round]);
-  return html`${PLACES.map((k) => places[k] && html`<${places[k]} g=${g} s=${s} send=${send} home=${home} me=${me} />`)}${(s.at.people === 'unread' || s.at.lends === 'unread') && html`<p>This computer cannot read what ${g.name ?? 'this group'} lends: ${s.why}</p>`}`;
+  return html`${PLACES.map((k) => places[k] && html`<${places[k]} g=${g} s=${s} send=${send} home=${home} me=${me} joined=${joined} />`)}${(s.at.people === 'unread' || s.at.lends === 'unread') && html`<p>This computer cannot read what ${g.name ?? 'this group'} lends: ${s.why}</p>`}`;
 }
