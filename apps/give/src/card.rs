@@ -125,8 +125,32 @@ impl Image {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Mount {
     pub volume: Option<String>,
-    pub target: String,
+    pub target: ContainerPath,
     pub read_only: bool,
+}
+
+/// A container path that cannot introduce another field in Podman's mount syntax.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ContainerPath(String);
+
+impl ContainerPath {
+    fn parse(raw: String, at: &str) -> Result<Self, Refused> {
+        if !raw.starts_with('/')
+            || raw.contains([':', ',', '\\'])
+            || raw.chars().any(char::is_control)
+            || raw.split('/').any(|p| matches!(p, "." | ".."))
+        {
+            return refuse(
+                at,
+                "a mount target is an absolute container path, with no :, comma, backslash or climbing part",
+            );
+        }
+        Ok(Self(raw))
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
 }
 
 /// Compose's `healthcheck`, with compose's defaults where the card is silent.
@@ -257,6 +281,14 @@ fn read_volumes(v: Option<&Value>) -> Result<Vec<String>, Refused> {
     let mut out = Vec::new();
     for (name, options) in mapping(v, "volumes")? {
         let name = string(name, "volumes")?;
+        if !name.as_bytes().first().is_some_and(u8::is_ascii_alphanumeric)
+            || !name.bytes().all(|b| b.is_ascii_alphanumeric() || b"._-".contains(&b))
+        {
+            return refuse(
+                &format!("volumes.{name}"),
+                "a volume name uses letters, digits, dot, - and _, beginning with a letter or digit",
+            );
+        }
         let empty = match options {
             Value::Null => true,
             Value::Mapping(m) => m.is_empty(),
@@ -363,6 +395,13 @@ fn read_service(name: &str, v: &Value, volumes: &[String]) -> Result<Service, Re
 
 /// `repo[:tag]@sha256:<64 hex>`.
 fn pinned(image: &str) -> Result<(), String> {
+    if image.starts_with('-')
+        || !image
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b"._-/:@".contains(&b))
+    {
+        return Err("an image is a registry reference, never an option or whitespace".into());
+    }
     let digest = image.rsplit_once("@sha256:").map(|(_, d)| d);
     match digest {
         Some(d) if d.len() == 64 && d.bytes().all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase()) => Ok(()),
@@ -405,6 +444,7 @@ fn read_mount(v: &Value, at: &str, volumes: &[String]) -> Result<Mount, Refused>
         }
         _ => return refuse(at, "a mount is `volume:/path` or a mapping"),
     };
+    let target = ContainerPath::parse(target, at)?;
     match source {
         Some(s) if s.starts_with(['/', '.', '~']) || s.contains('/') => refuse(at, BIND),
         Some(s) if !volumes.contains(&s) => refuse(at, format!("names {s}, which `volumes` does not declare")),

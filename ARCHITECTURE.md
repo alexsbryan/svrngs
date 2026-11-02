@@ -787,6 +787,9 @@ after U3, and is not built: nothing runs it (#196).
 links no svrngs crate (`tests/surface.rs`) and reaches svrngs by the record
 API, `svrngs share` and `unshare`, the synced folder and its carried page
 alone. `src/card.rs` reads a card once, each refusal naming its field;
+its privately constructed `ContainerPath` rejects mount option/source delimiters
+and path traversal. `runtime.rs` emits explicit `--mount type=volume` and a
+`--` separator before the image, so a target cannot become a host mount.
 `src/runtime.rs` starts, checks, snapshots, restores and stops one on
 Podman's command line (`src/podman.rs`, `src/machine.rs` for a Mac's
 machine), naming no svrngs type; `src/check.rs` is `give check`. `fold/`

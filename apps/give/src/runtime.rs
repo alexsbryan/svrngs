@@ -213,11 +213,15 @@ impl<'a> App<'a> {
             let source = m
                 .volume
                 .as_ref()
-                .map(|v| format!("{}:", self.volume(v)))
+                .map(|v| format!(",source={}", self.volume(v)))
                 .unwrap_or_default();
             a.extend([
-                "--volume".into(),
-                format!("{source}{}{}", m.target, if m.read_only { ":ro" } else { "" }),
+                "--mount".into(),
+                format!(
+                    "type=volume{source},destination={}{}",
+                    m.target.as_str(),
+                    if m.read_only { ",readonly" } else { "" }
+                ),
             ]);
         }
         if let Some(h) = &s.health {
@@ -253,7 +257,7 @@ impl<'a> App<'a> {
         if let Some(p) = &s.platform {
             a.extend(["--platform".into(), p.clone()]);
         }
-        a.push(s.image.as_str().into());
+        a.extend(["--".into(), s.image.as_str().into()]);
         a.extend(s.command.iter().flatten().cloned());
         a
     }

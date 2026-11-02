@@ -30,6 +30,9 @@ compose's own `healthcheck`. Give refuses five fields, each by name:
 `build`, `privileged`, a custom network, host networking, and a bind mount
 from the host. Any field of compose that give does not run is refused too,
 never dropped.
+Mount targets are parsed absolute container paths, with no option delimiters
+or climbing parts, and emitted as explicit `type=volume` mounts. Neither a
+mapping's target nor a volume name can introduce a host bind at serialization.
 
 ## Checking a card
 

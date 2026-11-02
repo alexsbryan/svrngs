@@ -92,6 +92,26 @@ fn what_could_reach_the_computer_is_refused_by_name() {
 }
 
 #[test]
+fn mount_targets_cannot_be_reinterpreted_as_host_sources_or_options() {
+    for target in ["/Users:/escape", "/data,src=/Users", "relative", "/a/../data", "/a\\b"] {
+        let mount = format!("[{{type: volume, target: '{target}'}}]");
+        let (field, _) = refused(&with("[\"data:/data\"]", &mount));
+        assert_eq!(field, "services.web.volumes", "{target}");
+    }
+    for volume in ["data:opts", "data,src=host", "/host"] {
+        let card = with("data: {}", &format!("'{volume}': {{}}"));
+        assert_eq!(refused(&card).0, format!("volumes.{volume}"));
+    }
+    let card = Card::parse(&with(
+        "[\"data:/data\"]",
+        "[{type: volume, target: /data, read_only: true}]",
+    ))
+    .unwrap();
+    assert!(card.services[0].mounts[0].volume.is_none());
+    assert!(card.services[0].mounts[0].read_only);
+}
+
+#[test]
 fn a_card_runs_only_what_it_can_say() {
     let cases = [
         (
