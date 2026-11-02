@@ -134,9 +134,13 @@ def listed(who, name):
 
 
 def fetch(who, origin, words):
-    """GET / at the lend's origin on `who`'s own listener, as a browser sends it."""
+    """GET / at the lend's origin on `who`'s own listener, as a program on
+    that computer asks it: with the computer's token (svrngs-node
+    origin.rs:164-165; take 1 sent none, and every fetch was refused at
+    origin.rs:189, its README says)."""
     host = re.match(r"https?://([^/]+)/", origin)[1]
-    status, body = http(f"http://127.0.0.1:{base(who).rsplit(':', 1)[1]}/", {"Host": host})
+    token = (data(who) / "token").read_text().strip()
+    status, body = http(f"http://127.0.0.1:{base(who).rsplit(':', 1)[1]}/", {"Host": host, "Authorization": f"Bearer {token}"})
     return status == 200 and words in body
 
 
@@ -148,6 +152,16 @@ def lend_seen(who, name, words, bound, since):
     _, said = lends(who)
     return {"listed_ms": at_listed, "fetched_ms": at_fetched,
             "unlisted": said and {k: said.get(k) for k in ("unanswered", "unheard", "refused", "older")}}
+
+
+def each(fn, whos):
+    """fn(who) for every one of `whos` at once, so no wait eats another's
+    bound (take 1 waited on them one after another from one start)."""
+    got = {}
+    ts = [threading.Thread(target=lambda w=w: got.__setitem__(w, fn(w))) for w in whos]
+    for t in ts: t.start()
+    for t in ts: t.join()
+    return {w: got.get(w) for w in whos}
 
 
 def joined(out):
@@ -275,6 +289,21 @@ def first_round(path, since, reached):
     return None
 
 
+def bare_dials(ls):
+    """Each dial of a bare key (svrngs-node iroh.rs:283-289): ms to its
+    "a dial, answered or not" line for that peer, and that line's error."""
+    out = []
+    for i, l in enumerate(ls):
+        m = re.search(r"a bare key — dialled through.*?peer=(\w+)", l)
+        if not (m and at(l)): continue
+        for l2 in ls[i + 1:]:
+            if "a dial, answered or not" in l2 and f"peer={m[1]}" in l2 and at(l2):
+                e = re.search(r"error=(.*)$", l2)
+                out.append({"peer": m[1], "ms": round((at(l2) - at(l)) * 1000, 1), "error": e and e[1][:160]})
+                break
+    return out
+
+
 def read_trace(path):
     ls = lines_of(path)
     def pairs(begin, end, key=None):
@@ -307,6 +336,7 @@ def read_trace(path):
         "lookup_failed": len(find("Address Lookup failed")),
         "bare_key_dials": [l[-260:] for l in find("a bare key — dialled through")][:5],
         "bare_key_count": len(find("a bare key — dialled through")),
+        "bare_key_dial_ms": bare_dials(ls),
         "no_relay_named": len(find("the group names no relay for this computer")),
         "datagram_refused": len(find("failed to send datagram")),
         "folder_fetched": len(find("folder: fetched, verified")),
@@ -359,12 +389,13 @@ def main():
 
         # 3. A file of Ana's.
         want1, t = put_file("ana", "before.bin")
-        summary["file_before"] = {w: timed(lambda: arrived(w, "before.bin", want1), 60, t) for w in ("sam", "alex")}
+        summary["file_before"] = each(lambda w: timed(lambda: arrived(w, "before.bin", want1), 60, t), ("sam", "alex"))
         say("file-before", **summary["file_before"])
 
         # 4. Ana's lend.
         summary["share_notes"], t = share("ana", notes, "notes")
-        summary["notes_before"] = {w: lend_seen(w, "notes", "Ana's notes", 60, t) for w in ("sam", "alex")}
+        summary["notes_before"] = each(lambda w: lend_seen(w, "notes", "Ana's notes", 60, t), ("ana", "sam", "alex"))
+        if not summary["notes_before"]["ana"]["fetched_ms"]: sys.exit("Ana's own lend not fetched on her own computer: the fetch is not an instrument")
         say("notes-before", **summary["notes_before"])
 
         # 7. The cold restart: every computer, then the relay, Ctrl-C.
@@ -376,13 +407,13 @@ def main():
         t_start = {}
         for w in ("sam", "ana", "alex"):
             t_start[w], _ = start(w)
-        summary["restart"] = {"api_ms": {w: timed(lambda: gid(w) == GID, 60, t_start[w]) for w in t_start}}
+        summary["restart"] = {"api_ms": each(lambda w: timed(lambda: gid(w) == GID, 60, t_start[w]), list(t_start))}
         say("restart-api", **summary["restart"]["api_ms"])
         # 8. Ana's lend, as it was, on the others; a file of Alex's.
-        summary["restart"]["notes"] = {w: lend_seen(w, "notes", "Ana's notes", 120, t_start[w]) for w in ("sam", "alex")}
+        summary["restart"]["notes"] = each(lambda w: lend_seen(w, "notes", "Ana's notes", 120, t_start[w]), ("sam", "alex"))
         say("restart-notes", **summary["restart"]["notes"])
         want2, t = put_file("alex", "after.bin")
-        summary["restart"]["file_after"] = {w: timed(lambda: arrived(w, "after.bin", want2), 120, t) for w in ("sam", "ana")}
+        summary["restart"]["file_after"] = each(lambda w: timed(lambda: arrived(w, "after.bin", want2), 120, t), ("sam", "ana"))
         say("restart-file", **summary["restart"]["file_after"])
         # Each first round reaching both others, from the trace, waited for.
         log_of = lambda w: W / "logs" / f"{w}-{started[w]}.log"
@@ -393,7 +424,7 @@ def main():
 
         # 9. A new lend, Alex's.
         summary["share_board"], t = share("alex", board, "board")
-        summary["board"] = {w: lend_seen(w, "board", "Alex's board", 60, t) for w in ("sam", "ana")}
+        summary["board"] = each(lambda w: lend_seen(w, "board", "Alex's board", 60, t), ("sam", "ana"))
         say("board", **summary["board"])
 
         # 10. Dee, by a link made after the restart.
@@ -408,9 +439,10 @@ def main():
             t_in = time.time()
             dee = {"joined_ms": round((t_in - t) * 1000) if said else None, "said": said and said[0]}
             if said:
-                dee["notes"] = lend_seen("dee", "notes", "Ana's notes", 60, t_in)
-                dee["board"] = lend_seen("dee", "board", "Alex's board", 60, t_in)
-                dee["files"] = {n: timed(lambda: arrived("dee", n, h), 60, t_in) for n, h in (("before.bin", want1), ("after.bin", want2))}
+                seen = each(lambda n: lend_seen("dee", n, {"notes": "Ana's notes", "board": "Alex's board"}[n], 60, t_in), ("notes", "board"))
+                dee.update(seen)
+                hashes = {"before.bin": want1, "after.bin": want2}
+                dee["files"] = each(lambda n: timed(lambda: arrived("dee", n, hashes[n]), 60, t_in), list(hashes))
             else:
                 dee["out"] = redact(o.read_text()[-600:])
             summary["dee"] = dee; say("dee", **dee)
