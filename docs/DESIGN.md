@@ -1133,8 +1133,13 @@ iroh being relay-only, so a group need not lean on anyone's: `svrngs relay
 computers that dial it are built with — at `https://<name>/`, on TCP 443 and
 80 and QUIC address discovery on UDP 7842 (`crates/svrngs/src/relay.rs`). Its
 certificate is Let's Encrypt's, asked and renewed by the relay itself and
-kept in `<data dir>/relay`; `--staging` tries a name first. A name, never a
-bare address: iroh-relay's ACME client orders DNS names alone. By default it
+kept in `<data dir>/relay`; `--staging` tries a name first. HTTPS at a name,
+never at a bare address: iroh-relay's ACME client orders DNS names alone. On
+a local network with no internet, where no certificate can be had, an
+unlisted `svrngs relay --at <address:port>` serves the same relay over plain
+HTTP with no certificate, as the tests do; what crosses it is still iroh's
+end-to-end encrypted QUIC, a phone's page cannot use it (a browser refuses
+plain HTTP from an HTTPS page), and it admits as below. By default it
 lets through only the computers and phones that stand in a group its
 computer holds, read from the record on disk and asked again on each
 connection, each refusal traced; a computer in no group is refused the
