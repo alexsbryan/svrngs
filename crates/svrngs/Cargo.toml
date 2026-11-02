@@ -40,14 +40,6 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 [target.'cfg(target_env = "musl")'.dependencies]
 mimalloc = { version = "0.1.52", default-features = false }
 
-[features]
-# The home's v2 page, chosen by `--ui v2` (cli.rs), in a test build only:
-# svrngs-node's test support, which only a test asks of a node. A test's
-# binary carries it only when its run names it (`--features
-# svrngs/test-support`), since dev-dependencies' features never reach a
-# bin; no release names it (web/tests/release.test.mjs).
-test-support = ["svrngs-node/test-support"]
-
 [dev-dependencies]
 tempfile = "3"
 # join_by_link.rs dials as a stranger, as svrngs-node's own tests do.
@@ -79,12 +71,12 @@ name = "scenes"
 path = "tests/scenes/main.rs"
 test = false
 
-# The v2-only page tests (ralph/next/page/CHARTER.md, "What is settled"
-# 6): run once, by name, in scripts/check.sh's "page v2" step, with this
-# crate's test-support, until page-switchover.
+# The pages' own tests, one module a feature (ralph/next/page/CHARTER.md,
+# "What is settled" 6): run once, by name, in scripts/check.sh's "pages"
+# step.
 [[test]]
-name = "page_v2"
-path = "tests/page_v2/main.rs"
+name = "pages"
+path = "tests/pages/main.rs"
 test = false
 
 # The worlds of svrngs's xenia scenes (demo/xenia/README.md): run one at a

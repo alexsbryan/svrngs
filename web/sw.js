@@ -20,8 +20,10 @@ const CACHE = store.CACHE;
 // Relative to this file, so the page works wherever an origin serves it;
 // the directory's trailing slash is what makes `./` the page. The wasm is
 // not here: the page keeps it in this cache when it first fetches it
-// (store.js `runtime`, u4-9).
-const SHELL = ['./', './app.js?v=__VERSION__', './store.js?v=__VERSION__', './question.js?v=__VERSION__', './look.css?v=__VERSION__', './wasm/svrngs_web.js?v=__VERSION__'];
+// (store.js `runtime`, u4-9). Each module the page loads, app.js and the
+// rest, is the build's to add, from what it copied (scripts/build-web.sh),
+// so none is listed by hand.
+const SHELL = ['./', './look.css?v=__VERSION__', './wasm/svrngs_web.js?v=__VERSION__'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

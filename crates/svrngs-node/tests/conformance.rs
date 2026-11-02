@@ -74,7 +74,6 @@ async fn start(dir: &Path, relay: &Server, me: u8) -> Node {
     )
     .await
     .expect("a node starts");
-    let node = harness::with_ui(node).await;
     let seed = Roster::new(
         [(Person::parse("sam").unwrap(), vec![actor_of(&signing(SAM))])]
             .into_iter()

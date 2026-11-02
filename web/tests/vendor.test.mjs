@@ -1,4 +1,4 @@
-// The pages' v2 libraries, vendored (page-scaffold (b); web/vendor/README.md):
+// The pages' libraries, vendored (page-scaffold (b); web/vendor/README.md):
 // Preact 11.1.1 and htm 3.1.1, each file the bytes the README pins, with
 // its two edits and nothing else, and the three loading together under
 // node as one Preact.

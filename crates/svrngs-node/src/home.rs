@@ -80,11 +80,6 @@ const UNCHANGED: &str = "that cannot be changed on this computer";
 
 const POLICY: &str = "default-src 'self'; frame-ancestors 'none'";
 
-/// The home's v2 page, beside v1 until the switchover, in a test build only.
-#[cfg(feature = "test-support")]
-#[path = "home/v2/serve.rs"]
-pub mod v2;
-
 /// When a person joined, as the page says it (home.js `people`) and
 /// `svrngs remove --joined` takes it: this computer's time to the second
 /// with its offset, so the hour a fall-back night repeats reads back to one
@@ -92,16 +87,21 @@ pub mod v2;
 /// it by hand.
 pub const WHEN: &str = "%Y-%m-%d %H:%M:%S %z";
 
-/// The home page's files, one table of each one's path, type and body, as
-/// built in: its one module; svrngs's question and what apps use, in the
-/// one wording the group's page loads too (`scripts/build-web.sh` gives it
-/// the same file); its look, svrngs's one look, a file of its own since its
-/// policy runs no inline style, which the group's page is given too; and
-/// the tab's icon, the svrngs mark's small cut, from its one home
-/// (docs/brand/).
+/// The home page's files, as built in: one table of each one's path, type
+/// and body, its root module; svrngs's words, in the one wording the
+/// group's page loads too (`scripts/build-web.sh` gives it the same file);
+/// its look, svrngs's one look, a file of its own since its policy runs no
+/// inline style, which the group's page is given too; and the tab's icon,
+/// the svrngs mark's small cut, from its one home (docs/brand/). Then each
+/// module the root imports, by name under its directory: a flow's at
+/// `/page/`, the parts both pages draw with at `/ui/`, and the vendored
+/// Preact and htm at `/vendor/` (web/vendor/README.md). A path no name
+/// makes is 404, so nothing beside these files is reached
+/// (tests/home.rs, `the_home_page_s_modules_are_served_each_as_its_file`).
 macro_rules! served {
-    ($($path:literal $kind:literal $body:literal)*) => {
+    ($($path:literal $kind:literal $body:literal)* $(; $at:literal $dir:literal [$($name:literal)*])*) => {
         Router::new()$(.route($path, get(|| async { ([(header::CONTENT_TYPE, $kind)], include_str!($body)) })))*
+            $($(.route(concat!($at, $name, ".js"), get(|| async { ([(header::CONTENT_TYPE, "text/javascript")], include_str!(concat!($dir, $name, ".js"))) })))*)*
     };
 }
 
@@ -133,7 +133,10 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
         "/home.js" "text/javascript" "home/home.js"
         "/question.js" "text/javascript" "home/question.js"
         "/look.css" "text/css" "home/look.css"
-        "/favicon.svg" "image/svg+xml" "../../../docs/brand/favicon.svg"
+        "/favicon.svg" "image/svg+xml" "../../../docs/brand/favicon.svg";
+        "/page/" "home/page/" ["acts" "ask" "door" "group" "index" "join" "leave" "lending" "links" "make" "open" "play" "running" "screen" "shelf" "visits" "wifi"];
+        "/ui/" "home/ui/" ["acts" "changes" "copy" "door" "kit" "machine" "parts" "shelf" "trace" "uses" "view" "visitors"];
+        "/vendor/" "../../../web/vendor/" ["hooks" "htm" "preact"]
     }
     .route("/", get(page))
     .route("/ask", get(page))
@@ -159,8 +162,6 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
     .merge(crate::removal::router(at.clone()))
     .merge(crate::room::route::router(at.clone()))
     .merge(crate::play::router(at.clone()));
-    #[cfg(feature = "test-support")]
-    let home = home.layer(axum::middleware::from_fn_with_state(at.clone(), v2::serve));
     let home = home.layer(axum::middleware::from_fn_with_state(
         at.clone(),
         only_itself,

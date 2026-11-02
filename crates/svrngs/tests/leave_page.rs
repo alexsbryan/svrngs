@@ -88,7 +88,6 @@ async fn leaving_on_the_home_page_is_said_as_a_leave_everywhere(engine: harness:
     )
     .await
     .expect("Ana's computer starts");
-    let ana = harness::with_ui(ana).await;
     tokio::time::timeout(Duration::from_secs(20), ana.endpoint().online())
         .await
         .expect("Ana's computer reaches the relay on 127.0.0.1");
@@ -263,7 +262,6 @@ async fn computer(dir: &std::path::Path, key: &SigningKey, ours: &RelayConfig) -
     )
     .await
     .expect("a computer starts");
-    let node = harness::with_ui(node).await;
     tokio::time::timeout(Duration::from_secs(20), node.endpoint().online())
         .await
         .expect("the computer reaches the relay on 127.0.0.1");

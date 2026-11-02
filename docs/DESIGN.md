@@ -503,7 +503,10 @@ terminal's line wait for a group (the fifth xenia set: June read 80-119
 words of her 40 there, and pasted Kim's link into the other box,
 `demo/xenia/findings/wordy-home.md`). Each group is shown as soon as its people are read, and what they lend
 is added once each computer has answered or not, so a computer asleep holds
-back only that list. Each group is headed by its name, who made it and since
+back only that list. After a write of its own, and when it comes back on
+screen, it reads your groups again and draws what changed where it is,
+saying it reads them meanwhile; nothing reloads it (`home.js` `again`,
+`visible`; §5, "The pages draw one way"). Each group is headed by its name, who made it and since
 when this computer has held it, so two of one name are told apart, in a colour
 derived from its id, nothing to choose. Under it, what is in the group
 first, then who is in it (the operator, 2026-10-26: Money found first):
@@ -680,7 +683,7 @@ iPhone, iOS 18.7, 2026-10-30). So before the name is asked, in iPhone
 Safari alone, the page says to add it to the Home Screen first and join
 from there; it knows Safari by `navigator.standalone`, false there, true
 in a Home Screen web app and undefined in every other browser, never by
-its user agent (`web/app.js`, `askName`). The link's token stays in the
+its user agent (`web/page/join.js`). The link's token stays in the
 page's address, which the Home Screen copy keeps.
 
 *The page asks the browser to keep its storage.* Each time it opens a group
@@ -692,7 +695,7 @@ asked (measured on the operator's iPhone, iOS 18.7, 2026-10-31:
 `[false, true, true]` for persisted, persist, persisted). It never waits on
 the answer, and where the browser offers no asking, its trace says so and
 the group opens regardless. A guest's visit, never kept as a group, does
-not ask (`web/app.js`, `visit`).
+not ask (`web/page/visit.js`).
 
 *A name binds once where a stranger gives one.* A key is who someone is, a
 name is a claim, and a claim on a name someone already holds counts only
@@ -720,7 +723,7 @@ opens in the app in place of the page, by the
 `apple-app-site-association` file the host serves beside it. A group on a page host of its own
 gets none: its link opens the page, and the app's "Paste a link" takes it.
 The app asks the name as the page asks it, in the page's words
-(`web/app.js`, `askName`), and makes the same two calls to the issuer,
+(`web/page/join.js`, `NameForm`), and makes the same two calls to the issuer,
 `/ask` and `/redeem` (`join`), over svrngs-core's `joining`, with a key of
 its own kept in the Keychain. Its redemption names `Device::Browser`
 (call 2). A device link opened in the app joins as that link's person,
@@ -781,13 +784,13 @@ Seven calls:
    `#open=<label>&at=<path>&cold`: holding the group it signs a pass and
    comes back at the path, and holding none it says this browser hasn't
    joined. A tab is sent on at most once a minute, so a worker that never
-   takes its pass is said, not bounced again (`web/app.js`, `cold`).
+   takes its pass is said, not bounced again (`web/page/among.js`, `cold`).
    Holding more than one group, the page opens `#open=`, a label or an
    alias, in the group whose lends name it, as the page last listed each
    (each group keeps its lends' labels and aliases, `addresses`, when its
    page lists them): in more than one, it says so and offers each, never
    picking one; in none, the group last opened says it is not lent there
-   now, nor in the others when last opened (`web/app.js`, `among`). A
+   now, nor in the others when last opened (`web/page/among.js`). A
    path of the app's own, such as Jellyfin's `/web/`, is no file of the
    page's host, which answers it with the site's `404.html`, as Vercel,
    Netlify, Cloudflare Pages and GitHub Pages serve one for a missing path:
@@ -824,7 +827,7 @@ Seven calls:
    In a computer's browser each row of the group's page gives the address
    to keep, its alias, or its label where two lends share one, with one
    line in the same words as the home page gives a lend's
-   `<label>.localhost` address (`question.js`, `keeping`): "Bookmark
+   `<label>.localhost` address (`ui/parts.js`, `Keep`): "Bookmark
    this." A phone's rows say none, as a Home Screen copy of the page made
    after joining joins again, as someone new. An address typed or tapped on the group's page is
    a new fragment the browser does not load, so the page loads again to
@@ -943,7 +946,7 @@ Seven calls:
    set, `demo/xenia/findings/said-too-much-the-group-s-page.md`). Each yes is
    listed under "What acts as you", folded under its heading, a list to
    look at, never in the way,
-   on both pages, with since when and a Stop (`question.js`, `acts`, which
+   on both pages, with since when and a Stop (`ui/acts.js`, `Acts`, which
    groups what acts as the person by what it can do: reads and writes,
    opens friends' things, knows who you are, open to this WiFi, open to
    programs on this computer (Play, "A port, not a page"), can decide
@@ -1204,7 +1207,7 @@ behind — is each unit's inventory, PLAN §4. How a piece comes over:
 | `svrngs-core` | the record: acts, admission into one order, membership, the sync digest; and everything a browser's page must spell as the command and the node do — a link's token, the ask and the redemption, the protocols' names, a relay's URL, a lend's label, the pass, and a sign-in token's claims and signing input. `no_std`, so the compiler refuses filesystem, clock, network and threads; time and keys are arguments | none |
 | `svrngs-runtime` | the only owner of each group's journal on disk, its projections and its writes: the journal and its write index, the open-journal map, the register's standing | the journals |
 | `svrngs-node` | the adapters: sync and its route over iroh; redemption; the loopback record API and its live lane; the member door, its limit and shares, its sign-in with svrngs and each person's choices; the list of what members lend; each lend's origin on this computer; where this computer is, and on which network, by its router's hardware address; the room, each lend on it served on the network it was turned on at; the home page; the lender's sign-in key and its JWKS | each lend's declaration and secret, and each person's choices for it; who is using each lend now; each lender's sign-in key; the lends on for the room, and the network each was turned on at |
-| `svrngs-web` | the page's dial, wasm only, in `web/` with its static shell and a workspace of its own: a browser's endpoint dialling a group's computer by key over a relay, HTTP over the dial, joining, and the worker that serves each lend at its own origin with a pass | none: the page's store holds the key, sealed; a lend's origin's store holds its pass and its cookies |
+| `svrngs-web` | the page's dial, wasm only, in `web/` with its static shell, drawn as the home page is ("The pages draw one way", below), and a workspace of its own: a browser's endpoint dialling a group's computer by key over a relay, HTTP over the dial, joining, and the worker that serves each lend at its own origin with a pass | none: the page's store holds the key, sealed; a lend's origin's store holds its pass and its cookies |
 | `svrngs` | the command and the process: `new`, `join`, `link`, `share`, `unshare`, `room`, `remove`, `handover`, `leave` and `relay`; the bare command runs the node for every group this computer holds and prints where the home page opens | a device's keys; each group's seed |
 
 Every dial the transport makes to a member's computer, and a phone's page's
@@ -1279,23 +1282,40 @@ a host whose load is past 3 a core (`crates/svrngs-node/tests/browser/load.rs`,
 `BUSY`) a miss is could-not-judge and fails nothing. Tap, a third canary once
 named, is not built, and nothing runs it.
 
-**Two pages, one gate, until v2 replaces v1.** The pages' second UI is built
-beside the live one (PLAN §1), and every browser test drives the page
-`SVRNGS_UI` names: v1 unless it says `v2`, read once in
-`crates/svrngs-node/tests/browser/harness.rs` into the node's own `Ui`. Any
-other value stops the run. Each built page, and each home page the harness
-hands out, is held to its mark, `svrngs-ui-v2`: present under v2 and absent
-under v1, so a v2 run never passes on v1's page. A command built without its
-test-support, the only build that serves v2's home page, stops a v2 run in
-words. `scripts/parity.sh` runs every target `check.sh` runs that drives a
-page, on v2 and under the gate lock. It writes each test's verdict to
-`target/parity/verdicts.tsv`: passed, failed, could-not-judge or never-ran.
-A pass the empty pages also had (`demo/runs/page/2026-10-31-baseline/`) is
-counted apart, since v2 did not earn it. What only v2 does is tested in
-`crates/svrngs/tests/page_v2/`, in a step of its own, `page v2`, on every
-gate. `check.sh` runs parity only once the features are built. v2 becomes
-the pages in one commit, once parity passes, and the switch, parity and
-`page_v2` go with v1.
+**The pages draw one way.** The group's page and the home page each have
+one root (`web/app.js`, `crates/svrngs-node/src/home/home.js`), its flows
+beside it in `page/`, and the parts both draw with in
+`crates/svrngs-node/src/home/ui/`: Preact 11.1.1 and htm 3.1.1, vendored in
+`web/vendor/` with no build step, and one hand-written machine a page
+(`ui/machine.js`; svrn-docs `rings/current/PAGE_STATE.md` §3). The phone's
+build copies them beside the page (`scripts/build-web.sh`), and the node
+serves the home page's from one table (`home.rs` `served`). The rules, each
+with what holds it:
+- One store a page owns its state. Views read it and send; they never write
+  state, nor the DOM but through Preact. A field, region or message two
+  flows claim is refused as the page is composed
+  (`web/tests/pages/frame.test.mjs`).
+- `step(state, message)` is pure and synchronous: it reads no clock, DOM or
+  storage, and answers the next state and its effects as data. Every
+  machine's laws run its steps with no DOM (`web/tests/**/*.test.mjs`).
+- An effect runs at the edge and answers one message, done or failed, with
+  why: a rejection, a throw, no io or no answer is the failed message, never
+  a quiet idle (`web/tests/machine.test.mjs`).
+- Each region is a closed set of named states, and a message a state does not
+  take is refused with why, traced to `window.__lines` (`ui/trace.js`;
+  `machine.test.mjs`).
+- Each read is counted (`ask`), and an older answer is refused by name
+  (`late`; `machine.test.mjs`).
+- A page reads again after its own write and when it comes back on screen
+  (`visibilitychange`), and nothing reloads to draw again
+  (`crates/svrngs/tests/pages/`, in `check.sh`'s step `pages`).
+- Words, ids, classes and element kinds are the ones the browser tests find
+  by. The parts are held byte for byte to what the pages drew before them,
+  at `19b63b2b` (`web/tests/parts.test.mjs`, `web/tests/pages/before.mjs`).
+- One URL a module, `?v=<version>` on each, and only `ui/view.js` imports
+  `vendor/`, so Preact loads once (`web/tests/specifiers.test.mjs`).
+- The key never enters state: the edge's io holds it (`web/page/enter.js`,
+  `acts.js`). No check reads this yet.
 
 **Lean, and kept lean.** `svrngs-core`, the repository and its Swift stay
 under the caps in `scripts/lean_check.py`'s `BUDGET`, their one home. Swift

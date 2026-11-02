@@ -1,4 +1,4 @@
-// v2's pure core (page-scaffold (c); crates/svrngs-node/src/home/ui/machine.js;
+// The pages' pure core (page-scaffold (c); crates/svrngs-node/src/home/ui/machine.js;
 // svrn-docs rings/current/PAGE_STATE.md §3), on a toy machine of two regions
 // with no DOM: a step and its trace, a refusal, an effect that fails each way
 // it can, a late answer, a state outside its set, and the effects' order.

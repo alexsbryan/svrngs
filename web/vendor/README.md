@@ -1,6 +1,6 @@
-# Vendored for the pages' v2
+# Vendored for the pages
 
-v2 of both pages draws with Preact and writes its views with htm, each
+Both pages draw with Preact and writes its views with htm, each
 copied from npm and pinned here, with no build step (the operator,
 2026-10-31: "Preact with htm, vendored with no build step"; "I'm aligned
 with the 11.1.1 version"; `ralph/next/page/CHARTER.md`). Nothing is fetched

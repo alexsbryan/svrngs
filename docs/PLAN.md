@@ -292,16 +292,19 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   2026-10-31; svrn-docs `rings/current/PAGE_STATE.md`): on the operator's
   iPhone a bring's answer replaced the words above it, a second tap posted
   twice, and the group's list did not show it, since both pages draw each
-  part once and the home page redraws by reloading. So v2 of both pages,
-  Preact 11.1.1 and htm 3.1.1 vendored with no build step and one machine
-  per page, is built beside v1, which stays live and byte-frozen; one
-  switch, `SVRNGS_UI=v2`, runs the browser tests against v2, and once the
-  whole gate passes there one commit makes v2 the pages and deletes v1.
-  Its demo: on an iPhone the bring's answer beside its button, a second
-  tap refused, and what was brought in the group's list with no reload.
-  v2 is counted on a rung of its own, capped at 1,150 (510e4a0e); its
-  economizing pass cut 16 lines of `.` for the hooks into the rest
-  (`demo/runs/economize/2026-10-31-page/SURVEY.md`);
+  part once and the home page redraws by reloading. So a second UI of
+  both pages, Preact 11.1.1 and htm 3.1.1 vendored with no build step and
+  one machine per page, was built beside the first, which stayed live and
+  byte-frozen, every browser test run against both by one switch. Once
+  the whole gate passed on it, one commit, page-switchover's, made it the
+  pages and deleted the first, the switch, its parity report and its rung
+  with it (DESIGN §5, "The pages draw one way"). `.` took its lines back at
+  the operator's raise, 19,447, after the pass
+  (`demo/runs/economize/2026-11-01-page-switchover/SURVEY.md`), and the
+  cap went to one past where the swap landed. Its demo, on an iPhone the
+  bring's answer beside its button, a second tap refused, and what was
+  brought in the group's list with no reload, is the operator's play on
+  the live page once it is deployed;
 - sealing, at its §2 trigger.
 
 The operator's switch stands apart from that order: when they flip
