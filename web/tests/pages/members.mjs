@@ -9,8 +9,8 @@
 // trace. Or a guest (`visit`, a guest's link's token): the link opened on
 // the page `site` serves, in a browser holding nothing, and their name,
 // `name`, given once asked; then the same, with the heading as it asked
-// (`asking`). With `forget`, the session cookies are cleared before the
-// presses, as a session lapses; with `hold`, the page is hidden and shown
+// (`asking`). With `forget`, the session's key is dropped before the
+// presses, as a session lapses (page.mjs `lapse`); with `hold`, the page is hidden and shown
 // again once the test, told it is shown, says so (`watch`). With `never`,
 // words, each change after `shown` that leaves them in `at`'s text is
 // counted (`never`, 0 when none did).
@@ -20,7 +20,7 @@
 // Exit 0 with the JSON line; 1 on anything else.
 import { existsSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
-import { driving, launch, serve } from '../page.mjs';
+import { driving, lapse, launch, serve } from '../page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const at = args.at ?? 'body';
@@ -29,7 +29,7 @@ async function watch(page, reloads) {
   const shown = await page.locator(args.shown).allTextContents();
   if (args.never) await page.evaluate(([at, w]) => ((window.__never = 0), new MutationObserver(() => document.querySelector(at)?.textContent.includes(w) && window.__never++).observe(document.body, { subtree: true, childList: true, characterData: true })), [at, args.never]);
   // With `forget`, the page's session forgotten before any press, as one lapses.
-  if (args.forget) await page.context().clearCookies();
+  if (args.forget) await lapse(page);
   // A press `[selector, gone]` is waited on, before the next, until `gone` is gone: whether it went, and `at`'s text then.
   const waited = [];
   for (const [press, gone] of (args.press ?? []).map((p) => [p].flat())) {

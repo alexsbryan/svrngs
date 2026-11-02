@@ -507,14 +507,16 @@ async fn bringing_from_the_shelf_traces_why_it_could_not_write() {
     let folder = synced_at(ana, root.path().join("house"), &group).await;
     std::fs::set_permissions(&folder, std::fs::Permissions::from_mode(0o555)).unwrap();
     let home = format!("svrngs.localhost:{}", ana.api_addr().port());
+    let body = json!([group, ["Money"]]).to_string();
     let answer = http()
         .post(format!("http://{}/shelf", ana.api_addr()))
         .header("host", &home)
-        .header("cookie", common::opened(ana, None).await)
+        .headers(common::proved(ana, None, "POST", "/shelf", &body).await)
         .header("sec-fetch-site", "same-origin")
         .header("sec-fetch-mode", "cors")
         .header("origin", format!("http://{home}"))
-        .json(&json!([group, ["Money"]]))
+        .header("content-type", "application/json")
+        .body(body)
         .send()
         .await
         .unwrap();
@@ -551,14 +553,16 @@ async fn an_app_brought_lands_in_the_group_s_own_folder() {
     let own = synced_at(ana, root.path().join("house"), &group).await;
     let drop = synced_at(ana, root.path().join("drop"), &group).await;
     let home = format!("svrngs.localhost:{}", ana.api_addr().port());
+    let body = json!([group, ["Money"]]).to_string();
     let answer = http()
         .post(format!("http://{}/shelf", ana.api_addr()))
         .header("host", &home)
-        .header("cookie", common::opened(ana, None).await)
+        .headers(common::proved(ana, None, "POST", "/shelf", &body).await)
         .header("sec-fetch-site", "same-origin")
         .header("sec-fetch-mode", "cors")
         .header("origin", format!("http://{home}"))
-        .json(&json!([group, ["Money"]]))
+        .header("content-type", "application/json")
+        .body(body)
         .send()
         .await
         .unwrap();
@@ -584,14 +588,16 @@ async fn an_app_brought_lands_in_the_group_s_own_folder_placed_apart() {
     let placed = root.path().join(format!("house-{}", &group[..8]));
     let own = synced_at(ana, placed, &group).await;
     let home = format!("svrngs.localhost:{}", ana.api_addr().port());
+    let body = json!([group, ["Money"]]).to_string();
     let answer = http()
         .post(format!("http://{}/shelf", ana.api_addr()))
         .header("host", &home)
-        .header("cookie", common::opened(ana, None).await)
+        .headers(common::proved(ana, None, "POST", "/shelf", &body).await)
         .header("sec-fetch-site", "same-origin")
         .header("sec-fetch-mode", "cors")
         .header("origin", format!("http://{home}"))
-        .json(&json!([group, ["Money"]]))
+        .header("content-type", "application/json")
+        .body(body)
         .send()
         .await
         .unwrap();

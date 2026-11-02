@@ -24,6 +24,11 @@ mod drive;
 #[path = "../../../svrngs-node/tests/browser/load.rs"]
 #[allow(dead_code)]
 mod load;
+// The one helper that proves a request as home/session-worker.js does,
+// for what a scene writes before a person's browser arrives (people.rs).
+#[path = "../../../svrngs-node/tests/common/mod.rs"]
+#[allow(dead_code)]
+mod common;
 #[path = "../scenes/people.rs"]
 #[allow(dead_code)]
 mod people;

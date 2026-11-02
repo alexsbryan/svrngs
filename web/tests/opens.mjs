@@ -16,7 +16,7 @@
 //
 // Exit 0 with the JSON line, a step that did not finish said in it; 3,
 // naming the install command, when Playwright or its browser is absent.
-import { launch } from './page.mjs';
+import { arrived, launch } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const { context, close } = await launch(args.engine);
@@ -36,7 +36,7 @@ const fetched = (page, path, bare) =>
   );
 const opened = async (click) => {
   const [tab] = await Promise.all([context.waitForEvent('page'), click]);
-  await tab.waitForLoadState();
+  await arrived(tab);
   return tab;
 };
 // What it saw, said whole even when a step does not finish, as `error`,

@@ -637,8 +637,9 @@ async fn a_give_tarball_that_does_not_match_its_sum_is_refused_and_nothing_insta
     );
 }
 
-/// What svrngs answers the open `url` redeemed in a browser: its status,
-/// and whether it set the session.
+/// What svrngs answers the open `url` redeemed as a browser's bootstrap
+/// redeems it, by a POST from its own origin (home/session.js): its status,
+/// and whether it gave the origin its key (session.rs `redeem`).
 async fn redeemed(url: &str) -> (u16, bool) {
     let (host, path) = url
         .strip_prefix("http://")
@@ -649,13 +650,11 @@ async fn redeemed(url: &str) -> (u16, bool) {
     let mut sock = tokio::net::TcpStream::connect(format!("127.0.0.1:{port}"))
         .await
         .unwrap();
-    let ask = format!("GET /{path} HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\n\r\n");
+    let ask = format!("POST /{path} HTTP/1.1\r\nHost: {host}\r\nOrigin: http://{host}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
     sock.write_all(ask.as_bytes()).await.unwrap();
     let mut reply = String::new();
     sock.read_to_string(&mut reply).await.unwrap();
-    let set = reply
-        .to_ascii_lowercase()
-        .contains("\r\nset-cookie: svrngs=");
+    let set = reply.contains("\"key\":");
     (reply[9..12].parse().unwrap(), set)
 }
 
@@ -685,10 +684,10 @@ async fn the_opener_opens_the_home_page(home: &Path, linux: bool, address: &str,
     );
     assert_eq!(
         redeemed(&first).await,
-        (303, true),
+        (200, true),
         "install.sh's open sets the session"
     );
-    assert_ne!(redeemed(&first).await.0, 303, "a replayed open is refused");
+    assert_ne!(redeemed(&first).await.0, 200, "a replayed open is refused");
     let (run, where_) = if linux {
         let entry = home.join(".local/share/applications/svrngs.desktop");
         let entry = std::fs::read_to_string(&entry).expect("a .desktop entry");
@@ -721,7 +720,7 @@ async fn the_opener_opens_the_home_page(home: &Path, linux: bool, address: &str,
     );
     assert_eq!(
         redeemed(&second).await,
-        (303, true),
+        (200, true),
         "the opener's open sets the session"
     );
 }

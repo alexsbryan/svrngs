@@ -1,7 +1,7 @@
 // The browser half of page-acts' tests (crates/svrngs/tests/
 // pages/acts.rs). The home page, `home`, its address, opened until
-// `shown`, a selector, matches; with `forget`, its session cookies then
-// cleared, as a session lapses; then each of `press` in turn, `{at,
+// `shown`, a selector, matches; with `forget`, its session's key then
+// dropped, as a session lapses (page.mjs `lapse`); then each of `press` in turn, `{at,
 // traced?: [start, n]}`: `at` clicked, then waited on, within `within` ms,
 // until the trace holds n lines that start so (`went`, one a press). It
 // answers the text of `at`, a selector, after each press (`texts`), the
@@ -24,7 +24,7 @@
 // Exit 0 with the JSON line; 1 on anything else.
 import { existsSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
-import { driving, launch } from '../page.mjs';
+import { driving, lapse, launch } from '../page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 // web/store.js's database.
@@ -72,7 +72,7 @@ try {
   page.on('load', () => loads++);
   await page.goto(args.home);
   await page.locator(args.shown).first().waitFor({ timeout: 60_000 });
-  if (args.forget) await context.clearCookies();
+  if (args.forget) await lapse(page);
   const went = [], texts = [];
   const traced = ([start, n]) => (window.__lines ?? []).filter((l) => l.startsWith(start)).length >= n;
   for (const p of args.press ?? []) {

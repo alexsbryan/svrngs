@@ -124,7 +124,7 @@ fn none_wrong(checks: &[(bool, &str)], seen: &Value) {
 in_chromium!(
     /// **Two refusals on /ask are said once** (page-acts (d)). Ada's home
     /// page asks whether her page may use her shelf; her session lapses
-    /// (its cookies cleared), and she presses Yes, then, once that is
+    /// (its key dropped), and she presses Yes, then, once that is
     /// refused, Yes again: the section says the refusal once, the second
     /// in place of the first. Watched failing on v1 (`UI` flipped), whose
     /// `ask` appends each refusal (home.js@19b63b2b:343).

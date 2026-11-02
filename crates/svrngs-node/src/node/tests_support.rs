@@ -20,6 +20,16 @@ impl Node {
         std::fs::read_to_string(file).expect("a started node keeps its token")
     }
 
+    /// A read capability for protocol tests, independent of browser enrollment.
+    /// The origin still checks the app's declared reads and the person's choice.
+    pub fn read_capability(
+        &self,
+        app: &svrngs_core::pass::Label,
+        read: &svrngs_core::pass::Label,
+    ) -> String {
+        self.asking.sessions.cap(app, read)
+    }
+
     /// The dial-by-key transport the round dials through; a caller seeds a
     /// member's addresses here when no address lookup can find it.
     pub fn transport(&self) -> &IrohTransport {

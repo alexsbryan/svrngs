@@ -22,6 +22,7 @@ use tokio::sync::{mpsc, oneshot};
 use super::{kept, port_of, serves, InRoom, On, Served, Turn, ROOM_FILE};
 use crate::network::{guess, Unread, Whereabouts};
 use crate::node::Asking;
+use crate::origin::{Appending, Unconsented};
 
 /// How often the room reads which network this computer is on: the
 /// longest a lend stays served after this computer moves to another
@@ -150,13 +151,19 @@ async fn listen(at: &Asking, label: Label, addr: SocketAddr, listening: &mut Lis
     Served::At(addr)
 }
 
+/// What a caller at the room door proves of the entries a lend's answer
+/// names to write as this computer's person: nothing. The door's one
+/// check, [`from_this_network`], is of the caller's address, which proves
+/// no person, so each such answer is refused.
+pub(super) const IN_ROOM: Appending = Appending::Denied(Unconsented::NetworkOnly);
+
 /// A request at the room door, carried to its lend as at its origin, for
 /// the lend's own page: the room serves one lend at each port.
 async fn in_room(
     State((at, label)): State<(Asking, Label)>,
     req: Request,
 ) -> Result<Response, Response> {
-    crate::origin::reach(&at, label.clone(), label, req).await
+    crate::origin::reach(&at, label.clone(), label, IN_ROOM, req).await
 }
 
 /// Serve a request only from a caller on this computer's network: one the

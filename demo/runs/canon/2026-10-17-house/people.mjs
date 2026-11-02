@@ -41,7 +41,7 @@
 //
 //   node people.mjs
 import { createInterface } from 'node:readline';
-import { launch } from '../../../../web/tests/page.mjs';
+import { arrived, launch } from '../../../../web/tests/page.mjs';
 
 const people = {};
 const words = async (page) => {
@@ -67,6 +67,8 @@ async function step(page, s) {
   if (s.goto) {
     await page.goto('about:blank');
     await page.goto(s.goto);
+    // Through an open, on to where it leads (page.mjs `arrived`).
+    await arrived(page, 90_000);
     return;
   }
   if (s.wait) return until(page, s.wait, s.within);
@@ -75,6 +77,7 @@ async function step(page, s) {
     for (;;) {
       await page.goto('about:blank');
       await page.goto(s.poll);
+      await arrived(page, 90_000);
       const got = await until(page, s.re, Math.min(10_000, s.every ?? 10_000)).catch(() => null);
       if (got) return got;
       if (Date.now() - t0 > (s.within ?? 60_000)) throw new Error(`${s.poll} never said ${s.re} within ${s.within ?? 60_000} ms`);

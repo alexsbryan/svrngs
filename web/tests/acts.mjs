@@ -21,7 +21,7 @@
 // Exit 0 with the JSON line, a step that did not finish said in it as
 // `error`; 3, naming the install command, when Playwright or its browser
 // is absent; 1 on anything else.
-import { driving, launch } from './page.mjs';
+import { arrived, driving, launch } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const section = (page) => page.locator('#acts').innerText({ timeout: 60_000 });
@@ -54,7 +54,7 @@ if (args.home) {
     await home.goto(args.home);
     await loaded();
     const [tab] = await Promise.all([context.waitForEvent('page'), home.locator('#home table.index button', { hasText: args.words }).click({ timeout: 10_000 })]);
-    await tab.waitForLoadState();
+    await arrived(tab);
     seen.opened = await fetched(tab, 'opened');
     seen.bare = await fetched(tab, 'bare', true);
     await home.reload();

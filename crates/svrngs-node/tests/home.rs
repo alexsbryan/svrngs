@@ -66,7 +66,7 @@ impl Got {
 /// One request from `browser` at `host`, `extra` its other header lines,
 /// with the session svrngs opened there when `extra` is a page's.
 async fn ask(
-    browser: &Browser,
+    browser: &Browser<'_>,
     method: &str,
     host: &str,
     path: &str,
@@ -74,9 +74,10 @@ async fn ask(
     body: &str,
 ) -> Got {
     let mut sock = tokio::net::TcpStream::connect(browser.api()).await.unwrap();
-    let cookie = browser.cookie(host, extra).await;
+    let path = browser.path(host, path, extra);
+    let proof = browser.proof(method, host, &path, extra, body).await;
     let request = format!(
-        "{method} {path} HTTP/1.1\r\nHost: {host}\r\n{extra}{cookie}Content-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+        "{method} {path} HTTP/1.1\r\nHost: {host}\r\n{extra}{proof}Content-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
         body.len()
     );
     sock.write_all(request.as_bytes()).await.unwrap();
@@ -224,7 +225,7 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
     );
     let elsewhere = ask(browser, "GET", "svrngs.localhost:1", "/", typed, "").await;
     assert_eq!(
-        elsewhere.status, 403,
+        elsewhere.status, 401,
         "only at its own port: {}",
         elsewhere.body
     );
@@ -426,11 +427,11 @@ async fn a_lend_s_limit_is_changed_on_the_home_page_and_the_door_takes_it() {
             .map(|l| l.limit.map(|n| n.get()))
     };
     let typed = "Sec-Fetch-Site: none\r\nSec-Fetch-Mode: navigate\r\n";
-    let open = |node: &Node| {
+    async fn open(node: &Node, shelf: &Label, typed: &str) -> Got {
         let browser = Browser::of(node);
         let host = format!("{shelf}.localhost:{}", node.api_addr().port());
-        async move { ask(&browser, "GET", &host, "/x", typed, "").await }
-    };
+        ask(&browser, "GET", &host, "/x", typed, "").await
+    }
     let (browser, home) = (
         &Browser::of(&sam),
         format!("svrngs.localhost:{}", sam.api_addr().port()),
@@ -438,9 +439,9 @@ async fn a_lend_s_limit_is_changed_on_the_home_page_and_the_door_takes_it() {
     let own =
         format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{home}\r\n");
 
-    let sams = open(&sam).await;
+    let sams = open(&sam, &shelf, typed).await;
     assert_eq!(sams.status, 200, "Sam, the first: {}", sams.body);
-    let alexs = open(&alex).await;
+    let alexs = open(&alex, &shelf, typed).await;
     assert_eq!(
         (alexs.status, alexs.header("x-svrngs-refused")),
         (503, Some("full")),
@@ -487,7 +488,7 @@ async fn a_lend_s_limit_is_changed_on_the_home_page_and_the_door_takes_it() {
         serde_json::Value::Null,
         "{listed:#}"
     );
-    let alexs = open(&alex).await;
+    let alexs = open(&alex, &shelf, typed).await;
     assert_eq!(alexs.status, 200, "Alex, with no restart: {}", alexs.body);
 
     let two = r#"{"lend":"shelf","to":{"limit":2}}"#;

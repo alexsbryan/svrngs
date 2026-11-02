@@ -39,12 +39,72 @@ use svrngs_core::pass::{Label, Pass};
 
 use crate::door::{self, Door, LendRefusal, Who, LEND_ROUTE, PASS_HEADER, REFUSED_HEADER};
 use crate::iroh::Contact;
-use crate::lend::Offered;
+use crate::lend::{Kind, Offered};
 use crate::node::Asking;
 use crate::oidc::provider::same;
 use crate::register::{Register, RemovalSaid};
 use crate::session::{Shown, AS_PATH};
 use crate::surface::{seed_of, STOP_SUFFIX};
+
+/// Whether a lent app's answer may write entries as the person asking
+/// ([`APPEND_HEADER`]), by what the request proved: decided by the door
+/// that took it and handed to [`reach`] by each, never defaulted.
+#[derive(Clone, Debug)]
+pub(crate) enum Appending {
+    /// This origin's own page, its session's proof carrying the person's
+    /// intent (`x-svrngs-intent: yes`, which the proof signs).
+    Granted,
+    /// A program with the token, accepting entries of the one kind it named.
+    Program(Kind),
+    /// No entry is written, and why.
+    Denied(Unconsented),
+}
+
+/// Why a request lets no lent app write entries as the person asking.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Unconsented {
+    /// A program with the token that named no kind to accept.
+    NoKind,
+    /// A browser's request without the person's intent: a tab's read, a
+    /// frame, a page that is not this origin's own.
+    NoIntent,
+    /// A page's read by the capability in its address: reach as that app,
+    /// never a yes to sign the read lend's reply.
+    Capability,
+    /// The room door (`crate::room`): it checks only that the caller's
+    /// address is on this computer's network, which proves no person.
+    NetworkOnly,
+}
+
+impl Appending {
+    fn for_request(shown: Shown, headers: &HeaderMap) -> Result<Self, Response> {
+        let intent = headers.get("x-svrngs-intent").is_some_and(|h| h == "yes");
+        let appending = match (shown, headers.get(APPEND_HEADER)) {
+            (Shown::Token, Some(kind)) => {
+                let kind = kind.to_str().ok().and_then(|k| Kind::parse(k).ok());
+                Self::Program(kind.ok_or_else(|| {
+                    tracing::debug!(target: "origin", "origin: refused — a program named no kind it accepts entries of that svrngs reads");
+                    LendRefusal::Closed.say(
+                        StatusCode::BAD_REQUEST,
+                        "name the app's kind when accepting its entries",
+                    )
+                })?)
+            }
+            (Shown::Token, None) => Self::Denied(Unconsented::NoKind),
+            (Shown::Session, _) if intent => Self::Granted,
+            _ => Self::Denied(Unconsented::NoIntent),
+        };
+        tracing::debug!(target: "origin", ?shown, ?appending, "origin: whether a lent app's answer may write entries as the person asking");
+        Ok(appending)
+    }
+    pub(crate) fn permits(&self, kind: &Kind) -> bool {
+        match self {
+            Self::Granted => true,
+            Self::Program(wanted) => wanted == kind,
+            Self::Denied(_) => false,
+        }
+    }
+}
 
 /// How long a pass this computer signs for its own page lasts: one
 /// request's, signed afresh for each, so none is kept.
@@ -75,7 +135,8 @@ fn at(host: &str) -> Option<(Label, Option<String>)> {
 /// the whole tab, a link the person follows, unless its `Origin` names
 /// another lend (a form that page posted); one from another lend's page is
 /// that page's, by its `Origin` at this listener's port, or a frame's, which
-/// sends none, by its `Referer`; one from another page naming no lend (an
+/// sends none, by its `Referer`, whatever its `Sec-Fetch-Site` says (a
+/// worker's fetch on the page's behalf says its own); one from another page naming no lend (an
 /// `<img>`, a frame with its `Referer` withheld) is nobody's, `None`. So a
 /// page's frame or form is held to what its fetch is (capability-navigation).
 /// Asked only of a browser's request, with its session here
@@ -94,7 +155,10 @@ fn app_of(headers: &HeaderMap, host: &Label) -> Option<Label> {
         .filter(|(_, p)| *p == port)
         .map(|(label, _)| label);
     let another = from.as_ref().is_some_and(|l| l != host);
-    if own && (matches!(site, Some("none" | "same-origin")) || !(framed || another)) {
+    // Another lend named outweighs `same-origin`: a service worker's fetch
+    // of a navigation it was shown no `Origin` of (WebKit) says its own
+    // site, the browser still sending the page's true `Origin`.
+    if own && !another && (matches!(site, Some("none" | "same-origin")) || !framed) {
         tracing::debug!(target: "origin", %host, ?site, ?mode, ?dest, "origin: a typed address, its own origin, or the whole tab going there that no other lend's page sent, so the lend's own page");
         return Some(host.clone());
     }
@@ -158,14 +222,27 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
     if req.uri().path() == crate::session::OPEN_PATH {
         return Ok(at.sessions.redeem(label.as_str(), &req));
     }
+    if let Some(answer) = at.sessions.public(label.as_str(), &req) {
+        return Ok(answer);
+    }
     // A page's read of this lend, by the capability in its address
     // (`crate::surface::reads`), is taken off before anything is decided.
     let cap = capped(&mut req)?;
     // A browser with this origin's session, else a program with the token,
     // which is the lend's own; neither is carried on to the lend.
-    let mut shown = at.sessions.shown(req.headers(), label.as_str());
+    let mut shown = if at.sessions.socket(label.as_str(), &mut req) {
+        Shown::Session
+    } else {
+        at.sessions.shown(&req, label.as_str())
+    };
+    let mut own_proof = shown == Shown::Session;
+    let mut appending = Appending::for_request(shown, req.headers())?;
+    // The proof, before it is stripped: a redirect its answer names is
+    // followed with it, once (`crate::session::Onwards`).
+    let proof = crate::session::Sessions::proof_of(req.headers());
     at.sessions.strip(req.headers_mut());
     if let Some(cap) = cap.filter(|_| shown != Shown::Token) {
+        own_proof = false;
         let app = app_of(req.headers(), &label);
         if app.as_ref() == Some(&label) {
             tracing::debug!(target: "origin", %label, "origin: the person going to a read's address, opened by the home page, whose session decides; a capability is never a session");
@@ -176,6 +253,9 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
             .is_some_and(|a| same(cap.as_bytes(), at.sessions.cap(a, &label).as_bytes()));
         tracing::debug!(target: "origin", %label, ?app, held, "origin: a page's read by the capability in its address, refused unless this computer's for that page");
         shown = if held { Shown::Session } else { Shown::Neither };
+        // A read capability can be held by the app's server too. It proves
+        // reach as that app, never authority to sign a target's reply.
+        appending = Appending::Denied(Unconsented::Capability);
     }
     // A bookmark in a browser that never opened this lend: the whole tab,
     // and only it, goes by the home page's `/to`, as a read's address does.
@@ -189,9 +269,15 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
         tracing::debug!(target: "origin", %label, "origin: refused — neither this origin's session nor the token, and no whole tab's navigation");
         return Err(at.sessions.refused(""));
     }
-    if req.uri().path() == crate::surface::READS_PATH {
-        tracing::debug!(target: "origin", %label, "origin: the lend's page asks the lends it reads, answered from the record");
-        return crate::surface::reads(&at, &label).await;
+    if own_proof
+        && matches!(appending, Appending::Denied(_))
+        && !matches!(*req.method(), Method::GET | Method::HEAD)
+    {
+        tracing::debug!(target: "origin", %label, method = %req.method(), ?appending, "origin: refused — a write with this origin's proof but not from its own page's intent");
+        return Err(LendRefusal::Closed.say(
+            StatusCode::FORBIDDEN,
+            "only this origin's client may submit a write",
+        ));
     }
     let program = (shown == Shown::Token).then(|| label.clone());
     let Some(app) = program.or_else(|| app_of(req.headers(), &label)) else {
@@ -201,6 +287,24 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
             "a page reaches another lend only by fetch, which says where it is from",
         ));
     };
+    if own_proof && app != label {
+        tracing::debug!(target: "origin", %label, %app, "origin: refused — this origin's proof, from a page its fetch names as another app's");
+        return Err(LendRefusal::Closed.say(
+            StatusCode::FORBIDDEN,
+            "an origin's proof cannot name another app",
+        ));
+    }
+    if req.uri().path() == crate::surface::READS_PATH {
+        if app != label {
+            tracing::debug!(target: "origin", %label, %app, "origin: refused — another app's page asks the lends this one reads");
+            return Err(LendRefusal::Closed.say(
+                StatusCode::FORBIDDEN,
+                "only an app's own origin may ask its capabilities",
+            ));
+        }
+        tracing::debug!(target: "origin", %label, "origin: its own page asks the lends it reads; reaching an app grants no authority over its capabilities");
+        return crate::surface::reads(&at, &label).await;
+    }
     let stop = req.uri().path().strip_prefix(crate::surface::READS_PATH);
     let stop = stop.and_then(|p| p.strip_prefix('/')?.strip_suffix(STOP_SUFFIX));
     if let Some(lend) = stop
@@ -219,13 +323,18 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
         let unasked =
             |r: &Response| (r.headers().get(REFUSED_HEADER)).is_some_and(|k| k == "unasked");
         let reached = match crate::surface::reaches(&at, &app, &label).await {
-            Ok(()) => reach(&at, label, app, req).await,
+            Ok(()) => reach(&at, label, app, appending, req).await,
             Err(refused) if unasked(&refused) => Err(refused),
             Err(refused) => return Err(refused),
         };
         return Ok(readable(reached, page));
     }
-    reach(&at, label, app, req).await
+    let (method, name) = (req.method().clone(), label.clone());
+    let reached = reach(&at, label, app, appending, req).await;
+    if let (Some(proof), Ok(answer)) = (proof.filter(|_| own_proof), &reached) {
+        at.sessions.onward(name.as_str(), &proof, &method, answer);
+    }
+    reached
 }
 
 /// svrngs's own answer to the page of another lend that reads this one —
@@ -263,11 +372,13 @@ fn capped(req: &mut Request) -> Result<Option<String>, Response> {
 /// `req` carried to the lend `label`, as this computer's person, for the
 /// page of the lend `app`: by the `Host` at its origin on loopback, or by
 /// the port at the room door (u6-1), one body for both (DESIGN §3, "The
-/// room", call 3).
+/// room", call 3). Each door says what its caller proved of entries the
+/// answer names, `appending`; none is assumed.
 pub(crate) async fn reach(
     at: &Asking,
     label: Label,
     app: Label,
+    appending: Appending,
     mut req: Request,
 ) -> Result<Response, Response> {
     let tail = req.uri().path_and_query().map_or("/", |p| p.as_str());
@@ -279,7 +390,7 @@ pub(crate) async fn reach(
         let (mut parts, body) = req.into_parts();
         parts.uri = uri_of(&target)?;
         let answer = door::lend_for(door, Who::Own(app), None, Request::from_parts(parts, body));
-        return appended(at, &label, None, answer.await?).await;
+        return appended(at, &label, None, answer.await?, appending).await;
     }
     let contact = dialled(at, &label)?;
     let Some(pass) = own_pass(at, &app, &label) else {
@@ -291,7 +402,7 @@ pub(crate) async fn reach(
     req.headers_mut().insert(PASS_HEADER, pass);
     tracing::debug!(target: "origin", %label, %app, lender = hex::encode(lender), "origin: another computer's lend, through the dial to its door, the app in this computer's own pass");
     let answer = carried(at, req, &contact, &target, label.as_str()).await?;
-    appended(at, &label, Some(&contact), answer).await
+    appended(at, &label, Some(&contact), answer, appending).await
 }
 
 /// The header in which a lent app's answer names, as a JSON array, the
@@ -324,17 +435,35 @@ async fn appended(
     label: &Label,
     contact: Option<&Contact>,
     mut answer: Response,
+    appending: Appending,
 ) -> Result<Response, Response> {
     let Some(named) = answer.headers_mut().remove(APPEND_HEADER) else {
         return Ok(answer);
     };
+    if let Appending::Denied(why) = appending {
+        tracing::debug!(target: "origin", %label, ?why, "origin: refused — a lent app's answer named entries this request did not consent to, so none is written and the answer withheld");
+        return Err(LendRefusal::Closed.say(
+            StatusCode::FORBIDDEN,
+            "this request did not authorize entries from the app",
+        ));
+    }
     let (rail, lender) = (&at.host.rail, hex::encode(label.lender()));
     let lend = declared(at, label, contact).await;
+    if let Some(l) = lend.as_ref().filter(|l| !appending.permits(&l.kind)) {
+        tracing::debug!(target: "origin", %label, kind = %l.kind.as_str(), ?appending, "origin: refused — the lend's declared kind is not the one the program accepts entries of");
+        return Err(LendRefusal::Closed.say(
+            StatusCode::FORBIDDEN,
+            "the app's kind changed; this program authorized no entry of that kind",
+        ));
+    }
     let who = contact.and_then(|_| rail.standing_anywhere(&lender));
     let whose = who.map_or("Your".into(), |(_, m)| format!("{}’s", m.person));
     let name = lend.as_ref().map_or("app", |l| l.name.as_str());
     let what = format!("{whose} {name}");
-    let acts: Vec<Value> = serde_json::from_slice(named.as_bytes()).unwrap_or_default();
+    let acts: Vec<Value> = serde_json::from_slice(named.as_bytes()).map_err(|why| {
+        tracing::debug!(target: "origin", %label, %why, "origin: refused a malformed append declaration; no success-shaped substitution");
+        LendRefusal::Closed.say(StatusCode::UNPROCESSABLE_ENTITY, format!("{what} answered with entries svrngs cannot read, so they were not saved."))
+    })?;
     let judged = |act: &Value| {
         let kind = lend.as_ref().ok_or(Unwritten::Unread)?.kind.as_str();
         let group = act["group"].as_str();
@@ -503,3 +632,7 @@ async fn carried(
     *response.headers_mut() = parts.headers;
     Ok(response.into_response())
 }
+
+#[cfg(test)]
+#[path = "origin_tests.rs"]
+mod tests;

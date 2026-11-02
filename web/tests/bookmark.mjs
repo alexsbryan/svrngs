@@ -13,7 +13,7 @@
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
-import { launch } from './page.mjs';
+import { arrived, launch } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const at = (label) => `http://${label}.localhost:${args.port}`;
@@ -24,6 +24,7 @@ async function landed(context) {
   context.on('response', (r) => r.request().isNavigationRequest() && answered.push(`${r.request().method()} ${r.url()} ${r.status()}`));
   const page = await context.newPage();
   await page.goto(`${at(args.label)}${args.at}`);
+  await arrived(page);
   return [page, { url: page.url(), title: await page.title(), text: await page.locator('body').innerText(), answered }];
 }
 const seen = {};

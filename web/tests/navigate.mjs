@@ -15,17 +15,19 @@
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
-import { launch } from './page.mjs';
+import { arrived, launch } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const { context, close } = await launch(args.engine);
 const answered = [];
 context.on('response', (r) => r.request().isNavigationRequest() && answered.push(`${r.request().method()} ${r.url()} ${r.status()}`));
-const follow = (page, href) =>
-  Promise.all([
+const follow = async (page, href) => {
+  await Promise.all([
     page.waitForEvent('load'),
     page.evaluate((href) => Object.assign(document.body.appendChild(document.createElement('a')), { href }).click(), href),
   ]);
+  await arrived(page);
+};
 try {
   const page = await context.newPage();
   await page.goto(args.url);
@@ -55,6 +57,7 @@ try {
         form.submit();
       }, to),
     ]);
+    await arrived(page);
     const posted = page.url();
     await page.goto(args.url);
     await follow(page, `${to}linked`);

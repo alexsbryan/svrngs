@@ -216,7 +216,9 @@ impl<T: Clone> Codes<T> {
     pub(crate) fn mint(&self, code: T) -> String {
         use ring::rand::SecureRandom;
         let mut bytes = [0u8; 32];
-        let _ = self.rng.fill(&mut bytes);
+        self.rng
+            .fill(&mut bytes)
+            .expect("failed to draw a one-time code");
         let text = URL_SAFE_NO_PAD.encode(bytes);
         let mut codes = self.inner.lock().expect("the code store's lock");
         codes.retain(|_, (_, expires, _)| *expires > now());

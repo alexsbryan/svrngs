@@ -481,9 +481,21 @@ exact `Origin` (`only_itself`), and only to a browser showing its session
 or a program showing the token, every answer `default-src 'self';
 frame-ancestors 'none'`. `session.rs` holds this computer's opens and
 sessions for the home page and every lend's origin alike: `POST /v1/open`
-behind the token (`svrngs open`), the home page's `/to`, `/svrngs-open`
-where a code becomes its host's cookie, and the capability a read's
-address carries (`/svrngs-as/<cap>/`, taken off in `origin.rs` `lent`). It serves `home/index.html`, its root `home/home.js`, the
+behind the token (`svrngs open`), the home page's `/to`, and `/svrngs-open`
+whose bootstrap redeems a one-use code by own-origin POST and imports a
+nonextractable HMAC key into that exact origin/port's IndexedDB. Cookies no
+longer authorize. `home/session.js`, `session-worker.js` and `session-client.js`
+prove each request's host/port, method, path/query, write intent, boot epoch and
+nonce; home writes also bind the body digest before effects. The worker checks
+the browser's actual client, or a navigation's referrer where WebKit shows no
+client or `Origin` (`browserAuthority`), and a proved fetch mints a path-bound
+one-use WebSocket open. A proved request's same-origin redirect keeps the
+onward request for that proof, once, by the method the redirect leaves
+(`session::Onwards`). The separate read credential (`/svrngs-as/<cap>/`, stripped in
+`origin.rs`) grants reach as its named app, never signing a reply. Programs
+must explicitly accept `x-svrngs-append: <kind>` to authorize response entries;
+the token alone does not. Upgrading a cookie-only browser requires a new open.
+It serves `home/index.html`, its root `home/home.js`, the
 modules it imports, `home/page/` at `/page/`, `home/ui/` at `/ui/` and
 `web/vendor/` at `/vendor/`, from one table (`served`), and
 `home/look.css`, the record API's `/v1/groups`, `/v1/lends` and

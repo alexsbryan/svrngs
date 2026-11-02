@@ -20,6 +20,11 @@ mod drive;
 #[allow(dead_code)]
 mod load;
 mod people;
+// The one helper that proves a request as home/session-worker.js does,
+// for what a scene writes before a person's browser arrives (people.rs).
+#[path = "../../../svrngs-node/tests/common/mod.rs"]
+#[allow(dead_code)]
+mod common;
 
 /// A scene played once, judged ([`people::judged`]) in its place,
 /// `target/scenes/<scene>-chromium`, by the name the gate's "scenes" step

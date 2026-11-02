@@ -215,19 +215,32 @@ and type an identity header, as it can reach any localhost service. A tie
 between the node and each process it lends to waits in PLAN §2.
 
 **A browser comes in through an open.** The home page and each lend's
-origin answer a browser only with this computer's session for that host,
-and a program only with the token (`crates/svrngs-node/src/session.rs`).
-An open is an address with a code, single-use and gone in a minute, that
-becomes the host's session where it is redeemed (`/svrngs-open`): `svrngs
-open` mints one for the home page, from the token, and hands it to the
-browser, and so do install.sh and the opener it puts in the person's
-Applications, or on Linux their applications menu; the home page mints
-one for each lend it opens (`/to`). A session is the token's HMAC over the
-host's first name, kept nowhere, so a restart keeps every bookmark working
-and one host's session opens no other. Anything else is answered "Open
-svrngs from your computer", naming that opener, with no terminal needed.
-Neither the session nor the token reaches a lend's service. A container
-on the Mac is refused at both (`demo/runs/give/2026-10-26-container/`).
+origin answer a browser only with a fresh proof from that exact origin,
+including its port, and a program only with the token
+(`crates/svrngs-node/src/session.rs`). An open's code is single-use and
+gone in a minute. Its GET serves fixed bootstrap code; an own-origin POST
+redeems it, and the bootstrap imports the returned HMAC key as a
+nonextractable key in that origin's IndexedDB. `svrngs open`, install.sh's
+opener and the home page's `/to` mint these opens. Cookies authorize nothing:
+a different port on the same hostname shares cookies, not origin storage.
+
+The origin's authentication worker proves host, port, method, path/query,
+write intent and, for home-page writes, the body's SHA-256. Each proof is
+fresh for less than a minute, has a single-use nonce, and names a random
+boot challenge. Restart keeps the enrolled key but invalidates old proofs.
+Only an existing own-origin client or a user/typed top-level read may use
+the worker; a foreign frame or form gets no signature. WebKit shows the
+worker no navigation's `Origin` or client, so there a navigation is the
+origin's own only when its referrer is; withheld, it is not. A foreign
+navigation the worker forwards keeps its true `Origin`, which outweighs the
+worker's `Sec-Fetch-Site` at the node. A same-origin redirect's onward request
+carries the proof that asked for it, taken once at the address the answer
+named, through at most 20 redirects. A proved fetch mints
+a one-use, path-bound open for a browser WebSocket. The worker and a small
+page shim carry an app's own worker and sockets (`home/session*.js`).
+An absence says "Open svrngs from your computer", naming the opener.
+Neither request proofs nor the token reach the lent service. Upgrading
+from cookie sessions requires each browser origin to be opened again.
 
 **A lent app writes as whoever asks by naming the act.** Its answer names,
 in `x-svrngs-append`, a JSON array of acts, each `{group, op}` or `{group,
@@ -242,8 +255,12 @@ was opened from, under a second pass the group page signs at the open,
 whose app is that kind's part of the group (`Label::carried`), so the
 fold's `Grant` lets the holder write that part alone. A correction of an
 act outside that kind, or a group the two do not share, withholds the
-answer and says why; nothing of it is written. The header never reaches
-the page.
+answer and says why; nothing of it is written. A browser request must have
+an own-origin client authorized to write; a navigation alone authorizes no
+entry. A program must explicitly accept the lend's kind in the request's
+`x-svrngs-append: <kind>`; its token alone grants no response-driven signing.
+A read capability grants reach, never signing a target's reply. The response
+header never reaches the page.
 
 **Or a folder the group carries.** A lend goes with its lender; a carried
 app stays with the group. It is a folder `apps/<kind>/` holding an
@@ -917,7 +934,7 @@ Seven calls:
    `<img>`, is refused `closed`; and a WebSocket's handshake, which sends
    no `Sec-Fetch-Site`, is judged by its `Origin`. A program showing the
    token is the lend's own. A page's fetch of a lend it reads carries no
-   cookie, as it is another origin, so `/svrngs-reads` answers that lend's
+   origin key, as it is another origin, so `/svrngs-reads` answers that lend's
    address with a capability in its path,
    `http://<read>.localhost:<port>/svrngs-as/<cap>/`: the token's HMAC over
    the pair, the page's lend and the read lend. The door takes the prefix
@@ -926,7 +943,8 @@ Seven calls:
    under it goes on to the home page's `/to`, so the home page's session
    decides. A capability is never a session: whoever holds one is that page
    toward that one lend, and the person's yes is still judged on every
-   request. A page reaches its own lend and the kinds its lender
+   request; the capability never authorizes signing a reply. Only the app's
+   own proved origin may discover its read capabilities. A page reaches its own lend and the kinds its lender
    declared it reads, in a group both lenders and this computer stand in,
    else `closed`. Another computer's app reaches them as this computer's
    person only on that person's yes, else `unasked`, "Say yes on your home

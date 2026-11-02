@@ -70,7 +70,7 @@ fn declare(dir: &std::path::Path, name: &str, port: u16, kind: &str, reads: &[&s
 
 /// `path` asked of `node`'s API at the origin of the lend `at`, by a
 /// program on loopback, with the token; from the page at `from`'s origin,
-/// with its browser's fetch headers and the session svrngs opened at `at`,
+/// with its browser's fetch headers and independent read capability,
 /// when one is named (give-session). Its status and JSON body.
 async fn at_origin(
     node: &Node,
@@ -80,11 +80,20 @@ async fn at_origin(
 ) -> (u16, serde_json::Value) {
     use tower::ServiceExt;
     let port = node.api_addr().port();
+    let path = match from.and_then(svrngs_core::pass::Label::parse) {
+        Some(app) if &app != at => format!("/svrngs-as/{}{path}", node.read_capability(&app, at)),
+        _ => path.into(),
+    };
     let mut request =
-        axum::http::Request::get(path).header("host", format!("{at}.localhost:{port}"));
+        axum::http::Request::get(&path).header("host", format!("{at}.localhost:{port}"));
     if let Some(page) = from {
+        if page == at.as_str() {
+            let headers = common::proved(node, Some(at.as_str()), "GET", &path, "").await;
+            for (name, value) in headers.iter() {
+                request = request.header(name, value);
+            }
+        }
         request = request
-            .header("cookie", common::opened(node, Some(at.as_str())).await)
             .header("sec-fetch-site", "same-site")
             .header("sec-fetch-mode", "cors")
             .header("origin", format!("http://{page}.localhost:{port}"));

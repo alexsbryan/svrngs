@@ -9,7 +9,7 @@ use axum::extract::ConnectInfo;
 use axum::http::{Request, StatusCode};
 use tower::ServiceExt;
 
-use super::owner::from_this_network;
+use super::owner::{from_this_network, IN_ROOM};
 use super::{serves, Served};
 use crate::network::{pick, HardwareAddress, Network, Unread};
 
@@ -140,4 +140,23 @@ fn served_only_on_the_network_it_was_turned_on_at() {
     assert!(Served::At(served)
         .said()
         .contains("http://192.168.1.4:41234/"));
+}
+
+/// **The room door consents to no entry.** Its one check is the caller's
+/// address, which proves no person, so a lend's answer there naming entries
+/// to write as this computer's person is refused, of every kind, and says
+/// so (`origin::Unconsented::NetworkOnly`). Planted, watched failing: the
+/// room's value set to `Appending::Granted`, what `origin::reach` assumed
+/// when a door named none.
+#[test]
+fn the_room_door_consents_to_no_entry() {
+    use crate::origin::{Appending, Unconsented};
+    for kind in ["events", "Money", "model"] {
+        let kind = crate::lend::Kind::parse(kind).unwrap();
+        assert!(!IN_ROOM.permits(&kind), "{kind:?} written from the room");
+    }
+    assert!(matches!(
+        IN_ROOM,
+        Appending::Denied(Unconsented::NetworkOnly)
+    ));
 }

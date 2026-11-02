@@ -264,18 +264,9 @@ impl Scene {
             .redirect(reqwest::redirect::Policy::none())
             .build()
             .unwrap();
-        // The home page's session, as its browser holds it once opened.
-        let open = crate::drive::open_at(api.port(), "svrngs", "/");
-        let set = http.get(open.expect("svrngs opens its home page")).send();
-        let set = set.await.unwrap();
-        let set = set
-            .headers()
-            .get("set-cookie")
-            .and_then(|c| c.to_str().ok());
-        let session = set
-            .and_then(|c| c.split(';').next())
-            .expect("an open sets the session");
-        let session = session.to_string();
+        // The home page's key, as its browser holds it once opened: an
+        // open redeemed from its own origin (home/session.js).
+        let session = crate::common::opened_at(api, token.trim(), None).await;
         Person {
             name: name.into(),
             home,
@@ -313,8 +304,9 @@ pub struct Person {
     api: SocketAddr,
     page: String,
     http: reqwest::Client,
-    /// The home page's session, `svrngs=<value>`, as a `Cookie` sends it.
-    session: String,
+    /// The home page's origin key, as its browser holds it once opened,
+    /// with which each of its requests is proved (common/mod.rs `prove`).
+    session: Vec<u8>,
 }
 
 impl Person {
@@ -364,13 +356,24 @@ impl Person {
     /// `POST <path>` of `body` on its home page, as the page's own script
     /// sends it, from its exact origin (home.rs `only_itself`).
     pub async fn on_home_page(&self, path: &str, body: &Value) -> Value {
+        let body = body.to_string();
+        let proof = crate::common::prove(
+            self.api,
+            &self.session,
+            "POST",
+            &self.page,
+            path,
+            &body,
+            false,
+        );
+        let proof = crate::common::headers(&proof.await);
         let sent = self.http.post(format!("http://{}{path}", self.page));
         let sent = sent
             .header("origin", format!("http://{}", self.page))
             .header("sec-fetch-site", "same-origin")
-            .header("cookie", &self.session)
+            .headers(proof)
             .header("content-type", "application/json")
-            .body(body.to_string());
+            .body(body);
         let got = sent.send().await.unwrap();
         let status = got.status();
         let got = got.bytes().await.unwrap();
@@ -398,21 +401,18 @@ impl Person {
         let http = reqwest::Client::builder().no_proxy();
         let http = http.redirect(reqwest::redirect::Policy::none());
         let http = http.resolve(name, self.api).build().unwrap();
-        let (_, open) = open_of(&format!("{origin}/")).expect("svrngs opens the lend");
-        let set = http.get(open).send().await.unwrap();
-        let set = set
-            .headers()
-            .get("set-cookie")
-            .and_then(|c| c.to_str().ok());
-        let session = set.and_then(|c| c.split(';').next());
-        let session = session.expect("an open sets the session").to_string();
+        let lend = name.strip_suffix(".localhost").expect("a lend's host");
+        let key = crate::common::opened_at(self.api, self.token().trim(), Some(lend)).await;
+        let body = body.to_string();
+        let proof = crate::common::prove(self.api, &key, "POST", host, path, &body, false);
+        let proof = crate::common::headers(&proof.await);
         let sent = http.post(format!("{origin}{path}"));
         let sent = sent
             .header("origin", origin)
             .header("sec-fetch-site", "same-origin")
-            .header("cookie", session)
+            .headers(proof)
             .header("content-type", "application/json")
-            .body(body.to_string());
+            .body(body);
         let got = sent.send().await.unwrap();
         let status = got.status();
         let got = got.bytes().await.unwrap();

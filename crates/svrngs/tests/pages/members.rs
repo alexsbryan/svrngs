@@ -287,7 +287,7 @@ async fn a_guest_s_visit_of_5_s_ends_while_shown(engine: Engine) {
 in_chromium!(
     /// **A refused leave is said in its own words** (page-members (d)).
     /// ada's home page shows "Leave house"; its session lapses (its
-    /// cookies cleared) and ada presses it: beside the button, house
+    /// key dropped) and ada presses it: beside the button, house
     /// cannot be changed, as the session has ended, said as how to open
     /// it again. Watched failing on v1 (`UI` flipped), whose `asked`
     /// (home.js@19b63b2b:42) reads the 401's page as JSON and says a parse error.

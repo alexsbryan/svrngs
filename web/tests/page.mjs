@@ -81,24 +81,26 @@ const ENGINES = { chromium: null, webkit: 'iPhone 15' };
 // The hosts svrngs opened for this half (drive.rs `opens`): each
 // computer's home page and each lend its args name, opened in `context` by
 // a code from `/v1/open`, asked with the token as `svrngs open` asks it, and
-// redeemed by the context's own requests, whose cookies its pages share, so
-// the context holds each host's session as a person's browser does
-// (give-session). A code is single-use, so each context mints its own; one
+// redeemed by a real bootstrap page, which imports the origin key and waits
+// for its authentication worker to control it. No cookie models authority.
+// A code is single-use, so each context mints its own; one
 // refused is said, and the host left unopened.
 async function opened(context) {
   for (const { port, token, names } of JSON.parse(process.env.SVRNGS_OPENS ?? '[]')) {
     for (const name of names) {
-      const body = JSON.stringify(name === 'svrngs' ? {} : { lend: name });
+      const body = JSON.stringify({ ...(name === 'svrngs' ? {} : { lend: name }), at: '/svrngs-session-ready' });
       const headers = { authorization: `Bearer ${token}`, 'content-type': 'application/json' };
       const asked = await fetch(`http://127.0.0.1:${port}/v1/open`, { method: 'POST', headers, body }).catch((e) => e);
       if (!asked.ok) {
         console.error(`svrngs at ${port} did not open ${name}: ${asked.status ?? asked}`);
         continue;
       }
-      // Redeemed and not followed, so no lend's service is asked by it.
+      // The ready endpoint is public bootstrap infrastructure, not the service.
       const at = (await asked.json()).open;
-      const redeemed = await context.request.get(at, { maxRedirects: 0 });
-      if (!redeemed.headers()['set-cookie']) console.error(`svrngs at ${port} set no session at ${at}: ${redeemed.status()}`);
+      const enrollment = await context.newPage();
+      await enrollment.goto(at);
+      await enrollment.waitForURL('**/svrngs-session-ready', { timeout: 30000 });
+      await enrollment.close();
     }
   }
   return context;
@@ -148,8 +150,45 @@ export async function launch(engine, { profile, device: as, args, unopened, zone
     console.error(`Playwright's ${engine} cannot start — run: ${INSTALL}\n${e}`);
     process.exit(3);
   }
+  made.context.pages().forEach(landing);
+  made.context.on('page', landing);
   if (!unopened) await opened(made.context);
   return made;
+}
+
+// Where `page` lands once an open it passed through has done its work: an
+// open's address (`/svrngs-open?code=`, from `svrngs open`, the home page's
+// `/to`, or a lend's bookmark sent there) answers only the bootstrap page,
+// whose script redeems the code, keeps the origin's key, waits for its
+// worker and only then goes on to where the open leads (home/session.js),
+// as a person's browser goes on a moment after it loads. Loaded there, or
+// at once when it never was at an open.
+// Answered: the response its last whole-tab navigation got, the page it
+// arrived at's own, where `page.goto`'s is the bootstrap's (each page of
+// a context `launch` made, `landing`).
+export async function arrived(page, timeout = 30_000) {
+  await page.waitForURL((u) => u.pathname !== '/svrngs-open', { timeout });
+  return landed.get(page) ?? null;
+}
+// Each page's last response to a navigation of its own tab, a redirect's
+// included, kept as it comes.
+const landed = new WeakMap();
+function landing(page) {
+  page.on('response', (r) => r.request().isNavigationRequest() && r.frame() === page.mainFrame() && landed.set(page, r));
+}
+
+// `page`'s origin's session lapsed, as one does: the key svrngs's open
+// enrolled there (home/session.js, IndexedDB `svrngs-browser`) dropped, so
+// its worker proves no request after and each is refused as a browser
+// with no session is (session.rs `refused`). What clearing the cookie was
+// before the key moved out of one.
+export async function lapse(page) {
+  await page.evaluate(() => new Promise((done, failed) => {
+    const asked = indexedDB.deleteDatabase('svrngs-browser');
+    asked.onsuccess = done;
+    asked.onerror = () => failed(asked.error);
+    asked.onblocked = () => failed(new Error('the session key is held open'));
+  }));
 }
 
 // Every address off this computer refused, as with n0 unreachable

@@ -18,7 +18,7 @@
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
-import { firstLook, launch } from './page.mjs';
+import { arrived, firstLook, launch } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const { context, close } = await launch(args.engine);
@@ -155,7 +155,7 @@ try {
   let opened = null;
   if (args.open) {
     const [tab] = await Promise.all([context.waitForEvent('page'), page.locator('a', { hasText: args.open }).first().click({ timeout: 30_000 })]);
-    await tab.waitForLoadState();
+    await arrived(tab);
     opened = { url: tab.url(), title: await tab.title() };
   }
   // With `text`, the page's words as a person reads them, each cell apart,

@@ -96,9 +96,18 @@ async fn ask(api: SocketAddr, host: &str, rest: &str) -> (String, tokio::net::Tc
 
 /// [`ask`] from a caller on `on`'s computer: a page with the session svrngs
 /// opened at `host`, a program with the token (give-session).
-async fn asked(on: &Browser, host: &str, rest: &str) -> (String, tokio::net::TcpStream) {
-    let shown = on.shown(host, rest).await;
-    ask(on.api(), host, &format!("{rest}{shown}")).await
+async fn asked(on: &Browser<'_>, host: &str, rest: &str) -> (String, tokio::net::TcpStream) {
+    let (line, headers) = rest.split_once("\r\n").unwrap();
+    let mut parts = line.split_whitespace();
+    let (method, path) = (parts.next().unwrap(), parts.next().unwrap());
+    let path = on.path(host, path, headers);
+    let shown = on.shown(method, host, &path, headers, "").await;
+    ask(
+        on.api(),
+        host,
+        &format!("{method} {path} HTTP/1.1\r\n{headers}{shown}"),
+    )
+    .await
 }
 
 /// A whole reply's body after its head, read to the close.
@@ -358,7 +367,7 @@ fn declare(dir: &std::path::Path, name: &str, port: u16, kind: &str, reads: &[&s
 /// kind, and the app the service behind it was told — `None` when the
 /// service was not asked.
 async fn judged(
-    on: &Browser,
+    on: &Browser<'_>,
     host: &str,
     extra: &str,
     heads: &std::sync::Mutex<Vec<String>>,
@@ -944,7 +953,7 @@ async fn a_lent_app_writes_as_the_person_asking_only_by_their_own_device() {
         format!("{label}.localhost:{}", api.port())
     };
     let post = |acts: serde_json::Value| {
-        format!("POST /e HTTP/1.1\r\nConnection: close\r\nContent-Length: 0\r\nx-test-append: {acts}\r\n")
+        format!("POST /e HTTP/1.1\r\nConnection: close\r\nContent-Length: 0\r\nx-svrngs-append: events\r\nx-test-append: {acts}\r\n")
     };
     let (alex_key, sam_key) = (actor_of(&signing(1)), actor_of(&signing(2)));
     let paid = alex.rail().commit(

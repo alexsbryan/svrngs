@@ -24,7 +24,7 @@
 //
 //   node people.mjs
 import { createInterface } from 'node:readline';
-import { launch } from '../../../../web/tests/page.mjs';
+import { arrived, launch } from '../../../../web/tests/page.mjs';
 
 const people = {};
 
@@ -60,7 +60,8 @@ async function act(c) {
   }
   const { page } = people[c.who];
   if (c.do === 'goto') {
-    const res = await page.goto(c.url, { timeout: 30_000 });
+    // Through an open, where it leads (page.mjs `arrived`), and its answer.
+    const res = (await page.goto(c.url, { timeout: 30_000 }), await arrived(page));
     return { status: res?.status() ?? null, ...(await view(c.who, t0)) };
   }
   if (c.do === 'press') {

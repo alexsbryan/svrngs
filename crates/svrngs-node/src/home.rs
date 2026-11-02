@@ -179,7 +179,7 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
 }
 
 /// The home page's one rule (the module doc), and its policy on every answer.
-async fn only_itself(State(at): State<Asking>, req: Request, next: Next) -> Response {
+async fn only_itself(State(at): State<Asking>, mut req: Request, next: Next) -> Response {
     let own = format!("{HOST}:{}", at.host.api_port);
     let ([site, mode, origin, host], own_page) = crate::origin::fetch(req.headers());
     let at_own = host.is_some_and(|h| h.eq_ignore_ascii_case(&own));
@@ -190,18 +190,42 @@ async fn only_itself(State(at): State<Asking>, req: Request, next: Next) -> Resp
         } else {
             site == Some("same-origin") && origin.is_some_and(|o| o == format!("http://{own}"))
         };
-    let shown = at.sessions.shown(req.headers(), crate::session::HOME);
+    if at_own {
+        if let Some(mut answer) = at.sessions.public(crate::session::HOME, &req) {
+            answer.headers_mut().insert(
+                header::CONTENT_SECURITY_POLICY,
+                HeaderValue::from_static(POLICY),
+            );
+            return answer;
+        }
+    }
+    let shown = at.sessions.shown(&req, crate::session::HOME);
     let opening = at_own && req.uri().path() == crate::session::OPEN_PATH;
     tracing::debug!(target: "home", path = %req.uri().path(), method = %req.method(), at_own, ?site, ?mode, ?origin, answers, ?shown, opening,
         "home: answered only to an open, then only with its session or the token, from itself, a typed address or, to read, a navigation");
+    let intent = req
+        .headers()
+        .get("x-svrngs-intent")
+        .is_some_and(|h| h == "yes");
+    let closed = || LendRefusal::Closed.say(StatusCode::FORBIDDEN, "this page answers only itself");
     let mut answer = if opening {
         at.sessions.redeem(crate::session::HOME, &req)
     } else if shown == crate::session::Shown::Neither {
+        tracing::debug!(target: "home", path = %req.uri().path(), "home: refused — neither its session's proof nor the token");
         at.sessions.refused("")
-    } else if answers {
+    } else if !answers {
+        tracing::debug!(target: "home", path = %req.uri().path(), ?site, ?origin, "home: refused — not from itself, a typed address or, to read, a navigation");
+        closed()
+    } else if shown == crate::session::Shown::Token || reads {
         next.run(req).await
+    } else if !intent {
+        tracing::debug!(target: "home", path = %req.uri().path(), "home: refused — a write its session proved, without its own page's intent");
+        closed()
+    } else if !at.sessions.body_matches(&mut req).await {
+        tracing::debug!(target: "home", path = %req.uri().path(), "home: refused — a write whose body is not the one its proof signed");
+        closed()
     } else {
-        LendRefusal::Closed.say(StatusCode::FORBIDDEN, "this page answers only itself")
+        next.run(req).await
     };
     answer.headers_mut().insert(
         header::CONTENT_SECURITY_POLICY,
