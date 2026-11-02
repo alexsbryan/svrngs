@@ -19,6 +19,13 @@ Chrome 151, on node 20.20.2, Darwin 27.0.0. No DNS: every name is routed by
   `localhost.js`, `localhost-tls.js` → the test layouts. **A `__Host-`
   cookie set by the group page is read by its frame under the app, is
   invisible to the app, and can't be planted by the app, in all three.**
+- `holder-design/handoff.js` → `run-handoff-webkit.txt` (`node handoff.js
+  webkit`), `run-handoff-chromium.txt` (`node handoff.js chromium
+  chromium-part`): the cookie as a one-time handoff. **The signer adopts the
+  sealed approver key into its own IndexedDB, keyed by its parent's label,
+  then deletes the cookie; later visits, a reload and a restart sign from the
+  store, a newer open replaces it, another app is refused, and two tabs on
+  one cookie both sign, in all three.**
 
 The private keys are not kept. To run again, make the two self-signed
 certificates beside the scripts:

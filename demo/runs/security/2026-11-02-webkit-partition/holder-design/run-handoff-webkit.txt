@@ -1,0 +1,15 @@
+# webkit 26.4 (2026-11-02T19:34:41.428Z)
+{"engine":"webkit","step":"H1 first ask under the app: adopt, then delete the cookie","visible":[],"cookieSeen":1,"adopted":true,"cookieAfterDelete":false,"ok":true,"keyExtractable":false}
+{"engine":"webkit","step":"H1 a signature with the adopted key verifies under the open's public key","verifies":true}
+{"engine":"webkit","step":"H1 after the delete: group page's document.cookie, the browser's jar","groupPage":[],"jar":0}
+{"engine":"webkit","step":"H2 app reloaded, no cookie","visible":["aaaa…"],"cookieSeen":0,"ok":true,"keyExtractable":false,"verifies":true,"signHtmlCookieOnWire":[[]]}
+{"engine":"webkit","step":"H2 browser restarted, app from a bookmark","visible":["aaaa…"],"cookieSeen":0,"ok":true,"keyExtractable":false,"verifies":true}
+{"engine":"webkit","step":"H3 second open of the same app: adopt the new one","visible":["aaaa…"],"cookieSeen":1,"adopted":true,"cookieAfterDelete":false,"ok":true,"keyExtractable":false}
+{"engine":"webkit","step":"H3 new open signs under its own key","newKey":true,"verifies":true}
+{"engine":"webkit","step":"H3 the page still holding the first open asks again","visible":["aaaa…"],"cookieSeen":0,"ok":false,"why":"not the open this signer adopted"}
+{"engine":"webkit","step":"H3 entry-1, approved under the first open, still verifies","verifies":true}
+{"engine":"webkit","step":"H4 another app presents the first app's open","visible":[],"ok":false,"why":"an open for another app"}
+{"engine":"webkit","step":"H4 another app presents it relabelled as its own","visible":[],"cookieSeen":0,"ok":false,"why":"no approver stored for this app"}
+{"engine":"webkit","step":"H5 two tabs, one cookie, at once, 10 rounds","tally":{"adopted + adopted | both verify: true | jar after: 0":10}}
+{"engine":"webkit","step":"H5 two tabs, one cookie, 30 ms apart, 10 rounds","tally":{"adopted + reused | both verify: true | jar after: 0":10}}
+{"engine":"webkit","step":"H5 two tabs, one cookie, second after the first settled, 10 rounds","tally":{"adopted + reused | both verify: true | jar after: 0":10}}
