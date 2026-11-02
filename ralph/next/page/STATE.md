@@ -640,3 +640,12 @@ brackets.
   - deploys the page and cuts a release from the switchover's commit (a detached worktree, `npm ci --prefix web`, `target/debug` dropped, `CARGO_INCREMENTAL=0 scripts/deploy-page.sh`);
   - reads it back: the page's version, the `/page/` routes from a released binary, and `svrngs-ui-v2` in no tarball;
   - plays the house demo once on their iPhone against the live page.
+
+  **Deployed 2026-11-02** (the operator: "You deploy"), from v1.4 (6dafd336), carrying the security work past the switchover. The deploy went to production, READY (`scripts/deploy-page.sh`: svrngs-page-pmmfo4zg5).
+  - **Read back:**
+    - `sign.html` sends `frame-ancestors https:`, at the page and at an app's name;
+    - `/` sends `frame-ancestors 'none'`;
+    - the live svrngs-darwin-aarch64 passes its SHA256SUMS, and its binary is byte-identical to the one built here;
+    - no binary holds `svrngs-ui-v2`, and the `/page/` routes are in it.
+  - **Keeper first:** this Mac's svrngs was updated to the same binary before the deploy; the old one is kept at `~/.local/bin/svrngs.pre-v1.4`.
+  - **Still owed:** the operator's iPhone play, so the row stays open.
