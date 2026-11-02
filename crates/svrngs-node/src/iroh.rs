@@ -222,13 +222,9 @@ impl IrohTransport {
     /// `RelayConfig::n0_services` — finds it, PLAN §4, U1's "A bare key is dialled".)
     pub(crate) fn endpoint_addr_for(&self, peer: &Contact) -> Option<iroh::EndpointAddr> {
         let mut ea = iroh::EndpointAddr::new(peer.key);
-        let mut has_path = false;
         if let Some(relay) = peer.relay_url.as_deref() {
             match crate::relay::parse(relay) {
-                Ok(url) => {
-                    ea = ea.with_relay_url(url);
-                    has_path = true;
-                }
+                Ok(url) => ea = ea.with_relay_url(url),
                 Err(e) => tracing::warn!(
                     target: "transport",
                     transport = "iroh",
@@ -244,14 +240,12 @@ impl IrohTransport {
             .ok()
             .and_then(|m| m.get(peer.key.as_bytes()).cloned())
             .unwrap_or_default();
-        let mut seen = std::collections::HashSet::new();
+        // The address set is iroh's `BTreeSet`, so a hint given twice is
+        // one address (iroh-base-1.0.2 `endpoint_addr.rs:118-121`).
         for a in peer.iroh_direct_addrs.iter().copied().chain(seeded) {
-            if seen.insert(a) {
-                ea = ea.with_ip_addr(a);
-                has_path = true;
-            }
+            ea = ea.with_ip_addr(a);
         }
-        if has_path {
+        if !ea.is_empty() {
             return Some(ea);
         }
         let lookup = has_lookup(&self.endpoint);
