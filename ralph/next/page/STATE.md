@@ -579,7 +579,7 @@ brackets.
     - "Open it to this WiFi", "Close it to this WiFi", the `on.said` words, "Closed to this WiFi: …", `table.index ~ ul.wifi li`, `#room`, and "Copied: <origin>. Paste it…";
     - "Play", "Stop", "Connect to …", " Copied.", "Open on this computer: played (cy’s), while Play is on. Stop", and the clipboard's text.
   - **Moves:** the raw-port scene's Play on v2. +32 to +46 [about 19].
-- [ ] page-parity — depends [page-shelf, page-index, page-members, page-join, page-acts, page-home-rooms] — ONE ROW, the full gate on v2, and the operator's iPhone run prepared:
+- [x] page-parity c8292845 — depends [page-shelf, page-index, page-members, page-join, page-acts, page-home-rooms] — ONE ROW, the full gate on v2, and the operator's iPhone run prepared:
   - **Owns:** check.sh's `parity` step and `demo/runs/page/`.
   - **(a) Every v1 test on v2.**
     - `scripts/parity.sh` reports every v1 test passed, or could-not-judge where check.sh allows it. Nothing is failed or never-ran.
