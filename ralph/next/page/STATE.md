@@ -603,7 +603,7 @@ brackets.
   - says go, or names what is owed.
 
   The switchover's raise, if page-parity's (f) found one, is set here or after the pass.
-- [ ] page-switchover — depends [HUMAN-page-switchover] — ONE ROW, the swap in ONE commit so no tree holds half and a bisect lands on v1 or v2, never between (the operator, 2026-11-01), any economizing commits before it, each green on `parity.sh`, and `scripts/check.sh` once, at the close — v2 becomes the pages, and v1 goes:
+- [x] page-switchover 1f94f60f — depends [HUMAN-page-switchover] — ONE ROW, the swap in ONE commit so no tree holds half and a bisect lands on v1 or v2, never between (the operator, 2026-11-01), any economizing commits before it, each green on `parity.sh`, and `scripts/check.sh` once, at the close — v2 becomes the pages, and v1 goes:
   - **(a) The pass first,** whenever page-parity's (f) is over.
     - Write `demo/runs/economize/<date>-page-switchover/SURVEY.md`.
     - Its first candidates are the primitives the feature rows wrote apart (PROMPT fence 8), and the near-duplicates across the two pages: `~/dev/commonwealth-ai/target/debug/sovereign-cli code dry-report --scope <dir>` for `web/v2` and `crates/svrngs-node/src/home`. Each is folded into `ui/parts.js` with its case in `parts.test.mjs`.
