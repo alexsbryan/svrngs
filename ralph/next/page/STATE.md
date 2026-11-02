@@ -597,7 +597,7 @@ brackets.
     - Each bar has its chance written beside it.
     - `NEEDS_HUMAN.md` gives the operator's steps, then stop. The results are told to the watching session, which writes `README.md` there.
   - **Plant:** a v1 test left failing on v2 makes `parity.sh` exit 1, naming it, and the `parity` step fail.
-- [x] HUMAN-page-switchover — depends [page-parity] — THE OPERATOR (go, 2026-11-01: "Ok let's do the switchover all in one commit so it's easy to bisect"; the iPhone run was not played before the go, so PREDICTIONS.md's bars stand never-ran until HUMAN-page-deploy's play on the live page; the raise is set after (a)'s pass, from `NEEDS_HUMAN.md`):
+- [x] HUMAN-page-switchover — depends [page-parity] — THE OPERATOR (go, 2026-11-01: "Ok let's do the switchover all in one commit so it's easy to bisect"; the iPhone run was not played before the go, so PREDICTIONS.md's bars stand never-ran until HUMAN-page-deploy's play on the live page; the raise is set after (a)'s pass, from `NEEDS_HUMAN.md`; the operator, 2026-11-01, "Yes to both" to the parked ask: `.` raised to 19,447 from the operator seat, and the swap's commit may delete the v2 rung and `V2` from `BUDGET` and lower `.` to one past where it lands, never raise it):
   - reads the parity record and the iPhone run;
   - if they choose, uses v2 on their own computer (a test build's node with `--ui v2`) and on their iPhone (`node web/tests/serve.mjs` over `target/web/site-v2`);
   - says go, or names what is owed.
