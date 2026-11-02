@@ -516,7 +516,16 @@ each hash held on every computer only until `keep` seconds after its put:
 a getter first asks the group's other computers on the members' protocol
 (`GET /internal/ring/blob/<hash>`) who holds it and for how long yet, and
 the provider's one rule (`Folders::serves`) serves a dialer a hash a
-synced folder or an app placed in a group it stands in. Removal as the command asks it (`removal.rs`, U7):
+synced folder or an app placed in a group it stands in.
+
+Incoming synced-folder operations and shelf writes resolve beneath an opened
+`cap_std::fs::Dir` (`folder::confined::Root`), including metadata and deletes;
+symlink parents cannot escape that authority. Blob installation streams into an
+exclusive random partial, checks length, flushes/fsyncs, rechecks expected local
+metadata and renames relative to the root. Failure is not recorded as a completed
+export (`synced.rs`). This is separate from the group's pure `SyncPath` parse.
+
+Removal as the command asks it (`removal.rs`, U7):
 `POST /v1/removals` commits svrngs-core's `Removal` and `POST
 /v1/handovers` its `HandOnTo`, each answering an `Outcome` the command
 words; each written wakes the round (`AskRound::wake`), so every

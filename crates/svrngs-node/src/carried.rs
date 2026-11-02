@@ -40,7 +40,6 @@
 //! a frame and a worker load only there.
 
 use std::collections::{BTreeMap, BTreeSet};
-use std::fs::{create_dir_all, write};
 use std::path::Path;
 
 use axum::body::to_bytes;
@@ -161,13 +160,12 @@ fn brought(at: &Asking, group: &str, asker: &str, apps: &[String]) -> Given {
         .find(|d| own == Some(super::synced::folder_of(d, group)));
     tracing::debug!(target: "folder", group, ?own, ?dir, kept = dirs.len(), "shelf: brought into the group's own folder, never another it shares; refused when this computer keeps none of its own");
     let dir = dir.ok_or(NO_FOLDER)?;
+    let root = super::confined::Root::open(dir).map_err(|e| traced(group, UNWRITTEN, &e))?;
     let mut said = Vec::new();
     for (name, _, files) in SHELF.iter().filter(|(n, ..)| apps.iter().any(|a| a == n)) {
-        let at = dir.join("apps").join(name);
-        let there = at.join("index.html").exists();
-        let put = |(f, text): &(&str, &str)| {
-            create_dir_all(at.join(f).with_file_name("")).and_then(|()| write(at.join(f), text))
-        };
+        let at = Path::new("apps").join(name);
+        let there = root.metadata(&at.join("index.html")).is_ok();
+        let put = |(f, text): &(&str, &str)| root.write(&at.join(f), text.as_bytes());
         let wrote: Result<(), _> = files.iter().filter(|_| !there).try_for_each(put);
         wrote.map_err(|e| traced(group, UNWRITTEN, &e))?;
         said.push(json!({ "app": name, "already": there }));

@@ -56,6 +56,8 @@ mod blob;
 #[path = "carried.rs"]
 pub(crate) mod carried;
 pub(crate) use carried::{bring, shelf, yes};
+#[path = "confined.rs"]
+mod confined;
 #[path = "synced.rs"]
 mod synced;
 

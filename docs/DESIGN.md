@@ -972,7 +972,12 @@ Seven calls:
    a path, its bytes by hash, and the entry it replaces. An entry no other
    replaces is a head; a path's second head is written beside it, named as a
    conflict with its writer's person. A path is parsed (`SyncPath`, of named
-   parts), so no act can write outside the folder on another member's disk.
+   parts), and incoming metadata, deletes, shelf writes and blob installs
+   resolve through an opened directory capability (`folder::confined::Root`),
+   so a symlink parent cannot carry an operation outside that root. A blob
+   streams to a fresh exclusive partial, its length checked and bytes synced;
+   installation rechecks local metadata before the capability-relative rename.
+   Failure never marks a file as successfully exported.
    The bytes move by iroh-blobs: a computer serves a hash only to a dialer
    standing in a group whose folder, or an app, placed it there, and fetches
    what it lacks by verified range from the group's members, passing over a

@@ -556,17 +556,25 @@ impl Folders {
         taken: &BTreeMap<SyncPath, (ContentHash, SystemTime)>,
     ) -> (Vec<TempTag>, usize) {
         let mut hold = Vec::new();
+        let root = match super::confined::Root::open(dir) {
+            Ok(root) => root,
+            Err(why) => {
+                tracing::warn!(target: "folder", folder, %why, "synced: the directory cannot be opened, so no incoming path is touched");
+                return (hold, placed.len());
+            }
+        };
         tracing::debug!(target: "folder", folder, placed = placed.len(), "synced: the layout to write");
         let paths: BTreeSet<&SyncPath> = placed.iter().map(|p| &p.path).collect();
         for (rel, h) in held.clone() {
-            let at = dir.join(rel.as_str());
             if paths.contains(&rel) {
                 continue;
             }
-            if unchanged(Some(&h), &at) {
-                let gone = std::fs::remove_file(&at);
+            if root.unchanged(Path::new(rel.as_str()), Some((h.p.size, h.mtime))) {
+                let gone = root.remove(Path::new(rel.as_str()));
                 tracing::info!(target: "folder", folder, path = %rel, ?gone, "synced: deleted, the record placing nothing there");
-                held.remove(&rel);
+                if gone.is_ok() {
+                    held.remove(&rel);
+                }
             } else {
                 tracing::debug!(target: "folder", folder, path = %rel, "synced: not deleted, the record placing nothing there — the disk changed since it was last held");
             }
@@ -589,19 +597,25 @@ impl Folders {
         }
         let mut fetches = Vec::new();
         for &p in placed {
-            let (at, before) = (dir.join(p.path.as_str()), held.get(&p.path));
+            let before = held.get(&p.path);
             if before.is_some_and(|h| h.p.entry == p.entry) {
                 continue;
             }
-            if !unchanged(before, &at) {
+            if !root.unchanged(
+                Path::new(p.path.as_str()),
+                before.map(|h| (h.p.size, h.mtime)),
+            ) {
                 tracing::debug!(target: "folder", folder, path = %p.path, "synced: not written — the disk changed since it was last held, and is never written over");
                 continue;
             }
             if before.is_none_or(|h| h.p.hash != p.hash) {
-                fetches.push((p.clone(), at));
+                fetches.push((p.clone(), before.map(|h| (h.p.size, h.mtime))));
                 continue;
             }
-            match std::fs::metadata(&at).and_then(|m| m.modified()) {
+            match root
+                .metadata(Path::new(p.path.as_str()))
+                .map(|(_, mtime)| mtime)
+            {
                 Ok(mtime) => {
                     let p = p.clone();
                     held.insert(p.path.clone(), Held { p, mtime });
@@ -613,22 +627,28 @@ impl Folders {
         }
         // Fetched FETCH_AT_ONCE at once, each written when it is held
         // (perf-2 g).
+        let root = &root;
         let fetched = n0_future::stream::iter(fetches)
-            .map(|(p, at)| async move {
-                let tag = self.fetch_placed(folder, &p, &at, standing).await;
-                (p, at, tag)
+            .map(|(p, expected)| async move {
+                let tag = self
+                    .fetch_placed(folder, &p, root, standing, expected)
+                    .await;
+                (p, tag)
             })
             .buffered_unordered(FETCH_AT_ONCE)
             .collect::<Vec<_>>()
             .await;
         let mut unwritten = 0;
-        for (p, at, tag) in fetched {
+        for (p, tag) in fetched {
             let Some(tag) = tag else {
                 unwritten += 1;
                 continue;
             };
             hold.push(tag);
-            match std::fs::metadata(&at).and_then(|m| m.modified()) {
+            match root
+                .metadata(Path::new(p.path.as_str()))
+                .map(|(_, mtime)| mtime)
+            {
                 Ok(mtime) => drop(held.insert(p.path.clone(), Held { p, mtime })),
                 Err(why) => {
                     tracing::warn!(target: "folder", folder, path = %p.path, %why, "synced: written, but its mtime cannot be read, so it is not held");
@@ -651,8 +671,9 @@ impl Folders {
         &self,
         folder: &str,
         p: &Placed,
-        at: &Path,
+        root: &super::confined::Root,
         standing: &Holders,
+        expected: Option<(u64, SystemTime)>,
     ) -> Option<TempTag> {
         let ms = |t: Instant| t.elapsed().as_millis() as u64;
         let hash = Hash::from_bytes(*p.hash.as_bytes());
@@ -667,10 +688,17 @@ impl Folders {
             return None;
         }
         let (fetch_ms, exported) = (ms(fetched), Instant::now());
-        let wrote = self.store.blobs().export(hash, at).finish().await;
+        let wrote = root
+            .copy(
+                Path::new(p.path.as_str()),
+                self.store.blobs().reader(hash),
+                expected,
+                p.size,
+            )
+            .await;
         if let Err(why) = wrote {
             tracing::warn!(target: "folder", folder, path = %p.path, %hash, %why, "synced: not written into the directory");
-            return Some(tag);
+            return None;
         }
         tracing::info!(target: "folder", folder, path = %p.path, %hash, from = p.entry.key, seq = p.entry.seq, beside = p.beside, fetch_ms, export_ms = ms(exported), "synced: written into the directory");
         Some(tag)
