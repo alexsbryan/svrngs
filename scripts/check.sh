@@ -69,16 +69,16 @@ if [ -f Cargo.toml ]; then
   step "clippy"   sh -c "cargo clippy --quiet --all-targets -- -D warnings && cargo clippy --quiet --workspace --test '*' -- -D warnings"
   # What the browser tests could not judge, printed after the browser's step,
   # and the conformance canary's verdicts: kept from this check alone.
-  rm -rf target/could-not-judge target/conformance
+  # And `v2`: a run on v2 (SVRNGS_UI=v2) starts svrngs with `--ui v2`, which
+  # only a binary built with svrngs's test-support takes (harness.rs
+  # `ui_args`), so under v2 the tests and scenes that start svrngs build with
+  # it, as parity.sh's do. On v1 they build as before. Red without it:
+  # home_group and every scene stopped at harness.rs:200
+  # (page-parity-4.await.log).
+  rm -rf target/could-not-judge target/conformance; v2=; [ "${SVRNGS_UI-}" = v2 ] && v2="--features svrngs/test-support"
   # The canaries, browser, joining and conformance targets are `test = false`
   # (crates/svrngs-node/Cargo.toml, crates/svrngs/Cargo.toml), so each runs
   # once, in its own step below, and not again here.
-  # A run on v2 (SVRNGS_UI=v2) starts svrngs with `--ui v2`, which only a
-  # binary built with svrngs's test-support takes (harness.rs `ui_args`), so
-  # under v2 the tests and scenes that start svrngs build with it, as
-  # parity.sh's do. On v1 they build as before. Red without it: home_group
-  # and every scene stopped at harness.rs:200 (page-parity-4.await.log).
-  v2=; [ "${SVRNGS_UI-}" = v2 ] && v2="--features svrngs/test-support"
   step "tests"    cargo test --quiet $v2
   # The canaries (DESIGN §5), by name: the apps that keep the infra general.
   step "canaries" cargo test --quiet --workspace --test canaries
