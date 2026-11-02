@@ -9,6 +9,7 @@
 // A guest's lends are drawn here too (web/page/visit.js `listed`).
 import { agreed, alias, aliased, go, html, Keep, named, no, once, opens, Row } from '../ui/kit.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
+import { handoffCookie, sealOpen } from '../authority.js?v=__VERSION__';
 import { listed } from './visit.js?v=__VERSION__';
 
 // How long a pass opens a lend, in seconds (app.js@19b63b2b:75): its origin asks for
@@ -59,11 +60,18 @@ export async function handing({ group, lent, unanswered, label, at }, key, until
   if (raw) trace('PAGE: a lend of this open is at a computer on an older svrngs, so its holder goes as bytes');
   if (!had && !raw) await store.holder(label, holder);
   const start = `${store.lendOrigin(location.protocol, label, location.host)}/open.html?v=__VERSION__${at ? `&back=${encodeURIComponent(at)}` : ''}`;
-  const handoff = { label, lends, pass: w.pass(key, holder, label, lends.slice(1).map((o) => o.label), until),
+  // This open's approver (HOLDER_APPROVAL §3.D): named in both passes, its
+  // seed sealed into the open and its sealing key left in a cookie for the
+  // group's signer alone, which approves the app's entries with it.
+  const approver = crypto.getRandomValues(new Uint8Array(32)), approves = w.actor(approver);
+  const handoff = { label, lends, pass: w.pass(key, holder, label, lends.slice(1).map((o) => o.label), until, approves),
     // An app on a port writes its kind's part of the record as you by naming the act (DESIGN §3, "Lent apps"); a guest's open, naming no group, writes none.
-    writes: l.group || !group.id ? null : w.pass(key, holder, w.carried_label(l.key, l.kind, group.id), [], until),
+    writes: l.group || !group.id ? null : w.pass(key, holder, w.carried_label(l.key, l.kind, group.id), [], until, approves),
     group: group.id, holder, seed: seed && store.hex(seed), raw, relay: w.relay_of(group.token) ?? null, page: here(), unanswered: unanswered.map((u) => u.person ?? u) };
   trace(`PAGE: opening ${label} at ${start}, a pass to ${lends.length} lend(s) until ${until}`);
+  const sealed = await sealOpen(handoff, approver);
+  handoff.proof = sealed.proof;
+  document.cookie = `${handoffCookie(label)}=${sealed.w}; Secure; Path=/; SameSite=Strict; Max-Age=${until - Math.floor(Date.now() / 1000)}`;
   const fragment = btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(handoff)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   location[at === undefined ? 'assign' : 'replace'](`${start}#${fragment}`);
   return { type: 'handed', why: `to ${start}` };

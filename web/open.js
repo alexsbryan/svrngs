@@ -26,6 +26,7 @@
 // the lent app's scripts read; a pass with no bytes here, the group's page
 // signs another, to a new holder (`anew`).
 import * as store from './store.js?v=__VERSION__';
+import { signerFor, holderMatches, openMessage } from './authority.js?v=__VERSION__';
 
 const say = (words) => (document.getElementById('said').textContent = words);
 
@@ -44,6 +45,27 @@ function running(reg) {
   });
 }
 
+// Whether this browser's group page issued `handed`: the group's signer,
+// framed at the address derived from this origin's own host, adopts the
+// open's approver on its first ask, or finds the one it adopted
+// (sign.js; svrn-docs rings/current/HOLDER_APPROVAL.md §3.D).
+async function checked(handed) {
+  const url = signerFor(location.href, new URL('./', import.meta.url).pathname);
+  const frame = document.createElement('iframe');
+  frame.hidden = true;
+  frame.src = url;
+  const channel = new MessageChannel();
+  try {
+    return await new Promise((yes, no) => {
+      const timeout = setTimeout(() => no(new Error('the group page did not verify this open')), 15000);
+      channel.port1.onmessage = ({ data }) => { clearTimeout(timeout); yes(data.opened === true); };
+      const opening = { ...JSON.parse(openMessage(handed)), proof: handed.proof };
+      frame.onload = () => frame.contentWindow.postMessage({ opening }, new URL(url).origin, [channel.port2]);
+      document.body.append(frame);
+    });
+  } finally { frame.remove(); }
+}
+
 async function start() {
   const asked = new URLSearchParams(location.search);
   let handed, seed;
@@ -51,6 +73,7 @@ async function start() {
     handed = decode(location.hash.slice(1));
     history.replaceState(null, '', `${location.pathname}${location.search}`);
     if (store.labelOf(location.hostname) !== handed.label) throw new Error(`a pass for ${handed.label} opened at ${location.origin}`);
+    if (!await checked(handed)) return say('Open this app again from your group’s page.');
     // Lines the last pass's holder signed and no computer took yet go on
     // with this one (lend.js `writing`), each under the pass it was signed with.
     const was = await store.lendKept(`pass ${handed.label}`).catch(() => null);
@@ -66,15 +89,19 @@ async function start() {
     else return location.replace(`${handed.page}#open=${handed.label}&anew`);
     seed = handed.seed;
     if (!handed.raw) delete handed.seed;
-    await store.lendKeep(`pass ${handed.label}`, handed);
   } else {
     handed = asked.get('for') && (await store.lendKept(`pass ${asked.get('for')}`));
     if (!handed) return say('Open this from your group’s page.');
+    if (!await checked(handed)) return say('Open this app again from your group’s page.');
     if (asked.has('again')) return location.replace(`${handed.page}#open=${handed.label}`);
   }
+  if (!await holderMatches(handed.key, handed.holder)) throw new Error('the key is not the holder the group page named');
+  await store.lendKeep(`pass ${handed.label}`, handed);
+  console.debug(`OPEN: ${handed.label}'s open is this browser's, its holder proved and kept`);
   if (!('serviceWorker' in navigator)) return say('This browser cannot open it.');
   const script = new URL('./lend.js?v=__VERSION__', import.meta.url).pathname;
   const worker = await running(await navigator.serviceWorker.register(script, { scope: '/', type: 'module' }));
+  console.debug('OPEN: the lend’s worker runs; handing it the pass');
   const held = (await store.handOver(worker, { handed })) || (seed && (await store.handOver(worker, { handed: { ...handed, key: pkcs8(seed) } })));
   if (!held && !seed) {
     console.debug('OPEN: the worker did not take the holder’s key, and no bytes of it are here: the group’s page signs a pass to a new holder');

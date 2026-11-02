@@ -10,7 +10,9 @@
 //! page's host>`, whose worker dials its lender's key with a pass (u5-2).
 //! The page's origin is `localhost`, whose every name this computer
 //! answers, as svrnme.sh's are, so `svrngs new` decides that itself, and
-//! nothing more is typed: the bar u5-2 keeps. Everything runs on this
+//! nothing more is typed: the bar u5-2 keeps. The phone opens the link
+//! printed at the same server's TLS name, the tests' page host
+//! (web/tests/page.mjs `PAGE_HOST`), where the group's signer works. Everything runs on this
 //! computer: a relay on 127.0.0.1, plain HTTP, Sam's computer reached only
 //! through it, and the page served on 127.0.0.1. The browser
 //! half is `web/tests/join.mjs`, which fails naming the install command
@@ -141,6 +143,13 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
     });
     let origin: Value = serde_json::from_str(&first).unwrap();
     let origin = Origin::parse(origin["origin"].as_str().unwrap()).unwrap();
+    let port = origin
+        .as_str()
+        .trim_end_matches('/')
+        .rsplit(':')
+        .next()
+        .unwrap()
+        .to_string();
 
     let page = cli::checked_page(origin.clone())
         .await
@@ -289,21 +298,15 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
         );
     }
 
-    // A lend opens at an origin of its own, `<label>.localhost`, whose
+    // A lend opens at an origin of its own, `<label>.<page host>`, whose
     // worker serves it from Sam's computer, dialled by Sam's key (u5-2).
     let shelf = svrngs_core::pass::Label::of(
         SigningKey::from_bytes(&[1; 32]).verifying_key().as_bytes(),
         "shelf",
     );
-    let port = origin
-        .as_str()
-        .trim_end_matches('/')
-        .rsplit(':')
-        .next()
-        .unwrap();
     assert_eq!(
         seen["opened"],
-        json!({ "origin": format!("http://{shelf}.localhost:{port}"), "text": "hi" }),
+        json!({ "origin": format!("https://{shelf}.{}:{port}", harness::PAGE_HOST), "text": "hi" }),
         "{seen:#}"
     );
     sam.endpoint().close().await;

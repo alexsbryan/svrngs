@@ -4,6 +4,10 @@
 // Each exits 3 naming the install command when Playwright or its browser
 // is absent — the browser step fails then, never skips.
 import http from 'node:http';
+import net from 'node:net';
+import tls from 'node:tls';
+import { execFileSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize, resolve } from 'node:path';
 
@@ -28,23 +32,116 @@ const TYPES = {
 //
 // Each answer carries the headers the page host is told to send
 // (web/vercel.json, sup-3), each `source` read as a pattern of the path:
-// its `frame-ancestors` is the one guard a `<meta>` policy cannot be.
+// its `frame-ancestors` is the one guard a `<meta>` policy cannot be. All
+// but HSTS: under it the tests' certificate, which no browser trusts, is
+// refused past any telling, and Playwright's WebKit keeps it for every
+// profile of this user (~/Library/Caches/org.webkit.Playwright/WebKit/HSTS,
+// 2026-11-02: an app's name refused "A TLS error" ever after one visit).
+const HSTS = 'Strict-Transport-Security';
 const HOST = JSON.parse(await readFile(new URL('../vercel.json', import.meta.url), 'utf8')).headers;
 //
 // The page's policy is given the tests' own allowance, and no other: their
 // relay, plain HTTP on 127.0.0.1 (crates/svrngs-node/tests/browser/harness.rs),
-// which the published page never holds (web/index.html). A page whose
-// `connect-src` no longer reads as below stops the tests, said, rather
-// than serving it without the allowance.
+// which the published page never holds (web/index.html), asked over TLS:
+// WebKit refuses a TLS page a plain request to 127.0.0.1, as mixed content,
+// so the page and the lend's worker upgrade theirs
+// (`upgrade-insecure-requests`), and the relay's front ends the TLS
+// (harness.rs `relay`); Chromium asks 127.0.0.1 in the clear, as before.
+// Only at the page's TLS name (`PAGE_HOST`): a page a test opens on
+// 127.0.0.1 in the clear upgrades nothing, or its own files would be asked
+// over TLS of a server that speaks none.
+// A page whose `connect-src` no longer reads as below stops the tests,
+// said, rather than serving it without the allowance.
 const CONNECT = "connect-src 'self' wss: https:;";
 const LOOPBACK = 'ws://127.0.0.1:* http://127.0.0.1:*';
-function tests(page) {
+function tests(page, upgraded) {
   if (!String(page).includes(CONNECT)) {
     console.error(`the page's policy holds no \`${CONNECT}\`, so page.mjs cannot add the tests' relay to it`);
     process.exit(1);
   }
-  return String(page).replace(CONNECT, `${CONNECT.slice(0, -1)} ${LOOPBACK};`);
+  return String(page).replace(CONNECT, `${CONNECT.slice(0, -1)} ${LOOPBACK};${upgraded ? ' upgrade-insecure-requests;' : ''}`);
 }
+const UPGRADED = { 'content-security-policy': 'upgrade-insecure-requests' };
+
+// The page at the shape production's has, over TLS at a name with each
+// app at a name of its own under it (DESIGN §3, "the page's host must serve
+// the page at every name under it"): `https://group.svrnme.test:<port>/`,
+// an app `https://<label>.group.svrnme.test:<port>/`. On `localhost` and
+// `<label>.localhost` WebKit gives the group's signer, framed under an app,
+// none of the page's cookies, and the signer's handoff is one
+// (HOLDER_APPROVAL §3.D; demo/runs/security/2026-11-02-webkit-partition/,
+// holder-design/run-localhost*.txt). No name resolves: each context reaches
+// them through `proxied`, which ends their TLS and hands each to the page's
+// server, plain HTTP on 127.0.0.1 at the name's port.
+export const PAGE_HOST = 'group.svrnme.test';
+export const pageAt = (server) => `https://${PAGE_HOST}:${server.address().port}/`;
+export const appAt = (label, port) => `https://${label}.${PAGE_HOST}:${port}`;
+export const inApp = (url) => url.hostname.endsWith(`.${PAGE_HOST}`);
+const TLS = new URL('../../target/tls/', import.meta.url).pathname;
+
+// The certificate the proxy ends TLS with, made once a checkout by openssl,
+// which macOS and every Linux carry, in a directory of its own put in
+// place whole, so two drivers making it at once each read one pair: the
+// browsers take it as they are told to (`launch`), so it need name nothing
+// they check.
+function certified() {
+  try {
+    return { key: readFileSync(`${TLS}page/key.pem`), cert: readFileSync(`${TLS}page/cert.pem`) };
+  } catch {
+    mkdirSync(TLS, { recursive: true });
+    const made = mkdtempSync(`${TLS}making-`);
+    try {
+      execFileSync('openssl', ['req', '-x509', '-newkey', 'ec', '-pkeyopt', 'ec_paramgen_curve:P-256', '-nodes', '-days', '3650', '-subj', `/CN=${PAGE_HOST}`,
+        '-keyout', `${made}/key.pem`, '-out', `${made}/cert.pem`, '-addext', `subjectAltName=DNS:${PAGE_HOST},DNS:*.${PAGE_HOST}`], { stdio: 'pipe' });
+    } catch (e) {
+      console.error(`openssl could not make the tests' page certificate, so no page can be tested over TLS: ${e}`);
+      process.exit(3);
+    }
+    try { renameSync(made, `${TLS}page`); } catch { rmSync(made, { recursive: true, force: true }); }
+    return certified();
+  }
+}
+
+let secure;
+const secured = () => (secure ??= tls.createSecureContext(certified()));
+
+// The proxy each context reaches the page's names through: the run's, which
+// browsers.mjs starts beside its browsers, else one of this process's own;
+// one a run, since WebKit opened contexts at once under proxies of several
+// processes and some found no proxy (2026-11-02, the pages step). A CONNECT
+// to a name under PAGE_HOST is answered here, its TLS ended, with one
+// context made once, and its bytes handed to 127.0.0.1 at the name's port.
+// (Ending it in each page's server instead, after reading a byte to tell
+// TLS from plain, timed out every page load, 2026-11-02.) Anything else goes where it was
+// asked, as with no proxy: a TV at the room's address on this WiFi (the
+// night scene); what a test keeps off this computer, `offline` stops in
+// the browser before it gets here.
+let proxying;
+export const proxied = () => (proxying ??= new Promise((done) => {
+  const piped = (a, b) => (a.pipe(b).pipe(a), [a, b].forEach((s) => s.on('error', () => (a.destroy(), b.destroy()))));
+  const proxy = http.createServer((req, res) => {
+    const to = new URL(req.url);
+    const sent = http.request({ host: to.hostname, port: to.port || 80, path: `${to.pathname}${to.search}`, method: req.method, headers: req.headers }, (r) => (res.writeHead(r.statusCode, r.headers), r.pipe(res)));
+    sent.on('error', () => res.writeHead(502).end());
+    req.pipe(sent);
+  });
+  proxy.on('connect', (req, sock, head) => {
+    const [, name, port] = /^(.+):(\d+)$/.exec(req.url) ?? [];
+    const ours = name === PAGE_HOST || name?.endsWith(`.${PAGE_HOST}`);
+    sock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+    if (head?.length) sock.unshift(head);
+    if (!ours) return piped(sock, net.connect(+port, name));
+    sock.on('error', () => sock.destroy());
+    piped(new tls.TLSSocket(sock, { isServer: true, secureContext: secured() }), net.connect(+port, '127.0.0.1'));
+  });
+  proxy.listen(0, '127.0.0.1', () => (proxy.unref(), done(`http://127.0.0.1:${proxy.address().port}`)));
+}));
+// What every context is opened with: the page's names through the proxy,
+// its certificate taken, loopback asked directly. Chromium takes it for a
+// worker's script only when told at launch (`IGNORING`).
+const shared = () => JSON.parse(process.env.SVRNGS_BROWSERS ?? '{}').proxy;
+export const reaching = async () => ({ ignoreHTTPSErrors: true, proxy: { server: shared() ?? (await proxied()), bypass: 'localhost,*.localhost,127.0.0.1' } });
+export const IGNORING = ['--ignore-certificate-errors'];
 export function serve(dir, { worker, port = 0 } = {}) {
   const root = resolve(dir);
   const asked = [];
@@ -52,21 +149,22 @@ export function serve(dir, { worker, port = 0 } = {}) {
     const path = new URL(req.url, 'http://page').pathname;
     res.on('finish', () => asked.push(`${new Date().toISOString()} ${req.method} ${req.headers.host}${req.url} ${res.statusCode}`));
     for (const { source, headers } of HOST) {
-      if (new RegExp(`^${source}$`).test(path)) for (const { key, value } of headers) res.setHeader(key, value);
+      if (new RegExp(`^${source}$`).test(path)) for (const { key, value } of headers) if (key !== HSTS) res.setHeader(key, value);
     }
     const file = join(root, normalize(path.endsWith('/') ? `${path}index.html` : path));
     if (!file.startsWith(root)) return res.writeHead(403).end();
+    const upgraded = new URL(`http://${req.headers.host}`).hostname.endsWith(PAGE_HOST);
     try {
       let body = await readFile(file);
-      if (/\/(index|404)\.html$/.test(file)) body = tests(body);
+      if (/\/(index|404)\.html$/.test(file)) body = tests(body, upgraded);
       if (worker && path === '/lend.js') body = `${worker}\n${body}`;
-      res.writeHead(200, { 'content-type': TYPES[extname(file)] ?? 'application/octet-stream' });
+      res.writeHead(200, { 'content-type': TYPES[extname(file)] ?? 'application/octet-stream', ...(upgraded && path === '/lend.js' ? UPGRADED : {}) });
       res.end(body);
     } catch {
       // A path with no file: the site's 404.html, as a static host serves
       // it (Vercel, Netlify, Cloudflare Pages, GitHub Pages), else nothing.
       const missing = await readFile(join(root, '404.html')).catch(() => null);
-      res.writeHead(404, { 'content-type': TYPES['.html'] }).end(missing ? tests(missing) : '');
+      res.writeHead(404, { 'content-type': TYPES['.html'] }).end(missing ? tests(missing, upgraded) : '');
     }
   });
   server.asked = asked;
@@ -134,8 +232,9 @@ export async function launch(engine, { profile, device: as, args, unopened, zone
   const device = { ...(named ? pw.devices[named] : {}), ...(zone ? { timezoneId: zone } : {}) };
   let made;
   try {
+    const flags = engine === 'chromium' ? [...IGNORING, ...(args ?? [])] : args;
     if (profile) {
-      const context = await pw[engine].launchPersistentContext(profile, device);
+      const context = await pw[engine].launchPersistentContext(profile, { ...device, ...(await reaching()), args: flags });
       made = { context, close: () => context.close() };
     } else {
       // The run's browser of `engine`, where its harness started one
@@ -143,8 +242,8 @@ export async function launch(engine, { profile, device: as, args, unopened, zone
       // crashed macOS's pasteboard daemon (harness.rs `browsers`). Closing
       // it then closes this context and lets the shared browser be.
       const shared = !args && JSON.parse(process.env.SVRNGS_BROWSERS ?? '{}')[engine];
-      const browser = await (shared ? pw[engine].connect(shared) : pw[engine].launch({ args }));
-      made = { context: await browser.newContext(device), close: () => browser.close() };
+      const browser = await (shared ? pw[engine].connect(shared) : pw[engine].launch({ args: flags }));
+      made = { context: await browser.newContext({ ...device, ...(await reaching()) }), close: () => browser.close() };
     }
   } catch (e) {
     console.error(`Playwright's ${engine} cannot start — run: ${INSTALL}\n${e}`);
@@ -194,7 +293,8 @@ export async function lapse(page) {
 // Every address off this computer refused, as with n0 unreachable
 // (relay-default (b)): each request and socket the context opens elsewhere —
 // n0's lookup, n0's relays, any host — aborted, and its URL kept in the
-// list answered. Ours run on 127.0.0.1 and names under localhost.
+// list answered. Ours run on 127.0.0.1, names under localhost and the page's
+// (`PAGE_HOST`).
 // "What acts as you" opened by its heading, as a person opens it: on both
 // pages it is folded under it (question.js `acts`). Once open, left so.
 export async function unfold(page) {
@@ -230,7 +330,7 @@ export function firstLook(page, room) {
 
 export async function offline(context) {
   const away = [];
-  const off = (url) => /^(https?|wss?):$/.test(url.protocol) && !/^(127\.0\.0\.1|\[::1\]|(.+\.)?localhost)$/.test(url.hostname);
+  const off = (url) => /^(https?|wss?):$/.test(url.protocol) && !/^(127\.0\.0\.1|\[::1\]|(.+\.)?localhost|(.+\.)?group\.svrnme\.test)$/.test(url.hostname);
   await context.route(off, (route) => (away.push(route.request().url()), route.abort()));
   await context.routeWebSocket(off, (ws) => (away.push(ws.url()), ws.close()));
   return away;
@@ -242,7 +342,7 @@ export async function offline(context) {
 // who made the group and when the phone joined it (v1ui-door (d)); with
 // `id`, the group's own, as a phone that joined keeps it (v1ui-shelf (c));
 // `name` the group's, house unless given. Imported as app.js imports it.
-export async function hold({ hex, token, person = 'bo', maker, since, id = 'held', name = 'house' }) {
+export async function hold({ hex, token, person = 'bo', maker, since, id = 'house', name = 'house' }) {
   const app = document.querySelector('script[type=module]').src;
   const store = await import(new URL(`./store.js${new URL(app).search}`, app).href);
   const key = Uint8Array.from(hex.match(/../g), (h) => parseInt(h, 16));
@@ -268,13 +368,14 @@ export async function held(page, origin, args) {
 // its log, exit 1. Closed after, either way.
 export async function driving(args, drive) {
   const server = await serve(args.site, { port: args.port });
-  const origin = `http://localhost:${server.address().port}/`;
+  const origin = pageAt(server);
   const { context, close } = await launch(args.engine, { zone: args.zone });
   const logs = [];
   context.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
   try {
     const page = await context.newPage();
     page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
+    page.on('requestfailed', (r) => logs.push(`requestfailed: ${r.url()} ${r.failure()?.errorText}`));
     await held(page, origin, args);
     console.log(JSON.stringify({ ...(await drive({ page, context, origin, logs })), logs }));
   } catch (e) {

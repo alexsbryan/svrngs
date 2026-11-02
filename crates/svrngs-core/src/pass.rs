@@ -26,6 +26,7 @@ use alloc::vec::Vec;
 use base64::Engine as _;
 use serde::{Deserialize, Serialize};
 
+use crate::grant::{Capability::Append, Grant};
 use crate::{actor_of, field, sign_message, verify_hex, SigningKey};
 
 /// Base32's alphabet for a label: 22 lowercase letters and the ten digits,
@@ -158,13 +159,27 @@ pub struct Pass {
     pub reads: Vec<Label>,
     /// When it stops opening them.
     pub until: i64,
-    /// The person's signature over the five.
+    /// The person's signature over the five, and the approver when named.
     pub sig: String,
+    /// The key that approves the holder's entries, one per open, named by
+    /// the person: the group's page mints it and hands it to its signer,
+    /// never to the app (svrn-docs rings/current/HOLDER_APPROVAL.md §3.D).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub approver: Option<String>,
+    /// The one entry this grant approves: its id without its grant
+    /// ([`crate::grant::bare_id`]). Never in the person's signature.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub op: Option<crate::OpId>,
+    /// The approver's signature over [`Self::approval_message`].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub approval: Option<String>,
 }
 
 /// Why a pass opens nothing here.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
 pub enum PassFault {
+    #[error("an entry approval is not a reach pass")]
+    NotReach,
     #[error("not signed by the person it names")]
     Unsigned,
     #[error("held by another key than the one presenting it")]
@@ -180,11 +195,18 @@ pub enum PassFault {
 impl Pass {
     /// `person` lets `holder`, actor hex, act as them for `app` toward it
     /// and `reads` until `until`.
-    pub fn sign(
+    pub fn sign(person: &SigningKey, holder: &str, lends: (Label, Vec<Label>), until: i64) -> Self {
+        Self::approvable(person, holder, lends, until, None)
+    }
+
+    /// [`Self::sign`], naming `approver`, actor hex, as the key that
+    /// approves the holder's entries ([`Self::approve`]).
+    pub fn approvable(
         person: &SigningKey,
         holder: &str,
         (app, reads): (Label, Vec<Label>),
         until: i64,
+        approver: Option<String>,
     ) -> Self {
         let mut pass = Self {
             person: actor_of(person),
@@ -193,6 +215,9 @@ impl Pass {
             reads,
             until,
             sig: String::new(),
+            approver,
+            op: None,
+            approval: None,
         };
         pass.sig = sign_message(person, &pass.message());
         pass
@@ -201,7 +226,8 @@ impl Pass {
     /// `DOMAIN || person || holder || until[8 BE] || app || each read`,
     /// every variable field preceded by its `u32` big-endian length: the
     /// bytes a pass naming `[app, ...reads]` as its lends signed before the
-    /// app had a field of its own (sup-1).
+    /// app had a field of its own (sup-1); then, with an approver,
+    /// `"approver" || approver`, a tag no label's 62 letters can be.
     pub fn message(&self) -> Vec<u8> {
         let mut msg = crate::sig::PASS_DOMAIN.to_vec();
         field(&mut msg, self.person.as_bytes());
@@ -210,12 +236,70 @@ impl Pass {
         for lend in core::iter::once(&self.app).chain(&self.reads) {
             field(&mut msg, lend.as_str().as_bytes());
         }
+        if let Some(approver) = &self.approver {
+            field(&mut msg, b"approver");
+            field(&mut msg, approver.as_bytes());
+        }
         msg
+    }
+
+    /// What the approver signs: [`Self::message`], then `"op" || op`.
+    pub fn approval_message(&self) -> Vec<u8> {
+        let mut msg = self.message();
+        if let Some(op) = &self.op {
+            field(&mut msg, b"op");
+            field(&mut msg, op.as_bytes());
+        }
+        msg
+    }
+
+    /// This grant naming `line`, unsigned, when its approver may approve
+    /// it at `now`, the approver's clock: before the pass lapses, by its
+    /// holder, appending only its app's part (HOLDER_APPROVAL §2). The
+    /// holder's own timestamp is no evidence of when it wrote, so a line
+    /// stamped after the pass lapses gets none either.
+    pub fn approving(
+        &self,
+        line: &crate::Op<crate::SignedOp>,
+        group: &str,
+        now: i64,
+    ) -> Option<Self> {
+        let payload = match &line.kind.act {
+            crate::RailAct::Record { payload } => Ok(Some(payload)),
+            crate::RailAct::Correct { replacement, .. } => Ok(replacement.as_ref()),
+            _ => Err(()),
+        };
+        let may = |p: &crate::Payload| Grant(self, group).may(&line.actor, Append(p.app()), now);
+        let scoped = payload.is_ok_and(|p| p.is_none_or(|p| may(p).is_ok()));
+        let live = now < self.until && line.ts_unix < self.until;
+        let approves = self.approver.is_some() && self.op.is_none() && self.signed();
+        tracing::debug!(target: "rail:pass", holder = %line.actor, scoped, live, approves, "pass: an entry is approved only by its pass's approver, while the pass is live, in its app's part");
+        (scoped && live && approves && self.holder == line.actor).then(|| Self {
+            op: Some(crate::grant::bare_id(line, group)),
+            ..self.clone()
+        })
+    }
+
+    /// [`Self::approving`], signed by `approver`, the key this pass names.
+    pub fn approve(
+        &self,
+        approver: &SigningKey,
+        line: &crate::Op<crate::SignedOp>,
+        group: &str,
+        now: i64,
+    ) -> Option<Self> {
+        let mut pass = self.approving(line, group, now)?;
+        (pass.approver.as_deref() == Some(actor_of(approver).as_str())).then_some(())?;
+        pass.approval = Some(sign_message(approver, &pass.approval_message()));
+        Some(pass)
     }
 
     /// Whether this pass, presented by `holder` at `now`, opens `lend`: its
     /// app or one of its reads.
     pub fn check(&self, holder: &str, lend: &Label, now: i64) -> Result<(), PassFault> {
+        if self.op.is_some() {
+            return Err(PassFault::NotReach);
+        }
         if !self.signed() {
             return Err(PassFault::Unsigned);
         }
@@ -255,9 +339,22 @@ impl Pass {
         link
     }
 
-    /// Whether the person it names signed it.
+    /// Whether the person it names signed it and, where it names an
+    /// entry, its approver approved that entry. Each signature in one
+    /// spelling only, lowercase hex, so no pass has two encodings and no
+    /// entry two ids.
     pub fn signed(&self) -> bool {
-        verify_hex(&self.person, &self.message(), &self.sig)
+        let one = |sig: &str| {
+            sig.len() == 128 && sig.bytes().all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'))
+        };
+        let approved = match (&self.op, &self.approver, &self.approval) {
+            (None, _, None) => true,
+            (Some(_), Some(by), Some(sig)) => {
+                one(sig) && verify_hex(by, &self.approval_message(), sig)
+            }
+            _ => false,
+        };
+        one(&self.sig) && approved && verify_hex(&self.person, &self.message(), &self.sig)
     }
 
     /// The pass as a header carries it: its JSON in base64url.

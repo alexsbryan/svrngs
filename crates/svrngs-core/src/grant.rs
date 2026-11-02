@@ -34,6 +34,8 @@ pub enum Capability<'a> {
 )]
 #[serde(rename_all = "snake_case")]
 pub enum Why {
+    #[error("its person did not approve this exact entry")]
+    Unapproved,
     #[error("its pass is not signed by the person it names")]
     Unsigned,
     #[error("its pass is another key's")]
@@ -48,6 +50,13 @@ pub enum Why {
     /// yet: it may be real data, and counts once its target arrives.
     #[error("what it corrects is not held here yet")]
     Unheld,
+}
+
+/// The content a per-entry grant binds, before that grant is attached.
+pub fn bare_id(line: &crate::Op<crate::SignedOp>, group: &str) -> crate::OpId {
+    let mut bare = line.clone();
+    bare.kind.grant = None;
+    crate::derive_id(&bare, group)
 }
 
 /// What the pass `.0` on a holder's line grants in the group `.1`, whose

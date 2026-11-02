@@ -405,11 +405,18 @@ pub fn carried_label(lender: String, kind: String, group: String) -> Result<Stri
 /// seconds since 1970: the pass, as the door reads it from a request (u5-2,
 /// sup-1; svrngs-core's `Pass`).
 #[wasm_bindgen]
-pub fn pass(person: Vec<u8>, holder: String, app: String, reads: Vec<String>, until: f64) -> Result<String, JsError> {
+pub fn pass(
+    person: Vec<u8>,
+    holder: String,
+    app: String,
+    reads: Vec<String>,
+    until: f64,
+    approver: Option<String>,
+) -> Result<String, JsError> {
     let parse = |l: &String| Label::parse(l).ok_or_else(|| JsError::new(&format!("{l} is not a lend's label")));
     let app = parse(&app)?;
     let reads = reads.iter().map(parse).collect::<Result<Vec<_>, _>>()?;
-    Ok(Pass::sign(&signing(person)?, &holder, (app, reads), until as i64).encode())
+    Ok(Pass::approvable(&signing(person)?, &holder, (app, reads), until as i64, approver).encode())
 }
 
 /// The key of 32 bytes `key`, as the record spells an actor: a holder's,
@@ -478,6 +485,46 @@ pub fn unsigned_line(
     let line = unsigned(actor, group, (ts, seq, prev), act, Some(grant))?;
     let message = js_sys::Uint8Array::from(svrngs_core::ring_op_message(&line.id).as_slice());
     Ok(js_sys::Array::of2(&serde_json::to_string(&line)?.into(), &message))
+}
+
+/// The signer's approval of `line`, the app's entry in `group`, at `now`
+/// by its own clock (web/sign.js; HOLDER_APPROVAL §3.D): the grant with the
+/// entry named, as JSON, and the bytes the approver `approver` signs — the
+/// signer's key never leaves WebCrypto, so it signs them there and puts
+/// the signature in the grant's `approval`. Only while the open's `reach` pass is live
+/// for the line's holder, `grant` the one the line carries and one the open
+/// issued, both naming `approver`, of one lender's app, and the line
+/// stamped within five minutes of `now`.
+#[wasm_bindgen]
+pub fn approve_line(
+    approver: String,
+    group: String,
+    reach: String,
+    grant: String,
+    line: String,
+    now: f64,
+) -> Result<js_sys::Array, JsError> {
+    let reach = Pass::decode(&reach).ok_or_else(|| JsError::new("not a reach pass"))?;
+    let issued = Pass::decode(&grant).ok_or_else(|| JsError::new("not an issued grant"))?;
+    let line: svrngs_core::Op<svrngs_core::SignedOp> = serde_json::from_str(&line)?;
+    let now = now as i64;
+    let grant = line.kind.grant.as_ref().ok_or_else(|| JsError::new("no write grant"))?;
+    let named = |p: &Pass| p.approver.as_deref() == Some(approver.as_str());
+    let ours = named(&reach)
+        && named(grant)
+        && grant == &issued
+        && reach.app.lender() == grant.app.lender()
+        && now.abs_diff(line.ts_unix) <= 300;
+    if !ours || reach.check(&line.actor, &reach.app, now).is_err() {
+        return Err(JsError::new("this app has no live authority here"));
+    }
+    let pass = grant
+        .approving(&line, &group, now)
+        .ok_or_else(|| JsError::new("this entry was not approved"))?;
+    Ok(js_sys::Array::of2(
+        &serde_json::to_string(&pass)?.into(),
+        &js_sys::Uint8Array::from(pass.approval_message().as_slice()).into(),
+    ))
 }
 
 type Stamp = (f64, f64, Option<String>);

@@ -7,7 +7,7 @@
 // `engine` (page.mjs), it opens the link and types the name whenever the page asks for
 // one; reads every storage the page can write for the person's key; opens
 // the link again, then the page alone; opens the first lend listed, at its
-// own origin, `<label>.localhost`, which its worker serves (u5-2); and
+// own origin, `<label>.<page host>`, which its worker serves (u5-2); and
 // prints what it saw as one JSON line.
 //
 //   node web/tests/join.mjs '{"engine": "chromium"|"webkit", "site": "<dir>"}'
@@ -15,18 +15,24 @@
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
 import { createInterface } from 'node:readline';
-import { firstLook, launch, serve } from './page.mjs';
+import { firstLook, inApp, launch, pageAt, serve } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const server = await serve(args.site);
-const origin = `http://localhost:${server.address().port}/`;
-console.log(JSON.stringify({ origin }));
+// The page's origin as `svrngs new --origin` checks it, on `localhost`, a
+// name every name under which this computer answers; the phone reaches the
+// same server at the page's host over TLS (page.mjs `PAGE_HOST`), so the
+// link it opens is the one printed, at that address.
+const checked = `http://localhost:${server.address().port}/`;
+const origin = pageAt(server);
+console.log(JSON.stringify({ origin: checked }));
 const input = createInterface({ input: process.stdin });
 const told = await new Promise((done) => input.once('line', done));
 input.close();
 // `taken`, when told, is typed first: a name someone in the group goes by,
 // which the page refuses and asks again, saying why (bash-person).
-const { link, name, taken, hint: probe } = JSON.parse(told);
+const { link: printed, name, taken, hint: probe } = JSON.parse(told);
+const link = printed.replace(checked, origin);
 
 // In the page: the person's key as the page's store unseals it, and where
 // else its 32 bytes appear — raw, hex, base64 or as a list of numbers — in
@@ -184,7 +190,7 @@ try {
   // worker serves it from its lender's computer, dialled by key with a pass.
   let opened = null;
   if (alone.lent.length) {
-    const away = (url) => url.hostname.endsWith('.localhost') && url.pathname === '/';
+    const away = (url) => inApp(url) && url.pathname === '/';
     await Promise.all([page.waitForURL(away, { timeout: 90_000 }), page.click('#lent button')]);
     await page.waitForFunction(() => document.body?.innerText.includes('hi'), null, { timeout: 60_000 }).catch(() => {});
     opened = { origin: new URL(page.url()).origin, text: await page.evaluate(() => document.body.innerText) };

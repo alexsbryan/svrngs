@@ -25,7 +25,7 @@
 //
 //   node people.mjs
 import { createInterface } from 'node:readline';
-import { arrived, launch } from '../../../../web/tests/page.mjs';
+import { arrived, inApp, launch } from '../../../../web/tests/page.mjs';
 
 const people = {};
 
@@ -68,7 +68,7 @@ async function shoot(c) {
 
 // The lend's page shown, on a lend's origin, not the group's page.
 async function landed(page, home) {
-  await page.waitForURL((u) => u.hostname.endsWith('.localhost') && u.host !== home, { timeout: 90_000 });
+  await page.waitForURL((u) => (u.hostname.endsWith('.localhost') || inApp(u)) && u.host !== home, { timeout: 90_000 });
   await page.waitForFunction(shown, null, { timeout: 90_000 });
 }
 

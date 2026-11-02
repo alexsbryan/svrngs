@@ -243,6 +243,12 @@ pub struct Membership {
     /// person than its signer's counts nowhere (`admit`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub signers: Option<OpId>,
+    /// The keeper's first counting [`RailAct::Holders`], the holders'
+    /// cutover: past what it covers, a holder's line counts only with its
+    /// person's approval of its exact content (`admit`). Skipped when
+    /// absent, so a fold with none serialises as before.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub holders: Option<OpId>,
 }
 
 /// A guest, as a counting [`RailAct::Visit`] names them, hosted by the key
@@ -583,6 +589,7 @@ fn walk(
     let mut made: BTreeMap<&str, Vec<OpId>> = BTreeMap::new();
     let mut visits: BTreeMap<OpId, Guest> = BTreeMap::new();
     let mut signers = None;
+    let mut holders = None;
     for (id, op) in order.iter().copied() {
         let of = |k: &str| String::from(devices.get(k).map_or(k, String::as_str));
         if !live.contains_key(op.stands_as()) {
@@ -724,6 +731,10 @@ fn walk(
                     "membership: a Signers is the cutover only as the keeper's, the first");
                 signers = signers.or(keeps.then(|| id.clone()));
             }
+            RailAct::Holders { .. } => {
+                tracing::debug!(target: "rail:membership", id = %id, keeps, "membership: legacy holder cutover only by the keeper, once");
+                holders = holders.or(keeps.then(|| id.clone()));
+            }
             RailAct::Correct { corrects, .. } => {
                 let visit = visits.get_mut(corrects).filter(|g| g.host == op.actor);
                 tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor, %corrects, stops = visit.is_some(), "membership: a Correct is a visit's Stop only by the key that hosts it, and the first counts");
@@ -748,6 +759,7 @@ fn walk(
         relays,
         visits,
         signers,
+        holders,
     }
 }
 
@@ -778,7 +790,8 @@ impl RailAct {
             | RailAct::Invite { .. }
             | RailAct::Relay { .. }
             | RailAct::Visit(_)
-            | RailAct::Signers { .. } => true,
+            | RailAct::Signers { .. }
+            | RailAct::Holders { .. } => true,
             RailAct::Record { .. }
             | RailAct::Correct { .. }
             | RailAct::Seal

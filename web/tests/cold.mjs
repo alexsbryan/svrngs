@@ -33,7 +33,7 @@
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
-import { driving, hold } from './page.mjs';
+import { appAt, driving, hold } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 
@@ -67,7 +67,7 @@ await driving(args, async ({ page, origin }) => {
     seen.second = await page.evaluate(() => document.getElementById('status').textContent);
   }
   if (args.cold) {
-    const at = `http://${args.cold}.localhost:${port}`;
+    const at = appAt(args.cold, port);
     await page.goto(`${at}/?n=1`);
     seen.cold = await landed(page);
     // The lend's worker gone again, as when a browser clears it: the page

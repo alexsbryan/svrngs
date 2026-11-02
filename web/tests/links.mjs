@@ -12,11 +12,11 @@
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
-import { driving, launch } from './page.mjs';
+import { driving, inApp, launch } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 await driving(args, async ({ page, context, logs }) => {
-  const away = (url) => url.hostname.endsWith('.localhost') && !url.pathname.endsWith('/open.html');
+  const away = (url) => inApp(url) && !url.pathname.endsWith('/open.html');
   await Promise.all([page.waitForURL(away, { timeout: 90_000 }), page.locator('#lent button', { hasText: args.open }).click()]);
   await page.waitForFunction(() => document.title === 'the app', null, { timeout: 90_000 }).catch(() => {});
   const link = await page.evaluate(() => document.getElementById('link')?.getAttribute('href') ?? null);

@@ -276,3 +276,89 @@ fn a_cut_covers_its_person_s_holders() {
     );
     assert!(!standing(&a, 2));
 }
+
+/// The approver a group's page mints for one open (HOLDER_APPROVAL §3.D).
+const APPROVER: u8 = 8;
+
+/// **An app's entry counts only as its approver approved it, exactly.**
+/// Bo's page names an approver in the pass; the signer approves one entry
+/// by its own clock while the pass is live. The approval survives a late
+/// delivery, never makes a reach pass, has one spelling, and binds the
+/// entry's content: a changed entry, an unapproved one, one approved by
+/// another key or by the person in the approver's place, and approval asked
+/// after the pass lapsed, count nowhere. The keeper's `Holders` cut keeps
+/// the entry before it, approved or not.
+#[test]
+fn exact_approval_survives_delivery_delay_but_cannot_be_forged_after_expiry() {
+    let lends = (app("money"), vec![]);
+    let approver = Some(actor_of(&key(APPROVER)));
+    let broad = Pass::approvable(&key(2), &actor_of(&key(HOLDER)), lends, 2000, approver);
+    let old = held(HOLDER, &broad, 100, None, act("money/expense", "old"));
+    let next =
+        |pass: &Pass, ts, what| held(HOLDER, pass, ts, Some(&old), act("money/expense", what));
+    let (draft, late) = (next(&broad, 101, "approved"), next(&broad, 2000, "late"));
+    let undo = RailAct::Correct {
+        corrects: old.id.clone(),
+        replacement: None,
+    };
+    let undo = held(HOLDER, &broad, 101, Some(&old), undo);
+    let approve = |pass: &Pass, by: u8, line, now| pass.approve(&key(by), line, NS, now);
+    assert!(
+        approve(&broad, APPROVER, &draft, 2000).is_none(),
+        "backdating does not make approval timely"
+    );
+    assert!(
+        approve(&broad, APPROVER, &late, 101).is_none(),
+        "an entry stamped past the pass gets none"
+    );
+    assert!(
+        approve(&broad, APPROVER, &undo, 2000).is_none(),
+        "an undo asked after the pass lapsed gets none"
+    );
+    assert!(
+        approve(&broad, 2, &draft, 101).is_none(),
+        "the person's key is not the approver the pass names"
+    );
+    let unnamed = pass(2, "money", 2000);
+    assert!(
+        approve(&unnamed, APPROVER, &draft, 101).is_none(),
+        "a pass naming no approver approves nothing"
+    );
+    let exact = approve(&broad, APPROVER, &draft, 101).unwrap();
+    assert!(
+        exact.check(&exact.holder, &exact.app, 101).is_err(),
+        "write approval is never a reach capability"
+    );
+    let mut alias = exact.clone();
+    alias.approval = alias.approval.map(|s| s.to_ascii_uppercase());
+    assert!(
+        !alias.signed(),
+        "authorization encodings cannot multiply an entry's identity"
+    );
+    let mut stranger = broad.clone();
+    stranger.op = exact.op.clone();
+    stranger.approval = Some(sign_message(&key(7), &stranger.approval_message()));
+    let (approved, changed) = (next(&exact, 101, "approved"), next(&exact, 101, "changed"));
+    let (forged, other) = (
+        next(&broad, 101, "backdated"),
+        next(&stranger, 101, "approved"),
+    );
+    let cut = signed(
+        &key(1),
+        102,
+        0,
+        RailAct::Holders {
+            through: vec![old.id.clone()],
+        },
+    );
+    let ops = vec![old, approved, changed, forged, other, undo, cut];
+    let a = admitted(&ops);
+    assert_eq!(
+        whose(&a),
+        vec![mine("old", "bo"), mine("approved", "bo")],
+        "{:?}",
+        a.gaps()
+    );
+    let reversed = admitted(&ops.into_iter().rev().collect::<Vec<_>>());
+    assert_eq!(whose(&a), whose(&reversed));
+}

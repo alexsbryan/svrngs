@@ -661,7 +661,7 @@ async fn conformance(way: Way, engine: Engine) {
         let at = lend["at"].as_str().unwrap_or_default();
         let own = match way {
             Way::Computer => format!("http://{}.localhost:{}/", label(n), api.port()),
-            Way::Wildcard => format!("http://{}.localhost:", label(n)),
+            Way::Wildcard => format!("https://{}.{}:", label(n), harness::PAGE_HOST),
         };
         if way != Way::Computer {
             assert_eq!(

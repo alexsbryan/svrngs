@@ -317,3 +317,17 @@ fn the_fold_answers_each_persons_stretch_in_the_group() {
         "{m:?}"
     );
 }
+
+/// **A fold with no holder cutover serialises as before**: `holders`, as
+/// `signers`, is skipped when absent and read as absent when missing, so a
+/// membership an older computer wrote reads the same.
+#[test]
+fn a_fold_with_no_holder_cutover_serialises_as_before() {
+    let seed = seed_of(&[(1, "alex")]);
+    let write = signed(&key(1), 100, 0, record("alex-writes"));
+    let m = membership(with_ids([&write]), &seed, NS);
+    let json = serde_json::to_value(&m).unwrap();
+    assert!(json.get("holders").is_none(), "no cutover, no key: {json}");
+    let read: Membership = serde_json::from_value(json).unwrap();
+    assert_eq!(read, m);
+}

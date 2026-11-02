@@ -21,7 +21,7 @@
 // Exit 0 with the JSON line, a step that did not finish said in it as
 // `error`; 3, naming the install command, when Playwright or its browser
 // is absent; 1 on anything else.
-import { arrived, driving, launch } from './page.mjs';
+import { arrived, driving, inApp, launch } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const section = (page) => page.locator('#acts').innerText({ timeout: 60_000 });
@@ -76,7 +76,7 @@ if (args.home) {
 } else {
   // What the lend's page, once open at its origin, is told it reads.
   const told = async (page) => {
-    await page.waitForURL((u) => u.hostname.endsWith('.localhost') && !u.pathname.endsWith('/open.html'), { timeout: 90_000 });
+    await page.waitForURL((u) => inApp(u) && !u.pathname.endsWith('/open.html'), { timeout: 90_000 });
     await page.waitForLoadState('load');
     return page.evaluate(() => fetch('/svrngs-reads').then(async (r) => ({ status: r.status, body: await r.text() })));
   };

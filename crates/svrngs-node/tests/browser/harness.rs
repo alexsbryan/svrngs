@@ -2,6 +2,7 @@
 //! test (crates/svrngs/tests/join_page.rs), which includes this file by
 //! path: the page built once per run, and iroh's relay on 127.0.0.1.
 
+use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 
@@ -132,13 +133,24 @@ pub fn site() -> &'static Path {
     })
 }
 
-/// The relay's address, `http://127.0.0.1:<port>/`.
+/// The name the tests serve the group's page at, each app at a name under
+/// it (web/tests/page.mjs `PAGE_HOST`, which reaches it through a proxy).
+pub const PAGE_HOST: &str = "group.svrnme.test";
+
+/// The relay's address, `http://127.0.0.1:<port>/`: its front's ([`relay`]).
 pub fn relay_url(relay: &Server) -> String {
-    format!(
-        "http://{}/",
-        relay.http_addr().expect("the relay serves HTTP")
-    )
+    format!("http://{}/", relay_at(relay))
 }
+
+/// Where the relay is reached: its front ([`relay`]).
+pub fn relay_at(relay: &Server) -> SocketAddr {
+    let at = relay.http_addr().expect("the relay serves HTTP");
+    *FRONTS.lock().unwrap().get(&at).unwrap_or(&at)
+}
+
+/// Each relay's front, by the relay's own address.
+static FRONTS: std::sync::Mutex<std::collections::BTreeMap<SocketAddr, SocketAddr>> =
+    std::sync::Mutex::new(std::collections::BTreeMap::new());
 
 /// The relay's, the doors' and the nodes' debug lines, every test's that
 /// this binary runs, kept in `target/traces/<binary>.log`, so a miss in a
@@ -161,12 +173,64 @@ fn traced() {
     });
 }
 
-/// iroh's relay server on 127.0.0.1, plain HTTP: no TLS, no QUIC.
+/// iroh's relay server on 127.0.0.1, plain HTTP: no TLS, no QUIC, behind a
+/// front at the address [`relay_url`] gives. The front passes each
+/// connection on as it comes, but ends TLS for one that opens with it
+/// (0x16, a TLS handshake): a group's page over TLS asks the relay over TLS,
+/// since the tests' page upgrades its insecure requests
+/// (`upgrade-insecure-requests`, web/tests/page.mjs), and WebKit refuses a
+/// TLS page any plain request to 127.0.0.1, as mixed content
+/// (demo/runs/security/2026-11-02-webkit-partition/README.md). Nodes ask it
+/// in the clear, as before.
 pub async fn relay() -> Server {
     traced();
     let mut config = ServerConfig::default();
     config.relay = Some(RelayServer::new(([127, 0, 0, 1], 0)));
-    Server::spawn(config)
+    let server = Server::spawn(config)
         .await
-        .expect("a relay starts on 127.0.0.1")
+        .expect("a relay starts on 127.0.0.1");
+    let inner = server.http_addr().expect("the relay serves HTTP");
+    let front = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    FRONTS
+        .lock()
+        .unwrap()
+        .insert(inner, front.local_addr().unwrap());
+    let ended = tokio_rustls::TlsAcceptor::from(tls());
+    tokio::spawn(async move {
+        while let Ok((mut asked, _)) = front.accept().await {
+            let ended = ended.clone();
+            tokio::spawn(async move {
+                let (mut first, mut relay) =
+                    ([0u8; 1], tokio::net::TcpStream::connect(inner).await?);
+                if asked.peek(&mut first).await? == 1 && first[0] == 0x16 {
+                    let mut asked = ended.accept(asked).await?;
+                    tokio::io::copy_bidirectional(&mut asked, &mut relay).await?;
+                } else {
+                    tokio::io::copy_bidirectional(&mut asked, &mut relay).await?;
+                }
+                Ok::<_, std::io::Error>(())
+            });
+        }
+    });
+    server
+}
+
+/// The front's TLS: a certificate for 127.0.0.1 made once a run, which the
+/// tests' browsers are told to take (page.mjs `launch`).
+fn tls() -> std::sync::Arc<rustls::ServerConfig> {
+    static TLS: OnceLock<std::sync::Arc<rustls::ServerConfig>> = OnceLock::new();
+    TLS.get_or_init(|| {
+        let made = rcgen::generate_simple_self_signed(vec!["127.0.0.1".into(), "localhost".into()])
+            .unwrap();
+        let key = rustls::pki_types::PrivatePkcs8KeyDer::from(made.signing_key.serialize_der());
+        let provider = std::sync::Arc::new(rustls::crypto::ring::default_provider());
+        let config = rustls::ServerConfig::builder_with_provider(provider)
+            .with_safe_default_protocol_versions()
+            .unwrap()
+            .with_no_client_auth()
+            .with_single_cert(vec![made.cert.der().clone()], key.into())
+            .unwrap();
+        std::sync::Arc::new(config)
+    })
+    .clone()
 }

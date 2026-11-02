@@ -49,14 +49,16 @@
 // the last runs' (u5-12: a worker WebKit ended took its trace with it).
 import init, { actor, app_act, holder_endpoint, link, links, unsigned_line } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
+import { maySign, signerFor, openMessage, framing } from './authority.js?v=__VERSION__';
 
 const SCOPE = new URL(self.registration.scope);
 // Where the page's files are on this origin, the shell this worker leaves
 // to the network: any version of them, so a newer page starts here too.
 const SITE = new URL('./', self.location).pathname;
-const SHELL = /^(open\.html|open\.js|lend\.js|shim\.js|store\.js|wasm\/svrngs_web(_bg\.wasm|\.js))$/;
+const SHELL = /^(open\.html|open\.js|lend\.js|shim\.js|store\.js|authority\.js|wasm\/svrngs_web(_bg\.wasm|\.js))$/;
 // This worker's lend: the first name of its address.
 const OWN = store.labelOf(SCOPE.hostname);
+const SIGNER = signerFor(SCOPE, SITE);
 const PLAIN = { 'content-type': 'text/plain; charset=utf-8' };
 const TRACE = `${SCOPE.pathname}svrngs-trace`;
 // Where its pages ask the lends they read, as a computer's origin answers
@@ -99,6 +101,9 @@ let linked = null;
 const dials = new Map();
 const jars = new Map();
 let app;
+let signing = Promise.resolve();
+// The last page served whose own `<meta>` sets a policy (`lent`).
+let walled = null;
 
 // Where `label`'s pages are: this worker's lend under its scope; another
 // at an address of its own beside this one.
@@ -306,7 +311,7 @@ const closed = () => say(403, 'This is not open to this page.', 'closed');
 const shim = (label, jar, policy, nonce = /'nonce-([^']+)'/.exec(policy ?? '')?.[1]) => `<script${nonce ? ` nonce="${nonce}"` : ''} src="${SITE}shim.js?v=__VERSION__&l=${label}&c=${encodeURIComponent(cookieFor(jar, '/', true))}"></script>`;
 
 // Serve `request`, at `url`, from the lend `where` names.
-async function lent(request, url, where) {
+async function lent(request, url, where, signing = false) {
   const h = await holding();
   if (!h) {
     if (request.mode !== 'navigate') return unheld();
@@ -315,7 +320,10 @@ async function lent(request, url, where) {
   }
   const lend = h.lends.find((l) => l.label === where.label);
   if (!lend) return closed();
-  if (request.method === 'POST' && lend.group && where.path === '/svrngs/acts') return writing(request, lend);
+  if (request.method === 'POST' && lend.group && where.path === '/svrngs/acts') {
+    if (!signing || request.headers.get('content-type')?.split(';')[0].trim() !== 'application/json') return closed();
+    return writing(request, lend);
+  }
   if (where.read && request.mode === 'navigate') return opening(h, where);
   const jar = await jarOf(where.label);
   const headers = bounded(
@@ -378,6 +386,7 @@ async function lent(request, url, where) {
     await keepJar(where.label);
   }
   const naming = res.headers.get(APPEND);
+  if (naming && !signing) return closed();
   const refused = naming && (await appended(lend, naming));
   if (refused) return refused;
   if (res.headers.get(REFUSED) === 'pass' && request.mode === 'navigate') {
@@ -400,8 +409,18 @@ async function lent(request, url, where) {
   if (set) headed.set(PAGE_COOKIES, cookieFor(jar, '/', true));
   const html = request.method === 'GET' && (res.headers.get('content-type') ?? '').includes('text/html');
   if (!html) return new Response(said && answer ? counted(answer, said) : answer, { status: res.status, statusText: res.statusText, headers: headed });
+  // The app's own policy, with the signer derived from this origin's host,
+  // never an address supplied by app data, let in as a frame only where it
+  // restricts frames (authority.js `framing`). The signer accepts scoped acts only.
+  const { policy, framed } = framing(headed.get('content-security-policy'), SIGNER);
+  trace(`RUNTIME: ${path}'s policy ${policy == null ? 'is none, so none is set' : `frames by ${framed.join(', ')}; the signer is let in where they restrict`}`);
+  if (policy != null) headed.set('content-security-policy', policy);
   headed.delete('content-length');
   const text = await new Response(answer).text();
+  // A policy in the page's own `<meta>` this worker can't add the signer to
+  // (DESIGN §3, the known gap): said, and its saves told why.
+  walled = /<meta[^>]+content-security-policy/i.test(text) ? path : walled;
+  if (walled === path) trace(`RUNTIME: ${path} sets its own policy in a <meta>, which may keep the signer out`);
   const head = /<head[^>]*>/i.exec(text) ?? /<html[^>]*>/i.exec(text) ?? /<!doctype[^>]*>/i.exec(text);
   const at = head ? head.index + head[0].length : 0;
   const page = `${text.slice(0, at)}${shim(where.label, jar, res.headers.get('content-security-policy'))}${text.slice(at)}`;
@@ -447,9 +466,35 @@ async function appended(lend, named) {
 // twice, and carried with every line not yet taken to the lend's computer
 // (`/carry`), which writes none of its own. A line not taken waits, the
 // same bytes, for the next write.
-async function signed(lend, group, act, grant) {
+function signed(...args) {
+  const next = signing.then(() => writeSigned(...args));
+  signing = next.catch(() => {});
+  return next;
+}
+
+async function approved(group, line) {
+  const pages = await self.clients.matchAll({ type: 'window' });
+  const client = pages.find((c) => new URL(c.url).origin === SCOPE.origin);
+  if (!client) throw new Error('no app page is open to ask the trusted signer');
+  const channel = new MessageChannel();
+  const answer = new Promise((yes, no) => {
+    const why = walled ? `This app’s page (${walled}) may keep out your group’s signer, so this wasn’t saved.` : 'the trusted signer did not answer';
+    const timeout = setTimeout(() => no(new Error(why)), 15000);
+    channel.port1.onmessage = ({ data }) => { clearTimeout(timeout); if (data.pass) yes(data.pass); else no(new Error(data.error)); };
+  });
+  const authority = { ...JSON.parse(openMessage(handed)), proof: handed.proof };
+  client.postMessage({ approve: { group, reach: handed.pass, line, authority }, signer: SIGNER }, [channel.port2]);
+  return answer;
+}
+
+async function writeSigned(lend, group, act, grant) {
   const at = handed.line ?? { seq: -1, id: null };
-  const [unsigned, message] = unsigned_line(handed.holder, group, Math.floor(Date.now() / 1000), at.seq + 1, at.id, act, grant);
+  const stamp = Math.floor(Date.now() / 1000);
+  const draft = unsigned_line(handed.holder, group, stamp, at.seq + 1, at.id, act, grant)[0];
+  let permitted;
+  try { permitted = await approved(group, draft); }
+  catch (error) { return Response.json({ error: error.message }, { status: 403 }); }
+  const [unsigned, message] = unsigned_line(handed.holder, group, stamp, at.seq + 1, at.id, act, permitted);
   const line = { ...JSON.parse(unsigned), sig: store.hex(new Uint8Array(await crypto.subtle.sign('Ed25519', handed.key, message))) };
   handed = { ...handed, line: { seq: line.seq, id: line.id }, unsent: [...(handed.unsent ?? []), [group, line]] };
   await store.lendKeep(`pass ${OWN}`, handed);
@@ -570,9 +615,9 @@ function appWorker(code) {
     addEventListener: (type, f) => on[type]?.push(f),
     skipWaiting: async () => {},
     fetch: (input, init) => {
-      const request = new Request(new URL(input?.url ?? input, SCOPE), init);
+      const request = new Request(input instanceof Request ? input : new URL(input, SCOPE), init);
       const where = at(new URL(request.url));
-      return where ? lent(request, new URL(request.url), where) : fetch(request);
+      return where ? lent(request, new URL(request.url), where, true) : fetch(request);
     },
   };
   const scope = new Proxy(self, {
@@ -594,13 +639,15 @@ async function appLoaded() {
 
 // The app's listeners first: an answer one of them gives, else the lend's.
 async function answered(e, url, where) {
-  const on = where.label === OWN && (await appLoaded());
+  const signing = await maySign(e, self.clients, SCOPE.origin);
+  // App code must not turn an untrusted navigation into an authorized fetch.
+  const on = signing && where.label === OWN && (await appLoaded());
   let given = null;
   if (on) {
     const event = { request: e.request, clientId: e.clientId, respondWith: (p) => (given ??= p), waitUntil: () => {} };
     for (const f of on.fetch) f.call(self, event);
   }
-  return given ? given : lent(e.request, url, where);
+  return given ? given : lent(e.request, url, where, signing);
 }
 
 self.addEventListener('fetch', (e) => {
@@ -623,6 +670,7 @@ self.addEventListener('fetch', (e) => {
 
 self.addEventListener('message', async (e) => {
   const reply = e.ports[0];
+  if (!e.source?.url || new URL(e.source.url).origin !== SCOPE.origin) return reply?.postMessage({ error: 'only this origin hands the worker authority' });
   const { handed: given, cookie, worker, socket: asked } = e.data ?? {};
   if (given?.label === OWN && typeof given.pass === 'string') {
     // The holder's bytes, where its key was lost on the way (below):

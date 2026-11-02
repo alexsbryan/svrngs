@@ -11,9 +11,23 @@
 //   a message port, and the worker speaks it to the lend's computer.
 // - An app's own worker, which would put itself over the lend's, is
 //   handed to the lend's worker, which asks its listeners first.
+// - An entry the worker signs for the app is first approved by the group's
+//   signer (sign.html), which only a page can frame: framed here, once, at
+//   the address the worker derives from its own host (lend.js `SIGNER`).
 (() => {
   const me = new URL(document.currentScript.src);
   const worker = () => navigator.serviceWorker?.controller;
+  let signer;
+  navigator.serviceWorker?.addEventListener('message', async (event) => {
+    if (!event.data?.approve || !event.ports[0] || event.source !== worker()) return;
+    const url = new URL(event.data.signer);
+    signer ??= new Promise((yes) => {
+      const frame = Object.assign(document.createElement('iframe'), { src: url.href, hidden: true });
+      frame.onload = () => yes(frame);
+      document.documentElement.append(frame);
+    });
+    (await signer).contentWindow.postMessage(event.data.approve, url.origin, [event.ports[0]]);
+  });
   const ask = (message) =>
     new Promise((done) => {
       const { port1, port2 } = new MessageChannel();

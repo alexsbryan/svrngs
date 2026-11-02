@@ -4,13 +4,16 @@
 // on this machine's clock and answered with `Date.now()` when it ended, so
 // the driver can set two machines' times side by side.
 const pw = await import(process.env.PLAYWRIGHT ?? 'playwright');
+// The group's page as the tests serve it, over TLS through their proxy
+// (web/tests/page.mjs `PAGE_HOST`), since part 7 of the security change.
+const { IGNORING, reaching } = await import('../../../../web/tests/page.mjs');
 
 const words = (page, sel) => page.evaluate((s) => document.querySelector(s)?.innerText ?? '', sel).catch(() => '');
 
 /** A browser for `who`: `engine` chromium or webkit, `device` a Playwright device name or none. */
 export async function person({ who, engine, device }) {
-  const browser = await pw[engine].launch();
-  const context = await browser.newContext(device ? pw.devices[device] : {});
+  const browser = await pw[engine].launch(engine === 'chromium' ? { args: IGNORING } : {});
+  const context = await browser.newContext({ ...(device ? pw.devices[device] : {}), ...(await reaching()) });
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e).slice(0, 300)));

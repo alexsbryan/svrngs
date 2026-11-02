@@ -20,7 +20,7 @@
 // Exit 0 with the JSON line; 1 on anything else.
 import { existsSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
-import { driving, lapse, launch, serve } from '../page.mjs';
+import { driving, lapse, launch, pageAt, serve } from '../page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const at = args.at ?? 'body';
@@ -71,7 +71,7 @@ if (args.home || args.visit) {
     const page = await context.newPage();
     page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
     const loads = counted(page);
-    const asking = args.visit ? await guest(page, `http://localhost:${server.address().port}/`) : void (await page.goto(args.home));
+    const asking = args.visit ? await guest(page, pageAt(server)) : void (await page.goto(args.home));
     console.log(JSON.stringify({ asking, ...(await watch(page, () => loads() - 1)), logs }));
   } catch (e) {
     console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);

@@ -1,5 +1,15 @@
 # svrngs releases
 
+## Next, not yet released
+
+**Update your group's keeper first.** An app you open from your group's
+page now saves an entry only once your group's page approves it, while the
+app is open to you, so an app can't save as you after its time runs out.
+Until the computer that keeps your group runs this svrngs, saving in an app
+says "The group's keeper needs to open the new svrngs before apps can save
+entries." A computer still on V1.3.1 shows on the group's page as running
+an older svrngs, and what it lends isn't listed there until it's updated.
+
 ## V1.3.1, 31 October 2026
 
 V1.3.1 makes everything your group lends something you can bookmark, on a

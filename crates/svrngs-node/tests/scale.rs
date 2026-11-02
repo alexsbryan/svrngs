@@ -657,14 +657,13 @@ async fn stand_up(members: usize, acts: usize) -> (Vec<tempfile::TempDir>, Vec<N
     for w in writes {
         w.await.unwrap();
     }
-    // The keeper's cutover, which its computer writes on its first round
-    // (node.rs `cut_over`), written here so the rounds measured below are a
-    // group's past its first: none of them writes or moves it.
-    nodes[0]
-        .rail()
-        .commit(GROUP, &svrngs_core::Cutover)
-        .unwrap()
-        .unwrap();
+    // The keeper's two cutovers, of authorship and of holders, which its
+    // computer writes on its first round (node.rs `cut_over`), written here
+    // so the rounds measured below are a group's past its first: none of
+    // them writes or moves either.
+    for cutover in [svrngs_core::Cutover::Authors, svrngs_core::Cutover::Holders] {
+        nodes[0].rail().commit(GROUP, &cutover).unwrap().unwrap();
+    }
     converge(&nodes).await;
     let digest = nodes[0].rail().digest(GROUP).unwrap();
     for node in &nodes[1..] {

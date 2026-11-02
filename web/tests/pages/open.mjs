@@ -7,11 +7,11 @@
 //   node web/tests/pages/open.mjs '{"engine": "chromium", "site": "<dir>", "token": "<token>"}'
 //
 // Exit 0 with the JSON line; 1 on anything else.
-import { launch, serve } from '../page.mjs';
+import { launch, pageAt, serve } from '../page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const server = await serve(args.site);
-const origin = `http://localhost:${server.address().port}/`;
+const origin = pageAt(server);
 const DESKTOP = { chromium: 'Desktop Chrome', webkit: 'Desktop Safari' };
 const { context, close } = await launch(args.engine, { device: DESKTOP[args.engine] });
 const errors = [];

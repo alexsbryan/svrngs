@@ -26,7 +26,7 @@ use svrngs_node::room::Served;
 
 use crate::films::{node, Jellyfin};
 use crate::harness::{relay_url, Engine};
-use crate::people::{late, Scene};
+use crate::people::{at_page_host, late, Scene};
 
 /// Jellyfin's users by name, as Sam's own token reads them.
 async fn users(jf: &Jellyfin) -> Vec<String> {
@@ -146,12 +146,16 @@ async fn night(engine: Engine) {
     let profile = scene.scratch("tv");
     std::fs::create_dir_all(&profile).unwrap();
     let profile = profile.canonicalize().unwrap();
+    // The page's links as a phone's browser reaches the page (people.rs
+    // `at_page_host`).
     let args = |link: &Value, people: Value| {
-        json!({
-            "room": room, "link": link, "server": jf.env("SERVER"),
-            "profile": profile, "account": "room", "people": people,
-        })
-        .to_string()
+        at_page_host(
+            json!({
+                "room": room, "link": link, "server": jf.env("SERVER"),
+                "profile": profile, "account": "room", "people": people,
+            })
+            .to_string(),
+        )
     };
 
     // The TV, at the room's address, signed in by Quick Connect from

@@ -913,14 +913,16 @@ async fn a_line_is_carried_only_signed_by_someone_in_the_group() {
             .filter(|o| o.payload.is_some())
             .collect::<Vec<_>>()
     };
-    // Every line but the keeper's cutover, which ana's computer, keeping
-    // the group, writes once on a round of its own (capability-signed).
+    // Every line but the keeper's two cutovers, of authorship and of
+    // holders, which ana's computer, keeping the group, writes once each on
+    // a round of its own (capability-signed; HOLDER_APPROVAL §5).
     let all = || {
         let (mut ops, _) = ana
             .rail()
             .ops_missing_from_within(&group, &Default::default(), usize::MAX)
             .unwrap();
-        ops.retain(|o| !matches!(o.kind.act, svrngs_core::RailAct::Signers { .. }));
+        use svrngs_core::RailAct::{Holders, Signers};
+        ops.retain(|o| !matches!(o.kind.act, Signers { .. } | Holders { .. }));
         ops
     };
     let anas = || {
@@ -965,9 +967,12 @@ async fn a_line_is_carried_only_signed_by_someone_in_the_group() {
 /// for Money, its pass on each line, carries a line to Ana's computer by
 /// `/carry` on the holders' protocol, which any key may speak. Kept: the
 /// line is stored unchanged and counts, its actor the holder and its person
-/// Ben. Refused, `not_signed`, and not held: a holder line under a pass a
-/// stranger signed, and one under Ben's pass with its person rewritten to
-/// Ana's key.
+/// Ben, once the approver Ben's pass names approved its exact content
+/// (HOLDER_APPROVAL §3.D). Refused, `not_signed`, and not held: a holder
+/// line under a pass a stranger signed, and one under Ben's pass with its
+/// person rewritten to Ana's key; `not_approved`: Ben's line its approver
+/// never approved; `upgrade_keeper`: the approved line before the keeper,
+/// Ana, wrote the holders' cutover.
 #[tokio::test]
 async fn a_phone_s_line_is_carried_and_counts_as_its_person() {
     use svrngs_core::pass::{Label, Pass};
@@ -986,12 +991,15 @@ async fn a_phone_s_line_is_carried_and_counts_as_its_person() {
         .as_secs() as i64
         + 1;
     let app = Label::carried(&signing(1).verifying_key().to_bytes(), "Money", &group);
+    let approver = signing(8);
     let pass = |by: u8| {
-        Pass::sign(
+        let lends = (app.clone(), vec![]);
+        Pass::approvable(
             &signing(by),
             &actor_of(&holder),
-            (app.clone(), vec![]),
+            lends,
             now + 600,
+            Some(actor_of(&approver)),
         )
     };
     let act = json!({ "op": "record", "payload": { "kind": "Money/expense", "n": 1 } });
@@ -1007,10 +1015,24 @@ async fn a_phone_s_line_is_carried_and_counts_as_its_person() {
         let said: Value = answer.json().await.unwrap();
         assert_eq!(said["kind"], "not_signed", "{said}");
     }
-    let own = line(pass(2));
-    let answer = carry(&own).await.unwrap();
-    assert_eq!(answer.status(), 200);
-    let said: Value = answer.json().await.unwrap();
+    let unapproved = carry(&line(pass(2))).await.unwrap();
+    assert_eq!(unapproved.status(), 422);
+    let said: Value = unapproved.json().await.unwrap();
+    assert_eq!(said["kind"], "not_approved", "{said}");
+    let approved = pass(2)
+        .approve(&approver, &line(pass(2)), &group, now)
+        .unwrap();
+    let own = line(approved);
+    let said: Value = carry(&own).await.unwrap().json().await.unwrap();
+    assert_eq!(
+        said["kind"], "upgrade_keeper",
+        "not before the keeper's holders cutover: {said}"
+    );
+    ana.rail()
+        .commit(&group, &svrngs_core::Cutover::Holders)
+        .unwrap()
+        .unwrap();
+    let said: Value = carry(&own).await.unwrap().json().await.unwrap();
     assert_eq!(said["counted"], true, "{said}");
     let a = ana.rail().admission(&group).unwrap();
     let ops: Vec<_> = (svrngs_core::tests_support::wire_ops(&a).into_iter())

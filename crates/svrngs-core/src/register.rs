@@ -247,26 +247,41 @@ fn removes<'a>(before: &Admission, keys: impl Iterator<Item = &'a String>) -> Ve
     acts
 }
 
-/// The keeper's cutover (capability-signed; DESIGN §1): a
-/// [`RailAct::Signers`] naming every key's newest acts held now, written
-/// once, and counted only as the keeper's (the fold's `keeps`).
+/// The keeper freezes legacy authorship or holder authority by the held tips,
+/// not a timestamp a writer can backdate. Each cutover counts only once.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Cutover;
+pub enum Cutover {
+    Authors,
+    Holders,
+}
+
+impl Cutover {
+    fn written(&self, before: &Admission) -> bool {
+        match self {
+            Self::Authors => before.membership().signers.is_some(),
+            Self::Holders => before.membership().holders.is_some(),
+        }
+    }
+}
 
 impl Command for Cutover {
     type Refusal = HandOnRefusal;
     const READS: Reads = Reads::All;
 
     fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, HandOnRefusal> {
-        let written = before.membership().signers.is_some();
-        tracing::debug!(target: "register", written, "cutover: written once, naming every key's newest acts held");
+        let written = self.written(before);
+        tracing::debug!(target: "register", cutover = ?self, written, "cutover: written once, naming every key's newest acts held");
         let through = before.tips.values().flatten().cloned().collect();
-        let signers = (!written).then_some(RailAct::Signers { through });
+        let act = match self {
+            Self::Authors => RailAct::Signers { through },
+            Self::Holders => RailAct::Holders { through },
+        };
+        let signers = (!written).then_some(act);
         Ok(Vec::from_iter(signers))
     }
 
     fn confirm(&self, after: &Admission, _written: &[OpId]) -> Result<(), HandOnRefusal> {
-        let written = after.membership().signers.is_some();
+        let written = self.written(after);
         written.then_some(()).ok_or(HandOnRefusal::NotKeeper)
     }
 }

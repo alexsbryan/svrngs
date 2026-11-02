@@ -380,7 +380,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # inline tests out, one `host()`, a duplicated holder check, one signer
 # derivation. session.rs's `Onwards` store (+111) is the next pass's first
 # candidate. The seventh part waits on branch security-part7.
-BUDGET = {"crates/svrngs-core": 3242, ".": 20279, "swift": 1}
+# The seventh part on design D, the operator's (2026-11-02, "as
+# recommended"): +132 in the core (the pass's approver and its second
+# signature check) and +456 in all (with the signer, web/sign.js, and its
+# seal), at 3,373 and 20,734. The pass cut the wasm `approved()`, a second
+# act-kind check in `approving()` and a line of `approval_message`.
+BUDGET = {"crates/svrngs-core": 3374, ".": 20735, "swift": 1}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 

@@ -15,11 +15,11 @@
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
-import { held, launch, serve, unfold } from './page.mjs';
+import { held, launch, pageAt, serve, unfold } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const server = await serve(args.site);
-const origin = `http://localhost:${server.address().port}/`;
+const origin = pageAt(server);
 const { context, close } = await launch(args.engine);
 const logs = [];
 context.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));

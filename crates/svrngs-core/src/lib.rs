@@ -441,6 +441,9 @@ pub enum RailAct {
     /// covers. Counts only as the keeper's, the first. Carries no
     /// [`Payload`].
     Signers { through: Vec<OpId> },
+    /// The keeper freezes legacy holder entries by ancestry; new entries bind
+    /// their person's approval of exact content, not a writer-chosen clock.
+    Holders { through: Vec<OpId> },
 }
 
 /// What a [`RailAct::Visit`] says: the guest's name, the key they made for
@@ -710,6 +713,7 @@ pub const VISIT_LINE_VERSION: u32 = 11;
 /// counts the line as nobody's, never as the person of a key that did not
 /// sign it, and says its answer covers a subset.
 pub const AUTHORSHIP_LINE_VERSION: u32 = 12;
+pub const APPROVAL_LINE_VERSION: u32 = 13;
 
 impl Journaled for SignedOp {
     const FILE: &'static str = "ring_oplog.jsonl";
@@ -719,7 +723,7 @@ impl Journaled for SignedOp {
     /// redemption's, a folder's, removal's, a device link's, a relay's, a
     /// yes to a carried app's version's, a visit's and a holder's lines too
     /// (see [`Self::line_version`]).
-    const UNDERSTANDS: u32 = AUTHORSHIP_LINE_VERSION;
+    const UNDERSTANDS: u32 = APPROVAL_LINE_VERSION;
     /// The membership acts — [`RailAct::Admit`] and [`RailAct::Remove`] —
     /// ship at the bumped line version and the original three keep the bytes
     /// they always had, so an un-upgraded node names exactly the acts it
@@ -728,6 +732,8 @@ impl Journaled for SignedOp {
     /// before.
     fn line_version(&self) -> u32 {
         match self.act {
+            _ if self.grant.as_ref().is_some_and(|p| p.op.is_some()) => APPROVAL_LINE_VERSION,
+            RailAct::Holders { .. } => APPROVAL_LINE_VERSION,
             _ if self.grant.is_some() => AUTHORSHIP_LINE_VERSION,
             RailAct::Admit {
                 invite:

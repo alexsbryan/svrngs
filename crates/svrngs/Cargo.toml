@@ -41,6 +41,11 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 mimalloc = { version = "0.1.52", default-features = false }
 
 [dev-dependencies]
+# The browser tests' relay front ends a page's TLS (tests/browser/harness.rs
+# `relay`): rustls with ring, as the product uses it, and a certificate made
+# there, both already in the lock through iroh-relay.
+tokio-rustls = { version = "0.26", default-features = false, features = ["ring"] }
+rcgen = "0.14"
 tempfile = "3"
 # The shared native session protocol fixture computes request proofs.
 ring = "0.17"

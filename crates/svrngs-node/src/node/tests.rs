@@ -5,8 +5,8 @@ use super::{answered, Answered};
 /// field** (arch-version (b); AUDIT §2.5). Its answer of what it lends
 /// carries no version, as every build before arch-version's did, so it is
 /// `Older`, though its lends would read. One carrying this build's version,
-/// or a later one, is read, and one at 1, before a holder's link, is read
-/// with its version (capability-signed); one carrying it whose lends are
+/// or a later one, is read; one at 1 to 3, before the holders' flag day
+/// (version 4, HOLDER_APPROVAL), is older too; one carrying it whose lends are
 /// not lends is refused, as before. Planted, watched failing: the version check taken
 /// out of `answered`, which read the versionless answer as lends.
 #[test]
@@ -34,10 +34,12 @@ fn a_computer_answering_an_older_version_is_named_older() {
         matches!(said(Some(now + 1), lend()), Answered::Lends(l, _) if l.len() == 1),
         "a later one"
     );
-    assert!(
-        matches!(said(Some(1), lend()), Answered::Lends(l, 1) if l.len() == 1),
-        "one before a holder's link (capability-signed), read with its version"
-    );
+    for before in 1..now {
+        assert!(
+            matches!(said(Some(before), lend()), Answered::Older),
+            "{before}: one before the holders' flag day (version 4) takes an app's entry unapproved"
+        );
+    }
     assert!(!crate::version::links(Some(1)) && crate::version::links(Some(now)));
     assert!(
         matches!(

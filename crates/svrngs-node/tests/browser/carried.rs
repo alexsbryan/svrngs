@@ -815,3 +815,132 @@ async fn the_phone_goes_on_to_a_computer_that_answers(engine: Engine) {
     );
     drop((ada, cy));
 }
+
+in_both_engines!(
+    /// **An app's entry is approved by the group's signer and carried, the
+    /// whole flow** (svrn-docs rings/current/HOLDER_APPROVAL.md §3.D, §6):
+    /// on the group's page at its TLS name, bo opens Money, which ada's
+    /// computer carries; the page seals the open's approver into the open
+    /// and leaves its key in a cookie, and the group's signer, framed under
+    /// Money, adopts it and deletes the cookie. Money saves an entry, which
+    /// the signer approves and ada's computer takes by `/carry` and counts
+    /// as bo's; again after a reload, and after the browser restarts, from
+    /// Money's address alone. Opened again, Money saves under the newer
+    /// open's approver, and the signer refuses the first open. Notes is
+    /// refused Money's open, as it is and as its own. Walled, whose page
+    /// keeps frames out in its own `<meta>`, is told why it can't save (the
+    /// known gap, DESIGN §3). Money's open, replayed
+    /// in a browser that never opened it, says "Open this app again from
+    /// your group's page." Each of the four entries counts, each approved by
+    /// the approver its own pass names. Planted, watched failing: the
+    /// signer's digest check taken out of `approver` (web/sign.js), and the
+    /// first open is answered as issued.
+    an_app_s_entry_is_approved_by_the_group_s_signer_and_carried
+);
+async fn an_app_s_entry_is_approved_by_the_group_s_signer_and_carried(engine: Engine) {
+    let site = site();
+    let relay = relay().await;
+    let bo = signing(7);
+    let dirs: Vec<_> = (0..2).map(|_| tempfile::tempdir().unwrap()).collect();
+    let ada = node(dirs[0].path(), &relay, &bo).await;
+    let folder = dirs[0].path().join("house");
+    std::fs::create_dir(&folder).unwrap();
+    keep_folder(&ada, &folder).await;
+    let script = "window.save = async (what) => {
+  const r = await fetch('svrngs/acts', { method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ op: { kind: 'expense', amount_cents: 1, description: what } }) });
+  return { status: r.status, said: await r.text() };
+};
+document.title = 'ready';
+";
+    let page = "<!doctype html><title>…</title><script type=module src=app.js></script>";
+    let walled = "<!doctype html><meta http-equiv=Content-Security-Policy content=\"frame-src 'none'\"><title>…</title><script type=module src=app.js></script>";
+    for (app, page) in [("Money", page), ("Notes", page), ("Walled", walled)] {
+        carry(
+            &folder,
+            app,
+            &[("index.html", page.into()), ("app.js", script.into())],
+        );
+        carried_at(&ada, app).await;
+    }
+    let args = json!({
+        "site": site,
+        "key": hex::encode(bo.to_bytes()),
+        "token": token(&signing(1), &relay),
+        "profile": dirs[1].path(),
+        "apps": ["Money", "Notes", "Walled"],
+    });
+    let seen = drive(engine, "approve.mjs", args, None).await;
+    eprintln!("the approval run: {seen:#}");
+    let saved = |s: &Value| s["status"] == 200;
+    let logs = seen["logs"].to_string();
+    assert!(
+        logs.contains("SIGN: adopted the approver") && seen["opened"]["cookies"] == 0,
+        "the signer adopts the open's approver and deletes its cookie:\n{seen:#}"
+    );
+    for step in [
+        &seen["opened"]["saved"],
+        &seen["reloaded"],
+        &seen["restarted"],
+        &seen["again"]["saved"],
+    ] {
+        assert!(saved(step), "Money saves: {step}\n{seen:#}");
+    }
+    let again = &seen["again"];
+    let refused = json!({ "opened": false, "error": "Open this app again from your group’s page to write in it." });
+    assert_eq!(
+        (again["newer"]["opened"].clone(), again["newKey"].clone()),
+        (json!(true), json!(true)),
+        "{seen:#}"
+    );
+    assert_eq!(
+        again["older"], refused,
+        "the first open, once a newer is adopted:\n{seen:#}"
+    );
+    assert_eq!(
+        seen["another"]["as"], refused,
+        "Money's open, asked from Notes:\n{seen:#}"
+    );
+    assert_eq!(
+        seen["another"]["relabelled"], refused,
+        "Money's open as Notes':\n{seen:#}"
+    );
+    assert_eq!(
+        seen["replayed"], "Open this app again from your group’s page.",
+        "{seen:#}"
+    );
+    let kept_out = &seen["walled"];
+    let said = kept_out["said"].as_str().unwrap_or_default();
+    assert!(
+        kept_out["status"] == 403 && said.contains("may keep out your group’s signer"),
+        "an app whose page keeps the signer out is told why (DESIGN §3, the known gap):\n{seen:#}"
+    );
+
+    let admitted = ada.rail().admission(NS).unwrap();
+    let ops = svrngs_core::tests_support::wire_ops(&admitted);
+    let money: Vec<_> = ops
+        .iter()
+        .filter(|o| o.payload.is_some() && o.person.as_str() == "bo")
+        .collect();
+    let held = ada
+        .rail()
+        .ops_missing_from_within(NS, &Default::default(), usize::MAX)
+        .unwrap()
+        .0;
+    let approvers: BTreeSet<_> = held
+        .iter()
+        .filter_map(|o| o.kind.grant.as_ref())
+        .inspect(|p| {
+            assert!(
+                p.op.is_some() && p.approval.is_some(),
+                "every entry carried is approved: {p:?}"
+            )
+        })
+        .filter_map(|p| p.approver.clone())
+        .collect();
+    assert_eq!(
+        (money.len(), approvers.len()),
+        (4, 2),
+        "four entries count as bo's, under two opens' approvers: {money:#?}"
+    );
+}

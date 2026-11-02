@@ -67,10 +67,21 @@ page group web/index.html <meta http-equiv="Content-Security-Policy" content=
   form-action 'none'
 page group-host web/vercel.json "key": "Content-Security-Policy", "value":
   frame-ancestors 'none'
+page signer-host web/vercel.json { "value":
+  frame-ancestors https: | sign.html alone is framed, by a lent app at a name under the page's host, which no header a static host sends can spell for every host; sign.js answers only a parent whose origin, as the browser sets it, is a lend's label directly under its own host (svrn-docs rings/current/HOLDER_APPROVAL.md §3.D)
+page signer web/sign.html <meta http-equiv="Content-Security-Policy" content=
+  default-src 'none'
+  script-src 'self' 'wasm-unsafe-eval' | svrngs's own wasm, to check an app's entry against the grants its open issued before the signer approves it; no app code runs here, and the person's key is never loaded
+  connect-src 'self' | the wasm, from the page's own origin
+  base-uri 'none'
+  form-action 'none'
+page carried-signer web/authority.js export const SIGNER_FRAME =
+  frame-src {signer} | lend.js adds only the platform signer, derived from its own host, to a frame-src the app already restricts; it never narrows the app's policy
 page open web/open.html <meta http-equiv="Content-Security-Policy" content=
   default-src 'none'
   script-src 'self'
   img-src 'self' | the tab's icon, svrngs's mark (favicon.svg) from the page's own origin; an image runs nothing
+  frame-src https: | open.js frames the group's signer, at the address it derives from its own host, to learn whether this browser's group page issued the open before any of it is kept
   base-uri 'none'
   form-action 'none'
 

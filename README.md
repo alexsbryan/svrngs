@@ -104,9 +104,10 @@ Nothing we run holds them. We run three things, and you can replace each:
    with `svrngs join <link>`, and need no page.
 4. **Host the page, for phones.** Run `scripts/build-web.sh` and
    `scripts/build-release.sh` (each one's top says what it needs), then
-   serve `target/web/site/` at your host and at every name under it, with
-   `frame-ancestors 'none'` on every answer, as
-   [`web/vercel.json`](web/vercel.json) does. Add `--origin
+   serve `target/web/site/` over HTTPS at your host and at every name under
+   it, with `frame-ancestors 'none'` on every answer but `/sign.html`,
+   which sends `frame-ancestors https:` so your group's apps can frame it,
+   as [`web/vercel.json`](web/vercel.json) does. Add `--origin
    https://<your host>/` to `new`, or run `svrngs link <group> --origin
    https://<your host>/`. Your founder's line is the one above, with your
    host in it.

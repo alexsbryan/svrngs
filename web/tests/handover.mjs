@@ -29,7 +29,7 @@
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { held, launch, play, serve } from './page.mjs';
+import { held, inApp, launch, pageAt, play, serve } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 
@@ -84,7 +84,7 @@ const traced = (page) =>
   page.evaluate(() => fetch('/svrngs-trace').then((r) => r.text())).catch((e) => `the trace was not read: ${e}`);
 
 const server = await serve(args.site, { worker: args.keysLost ? `${PLANT}\n${KEYS_LOST}` : PLANT });
-const origin = `http://localhost:${server.address().port}/`;
+const origin = pageAt(server);
 const profile = args.engine === 'webkit' ? mkdtempSync(join(tmpdir(), 'svrngs-webkit-')) : undefined;
 let { context, close } = await launch(args.engine, { profile });
 const logs = [];
@@ -99,7 +99,7 @@ try {
   await held(page, origin, args);
   const listed = await page.evaluate(() => [...document.querySelectorAll('#lent button')].map((b) => b.textContent));
   const button = page.locator('#lent button', { hasText: args.open });
-  const away = (url) => url.hostname.endsWith('.localhost');
+  const away = inApp;
   await Promise.all([page.waitForURL(away, { timeout: 90_000 }), button.click()]);
   await page.waitForSelector('video', { timeout: 60_000 });
   const opened = page.url();

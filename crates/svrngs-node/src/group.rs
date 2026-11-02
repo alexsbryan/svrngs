@@ -173,7 +173,9 @@ impl crate::node::Host {
             .and_then(|()| relay.map_or(Ok(()), |relay| write_relay(&dir, relay)))
             .map_err(|e: SeedError| e.to_string())?;
         rail.set_seed(&seed.id(), &seed.roster())
-            .map_err(|e| e.to_string())
+            .map_err(|e| e.to_string())?;
+        self.cut_over(&seed.id());
+        Ok(())
     }
 
     /// The relay a group made here keeps, the one rule `svrngs new` with no

@@ -113,7 +113,7 @@ fi
 # one way; and the tab's icon and the Home Screen's, the svrngs mark from
 # its one home (docs/brand/).
 SHARED=(crates/svrngs-node/src/home/question.js crates/svrngs-node/src/home/look.css crates/svrngs-node/src/home/away.html docs/brand/favicon.svg docs/brand/apple-touch-icon.png)
-PAGE=(index.html app.js store.js sw.js open.html open.js lend.js shim.js)
+PAGE=(index.html app.js store.js sw.js open.html open.js lend.js shim.js authority.js sign.html sign.js)
 mkdir -p "$OUT/page" "$OUT/ui" "$OUT/vendor"
 cp "${SHARED[@]}" "${PAGE[@]/#/$APP/}" "$OUT/"
 cp "$APP"/page/*.js "$OUT/page/"
@@ -125,7 +125,7 @@ cp "$APP/install.sh" "$OUT/"
 MODULES=($(cd "$OUT" && echo page/*.js ui/*.js vendor/*.js))
 # The worker's SHELL, the build's: every module the page loads, from what
 # was copied, so a new flow is kept offline with no edit (web/sw.js).
-sed "s#^const SHELL = \[\(.*\)\];#const SHELL = [\1$(printf ", './%s?v=__VERSION__'" app.js store.js question.js "${MODULES[@]}")];#" "$APP/sw.js" >"$OUT/sw.js"
+sed "s#^const SHELL = \[\(.*\)\];#const SHELL = [\1$(printf ", './%s?v=__VERSION__'" app.js store.js authority.js sign.js question.js "${MODULES[@]}")];#" "$APP/sw.js" >"$OUT/sw.js"
 grep -q "'./ui/view.js?v=" "$OUT/sw.js" || { echo "build-web: web/sw.js has no \`const SHELL = [...];\` line, so the page's modules would not be kept offline" >&2; exit 1; }
 # The version is the content hash of the module and of every file stamped,
 # stamped into every shell URL and the service-worker cache name, so a

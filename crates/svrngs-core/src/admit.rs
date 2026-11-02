@@ -424,6 +424,20 @@ struct Candidate<'a> {
     op: &'a Op<SignedOp>,
 }
 
+fn cutoff(acts: &BTreeMap<OpId, &Op<SignedOp>>, by: &OpId) -> BTreeSet<OpId> {
+    let mut pending = match acts.get(by).map(|op| &op.kind.act) {
+        Some(RailAct::Signers { through } | RailAct::Holders { through }) => through.clone(),
+        _ => Vec::new(),
+    };
+    let mut seen = BTreeSet::new();
+    while let Some(id) = pending.pop() {
+        if let Some(op) = acts.get(&id).filter(|_| seen.insert(id.clone())) {
+            pending.extend(op.kind.prev.clone());
+        }
+    }
+    seen
+}
+
 /// Turn a bag of journal lines into the order every node applies them in.
 ///
 /// `roster`, `namespace` and `verifier` are *parameters*, never folded state.
@@ -506,6 +520,13 @@ pub fn admit(
         let may = |cap| Grant(pass, namespace).may(&op.actor, cap, op.ts_unix);
         let verdict = match &op.kind.act {
             _ if !*signed.entry(pass).or_insert_with(|| pass.signed()) => Err(Why::Unsigned),
+            _ if pass
+                .op
+                .as_ref()
+                .is_some_and(|id| *id != crate::grant::bare_id(op, namespace)) =>
+            {
+                Err(Why::Unapproved)
+            }
             RailAct::Record { payload } => may(Append(payload.app())),
             RailAct::Correct {
                 corrects,
@@ -525,6 +546,30 @@ pub fn admit(
     for (id, actor, why) in ungranted {
         authentic.remove(&id);
         gaps.push(RailGap::Ungranted { id, actor, why });
+    }
+
+    // The signed cutover names old history by hash, never by a forgeable clock.
+    // Apply it before membership/voids so a rejected correction has no effect.
+    if authentic
+        .values()
+        .any(|o| matches!(o.kind.act, RailAct::Holders { .. }))
+    {
+        let first = crate::membership::membership(
+            authentic.iter().map(|(id, op)| (id, *op)),
+            roster,
+            namespace,
+        );
+        if let Some(cut) = first.holders.as_ref() {
+            let covered = cutoff(&authentic, cut);
+            authentic.retain(|id, op| {
+                let allowed = op.kind.grant.as_ref().is_none_or(|p| p.op.is_some() || covered.contains(id));
+                if !allowed {
+                    tracing::debug!(target: "rail:admit", %id, "grant: rejected legacy holder authority outside its signed cutoff");
+                    gaps.push(RailGap::Ungranted { id: id.clone(), actor: op.actor.clone(), why: crate::grant::Why::Unapproved });
+                }
+                allowed
+            });
+        }
     }
 
     // ── the chain: each act names its author's act at seq − 1 ─────────
@@ -621,19 +666,7 @@ pub fn admit(
     // An act naming another person than its signer's counts only where the
     // keeper's `Signers` covers it, by ancestry as a cut covers; until the
     // keeper writes one, as before.
-    let cover = m.signers.as_ref().map(|by| {
-        let mut at = match authentic.get(by).map(|op| &op.kind.act) {
-            Some(RailAct::Signers { through }) => through.clone(),
-            _ => Vec::new(),
-        };
-        let mut seen = BTreeSet::new();
-        while let Some(id) = at.pop() {
-            if let Some(op) = authentic.get(&id).filter(|_| seen.insert(id.clone())) {
-                at.extend(op.kind.prev.clone());
-            }
-        }
-        seen
-    });
+    let cover = m.signers.as_ref().map(|by| cutoff(&authentic, by));
     let mut admitted: BTreeMap<OpId, Candidate<'_>> = BTreeMap::new();
     for (id, op) in authentic {
         let Some((first, person)) = m.person_of(op.stands_as()) else {

@@ -178,6 +178,7 @@ impl Scene {
             .expect("serve.mjs prints its port");
         let port = port.strip_prefix("port ").expect("`port <n>`").to_string();
         tokio::spawn(async move { while let Ok(Some(_)) = lines.next_line().await {} });
+        PAGES.lock().unwrap().push(port.clone());
         (format!("http://localhost:{port}/"), served)
     }
 
@@ -565,6 +566,24 @@ pub fn open_of(url: &str) -> Option<(String, String)> {
     Some((host.to_string(), open))
 }
 
+/// Each page [`Scene::page`] serves, by port. `svrngs new --origin` checks
+/// the page at `http://localhost:<port>/`, a name every name under which
+/// this computer answers, and a browser reaches the same server at the
+/// tests' page host over TLS (web/tests/page.mjs `PAGE_HOST`), where the
+/// group's signer works, so each address of it a person is handed is told
+/// to their browser at that host ([`Browsers::tell`]).
+static PAGES: std::sync::Mutex<Vec<String>> = std::sync::Mutex::new(Vec::new());
+
+/// `said` with each page [`Scene::page`] serves at the address a browser
+/// reaches it by ([`PAGES`]).
+pub fn at_page_host(mut said: String) -> String {
+    for port in PAGES.lock().unwrap().iter() {
+        let tls = format!("https://{}:{port}/", crate::harness::PAGE_HOST);
+        said = said.replace(&format!("http://localhost:{port}/"), &tls);
+    }
+    said
+}
+
 /// Each person's browser, kept for the whole scene so what a phone keeps
 /// stays: the recorded Events run's driver,
 /// demo/runs/events/2026-10-14/people.mjs, one JSON command a line.
@@ -619,6 +638,7 @@ impl Browsers {
     /// One command, and its answer; an error the driver caught fails the
     /// scene, its words and the page's console with it.
     pub async fn tell(&mut self, mut command: Value) -> Value {
+        command = serde_json::from_str(&at_page_host(command.to_string())).unwrap();
         let who = command["who"].as_str().unwrap_or_default().to_string();
         self.open_first(&who, &mut command);
         let stdin = self.run.stdin.as_mut().unwrap();

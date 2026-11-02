@@ -26,7 +26,7 @@
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { held, launch, play, serve } from './page.mjs';
+import { held, inApp, launch, pageAt, play, serve } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 
@@ -55,7 +55,7 @@ async function refusal({ lend, path }) {
 }
 
 const server = await serve(args.site);
-const origin = `http://localhost:${server.address().port}/`;
+const origin = pageAt(server);
 // WebKit's context keeps a profile, so the browser can be closed and
 // opened again on it; Chromium's is stopped through DevTools.
 const profile = args.engine === 'webkit' ? mkdtempSync(join(tmpdir(), 'svrngs-webkit-')) : undefined;
@@ -69,7 +69,7 @@ try {
   await held(page, origin, args);
   const listed = await page.evaluate(() => [...document.querySelectorAll('#lent button')].map((b) => b.textContent));
   const button = page.locator('#lent button', { hasText: args.open });
-  const away = (url) => url.hostname.endsWith('.localhost');
+  const away = inApp;
   await Promise.all([page.waitForURL(away, { timeout: 90_000 }), button.click()]);
   await page.waitForSelector('video', { timeout: 60_000 });
   const opened = page.url();

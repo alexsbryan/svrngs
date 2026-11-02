@@ -24,11 +24,11 @@
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
 import { createInterface } from 'node:readline';
-import { hold, launch, play, serve } from './page.mjs';
+import { hold, inApp, launch, pageAt, play, serve } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const server = await serve(args.site);
-const origin = `http://localhost:${server.address().port}/`;
+const origin = pageAt(server);
 console.log(JSON.stringify({ origin }));
 const input = createInterface({ input: process.stdin });
 const told = await new Promise((done) => input.once('line', done));
@@ -99,7 +99,7 @@ try {
   const asked = await phone.locator('#join').isVisible();
   const listed = await phone.locator('#lent button').allTextContents();
   const text = await phone.locator('body').innerText();
-  const away = (url) => url.hostname.endsWith('.localhost');
+  const away = inApp;
   await Promise.all([phone.waitForURL(away, { timeout: 90_000 }), phone.locator('#lent button', { hasText: open }).first().click()]);
   await phone.waitForSelector('video', { timeout: 60_000 });
   const opened = phone.url();

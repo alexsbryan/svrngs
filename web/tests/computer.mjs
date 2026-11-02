@@ -12,11 +12,11 @@
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
-import { launch, serve } from './page.mjs';
+import { launch, pageAt, serve } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const server = await serve(args.site);
-const origin = `http://localhost:${server.address().port}/`;
+const origin = pageAt(server);
 const link = `${origin}#${args.token}`;
 const DESKTOP = { chromium: 'Desktop Chrome', webkit: 'Desktop Safari' };
 const logs = [];
@@ -63,7 +63,7 @@ async function opened(device) {
 try {
   const computer = await opened(DESKTOP[args.engine]);
   const phone = await opened('iPhone 15');
-  const served = await (await fetch(origin)).text();
+  const served = await (await fetch(`http://127.0.0.1:${server.address().port}/`)).text();
   const asked = server.asked;
   console.log(JSON.stringify({ origin, computer, phone, served, requests, asked, logs }));
 } catch (e) {

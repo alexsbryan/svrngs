@@ -348,6 +348,28 @@ pub(crate) async fn carry(
         let why = format!("This entry was not signed by anyone in {group}.");
         return refused(&group, "not_signed", why);
     }
+    if line.kind.grant.as_ref().is_some_and(|p| p.op.is_none())
+        && read.as_ref().is_none_or(|a| !a.membership().counts(&id))
+    {
+        tracing::debug!(target: "rails", group, %id, signer = %line.actor, "rail: refused — a holder's line naming no approved content, which the group's copy here does not already count");
+        return refused(
+            &group,
+            "not_approved",
+            "An app's new entry needs its person's approval of that exact content.".into(),
+        );
+    }
+    if line.kind.grant.is_some()
+        && read
+            .as_ref()
+            .is_none_or(|a| a.membership().holders.is_none())
+    {
+        tracing::debug!(target: "rails", group, %id, signer = %line.actor, "rail: refused — a holder's line in a group whose keeper has written no holder cutover, so legacy holder authority is still open");
+        return refused(
+            &group,
+            "upgrade_keeper",
+            "The group's keeper needs to open the new svrngs before apps can save entries.".into(),
+        );
+    }
     if let Err(e) = rail.ingest_all(&group, std::slice::from_ref(&line)) {
         return err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string());
     }

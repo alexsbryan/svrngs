@@ -83,6 +83,18 @@ key's relay is its own newest `Relay` act (relay-in-record): the fold
 answers it for a standing key (`Membership::relay`, read by `relay::parse`),
 and `RelayAt` writes it only when the record says otherwise.
 
+`Pass` distinguishes reach from exact-entry approval (`pass.rs`, `grant.rs`):
+the person signs a pass naming its open's `approver`; `approving` names one
+entry's id without its grant (`op`), and the approver signs pass and id
+(`approval`). The holder signs the resulting line; `admit` verifies all
+three. The signer checks expiry by its own clock at approval, so a later
+delivery doesn't trust the holder's clock. `Cutover::Holders` (`register.rs`)
+writes keeper-signed `Holders {through}` tips, freezing broad-grant legacy
+history by ancestry before voids or membership can depend on a rejected
+correction. Both new shapes use line version 13. Nodes run cutover on start,
+group creation and rounds; `/carry` refuses new holder entries without it.
+The node/page protocol is v4.
+
 **`crates/svrngs-runtime`**: the journal, its write index, the open-journal map
 (`RingRail`) and the register's standing (`register.rs`), split out of
 svrngs-node. The journal is crate-private: an adapter reaches a group only
@@ -726,7 +738,12 @@ lends it reads, and opens the lend's `open.html` with the pass, the key,
 the lends, the relay (`relay_of`, never the token) and itself in the
 fragment; `open.js` keeps them in that origin's store (`store.js`
 `lendKeep`), registers `lend.js` over the lend's address and hands it the
-pass in memory. `lend.js`, a module, is the runtime: it serves every
+pass in memory. Before state is installed, `open.js` asks the group
+origin's `sign.html` whether this browser's group page issued the open: the
+signer adopts the open's approver from its seal and the page's
+`__Host-svrngs-<label>` cookie, or finds the one it adopted
+(`authority.js`, `sign.js`); the private key separately proves the named
+holder. `lend.js`, a module, is the runtime: it serves every
 request at the lend's address, and at the address of a lend the pass also
 names, by `fetch` over a dial to the lender's door, `/lend/<label>/<path>`,
 on the pass holders' protocol (`holder_endpoint`, `dial_lend`), the pass
@@ -757,7 +774,16 @@ app, `POST /svrngs-reads/<label>/svrngs-stop`, which the worker sends to
 that lend's door with the pass, `{said: "stop"}` (`stopping`). The page
 host is told to send `frame-ancestors 'none'` (`web/vercel.json`), which
 a `<meta>` policy cannot, and the tests' server sends `vercel.json`'s
-headers (`web/tests/page.mjs`). With no pass in memory and
+headers (`web/tests/page.mjs`). Its sole exception is `sign.html`, a separate
+page with no app code: `sign.js` takes the app's label from its parent's
+origin, keeps that app's approver in its own store, and calls `approve_line`
+on only a grant the open issued while it is live, signing with a key it
+can't export. `authority::maySign` first checks the actual same-origin
+browser Client, refusing navigation-driven writes. The worker serializes
+appends and receives exact-entry approval through the page's shim and hidden
+signer frame; stable approval storage avoids two ids for one entry across
+refreshed opens. The frame URL derives from the app's own host, never
+handoff data. With no pass in memory and
 none it can read, it sends a navigation to `open.html?for=<label>`, which
 reads the pass and hands it over again. Its look is the home page's
 `look.css`, which `build-web.sh` copies beside it as it copies

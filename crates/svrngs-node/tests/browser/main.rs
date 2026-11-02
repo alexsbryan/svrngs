@@ -512,15 +512,21 @@ fn the_index_s_row_is_judged_once_for_both_pages() {
 const UNLENT: &str = "That app, or what it asks to use, is not lent here now.";
 
 /// Where the phone opens `name`, lent by the computer whose key is `seed`'s:
-/// an origin of its own, `http://<label>.localhost:<port>/` (u5-2).
+/// an origin of its own, `https://<label>.<page host>:<port>/` (u5-2;
+/// harness.rs `PAGE_HOST`).
 fn label(seed: u8, name: &str) -> String {
     svrngs_core::pass::Label::of(signing(seed).verifying_key().as_bytes(), name).to_string()
 }
 
-/// Whether `url` is the lend `label`'s own origin on this computer.
+/// Whether `url` is the lend `label`'s own origin: on a computer, or under
+/// the page's host on a phone.
 fn at_origin(url: &Value, label: &str) -> bool {
+    let own = [
+        format!("http://{label}.localhost:"),
+        format!("https://{label}.{}:", harness::PAGE_HOST),
+    ];
     url.as_str()
-        .is_some_and(|u| u.starts_with(&format!("http://{label}.localhost:")))
+        .is_some_and(|u| own.iter().any(|o| u.starts_with(o)))
 }
 
 in_webkit!(
@@ -1561,7 +1567,7 @@ async fn a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone(engine: Engi
         .local_addr()
         .unwrap()
         .port();
-    let page = format!("http://localhost:{port}/");
+    let page = format!("https://{}:{port}/", harness::PAGE_HOST);
     let house = ada.rail().group_dir(NS).unwrap();
     svrngs_node::group::write_origin(&house, &Origin::parse(&page).unwrap()).unwrap();
     let (app, heads) = linking_app().await;
@@ -2020,11 +2026,11 @@ async fn a_person_in_two_groups_opens_each_ones_lend_where_it_is_lent(engine: En
         !offered["url"]
             .as_str()
             .unwrap_or_default()
-            .contains(".localhost:")
+            .contains(&format!(".{}:", harness::PAGE_HOST))
             || offered["url"]
                 .as_str()
                 .unwrap_or_default()
-                .starts_with("http://localhost:"),
+                .starts_with(&format!("https://{}:", harness::PAGE_HOST)),
         "none opened before bo picks:\n{seen:#}"
     );
     let chosen = &offered["chosen"];
@@ -4393,7 +4399,7 @@ async fn a_computer_that_did_not_answer_is_named_by_its_person(engine: Engine) {
 /// on, so a dial through it lands that much after one through the relay
 /// itself: which computer answers first, made so rather than raced.
 async fn slow_way(relay: &Server, by: Duration) -> String {
-    let to = relay.http_addr().expect("the relay serves HTTP");
+    let to = harness::relay_at(relay);
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let at = listener.local_addr().unwrap();
     tokio::spawn(async move {
@@ -4763,7 +4769,7 @@ async fn socket_page() -> std::net::SocketAddr {
 /// only through it: shut (`false` sent), it ends every connection through
 /// it and refuses each new one, until opened again (`true`).
 async fn lid(relay: &Server) -> (String, tokio::sync::watch::Sender<bool>) {
-    let to = relay.http_addr().expect("the relay serves HTTP");
+    let to = harness::relay_at(relay);
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let at = listener.local_addr().unwrap();
     let (open, watch) = tokio::sync::watch::channel(true);

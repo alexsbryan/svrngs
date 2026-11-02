@@ -14,13 +14,13 @@
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
-import { driving } from './page.mjs';
+import { driving, inApp } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 await driving(args, async ({ page, logs }) => {
   const said = await page.evaluate(() => document.getElementById('response').textContent);
   // At the lend's origin, its start page gone.
-  const away = (url) => url.hostname.endsWith('.localhost') && !url.pathname.endsWith('/open.html');
+  const away = (url) => inApp(url) && !url.pathname.endsWith('/open.html');
   // The open's words and the line beside it (capability-open): what the
   // yes it is says.
   const button = page.locator('#lent button', { hasText: args.open });

@@ -318,6 +318,16 @@ impl Node {
             api_port: api.addr().port(),
             minting: Default::default(),
         });
+        match rail.namespaces() {
+            Ok(groups) => {
+                for group in groups {
+                    host.cut_over(&group);
+                }
+            }
+            Err(why) => {
+                tracing::warn!(target: "node", %why, "node: groups unreadable at startup; their delegated writes remain closed")
+            }
+        }
         let (folders, blobs) =
             crate::folder::Folders::start(&data_dir, host.clone(), nudge.clone())
                 .await
@@ -554,14 +564,18 @@ impl Host {
     /// it keeps the group and none is written yet, past which a computer's
     /// act for another person counts nowhere (svrngs-core's `Cutover`;
     /// capability-signed). Asked of the kept register, as the relay is.
-    fn cut_over(&self, namespace: &str) {
+    pub(crate) fn cut_over(&self, namespace: &str) {
         let Ok(r) = self.rail.register(namespace) else {
             return;
         };
         let keeps = r.keeper.as_deref() == Some(self.actor.as_str());
         if keeps && r.signers.is_none() {
-            let wrote = self.rail.commit(namespace, &svrngs_core::Cutover);
+            let wrote = self.rail.commit(namespace, &svrngs_core::Cutover::Authors);
             tracing::debug!(target: "node", namespace, written = matches!(wrote, Ok(Ok(_))), "node: the keeper's cutover, once per group");
+        }
+        if keeps && r.holders.is_none() {
+            let wrote = self.rail.commit(namespace, &svrngs_core::Cutover::Holders);
+            tracing::debug!(target: "node", namespace, written = matches!(wrote, Ok(Ok(_))), "node: legacy holder history frozen; new entries require exact-content approval");
         }
     }
 

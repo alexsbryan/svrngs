@@ -27,13 +27,12 @@
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
 import { execSync, spawn } from 'node:child_process';
-import { hold, launch, serve } from './page.mjs';
+import { hold, launch, pageAt, serve } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const phone = args.mode !== 'computer';
 const server = phone ? await serve(args.site) : null;
-const port = server?.address().port;
-const pageOrigin = `http://localhost:${port}/`;
+const pageOrigin = server && pageAt(server);
 
 // In a lent page: the groups a `svrngs` store at this origin holds, which
 // a lent page would unseal the person's key from (DESIGN §8, risk 5).

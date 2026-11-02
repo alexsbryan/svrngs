@@ -1418,14 +1418,44 @@ from the journal waits in PLAN §2.
   its id, the pass that lets its signer, a holder, act as the person who
   signed the pass: a phone's act in an app it opened. It counts as that
   person's, under their standing, only appending its app's own `<kind>/`
-  part, the kind the pass's label names (`Label::carried`), only before the
-  pass lapses, and never deciding: a holder's `Runs`, or any act of the
-  register, counts nowhere. Anything else is `RailGap::Ungranted`, a
-  contradiction, or an absence while what it corrects is not held
+  part, the kind the pass's label names (`Label::carried`), and never
+  deciding: a holder's `Runs`, or any act of the register, counts nowhere.
+  Anything else is `RailGap::Ungranted`, a contradiction, or an absence
+  while what it corrects is not held
   (`crates/svrngs-core/src/grant.rs`, judged in `admit`, each pass
   verified once). A cut covers its key's holders as it covers the key, and
-  its `through` names their newest acts. A holder's line ships at line
-  version 12, which an older build names `NewerVersionLine`.
+  its `through` names their newest acts.
+
+  A holder's timestamp can't show when it wrote: the app's own code holds
+  the holder, so it can stamp any time. So an app's entry counts only once
+  its open's approver approves its exact content (svrn-docs
+  rings/current/HOLDER_APPROVAL.md, option D). The group's page mints the
+  approver for each open and names its key in both passes it signs
+  (`Pass.approver`, in the person's signature). It hands the key only to
+  the group's signer, `web/sign.html` at the page's origin, which an app's
+  page frames and which runs no app code. Before the worker signs an entry,
+  the signer approves it by its own clock while the pass is live
+  (`Pass::approving`, `approve_line`): the entry's grant must be one its
+  open issued, its time within five minutes of the signer's, its app's own
+  part. Approval names the entry's id without its grant (`grant::bare_id`,
+  `Pass.op`) and is the approver's signature over the pass and that id
+  (`Pass.approval`); `Pass::signed` checks both signatures, each in one
+  spelling. So a later delivery keeps its meaning, an entry stamped after
+  the pass lapses gets none, and an approval is never a reach pass. A
+  leaked approver can still approve, and backdate, within its own pass's
+  scope (one person, one holder, one app); the signer refuses once the
+  pass lapses. The signer keeps repeat approvals of one entry stable for
+  the five minutes, so a newer open can't give one entry two ids.
+
+  New holder entries and `Holders {through}` ship at line version 13. On
+  the keeper's first upgraded start, new group, or round, `Cutover::Holders`
+  signs the held legacy history's tips; broad old grants count only within
+  that ancestry. Admission drops unapproved legacy entries before
+  corrections can void anything. A computer refuses a new holder entry by
+  `/carry` until it holds the keeper's cutover (`upgrade_keeper`), and one
+  no approver approved (`not_approved`). The keeper upgrades first: the
+  protocol is version 4, and a computer answering below it is older
+  (`version.rs`).
 - **An entry's author is its signer.** A line counts as its signer's
   person, or a holder's as the person its pass names. A line naming
   another person, as an older svrngs wrote a phone's act (`on_behalf_of`),
@@ -1663,9 +1693,37 @@ address that does not give the page is not judged (exit 3). group.svrnme.sh
 does (`scripts/deploy-page.sh`), so a group that names ours types nothing
 more. The cost: the page's host and the phone's name lookups see which app
 is opened, since its label names its lender's key and the app. The host
-sends `frame-ancestors 'none'` on every answer (`web/vercel.json`), since a
-lent app is a name under its host and could frame the page where a person
-says yes; a host a group names in its place must send it too.
+sends `frame-ancestors 'none'` on every answer but `sign.html`
+(`web/vercel.json`), since a lent app is a name under its host and could
+frame the page where a person says yes; a host a group names in its place
+must send the same. The signer is the one page an app may frame, at
+`https:`, the most a static host's header can say for every host: it
+answers only a parent whose origin, as the browser sets it, is a lend's
+label directly under its own host. The worker adds the signer, at the
+address it derives from its own host, to a lent page's frames only where
+the app's policy restricts them, and never narrows that policy
+(`authority.js` `framing`). An app that restricts frames only in a
+`<meta>` policy is a known gap: the worker can't add to it, the signer
+can't load, and each save waits for the signer and answers "This app's
+page (<path>) may keep out your group's signer, so this wasn't saved." Not
+fixed: no app in apps/ does it.
+
+Before an app's origin keeps an open, the signer says whether this
+browser's group page issued it. The page seals the approver's seed under a
+fresh key W, bound to the open's routing and authority
+(`authority.js` `openMessage`), puts the seal in the app's address as the
+open's `proof`, and leaves W in a cookie of its own origin,
+`__Host-svrngs-<label>`, which the app can't read or plant. On its first
+ask, the signer takes the label from its parent's origin, reads that
+cookie, opens the seal, keeps the approver in its own store by the label
+with the open's digest, and only then deletes the cookie (`sign.js`
+`approver`). Later asks need the open to match what it kept, so a newer
+open of the app replaces the older one, whose pages are refused. A missing
+cookie or record, another app's open, or an older one, each ends in "Open
+this app again from your group's page". This needs the page over TLS on a
+real name: the browser tests reach `https://group.svrnme.test` through a
+proxy (`web/tests/page.mjs`), since WebKit gives a frame under a
+`<label>.localhost` page no cookie.
 
 **The phone's app adds what the page can't; the page stays the way in.**
 Designed, not built: it waits in PLAN §2 until it is resourced, not

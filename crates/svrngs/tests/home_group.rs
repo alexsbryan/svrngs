@@ -185,7 +185,10 @@ async fn the_home_page_makes_a_group_another_computer_joins_with_no_restart(
                 ["#make input[name=name]", "Trip"],
                 ["#make input[name=person]", "Dee"],
                 ["#make button:has-text('Make a group')", null],
-                ["#home section button:text-is('Invite someone to Trip')", null, true],
+                // Until the link is shown: the group made, its keeper's
+                // cutovers written at once (node.rs `cut_over`), the page
+                // may draw again before it (part 7, 2026-11-02).
+                ["#home section button:text-is('Invite someone to Trip')", null, true, "Send this link"],
                 ["#make input[name=name]", "trip", true],
                 ["#make input[name=person]", "Dee"],
                 ["#make button:has-text('Make a group')", null],
