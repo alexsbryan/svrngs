@@ -1,0 +1,37 @@
+<claude-code-hint v="1" type="plugin" value="vercel@claude-plugins-official" />
+Vercel CLI 59.10.0 (Node.js 20.20.2)
+Loading teams…
+{
+  "status": "action_required",
+  "reason": "missing_scope",
+  "message": "Provide --team or --scope explicitly. No default is applied in non-interactive mode.",
+  "choices": [
+    {
+      "id": "team_cv0qOiDtFB1gwViUGP4h60Rr",
+      "name": "empathmed"
+    },
+    {
+      "id": "team_aaN4Rw3Eeyuutcg1Lj9VJgEL",
+      "name": "svrnmesh"
+    }
+  ],
+  "next": [
+    {
+      "command": "vercel link --listen 127.0.0.1:8611 --scope empathmed",
+      "when": "Link first (then run any command without --scope)"
+    },
+    {
+      "command": "vercel dev --listen 127.0.0.1:8611 --scope empathmed",
+      "when": "Run this command with scope (no link)"
+    },
+    {
+      "command": "vercel link --listen 127.0.0.1:8611 --scope svrnmesh",
+      "when": "Link first (then run any command without --scope)"
+    },
+    {
+      "command": "vercel dev --listen 127.0.0.1:8611 --scope svrnmesh",
+      "when": "Run this command with scope (no link)"
+    }
+  ],
+  "hint": "Run one of the commands in next[] to complete without prompting."
+}
