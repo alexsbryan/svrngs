@@ -372,7 +372,15 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # estimate, so its cap is one past it. Merged with main's relay `--at`
 # (227193b1, +14), it lands at 19,435, under the operator's 19,447, so the
 # cap is one past that.
-BUDGET = {"crates/svrngs-core": 3242, ".": 19436, "swift": 1}
+# The operator's raise for the security work's six parts (2026-11-02, "As
+# recommended": one raise to one past where it lands after the fixes): +843,
+# all outside the core. Part 6, the per-origin browser key, is +675
+# (session.rs +358, origin.rs +101, the three session*.js +188); confined
+# folders +122; advisories.py +33; secrets +13. The pass cut 17 lines: origin.rs's
+# inline tests out, one `host()`, a duplicated holder check, one signer
+# derivation. session.rs's `Onwards` store (+111) is the next pass's first
+# candidate. The seventh part waits on branch security-part7.
+BUDGET = {"crates/svrngs-core": 3242, ".": 20279, "swift": 1}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
