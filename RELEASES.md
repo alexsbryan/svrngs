@@ -1,6 +1,10 @@
 # svrngs releases
 
-## Next, not yet released
+## V1.4, 2 November 2026
+
+V1.4 rebuilds both pages, your computer's and your group's, and closes the
+ways another program or app could act as you. Update the computer that
+keeps your group first, then everyone else's.
 
 **Update your group's keeper first.** An app you open from your group's
 page now saves an entry only once your group's page approves it, while the
@@ -9,6 +13,27 @@ Until the computer that keeps your group runs this svrngs, saving in an app
 says "The group's keeper needs to open the new svrngs before apps can save
 entries." A computer still on V1.3.1 shows on the group's page as running
 an older svrngs, and what it lends isn't listed there until it's updated.
+
+**Open svrngs from your computer once.** Your browser now proves each
+request to svrngs with a key of its own, never a cookie, so another
+program on your computer can't use your browser's place. The first time
+after you update, a page says "Open svrngs from your computer". Do that,
+and every app opens as before.
+
+**Apps write only when you ask.** An app on your computer saves an entry
+as you only for a request your browser made in that app. A program sends
+`x-svrngs-append` with the kind its lend declares. Saying you're coming
+through the room's door on the local network isn't saved any more,
+because that door can't tell who you are. Open the event from your group's
+page instead.
+
+**Safer on your computer.** svrngs's own folder and secret files are
+private to you from the moment they're made. A synced folder can't be led
+outside itself by a link. A Give card can't reach into your computer's
+files. Pantry's token goes only to Pantry.
+
+**The same pages, rebuilt.** Both pages draw what they did, and update in
+place when something changes, with no reload.
 
 ## V1.3.1, 31 October 2026
 
