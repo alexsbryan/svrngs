@@ -385,8 +385,16 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # signature check) and +456 in all (with the signer, web/sign.js, and its
 # seal), at 3,373 and 20,734. The pass cut the wasm `approved()`, a second
 # act-kind check in `approving()` and a line of `approval_message`.
-BUDGET = {"crates/svrngs-core": 3374, ".": 20735, "swift": 1}
-CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
+# JavaScript on a rung of its own, the operator's (2026-11-02, ralph/next/js/
+# CHARTER.md, "Answered" 2): "we'll just have a line count jubilee at the
+# end, also I want to track js independently". `js` counts .js and .mjs with
+# the same exclusions, and `.` no longer does: 2,233 of its 20,734 moved and
+# this rung's own 4 came in, so `.` is one past 18,505. `js` has no cap (None) until the js queue's
+# jubilee sets one past where the queue lands; until then it is printed as
+# uncapped, never passed in silence.
+BUDGET = {"crates/svrngs-core": 3374, ".": 18506, "js": None, "swift": 1}
+CODE = {".rs", ".ts", ".py", ".sh"}
+RUNG_KINDS = {"js": {".js", ".mjs"}, "swift": {".swift"}}
 
 
 def files(base):
@@ -450,7 +458,10 @@ def main():
     if core_lib.exists() and "#![cfg_attr(not(test), no_std)]" not in core_lib.read_text():
         broken.append("crates/svrngs-core/src/lib.rs lost #![cfg_attr(not(test), no_std)]: the core is no_std")
     for rung, cap in BUDGET.items():
-        n = code_lines(ROOT, {".swift"}) if rung == "swift" else code_lines(ROOT / rung)
+        n = code_lines(ROOT, RUNG_KINDS[rung]) if rung in RUNG_KINDS else code_lines(ROOT / rung)
+        if cap is None:
+            print(f"{rung:<20} {n:>6} lines, no cap until the js queue's jubilee")
+            continue
         print(f"{rung:<20} {n:>6} / {cap} lines")
         if n >= cap:
             broken.append(f"{rung} has {n} lines of code, budget {cap}: raised only by the operator, with the reason in the commit")

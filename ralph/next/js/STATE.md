@@ -4,8 +4,8 @@
 shape the code takes, and the open choices with their defaults. Read it
 whole before a row.
 
-**Not launched.** The loop starts after HUMAN-js-agreed is ticked, once the
-security work stashed on 2026-11-02 has landed on main.
+**Launched 2026-11-02**, a pool of one lane, once the security work was on
+main (9338948f) and the `js` rung landed.
 
 **The demo.** A reader who knows JS/TS opens `web/page/shelf.js`,
 `ui/machine.js` and the home page's flows:
@@ -20,7 +20,7 @@ unchanged, so no person sees a change.
 
 The rows run in order, since all of them touch the same files.
 
-- [ ] HUMAN-js-agreed — depends [] — THE OPERATOR (CHARTER's choices answered, 2026-11-02: oxfmt; a `js` rung with no cap until a jubilee at the queue's end; the rest as proposed):
+- [x] HUMAN-js-agreed — depends [] — DONE 2026-11-02: the security work is on main, its seventh part at 9338948f (the operator: "as recommended"); the `js` rung landed from the operator seat, `js` 2,233 uncapped and `.` lowered to 18,506; plant: a planted `web/page/x.js` line moved `js` 2,233 → 2,234 and left `.` at 18,505. — THE OPERATOR (CHARTER's choices answered, 2026-11-02: oxfmt; a `js` rung with no cap until a jubilee at the queue's end; the rest as proposed):
   - confirms the security work is on main.
 
   The watching session then:
