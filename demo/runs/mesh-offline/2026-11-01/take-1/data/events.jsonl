@@ -1,0 +1,41 @@
+{"t": 1793606120.493, "event": "start", "build": "227193b1", "build_tree_clean": true, "bin_sha256": "6556ddc97ec6392bf3bc0cb184a27dfbf6fc2918810d113c7a8772dc0904c43e", "load": 5.20166015625, "cores": 12, "macos": "27.0.1"}
+{"t": 1793606130.032, "event": "instrument", "held": {"curl a name": true, "curl an address": true, "dig": true, "host": true, "udp to this host's resolver": true, "curl loopback (control)": true, "outside": true}}
+{"t": 1793606130.038, "event": "started", "who": "relay", "n": 1, "args": ["relay", "--at", "127.0.0.1:63407", "--open"], "pid": 62723}
+{"t": 1793606130.573, "event": "relay", "at": "http://127.0.0.1:63407", "first": {"said": "Relaying at http://127.0.0.1:63407/ for every computer and phone that reaches it, each sending at most 70 Mbit/s. Leave this running.", "ms": 535}}
+{"t": 1793606130.576, "event": "started", "who": "sam", "n": 1, "args": ["new", "mesh", "--as", "Sam", "--relay", "http://127.0.0.1:63407"], "pid": 62736}
+{"t": 1793606133.667, "event": "made", "link_ms": 3091, "said": "://join/<the token>\n\nmesh's folder is /tmp/mesh-offline-2026-11-01/sam/svrngs/mesh: what anyone in mesh puts there reaches this computer, and what you put there reaches theirs.\n\nLeave this running; Ctrl-C stops it.\n"}
+{"t": 1793606133.672, "event": "started", "who": "ana", "n": 1, "args": ["join", "svrngs://join/<the token>", "--as", "Ana"], "pid": 62896}
+{"t": 1793606136.798, "event": "joined", "who": "ana", "joined_ms": 3126, "said": "You're in mesh, as Ana.", "folder": true}
+{"t": 1793606136.804, "event": "started", "who": "alex", "n": 1, "args": ["join", "svrngs://join/<the token>", "--as", "Alex"], "pid": 62907}
+{"t": 1793606139.912, "event": "joined", "who": "alex", "joined_ms": 3108, "said": "You're in mesh, as Alex.", "folder": true}
+{"t": 1793606140.128, "event": "file-before", "sam": 207, "alex": 208}
+{"t": 1793606140.145, "event": "share", "who": "ana", "name": "notes", "exit": 0, "ms": 17, "said": "You lend notes (port 63363) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 63363 --limit <number>`.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare notes` stops lending it.", "trace": "assword on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): \n2026-11-02T07:55:40.143807Z DEBUG cli: cli: share \u2014 the password asked for lend=notes given=false terminal=false\n2026-11-02T07:55:40.144183Z DEBUG cli: cli: refused \u2014 another svrngs holds the data dir lock=/tmp/mesh-offline-2026-11-01/ana/.svrngs/lock error=lock acquisition failed because the operation would block\n2026-11-02T07:55:40.144194Z DEBUG cli: cli: share \u2014 svrngs runs here already, and reads the lend from its declaration lock=/tmp/mesh-offline-2026-11-01/ana/.svrngs/lock"}
+{"t": 1793606200.168, "event": "notes-before", "sam": {"listed_ms": 2, "fetched_ms": null, "unlisted": {"unanswered": [], "unheard": [], "refused": [], "older": []}}, "alex": {"listed_ms": null, "fetched_ms": null, "unlisted": {"unanswered": [], "unheard": [], "refused": [], "older": []}}}
+{"t": 1793606205.189, "event": "stopped", "who": "sam", "exit": 0, "ms": 10, "killed": false}
+{"t": 1793606205.194, "event": "stopped", "who": "ana", "exit": 0, "ms": 5, "killed": false}
+{"t": 1793606205.199, "event": "stopped", "who": "alex", "exit": 0, "ms": 5, "killed": false}
+{"t": 1793606205.2, "event": "stopped", "who": "relay", "exit": 0, "ms": 2, "killed": false}
+{"t": 1793606208.215, "event": "started", "who": "relay", "n": 2, "args": ["relay", "--at", "127.0.0.1:63407", "--open"], "pid": 64693}
+{"t": 1793606208.326, "event": "relay-again", "said": "Relaying at http://127.0.0.1:63407/ for every computer and phone that reaches it, each sending at most 70 Mbit/s. Leave this running.", "ms": 111}
+{"t": 1793606208.341, "event": "started", "who": "sam", "n": 2, "args": [], "pid": 64695}
+{"t": 1793606208.348, "event": "started", "who": "ana", "n": 2, "args": [], "pid": 64696}
+{"t": 1793606208.35, "event": "started", "who": "alex", "n": 2, "args": [], "pid": 64697}
+{"t": 1793606208.454, "event": "restart-api", "sam": 111, "ana": 106, "alex": 104}
+{"t": 1793606328.387, "event": "restart-notes", "sam": {"listed_ms": 114, "fetched_ms": null, "unlisted": {"unanswered": [], "unheard": [], "refused": [], "older": []}}, "alex": {"listed_ms": null, "fetched_ms": null, "unlisted": {"unanswered": [], "unheard": [], "refused": [], "older": []}}}
+{"t": 1793606328.608, "event": "restart-file", "sam": 214, "ana": 215}
+{"t": 1793606328.614, "event": "restart-rounds", "both": {"sam": 106, "ana": 99, "alex": 1102}, "any": {"sam": 106, "ana": 99, "alex": 1102}}
+{"t": 1793606328.63, "event": "share", "who": "alex", "name": "board", "exit": 0, "ms": 16, "said": "You lend board (port 63366) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 63366 --limit <number>`.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare board` stops lending it.", "trace": "sword on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): \n2026-11-02T07:58:48.628948Z DEBUG cli: cli: share \u2014 the password asked for lend=board given=false terminal=false\n2026-11-02T07:58:48.629316Z DEBUG cli: cli: refused \u2014 another svrngs holds the data dir lock=/tmp/mesh-offline-2026-11-01/alex/.svrngs/lock error=lock acquisition failed because the operation would block\n2026-11-02T07:58:48.629323Z DEBUG cli: cli: share \u2014 svrngs runs here already, and reads the lend from its declaration lock=/tmp/mesh-offline-2026-11-01/alex/.svrngs/lock"}
+{"t": 1793606388.696, "event": "board", "sam": {"listed_ms": 2, "fetched_ms": null, "unlisted": {"unanswered": [], "unheard": [], "refused": [], "older": []}}, "ana": {"listed_ms": null, "fetched_ms": null, "unlisted": {"unanswered": [], "unheard": [], "refused": [], "older": []}}}
+{"t": 1793606388.701, "event": "stopped", "who": "sam", "exit": 0, "ms": 5, "killed": false}
+{"t": 1793606388.704, "event": "started", "who": "sam", "n": 3, "args": ["link", "mesh"], "pid": 68506}
+{"t": 1793606391.774, "event": "link-again", "ms": 3070, "said": "A new link to mesh. Any link you sent before stops letting anyone new in; everyone it let in stays.\nIt works for a day, while this computer is on:\n\n  svrngs://join/<the token>\n\nLeave this running; Ctrl-C stops it.\n"}
+{"t": 1793606391.779, "event": "started", "who": "dee", "n": 1, "args": ["join", "svrngs://join/<the token>", "--as", "Dee"], "pid": 68752}
+{"t": 1793606454.981, "event": "dee", "joined_ms": 3108, "said": "You're in mesh, as Dee.", "notes": {"listed_ms": 27, "fetched_ms": null, "unlisted": {"unanswered": [], "unheard": [], "refused": [], "older": []}}, "board": {"listed_ms": null, "fetched_ms": null, "unlisted": {"unanswered": [], "unheard": [], "refused": [], "older": []}}, "files": {"before.bin": null, "after.bin": null}}
+{"t": 1793606475.014, "event": "stopped", "who": "app-notes", "exit": 0, "ms": 21, "killed": false}
+{"t": 1793606475.025, "event": "stopped", "who": "app-board", "exit": 0, "ms": 11, "killed": false}
+{"t": 1793606475.03, "event": "stopped", "who": "relay", "exit": 0, "ms": 5, "killed": false}
+{"t": 1793606476.083, "event": "stopped", "who": "ana", "exit": 0, "ms": 1053, "killed": false}
+{"t": 1793606476.088, "event": "stopped", "who": "alex", "exit": 0, "ms": 5, "killed": false}
+{"t": 1793606476.092, "event": "stopped", "who": "sam", "exit": 0, "ms": 5, "killed": false}
+{"t": 1793606476.094, "event": "stopped", "who": "dee", "exit": 0, "ms": 2, "killed": false}
+{"t": 1793606478.645, "event": "end", "off_host": 0, "lsof_samples": 167}

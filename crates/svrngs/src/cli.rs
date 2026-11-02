@@ -356,7 +356,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let mut carries = None;
     let mut run = true;
     let mut device = false;
-    let (mut open, mut staging) = (false, false);
+    let (mut open, mut staging, mut here) = (false, false, None);
     let mut joined = None;
     let mut more = Vec::new();
     while let Some(arg) = it.next() {
@@ -366,6 +366,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         // are a pattern the compiler holds, never text split (#147).
         let valued = match arg.as_str() {
             "--relay" => verb == "new",
+            "--at" => verb == "relay",
             "--joined" => matches!(verb.as_str(), "remove" | "handover"),
             "--as" | "--origin" | "--name" | "--kind" | "--limit" | "--refuse" | "--upload"
             | "--reads" | "--sign-in" | "--folder" | "--group" | "--ask" => true,
@@ -427,6 +428,13 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             }
             "--open" if verb == "relay" => open = true,
             "--staging" if verb == "relay" => staging = true,
+            // Unlisted in USAGE: plain HTTP, no certificate, for a relay on
+            // a local network with no internet, where Let's Encrypt cannot
+            // reach a name (`relay::At::Here`).
+            "--at" if valued => {
+                let what = "an address and port of this computer's, as 10.42.3.20:3340";
+                here = Some(raw.parse::<SocketAddr>().map_err(|_| not(what))?);
+            }
             "-h" | "--help" => return Ok(Verb::Help),
             other if other.starts_with('-') => return Err(format!("unknown argument `{other}`")),
             other if positional.is_none() => positional = Some(other.to_string()),
@@ -548,10 +556,15 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             Ok(Verb::Room(names.collect::<Result<_, _>>()?))
         }
         "relay" => {
-            let raw =
-                positional.ok_or("relay wants the name it is reached at: `svrngs relay <name>`")?;
-            let name = relay::name(&raw)?;
-            let at = relay::At::Name { name, staging };
+            let at = match (here, positional) {
+                (Some(_), _) if staging => return Err("--staging asks Let's Encrypt for a name's certificate, and a relay --at an address has none".into()),
+                (Some(_), Some(raw)) => return Err(format!("a relay is at a name or --at an address, not both: `{raw}`")),
+                (Some(addr), None) => relay::At::Here(addr),
+                (None, raw) => {
+                    let raw = raw.ok_or("relay wants the name it is reached at: `svrngs relay <name>`")?;
+                    relay::At::Name { name: relay::name(&raw)?, staging }
+                }
+            };
             Ok(Verb::Relay(Relay { at, open }))
         }
         "open" => Ok(Verb::Open),
