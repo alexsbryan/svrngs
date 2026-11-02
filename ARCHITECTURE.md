@@ -479,7 +479,9 @@ frame-ancestors 'none'`. `session.rs` holds this computer's opens and
 sessions for the home page and every lend's origin alike: `POST /v1/open`
 behind the token (`svrngs open`), the home page's `/to`, `/svrngs-open`
 where a code becomes its host's cookie, and the capability a read's
-address carries (`/svrngs-as/<cap>/`, taken off in `origin.rs` `lent`). It serves `home/index.html`, `home/home.js` and
+address carries (`/svrngs-as/<cap>/`, taken off in `origin.rs` `lent`). It serves `home/index.html`, its root `home/home.js`, the
+modules it imports, `home/page/` at `/page/`, `home/ui/` at `/ui/` and
+`web/vendor/` at `/vendor/`, from one table (`served`), and
 `home/look.css`, the record API's `/v1/groups`, `/v1/lends` and
 `/v1/rail/people` from the same routers, and `/choices`, kept by this
 computer's door for its own lends and dialled to the lender's otherwise
@@ -665,7 +667,9 @@ program itself for `share` with svrngs running and not.
 (DESIGN §3, "Joining"; U4): the crate `svrngs-web`, wasm only, in a
 workspace of its own with upstream's measured pins (iroh =1.0.2,
 wasm-bindgen =0.2.128, wasm-bindgen-futures =0.4.78, js-sys =0.3.105) and
-lock, and the static shell beside it — `index.html`, `app.js`,
+lock, and the static shell beside it — `index.html`, its root `app.js`
+and the flows it composes in `page/`, drawn with the home page's `ui/` and
+the vendored Preact and htm (DESIGN §5, "The pages draw one way"),
 `store.js`, `sw.js`, and for a lend's own origin `open.html`, `open.js`,
 `lend.js`, `shim.js`.
 Forked from commonwealth-ai's `sovereign/apps/ring-runtime` at `e1a43bcd2`
@@ -684,8 +688,8 @@ hashing to the group, `seed::answered`) and `redemption`, naming a browser.
 `store.js` (u4-5) is the page's store: IndexedDB `svrngs` v2, a
 non-extractable AES-GCM key under `seal`, and under `groups` each group
 joined — its name, the person's, the link's token, and the person's key
-sealed with the group's id as additional data (call 1). `app.js` reads the
-fragment as the token: a link joined by, or the page alone, is in; a new
+sealed with the group's id as additional data (call 1). The page reads the
+fragment as the token (`page/enter.js`): a link joined by, or the page alone, is in; a new
 link is asked of its issuer, and a group kept already is in; else it asks the
 person's name once, redeems, keeps the group, and lists `GET /people/lends`
 as the bare command prints it ("Sam's shelf"); it keeps the layers on the
@@ -718,7 +722,7 @@ Back skips it (`opening`). A lend that asks is told with its lender's
 words, `asks`, and `ask`, `<this origin>/svrngs-ask?lend=<label>&app=<this
 lend>`, a computer's shape (sup-3); navigated with `&back=<path>`, it
 sends the page to the group's page at `#ask=<lend>&app=<label>&at=<path>`
-(`asking`, through `onward`, as `opening` goes). There `app.js` asks "Let
+(`asking`, through `onward`, as `opening` goes). There the page asks "Let
 Sam's night use Ana's taste?" around the lender's words; Yes posts
 `{app, said: "yes"}` to the lender's door, `POST /choices/<label>`, on a
 dial from `endpoint` as the person; yes or not, it opens the app again at
@@ -732,7 +736,8 @@ headers (`web/tests/page.mjs`). With no pass in memory and
 none it can read, it sends a navigation to `open.html?for=<label>`, which
 reads the pass and hands it over again. Its look is the home page's
 `look.css`, which `build-web.sh` copies beside it as it copies
-`question.js`. The shell's paths are relative, and
+`question.js`, `ui/` and `vendor/`, each module stamped with the build's
+version, and the worker's shell listed from what it copied. The shell's paths are relative, and
 the CSP admits a relay on 127.0.0.1. `scripts/build-web.sh` (upstream's
 `build-ring-runtime.sh`) builds it into `target/web/site` with Homebrew's
 LLVM on a Mac, and `--lint` holds it to rustfmt and clippy for wasm32.

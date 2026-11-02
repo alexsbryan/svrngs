@@ -9,9 +9,9 @@ import assert from 'node:assert/strict';
 import { register } from 'node:module';
 import { test } from 'node:test';
 
-register('./v2/layout.mjs', import.meta.url);
+register('./pages/layout.mjs', import.meta.url);
 const { Act, Field, Fold, Heading, Keep, Row, Said } = await import('../../crates/svrngs-node/src/home/ui/parts.js?v=__VERSION__');
-const v1 = await import('../../crates/svrngs-node/src/home/question.js?v=__VERSION__');
+import { v1 } from './pages/before.mjs';
 
 // A document of plain objects, enough for v1's `el` and its `Object.assign`s.
 class Node {
@@ -80,7 +80,7 @@ test("Act's answer in its place, and a form's own button, which sends nothing it
   const brought = { state: 'done', said: 'You brought Money to Bo’s: everyone in it can open it in a few seconds.' };
   assert.equal(out(Act({ words: 'Bring the ticked ones to Bo’s', doing: brought, answer: 'instead', on: { type: 'bring' }, send })), brought.said);
   const join = Act({ words: 'Join', send });
-  assert.equal(out(join), '<button>Join</button>', 'web/index.html:75');
+  assert.equal(out(join), '<button>Join</button>', 'web/index.html@19b63b2b:75');
   assert.equal(join[0].props.onClick, undefined);
 });
 
@@ -103,7 +103,7 @@ test('Field: the join’s label and box, the home page’s wrapped ones and its 
   group.id = 'group';
   const words = ['What’s your name? Everyone in ', group, ' sees it.'];
   const join = Field({ shape: 'for', id: 'name', words, attrs: { autocomplete: 'name', maxlength: '64', required: true }, send });
-  assert.equal(out(join), '<label for="name">What’s your name? Everyone in <span id="group">Bo’s</span> sees it.</label><input autocomplete="name" id="name" maxlength="64" name="name" required></input>', 'web/index.html:72-73');
+  assert.equal(out(join), '<label for="name">What’s your name? Everyone in <span id="group">Bo’s</span> sees it.</label><input autocomplete="name" id="name" maxlength="64" name="name" required></input>', 'web/index.html@19b63b2b:72-73');
   const wrap = Field({ name: 'link', words: 'The link someone sent you: ', send });
   assert.equal(out(wrap), out(el('label', 'The link someone sent you: ', Object.assign(el('input'), { name: 'link' }))));
   const hours = [48, 24, 6].map((h) => [h * 3600, `${h} hours`]);
@@ -115,8 +115,8 @@ test('Field: the join’s label and box, the home page’s wrapped ones and its 
 });
 
 test('Heading and Said are the phone’s #status, #response and #why', () => {
-  assert.equal(out(Heading({ words: 'Opening…' })), '<h1 id="status">Opening…</h1>', 'web/index.html:62');
+  assert.equal(out(Heading({ words: 'Opening…' })), '<h1 id="status">Opening…</h1>', 'web/index.html@19b63b2b:62');
   assert.equal(out(Heading({ words: 'This browser could not open the page.', tone: 'bad' })), '<h1 class="bad" id="status">This browser could not open the page.</h1>');
-  assert.equal(out(Said({ tag: 'pre', id: 'response', words: '' })), '<pre id="response"></pre>', 'web/index.html:98');
+  assert.equal(out(Said({ tag: 'pre', id: 'response', words: '' })), '<pre id="response"></pre>', 'web/index.html@19b63b2b:98');
   assert.equal(out(Said({ id: 'why', class: 'bad', words: 'That name is taken.' })), '<p class="bad" id="why">That name is taken.</p>');
 });

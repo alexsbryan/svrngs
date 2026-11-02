@@ -72,8 +72,7 @@ chrono = { version = "0.4", default-features = false, features = ["clock"] }
 
 [features]
 # What only a test asks of a node (src/node/tests_support.rs): its routes as a
-# caller no socket can be, its transport, a round now; and its home page's v2,
-# chosen per node (src/home/v2/serve.rs) until the switchover.
+# caller no socket can be, its transport, a round now.
 test-support = []
 
 [dev-dependencies]

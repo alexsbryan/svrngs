@@ -6,7 +6,7 @@
 // answers each `{app, already}`; what happened said beside the button,
 // where it is looked for, not over the words above the boxes, which v1
 // replaced (page-shelf (b)). Folded as "Bring more to <group>" for someone
-// who has just `joined` (question.js:195-198). Its machine, SHELF, is the
+// who has just `joined` (question.js@19b63b2b:195-198). Its machine, SHELF, is the
 // part's own (ui/view.js `useMachine`), its trace `SHELF:`. While it
 // brings, the button and the boxes are held, "Bringing…" said beside it,
 // and a second bring is refused, where v1's second tap brought again; then what it brought is offered no

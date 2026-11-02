@@ -124,14 +124,18 @@ async fn opening_an_app_from_the_home_page_is_the_yes_to_what_it_reads(engine: E
 /// first version runs as a person only once they open it so named; a lend
 /// reading other kinds opens your friends' lends of them as you; one doing
 /// neither writes what you say there as you. Both pages draw the line
-/// beside the open from question.js's `agreed`, and the open by `named`.
+/// beside the open from question.js's `agreed`, and the open by `named`,
+/// each in its `page/index.js` since page-switchover.
 /// Red at d736ff18: `agreed` said "Open " and the name before what the app
 /// does, all of it on the button. Red at 5c6e3b0d: "It reads and writes"
 /// first, which Ana read as done on her behalf without her yes (the fifth
 /// xenia set, demo/xenia/findings/said-too-much-the-group-s-page.md).
 #[test]
 fn the_open_says_what_an_app_does_in_one_wording() {
-    for page in ["crates/svrngs-node/src/home/home.js", "web/app.js"] {
+    for page in [
+        "crates/svrngs-node/src/home/page/index.js",
+        "web/page/index.js",
+    ] {
         let text = std::fs::read_to_string(repo().join(page)).unwrap();
         assert!(
             text.contains("agreed(l, "),

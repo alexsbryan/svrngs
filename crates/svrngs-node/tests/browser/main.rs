@@ -132,7 +132,6 @@ async fn seeded(dir: &Path, relay: String, me: u8, founder: &str, founder_key: u
     )
     .await
     .expect("a node starts");
-    let node = harness::with_ui(node).await;
     drive::opens_at(node.api_addr().port(), &node.token());
     let seed = Roster::new(
         [(
@@ -271,7 +270,6 @@ async fn house(dir: &Path, relay: &Server, admitted: &SigningKey) -> (Node, Stri
     )
     .await
     .expect("a node starts");
-    let node = harness::with_ui(node).await;
     drive::opens_at(node.api_addr().port(), &node.token());
     let ada = Name::parse("ada").unwrap();
     let seed = draw(
@@ -481,15 +479,20 @@ fn in_question_at(zone: Option<&str>, call: &str, args: Value) -> Value {
 /// which both pages draw the index from, so a change to either lands on
 /// both; neither page judges them itself. Planted, watched failing: the
 /// pages as v1ui-door left them, each with its own `l.using >= l.limit`
-/// and "signing you in once".
+/// and "signing you in once". Since page-switchover each page draws its
+/// index in its `page/index.js`; the phone's asks `opens(l)` for the
+/// verdict alone, as v1's read only `[1]` (web/app.js@19b63b2b:540).
 #[test]
 fn the_index_s_row_is_judged_once_for_both_pages() {
-    for page in ["crates/svrngs-node/src/home/home.js", "web/app.js"] {
+    for page in [
+        "crates/svrngs-node/src/home/page/index.js",
+        "web/page/index.js",
+    ] {
         let text = std::fs::read_to_string(repo().join(page)).unwrap();
         for judged in ["using >=", "signing you in"] {
             assert!(!text.contains(judged), "{page} judges {judged:?} itself");
         }
-        assert!(text.contains("opens(l, "), "{page} draws no row by `opens`");
+        assert!(text.contains("opens(l"), "{page} draws no row by `opens`");
     }
     let full = json!({ "person": "cy", "limit": 1, "using": 1 });
     let open = json!({ "person": "cy", "limit": null, "using": 4 });
@@ -3247,7 +3250,6 @@ async fn alone(dir: &Path, relay: &Server) -> Node {
     )
     .await
     .expect("a node starts");
-    let node = harness::with_ui(node).await;
     drive::opens_at(node.api_addr().port(), &node.token());
     node
 }
@@ -3899,7 +3901,6 @@ async fn the_home_page_tells_two_groups_of_one_name_apart(engine: Engine) {
     )
     .await
     .expect("a node starts");
-    let ada = harness::with_ui(ada).await;
     drive::opens_at(ada.api_addr().port(), &ada.token());
     let trip = || Name::parse("Trip").unwrap();
     for (founder, key) in [("ada", 1), ("sam", 5)] {

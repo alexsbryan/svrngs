@@ -92,8 +92,6 @@ use std::num::NonZeroU16;
 
 use svrngs_node::api::{ApiError, API_FILE};
 use svrngs_node::folder::FolderAsk;
-#[cfg(feature = "test-support")]
-use svrngs_node::home::v2::Ui;
 use svrngs_node::home::WHEN;
 use svrngs_node::invite::{Linked, Unminted};
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
@@ -342,9 +340,6 @@ pub enum RemoveKind {
 /// Parse `std::env::args()`. A wrong argument is an error string the caller
 /// prints, never a guess at what was meant.
 pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
-    // A test build's `--ui v1|v2`, anywhere, is the node's page (`start`).
-    #[cfg(feature = "test-support")]
-    let args = Ui::asked(args)?.1;
     let mut it = args.into_iter().skip(1);
     let Some(verb) = it.next() else {
         return Ok(Verb::Run);
@@ -1029,9 +1024,6 @@ async fn start(
                 _ => Refusal::Start,
             }
         })?;
-    // `parse` refused any `--ui` but v1 or v2, so this reads one of them.
-    #[cfg(feature = "test-support")]
-    let node = node.ui(Ui::asked(std::env::args()).map_or(Ui::V1, |(ui, _)| ui));
     if let Some(sharing) = sharing {
         print!("{}", sharing.said(node.api_addr()));
         println!();

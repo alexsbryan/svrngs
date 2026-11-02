@@ -1,15 +1,15 @@
 // Copy, v2's first component (page-open (a); crates/svrngs-node/src/home/ui/
 // copy.js), with no DOM: COPY's every move and refusal, its trace, an io
 // that fails each way it can, and what it draws, held to what v1 draws in
-// its place: the phone's #copy, its word replaced (web/app.js:611), and
-// the home page's answers appended after the button (home.js:137, :202),
+// its place: the phone's #copy, its word replaced (web/app.js@19b63b2b:611), and
+// the home page's answers appended after the button (home.js@19b63b2b:137, :202),
 // the second " Copied." kept.
 
 import assert from 'node:assert/strict';
 import { register } from 'node:module';
 import { test } from 'node:test';
 
-register('./v2/layout.mjs', import.meta.url);
+register('./pages/layout.mjs', import.meta.url);
 const { COPY, drawn } = await import('../../crates/svrngs-node/src/home/ui/copy.js?v=__VERSION__');
 const { machine } = await import('../../crates/svrngs-node/src/home/ui/machine.js?v=__VERSION__');
 
@@ -90,9 +90,9 @@ const HOME = { copy: 'Copy the link', copied: ' Copied.', unwritten: ' Select it
 test('without beside, the answer is the button’s word, as the phone’s #copy is; a press sends the copy of its text', () => {
   const sent = [], send = (m) => sent.push(m);
   const at = (copy) => out(drawn({ at: { copy }, said: [] }, send, { id: 'copy', text: 'curl', words: PHONE }));
-  assert.equal(at('idle'), '<button id="copy">Copy</button>', 'web/index.html:95');
+  assert.equal(at('idle'), '<button id="copy">Copy</button>', 'web/index.html@19b63b2b:95');
   assert.equal(at('copying'), '<button id="copy">Copy</button>');
-  assert.equal(at('copied'), '<button id="copy">Copied</button>', 'web/app.js:611');
+  assert.equal(at('copied'), '<button id="copy">Copied</button>', 'web/app.js@19b63b2b:611');
   assert.equal(at('unwritten'), '<button id="copy">Select the line and copy it</button>');
   drawn({ at: { copy: 'idle' }, said: [] }, send, { id: 'copy', text: 'curl', words: PHONE }).props.onClick();
   assert.deepEqual(sent, [{ type: 'copy', text: 'curl' }]);

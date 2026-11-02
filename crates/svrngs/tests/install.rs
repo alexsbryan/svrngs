@@ -180,19 +180,11 @@ case "$*" in
     while kill -0 "$pid" 2>/dev/null; do sleep 0.1; done ;;
 esac
 "#;
-    // The svrngs each starts takes the run's page (harness.rs `ui_args`).
-    let ui: String = harness::ui_args().iter().map(|a| format!(" {a}")).collect();
     let mut files = vec![
-        (
-            "launchctl",
-            launchctl.replace("\"$run\" >>", &format!("\"$run\"{ui} >>")),
-        ),
+        ("launchctl", launchctl.to_string()),
         ("open", open.into()),
         ("xdg-open", open.into()),
-        (
-            "systemctl",
-            systemctl.replace("$run >>", &format!("$run{ui} >>")),
-        ),
+        ("systemctl", systemctl.into()),
     ];
     if let Some(u) = uname {
         let (s, m) = u.split_once(' ').unwrap();
@@ -807,7 +799,6 @@ async fn new_places_the_groups_folder() {
     let home = tempfile::tempdir().unwrap();
     let mut new = tokio::process::Command::new(env!("CARGO_BIN_EXE_svrngs"))
         .args(["new", "trip", "--as", "Sam"])
-        .args(harness::ui_args())
         .env_clear()
         .env("HOME", home.path())
         .stdout(std::process::Stdio::piped())
@@ -909,7 +900,7 @@ async fn joining_places_the_groups_folder() {
     );
     assert!(place.is_dir(), "{} not made", place.display());
 
-    let mut running = svrngs(harness::ui_args()).spawn().unwrap();
+    let mut running = svrngs(&[]).spawn().unwrap();
     let http = reqwest::Client::builder().no_proxy().build().unwrap();
     let groups = tokio::time::timeout(Duration::from_secs(30), async {
         loop {

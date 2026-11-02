@@ -9,7 +9,7 @@ import { go, machine, no } from './machine.js?v=__VERSION__';
 
 const AGAIN = ['idle', 'copied', 'unwritten'];
 // `said` is each answer in turn, by state: a second " Copied." after the
-// first, as home.js's `p.append` leaves both (home.js:137, :202).
+// first, as home.js's `p.append` leaves both (home.js@19b63b2b:137, :202).
 const answered = (s, m) => (s.at.copy === 'copying' ? go(s, { copy: m.type }, { said: [...s.said, m.type] }) : no(s, `${m.type} answers no copy, as none is being written`));
 export const COPY = {
   states: { copy: ['idle', 'copying', 'copied', 'unwritten'] },
@@ -26,7 +26,7 @@ export const Copy = (props) => drawn(...useMachine(() => machine('COPY', COPY, F
 
 // `words` is the button's and each answer's: { copy, copied, unwritten }.
 // Without `beside`, the answer is the button's word in its place
-// (web/app.js:611); with it, each answer is said after the button, past
+// (web/app.js@19b63b2b:611); with it, each answer is said after the button, past
 // what `beside` draws there (`true`, nothing), as home.js appends them.
 export function drawn(s, send, { id, text, words, beside }) {
   const press = () => send({ type: 'copy', text });

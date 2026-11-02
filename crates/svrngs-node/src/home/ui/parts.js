@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// v2's seven primitives, both pages' (page-scaffold (d); ralph/next/page/
+// The pages' seven primitives, both pages' (page-scaffold (d); ralph/next/page/
 // CHARTER.md, "The parts"). Each is a pure view: props in, vnodes out, and
 // `send` for what it asks. Each draws what v1 draws in its place, words,
 // ids, classes and element kinds byte for byte (web/tests/parts.test.mjs).
@@ -28,7 +28,7 @@ export const Fold = ({ id, summary, heading, open = false, fold, send, children 
   html`<details id=${id} open=${open} onToggle=${(e) => e.currentTarget.open === open || send({ type: 'fold', fold, open: e.currentTarget.open })}><summary>${heading ? html`<h2>${summary}</h2>` : summary}</summary>${children}</details>`;
 
 // A box to type in: `for`, a label beside its input, which takes the focus
-// as it is drawn (web/app.js:136), or `wrap`, the label around it, or a
+// as it is drawn (web/app.js@19b63b2b:136), or `wrap`, the label around it, or a
 // `select` of `options`, [value, words]. Each change is sent as `typed`.
 const focus = (box) => box?.focus();
 export function Field({ shape = 'wrap', id, name = id, words, value, attrs = {}, options, send }) {

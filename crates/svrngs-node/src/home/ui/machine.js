@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// v2's one core, both pages' (page-scaffold (c); svrn-docs
+// The pages' one core, both pages' (page-scaffold (c); svrn-docs
 // rings/current/PAGE_STATE.md §3). A machine owns its page's state: views
 // read it and `dispatch` a message `m`, and never write it. `step(s, m)` is
 // the page's, pure and synchronous, and answers the next state and the
@@ -31,8 +31,8 @@ export function machine(name, { states, step, io }, state, first = []) {
   const run = (effects) => effects.forEach((f) => Promise.resolve().then(() => io[f.run]?.(f))
     .then((m) => m ?? Promise.reject(new Error(io[f.run] ? `${f.run} answered nothing` : `nothing here runs ${f.run}`)))
     .then(dispatch, (e) => dispatch({ type: f.failed, n: f.n, why: e?.message ?? String(e) })));
-  // The one trace of every step and refusal, both pages', to v1's sink
-  // (web/store.js:88's `globalThis.__trace`).
+  // The one trace of every step and refusal, both pages', to their sink
+  // (ui/trace.js), as web/store.js:88 traces to it too.
   function dispatch(m) {
     const { state: next, effects = [], refused } = step(state, m);
     const out = refused ? '' : regions.find((r) => !states[r].includes(next.at[r]));

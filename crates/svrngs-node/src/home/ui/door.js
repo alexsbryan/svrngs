@@ -10,9 +10,9 @@
 // answers, drawn off when it did not, and one in only from a phone marked
 // so, with no presence claimed. Given `lent`, as the screen gives it, each
 // person's own lends in their window, a link each, opened in a tab, the
-// screen's `newest` marked new (home.js:322); an app the group carries is
+// screen's `newest` marked new (home.js@19b63b2b:322); an app the group carries is
 // the group's, in nobody's window. `counted` is what the screen counts of
-// it (home.js:324): its people, those on now, and the things in their windows.
+// it (home.js@19b63b2b:324): its people, those on now, and the things in their windows.
 import { html } from './view.js?v=__VERSION__';
 import { called } from '../question.js?v=__VERSION__';
 
