@@ -369,8 +369,10 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # to both"): the rung and its paths are gone, so `.` counts the pages'
 # flows, ui/ and the vendored Preact and htm again; v1's pages, parity.sh,
 # serve.rs and the switch's hooks went. `.` landed at 19,421, inside the
-# estimate, so its cap is one past it.
-BUDGET = {"crates/svrngs-core": 3242, ".": 19422, "swift": 1}
+# estimate, so its cap is one past it. Merged with main's relay `--at`
+# (227193b1, +14), it lands at 19,435, under the operator's 19,447, so the
+# cap is one past that.
+BUDGET = {"crates/svrngs-core": 3242, ".": 19436, "swift": 1}
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
 
