@@ -283,7 +283,9 @@ async fn a_computer_that_answers_no_dial_is_asleep_within_the_cap() {
         matches!(&said, Ok(Err(e @ Unsent::Asleep(_))) if e.to_string().starts_with("not answered within 4s")),
         "{said:?}"
     );
-    let said = transport.send(&Contact::by_key(key), get("/who")).await;
+    let said = transport
+        .send(&Contact::named(key, None), get("/who"))
+        .await;
     assert!(matches!(said, Err(Unsent::NoPath)), "{said:?}");
 }
 

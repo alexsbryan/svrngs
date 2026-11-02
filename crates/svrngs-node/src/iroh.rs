@@ -95,16 +95,6 @@ pub struct Contact {
 }
 
 impl Contact {
-    /// A peer known by its key alone, no hint: how svrngs dials a member,
-    /// since nothing gossips addresses (PLAN §4, U1's "A bare key is dialled").
-    pub fn by_key(key: PublicKey) -> Self {
-        Self {
-            key,
-            relay_url: None,
-            iroh_direct_addrs: Vec::new(),
-        }
-    }
-
     /// A member by its key and the relay its group's record names for it
     /// (relay-in-record; DESIGN §6). With none named its key alone, said:
     /// only an address lookup finds it then, and with none it is not dialled.
@@ -114,8 +104,9 @@ impl Contact {
                 "transport: the group names no relay for this computer — its key alone, which only an address lookup finds");
         }
         Self {
+            key,
             relay_url: relay.map(ToString::to_string),
-            ..Self::by_key(key)
+            iroh_direct_addrs: Vec::new(),
         }
     }
 }
