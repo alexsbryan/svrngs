@@ -40,14 +40,14 @@ const left = ({ s }) => ((gone) => gone.length > 0 && html`<section id="left"><h
 
 // The page's foot, last, once no feature's file `holds` it while it reads, as
 // v1 drew it after every read (home.js:326-328); and "What you lend" held
-// with it, as v1 drew it after "What acts as you" and its WiFi (h:377-424),
+// until "What acts as you" is read, as v1 drew it after it and its WiFi (h:377-424),
 // which a driver's `text` waits on (home.mjs:166; main.rs:3536 on v2).
 export function Home({ store, flows, places }) {
   const s = useStore(store), q = s.q, home = store.dispatch, held = () => Object.values(flows).some((f) => f.holds?.(s)), P = (k) => places[k] && html`<${places[k]} s=${s} home=${home} />`;
   if (s.at.groups === 'reading' || s.at.groups === 'unread') return html`<p class=${s.at.groups === 'reading' ? 'said' : undefined}>${s.at.groups === 'reading' ? 'Reading your groups…' : `This computer cannot read your groups: ${s.why}`}</p>`;
   if (s.ask || q.screen) return P(s.ask ? 'ask' : 'screen');
   const said = SAID[s.at.said](q, q.unplaced ? `Its folder could not be made: ${q.unplaced}. ` : '');
-  return html`${said && html`<p>${said}</p>`}${s.at.groups === 'rereading' && html`<p class="said">Reading your groups…</p>`}${!s.groups.length && html`<p class="none">You’re in no group yet. Join one below from the link someone sent you, or make your own.</p>`}${s.groups.filter((g) => !g.left).map((g) => html`<${Group} key=${g.id} g=${g} joined=${q.joined} me=${s.key} round=${s.round} places=${places} flows=${flows} home=${home} />`)}${PLACES.map((k) => (k !== 'lent' || !held()) && P(k))}${!held() && html`<p class="address">Your home page, the same address each time svrngs starts: ${s.origin}/</p>`}`;
+  return html`${said && html`<p>${said}</p>`}${s.at.groups === 'rereading' && html`<p class="said">Reading your groups…</p>`}${!s.groups.length && html`<p class="none">You’re in no group yet. Join one below from the link someone sent you, or make your own.</p>`}${s.groups.filter((g) => !g.left).map((g) => html`<${Group} key=${g.id} g=${g} joined=${q.joined} me=${s.key} round=${s.round} places=${places} flows=${flows} home=${home} />`)}${PLACES.map((k) => (k !== 'lent' || !flows.acts.holds(s)) && P(k))}${!held() && html`<p class="address">Your home page, the same address each time svrngs starts: ${s.origin}/</p>`}`;
 }
 
 // The edge: each feature's file, by its one URL, then HOME, its first read
