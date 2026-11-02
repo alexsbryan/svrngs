@@ -11,10 +11,7 @@
 // second fix), and the form is empty again; a refusal is said beside the
 // button once, the last in place of the one before, where v1 appended each
 // (h:421; page-join (d)'s first fix).
-import { html, useMachine } from '../ui/view.js?v=__VERSION__';
-import { ask, go, late, machine, no } from '../ui/machine.js?v=__VERSION__';
-import { Act, Field } from '../ui/parts.js?v=__VERSION__';
-import { namesakes } from '../question.js?v=__VERSION__';
+import { Act, ask, Field, go, html, late, machine, namesakes, no, useMachine } from '../ui/kit.js?v=__VERSION__';
 import { get } from './group.js?v=__VERSION__';
 import { post } from './running.js?v=__VERSION__';
 

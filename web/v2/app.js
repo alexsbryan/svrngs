@@ -12,8 +12,7 @@
 import init from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
 import { trace } from './ui/trace.js?v=__VERSION__';
-import { html, render } from './ui/view.js?v=__VERSION__';
-import { machine } from './ui/machine.js?v=__VERSION__';
+import { html, machine, render } from './ui/kit.js?v=__VERSION__';
 import { Page, compose } from './v2/page.js?v=__VERSION__';
 import * as acts from './v2/acts.js?v=__VERSION__';
 import * as among from './v2/among.js?v=__VERSION__';

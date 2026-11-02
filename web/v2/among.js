@@ -9,10 +9,8 @@
 // is offered in #door, opened in the one the person picks (a:581-587). A
 // lend's address with nothing serving it in this browser goes to the
 // group's page, at most once a minute from one tab (a:638-646).
-import { html } from '../ui/view.js?v=__VERSION__';
-import { go, no } from '../ui/machine.js?v=__VERSION__';
+import { aliased, go, html, no, whose } from '../ui/kit.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
-import { aliased, whose } from '../question.js?v=__VERSION__';
 
 export const owns = ['offered', 'missed'];
 export const states = { among: ['unasked', 'offered', 'picked', 'named', 'sent'] };

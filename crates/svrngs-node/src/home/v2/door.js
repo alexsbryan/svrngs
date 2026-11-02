@@ -9,10 +9,7 @@
 // where v1's `p.append` said each after the one before (home.js:130);
 // and who was removed or asked to be, when anyone was. `decides` is who
 // decides for you in it, which "What acts as you" says (page-acts).
-import { html, useMachine } from '../ui/view.js?v=__VERSION__';
-import { ask, go, late, machine, no } from '../ui/machine.js?v=__VERSION__';
-import { Door } from '../ui/door.js?v=__VERSION__';
-import { deciders, removal } from '../question.js?v=__VERSION__';
+import { ask, deciders, Door, go, html, late, machine, no, removal, useMachine } from '../ui/kit.js?v=__VERSION__';
 
 // `body` posted as JSON, its answer read, or its refusal's words (home.js:28-37).
 export const post = (path, body) => fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(async (r) => ((a) => (r.ok ? a : Promise.reject(new Error(a.error || `answered ${r.status}`))))(await r.json().catch(() => ({}))));

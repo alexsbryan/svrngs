@@ -8,9 +8,7 @@
 // again on HOME's `again` and `visible`, each a new `round` from HOME.
 // What each read draws is each feature's, in its place (PLACES), from
 // home/v2/<file>.js: a file that draws nothing draws nothing here.
-import { html, useEffect, useMachine } from '../ui/view.js?v=__VERSION__';
-import { ask, go, late, machine, no } from '../ui/machine.js?v=__VERSION__';
-import { whose } from '../question.js?v=__VERSION__';
+import { ask, go, html, late, machine, no, useEffect, useMachine, whose } from '../ui/kit.js?v=__VERSION__';
 
 // A route's answer, or its words when it refuses, never read as empty
 // (home.js:25-30); refused as the page's session lapsed (home.rs:198,

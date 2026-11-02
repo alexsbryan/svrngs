@@ -8,11 +8,8 @@
 // its flow (`visit`, `join`, `among`, `cold`, `opens`, `offer`), and what
 // `#open=` names, once the group is read (`wanted`).
 // The key and the endpoint are the edge's (`io`), never in state.
-import { html } from '../ui/view.js?v=__VERSION__';
-import { ask, go, late, no } from '../ui/machine.js?v=__VERSION__';
-import { Act } from '../ui/parts.js?v=__VERSION__';
+import { Act, alias, apart, ask, called, go, html, late, no, once, whose } from '../ui/kit.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
-import { alias, apart, called, once, whose } from '../question.js?v=__VERSION__';
 import { offered } from './among.js?v=__VERSION__';
 
 export const owns = ['group', 'wants', 'joined', 'via', 'stale', 'lent', 'people', 'shelf', 'unanswered', 'unheard', 'refused', 'behind', 'removals', 'visiting', 'changed', 'me'];

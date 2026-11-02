@@ -8,9 +8,7 @@
 // own (ui/view.js `useMachine`). A link to nothing lent here is said beside
 // the button once, the last in place of the one before, where v1 appended
 // each (h:397; page-join (f)'s fix).
-import { html, useMachine } from '../ui/view.js?v=__VERSION__';
-import { go, machine, no } from '../ui/machine.js?v=__VERSION__';
-import { Act, Field } from '../ui/parts.js?v=__VERSION__';
+import { Act, Field, go, html, machine, no, useMachine } from '../ui/kit.js?v=__VERSION__';
 
 // `at` (`/` when none) as an address at `origin`, or null: resolved, and
 // kept only if it is still there, as open.js judges its way back — a path

@@ -7,11 +7,8 @@
 // lend's label and, from `#open=` (page-join), the path to go to, never a
 // closure's lend. The pass, the holder and the hand-off are the edge's.
 // A guest's lends are drawn here too (web/v2/visit.js `listed`).
-import { html } from '../ui/view.js?v=__VERSION__';
-import { go, no } from '../ui/machine.js?v=__VERSION__';
-import { Keep, Row } from '../ui/parts.js?v=__VERSION__';
+import { agreed, alias, aliased, go, html, Keep, named, no, once, opens, Row } from '../ui/kit.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
-import { agreed, alias, aliased, named, once, opens } from '../question.js?v=__VERSION__';
 import { listed } from './visit.js?v=__VERSION__';
 
 // How long a pass opens a lend, in seconds (a:75): its origin asks for

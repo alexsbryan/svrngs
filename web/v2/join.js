@@ -10,9 +10,7 @@
 // A guest's name is asked in this form too, first (web/v2/visit.js), with
 // no Home Screen line, as a visit is kept apart from every group, and sent
 // to the visit as `guest named`.
-import { html } from '../ui/view.js?v=__VERSION__';
-import { go, no } from '../ui/machine.js?v=__VERSION__';
-import { Field } from '../ui/parts.js?v=__VERSION__';
+import { Field, go, html, no } from '../ui/kit.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
 
 // `joining`: the link's token, the groups kept when it was opened, what the

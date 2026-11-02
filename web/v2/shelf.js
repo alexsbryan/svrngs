@@ -3,8 +3,7 @@
 // shelf (ui/shelf.js), drawn in #shelf once the group is read, and brought
 // through the computer the page reaches (web/v2/enter.js `through`); then
 // the group read again (enter.js `reread`).
-import { html } from '../ui/view.js?v=__VERSION__';
-import { Shelf } from '../ui/shelf.js?v=__VERSION__';
+import { html, Shelf } from '../ui/kit.js?v=__VERSION__';
 import { through } from './enter.js?v=__VERSION__';
 
 const bring = (g, apps) => through(g, '/shelf', apps);

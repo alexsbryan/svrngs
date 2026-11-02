@@ -6,9 +6,7 @@
 // pointer is coarse, and it has no terminal: no line there (web/app.js
 // `offer`, `line`, :595-614). page-open's, then page-join's; how this reaches
 // you is drawn as web/index.html:88-96 has it, word for word.
-import { html } from '../ui/view.js?v=__VERSION__';
-import { go, no } from '../ui/machine.js?v=__VERSION__';
-import { Copy } from '../ui/copy.js?v=__VERSION__';
+import { Copy, go, html, no } from '../ui/kit.js?v=__VERSION__';
 
 export const owns = ['line'];
 export const states = { offer: ['unoffered', 'offered'] };

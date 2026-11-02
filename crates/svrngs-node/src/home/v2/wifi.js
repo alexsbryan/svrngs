@@ -12,10 +12,7 @@
 // rounds (HOME's `again` and `visible`), once a round however many groups
 // draw a foot. What is open that cannot be read is said once, in `part`,
 // never read as none; a press in a line then writes it over.
-import { html, useEffect, useMachine, useStore } from '../ui/view.js?v=__VERSION__';
-import { ask, go, late, machine, no } from '../ui/machine.js?v=__VERSION__';
-import { Act, Keep } from '../ui/parts.js?v=__VERSION__';
-import { called, named, once } from '../question.js?v=__VERSION__';
+import { Act, ask, called, go, html, Keep, late, machine, named, no, once, useEffect, useMachine, useStore } from '../ui/kit.js?v=__VERSION__';
 import { get } from './group.js?v=__VERSION__';
 import { post } from './running.js?v=__VERSION__';
 

@@ -7,9 +7,7 @@
 // it (`agreed`); whose; how it opens, a port by Play's cell (play.js); and
 // whether it is full now. Each computer that did not say is a row of its
 // own, said by how: what it lends never stale, and never nobody's.
-import { html } from '../ui/view.js?v=__VERSION__';
-import { Row } from '../ui/parts.js?v=__VERSION__';
-import { agreed, called, named, once, opens, owner } from '../question.js?v=__VERSION__';
+import { agreed, called, html, named, once, opens, owner, Row } from '../ui/kit.js?v=__VERSION__';
 import { cell } from './play.js?v=__VERSION__';
 
 // The lend's label, the first name of its origin here (h:45).
