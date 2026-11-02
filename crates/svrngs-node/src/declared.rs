@@ -21,6 +21,9 @@
 //! [`write_whole`].)
 
 use std::path::{Path, PathBuf};
+#[cfg(unix)]
+const SECRET_MODE: u32 = 0o600;
+const DIRECTORY_MODE: u32 = 0o700;
 
 /// A header name the wire can carry and a path cannot escape: RFC 9110 token
 /// characters minus the ones no origin uses, lowercased.
@@ -111,25 +114,50 @@ pub fn write_declared_in(dir: &Path, name: &str, value: &str) -> std::io::Result
     write_secret(&path, value.trim().as_bytes()).map_err(|(_, e)| e)
 }
 
-/// `dir` made, and kept 0700: the one place this node makes a secret's
-/// directory.
-pub(crate) fn secret_dir(dir: &Path) -> std::io::Result<()> {
-    std::fs::create_dir_all(dir)?;
-    harden(dir, 0o700)
+/// Make private directories from their first creation. Existing owner rights
+/// are never broadened: an operator's read-only directory stays read-only.
+pub fn secret_dir(dir: &Path) -> std::io::Result<()> {
+    let mut builder = std::fs::DirBuilder::new();
+    builder.recursive(true);
+    #[cfg(unix)]
+    std::os::unix::fs::DirBuilderExt::mode(&mut builder, DIRECTORY_MODE);
+    builder.create(dir)?;
+    #[cfg(unix)]
+    let mode = {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::metadata(dir)?.permissions().mode() & DIRECTORY_MODE
+    };
+    #[cfg(not(unix))]
+    let mode = DIRECTORY_MODE;
+    tracing::debug!(target: "media", dir = %dir.display(), mode = format!("{mode:o}"), "secret-dir: kept to its owner, the owner's rights never widened");
+    harden(dir, mode)
 }
 
-/// `bytes` at `path`, owner-only and whole: written to a `.<name>.partial`
+/// `bytes` at `path`, owner-only and whole: written to a fresh random partial
 /// created 0600 and renamed into place, so no reader sees half of it, nor a
 /// value another user can read — the one way this node writes a secret
 /// (a lend's declaration, and the sign-in key). An error names the file
-/// that failed, the partial or `path`.
-pub(crate) fn write_secret(path: &Path, bytes: &[u8]) -> Result<(), (PathBuf, std::io::Error)> {
-    let name = path.file_name().unwrap_or_default().to_string_lossy();
-    let partial = path.with_file_name(format!(".{name}.partial"));
-    write_owner_only(&partial, bytes).map_err(|e| (partial.clone(), e))?;
-    harden(&partial, 0o600).map_err(|e| (partial.clone(), e))?;
-    std::fs::rename(&partial, path).map_err(|e| (path.to_path_buf(), e))?;
-    harden(path, 0o600).map_err(|e| (path.to_path_buf(), e))
+/// that failed, the partial or `path`. The parent is private before creation;
+/// the partial is born 0600, synced, then renamed. No old inode is reused.
+#[expect(
+    clippy::disallowed_methods,
+    reason = "the secret-file adapter draws a fresh partial name, never reusing a readable inode"
+)]
+pub fn write_secret(path: &Path, bytes: &[u8]) -> Result<(), (PathBuf, std::io::Error)> {
+    let written = (|| {
+        secret_dir(path.parent().unwrap_or(Path::new("."))).map_err(|e| (path.to_path_buf(), e))?;
+        let mut nonce = [0; 16];
+        getrandom::fill(&mut nonce).map_err(|e| (path.to_path_buf(), std::io::Error::other(e)))?;
+        let name = path.file_name().unwrap_or_default().to_string_lossy();
+        let partial = path.with_file_name(format!(".{name}.{}.partial", hex::encode(nonce)));
+        write_owner_only(&partial, bytes).map_err(|e| (partial.clone(), e))?;
+        std::fs::rename(&partial, path).map_err(|e| (path.to_path_buf(), e))
+    })();
+    // The value is a secret: the file that failed and why, never what it holds.
+    if let Err((file, why)) = &written {
+        tracing::debug!(target: "media", path = %path.display(), failed = %file.display(), %why, "secret: refused — not written owner-only and whole, so nothing is reported stored");
+    }
+    written
 }
 
 /// `value` at `path`, the file created owner-only (0600) where the system
@@ -138,10 +166,17 @@ pub(crate) fn write_secret(path: &Path, bytes: &[u8]) -> Result<(), (PathBuf, st
 fn write_owner_only(path: &Path, value: &[u8]) -> std::io::Result<()> {
     use std::io::Write;
     let mut open = std::fs::OpenOptions::new();
-    open.write(true).create(true).truncate(true);
+    open.write(true).create_new(true);
     #[cfg(unix)]
-    std::os::unix::fs::OpenOptionsExt::mode(&mut open, 0o600);
-    open.open(path)?.write_all(value)
+    std::os::unix::fs::OpenOptionsExt::mode(&mut open, SECRET_MODE);
+    let mut file = open.open(path)?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        file.set_permissions(std::fs::Permissions::from_mode(SECRET_MODE))?;
+    }
+    file.write_all(value)?;
+    file.sync_all()
 }
 
 /// `bytes` at `path`, whole: written to `.<its name>.partial` beside it and

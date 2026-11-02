@@ -731,7 +731,7 @@ pub fn data_dir() -> Result<PathBuf, Refusal> {
 /// Hold `<root>/lock` for as long as the file lives: one svrngs per data
 /// dir, so each group's record has one writer (RUST_ARCH 3).
 pub fn claim(root: &Path) -> Result<File, Refusal> {
-    std::fs::create_dir_all(root).map_err(|e| Refusal::DataDir(root.to_path_buf(), e))?;
+    svrngs_node::declared::secret_dir(root).map_err(|e| Refusal::DataDir(root.to_path_buf(), e))?;
     let path = root.join("lock");
     let file = File::create(&path).map_err(|e| Refusal::DataDir(path.clone(), e))?;
     match file.try_lock() {

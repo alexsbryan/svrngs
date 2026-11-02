@@ -347,6 +347,10 @@ Then it changed: a hardening that fails fails the write, where upstream
 ignored it and reported a secret readable by others as stored; the file is
 created 0600; and that a credential is set is traced at debug, since the door
 reads the store on every request.
+`declared::write_secret` also persists the command's identity: a private parent,
+fresh exclusive random partial born 0600, fsync, then rename. `secret_dir` creates
+directories privately and removes group/other rights without broadening existing
+owner rights. Node startup and the command's claim use it before other files.
 
 The door is `door.rs`, new code holding upstream's rules (PLAN §4, U3's
 inventory, its identity and forward_stream rows), merged into the members'

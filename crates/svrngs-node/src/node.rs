@@ -279,7 +279,7 @@ impl Node {
         api: SocketAddr,
         every: Duration,
     ) -> Result<Self, NodeError> {
-        std::fs::create_dir_all(&data_dir).map_err(|source| NodeError::DataDir {
+        crate::declared::secret_dir(&data_dir).map_err(|source| NodeError::DataDir {
             path: data_dir.clone(),
             source,
         })?;
