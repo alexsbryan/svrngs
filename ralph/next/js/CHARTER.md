@@ -22,7 +22,8 @@ lines instead of cutting code.
 watching session's scratchpad, and each row measures again before it acts.
 - **Width.** 325 lines in the pages' flows run past 140 characters. The
   average line is 94 characters, and `web/page/enter.js` reaches 310.
-- **Prettier 3.6.2 at width 100** over every counted JavaScript file, with
+- **Prettier 3.6.2 at width 100** (the probe; oxfmt, chosen below, is
+  Prettier-compatible) over every counted JavaScript file, with
   `lean_check`'s exclusions:
 
   | | Before | After |
@@ -107,7 +108,7 @@ PAGE_STATE §3 and DESIGN §5 (AGENTS.md 3).
   `s` and `m`. A loop's `i` and a destructured `_` are the exceptions.
 - **Comments say why,** in a way someone can check. A row's letter or a
   `file@commit` alone is not a why.
-- **The formatter decides how a line looks.** No `prettier-ignore` packs
+- **The formatter decides how a line looks.** No formatter-ignore comment packs
   a line.
 
 ## Scope
@@ -120,51 +121,56 @@ PAGE_STATE §3 and DESIGN §5 (AGENTS.md 3).
 - **Untouched:** `web/vendor/`, `demo/runs/` and
   `apps/on-air/vendored.mjs`, as `.oxlintrc.json`'s ignores have it.
 
-## Open, each with the session's default
+## Answered by the operator, 2026-11-02
 
-The operator answers these at HUMAN-js-agreed.
-1. **The formatter.** Default: Prettier, pinned exactly in
-   `web/package.json`, at width 100, with single quotes and
-   `embeddedLanguageFormatting: "off"`. "Off" keeps the htm templates'
-   text byte for byte: formatting inside them can move the whitespace a
-   test pins (" Copied."). js-read breaks the templates up by hand. The
-   alternative is oxfmt, one toolchain with oxlint.
-2. **The format's raise.** js-format (b) only reformats, so it adds no
-   code, and AGENTS.md "Done" asks for an economizing pass before a raise.
-   Default: waive the pass for that one commit, and raise `.` by exactly
-   its measured delta, landed from the operator seat beside it. Later rows
-   keep the usual rule.
-3. **The vendored type declarations.** These are Preact 11.1.1's and htm
-   3.1.1's `.d.ts`, from the same tarballs as the vendored code.
-   `lean_check` counts `.ts`, so they would count. Default: they sit in
-   `web/vendor/` and `lean_check` skips `*.d.ts` there, since they are not
-   ours and run nothing. build-web.sh and home.rs serve only named `.js`,
-   so they are never served.
-4. **Type-aware lint.** Default: oxlint's type-aware mode, if it reads
-   `checkJs` JavaScript:
+The operator: "1. oxfmt 2. yes we'll just have a line count jubilee at the
+end, also I want to track js independently 3. Agreed 4. Agreed 5. agreed".
+
+1. **The formatter is oxfmt,** one toolchain with oxlint. It is pinned
+   exactly in `web/package.json`, at width 100 with single quotes.
+   js-format (a) confirms that oxfmt leaves the htm templates' text byte
+   for byte, through an option or an ignore of embedded templates. If it
+   can't, the row stops: formatting inside a template can move the
+   whitespace a test pins (" Copied."). js-read breaks the templates up by
+   hand.
+2. **JavaScript gets its own rung, and its line count has a jubilee at the
+   end.**
+   - `lean_check.py` counts `.js` and `.mjs` on a rung of their own, `js`.
+     `.` keeps Rust, Python and shell. That is the Swift rung's shape
+     (2b1e6339), with the same exclusions as today: tests, `apps/`,
+     `demo/runs/` and `docs/brand/src/`.
+   - The watching session lands the rung from the operator seat when it
+     ticks HUMAN-js-agreed. `.`'s cap is lowered to one past what is left.
+   - **During the queue, `js` is reported and has no cap.** `lean_check`
+     prints its count with "no cap until the js queue's jubilee", and never
+     passes it quietly. No row stops for a raise, and the pass before a
+     raise is waived for this queue.
+   - **The jubilee** closes js-read. The `js` cap is set to one past where
+     the queue lands, as a ready diff in `NEEDS_HUMAN.md`, which the
+     watching session lands. From then on, `js` keeps AGENTS.md "Done"'s
+     rule like every other rung.
+   - Fence 1 still holds, and the jubilee is no license to pack or to pad.
+3. **The vendored type declarations,** agreed. Preact 11.1.1's and htm
+   3.1.1's `.d.ts` are vendored in `web/vendor/`, and `lean_check` skips
+   `*.d.ts` there. They are never served.
+4. **Type-aware lint,** agreed: oxlint's type-aware mode if it reads
+   `checkJs` JavaScript. If it can't, each of these rules is named
+   never-ran, with no ESLint added:
    - `switch-exhaustiveness-check`;
    - `no-floating-promises`;
    - `strict-boolean-expressions`;
    - `no-unnecessary-condition`;
    - `prefer-nullish-coalescing`.
-
-   If it can't read that JavaScript, these rules wait as never-ran, named
-   in js-lint's commit, rather than adding ESLint.
-5. **Pool or serial.** Default: `pool` with 1 lane, so the main checkout
-   stays free for other sessions, as the page queue ran.
+5. **A pool of 1 lane,** agreed.
 
 ## Estimates
 
-Lines are `.`'s count by `lean_check`, against `.` 19,435 of 19,436 at
-a625a891. The security work lands first, so each row measures again from
-where main is.
+The `js` rung is counted from where main is when it lands, after the
+security work. Each row reports `js` and `.` before and after.
 
-| Row | Expected change to `.` |
+| Row | Expected change to `js` |
 |---|---|
-| js-format | +1,500 to +3,583. The top is the probe with templates formatted; "off" brings it down. Re-measured in (b). |
+| js-format | +1,500 to +3,583. The top is the Prettier probe with templates formatted; oxfmt is Prettier-compatible. Re-measured in (b). |
 | js-types | +5 to +20. JSDoc is comments and uncounted (`lean_check.py:403`); only `assertNever` and the narrowing guards count. |
 | js-lint | +50 to +150. `ui/kit.js` goes, and its 65 lines of imports by name come back; nested ternaries become statements. |
 | js-read | −100 to +300. Components out of expressions add their signatures; folding duplicates cuts. |
-
-Every raise after js-format follows AGENTS.md "Done": an economizing pass,
-then a ready diff in `NEEDS_HUMAN.md`, landed from the operator seat.

@@ -1,7 +1,7 @@
 # svrngs js — the pages' JavaScript formatted, typed in JSDoc and checked by tsc, linted for structure, and read; no build step (the operator, 2026-11-02: "Let's write that up for the next queue"). Four rows and the operator's go. Not launched until HUMAN-js-agreed is ticked and the security work is on main.
 #
 # Default, a pool of one lane, so the main checkout stays free for other
-# sessions (CHARTER, "Open" 5):
+# sessions (CHARTER, "Answered" 5):
 #
 #   python3 ~/dev/commonwealth-ai/scripts/ralph.py pool --workdir ~/dev/svrngs \
 #     --queue js --lanes 1 --install-launchd --max-lane-failures 3

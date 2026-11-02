@@ -20,24 +20,25 @@ unchanged, so no person sees a change.
 
 The rows run in order, since all of them touch the same files.
 
-- [ ] HUMAN-js-agreed — depends [] — THE OPERATOR:
-  - reads `CHARTER.md` and answers its "Open" choices, or takes the defaults;
+- [ ] HUMAN-js-agreed — depends [] — THE OPERATOR (CHARTER's choices answered, 2026-11-02: oxfmt; a `js` rung with no cap until a jubilee at the queue's end; the rest as proposed):
   - confirms the security work is on main.
 
-  The watching session writes the answers here and starts the loop.
-- [ ] js-format — depends [HUMAN-js-agreed] — ONE ROW, each part its own commit, and `scripts/check.sh` once, at the close — the formatter in the gate, then one commit that only formats:
+  The watching session then:
+  - lands the `js` rung from the operator seat (CHARTER, "Answered" 2), with its plant: one counted line in a planted `web/page/x.js` moves `js` and leaves `.` unchanged;
+  - ticks this row and starts the loop.
+- [ ] js-format — depends [HUMAN-js-agreed] — ONE ROW, each part its own commit, and `scripts/check.sh` once, at the close — oxfmt in the gate, then one commit that only formats:
   - **(a) The tool.**
-    - The formatter is pinned exactly in `web/package.json`, and `web/package-lock.json` is updated by `npm install --prefix web`.
-    - Its config sits at the root (`.prettierrc.json`), with its ignores matching `.oxlintrc.json`'s.
+    - oxfmt is pinned exactly in `web/package.json`, and `web/package-lock.json` is updated by `npm install --prefix web`.
+    - Its config sits at the root, at width 100 with single quotes, and its ignores match `.oxlintrc.json`'s.
+    - Shown on a scratch copy: the htm templates' text comes out byte for byte (CHARTER, "Answered" 1). Otherwise, stop.
     - No step is wired yet, so every commit stays green.
-    - `prettier --check` on today's tree is the plant run: it fails, and the commit cites its count of unformatted files.
+    - oxfmt's check on today's tree is the plant run: it fails, and the commit cites its count of unformatted files.
   - **(b) One commit that only formats, and the step.**
-    - `prettier --write` over every file (a) covers.
+    - oxfmt over every file (a) covers.
     - `check.sh` gains a `format` step, right after `lint`, checking every file it covers and naming each unformatted one.
     - Nothing else goes in the commit.
     - **Its proof of no behavior change:** the pages' laws (`node --test web/tests/*.test.mjs`), `parts.test.mjs`, and the browser tests run under the gate lock. Every one passes unchanged.
-    - **Lines:** `lean_check` before and after, by directory, as in CHARTER's table.
-    - Then a ready diff in `NEEDS_HUMAN.md` raising `.` by exactly that delta (CHARTER, "Open" 2), and stop. The watching session lands it.
+    - **Lines:** `js` and `.` from `lean_check` before and after, by directory, as in CHARTER's table. No cap stops it (CHARTER, "Answered" 2).
   - **(c) `.git-blame-ignore-revs`** names (b)'s commit, so blame skips it, and CONTRIBUTING or the README says how to use it.
   - **Plant:** a planted unformatted line in `web/page/shelf.js` fails `format`, naming the file.
   - **Moves:** nothing a person sees. It moves the line count to the code's real size.
@@ -49,7 +50,7 @@ The rows run in order, since all of them touch the same files.
       - `noImplicitReturns`, `noFallthroughCasesInSwitch` and `noUncheckedIndexedAccess`;
       - `include` set to the pages' code (CHARTER, "Scope").
     - `check.sh` gains a `types` step.
-    - Preact 11.1.1's and htm 3.1.1's `.d.ts` are vendored from the same tarballs (`web/vendor/README.md` gives the commands), with `lean_check`'s skip, per CHARTER "Open" 3.
+    - Preact 11.1.1's and htm 3.1.1's `.d.ts` are vendored from the same tarballs (`web/vendor/README.md` gives the commands), with `lean_check`'s skip, per CHARTER "Answered" 3.
     - Red first: the step's first run lists the errors at HEAD, and the commit cites the count.
     - Files that aren't typed yet carry `// @ts-nocheck`, which (b) to (d) remove. A file still carrying one when the row closes fails the row.
   - **(b) The core.** `ui/machine.js` takes a generic `Machine<State, Message>`:
@@ -85,7 +86,7 @@ The rows run in order, since all of them touch the same files.
     - `oxc/no-barrel-file`: `ui/kit.js` goes, and each flow imports what it uses, from its module;
     - `import/no-restricted-paths` for CHARTER's layers;
     - `web/tests/specifiers.test.mjs` still passes.
-  - **(d) Type-aware,** per CHARTER "Open" 4, or each rule named never-ran with why.
+  - **(d) Type-aware,** per CHARTER "Answered" 4, or each rule named never-ran with why.
   - **Plant:** each rule watched failing on a planted file before its fixes. The commit names the rule and the plant.
 - [ ] js-read — depends [js-lint] — ONE ROW, each part its own commit, `scripts/check.sh` once, at the close — the pages read as code meant for people, behavior kept:
   - **(a) Survey.** `demo/runs/economize/<date>-js-read/SURVEY.md` lists:
@@ -103,5 +104,9 @@ The rows run in order, since all of them touch the same files.
     - comments are rewritten to say why.
   - **(d) The rules written down** (AGENTS.md 3): CHARTER's "The shape the code takes" goes into svrn-docs `rings/current/PAGE_STATE.md` §3 and DESIGN §5, rewritten in place.
   - **Kept:** every browser test, the pages' laws and `parts.test.mjs`, unchanged and passing. A change a person would see is NEEDS_HUMAN, not this queue's.
-  - **Lines:** `lean_check` before and after each part. Past CHARTER's range, run an economizing pass, then write `NEEDS_HUMAN.md` with the raise.
+  - **Lines:** `js` and `.` before and after each part, with no cap to stop it.
+  - **(e) The jubilee** (CHARTER, "Answered" 2). After the gate passes at the close:
+    - a ready diff in `NEEDS_HUMAN.md` setting `js`'s cap to one past where it lands, and `lean_check`'s "no cap" mode removed;
+    - the queue's total named: `js` at HUMAN-js-agreed against `js` now, by row;
+    - then stop. The watching session lands it.
   - **Moves:** the operator's reading of the pages, the demo above.

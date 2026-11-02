@@ -21,10 +21,11 @@ Fences the rows keep:
    - packing statements with `,` or `&&`;
    - shortening names;
    - a re-export file to save imports;
-   - `prettier-ignore` to pack a line.
+   - a formatter-ignore comment to pack a line.
 
-   A budget is met by cutting code. Otherwise, it is a raise asked in
-   `NEEDS_HUMAN.md`.
+   This queue's `js` rung has no cap until the jubilee at its end
+   (CHARTER, "Answered" 2). That is no license to pad or to pack: write
+   the code the shape asks for, at the size it takes.
 2. **No build step** (CHARTER, decision 1).
    - Nothing transforms the bytes that ship.
    - Types live in JSDoc comments.
@@ -65,12 +66,14 @@ Fences the rows keep:
    - `eval` or `Function(`.
 
    A diff to `scripts/trust_floor.txt` is NEEDS_HUMAN.
-9. **The budget.** Each part reports `lean_check`'s `.` before and after.
-   - A worker's edit of `BUDGET` is refused as a CI bypass. So commit the
-     part, write the raise as a ready diff in `NEEDS_HUMAN.md`, and stop.
-     The watching session lands it from the operator seat.
-   - js-format (b)'s raise is its measured delta exactly (CHARTER,
-     "Open" 2). Every other raise follows an economizing pass.
+9. **The budget.** Each part reports `lean_check`'s `js` and `.`, before
+   and after.
+   - `js` has no cap until js-read (e), the jubilee.
+   - `.` keeps its cap. This queue should not move it: a part that does
+     says why.
+   - A worker's edit of `BUDGET` is refused as a CI bypass. The jubilee's
+     cap is a ready diff in `NEEDS_HUMAN.md`, which the watching session
+     lands from the operator seat.
 10. **Browsers and the gate lock.** Every run that starts a browser, and
     `scripts/check.sh`, runs as `lockf -k /tmp/svrngs-gate.lock <cmd>`.
     Close a row with `ralph-result await <budget> -- lockf -k
