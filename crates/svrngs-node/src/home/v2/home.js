@@ -20,9 +20,12 @@ import { Group, get, offered } from './group.js?v=__VERSION__';
 // Each feature's file, and the page's places after the groups, in
 // home.js:378-427's order.
 const FILES = ['shelf', 'index', 'running', 'lending', 'door', 'visits', 'leave', 'screen', 'join', 'make', 'links', 'open', 'acts', 'ask', 'wifi', 'play'], PLACES = ['acts', 'left', 'open', 'join', 'make', 'running', 'lent'];
-const reading = (s, m, [asked, n] = ask(s, 'groups')) => go(s, {}, { asked }, { run: 'groups', n, round: m.type, failed: 'unread' });
+// After a write here (`again`), the groups drawn stay, said as read again
+// until they are, where v1 loaded the page again (home_group.rs:219, :335
+// on v2: "You made Trip." over the old groups looked done).
+const reading = (s, m, [asked, n] = ask(s, 'groups')) => go(s, m.type === 'again' && s.at.groups === 'read' ? { groups: 'rereading' } : {}, { asked }, { run: 'groups', n, round: m.type, failed: 'unread' });
 const HOME = (flows) => ({
-  states: { groups: ['reading', 'read', 'unread'], said: ['none', 'made', 'joined', 'left'] },
+  states: { groups: ['reading', 'read', 'rereading', 'unread'], said: ['none', 'made', 'joined', 'left'] },
   step: (s, m) => ({ again: reading, visible: reading,
     read: () => (late(s, 'groups', m.n) ? no(s, late(s, 'groups', m.n)) : go(s, { groups: 'read' }, { groups: m.groups, key: m.key, round: { type: m.round } })),
     unread: () => (late(s, 'groups', m.n) ? no(s, late(s, 'groups', m.n)) : go(s, { groups: 'unread' }, { why: m.why })) })[m.type]?.(s, m) ?? offered(flows, s, m),
@@ -41,10 +44,10 @@ const left = ({ s }) => ((gone) => gone.length > 0 && html`<section id="left"><h
 // which a driver's `text` waits on (home.mjs:166; main.rs:3536 on v2).
 export function Home({ store, flows, places }) {
   const s = useStore(store), q = s.q, home = store.dispatch, held = () => Object.values(flows).some((f) => f.holds?.(s)), P = (k) => places[k] && html`<${places[k]} s=${s} home=${home} />`;
-  if (s.at.groups !== 'read') return html`<p class=${s.at.groups === 'reading' ? 'said' : undefined}>${s.at.groups === 'reading' ? 'Reading your groups…' : `This computer cannot read your groups: ${s.why}`}</p>`;
+  if (s.at.groups === 'reading' || s.at.groups === 'unread') return html`<p class=${s.at.groups === 'reading' ? 'said' : undefined}>${s.at.groups === 'reading' ? 'Reading your groups…' : `This computer cannot read your groups: ${s.why}`}</p>`;
   if (s.ask || q.screen) return P(s.ask ? 'ask' : 'screen');
   const said = SAID[s.at.said](q, q.unplaced ? `Its folder could not be made: ${q.unplaced}. ` : '');
-  return html`${said && html`<p>${said}</p>`}${!s.groups.length && html`<p class="none">You’re in no group yet. Join one below from the link someone sent you, or make your own.</p>`}${s.groups.filter((g) => !g.left).map((g) => html`<${Group} key=${g.id} g=${g} joined=${q.joined} me=${s.key} round=${s.round} places=${places} flows=${flows} home=${home} />`)}${PLACES.map((k) => (k !== 'lent' || !held()) && P(k))}${!held() && html`<p class="address">Your home page, the same address each time svrngs starts: ${s.origin}/</p>`}`;
+  return html`${said && html`<p>${said}</p>`}${s.at.groups === 'rereading' && html`<p class="said">Reading your groups…</p>`}${!s.groups.length && html`<p class="none">You’re in no group yet. Join one below from the link someone sent you, or make your own.</p>`}${s.groups.filter((g) => !g.left).map((g) => html`<${Group} key=${g.id} g=${g} joined=${q.joined} me=${s.key} round=${s.round} places=${places} flows=${flows} home=${home} />`)}${PLACES.map((k) => (k !== 'lent' || !held()) && P(k))}${!held() && html`<p class="address">Your home page, the same address each time svrngs starts: ${s.origin}/</p>`}`;
 }
 
 // The edge: each feature's file, by its one URL, then HOME, its first read
