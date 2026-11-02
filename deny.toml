@@ -1,0 +1,13 @@
+[advisories]
+unmaintained = "all"
+unsound = "all"
+yanked = "warn"
+maximum-db-staleness = "P1D"
+# Maintenance notices only; vulnerability and unsoundness advisories stay fatal.
+# scripts/advisories.py makes every exception expire at its review date.
+ignore = [
+  { id = "RUSTSEC-2023-0089", reason = "review by 2026-12-01: atomic-polyfill is transitive through postcard/heapless in pinned iroh; no vulnerable behavior is identified by this maintenance notice" },
+  { id = "RUSTSEC-2024-0436", reason = "review by 2026-12-01: paste is a build-time dependency of netlink-packet-core/netdev; replacement belongs with the pinned network stack" },
+  { id = "RUSTSEC-2024-0370", reason = "review by 2026-12-01: proc-macro-error is build-time through genawaiter/iroh-blobs; the notice identifies maintenance, not an exploit" },
+  { id = "RUSTSEC-2024-0449", reason = "review by 2026-12-01: Give's existing serde_yaml parser uses unsafe-libyaml; replace with a maintained parser in a separately verified card-reader change" },
+]

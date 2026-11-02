@@ -162,8 +162,8 @@ HTTP/1 server serves on its every bi-stream, each request carrying the verified 
 request head parsed but by hyper. A test drives raw HTTP or a socket at a
 door through a stand-in splice (`node/tests_support.rs`), which the product
 has not; `tests/accept.rs` tests the acceptor.
-iroh is pinned at `=1.0.2`, and its tree locked at upstream's versions, so the
-fork runs on what upstream tested.
+iroh is pinned at `=1.0.2`; transitive lockfile versions include security
+updates rather than retaining vulnerable upstream-era resolutions.
 
 Ring sync came over the same way: `ring_sync.rs` and `ring_sync/journal.rs`
 are `commonwealth-rails`' round, chunked exchange and responder (`answer`),
@@ -820,7 +820,12 @@ repository standalone and within budget; `vocab_check.py` keeps every app's
 nouns (`apps/<app>/nouns.txt`) out of infra code; `trust_check.py` holds every
 page's policy and every listener to `trust_floor.txt`, their one home, and
 the floor to a reason for each change; `ports.py` lists the fork's pairs;
-`principles_check.py` keeps `docs/principles/` pinned; `build-web.sh` builds
+`principles_check.py` keeps `docs/principles/` pinned; `advisories.py` checks
+both Rust lockfiles against a fresh RustSec database through cargo-deny, missing
+tools reported never-ran. `deny.toml` contains four maintenance-only exceptions
+due for review by 2026-12-01; vulnerability and unsoundness findings remain
+fatal. Pinned, yanked `iroh-blobs 0.103.0` remains a warning, not a fixed finding.
+`build-web.sh` builds
 and lints the page (`web/`).
 
 **`docs/diagrams/`**: the three pictures `docs/OVERVIEW.md` shows, drawn by
