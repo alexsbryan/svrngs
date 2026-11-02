@@ -13,6 +13,7 @@ async function post(url, message, { session, version, timeout, token }) {
   if (session) headers['mcp-session-id'] = session;
   if (version) headers['mcp-protocol-version'] = version;
   const res = await fetch(url, {
+    redirect: 'error',
     method: 'POST',
     headers,
     body: JSON.stringify(message),

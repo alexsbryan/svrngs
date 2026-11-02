@@ -125,13 +125,17 @@ function record(lends) {
   });
 }
 
+// The key the person's interface shows the pantry (pantry.mjs `accessAt`),
+// sent by each client here and carried on by the bridge.
+const KEY = 'bridge-test-interface';
+
 function hash(path) {
   return createHash('sha256').update(readFileSync(path)).digest('hex');
 }
 
 async function place(t, lends) {
   const held = await record(lends);
-  const pantry = await serve({ record: held.origin, host: '127.0.0.1', port: 0 });
+  const pantry = await serve({ record: held.origin, host: '127.0.0.1', port: 0, access: KEY });
   t.after(() => Promise.all([held.close(), pantry.close()]));
   return pantry;
 }
@@ -158,7 +162,7 @@ test('a screenshot reaches a blind model as the vision model\'s description, too
   };
   const res = await fetch(`${bridge.url}/v1/chat/completions`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-svrngs-person': 'ana' },
+    headers: { authorization: `Bearer ${KEY}`, 'content-type': 'application/json', 'x-svrngs-person': 'ana' },
     body: JSON.stringify(request),
   });
   assert.equal(res.status, 200);
@@ -211,7 +215,7 @@ test('a request with no image passes through untouched, and the vision model is 
   const tools = [{ type: 'function', function: { name: 'weather', parameters: { type: 'object' } } }];
   const res = await fetch(`${bridge.url}/v1/chat/completions`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { authorization: `Bearer ${KEY}`, 'content-type': 'application/json' },
     body: JSON.stringify({ model: 'ana/coder', messages: [{ role: 'user', content: 'hello' }], tools }),
   });
   assert.equal(res.status, 200);
@@ -239,7 +243,7 @@ test('the pantry\'s own files do not change for the bridge', async (t) => {
 
   await fetch(`${bridge.url}/v1/chat/completions`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { authorization: `Bearer ${KEY}`, 'content-type': 'application/json' },
     body: JSON.stringify({
       model: 'ana/coder',
       messages: [{ role: 'user', content: [{ type: 'image_url', image_url: { url: 'data:image/png;base64,CCC' } }] }],

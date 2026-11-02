@@ -13,6 +13,14 @@ import { test } from 'node:test';
 import { FOUND_FOR, LENDS_FOR, formatList, list, serve } from './pantry.mjs';
 
 const HERE = new URL('.', import.meta.url).pathname;
+const clients = new Map();
+const CLIENT_KEY = 'pantry-test-interface';
+const fetch = (url, init = {}) => {
+  const key = clients.get(new URL(url).origin);
+  const headers = new Headers(init.headers);
+  if (key && !headers.has('authorization')) headers.set('authorization', `Bearer ${key}`);
+  return globalThis.fetch(url, { ...init, headers });
+};
 
 function body(req) {
   return new Promise((resolve, reject) => {
@@ -155,7 +163,9 @@ function silent() {
 }
 
 async function pantry(opts) {
-  return serve({ host: '127.0.0.1', port: 0, ...opts });
+  const at = await serve({ host: '127.0.0.1', port: 0, access: CLIENT_KEY, ...opts });
+  clients.set(new URL(at.url).origin, CLIENT_KEY);
+  return at;
 }
 
 // C1: discovery by protocol, no registration.
@@ -631,7 +641,7 @@ test('a client\'s Authorization and Cookie never reach a friend\'s lend', async 
     method: 'POST',
     headers: {
       'content-type': 'application/json',
-      authorization: 'Bearer not-for-ana',
+      authorization: `Bearer ${CLIENT_KEY}`,
       cookie: 'svrngs=not-for-ana',
       'x-keep-me': 'yes',
     },

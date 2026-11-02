@@ -753,7 +753,10 @@ Streamable HTTP is a tool. `apps/pantry/`, an app on the person's own
 computer, asks each lend its protocol, lists them with whose computer lends
 them and the address to paste, and gives one OpenAI-compatible address that
 routes each request by its `model` to the friend who lends it; nothing is
-registered, and the pantry keeps no kind list. Behaviour is another app on
+registered, and the pantry keeps no kind list. Every caller shows the separate,
+owner-only `pantry-token` as its API key; the record's token is attached only
+at the selected lend's fixed origin, never at an authority a request supplies,
+and discovery follows no redirect. Behaviour is another app on
 the consumer's computer — an OpenAI-in, OpenAI-out adapter that calls the
 pantry — so every lend it reaches is reached as that person; the vision
 bridge in `apps/pantry/examples/` is the worked example

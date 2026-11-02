@@ -109,12 +109,15 @@ fn files() -> Vec<Vec<u8>> {
 }
 
 /// What a chat for `model` through the pantry at `at` answered, streamed
-/// when `stream`: the words, joined from its chunks.
-async fn chat(at: &str, model: &str, stream: bool) -> String {
+/// when `stream`: the words, joined from its chunks. Sent with `key`, the
+/// pantry's API key, as the interface a person points at it sends it
+/// (apps/pantry/README.md, `pantry-token`).
+async fn chat(at: &str, key: &str, model: &str, stream: bool) -> String {
     let asked = json!({ "model": model, "stream": stream, "messages": [{ "role": "user", "content": "who asks?" }] });
     let got = reqwest::Client::builder().no_proxy().build().unwrap();
     let got = got
         .post(format!("{at}/v1/chat/completions"))
+        .bearer_auth(key)
         .header("content-type", "application/json")
         .body(asked.to_string())
         .send();
@@ -201,8 +204,11 @@ async fn pantry(engine: Engine) {
         .and_then(|a| a.strip_suffix("/v1"))
         .unwrap_or_else(|| panic!("pantry serve printed no address: {line}"))
         .to_string();
+    // The key the start line names, made beside Bo's record as it started.
+    let key = std::fs::read_to_string(bo.home.join(".svrngs/pantry-token")).unwrap();
+    let key = key.trim();
     assert_eq!(
-        chat(&at, "Ana/coder", true).await,
+        chat(&at, key, "Ana/coder", true).await,
         "ana's coder heard Bo",
         "a streamed chat for Ana/coder reaches Ana's model, under its own id, as Bo"
     );
@@ -210,7 +216,7 @@ async fn pantry(engine: Engine) {
     // C3: Cy's model, of a shape no pantry test uses, answers too, and
     // the pantry's files are as they were.
     assert_eq!(
-        chat(&at, "Cy/cy-model", false).await,
+        chat(&at, key, "Cy/cy-model", false).await,
         "cy's cy-model heard Bo"
     );
     assert!(files() == before, "the pantry's files changed in the scene");

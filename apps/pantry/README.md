@@ -20,7 +20,7 @@ each lend its protocol.
 `list` shows what every group you hold lends now: each model with its
 `<lender>/<model>` id, each tool with its read-only or destructive
 annotation, and each person whose computer did not answer. `serve` prints
-one address; keep it running.
+one address and the path of its API-key file; keep it running.
 
 The pantry reads this computer's record at `$SVRNGS_DIR/api`, else
 `~/.svrngs/api`, with the token in `token` beside it. `--record URL` names another record, and `--port N` names
@@ -28,7 +28,12 @@ another port. Without one, `serve` takes the address it took last time,
 kept in your data dir's `pantry-port`, so the address you pasted into your
 interface keeps working after a restart. If another program holds that
 address, `serve` names it and stops; it never moves in silence. It listens
-on 127.0.0.1 only, so it is yours, not your network's.
+on 127.0.0.1 only and requires the interface's bearer key on every request:
+loopback alone does not distinguish your program from a contained program.
+The key is made once, owner-only, in `pantry-token` beside `api`; it is
+separate from the record's token and is never sent to a lend. Browser requests
+are refused. Requests stay at the selected lend's origin, and credential-bearing
+discovery never follows redirects.
 
 The pantry keeps what the record answered for 30 seconds, and what each
 lend answered for 4, so a friend whose computer is asleep costs one ask,
@@ -42,6 +47,9 @@ In any OpenAI-compatible interface, set the OpenAI base URL to the address
 `serve` printed, with `/v1` (for example `http://127.0.0.1:8787/v1`). Your
 interface's model picker is the matcher: it lists `ana/coder`, `sam/voice`
 and the rest, and a request goes to the friend whose id it names.
+Set the interface's API key to the contents of `pantry-token`, as the start
+line says. The vision bridge takes that same key from its client's request
+and carries it to your pantry, for the vision call too; it keeps no key of its own.
 
 Some interfaces keep speech-to-text and speech in settings of their own.
 Point those at the same address; if they ask for a model, name the

@@ -13,11 +13,13 @@
 // no kind list, no card and no matcher.
 
 import http from 'node:http';
+import { randomBytes } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
 import { toolsAt } from './mcp.mjs';
+import { authorized, destination } from './boundary.mjs';
 
 /// How long what discovery found is kept in this process: a friend's computer
 /// that did not answer is not dialled again on every message, and what it said
@@ -59,6 +61,18 @@ function tokenAt() {
   }
 }
 
+// The interface's key is separate from the record's token and never forwarded.
+function accessAt(state) {
+  const dir = dataDir(state);
+  const path = join(dir, 'pantry-token');
+  mkdirSync(dir, { recursive: true, mode: 0o700 });
+  try { writeFileSync(path, randomBytes(32).toString('base64url'), { flag: 'wx', mode: 0o600 }); }
+  catch (e) { if (e.code !== 'EEXIST') throw e; }
+  const key = readFileSync(path, 'utf8').trim();
+  if (!/^[A-Za-z0-9_-]{43}$/.test(key)) throw new Error(`${path} holds no pantry key`);
+  return key;
+}
+
 /// The address the last start took, if one was kept.
 function keptPort(dir) {
   try {
@@ -87,7 +101,7 @@ function secondsAgo(at, now) {
 
 async function get(url, token) {
   const headers = token === undefined ? {} : { authorization: `Bearer ${token}` };
-  const res = await fetch(url, { headers, signal: AbortSignal.timeout(DISCOVERY_TIMEOUT) });
+  const res = await fetch(url, { headers, redirect: 'error', signal: AbortSignal.timeout(DISCOVERY_TIMEOUT) });
   if (!res.ok) throw new Error(`${url} answered ${res.status}`);
   return res.json();
 }
@@ -193,6 +207,7 @@ async function probe(origin, token) {
     || /abort|timeout/i.test(e?.message || '');
   try {
     const res = await fetch(`${base}/v1/models`, {
+      redirect: 'error',
       headers: { accept: 'application/json', ...(token && { authorization: `Bearer ${token}` }) },
       signal: AbortSignal.timeout(DISCOVERY_TIMEOUT),
     });
@@ -406,12 +421,16 @@ function rewriteModel(raw, contentType, model) {
 /// `--port` it takes the address it took last time, from the data dir's
 /// `pantry-port`, so the address a person pasted into their interface stays;
 /// another program holding it is said by name, never moved past in silence.
-export async function serve({ record: at = recordAt(), token = tokenAt(), port, host = '127.0.0.1', state, clock = Date.now } = {}) {
+export async function serve({ record: at = recordAt(), token = tokenAt(), port, host = '127.0.0.1', state, access = accessAt(state), clock = Date.now } = {}) {
+  if (!access || !['127.0.0.1', '::1'].includes(host)) throw new Error('the pantry needs a caller key and a loopback listener');
   const record = { at, token };
   const dir = dataDir(state);
   const wanted = port === undefined ? (keptPort(dir) ?? 0) : port;
   const server = http.createServer(async (req, res) => {
     try {
+      if (!authorized(req.headers, access)) { note('refused caller'); return fault(res, 401, 'send the key in pantry-token as Authorization: Bearer <key>'); }
+      try { destination(record.at, req.url); }
+      catch (error) { note('refused target', error.message); return fault(res, 400, error.message); }
       if (req.method === 'GET' && req.url === '/v1/models') {
         const { data, at } = await modelsNow(record, clock);
         res.writeHead(200, {
@@ -451,7 +470,7 @@ export async function serve({ record: at = recordAt(), token = tokenAt(), port, 
       if (!written) {
         return fault(res, 400, `the body's model cannot be rewritten for ${asked.model}`);
       }
-      const upstream = new URL(req.url, lend.origin);
+      const upstream = destination(lend.origin, req.url);
       const headers = { ...req.headers };
       delete headers.host;
       delete headers.connection;
@@ -461,6 +480,8 @@ export async function serve({ record: at = recordAt(), token = tokenAt(), port, 
       // takes it off before the lend's service is asked (give-session).
       delete headers.authorization;
       delete headers.cookie;
+      // Caller-controlled headers cannot opt this forwarding program into signing.
+      for (const name of Object.keys(headers)) if (name.startsWith('x-svrngs-')) delete headers[name];
       if (record.token) headers.authorization = `Bearer ${record.token}`;
       headers['content-length'] = String(written.body.length);
       note('routed', asked.model, '→', lend.handle, lend.name, lend.origin);
@@ -532,6 +553,7 @@ async function main(argv) {
   if (verb === 'serve') {
     const at = await serve(options);
     console.log(`Point your interface at ${at.url}/v1`);
+    console.log(`Set its API key to the contents of ${join(dataDir(options.state), 'pantry-token')}.`);
     return;
   }
   console.error('usage: pantry list | pantry serve [--port N] [--record URL] [--state DIR]');

@@ -11,6 +11,7 @@
 //   node server.mjs --upstream http://127.0.0.1:8787 --vision ana/vision [--port 8120]
 
 import http from 'node:http';
+import { destination } from '../../boundary.mjs';
 
 export const PROMPT = 'You are describing a screenshot of a web page to a '
   + 'programmer who cannot see it. Describe the layout, every visible string, '
@@ -34,7 +35,7 @@ function json(res, status, value) {
 
 /// One request to the person's pantry, its answer streamed back as it came.
 function relay(req, res, base, raw, extra = {}) {
-  const at = new URL(req.url, base);
+  const at = destination(base, req.url);
   const headers = { ...req.headers };
   delete headers.host;
   delete headers.connection;
@@ -55,10 +56,11 @@ function relay(req, res, base, raw, extra = {}) {
 }
 
 /// The vision model's description of one image, asked through the pantry.
-async function describe(base, vision, part) {
+async function describe(base, vision, part, authorization) {
   const res = await fetch(`${base}/v1/chat/completions`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...(authorization && { authorization }) },
+    redirect: 'error',
     body: JSON.stringify({
       model: vision,
       stream: false,
@@ -102,6 +104,7 @@ export async function start({ upstream, vision, port = 8120, host = '127.0.0.1' 
   const base = upstream.replace(/\/+$/, '');
   const server = http.createServer(async (req, res) => {
     try {
+      destination(base, req.url);
       const raw = await collect(req);
       let asked = null;
       if (req.method === 'POST' && req.url.split('?')[0] === '/v1/chat/completions') {
@@ -117,7 +120,7 @@ export async function start({ upstream, vision, port = 8120, host = '127.0.0.1' 
       }
       let seen;
       try {
-        seen = { ...asked, messages: await withSight(asked.messages, (part) => describe(base, vision, part)) };
+        seen = { ...asked, messages: await withSight(asked.messages, (part) => describe(base, vision, part, req.headers.authorization)) };
       } catch (e) {
         return json(res, 502, {
           error: `the bridge could not describe an image with ${vision}: ${e.message}`,
