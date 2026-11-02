@@ -8,11 +8,12 @@
 //! (iroh-relay `defaults.rs`): HTTPS on TCP 443, HTTP on 80, and QUIC
 //! address discovery on UDP 7842. Its certificate is Let's Encrypt's, asked
 //! and renewed by the relay itself (`CertConfig::LetsEncrypt`) and kept
-//! under `<data dir>/relay`. Never at a bare address: an address's
+//! under `<data dir>/relay`. Never HTTPS at a bare address: an address's
 //! certificate needs Let's Encrypt's `shortlived` profile, and
 //! tokio-rustls-acme 0.9.1, iroh-relay's ACME client, orders names alone —
 //! its `Identifier` is `Dns` only and its order names no profile
-//! (`acme.rs:129-130`, `:301-303`); PLAN §2 keeps the row.
+//! (`acme.rs:129-130`, `:301-303`); PLAN §2 keeps the row. At an address
+//! it serves plain HTTP alone, [`At::Here`].
 //!
 //! Who it lets through is decided per connection
 //! (`AccessControl::on_connect`): by default a computer or phone standing
@@ -59,7 +60,11 @@ pub enum At {
     /// staging service with `--staging`.
     Name { name: String, staging: bool },
     /// Plain HTTP at an address of this computer's, no certificate, as
-    /// iroh-relay's `--dev`: what the tests serve. No flag says it.
+    /// iroh-relay's `--dev`: what the tests serve, and `--at <address>`, a
+    /// flag `svrngs help` does not list, for a relay on a local network
+    /// with no internet, where Let's Encrypt reaches no name. What crosses
+    /// it is iroh's QUIC, encrypted end to end, as at a name; whom it lets
+    /// through is decided as at a name.
     Here(SocketAddr),
 }
 
@@ -138,8 +143,12 @@ pub async fn spawn(relay: &Relay, root: &Path) -> Result<Server, Refusal> {
     };
     let any = |port| SocketAddr::from((Ipv6Addr::UNSPECIFIED, port));
     let (http, tls, quic) = match &relay.at {
-        At::Here(addr) => (*addr, None, None),
+        At::Here(addr) => {
+            tracing::debug!(target: "relay", %addr, "relay: plain HTTP at the address given, with no certificate");
+            (*addr, None, None)
+        }
         At::Name { name, staging } => {
+            tracing::debug!(target: "relay", name, staging, "relay: HTTPS at the name, its certificate Let's Encrypt's");
             let builder = rustls::ServerConfig::builder_with_provider(Arc::new(
                 rustls::crypto::ring::default_provider(),
             ))

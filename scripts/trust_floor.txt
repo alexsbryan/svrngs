@@ -85,7 +85,7 @@ listen crates/svrngs-node/src/guest.rs: .bind() | the iroh endpoint, UDP on ever
 listen crates/svrngs-node/src/guest.rs: .bind_addr(SocketAddr::from(([127, 0, 0, 1], 0))) | the iroh endpoint on loopback alone, for `loopback_only`, the tests' two nodes on one host
 listen web/src/lib.rs: let ep = match builder.bind().await { | the phone's iroh endpoint, in the browser: it offers no protocol and reaches out through its relay alone (web/src/lib.rs:139)
 listen crates/svrngs/src/relay.rs: let any = |port| SocketAddr::from((Ipv6Addr::UNSPECIFIED, port)); | `svrngs relay` at a name: ports 80, 443 and 7842 on every interface, since a relay is what others reach, by default admitting only keys standing in a group its computer holds
-listen crates/svrngs/src/relay.rs: Server::spawn(server).await.map_err(|e| { | `svrngs relay`: at the name's ports above, or plain HTTP at the address its caller gives, which only the tests do
+listen crates/svrngs/src/relay.rs: Server::spawn(server).await.map_err(|e| { | `svrngs relay`: at the name's ports above, or plain HTTP at the address its caller gives: the tests, and `svrngs relay --at <address>`, unlisted in its help, for a relay on a local network with no internet, where Let's Encrypt reaches no name; what crosses it is iroh's end-to-end encrypted QUIC, and whom it admits is decided as at a name
 
 # The behavioural gates.
 gate crates/svrngs-node/tests/peer.rs no_loopback_port_reaches_a_friends_door | no port on this computer reaches a friend's door as this computer's key (#175)

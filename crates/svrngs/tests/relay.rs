@@ -199,6 +199,61 @@ fn the_verb_takes_a_name_never_an_address() {
     assert!(cli::parse(["svrngs", "new", "x", "--open"].map(String::from)).is_err());
 }
 
+/// **A relay `--at` an address serves plain HTTP there, and help lists no
+/// such flag**: `svrngs relay --at <address>` parses to [`At::Here`], and
+/// the relay it asks starts and lets a key through, as one at a name
+/// would; `svrngs help` names no `--at`; with `--staging`, with a name
+/// beside it, with no port, or on another verb, it is refused. Planted:
+/// `--at` listed in USAGE, and `--staging` taken beside it.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_relay_at_an_address_is_plain_http_and_unlisted() {
+    let parse = |args: &[&str]| {
+        cli::parse(
+            ["svrngs", "relay"]
+                .iter()
+                .chain(args)
+                .map(|a| a.to_string()),
+        )
+    };
+    let Ok(cli::Verb::Relay(asked)) = parse(&["--at", "127.0.0.1:0", "--open"]) else {
+        panic!("--at parses to a relay");
+    };
+    assert_eq!(
+        asked,
+        Relay {
+            at: At::Here("127.0.0.1:0".parse().unwrap()),
+            open: true
+        }
+    );
+    let empty = tempfile::tempdir().unwrap();
+    let server = relay::spawn(&asked, empty.path())
+        .await
+        .expect("a relay --at an address starts");
+    assert!(
+        server.https_addr().is_none(),
+        "no certificate at an address"
+    );
+    assert!(
+        admits(&server, SAM).await,
+        "an open relay --at lets a key through"
+    );
+
+    assert!(!cli::USAGE.contains("--at"), "help lists --at");
+    let refused = |args: &[&str], says: &str| {
+        let said = parse(args).unwrap_err();
+        assert!(said.contains(says), "{args:?}: {said}");
+    };
+    refused(&["--at", "10.42.3.20:3340", "--staging"], "--staging");
+    refused(
+        &["relay.example.org", "--at", "10.42.3.20:3340"],
+        "not both",
+    );
+    refused(&["--at", "10.42.3.20"], "an address and port");
+    refused(&["--at"], "--at wants a value");
+    let elsewhere = cli::parse(["svrngs", "new", "x", "--at", "10.42.3.20:3340"].map(String::from));
+    assert_eq!(elsewhere.err(), Some("unknown argument `--at`".to_string()));
+}
+
 /// What `scripts/relay-answers.sh` says of `url`: whether it exited 0.
 async fn answers(url: String) -> bool {
     let script = harness::repo().join("scripts/relay-answers.sh");
