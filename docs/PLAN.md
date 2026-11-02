@@ -399,6 +399,20 @@ The grapevine's standing carries are a row after V1 too (GRAPEVINE_DEMO
 
 ## 3. Decisions
 
+By the operator, 2026-11-02, on a group's relays with fallbacks, after the
+hack night with a laptop's relay on a Lightning Mesh (svrn-docs
+`rings/demo/MESH_HACKNIGHT.md`): "group record, start with keeper only,
+there is always a batteries included fallback (now n0, next
+relay.svrnme.sh), let iroh pick by speed". So a group's relays become a
+list in its record that only the keeper sets; each computer adds the
+build's relays (`cli::SHIPPED`) to every group's list; iroh makes the
+fastest its home; and a member is dialled at every relay it might be on.
+This changes the relay-park decision below: n0 is now the fallback when a
+group's relays fail, said on the home page, never silent. The design and
+its invariants, to be agreed before code: svrn-docs
+`rings/current/GROUP_RELAYS.md` §7. DESIGN §3's "never a fallback" sentence
+changes in the commit that builds it.
+
 By the operator, 2026-10-10 and 2026-10-11, on the scene v1 answers to
 (`demo/c.md`):
 - "Yeah write the scene that we can fulfill and the Demo C run of show":
