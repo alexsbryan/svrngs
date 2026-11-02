@@ -12,8 +12,7 @@
 // button once, the last in place of the one before, where v1 appended each
 // (h:421; page-join (d)'s first fix).
 import { Act, ask, Field, go, html, late, machine, namesakes, no, useMachine } from '../ui/kit.js?v=__VERSION__';
-import { get } from './group.js?v=__VERSION__';
-import { post } from './running.js?v=__VERSION__';
+import { get, post } from './group.js?v=__VERSION__';
 
 const FIRST = { at: { make: 'typing' }, name: '', person: '', before: '', said: '' };
 export const MAKE = (home) => ({ states: { make: ['typing', 'checking', 'checked', 'making', 'refused'] },

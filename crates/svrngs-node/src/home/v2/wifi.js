@@ -13,8 +13,7 @@
 // draw a foot. What is open that cannot be read is said once, in `part`,
 // never read as none; a press in a line then writes it over.
 import { Act, ask, called, go, html, Keep, late, machine, named, no, once, useEffect, useMachine, useStore } from '../ui/kit.js?v=__VERSION__';
-import { get } from './group.js?v=__VERSION__';
-import { post } from './running.js?v=__VERSION__';
+import { get, post } from './group.js?v=__VERSION__';
 
 const answer = (n, turned) => (room) => ({ type: 'answered', n, room, turned, why: `${room.length} open` }), same = (a) => (b) => a.key === b.key && a.name === b.name, k = (l) => `${l.key}:${l.name}`;
 // A turn is answered by what is open then, written over what was read, and

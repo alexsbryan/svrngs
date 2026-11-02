@@ -11,8 +11,7 @@
 // v1 opened the page again (h:409; page-join (c)'s fix), and the form is
 // empty again; a refusal is said below, in place of the last.
 import { Act, ask, Field, go, html, late, machine, no, useMachine } from '../ui/kit.js?v=__VERSION__';
-import { get } from './group.js?v=__VERSION__';
-import { post } from './running.js?v=__VERSION__';
+import { get, post } from './group.js?v=__VERSION__';
 
 const FIRST = { at: { join: 'typing' }, link: '', person: '', for: undefined, why: '' }, who = (s) => s.for?.[1] ?? s.person.trim();
 export const JOIN = (home) => ({ states: { join: ['typing', 'checking', 'checked', 'refused', 'joining'] },

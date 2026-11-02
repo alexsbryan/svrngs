@@ -10,7 +10,7 @@
 // each (page-join (e)'s fix); a refusal said there in its place.
 import { Act, Field, go, html, machine, no, useMachine } from '../ui/kit.js?v=__VERSION__';
 import { COPY, drawn } from '../ui/copy.js?v=__VERSION__';
-import { post } from './running.js?v=__VERSION__';
+import { post } from './group.js?v=__VERSION__';
 
 const LINK = (group) => ({ states: { link: ['none', 'making', 'made', 'refused'] },
   io: { make: ({ asked, visit }) => post('/link', { group, device: asked.device, ...(visit && { visit: Number(visit) }) }).then((a) => ({ type: 'made', a, asked, why: a.https ?? a.client })) },

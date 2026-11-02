@@ -9,9 +9,8 @@
 // page-acts (d)). Its machine, ASK, is the place's own (ui/view.js
 // `useMachine`).
 import { go, html, machine, no, question, unlent, useMachine } from '../ui/kit.js?v=__VERSION__';
-import { get } from './group.js?v=__VERSION__';
+import { get, post } from './group.js?v=__VERSION__';
 import { label } from './index.js?v=__VERSION__';
-import { post } from './running.js?v=__VERSION__';
 
 // A group's lends, none when they cannot be read, or who is in it cannot (h:63-66).
 const lentIn = (groups) => Promise.all(groups.map((g) => (g.removed === false ? get(`/v1/lends?namespace=${encodeURIComponent(g.id)}`).then((l) => l.lent, () => []) : []))).then((a) => a.flat());

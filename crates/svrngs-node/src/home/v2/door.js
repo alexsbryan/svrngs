@@ -10,9 +10,8 @@
 // and who was removed or asked to be, when anyone was. `decides` is who
 // decides for you in it, which "What acts as you" says (page-acts).
 import { ask, deciders, Door, go, html, late, machine, no, removal, useMachine } from '../ui/kit.js?v=__VERSION__';
+import { post } from './group.js?v=__VERSION__';
 
-// `body` posted as JSON, its answer read, or its refusal's words (home.js:28-37).
-export const post = (path, body) => fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(async (r) => ((a) => (r.ok ? a : Promise.reject(new Error(a.error || `answered ${r.status}`))))(await r.json().catch(() => ({}))));
 const its = (g) => (g.name ? `${g.name}’s folder` : 'The group’s folder');
 const answered = (s, m, words) => (late(s, 'open', m.n) ? no(s, late(s, 'open', m.n)) : go(s, { folder: m.type }, { said: words }));
 const FOLDER = {

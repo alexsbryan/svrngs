@@ -17,9 +17,8 @@
 // what apps use reads the groups again, and so the section, where v1
 // reloaded the page (h:221; page-acts (d)).
 import { Acts, ask, called, carrying, Changes, deciders, go, html, late, machine, no, once, reading, useEffect, useMachine, Uses } from '../ui/kit.js?v=__VERSION__';
-import { get } from './group.js?v=__VERSION__';
+import { get, post } from './group.js?v=__VERSION__';
 import { Reach, label } from './index.js?v=__VERSION__';
-import { post } from './running.js?v=__VERSION__';
 import * as wifi from './wifi.js?v=__VERSION__';
 import * as play from './play.js?v=__VERSION__';
 

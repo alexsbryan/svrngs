@@ -11,8 +11,7 @@
 // (`part`, for acts.js). What has Play on that cannot be read is said
 // once, in `part`, never read as none; Play then writes it over.
 import { Act, ask, go, html, late, machine, no, useEffect, useStore } from '../ui/kit.js?v=__VERSION__';
-import { get } from './group.js?v=__VERSION__';
-import { post } from './running.js?v=__VERSION__';
+import { get, post } from './group.js?v=__VERSION__';
 
 const answer = (n) => (plays) => ({ type: 'answered', n, plays, why: `${plays.length} on` }), same = (a) => (b) => a.key === b.key && a.name === b.name, k = (l) => `${l.key}:${l.name}`;
 // Where a program here connects to what Play opened, copied, or why not.

@@ -12,10 +12,8 @@
 // lends it, and the row then says what happened, or why not, each refusal
 // beside the button as v1 appends it, kept there while it lends again. Drawn once the person is in a group.
 import { Act, ask, Field, go, html, late, machine, no, useMachine } from '../ui/kit.js?v=__VERSION__';
-import { get } from './group.js?v=__VERSION__';
+import { get, post } from './group.js?v=__VERSION__';
 
-// `body` posted as JSON to `path`, its answer, or its words when it refuses.
-export const post = (path, body) => fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(async (r) => ((b) => (r.ok ? b : Promise.reject(new Error(b.error || `answered ${r.status}`))))(await r.json().catch(() => ({}))));
 // What a lend needs first, as /running says from svrngs's table, in a
 // sentence each: its own accounts, a setting, or what svrngs keeps back.
 export const needs = (r) => [r.signs?.accounts && `It keeps its own accounts, so make each person one in it: ${r.signs.accounts}.`, r.signs?.header && `Before it knows who is who, set this in it: ${r.signs.header}.`, r.keeps?.length && `svrngs keeps these parts of it from everyone: ${r.keeps.join(', ')}.`].filter(Boolean).join(' ');

@@ -12,7 +12,7 @@
 // reloaded the page (page-members (b)). A refusal is said after the one
 // before, as v1's `li.append` does.
 import { go, html, machine, no, until, useMachine, Visiting } from '../ui/kit.js?v=__VERSION__';
-import { post } from './door.js?v=__VERSION__';
+import { post } from './group.js?v=__VERSION__';
 
 const VISITS = (home) => ({
   states: { visit: ['on', 'stopping', 'stopped', 'waited', 'refused'] },

@@ -13,6 +13,9 @@ import { ask, go, html, late, machine, no, useEffect, useMachine, whose } from '
 // A route's answer, or its words when it refuses, never read as empty
 // (home.js:25-30); refused as the page's session lapsed (home.rs:198,
 // session.rs `refused`), said as how to open it again.
+// `body` posted as JSON to `path`, its answer, or its words when it refuses
+// (home.js:28-37).
+export const post = (path, body) => fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(async (r) => ((b) => (r.ok ? b : Promise.reject(new Error(b.error || `answered ${r.status}`))))(await r.json().catch(() => ({}))));
 // A message to a feature (`m.flow`, its file's name) is taken by its
 // `take`, or refused by name.
 export const get = (path) => fetch(path).then(async (r) => (r.ok ? r.json() : Promise.reject(new Error(r.status === 401 ? 'this page’s session has ended. Open svrngs from your Applications, or on Linux your applications menu, and it opens here again' : (await r.json().catch(() => ({}))).error || `answered ${r.status}`)))),

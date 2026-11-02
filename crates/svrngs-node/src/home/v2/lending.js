@@ -21,8 +21,7 @@
 // (SIGN_IN_WITH_SVRNGS §5 "Turning it on"); a read again keeps the row, so
 // keeps it shown, and a load of the page, which reads none, shows it no more.
 import { Act, ask, Field, go, html, late, machine, no, useEffect, useMachine } from '../ui/kit.js?v=__VERSION__';
-import { get } from './group.js?v=__VERSION__';
-import { post } from './running.js?v=__VERSION__';
+import { get, post } from './group.js?v=__VERSION__';
 
 const LENDING = { states: { lent: ['reading', 'read', 'unread'] }, io: { read: ({ n }) => get('/lent').then(({ lent, signing }) => ({ type: 'answered', n, lent: lent.filter((l) => !l.group), signing, why: `${lent.length} lent` })) },
   step: (s, m, [asked, n] = ask(s, 'lent'), old = m.type !== 'read' && late(s, 'lent', m.n)) => (old ? no(s, old) : ({ read: () => go(s, { lent: 'reading' }, { asked }, { run: 'read', n, failed: 'unread' }),
