@@ -1,0 +1,62 @@
+== node web/tests/dev.mjs
+Your group's page is at https://group.svrnme.test:55502/, for this computer only.
+
+Open it in a Chrome of its own: paste this in another Terminal window.
+
+  open -na "Google Chrome" --args --user-data-dir="$(mktemp -d)" --no-first-run --proxy-server=http://127.0.0.1:55503 --ignore-certificate-errors-spki-list=2BNB5D4yvdolPkeLHwvE5Hr6bIQaMCAVJEgaWPFG1FE= https://group.svrnme.test:55502/
+
+That Chrome reaches the page through this command, and takes its certificate, which nothing else trusts. It keeps nothing you already use.
+
+To join a group there, open any link to it in that Chrome, with what comes before the # changed to https://group.svrnme.test:55502/ (for a svrngs://join/ link, svrngs://join/ changed to https://group.svrnme.test:55502/#).
+
+Or point a group at this page, so svrngs prints its links here. Stop svrngs, then run one of these, which runs it again:
+
+  svrngs new <name> --origin http://localhost:55502/
+  svrngs link <group> --origin http://localhost:55502/
+
+svrngs checks the page at http://localhost, since nothing but that Chrome reaches the https address, so its links start http://localhost:55502/. Change that to https://group.svrnme.test:55502/ too: at http://localhost, apps don't open. A new link stops the group's old one letting anyone in. --origin https://group.svrnme.sh/ points it back.
+
+Safari can't save in an app here. It keeps the page's cookie from the app on every local address (demo/runs/security/2026-11-02-webkit-partition/).
+
+After a change, run scripts/build-web.sh again and reload. Ctrl-C stops this.
+== svrngs link house --origin https://group.svrnme.test:55502/
+svrngs: cannot tell from here whether https://group.svrnme.test:55502/ gives each app an address of its own: the page does not open there (RUST_LOG=debug says why); try again
+exit 3
+== svrngs link house --origin http://localhost:55502/
+A new link to house. Any link you sent before stops letting anyone new in; everyone it let in stays.
+It works for a day, while this computer is on:
+
+  svrngs://join/AoSHhI1-whN6VuXsqJ437JPs6z6B2rrdHzJ0BMgh79f9glIuiYEjoMthajyvg7pbm2h0dHBzOi8vdXN3MS0xLnJlbGF5Lm4wLmlyb2gubGluay8
+
+or, to open it in a browser:
+
+  http://localhost:55502/#AoSHhI1-whN6VuXsqJ437JPs6z6B2rrdHzJ0BMgh79f9glIuiYEjoMthajyvg7pbm2h0dHBzOi8vdXN3MS0xLnJlbGF5Lm4wLmlyb2gubGluay8
+
+On a phone, each app opens at an address of its own under localhost:55502, which can see which app is opened.
+
+Leave this running; Ctrl-C stops it.
+== drive.mjs plain
+{
+ "flags": [
+  "--no-first-run",
+  "--proxy-server=http://127.0.0.1:55503",
+  "--ignore-certificate-errors-spki-list=2BNB5D4yvdolPkeLHwvE5Hr6bIQaMCAVJEgaWPFG1FE="
+ ],
+ "link": "http://localhost:55502/#AoSHhI1-whN6VuXsqJ437JPs6z6B2rrdHzJ0BMgh79f9glIuiYEjoMthajyvg7pbm2h0dHBzOi8vdXN3MS0xLnJlbGF5Lm4wLmlyb2gubGluay8",
+ "joined": {
+  "at": "http://localhost:55502",
+  "status": "You’re in house, as bo"
+ },
+ "failed": "TimeoutError: page.waitForURL: Timeout 90000ms exceeded.",
+ "counted": [],
+ "logs": [
+  "error: Refused to apply style from 'http://localhost:55502/look.css?v=5d16e0d059a9' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+  "debug: HTTP: POST /ask answered 200",
+  "debug: HTTP: POST /redeem answered 200",
+  "debug: PAGE: asked the browser to keep the page's storage: refused",
+  "debug: HTTP: GET /people/lends answered 200",
+  "error: Framing 'http://localhost:55502/' violates the following Content Security Policy directive: \"frame-src https:\". The request has been blocked.\n",
+  "error: OPEN: Error: the group page did not verify this open"
+ ]
+}
+exit 1

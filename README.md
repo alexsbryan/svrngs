@@ -153,6 +153,12 @@ scripts/check.sh
 Every step passes, or it isn't done. On Linux, it also runs whole in a
 podman image: [`scripts/gate/README.md`](scripts/gate/README.md).
 
+To work on the group's page, `web/`, run `scripts/build-web.sh`, then
+`node web/tests/dev.mjs`. It serves the page on your computer at an https
+address, and prints the line that opens Chrome there, where apps open and
+save, and how to point a group at it. Safari can't save there
+([why](demo/runs/security/2026-11-02-webkit-partition/README.md)).
+
 Some of svrngs is forked from commonwealth-ai, and links nothing from it:
 each forked file names its original on a `ported from commonwealth-ai`
 line. You need commonwealth-ai only to follow those originals: checked out

@@ -83,8 +83,8 @@ const TLS = new URL('../../target/tls/', import.meta.url).pathname;
 // which macOS and every Linux carry, in a directory of its own put in
 // place whole, so two drivers making it at once each read one pair: the
 // browsers take it as they are told to (`launch`), so it need name nothing
-// they check.
-function certified() {
+// they check. Exported for dev.mjs, which names it to Chrome by its key.
+export function certified() {
   try {
     return { key: readFileSync(`${TLS}page/key.pem`), cert: readFileSync(`${TLS}page/cert.pem`) };
   } catch {

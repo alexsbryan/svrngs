@@ -1,0 +1,82 @@
+== node web/tests/dev.mjs
+Your group's page is at https://group.svrnme.test:55303/, for this computer only.
+
+Open it in a Chrome of its own: paste this in another Terminal window.
+
+  open -na "Google Chrome" --args --user-data-dir="$(mktemp -d)" --no-first-run --proxy-server=http://127.0.0.1:55304 --ignore-certificate-errors-spki-list=2BNB5D4yvdolPkeLHwvE5Hr6bIQaMCAVJEgaWPFG1FE= https://group.svrnme.test:55303/
+
+That Chrome reaches the page through this command, and takes its certificate, which nothing else trusts. It keeps nothing you already use.
+
+To join a group there, open any link to it in that Chrome, with what comes before the # changed to https://group.svrnme.test:55303/ (for a svrngs://join/ link, svrngs://join/ changed to https://group.svrnme.test:55303/#).
+
+Or point a group at this page, so svrngs prints its links here. Stop svrngs, then run one of these, which runs it again:
+
+  svrngs new <name> --origin http://localhost:55303/
+  svrngs link <group> --origin http://localhost:55303/
+
+svrngs checks the page at http://localhost, since nothing but that Chrome reaches the https address, so its links start http://localhost:55303/. Change that to https://group.svrnme.test:55303/ too: at http://localhost, apps don't open. A new link stops the group's old one letting anyone in. --origin https://group.svrnme.sh/ points it back.
+
+Safari can't save in an app here. It keeps the page's cookie from the app on every local address (demo/runs/security/2026-11-02-webkit-partition/).
+
+After a change, run scripts/build-web.sh again and reload. Ctrl-C stops this.
+== svrngs link house --origin https://group.svrnme.test:55303/
+svrngs: cannot tell from here whether https://group.svrnme.test:55303/ gives each app an address of its own: the page does not open there (RUST_LOG=debug says why); try again
+exit 3
+== svrngs link house --origin http://localhost:55303/
+A new link to house. Any link you sent before stops letting anyone new in; everyone it let in stays.
+It works for a day, while this computer is on:
+
+  svrngs://join/AnrP0LRp12qO74YEwXVbFgEXgyMEElCOXGzIxLR1LiP2dGNopxxlljC3pMf7CPMLZmh0dHBzOi8vdXN3MS0xLnJlbGF5Lm4wLmlyb2gubGluay8
+
+or, to open it in a browser:
+
+  http://localhost:55303/#AnrP0LRp12qO74YEwXVbFgEXgyMEElCOXGzIxLR1LiP2dGNopxxlljC3pMf7CPMLZmh0dHBzOi8vdXN3MS0xLnJlbGF5Lm4wLmlyb2gubGluay8
+
+On a phone, each app opens at an address of its own under localhost:55303, which can see which app is opened.
+
+Leave this running; Ctrl-C stops it.
+== drive.mjs
+{
+ "flags": [
+  "--no-first-run",
+  "--proxy-server=http://127.0.0.1:55304",
+  "--ignore-certificate-errors-spki-list=2BNB5D4yvdolPkeLHwvE5Hr6bIQaMCAVJEgaWPFG1FE="
+ ],
+ "link": "https://group.svrnme.test:55303/#AnrP0LRp12qO74YEwXVbFgEXgyMEElCOXGzIxLR1LiP2dGNopxxlljC3pMf7CPMLZmh0dHBzOi8vdXN3MS0xLnJlbGF5Lm4wLmlyb2gubGluay8",
+ "joined": {
+  "at": "https://group.svrnme.test:55303",
+  "status": "You’re in house, as bo"
+ },
+ "opened": "https://snj7bqdl47zk756hawa1m020afn2hk2fclkk61dp3dcnk7lrfs5ak4jcuk8z46.group.svrnme.test:55303",
+ "saved": {
+  "status": 200,
+  "said": "{\"counted\":true,\"id\":\"58a97a6559c2636305077b9709be77d479887a1e73b6dac78b57555096818237\"}"
+ },
+ "counted": [
+  {
+   "person": "bo",
+   "op": {
+    "amount_cents": 1,
+    "description": "saved from the dev page 1793663485714",
+    "kind": "Money/expense"
+   }
+  }
+ ],
+ "logs": [
+  "error: Refused to apply style from 'https://group.svrnme.test:55303/look.css?v=5d16e0d059a9' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+  "debug: HTTP: POST /ask answered 200",
+  "debug: HTTP: POST /redeem answered 200",
+  "debug: PAGE: asked the browser to keep the page's storage: refused",
+  "debug: HTTP: GET /people/lends answered 200",
+  "debug: SIGN: adopted the approver of snj7bqdl47zk756hawa1m020afn2hk2fclkk61dp3dcnk7lrfs5ak4jcuk8z46's newest open and deleted its cookie",
+  "debug: HTTP: GET /lend/snj7bqdl47zk756hawa1m020afn2hk2fclkk61dp3dcnk7lrfs5ak4jcuk8z46/ answered 200",
+  "debug: RUNTIME: /lend/snj7bqdl47zk756hawa1m020afn2hk2fclkk61dp3dcnk7lrfs5ak4jcuk8z46/'s policy frames by frame-src; the signer is let in where they restrict",
+  "debug: HTTP: GET /lend/snj7bqdl47zk756hawa1m020afn2hk2fclkk61dp3dcnk7lrfs5ak4jcuk8z46/app.js answered 200",
+  "debug: RUNTIME: an act of Money signed as line 0, 1 to carry",
+  "debug: HTTP: GET /lend/snj7bqdl47zk756hawa1m020afn2hk2fclkk61dp3dcnk7lrfs5ak4jcuk8z46/favicon.ico answered 404",
+  "error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "debug: HTTP: POST /carry answered 200",
+  "debug: RUNTIME: line 0 carried to ada's computer, answered 200"
+ ]
+}
+exit 0
