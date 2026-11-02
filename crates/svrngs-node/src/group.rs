@@ -143,7 +143,7 @@ fn keep(dir: &Path, path: PathBuf, contents: &str) -> Result<(), SeedError> {
 /// What `path` holds, or `None` when there is no file there: how the seed
 /// and the origin are read back. Any other failure is a [`SeedError::Read`]
 /// naming the file, never an absence (ARCH 6).
-fn kept(path: &Path) -> Result<Option<String>, SeedError> {
+pub(crate) fn kept(path: &Path) -> Result<Option<String>, SeedError> {
     match std::fs::read_to_string(path) {
         Ok(raw) => Ok(Some(raw)),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),

@@ -45,16 +45,13 @@ pub const ORIGIN_FILE: &str = "origin";
 /// `None` when it keeps none; why it cannot be read, never an absence
 /// (ARCH 6). Moved from svrngs's group.rs `read_origin`.
 pub fn kept_page(dir: &Path) -> Result<Option<Origin>, String> {
-    match std::fs::read_to_string(dir.join(ORIGIN_FILE)) {
-        Ok(raw) => Origin::parse(&raw)
-            .map(Some)
-            .ok_or_else(|| "not an http(s) address without a '#'".into()),
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-            tracing::debug!(target: "group", dir = %dir.display(), "group: no origin kept");
-            Ok(None)
-        }
-        Err(e) => Err(e.to_string()),
-    }
+    let Some(raw) = crate::group::kept(&dir.join(ORIGIN_FILE)).map_err(|e| e.to_string())? else {
+        tracing::debug!(target: "group", dir = %dir.display(), "group: no origin kept");
+        return Ok(None);
+    };
+    Origin::parse(&raw)
+        .map(Some)
+        .ok_or_else(|| "not an http(s) address without a '#'".into())
 }
 
 /// A link made: its token, the page its https link is on when the group
