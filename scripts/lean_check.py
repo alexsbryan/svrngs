@@ -359,7 +359,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # its own economizing pass (demo/runs/page/2026-10-31-members-range,
 # 2026-11-01-join-range, 2026-11-01-acts-range). v2 671 landed and those
 # three tops come to 1,206, so the cap is one past it.
-BUDGET = {"crates/svrngs-core": 3242, ".": 19122, "swift": 1, "v2": 1207}
+# The operator's raise for the switchover (2026-11-01, "Yes to both", after
+# page-switchover (a)'s pass, demo/runs/economize/2026-11-01-page-switchover/
+# SURVEY.md): v2's imports in one line from ui/kit.js and one `post` (-71).
+# `.` goes to one past the swap's estimate, 19,418 to 19,446: v2's 1,008 to
+# 1,011 lines that stay count again and v1's 703 go. The swap lowers it to
+# one past where it lands, and deletes `v2` with the rung.
+BUDGET = {"crates/svrngs-core": 3242, ".": 19447, "swift": 1, "v2": 1207}
 V2 = ("web/v2/", "web/vendor/", "crates/svrngs-node/src/home/v2/", "crates/svrngs-node/src/home/ui/", "scripts/parity.sh")
 CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
 
