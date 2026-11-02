@@ -10,7 +10,7 @@
 // (acts.mjs:64), and what apps use of each asking lend, from /choices
 // (ui/uses.js, as `p`); knows; and WiFi and Play, page-home-rooms' parts.
 // Drawn once every group has been told and /reaching read, as v1 drew the
-// page's foot only then (h:326-328). Its machine, ACTS, is the section's
+// page's foot only then (h:326-328), and kept after. Its machine, ACTS, is the section's
 // own (ui/view.js `useMachine`), each read counted, read again on each of
 // HOME's rounds; a yes to a new version is posted to /runs, kept in
 // `acted` by what it acts on, so it stays said once read again; a Stop on
@@ -58,17 +58,21 @@ function Acting({ s: h, home }) {
   const asking = lent.filter((l) => l.asks).map(label), ready = groups.every(told);
   useEffect(() => void (ready && send({ type: 'read', asking })), [ready, h.round, asking.join()]);
   useEffect(() => void (ready && s.at.reaching !== 'reading' && !h.actsRead && home({ type: 'told', flow: 'acts', read: true, why: 'what acts as you is read' })), [ready, s.at.reaching]);
-  if (!ready || s.at.reaching === 'reading') return null;
+  // Drawn once read; a group new in a round (one made or joined) is said
+  // read until it is told, the rest kept, where the section dropped out
+  // and came back after each write (home_group.rs:219 on v2).
+  if (s.at.reaching === 'reading') return null;
+  const shown = groups.filter(told);
   const yes = (g) => (m) => (m.type === 'yes' ? send({ ...m, g: g.id, c: told(g).lends.changed?.find((c) => c.group === g.id && c.app === m.app) }) : send(m));
   const doing = (g) => Object.fromEntries(Object.entries(s.acted).filter(([k]) => k.startsWith(`${g.id} `)).map(([k, a]) => [k.slice(g.id.length + 1), s.acting === k && s.at.doing === 'busy' ? { state: 'busy' } : a]));
   const changed = (g, L = told(g).lends) => L.changed && [...L.changed, ...Object.values(s.acted).filter((a) => a.c?.group === g.id && a.state === 'done' && !L.changed.some((c) => c.app === a.c.app)).map((a) => a.c)];
   const parts = {
-    reads: groups.filter((g) => told(g).lends).flatMap((g) => [...once(told(g).lends.lent).filter((o) => o.group).map((l) => html`<p>${carrying(l.kind, told(g).lends.shelf)}</p>`), ...Changes({ g, changed: changed(g), rows: rows(g), me: h.key, doing: doing(g), open: s.folds?.changes, send: yes(g) })]),
+    reads: shown.filter((g) => told(g).lends).flatMap((g) => [...once(told(g).lends.lent).filter((o) => o.group).map((l) => html`<p>${carrying(l.kind, told(g).lends.shelf)}</p>`), ...Changes({ g, changed: changed(g), rows: rows(g), me: h.key, doing: doing(g), open: s.folds?.changes, send: yes(g) })]),
     opens: [...(s.yeses.why !== undefined ? [html`<p>This computer cannot say which apps open your friends’ things as you: ${s.yeses.why}</p>`] : Object.entries(s.yeses).map(([app, c]) => html`<p>${reading(lent.find((o) => label(o) === app && o.reads?.length), c)}${c.said === 'yes' && html`<${Reach} app=${app} words="Stop" said="stop" />`}</p>`)),
       ...Uses({ lent, labelOf: label, choices: s.choices, tag: 'p', said: s.said, send })],
     knows: [html`<p>What you open knows your name.</p>`], wifi: wifi.part({ s: h, home }), play: play.part({ s: h, home }),
-    decides: groups.filter((g) => told(g).people).map((g) => html`<p>${`${g.name ?? 'Your group'}: ${deciders(rows(g), h.key, 'computer')}.`}</p>`),
+    decides: shown.filter((g) => told(g).people).map((g) => html`<p>${`${g.name ?? 'Your group'}: ${deciders(rows(g), h.key, 'computer')}.`}</p>`),
   };
-  return html`<${Acts} parts=${parts} notes=${NOTES} open=${s.folds?.acts} send=${send} />`;
+  return html`<${Acts} parts=${parts} notes=${NOTES} open=${s.folds?.acts} send=${send} />${!ready && html`<p class="said">Reading your groups…</p>`}`;
 }
 export const view = { acts: ({ s, home }) => s.groups.length > 0 && html`<${Acting} s=${s} home=${home} />`, told: Told };

@@ -4,8 +4,7 @@
 // Each flow module (web/v2/<flow>.js) exports `owns` (its fields),
 // `states` (its regions), `takes` (message type -> step), `io`, `view`
 // (place -> part), and `heading` and `response` (slot -> words of state)
-// and `acts` (state -> {part: vnodes}), or `unbuilt`, the types a flow not
-// built yet takes, each refused by name. Flows talk only by messages: a take
+// and `acts` (state -> {part: vnodes}). Flows talk only by messages: a take
 // answers `{run: 'send', m}`, which the frame's io dispatches. Kept apart
 // from app.js, the edge, so node holds it to its laws with no browser
 // (web/tests/v2/frame.test.mjs).
@@ -29,13 +28,11 @@ const frame = { owns: ['fine', 'standalone', 'said'], states: { page: ['opening'
   takes: { failed: (s, m) => go(s, { page: 'failed' }, { said: m.said ?? COULD_NOT }) }, heading: { failed: (s) => s.at.page === 'failed' && [s.said, 'bad'] } };
 
 // PAGE's parts from `flows` ({name: module}), each part a flow leaves out
-// empty, and each type in `unbuilt` (a flow not built yet) taken and
-// refused by name, so a sender is written against it. As it composes, a
+// empty. As it composes, a
 // message type, region, field, io or place two flows claim is refused, and
 // a slot ORDER does not read; a slot is shared, its flows' lines in turn.
 export function compose(flows) {
-  const all = Object.entries({ frame, ...flows }).map(([name, f]) => ({ name, owns: [], states: {}, io: {}, view: {}, heading: {}, response: {}, acts: () => ({}), ...f,
-    takes: { ...f.takes, ...Object.fromEntries((f.unbuilt ?? []).map((t) => [t, (s) => no(s, `not built yet: ${name}`)])) } }));
+  const all = Object.entries({ frame, ...flows }).map(([name, f]) => ({ name, owns: [], states: {}, io: {}, view: {}, heading: {}, response: {}, acts: () => ({}), takes: {}, ...f }));
   const claimed = {}, keys = Object.keys, owner = (kind, n) => claimed[`${kind} ${n}`]?.name;
   for (const f of all) {
     for (const [kind, names] of [['message type', keys(f.takes)], ['region', keys(f.states)], ['io', keys(f.io)], ['place', keys(f.view)], ['field', f.owns]]) {

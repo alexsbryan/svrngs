@@ -586,7 +586,7 @@ brackets.
     - Each test in the baseline's "passes with no v2" is named against the row that since earned it.
   - **(b) The whole gate on v2.**
     - `SVRNGS_UI=v2 lockf -k /tmp/svrngs-gate.lock bash scripts/check.sh` exits 0, with `page v2` green.
-    - `git diff 46ba8288 -- crates/*/tests web/tests` lists only `home.mjs`, `tabs.mjs`, `page_v2/`, `web/tests/*.test.mjs` and `web/tests/v2/`.
+    - `git diff 46ba8288 -- crates/*/tests web/tests` lists only `home.mjs`, `tabs.mjs`, `page_v2/`, `web/tests/*.test.mjs` and `web/tests/v2/`, and the files these commits touched (corrected at page-parity (b): at 11b307fc the diff also lists 13 files, all from these): page-switch's switch, cb32a99d and b6598d4e (`with_ui`, `ui_args`, `home_is` and the marks, in harness.rs, main.rs, conformance.rs, common/mod.rs, home_group.rs, install.rs, leave_page.rs, phone_dry.rs, scenes/people.rs), which remove no assertion; page-switch (b)'s v2 routes in `tests/home.rs`, 34297d41 (this file's page-switch row); and main's two node fixes from outside this queue, 3df32f1f and c0c466fe (`carried.rs`, `browser/carried.rs`, `browser/main.rs`, `folders.rs`), decided by the operator on 2026-10-31.
   - **(c) The record,** `demo/runs/page/<date>-parity/`: `verdicts.tsv`, each step's verdict on v1 and on v2 side by side, the commands and the commit. One run is not a rate (AGENTS.md 7), so a second is recorded, on another day or on the Fedora box's image (`scripts/gate/README.md`).
   - **(d) check.sh gains `parity`,** held until the switchover so that v2 cannot slip back (+1 `.`).
   - **(e) Leftovers:** `grep -rn "not built yet" web/v2 crates/svrngs-node/src/home/v2` finds none.

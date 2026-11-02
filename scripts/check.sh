@@ -26,7 +26,7 @@ failed=0
 # up to 2.7 times (scenes, 204 to 544 s) with the host's load, and 5 leaves
 # room past the slowest seen while ending a hang in about 45 min at most. Every
 # step not named passed in at most 59 s there (app laws), so has 300 s.
-slowest() { case $1 in tests) echo 307 ;; browser) echo 246 ;; scenes) echo 544 ;; "conformance canary") echo 178 ;; *) echo 60 ;; esac; }
+slowest() { case $1 in tests) echo 307 ;; browser) echo 246 ;; scenes) echo 544 ;; "conformance canary") echo 178 ;; parity) echo 514 ;; *) echo 60 ;; esac; }
 # Each step runs in a process group of its own (set -m), ended whole at its
 # limit and when it ends, so no server or browser it started outlives it
 # (Playwright's browsers close as their driver is told TERM); the loop's
@@ -69,11 +69,17 @@ if [ -f Cargo.toml ]; then
   step "clippy"   sh -c "cargo clippy --quiet --all-targets -- -D warnings && cargo clippy --quiet --workspace --test '*' -- -D warnings"
   # What the browser tests could not judge, printed after the browser's step,
   # and the conformance canary's verdicts: kept from this check alone.
-  rm -rf target/could-not-judge target/conformance
+  # And `v2`: a run on v2 (SVRNGS_UI=v2) starts svrngs with `--ui v2`, which
+  # only a binary built with svrngs's test-support takes (harness.rs
+  # `ui_args`), so under v2 the tests and scenes that start svrngs build with
+  # it, as parity.sh's do. On v1 they build as before. Red without it:
+  # home_group and every scene stopped at harness.rs:200
+  # (page-parity-4.await.log).
+  rm -rf target/could-not-judge target/conformance; v2=; [ "${SVRNGS_UI-}" = v2 ] && v2="--features svrngs/test-support"
   # The canaries, browser, joining and conformance targets are `test = false`
   # (crates/svrngs-node/Cargo.toml, crates/svrngs/Cargo.toml), so each runs
   # once, in its own step below, and not again here.
-  step "tests"    cargo test --quiet
+  step "tests"    cargo test --quiet $v2
   # The canaries (DESIGN §5), by name: the apps that keep the infra general.
   step "canaries" cargo test --quiet --workspace --test canaries
   # The ceiling's canary (DESIGN §5, "The canaries"; PLAN §4, "The ceiling";
@@ -120,7 +126,7 @@ if [ -f Cargo.toml ]; then
   # 5 s): 12 threads 162 s, peak 140, 29 of 32 samples past; 4, 201 s, peak
   # 66, 28 of 40; 2, 319 s, peak 44, 6 of 63; 1, 560 s, peak 21, none. At 2
   # a timing is now and then could-not-judge, never a false failure.
-  step "scenes" cargo test -p svrngs --test scenes -- --test-threads=2
+  step "scenes" cargo test -p svrngs --test scenes $v2 -- --test-threads=2
   awk '/^test .* \.\.\. / {split($2, n, "::"); k = n[1]; if (!(k in s)) o[++m] = k; e[k] = e[k] (e[k] ? ", " : "") n[3]; if (!(k in s) || $NF != "ok") s[k] = $NF == "ok" ? "passed" : "failed"} FILENAME ~ /never-ran/ {k = FILENAME; sub(/.*scenes\//, "", k); sub(/-[a-z]+\/never-ran.txt$/, "", k); if (!(k in s)) o[++m] = k; s[k] = "never-ran"; w[k] = ": " $0; x = 1} FILENAME ~ /could-not-judge/ {k = FILENAME; sub(/.*scenes\//, "", k); sub(/-[a-z]+\/could-not-judge.txt$/, "", k); if (s[k] == "passed") {s[k] = "could-not-judge"; w[k] = ": " $0}} END {for (i = 1; i <= m; i++) printf "%-10s scene %s (%s)%s\n", s[o[i]], o[i], e[o[i]], w[o[i]]; exit x}' /tmp/svrngs-check.$$ $(ls target/scenes/*/never-ran.txt target/scenes/*/could-not-judge.txt 2>/dev/null) || failed=1
   # The conformance canary (DESIGN §5; u5-2): apps/web-conformance, lent by
   # two computers, opened from a computer and from a phone, each app at an
@@ -138,6 +144,11 @@ if [ -f Cargo.toml ]; then
     cut -f1,2,4,5,7,8 target/conformance/seeks-*.tsv | sed 's/^/           /'
     awk -F'\t' -v cores="$(getconf _NPROCESSORS_ONLN)" '{n++; l+=$5=="failed"; s+=$8=="failed"; split($10, a, "averages?: "); hot+=a[2]+0>cores} END {printf "           of %d here since %s: %d missed 5 s through a lend, %d straight; %d ended at a load above %d cores\n", n, f, l, s, hot, cores} NR==1 {f=substr($9,1,20)}' target/seeks-webkit.log
   else echo "never-ran  WebKit's seeks back to back, a rate: nothing kept"; failed=1; fi
+  # Every test above that drives a page, again on v2, each test's verdict
+  # in target/parity/verdicts.tsv (page-parity (d)), so v2 cannot slip back
+  # before page-switchover makes it the pages. Its 514 s is its one passing
+  # run (demo/runs/page/2026-11-01-parity/). Under this run's gate lock.
+  step "parity" env PARITY_LOCKED=1 SVRNGS_UI=v2 bash scripts/parity.sh
 else
   echo "never-ran  rustfmt, clippy, tests: no Cargo workspace yet"; failed=1
 fi

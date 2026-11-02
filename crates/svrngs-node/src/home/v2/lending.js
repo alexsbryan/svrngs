@@ -46,9 +46,15 @@ function Lent({ l, signs, home }) {
   const act = (words, on) => html`<${Act} words=${words} doing=${{ state: s.at.change === 'changing' ? 'busy' : 'idle' }} on=${on} send=${send} />`;
   return html`<li>${`${l.name}: ${n ? `up to ${n} ${n === 1 ? 'person' : 'people'}` : 'everyone in your groups'} at once, ${l.using} using it now. `}<${Field} words="How many people at once: " value=${value} attrs=${{ type: 'number', min: 1 }} send=${send} />${act('Let in this many', { type: 'many', value })}${n && act('Let everyone in', { type: 'change', to: { limit: null } })}${signs ? 'Signs people in with svrngs. ' : act('Sign people in with svrngs', { type: 'sign' })}${act('Stop lending', { type: 'change', to: 'stop' })}${s.said}${s.shown && signed(s.shown)}</li>`;
 }
-function Lending({ round, home }) {
+// HOME's: the page's foot held until what you lend is first read, as v1
+// drew its address after it (h:326-328): drawn at once, a driver read the
+// list empty (main.rs:2524 on v2).
+export const take = (s) => go(s, {}, { lentRead: true });
+export const holds = (s) => s.groups.length > 0 && !s.lentRead;
+function Lending({ round, home, told }) {
   const [s, send] = useMachine(() => machine('LENDING', LENDING, { at: { lent: 'reading' } }));
   useEffect(() => send({ type: 'read' }), [round]);
+  useEffect(() => void (!told && s.at.lent !== 'reading' && home({ type: 'told', flow: 'lending', why: `what you lend is ${s.at.lent}` })), [s.at.lent]);
   return html`<section id="lent"><h2>What you lend</h2>${s.at.lent === 'unread' ? html`<p>This computer cannot read what you lend: ${s.why}</p>` : s.lent && html`${!s.lent.length && html`<p>You lend nothing yet.</p>`}<ul>${s.lent.map((l) => html`<${Lent} key=${l.name} l=${l} signs=${s.signing.includes(l.name)} home=${home} />`)}</ul>`}</section>`;
 }
-export const view = { lent: ({ s, home }) => s.groups.length > 0 && html`<${Lending} round=${s.round} home=${home} />` };
+export const view = { lent: ({ s, home }) => s.groups.length > 0 && html`<${Lending} round=${s.round} home=${home} told=${s.lentRead} />` };
