@@ -597,13 +597,13 @@ brackets.
     - Each bar has its chance written beside it.
     - `NEEDS_HUMAN.md` gives the operator's steps, then stop. The results are told to the watching session, which writes `README.md` there.
   - **Plant:** a v1 test left failing on v2 makes `parity.sh` exit 1, naming it, and the `parity` step fail.
-- [ ] HUMAN-page-switchover — depends [page-parity] — THE OPERATOR:
+- [x] HUMAN-page-switchover — depends [page-parity] — THE OPERATOR (go, 2026-11-01: "Ok let's do the switchover all in one commit so it's easy to bisect"; the iPhone run was not played before the go, so PREDICTIONS.md's bars stand never-ran until HUMAN-page-deploy's play on the live page; the raise is set after (a)'s pass, from `NEEDS_HUMAN.md`):
   - reads the parity record and the iPhone run;
   - if they choose, uses v2 on their own computer (a test build's node with `--ui v2`) and on their iPhone (`node web/tests/serve.mjs` over `target/web/site-v2`);
   - says go, or names what is owed.
 
   The switchover's raise, if page-parity's (f) found one, is set here or after the pass.
-- [ ] page-switchover — depends [HUMAN-page-switchover] — ONE ROW, the swap in ONE commit so no tree holds half, any economizing commits before it, and `scripts/check.sh` once, at the close — v2 becomes the pages, and v1 goes:
+- [ ] page-switchover — depends [HUMAN-page-switchover] — ONE ROW, the swap in ONE commit so no tree holds half and a bisect lands on v1 or v2, never between (the operator, 2026-11-01), any economizing commits before it, each green on `parity.sh`, and `scripts/check.sh` once, at the close — v2 becomes the pages, and v1 goes:
   - **(a) The pass first,** whenever page-parity's (f) is over.
     - Write `demo/runs/economize/<date>-page-switchover/SURVEY.md`.
     - Its first candidates are the primitives the feature rows wrote apart (PROMPT fence 8), and the near-duplicates across the two pages: `~/dev/commonwealth-ai/target/debug/sovereign-cli code dry-report --scope <dir>` for `web/v2` and `crates/svrngs-node/src/home`. Each is folded into `ui/parts.js` with its case in `parts.test.mjs`.
