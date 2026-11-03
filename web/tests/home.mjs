@@ -122,7 +122,7 @@ try {
   // read in (js-webkit (d)): they hold `w`, if given, and no "…", and no
   // machine is still at work by its trace, `window.__lines`. A frame
   // between two of a press's reads can hold no "…": while a new group is
-  // read, what acts as you is not drawn (page/acts.js `Acting`), and a
+  // read, what acts as you is not drawn (page/acting.js `Acting`), and a
   // press was read there, its group's heading drawn with nothing under it
   // (demo/runs/webkit-wall/2026-11-03/home-group-held.txt).
   const rest = ([s, w]) => {

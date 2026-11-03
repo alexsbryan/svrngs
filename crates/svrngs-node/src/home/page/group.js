@@ -138,7 +138,7 @@ export const offered = (flows, state, message, flow = flows[message.flow]) =>
 // Each place of a group's section, in v1's order (home.js@19b63b2b:116-232): the
 // index, its people, its folder, the links made here, leaving, removals,
 // who is visiting, the shelf, what is open to this WiFi, and its link to a screen (`show`);
-// then what it read, told to HOME for "What acts as you" (home/page/acts.js `Told`), drawing nothing.
+// then what it read, told to HOME for "What acts as you" (home/page/group-told.js `GroupTold`), drawing nothing.
 const PLACES = /** @type {const} */ ([
   'index',
   'people',
