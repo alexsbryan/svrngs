@@ -219,7 +219,7 @@ export function machine(name, { states, step, io }, state, first = []) {
   // (ui/trace.js), as web/store.js:88 traces to it too.
   /** @param {Message} message */
   function dispatch(message) {
-    const { state: next, effects = [], refused } = step(state, message);
+    const { state: next, effects, refused } = step(state, message);
     const why = refusal(refused, next);
     if (why)
       return globalThis.__trace?.(`${name}: ${message.type} refused in ${where(state)}: ${why}`);

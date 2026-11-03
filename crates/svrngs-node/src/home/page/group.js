@@ -303,6 +303,14 @@ const BACKUP = {
  * @property {string} [joined]
  */
 
+// The colour a group is drawn in on every page, one of look.css's twelve
+// `data-colour`s, derived from its id.
+/** @param {string} id */
+export const colour = (id) => {
+  let hash = 0;
+  for (const char of id) hash = (hash * 31 + char.charCodeAt(0)) % 12;
+  return hash;
+};
 // The section, in its group's colour, derived from its id (look.css
 // `data-colour`), headed by its name and whose it is (#138); when this
 // computer meets the group at its fallback, said under it (surface.rs
@@ -324,7 +332,7 @@ const below = (group, name, props) => {
 /** @param {GroupProps} props */
 export const Group = ({ g: group, ...props }) =>
   ((name) =>
-    html`<section data-colour=${[...group.id].reduce((hash, char) => (hash * 31 + char.charCodeAt(0)) % 12, 0)}><h2>${group.name ?? 'A group whose name this computer cannot read'}${group.made && html`<small> (${whose(group.made)})</small>`}</h2>${group.fallback && html`<p class="said">${BACKUP[group.fallback](name)}</p>`}${below(group, name, props)}</section>`)(
+    html`<section data-colour=${colour(group.id)}><h2>${group.name ?? 'A group whose name this computer cannot read'}${group.made && html`<small> (${whose(group.made)})</small>`}</h2>${group.fallback && html`<p class="said">${BACKUP[group.fallback](name)}</p>`}${below(group, name, props)}</section>`)(
     group.name ?? 'this group',
   );
 /** @param {GroupProps} props */

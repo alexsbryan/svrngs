@@ -212,7 +212,7 @@ async function holding() {
       `RUNTIME: the pass for ${OWN} ${handed ? 'read from this origin’s store' : 'is not kept here'}`,
     );
   } catch (error) {
-    trace(`RUNTIME: this origin's store cannot be read here: ${error}`);
+    trace(`RUNTIME: this origin's store cannot be read here: ${String(error)}`);
   }
   return handed;
 }
@@ -878,7 +878,7 @@ async function appended(lend, named) {
         app_act(lend.kind, new TextEncoder().encode(JSON.stringify(act))),
     );
   } catch (error) {
-    trace(`RUNTIME: ${what}'s acts are not a list: ${error}`);
+    trace(`RUNTIME: ${what}'s acts are not a list: ${String(error)}`);
   }
   if (!handed.writes || !acts?.every(Boolean)) {
     trace(
@@ -990,7 +990,7 @@ async function writeSigned(lend, group, act, grant) {
     res = await carried(lend);
   } catch (error) {
     dials.delete(lend.key);
-    trace(`RUNTIME: lines not carried: ${error}`);
+    trace(`RUNTIME: lines not carried: ${String(error)}`);
     return Response.json(
       {
         error: `${lend.person}’s computer did not answer. It is kept on this phone and goes with your next entry`,
@@ -1179,7 +1179,7 @@ async function stopping(label) {
     ).fetch('POST', `/choices/${label}`, headers, new Blob([body]).stream());
   } catch (error) {
     dials.delete(lend.key);
-    trace(`RUNTIME: the stop for ${label} failed: ${error}`);
+    trace(`RUNTIME: the stop for ${label} failed: ${String(error)}`);
     return say(502, 'The computer lending this did not answer. Try again later.', 'away');
   }
 }
@@ -1228,6 +1228,9 @@ function appWorker(code) {
       return target[property];
     },
   });
+  // The app's own worker, run as its code: the one way a worker runs a script
+  // it has as text, in the scope above.
+  // oxlint-disable-next-line typescript/no-implied-eval
   new Function('self', 'addEventListener', 'skipWaiting', 'fetch', code)(
     scope,
     own.addEventListener,
@@ -1331,7 +1334,7 @@ const traceShown = () =>
   if (typeof cookie === 'string') return event.waitUntil(cookieKept(cookie, reply));
   if (typeof worker === 'string') return event.waitUntil(workerRun(worker, reply));
   if (asked && reply) return event.waitUntil(socket(asked, reply));
-  trace(`RUNTIME: a message that hands over nothing, refused: ${Object.keys(data)}`);
+  trace(`RUNTIME: a message that hands over nothing, refused: ${Object.keys(data).join(',')}`);
 });
 
 /** @param {Client | null} source */
@@ -1509,7 +1512,7 @@ async function switched({ url, protocols }, port) {
     // The dial let go, as `lent` does, so the next socket dials the
     // computer afresh once it answers again (demo/runs/doc/2026-10-20/found/).
     dials.delete(lend.key);
-    trace(`RUNTIME: a socket at ${where.path} failed: ${error}`);
+    trace(`RUNTIME: a socket at ${where.path} failed: ${String(error)}`);
     port.postMessage({ closed: 1006, reason: String(error) });
     return null;
   }
@@ -1544,7 +1547,7 @@ async function relayed(reader, writer, port) {
     buf = Uint8Array.from([...buf, ...value]);
     for (let arrived = frameAt(buf); arrived; arrived = frameAt(buf)) {
       buf = arrived.rest;
-      if (arrived.op === 9) writer.write(frame(10, arrived.data));
+      if (arrived.op === 9) void writer.write(frame(10, arrived.data));
       if (arrived.op === 8) return closedBy(arrived.data, writer, port);
       parts = gathered(parts, arrived, port);
     }

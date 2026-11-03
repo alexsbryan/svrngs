@@ -107,6 +107,8 @@
       return response;
     });
   };
+  // Unbound on purpose: it is called by `apply` below, with the request as `this`.
+  // oxlint-disable-next-line typescript/unbound-method
   const opened = XMLHttpRequest.prototype.open;
   // Either of `open`'s two forms, `async` and after it optional.
   /** @param {[string, string | URL, boolean?, (string | null)?, (string | null)?]} args */
@@ -195,7 +197,8 @@
     send(data) {
       if (this.readyState !== 1)
         throw new DOMException('the socket is not open', 'InvalidStateError');
-      if (data instanceof Blob) data.arrayBuffer().then((send) => this.port.postMessage({ send }));
+      if (data instanceof Blob)
+        void data.arrayBuffer().then((send) => this.port.postMessage({ send }));
       // A typed array's `slice`; a DataView has none, and throws here.
       else
         this.port.postMessage({

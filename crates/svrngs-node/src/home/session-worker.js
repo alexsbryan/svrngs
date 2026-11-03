@@ -105,6 +105,9 @@ async function authenticated(request, intent = false) {
           },
         },
       );
+      // The app's own worker, run as its code: the one way a worker runs a
+      // script it has as text, in the scope above.
+      // oxlint-disable-next-line typescript/no-implied-eval
       new Function('self', 'addEventListener', 'fetch', await res.text())(scope, on, fetched);
       app = listeners.fetch;
       for (const listener of [...listeners.install, ...listeners.activate])

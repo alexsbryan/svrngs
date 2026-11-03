@@ -549,7 +549,7 @@ const lends = (core, group, tried) =>
         trace(
           `PAGE: ${PEOPLE_LENDS} failed through ${whoseComputer(via)}, so the next to answer is asked: ${error}`,
         );
-        dialled.close();
+        void dialled.close();
         return lends(core, group, [...tried, via?.key ?? core.issuer_of(group.token)]).catch(() =>
           Promise.reject(error),
         );
@@ -651,7 +651,7 @@ export const io = {
   // Asked on each open, never awaited, so a browser asking its person first holds nothing (app.js@19b63b2b:417-421).
   open: ({ group }) =>
     store.opened(group).then(async (opened) => {
-      store
+      void store
         .persist()
         .catch((error) => `asking the browser to keep the page's storage failed: ${error}`)
         .then((line) => trace(`PAGE: ${line}`));

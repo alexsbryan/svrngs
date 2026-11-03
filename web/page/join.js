@@ -290,7 +290,7 @@ async function posted(core, token, { path, body }, refused = joining) {
         refusal(refused(res.status, text), res.status)),
       );
 }
-const unjoined = (/** @type {{ said?: string }} */ error) =>
+const unjoined = (/** @type {Error & { said?: string }} */ error) =>
   /** @satisfies {PageMessage} */ ({
     type: 'unjoined',
     said: error.said,

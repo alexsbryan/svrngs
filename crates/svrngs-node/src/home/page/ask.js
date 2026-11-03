@@ -61,7 +61,7 @@ const lentIn = (groups) =>
             (lend) => lend.lent,
             () => [],
           )
-        : [],
+        : Promise.resolve([]),
     ),
   ).then((answers) => answers.flat());
 // The app at `back`, kept only on its own origin, as open.js judges its way back (home.js@19b63b2b:233-236).

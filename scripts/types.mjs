@@ -35,16 +35,16 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
+export const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const require = createRequire(join(ROOT, 'web', 'package.json'));
 const ts = require('typescript');
 
 const VERSION = /\?v=__VERSION__$/;
 const SESSION = join(ROOT, 'crates/svrngs-node/src/home/session.js');
-const GLUE = join(ROOT, 'target/web/site/wasm/svrngs_web.js');
+export const GLUE = join(ROOT, 'target/web/site/wasm/svrngs_web.js');
 
 /** The file a specifier's URL is served from, as a specifier tsc can resolve. */
-function served(specifier) {
+export function served(specifier) {
   const url = specifier.replace(VERSION, '');
   if (url === '/svrngs-session.js') {
     return SESSION;
@@ -56,8 +56,20 @@ function served(specifier) {
 }
 
 // The exit status is set, never `process.exit`ed, so a long list of errors
-// reaches a pipe whole before node ends.
-process.exitCode = check();
+// reaches a pipe whole before node ends. Imported (scripts/typed-lint.mjs
+// reads `served`), it checks nothing.
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  process.exitCode = check();
+}
+
+/**
+ * The files config `name` names, as tsc reads it.
+ * @param {string} name
+ */
+export function filesOf(name) {
+  const read = ts.readConfigFile(join(ROOT, name), ts.sys.readFile);
+  return ts.parseJsonConfigFileContent(read.config, ts.sys, ROOT).fileNames;
+}
 
 /** Every error both programs' files hold, printed: 0 for none, else 1. */
 function check() {

@@ -226,7 +226,7 @@ export const take = (state, message, [asked, serial] = ask(state, 'groups')) =>
         { asked, q: { ...state.q, left: message.name } },
         { run: 'groups', n: serial, round: 'again', failed: 'unread' },
       )
-    : no(state, `leaving takes no ${message.type}`);
+    : no(state, `leaving takes no ${String(message.type)}`);
 /** @type {{ leave: (props: PlaceProps) => Drawn }} */
 export const view = {
   leave: ({ g: group, s: state, home, me }) =>

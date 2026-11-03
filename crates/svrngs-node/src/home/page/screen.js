@@ -20,7 +20,7 @@ import { html, useMachine } from '../ui/view.js?v=__VERSION__';
 import { ask, assertNever, go, late, machine, no } from '../ui/machine.js?v=__VERSION__';
 import { counted, Door } from '../ui/door.js?v=__VERSION__';
 import { called, whose } from '../question.js?v=__VERSION__';
-import { get } from './group.js?v=__VERSION__';
+import { colour, get } from './group.js?v=__VERSION__';
 /** @import { Group, Lends, Lent, PlaceProps } from './group.js?v=__VERSION__' */
 /** @import { Machine } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
@@ -217,7 +217,7 @@ function Screen({ s: { groups, q: query } }) {
   if (!here)
     return html`<p>This computer cannot show that group on a screen: you are not in it here.</p>`;
   const count = countLine(state, group);
-  return html`<section data-colour=${[...group.id].reduce((hash, char) => (hash * 31 + char.charCodeAt(0)) % 12, 0)}><h2>${group.name ?? 'A group whose name this computer cannot read'}${group.made && html`<small> (${whose(group.made)})</small>`}</h2><p>${count}</p><div>${state.rows && html`<${Door} rows=${state.rows} lent=${/** @type {Lends} */ (state.lends).lent} lends=${state.lends} newest=${state.newest} />`}</div><aside><h2>Since this screen opened</h2><p>Kept on this screen only: it starts over when the screen is opened again.</p><ol>${state.since.map(([tone, words], i) => html`<li><time>${tone}</time> ${words} ${i === 0 && html`<mark>new</mark>`}</li>`)}</ol><p>Nothing new yet. Who joins, and what they lend, shows here as it happens.</p></aside><footer><p>Lit: answered just now. Dashed: did not answer. Dotted: in from a phone.</p><p>Each thing lent opens in a tab as ${group.person}, from this computer.</p></footer></section>`;
+  return html`<section data-colour=${colour(group.id)}><h2>${group.name ?? 'A group whose name this computer cannot read'}${group.made && html`<small> (${whose(group.made)})</small>`}</h2><p>${count}</p><div>${state.rows && html`<${Door} rows=${state.rows} lent=${/** @type {Lends} */ (state.lends).lent} lends=${state.lends} newest=${state.newest} />`}</div><aside><h2>Since this screen opened</h2><p>Kept on this screen only: it starts over when the screen is opened again.</p><ol>${state.since.map(([tone, words], i) => html`<li><time>${tone}</time> ${words} ${i === 0 && html`<mark>new</mark>`}</li>`)}</ol><p>Nothing new yet. Who joins, and what they lend, shows here as it happens.</p></aside><footer><p>Lit: answered just now. Dashed: did not answer. Dotted: in from a phone.</p><p>Each thing lent opens in a tab as ${group.person}, from this computer.</p></footer></section>`;
 }
 
 /** @type {{ screen: (props: HOME.PlaceProps) => Drawn, show: (props: PlaceProps) => Drawn }} */
