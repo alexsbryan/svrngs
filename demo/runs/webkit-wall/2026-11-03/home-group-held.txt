@@ -1,0 +1,110 @@
+js-webkit (d): the home_group read race, reproduced with a held read and fixed in web/tests/home.mjs.
+All runs at 5b6aad07 on this Mac under `lockf -k /tmp/svrngs-gate.lock`, 1-minute load 6.6-8.9.
+
+The held read (scratch, never committed): every GROUP `get` and ACTS's `/reaching` read wait 2 s.
+diff --git a/crates/svrngs-node/src/home/page/acts.js b/crates/svrngs-node/src/home/page/acts.js
+index f5bb6166..cbddaf43 100644
+--- a/crates/svrngs-node/src/home/page/acts.js
++++ b/crates/svrngs-node/src/home/page/acts.js
+@@ -186,7 +186,7 @@ const ACTS = {
+   io: {
+     read: ({ n, asking }) =>
+       Promise.all([
+-        get('/reaching').catch((e) => ({ why: e.message })),
++        new Promise((r) => setTimeout(r, 2000)).then(() => get('/reaching')).catch((e) => ({ why: e.message })),
+         ...asking.map((l) =>
+           get(`/choices?lend=${l}`).then(
+             /** @returns {[string, Asked]} */ ({ choices }) => [l, { choices }],
+diff --git a/crates/svrngs-node/src/home/page/group.js b/crates/svrngs-node/src/home/page/group.js
+index 26e6ff8f..19d7ac81 100644
+--- a/crates/svrngs-node/src/home/page/group.js
++++ b/crates/svrngs-node/src/home/page/group.js
+@@ -249,7 +249,7 @@ const GROUP = (flows) => ({
+   },
+   io: {
+     get: ({ kind, n, id }) =>
+-      get(`${ROUTES[kind]}?namespace=${encodeURIComponent(id)}`).then(
++      new Promise((r) => setTimeout(r, 2000)).then(() => get(`${ROUTES[kind]}?namespace=${encodeURIComponent(id)}`)).then(
+         (body) => ({ type: 'answered', kind, n, body, why: `${kind} ${n}` }),
+         (e) => ({ type: 'unread', kind, n, why: e.message }),
+       ),
+
+To see the frames, home.mjs (scratch, never committed) had `settled` answer the frame it passed on
+({ at: performance.now(), text, lines: window.__lines }) and read `window.__lines` again just after
+each non-`stays` press's read; both went out as `frames`.
+
+1. GROUP's get held alone (target/jw/held-old-2.txt):
+   cargo test -p svrngs --test home_group -- webkit the_home_page_makes --nocapture
+   -> 2 passed, 1 failed: makes_a_group...::chromium at home_group.rs:205, as js-webkit-5's gate did.
+   WebKit passed: its first frame with no "…" came after every group was told.
+
+2. GROUP's get and ACTS's read held, the old `settled` (target/jw/held-old-4.txt):
+   cargo test -p svrngs --test home_group -- the_home_page_makes the_home_page_joins --nocapture
+   -> 0 passed, 4 failed: joins_...::{chromium,webkit} at home_group.rs:334, makes_...::{chromium,webkit}
+   at home_group.rs:205, the two lines the gates since (c) failed on.
+
+   The frames for the two WebKit tests, read from each panic's JSON (the run's logs were under
+   target/jw/, which is not kept; these excerpts are): when each frame was taken, ms since the page
+   opened; whether it drew Trip's folder; the lines in `settled`'s frame and those traced after it:
+
+#### joins_another_group_from_its_link_while_svrngs_runs::webkit
+== settled at 4607 ms, lines 31
+  Trip folder drawn: False | with …: []
+== read at 4616 ms, lines 34
+after[0] with …: [] | Trip folder drawn: False
+after[1] with …: [] | Trip folder drawn: False
+--- the settled frame, its last 8 lines
+GROUP: read: reading/reading -> reading/reading, running get, get
+ACTS: read: reading/idle -> reading/idle, running read
+LENDING: read: reading -> reading, running read
+HOME: read (2 group(s)): rereading/joined -> read/joined
+ROOM: read refused in read: round 1 is read already
+LENDING: answered (0 lent): reading -> read
+LENDING: read: read -> reading, running read
+LENDING: answered (0 lent): reading -> read
+--- traced between the settled frame and the read
+ROOM: read refused in read: round 1 is read already
+GROUP: again: reading/reading -> reading/reading, running get, get
+GROUP: again: reading/reading -> reading/reading, running get, get
+
+#### makes_a_group_another_computer_joins_with_no_restart::webkit
+== settled at 4548 ms, lines 40
+  Trip folder drawn: False | with …: []
+== read at 4556 ms, lines 44
+== settled at 9106 ms, lines 98
+  Trip folder drawn: True | with …: []
+== read at 9123 ms, lines 99
+after[0] with …: [] | Trip folder drawn: False
+after[1] with …: [] | Trip folder drawn: True
+after[2] with …: [] | Trip folder drawn: True
+after[3] with …: [] | Trip folder drawn: True
+--- the settled frame, its last 8 lines
+ACTS: read: reading/idle -> reading/idle, running read
+LENDING: read: reading -> reading, running read
+HOME: read (3 group(s)): rereading/made -> read/made
+ROOM: read refused in read: round 1 is read already
+ROOM: read refused in read: round 1 is read already
+LENDING: answered (0 lent): reading -> read
+LENDING: read: read -> reading, running read
+LENDING: answered (0 lent): reading -> read
+--- traced between the settled frame and the read
+GROUP: again: reading/reading -> reading/reading, running get, get
+GROUP: again: reading/reading -> reading/reading, running get, get
+ROOM: read refused in read: round 1 is read already
+GROUP: again: reading/reading -> reading/reading, running get, get
+
+   So `settled` passed on a frame (`settled at`) with no "…" in it while a GROUP's last step ran its
+   gets and ACTS's ran its read: page/acts.js `Acting` draws nothing while ACTS is reading, so the
+   frame held no "Reading your groups…". The press was read 8 ms later (`read at`), Trip's heading
+   drawn with nothing under it.
+
+3. The fix (web/tests/home.mjs `rest`, `atRest`), the same held read, three runs
+   (target/jw/held-new.txt, -2, -3):
+   cargo test -p svrngs --test home_group -- the_home_page_makes the_home_page_joins
+   -> 4 passed, 0 failed; 4 passed, 0 failed; 4 passed, 0 failed (23.94 s, 23.83 s, 23.78 s).
+
+4. The hold removed, the fix kept, every other driver of home.mjs:
+   cargo test -p svrngs --test home_group --test leave_page --test pages
+   -> 5 passed; 6 passed; 34 passed (target/jw/users.txt)
+   cargo test --quiet -p svrngs-node --test browser
+   -> 94 passed, 0 failed, 2 ignored in 153.07 s at load 12.1 (target/jw/browser.txt)

@@ -219,3 +219,22 @@ Two of the two gates since (c) failed `tests` on this race, each on a
 different `home_group` test, and passed `browser`. The row's pass,
 `scripts/check.sh` exiting 0, waits on the operator's choice in
 `ralph/next/js/NEEDS_HUMAN.md`.
+
+## (d): the race reproduced with a held read, and read at rest
+
+Decided by the row's director (`ralph/next/js/STATE.md`, js-webkit (d)).
+`home-group-held.txt` holds every run. A scratch hold, never committed,
+made each GROUP `get` and ACTS's `/reaching` read wait 2 s. With the old
+`settled`, all four of `home_group`'s make and join tests failed, at
+`home_group.rs:205` and `:334`, the two lines the gates since (c) failed
+on. Their frames show why: `settled` passed on a frame with no "…" while
+GROUP and ACTS were still reading. `page/acts.js` `Acting` draws nothing
+while ACTS reads, so no "Reading your groups…" was there to hold it. The
+press was read 8 ms later, Trip's heading with nothing under it.
+
+The fix is in `web/tests/home.mjs` alone. A `do` press is read once the
+page is at rest (`rest`, `atRest`): `all`'s words, taken in the frame
+that judged them, hold the step's words and no "…", and no machine's
+last traced step runs effects or leaves it reading. With the same hold
+it passed 4 of 4, three times. Without it, `home_group`, `leave_page`,
+`pages` and the `browser` step passed (94 in 153 s, at load 12.1).

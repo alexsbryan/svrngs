@@ -103,7 +103,8 @@ try {
   // has listed what this computer lends (bash-limit (b)); with `stays`, a
   // click that reloads nothing, read once the page has said what happened
   // (start-home) — not while it says it is still asking, "…" (v1ui-lend
-  // (b): what runs here) — and in Chromium the clipboard then.
+  // (b): what runs here) — and in Chromium the clipboard then. Either is
+  // read once the page is at rest (`atRest`, below).
   const after = [];
   let clipboard = null;
   // `all`'s words changed from `b` and no longer "…": what a press says.
@@ -117,6 +118,35 @@ try {
       .join('\n')
       .includes(w);
   const until = (s, w) => w && page.waitForFunction(holds, [s, w], { timeout: 30_000 });
+  // `all`'s words once the page is at rest, judged in the frame they are
+  // read in (js-webkit (d)): they hold `w`, if given, and no "…", and no
+  // machine is still at work by its trace, `window.__lines`. A frame
+  // between two of a press's reads can hold no "…": while a new group is
+  // read, what acts as you is not drawn (page/acts.js `Acting`), and a
+  // press was read there, its group's heading drawn with nothing under it
+  // (demo/runs/webkit-wall/2026-11-03/home-group-held.txt).
+  const rest = ([s, w]) => {
+    const texts = [...document.querySelectorAll(s)].map((e) => e.textContent);
+    const words = texts.join('\n');
+    if (words.includes('…') || (w && !words.includes(w))) return false;
+    // ui/machine.js traces each step `NAME: type: from -> to` and the
+    // effects it runs after `, running`, and a refusal, which changes
+    // nothing, `NAME: type refused in …`. A machine is at work when its
+    // last step runs effects, whose answer is its next step, or leaves it
+    // reading. Machines of one name, a GROUP for each group, are judged
+    // by that name's last step.
+    const steps = new Map();
+    for (const line of window.__lines ?? []) {
+      const step = line.match(/^([A-Z]+): .* -> ([^\s,]+)(, running .*)?$/);
+      if (step && !line.includes(' refused in ')) steps.set(step[1], step);
+    }
+    const working = [...steps.values()].some(
+      ([, , to, running]) => running || to.split('/').some((r) => r.endsWith('reading')),
+    );
+    return !working && texts;
+  };
+  const atRest = async (s, w) =>
+    (await page.waitForFunction(rest, [s, w], { timeout: 30_000 })).jsonValue();
   for (const [selector, value, stays, words] of args.do ?? []) {
     // A value `true` ticks the box (the shelf, its boxes unticked to start).
     if (value === true) {
@@ -136,8 +166,7 @@ try {
         ? page.locator(selector).first().fill(value)
         : page.locator(selector).first().click());
       await page.waitForFunction(settled, [args.all, before], { timeout: 30_000 });
-      await until(args.all, words);
-      after.push(await page.locator(args.all).allTextContents());
+      after.push(await atRest(args.all, words));
       if (args.engine === 'chromium')
         clipboard = await page
           .evaluate(() => navigator.clipboard.readText())
@@ -162,8 +191,7 @@ try {
       .locator('#lent li, #lent p, #home p.none ~ p.address')
       .first()
       .waitFor({ timeout: 30_000 });
-    await until(args.all, words);
-    after.push(await page.locator(args.all).allTextContents());
+    after.push(await atRest(args.all, words));
   }
   // As spike run.mjs shows a page again: hidden, then visible, each said.
   if (args.visible) {
