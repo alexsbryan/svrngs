@@ -3,7 +3,7 @@
 // the group's lends are read, brings by /shelf, then has HOME read the
 // groups again (`again`). It is folded for the group HOME says was just
 // joined here: a link someone joins from opens the page at `?joined=`, given
-// through home.js and group.js as `joined`.
+// through home-page.js and group.js as `joined`.
 import { html } from '../ui/view.js?v=__VERSION__';
 import { Shelf } from '../ui/shelf.js?v=__VERSION__';
 import { post } from './routes.js?v=__VERSION__';

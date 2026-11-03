@@ -9,14 +9,14 @@ import { Leave } from './leave-group.js?v=__VERSION__';
 /** @import { Taken as Offered } from './offered.js?v=__VERSION__' */
 /** @import { Step } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
-/** @import * as HOME from '../home.js?v=__VERSION__' */
+/** @import * as HOME from './home-reading.js?v=__VERSION__' */
 
 /**
  * HOME's message this file takes: a group left, by its name.
  * @typedef {{ type: 'left', flow: 'leave', name: string }} Taken
  */
 
-// HOME's `left`: the leave said (home.js SAYS `left`), the groups read again.
+// HOME's `left`: the leave said (home-page.js SAID `left`), the groups read again.
 // Any message to this flow is offered here (offered.js), so one of
 // another type is refused.
 /**

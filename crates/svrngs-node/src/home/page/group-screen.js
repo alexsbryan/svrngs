@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // A group on a screen, for a TV, a spare laptop or a projector: opened in
 // a tab of its own at `/?screen=<its id>` (screen-link.js), where HOME
-// draws this alone (home.js `Home`). Its door alone, big, each person's
+// draws this alone (home-page.js `Home`). Its door alone, big, each person's
 // lends in their window (ui/door.js), read by SCREEN (on-screen.js), with
 // what arrived since it opened beside it (since-opened.js).
 import { html, useMachine } from '../ui/view.js?v=__VERSION__';
@@ -13,7 +13,7 @@ import { SCREEN } from './on-screen.js?v=__VERSION__';
 import { SinceOpened } from './since-opened.js?v=__VERSION__';
 /** @import { Group, Lends } from './group.js?v=__VERSION__' */
 /** @import { Effect, State } from './on-screen.js?v=__VERSION__' */
-/** @import { PlaceProps } from '../home.js?v=__VERSION__' */
+/** @import { PlaceProps } from './home-reading.js?v=__VERSION__' */
 
 /**
  * @param {number} count
@@ -41,7 +41,7 @@ const countLine = (state, group) => {
 
 /** @param {PlaceProps} props */
 export function Screen({ s: { groups, q: query } }) {
-  // HOME draws the screen once the groups are read (home.js `Home`).
+  // HOME draws the screen once the groups are read (home-page.js `Home`).
   const group = /** @type {Group[]} */ (groups).find((one) => one.id === query.screen);
   const here = group && !group.left && group.removed === false;
   const [state] = useMachine(() => {

@@ -6,7 +6,7 @@ import { Screen } from './group-screen.js?v=__VERSION__';
 import { ScreenLink } from './screen-link.js?v=__VERSION__';
 /** @import { PlaceProps } from './group.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
-/** @import * as HOME from '../home.js?v=__VERSION__' */
+/** @import * as HOME from './home-reading.js?v=__VERSION__' */
 
 /** @type {{ screen: (props: HOME.PlaceProps) => Drawn, show: (props: PlaceProps) => Drawn }} */
 export const view = { screen: Screen, show: ScreenLink };

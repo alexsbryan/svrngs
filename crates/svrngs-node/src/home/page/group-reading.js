@@ -29,7 +29,7 @@ import { get } from './routes.js?v=__VERSION__';
  */
 
 /**
- * A round of reading, by HOME's message that began it (home.js `reading`).
+ * A round of reading, by HOME's message that began it (home-reading.js `reading`).
  * @typedef {{ type: 'read' | 'again' | 'visible' }} Round
  */
 

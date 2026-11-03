@@ -8,7 +8,7 @@ import { Act, Field } from '../ui/parts.js?v=__VERSION__';
 import { CHANGE } from './lend-change.js?v=__VERSION__';
 import { SigningOn } from './signing-on.js?v=__VERSION__';
 /** @import { Lend } from '../question.js?v=__VERSION__' */
-/** @import * as HOME from '../home.js?v=__VERSION__' */
+/** @import * as HOME from './home-reading.js?v=__VERSION__' */
 
 /**
  * A lend's row: the lend, whether it signs people in with svrngs, and

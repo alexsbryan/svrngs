@@ -12,7 +12,7 @@ import { assertNever, go } from '../ui/machine.js?v=__VERSION__';
 import { ENDED, sent } from './routes.js?v=__VERSION__';
 /** @import { Home } from './group.js?v=__VERSION__' */
 /** @import { Machine } from '../ui/machine.js?v=__VERSION__' */
-/** @import * as HOME from '../home.js?v=__VERSION__' */
+/** @import * as HOME from './home-reading.js?v=__VERSION__' */
 
 /**
  * The node's answer to a leave or a hand-on (removal.rs `Outcome`, by its

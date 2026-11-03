@@ -11,7 +11,7 @@
 import { assertNever, go, no } from '../ui/machine.js?v=__VERSION__';
 import { post } from './routes.js?v=__VERSION__';
 /** @import { Machine, Step } from '../ui/machine.js?v=__VERSION__' */
-/** @import * as HOME from '../home.js?v=__VERSION__' */
+/** @import * as HOME from './home-reading.js?v=__VERSION__' */
 
 /**
  * The app form's fill, the one time signing people in is turned on

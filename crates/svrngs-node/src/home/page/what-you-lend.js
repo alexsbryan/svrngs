@@ -7,7 +7,7 @@ import { html, useEffect, useMachine } from '../ui/view.js?v=__VERSION__';
 import { machine } from '../ui/machine.js?v=__VERSION__';
 import { LENDING } from './lent-read.js?v=__VERSION__';
 import { Lent } from './lent-row.js?v=__VERSION__';
-/** @import * as HOME from '../home.js?v=__VERSION__' */
+/** @import * as HOME from './home-reading.js?v=__VERSION__' */
 
 /**
  * The list, read again on each of HOME's rounds: the round, HOME's

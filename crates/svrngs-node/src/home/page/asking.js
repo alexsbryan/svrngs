@@ -10,7 +10,7 @@ import { label } from '../question.js?v=__VERSION__';
 import { get, post } from './routes.js?v=__VERSION__';
 /** @import { Group, Lent } from './group.js?v=__VERSION__' */
 /** @import { Machine } from '../ui/machine.js?v=__VERSION__' */
-/** @import { Said } from '../home.js?v=__VERSION__' */
+/** @import { Said } from './home-reading.js?v=__VERSION__' */
 
 /**
  * The ask's state: where it is, what was last said of it, and, once the
@@ -75,7 +75,7 @@ const leave = (app, back) => {
 };
 
 /**
- * ASK, for the ask the address names (home.js `Said`).
+ * ASK, for the ask the address names (home-reading.js `Said`).
  * @param {Said} asked
  * @returns {Machine<State, Message, Effect>}
  */

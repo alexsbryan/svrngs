@@ -11,7 +11,7 @@ import { get, post } from './routes.js?v=__VERSION__';
 /** @import { Machine } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Asked } from '../ui/uses.js?v=__VERSION__' */
 /** @import { Change } from '../ui/changes.js?v=__VERSION__' */
-/** @import * as HOME from '../home.js?v=__VERSION__' */
+/** @import * as HOME from './home-reading.js?v=__VERSION__' */
 
 /**
  * What the person said of an app reaching their friends' lends as them,

@@ -24,7 +24,7 @@ import * as play from './play.js?v=__VERSION__';
 /** @import { Change } from '../ui/changes.js?v=__VERSION__' */
 /** @import { Acted, Choice, Message, State, Yes } from './acts-read.js?v=__VERSION__' */
 /** @import { Told } from './acts.js?v=__VERSION__' */
-/** @import * as HOME from '../home.js?v=__VERSION__' */
+/** @import * as HOME from './home-reading.js?v=__VERSION__' */
 
 const NOTES = {
   opens: 'Each Stop holds from the app’s next request.',
@@ -76,7 +76,7 @@ export function Acting({ s: homeState, home }) {
       said: {},
     }),
   );
-  // HOME draws the section once the groups are read (home.js `Home`).
+  // HOME draws the section once the groups are read (home-page.js `Home`).
   const groups = /** @type {Group[]} */ (homeState.groups).filter(
     (group) => !group.left && group.removed === false,
   );

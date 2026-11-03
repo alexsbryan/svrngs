@@ -12,7 +12,7 @@ import { ask, assertNever, go, late, no } from '../ui/machine.js?v=__VERSION__';
 import { namesakes } from '../question.js?v=__VERSION__';
 import { get, post } from './routes.js?v=__VERSION__';
 /** @import { Machine, Step } from '../ui/machine.js?v=__VERSION__' */
-/** @import * as HOME from '../home.js?v=__VERSION__' */
+/** @import * as HOME from './home-reading.js?v=__VERSION__' */
 
 /**
  * HOME's message this file takes: a group made, by its name, the groups

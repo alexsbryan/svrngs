@@ -11,7 +11,7 @@ import { GroupTold } from './group-told.js?v=__VERSION__';
 /** @import { PeopleRow } from '../question.js?v=__VERSION__' */
 /** @import { Step } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
-/** @import * as HOME from '../home.js?v=__VERSION__' */
+/** @import * as HOME from './home-reading.js?v=__VERSION__' */
 
 /**
  * The fields of HOME's that `take` sets: whether "What acts as you" is
@@ -45,14 +45,14 @@ export const take = (state, message) => {
   return go(state, {}, { told: { ...state.told, [message.id]: told } });
 };
 
-// The page's foot held until the section has read (home.js `Home`).
-// HOME asks once the groups are read (home.js `Home`).
+// The page's foot held until the section has read (home-page.js `Home`).
+// HOME asks once the groups are read (home-page.js `Home`).
 /** @param {HOME.State} state */
 export const holds = (state) => /** @type {Group[]} */ (state.groups).length > 0 && !state.actsRead;
 
 /** @param {HOME.PlaceProps} props */
 function ActsPlace({ s: state, home }) {
-  // HOME draws its places once the groups are read (home.js `Home`).
+  // HOME draws its places once the groups are read (home-page.js `Home`).
   if (/** @type {Group[]} */ (state.groups).length === 0) return false;
   return html`<${Acting} s=${state} home=${home} />`;
 }

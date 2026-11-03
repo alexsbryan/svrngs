@@ -9,7 +9,7 @@ import { machine } from '../ui/machine.js?v=__VERSION__';
 import { Act, Field } from '../ui/parts.js?v=__VERSION__';
 import { FIRST, MAKE } from './make.js?v=__VERSION__';
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
-/** @import { PlaceProps } from '../home.js?v=__VERSION__' */
+/** @import { PlaceProps } from './home-reading.js?v=__VERSION__' */
 
 // Each field's name is a field of MAKE's `State`, by which `state[name]`
 // reads what was typed in it.

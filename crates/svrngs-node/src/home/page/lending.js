@@ -10,7 +10,7 @@ import { go } from '../ui/machine.js?v=__VERSION__';
 import { Lending } from './what-you-lend.js?v=__VERSION__';
 /** @import { Step } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
-/** @import * as HOME from '../home.js?v=__VERSION__' */
+/** @import * as HOME from './home-reading.js?v=__VERSION__' */
 
 /**
  * The field of HOME's that `take` sets: whether what you lend is read.
@@ -30,14 +30,14 @@ import { Lending } from './what-you-lend.js?v=__VERSION__';
  */
 export const take = (state) => go(state, {}, { lentRead: true });
 
-// Asked only past the groups' read (home.js `Home`, `held`, past its first
+// Asked only past the groups' read (home-page.js `Home`, `held`, past its first
 // `return`), so `state.groups` is read.
 /** @param {HOME.State} state */
 export const holds = (state) => /** @type {Groups} */ (state.groups).length > 0 && !state.lentRead;
 
 /** @param {HOME.PlaceProps} props */
 function LendingPlace({ s: state, home }) {
-  // HOME draws its places once the groups are read (home.js `Home`).
+  // HOME draws its places once the groups are read (home-page.js `Home`).
   if (/** @type {Groups} */ (state.groups).length === 0) return false;
   return html`<${Lending} round=${state.round} home=${home} told=${state.lentRead} />`;
 }

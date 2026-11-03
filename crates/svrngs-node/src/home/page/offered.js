@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // A message to a feature of the home page, by `message.flow`, its file's
 // name in home/page/, taken by that file's `take` or refused by name. HOME
-// (home.js) and each group's GROUP (group-reading.js) offer a message no
+// (home-reading.js) and each group's GROUP (group-reading.js) offer a message no
 // case of theirs takes.
 import { no } from '../ui/machine.js?v=__VERSION__';
 /** @import { Effect as AnyEffect, Step } from '../ui/machine.js?v=__VERSION__' */
 
 /**
  * A message to a feature, `flow` its file's name in home/page/, which that
- * file's `take` takes (home.js).
+ * file's `take` takes (home-reading.js FILES).
  * @typedef {{ type: string, flow: string }} Taken
  */
 

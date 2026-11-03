@@ -4,11 +4,11 @@
 import { html } from '../ui/view.js?v=__VERSION__';
 import { Open } from './link-box.js?v=__VERSION__';
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
-/** @import { PlaceProps } from '../home.js?v=__VERSION__' */
+/** @import { PlaceProps } from './home-reading.js?v=__VERSION__' */
 
 /** @param {PlaceProps} props */
 function OpenPlace({ s: state }) {
-  // HOME draws its places once the groups are read (home.js `Home`).
+  // HOME draws its places once the groups are read (home-page.js `Home`).
   const groups = /** @type {NonNullable<PlaceProps['s']['groups']>} */ (state.groups);
   if (groups.length === 0) return false;
   return html`<${Open} origin=${state.origin} />`;

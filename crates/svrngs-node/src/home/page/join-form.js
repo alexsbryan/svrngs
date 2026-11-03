@@ -10,7 +10,7 @@ import { machine } from '../ui/machine.js?v=__VERSION__';
 import { Act, Field } from '../ui/parts.js?v=__VERSION__';
 import { FIRST, JOIN, who } from './join.js?v=__VERSION__';
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
-/** @import { PlaceProps } from '../home.js?v=__VERSION__' */
+/** @import { PlaceProps } from './home-reading.js?v=__VERSION__' */
 
 /** @param {PlaceProps} props */
 function JoinForm({ home }) {

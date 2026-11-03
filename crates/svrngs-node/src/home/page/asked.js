@@ -8,10 +8,10 @@ import { machine } from '../ui/machine.js?v=__VERSION__';
 import { question, unlent } from '../question.js?v=__VERSION__';
 import { ASK } from './asking.js?v=__VERSION__';
 /** @import { Group, Lent } from './group.js?v=__VERSION__' */
-/** @import { PlaceProps } from '../home.js?v=__VERSION__' */
+/** @import { PlaceProps } from './home-reading.js?v=__VERSION__' */
 
 // HOME's state, `home`, past its groups' read, as `Home` draws the ask only
-// then (home.js `Home`, past its first `return`), so `home.groups` is read.
+// then (home-page.js `Home`, past its first `return`), so `home.groups` is read.
 /** @param {PlaceProps} props */
 export function Asked({ s: home }) {
   const [state, send] = useMachine(() =>
