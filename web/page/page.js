@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // The phone's one machine, PAGE, composed from its flows, and `Page`, its
-// one root (page-scaffold (e); ralph/next/page/CHARTER.md, settled 4).
+// one root (ralph/next/page/CHARTER.md, settled 4).
 // Each flow module (web/page/<flow>.js) exports `owns` (its fields),
 // `states` (its regions), `takes` (message type -> step), `io`, `view`
 // (place -> part), and `heading` and `response` (slot -> words of state)
@@ -84,7 +84,10 @@ import { Heading } from '../ui/parts.js?v=__VERSION__';
 /**
  * A flow's `send(type, rest)`: the effect sending the message of type `type`,
  * its `rest`, to the flow that takes it.
- * @typedef {<T extends Message['type']>(type: T, ...rest: {} extends Rest<T> ? [rest?: Rest<T>] : [rest: Rest<T>]) => Send} Sender
+ * @typedef {<T extends Message['type']>(
+ *   type: T,
+ *   ...rest: {} extends Rest<T> ? [rest?: Rest<T>] : [rest: Rest<T>]
+ * ) => Send} Sender
  */
 
 /**
@@ -131,8 +134,7 @@ import { Heading } from '../ui/parts.js?v=__VERSION__';
  */
 
 // The heading is the first a slot gives, in this order, and the response
-// every slot's lines in it, where v1's eleven writers of #status and seven
-// of #response each wrote over the last (web/app.js).
+// every slot's lines in it, so no flow's words write over another's.
 export const ORDER = ['failed', 'visit', 'ask', 'among', 'elsewhere', 'join', 'enter'];
 // "What acts as you", its parts in question.js's PARTS order (:237).
 const PARTS = ['reads', 'opens', 'knows', 'wifi', 'play', 'decides'];
@@ -152,8 +154,14 @@ const PLACES = [
 ];
 const COULD_NOT = 'This browser could not open the page.';
 
+// The effect that sends a message of `type` to the flow that takes it,
+// which the frame's io dispatches (`frame`).
+export const sending = /** @type {Sender} */ (
+  (type, message) => ({ run: 'send', m: { type, ...message } })
+);
+
 // The frame's own flow: `fine` and `standalone`, read once at the edge,
-// and a failed effect, its words in `said` when it has any (app.js@19b63b2b:88).
+// and a failed effect, its words in `said` when it has any.
 const frame = {
   owns: ['fine', 'standalone', 'said'],
   states: /** @type {const} */ ({ page: ['opening', 'failed'] }),
@@ -177,31 +185,60 @@ const frame = {
   },
 };
 
+// A flow as `compose` keeps it: named, each part it leaves out empty.
+/** @typedef {Required<Flow> & { name: string }} Filled */
+/**
+ * @param {string} name
+ * @param {Flow} flow
+ * @returns {Filled}
+ */
+const filled = (name, flow) => ({
+  name,
+  owns: [],
+  states: {},
+  io: {},
+  view: {},
+  heading: {},
+  response: {},
+  acts: () => ({}),
+  takes: {},
+  ...flow,
+});
+
+// Each field and region `next` moves from `state`, fields first, as
+// [kind, name]. `asked` is the core's counter of reads (ui/machine.js
+// `ask`), every flow's, so it is never one flow's move.
+/**
+ * @param {State} state
+ * @param {State} next
+ * @returns {[string, string][]}
+ */
+function moved(state, next) {
+  const fields = /** @type {(keyof State)[]} */ (Object.keys({ ...state, ...next })).filter(
+    (name) => name !== 'at' && name !== 'asked' && next[name] !== state[name],
+  );
+  const regions = /** @type {(keyof At)[]} */ (Object.keys({ ...state.at, ...next.at })).filter(
+    (name) => next.at[name] !== state.at[name],
+  );
+  return [
+    ...fields.map((name) => /** @type {[string, string]} */ (['field', name])),
+    ...regions.map((name) => /** @type {[string, string]} */ (['region', name])),
+  ];
+}
+
 // PAGE's parts from `flows` ({name: module}), each part a flow leaves out
-// empty. As it composes, a
-// message type, region, field, io or place two flows claim is refused, and
-// a slot ORDER does not read; a slot is shared, its flows' lines in turn.
+// empty. As it composes, a message type, region, field, io or place two
+// flows claim is refused, and a slot ORDER does not read; a slot is
+// shared, its flows' lines in turn.
 /**
  * @param {Record<string, Flow>} flows
  * @returns {Parts}
  */
 export function compose(flows) {
-  const all = Object.entries(/** @type {Record<string, Flow>} */ ({ frame, ...flows })).map(
-    ([name, flow]) =>
-      /** @type {Required<Flow> & { name: string }} */ ({
-        name,
-        owns: [],
-        states: {},
-        io: {},
-        view: {},
-        heading: {},
-        response: {},
-        acts: () => ({}),
-        takes: {},
-        ...flow,
-      }),
+  const all = Object.entries({ frame, ...flows }).map(([name, flow]) =>
+    filled(name, /** @type {Flow} */ (flow)),
   );
-  /** @type {Record<string, (typeof all)[number]>} */
+  /** @type {Record<string, Filled>} */
   const claimed = {};
   const keys = Object.keys;
   const owner = (/** @type {string} */ kind, /** @type {string} */ name) =>
@@ -209,88 +246,99 @@ export function compose(flows) {
   /**
    * Each of `names`, of `kind`, claimed for `flow`, else refused naming
    * the flow that claimed it first.
-   * @param {(typeof all)[number]} flow
+   * @param {Filled} flow
    * @param {string} kind
    * @param {readonly string[]} names
    */
   const claim = (flow, kind, names) => {
-    for (const name of names)
-      if ((claimed[`${kind} ${name}`] ??= flow) !== flow)
+    for (const name of names) {
+      const first = (claimed[`${kind} ${name}`] ??= flow);
+      if (first !== flow) {
         throw new Error(`${kind} ${name} is claimed by ${owner(kind, name)} and by ${flow.name}`);
+      }
+    }
   };
   for (const flow of all) {
-    for (const [kind, names] of /** @type {[string, readonly string[]][]} */ ([
-      ['message type', keys(flow.takes)],
-      ['region', keys(flow.states)],
-      ['io', keys(flow.io)],
-      ['place', keys(flow.view)],
-      ['field', flow.owns],
-    ]))
-      claim(flow, kind, names);
-    const slot = [...keys(flow.heading), ...keys(flow.response)].find(
-      (name) => !ORDER.includes(name),
-    );
-    if (slot)
+    claim(flow, 'message type', keys(flow.takes));
+    claim(flow, 'region', keys(flow.states));
+    claim(flow, 'io', keys(flow.io));
+    claim(flow, 'place', keys(flow.view));
+    claim(flow, 'field', flow.owns);
+    const slots = [...keys(flow.heading), ...keys(flow.response)];
+    const slot = slots.find((name) => !ORDER.includes(name));
+    if (slot) {
+      const order = ORDER.join(', ');
       throw new Error(
-        `${flow.name}'s heading or response names ${slot}, which is not one of ${ORDER.join(', ')}`,
+        `${flow.name}'s heading or response names ${slot}, which is not one of ${order}`,
       );
+    }
   }
   // One take per message, its flow's: a part's own message by its name
   // first (ui/parts.js: Fold's `fold <fold>`, Field's `typed <field>`), as
   // two flows each draw a Fold. An answer that moves a field or region its
-  // flow does not own is refused, naming it. `asked` is the core's counter
-  // of reads (ui/machine.js `ask`), every flow's.
+  // flow does not own is refused, naming it.
   /**
    * @param {State} state
    * @param {Message & { fold?: string, field?: string }} message
    * @returns {Step<State>}
    */
   const step = (state, message) => {
+    const candidates = [`${message.type} ${message.fold ?? message.field}`, message.type];
     const type = /** @type {string} */ (
-      [`${message.type} ${message.fold ?? message.field}`, message.type].find(
-        (candidate) => claimed[`message type ${candidate}`],
-      )
+      candidates.find((candidate) => claimed[`message type ${candidate}`])
     );
     const flow = claimed[`message type ${type}`];
     const result = flow?.takes[type]?.(state, message);
-    if (!flow || !result || result.refused)
+    if (!flow || !result || result.refused) {
       return result ?? no(state, `nothing here takes ${message.type}`);
-    const out = [
-      .../** @type {(keyof State)[]} */ (keys({ ...state, ...result.state }))
-        .filter((name) => name !== 'at' && name !== 'asked' && result.state[name] !== state[name])
-        .map((name) => /** @type {[string, string]} */ (['field', name])),
-      .../** @type {(keyof At)[]} */ (keys({ ...state.at, ...result.state.at }))
-        .filter((name) => result.state.at[name] !== state.at[name])
-        .map((name) => /** @type {[string, string]} */ (['region', name])),
-    ].find(([kind, name]) => owner(kind, name) !== flow.name);
-    return out
-      ? no(state, `${flow.name} moved ${out.join(' ')}, which is ${owner(...out) ?? 'nobody'}'s`)
-      : result;
+    }
+    const out = moved(state, result.state).find(([kind, name]) => owner(kind, name) !== flow.name);
+    if (out) {
+      const whose = owner(...out) ?? 'nobody';
+      return no(state, `${flow.name} moved ${out.join(' ')}, which is ${whose}'s`);
+    }
+    return result;
   };
   const states = Object.assign({}, ...all.map((flow) => flow.states));
-  const each = (/** @type {'heading' | 'response'} */ pick, /** @type {State} */ state) =>
+  // Each slot's words, in ORDER, from every flow that has the slot.
+  /**
+   * @param {'heading' | 'response'} pick
+   * @param {State} state
+   */
+  const each = (pick, state) =>
     ORDER.flatMap((slot) => all.map((flow) => flow[pick][slot]?.(state)).filter(Boolean));
+  // What acts as you, each part's from every flow, in PARTS order; a part
+  // with nothing drawn is left out.
+  /**
+   * @param {State} state
+   * @returns {[string, Drawn[]][]}
+   */
+  const acts = (state) => {
+    /** @type {[string, Drawn[]][]} */
+    const parts = PARTS.map((place) => [
+      place,
+      all.flatMap((flow) => flow.acts(state)[place] ?? []),
+    ]);
+    return parts.filter(([, drawn]) => drawn.length > 0);
+  };
   return {
     states,
     step,
     io: Object.assign({}, ...all.map((flow) => flow.io)),
     // The first state: each region at the first of its set, and `fields`.
     // Its other fields are absent until their flows set them, as `State` says.
-    first: (fields) =>
-      /** @type {State} */ ({
-        at: Object.fromEntries(Object.entries(states).map(([region, [at]]) => [region, at])),
-        ...fields,
-      }),
-    heading: (state) => /** @type {Said | undefined} */ (each('heading', state)[0]) ?? ['Opening…'],
+    first: (fields) => {
+      const at = Object.fromEntries(
+        Object.entries(states).map(([region, [first]]) => [region, first]),
+      );
+      return /** @type {State} */ ({ at, ...fields });
+    },
+    heading: (state) => {
+      const first = /** @type {Said | undefined} */ (each('heading', state)[0]);
+      return first ?? ['Opening…'];
+    },
     response: (state) => each('response', state).flat().join('\n'),
-    acts: (state) =>
-      PARTS.map(
-        (place) =>
-          /** @type {[string, Drawn[]]} */ ([
-            place,
-            all.flatMap((flow) => flow.acts(state)[place] ?? []),
-          ]),
-      ).filter(([, drawn]) => drawn.length),
+    acts,
     places: /** @type {Parts['places']} */ (
       PLACES.map((place) => claimed[`place ${place}`]?.view[place]).filter(Boolean)
     ),
@@ -299,7 +347,7 @@ export function compose(flows) {
 
 // The page, web/index.html's body in its order, inside #page: the heading,
 // each place its flow's part, and #response. The tab is titled by the
-// group the page is in (app.js@19b63b2b:405, :422).
+// group the page is in.
 /**
  * @typedef {object} PageProps
  * @property {Parts} parts
@@ -312,6 +360,15 @@ export function Page({ parts, store }) {
   const acts = parts.acts(state);
   // Absent until a group is held (`first`).
   const group = /** @type {Partial<State>} */ (state).group;
-  useEffect(() => void (group && (document.title = group.name)), [group?.name]);
-  return html`<${Heading} words=${words} tone=${tone} />${parts.places.map((Place) => html`<${Place} s=${state} send=${store.dispatch} acts=${acts} />`)}<pre id="response">${parts.response(state)}</pre>`;
+  useEffect(() => {
+    if (group) document.title = group.name;
+  }, [group?.name]);
+  const places = parts.places.map(
+    (Place) => html`<${Place} s=${state} send=${store.dispatch} acts=${acts} />`,
+  );
+  return html`
+    <${Heading} words=${words} tone=${tone} />
+    ${places}
+    <pre id="response">${parts.response(state)}</pre>
+  `;
 }

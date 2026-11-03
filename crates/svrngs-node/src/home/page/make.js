@@ -1,24 +1,18 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// "Make a group" (page-join (d); home.js@19b63b2b:415-422): a group made here as
-// `svrngs new` makes one, by the svrngs running here (start-group), from
-// its name and the person's. Its machine, MAKE, is the place's own
-// (ui/view.js `useMachine`). A name a group here has already is said below
+// MAKE, the machine of "Make a group" (make-form.js `MakeForm`): a group
+// made here as `svrngs new` makes one, by the svrngs running here, from
+// its name and the person's. A name a group here has already is said below
 // as it is typed (#138), each name asked of `GET /group` counted, so an
-// older answer is refused by name (`late`), where v1 compared the typed
-// value (home.js@19b63b2b:420). Pressed, a second press is refused while it makes; made,
-// HOME says so, and again whose namesakes there are (`take`), and reads the
-// groups again, where v1 opened the page again (home.js@19b63b2b:364; page-join (d)'s
-// second fix), and the form is empty again; a refusal is said beside the
-// button once, the last in place of the one before, where v1 appended each
-// (home.js@19b63b2b:421; page-join (d)'s first fix).
-import { html, useMachine } from '../ui/view.js?v=__VERSION__';
-import { ask, assertNever, go, late, machine, no } from '../ui/machine.js?v=__VERSION__';
-import { Act, Field } from '../ui/parts.js?v=__VERSION__';
+// older answer is refused by name (`late`) and a slow answer never speaks
+// of a name typed over. Pressed, a second press is refused while it makes;
+// made, HOME says so, and again whose namesakes there are (`take`), and
+// reads the groups again, and the form is empty again; a refusal is said
+// beside the button once, the last in place of the one before.
+import { ask, assertNever, go, late, no } from '../ui/machine.js?v=__VERSION__';
 import { namesakes } from '../question.js?v=__VERSION__';
-import { get, post } from './group.js?v=__VERSION__';
+import { get, post } from './routes.js?v=__VERSION__';
 /** @import { Machine, Step } from '../ui/machine.js?v=__VERSION__' */
-/** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
-/** @import * as HOME from '../home.js?v=__VERSION__' */
+/** @import * as HOME from './home-reading.js?v=__VERSION__' */
 
 /**
  * HOME's message this file takes: a group made, by its name, the groups
@@ -57,8 +51,10 @@ import { get, post } from './group.js?v=__VERSION__';
  *   | { run: 'make', name: string, person: string, failed: 'refused' }} Effect
  */
 
+// The form as the page draws it first, and again once a group is made.
 /** @type {State} */
-const FIRST = { at: { make: 'typing' }, name: '', person: '', before: '', said: '' };
+export const FIRST = { at: { make: 'typing' }, name: '', person: '', before: '', said: '' };
+
 /**
  * @param {HOME.PlaceProps['home']} home
  * @returns {Machine<State, Message, Effect>}
@@ -86,33 +82,31 @@ export const MAKE = (home) => ({
   },
   step: (state, message) => {
     switch (message.type) {
-      case 'typed':
-        return message.field === 'person'
-          ? go(state, {}, { person: message.value })
-          : ((asked, serial) =>
-              go(
-                state,
-                { make: 'checking' },
-                { name: message.value, asked },
-                { run: 'check', name: message.value, n: serial, failed: 'checked' },
-              ))(...ask(state, 'name'));
-      case 'checked':
-        return late(state, 'name', message.n)
-          ? no(state, late(state, 'name', message.n))
-          : go(
-              state,
-              { make: state.at.make === 'checking' ? 'checked' : state.at.make },
-              { before: message.words ?? message.why },
-            );
+      case 'typed': {
+        if (message.field === 'person') return go(state, {}, { person: message.value });
+        const [asked, serial] = ask(state, 'name');
+        return go(
+          state,
+          { make: 'checking' },
+          { name: message.value, asked },
+          { run: 'check', name: message.value, n: serial, failed: 'checked' },
+        );
+      }
+      case 'checked': {
+        const old = late(state, 'name', message.n);
+        if (old) return no(state, old);
+        const make = state.at.make === 'checking' ? 'checked' : state.at.make;
+        return go(state, { make }, { before: message.words ?? message.why });
+      }
       case 'make':
-        return state.at.make === 'making'
-          ? no(state, 'a group is being made, and is answered first')
-          : go(
-              state,
-              { make: 'making' },
-              {},
-              { run: 'make', name: state.name, person: state.person, failed: 'refused' },
-            );
+        if (state.at.make === 'making')
+          return no(state, 'a group is being made, and is answered first');
+        return go(
+          state,
+          { make: 'making' },
+          {},
+          { run: 'make', name: state.name, person: state.person, failed: 'refused' },
+        );
       case 'made':
         return go(state, FIRST.at, FIRST);
       case 'refused':
@@ -122,27 +116,10 @@ export const MAKE = (home) => ({
     }
   },
 });
+
 /**
  * @param {HOME.State} state
  * @param {Taken} message
  * @returns {Step<HOME.State, HOME.Effect>}
  */
 export const take = (state, message) => go(state, { said: 'made' }, { q: message.q });
-
-// Each field's name a field of the form's `State`, by which `state[name]` reads it.
-/** @param {HOME.PlaceProps} props */
-const Make = ({ home }) =>
-  ((state, send) =>
-    html`<section id="make"><h2>Make a group</h2><p>${
-      /** @satisfies {['name' | 'person', string][]} */ ([
-        ['name', 'A name for the group: '],
-        ['person', 'Your name in it: '],
-      ]).map(
-        ([name, words]) =>
-          html`<${Field} name=${name} words=${words} value=${state[name]} send=${send} />`,
-      )
-    }<${Act} words="Make a group" doing=${{ state: state.at.make === 'making' ? 'busy' : 'idle', said: state.said }} on=${{ type: 'make' }} send=${send} /></p><p>${state.before}</p></section>`)(
-    ...useMachine(() => machine('MAKE', MAKE(home), FIRST)),
-  );
-/** @type {{ make: (props: HOME.PlaceProps) => Drawn }} */
-export const view = { make: ({ home }) => html`<${Make} home=${home} />` };

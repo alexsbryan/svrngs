@@ -1,22 +1,24 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// What `#open=` names, and a lend's address opened cold (page-join (b);
-// DESIGN §3, "Lent apps", call 1; svrn-docs rings/current/
-// IN_THE_BROWSER.md §4). Once the group is read (enter.js `kept` sends
-// `wanted`), `#open=` names a lend by its label, else by its alias
-// (question.js `alias`), one of what the group lends now, and it opens
-// (index.js `open`) at `#at=`; none, or more than one, is said, never a
-// nearest match (app.js@19b63b2b:546-563). Lent in more than one group held here, each
-// is offered in #door, opened in the one the person picks (app.js@19b63b2b:581-587). A
-// lend's address with nothing serving it in this browser goes to the
-// group's page, at most once a minute from one tab (app.js@19b63b2b:638-646).
-import { html } from '../ui/view.js?v=__VERSION__';
+// What `#open=` names, and a lend's address opened cold (DESIGN §3, "Lent
+// apps", call 1; svrn-docs rings/current/IN_THE_BROWSER.md §4). Once the
+// group is read (enter.js `kept` sends `wanted`), `#open=` names a lend by
+// its label, else by its alias (question.js `alias`), one of what the
+// group lends now, and it opens (index.js `open`) at `#at=`. None, or more
+// than one, is said, never a nearest match, so an address never opens a
+// thing the person did not name. Lent in more than one group held here,
+// each is offered in #door (offered-groups.js), opened in the one the
+// person picks. A lend's address with nothing serving it in this browser
+// goes to the group's page, at most once a minute from one tab, so a lend
+// that never takes its pass cannot send the tab back and forth.
 import { go, no } from '../ui/machine.js?v=__VERSION__';
-import { aliased, whose } from '../question.js?v=__VERSION__';
+import { aliased, titled } from '../question.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
+import { trace, wasm } from './dial.js?v=__VERSION__';
+import { sending } from './page.js?v=__VERSION__';
 /** @import { Group } from '../store.js?v=__VERSION__' */
 /** @import { Io, Takes } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Lent, Wants } from './enter.js?v=__VERSION__' */
-/** @import { Message as PageMessage, Nothing, Props, Said, Send, Sender, State } from './page.js?v=__VERSION__' */
+/** @import { Message as PageMessage, Nothing, Said, Send, State } from './page.js?v=__VERSION__' */
 
 /**
  * The fields this flow owns (`owns`): the groups offered to open what the
@@ -45,11 +47,6 @@ export const owns = ['offered', 'missed'];
 export const states = /** @type {const} */ ({
   among: ['unasked', 'offered', 'picked', 'named', 'sent'],
 });
-const titled = (/** @type {Group} */ group) =>
-  `${group.name}${group.maker ? ` (${whose(group)})` : ''}`;
-const sending = /** @type {Sender} */ (
-  (type, message) => ({ run: 'send', m: { type, ...message } })
-);
 /** @type {Takes<State, Message, Effect | Send>} */
 export const takes = {
   among: (state, { groups, wants }) =>
@@ -62,26 +59,22 @@ export const takes = {
       ? byLabel
       : aliased(open, /** @type {Lent[]} */ (state.lent), state.people);
     const name = state.group.name;
-    const why = `#open=${open} names ${by.length} of what ${name} lends${byLabel.length ? ', by its label' : ', by its alias'}`;
-    // A lend's origin holding no key its pass names asks for a new one (open.js `anew`).
-    // Named by one, `by[0]` is it.
-    if (by.length === 1)
-      return go(
-        state,
-        { among: 'named' },
-        {},
+    const how = byLabel.length ? 'by its label' : 'by its alias';
+    const why = `#open=${open} names ${by.length} of what ${name} lends, ${how}`;
+    if (by.length === 1) {
+      const { label } = /** @type {Lent} */ (by[0]);
+      // A lend's origin holding no key its pass names asks for a new one
+      // (open.js `anew`), so the one it holds is forgotten first.
+      const opening =
         anew === undefined
-          ? sending('open', { label: /** @type {Lent} */ (by[0]).label, at, why })
-          : { run: 'forget', label: /** @type {Lent} */ (by[0]).label, at, why, failed: 'failed' },
-      );
-    if (by.length)
-      return go(
-        state,
-        { among: 'named' },
-        {
-          missed: `${by.length} things in ${name} go by ${open}. Open the one you mean from the list.`,
-        },
-      );
+          ? sending('open', { label, at, why })
+          : /** @satisfies {Effect} */ ({ run: 'forget', label, at, why, failed: 'failed' });
+      return go(state, { among: 'named' }, {}, opening);
+    }
+    if (by.length) {
+      const missed = `${by.length} things in ${name} go by ${open}. Open the one you mean from the list.`;
+      return go(state, { among: 'named' }, { missed });
+    }
     return go(
       state,
       { among: 'named' },
@@ -89,32 +82,33 @@ export const takes = {
       { run: 'others', open, id: state.group.id, why, failed: 'failed' },
     );
   },
-  // Naming none here, it is said of the other groups held here too, as each was last listed.
-  others: (
-    state,
-    { open, label, others },
-    nor = others.length
-      ? `, nor in ${others.map(titled).join(' or ')} when you last opened ${others.length > 1 ? 'them' : 'it'}`
-      : '',
-  ) =>
-    go(
-      state,
-      {},
-      {
-        missed: label
-          ? `What that address opens is not lent in ${state.group.name} now${nor}.`
-          : `Nothing in ${state.group.name} goes by ${open} now${nor}.`,
-      },
-    ),
-  // Picked, the offer goes in the click's own draw, as v1's did (web/app.js@19b63b2b:586), before `hold` is answered.
-  pick: (state, { group, wants }) =>
-    state.at.among === 'offered'
-      ? go(state, { among: 'picked' }, {}, sending('hold', { group, wants }))
-      : no(state, `nothing is offered: among is ${state.at.among}`),
+  // Naming none here, it is said of the other groups held here too, as
+  // each was last listed.
+  others: (state, { open, label, others }) => {
+    const them = others.length > 1 ? 'them' : 'it';
+    const nor = others.length
+      ? `, nor in ${others.map(titled).join(' or ')} when you last opened ${them}`
+      : '';
+    const group = state.group.name;
+    const missed = label
+      ? `What that address opens is not lent in ${group} now${nor}.`
+      : `Nothing in ${group} goes by ${open} now${nor}.`;
+    return go(state, {}, { missed });
+  },
+  // Picked, the offer goes in the click's own draw, before `hold` is
+  // answered, so a second click finds nothing offered.
+  pick: (state, { group, wants }) => {
+    if (state.at.among !== 'offered') {
+      return no(state, `nothing is offered: among is ${state.at.among}`);
+    }
+    return go(state, { among: 'picked' }, {}, sending('hold', { group, wants }));
+  },
   cold: (state) => go(state, { among: 'sent' }, {}, { run: 'cold', failed: 'failed' }),
   sent: (state) => go(state, {}),
 };
-const choosing = (/** @type {State} */ state) =>
+// Offered more than one group while no tab here holds one: group-door.js
+// draws the offer in #door (offered-groups.js) only then.
+export const choosing = (/** @type {State} */ state) =>
   state.at.among === 'offered' && state.at.tab === 'unheld';
 /** @type {Record<string, (s: State) => Said | Nothing>} */
 export const heading = {
@@ -129,38 +123,18 @@ export const response = {
   among: (state) =>
     choosing(state) ? ['Open it in the one you mean.'] : state.missed && [state.missed],
 };
-// Each group offered, drawn in #door (enter.js `chosen`).
-/**
- * @param {State} state
- * @param {Props['send']} send
- */
-export const offered = (state, send) =>
-  choosing(state)
-    ? state.offered.groups.map(
-        (group) =>
-          html`<p><button onClick=${() => send({ type: 'pick', group: group, wants: state.offered.wants })}>Open it in ${titled(group)}</button></p>`,
-      )
-    : null;
-
 // The edge. `forget`: never from a window another page opened, which could
 // read its bytes as they arrive. `cold`: the group's page is this host past
 // its first name, marked in this origin's session, so a lend whose worker
 // never takes its pass comes back here and is said, never sent on again.
 const ONCE = 60_000;
-const wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__');
-const trace = (/** @type {string} */ line) => globalThis.__trace?.(line);
 /** @type {Io<Effect, PageMessage>} */
 export const io = {
-  forget: ({ label, at, why }) =>
-    (/** @type {Window | null} */ (window.opener)
-      ? Promise.resolve()
-      : store.holder(label, null)
-    ).then(() => ({
-      type: 'open',
-      label,
-      at,
-      why,
-    })),
+  forget: async ({ label, at, why }) => {
+    const opener = /** @type {Window | null} */ (window.opener);
+    if (!opener) await store.holder(label, null);
+    return { type: 'open', label, at, why };
+  },
   others: ({ open, id }) =>
     Promise.all([wasm(), store.groups()]).then(([core, kept]) => ({
       type: 'others',
@@ -182,11 +156,9 @@ export const io = {
     location.replace(
       `${page}#${new URLSearchParams({ open: store.labelOf(location.hostname), at })}&cold`,
     );
-    return (
-      trace(
-        `PAGE: a lend's address with nothing serving it: to the group's page, ${page}, to come back at ${at}`,
-      ),
-      { type: 'sent', why: `to ${page}` }
+    trace(
+      `PAGE: a lend's address with nothing serving it: to the group's page, ${page}, to come back at ${at}`,
     );
+    return { type: 'sent', why: `to ${page}` };
   },
 };

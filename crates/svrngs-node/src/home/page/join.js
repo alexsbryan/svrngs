@@ -1,22 +1,18 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// "Join a group from a link" (page-join (c); home.js@19b63b2b:404-414): a group
-// joined from a link someone sent, by the svrngs running here as `svrngs
-// join` joins (arch-command (c)). Its machine, JOIN, is the place's own
-// (ui/view.js `useMachine`). Each link typed is asked of the computer that
-// sent it, what it is for, each ask counted, so an older answer is refused
-// by name (`late`), where v1 compared the typed value (home.js@19b63b2b:411); the answer
-// is said on the button before it is pressed, and the name box hidden when
-// the link names whom it joins as. Pressed, a second press is refused while
-// it joins; joined, HOME says so (`take`) and reads the groups again, where
-// v1 opened the page again (home.js@19b63b2b:409; page-join (c)'s fix), and the form is
-// empty again; a refusal is said below, in place of the last.
-import { html, useMachine } from '../ui/view.js?v=__VERSION__';
-import { ask, assertNever, go, late, machine, no } from '../ui/machine.js?v=__VERSION__';
-import { Act, Field } from '../ui/parts.js?v=__VERSION__';
-import { get, post } from './group.js?v=__VERSION__';
+// JOIN, the machine of "Join a group from a link" (join-form.js
+// `JoinForm`): a group joined from a link someone sent, by the svrngs
+// running here as `svrngs join` joins. Each link typed is asked of the
+// computer that sent it, what it is for, each ask counted, so an older
+// answer is refused by name (`late`) and a slow answer never names a link
+// typed over. The answer is said on the button before it is pressed, and
+// the name box hidden when the link names whom it joins as. Pressed, a
+// second press is refused while it joins; joined, HOME says so (`take`)
+// and reads the groups again, and the form is empty again; a refusal is
+// said below, in place of the last.
+import { ask, assertNever, go, late, no } from '../ui/machine.js?v=__VERSION__';
+import { get, post } from './routes.js?v=__VERSION__';
 /** @import { Machine, Step } from '../ui/machine.js?v=__VERSION__' */
-/** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
-/** @import * as HOME from '../home.js?v=__VERSION__' */
+/** @import * as HOME from './home-reading.js?v=__VERSION__' */
 
 /**
  * HOME's message this file takes: a group joined, by its name, as whom,
@@ -63,9 +59,14 @@ import { get, post } from './group.js?v=__VERSION__';
  *   | { run: 'join', link: string, person: string, failed: 'unjoined' }} Effect
  */
 
+// The form as the page draws it first, and again once a join is done.
 /** @type {State} */
-const FIRST = { at: { join: 'typing' }, link: '', person: '', for: undefined, why: '' };
-const who = /** @param {State} state */ (state) => state.for?.[1] ?? state.person.trim();
+export const FIRST = { at: { join: 'typing' }, link: '', person: '', for: undefined, why: '' };
+
+// Whom the join names: the link's own person, else the name typed.
+/** @param {State} state */
+export const who = (state) => state.for?.[1] ?? state.person.trim();
+
 /**
  * @param {HOME.PlaceProps['home']} home
  * @returns {Machine<State, Message, Effect>}
@@ -96,20 +97,20 @@ export const JOIN = (home) => ({
         : '';
     if (old) return no(state, old);
     switch (message.type) {
-      case 'typed':
-        return message.field === 'person'
-          ? go(state, {}, { person: message.value })
-          : ((asked, serial) =>
-              go(
-                state,
-                { join: 'checking' },
-                {
-                  link: message.value,
-                  asked,
-                  why: 'Asking the computer that sent it what it is for…',
-                },
-                { run: 'check', link: message.value, n: serial, failed: 'refused' },
-              ))(...ask(state, 'link'));
+      case 'typed': {
+        if (message.field === 'person') return go(state, {}, { person: message.value });
+        const [asked, serial] = ask(state, 'link');
+        return go(
+          state,
+          { join: 'checking' },
+          {
+            link: message.value,
+            asked,
+            why: 'Asking the computer that sent it what it is for…',
+          },
+          { run: 'check', link: message.value, n: serial, failed: 'refused' },
+        );
+      }
       case 'checked':
         return go(state, { join: 'checked' }, { for: message.for, why: '' });
       case 'refused':
@@ -133,23 +134,10 @@ export const JOIN = (home) => ({
     }
   },
 });
+
 /**
  * @param {HOME.State} state
  * @param {Taken} message
  * @returns {Step<HOME.State, HOME.Effect>}
  */
 export const take = (state, message) => go(state, { said: 'joined' }, { q: message.q });
-
-/** @param {HOME.PlaceProps} props */
-const Join = ({ home }) =>
-  ((
-    state,
-    send,
-    typed = /** @param {{ currentTarget: HTMLInputElement }} typing */ (typing) =>
-      send({ type: 'typed', field: 'person', value: typing.currentTarget.value }),
-  ) =>
-    html`<section id="join"><h2>Join a group from a link</h2><p><${Field} name="link" words="The link someone sent you: " value=${state.link} send=${send} /><label hidden=${Boolean(state.for?.[1])}>${'Your name in it: '}<input name="person" value=${state.person} onInput=${typed} /></label>${state.for && html`<${Act} words=${`Join ${state.for[0]}${who(state) ? ` as ${who(state)}` : ''}`} doing=${{ state: state.at.join === 'joining' ? 'busy' : 'idle' }} on=${{ type: 'join' }} send=${send} />`}</p><p>${state.why}</p></section>`)(
-    ...useMachine(() => machine('JOIN', JOIN(home), FIRST)),
-  );
-/** @type {{ join: (props: HOME.PlaceProps) => Drawn }} */
-export const view = { join: ({ home }) => html`<${Join} home=${home} />` };

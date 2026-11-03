@@ -10,42 +10,40 @@
 // clock. Every refusal tells the person to open the app again from the
 // group's page.
 import init, { actor, approve_line } from './wasm/svrngs_web.js?v=__VERSION__';
-import { handoffCookie, hostCookie, openMessage, openSeal } from './authority.js?v=__VERSION__';
+import {
+  handoffCookie,
+  hostCookie,
+  openMessage,
+  openSeal,
+  pkcs8,
+} from './authority.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
 /** @import { Handoff } from './authority.js?v=__VERSION__' */
+
 // An open's approver as `approver` keeps it, by its label: the key it
 // signs with, its public half, and the digest of the open it was adopted for.
 /** @typedef {{ label: string, pub: string, digest: string, key: CryptoKey, until: number }} Approver */
+
+// The runtime, started on the first ask this frame answers and kept for the rest.
+/** @type {Promise<unknown> | undefined} */
 let loaded;
+
+// A pass's base64url JSON, each character as `atob` answers it. open.js
+// `decode` reads its fragment as UTF-8 instead; the two are kept apart, so
+// what this reads of a pass stays as it was.
 /** @param {string} text */
 const decode = (text) => JSON.parse(atob(text.replace(/-/g, '+').replace(/_/g, '/')));
-/** @param {ArrayBuffer} bytes */
-const hex = (bytes) =>
-  [...new Uint8Array(bytes)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+
+// `text` as base64url, with no padding, as a pass is written.
+/** @param {string} text */
+const base64url = (text) => btoa(text).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+// What an approver remembers of the open it was adopted for.
 /** @param {Handoff} handoff */
-const digest = async (handoff) =>
-  hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(openMessage(handoff))));
-/** @param {Uint8Array} seed */
-const pkcs8 = (seed) =>
-  Uint8Array.from([
-    0x30,
-    0x2e,
-    0x02,
-    0x01,
-    0x00,
-    0x30,
-    0x05,
-    0x06,
-    0x03,
-    0x2b,
-    0x65,
-    0x70,
-    0x04,
-    0x22,
-    0x04,
-    0x20,
-    ...seed,
-  ]);
+async function digest(handoff) {
+  const message = new TextEncoder().encode(openMessage(handoff));
+  return store.hex(new Uint8Array(await crypto.subtle.digest('SHA-256', message)));
+}
 
 // One transaction on this origin's store `name`, its one object store kept
 // by `keyPath`: `act(store)`'s request's answer once it commits.
@@ -63,19 +61,23 @@ function stored(name, keyPath, mode, act) {
     request.onupgradeneeded = () => request.result.createObjectStore('kept', { keyPath });
     request.onerror = () => no(request.error);
     request.onsuccess = () => {
-      const tx = request.result.transaction('kept', mode);
-      const asked = act(tx.objectStore('kept'));
-      tx.oncomplete = () => {
+      const transaction = request.result.transaction('kept', mode);
+      const asked = act(transaction.objectStore('kept'));
+      transaction.oncomplete = () => {
         request.result.close();
         yes(asked.result);
       };
-      tx.onabort = tx.onerror = () => {
+      const refused = () => {
         request.result.close();
-        no(tx.error ?? new Error('this browser’s storage refused'));
+        no(transaction.error ?? new Error('this browser’s storage refused'));
       };
+      transaction.onabort = refused;
+      transaction.onerror = refused;
     };
   });
 }
+
+// This origin's approvers, by an app's label.
 /**
  * @template T
  * @param {IDBTransactionMode} mode
@@ -96,11 +98,12 @@ const approvers = (mode, act) => stored('svrngs-approvers', 'label', mode, act);
  */
 async function approver(label, handoff, now) {
   await approvers('readwrite', (objects) => {
-    const all = objects.getAll();
-    all.onsuccess = () =>
-      all.result
-        .filter((record) => record.until <= now)
-        .forEach((record) => objects.delete(record.label));
+    const all = /** @type {IDBRequest<Approver[]>} */ (objects.getAll());
+    all.onsuccess = () => {
+      for (const record of all.result) {
+        if (record.until <= now) objects.delete(record.label);
+      }
+    };
     return all;
   });
   const name = handoffCookie(label);
@@ -124,8 +127,9 @@ async function approver(label, handoff, now) {
     (objects) => /** @type {IDBRequest<Approver | undefined>} */ (objects.get(label)),
   );
   if (!kept) throw new Error(`no approver is kept for ${label}: its cookie is gone or never came`);
-  if (kept.digest !== (await digest(handoff)))
+  if (kept.digest !== (await digest(handoff))) {
     throw new Error(`${label} presented an open other than the one adopted`);
+  }
   return kept;
 }
 
@@ -147,11 +151,17 @@ async function stableApproval(group, pass, line, now) {
     );
     read.onsuccess = () => {
       const live = read.result.filter((pending) => pending.until > now);
-      for (const pending of read.result) if (pending.until <= now) entries.delete(pending.id);
+      for (const pending of read.result) {
+        if (pending.until <= now) entries.delete(pending.id);
+      }
       const existing = live.find((pending) => pending.id === id);
-      if (existing) chosen = existing.pass;
-      else if (live.length >= 4096) entries.transaction.abort();
-      else entries.put({ id, pass, until: JSON.parse(line).ts_unix + 301 });
+      if (existing) {
+        chosen = existing.pass;
+      } else if (live.length >= 4096) {
+        entries.transaction.abort();
+      } else {
+        entries.put({ id, pass, until: JSON.parse(line).ts_unix + 301 });
+      }
     };
     return read;
   });
@@ -166,12 +176,10 @@ function framer(origin) {
   const app = new URL(origin);
   const suffix = `.${location.host}`;
   const label = app.host.slice(0, -suffix.length);
-  if (
-    app.protocol !== location.protocol ||
-    !app.host.endsWith(suffix) ||
-    !/^[a-z0-9]{62}$/.test(label)
-  )
+  const under = app.protocol === location.protocol && app.host.endsWith(suffix);
+  if (!under || !/^[a-z0-9]{62}$/.test(label)) {
     throw new Error(`${origin} is not an app under ${location.host}`);
+  }
   return label;
 }
 
@@ -200,12 +208,14 @@ async function answered(asked, port) {
   await (loaded ??= init({ module_or_path: store.runtime() }));
   if (asked.data?.opening) {
     const handoff = asked.data.opening;
-    if (handoff.label !== label)
+    if (handoff.label !== label) {
       throw new Error(`an open for ${handoff.label} asked from ${label}`);
+    }
     await approver(label, handoff, now);
-    return port.postMessage({ opened: true });
+    port.postMessage({ opened: true });
+    return;
   }
-  return port.postMessage({ pass: await entryApproved(asked.data, label, now) });
+  port.postMessage({ pass: await entryApproved(asked.data, label, now) });
 }
 
 // The entry asked, `data`, approved under a grant the open kept for
@@ -223,13 +233,12 @@ async function entryApproved(data, label, now) {
     try {
       made = approve_line(kept.pub, group, reach, grant, line, now);
     } catch {
-      continue; /* Only the grants this open issued may authorize an entry. */
+      // Only the grants this open issued may authorize an entry.
+      continue;
     }
-    const approval = hex(await crypto.subtle.sign('Ed25519', kept.key, made[1]));
-    const pass = btoa(JSON.stringify({ ...JSON.parse(made[0]), approval }))
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/, '');
+    const signed = await crypto.subtle.sign('Ed25519', kept.key, made[1]);
+    const approval = store.hex(new Uint8Array(signed));
+    const pass = base64url(JSON.stringify({ ...JSON.parse(made[0]), approval }));
     return stableApproval(group, pass, line, now);
   }
   throw new Error('this open grants no entry of that kind');
@@ -244,8 +253,9 @@ async function entryApproved(data, label, now) {
 function entryAsked(data, label) {
   const { group, reach, line, authority } = data?.approve ?? data ?? {};
   if (tooLarge(reach, line)) throw new Error('an entry is too large');
-  if (authority?.label !== label || authority.pass !== reach || authority.group !== group)
+  if (authority?.label !== label || authority.pass !== reach || authority.group !== group) {
     throw new Error('this open grants no authority here');
+  }
   return { group, reach, line, authority };
 }
 

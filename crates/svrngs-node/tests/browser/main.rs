@@ -64,6 +64,25 @@ fn signing(seed: u8) -> SigningKey {
     SigningKey::from_bytes(&[seed; 32])
 }
 
+/// Every `.js` file in a page's `page/` directory, in name order, as one
+/// text: a test that reads which call a page draws by reads the page, not
+/// one file of it, since js-read (b) split each flow's view into
+/// components a file apiece (web/page/lend-line.js draws the phone's open).
+/// Here, not in harness.rs, since conformance.rs shares that file and reads
+/// no page's source.
+pub fn page_source(dir: &str) -> String {
+    let mut files: Vec<std::path::PathBuf> = std::fs::read_dir(repo().join(dir))
+        .unwrap_or_else(|e| panic!("{dir}: {e}"))
+        .map(|entry| entry.unwrap().path())
+        .filter(|path| path.extension().is_some_and(|ext| ext == "js"))
+        .collect();
+    files.sort();
+    files
+        .iter()
+        .map(|path| std::fs::read_to_string(path).unwrap())
+        .collect()
+}
+
 /// No link is asked about here.
 fn no_seed(_: &Path) -> Result<Option<String>, String> {
     Ok(None)
@@ -480,15 +499,14 @@ fn in_question_at(zone: Option<&str>, call: &str, args: Value) -> Value {
 /// both; neither page judges them itself. Planted, watched failing: the
 /// pages as v1ui-door left them, each with its own `l.using >= l.limit`
 /// and "signing you in once". Since page-switchover each page draws its
-/// index in its `page/index.js`; the phone's asks `opens(l)` for the
-/// verdict alone, as v1's read only `[1]` (web/app.js@19b63b2b:540).
+/// index in its `page/` directory; the phone's asks `opens(l)` for the
+/// verdict alone, as v1's read only `[1]` (web/app.js@19b63b2b:540). The
+/// whole directory is read since js-read (b) moved the phone's row into
+/// web/page/lend-line.js, where `index.js` alone missed it (js-read-2's run).
 #[test]
 fn the_index_s_row_is_judged_once_for_both_pages() {
-    for page in [
-        "crates/svrngs-node/src/home/page/index.js",
-        "web/page/index.js",
-    ] {
-        let text = std::fs::read_to_string(repo().join(page)).unwrap();
+    for page in ["crates/svrngs-node/src/home/page", "web/page"] {
+        let text = page_source(page);
         for judged in ["using >=", "signing you in"] {
             assert!(!text.contains(judged), "{page} judges {judged:?} itself");
         }

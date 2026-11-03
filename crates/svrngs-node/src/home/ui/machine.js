@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// The pages' one core, both pages' (page-scaffold (c); svrn-docs
+// The pages' one core, both pages' (svrn-docs
 // rings/current/PAGE_STATE.md §3). A machine owns its page's state: views
 // read it and `dispatch` a `message`, and never write it. `step(state, message)` is
 // the page's, pure and synchronous, and answers the next state and the

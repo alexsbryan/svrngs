@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Who is visiting now, both pages' (page-members (a); question.js
-// `visiting`, :43, which it moves; GUESTS §5 "The pages"), from the record,
+// Who is visiting now, both pages' (svrn-docs GUESTS §5 "The pages"), from the record,
 // as every member's page shows them: each guest, by host, until a day and
 // an hour, the host by the name the door gives them (`called`).
 import { html } from './view.js?v=__VERSION__';
@@ -21,5 +20,12 @@ import { called, until } from '../question.js?v=__VERSION__';
  */
 
 /** @param {VisitingProps} props */
-export const Visiting = ({ vs, rows = [] }) =>
-  html`<ul class="visiting">${[...vs].sort((left, right) => left.host.localeCompare(right.host)).map((visit) => html`<li>${`${visit.guest}, ${called(rows, visit.host_key) ?? visit.host}’s guest, until ${until(visit)}`}</li>`)}</ul>`;
+export function Visiting({ vs, rows = [] }) {
+  const byHost = [...vs].sort((left, right) => left.host.localeCompare(right.host));
+  const lines = byHost.map((visit) => {
+    const host = called(rows, visit.host_key) ?? visit.host;
+    const line = `${visit.guest}, ${host}’s guest, until ${until(visit)}`;
+    return html`<li>${line}</li>`;
+  });
+  return html`<ul class="visiting">${lines}</ul>`;
+}
