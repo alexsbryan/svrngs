@@ -26,6 +26,13 @@ import {
 } from '../ui/kit.js?v=__VERSION__';
 import { get, post } from './group.js?v=__VERSION__';
 
+/**
+ * HOME's message this file takes: a group made, by its name, the groups
+ * of its name said, and why its folder could not be made, `null` when it
+ * was.
+ * @typedef {{ type: 'made', flow: 'make', q: { made: string, also: string, unplaced: string | null } }} Taken
+ */
+
 const FIRST = { at: { make: 'typing' }, name: '', person: '', before: '', said: '' };
 export const MAKE = (home) => ({
   states: { make: ['typing', 'checking', 'checked', 'making', 'refused'] },

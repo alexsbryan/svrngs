@@ -24,6 +24,12 @@ import {
 } from '../ui/kit.js?v=__VERSION__';
 import { get, post } from './group.js?v=__VERSION__';
 
+/**
+ * HOME's message this file takes: a group joined, by its name, as whom,
+ * and why its folder could not be made, `null` when it was (home.rs `join`).
+ * @typedef {{ type: 'joined', flow: 'join', q: { joined: string, person: string, unplaced: string | null } }} Taken
+ */
+
 const FIRST = { at: { join: 'typing' }, link: '', person: '', for: undefined, why: '' },
   who = (s) => s.for?.[1] ?? s.person.trim();
 export const JOIN = (home) => ({

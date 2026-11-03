@@ -35,6 +35,16 @@ import {
 } from '../ui/kit.js?v=__VERSION__';
 import { get, post } from './group.js?v=__VERSION__';
 
+/**
+ * The field of HOME's that `take` sets: whether what you lend is read.
+ * @typedef {{ lentRead?: boolean }} Fields
+ */
+
+/**
+ * HOME's message this file takes: what you lend read.
+ * @typedef {{ type: 'told', flow: 'lending', why: string }} Taken
+ */
+
 const LENDING = {
   states: { lent: ['reading', 'read', 'unread'] },
   io: {

@@ -39,6 +39,23 @@ import { get, post } from './group.js?v=__VERSION__';
 import { Reach, label } from './index.js?v=__VERSION__';
 import * as wifi from './wifi.js?v=__VERSION__';
 import * as play from './play.js?v=__VERSION__';
+/** @import { Lends } from './group.js?v=__VERSION__' */
+/** @import { Row } from '../question.js?v=__VERSION__' */
+
+/**
+ * The fields of HOME's that `take` sets: whether "What acts as you" is
+ * read, and what each group's GROUP last read, by its id.
+ * @typedef {object} Fields
+ * @property {boolean} [actsRead]
+ * @property {Record<string, { people: Row[] | undefined, lends: Lends | undefined }>} [told]
+ */
+
+/**
+ * HOME's messages this file takes: "What acts as you" read, or what a
+ * group's GROUP read (`Told`).
+ * @typedef {{ type: 'told', flow: 'acts', read: true, why: string }
+ *   | { type: 'told', flow: 'acts', id: string, people: Row[] | undefined, lends: Lends | undefined, why: string }} Taken
+ */
 
 // HOME's: what each group's GROUP last read, by its id.
 export const take = (s, m) =>

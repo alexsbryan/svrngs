@@ -17,6 +17,11 @@
 // where v1 went on saying "You keep the order of removals" until a reload.
 import { ask, called, go, html, machine, no, useMachine } from '../ui/kit.js?v=__VERSION__';
 
+/**
+ * HOME's message this file takes: a group left, by its name.
+ * @typedef {{ type: 'left', flow: 'leave', name: string }} Taken
+ */
+
 const SAYS = {
     handed: (s) => `${s.person} keeps the order of removals in ${s.name} now, so you can leave it.`,
     decides: (s) =>
