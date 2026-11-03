@@ -48,7 +48,7 @@ use std::path::Path;
 use std::time::Duration;
 
 use drive::drive;
-use harness::{relay, relay_url, repo, site, Engine};
+use harness::{page_source, relay, relay_url, repo, site, Engine};
 use iroh_relay::server::Server;
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
@@ -480,15 +480,14 @@ fn in_question_at(zone: Option<&str>, call: &str, args: Value) -> Value {
 /// both; neither page judges them itself. Planted, watched failing: the
 /// pages as v1ui-door left them, each with its own `l.using >= l.limit`
 /// and "signing you in once". Since page-switchover each page draws its
-/// index in its `page/index.js`; the phone's asks `opens(l)` for the
-/// verdict alone, as v1's read only `[1]` (web/app.js@19b63b2b:540).
+/// index in its `page/` directory; the phone's asks `opens(l)` for the
+/// verdict alone, as v1's read only `[1]` (web/app.js@19b63b2b:540). The
+/// whole directory is read since js-read (b) moved the phone's row into
+/// web/page/lend-line.js, where `index.js` alone missed it (js-read-2's run).
 #[test]
 fn the_index_s_row_is_judged_once_for_both_pages() {
-    for page in [
-        "crates/svrngs-node/src/home/page/index.js",
-        "web/page/index.js",
-    ] {
-        let text = std::fs::read_to_string(repo().join(page)).unwrap();
+    for page in ["crates/svrngs-node/src/home/page", "web/page"] {
+        let text = page_source(page);
         for judged in ["using >=", "signing you in"] {
             assert!(!text.contains(judged), "{page} judges {judged:?} itself");
         }

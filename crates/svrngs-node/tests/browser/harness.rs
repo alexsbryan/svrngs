@@ -113,6 +113,23 @@ pub fn repo() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
 
+/// Every `.js` file in a page's `page/` directory, in name order, as one
+/// text: a test that reads which call a page draws by reads the page, not
+/// one file of it, since js-read (b) split each flow's view into
+/// components a file apiece (web/page/lend-line.js draws the phone's open).
+pub fn page_source(dir: &str) -> String {
+    let mut files: Vec<PathBuf> = std::fs::read_dir(repo().join(dir))
+        .unwrap_or_else(|e| panic!("{dir}: {e}"))
+        .map(|entry| entry.unwrap().path())
+        .filter(|path| path.extension().is_some_and(|ext| ext == "js"))
+        .collect();
+    files.sort();
+    files
+        .iter()
+        .map(|path| std::fs::read_to_string(path).unwrap())
+        .collect()
+}
+
 /// The page, built by `scripts/build-web.sh` into target/web/site once per
 /// run of this binary.
 pub fn site() -> &'static Path {

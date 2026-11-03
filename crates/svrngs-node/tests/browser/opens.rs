@@ -128,17 +128,16 @@ async fn opening_an_app_from_the_home_page_is_the_yes_to_what_it_reads(engine: E
 /// each in its `page/index.js` since page-switchover. The call is read, not
 /// its argument's name: js-lint (a) named the lend `lend` (75e95f3a), and
 /// this test's `agreed(l, ` failed on the rename alone (js-lint-6's gate).
+/// The page's whole `page/` directory is read: js-read (b) moved the
+/// phone's open into web/page/lend-line.js (js-read-2's run).
 /// Red at d736ff18: `agreed` said "Open " and the name before what the app
 /// does, all of it on the button. Red at 5c6e3b0d: "It reads and writes"
 /// first, which Ana read as done on her behalf without her yes (the fifth
 /// xenia set, demo/xenia/findings/said-too-much-the-group-s-page.md).
 #[test]
 fn the_open_says_what_an_app_does_in_one_wording() {
-    for page in [
-        "crates/svrngs-node/src/home/page/index.js",
-        "web/page/index.js",
-    ] {
-        let text = std::fs::read_to_string(repo().join(page)).unwrap();
+    for page in ["crates/svrngs-node/src/home/page", "web/page"] {
+        let text = page_source(page);
         assert!(text.contains("agreed("), "{page} draws no open by `agreed`");
     }
     let shelf = json!([{ "name": "Money", "words": "who owes whom, and for what." }]);
