@@ -8,7 +8,9 @@
 // own (ui/view.js `useMachine`). A link to nothing lent here is said beside
 // the button once, the last in place of the one before, where v1 appended
 // each (home.js@19b63b2b:397; page-join (f)'s fix).
-import { Act, assertNever, Field, go, html, machine, useMachine } from '../ui/kit.js?v=__VERSION__';
+import { html, useMachine } from '../ui/view.js?v=__VERSION__';
+import { assertNever, go, machine } from '../ui/machine.js?v=__VERSION__';
+import { Act, Field } from '../ui/parts.js?v=__VERSION__';
 /** @import { Machine } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 /** @import { PlaceProps } from '../home.js?v=__VERSION__' */

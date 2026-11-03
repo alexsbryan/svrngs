@@ -9,19 +9,10 @@
 // where v1's `p.append` said each after the one before (home.js@19b63b2b:130);
 // and who was removed or asked to be, when anyone was. `decides` is who
 // decides for you in it, which "What acts as you" says (page-acts).
-import {
-  ask,
-  assertNever,
-  deciders,
-  Door,
-  go,
-  html,
-  late,
-  machine,
-  no,
-  removal,
-  useMachine,
-} from '../ui/kit.js?v=__VERSION__';
+import { html, useMachine } from '../ui/view.js?v=__VERSION__';
+import { ask, assertNever, go, late, machine, no } from '../ui/machine.js?v=__VERSION__';
+import { Door } from '../ui/door.js?v=__VERSION__';
+import { deciders, removal } from '../question.js?v=__VERSION__';
 import { post } from './group.js?v=__VERSION__';
 /** @import { Group, Lends, People, PlaceProps, Reads } from './group.js?v=__VERSION__' */
 /** @import { Machine, Step } from '../ui/machine.js?v=__VERSION__' */

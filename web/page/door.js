@@ -11,16 +11,11 @@
 // visit listed ends, the group is read again (enter.js `reread`), so it
 // drops off the page as it ends, where v1 listed it until the next open
 // (page-members (b)); one end waited for at a time, the earliest.
-import {
-  Door,
-  go,
-  html,
-  no,
-  removal,
-  useEffect,
-  Visiting,
-  whose,
-} from '../ui/kit.js?v=__VERSION__';
+import { html, useEffect } from '../ui/view.js?v=__VERSION__';
+import { go, no } from '../ui/machine.js?v=__VERSION__';
+import { Door } from '../ui/door.js?v=__VERSION__';
+import { Visiting } from '../ui/visitors.js?v=__VERSION__';
+import { removal, whose } from '../question.js?v=__VERSION__';
 import { chosen } from './enter.js?v=__VERSION__';
 /** @import { Group } from '../store.js?v=__VERSION__' */
 /** @import { Visitor } from '../ui/visitors.js?v=__VERSION__' */

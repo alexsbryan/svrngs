@@ -14,16 +14,9 @@
 // hand-on reads them again too (HOME's `again`), so the hand-on, no
 // longer this computer's, goes, and what it did is said beside Leave,
 // where v1 went on saying "You keep the order of removals" until a reload.
-import {
-  ask,
-  assertNever,
-  called,
-  go,
-  html,
-  machine,
-  no,
-  useMachine,
-} from '../ui/kit.js?v=__VERSION__';
+import { html, useMachine } from '../ui/view.js?v=__VERSION__';
+import { ask, assertNever, go, machine, no } from '../ui/machine.js?v=__VERSION__';
+import { called } from '../question.js?v=__VERSION__';
 /** @import { Group, Home, PlaceProps } from './group.js?v=__VERSION__' */
 /** @import { Machine, Step } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */

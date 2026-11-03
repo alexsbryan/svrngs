@@ -10,18 +10,9 @@
 // it joins; joined, HOME says so (`take`) and reads the groups again, where
 // v1 opened the page again (home.js@19b63b2b:409; page-join (c)'s fix), and the form is
 // empty again; a refusal is said below, in place of the last.
-import {
-  Act,
-  ask,
-  assertNever,
-  Field,
-  go,
-  html,
-  late,
-  machine,
-  no,
-  useMachine,
-} from '../ui/kit.js?v=__VERSION__';
+import { html, useMachine } from '../ui/view.js?v=__VERSION__';
+import { ask, assertNever, go, late, machine, no } from '../ui/machine.js?v=__VERSION__';
+import { Act, Field } from '../ui/parts.js?v=__VERSION__';
 import { get, post } from './group.js?v=__VERSION__';
 /** @import { Machine, Step } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */

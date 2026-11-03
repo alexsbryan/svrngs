@@ -8,16 +8,9 @@
 // is made is refused. The link is then said in p.link, in its words, with
 // Copy (ui/copy.js) beside it, its last answer alone, where home.js@19b63b2b:137 appends
 // each (page-join (e)'s fix); a refusal said there in its place.
-import {
-  Act,
-  assertNever,
-  Field,
-  go,
-  html,
-  machine,
-  no,
-  useMachine,
-} from '../ui/kit.js?v=__VERSION__';
+import { html, useMachine } from '../ui/view.js?v=__VERSION__';
+import { assertNever, go, machine, no } from '../ui/machine.js?v=__VERSION__';
+import { Act, Field } from '../ui/parts.js?v=__VERSION__';
 import { COPY, drawn } from '../ui/copy.js?v=__VERSION__';
 import { post } from './group.js?v=__VERSION__';
 /** @import { Group, PlaceProps } from './group.js?v=__VERSION__' */

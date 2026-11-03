@@ -11,15 +11,10 @@
 // (HOME's `again`), sooner reading the guest as still here, where v1
 // reloaded the page (page-members (b)). A refusal is said after the one
 // before, as v1's `li.append` does.
-import {
-  assertNever,
-  go,
-  html,
-  machine,
-  until,
-  useMachine,
-  Visiting,
-} from '../ui/kit.js?v=__VERSION__';
+import { html, useMachine } from '../ui/view.js?v=__VERSION__';
+import { assertNever, go, machine } from '../ui/machine.js?v=__VERSION__';
+import { Visiting } from '../ui/visitors.js?v=__VERSION__';
+import { until } from '../question.js?v=__VERSION__';
 import { post } from './group.js?v=__VERSION__';
 /** @import { Group, Home, PlaceProps, Visit } from './group.js?v=__VERSION__' */
 /** @import { Machine } from '../ui/machine.js?v=__VERSION__' */

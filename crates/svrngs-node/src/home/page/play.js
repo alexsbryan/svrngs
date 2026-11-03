@@ -10,18 +10,9 @@
 // index.js), and each Play on with its Stop under "What acts as you"
 // (`part`, for acts.js). What has Play on that cannot be read is said
 // once, in `part`, never read as none; Play then writes it over.
-import {
-  Act,
-  ask,
-  assertNever,
-  go,
-  html,
-  late,
-  machine,
-  no,
-  useEffect,
-  useStore,
-} from '../ui/kit.js?v=__VERSION__';
+import { html, useEffect, useStore } from '../ui/view.js?v=__VERSION__';
+import { ask, assertNever, go, late, machine, no } from '../ui/machine.js?v=__VERSION__';
+import { Act } from '../ui/parts.js?v=__VERSION__';
 import { get, post } from './group.js?v=__VERSION__';
 /** @import { Machine } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */

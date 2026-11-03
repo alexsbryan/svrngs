@@ -11,7 +11,9 @@
 // can be said again, where v1 left the form hidden (app.js@19b63b2b:316; page-acts (d)).
 // The ask is sent by the page once its list is read (`Asking`), as no flow
 // sends it: the read is enter's.
-import { go, html, no, question, unlent, useEffect } from '../ui/kit.js?v=__VERSION__';
+import { html, useEffect } from '../ui/view.js?v=__VERSION__';
+import { go, no } from '../ui/machine.js?v=__VERSION__';
+import { question, unlent } from '../question.js?v=__VERSION__';
 import { choose } from './uses.js?v=__VERSION__';
 /** @import { Group } from '../store.js?v=__VERSION__' */
 /** @import { Io, Takes } from '../ui/machine.js?v=__VERSION__' */

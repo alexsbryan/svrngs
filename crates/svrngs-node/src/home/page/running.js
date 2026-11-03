@@ -11,18 +11,9 @@
 // lent only once the person names it and says what it is; one button
 // lends it, and the row then says what happened, or why not, each refusal
 // beside the button as v1 appends it, kept there while it lends again. Drawn once the person is in a group.
-import {
-  Act,
-  ask,
-  assertNever,
-  Field,
-  go,
-  html,
-  late,
-  machine,
-  no,
-  useMachine,
-} from '../ui/kit.js?v=__VERSION__';
+import { html, useMachine } from '../ui/view.js?v=__VERSION__';
+import { ask, assertNever, go, late, machine, no } from '../ui/machine.js?v=__VERSION__';
+import { Act, Field } from '../ui/parts.js?v=__VERSION__';
 import { get, post } from './group.js?v=__VERSION__';
 /** @import { Group, Home } from './group.js?v=__VERSION__' */
 /** @import { Machine } from '../ui/machine.js?v=__VERSION__' */

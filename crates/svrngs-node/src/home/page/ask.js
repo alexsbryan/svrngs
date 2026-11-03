@@ -8,16 +8,9 @@
 // the buttons, in place of any before it, where v1 appended each (home.js@19b63b2b:343;
 // page-acts (d)). Its machine, ASK, is the place's own (ui/view.js
 // `useMachine`).
-import {
-  assertNever,
-  go,
-  html,
-  machine,
-  no,
-  question,
-  unlent,
-  useMachine,
-} from '../ui/kit.js?v=__VERSION__';
+import { html, useMachine } from '../ui/view.js?v=__VERSION__';
+import { assertNever, go, machine, no } from '../ui/machine.js?v=__VERSION__';
+import { question, unlent } from '../question.js?v=__VERSION__';
 import { get, post } from './group.js?v=__VERSION__';
 import { label } from './index.js?v=__VERSION__';
 /** @import { Group, Lent } from './group.js?v=__VERSION__' */

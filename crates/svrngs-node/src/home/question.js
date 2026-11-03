@@ -5,7 +5,7 @@
 // computer (home.rs serves this file) and the group's page on a phone
 // (scripts/build-web.sh gives it this file). Its words are DESIGN §1's, a
 // lend named as the bare command names it (svrngs cli.rs `lends`). Words
-// only: the parts in ui/ draw them (ui/kit.js), and each page keeps how it
+// only: the parts in ui/ draw them, and each page keeps how it
 // asks a lend's choices and posts a yes or a stop (REVIEW_FINDINGS #110,
 // #113).
 

@@ -16,25 +16,12 @@
 // `acted` by what it acts on, so it stays said once read again; a Stop on
 // what apps use reads the groups again, and so the section, where v1
 // reloaded the page (home.js@19b63b2b:221; page-acts (d)).
-import {
-  Acts,
-  ask,
-  assertNever,
-  called,
-  carrying,
-  Changes,
-  deciders,
-  go,
-  html,
-  late,
-  machine,
-  no,
-  once,
-  reading,
-  useEffect,
-  useMachine,
-  Uses,
-} from '../ui/kit.js?v=__VERSION__';
+import { html, useEffect, useMachine } from '../ui/view.js?v=__VERSION__';
+import { ask, assertNever, go, late, machine, no } from '../ui/machine.js?v=__VERSION__';
+import { Acts } from '../ui/acts.js?v=__VERSION__';
+import { Changes } from '../ui/changes.js?v=__VERSION__';
+import { Uses } from '../ui/uses.js?v=__VERSION__';
+import { called, carrying, deciders, once, reading } from '../question.js?v=__VERSION__';
 import { get, post } from './group.js?v=__VERSION__';
 import { Reach, label } from './index.js?v=__VERSION__';
 import * as wifi from './wifi.js?v=__VERSION__';

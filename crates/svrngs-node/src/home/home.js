@@ -13,17 +13,9 @@
 // coming back on screen: each reads the groups again, then each group.
 // The edge, below the page, reads the address and forgets a notice in it.
 import { trace } from './ui/trace.js?v=__VERSION__';
-import {
-  ask,
-  go,
-  html,
-  late,
-  machine,
-  no,
-  render,
-  useStore,
-  whose,
-} from './ui/kit.js?v=__VERSION__';
+import { html, render, useStore } from './ui/view.js?v=__VERSION__';
+import { ask, go, late, machine, no } from './ui/machine.js?v=__VERSION__';
+import { whose } from './question.js?v=__VERSION__';
 import { Group, get, offered } from './page/group.js?v=__VERSION__';
 /** @import { Machine, Step, Store } from './ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from './ui/view.js?v=__VERSION__' */

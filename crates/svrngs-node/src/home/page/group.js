@@ -8,17 +8,9 @@
 // again on HOME's `again` and `visible`, each a new `round` from HOME.
 // What each read draws is each feature's, in its place (PLACES), from
 // home/page/<file>.js: a file that draws nothing draws nothing here.
-import {
-  ask,
-  go,
-  html,
-  late,
-  machine,
-  no,
-  useEffect,
-  useMachine,
-  whose,
-} from '../ui/kit.js?v=__VERSION__';
+import { html, useEffect, useMachine } from '../ui/view.js?v=__VERSION__';
+import { ask, go, late, machine, no } from '../ui/machine.js?v=__VERSION__';
+import { whose } from '../question.js?v=__VERSION__';
 /** @import { Core, Effect as AnyEffect, Machine, Step, Store } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 /** @import { Lend, Named, Removal, PeopleRow, Shelved } from '../question.js?v=__VERSION__' */

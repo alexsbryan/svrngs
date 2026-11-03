@@ -82,6 +82,12 @@
             "max": 10,
             "variant": "modified"
           }
+        ],
+        "oxc/no-barrel-file": [
+          "error",
+          {
+            "threshold": 0
+          }
         ]
       }
     }

@@ -19,21 +19,12 @@
 // Lines a carry left unsent are carried again on each read that holds
 // them, where v1 carried them only at the next yes (app.js@19b63b2b:506; page-acts (d)):
 // refused, that carry asks no read again, so it is tried once a read.
-import {
-  Act,
-  Acts,
-  carrying,
-  Changes,
-  deciders,
-  go,
-  html,
-  named,
-  no,
-  once,
-  reading,
-  spoken,
-  useEffect,
-} from '../ui/kit.js?v=__VERSION__';
+import { html, useEffect } from '../ui/view.js?v=__VERSION__';
+import { go, no } from '../ui/machine.js?v=__VERSION__';
+import { Act } from '../ui/parts.js?v=__VERSION__';
+import { Acts } from '../ui/acts.js?v=__VERSION__';
+import { Changes } from '../ui/changes.js?v=__VERSION__';
+import { carrying, deciders, named, once, reading, spoken } from '../question.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
 import { through } from './enter.js?v=__VERSION__';
 import { PASS_LIFE } from './index.js?v=__VERSION__';

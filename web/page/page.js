@@ -8,7 +8,9 @@
 // answers `{run: 'send', m}`, which the frame's io dispatches. Kept apart
 // from app.js, the edge, so node holds it to its laws with no browser
 // (web/tests/pages/frame.test.mjs).
-import { go, Heading, html, no, useEffect, useStore } from '../ui/kit.js?v=__VERSION__';
+import { html, useEffect, useStore } from '../ui/view.js?v=__VERSION__';
+import { go, no } from '../ui/machine.js?v=__VERSION__';
+import { Heading } from '../ui/parts.js?v=__VERSION__';
 /** @import { Effect, Machine, Runners, Step, Store } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 /** @import * as acts from './acts.js?v=__VERSION__' */

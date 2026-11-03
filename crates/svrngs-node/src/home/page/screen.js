@@ -16,20 +16,10 @@
 // (`newest`): kept by this page alone, so opened again it starts over. The
 // first read's were here before it opened, so no line says them. The page's
 // class and title are set at the edge (`look`), not by a view.
-import {
-  ask,
-  assertNever,
-  called,
-  counted,
-  Door,
-  go,
-  html,
-  late,
-  machine,
-  no,
-  useMachine,
-  whose,
-} from '../ui/kit.js?v=__VERSION__';
+import { html, useMachine } from '../ui/view.js?v=__VERSION__';
+import { ask, assertNever, go, late, machine, no } from '../ui/machine.js?v=__VERSION__';
+import { counted, Door } from '../ui/door.js?v=__VERSION__';
+import { called, whose } from '../question.js?v=__VERSION__';
 import { get } from './group.js?v=__VERSION__';
 /** @import { Group, Lends, Lent, PlaceProps } from './group.js?v=__VERSION__' */
 /** @import { Machine } from '../ui/machine.js?v=__VERSION__' */

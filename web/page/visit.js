@@ -9,7 +9,10 @@
 // opens is listed in #lent (`listed`, web/page/index.js's place), each open
 // a pass that lasts past the visit (app.js@19b63b2b:211), so the lender's door says it
 // has ended. The key never enters state: the edge holds it.
-import { go, html, named, no, Row } from '../ui/kit.js?v=__VERSION__';
+import { html } from '../ui/view.js?v=__VERSION__';
+import { go, no } from '../ui/machine.js?v=__VERSION__';
+import { Row } from '../ui/parts.js?v=__VERSION__';
+import { named } from '../question.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
 import { PASS_LIFE, handing } from './index.js?v=__VERSION__';
 /** @import { Visit } from '../store.js?v=__VERSION__' */

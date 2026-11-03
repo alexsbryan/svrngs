@@ -20,19 +20,9 @@
 // once, and nowhere else: never in a request, a link or a trace line
 // (SIGN_IN_WITH_SVRNGS §5 "Turning it on"); a read again keeps the row, so
 // keeps it shown, and a load of the page, which reads none, shows it no more.
-import {
-  Act,
-  ask,
-  assertNever,
-  Field,
-  go,
-  html,
-  late,
-  machine,
-  no,
-  useEffect,
-  useMachine,
-} from '../ui/kit.js?v=__VERSION__';
+import { html, useEffect, useMachine } from '../ui/view.js?v=__VERSION__';
+import { ask, assertNever, go, late, machine, no } from '../ui/machine.js?v=__VERSION__';
+import { Act, Field } from '../ui/parts.js?v=__VERSION__';
 import { get, post } from './group.js?v=__VERSION__';
 /** @import { Machine, Step } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */

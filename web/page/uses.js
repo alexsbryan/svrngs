@@ -10,7 +10,10 @@
 // posted to its lender's door, and then it asks again; a refusal is said
 // after the button. Lines by ui/uses.js `Uses`, as `li`. The dial is the
 // one endpoint's (web/page/enter.js `dialled`), at the edge.
-import { ask, Fold, go, html, late, no, Uses } from '../ui/kit.js?v=__VERSION__';
+import { html } from '../ui/view.js?v=__VERSION__';
+import { ask, go, late, no } from '../ui/machine.js?v=__VERSION__';
+import { Fold } from '../ui/parts.js?v=__VERSION__';
+import { Uses } from '../ui/uses.js?v=__VERSION__';
 import { dialled } from './enter.js?v=__VERSION__';
 /** @import { Group } from '../store.js?v=__VERSION__' */
 /** @import { Io, Takes } from '../ui/machine.js?v=__VERSION__' */

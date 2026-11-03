@@ -9,7 +9,9 @@
 // is offered in #door, opened in the one the person picks (app.js@19b63b2b:581-587). A
 // lend's address with nothing serving it in this browser goes to the
 // group's page, at most once a minute from one tab (app.js@19b63b2b:638-646).
-import { aliased, go, html, no, whose } from '../ui/kit.js?v=__VERSION__';
+import { html } from '../ui/view.js?v=__VERSION__';
+import { go, no } from '../ui/machine.js?v=__VERSION__';
+import { aliased, whose } from '../question.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
 /** @import { Group } from '../store.js?v=__VERSION__' */
 /** @import { Io, Takes } from '../ui/machine.js?v=__VERSION__' */
