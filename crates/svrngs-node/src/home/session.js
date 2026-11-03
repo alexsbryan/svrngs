@@ -67,27 +67,34 @@ export async function browserAuthority(fetched, clients, origin) {
   if (from && from !== origin) return null;
   const client = fetched.clientId && (await clients.get(fetched.clientId));
   if ((client && new URL(client.url).origin === origin) || from === origin) return Browser.Own;
-  // A navigation WebKit shows no `Origin` and no client of: its referrer,
-  // which the browser sets to the page that started it and no page sets to
-  // another origin's, says whether that page is this origin's own. Withheld,
-  // it proves nothing.
-  if (
-    request.mode === 'navigate' &&
-    !from &&
-    URL.canParse(request.referrer ?? '') &&
-    new URL(request.referrer).origin === origin
-  )
-    return Browser.Own;
-  // A whole tab's read, typed, bookmarked or followed, as a cookie the
-  // browser sends on a top-level GET once was: never a frame, never a
-  // write. A worker is shown no `Sec-Fetch-*` header in Chromium or WebKit,
-  // so whether a person or a page started it cannot be read here.
-  const tab =
-    ['GET', 'HEAD'].includes(request.method) &&
-    request.mode === 'navigate' &&
-    request.destination === 'document';
-  return tab ? Browser.Tab : null;
+  if (referredHere(request, from, origin)) return Browser.Own;
+  return wholeTab(request) ? Browser.Tab : null;
 }
+
+// A navigation WebKit shows no `Origin` and no client of: its referrer,
+// which the browser sets to the page that started it and no page sets to
+// another origin's, says whether that page is this origin's own. Withheld,
+// it proves nothing.
+/**
+ * @param {Request} request
+ * @param {string | null} from its `Origin`
+ * @param {string} origin
+ */
+const referredHere = (request, from, origin) =>
+  request.mode === 'navigate' &&
+  !from &&
+  URL.canParse(request.referrer ?? '') &&
+  new URL(request.referrer).origin === origin;
+
+// A whole tab's read, typed, bookmarked or followed, as a cookie the
+// browser sends on a top-level GET once was: never a frame, never a
+// write. A worker is shown no `Sec-Fetch-*` header in Chromium or WebKit,
+// so whether a person or a page started it cannot be read here.
+/** @param {Request} request */
+const wholeTab = (request) =>
+  ['GET', 'HEAD'].includes(request.method) &&
+  request.mode === 'navigate' &&
+  request.destination === 'document';
 
 if (typeof document !== 'undefined' && document.getElementById('svrngs-session-state')) {
   // Found by the test above.

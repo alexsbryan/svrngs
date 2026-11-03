@@ -126,54 +126,87 @@ async function authenticated(request, intent = false) {
     ].includes(url.pathname)
   )
     return;
-  fetchEvent.respondWith(
-    (async () => {
-      const authority = await browserAuthority(
-        fetchEvent,
-        /** @type {Scope} */ (self).clients,
-        self.location.origin,
-      );
-      if (!authority) {
-        // A read capability is independent authority: forward it unsigned for
-        // the node to judge. Never let a refusal bootstrap this frame's key.
-        if (url.pathname.startsWith('/svrngs-as/')) {
-          const response = await fetch(fetchEvent.request);
-          if (response.status !== 401) return response;
-        }
-        return new Response('Open this page as a tab, or from its own origin', { status: 403 });
-      }
-      const intent = authority === Browser.Own;
-      /** @type {Response | Promise<Response> | undefined} */
-      let given;
-      for (const flow of intent ? (app ?? []) : [])
-        flow({
-          request: fetchEvent.request,
-          clientId: fetchEvent.clientId,
-          respondWith: (promise) => {
-            given ??= promise;
-          },
-          waitUntil: () => {},
-        });
-      const response = await (given ?? authenticated(fetchEvent.request, intent));
-      if (
-        url.hostname === 'svrngs.localhost' ||
-        fetchEvent.request.method !== 'GET' ||
-        !response.headers.get('content-type')?.includes('text/html')
-      )
-        return response;
-      const headers = new Headers(response.headers);
-      headers.delete('content-length');
-      headers.delete('content-encoding');
-      const nonce = /'nonce-([^']+)'/.exec(headers.get('content-security-policy') ?? '')?.[1];
-      const html = await response.text();
-      const head = /<head[^>]*>/i.exec(html) ?? /<!doctype[^>]*>/i.exec(html);
-      const at = head ? head.index + head[0].length : 0;
-      const script = `<script${nonce ? ` nonce="${nonce}"` : ''} src="/svrngs-session-client.js"></script>`;
-      return new Response(html.slice(0, at) + script + html.slice(at), {
-        status: response.status,
-        statusText: response.statusText,
-        headers,
-      });
-    })(),
-  );
+  fetchEvent.respondWith(served(fetchEvent, url));
 });
+
+// The answer to a fetch of this origin's, `fetchEvent` at `url`: refused
+// unless the browser's authority is read from it, an app's own worker's
+// answer, else the node's to it proved, a page with the session's client
+// in it.
+/**
+ * @param {FetchEvent} fetchEvent
+ * @param {URL} url
+ */
+async function served(fetchEvent, url) {
+  const authority = await browserAuthority(
+    fetchEvent,
+    /** @type {Scope} */ (self).clients,
+    self.location.origin,
+  );
+  if (!authority) return unproved(fetchEvent.request, url);
+  const intent = authority === Browser.Own;
+  const response = await (appAnswer(fetchEvent, intent) ??
+    authenticated(fetchEvent.request, intent));
+  if (
+    url.hostname === 'svrngs.localhost' ||
+    fetchEvent.request.method !== 'GET' ||
+    !response.headers.get('content-type')?.includes('text/html')
+  )
+    return response;
+  return withClient(response);
+}
+
+// A request no authority of the browser's is read from.
+/**
+ * @param {Request} request
+ * @param {URL} url
+ */
+async function unproved(request, url) {
+  // A read capability is independent authority: forward it unsigned for
+  // the node to judge. Never let a refusal bootstrap this frame's key.
+  if (url.pathname.startsWith('/svrngs-as/')) {
+    const response = await fetch(request);
+    if (response.status !== 401) return response;
+  }
+  return new Response('Open this page as a tab, or from its own origin', { status: 403 });
+}
+
+// The answer an app's own worker gives `fetchEvent`, when this origin's
+// own page asked it (`intent`) and one gives any.
+/**
+ * @param {FetchEvent} fetchEvent
+ * @param {boolean} intent
+ */
+function appAnswer(fetchEvent, intent) {
+  /** @type {Response | Promise<Response> | undefined} */
+  let given;
+  for (const flow of intent ? (app ?? []) : [])
+    flow({
+      request: fetchEvent.request,
+      clientId: fetchEvent.clientId,
+      respondWith: (promise) => {
+        given ??= promise;
+      },
+      waitUntil: () => {},
+    });
+  return given;
+}
+
+// A page, `response`, with the session's client script in its head, under
+// the page's own script nonce when its policy names one.
+/** @param {Response} response */
+async function withClient(response) {
+  const headers = new Headers(response.headers);
+  headers.delete('content-length');
+  headers.delete('content-encoding');
+  const nonce = /'nonce-([^']+)'/.exec(headers.get('content-security-policy') ?? '')?.[1];
+  const html = await response.text();
+  const head = /<head[^>]*>/i.exec(html) ?? /<!doctype[^>]*>/i.exec(html);
+  const at = head ? head.index + head[0].length : 0;
+  const script = `<script${nonce ? ` nonce="${nonce}"` : ''} src="/svrngs-session-client.js"></script>`;
+  return new Response(html.slice(0, at) + script + html.slice(at), {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
