@@ -34,6 +34,24 @@ export const Fold = ({ id, summary, heading, open = false, fold, send, children 
 // as it is drawn (web/app.js@19b63b2b:136), or `wrap`, the label around it, or a
 // `select` of `options`, [value, words]. Each change is sent as `typed`.
 const focus = (box) => box?.focus();
+/**
+ * A field's props: its `typed` message names the field `name`, `id` when
+ * not given, so the machine taking it is checked for that field.
+ * @template {string} Name
+ * @typedef {object} FieldProps
+ * @property {'wrap' | 'for'} [shape]
+ * @property {Name} id
+ * @property {Name} [name]
+ * @property {import('./view.js?v=__VERSION__').Drawn} words
+ * @property {string} [value]
+ * @property {Record<string, string | number | boolean>} [attrs] the box's own attributes
+ * @property {[value: string, words: string][]} [options] a `select`'s, else a text box
+ * @property {(message: { type: 'typed', field: Name, value: string }) => void} send
+ */
+/**
+ * @template {string} Name
+ * @param {FieldProps<Name>} props
+ */
 export function Field({ shape = 'wrap', id, name = id, words, value, attrs = {}, options, send }) {
   const typed = (e) => send({ type: 'typed', field: name, value: e.currentTarget.value });
   const box = options
