@@ -392,7 +392,15 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # this rung's own 4 came in, so `.` is one past 18,505. `js` has no cap (None) until the js queue's
 # jubilee sets one past where the queue lands; until then it is printed as
 # uncapped, never passed in silence.
-BUDGET = {"crates/svrngs-core": 3374, ".": 18506, "js": None, "swift": 1}
+# Relay fallbacks in tiers, the operator's raise (2026-11-02, "Approve the
+# raise"; svrn-docs rings/current/GROUP_RELAYS.md §7): +104 in the core (the
+# keeper's `Meets` act and its fold, `MeetsAt`, the two-tier `Meeting`, the
+# two-relay link) and +355 in `.` net, at 3,477 and 18,860 (105df0bf..424d1dfc).
+# The pass cut 17 lines first: a dial's addresses kept once (0f08ee6a), one
+# way to make a contact (c0212347), one reader of a group's page (77768a50);
+# it found nothing said twice in link.rs, relay.rs, membership.rs or
+# register.rs. The rest is new: the tiers module, multi-relay dials and links.
+BUDGET = {"crates/svrngs-core": 3478, ".": 18861, "js": None, "swift": 1}
 CODE = {".rs", ".ts", ".py", ".sh"}
 RUNG_KINDS = {"js": {".js", ".mjs"}, "swift": {".swift"}}
 
