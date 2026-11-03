@@ -104,7 +104,7 @@ The rows run in order, since all of them touch the same files.
   - **(c) Modules:**
     - `import/no-cycle`;
     - `oxc/no-barrel-file`: `ui/kit.js` goes, and each flow imports what it uses, from its module;
-    - `import/no-restricted-paths` for CHARTER's layers;
+    - `no-restricted-imports`, a `regex` pattern per override, for CHARTER's layers (corrected: `import/no-restricted-paths` is not in oxlint 1.89.0, `grep -c no-restricted-paths web/node_modules/oxlint/configuration_schema.json` is 0; `no-restricted-imports` is, at :5227);
     - `web/tests/specifiers.test.mjs` still passes.
   - **(d) Type-aware,** per CHARTER "Answered" 4, or each rule named never-ran with why.
   - **Plant:** each rule watched failing on a planted file before its fixes. The commit names the rule and the plant.
