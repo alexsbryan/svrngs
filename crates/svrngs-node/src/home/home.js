@@ -113,6 +113,7 @@ const FILES = /** @type {const} */ ([
   'join',
   'join-form',
   'make',
+  'make-form',
   'links',
   'open',
   'acts',
