@@ -58,13 +58,16 @@ The rows run in order, since all of them touch the same files.
     - `assertNever` takes the `never` an exhaustive `switch` leaves;
     - `ui/view.js`'s `useStore` and `useMachine` are typed;
     - `ui/trace.js` is typed.
+  - **Corrected 2026-11-02, (b)'s session: no step at HEAD is a `switch`** (`git grep "switch ("` over both pages finds none). Each takes a message by a table, two ways:
+    - **The phone's flows** each export `takes` (message type → step), which `compose` reads at run time to refuse a type two flows claim (`web/page/page.js:61-76`, `:94`). A `switch` would hide the types from it. So each flow's `takes` is typed `Takes<State, Message>` (`ui/machine.js`): a mapped type over the flow's Message union, which fails `types` on a type with no step or a step for no type, and gives each step its own message's type. That is the same check as an exhaustive `switch`, with no runtime change.
+    - **The home page's steps** are object-literal tables of thunks, `({ ... })[m.type]?.() ?? no(s, '... takes no ${m.type}')` (21 of them, such as `crates/svrngs-node/src/home/page/ask.js:70`), whose thunks read `m` unnarrowed. Each becomes a `switch (m.type)` ending in `assertNever`, which refuses in the same words. The `switch` is the guard narrowing needs, so "Kept" below allows it.
   - **(c) The phone page,** one commit per machine:
     - its states and messages as discriminated-union `@typedef`s;
-    - `step`'s `switch` exhaustive;
+    - its `takes` a `Takes<State, Message>`, exhaustive;
     - `io` typed;
     - each component's props a `@typedef`.
-  - **(d) The home page,** the same way, one commit per machine.
-  - **Plant:** a planted message `{ type: 'nope' }` that no case takes fails `types` at the `assertNever`. A planted wrong prop type fails it too.
+  - **(d) The home page,** the same way, one commit per machine, its `step` a `switch` exhaustive at `assertNever`.
+  - **Plant:** a planted message `{ type: 'nope' }` that no case takes fails `types`: at the `assertNever` in a home step, and at the `takes` in a phone flow. A planted wrong prop type fails it too.
   - **Kept:** every runtime byte but `assertNever` and the guards narrowing needs. `git diff` on a typed file shows comments only, apart from those.
 - [ ] js-lint — depends [js-types] — ONE ROW, each part its own commit, `scripts/check.sh` once, at the close — the structural rules, each on with its hits fixed in the same commit:
   - **The scope.** `.oxlintrc.json` gains an `overrides` entry for the pages' code (CHARTER, "Scope"). The rest keeps today's rules.
