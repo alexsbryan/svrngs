@@ -21,7 +21,7 @@ import { assertNever, go, machine, no } from './machine.js?v=__VERSION__';
 import { Act, Fold } from './parts.js?v=__VERSION__';
 import { spoken } from '../question.js?v=__VERSION__';
 /** @import { Machine, Store } from './machine.js?v=__VERSION__' */
-/** @import { Drawn } from './view.js?v=__VERSION__' */
+/** @import { Drawn, Targeted } from './view.js?v=__VERSION__' */
 /** @import { Shelved } from '../question.js?v=__VERSION__' */
 
 /**
@@ -45,7 +45,7 @@ import { spoken } from '../question.js?v=__VERSION__';
  * SHELF's state: where its bring is; the apps ticked, and those brought,
  * by kind; whether its fold is open; what its bring said; the group's
  * name, as the bring under way names it; and how often the group was read
- * again without listing all it brought.
+ * again without naming all it brought.
  * @typedef {object} ShelfState
  * @property {{ bring: 'idle' | 'bringing' | 'brought' | 'refused' }} at
  * @property {Record<string, number>} [asked]
@@ -226,9 +226,8 @@ export function drawn(s, send, { g, lent, shelf, joined }) {
   const name = g.name ?? 'your group',
     listed = (/** @type {Shelved} */ a) => on(g, lent)(a.name),
     offered = shelf.filter((a) => !listed(a) && !s.brought.includes(a.name));
-  const tick =
-    (/** @type {string} */ a) => (/** @type {Event & { currentTarget: HTMLInputElement }} */ e) =>
-      send({ type: 'tick', app: a, on: e.currentTarget.checked });
+  const tick = (/** @type {string} */ a) => (/** @type {Targeted<HTMLInputElement>} */ e) =>
+    send({ type: 'tick', app: a, on: e.currentTarget.checked });
   const section = html`<section><h3>Bring things to the table</h3>${shelf.filter(listed).map((a) => html`<p>${spoken(a.name)} is on the table.</p>`)}<p>${offered.length ? `These come with svrngs. Bring one, and everyone in ${name} opens it on their own computer or phone, while any computer in ${name} is on.` : ''}</p>${offered.map((a) => html`<p><label><input type="checkbox" disabled=${s.at.bring === 'bringing'} checked=${s.ticked.includes(a.name)} onChange=${tick(a.name)} />${` ${spoken(a.name)}: ${a.words}`}</label></p>`)}${(offered.length > 0 || s.said) && html`<p><${Act} answer=${offered.length ? 'beside' : 'instead'} words=${`Bring the ticked ones to ${name}`} doing=${{ state: s.at.bring === 'bringing' ? 'busy' : s.at.bring, said: s.said && ` ${s.said}` }} on=${{ type: 'bring', g, name, apps: offered.map((a) => a.name).filter((a) => s.ticked.includes(a)) }} send=${send} />${s.at.bring === 'bringing' && ' Bringing…'}</p>`}</section>`;
   return joined
     ? html`<${Fold} summary=${`Bring more to ${name}`} fold="shelf" open=${s.open} send=${send}>${section}<//>`

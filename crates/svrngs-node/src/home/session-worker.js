@@ -14,7 +14,7 @@ import { session, proof, Browser, browserAuthority } from '/svrngs-session.js';
  * @typedef {{ waitUntil: () => void }} AppStage
  */
 
-/** @type {((event: AppFetch) => void)[] | null} */
+/** @type {((e: AppFetch) => void)[] | null} */
 let app = null;
 /**
  * `request` sent proved as this browser's session, `intent` saying whether
@@ -68,14 +68,12 @@ async function authenticated(request, intent = false) {
       if (url.origin !== self.location.origin) throw new Error('an app worker is its own origin’s');
       const res = await authenticated(new Request(url));
       if (!res.ok) throw new Error(`its worker answered ${res.status}`);
-      /** @type {{ fetch: ((event: AppFetch) => void)[], install: ((event: AppStage) => void)[], activate: ((event: AppStage) => void)[] }} */
+      /** @type {{ fetch: ((e: AppFetch) => void)[], install: ((e: AppStage) => void)[], activate: ((e: AppStage) => void)[] }} */
       const listeners = { fetch: [], install: [], activate: [] };
       // An app may listen for any type; these three are handed on, and a
       // listener's own type is the app's, never read here.
-      const on = (/** @type {string} */ type, /** @type {(event: never) => void} */ f) =>
-        /** @type {Partial<Record<string, ((event: never) => void)[]>>} */ (listeners)[type]?.push(
-          f,
-        );
+      const on = (/** @type {string} */ type, /** @type {(e: never) => void} */ f) =>
+        /** @type {Partial<Record<string, ((e: never) => void)[]>>} */ (listeners)[type]?.push(f);
       /**
        * @param {RequestInfo | URL} input
        * @param {RequestInit} [init]

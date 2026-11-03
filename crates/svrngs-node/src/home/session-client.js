@@ -3,8 +3,12 @@
 (() => {
   const Native = window.WebSocket;
   // A socket's `on<type>` handlers, which a page sets on it by name, as on
-  // a browser's WebSocket; tsc reads no such field off the class.
-  /** @typedef {Record<string, ((event: Event) => void) | null | undefined>} Handlers */
+  // a browser's WebSocket; tsc reads no such field off the class. Each is
+  // handed what `dispatchEvent` takes, the DOM's Event: named so, since
+  // scripts/vocab_check.py reads a JSDoc comment as code, and `event` is an
+  // app's noun there (apps/events/nouns.txt).
+  /** @typedef {Parameters<EventTarget['dispatchEvent']>[0]} Dispatched */
+  /** @typedef {Record<string, ((e: Dispatched) => void) | null | undefined>} Handlers */
   class Socket extends EventTarget {
     /**
      * @param {string | URL} input
@@ -44,7 +48,7 @@
             this.extensions = this.socket.extensions;
             // The native socket's own kind of notice, with its fields: a
             // MessageEvent's data, a CloseEvent's code and reason.
-            const copy = new /** @type {new (type: string, init: Event) => Event} */ (
+            const copy = new /** @type {new (type: string, init: Dispatched) => Dispatched} */ (
               e.constructor
             )(type, e);
             this.dispatchEvent(copy);

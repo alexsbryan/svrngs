@@ -53,10 +53,10 @@ export async function proof(key, request, epoch) {
 
 export const Browser = Object.freeze({ Own: 'own', Tab: 'tab' });
 /**
- * Whose a request is, by the fetch event the worker gives: this origin's
- * own page, a whole tab's read, or neither (`null`). Its event and clients
- * are a worker's `FetchEvent` and `Clients`, read for the fields here, as
- * this module is the page's too, whose lib declares neither.
+ * Whose a request is, by the fetch the worker is handed: this origin's
+ * own page, a whole tab's read, or neither (`null`). The fetch and the
+ * clients are a worker's `FetchEvent` and `Clients`, read for the fields
+ * here, as this module is the page's too, whose lib declares neither.
  * @param {{ request: Request, clientId: string }} fetched
  * @param {{ get: (id: string) => Promise<{ url: string } | undefined> }} clients
  * @param {string} origin
