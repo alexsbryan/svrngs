@@ -1,0 +1,13 @@
+   1     1 Thread   DispatchQueue_2630: com.apple.IPC.ReceiveQueue  (serial)
+   1     133 Thread: CVDisplayLink
+   3     1499 Thread
+  64     1499 Thread   DispatchQueue_19: com.apple.root.user-interactive-qos  (concurrent)
+   1     1499 Thread   DispatchQueue_1: com.apple.main-thread  (serial)
+   1     1499 Thread: Inspector pipe reader
+   1     1499 Thread: JavaScriptCore libpas scavenger
+   1     1499 Thread: WebCore: Scrolling
+   1     1499 Thread: com.apple.NSEventThread
+   1     245 Thread: CVDisplayLink
+   1     73 Thread: CVDisplayLink
+   1     94 Thread
+NSAnimation _runBlocking frames: 65

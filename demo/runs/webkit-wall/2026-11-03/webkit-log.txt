@@ -1,0 +1,46 @@
+# /usr/bin/log show --style compact, run 7 (probe time 8058 = 01:27:38), the shared WebKit is Playwright[9522], approve.mjs's own is Playwright[10809]
+# The last navigation policy the shared WebKit answered, and the ones it never answered:
+01:27:37.997 Df Playwright[9522:16475655] [com.apple.authkit:nto] URL shouldn't be processed
+01:27:37.997 Df Playwright[9522:16475655] [com.apple.authkit:nto] Authorization controller should process URL async: NO
+01:27:37.997 Df Playwright[9522:16475655] [com.apple.authkit:nto] URL shouldn't be processed
+01:27:37.997 Df Playwright[9522:16475655] [com.apple.authkit:nto] Authorization controller should process URL async: NO
+01:27:37.998 Df Playwright[9522:16473e92] [com.apple.WebKit:AppSSO] SOAuthorizationCoordinator::tryAuthorize: The requested URL is not registered for AppSSO handling. No further action needed.
+01:27:37.998 Df Playwright[9522:16473e92] [com.apple.WebKit:AppSSO] SOAuthorizationCoordinator::tryAuthorize: The requested URL is not registered for AppSSO handling. No further action needed.
+01:27:37.998 Df Playwright[9522:16473e92] [com.apple.WebKit:Loading] [pageProxyID=1628, webPageID=1629, PID=10863] WebPageProxy::decidePolicyForNavigationAction: listener called: frameID=4294967368, isMainFrame=1, navigationID=163
+01:27:38.077 Df Playwright[9522:16473e92] [com.apple.WebKit:Loading] [pageProxyID=1628, webPageID=1629, PID=10863] WebPageProxy::decidePolicyForNavigationAction: frameID=4294967368, isMainFrame=1, navigationID=1643
+01:27:38.077 Df Playwright[9522:16473e92] [com.apple.WebKit:AppSSO] SOAuthorizationCoordinator::tryAuthorize
+01:27:38.077 Df Playwright[9522:16473e92] [com.apple.authkit:nto] Fetching native takeover URLs
+01:27:38.627 Df Playwright[9522:16473e92] [com.apple.WebKit:Loading] [pageProxyID=1650, webPageID=1651, PID=10885] WebPageProxy::decidePolicyForNavigationAction: frameID=4294967369, isMainFrame=1, navigationID=1655
+01:27:38.627 Df Playwright[9522:16473e92] [com.apple.WebKit:AppSSO] SOAuthorizationCoordinator::tryAuthorize
+01:27:38.627 Df Playwright[9522:16473e92] [com.apple.authkit:nto] Fetching native takeover URLs
+01:27:38.638 Df Playwright[9522:16473e92] [com.apple.WebKit:Loading] [pageProxyID=1650, webPageID=1651, PID=10885] WebPageProxy::decidePolicyForNavigationAction: frameID=4294967369, isMainFrame=1, navigationID=1660
+01:27:38.638 Df Playwright[9522:16473e92] [com.apple.WebKit:Loading] [pageProxyID=1650, webPageID=1651, PID=10885] WebPageProxy::decidePolicyForNavigationAction: listener called: frameID=4294967369, isMainFrame=1, navigationID=165
+01:27:38.638 Df Playwright[9522:16473e92] [com.apple.WebKit:AppSSO] SOAuthorizationCoordinator::tryAuthorize
+01:27:38.638 Df Playwright[9522:16473e92] [com.apple.authkit:nto] Fetching native takeover URLs
+01:27:40.628 Df Playwright[9522:16473e92] [com.apple.WebKit:Loading] [pageProxyID=1070, webPageID=1618, PID=10854] WebPageProxy::decidePolicyForNavigationAction: frameID=588410519553, isMainFrame=0, navigationID=0
+01:27:40.629 Df Playwright[9522:16473e92] [com.apple.WebKit:AppSSO] SOAuthorizationCoordinator::tryAuthorize
+01:27:40.629 Df Playwright[9522:16473e92] [com.apple.authkit:nto] Fetching native takeover URLs
+01:27:50.641 Df Playwright[9522:16473e92] [com.apple.WebKit:Loading] [pageProxyID=1070, webPageID=1618, PID=10854] WebPageProxy::decidePolicyForNavigationAction: frameID=4294967367, isMainFrame=1, navigationID=0
+01:27:50.642 Df Playwright[9522:16473e92] [com.apple.WebKit:AppSSO] SOAuthorizationCoordinator::tryAuthorize
+01:27:50.642 Df Playwright[9522:16473e92] [com.apple.authkit:nto] Fetching native takeover URLs
+01:27:54.568 Df Playwright[9522:16473e92] [com.apple.WebKit:Loading] [pageProxyID=1700, webPageID=1701, PID=11397] WebPageProxy::decidePolicyForNavigationAction: frameID=4294967370, isMainFrame=1, navigationID=1705
+01:27:54.568 Df Playwright[9522:16473e92] [com.apple.WebKit:AppSSO] SOAuthorizationCoordinator::tryAuthorize
+01:27:54.569 Df Playwright[9522:16473e92] [com.apple.authkit:nto] Fetching native takeover URLs
+01:27:54.579 Df Playwright[9522:16473e92] [com.apple.WebKit:Loading] [pageProxyID=1700, webPageID=1701, PID=11397] WebPageProxy::decidePolicyForNavigationAction: frameID=4294967370, isMainFrame=1, navigationID=1707
+01:27:54.579 Df Playwright[9522:16473e92] [com.apple.WebKit:Loading] [pageProxyID=1700, webPageID=1701, PID=11397] WebPageProxy::decidePolicyForNavigationAction: listener called: frameID=4294967370, isMainFrame=1, navigationID=170
+01:27:54.579 Df Playwright[9522:16473e92] [com.apple.WebKit:AppSSO] SOAuthorizationCoordinator::tryAuthorize
+01:27:54.579 Df Playwright[9522:16473e92] [com.apple.authkit:nto] Fetching native takeover URLs
+# akd, the AuthKit daemon, took each ask:
+01:27:38.077 Df akd[805:1647507b] [com.apple.authkit:nto] Daemon is fetching native takeover urls
+01:27:38.262 Df akd[805:1647507b] [com.apple.authkit:nto] Daemon is fetching native takeover urls
+01:27:38.319 Df akd[805:1647507b] [com.apple.authkit:nto] Daemon is fetching native takeover urls
+# The stalled page 1700 (runs.mjs), its navigation 1707 asked and never answered until it closed:
+01:27:54.432 Df Playwright[9522:16473e92] [com.apple.WebKit:Loading] [pageProxyID=1700, webPageID=1701, PID=0] WebPageProxy::loadRequest:
+01:27:54.433 Df Playwright[9522:16473e92] [com.apple.WebKit:Loading] [pageProxyID=1700, webPageID=1701, PID=0] WebPageProxy::loadRequestWithNavigationShared:
+01:27:54.568 Df Playwright[9522:16473e92] [com.apple.WebKit:Loading] [pageProxyID=1700, webPageID=1701, PID=11397] WebPageProxy::decidePolicyForNavigationAction: frameID=4294967370, isMainFrame=1, navigationID=1705
+01:27:54.576 Df Playwright[9522:16473e92] [com.apple.WebKit:Loading] [pageProxyID=1700, webPageID=1701, PID=11397] WebPageProxy::loadRequest:
+01:27:54.576 Df Playwright[9522:16473e92] [com.apple.WebKit:Loading] [pageProxyID=1700, webPageID=1701, PID=11397] WebPageProxy::loadRequestWithNavigationShared:
+01:27:54.579 Df Playwright[9522:16473e92] [com.apple.WebKit:Loading] [pageProxyID=1700, webPageID=1701, PID=11397] WebPageProxy::decidePolicyForNavigationAction: frameID=4294967370, isMainFrame=1, navigationID=1707
+01:27:54.579 Df Playwright[9522:16473e92] [com.apple.WebKit:Loading] [pageProxyID=1700, webPageID=1701, PID=11397] WebPageProxy::decidePolicyForNavigationAction: listener called: frameID=4294967370, isMainFrame=1, navigationID=170
+01:27:54.579 Df Playwright[9522:16473e92] [com.apple.WebKit:Loading] [pageProxyID=1700, webPageID=1701, PID=11397] WebPageProxy::receivedNavigationActionPolicyDecision: frameID=4294967370, isMainFrame=1, navigationID=1705, policyA
+01:28:24.588 Df Playwright[9522:16473e92] [com.apple.WebKit:Process] [pageProxyID=1700, webPageID=1701, PID=11397] WebPageProxy::closePage:
