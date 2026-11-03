@@ -8,7 +8,7 @@ import { Links } from './group-links.js?v=__VERSION__';
 
 /** @param {PlaceProps} props */
 function LinksPlace({ g: group, s: state }) {
-  // Its people read, as the group's section reads them (group.js `Read`).
+  // Its people read, as the group's section reads them (group-read.js `GroupRead`).
   if (!state.people) return false;
   return html`<${Links} g=${group} />`;
 }

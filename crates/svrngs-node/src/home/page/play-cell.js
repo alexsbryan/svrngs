@@ -4,7 +4,7 @@
 // PLAY reads once a round however many cells ask.
 import { html, useEffect } from '../ui/view.js?v=__VERSION__';
 import { Turn, play } from './play.js?v=__VERSION__';
-/** @import * as GROUP from './group.js?v=__VERSION__' */
+/** @import * as GROUP from './group-reading.js?v=__VERSION__' */
 /** @import { Port } from './play.js?v=__VERSION__' */
 
 /**

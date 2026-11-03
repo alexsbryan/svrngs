@@ -5,7 +5,8 @@
 import { html } from '../ui/view.js?v=__VERSION__';
 import { ask, go, no } from '../ui/machine.js?v=__VERSION__';
 import { Leave } from './leave-group.js?v=__VERSION__';
-/** @import { PlaceProps, Taken as Offered } from './group.js?v=__VERSION__' */
+/** @import { PlaceProps } from './group.js?v=__VERSION__' */
+/** @import { Taken as Offered } from './offered.js?v=__VERSION__' */
 /** @import { Step } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 /** @import * as HOME from '../home.js?v=__VERSION__' */
@@ -16,7 +17,7 @@ import { Leave } from './leave-group.js?v=__VERSION__';
  */
 
 // HOME's `left`: the leave said (home.js SAYS `left`), the groups read again.
-// Any message to this flow is offered here (group.js `offered`), so one of
+// Any message to this flow is offered here (offered.js), so one of
 // another type is refused.
 /**
  * @param {HOME.State} state
@@ -37,7 +38,7 @@ export const take = (state, message) => {
 
 /** @param {PlaceProps} props */
 function LeavePlace({ g: group, s: state, home, me }) {
-  // Its people read, as the group's section reads them (group.js `Read`).
+  // Its people read, as the group's section reads them (group-read.js `GroupRead`).
   if (!state.people) return false;
   return html`<${Leave} g=${group} rows=${state.people.people} me=${me} home=${home} />`;
 }

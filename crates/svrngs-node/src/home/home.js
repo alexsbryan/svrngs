@@ -8,7 +8,7 @@
 // (?made=, ?joined=, ?left=; home.js@19b63b2b:363-367), said once. It draws in v1's order, each
 // group's section (home/page/group.js), then each feature's place, from
 // home/page/<file>.js; a message no file takes is refused by name
-// (group.js `offered`). It
+// (page/offered.js). It
 // takes one fixed message, `again`, after a write, and `visible`, on
 // coming back on screen: each reads the groups again, then each group.
 // The edge, below the page, reads the address and forgets a notice in it.
@@ -16,11 +16,14 @@ import { trace } from './ui/trace.js?v=__VERSION__';
 import { html, render, useStore } from './ui/view.js?v=__VERSION__';
 import { ask, go, late, machine, no } from './ui/machine.js?v=__VERSION__';
 import { whose } from './question.js?v=__VERSION__';
-import { Group, offered } from './page/group.js?v=__VERSION__';
+import { Group } from './page/group.js?v=__VERSION__';
+import { offered } from './page/offered.js?v=__VERSION__';
 import { get } from './page/routes.js?v=__VERSION__';
 /** @import { Machine, Step, Store } from './ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from './ui/view.js?v=__VERSION__' */
-/** @import { Group as Held, GroupProps, Round, Taken } from './page/group.js?v=__VERSION__' */
+/** @import { Group as Held, GroupProps } from './page/group.js?v=__VERSION__' */
+/** @import { Round } from './page/group-reading.js?v=__VERSION__' */
+/** @import { Taken } from './page/offered.js?v=__VERSION__' */
 /** @import * as acts from './page/acts.js?v=__VERSION__' */
 /** @import * as lending from './page/lending.js?v=__VERSION__' */
 /** @import * as join from './page/join.js?v=__VERSION__' */

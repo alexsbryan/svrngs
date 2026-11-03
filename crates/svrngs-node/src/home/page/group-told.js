@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // A group's GROUP read, told to HOME (acts.js `take`) by its place in the
-// group's section (group.js PLACES), once neither its people nor its lends
+// group's section (group-read.js PLACES), once neither its people nor its lends
 // are reading, so "What acts as you" (acting.js) draws from every group's
 // read. It draws nothing.
 import { useEffect } from '../ui/view.js?v=__VERSION__';

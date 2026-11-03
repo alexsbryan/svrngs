@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // A group's people on the home page, each in its place in the group's
-// section (group.js PLACES), once GROUP has read them: the door
+// section (group-read.js PLACES), once GROUP has read them: the door
 // (people.js), the group's folders on this disk (folders.js), and who was
 // removed or asked to be (removals.js).
 import { Folders } from './folders.js?v=__VERSION__';
