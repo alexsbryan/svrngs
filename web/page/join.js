@@ -255,12 +255,11 @@ let key;
  * the refusal `refused` words for its status.
  * @param {typeof Wasm} core
  * @param {string} token
- * @param {string} path
- * @param {string} body
+ * @param {{ path: string, body: string }} request
  * @param {(status: number, text: string) => string} [refused]
  * @returns {Promise<string>}
  */
-async function posted(core, token, path, body, refused = joining) {
+async function posted(core, token, { path, body }, refused = joining) {
   const dialled = await Promise.race([
     core.connect_to_join(key, token),
     new Promise((_, reject) => setTimeout(() => reject(new Error('no answer')), PATIENCE)),
@@ -305,7 +304,7 @@ export const io = {
             'This link was made by an older svrngs. Ask whoever sent it for a new one.',
           );
         key = crypto.getRandomValues(new Uint8Array(32));
-        const told = await posted(core, token, '/ask', core.ask(key, token));
+        const told = await posted(core, token, { path: '/ask', body: core.ask(key, token) });
         const group = core.believe(told);
         return /** @satisfies {PageMessage} */ ({
           type: 'asked',
@@ -330,7 +329,7 @@ export const io = {
             why: `${error.message[0].toUpperCase()}${error.message.slice(1)}.`,
           });
         }
-        await posted(core, token, '/redeem', body, (status, text) =>
+        await posted(core, token, { path: '/redeem', body }, (status, text) =>
           status === 409
             ? `Someone in ${group.name} already goes by ${JSON.parse(text).error}. If that’s you, open your home page on your computer, press “Add your phone or another computer”, and open that link here. Else join under another name.`
             : joining(status),

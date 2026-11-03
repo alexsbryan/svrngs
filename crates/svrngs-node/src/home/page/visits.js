@@ -119,14 +119,10 @@ function Stop({ g: group, v: visit, name, home }) {
  * @param {string} name
  * @returns {Drawn}
  */
-const listed = (
-  group,
-  rows,
-  home,
-  name,
-  mine = (group.visiting ?? []).filter((visit) => visit.yours),
-) =>
-  html`${!group.visiting && html`<p>This computer cannot say who is visiting ${name} now.</p>`}${mine.length > 0 && html`<h3>Who you have over</h3><ul class="yours">${mine.map((visit) => html`<${Stop} key=${visit.id} g=${group} v=${visit} name=${name} home=${home} />`)}</ul>`}${(group.visiting?.length ?? 0) > 0 && html`<h3>Visiting now</h3><${Visiting} vs=${group.visiting} rows=${rows} />`}`;
+const listed = (group, rows, home, name) => {
+  const mine = (group.visiting ?? []).filter((visit) => visit.yours);
+  return html`${!group.visiting && html`<p>This computer cannot say who is visiting ${name} now.</p>`}${mine.length > 0 && html`<h3>Who you have over</h3><ul class="yours">${mine.map((visit) => html`<${Stop} key=${visit.id} g=${group} v=${visit} name=${name} home=${home} />`)}</ul>`}${(group.visiting?.length ?? 0) > 0 && html`<h3>Visiting now</h3><${Visiting} vs=${group.visiting} rows=${rows} />`}`;
+};
 /** @type {{ visits: (props: PlaceProps) => Drawn }} */
 export const view = {
   visits: ({ g: group, s: state, home }) =>

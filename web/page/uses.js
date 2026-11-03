@@ -134,11 +134,10 @@ const saying = (/** @type {string} */ said) => Object.assign(new Error(said), { 
 /**
  * @param {Group} group
  * @param {Lent} lend
- * @param {'GET' | 'POST'} method
  * @param {{ app: string, said: string }} [body] posted, else the choices are asked
  * @param {string} [away] said after a dial not answered
  */
-const door = (group, lend, method, body, away = '') =>
+const door = (group, lend, body, away = '') =>
   dialled(group, lend)
     .catch((error) =>
       Promise.reject(
@@ -157,7 +156,7 @@ const door = (group, lend, method, body, away = '') =>
         : [['accept', 'application/json']];
       const response = await connection
         .fetch(
-          method,
+          body ? 'POST' : 'GET',
           `/choices/${lend.label}`,
           head,
           body ? new Blob([/** @type {Uint8Array<ArrayBuffer>} */ (bytes)]).stream() : null,
@@ -187,11 +186,11 @@ const door = (group, lend, method, body, away = '') =>
  * @param {'yes' | 'stop'} said
  */
 export const choose = (group, lend, app, said) =>
-  door(group, lend, 'POST', { app, said }, ' Try again later.');
+  door(group, lend, { app, said }, ' Try again later.');
 /** @type {Io<Effect, PageMessage>} */
 export const io = {
   choices: ({ group, l: lend, n: serial }) =>
-    door(group, lend, 'GET').then(
+    door(group, lend).then(
       (answer) => ({
         type: 'chosen',
         n: serial,

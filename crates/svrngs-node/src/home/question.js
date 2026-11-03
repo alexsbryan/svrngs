@@ -250,15 +250,10 @@ export const apart = (lent, rows) =>
  * @param {Lend} lend
  * @param {Lend[]} lent
  * @param {PeopleRow[]} rows
- * @param {(o: Lend) => string} [at]
  */
-export const alias = (
-  lend,
-  lent,
-  rows,
-  at = (one) => `${one.name}@${one.called ?? one.person}`,
-  computer = rows.find((row) => row.key === lend.key),
-) => {
+export const alias = (lend, lent, rows) => {
+  const at = (/** @type {Lend} */ one) => `${one.name}@${one.called ?? one.person}`;
+  const computer = rows.find((row) => row.key === lend.key);
   if (lend.group) return lend.kind;
   const shared = lent.some(
     (other) => !other.group && other.key !== lend.key && at(other) === at(lend),
@@ -332,28 +327,28 @@ export const reading = (
  * @param {PeopleRow[]} rows
  * @param {string} me
  * @param {'computer' | 'browser'} here
- * @param {string} [first]
- * @param {(device: 'computer' | 'browser') => number} [own]
- * @param {(n: number, device: 'computer' | 'browser', one: string) => string[]} [said]
  */
-export const deciders = (
-  rows,
-  me,
-  here,
-  first = rows.find((row) => row.key === me)?.person_key,
-  own = (device) =>
+export const deciders = (rows, me, here) => {
+  const first = rows.find((row) => row.key === me)?.person_key;
+  /** @param {'computer' | 'browser'} device */
+  const own = (device) =>
     rows.filter((row) => row.person_key === first && row.key !== me && row.device === device)
-      .length,
-  said = (count, device, one) =>
-    count ? [`your ${here === device ? 'other ' : ''}${count > 1 ? `${count} ${one}s` : one}`] : [],
-) =>
-  [
+      .length;
+  /**
+   * @param {number} count
+   * @param {'computer' | 'browser'} device
+   * @param {string} one
+   */
+  const said = (count, device, one) =>
+    count ? [`your ${here === device ? 'other ' : ''}${count > 1 ? `${count} ${one}s` : one}`] : [];
+  return [
     `This ${here === 'computer' ? 'computer' : 'phone'}`,
     ...said(own('computer'), 'computer', 'computer'),
     ...said(own('browser'), 'browser', 'phone'),
   ]
     .join(', ')
     .replace(/, ([^,]*)$/, ', and $1');
+};
 
 // How `lend` opens, `where`, and whether it is full now: the index's row
 // as both pages judge it, so a change to either lands on both (#158).

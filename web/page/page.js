@@ -204,6 +204,18 @@ export function compose(flows) {
   const keys = Object.keys;
   const owner = (/** @type {string} */ kind, /** @type {string} */ name) =>
     claimed[`${kind} ${name}`]?.name;
+  /**
+   * Each of `names`, of `kind`, claimed for `flow`, else refused naming
+   * the flow that claimed it first.
+   * @param {(typeof all)[number]} flow
+   * @param {string} kind
+   * @param {readonly string[]} names
+   */
+  const claim = (flow, kind, names) => {
+    for (const name of names)
+      if ((claimed[`${kind} ${name}`] ??= flow) !== flow)
+        throw new Error(`${kind} ${name} is claimed by ${owner(kind, name)} and by ${flow.name}`);
+  };
   for (const flow of all) {
     for (const [kind, names] of /** @type {[string, readonly string[]][]} */ ([
       ['message type', keys(flow.takes)],
@@ -211,11 +223,8 @@ export function compose(flows) {
       ['io', keys(flow.io)],
       ['place', keys(flow.view)],
       ['field', flow.owns],
-    ])) {
-      for (const name of names)
-        if ((claimed[`${kind} ${name}`] ??= flow) !== flow)
-          throw new Error(`${kind} ${name} is claimed by ${owner(kind, name)} and by ${flow.name}`);
-    }
+    ]))
+      claim(flow, kind, names);
     const slot = [...keys(flow.heading), ...keys(flow.response)].find(
       (name) => !ORDER.includes(name),
     );

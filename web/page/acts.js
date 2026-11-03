@@ -185,16 +185,15 @@ const doing = (state, key) =>
  * @param {Props['send']} send
  * @param {Lent & { reads: string[] }} lend
  */
-const read = (
-  state,
-  send,
-  lend,
-  said = /** @type {Said} */ (/** @type {Record<string, Said>} */ (state.group.reads)[lend.label]),
-  act = doing(state, `stop ${lend.label}`),
-) =>
-  act.state === 'done'
+const read = (state, send, lend) => {
+  const said = /** @type {Said} */ (
+    /** @type {Record<string, Said>} */ (state.group.reads)[lend.label]
+  );
+  const act = doing(state, `stop ${lend.label}`);
+  return act.state === 'done'
     ? html`<p>${named(lend)} stops opening your friends’ ${lend.reads.map(spoken).join(' and ')} as you within ${PASS_LIFE / 3600} hours, when the pass it holds ends.</p>`
     : html`<p>${reading(lend, said)}${said.said === 'yes' && html`<${Act} words="Stop" doing=${act} on=${{ type: 'stop reads', label: lend.label }} send=${send} />`}</p>`;
+};
 /**
  * Drawn once the tab holds a group (`view`).
  * @typedef {object} DrawnProps
