@@ -26,6 +26,12 @@ Stop is then said beside its button. A person would see that, so it is
 yours to choose. The fix is a few lines, and its test is a browser test
 that refuses a Stop.
 
+**Fixed 2026-11-03, the operator's "Fix the bugs":** the phone's way, at
+dd7a6b60, outside this queue; its test is crates/svrngs/tests/pages/acts.rs
+`a_refused_stop_on_what_apps_use_is_said_beside_it`. The two the typing
+found in code comments went with it: web/lend.js's split head (cc24f9ae,
+and a 127-byte frame, 00f75721) and web/shim.js's DataView (adef516a).
+
 ## A phone's write waits out a round's slowest dial (js-webkit, 2026-11-03)
 
 Found while reading js-webkit's `carried` failure
