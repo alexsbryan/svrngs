@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // A lend's worker: the runtime, at the lend's own origin (u5-2; DESIGN §3,
 // "Lent apps", calls 1, 3 and 6; §7). Moved from the page's worker, where
 // every lend ran under the origin that holds each person's key (sw.js).
@@ -58,11 +57,49 @@ import init, {
 } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
 import { maySign, signerFor, openMessage, framing } from './authority.js?v=__VERSION__';
+/** @import { Handoff, Passed } from './authority.js?v=__VERSION__' */
+/** @import { Dialled, Endpoint } from './wasm/svrngs_web.js?v=__VERSION__' */
 
-const SCOPE = new URL(self.registration.scope);
+// `self` as a service worker's: the worker's lib names it a
+// `WorkerGlobalScope`, which every kind of worker shares
+// (jsconfig.workers.json). Its own first, so `addEventListener` gives each
+// listener its event's type.
+/** @typedef {ServiceWorkerGlobalScope & typeof self} Scope */
+// The open the page hands over (open.js), as this worker holds it: the
+// holder's key imported, and the lines it signed, the last and those not
+// yet carried (`writeSigned`).
+/**
+ * @typedef {Handoff & {
+ *   key: CryptoKey,
+ *   line?: { seq: number, id: string },
+ *   unsent?: Unsent[],
+ * }} Held
+ */
+// A signed line not yet carried to the lend's computer: its group, and the
+// line, of which this worker reads its seq and id.
+/** @typedef {[string, { seq: number, id: string }]} Unsent */
+// The lend a request is at (`at`), its path there, and whether it is one
+// this lend's pages read, asked under `READS`.
+/** @typedef {{ label: string, path: string, read?: boolean }} Where */
+// A cookie kept in a lend's jar (`setCookie`): `expires` in ms, none for
+// the session's; `page` whether its pages may read it.
+/** @typedef {{ name: string, value: string, path: string, expires: number | null, page: boolean }} Cookie */
+// A header sent through the door, as the dial takes it: `[name, value]`.
+/** @typedef {[string, string]} Header */
+// How a range's trace says what came of it (`ranged`).
+/** @typedef {(what: string) => void} Said */
+// What this worker's own answer says it is: the three of the door's kinds
+// it gives (door.rs, `LendRefusal`).
+/** @typedef {'pass' | 'closed' | 'away'} Refusal */
+// An app's own worker's listener, as `appWorker` hands it its events.
+/** @typedef {(event: object) => void} Listener */
+/** @typedef {Record<'fetch' | 'install' | 'activate' | 'message', Listener[]>} On */
+
+const SCOPE = new URL(/** @type {Scope} */ (self).registration.scope);
 // Where the page's files are on this origin, the shell this worker leaves
 // to the network: any version of them, so a newer page starts here too.
-const SITE = new URL('./', self.location).pathname;
+// `self.location` is a `WorkerLocation`, which `URL` reads as its `href`.
+const SITE = new URL('./', /** @type {string} */ (/** @type {unknown} */ (self.location))).pathname;
 const SHELL =
   /^(open\.html|open\.js|lend\.js|shim\.js|store\.js|authority\.js|wasm\/svrngs_web(_bg\.wasm|\.js))$/;
 // This worker's lend: the first name of its address.
@@ -79,6 +116,7 @@ const STOP = new RegExp(`^${READS}/([^/]+)/svrngs-stop$`);
 // Enough for a film's seeks, each range's lines with them (u5-11), over
 // this run and the last.
 const LINES = 2000;
+/** @type {string[]} */
 const traced = [];
 // The last runs' lines, read once; this run's are kept after them, a
 // second at most after each is written.
@@ -86,6 +124,7 @@ const before = store.lendKept(`trace ${OWN}`).then(
   (l) => l ?? [],
   () => [],
 );
+/** @type {ReturnType<typeof setTimeout> | null} */
 let keeping = null;
 const kept = async () => [...(await before), ...traced].slice(-LINES);
 self.__trace = (l) => {
@@ -102,25 +141,43 @@ self.__trace = (l) => {
 const trace = self.__trace;
 trace(`RUNTIME: this run of the worker begins`);
 
-self.addEventListener('install', () => self.skipWaiting());
-self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
+/** @type {Scope} */ (self).addEventListener('install', () =>
+  /** @type {Scope} */ (self).skipWaiting(),
+);
+/** @type {Scope} */ (self).addEventListener('activate', (e) =>
+  e.waitUntil(/** @type {Scope} */ (self).clients.claim()),
+);
 
 // What this run of the worker holds, all of it lost when the browser stops
 // it: what the page handed it, the wasm, its endpoint, a dial per lender,
 // each lend's cookies, the app's worker.
-let handed = null;
+//
+// `handed` is none until a page hands it over or `holding` reads it back,
+// and is read as held: every reader but `holding` runs after `holding`
+// found it, or after a page handed it, as `lent` and `socket` do.
+/** @type {Held} */
+let handed = /** @type {Held} */ (/** @type {unknown} */ (null));
+/** @type {ReturnType<typeof init> | null} */
 let loaded = null;
+/** @type {Promise<Endpoint> | null} */
 let endpoint = null;
+/** @type {string | null} */
 let linked = null;
+/** @type {Map<string, Promise<Dialled>>} */
 const dials = new Map();
+/** @type {Map<string, Cookie[]>} */
 const jars = new Map();
+/** @type {On | null | undefined} */
 let app;
+/** @type {Promise<unknown>} */
 let signing = Promise.resolve();
 // The last page served whose own `<meta>` sets a policy (`lent`).
+/** @type {string | null} */
 let walled = null;
 
 // Where `label`'s pages are: this worker's lend under its scope; another
 // at an address of its own beside this one.
+/** @param {string} label */
 const baseOf = (label) =>
   label === OWN
     ? SCOPE.href
@@ -128,6 +185,10 @@ const baseOf = (label) =>
 
 // The lend `url` is at, and its path there; or none. Under `READS`, a
 // lend this page reads, by its label.
+/**
+ * @param {URL} url
+ * @returns {Where | null}
+ */
 function at(url) {
   const [, read, path] =
     (url.origin === SCOPE.origin && url.pathname.match(new RegExp(`^${READS}/([^/]+)(/.*)?$`))) ||
@@ -142,6 +203,7 @@ function at(url) {
   return null;
 }
 
+/** @returns {Promise<Held | null>} */
 async function holding() {
   if (handed) return handed;
   try {
@@ -155,6 +217,10 @@ async function holding() {
   return handed;
 }
 
+/**
+ * @param {string} lender
+ * @returns {Promise<Dialled>}
+ */
 function dialFor(lender) {
   if (!dials.has(lender)) {
     const opening = (async () => {
@@ -169,7 +235,8 @@ function dialFor(lender) {
     dials.set(lender, opening);
     opening.catch(() => dials.delete(lender));
   }
-  return dials.get(lender);
+  // Set just above when it was not.
+  return /** @type {Promise<Dialled>} */ (dials.get(lender));
 }
 
 // This run's endpoint (capability-signed (H); DESIGN §3): a key of this
@@ -181,12 +248,21 @@ async function opened() {
   const own = !handed.seed;
   const bytes = own
     ? crypto.getRandomValues(new Uint8Array(32))
-    : Uint8Array.from(handed.seed.match(/../g), (h) => parseInt(h, 16));
+    : // Not `own`, so the open names a seed.
+      Uint8Array.from(
+        /** @type {RegExpMatchArray} */ (/** @type {string} */ (handed.seed).match(/../g)),
+        (h) => parseInt(h, 16),
+      );
   linked = null;
   if (own) {
     const to = actor(bytes);
     const sig = new Uint8Array(
-      await crypto.subtle.sign('Ed25519', handed.key, link(handed.pass, to)),
+      await crypto.subtle.sign(
+        'Ed25519',
+        handed.key,
+        // The glue's bytes are a copy of its own, in a buffer of their own.
+        /** @type {Uint8Array<ArrayBuffer>} */ (link(handed.pass, to)),
+      ),
     );
     linked = new TextDecoder().decode(link(handed.pass, to, sig));
   }
@@ -198,28 +274,47 @@ async function opened() {
 
 // The pass a request carries, and the link naming this run's endpoint
 // when the holder signed one (`opened`).
+/**
+ * @param {Held} h
+ * @returns {Promise<Header[]>}
+ */
 const passed = async (h) => (
   await (endpoint ??= opened()),
-  [['x-svrngs-pass', h.pass], ...(linked ? [['x-svrngs-link', linked]] : [])]
+  [
+    ['x-svrngs-pass', h.pass],
+    ...(linked ? [/** @type {Header} */ (['x-svrngs-link', linked])] : []),
+  ]
 );
 
 // ── cookies, a jar per lend ─────────────────────────────────────────────
 
+/**
+ * @param {string} label
+ * @returns {Promise<Cookie[]>}
+ */
 const jarOf = async (label) => (
   jars.has(label) ||
     jars.set(label, (await store.lendKept(`cookies ${label}`).catch(() => null)) ?? []),
-  jars.get(label)
+  // Set just above when it was not.
+  /** @type {Cookie[]} */ (jars.get(label))
 );
 
+/** @param {Cookie} c */
 const live = (c) => c.expires === null || c.expires > Date.now();
 
 // Keep a `Set-Cookie` value in `jar`: its name, value, path, lapse and
 // whether pages may read it. Any other attribute is the browser's, and
 // there is no other site here to keep it from.
+/**
+ * @param {Cookie[]} jar
+ * @param {string} line
+ */
 function setCookie(jar, line) {
-  const [pair, ...attrs] = line.split(';');
+  // `split` gives at least one part, the empty string's included.
+  const [pair, ...attrs] = /** @type {[string, ...string[]]} */ (line.split(';'));
   const eq = pair.indexOf('=');
   if (eq < 1) return;
+  /** @type {Cookie} */
   const c = {
     name: pair.slice(0, eq).trim(),
     value: pair.slice(eq + 1).trim(),
@@ -228,7 +323,7 @@ function setCookie(jar, line) {
     page: true,
   };
   for (const attr of attrs) {
-    const [k, ...v] = attr.split('=');
+    const [k, ...v] = /** @type {[string, ...string[]]} */ (attr.split('='));
     const [key, value] = [k.trim().toLowerCase(), v.join('=').trim()];
     if (key === 'path' && value.startsWith('/')) c.path = value;
     if (key === 'max-age') c.expires = Date.now() + Number(value) * 1000;
@@ -239,12 +334,18 @@ function setCookie(jar, line) {
   jar.splice(0, jar.length, ...kept, ...(live(c) ? [c] : []));
 }
 
+/**
+ * @param {Cookie[]} jar
+ * @param {string} path
+ * @param {boolean} page whether a page reads them, which sees no `HttpOnly` one
+ */
 const cookieFor = (jar, path, page) =>
   jar
     .filter((c) => live(c) && path.startsWith(c.path) && (c.page || !page))
     .map((c) => `${c.name}=${c.value}`)
     .join('; ');
 
+/** @param {string} label */
 const keepJar = async (label) =>
   void (await store
     .lendKeep(`cookies ${label}`, await jarOf(label))
@@ -269,25 +370,34 @@ const keepJar = async (label) =>
 const PART = 2 * 1024 * 1024;
 const FIRST = 256 * 1024;
 // Where a part of a file ends, `<path> <offset>`, and that part's size.
+/** @type {Map<string, number>} */
 const ends = new Map();
 
+/**
+ * @param {Header[]} headers
+ * @param {RequestDestination} destination
+ * @param {string} path
+ * @returns {Header[]}
+ */
 function bounded(headers, destination, path) {
-  return headers.map(([name, value]) => {
-    const range = name.toLowerCase() === 'range' && /^bytes=(\d+)-(\d*)$/.exec(value.trim());
-    if (!range) return [name, value];
-    const from = Number(range[1]);
-    const media = destination === 'video' || destination === 'audio';
-    const size =
-      range[2] !== '' ? PART : Math.min(PART, 2 * (ends.get(`${path} ${from}`) ?? FIRST / 2));
-    if (range[2] !== '' && !(media && Number(range[2]) - from + 1 > size)) return [name, value];
-    ends.delete(`${path} ${from}`);
-    ends.set(`${path} ${from + size}`, size);
-    if (ends.size > 64) ends.delete(ends.keys().next().value);
-    trace(
-      `RUNTIME: ${value} for ${destination || 'a fetch'} runs on: asked as a part of ${size} bytes`,
-    );
-    return [name, `bytes=${from}-${from + size - 1}`];
-  });
+  return headers.map(
+    /** @returns {Header} */ ([name, value]) => {
+      const range = name.toLowerCase() === 'range' && /^bytes=(\d+)-(\d*)$/.exec(value.trim());
+      if (!range) return [name, value];
+      const from = Number(range[1]);
+      const media = destination === 'video' || destination === 'audio';
+      const size =
+        range[2] !== '' ? PART : Math.min(PART, 2 * (ends.get(`${path} ${from}`) ?? FIRST / 2));
+      if (range[2] !== '' && !(media && Number(range[2]) - from + 1 > size)) return [name, value];
+      ends.delete(`${path} ${from}`);
+      ends.set(`${path} ${from + size}`, size);
+      if (ends.size > 64) ends.delete(/** @type {string} */ (ends.keys().next().value));
+      trace(
+        `RUNTIME: ${value} for ${destination || 'a fetch'} runs on: asked as a part of ${size} bytes`,
+      );
+      return [name, `bytes=${from}-${from + size - 1}`];
+    },
+  );
 }
 
 // A range, or a media element's ask, traced from asked to its end
@@ -296,10 +406,16 @@ function bounded(headers, destination, path) {
 // decides, which the dial's own lines do not show. None for any other
 // request.
 let asks = 0;
+/**
+ * @param {Request} request
+ * @param {string} path
+ * @returns {Said | null}
+ */
 function ranged(request, path) {
   if (!request.headers.has('range') && !['video', 'audio'].includes(request.destination))
     return null;
   const [n, t0] = [++asks, Date.now()];
+  /** @type {Said} */
   const said = (what) => trace(`RANGE ${n}: ${what}, ${Date.now() - t0} ms`);
   said(
     `asked ${path} ${request.headers.get('range') ?? 'whole'} for ${request.destination || 'a fetch'}`,
@@ -309,6 +425,10 @@ function ranged(request, path) {
 }
 
 // `body`, its reading traced by `said`.
+/**
+ * @param {ReadableStream<Uint8Array>} body
+ * @param {Said} said
+ */
 function counted(body, said) {
   const reader = body.getReader();
   let [bytes, cancelled] = [0, false];
@@ -341,6 +461,10 @@ function counted(body, said) {
 // due to memory pressure'), sending the request it held to the network
 // (demo/runs/u5/2026-10-06-worker-gone/).
 const SLICE = 256 * 1024;
+/**
+ * @param {Blob} blob
+ * @param {string} what
+ */
 function sent(blob, what) {
   const t0 = Date.now();
   let at = 0;
@@ -366,6 +490,11 @@ const PAGE_COOKIES = 'x-svrngs-page-cookies';
 const REFUSED = 'x-svrngs-refused';
 // The acts a lent app writes as the person asking (`appended`).
 const APPEND = 'x-svrngs-append';
+/**
+ * @param {number} status
+ * @param {string} words
+ * @param {Refusal} kind
+ */
 const say = (status, words, kind) =>
   new Response(words, { status, headers: { ...PLAIN, [REFUSED]: kind } });
 // The two refusals a page meets at the pass and the lend, each in one set of
@@ -377,10 +506,21 @@ const closed = () => say(403, 'This is not open to this page.', 'closed');
 // and the nonce of the page's script policy when it names one: under
 // `script-src 'nonce-…' 'strict-dynamic'` (Nextcloud's) a script without
 // it does not run (u5-catalogue-dry).
+/**
+ * @param {string} label
+ * @param {Cookie[]} jar
+ * @param {string | null} policy
+ */
 const shim = (label, jar, policy, nonce = /'nonce-([^']+)'/.exec(policy ?? '')?.[1]) =>
   `<script${nonce ? ` nonce="${nonce}"` : ''} src="${SITE}shim.js?v=__VERSION__&l=${label}&c=${encodeURIComponent(cookieFor(jar, '/', true))}"></script>`;
 
 // Serve `request`, at `url`, from the lend `where` names.
+/**
+ * @param {Request} request
+ * @param {URL} url
+ * @param {Where} where
+ * @returns {Promise<Response>}
+ */
 async function lent(request, url, where, signing = false) {
   const h = await holding();
   if (!h) {
@@ -396,7 +536,11 @@ async function lent(request, url, where, signing = false) {
   if (request.method === 'POST' && lend.group && where.path === '/svrngs/acts') {
     if (
       !signing ||
-      request.headers.get('content-type')?.split(';')[0].trim() !== 'application/json'
+      // `split` gives at least one part; the cast's parens end the chain,
+      // and `?.` takes it on as the chain went.
+      /** @type {string | undefined} */ (
+        request.headers.get('content-type')?.split(';')[0]
+      )?.trim() !== 'application/json'
     )
       return closed();
     return writing(request, lend);
@@ -449,7 +593,7 @@ async function lent(request, url, where, signing = false) {
   for (let tries = 0; !res; tries++) {
     try {
       res = await (await dialFor(lend.key)).fetch(request.method, path, headers, body);
-    } catch (e) {
+    } catch (/** @type {any} */ e) {
       dials.delete(lend.key);
       trace(`RUNTIME: ${request.method} ${path} failed (try ${tries + 1}): ${e}`);
       // A dial that heard nothing from the computer within the cap, new or
@@ -526,12 +670,16 @@ async function lent(request, url, where, signing = false) {
 
 // An app's write is this phone's own (capability-signed; DESIGN §3): shaped
 // as the door shapes one (svrngs-core `app_act`) and `signed`.
+/**
+ * @param {Request} request
+ * @param {Passed} lend a lend of a group: `lent` writes for no other
+ */
 async function writing(request, lend) {
   await (loaded ??= init({ module_or_path: store.runtime() }));
   const act = app_act(lend.kind, new Uint8Array(await request.arrayBuffer()));
   if (!act)
     return Response.json({ error: 'an act is JSON, {op} or {corrects, op}' }, { status: 422 });
-  return signed(lend, lend.group, act, handed.pass);
+  return signed(lend, /** @type {string} */ (lend.group), act, handed.pass);
 }
 
 // The acts a lent app's answer names (`x-svrngs-append`), this phone's own
@@ -539,13 +687,21 @@ async function writing(request, lend) {
 // it was opened from, and `signed` under the pass that lets its holder
 // write that kind's part (app.js `writes`); none of them if one is not.
 // Nothing when all are counted, else what the person is told.
+/**
+ * @param {Passed} lend
+ * @param {string} named
+ * @returns {Promise<Response | null>}
+ */
 async function appended(lend, named) {
   await (loaded ??= init({ module_or_path: store.runtime() }));
   const what = `${lend.person}’s ${lend.name}`;
+  // Each act shaped, or false or none where one is not, which
+  // `every(Boolean)` refuses below.
+  /** @type {(string | false | undefined)[] | null} */
   let acts = null;
   try {
     acts = JSON.parse(named).map(
-      (a) =>
+      (/** @type {{ group?: string }} */ a) =>
         a.group === handed.group && app_act(lend.kind, new TextEncoder().encode(JSON.stringify(a))),
     );
   } catch (e) {
@@ -562,8 +718,15 @@ async function appended(lend, named) {
       { status: 403 },
     );
   }
+  // Every act is shaped, and a pass that writes is a member's, whose open
+  // names its group.
   for (const act of acts) {
-    const res = await signed(lend, handed.group, act, handed.writes);
+    const res = await signed(
+      lend,
+      /** @type {string} */ (handed.group),
+      /** @type {string} */ (act),
+      handed.writes,
+    );
     if (!res.ok) return res;
   }
   return null;
@@ -574,17 +737,23 @@ async function appended(lend, named) {
 // twice, and carried with every line not yet taken to the lend's computer
 // (`/carry`), which writes none of its own. A line not taken waits, the
 // same bytes, for the next write.
+/** @param {Parameters<typeof writeSigned>} args */
 function signed(...args) {
   const next = signing.then(() => writeSigned(...args));
   signing = next.catch(() => {});
   return next;
 }
 
+/**
+ * @param {string} group
+ * @param {string} line
+ */
 async function approved(group, line) {
-  const pages = await self.clients.matchAll({ type: 'window' });
+  const pages = await /** @type {Scope} */ (self).clients.matchAll({ type: 'window' });
   const client = pages.find((c) => new URL(c.url).origin === SCOPE.origin);
   if (!client) throw new Error('no app page is open to ask the trusted signer');
   const channel = new MessageChannel();
+  /** @type {Promise<string>} */
   const answer = new Promise((yes, no) => {
     const why = walled
       ? `This app’s page (${walled}) may keep out your group’s signer, so this wasn’t saved.`
@@ -603,6 +772,13 @@ async function approved(group, line) {
   return answer;
 }
 
+/**
+ * @param {Passed} lend
+ * @param {string} group
+ * @param {string} act
+ * @param {string} grant
+ * @returns {Promise<Response>}
+ */
 async function writeSigned(lend, group, act, grant) {
   const at = handed.line ?? { seq: -1, id: null };
   const stamp = Math.floor(Date.now() / 1000);
@@ -610,7 +786,7 @@ async function writeSigned(lend, group, act, grant) {
   let permitted;
   try {
     permitted = await approved(group, draft);
-  } catch (error) {
+  } catch (/** @type {any} */ error) {
     return Response.json({ error: error.message }, { status: 403 });
   }
   const [unsigned, message] = unsigned_line(
@@ -632,12 +808,13 @@ async function writeSigned(lend, group, act, grant) {
     unsent: [...(handed.unsent ?? []), [group, line]],
   };
   await store.lendKeep(`pass ${OWN}`, handed);
+  // `unsent` is set just above, and below each time `handed` is.
   trace(
-    `RUNTIME: an act of ${lend.kind} signed as line ${line.seq}, ${handed.unsent.length} to carry`,
+    `RUNTIME: an act of ${lend.kind} signed as line ${line.seq}, ${/** @type {Unsent[]} */ (handed.unsent).length} to carry`,
   );
   let res;
   try {
-    for (const sent of handed.unsent) {
+    for (const sent of /** @type {Unsent[]} */ (handed.unsent)) {
       const body = new TextEncoder().encode(JSON.stringify(sent));
       const headers = [
         ['content-type', 'application/json'],
@@ -650,7 +827,10 @@ async function writeSigned(lend, group, act, grant) {
         `RUNTIME: line ${sent[1].seq} carried to ${lend.person}'s computer, answered ${res.status}`,
       );
       if (!res.ok) break;
-      handed = { ...handed, unsent: handed.unsent.filter((u) => u[1].id !== sent[1].id) };
+      handed = {
+        ...handed,
+        unsent: /** @type {Unsent[]} */ (handed.unsent).filter((u) => u[1].id !== sent[1].id),
+      };
       await store.lendKeep(`pass ${OWN}`, handed);
     }
   } catch (e) {
@@ -680,6 +860,10 @@ async function writeSigned(lend, group, act, grant) {
 // window, dark, naming the lend (away.html, which a computer's door shows
 // too, scripts/build-web.sh copying it here); a page's own request, and a
 // tab when that page cannot be fetched, svrngs's words.
+/**
+ * @param {Request} request
+ * @param {Passed} lend
+ */
 async function away(request, lend) {
   const who = lend.person.replace(/</g, '&lt;');
   const page =
@@ -730,6 +914,10 @@ async function told() {
 // The group's page at `to`, then `then` and the fragment this page was
 // opened with, which the browser keeps from a worker; so a page of this
 // worker's own sends it on, `<` escaped.
+/**
+ * @param {string} to
+ * @param {string} then
+ */
 const onward = (
   to,
   then,
@@ -742,6 +930,10 @@ const onward = (
 
 // A page navigated to `where`, a lend it reads: the group's page opens that
 // lend at the path.
+/**
+ * @param {Held} h
+ * @param {Where} where
+ */
 const opening = (h, where) => (
   trace(
     `RUNTIME: a page opens ${where.label}, which it reads, at ${where.path}: through the group's page`,
@@ -751,6 +943,7 @@ const opening = (h, where) => (
 
 // A page sends its person to say yes to this lend using `lend`, one it
 // reads: the group's page asks, then opens this lend again at `back`.
+/** @param {URL} url */
 async function asking(url) {
   const h = await holding();
   const lend = url.searchParams.get('lend');
@@ -764,6 +957,7 @@ async function asking(url) {
 }
 
 // A page stops this lend using `label`: sent to its door with the pass.
+/** @param {string} label */
 async function stopping(label) {
   const h = await holding();
   if (!h) return unheld();
@@ -796,19 +990,41 @@ async function stopping(label) {
 // which serves its every request; the shim hands its script here instead,
 // kept in this origin's store, and its listeners are asked first.
 
+/**
+ * @param {string} code
+ * @returns {On}
+ */
 function appWorker(code) {
+  /** @type {On} */
   const on = { fetch: [], install: [], activate: [], message: [] };
   const own = {
-    addEventListener: (type, f) => on[type]?.push(f),
+    // A type the app names that is none of `on`'s is let go.
+    /**
+     * @param {string} type
+     * @param {Listener} f
+     */
+    addEventListener: (type, f) =>
+      /** @type {Partial<On>} */ (on)[/** @type {keyof On} */ (type)]?.push(f),
     skipWaiting: async () => {},
+    /**
+     * @param {RequestInfo | URL} input
+     * @param {RequestInit} [init]
+     */
     fetch: (input, init) => {
       const request = new Request(input instanceof Request ? input : new URL(input, SCOPE), init);
       const where = at(new URL(request.url));
       return where ? lent(request, new URL(request.url), where, true) : fetch(request);
     },
   };
-  const scope = new Proxy(self, {
-    get: (o, k) => (k in own ? own[k] : typeof o[k] === 'function' ? o[k].bind(o) : o[k]),
+  // The app's `self`: what `own` names, else the worker's own, its
+  // functions bound to it.
+  const scope = new Proxy(/** @type {Record<string | symbol, any>} */ (self), {
+    get: (o, k) =>
+      k in own
+        ? own[/** @type {keyof typeof own} */ (k)]
+        : typeof o[k] === 'function'
+          ? o[k].bind(o)
+          : o[k],
   });
   new Function('self', 'addEventListener', 'skipWaiting', 'fetch', code)(
     scope,
@@ -830,15 +1046,22 @@ async function appLoaded() {
 }
 
 // The app's listeners first: an answer one of them gives, else the lend's.
+/**
+ * @param {FetchEvent} e
+ * @param {URL} url
+ * @param {Where} where
+ */
 async function answered(e, url, where) {
-  const signing = await maySign(e, self.clients, SCOPE.origin);
+  const signing = await maySign(e, /** @type {Scope} */ (self).clients, SCOPE.origin);
   // App code must not turn an untrusted navigation into an authorized fetch.
   const on = signing && where.label === OWN && (await appLoaded());
+  /** @type {Response | PromiseLike<Response> | null} */
   let given = null;
   if (on) {
     const event = {
       request: e.request,
       clientId: e.clientId,
+      /** @param {Response | PromiseLike<Response>} p */
       respondWith: (p) => (given ??= p),
       waitUntil: () => {},
     };
@@ -847,7 +1070,7 @@ async function answered(e, url, where) {
   return given ? given : lent(e.request, url, where, signing);
 }
 
-self.addEventListener('fetch', (e) => {
+/** @type {Scope} */ (self).addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (url.origin === self.location.origin && url.pathname === TRACE) {
     return e.respondWith(
@@ -869,7 +1092,8 @@ self.addEventListener('fetch', (e) => {
     return e.respondWith(asking(url));
   const stop =
     url.origin === self.location.origin && e.request.method === 'POST' && STOP.exec(url.pathname);
-  if (stop) return e.respondWith(stopping(stop[1]));
+  // `STOP` names its label whenever it matches.
+  if (stop) return e.respondWith(stopping(/** @type {string} */ (stop[1])));
   const where = at(url);
   if (!where) return;
   e.respondWith(answered(e, url, where));
@@ -877,9 +1101,14 @@ self.addEventListener('fetch', (e) => {
 
 // ── what a lend's page hands over ───────────────────────────────────────
 
-self.addEventListener('message', async (e) => {
+// A message from a page of this origin: a window's `Client`, of which a
+// worker's `source` is one kind.
+/** @type {Scope} */ (self).addEventListener('message', async (e) => {
   const reply = e.ports[0];
-  if (!e.source?.url || new URL(e.source.url).origin !== SCOPE.origin)
+  if (
+    !(/** @type {Client | null} */ (e.source)?.url) ||
+    new URL(/** @type {Client} */ (e.source).url).origin !== SCOPE.origin
+  )
     return reply?.postMessage({ error: 'only this origin hands the worker authority' });
   const { handed: given, cookie, worker, socket: asked } = e.data ?? {};
   if (given?.label === OWN && typeof given.pass === 'string') {
@@ -925,15 +1154,19 @@ self.addEventListener('message', async (e) => {
 // and fires this in its place (2026-10-30, demo/runs/ios/2026-10-30-observe/
 // keyprobe/phone.log): its pages are told, so the start page hands the
 // key's bytes at once (open.js).
-self.addEventListener('messageerror', async () => {
+/** @type {Scope} */ (self).addEventListener('messageerror', async () => {
   trace('RUNTIME: a message was lost on its way here: its pages are told');
-  for (const c of await self.clients.matchAll({ includeUncontrolled: true }))
+  for (const c of await /** @type {Scope} */ (self).clients.matchAll({ includeUncontrolled: true }))
     c.postMessage(store.LOST);
 });
 
 // ── a WebSocket, over a socket the door switches ────────────────────────
 
 // One frame from this end: masked, as a client's must be (RFC 6455 §5.3).
+/**
+ * @param {number} op
+ * @param {string | ArrayBuffer | Uint8Array} data
+ */
 function frame(op, data) {
   const bytes = typeof data === 'string' ? new TextEncoder().encode(data) : new Uint8Array(data);
   const n = bytes.length;
@@ -947,12 +1180,19 @@ function frame(op, data) {
   const out = new Uint8Array(head.length + 4 + n);
   out.set(head);
   out.set(mask, head.length);
-  for (let i = 0; i < n; i++) out[head.length + 4 + i] = bytes[i] ^ mask[i & 3];
+  // `i` is under `n`, the bytes' length, and `i & 3` under the mask's 4.
+  for (let i = 0; i < n; i++)
+    out[head.length + 4 + i] =
+      /** @type {number} */ (bytes[i]) ^ /** @type {number} */ (mask[i & 3]);
   return out;
 }
 
 // Carry the WebSocket the shim opened at `url` to `port`: open, each
 // message both ways, ping answered, close.
+/**
+ * @param {{ url: string, protocols?: string[] }} asked
+ * @param {MessagePort} port
+ */
 async function socket({ url, protocols }, port) {
   const http = new URL(url.replace(/^ws/, 'http'));
   const where = at(http);
@@ -965,7 +1205,8 @@ async function socket({ url, protocols }, port) {
     ['upgrade', 'websocket'],
     ['sec-websocket-version', '13'],
     ['sec-websocket-key', key],
-    ...(await passed(h)),
+    // A lend was found, so the open is held.
+    ...(await passed(/** @type {Held} */ (h))),
   ];
   if (protocols?.length) headers.push(['sec-websocket-protocol', protocols.join(', ')]);
   const cookie = cookieFor(await jarOf(where.label), where.path, false);
@@ -982,7 +1223,10 @@ async function socket({ url, protocols }, port) {
   }
   if (s.status !== 101) return port.postMessage({ closed: 1006, reason: `answered ${s.status}` });
   const writer = s.writable.getWriter();
-  const chosen = s.headers.find(([n]) => n.toLowerCase() === 'sec-websocket-protocol')?.[1] ?? '';
+  const chosen =
+    s.headers.find(
+      (/** @type {Header} */ [n]) => n.toLowerCase() === 'sec-websocket-protocol',
+    )?.[1] ?? '';
   port.postMessage({ open: chosen });
   port.onmessage = ({ data }) => {
     if ('send' in data) writer.write(frame(typeof data.send === 'string' ? 1 : 2, data.send));
@@ -991,23 +1235,47 @@ async function socket({ url, protocols }, port) {
   };
   const reader = s.readable.getReader();
   let buf = new Uint8Array(0);
+  // A message's frames so far: its first's opcode, and each one's bytes.
+  /** @typedef {{ op: number, data: Uint8Array }} Part */
+  /** @type {Part[]} */
   let parts = [];
   for (;;) {
     const { value, done } = await reader.read();
     if (done) return port.postMessage({ closed: 1006, reason: 'the stream ended' });
     buf = Uint8Array.from([...buf, ...value]);
     while (buf.length >= 2) {
-      let n = buf[1] & 127;
+      // The head's bytes past its first two are read before `at + n` is
+      // checked, so one not come yet is `undefined`, cast here as a byte. To
+      // `<<` and `|` it is 0, and the check waits for it; to `*` it is NaN,
+      // which the check lets by, and `slice(NaN)` keeps the whole buffer, so
+      // a 64 KiB frame whose head comes split never ends this loop. Found by
+      // `types`, and left as it runs.
+      let n = /** @type {number} */ (buf[1]) & 127;
       let at = 2;
-      if (n === 126) [n, at] = [(buf[2] << 8) | buf[3], 4];
-      if (n === 127) [n, at] = [buf[6] * 2 ** 24 + ((buf[7] << 16) | (buf[8] << 8) | buf[9]), 10];
+      if (n === 126)
+        [n, at] = [(/** @type {number} */ (buf[2]) << 8) | /** @type {number} */ (buf[3]), 4];
+      if (n === 127)
+        [n, at] = [
+          /** @type {number} */ (buf[6]) * 2 ** 24 +
+            ((/** @type {number} */ (buf[7]) << 16) |
+              (/** @type {number} */ (buf[8]) << 8) |
+              /** @type {number} */ (buf[9])),
+          10,
+        ];
       if (buf.length < at + n) break;
-      const [op, fin, data] = [buf[0] & 15, buf[0] & 128, buf.slice(at, at + n)];
+      const [op, fin, data] = [
+        /** @type {number} */ (buf[0]) & 15,
+        /** @type {number} */ (buf[0]) & 128,
+        buf.slice(at, at + n),
+      ];
       buf = buf.slice(at + n);
       if (op === 9) writer.write(frame(10, data));
       if (op === 8) {
         port.postMessage({
-          closed: data.length >= 2 ? (data[0] << 8) | data[1] : 1005,
+          closed:
+            data.length >= 2
+              ? (/** @type {number} */ (data[0]) << 8) | /** @type {number} */ (data[1])
+              : 1005,
           reason: new TextDecoder().decode(data.slice(2)),
         });
         return writer.close().catch(() => {});
@@ -1016,7 +1284,11 @@ async function socket({ url, protocols }, port) {
       if (fin && (op === 0 || op === 1 || op === 2)) {
         const whole = Uint8Array.from(parts.flatMap((p) => [...p.data]));
         port.postMessage({
-          message: parts[0].op === 1 ? new TextDecoder().decode(whole) : whole.buffer,
+          // A part was pushed just above.
+          message:
+            /** @type {Part} */ (parts[0]).op === 1
+              ? new TextDecoder().decode(whole)
+              : whole.buffer,
         });
         parts = [];
       }
