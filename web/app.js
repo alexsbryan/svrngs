@@ -61,7 +61,7 @@ const page = machine(
   parts.first({
     fine: matchMedia('(pointer: fine)').matches,
     // iPhone Safari's own: false outside a Home Screen web app, absent in
-    // every other browser (web/page/join.js `NameForm`), so no lib declares it.
+    // every other browser (web/page/name-form.js `NameForm`), so no lib declares it.
     standalone: /** @type {Navigator & { standalone?: boolean }} */ (navigator).standalone,
   }),
   [{ run: 'init', failed: 'failed' }],
