@@ -1,0 +1,414 @@
+{
+ "start": {
+  "build": "453ccc38",
+  "build_tree_clean": true,
+  "bin_sha256": "fd52783e7ae63055504a687c8874444042bc4cec3183b21eac78bd9f860332e4",
+  "load": 38.6474609375,
+  "cores": 12
+ },
+ "instrument": {
+  "probes": {
+   "udp to 100.104.36.28": "PermissionError(1, 'Operation not permitted')",
+   "udp to 127.0.0.1": "PermissionError(1, 'Operation not permitted')",
+   "udp to 192.168.1.11": "PermissionError(1, 'Operation not permitted')",
+   "udp to ::1": "PermissionError(1, 'Operation not permitted')",
+   "udp to fd7a:115c:a1e0::a3a:241c": "PermissionError(1, 'Operation not permitted')",
+   "udp to 1.1.1.1 (control)": "sent",
+   "tcp to loopback (control)": "200",
+   "https to n0 (control)": "200"
+  },
+  "held": {
+   "udp to 100.104.36.28": true,
+   "udp to 127.0.0.1": true,
+   "udp to 192.168.1.11": true,
+   "udp to ::1": true,
+   "udp to fd7a:115c:a1e0::a3a:241c": true,
+   "udp to 1.1.1.1 (control)": true,
+   "tcp to loopback (control)": true,
+   "https to n0 (control)": true
+  }
+ },
+ "relays": {
+  "A": {
+   "url": "http://127.0.0.1:63937/",
+   "up": [
+    {
+     "ms": 516,
+     "t": 1793670693.091
+    },
+    {
+     "ms": 257,
+     "t": 1793670763.903
+    },
+    {
+     "ms": 252,
+     "t": 1793670865.647
+    }
+   ]
+  },
+  "B": {
+   "url": "http://127.0.0.1:63938/",
+   "up": [
+    {
+     "ms": 252,
+     "t": 1793670693.611
+    },
+    {
+     "ms": 254,
+     "t": 1793670865.902
+    }
+   ]
+  }
+ },
+ "sam": {
+  "link_ms": 3345
+ },
+ "ana": {
+  "joined_ms": 3308
+ },
+ "alex": {
+  "joined_ms": 3343
+ },
+ "share": {
+  "who": "ana",
+  "exit": 0,
+  "ms": 18,
+  "said": "You lend notes (port 63929) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 63929 --limit <number>`.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare notes` stops lending it."
+ },
+ "listed_ms": 5,
+ "before": {
+  "sam": 0,
+  "alex": 0
+ },
+ "homes_before": {
+  "sam": "http://127.0.0.1:63937/",
+  "ana": "http://127.0.0.1:63937/",
+  "alex": "http://127.0.0.1:63937/"
+ },
+ "tiers_before": {
+  "sam": "Own",
+  "ana": "Own",
+  "alex": "Own"
+ },
+ "one_stopped": {
+  "stopped": "A",
+  "lend": {
+   "sam": {
+    "works_ms": 4513,
+    "fetches": [
+     [
+      2,
+      false,
+      4004
+     ],
+     [
+      4513,
+      true,
+      160
+     ]
+    ]
+   },
+   "alex": {
+    "works_ms": 4511,
+    "fetches": [
+     [
+      2,
+      false,
+      4005
+     ],
+     [
+      4511,
+      true,
+      302
+     ]
+    ]
+   }
+  },
+  "home_moved_ms": {
+   "sam": 17558,
+   "ana": 27841,
+   "alex": 29008
+  },
+  "homes": {
+   "sam": "http://127.0.0.1:63938/",
+   "ana": "http://127.0.0.1:63938/",
+   "alex": "http://127.0.0.1:63938/"
+  },
+  "tiers": {
+   "sam": [],
+   "ana": [],
+   "alex": []
+  }
+ },
+ "one_back": {
+  "returned_ms": {
+   "sam": null,
+   "ana": 51685,
+   "alex": null
+  },
+  "homes": {
+   "sam": "http://127.0.0.1:63938/",
+   "ana": "http://127.0.0.1:63937/",
+   "alex": "http://127.0.0.1:63938/"
+  },
+  "lend_works": {
+   "sam": true,
+   "alex": true
+  }
+ },
+ "both_stopped": {
+  "stopped": [
+   {
+    "who": "relayA",
+    "exit": 0,
+    "ms": 4,
+    "killed": false,
+    "t": 1793670854.403
+   },
+   {
+    "who": "relayB",
+    "exit": 0,
+    "ms": 4,
+    "killed": false,
+    "t": 1793670854.408
+   }
+  ],
+  "lend": {
+   "sam": {
+    "works_ms": 8,
+    "fetches": [
+     [
+      8,
+      true,
+      167
+     ]
+    ]
+   },
+   "alex": {
+    "works_ms": 8,
+    "fetches": [
+     [
+      8,
+      true,
+      167
+     ]
+    ]
+   }
+  },
+  "tier_ms": {
+   "sam": 9509,
+   "ana": 2858,
+   "alex": 6170
+  },
+  "home_n0_ms": {
+   "sam": 10737,
+   "ana": 4127,
+   "alex": 7516
+  },
+  "homes": {
+   "sam": "https://usw1-1.relay.n0.iroh.link/",
+   "ana": "https://usw1-1.relay.n0.iroh.link/",
+   "alex": "https://usw1-1.relay.n0.iroh.link/"
+  }
+ },
+ "both_back": {
+  "tier_ms": {
+   "sam": 8009,
+   "ana": 1359,
+   "alex": 4673
+  },
+  "home_own_ms": {
+   "sam": 11011,
+   "ana": 4361,
+   "alex": 7676
+  },
+  "homes": {
+   "sam": "http://127.0.0.1:63938/",
+   "ana": "http://127.0.0.1:63937/",
+   "alex": "http://127.0.0.1:63937/"
+  },
+  "lend_works": {
+   "sam": true,
+   "alex": true
+  }
+ },
+ "stopped_end": [
+  {
+   "who": "app-notes",
+   "exit": 0,
+   "ms": 9,
+   "killed": false,
+   "t": 1793670882.239
+  },
+  {
+   "who": "sam",
+   "exit": 0,
+   "ms": 184,
+   "killed": false,
+   "t": 1793670882.248
+  },
+  {
+   "who": "ana",
+   "exit": 0,
+   "ms": 172,
+   "killed": false,
+   "t": 1793670882.433
+  },
+  {
+   "who": "alex",
+   "exit": 0,
+   "ms": 3,
+   "killed": false,
+   "t": 1793670882.604
+  },
+  {
+   "who": "relayA",
+   "exit": 0,
+   "ms": 1,
+   "killed": false,
+   "t": 1793670882.608
+  },
+  {
+   "who": "relayB",
+   "exit": 0,
+   "ms": 1,
+   "killed": false,
+   "t": 1793670882.609
+  }
+ ],
+ "traces": {
+  "alex-1": {
+   "lines": 659,
+   "warn_error": 44,
+   "asks": 19,
+   "dials_held": [
+    [
+     "2026-11-03T01:51:43.695587Z",
+     "7040ad0c0a",
+     "Member",
+     "[\"Relay(http://127.0.0.1:63937/) Active\", \"Relay(https://usw1-1.relay.n0.iroh.link/) Inactive\"]"
+    ],
+    [
+     "2026-11-03T01:51:43.898968Z",
+     "2f923b9fd2",
+     "Member",
+     "[]"
+    ],
+    [
+     "2026-11-03T01:52:18.426970Z",
+     "2f923b9fd2",
+     "Member",
+     "[\"Relay(http://127.0.0.1:63937/) Active\", \"Relay(https://euc1-1.relay.n0.iroh.link/) Inactive\", \"Relay(http://127.0.0.1:63938/) Inactive\", \"Relay(https://use1-1.relay.n0.iroh.link/) Inactive\", \"Relay(https://usw1-1.relay.n0.iroh.link/) Inactive\", \"Relay(https://aps1-1.relay.n0.iroh.link/) Inactive\"]"
+    ],
+    [
+     "2026-11-03T01:52:40.611238Z",
+     "7040ad0c0a",
+     "Member",
+     "[\"Relay(http://127.0.0.1:63937/) Active\", \"Relay(https://usw1-1.relay.n0.iroh.link/) Inactive\"]"
+    ],
+    [
+     "2026-11-03T01:54:38.248216Z",
+     "7040ad0c0a",
+     "Member",
+     "[\"Relay(http://127.0.0.1:63937/) Active\", \"Relay(https://euc1-1.relay.n0.iroh.link/) Inactive\", \"Relay(http://127.0.0.1:63938/) Active\", \"Relay(https://usw1-1.relay.n0.iroh.link/) Inactive\", \"Relay(https://use1-1.relay.n0.iroh.link/) Inactive\", \"Relay(https://aps1-1.relay.n0.iroh.link/) Inactive\"]"
+    ]
+   ]
+  },
+  "ana-1": {
+   "lines": 784,
+   "warn_error": 44,
+   "asks": 19,
+   "dials_held": [
+    [
+     "2026-11-03T01:51:40.444797Z",
+     "7040ad0c0a",
+     "Member",
+     "[\"Relay(http://127.0.0.1:63937/) Active\", \"Relay(https://usw1-1.relay.n0.iroh.link/) Inactive\"]"
+    ],
+    [
+     "2026-11-03T01:52:37.295986Z",
+     "9a1b6a214e",
+     "Member",
+     "[\"Relay(https://usw1-1.relay.n0.iroh.link/) Active\", \"Relay(http://127.0.0.1:63937/) Active\"]"
+    ],
+    [
+     "2026-11-03T01:52:37.296036Z",
+     "7040ad0c0a",
+     "Member",
+     "[\"Relay(http://127.0.0.1:63937/) Active\", \"Relay(https://usw1-1.relay.n0.iroh.link/) Active\"]"
+    ]
+   ]
+  },
+  "relayA-1": {
+   "lines": 9,
+   "warn_error": 0,
+   "asks": 0,
+   "dials_held": []
+  },
+  "relayA-2": {
+   "lines": 9,
+   "warn_error": 0,
+   "asks": 0,
+   "dials_held": []
+  },
+  "relayA-3": {
+   "lines": 8,
+   "warn_error": 0,
+   "asks": 0,
+   "dials_held": []
+  },
+  "relayB-1": {
+   "lines": 9,
+   "warn_error": 0,
+   "asks": 0,
+   "dials_held": []
+  },
+  "relayB-2": {
+   "lines": 8,
+   "warn_error": 0,
+   "asks": 0,
+   "dials_held": []
+  },
+  "sam-1": {
+   "lines": 747,
+   "warn_error": 54,
+   "asks": 19,
+   "dials_held": [
+    [
+     "2026-11-03T01:51:40.444415Z",
+     "2f923b9fd2",
+     "Member",
+     "[\"Relay(http://127.0.0.1:63937/) Active\"]"
+    ],
+    [
+     "2026-11-03T01:51:43.695381Z",
+     "9a1b6a214e",
+     "Member",
+     "[\"Relay(http://127.0.0.1:63937/) Active\"]"
+    ],
+    [
+     "2026-11-03T01:52:18.429248Z",
+     "2f923b9fd2",
+     "Member",
+     "[\"Relay(http://127.0.0.1:63937/) Active\", \"Relay(https://euc1-1.relay.n0.iroh.link/) Inactive\", \"Relay(http://127.0.0.1:63938/) Inactive\", \"Relay(https://use1-1.relay.n0.iroh.link/) Inactive\", \"Relay(https://usw1-1.relay.n0.iroh.link/) Inactive\", \"Relay(https://aps1-1.relay.n0.iroh.link/) Inactive\"]"
+    ],
+    [
+     "2026-11-03T01:52:43.732918Z",
+     "9a1b6a214e",
+     "Member",
+     "[\"Relay(https://euc1-1.relay.n0.iroh.link/) Inactive\", \"Relay(http://127.0.0.1:63938/) Active\", \"Relay(https://use1-1.relay.n0.iroh.link/) Inactive\", \"Relay(https://usw1-1.relay.n0.iroh.link/) Inactive\", \"Relay(https://aps1-1.relay.n0.iroh.link/) Inactive\", \"Relay(http://127.0.0.1:63937/) Active\"]"
+    ],
+    [
+     "2026-11-03T01:54:38.229405Z",
+     "9a1b6a214e",
+     "Member",
+     "[\"Relay(https://euc1-1.relay.n0.iroh.link/) Inactive\", \"Relay(http://127.0.0.1:63938/) Active\", \"Relay(https://use1-1.relay.n0.iroh.link/) Inactive\", \"Relay(https://usw1-1.relay.n0.iroh.link/) Inactive\", \"Relay(https://aps1-1.relay.n0.iroh.link/) Inactive\", \"Relay(http://127.0.0.1:63937/) Active\"]"
+    ]
+   ]
+  }
+ },
+ "end": {
+  "load": 8.13623046875,
+  "t": 1793670882.62
+ }
+}
