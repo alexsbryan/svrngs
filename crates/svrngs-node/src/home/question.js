@@ -75,6 +75,14 @@
 // `valid_header_name`), and "House-rules" reads "House rules" (canon-house).
 /** @param {string} kind */
 export const spoken = (kind) => kind.replaceAll('-', ' ');
+// A lend's label, the first name of its origin here: what /to, /choices
+// and /reaching name it by. A split answers one part at least, so its
+// first is there.
+/**
+ * @param {{ origin: string }} lend
+ * @returns {string}
+ */
+export const label = (lend) => /** @type {string} */ (new URL(lend.origin).hostname.split('.')[0]);
 /** @param {Lend} lend */
 export const named = (lend) =>
   lend.group

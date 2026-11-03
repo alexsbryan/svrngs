@@ -1,106 +1,36 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// The group's index on the home page (page-index (b); home.js@19b63b2b:118-119,
-// :172-191; V1_UI_BUILD §3.1): one table of what is in the group, on any
-// port, drawn from GROUP's last read of its people and what they lend, so
-// each read draws it again. Each thing by its open, named (question.js
-// `named`), which opens it in a tab, with what opening it agrees to beside
-// it (`agreed`); whose; how it opens, a port by Play's cell (play.js); and
-// whether it is full now. Each computer that did not say is a row of its
-// own, said by how: what it lends never stale, and never nobody's.
+// The group's index on the home page: one table of what is in the group,
+// on any port, drawn from GROUP's last read of its people and what they
+// lend, so each read draws it again (index-rows.js).
 import { html } from '../ui/view.js?v=__VERSION__';
 import { Row } from '../ui/parts.js?v=__VERSION__';
-import { agreed, called, named, once, opens, owner } from '../question.js?v=__VERSION__';
-import { cell } from './play.js?v=__VERSION__';
-/** @import { Lends, Lent, PlaceProps } from './group.js?v=__VERSION__' */
+import { IndexRows } from './index-rows.js?v=__VERSION__';
+/** @import { PlaceProps } from './group.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
-/** @import { PeopleRow as Person } from '../question.js?v=__VERSION__' */
 
-// The lend's label, the first name of its origin here (home.js@19b63b2b:45).
-// A split answers one part at least, so its first is there.
-/**
- * @param {{ origin: string }} lend
- * @returns {string}
- */
-export const label = (lend) => /** @type {string} */ (new URL(lend.origin).hostname.split('.')[0]);
-// A form posting what the person says of the app labelled `app` reaching
-// friends' lends as them to /reaching (home.rs): its yes, which goes on to
-// the app in a tab of its own (capability-open), or its Stop, which comes
-// back here (capability-what-acts; home.js@19b63b2b:51).
-/**
- * The form's props: the app's label, the button's words, and what it posts.
- * @typedef {{ app: string, words: Drawn, said?: 'yes' | 'stop' }} ReachProps
- */
+const HEADS = ['What', 'Whose', 'How it opens', 'Now'];
 
-/** @param {ReachProps} props */
-export const Reach = ({ app, words, said = 'yes' }) =>
-  html`<form method="post" action="/reaching" target=${said === 'yes' ? '_blank' : undefined}><input type="hidden" name="app" value=${app} /><input type="hidden" name="said" value=${said} /><button>${words}</button></form>`;
-// A lend reading friends' lends opens by the form posting its yes, any
-// other through `/to` (home.rs), which gives its origin a code of its own
-// that becomes its session there (give-session; home.js@19b63b2b:58-61).
-/** @param {Lent} lend */
-const opener = (lend) =>
-  lend.reads && lend.reads.length > 0
-    ? html`<${Reach} app=${label(lend)} words=${named(lend)} />`
-    : html`<a href=${`/to?${new URLSearchParams({ lend: label(lend) })}`} target="_blank">${named(lend)}</a>`;
-const UNLISTED = {
-  unanswered: 'did not answer, so what they lend is not listed',
-  unheard: 'has not heard of yours yet, so what they lend is not listed yet',
-  refused: 'answered without saying what they lend, so it is not listed',
-  older: 'runs an older svrngs, so what they lend is not listed',
-};
+/** @param {PlaceProps} props */
+function Index({ g: group, s: state, send, home, me }) {
+  const rows = state.lends
+    ? html`
+        <${IndexRows}
+          lends=${state.lends}
+          g=${group}
+          s=${state}
+          send=${send}
+          home=${home}
+          me=${me}
+        />
+      `
+    : html`<${Row} cells=${['Asking each computer in the group what it lends…']} />`;
+  return html`
+    <table class="index">
+      <thead><${Row} tag="th" cells=${HEADS} /></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
 
-// Each lend, whose by the key its computer joined with (question.js
-// `apart`, never written into the read), then each computer unlisted.
-// Drawn only once GROUP has read the lends (`view.index`), so `state.lends` is
-// read.
-/**
- * @param {PlaceProps} props
- * @param {Lends} [lends]
- * @param {Person[]} [people]
- * @returns {Drawn[]}
- */
-const rows = (
-  { g: group, s: state, send, home, me },
-  lends = /** @type {Lends} */ (state.lends),
-  people = state.people?.people ?? [],
-) => {
-  const lent = lends.lent.map((lend) => ({
-    ...lend,
-    called: called(people, people.find((row) => row.key === lend.key)?.person_key),
-  }));
-  // A lend's third cell: how it opens; a port, this computer's own or
-  // another's to open here.
-  /**
-   * @param {Lent} lend
-   * @param {string | undefined} opened
-   */
-  const openCell = (lend, opened) => {
-    if (!lend.raw) return `${opened}.`;
-    if (lend.key === me) return 'A port this computer lends.';
-    return html`<${cell} l=${lend} g=${group} s=${state} send=${send} home=${home} />`;
-  };
-  const each = once(lent).map((lend) =>
-    ((opened, now) =>
-      html`<tr key=${label(lend)}>${lend.raw ? html`<td>${named(lend)}</td>` : html`<td>${opener(lend)}${` ${agreed(lend, lends.shelf, group)}`}</td>`}<td>${owner(lend, group)}</td><td>${openCell(lend, opened)}</td><td>${now}</td></tr>`)(
-      ...opens(lend, 'In a tab'),
-    ),
-  );
-  const said = Object.entries(UNLISTED).flatMap(([how, why]) =>
-    // Object.entries names each key a string; each is UNLISTED's, a list of
-    // the lends' read.
-    lends[/** @type {keyof typeof UNLISTED} */ (how)].map(
-      (person) => `${called(people, person.person_key) ?? person.person}'s computer ${why}.`,
-    ),
-  );
-  return [
-    ...each,
-    ...[...said, ...(each.length || said.length ? [] : ['Nobody lends anything here yet.'])].map(
-      (words) => html`<${Row} cells=${[words]} span=${4} />`,
-    ),
-  ];
-};
 /** @type {{ index: (props: PlaceProps) => Drawn }} */
-export const view = {
-  index: (props) =>
-    html`<table class="index"><thead><${Row} tag="th" cells=${['What', 'Whose', 'How it opens', 'Now']} /></thead><tbody>${props.s.lends ? rows(props) : html`<${Row} cells=${['Asking each computer in the group what it lends…']} />`}</tbody></table>`,
-};
+export const view = { index: Index };
