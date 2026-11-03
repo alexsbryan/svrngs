@@ -131,7 +131,7 @@ The rows run in order, since all of them touch the same files.
     - then stop. The watching session lands it.
   - **Moves:** the operator's reading of the pages, the demo above.
 
-- [ ] REVIEW-audit-js-auto-1 — depends [js-read] — operator-approved focused closing review of the JavaScript queue against its charter and the pinned principles; the legacy semantic-clone and noun-convergence checks are explicitly deferred — read: CHARTER.md, docs/DESIGN.md §5, docs/principles/ARCH_PRINCIPLES.md, REVIEW_AUDIT_NEEDS_HUMAN.md — check: focused source review and the verified gate evidence below
+- [x] REVIEW-audit-js-auto-1 970a835c8 — depends [js-read] — operator-approved focused closing review of the JavaScript queue against its charter and the pinned principles; the legacy semantic-clone and noun-convergence checks are explicitly deferred — read: CHARTER.md, docs/DESIGN.md §5, docs/principles/ARCH_PRINCIPLES.md, REVIEW_AUDIT_NEEDS_HUMAN.md — check: focused source review and the verified gate evidence below
   - **Decision, 2026-11-03.** The operator approved: "Yes that sounds good
     to me", in answer to finishing a focused review of the actual JavaScript
     changes and closing the loop on that basis, with semantic-clone analysis
