@@ -203,7 +203,8 @@ function Drawn({ s, send }) {
     [s.lent],
   );
   if (!s.lent) return html`<section id="acts"></section>`;
-  // `a.c` is tested first, so it is the change each `some` reads.
+  // `a.c` is tested first, so it is the change each `some` reads, and
+  // each the filter keeps has one.
   const done = Object.values(s.acted ?? {})
     .filter(
       (a) =>
@@ -215,7 +216,7 @@ function Drawn({ s, send }) {
             c.group === /** @type {Change} */ (a.c).group,
         ),
     )
-    .map((a) => a.c);
+    .map((a) => /** @type {Change} */ (a.c));
   const parts = {
     reads: [
       ...once(s.lent)

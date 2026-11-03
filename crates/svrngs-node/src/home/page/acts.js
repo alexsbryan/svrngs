@@ -359,7 +359,8 @@ function Acting({ s: h, home }) {
     );
   // A change kept by its yes, once done, which the record no longer
   // lists: `a.c` and `L.changed` are read where the filter has found
-  // them, as tsc does not narrow them inside `some`'s callback.
+  // them, as tsc does not narrow them inside `some`'s callback, nor what
+  // the filter keeps.
   /**
    * @param {Group} g
    * @param {Lends} [L]
@@ -378,7 +379,7 @@ function Acting({ s: h, home }) {
               )
             ),
         )
-        .map((a) => a.c),
+        .map((a) => /** @type {Change} */ (a.c)),
     ];
   const parts = {
     reads: shown
