@@ -4,6 +4,7 @@
 //! fold names them, by name and, of two people of one name, by when they
 //! joined ([`crate::Membership::one_named`]).
 
+use alloc::collections::BTreeSet;
 use alloc::string::{String, ToString};
 use alloc::vec;
 use alloc::vec::Vec;
@@ -359,6 +360,33 @@ impl Command for RelayAt {
             "relay: the record's relay for this computer against the one it is reached through");
         let url = self.url.as_ref().map(ToString::to_string);
         Ok(Vec::from_iter(writes.then_some(RailAct::Relay { url })))
+    }
+}
+
+/// The keeper says the group meets at these relays (relay fallbacks;
+/// svrn-docs `rings/current/GROUP_RELAYS.md` §7): written only when the
+/// record says otherwise, and counted only as the keeper's, so anyone
+/// else's is refused [`HandOnRefusal::NotKeeper`] and nothing is written.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MeetsAt(pub BTreeSet<crate::relay::Url>);
+
+impl Command for MeetsAt {
+    type Refusal = HandOnRefusal;
+    const READS: Reads = Reads::Membership;
+
+    fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, HandOnRefusal> {
+        let said = before.membership().meets_at();
+        let writes = said.as_ref() != Some(&self.0);
+        tracing::debug!(target: "register", ?said, asked = ?self.0, writes,
+            "meets: the relays the record says the group meets at against the keeper's");
+        let relays = self.0.iter().map(ToString::to_string).collect();
+        Ok(Vec::from_iter(writes.then_some(RailAct::Meets { relays })))
+    }
+
+    fn confirm(&self, after: &Admission, _written: &[OpId]) -> Result<(), HandOnRefusal> {
+        let counted = after.membership().meets_at().as_ref() == Some(&self.0);
+        tracing::debug!(target: "register", counted, "meets: the fold's verdict, which counts only the keeper's");
+        counted.then_some(()).ok_or(HandOnRefusal::NotKeeper)
     }
 }
 

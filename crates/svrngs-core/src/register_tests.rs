@@ -827,6 +827,48 @@ fn a_computers_relay_is_written_once_per_move() {
     }
 }
 
+/// **Only the keeper says where the group meets** (relay fallbacks;
+/// GROUP_RELAYS §7): cy, standing but not keeping, is refused `NotKeeper`
+/// and nothing is written; alex, the keeper, writes the list once, then
+/// nothing when it is the same, then the change. Planted: `MeetsAt`'s
+/// `confirm` answering Ok, and cy's act was written and counted nowhere,
+/// the plant caught by the refusal's assertion.
+#[test]
+fn only_the_keeper_says_where_the_group_meets() {
+    let (seed, store) = alexs_group();
+    let at = |us: &[&str]| MeetsAt(us.iter().map(|u| relay::Url::parse(u).unwrap()).collect());
+    let two = at(&["http://10.0.0.2:3340/", "http://10.0.0.3:3340/"]);
+    assert_eq!(
+        commit(&store, &two, &author(&key(3), &seed, 1_000)).unwrap(),
+        Err(Refused::Command(HandOnRefusal::NotKeeper)),
+        "cy does not keep the group"
+    );
+    assert_eq!(
+        register(&store, &seed).meets_at(),
+        None,
+        "cy's said nothing"
+    );
+    for (now, asked, writes) in [
+        (1_001, &two, 1),
+        (1_002, &two, 0),
+        (1_003, &at(&["http://10.0.0.3:3340/"]), 1),
+    ] {
+        let done = commit(&store, asked, &author(&key(1), &seed, now))
+            .unwrap()
+            .unwrap();
+        assert_eq!(done.lines().len(), writes, "at {now}");
+        assert_eq!(
+            done.lines().first().map(|l| l.v),
+            (writes == 1).then_some(MEETS_LINE_VERSION)
+        );
+        assert_eq!(
+            register(&store, &seed).meets_at().as_ref(),
+            Some(&asked.0),
+            "at {now}"
+        );
+    }
+}
+
 // ── leaving (groups-leave) ──────────────────────────────────────
 
 /// **A person's leave cuts every key of theirs, from either computer, by

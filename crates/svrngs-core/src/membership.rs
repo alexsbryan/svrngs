@@ -249,6 +249,11 @@ pub struct Membership {
     /// absent, so a fold with none serialises as before.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub holders: Option<OpId>,
+    /// The relays the keeper's newest counting [`RailAct::Meets`] names, as
+    /// written (relay fallbacks); `None` while the keeper has named none.
+    /// Ask [`Self::meets_at`]. Skipped when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub meets: Option<BTreeSet<String>>,
 }
 
 /// A guest, as a counting [`RailAct::Visit`] names them, hosted by the key
@@ -392,6 +397,20 @@ impl Membership {
         let said = self.relays.get(key).filter(|_| self.standing.contains(key));
         tracing::debug!(target: "rail:membership", key, ?said, "membership: the relay the record names for a standing key");
         crate::relay::parse(said?).ok()
+    }
+
+    /// The relays the keeper says the group meets at, each read dotless,
+    /// one that reads as no URL left out and said ([`crate::relay::parse`]);
+    /// `None` while the keeper has said none.
+    pub fn meets_at(&self) -> Option<BTreeSet<crate::relay::Url>> {
+        let said = self.meets.as_ref();
+        tracing::debug!(target: "rail:membership", ?said, "membership: the relays the keeper says the group meets at");
+        Some(
+            said?
+                .iter()
+                .filter_map(|r| crate::relay::parse(r).ok())
+                .collect(),
+        )
     }
 
     /// What holds `key`, if it stands now; `None` if it does not.
@@ -590,6 +609,7 @@ fn walk(
     let mut visits: BTreeMap<OpId, Guest> = BTreeMap::new();
     let mut signers = None;
     let mut holders = None;
+    let mut meets = None;
     for (id, op) in order.iter().copied() {
         let of = |k: &str| String::from(devices.get(k).map_or(k, String::as_str));
         if !live.contains_key(op.stands_as()) {
@@ -735,6 +755,11 @@ fn walk(
                 tracing::debug!(target: "rail:membership", id = %id, keeps, "membership: legacy holder cutover only by the keeper, once");
                 holders = holders.or(keeps.then(|| id.clone()));
             }
+            RailAct::Meets { relays } => {
+                tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor, keeper = ?keeper, keeps, ?relays,
+                    "membership: a Meets says where the group meets only as the keeper's, the newest winning");
+                meets = keeps.then(|| relays.clone()).or(meets);
+            }
             RailAct::Correct { corrects, .. } => {
                 let visit = visits.get_mut(corrects).filter(|g| g.host == op.actor);
                 tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor, %corrects, stops = visit.is_some(), "membership: a Correct is a visit's Stop only by the key that hosts it, and the first counts");
@@ -760,6 +785,7 @@ fn walk(
         visits,
         signers,
         holders,
+        meets,
     }
 }
 
@@ -776,7 +802,7 @@ impl RailAct {
     /// (`Remove`), hands the keeper on (`HandOn`) or opens a link
     /// (`Invite`); or says where its signer is reached (`Relay`), or who
     /// is visiting (`Visit`), or cuts over to each act counting as its
-    /// signer's alone (`Signers`), each of which the register carries beside
+    /// signer's alone (`Signers`), or where the group meets (`Meets`), each of which the register carries beside
     /// the keys. A `Correct` does not, since U7: it voids nothing that
     /// moves membership. [`standing_reads`] keeps these, and the acts
     /// of every key a `Remove` names, so the list has one home beside the
@@ -791,7 +817,8 @@ impl RailAct {
             | RailAct::Relay { .. }
             | RailAct::Visit(_)
             | RailAct::Signers { .. }
-            | RailAct::Holders { .. } => true,
+            | RailAct::Holders { .. }
+            | RailAct::Meets { .. } => true,
             RailAct::Record { .. }
             | RailAct::Correct { .. }
             | RailAct::Seal

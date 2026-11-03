@@ -126,8 +126,8 @@ pub use payload::{Payload, PayloadError, MAX_PAYLOAD_BYTES};
 pub use project::{Invites, Wire};
 pub use record::{Append, AppendRefusal};
 pub use register::{
-    Cutover, HandOnRefusal, HandOnTo, Leave, MintInvite, Redeem, RedeemRefusal, RelayAt, Removal,
-    RemovalRefusal,
+    Cutover, HandOnRefusal, HandOnTo, Leave, MeetsAt, MintInvite, Redeem, RedeemRefusal, RelayAt,
+    Removal, RemovalRefusal,
 };
 pub use sig::{
     act_id, actor_of, derive_id, field, redemption_message, ring_op_message, sign_act,
@@ -444,6 +444,13 @@ pub enum RailAct {
     /// The keeper freezes legacy holder entries by ancestry; new entries bind
     /// their person's approval of exact content, not a writer-chosen clock.
     Holders { through: Vec<OpId> },
+    /// The keeper says: the group meets at these relays (relay fallbacks;
+    /// svrn-docs `rings/current/GROUP_RELAYS.md` §7). Counts only as the
+    /// keeper's, as a cut does, its newest winning
+    /// ([`Membership::meets_at`]); a computer joins the build's relays to
+    /// them, which the record never names ([`relay::Meeting`]). As written:
+    /// the fold reads each dotless. Carries no [`Payload`].
+    Meets { relays: BTreeSet<String> },
 }
 
 /// What a [`RailAct::Visit`] says: the guest's name, the key they made for
@@ -715,15 +722,21 @@ pub const VISIT_LINE_VERSION: u32 = 11;
 pub const AUTHORSHIP_LINE_VERSION: u32 = 12;
 pub const APPROVAL_LINE_VERSION: u32 = 13;
 
+/// The line format version the group's relays ship at (relay fallbacks):
+/// the keeper's [`RailAct::Meets`]. A build at [`APPROVAL_LINE_VERSION`]
+/// names it `NewerVersionLine`, so it meets the group where it did before,
+/// at the relay its group's file keeps.
+pub const MEETS_LINE_VERSION: u32 = 14;
+
 impl Journaled for SignedOp {
     const FILE: &'static str = "ring_oplog.jsonl";
     const ID_PREFIX: &'static str = "ring";
     const LABEL: &'static str = "ring_rail";
     /// This build reads the membership cohort's, the link's, a browser's
     /// redemption's, a folder's, removal's, a device link's, a relay's, a
-    /// yes to a carried app's version's, a visit's and a holder's lines too
-    /// (see [`Self::line_version`]).
-    const UNDERSTANDS: u32 = APPROVAL_LINE_VERSION;
+    /// yes to a carried app's version's, a visit's, a holder's and the
+    /// group's relays' lines too (see [`Self::line_version`]).
+    const UNDERSTANDS: u32 = MEETS_LINE_VERSION;
     /// The membership acts — [`RailAct::Admit`] and [`RailAct::Remove`] —
     /// ship at the bumped line version and the original three keep the bytes
     /// they always had, so an un-upgraded node names exactly the acts it
@@ -732,6 +745,7 @@ impl Journaled for SignedOp {
     /// before.
     fn line_version(&self) -> u32 {
         match self.act {
+            RailAct::Meets { .. } => MEETS_LINE_VERSION,
             _ if self.grant.as_ref().is_some_and(|p| p.op.is_some()) => APPROVAL_LINE_VERSION,
             RailAct::Holders { .. } => APPROVAL_LINE_VERSION,
             _ if self.grant.is_some() => AUTHORSHIP_LINE_VERSION,
