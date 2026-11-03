@@ -108,7 +108,7 @@ The rows run in order, since all of them touch the same files.
     - `web/tests/specifiers.test.mjs` still passes.
   - **(d) Type-aware,** per CHARTER "Answered" 4, or each rule named never-ran with why.
   - **Plant:** each rule watched failing on a planted file before its fixes. The commit names the rule and the plant.
-- [ ] js-read — depends [js-lint] — ONE ROW, each part its own commit, `scripts/check.sh` once, at the close — the pages read as code meant for people, behavior kept:
+- [x] js-read df1e63da — depends [js-lint] — ONE ROW, each part its own commit, `scripts/check.sh` once, at the close — the pages read as code meant for people, behavior kept:
   - **(a) Survey.** `demo/runs/economize/<date>-js-read/SURVEY.md` lists:
     - each view packed into an expression;
     - each machine not yet in its own module;
