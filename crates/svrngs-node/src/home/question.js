@@ -105,7 +105,7 @@ const does = (kind, shelf) =>
 /**
  * @param {Lend} l
  * @param {Shelved[]} shelf
- * @param {{ name?: string }} g
+ * @param {{ name?: string | null }} g
  */
 export const agreed = (l, shelf, g) =>
   l.group
@@ -126,7 +126,7 @@ export const until = (v) =>
 // app the group carries, whichever computer's copy is listed (`once`).
 /**
  * @param {Lend} l
- * @param {{ name?: string }} g
+ * @param {{ name?: string | null }} g
  */
 export const owner = (l, g) => (l.group ? (g.name ?? 'your group') : (l.called ?? l.person));
 
