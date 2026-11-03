@@ -2,7 +2,8 @@
 // One browser of each engine for a run of browser tests
 // (crates/svrngs-node/tests/browser/harness.rs `browsers`): each test's
 // driver connects to it and opens a context of its own (page.mjs `launch`),
-// so a run starts two browsers where it started one a test. Prints their
+// so a run starts two browsers where it started one a test, each as
+// page.mjs `starting` has it start. Prints their
 // addresses as one line, {"chromium": "<ws>", "webkit": "<ws>", "proxy":
 // "<http>"}, the proxy every context reaches the page's names through
 // (page.mjs `proxied`), and closes
@@ -11,11 +12,11 @@
 //   node web/tests/browsers.mjs
 
 import { chromium, webkit } from 'playwright';
-import { IGNORING, proxied } from './page.mjs';
+import { IGNORING, proxied, starting } from './page.mjs';
 
 const servers = {
-  chromium: await chromium.launchServer({ args: IGNORING }),
-  webkit: await webkit.launchServer(),
+  chromium: await chromium.launchServer({ ...starting(chromium), args: IGNORING }),
+  webkit: await webkit.launchServer(starting(webkit)),
 };
 console.log(
   JSON.stringify({

@@ -1,0 +1,17 @@
+# cargo test --quiet --workspace --test browser, under lockf -k /tmp/svrngs-gate.lock, with page.mjs `starting` (js-webkit (b))
+== plant: web/tests/webkit.sh as `exec "$SVRNGS_WEBKIT" "$@"`, AppKit's window animations on (01:45, load 6.2)
+carried::a_new_version_runs_as_each_person_only_after_their_yes::webkit --- FAILED
+the_page_offers_a_computer_one_line_and_sends_the_token_nowhere::webkit --- FAILED
+tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit --- FAILED
+the_phone_goes_through_the_link_s_computer_while_it_answers::webkit --- FAILED
+the_phone_reaches_whoever_s_awake::webkit --- FAILED
+test result: FAILED. 89 passed; 5 failed; 2 ignored; 0 measured; 0 filtered out; finished in 230.53s
+== green 1 (01:55, load 7.4)
+test result: ok. 94 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 140.74s
+== green 2 (01:58, load 10.5)
+carried::a_new_version_runs_as_each_person_only_after_their_yes::webkit --- FAILED
+test result: FAILED. 93 passed; 1 failed; 2 ignored; 0 measured; 0 filtered out; finished in 139.98s
+  left: String("Money as brought")
+ right: "Money as kim changed it"   (carried.rs:696, runs.mjs `after`)
+== green 3 (02:00, load 13.1)
+test result: ok. 94 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 141.83s

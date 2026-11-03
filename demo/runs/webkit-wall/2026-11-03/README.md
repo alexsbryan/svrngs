@@ -76,3 +76,30 @@ the proxy); and the Mac's load.
 To run again: `node wall.mjs`, `node wall.mjs
 -NSAutomaticWindowAnimationsEnabled NO`, `node leak.mjs [defaults]`, from
 this directory, with `npm ci --prefix web` done.
+
+## The fix, js-webkit (b)
+
+page.mjs `starting` starts WebKit on macOS through `web/tests/webkit.sh`,
+which adds `-NSAutomaticWindowAnimationsEnabled NO`. Both places that start
+a browser use it: browsers.mjs's shared one and `launch`'s own. The
+launcher ends its line with `about:blank`. Playwright.app opens its last
+argument that doesn't start with `--` as its first page. A first try ended
+on `NO`, and every browser started with a profile waited the full 180 s on
+it (four tests, `launchPersistentContext: Timeout 180000ms exceeded`). With
+`about:blank`, a profile's browser starts in 581-751 ms against 573-575 ms
+without the launcher, on that same first page, and 70 more pages load in it.
+
+`browser-step-fixed.txt`: the step under the gate lock.
+- **Plant:** the launcher without the default, so the windows animate again.
+  The four are red again, along with
+  `carried::a_new_version_runs_as_each_person_only_after_their_yes::webkit`,
+  whose page also opened past the 64th; 230.53 s.
+- **With the fix:** 94 of 94 at load 7.4 (140.74 s) and at load 13.1
+  (141.83 s).
+- **Between those two runs, at load 10.5:** 93 of 94. That same `carried`
+  test failed, on an assertion and not a timeout. The phone's yes was
+  written (`POST /carry answered 200`), Money was opened right after, and
+  it ran "Money as brought" where the test wants "Money as kim changed it"
+  (`carried.rs:696`). `runs.mjs` `opened` takes any `Money …` title as
+  loaded. That race is the test's own and not this stall, and it is left
+  as it is: this queue changes no test (its fence 3).

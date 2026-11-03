@@ -10,6 +10,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 export const INSTALL = 'npm ci --prefix web && npx --prefix web playwright install chromium webkit';
 
@@ -197,6 +198,19 @@ export const reaching = async () => ({
   proxy: { server: shared() ?? (await proxied()), bypass: 'localhost,*.localhost,127.0.0.1' },
 });
 export const IGNORING = ['--ignore-certificate-errors'];
+// How Playwright starts a browser of `type` here, for browsers.mjs and
+// `launch`. WebKit on macOS starts through webkit.sh, with AppKit's window
+// animations off: each page's animation kept one of 64 threads while the
+// display was off, and from the 64th page on, the browser loaded nothing
+// (demo/runs/webkit-wall/2026-11-03). Anything else starts as Playwright
+// starts it.
+export function starting(type) {
+  if (type.name() !== 'webkit' || process.platform !== 'darwin') return {};
+  return {
+    executablePath: fileURLToPath(new URL('./webkit.sh', import.meta.url)),
+    env: { ...process.env, SVRNGS_WEBKIT: type.executablePath() },
+  };
+}
 export function serve(dir, { worker, port = 0 } = {}) {
   const root = resolve(dir);
   const asked = [];
@@ -309,6 +323,7 @@ export async function launch(engine, { profile, device: as, args, unopened, zone
       const context = await pw[engine].launchPersistentContext(profile, {
         ...device,
         ...(await reaching()),
+        ...starting(pw[engine]),
         args: flags,
       });
       made = { context, close: () => context.close() };
@@ -320,7 +335,7 @@ export async function launch(engine, { profile, device: as, args, unopened, zone
       const shared = !args && JSON.parse(process.env.SVRNGS_BROWSERS ?? '{}')[engine];
       const browser = await (shared
         ? pw[engine].connect(shared)
-        : pw[engine].launch({ args: flags }));
+        : pw[engine].launch({ ...starting(pw[engine]), args: flags }));
       made = {
         context: await browser.newContext({ ...device, ...(await reaching()) }),
         close: () => browser.close(),
