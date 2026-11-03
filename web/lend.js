@@ -1597,24 +1597,25 @@ async function relayed(reader, writer, port) {
  */
 function frameAt(buf) {
   if (buf.length < 2) return null;
-  // The head's bytes past its first two are read before `at + n` is
-  // checked, so one not come yet is `undefined`, cast here as a byte. To
-  // `<<` and `|` it is 0, and the check waits for it; to `*` it is NaN,
-  // which the check lets by, and `slice(NaN)` keeps the whole buffer, so
-  // a 64 KiB frame whose head comes split never ends this loop. Found by
-  // `types`, and left as it runs.
   let length = /** @type {number} */ (buf[1]) & 127;
+  // The head is 2 bytes, or 4 or 10 with a longer length, and is waited
+  // for whole before that length is read: a byte not come yet reads
+  // `undefined`, which `*` makes NaN, the check below lets NaN by, and
+  // `slice(NaN)` keeps the whole buffer, so a 64 KiB frame whose head came
+  // in two reads was read again forever (web/tests/lend-frames.test.mjs).
+  // Past this check each byte the head names has come.
   let at = 2;
+  if (length === 126) at = 4;
+  if (length === 127) at = 10;
+  if (buf.length < at) return null;
   if (length === 126)
-    [length, at] = [(/** @type {number} */ (buf[2]) << 8) | /** @type {number} */ (buf[3]), 4];
+    length = (/** @type {number} */ (buf[2]) << 8) | /** @type {number} */ (buf[3]);
   if (length === 127)
-    [length, at] = [
+    length =
       /** @type {number} */ (buf[6]) * 2 ** 24 +
-        ((/** @type {number} */ (buf[7]) << 16) |
-          (/** @type {number} */ (buf[8]) << 8) |
-          /** @type {number} */ (buf[9])),
-      10,
-    ];
+      ((/** @type {number} */ (buf[7]) << 16) |
+        (/** @type {number} */ (buf[8]) << 8) |
+        /** @type {number} */ (buf[9]));
   if (buf.length < at + length) return null;
   return {
     op: /** @type {number} */ (buf[0]) & 15,
