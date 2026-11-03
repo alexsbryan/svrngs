@@ -1,6 +1,25 @@
 # REVIEW-audit-js-auto-1 — required instrument absent
 
-## Decision requested
+## Operator decision, 2026-11-03
+
+Resolved: the operator approved a focused review of the actual JavaScript
+changes against the agreed charter, the existing gate evidence, the focused
+doc-scene rerun and the tested budget cap, then closing the loop on that
+basis. The reply was "Yes that sounds good to me". STATE.md's audit row
+now holds that acceptance criterion.
+
+The original semantic-clone and cross-repository noun-convergence analyses
+are explicitly deferred, not passed. No further external toolchain repair
+or code-index build is part of this queue's closure. The partial ledger
+and missing-instrument results below remain historical evidence.
+
+The watching session subsequently restored the developer CLI and ingestor
+through commonwealth's existing program-lift run-only checks, without
+editing its source. A fresh source-code index was started and interrupted;
+it is not an audit result. The proposed uncommitted snapshot helper was
+removed when the work was brought back to the operator-approved scope.
+
+## Original decision request, resolved above
 
 Restore/provide the sovereign-cli audit executable and a suitable current
 corpus, or explicitly select a replacement instrument. The row requires
@@ -75,7 +94,7 @@ Finished in 47ms on 281 files using 12 threads.
 exit 0
 ```
 
-The final scripts/check.sh has not run: this is a blocked partial audit,
-not row closure. After restoring the instrument, finish the clone/noun
-checks and architectural review, fix small behavior-preserving findings,
-commit, then close via the locked gate required by the queue.
+At e4069050 this was a blocked partial audit, not row closure. Its original
+tool-specific completion requirement is superseded by the operator's
+decision above. The focused closing review remains to be completed and
+reported through the loop under STATE.md's revised acceptance criterion.

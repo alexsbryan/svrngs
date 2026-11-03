@@ -133,3 +133,21 @@ first output and exit 0; `git diff --check` also exited 0. Thus the new
 cap was watched failing, and a JavaScript addition moved only its own
 counter. These runs change neither the preceding gate's recorded
 abstention nor the closing audit's outstanding instrument requirement.
+
+## Focused doc-scene follow-up
+
+The watching session reran the one scene that the full gate could not
+judge, on main after js-read merged and the jubilee landed at 35bd78e6:
+
+```text
+$ ulimit -Sn 10240 && CARGO_INCREMENTAL=0 lockf -k /tmp/svrngs-gate.lock cargo test -p svrngs --test scenes doc:: -- --test-threads=1 --nocapture
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 25.29s
+running 1 test
+test doc::doc::chromium ... ok
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 32.56s
+exit 0
+```
+
+`target/scenes/doc-chromium/` then contained alex/, bo/, doc/ and keep/,
+and no could-not-judge or never-ran marker. This is a separate passing
+run; it does not rewrite the original gate's load-related abstention.
