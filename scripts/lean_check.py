@@ -389,9 +389,8 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # CHARTER.md, "Answered" 2): "we'll just have a line count jubilee at the
 # end, also I want to track js independently". `js` counts .js and .mjs with
 # the same exclusions, and `.` no longer does: 2,233 of its 20,734 moved and
-# this rung's own 4 came in, so `.` is one past 18,505. `js` has no cap (None) until the js queue's
-# jubilee sets one past where the queue lands; until then it is printed as
-# uncapped, never passed in silence.
+# this rung's own 4 came in, so `.` is one past 18,505. `js` stayed uncapped
+# until the queue's jubilee below; its count was always printed.
 # Relay fallbacks in tiers, the operator's raise (2026-11-02, "Approve the
 # raise"; svrn-docs rings/current/GROUP_RELAYS.md §7): +104 in the core (the
 # keeper's `Meets` act and its fold, `MeetsAt`, the two-tier `Meeting`, the
@@ -405,7 +404,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # lint` step (check.sh, 94192670), at 18,861. The pass found nothing to cut:
 # every check.sh line is a step or a verdict, and no script holds a function
 # never called (ralph/next/js/NEEDS_HUMAN.md, "`.` is at its cap").
-BUDGET = {"crates/svrngs-core": 3478, ".": 18862, "js": None, "swift": 1}
+# The js queue's jubilee, preauthorized by CHARTER "Answered" 2: its final
+# 7,338 lines set js's cap one past, 7,339. Removing uncapped mode cuts three
+# Python lines, so . lands at 18,858 and its cap lowers to one past too.
+# The +1 JavaScript plant and the restored count are recorded in
+# demo/runs/economize/2026-11-03-js-read/CLOSE.md.
+BUDGET = {"crates/svrngs-core": 3478, ".": 18859, "js": 7339, "swift": 1}
 CODE = {".rs", ".ts", ".py", ".sh"}
 RUNG_KINDS = {"js": {".js", ".mjs"}, "swift": {".swift"}}
 
@@ -475,9 +479,6 @@ def main():
         broken.append("crates/svrngs-core/src/lib.rs lost #![cfg_attr(not(test), no_std)]: the core is no_std")
     for rung, cap in BUDGET.items():
         n = code_lines(ROOT, RUNG_KINDS[rung]) if rung in RUNG_KINDS else code_lines(ROOT / rung)
-        if cap is None:
-            print(f"{rung:<20} {n:>6} lines, no cap until the js queue's jubilee")
-            continue
         print(f"{rung:<20} {n:>6} / {cap} lines")
         if n >= cap:
             broken.append(f"{rung} has {n} lines of code, budget {cap}: raised only by the operator, with the reason in the commit")

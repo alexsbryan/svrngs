@@ -98,3 +98,38 @@ The gate ran the unchanged page laws (including `parts.test.mjs`),
 browser tests, joining tests, pages and scenes. No test is changed by
 part (e). The cap's positive control remains the watching session's
 landing step, spelled out beside the ready diff.
+
+## The watching session's jubilee
+
+After js-read merged, the watching session applied CHARTER "Answered" 2's
+preauthorized cap. JavaScript has no uncapped mode now. Removing that mode
+cuts three Python lines; the non-JavaScript cap lowers with that cut.
+
+The clean tree first passed:
+
+```text
+$ python3 scripts/lean_check.py
+crates/svrngs-core     3477 / 3478 lines
+.                     18858 / 18859 lines
+js                     7338 / 7339 lines
+swift                     0 / 1 lines
+exit 0
+```
+
+Plant: a new, untracked `web/page/jubilee-plant.js` containing exactly one
+line, `export const jubileePlant = true;`. The same command failed:
+
+```text
+crates/svrngs-core     3477 / 3478 lines
+.                     18858 / 18859 lines
+js                     7339 / 7339 lines
+swift                     0 / 1 lines
+BROKEN  js has 7339 lines of code, budget 7339: raised only by the operator, with the reason in the commit
+exit 1
+```
+
+The plant was deleted. `python3 scripts/lean_check.py` returned to the
+first output and exit 0; `git diff --check` also exited 0. Thus the new
+cap was watched failing, and a JavaScript addition moved only its own
+counter. These runs change neither the preceding gate's recorded
+abstention nor the closing audit's outstanding instrument requirement.

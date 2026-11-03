@@ -190,3 +190,15 @@ root. After applying, run `python3 scripts/lean_check.py`: `js` must report
 `lean_check` must fail on `js` at 7,339. Remove the plant and require
 exit 0 before committing. These are instructions for landing the diff,
 not claims of a run against an applied cap.
+
+**Landed by the watching session, 2026-11-03, under CHARTER "Answered"
+2's authorization.** `js` is capped at 7,339. The temporary uncapped branch
+is gone. Its three-line cut lowers `.` to 18,858, so its cap is **18,859**,
+rather than retaining the ready diff's 18,862 (AGENTS.md "Done": a pass's
+cuts lower the cap to where they land).
+
+The actual positive control, with `web/page/jubilee-plant.js` containing
+`export const jubileePlant = true;`, failed `lean_check` at `7339 / 7339`.
+The core stayed `3477 / 3478` and `.` stayed `18858 / 18859`. The plant
+was removed; `python3 scripts/lean_check.py` then exited 0 with
+`js 7338 / 7339`. The run is recorded in the close report.
