@@ -95,10 +95,16 @@ pub enum Tier {
 
 impl Meeting {
     /// The one function: the group's `own` relays as one tier, the
-    /// `build`'s as the other, each read dotless.
+    /// `build`'s as the other, each read dotless; a relay of the build's is
+    /// never the group's own, as a link from a computer homed there carries
+    /// one (demo/runs/relay-fallbacks/2026-11-02, take 1).
     pub fn of(own: impl IntoIterator<Item = Url>, build: &[Url]) -> Self {
-        let own: BTreeSet<Url> = own.into_iter().map(dotless).collect();
-        let build = build.iter().cloned().map(dotless).collect();
+        let build: BTreeSet<Url> = build.iter().cloned().map(dotless).collect();
+        let own: BTreeSet<Url> = own
+            .into_iter()
+            .map(dotless)
+            .filter(|r| !build.contains(r))
+            .collect();
         let meeting = Self {
             unowned: own.is_empty(),
             own,

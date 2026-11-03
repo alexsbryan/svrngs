@@ -67,9 +67,12 @@ fn a_relays_url_loses_its_hosts_trailing_dot_and_nothing_else() {
 /// **A group never meets without the build's relays** (relay fallbacks;
 /// GROUP_RELAYS §7): whatever the record names, none or some, the meeting
 /// holds every relay the build gives, read dotless, where a member is
-/// dialled; and a link carries the issuer's home first, then the group's
-/// own, else the build's first alone. Planted: `Meeting::of` keeping the
-/// build's only when the group names none, and the first two rows failed.
+/// dialled, and never among the group's own, as a link from a computer
+/// homed at the build's carries one (the run's take 1); and a link carries
+/// the issuer's home first, then the group's own, else the build's first
+/// alone. Planted: `Meeting::of` keeping the build's only when the group
+/// names none, and the first two rows failed; and keeping a build's relay
+/// in the own tier, and the own-tier assertion failed.
 /// (A meeting written by hand does not compile: `Meeting`'s doc test.)
 #[test]
 fn a_group_never_meets_without_the_builds_relays() {
@@ -91,6 +94,12 @@ fn a_group_never_meets_without_the_builds_relays() {
             assert!(all.contains(&relay), "{relay} in the meeting of {own:?}");
         }
     }
+    let homed_at_n0 = Meeting::of([dotless_build[0].clone(), a.clone()], &build);
+    assert_eq!(
+        homed_at_n0.own(),
+        &BTreeSet::from([a.clone()]),
+        "a build's relay is never a group's own"
+    );
     let mesh = Meeting::of([a.clone(), b.clone()], &build);
     assert_eq!(mesh.carried(Some(&b)), [b.clone(), a.clone()]);
     assert_eq!(
