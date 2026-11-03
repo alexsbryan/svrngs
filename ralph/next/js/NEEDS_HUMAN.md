@@ -105,6 +105,14 @@ weaken the row's pass bar. This entry stays open for the operator for one
 reason: whether a person should see a made or joined group as being read
 until it is. That is a page change, and no queue holds it.
 
+**Fixed 2026-11-03** (the operator: "Of course things should show as
+loading until they're loaded"): a group whose people aren't read yet says
+"Reading <group>…" in its own section (e1ca7cb2), and a group drawn before
+a make or join no longer loses its section when "You made …" is first said
+(e1d3615a, a '' Preact drew as words). Test: crates/svrngs/tests/pages/
+join.rs `a_group_made_or_joined_says_it_is_being_read_until_it_is`;
+check.sh exit 0 at e1d3615a.
+
 ## `.` is at its cap by one gate line (js-lint, 2026-11-03)
 
 **What happens.** js-lint (d1) runs the pages' type-aware lint as a step

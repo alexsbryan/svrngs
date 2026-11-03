@@ -336,11 +336,16 @@ export const Group = ({ g: group, ...props }) =>
     html`<section data-colour=${colour(group.id)}><h2>${group.name ?? 'A group whose name this computer cannot read'}${group.made && html`<small> (${whose(group.made)})</small>`}</h2>${group.fallback && html`<p class="said">${BACKUP[group.fallback](name)}</p>`}${below(group, name, props)}</section>`)(
     group.name ?? 'this group',
   );
+// Until its people are first read, which each place drawn from them waits
+// on, the section says it is being read, where its heading stood alone
+// once a group was made or joined (the operator, 2026-11-03: "things
+// should show as loading until they're loaded"; demo/runs/webkit-wall/
+// 2026-11-03/home-group-gate-2.txt). Read again, it keeps what it drew.
 /** @param {GroupProps} props */
 function Read({ g: group, round, places, flows, home, me, joined }) {
   const [state, send] = useMachine(() =>
     machine('GROUP', GROUP(flows), { at: { people: 'reading', lends: 'reading' }, id: group.id }),
   );
   useEffect(() => send({ type: round.type }), [round]);
-  return html`${PLACES.map((place) => places[place] && html`<${places[place]} g=${group} s=${state} send=${send} home=${home} me=${me} joined=${joined} />`)}${(state.at.people === 'unread' || state.at.lends === 'unread') && html`<p>This computer cannot read what ${group.name ?? 'this group'} lends: ${state.why}</p>`}`;
+  return html`${state.at.people === 'reading' && !state.people && html`<p class="said">Reading ${group.name ?? 'this group'}…</p>`}${PLACES.map((place) => places[place] && html`<${places[place]} g=${group} s=${state} send=${send} home=${home} me=${me} joined=${joined} />`)}${(state.at.people === 'unread' || state.at.lends === 'unread') && html`<p>This computer cannot read what ${group.name ?? 'this group'} lends: ${state.why}</p>`}`;
 }

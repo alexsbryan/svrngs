@@ -133,9 +133,15 @@ async fn a_link_to_nothing_lent_is_said_once(engine: Engine) {
 }
 
 /// Ada's home page, with Sam's computer holding Trip, the `steps` taken,
-/// given Sam's link to Trip, each read once `until`'s words hold it: the
-/// reads, and whether the page loaded once.
-async fn drawn(engine: Engine, read: &str, steps: impl FnOnce(&str) -> Value) -> Value {
+/// given Sam's link to Trip, each read once `until`'s words hold it, with
+/// what `held` holds (web/tests/pages/index.mjs): the reads, and whether
+/// the page loaded once.
+async fn drawn(
+    engine: Engine,
+    read: &str,
+    steps: impl FnOnce(&str) -> Value,
+    held: Value,
+) -> Value {
     let relay = relay().await;
     let dir = tempfile::tempdir().unwrap();
     let (ada, home) = house(dir.path(), &relay).await;
@@ -143,7 +149,7 @@ async fn drawn(engine: Engine, read: &str, steps: impl FnOnce(&str) -> Value) ->
     let (sam, _, trip) = computer(sam_dir.path(), &relay, 2, "Trip", "Sam").await;
     let made = (sam.host().link(&trip, false, None, None)).expect("Sam makes a link to Trip");
     let link = svrngs_node::link::client_link(&made.token);
-    let args = json!({ "home": home, "read": read, "steps": steps(&link) });
+    let args = json!({ "home": home, "read": read, "steps": steps(&link), "held": held });
     let seen = drive(engine, "pages/index.mjs", args, None).await;
     drop((ada, sam));
     seen
@@ -170,7 +176,7 @@ async fn a_group_joined_is_drawn_with_no_reload(engine: Engine) {
             ]
         ])
     };
-    let seen = drawn(engine, "#home > p, #home summary", steps).await;
+    let seen = drawn(engine, "#home > p, #home summary", steps, Value::Null).await;
     let words = seen["after"][0]["words"].to_string();
     let wrong: Vec<&str> = [
         (!words.contains("You’re in Trip, as Dee."), "said joined"),
@@ -203,12 +209,99 @@ async fn a_group_made_is_drawn_with_no_reload(engine: Engine) {
             ]
         ])
     };
-    let seen = drawn(engine, "#home > p, #home section button", steps).await;
+    let seen = drawn(
+        engine,
+        "#home > p, #home section button",
+        steps,
+        Value::Null,
+    )
+    .await;
     let words = seen["after"][0]["words"].to_string();
     let wrong: Vec<&str> = [
         (!words.contains("You made Lab."), "said made"),
         (!words.contains("Invite someone to Lab"), "Lab drawn"),
         (seen["loads"] != 1, "with no reload"),
+    ]
+    .into_iter()
+    .filter_map(|(failed, what)| failed.then_some(what))
+    .collect();
+    assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
+}
+
+in_chromium!(
+    /// **A group made or joined says it is being read until it is** (the
+    /// operator, 2026-11-03: "Of course things should show as loading
+    /// until they're loaded"; demo/runs/webkit-wall/2026-11-03/README.md,
+    /// "The gate after (c)"). Once Ada's home page is drawn, every read of
+    /// a group's people and of what they lend is held. She makes Lab, then
+    /// joins Sam's Trip as Dee: each is drawn with "Reading Lab…", "Reading
+    /// Trip…" under its heading, never its heading alone, while house,
+    /// drawn before, keeps what it drew as it is read again. Let go, each
+    /// is drawn read, its folder placed, and none says it is being read.
+    /// Planted, watched failing: the page as 84b5a7b0 left it, Lab's and
+    /// Trip's headings drawn with no line but their index's "Asking each
+    /// computer in the group what it lends…".
+    a_group_made_or_joined_says_it_is_being_read_until_it_is
+);
+async fn a_group_made_or_joined_says_it_is_being_read_until_it_is(engine: Engine) {
+    let steps = |link: &str| {
+        json!([
+            ["#make input[name=name]", "Lab"],
+            ["#make input[name=person]", "Ada"],
+            [
+                "#make button:has-text('Make a group')",
+                null,
+                "MAKE: made",
+                "Reading Lab…"
+            ],
+            ["#join input[name=link]", link],
+            ["#join input[name=person]", "Dee"],
+            [
+                "#join button:has-text('Join Trip as Dee')",
+                null,
+                "JOIN: joined",
+                "Reading Trip…"
+            ]
+        ])
+    };
+    let held = json!([["/v1/rail/people", "/v1/lends"], "…"]);
+    let seen = drawn(engine, "#home section[data-colour]", steps, held).await;
+    eprintln!("the home page's run: {seen:#}");
+    // The words of the section `head` starts, in the read `at`.
+    let section = |at: &Value, head: &str| {
+        (at["words"].as_array().into_iter().flatten())
+            .filter_map(Value::as_str)
+            .find(|words| words.starts_with(head))
+            .map(String::from)
+            .unwrap_or_default()
+    };
+    let (made, joined, released) = (&seen["after"][0], &seen["after"][1], &seen["released"]);
+    let house = section(made, "house (yours");
+    let wrong: Vec<&str> = [
+        (
+            !house.contains("Invite someone to house") || house.contains("Reading house…"),
+            "house keeps what it drew while it is read again",
+        ),
+        (
+            !section(made, "Lab (yours").contains("Reading Lab…"),
+            "Lab says it is being read",
+        ),
+        (
+            !section(joined, "Trip (Sam’s").contains("Reading Trip…"),
+            "Trip says it is being read",
+        ),
+        (
+            released["how"] != "settled",
+            "let go, none says it is being read",
+        ),
+        (
+            !section(released, "Lab (yours").contains("Lab’s folder is on this computer"),
+            "let go, Lab drawn read",
+        ),
+        (
+            !section(released, "Trip (Sam’s").contains("Trip’s folder is on this computer"),
+            "let go, Trip drawn read",
+        ),
     ]
     .into_iter()
     .filter_map(|(failed, what)| failed.then_some(what))
