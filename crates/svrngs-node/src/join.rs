@@ -125,6 +125,12 @@ impl Host {
             tracing::debug!(target: "join", group = %id, "join: a client's link, so no origin is kept");
         }
         let synced = self.sync_with(&id, &issuer).await;
+        // Where the group meets, from the record the sync brought, decided
+        // now: until then this computer knew only the link's relays, and
+        // its next round is a minute away (the run's take 2, relay
+        // fallbacks).
+        self.refresh();
+        self.decide(None).await;
         match &synced.stop {
             None => {
                 tracing::debug!(target: "join", group = %id, pulled = synced.pulled, "join: synced once from the issuer")
