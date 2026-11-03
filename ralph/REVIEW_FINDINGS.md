@@ -12964,3 +12964,161 @@ required instrument checks, full architectural review, any resulting
 small fixes, and the final locked scripts/check.sh remain owed. Resume
 with the instrument restored; do not treat the ledger or the lexical
 inventory as proof that those checks passed.
+
+### (4) Focused closing review completed, 2026-11-03
+
+**Disposition: the operator-approved focused review is complete.** This
+supersedes the remaining-work instruction above, not its historical runs.
+The acceptance criterion is `ralph/next/js/STATE.md:134-166`, approved in
+54693711 and confirmed by the director in 0dd390d2. Semantic-clone analysis
+and cross-repository noun convergence are **explicitly deferred, not
+passed**. Their original attempts in (2) and (3) remain **never-ran**;
+neither the lexical inventory nor this source review substitutes for them.
+
+Review range: **18bc628f..0dd390d2**, the queue's launch through this
+review's starting tree. The broader creation-to-07f4b7a5 ledger in (1)
+is historical evidence, not an attribution of security or relay work to
+the JavaScript queue. The review read CHARTER whole, DESIGN §5, both
+principle pins, svrn-docs `rings/current/PAGE_STATE.md` §3 and the director's
+disposition. No product code, test, gate, policy or budget changes here.
+
+#### Source conclusions
+
+Below, `home/` abbreviates `crates/svrngs-node/src/home/`; an unqualified
+filename in a table cell is beside the preceding qualified file. Browser
+test paths are under `crates/svrngs-node/tests/`, page test paths under
+`crates/svrngs/tests/`, and driver paths under `web/tests/`.
+
+| Area | Reviewed sites and conclusion |
+|---|---|
+| Pure steps and trace | `home/ui/machine.js:104-154,167-246` keeps state replacement, refusals, read serials and effect execution in one implementation. `dispatch` checks closed regions before publishing state or running effects, and traces both accepted and refused steps. `home/page/home-reading.js:165-211`, `group-reading.js:81-118`, `join.js:74-143` and `acts-read.js:88-205` separate their synchronous decisions from route calls in `io`. `web/page/enter.js:294-430` and `acts.js:104-132` return data; their storage, clock and network calls are in the edge below. |
+| Exhaustiveness and ownership | The phone uses typed `Takes`, not a switch per flow (`ui/machine.js:41-59`); `web/page/page.js:237-345` composes the closed tables and refuses duplicate ownership and foreign field/region writes. HOME's switch delegates feature messages to `offered.js:25-37`; the other home machines end in `assertNever` or the typed delegate. These are the implemented forms, not a claim that every step is literally a switch. `web/app.js:42-66` and `home/home.js:19-31` own the page stores; mounted parts own their local machines, as PAGE_STATE's per-mount rule permits (`ui/shelf.js:200-209`, `home/page/group-read.js:38-42`). |
+| Edge and key ownership | `web/page/dial.js:81-110` owns the private key and endpoint, while state carries public identity and group metadata. Its shared `exchange`, `reach`, `lends` and `through` keep body reads before close and the next-computer retry (`:57-79,120-189,215-223`). `home/page/routes.js:34-65` owns HTTP and refusal wording. Extracted views dispatch messages; they do not acquire signing keys or call those network helpers. Lifecycle bridges such as `group-read.js:42` send a message, rather than performing a read themselves. |
+| Named views and readable templates | `web/page/shelf.js:19-36`, `name-form.js:30-48`, `lend-line.js:39-50`, `home/page/home-page.js:46-97`, `group.js:140-152` and `asked.js:16-37` show the extracted, named, typed components and named conditions. Templates retain explicit significant spaces, e.g. `lend-line.js:41-42`; the parts' byte-for-byte laws still compare against the earlier page. The parts preserve their public law-imported APIs. Residual boundaries are recorded below rather than claiming universal literal compliance. |
+| Layers and module URLs | `ui/kit.js` is deleted; imports name their owning modules. `.oxlintrc.json:118-182` enforces page/ui/vendor direction, and `web/tests/specifiers.test.mjs:27-56` checks versioned imports and the single vendor door. Current lint, typed lint and specifier laws pass. The `import/no-cycle` rule remains enabled. |
+| Build, serve and types | `scripts/build-web.sh:115-143` copies named root files and only `.js` modules, includes copied modules in the shell and version hash, and stamps URLs. `home.rs:132-140` serves the new components and omits the removed barrel; it serves no `.d.ts`. No type/lint/format transform was added to build or deploy. `scripts/types.mjs:46-55,75-121` resolves served URLs, requires the built wasm declaration and refuses `@ts-nocheck`; `typed-lint.mjs:75-98,119-139` checks separate page/worker copies, never shipped bytes. `jsconfig.json:7-34` keeps strict/noEmit and the two served roots. |
+| Names and comments | The flow names and helper names identify the thing drawn or decided; comments on the moved roots and edges explain lifetimes, stale-answer rules and the test that constrains an unusual shape. `home/home.js:15-18` explains the no-top-level-await constraint; `name-form.js:2-11` explains storage and remount behavior. No formatting-ignore escape was found in the reviewed page source. Existing app-worker execution is retained, not introduced by this review; the policy and trust-floor files are unchanged. |
+
+#### Tests and instrument coverage
+
+`git diff 8e085041 HEAD -- web/tests/parts.test.mjs
+web/tests/machine.test.mjs web/tests/one-ui.test.mjs
+web/tests/specifiers.test.mjs web/tests/pages` leaves only the later
+`pages/index.mjs` held-request instrumentation. The part, machine,
+composition, shelf, membership and versioned-import laws have no further
+changes after formatting. The launch-to-finished diff preserves their
+assertions, expected words, ids and element kinds.
+
+The two source-reading browser tests now read every `.js` in each page's
+`page/` directory (`tests/browser/main.rs:67-84,507-524` and
+`opens.rs:138-162`), following the moved row rather than the former file.
+They still forbid local fullness/sign-in wording and require `opens` and
+`agreed`. Removing the `agreed` test's dependence on the parameter spelling
+`l` does not remove its call assertion. a68d2919 records the red controls in the moved
+`web/page/lend-line.js`: a local `using >=` comment and renaming `agreed`
+both failed their respective checks; restored, both passed. e3c3eb08 only
+moves the reader into the binary that uses it, fixing clippy's unused
+helper error in conformance.
+
+The other queue test-wiring changes preserve the behavioral assertions:
+`browser/carried.rs:587-594` admits Bo as a phone, consistent with its
+fixture's role; `web/tests/page.mjs:201-213` and `webkit.sh` change macOS
+WebKit startup, not page expectations; `home.mjs:121-153` waits and samples
+the words in the same settled frame. The held reads added to
+`pages/index.mjs:40-50,101-119` support the separate, operator-approved
+loading test in `crates/svrngs/tests/pages/join.rs:231-310`, not an assertion
+removed to make the refactor pass. The added refused-Stop test in
+`pages/acts.rs:215-259` likewise strengthens coverage of an interleaved
+home-page fix. Those product changes are included in the closing full gate.
+
+#### Recorded limitations and follow-ups
+
+| # | Principle | Sites | Disposition |
+|---|---|---|---|
+| JS1 | 9, 10 | `home/ui/machine.js:20-22,191-202`; `web/page/page.js:50-58,112-121`; `home/page/asked.js:24-27` | The types check declared message tables and switches, but do not encode every state's field-presence relationship or prove that an effect's `failed` string constructs a complete Message. Casts and the dynamic composition boundary remain. Current failure/stale-answer laws pass; this is a static-guarantee limit, not a newly observed runtime failure. A state/effect type redesign is a separate refactor; no new guarantee is inferred from zero type errors. |
+| JS2 | 3, 12 | `home/ui/shelf.js:102-178,200-281`, `home/ui/parts.js`; `web/page/acts.js:134-142` | Machine/view separation and one named component per file are not literal everywhere: shared UI modules keep the APIs the existing laws import, and this phone flow still has a small anonymous slot adapter around its named extracted component. Record the residue; reorganizing the shared APIs and remaining adapters is deferred to a dedicated behavior-preserving part, not silently reported as a complete separation. |
+| JS3 | 7 | `web/tests/home.mjs:133-147`; `home/page/group-read.js:39-40` | The rest sampler keys the latest trace by machine name; multiple mounted GROUP machines share that name. It is a readiness heuristic plus word assertions, not proof that every group's effects have finished. The held-request loading test covers its named case independently. Per-instance trace/readiness instrumentation is a follow-up; no failing run was found in this review. |
+
+No newly observed behavior regression or acceptance-blocking defect was
+found. These source/instrument limits do not turn the deferred semantic
+clone or noun analyses into passing checks.
+
+#### Validation of the finished tree
+
+The raw closing log was read at
+`ralph/next/js/ctl/log/sessions/js-read-16.await.log:1-72`, not just its
+summary. Its `lockf -k /tmp/svrngs-gate.lock bash scripts/check.sh` run at
+8e00b6e8 exited 0 in 1,384 seconds as recorded in
+`demo/runs/economize/2026-11-03-js-read/CLOSE.md:37-100`. Browser, joining,
+pages, types, typed lint and conformance passed. The doc scene's
+**could-not-judge** at log line 27 remains that run's verdict. The separate
+locked doc-scene rerun at 35bd78e6 passed **1 of 1**, exit 0
+(`CLOSE.md:137-153`); it does not rewrite the abstention.
+
+Coverage comparison, run here at 0dd390d2:
+
+```text
+$ git diff --stat 8e00b6e8 HEAD
+ demo/runs/economize/2026-11-03-js-read/CLOSE.md | 153 ++++++++++++++++++++++++
+ ralph/REVIEW_FINDINGS.md                        | 116 ++++++++++++++++++
+ ralph/next/js/NEEDS_HUMAN.md                    |  53 ++++++++
+ ralph/next/js/REVIEW_AUDIT_NEEDS_HUMAN.md       | 123 +++++++++++++++++++
+ ralph/next/js/STATE.md                          |  36 +++++-
+ scripts/lean_check.py                           |  15 +--
+ 6 files changed, 488 insertions(+), 8 deletions(-)
+exit 0
+```
+
+`git diff --exit-code 8e00b6e8 HEAD -- crates web apps scripts/check.sh
+scripts/build-web.sh scripts/deploy-page.sh scripts/types.mjs
+scripts/typed-lint.mjs jsconfig.json jsconfig.workers.json .oxlintrc.json
+.oxfmtrc.json scripts/trust_floor.txt` exited 0, no output. The only
+executable delta is the jubilee's removal of uncapped mode and lowered
+caps in `scripts/lean_check.py`, reviewed via `git diff`. Its actual +1
+JavaScript plant failed at 7,339 / 7,339, then removal restored the passing
+7,338 / 7,339 (`CLOSE.md:102-135`, commit 35bd78e6). Runtime, tests and gate
+wiring remain covered. This review adds only this Markdown record, so the
+row's condition for another full gate is not triggered.
+
+Current fast checks, all run here with exit 0:
+
+```text
+$ python3 scripts/lean_check.py
+crates/svrngs-core     3477 / 3478 lines
+.                     18858 / 18859 lines
+js                     7338 / 7339 lines
+swift                     0 / 1 lines
+
+$ node --test web/tests/*.test.mjs web/tests/pages/*.test.mjs
+1..85
+# tests 106
+# pass 106
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+
+$ web/node_modules/.bin/oxfmt --check "**/*.{js,mjs,cjs}"
+All matched files use the correct format.
+Finished in 172ms on 281 files using 12 threads.
+
+$ web/node_modules/.bin/oxlint
+[no output]
+
+$ node scripts/types.mjs
+types: 0 errors in 127 files
+
+$ node scripts/typed-lint.mjs
+typed lint, jsconfig.json: 123 files, exit 0
+typed lint, jsconfig.workers.json: 3 files, exit 0
+
+$ git diff --check
+[no output]
+```
+
+The page-law run includes `parts.test.mjs` and all page subdirectory laws;
+Node printed module-type reparsing warnings, not failed or skipped tests.
+No new check was added, so no new plant is claimed. Before and after this
+documentation-only part, lean printed the same four readings above and
+exited 0; the after-edit `git diff --check` also exited 0. The recorded full gate, focused doc rerun and
+current fast checks satisfy the revised row's acceptance evidence.
