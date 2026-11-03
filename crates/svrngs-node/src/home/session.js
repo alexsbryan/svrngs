@@ -1,6 +1,12 @@
-// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // Browser authority stays in this origin's IndexedDB, whose port is part of its identity.
+/**
+ * This origin's session key: kept, given `value`, or read, `undefined`
+ * before one is kept.
+ * @param {CryptoKey} [value]
+ * @returns {Promise<CryptoKey | undefined>}
+ */
 export async function session(value) {
+  /** @type {IDBDatabase} */
   const db = await new Promise((yes, no) => {
     const r = indexedDB.open('svrngs-browser', 1);
     r.onupgradeneeded = () => r.result.createObjectStore('keys');
@@ -22,6 +28,13 @@ export async function session(value) {
   });
 }
 
+/**
+ * The proof a request carries: when, a nonce, and the key's HMAC over its
+ * host, method, path, body digest, intent and the session's `epoch`.
+ * @param {CryptoKey} key
+ * @param {Request} request
+ * @param {string} epoch
+ */
 export async function proof(key, request, epoch) {
   const url = new URL(request.url);
   const nonce = [...crypto.getRandomValues(new Uint8Array(16))]
@@ -39,6 +52,15 @@ export async function proof(key, request, epoch) {
 }
 
 export const Browser = Object.freeze({ Own: 'own', Tab: 'tab' });
+/**
+ * Whose a request is, by the fetch event the worker gives: this origin's
+ * own page, a whole tab's read, or neither (`null`). Its event and clients
+ * are a worker's `FetchEvent` and `Clients`, read for the fields here, as
+ * this module is the page's too, whose lib declares neither.
+ * @param {{ request: Request, clientId: string }} fetched
+ * @param {{ get: (id: string) => Promise<{ url: string } | undefined> }} clients
+ * @param {string} origin
+ */
 export async function browserAuthority(fetched, clients, origin) {
   const request = fetched.request;
   const from = request.headers.get('origin');
@@ -68,7 +90,8 @@ export async function browserAuthority(fetched, clients, origin) {
 }
 
 if (typeof document !== 'undefined' && document.getElementById('svrngs-session-state')) {
-  const said = document.getElementById('svrngs-session-state');
+  // Found by the test above.
+  const said = /** @type {HTMLElement} */ (document.getElementById('svrngs-session-state'));
   (async () => {
     let at = location.pathname + location.search;
     if (location.pathname === '/svrngs-open' && new URLSearchParams(location.search).has('code')) {
