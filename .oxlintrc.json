@@ -95,7 +95,8 @@
             "threshold": 0
           }
         ],
-        "import/no-cycle": "error"
+        "import/no-cycle": "error",
+        "typescript/switch-exhaustiveness-check": "error"
       }
     },
     {

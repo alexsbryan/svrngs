@@ -134,9 +134,11 @@ const reading = (state, message, [asked, serial] = ask(state, 'groups')) =>
     { asked },
     { run: 'groups', n: serial, round: message.type, failed: 'unread' },
   );
-// A message no case takes is offered to the feature its `flow` names: each
-// feature's `Taken` is that file's, and a message type HOME declares that
-// no case takes and names no flow fails `types` at `offered`.
+// A feature's message is offered to the feature its `flow` names, as is a
+// message no type declares, which `offered` refuses: each feature's `Taken`
+// is that file's. A message type HOME declares that no case names fails
+// `typed lint` (switch-exhaustiveness-check), and one that names no flow
+// fails `types` at `offered`.
 /**
  * @param {Flows} flows
  * @returns {Machine<State, Message, Effect>}
@@ -163,6 +165,10 @@ const HOME = (flows) => ({
         return late(state, 'groups', message.n)
           ? no(state, late(state, 'groups', message.n))
           : go(state, { groups: 'unread' }, { why: message.why });
+      case 'made':
+      case 'joined':
+      case 'left':
+      case 'told':
       default:
         return offered(flows, state, message);
     }
