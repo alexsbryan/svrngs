@@ -114,8 +114,10 @@ export const takes = {
     ),
   ),
 };
-const host = (/** @type {State} */ state) => state.stay?.host;
-const until = (/** @type {State} */ state) =>
+// Each heading's words are built whatever the visit's state, so `stay` is
+// read before a link is redeemed too, absent then (page.js `first`).
+const host = (/** @type {Partial<State>} */ state) => state.stay?.host;
+const until = (/** @type {Partial<State>} */ state) =>
   state.stay && new Date(state.stay.until * 1000).toLocaleString();
 /** @type {Record<string, (s: State) => Said | Nothing>} */
 export const heading = {

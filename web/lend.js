@@ -153,10 +153,12 @@ trace(`RUNTIME: this run of the worker begins`);
 // each lend's cookies, the app's worker.
 //
 // `handed` is none until a page hands it over or `holding` reads it back,
-// and is read as held: every reader but `holding` runs after `holding`
-// found it, or after a page handed it, as `lent` and `socket` do.
+// and is read as held: every reader but `holding` and `whereOf` runs after
+// `holding` found it, or after a page handed it, as `lent` and `socket` do.
+// Those two read it as it is, by `handedNow`.
 /** @type {Held} */
 let handed = /** @type {Held} */ (/** @type {unknown} */ (null));
+const handedNow = () => /** @type {Held | null} */ (handed);
 /** @type {ReturnType<typeof init> | null} */
 let loaded = null;
 /** @type {Promise<Endpoint> | null} */
@@ -194,7 +196,7 @@ function whereOf(url) {
     url.origin === SCOPE.origin ? url.pathname.match(new RegExp(`^${READS}/([^/]+)(/.*)?$`)) : null;
   const [, read, path] = reading ?? [];
   if (read) return { label: read, path: `${path ?? '/'}${url.search}`, read: true };
-  for (const label of [OWN, ...(handed?.lends ?? []).map((lend) => lend.label)]) {
+  for (const label of [OWN, ...(handedNow()?.lends ?? []).map((lend) => lend.label)]) {
     const base = new URL(baseOf(label));
     if (url.origin === base.origin && url.pathname.startsWith(base.pathname)) {
       return { label, path: `/${url.pathname.slice(base.pathname.length)}${url.search}` };
@@ -205,11 +207,11 @@ function whereOf(url) {
 
 /** @returns {Promise<Held | null>} */
 async function holding() {
-  if (handed) return handed;
+  if (handedNow()) return handed;
   try {
     handed = (await store.lendKept(`pass ${OWN}`)) ?? null;
     trace(
-      `RUNTIME: the pass for ${OWN} ${handed ? 'read from this origin’s store' : 'is not kept here'}`,
+      `RUNTIME: the pass for ${OWN} ${handedNow() ? 'read from this origin’s store' : 'is not kept here'}`,
     );
   } catch (error) {
     trace(`RUNTIME: this origin's store cannot be read here: ${String(error)}`);
@@ -438,7 +440,7 @@ function ranged(request, path) {
   said(
     `asked ${path} ${request.headers.get('range') ?? 'whole'} for ${request.destination || 'a fetch'}`,
   );
-  request.signal?.addEventListener('abort', () => said('the browser let go of it'));
+  request.signal.addEventListener('abort', () => said('the browser let go of it'));
   return said;
 }
 
@@ -627,7 +629,7 @@ async function proxied(asked, held) {
   const res = await doorAnswer(asked, headers, body);
   if (!res) return away(request, asked.lend);
   said?.(
-    `answered ${res.status} ${res.headers.get('content-range') ?? ''}${request.signal?.aborted ? ', after the browser let go of it' : ''}`,
+    `answered ${res.status} ${res.headers.get('content-range') ?? ''}${request.signal.aborted ? ', after the browser let go of it' : ''}`,
   );
   const set = res.headers.get('x-svrngs-set-cookies');
   if (set) await keepCookies(asked, set);
@@ -1272,7 +1274,12 @@ async function answered(fetchEvent, url, where) {
     };
     for (const listener of on.fetch) listener.call(self, event);
   }
-  return given ?? lent(fetchEvent.request, url, where, allowed);
+  // Set by a listener's `respondWith`, which the checker does not follow
+  // into the listener, so it reads `given` as still `null` here.
+  return (
+    /** @type {Response | PromiseLike<Response> | null} */ (given) ??
+    lent(fetchEvent.request, url, where, allowed)
+  );
 }
 
 /** @type {Scope} */ (self).addEventListener('fetch', (event) => {

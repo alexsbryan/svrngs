@@ -80,7 +80,7 @@ export async function handing(hand, key, until = Math.floor(Date.now() / 1000) +
     raw,
     relay: core.relay_of(group.token) ?? null,
     page: here(),
-    unanswered: unanswered.map((who) => who.person ?? who),
+    unanswered: unanswered.map((who) => who.person),
   };
   trace(`PAGE: opening ${label} at ${start}, a pass to ${lends.length} lend(s) until ${until}`);
   const sealed = await sealOpen(handoff, approver);

@@ -414,7 +414,7 @@ function Acting({ s: homeState, home }) {
       ]),
     opens: [
       // The yeses are read, or why not, once ACTS is past 'reading'.
-      ...(/** @type {Yeses} */ (state.yeses).why !== undefined
+      ...(/** @type {{ why?: string }} */ (state.yeses).why !== undefined
         ? [
             html`<p>This computer cannot say which apps open your friends’ things as you: ${/** @type {Yeses} */ (state.yeses).why}</p>`,
           ]

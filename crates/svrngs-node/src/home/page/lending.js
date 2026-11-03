@@ -137,7 +137,7 @@ const LENDING = {
           { run: 'read', n: serial, failed: 'unread' },
         );
       case 'answered':
-        return go(state, { lent: 'read' }, { lent: message.lent, signing: message.signing ?? [] });
+        return go(state, { lent: 'read' }, { lent: message.lent, signing: message.signing });
       case 'unread':
         return go(state, { lent: 'unread' }, { why: message.why });
       default:

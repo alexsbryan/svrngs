@@ -17,7 +17,7 @@
 import { html, useMachine } from '../ui/view.js?v=__VERSION__';
 import { ask, assertNever, go, machine, no } from '../ui/machine.js?v=__VERSION__';
 import { called } from '../question.js?v=__VERSION__';
-/** @import { Group, Home, PlaceProps } from './group.js?v=__VERSION__' */
+/** @import { Group, Home, PlaceProps, Taken as Offered } from './group.js?v=__VERSION__' */
 /** @import { Machine, Step } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 /** @import { PeopleRow } from '../question.js?v=__VERSION__' */
@@ -213,9 +213,11 @@ function Leave({ g: group, rows, me, home, name = group.name ?? 'this group' }) 
 }
 
 // HOME's `left`: the leave said (home.js SAYS `left`), the groups read again.
+// Any message to this flow is offered here (group.js `offered`), so one of
+// another type is refused.
 /**
  * @param {HOME.State} state
- * @param {Taken} message
+ * @param {Offered} message
  * @returns {Step<HOME.State, HOME.Effect>}
  */
 export const take = (state, message, [asked, serial] = ask(state, 'groups')) =>
@@ -223,7 +225,7 @@ export const take = (state, message, [asked, serial] = ask(state, 'groups')) =>
     ? go(
         state,
         { groups: 'reading', said: 'left' },
-        { asked, q: { ...state.q, left: message.name } },
+        { asked, q: { ...state.q, left: /** @type {Taken} */ (message).name } },
         { run: 'groups', n: serial, round: 'again', failed: 'unread' },
       )
     : no(state, `leaving takes no ${String(message.type)}`);

@@ -150,7 +150,7 @@ export const takes = {
   acted: (state, message) => answered(state, message, 'done'),
   unacted: (state, message) => answered(state, message, 'refused'),
   carry: (state) =>
-    state.group?.unsent?.length
+    /** @type {Partial<State>} */ (state).group?.unsent?.length
       ? acting(state, 'carry', { run: 'carrying', group: state.group, failed: 'unacted' })
       : no(state, 'no line is unsent'),
 };
@@ -251,7 +251,10 @@ function Drawn({ s: state, send }) {
 /** @type {Required<Flow>['view']} */
 export const view = {
   acts: ({ s: state, send }) =>
-    state.group ? html`<${Drawn} s=${state} send=${send} />` : html`<section id="acts"></section>`,
+    // Drawn before a group is held too, when `group` is absent (page.js `first`).
+    /** @type {Partial<State>} */ (state).group
+      ? html`<${Drawn} s=${state} send=${send} />`
+      : html`<section id="acts"></section>`,
 };
 
 // The edge: the key unsealed here, never in state, and the wasm imported

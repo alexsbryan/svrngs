@@ -64,7 +64,7 @@ function stored(name, keyPath, mode, act) {
       const asked = act(tx.objectStore('kept'));
       tx.oncomplete = () => {
         request.result.close();
-        yes(asked?.result);
+        yes(asked.result);
       };
       tx.onabort = tx.onerror = () => {
         request.result.close();

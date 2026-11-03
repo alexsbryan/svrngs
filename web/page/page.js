@@ -310,6 +310,8 @@ export function Page({ parts, store }) {
   const state = useStore(store);
   const [words, tone] = parts.heading(state);
   const acts = parts.acts(state);
-  useEffect(() => void (state.group && (document.title = state.group.name)), [state.group?.name]);
+  // Absent until a group is held (`first`).
+  const group = /** @type {Partial<State>} */ (state).group;
+  useEffect(() => void (group && (document.title = group.name)), [group?.name]);
   return html`<${Heading} words=${words} tone=${tone} />${parts.places.map((Place) => html`<${Place} s=${state} send=${store.dispatch} acts=${acts} />`)}<pre id="response">${parts.response(state)}</pre>`;
 }

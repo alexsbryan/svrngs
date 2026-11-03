@@ -39,13 +39,17 @@
         const { code } = await res.json();
         if (this.readyState !== 0) return;
         url.search += `${url.search ? '&' : '?'}__svrngs_socket=${code}`;
-        this.socket = protocols === undefined ? new Native(url) : new Native(url, protocols);
-        this.socket.binaryType = this.binaryType;
+        const socket = protocols === undefined ? new Native(url) : new Native(url, protocols);
+        // Absent until the node has answered, which `send`, `close` and the
+        // rest read it by.
+        /** @type {WebSocket | undefined} */
+        this.socket = socket;
+        socket.binaryType = this.binaryType;
         for (const type of ['open', 'message', 'error', 'close'])
-          this.socket.addEventListener(type, (fired) => {
-            this.readyState = this.socket.readyState;
-            this.protocol = this.socket.protocol;
-            this.extensions = this.socket.extensions;
+          socket.addEventListener(type, (fired) => {
+            this.readyState = socket.readyState;
+            this.protocol = socket.protocol;
+            this.extensions = socket.extensions;
             // The native socket's own kind of notice, with its fields: a
             // MessageEvent's data, a CloseEvent's code and reason.
             const copy = new /** @type {new (type: string, init: Dispatched) => Dispatched} */ (
@@ -95,9 +99,12 @@
     Object.defineProperty(Socket.prototype, name, { value });
   }
   window.WebSocket = /** @type {typeof WebSocket} */ (/** @type {unknown} */ (Socket));
-  if (navigator.serviceWorker)
-    navigator.serviceWorker.register = async (url) => {
-      const worker = navigator.serviceWorker.controller;
+  // Absent where the origin is not secure (Service Workers,
+  // `navigator.serviceWorker` is `[SecureContext]`).
+  const workers = /** @type {ServiceWorkerContainer | undefined} */ (navigator.serviceWorker);
+  if (workers)
+    workers.register = async (url) => {
+      const worker = workers.controller;
       if (!worker) throw new Error('svrngs has not opened this origin');
       const channel = new MessageChannel();
       /** @type {Promise<void>} */

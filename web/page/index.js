@@ -45,7 +45,11 @@ export const states = /** @type {const} */ ({ open: ['shut', 'opening', 'handed'
 /** @type {Takes<State, Message, Effect>} */
 export const takes = {
   open: (state, { label, at }, lend = state.lent?.find((one) => one.label === label)) => {
-    if (!lend) return no(state, `nothing ${state.group?.name ?? 'here'} lends is ${label}`);
+    if (!lend)
+      return no(
+        state,
+        `nothing ${/** @type {Partial<State>} */ (state).group?.name ?? 'here'} lends is ${label}`,
+      );
     if (state.at.open === 'opening') return no(state, `${state.opening} is opening already`);
     return go(
       state,
@@ -56,7 +60,7 @@ export const takes = {
         group: state.group,
         // `lend` is found in it, so the list is read.
         lent: /** @type {Lent[]} */ (state.lent),
-        unanswered: state.unanswered ?? [],
+        unanswered: state.unanswered,
         label,
         at,
         failed: 'unopened',

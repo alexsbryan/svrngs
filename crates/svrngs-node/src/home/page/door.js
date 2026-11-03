@@ -111,7 +111,7 @@ export const view = {
     state.people &&
     (group.folders === null
       ? html`<p>This computer cannot say where ${its(group)} is.</p>`
-      : (group.folders ?? []).map((dir) => html`<${Folder} key=${dir} g=${group} dir=${dir} />`)),
+      : group.folders.map((dir) => html`<${Folder} key=${dir} g=${group} dir=${dir} />`)),
   removals: ({ g: group, s: state }) =>
     state.people &&
     // `null` only beside `removed`'s, and a group whose `removed` is

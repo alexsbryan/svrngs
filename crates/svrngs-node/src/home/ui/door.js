@@ -25,8 +25,11 @@ import { called } from '../question.js?v=__VERSION__';
 
 /**
  * What the door judges by: whose computers did not answer, each by name and
- * first key (home/page/group.js `Lends`, web/page/enter.js `Whom`).
- * @typedef {{ unanswered: { person: string, person_key: string }[] }} Unanswered
+ * first key (home/page/group.js `Lends`, web/page/enter.js `Whom`), or by
+ * name alone, as a computer at version 2 named them (version.rs), which the
+ * door still draws (web/tests/pages/members.test.mjs, "the door as
+ * question.js `door` draws it").
+ * @typedef {{ unanswered: ({ person: string, person_key: string } | string)[] }} Unanswered
  */
 
 /**
@@ -88,8 +91,8 @@ const standing = (devices, lends, silent) => {
 function judged(person, devices, lends) {
   if (lends === undefined) return ['', 'asking…'];
   const phone = phoneSaid(devices);
-  const silent = lends?.unanswered.some(
-    (who) => (who.person_key ?? who) === (who.person_key ? person.person_key : person.person),
+  const silent = lends?.unanswered.some((who) =>
+    typeof who === 'string' ? who === person.person : who.person_key === person.person_key,
   );
   const [drawn, words] = standing(devices, lends, silent);
   return [drawn, words + phone];

@@ -90,7 +90,7 @@ import { offered } from './among.js?v=__VERSION__';
  *   | { type: 'opened', group: Group }
  *   | { type: 'shown' }
  *   | { type: 'reread' }
- *   | { type: 'read', n: number, ok: boolean, refusal: string | null, via?: Computer, link?: Computer, body: Body, lent: Lent[], me: string, older: boolean }
+ *   | { type: 'read', n: number, ok: boolean, refusal: string | null, via?: Computer, link?: Computer, body: Partial<Body>, lent: Lent[], me: string, older: boolean }
  *   | { type: 'unread', n?: number, said?: string, why: string }
  *   | { type: 'kept' }} Message
  */
@@ -138,6 +138,9 @@ const sending = /** @type {Sender} */ (
 const say = (/** @type {string | undefined} */ said) => sending('failed', { said, why: said });
 const titled = (/** @type {Group} */ group) =>
   `${group.name}${group.maker ? ` (${whose(group)})` : ''}`;
+// The browser's locks: absent where the page is not a secure context (Web
+// Locks, `navigator.locks` is `[SecureContext]`), and in a browser before them.
+const locks = () => /** @type {LockManager | undefined} */ (navigator.locks);
 const whoseComputer = (/** @type {Computer | undefined} */ computer) =>
   computer ? `${computer.person}’s computer` : 'The computer that sent your link';
 // The read, of `group` as kept: counted, so an older answer is refused by name.
@@ -352,20 +355,20 @@ export const takes = {
         state,
         `${whom} runs an older svrngs, so this page cannot show what ${name} lends. Installing svrngs again there updates it.`,
       );
+    const { lent } = message;
+    // Answered, at this version or later, so the body is whole: an answer
+    // is never read field by field (version.rs `older`).
     const {
-      lent,
-      body: {
-        unanswered,
-        unheard,
-        refused,
-        older: behind,
-        removals,
-        visiting,
-        people,
-        shelf,
-        changed,
-      },
-    } = message;
+      unanswered,
+      unheard,
+      refused,
+      older: behind,
+      removals,
+      visiting,
+      people,
+      shelf,
+      changed,
+    } = /** @type {Body} */ (message.body);
     const computers = [
       ...new Map(
         lent.map((lend) => [
@@ -438,8 +441,7 @@ export const heading = {
 const unlisted = (/** @type {State} */ state) =>
   /** @type {[keyof typeof HOW, string][]} */ (Object.entries(HOW)).flatMap(([how, why]) =>
     state[how].map(
-      (person) =>
-        `${called(state.people, person.person_key) ?? person.person ?? person}’s computer ${why}.`,
+      (person) => `${called(state.people, person.person_key) ?? person.person}’s computer ${why}.`,
     ),
   );
 /** @type {Record<string, (s: State) => string[] | Nothing>} */
@@ -624,7 +626,7 @@ export const io = {
     })),
   // The lock held forever once given; taken by another tab, this one opens again (app.js@19b63b2b:386-398).
   lock: ({ id, steal }) =>
-    !navigator.locks
+    !locks()
       ? { type: 'held', why: 'this browser has no locks, so each tab reaches the group' }
       : new Promise((answer, failed) =>
           navigator.locks
@@ -666,7 +668,7 @@ export const io = {
       .then(async (core) => {
         const [connection, via, res] = await lends(core, group, []);
         // Refused, its body is read for `lent` and `version` alone, both optional.
-        const body = /** @type {Body} */ (res.ok ? await res.json() : {});
+        const body = /** @type {Partial<Body>} */ (res.ok ? await res.json() : {});
         const refusal = res.headers.get('x-svrngs-refused');
         const lent = (await connection.close(), body.lent ?? []).map((lend) => ({
           ...lend,

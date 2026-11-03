@@ -101,7 +101,10 @@ export const takes = {
         ),
   stop: (state, { lend, app }, found = state.lent?.find((one) => one.label === lend)) =>
     !found
-      ? no(state, `nothing ${state.group?.name ?? 'here'} lends is ${lend}`)
+      ? no(
+          state,
+          `nothing ${/** @type {Partial<State>} */ (state).group?.name ?? 'here'} lends is ${lend}`,
+        )
       : go(state, {}, {}, { run: 'unuse', group: state.group, l: found, app, failed: 'unstopped' }),
   unused: (state) => asking(state),
   unstopped: (state, message) =>

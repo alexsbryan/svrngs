@@ -18,5 +18,5 @@ const bring = (group, apps) => through(group, '/shelf', apps);
 /** @type {Record<string, (props: Props) => Drawn>} */
 export const view = {
   shelf: ({ s: state, send }) =>
-    html`<div id="shelf">${state.lent && state.shelf && html`<${Shelf} g=${state.group} lent=${state.lent} shelf=${state.shelf} joined=${state.joined} bring=${bring} after=${() => send({ type: 'reread' })} />`}</div>`,
+    html`<div id="shelf">${state.lent && html`<${Shelf} g=${state.group} lent=${state.lent} shelf=${state.shelf} joined=${state.joined} bring=${bring} after=${() => send({ type: 'reread' })} />`}</div>`,
 };

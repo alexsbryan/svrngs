@@ -104,7 +104,8 @@
               "string": true
             }
           }
-        ]
+        ],
+        "typescript/no-unnecessary-condition": "error"
       }
     },
     {

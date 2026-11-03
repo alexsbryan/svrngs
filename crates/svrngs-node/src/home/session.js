@@ -83,7 +83,7 @@ export async function browserAuthority(fetched, clients, origin) {
 const referredHere = (request, from, origin) =>
   request.mode === 'navigate' &&
   !from &&
-  URL.canParse(request.referrer ?? '') &&
+  URL.canParse(request.referrer) &&
   new URL(request.referrer).origin === origin;
 
 // A whole tab's read, typed, bookmarked or followed, as a cookie the

@@ -255,7 +255,12 @@ export const holder = (label, key) =>
 // answered persisted, persist, persisted with `[false, true, true]`: iOS
 // keeps it when asked, and the page had not asked. Answered as the page's
 // trace says it, a browser that offers no asking among them.
-export const persist = async (storage = navigator.storage) => {
+// `navigator.storage` is absent where the page is not a secure context
+// (the Storage standard's `[SecureContext]`), and `persist` in a worker
+// (`[Exposed=Window]`).
+/** @typedef {{ persisted(): Promise<boolean>, persist?: () => Promise<boolean> }} Keeping */
+/** @param {Keeping} [storage] */
+export const persist = async (storage = /** @type {Keeping | undefined} */ (navigator.storage)) => {
   if (!storage?.persist) return "this browser offers no way to ask it to keep the page's storage";
   if (await storage.persisted()) return "the browser keeps the page's storage already";
   return `asked the browser to keep the page's storage: ${(await storage.persist()) ? 'granted' : 'refused'}`;
@@ -297,7 +302,7 @@ export async function unseal(group) {
 // Why unsealing `group`'s key failed, and the sizes and kinds of what it
 // was given, for the trace.
 /**
- * @param {{ iv: Uint8Array<ArrayBuffer>, sealed: Uint8Array<ArrayBuffer> }} group
+ * @param {{ iv?: any, sealed?: any }} group as the store held it, of whatever kinds
  * @param {any} error
  */
 const unsealing = (group, error) =>
@@ -386,8 +391,13 @@ const RUNTIME = new URL('./wasm/svrngs_web_bg.wasm?v=__VERSION__', import.meta.u
 // not be kept under this version's URL. Where the browser gives no cache
 // (an origin that is not https), fetched each time.
 export async function runtime() {
-  if (self.navigator?.serviceWorker?.controller) return fetch(RUNTIME);
-  const cache = await self.caches?.open(CACHE).catch(() => null);
+  // Both are absent where the origin is not secure: a service worker and the
+  // cache are `[SecureContext]` (Service Workers, "navigator.serviceWorker"
+  // and "caches").
+  const workers = /** @type {ServiceWorkerContainer | undefined} */ (self.navigator.serviceWorker);
+  if (workers?.controller) return fetch(RUNTIME);
+  const cacheStorage = /** @type {CacheStorage | undefined} */ (self.caches);
+  const cache = await cacheStorage?.open(CACHE).catch(() => null);
   const hit = await cache?.match(RUNTIME);
   if (hit) return hit;
   const res = await fetch(RUNTIME);

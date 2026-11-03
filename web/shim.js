@@ -17,10 +17,13 @@
 (() => {
   // A classic script, so the browser sets `currentScript` while it runs.
   const me = new URL(/** @type {HTMLScriptElement} */ (document.currentScript).src);
-  const worker = () => navigator.serviceWorker?.controller;
+  // Absent where the origin is not secure (Service Workers,
+  // `navigator.serviceWorker` is `[SecureContext]`).
+  const workers = /** @type {ServiceWorkerContainer | undefined} */ (navigator.serviceWorker);
+  const worker = () => workers?.controller;
   /** @type {Promise<HTMLIFrameElement> | undefined} */
   let signer;
-  navigator.serviceWorker?.addEventListener('message', async (event) => {
+  workers?.addEventListener('message', async (event) => {
     if (!event.data?.approve || !event.ports[0] || event.source !== worker()) return;
     const url = new URL(event.data.signer);
     signer ??= new Promise((yes) => {
@@ -219,11 +222,11 @@
   // `CONNECTING` and the rest are on it by `Object.assign`, just above.
   window.WebSocket = /** @type {typeof WebSocket} */ (/** @type {unknown} */ (Socket));
 
-  if (navigator.serviceWorker) {
-    navigator.serviceWorker.register = async (script) => {
+  if (workers) {
+    workers.register = async (script) => {
       const said = await ask({ worker: new URL(script, location.href).href });
-      if (said !== 'running') throw new TypeError(`the app's worker did not start: ${said?.error}`);
-      return navigator.serviceWorker.ready;
+      if (said !== 'running') throw new TypeError(`the app's worker did not start: ${said.error}`);
+      return workers.ready;
     };
   }
 })();
