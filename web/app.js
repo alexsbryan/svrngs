@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // The phone's page, its edge (page-scaffold (e)): served as /app.js
 // (scripts/build-web.sh), where the browser tests find ./wasm/ and
 // ./store.js from the module's address.
@@ -27,9 +26,11 @@ import * as join from './page/join.js?v=__VERSION__';
 import * as shelf from './page/shelf.js?v=__VERSION__';
 import * as uses from './page/uses.js?v=__VERSION__';
 import * as visit from './page/visit.js?v=__VERSION__';
+/** @import { Flow } from './page/page.js?v=__VERSION__' */
 
 // The wasm by its one URL, from the cache the worker reads it from too
 // (store.js `runtime`, u4-9); then the address's fragment, to open.
+/** @type {Flow} */
 const edge = {
   io: {
     init: () =>
@@ -59,7 +60,11 @@ const page = machine(
   parts.first({ fine: matchMedia('(pointer: fine)').matches, standalone: navigator.standalone }),
   [{ run: 'init', failed: 'failed' }],
 );
-render(html`<${Page} parts=${parts} store=${page} />`, document.getElementById('page'));
+// web/index.html holds #page.
+render(
+  html`<${Page} parts=${parts} store=${page} />`,
+  /** @type {HTMLElement} */ (document.getElementById('page')),
+);
 
 // An address typed or tapped on this page is a new fragment on the same
 // page, which the browser opens without loading it (web/app.js@19b63b2b:626).
