@@ -4,7 +4,12 @@
 // (ralph/next/js/CHARTER.md, decision 1). Each error is printed as tsc
 // prints it, then the count; exit 0 holds, 1 broken.
 //
-// The service workers (web/sw.js, web/lend.js) run in a worker's global,
+// A file that carries `@ts-nocheck` is one tsc skips whole, so each is
+// refused by name: every file the configs name is typed (the js-types
+// row's close).
+//
+// The service workers (web/sw.js, web/lend.js and
+// crates/svrngs-node/src/home/session-worker.js) run in a worker's global,
 // not a window's, so jsconfig.workers.json checks them in a program of
 // their own, with the worker's lib for the DOM's. Each program reports the
 // errors in the files its config names: a module both import, such as
@@ -95,5 +100,11 @@ function program(name) {
   if (errors.length > 0) {
     console.log(ts.formatDiagnostics(errors, host));
   }
-  return { errors: errors.length, files: config.fileNames };
+  const skipped = config.fileNames.filter((file) =>
+    /@ts-nocheck/.test(ts.sys.readFile(file) ?? ''),
+  );
+  for (const file of skipped) {
+    console.log(`${file}: carries @ts-nocheck, so tsc skips its types`);
+  }
+  return { errors: errors.length + skipped.length, files: config.fileNames };
 }
