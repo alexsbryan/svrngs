@@ -8,7 +8,9 @@
 // answers `{run: 'send', m}`, which the frame's io dispatches. Kept apart
 // from app.js, the edge, so node holds it to its laws with no browser
 // (web/tests/pages/frame.test.mjs).
-import { go, Heading, html, no, useEffect, useStore } from '../ui/kit.js?v=__VERSION__';
+import { html, useEffect, useStore } from '../ui/view.js?v=__VERSION__';
+import { go, no } from '../ui/machine.js?v=__VERSION__';
+import { Heading } from '../ui/parts.js?v=__VERSION__';
 /** @import { Effect, Machine, Runners, Step, Store } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 /** @import * as acts from './acts.js?v=__VERSION__' */
@@ -73,16 +75,16 @@ import { go, Heading, html, no, useEffect, useStore } from '../ui/kit.js?v=__VER
  */
 
 /**
- * The rest of a message of type `T`, as a flow's `send(type, m)` takes it:
+ * The rest of a message of type `T`, as a flow's `send(type, rest)` takes it:
  * required when the message has a field that is.
  * @template {Message['type']} T
  * @typedef {Omit<Extract<Message, { type: T }>, 'type'>} Rest
  */
 
 /**
- * A flow's `send(type, m)`: the effect sending the message of type `type`,
- * its rest `m`, to the flow that takes it.
- * @typedef {<T extends Message['type']>(type: T, ...m: {} extends Rest<T> ? [m?: Rest<T>] : [m: Rest<T>]) => Send} Sender
+ * A flow's `send(type, rest)`: the effect sending the message of type `type`,
+ * its `rest`, to the flow that takes it.
+ * @typedef {<T extends Message['type']>(type: T, ...rest: {} extends Rest<T> ? [rest?: Rest<T>] : [rest: Rest<T>]) => Send} Sender
  */
 
 /**
@@ -157,21 +159,21 @@ const frame = {
   states: /** @type {const} */ ({ page: ['opening', 'failed'] }),
   io: {
     /** @param {Send} send */
-    send: ({ m }) => m,
+    send: ({ m: message }) => message,
   },
   takes: {
     /**
-     * @param {State} s
-     * @param {Failed} m
+     * @param {State} state
+     * @param {Failed} message
      */
-    failed: (s, m) => go(s, { page: 'failed' }, { said: m.said ?? COULD_NOT }),
+    failed: (state, message) => go(state, { page: 'failed' }, { said: message.said ?? COULD_NOT }),
   },
   heading: {
     /**
-     * @param {State} s
+     * @param {State} state
      * @returns {Said | Nothing}
      */
-    failed: (s) => s.at.page === 'failed' && [/** @type {string} */ (s.said), 'bad'],
+    failed: (state) => state.at.page === 'failed' && [/** @type {string} */ (state.said), 'bad'],
   },
 };
 
@@ -185,7 +187,7 @@ const frame = {
  */
 export function compose(flows) {
   const all = Object.entries(/** @type {Record<string, Flow>} */ ({ frame, ...flows })).map(
-    ([name, f]) =>
+    ([name, flow]) =>
       /** @type {Required<Flow> & { name: string }} */ ({
         name,
         owns: [],
@@ -196,29 +198,41 @@ export function compose(flows) {
         response: {},
         acts: () => ({}),
         takes: {},
-        ...f,
+        ...flow,
       }),
   );
   /** @type {Record<string, (typeof all)[number]>} */
-  const claimed = {},
-    keys = Object.keys,
-    owner = (/** @type {string} */ kind, /** @type {string} */ n) => claimed[`${kind} ${n}`]?.name;
-  for (const f of all) {
+  const claimed = {};
+  const keys = Object.keys;
+  const owner = (/** @type {string} */ kind, /** @type {string} */ name) =>
+    claimed[`${kind} ${name}`]?.name;
+  /**
+   * Each of `names`, of `kind`, claimed for `flow`, else refused naming
+   * the flow that claimed it first.
+   * @param {(typeof all)[number]} flow
+   * @param {string} kind
+   * @param {readonly string[]} names
+   */
+  const claim = (flow, kind, names) => {
+    for (const name of names)
+      if ((claimed[`${kind} ${name}`] ??= flow) !== flow)
+        throw new Error(`${kind} ${name} is claimed by ${owner(kind, name)} and by ${flow.name}`);
+  };
+  for (const flow of all) {
     for (const [kind, names] of /** @type {[string, readonly string[]][]} */ ([
-      ['message type', keys(f.takes)],
-      ['region', keys(f.states)],
-      ['io', keys(f.io)],
-      ['place', keys(f.view)],
-      ['field', f.owns],
-    ])) {
-      for (const n of names)
-        if ((claimed[`${kind} ${n}`] ??= f) !== f)
-          throw new Error(`${kind} ${n} is claimed by ${owner(kind, n)} and by ${f.name}`);
-    }
-    const slot = [...keys(f.heading), ...keys(f.response)].find((n) => !ORDER.includes(n));
+      ['message type', keys(flow.takes)],
+      ['region', keys(flow.states)],
+      ['io', keys(flow.io)],
+      ['place', keys(flow.view)],
+      ['field', flow.owns],
+    ]))
+      claim(flow, kind, names);
+    const slot = [...keys(flow.heading), ...keys(flow.response)].find(
+      (name) => !ORDER.includes(name),
+    );
     if (slot)
       throw new Error(
-        `${f.name}'s heading or response names ${slot}, which is not one of ${ORDER.join(', ')}`,
+        `${flow.name}'s heading or response names ${slot}, which is not one of ${ORDER.join(', ')}`,
       );
   }
   // One take per message, its flow's: a part's own message by its name
@@ -227,51 +241,58 @@ export function compose(flows) {
   // flow does not own is refused, naming it. `asked` is the core's counter
   // of reads (ui/machine.js `ask`), every flow's.
   /**
-   * @param {State} s
-   * @param {Message & { fold?: string, field?: string }} m
+   * @param {State} state
+   * @param {Message & { fold?: string, field?: string }} message
    * @returns {Step<State>}
    */
-  const step = (s, m) => {
+  const step = (state, message) => {
     const type = /** @type {string} */ (
-      [`${m.type} ${m.fold ?? m.field}`, m.type].find((t) => claimed[`message type ${t}`])
+      [`${message.type} ${message.fold ?? message.field}`, message.type].find(
+        (candidate) => claimed[`message type ${candidate}`],
+      )
     );
-    const f = claimed[`message type ${type}`],
-      r = f?.takes[type]?.(s, m);
-    if (!f || !r || r.refused) return r ?? no(s, `nothing here takes ${m.type}`);
+    const flow = claimed[`message type ${type}`];
+    const result = flow?.takes[type]?.(state, message);
+    if (!flow || !result || result.refused)
+      return result ?? no(state, `nothing here takes ${message.type}`);
     const out = [
-      .../** @type {(keyof State)[]} */ (keys({ ...s, ...r.state }))
-        .filter((k) => k !== 'at' && k !== 'asked' && r.state[k] !== s[k])
-        .map((k) => /** @type {[string, string]} */ (['field', k])),
-      .../** @type {(keyof At)[]} */ (keys({ ...s.at, ...r.state.at }))
-        .filter((k) => r.state.at[k] !== s.at[k])
-        .map((k) => /** @type {[string, string]} */ (['region', k])),
-    ].find(([kind, k]) => owner(kind, k) !== f.name);
+      .../** @type {(keyof State)[]} */ (keys({ ...state, ...result.state }))
+        .filter((name) => name !== 'at' && name !== 'asked' && result.state[name] !== state[name])
+        .map((name) => /** @type {[string, string]} */ (['field', name])),
+      .../** @type {(keyof At)[]} */ (keys({ ...state.at, ...result.state.at }))
+        .filter((name) => result.state.at[name] !== state.at[name])
+        .map((name) => /** @type {[string, string]} */ (['region', name])),
+    ].find(([kind, name]) => owner(kind, name) !== flow.name);
     return out
-      ? no(s, `${f.name} moved ${out.join(' ')}, which is ${owner(...out) ?? 'nobody'}'s`)
-      : r;
+      ? no(state, `${flow.name} moved ${out.join(' ')}, which is ${owner(...out) ?? 'nobody'}'s`)
+      : result;
   };
-  const states = Object.assign({}, ...all.map((f) => f.states)),
-    each = (/** @type {'heading' | 'response'} */ pick, /** @type {State} */ s) =>
-      ORDER.flatMap((slot) => all.map((f) => f[pick][slot]?.(s)).filter(Boolean));
+  const states = Object.assign({}, ...all.map((flow) => flow.states));
+  const each = (/** @type {'heading' | 'response'} */ pick, /** @type {State} */ state) =>
+    ORDER.flatMap((slot) => all.map((flow) => flow[pick][slot]?.(state)).filter(Boolean));
   return {
     states,
     step,
-    io: Object.assign({}, ...all.map((f) => f.io)),
+    io: Object.assign({}, ...all.map((flow) => flow.io)),
     // The first state: each region at the first of its set, and `fields`.
     // Its other fields are absent until their flows set them, as `State` says.
     first: (fields) =>
       /** @type {State} */ ({
-        at: Object.fromEntries(Object.entries(states).map(([r, [at]]) => [r, at])),
+        at: Object.fromEntries(Object.entries(states).map(([region, [at]]) => [region, at])),
         ...fields,
       }),
-    heading: (s) => /** @type {Said | undefined} */ (each('heading', s)[0]) ?? ['Opening…'],
-    response: (s) => each('response', s).flat().join('\n'),
-    acts: (s) =>
+    heading: (state) => /** @type {Said | undefined} */ (each('heading', state)[0]) ?? ['Opening…'],
+    response: (state) => each('response', state).flat().join('\n'),
+    acts: (state) =>
       PARTS.map(
-        (p) => /** @type {[string, Drawn[]]} */ ([p, all.flatMap((f) => f.acts(s)[p] ?? [])]),
-      ).filter(([, n]) => n.length),
+        (place) =>
+          /** @type {[string, Drawn[]]} */ ([
+            place,
+            all.flatMap((flow) => flow.acts(state)[place] ?? []),
+          ]),
+      ).filter(([, drawn]) => drawn.length),
     places: /** @type {Parts['places']} */ (
-      PLACES.map((p) => claimed[`place ${p}`]?.view[p]).filter(Boolean)
+      PLACES.map((place) => claimed[`place ${place}`]?.view[place]).filter(Boolean)
     ),
   };
 }
@@ -286,9 +307,11 @@ export function compose(flows) {
  */
 /** @param {PageProps} props */
 export function Page({ parts, store }) {
-  const s = useStore(store),
-    [words, tone] = parts.heading(s),
-    acts = parts.acts(s);
-  useEffect(() => void (s.group && (document.title = s.group.name)), [s.group?.name]);
-  return html`<${Heading} words=${words} tone=${tone} />${parts.places.map((P) => html`<${P} s=${s} send=${store.dispatch} acts=${acts} />`)}<pre id="response">${parts.response(s)}</pre>`;
+  const state = useStore(store);
+  const [words, tone] = parts.heading(state);
+  const acts = parts.acts(state);
+  // Absent until a group is held (`first`).
+  const group = /** @type {Partial<State>} */ (state).group;
+  useEffect(() => void (group && (document.title = group.name)), [group?.name]);
+  return html`<${Heading} words=${words} tone=${tone} />${parts.places.map((Place) => html`<${Place} s=${state} send=${store.dispatch} acts=${acts} />`)}<pre id="response">${parts.response(state)}</pre>`;
 }

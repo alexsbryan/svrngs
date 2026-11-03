@@ -35,29 +35,34 @@ const AGAIN = ['idle', 'copied', 'unwritten'];
 // `said` is each answer in turn, by state: a second " Copied." after the
 // first, as home.js's `p.append` leaves both (home.js@19b63b2b:137, :202).
 /**
- * @param {CopyState} s
- * @param {Extract<CopyMessage, { type: 'copied' | 'unwritten' }>} m
+ * @param {CopyState} state
+ * @param {Extract<CopyMessage, { type: 'copied' | 'unwritten' }>} message
  * @returns {Step<CopyState, CopyEffect>}
  */
-const answered = (s, m) =>
-  s.at.copy === 'copying'
-    ? go(s, { copy: m.type }, { said: [...s.said, m.type] })
-    : no(s, `${m.type} answers no copy, as none is being written`);
+const answered = (state, message) =>
+  state.at.copy === 'copying'
+    ? go(state, { copy: message.type }, { said: [...state.said, message.type] })
+    : no(state, `${message.type} answers no copy, as none is being written`);
 /** @type {Machine<CopyState, CopyMessage, CopyEffect>} */
 export const COPY = {
   states: { copy: ['idle', 'copying', 'copied', 'unwritten'] },
-  step: (s, m) => {
-    switch (m.type) {
+  step: (state, message) => {
+    switch (message.type) {
       case 'copy':
-        return AGAIN.includes(s.at.copy)
-          ? go(s, { copy: 'copying' }, {}, { run: 'write', text: m.text, failed: 'unwritten' })
-          : no(s, 'a copy is being written already');
+        return AGAIN.includes(state.at.copy)
+          ? go(
+              state,
+              { copy: 'copying' },
+              {},
+              { run: 'write', text: message.text, failed: 'unwritten' },
+            )
+          : no(state, 'a copy is being written already');
       case 'copied':
-        return answered(s, m);
+        return answered(state, message);
       case 'unwritten':
-        return answered(s, m);
+        return answered(state, message);
       default:
-        return assertNever(s, m, 'a copy');
+        return assertNever(state, message, 'a copy');
     }
   },
   io: { write: ({ text }) => navigator.clipboard.writeText(text).then(() => ({ type: 'copied' })) },
@@ -91,14 +96,14 @@ export const Copy = (props) => drawn(...useMachine(() => machine('COPY', COPY, F
 
 /**
  * A Copy drawn from its state.
- * @param {CopyState} s
+ * @param {CopyState} state
  * @param {Store<CopyState, CopyMessage>['dispatch']} send
  * @param {CopyProps} props
  * @returns {Drawn}
  */
-export function drawn(s, send, { id, text, words, beside }) {
+export function drawn(state, send, { id, text, words, beside }) {
   const press = () => send({ type: 'copy', text });
-  if (!beside)
-    return html`<button id=${id} onClick=${press}>${words[s.at.copy] ?? words.copy}</button>`;
-  return html`<button id=${id} onClick=${press}>${words.copy}</button>${beside}${s.said.map((k) => words[k])}`;
+  if (beside === undefined)
+    return html`<button id=${id} onClick=${press}>${words[state.at.copy] ?? words.copy}</button>`;
+  return html`<button id=${id} onClick=${press}>${words.copy}</button>${beside}${state.said.map((said) => words[said])}`;
 }

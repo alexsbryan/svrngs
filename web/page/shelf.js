@@ -3,19 +3,20 @@
 // shelf (ui/shelf.js), drawn in #shelf once the group is read, and brought
 // through the computer the page reaches (web/page/enter.js `through`); then
 // the group read again (enter.js `reread`).
-import { html, Shelf } from '../ui/kit.js?v=__VERSION__';
+import { html } from '../ui/view.js?v=__VERSION__';
+import { Shelf } from '../ui/shelf.js?v=__VERSION__';
 import { through } from './enter.js?v=__VERSION__';
 /** @import { Group } from '../store.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 /** @import { Props } from './page.js?v=__VERSION__' */
 
 /**
- * @param {Group} g
+ * @param {Group} group
  * @param {unknown} apps what the shelf brings, as ui/shelf.js `Shelf` asks it
  */
-const bring = (g, apps) => through(g, '/shelf', apps);
+const bring = (group, apps) => through(group, '/shelf', apps);
 /** @type {Record<string, (props: Props) => Drawn>} */
 export const view = {
-  shelf: ({ s, send }) =>
-    html`<div id="shelf">${s.lent && s.shelf && html`<${Shelf} g=${s.group} lent=${s.lent} shelf=${s.shelf} joined=${s.joined} bring=${bring} after=${() => send({ type: 'reread' })} />`}</div>`,
+  shelf: ({ s: state, send }) =>
+    html`<div id="shelf">${state.lent && html`<${Shelf} g=${state.group} lent=${state.lent} shelf=${state.shelf} joined=${state.joined} bring=${bring} after=${() => send({ type: 'reread' })} />`}</div>`,
 };

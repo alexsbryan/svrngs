@@ -6,7 +6,9 @@
 // pointer is coarse, and it has no terminal: no line there (web/app.js
 // `offer`, `line`, :595-614). page-open's, then page-join's; how this reaches
 // you is drawn as web/index.html@19b63b2b:88-96 has it, word for word.
-import { Copy, go, html, no } from '../ui/kit.js?v=__VERSION__';
+import { html } from '../ui/view.js?v=__VERSION__';
+import { go, no } from '../ui/machine.js?v=__VERSION__';
+import { Copy } from '../ui/copy.js?v=__VERSION__';
 /** @import { Io, Takes } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 /** @import { Wants } from './enter.js?v=__VERSION__' */
@@ -22,7 +24,7 @@ import { Copy, go, html, no } from '../ui/kit.js?v=__VERSION__';
  * The messages this flow takes.
  * @typedef {{ type: 'offer', token: string }
  *   | { type: 'opens', wants?: Wants }
- *   | { type: 'offered', token?: string, page: string, href?: string | false }} Message
+ *   | { type: 'offered', token?: string, page: string, href?: string }} Message
  */
 
 /**
@@ -35,20 +37,20 @@ export const owns = ['line'];
 export const states = /** @type {const} */ ({ offer: ['unoffered', 'offered'] });
 /** @type {Takes<State, Message, Effect>} */
 export const takes = {
-  offer: (s, m) =>
-    s.fine && /^[A-Za-z0-9_-]*$/.test(m.token)
-      ? go(s, {}, {}, { run: 'where', token: m.token, failed: 'failed' })
-      : no(s, 'no line offered: not a computer, or not a token'),
+  offer: (state, message) =>
+    state.fine && /^[A-Za-z0-9_-]*$/.test(message.token)
+      ? go(state, {}, {}, { run: 'where', token: message.token, failed: 'failed' })
+      : no(state, 'no line offered: not a computer, or not a token'),
   // A link into a lend on a computer keeping no group here, its person's
   // svrngs elsewhere on it: the link itself, to open from its home page
   // (events-links (c); app.js@19b63b2b:702).
-  opens: (s) =>
-    s.fine
-      ? go(s, {}, {}, { run: 'where', opens: true, failed: 'failed' })
-      : no(s, 'no link offered: not a computer'),
-  offered: (s, { token, page, href }) =>
+  opens: (state) =>
+    state.fine
+      ? go(state, {}, {}, { run: 'where', opens: true, failed: 'failed' })
+      : no(state, 'no link offered: not a computer'),
+  offered: (state, { token, page, href }) =>
     go(
-      s,
+      state,
       { offer: 'offered' },
       {
         line: href
@@ -62,8 +64,8 @@ export const takes = {
 };
 /** @type {Record<string, (s: State) => Said | Nothing>} */
 export const heading = {
-  elsewhere: (s) =>
-    s.line?.[0] === 'opens' && ['This link opens in svrngs on your computer.', 'good'],
+  elsewhere: (state) =>
+    state.line?.[0] === 'opens' && ['This link opens in svrngs on your computer.', 'good'],
 };
 // The page's own address, which only the edge reads.
 /** @type {Io<Effect, PageMessage>} */
@@ -72,7 +74,7 @@ export const io = {
     type: 'offered',
     token,
     page: `${location.origin}${location.pathname}`,
-    href: opens && location.href,
+    href: opens ? location.href : undefined,
   }),
 };
 
@@ -91,9 +93,9 @@ export const view = {
   computer: ({
     s: { line: [says, text = ''] = /** @type {Partial<Fields['line'] & {}>} */ ([]) },
   }) =>
-    html`<section id="computer" hidden=${!says}>${Object.entries(SAYS).map(([id, w]) => html`<p id=${id} hidden=${id !== says}>${w}</p>`)}<pre id="line">${text}</pre><${Copy} id="copy" text=${text} words=${WORDS} /></section>`,
+    html`<section id="computer" hidden=${!says}>${Object.entries(SAYS).map(([id, words]) => html`<p id=${id} hidden=${id !== says}>${words}</p>`)}<pre id="line">${text}</pre><${Copy} id="copy" text=${text} words=${WORDS} /></section>`,
   // For someone at a computer who likes to see how a thing works, once in;
   // on a phone left out of the first look (app.js@19b63b2b:522-525; join_page.rs).
-  how: ({ s }) =>
-    html`<details id="how" hidden=${!(s.fine && s.lent)}><summary>How this reaches you</summary><p>The link from the chat keeps its code after the #, which your browser never sends to the site this page comes from.</p><p>This browser keeps who you are. There is no account anywhere.</p><p>The site this page comes from sends only files. It does see which thing’s address you open, as each has a name under it. Your group can serve this page from a site of its own.</p><p>Between you and the computer lending a thing, a server passes it along sealed, and can’t read it. Your group can run its own.</p><p>That computer is someone’s in your group. It checks it’s you before it answers, and tells the app there who you are: some apps let you straight in, others ask you to sign in once.</p><p>What your group keeps together is on its people’s own computers, and can leave with the group, whole.</p></details>`,
+  how: ({ s: state }) =>
+    html`<details id="how" hidden=${!(state.fine && state.lent)}><summary>How this reaches you</summary><p>The link from the chat keeps its code after the #, which your browser never sends to the site this page comes from.</p><p>This browser keeps who you are. There is no account anywhere.</p><p>The site this page comes from sends only files. It does see which thing’s address you open, as each has a name under it. Your group can serve this page from a site of its own.</p><p>Between you and the computer lending a thing, a server passes it along sealed, and can’t read it. Your group can run its own.</p><p>That computer is someone’s in your group. It checks it’s you before it answers, and tells the app there who you are: some apps let you straight in, others ask you to sign in once.</p><p>What your group keeps together is on its people’s own computers, and can leave with the group, whole.</p></details>`,
 };

@@ -17,26 +17,36 @@
 (() => {
   // A classic script, so the browser sets `currentScript` while it runs.
   const me = new URL(/** @type {HTMLScriptElement} */ (document.currentScript).src);
-  const worker = () => navigator.serviceWorker?.controller;
+  // Absent where the origin is not secure (Service Workers,
+  // `navigator.serviceWorker` is `[SecureContext]`).
+  const workers = /** @type {ServiceWorkerContainer | undefined} */ (navigator.serviceWorker);
+  const worker = () => workers?.controller;
   /** @type {Promise<HTMLIFrameElement> | undefined} */
   let signer;
-  navigator.serviceWorker?.addEventListener('message', async (event) => {
-    if (!event.data?.approve || !event.ports[0] || event.source !== worker()) return;
-    const url = new URL(event.data.signer);
-    signer ??= new Promise((yes) => {
-      const frame = Object.assign(document.createElement('iframe'), {
-        src: url.href,
-        hidden: true,
+  // What the lend's worker posts its pages: an entry to approve and the
+  // signer that approves it (lend.js `approved`), else store.js `LOST`,
+  // which has no `approve`.
+  /** @typedef {{ approve?: object, signer: string }} Approving */
+  workers?.addEventListener(
+    'message',
+    async (/** @type {MessageEvent<Approving | null>} */ event) => {
+      if (!event.data?.approve || !event.ports[0] || event.source !== worker()) return;
+      const url = new URL(event.data.signer);
+      signer ??= new Promise((yes) => {
+        const frame = Object.assign(document.createElement('iframe'), {
+          src: url.href,
+          hidden: true,
+        });
+        frame.onload = () => yes(frame);
+        document.documentElement.append(frame);
       });
-      frame.onload = () => yes(frame);
-      document.documentElement.append(frame);
-    });
-    /** @type {Window} */ ((await signer).contentWindow).postMessage(
-      event.data.approve,
-      url.origin,
-      [event.ports[0]],
-    );
-  });
+      /** @type {Window} */ ((await signer).contentWindow).postMessage(
+        event.data.approve,
+        url.origin,
+        [event.ports[0]],
+      );
+    },
+  );
   // What lend.js's `worker` answers a script handed it.
   /** @typedef {'running' | { error: string }} Started */
   /**
@@ -46,7 +56,7 @@
   const ask = (message) =>
     new Promise((done) => {
       const { port1, port2 } = new MessageChannel();
-      port1.onmessage = (e) => done(e.data);
+      port1.onmessage = (event) => done(event.data);
       if (worker()) /** @type {ServiceWorker} */ (worker()).postMessage(message, [port2]);
       else done({ error: 'no worker serves this page' });
     });
@@ -59,24 +69,27 @@
   const pairs = (line) =>
     line
       .split('; ')
-      .filter((c) => c.includes('='))
-      .map((c) => [c.slice(0, c.indexOf('=')), c.slice(c.indexOf('=') + 1)]);
+      .filter((cookie) => cookie.includes('='))
+      .map((cookie) => [
+        cookie.slice(0, cookie.indexOf('=')),
+        cookie.slice(cookie.indexOf('=') + 1),
+      ]);
   const jar = new Map(pairs(me.searchParams.get('c') ?? ''));
   Object.defineProperty(Document.prototype, 'cookie', {
     configurable: true,
-    get: () => [...jar].map(([n, v]) => `${n}=${v}`).join('; '),
+    get: () => [...jar].map(([name, value]) => `${name}=${value}`).join('; '),
     set: (line) => {
       // `split` gives at least one part, the empty string's included.
       const [pair, ...attrs] = /** @type {[string, ...string[]]} */ (String(line).split(';'));
       const eq = pair.indexOf('=');
       if (eq < 1) return;
-      const gone = attrs.some((a) => {
-        const [k, v = ''] = /** @type {[string, ...string[]]} */ (
-          a.split('=').map((s) => s.trim())
+      const gone = attrs.some((attr) => {
+        const [name, value = ''] = /** @type {[string, ...string[]]} */ (
+          attr.split('=').map((part) => part.trim())
         );
         return (
-          (/^max-age$/i.test(k) && Number(v) <= 0) ||
-          (/^expires$/i.test(k) && Date.parse(v) < Date.now())
+          (/^max-age$/i.test(name) && Number(value) <= 0) ||
+          (/^expires$/i.test(name) && Date.parse(value) < Date.now())
         );
       });
       if (gone) jar.delete(pair.slice(0, eq).trim());
@@ -94,23 +107,28 @@
   const takeIn = (line) => {
     if (line === null) return;
     jar.clear();
-    for (const [n, v] of pairs(line)) jar.set(n, v);
+    for (const [name, value] of pairs(line)) jar.set(name, value);
   };
   const fetched = window.fetch;
-  /** @param {Parameters<typeof fetch>} a */
-  window.fetch = function (...a) {
-    return fetched.apply(this, a).then((r) => (takeIn(r.headers.get(PAGE_COOKIES)), r));
+  /** @param {Parameters<typeof fetch>} args */
+  window.fetch = function (...args) {
+    return fetched.apply(this, args).then((response) => {
+      takeIn(response.headers.get(PAGE_COOKIES));
+      return response;
+    });
   };
+  // Unbound on purpose: it is called by `apply` below, with the request as `this`.
+  // oxlint-disable-next-line typescript/unbound-method
   const opened = XMLHttpRequest.prototype.open;
   // Either of `open`'s two forms, `async` and after it optional.
-  /** @param {[string, string | URL, boolean?, (string | null)?, (string | null)?]} a */
-  XMLHttpRequest.prototype.open = function (...a) {
+  /** @param {[string, string | URL, boolean?, (string | null)?, (string | null)?]} args */
+  XMLHttpRequest.prototype.open = function (...args) {
     this.addEventListener(
       'readystatechange',
       () => this.readyState === 2 && takeIn(this.getResponseHeader(PAGE_COOKIES)),
     );
     // `apply` reads `open`'s last form, whose `async` is not optional.
-    return opened.apply(this, /** @type {Parameters<typeof opened>} */ (a));
+    return opened.apply(this, /** @type {Parameters<typeof opened>} */ (args));
   };
 
   // What the constructor's `Object.assign` puts on each socket, which tsc
@@ -142,21 +160,21 @@
           this.fire(new Event('open'));
         }
         if ('message' in data) {
-          const d = data.message;
+          const said = data.message;
           this.fire(
             new MessageEvent('message', {
               data:
-                typeof d !== 'string' &&
+                typeof said !== 'string' &&
                 /** @type {Assigned} */ (/** @type {unknown} */ (this)).binaryType === 'blob'
-                  ? new Blob([d])
-                  : d,
+                  ? new Blob([said])
+                  : said,
             }),
           );
         }
         if ('closed' in data) {
-          const opened = this.readyState > 0;
+          const ready = this.readyState > 0;
           this.readyState = 3;
-          if (!opened || data.closed === 1006) this.fire(new Event('error'));
+          if (!ready || data.closed === 1006) this.fire(new Event('error'));
           this.fire(
             new CloseEvent('close', {
               code: data.closed,
@@ -189,7 +207,8 @@
     send(data) {
       if (this.readyState !== 1)
         throw new DOMException('the socket is not open', 'InvalidStateError');
-      if (data instanceof Blob) data.arrayBuffer().then((send) => this.port.postMessage({ send }));
+      if (data instanceof Blob)
+        void data.arrayBuffer().then((send) => this.port.postMessage({ send }));
       // A typed array's `slice`; a DataView has none, and throws here.
       else
         this.port.postMessage({
@@ -210,11 +229,11 @@
   // `CONNECTING` and the rest are on it by `Object.assign`, just above.
   window.WebSocket = /** @type {typeof WebSocket} */ (/** @type {unknown} */ (Socket));
 
-  if (navigator.serviceWorker) {
-    navigator.serviceWorker.register = async (script) => {
+  if (workers) {
+    workers.register = async (script) => {
       const said = await ask({ worker: new URL(script, location.href).href });
-      if (said !== 'running') throw new TypeError(`the app's worker did not start: ${said?.error}`);
-      return navigator.serviceWorker.ready;
+      if (said !== 'running') throw new TypeError(`the app's worker did not start: ${said.error}`);
+      return workers.ready;
     };
   }
 })();

@@ -80,19 +80,19 @@ import { spoken } from '../question.js?v=__VERSION__';
  */
 
 /** @param {string} name */
-const done = (name) => (/** @type {Brought} */ r) =>
-  r.already
-    ? `${spoken(r.app)} is on the table already.`
-    : `You brought ${spoken(r.app)} to ${name}: everyone in it can open it in a few seconds.`;
-const BUSY = 'a bring is under way, and is answered first',
-  TRIES = 4;
-// Whether app `a` is on group `g`'s table, as its read `lent` says.
+const done = (name) => (/** @type {Brought} */ answer) =>
+  answer.already
+    ? `${spoken(answer.app)} is on the table already.`
+    : `You brought ${spoken(answer.app)} to ${name}: everyone in it can open it in a few seconds.`;
+const BUSY = 'a bring is under way, and is answered first';
+const TRIES = 4;
+// Whether `app` is on `group`'s table, as its read `lent` says.
 /**
- * @param {ShelfGroup} g
+ * @param {ShelfGroup} group
  * @param {ShelfLent[]} lent
  */
-const on = (g, lent) => (/** @type {string} */ a) =>
-  lent.some((l) => l.group === g.id && l.kind === a);
+const on = (group, lent) => (/** @type {string} */ app) =>
+  lent.some((lend) => lend.group === group.id && lend.kind === app);
 /**
  * The shelf's machine, bringing by the page's `bring` and reading the
  * group again by its `after`.
@@ -103,76 +103,84 @@ const on = (g, lent) => (/** @type {string} */ a) =>
  */
 export const SHELF = (bring, after) => ({
   states: { bring: ['idle', 'bringing', 'brought', 'refused'] },
-  step: (s, m) => {
-    switch (m.type) {
+  step: (state, message) => {
+    switch (message.type) {
       case 'tick':
-        return s.at.bring === 'bringing'
-          ? no(s, BUSY)
+        return state.at.bring === 'bringing'
+          ? no(state, BUSY)
           : go(
-              s,
+              state,
               {},
-              { ticked: m.on ? [...s.ticked, m.app] : s.ticked.filter((a) => a !== m.app) },
+              {
+                ticked: message.on
+                  ? [...state.ticked, message.app]
+                  : state.ticked.filter((app) => app !== message.app),
+              },
             );
       case 'fold':
-        return go(s, {}, { open: m.open });
+        return go(state, {}, { open: message.open });
       case 'bring':
-        return s.at.bring === 'bringing'
-          ? no(s, BUSY)
+        return state.at.bring === 'bringing'
+          ? no(state, BUSY)
           : go(
-              s,
+              state,
               { bring: 'bringing' },
-              { name: m.name },
-              { run: 'bring', g: m.g, apps: m.apps, failed: 'unbrought' },
+              { name: message.name },
+              { run: 'bring', g: message.g, apps: message.apps, failed: 'unbrought' },
             );
       case 'brought':
         // `name` is the bring's, which this answers.
         return ((apps) =>
           go(
-            s,
+            state,
             { bring: 'brought' },
             {
               said:
-                m.answers.map(done(/** @type {string} */ (s.name))).join(' ') ||
+                message.answers.map(done(/** @type {string} */ (state.name))).join(' ') ||
                 'Tick something to bring first.',
-              brought: [...s.brought, ...apps],
-              ticked: s.ticked.filter((a) => !apps.includes(a)),
+              brought: [...state.brought, ...apps],
+              ticked: state.ticked.filter((app) => !apps.includes(app)),
               tries: 0,
             },
             { run: 'after', ms: 0, failed: 'told' },
-          ))(m.answers.map((r) => r.app));
+          ))(message.answers.map((answer) => answer.app));
       case 'told':
-        return go(s, {});
+        return go(state, {});
       case 'listed': {
         // `brought` sets `tries` to 0, and it is the one way to `brought`.
-        const tries = /** @type {number} */ (s.tries);
-        return !m.missing.length || s.at.bring !== 'brought'
-          ? go(s, {})
-          : tries >= TRIES
-            ? no(s, `${m.why} not listed after ${TRIES} reads again; the next read says it`)
-            : go(
-                s,
-                {},
-                { tries: tries + 1 },
-                { run: 'after', ms: 1000 * 2 ** tries, failed: 'told' },
-              );
+        const tries = /** @type {number} */ (state.tries);
+        if (!message.missing.length || state.at.bring !== 'brought') return go(state, {});
+        if (tries >= TRIES)
+          return no(
+            state,
+            `${message.why} not listed after ${TRIES} reads again; the next read says it`,
+          );
+        return go(
+          state,
+          {},
+          { tries: tries + 1 },
+          { run: 'after', ms: 1000 * 2 ** tries, failed: 'told' },
+        );
       }
       case 'unbrought':
-        return go(s, { bring: 'refused' }, { said: `Nothing was brought: ${m.why}` });
+        return go(state, { bring: 'refused' }, { said: `Nothing was brought: ${message.why}` });
       default:
-        return assertNever(s, m, 'the shelf');
+        return assertNever(state, message, 'the shelf');
     }
   },
   io: {
     after: ({ ms }) =>
-      new Promise((r) => setTimeout(r, ms)).then(
-        () => (after(), { type: 'told', why: `the group is read again, ${ms} ms on` }),
-      ),
-    bring: ({ g, apps }) =>
-      bring(g, apps).then((answers) => ({
+      new Promise((resolve) => setTimeout(resolve, ms)).then(() => {
+        after();
+        return { type: 'told', why: `the group is read again, ${ms} ms on` };
+      }),
+    bring: ({ g: group, apps }) =>
+      bring(group, apps).then((answers) => ({
         type: 'brought',
         answers,
         why:
-          answers.map((r) => `${r.app}${r.already ? ' already' : ''}`).join(', ') || 'none ticked',
+          answers.map((answer) => `${answer.app}${answer.already ? ' already' : ''}`).join(', ') ||
+          'none ticked',
       })),
   },
 });
@@ -198,38 +206,38 @@ const FIRST = { at: { bring: 'idle' }, ticked: [], brought: [], open: false, sai
  * @param {ShelfProps<G>} props
  */
 export function Shelf(props) {
-  const [s, send] = useMachine(() => machine('SHELF', SHELF(props.bring, props.after), FIRST));
+  const [state, send] = useMachine(() => machine('SHELF', SHELF(props.bring, props.after), FIRST));
   // Each read the page gives after a bring: what it brought and the read does not list yet.
   useEffect(
     () =>
       void (
-        s.at.bring === 'brought' &&
+        state.at.bring === 'brought' &&
         ((missing) => send({ type: 'listed', missing, why: missing.join(', ') || 'all listed' }))(
-          s.brought.filter((a) => !on(props.g, props.lent)(a)),
+          state.brought.filter((app) => !on(props.g, props.lent)(app)),
         )
       ),
     [props.lent],
   );
-  return drawn(s, send, props);
+  return drawn(state, send, props);
 }
 
-// `lent` and `shelf` as the group's last read gives them; `g` its id and name.
+// `lent` and `shelf` as the group's last read gives them; `group` its id and name.
 /**
  * The shelf drawn from its state.
  * @template {ShelfGroup} G
- * @param {ShelfState} s
+ * @param {ShelfState} state
  * @param {Store<ShelfState, ShelfMessage<G>>['dispatch']} send
  * @param {Pick<ShelfProps<G>, 'g' | 'lent' | 'shelf' | 'joined'>} props
  * @returns {Drawn}
  */
-export function drawn(s, send, { g, lent, shelf, joined }) {
-  const name = g.name ?? 'your group',
-    listed = (/** @type {Shelved} */ a) => on(g, lent)(a.name),
-    offered = shelf.filter((a) => !listed(a) && !s.brought.includes(a.name));
-  const tick = (/** @type {string} */ a) => (/** @type {Targeted<HTMLInputElement>} */ e) =>
-    send({ type: 'tick', app: a, on: e.currentTarget.checked });
-  const section = html`<section><h3>Bring things to the table</h3>${shelf.filter(listed).map((a) => html`<p>${spoken(a.name)} is on the table.</p>`)}<p>${offered.length ? `These come with svrngs. Bring one, and everyone in ${name} opens it on their own computer or phone, while any computer in ${name} is on.` : ''}</p>${offered.map((a) => html`<p><label><input type="checkbox" disabled=${s.at.bring === 'bringing'} checked=${s.ticked.includes(a.name)} onChange=${tick(a.name)} />${` ${spoken(a.name)}: ${a.words}`}</label></p>`)}${(offered.length > 0 || s.said) && html`<p><${Act} answer=${offered.length ? 'beside' : 'instead'} words=${`Bring the ticked ones to ${name}`} doing=${{ state: s.at.bring === 'bringing' ? 'busy' : s.at.bring, said: s.said && ` ${s.said}` }} on=${{ type: 'bring', g, name, apps: offered.map((a) => a.name).filter((a) => s.ticked.includes(a)) }} send=${send} />${s.at.bring === 'bringing' && ' Bringing…'}</p>`}</section>`;
+export function drawn(state, send, { g: group, lent, shelf, joined }) {
+  const name = group.name ?? 'your group';
+  const listed = (/** @type {Shelved} */ app) => on(group, lent)(app.name);
+  const offered = shelf.filter((app) => !listed(app) && !state.brought.includes(app.name));
+  const tick = (/** @type {string} */ app) => (/** @type {Targeted<HTMLInputElement>} */ ticked) =>
+    send({ type: 'tick', app: app, on: ticked.currentTarget.checked });
+  const section = html`<section><h3>Bring things to the table</h3>${shelf.filter(listed).map((app) => html`<p>${spoken(app.name)} is on the table.</p>`)}<p>${offered.length ? `These come with svrngs. Bring one, and everyone in ${name} opens it on their own computer or phone, while any computer in ${name} is on.` : ''}</p>${offered.map((app) => html`<p><label><input type="checkbox" disabled=${state.at.bring === 'bringing'} checked=${state.ticked.includes(app.name)} onChange=${tick(app.name)} />${` ${spoken(app.name)}: ${app.words}`}</label></p>`)}${(offered.length > 0 || state.said) && html`<p><${Act} answer=${offered.length ? 'beside' : 'instead'} words=${`Bring the ticked ones to ${name}`} doing=${{ state: state.at.bring === 'bringing' ? 'busy' : state.at.bring, said: state.said && ` ${state.said}` }} on=${{ type: 'bring', g: group, name, apps: offered.map((app) => app.name).filter((app) => state.ticked.includes(app)) }} send=${send} />${state.at.bring === 'bringing' && ' Bringing…'}</p>`}</section>`;
   return joined
-    ? html`<${Fold} summary=${`Bring more to ${name}`} fold="shelf" open=${s.open} send=${send}>${section}<//>`
+    ? html`<${Fold} summary=${`Bring more to ${name}`} fold="shelf" open=${state.open} send=${send}>${section}<//>`
     : section;
 }

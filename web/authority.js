@@ -23,7 +23,7 @@ export async function maySign(fetched, clients, origin) {
     }
   };
   if (fetched.request.mode === 'navigate') return ours(fetched.request.referrer);
-  const client = fetched.clientId && (await clients.get(fetched.clientId));
+  const client = fetched.clientId ? await clients.get(fetched.clientId) : undefined;
   const from = fetched.request.headers.get('origin');
   return !!client && ours(client.url) && (!from || from === origin);
 }
@@ -87,11 +87,13 @@ export function framing(header, signer) {
     .split(',')
     .map((one) => {
       const directives = one.split(';');
-      const words = directives.map((d) => d.trim().split(/\s+/));
-      // `split` always answers one word at least, so `n` is.
+      const words = directives.map((directive) => directive.trim().split(/\s+/));
+      // `split` always answers one word at least, so `first` is.
       const at = (/** @type {string} */ name) =>
-        words.findIndex(([n]) => /** @type {string} */ (n).toLowerCase() === name);
-      const by = [Framed.Own, Framed.Child, Framed.Default].find((d) => at(d) >= 0) ?? Framed.Open;
+        words.findIndex(([first]) => /** @type {string} */ (first).toLowerCase() === name);
+      const by =
+        [Framed.Own, Framed.Child, Framed.Default].find((directive) => at(directive) >= 0) ??
+        Framed.Open;
       framed.push(by);
       if (by === Framed.Open) return one;
       // Not `Open`, `by` is a directive the policy holds, so `at(by)` finds it.
@@ -110,7 +112,7 @@ export function framing(header, signer) {
 }
 
 /**
- * A lend as a pass names it, in the hand-off (web/page/index.js `handing`).
+ * A lend as a pass names it, in the hand-off (web/page/hand.js `handing`).
  * @typedef {object} Passed
  * @property {string} label
  * @property {string} key
@@ -125,7 +127,7 @@ export function framing(header, signer) {
 
 /**
  * The hand-off: what the group's page hands a lend's origin in the
- * fragment as it opens it (web/page/index.js `handing`), read there by
+ * fragment as it opens it (web/page/hand.js `handing`), read there by
  * open.html (web/open.js). `proof` is the open's seal (`sealOpen`).
  * @typedef {object} Handoff
  * @property {string} label the lend opened
@@ -134,7 +136,8 @@ export function framing(header, signer) {
  * @property {string | null} writes the pass that writes its kind's part of the record as you
  * @property {string} [group] the group's id; none for a guest's open
  * @property {string} holder the holder's public key
- * @property {string | null} seed the holder's seed, as hex, when it is new
+ * @property {string | null} [seed] the holder's seed, as hex, when it is new; gone
+ *   once open.js hands the open on with no need of it
  * @property {boolean} raw whether the holder goes as bytes
  * @property {string | null} relay
  * @property {string} page the group's page, to come back to
@@ -157,21 +160,21 @@ const OPEN_FIELDS = [
   'page',
   'unanswered',
 ];
-/** @param {Handoff} h */
-export const openMessage = (h) =>
-  JSON.stringify(Object.fromEntries(OPEN_FIELDS.map((k) => [k, h[k]])));
+/** @param {Handoff} handoff */
+export const openMessage = (handoff) =>
+  JSON.stringify(Object.fromEntries(OPEN_FIELDS.map((field) => [field, handoff[field]])));
 /** @param {Uint8Array} bytes */
-const hex = (bytes) => [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
+const hex = (bytes) => [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('');
 /** @param {string} text */
-const bytes = (text) => Uint8Array.from(text.match(/../g) ?? [], (s) => parseInt(s, 16));
+const bytes = (text) => Uint8Array.from(text.match(/../g) ?? [], (pair) => parseInt(pair, 16));
 /**
- * @param {Handoff} h
+ * @param {Handoff} handoff
  * @param {Uint8Array<ArrayBuffer>} iv
  */
-const sealing = (h, iv) => ({
+const sealing = (handoff, iv) => ({
   name: 'AES-GCM',
   iv,
-  additionalData: new TextEncoder().encode(openMessage(h)),
+  additionalData: new TextEncoder().encode(openMessage(handoff)),
 });
 // The open's seal (svrn-docs rings/current/HOLDER_APPROVAL.md §3.D): the
 // approver's 32-byte seed under a fresh key W, bound to the open's message,
@@ -179,43 +182,44 @@ const sealing = (h, iv) => ({
 // app's address; W only in the group origin's `__Host-` cookie, which the
 // app can neither read nor plant.
 /**
- * @param {Handoff} h
+ * @param {Handoff} handoff
  * @param {Uint8Array<ArrayBuffer>} seed
  */
-export async function sealOpen(h, seed) {
-  const w = crypto.getRandomValues(new Uint8Array(32)),
-    iv = crypto.getRandomValues(new Uint8Array(12));
-  const key = await crypto.subtle.importKey('raw', w, 'AES-GCM', false, ['encrypt']);
+export async function sealOpen(handoff, seed) {
+  const sealKey = crypto.getRandomValues(new Uint8Array(32));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await crypto.subtle.importKey('raw', sealKey, 'AES-GCM', false, ['encrypt']);
   return {
-    proof: hex(iv) + hex(new Uint8Array(await crypto.subtle.encrypt(sealing(h, iv), key, seed))),
-    w: hex(w),
+    proof:
+      hex(iv) + hex(new Uint8Array(await crypto.subtle.encrypt(sealing(handoff, iv), key, seed))),
+    w: hex(sealKey),
   };
 }
 // The seed the seal holds, opened with W; none where W or the open differ.
 /**
- * @param {Handoff} h
- * @param {string | null} w
+ * @param {Handoff} handoff
+ * @param {string | null} sealKey
  */
-export async function openSeal(h, w) {
+export async function openSeal(handoff, sealKey) {
   if (
-    typeof h.proof !== 'string' ||
-    !/^[0-9a-f]{24,}$/.test(h.proof) ||
-    h.proof.length % 2 ||
-    !/^[0-9a-f]{64}$/.test(w ?? '')
+    typeof handoff.proof !== 'string' ||
+    !/^[0-9a-f]{24,}$/.test(handoff.proof) ||
+    handoff.proof.length % 2 ||
+    !/^[0-9a-f]{64}$/.test(sealKey ?? '')
   )
     return null;
   try {
-    // Tested above, `w` is 64 hex.
+    // Tested above, `sealKey` is 64 hex.
     const key = await crypto.subtle.importKey(
       'raw',
-      bytes(/** @type {string} */ (w)),
+      bytes(/** @type {string} */ (sealKey)),
       'AES-GCM',
       false,
       ['decrypt'],
     );
-    const all = bytes(h.proof);
+    const all = bytes(handoff.proof);
     return new Uint8Array(
-      await crypto.subtle.decrypt(sealing(h, all.slice(0, 12)), key, all.slice(12)),
+      await crypto.subtle.decrypt(sealing(handoff, all.slice(0, 12)), key, all.slice(12)),
     );
   } catch {
     return null;
@@ -234,8 +238,8 @@ export const handoffCookie = (label) => `__Host-svrngs-${label}`;
 export function hostCookie(cookies, name) {
   const found = cookies
     .split(';')
-    .map((c) => c.trim())
-    .filter((c) => c.startsWith(`${name}=`));
+    .map((cookie) => cookie.trim())
+    .filter((cookie) => cookie.startsWith(`${name}=`));
   // One found, `found[0]` is it.
   return found.length === 1 ? /** @type {string} */ (found[0]).slice(name.length + 1) : null;
 }
@@ -248,7 +252,9 @@ export async function holderMatches(key, holder) {
   const publicKey = await crypto.subtle.importKey(
     'raw',
     // 64 hex, tested above, so `match` finds 32 pairs.
-    Uint8Array.from(/** @type {RegExpMatchArray} */ (holder.match(/../g)), (s) => parseInt(s, 16)),
+    Uint8Array.from(/** @type {RegExpMatchArray} */ (holder.match(/../g)), (pair) =>
+      parseInt(pair, 16),
+    ),
     'Ed25519',
     false,
     ['verify'],

@@ -37,4 +37,4 @@ const PARTS = {
 
 /** @param {ActsProps} props */
 export const Acts = ({ parts, notes = {}, open, send }) =>
-  html`<section id="acts"><${Fold} summary="What acts as you" heading=${true} fold="acts" open=${open} send=${send}>${/** @type {[Part, string][]} */ (Object.entries(PARTS)).map(([k, head]) => html`<div>${(parts[k]?.length ?? 0) > 0 && [html`<h3>${head}</h3>`, notes[k] && html`<p>${notes[k]}</p>`, parts[k]]}</div>`)}<//></section>`;
+  html`<section id="acts"><${Fold} summary="What acts as you" heading=${true} fold="acts" open=${open} send=${send}>${/** @type {[Part, string][]} */ (Object.entries(PARTS)).map(([part, head]) => html`<div>${(parts[part]?.length ?? 0) > 0 && [html`<h3>${head}</h3>`, notes[part] && html`<p>${notes[part]}</p>`, parts[part]]}</div>`)}<//></section>`;

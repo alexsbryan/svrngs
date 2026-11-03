@@ -8,17 +8,9 @@
 // again on HOME's `again` and `visible`, each a new `round` from HOME.
 // What each read draws is each feature's, in its place (PLACES), from
 // home/page/<file>.js: a file that draws nothing draws nothing here.
-import {
-  ask,
-  go,
-  html,
-  late,
-  machine,
-  no,
-  useEffect,
-  useMachine,
-  whose,
-} from '../ui/kit.js?v=__VERSION__';
+import { html, useEffect, useMachine } from '../ui/view.js?v=__VERSION__';
+import { ask, go, late, machine, no } from '../ui/machine.js?v=__VERSION__';
+import { whose } from '../question.js?v=__VERSION__';
 /** @import { Core, Effect as AnyEffect, Machine, Step, Store } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 /** @import { Lend, Named, Removal, PeopleRow, Shelved } from '../question.js?v=__VERSION__' */
@@ -143,9 +135,12 @@ export const post = (path, body) =>
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
-  }).then(async (r) =>
-    ((b) => (r.ok ? b : Promise.reject(new Error(b.error || `answered ${r.status}`))))(
-      await r.json().catch(() => ({})),
+  }).then(async (response) =>
+    ((/** @type {{ error?: string }} */ answer) =>
+      response.ok
+        ? answer
+        : Promise.reject(new Error(answer.error || `answered ${response.status}`)))(
+      await response.json().catch(() => ({})),
     ),
   );
 // A route's answer, or its words when it refuses, never read as empty
@@ -156,68 +151,75 @@ export const post = (path, body) =>
  * @returns {Promise<any>}
  */
 export const get = (path) =>
-  fetch(path).then(async (r) =>
-    r.ok
-      ? r.json()
+  fetch(path).then(async (response) =>
+    response.ok
+      ? response.json()
       : Promise.reject(
           new Error(
-            r.status === 401
+            response.status === 401
               ? 'this page’s session has ended. Open svrngs from your Applications, or on Linux your applications menu, and it opens here again'
-              : (await r.json().catch(() => ({}))).error || `answered ${r.status}`,
+              : /** @type {{ error?: string }} */ (await response.json().catch(() => ({}))).error ||
+                  `answered ${response.status}`,
           ),
         ),
   );
-// A message to a feature (`m.flow`, its file's name) is taken by its
+// A message to a feature (`message.flow`, its file's name) is taken by its
 // `take`, or refused by name.
 /**
  * @template S
  * @template {AnyEffect} E
  * @param {Flows<S, E>} flows
- * @param {S} s
- * @param {Taken} m
+ * @param {S} state
+ * @param {Taken} message
  * @returns {Step<S, E>}
  */
-export const offered = (flows, s, m, f = flows[m.flow]) =>
-  f?.take ? f.take(s, m) : no(s, `nothing here takes ${m.type}`);
+export const offered = (flows, state, message, flow = flows[message.flow]) =>
+  flow?.take ? flow.take(state, message) : no(state, `nothing here takes ${message.type}`);
 
 // Each place of a group's section, in v1's order (home.js@19b63b2b:116-232): the
 // index, its people, its folder, the links made here, leaving, removals,
 // who is visiting, the shelf, what is open to this WiFi, and its link to a screen (`show`);
 // then what it read, told to HOME for "What acts as you" (home/page/acts.js `Told`), drawing nothing.
 const PLACES = /** @type {const} */ ([
-    'index',
-    'people',
-    'folder',
-    'links',
-    'leave',
-    'removals',
-    'visits',
-    'shelf',
-    'wifi',
-    'show',
-    'told',
-  ]),
-  ROUTES = { people: '/v1/rail/people', lends: '/v1/lends' };
+  'index',
+  'people',
+  'folder',
+  'links',
+  'leave',
+  'removals',
+  'visits',
+  'shelf',
+  'wifi',
+  'show',
+  'told',
+]);
+const ROUTES = { people: '/v1/rail/people', lends: '/v1/lends' };
 // Both read, each counted (ui/machine.js `ask`), the round's why traced.
 /**
- * @param {State} s
- * @param {Round} m
+ * @param {State} state
+ * @param {Round} message
  * @returns {Step<State, Effect>}
  */
-const reading = (s, m, [a, p] = ask(s, 'people'), [asked, l] = ask({ asked: a }, 'lends')) =>
+const reading = (
+  state,
+  message,
+  [peopleAsked, people] = ask(state, 'people'),
+  [asked, lends] = ask({ asked: peopleAsked }, 'lends'),
+) =>
   go(
-    s,
+    state,
     { people: 'reading', lends: 'reading' },
     { asked },
     .../** @type {[Kind, number][]} */ ([
-      ['people', p],
-      ['lends', l],
+      ['people', people],
+      ['lends', lends],
     ]).map(
-      ([kind, n]) => /** @type {Effect} */ ({ run: 'get', kind, n, id: s.id, failed: 'unread' }),
+      ([kind, serial]) =>
+        /** @type {Effect} */ ({ run: 'get', kind, n: serial, id: state.id, failed: 'unread' }),
     ),
   );
 // A message no case takes is offered to the feature it names, as HOME's
-// are: none sent to GROUP names one, so `m` there is `never`, and a message
+// are: none sent to GROUP names one, so `message` there is `never`, and a message
 // type GROUP declares and no case takes fails `types` at `offered`.
 /**
  * @param {Flows<State, Effect>} flows
@@ -225,33 +227,37 @@ const reading = (s, m, [a, p] = ask(s, 'people'), [asked, l] = ask({ asked: a },
  */
 const GROUP = (flows) => ({
   states: { people: ['reading', 'read', 'unread'], lends: ['reading', 'read', 'unread'] },
-  step: (s, m) => {
-    switch (m.type) {
+  step: (state, message) => {
+    switch (message.type) {
       case 'read':
       case 'again':
       case 'visible':
-        return reading(s, m);
+        return reading(state, message);
       case 'answered':
-        return late(s, m.kind, m.n)
-          ? no(s, late(s, m.kind, m.n))
+        return late(state, message.kind, message.n)
+          ? no(state, late(state, message.kind, message.n))
           : go(
-              s,
-              /** @type {Partial<State['at']>} */ ({ [m.kind]: 'read' }),
-              /** @type {Partial<State>} */ ({ [m.kind]: m.body }),
+              state,
+              /** @type {Partial<State['at']>} */ ({ [message.kind]: 'read' }),
+              /** @type {Partial<State>} */ ({ [message.kind]: message.body }),
             );
       case 'unread':
-        return late(s, m.kind, m.n)
-          ? no(s, late(s, m.kind, m.n))
-          : go(s, /** @type {Partial<State['at']>} */ ({ [m.kind]: 'unread' }), { why: m.why });
+        return late(state, message.kind, message.n)
+          ? no(state, late(state, message.kind, message.n))
+          : go(
+              state,
+              /** @type {Partial<State['at']>} */ ({ [message.kind]: 'unread' }),
+              { why: message.why },
+            );
       default:
-        return offered(flows, s, m);
+        return offered(flows, state, message);
     }
   },
   io: {
-    get: ({ kind, n, id }) =>
+    get: ({ kind, n: serial, id }) =>
       get(`${ROUTES[kind]}?namespace=${encodeURIComponent(id)}`).then(
-        (body) => ({ type: 'answered', kind, n, body, why: `${kind} ${n}` }),
-        (e) => ({ type: 'unread', kind, n, why: e.message }),
+        (body) => ({ type: 'answered', kind, n: serial, body, why: `${kind} ${serial}` }),
+        (error) => ({ type: 'unread', kind, n: serial, why: error.message }),
       ),
   },
 });
@@ -298,22 +304,43 @@ const BACKUP = {
  * @property {string} [joined]
  */
 
+// The colour a group is drawn in on every page, one of look.css's twelve
+// `data-colour`s, derived from its id.
+/** @param {string} id */
+export const colour = (id) => {
+  let hash = 0;
+  for (const char of id) hash = (hash * 31 + char.charCodeAt(0)) % 12;
+  return hash;
+};
 // The section, in its group's colour, derived from its id (look.css
 // `data-colour`), headed by its name and whose it is (#138); when this
 // computer meets the group at its fallback, said under it (surface.rs
 // `Held::fallback`; relay fallbacks); who is in it unread, or the person
 // removed, said and nothing read (home.js@19b63b2b:113-114).
+// Below a group's heading: who is in it could not be read, this person
+// was removed from it, or its places, once it is read.
+/**
+ * @param {Group} group
+ * @param {string} name
+ * @param {Omit<GroupProps, 'g'>} props
+ */
+const below = (group, name, props) => {
+  if (group.removed === null) return html`<p>This computer could not read who is in ${name}.</p>`;
+  if (group.removed)
+    return html`<p>You are no longer in ${name}. What you already have stays on this computer; nothing new reaches it.</p>`;
+  return html`<${Read} g=${group} ...${props} />`;
+};
 /** @param {GroupProps} props */
-export const Group = ({ g, ...props }) =>
+export const Group = ({ g: group, ...props }) =>
   ((name) =>
-    html`<section data-colour=${[...g.id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 12, 0)}><h2>${g.name ?? 'A group whose name this computer cannot read'}${g.made && html`<small> (${whose(g.made)})</small>`}</h2>${g.fallback && html`<p class="said">${BACKUP[g.fallback](name)}</p>`}${g.removed === null ? html`<p>This computer could not read who is in ${name}.</p>` : g.removed ? html`<p>You are no longer in ${name}. What you already have stays on this computer; nothing new reaches it.</p>` : html`<${Read} g=${g} ...${props} />`}</section>`)(
-    g.name ?? 'this group',
+    html`<section data-colour=${colour(group.id)}><h2>${group.name ?? 'A group whose name this computer cannot read'}${group.made && html`<small> (${whose(group.made)})</small>`}</h2>${group.fallback && html`<p class="said">${BACKUP[group.fallback](name)}</p>`}${below(group, name, props)}</section>`)(
+    group.name ?? 'this group',
   );
 /** @param {GroupProps} props */
-function Read({ g, round, places, flows, home, me, joined }) {
-  const [s, send] = useMachine(() =>
-    machine('GROUP', GROUP(flows), { at: { people: 'reading', lends: 'reading' }, id: g.id }),
+function Read({ g: group, round, places, flows, home, me, joined }) {
+  const [state, send] = useMachine(() =>
+    machine('GROUP', GROUP(flows), { at: { people: 'reading', lends: 'reading' }, id: group.id }),
   );
   useEffect(() => send({ type: round.type }), [round]);
-  return html`${PLACES.map((k) => places[k] && html`<${places[k]} g=${g} s=${s} send=${send} home=${home} me=${me} joined=${joined} />`)}${(s.at.people === 'unread' || s.at.lends === 'unread') && html`<p>This computer cannot read what ${g.name ?? 'this group'} lends: ${s.why}</p>`}`;
+  return html`${PLACES.map((place) => places[place] && html`<${places[place]} g=${group} s=${state} send=${send} home=${home} me=${me} joined=${joined} />`)}${(state.at.people === 'unread' || state.at.lends === 'unread') && html`<p>This computer cannot read what ${group.name ?? 'this group'} lends: ${state.why}</p>`}`;
 }

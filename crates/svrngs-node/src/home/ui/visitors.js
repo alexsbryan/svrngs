@@ -22,4 +22,4 @@ import { called, until } from '../question.js?v=__VERSION__';
 
 /** @param {VisitingProps} props */
 export const Visiting = ({ vs, rows = [] }) =>
-  html`<ul class="visiting">${[...vs].sort((a, b) => a.host.localeCompare(b.host)).map((v) => html`<li>${`${v.guest}, ${called(rows, v.host_key) ?? v.host}’s guest, until ${until(v)}`}</li>`)}</ul>`;
+  html`<ul class="visiting">${[...vs].sort((left, right) => left.host.localeCompare(right.host)).map((visit) => html`<li>${`${visit.guest}, ${called(rows, visit.host_key) ?? visit.host}’s guest, until ${until(visit)}`}</li>`)}</ul>`;

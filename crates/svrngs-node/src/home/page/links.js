@@ -8,16 +8,9 @@
 // is made is refused. The link is then said in p.link, in its words, with
 // Copy (ui/copy.js) beside it, its last answer alone, where home.js@19b63b2b:137 appends
 // each (page-join (e)'s fix); a refusal said there in its place.
-import {
-  Act,
-  assertNever,
-  Field,
-  go,
-  html,
-  machine,
-  no,
-  useMachine,
-} from '../ui/kit.js?v=__VERSION__';
+import { html, useMachine } from '../ui/view.js?v=__VERSION__';
+import { assertNever, go, machine, no } from '../ui/machine.js?v=__VERSION__';
+import { Act, Field } from '../ui/parts.js?v=__VERSION__';
 import { COPY, drawn } from '../ui/copy.js?v=__VERSION__';
 import { post } from './group.js?v=__VERSION__';
 /** @import { Group, PlaceProps } from './group.js?v=__VERSION__' */
@@ -75,30 +68,35 @@ const LINK = (group) => ({
   io: {
     make: ({ asked, visit }) =>
       post('/link', { group, device: asked.device, ...(visit && { visit: Number(visit) }) }).then(
-        (a) => ({ type: 'made', a, asked, why: a.https ?? a.client }),
+        (answer) => ({ type: 'made', a: answer, asked, why: answer.https ?? answer.client }),
       ),
   },
-  step: (s, m) => {
-    switch (m.type) {
+  step: (state, message) => {
+    switch (message.type) {
       case 'guest':
-        return go(s, {}, { guest: true });
+        return go(state, {}, { guest: true });
       case 'typed':
-        return go(s, {}, { visit: m.value });
+        return go(state, {}, { visit: message.value });
       case 'make':
-        return s.at.link === 'making'
-          ? no(s, 'a link is being made, and is answered first')
+        return state.at.link === 'making'
+          ? no(state, 'a link is being made, and is answered first')
           : go(
-              s,
+              state,
               { link: 'making' },
               {},
-              { run: 'make', asked: m, visit: m.guest && s.visit, failed: 'refused' },
+              {
+                run: 'make',
+                asked: message,
+                visit: message.guest && state.visit,
+                failed: 'refused',
+              },
             );
       case 'made':
-        return go(s, { link: 'made' }, { shown: m });
+        return go(state, { link: 'made' }, { shown: message });
       case 'refused':
-        return go(s, { link: 'refused' }, { why: m.why });
+        return go(state, { link: 'refused' }, { why: message.why });
       default:
-        return assertNever(s, m, 'a link');
+        return assertNever(state, message, 'a link');
     }
   },
 });
@@ -106,16 +104,16 @@ const LINK = (group) => ({
 // says each in turn.
 /** @param {CopyProps} props */
 const Copy = (props) =>
-  ((s, send) => drawn({ ...s, said: s.said.slice(-1) }, send, props))(
+  ((state, send) => drawn({ ...state, said: state.said.slice(-1) }, send, props))(
     ...useMachine(() => machine('COPY', COPY, { at: { copy: 'idle' }, said: [] })),
   );
 const WORDS = {
-    copy: 'Copy the link',
-    copied: ' Copied.',
-    unwritten: ' Select it above to copy it.',
-  },
-  LAST =
-    ' It works for a day, while this computer is on. A new link stops this one letting anyone new in; everyone it let in stays. ';
+  copy: 'Copy the link',
+  copied: ' Copied.',
+  unwritten: ' Select it above to copy it.',
+};
+const LAST =
+  ' It works for a day, while this computer is on. A new link stops this one letting anyone new in; everyone it let in stays. ';
 // The link made, in the words of whom it is for (home.js@19b63b2b:134, :139), kept while
 // the next is made, as v1 keeps it until the answer (home.js@19b63b2b:135).
 /**
@@ -124,7 +122,7 @@ const WORDS = {
  * @param {string} [at]
  * @returns {Drawn[]}
  */
-const said = ({ a, asked }, name, at = a.https ?? a.client) => [
+const said = ({ a: answer, asked }, name, at = answer.https ?? answer.client) => [
   ...(asked.guest
     ? [
         'Send this link to your guest, in any chat: ',
@@ -136,7 +134,7 @@ const said = ({ a, asked }, name, at = a.https ?? a.client) => [
           ? 'Open this link on your other computer or phone; it joins as you, so send it to nobody else: '
           : 'Send this link to the person you are inviting: ',
         html`<code>${at}</code>`,
-        a.https
+        answer.https
           ? ' It opens in a browser, which says how to join from there.'
           : ' They join with svrngs join and this link.',
         LAST,
@@ -150,21 +148,23 @@ const said = ({ a, asked }, name, at = a.https ?? a.client) => [
  */
 
 /** @param {LinksProps} props */
-function Links({ g }) {
-  const [s, send] = useMachine(() =>
-      machine('LINK', LINK(g.id), { at: { link: 'none' }, visit: '172800' }),
-    ),
-    name = g.name ?? 'this group';
+function Links({ g: group }) {
+  const [state, send] = useMachine(() =>
+    machine('LINK', LINK(group.id), { at: { link: 'none' }, visit: '172800' }),
+  );
+  const name = group.name ?? 'this group';
   /**
    * @param {string} words
    * @param {Omit<Make, 'type'>} on
    */
   const act = (words, on) =>
-    html`<${Act} words=${words} doing=${{ state: s.at.link === 'making' ? 'busy' : 'idle' }} on=${{ type: 'make', ...on }} send=${send} />`;
-  // `s.visit` is the Field's string, as `Number` reads it, which is what `/`
+    html`<${Act} words=${words} doing=${{ state: state.at.link === 'making' ? 'busy' : 'idle' }} on=${{ type: 'make', ...on }} send=${send} />`;
+  // `state.visit` is the Field's string, as `Number` reads it, which is what `/`
   // made of it before tsc asked for a number.
-  return html`<p>${act(`Invite someone to ${name}`, { device: false })}${act('Add your phone or another computer', { device: true })}${s.guest ? html`<${Field} name="visit" words="For how long, from when they open the link: " value=${s.visit} options=${[48, 24, 6].map((h) => [h * 3600, `${h} hours`])} send=${send} />${act('Make a link for your guest', { device: false, guest: true, hours: `${Number(s.visit) / 3600} hours` })}` : html`<${Act} words="Have a guest" on=${{ type: 'guest' }} send=${send} />`}</p><p class="link">${s.at.link === 'refused' ? s.why : s.shown && said(s.shown, name)}</p>`;
+  return html`<p>${act(`Invite someone to ${name}`, { device: false })}${act('Add your phone or another computer', { device: true })}${state.guest ? html`<${Field} name="visit" words="For how long, from when they open the link: " value=${state.visit} options=${[48, 24, 6].map((hash) => [hash * 3600, `${hash} hours`])} send=${send} />${act('Make a link for your guest', { device: false, guest: true, hours: `${Number(state.visit) / 3600} hours` })}` : html`<${Act} words="Have a guest" on=${{ type: 'guest' }} send=${send} />`}</p><p class="link">${state.at.link === 'refused' ? state.why : state.shown && said(state.shown, name)}</p>`;
 }
 // Drawn once the group's people are read, as v1 draws it (home.js@19b63b2b:121-139).
 /** @type {{ links: (props: PlaceProps) => Drawn }} */
-export const view = { links: ({ g, s }) => s.people && html`<${Links} g=${g} />` };
+export const view = {
+  links: ({ g: group, s: state }) => state.people && html`<${Links} g=${group} />`,
+};

@@ -19,24 +19,15 @@
 // Lines a carry left unsent are carried again on each read that holds
 // them, where v1 carried them only at the next yes (app.js@19b63b2b:506; page-acts (d)):
 // refused, that carry asks no read again, so it is tried once a read.
-import {
-  Act,
-  Acts,
-  carrying,
-  Changes,
-  deciders,
-  go,
-  html,
-  named,
-  no,
-  once,
-  reading,
-  spoken,
-  useEffect,
-} from '../ui/kit.js?v=__VERSION__';
+import { html, useEffect } from '../ui/view.js?v=__VERSION__';
+import { go, no } from '../ui/machine.js?v=__VERSION__';
+import { Act } from '../ui/parts.js?v=__VERSION__';
+import { Acts } from '../ui/acts.js?v=__VERSION__';
+import { Changes } from '../ui/changes.js?v=__VERSION__';
+import { carrying, deciders, named, once, reading, spoken } from '../question.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
 import { through } from './enter.js?v=__VERSION__';
-import { PASS_LIFE } from './index.js?v=__VERSION__';
+import { PASS_LIFE } from './hand.js?v=__VERSION__';
 import { Used } from './uses.js?v=__VERSION__';
 /** @import { Group, Line, Said } from '../store.js?v=__VERSION__' */
 /** @import { Change } from '../ui/changes.js?v=__VERSION__' */
@@ -82,109 +73,118 @@ import { Used } from './uses.js?v=__VERSION__';
 export const owns = ['folds', 'acting', 'acted'];
 export const states = /** @type {const} */ ({ doing: ['idle', 'busy', 'done', 'refused'] });
 /**
- * @param {State} s
+ * @param {State} state
  * @param {string} key what the act acts on, its answer kept by it
  * @param {Effect} effect
  * @param {Acted} [patch]
  */
-const acting = (s, key, effect, patch = {}) =>
-  s.at.doing === 'busy'
-    ? no(s, `${s.acting} is under way, and is answered first`)
+const acting = (state, key, effect, patch = {}) =>
+  state.at.doing === 'busy'
+    ? no(state, `${state.acting} is under way, and is answered first`)
     : go(
-        s,
+        state,
         { doing: 'busy' },
-        { acting: key, acted: { ...s.acted, [key]: { ...s.acted?.[key], ...patch } } },
+        { acting: key, acted: { ...state.acted, [key]: { ...state.acted?.[key], ...patch } } },
         effect,
       );
 /**
- * @param {State} s
- * @param {Extract<Message, { type: 'acted' | 'unacted' }>} m
+ * @param {State} current
+ * @param {Extract<Message, { type: 'acted' | 'unacted' }>} message
  * @param {'done' | 'refused'} state
  */
-const answered = (s, m, state) =>
-  s.at.doing !== 'busy'
-    ? no(s, 'no act is under way')
+const answered = (current, message, state) =>
+  current.at.doing !== 'busy'
+    ? no(current, 'no act is under way')
     : // Busy, an act is under way, so `acting` names it and `acted` holds it (`acting`).
       go(
-        s,
+        current,
         { doing: state },
         {
           acted: {
-            ...s.acted,
-            [/** @type {string} */ (s.acting)]: {
-              .../** @type {Record<string, Acted>} */ (s.acted)[/** @type {string} */ (s.acting)],
+            ...current.acted,
+            [/** @type {string} */ (current.acting)]: {
+              .../** @type {Record<string, Acted>} */ (current.acted)[
+                /** @type {string} */ (current.acting)
+              ],
               state,
               said:
                 state === 'refused'
-                  ? `${/** @type {Acted} */ (/** @type {Record<string, Acted>} */ (s.acted)[/** @type {string} */ (s.acting)]).said ?? ''} ${m.why}`
+                  ? `${/** @type {Acted} */ (/** @type {Record<string, Acted>} */ (current.acted)[/** @type {string} */ (current.acting)]).said ?? ''} ${message.why}`
                   : '',
             },
           },
         },
-        ...(m.group
+        ...(message.group
           ? [
               /** @satisfies {Send} */ ({
                 run: 'send',
-                m: { type: 'opened', group: m.group, why: 'kept here, so read again' },
+                m: { type: 'opened', group: message.group, why: 'kept here, so read again' },
               }),
             ]
           : []),
       );
 /**
- * @param {'acts' | 'changes'} k
+ * @param {'acts' | 'changes'} key
  * @returns {(s: State, m: { open: boolean }) => Step<State, never>}
  */
-const fold = (k) => (s, m) => go(s, {}, { folds: { ...s.folds, [k]: m.open } });
+const fold = (key) => (state, message) =>
+  go(state, {}, { folds: { ...state.folds, [key]: message.open } });
 /** @type {Takes<State, Message, Effect | Send>} */
 export const takes = {
   'fold acts': fold('acts'),
   'fold changes': fold('changes'),
-  yes: (s, { app }) =>
+  yes: (state, { app }) =>
     acting(
-      s,
+      state,
       `yes ${app}`,
-      { run: 'runs', group: s.group, app, failed: 'unacted' },
-      { c: s.changed?.find((c) => c.group === s.group.id && c.app === app) },
+      { run: 'runs', group: state.group, app, failed: 'unacted' },
+      { c: state.changed?.find((change) => change.group === state.group.id && change.app === app) },
     ),
-  'stop reads': (s, { label }) =>
-    acting(s, `stop ${label}`, { run: 'stopping', group: s.group, label, failed: 'unacted' }),
-  acted: (s, m) => answered(s, m, 'done'),
-  unacted: (s, m) => answered(s, m, 'refused'),
-  carry: (s) =>
-    s.group?.unsent?.length
-      ? acting(s, 'carry', { run: 'carrying', group: s.group, failed: 'unacted' })
-      : no(s, 'no line is unsent'),
+  'stop reads': (state, { label }) =>
+    acting(state, `stop ${label}`, {
+      run: 'stopping',
+      group: state.group,
+      label,
+      failed: 'unacted',
+    }),
+  acted: (state, message) => answered(state, message, 'done'),
+  unacted: (state, message) => answered(state, message, 'refused'),
+  carry: (state) =>
+    (/** @type {Partial<State>} */ (state).group?.unsent?.length ?? 0) > 0
+      ? acting(state, 'carry', { run: 'carrying', group: state.group, failed: 'unacted' })
+      : no(state, 'no line is unsent'),
 };
 
 const NOTES = {
   opens: `A Stop here holds from the next pass this phone signs for the app, within ${PASS_LIFE / 3600} hours.`,
 };
 /**
- * @param {State} s
+ * @param {State} state
  * @param {string} key
  * @returns {Acted}
  */
-const doing = (s, key) =>
-  s.acting === key && s.at.doing === 'busy' ? { state: 'busy' } : (s.acted?.[key] ?? {});
+const doing = (state, key) =>
+  state.acting === key && state.at.doing === 'busy'
+    ? { state: 'busy' }
+    : (state.acted?.[key] ?? {});
 // Each reading lend's yes or stop as kept, the yes with Stop, its line said
 // in its place once stopped (app.js@19b63b2b:512-518).
 /**
  * Drawn only for a lend the group holds a yes or a stop of (`opens`), so
- * `c` is that one, and the lend reads.
- * @param {State} s
+ * `said` is that one, and the lend reads.
+ * @param {State} state
  * @param {Props['send']} send
- * @param {Lent & { reads: string[] }} l
+ * @param {Lent & { reads: string[] }} lend
  */
-const read = (
-  s,
-  send,
-  l,
-  c = /** @type {Said} */ (/** @type {Record<string, Said>} */ (s.group.reads)[l.label]),
-  d = doing(s, `stop ${l.label}`),
-) =>
-  d.state === 'done'
-    ? html`<p>${named(l)} stops opening your friends’ ${l.reads.map(spoken).join(' and ')} as you within ${PASS_LIFE / 3600} hours, when the pass it holds ends.</p>`
-    : html`<p>${reading(l, c)}${c.said === 'yes' && html`<${Act} words="Stop" doing=${d} on=${{ type: 'stop reads', label: l.label }} send=${send} />`}</p>`;
+const read = (state, send, lend) => {
+  const said = /** @type {Said} */ (
+    /** @type {Record<string, Said>} */ (state.group.reads)[lend.label]
+  );
+  const act = doing(state, `stop ${lend.label}`);
+  return act.state === 'done'
+    ? html`<p>${named(lend)} stops opening your friends’ ${lend.reads.map(spoken).join(' and ')} as you within ${PASS_LIFE / 3600} hours, when the pass it holds ends.</p>`
+    : html`<p>${reading(lend, said)}${said.said === 'yes' && html`<${Act} words="Stop" doing=${act} on=${{ type: 'stop reads', label: lend.label }} send=${send} />`}</p>`;
+};
 /**
  * Drawn once the tab holds a group (`view`).
  * @typedef {object} DrawnProps
@@ -192,66 +192,73 @@ const read = (
  * @property {Props['send']} send
  */
 /** @param {DrawnProps} props */
-function Drawn({ s, send }) {
+function Drawn({ s: state, send }) {
   useEffect(
     () =>
       void (
-        s.at.list === 'read' &&
-        s.group.unsent?.length &&
-        send({ type: 'carry', why: `${s.group.unsent.length} line(s) unsent` })
+        state.at.list === 'read' &&
+        state.group.unsent &&
+        state.group.unsent.length > 0 &&
+        send({ type: 'carry', why: `${state.group.unsent.length} line(s) unsent` })
       ),
-    [s.lent],
+    [state.lent],
   );
-  if (!s.lent) return html`<section id="acts"></section>`;
-  // `a.c` is tested first, so it is the change each `some` reads, and
+  if (!state.lent) return html`<section id="acts"></section>`;
+  // `act.c` is tested first, so it is the change each `some` reads, and
   // each the filter keeps has one.
-  const done = Object.values(s.acted ?? {})
+  const done = Object.values(state.acted ?? {})
     .filter(
-      (a) =>
-        a.c &&
-        a.state === 'done' &&
-        !s.changed?.some(
-          (c) =>
-            c.app === /** @type {Change} */ (a.c).app &&
-            c.group === /** @type {Change} */ (a.c).group,
+      (act) =>
+        act.c &&
+        act.state === 'done' &&
+        !state.changed?.some(
+          (change) =>
+            change.app === /** @type {Change} */ (act.c).app &&
+            change.group === /** @type {Change} */ (act.c).group,
         ),
     )
-    .map((a) => /** @type {Change} */ (a.c));
+    .map((act) => /** @type {Change} */ (act.c));
   const parts = {
     reads: [
-      ...once(s.lent)
-        .filter((o) => o.group)
-        .map((l) => html`<p>${carrying(l.kind, s.shelf)}</p>`),
+      ...once(state.lent)
+        .filter((lend) => lend.group)
+        .map((lend) => html`<p>${carrying(lend.kind, state.shelf)}</p>`),
       ...Changes({
-        g: s.group,
-        changed: s.changed && [...s.changed, ...done],
-        rows: s.people,
-        me: s.me,
+        g: state.group,
+        changed: state.changed && [...state.changed, ...done],
+        rows: state.people,
+        me: state.me,
         doing: Object.fromEntries(
-          Object.keys(s.acted ?? {})
-            .filter((k) => k.startsWith('yes '))
-            .map((k) => [k.slice(4), doing(s, k)]),
+          Object.keys(state.acted ?? {})
+            .filter((key) => key.startsWith('yes '))
+            .map((key) => [key.slice(4), doing(state, key)]),
         ),
-        open: s.folds?.changes,
+        open: state.folds?.changes,
         send,
       }),
     ],
     opens: [
-      ...s.lent
-        .filter((o) => o.reads?.length && s.group.reads?.[o.label])
+      ...state.lent
+        .filter(
+          (lend) =>
+            lend.reads && lend.reads.length > 0 && state.group.reads?.[lend.label] !== undefined,
+        )
         // Filtered to the lends that read, as `read` takes them.
-        .map((l) => read(s, send, /** @type {Lent & { reads: string[] }} */ (l))),
-      ...(s.lent.some((l) => l.asks) ? [html`<${Used} s=${s} send=${send} />`] : []),
+        .map((lend) => read(state, send, /** @type {Lent & { reads: string[] }} */ (lend))),
+      ...(state.lent.some((lend) => lend.asks) ? [html`<${Used} s=${state} send=${send} />`] : []),
     ],
     knows: [html`<p>What you open knows your name.</p>`],
-    decides: [html`<p>${deciders(s.people, s.me, 'browser')}.</p>`],
+    decides: [html`<p>${deciders(state.people, state.me, 'browser')}.</p>`],
   };
-  return html`<${Acts} parts=${parts} notes=${NOTES} open=${s.folds?.acts} send=${send} />`;
+  return html`<${Acts} parts=${parts} notes=${NOTES} open=${state.folds?.acts} send=${send} />`;
 }
 /** @type {Required<Flow>['view']} */
 export const view = {
-  acts: ({ s, send }) =>
-    s.group ? html`<${Drawn} s=${s} send=${send} />` : html`<section id="acts"></section>`,
+  acts: ({ s: state, send }) =>
+    // Drawn before a group is held too, when `group` is absent (page.js `first`).
+    /** @type {Partial<State>} */ (state).group
+      ? html`<${Drawn} s=${state} send=${send} />`
+      : html`<section id="acts"></section>`,
 };
 
 // The edge: the key unsealed here, never in state, and the wasm imported
@@ -262,26 +269,26 @@ const wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__');
 // Carried only with lines unsent: `runs` adds one, and `carry` asks only
 // when some are.
 /**
- * @param {Group} g
+ * @param {Group} group
  * @param {string} why
  * @param {Group | null} [kept]
  * @returns {Promise<PageMessage>}
  */
-const carry = (g, why, kept = g) =>
-  /** @type {Line[]} */ (g.unsent)
-    .reduce((p, l) => p.then(() => through(g, '/carry', l)), Promise.resolve())
-    .then(() => store.opened({ ...g, unsent: [] }))
+const carry = (group, why, kept = group) =>
+  /** @type {Line[]} */ (group.unsent)
+    .reduce((chain, line) => chain.then(() => through(group, '/carry', line)), Promise.resolve())
+    .then(() => store.opened({ ...group, unsent: [] }))
     .then(
-      (g) => ({ type: 'acted', group: g, why: `${why}, and carried` }),
-      (e) => ({ type: 'unacted', group: kept, why: e.message }),
+      (opened) => ({ type: 'acted', group: opened, why: `${why}, and carried` }),
+      (error) => ({ type: 'unacted', group: kept, why: error.message }),
     );
 /** @type {Io<Effect, PageMessage>} */
 export const io = {
   runs: ({ group, app }) =>
     Promise.all([wasm(), store.unseal(group), through(group, '/runs', app)]).then(
-      ([w, key, { sign }], at = group.line ?? { seq: -1, id: null }) => {
+      ([core, key, { sign }], at = group.line ?? { seq: -1, id: null }) => {
         const line = JSON.parse(
-          w.sign_line(
+          core.sign_line(
             key,
             group.id,
             Math.floor(Date.now() / 1000),
@@ -296,7 +303,7 @@ export const io = {
             line: { seq: line.seq, id: line.id },
             unsent: [...(group.unsent ?? []), line],
           })
-          .then((g) => carry(g, `line ${line.seq} signed`));
+          .then((carried) => carry(carried, `line ${line.seq} signed`));
       },
     ),
   carrying: ({ group }) =>
@@ -307,5 +314,5 @@ export const io = {
         ...group,
         reads: { ...group.reads, [label]: { said: 'stop', at: Math.floor(Date.now() / 1000) } },
       })
-      .then((g) => ({ type: 'acted', group: g, why: `${label}'s reads stopped here` })),
+      .then((opened) => ({ type: 'acted', group: opened, why: `${label}'s reads stopped here` })),
 };

@@ -8,7 +8,9 @@
 // own (ui/view.js `useMachine`). A link to nothing lent here is said beside
 // the button once, the last in place of the one before, where v1 appended
 // each (home.js@19b63b2b:397; page-join (f)'s fix).
-import { Act, assertNever, Field, go, html, machine, useMachine } from '../ui/kit.js?v=__VERSION__';
+import { html, useMachine } from '../ui/view.js?v=__VERSION__';
+import { assertNever, go, machine } from '../ui/machine.js?v=__VERSION__';
+import { Act, Field } from '../ui/parts.js?v=__VERSION__';
 /** @import { Machine } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 /** @import { PlaceProps } from '../home.js?v=__VERSION__' */
@@ -48,48 +50,53 @@ import { Act, assertNever, Field, go, html, machine, useMachine } from '../ui/ki
  * @returns {string | null}
  */
 export const within = (at, origin) =>
-  ((u) => (u.origin === new URL(origin).origin ? u.href : null))(new URL(at ?? '/', origin));
+  ((url) => (url.origin === new URL(origin).origin ? url.href : null))(new URL(at ?? '/', origin));
 // Where `link` opens through `/to` from a home page on `port`, or null.
 /**
  * @param {string} link
  * @param {string} port
- * @param {URLSearchParams} [q]
+ * @param {URLSearchParams} [params]
  * @param {string} [lend]
  */
 const to = (
   link,
   port,
-  q = new URLSearchParams(link.split('#')[1] ?? ''),
-  lend = q.get('open') ?? '',
+  params = new URLSearchParams(link.split('#')[1] ?? ''),
+  lend = params.get('open') ?? '',
 ) =>
   ((at) =>
     at &&
-    `/to?${new URLSearchParams({ lend, at: ((u) => u.pathname + u.search + u.hash)(new URL(at)) })}`)(
-    /^[a-z0-9]+$/.test(lend) && within(q.get('at'), `http://${lend}.localhost:${port}`),
+    `/to?${new URLSearchParams({ lend, at: ((url) => url.pathname + url.search + url.hash)(new URL(at)) })}`)(
+    /^[a-z0-9]+$/.test(lend) ? within(params.get('at'), `http://${lend}.localhost:${port}`) : null,
   );
 /** @type {Machine<State, Message, Effect>} */
 const OPEN = {
   states: { open: ['typing', 'opened', 'refused'] },
-  io: { open: ({ at }) => (window.open(at, '_blank'), { type: 'opened', why: at }) },
-  step: (s, m) => {
-    switch (m.type) {
+  io: {
+    open: ({ at }) => {
+      window.open(at, '_blank');
+      return { type: 'opened', why: at };
+    },
+  },
+  step: (state, message) => {
+    switch (message.type) {
       case 'typed':
-        return go(s, { open: 'typing' }, { link: m.value });
+        return go(state, { open: 'typing' }, { link: message.value });
       case 'opened':
-        return go(s, {});
+        return go(state, {});
       case 'open':
         return ((at) =>
           at
-            ? go(s, { open: 'opened' }, {}, { run: 'open', at, failed: 'refused' })
+            ? go(state, { open: 'opened' }, {}, { run: 'open', at, failed: 'refused' })
             : go(
-                s,
+                state,
                 { open: 'refused' },
                 { said: ' That is not a link to something lent in your groups.' },
-              ))(to(s.link, s.port));
+              ))(to(state.link, state.port));
       case 'refused':
-        return go(s, { open: 'refused' }, { said: ` ${m.why}` });
+        return go(state, { open: 'refused' }, { said: ` ${message.why}` });
       default:
-        return assertNever(s, m, 'opening a link');
+        return assertNever(state, message, 'opening a link');
     }
   },
 };
@@ -101,7 +108,7 @@ const OPEN = {
 
 /** @param {OpenProps} props */
 function Open({ origin }) {
-  const [s, send] = useMachine(() =>
+  const [state, send] = useMachine(() =>
     machine('OPEN', OPEN, {
       at: { open: 'typing' },
       link: '',
@@ -109,13 +116,13 @@ function Open({ origin }) {
       port: new URL(origin).port,
     }),
   );
-  return html`<section id="open"><h2>Open a link from your group</h2><p><${Field} words="The link: " value=${s.link} send=${send} /><${Act} words="Open it" doing=${{ said: s.said }} on=${{ type: 'open' }} send=${send} /></p></section>`;
+  return html`<section id="open"><h2>Open a link from your group</h2><p><${Field} words="The link: " value=${state.link} send=${send} /><${Act} words="Open it" doing=${{ said: state.said }} on=${{ type: 'open' }} send=${send} /></p></section>`;
 }
-// Drawn once the groups are read (home.js `Home`), so `s.groups` is read
+// Drawn once the groups are read (home.js `Home`), so `state.groups` is read
 // then.
 /** @type {{ open: (props: PlaceProps) => Drawn }} */
 export const view = {
-  open: ({ s }) =>
-    /** @type {NonNullable<PlaceProps['s']['groups']>} */ (s.groups).length > 0 &&
-    html`<${Open} origin=${s.origin} />`,
+  open: ({ s: state }) =>
+    /** @type {NonNullable<PlaceProps['s']['groups']>} */ (state.groups).length > 0 &&
+    html`<${Open} origin=${state.origin} />`,
 };

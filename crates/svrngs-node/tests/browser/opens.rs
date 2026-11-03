@@ -125,7 +125,9 @@ async fn opening_an_app_from_the_home_page_is_the_yes_to_what_it_reads(engine: E
 /// reading other kinds opens your friends' lends of them as you; one doing
 /// neither writes what you say there as you. Both pages draw the line
 /// beside the open from question.js's `agreed`, and the open by `named`,
-/// each in its `page/index.js` since page-switchover.
+/// each in its `page/index.js` since page-switchover. The call is read, not
+/// its argument's name: js-lint (a) named the lend `lend` (75e95f3a), and
+/// this test's `agreed(l, ` failed on the rename alone (js-lint-6's gate).
 /// Red at d736ff18: `agreed` said "Open " and the name before what the app
 /// does, all of it on the button. Red at 5c6e3b0d: "It reads and writes"
 /// first, which Ana read as done on her behalf without her yes (the fifth
@@ -137,10 +139,7 @@ fn the_open_says_what_an_app_does_in_one_wording() {
         "web/page/index.js",
     ] {
         let text = std::fs::read_to_string(repo().join(page)).unwrap();
-        assert!(
-            text.contains("agreed(l, "),
-            "{page} draws no open by `agreed`"
-        );
+        assert!(text.contains("agreed("), "{page} draws no open by `agreed`");
     }
     let shelf = json!([{ "name": "Money", "words": "who owes whom, and for what." }]);
     let carried = |kind: &str| json!({ "group": "g", "kind": kind, "person": "cy", "name": "x", "reads": [] });

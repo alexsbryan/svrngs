@@ -53,6 +53,6 @@ export function useStore(store) {
  * @returns {[State, Store<State, Message>['dispatch']]}
  */
 export function useMachine(make) {
-  const [m] = useState(make);
-  return [useStore(m), m.dispatch];
+  const [store] = useState(make);
+  return [useStore(store), store.dispatch];
 }

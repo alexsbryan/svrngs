@@ -20,19 +20,9 @@
 // once, and nowhere else: never in a request, a link or a trace line
 // (SIGN_IN_WITH_SVRNGS §5 "Turning it on"); a read again keeps the row, so
 // keeps it shown, and a load of the page, which reads none, shows it no more.
-import {
-  Act,
-  ask,
-  assertNever,
-  Field,
-  go,
-  html,
-  late,
-  machine,
-  no,
-  useEffect,
-  useMachine,
-} from '../ui/kit.js?v=__VERSION__';
+import { html, useEffect, useMachine } from '../ui/view.js?v=__VERSION__';
+import { ask, assertNever, go, late, machine, no } from '../ui/machine.js?v=__VERSION__';
+import { Act, Field } from '../ui/parts.js?v=__VERSION__';
 import { get, post } from './group.js?v=__VERSION__';
 /** @import { Machine, Step } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
@@ -120,13 +110,13 @@ import { get, post } from './group.js?v=__VERSION__';
 const LENDING = {
   states: { lent: ['reading', 'read', 'unread'] },
   io: {
-    read: ({ n }) =>
+    read: ({ n: serial }) =>
       get('/lent').then(
         /** @param {{ lent: Lend[], signing: string[] }} answer */
         ({ lent, signing }) => ({
           type: 'answered',
-          n,
-          lent: lent.filter((l) => !l.group),
+          n: serial,
+          lent: lent.filter((lend) => !lend.group),
           signing,
           why: `${lent.length} lent`,
         }),
@@ -134,32 +124,37 @@ const LENDING = {
   },
   // Each message's read numbered, and an answer older than the last read
   // asked refused by name, before any case takes it.
-  step: (s, m) => {
-    const [asked, n] = ask(s, 'lent');
-    const old = m.type !== 'read' && late(s, 'lent', m.n);
-    if (old) return no(s, old);
-    switch (m.type) {
+  step: (state, message) => {
+    const [asked, serial] = ask(state, 'lent');
+    const old = message.type === 'read' ? '' : late(state, 'lent', message.n);
+    if (old) return no(state, old);
+    switch (message.type) {
       case 'read':
-        return go(s, { lent: 'reading' }, { asked }, { run: 'read', n, failed: 'unread' });
+        return go(
+          state,
+          { lent: 'reading' },
+          { asked },
+          { run: 'read', n: serial, failed: 'unread' },
+        );
       case 'answered':
-        return go(s, { lent: 'read' }, { lent: m.lent, signing: m.signing ?? [] });
+        return go(state, { lent: 'read' }, { lent: message.lent, signing: message.signing });
       case 'unread':
-        return go(s, { lent: 'unread' }, { why: m.why });
+        return go(state, { lent: 'unread' }, { why: message.why });
       default:
-        return assertNever(s, m, 'what you lend');
+        return assertNever(state, message, 'what you lend');
     }
   },
 };
 // The change asked, `run` with what it carries, unless one is under way.
 /**
- * @param {ChangeState} s
+ * @param {ChangeState} state
  * @param {ChangeEffect} effect
  * @returns {Step<ChangeState, ChangeEffect>}
  */
-const changing = (s, effect) =>
-  s.at.change === 'changing'
-    ? no(s, 'a change is under way, and is answered first')
-    : go(s, { change: 'changing' }, {}, effect);
+const changing = (state, effect) =>
+  state.at.change === 'changing'
+    ? no(state, 'a change is under way, and is answered first')
+    : go(state, { change: 'changing' }, {}, effect);
 /**
  * @param {string} lend
  * @param {HOME.PlaceProps['home']} home
@@ -169,36 +164,41 @@ const CHANGE = (lend, home) => ({
   states: { change: ['idle', 'changing', 'refused'] },
   io: {
     change: ({ to }) =>
-      post('/lent', { lend, to }).then(
-        () => (home({ type: 'again' }), { type: 'changed', why: 'the groups read again' }),
-      ),
+      post('/lent', { lend, to }).then(() => {
+        home({ type: 'again' });
+        return { type: 'changed', why: 'the groups read again' };
+      }),
     sign: () =>
-      post('/lent', { lend, to: 'sign-in' }).then((c) => ({
+      post('/lent', { lend, to: 'sign-in' }).then((signIn) => ({
         type: 'signed',
-        c,
+        c: signIn,
         why: 'its secret shown here once',
       })),
   },
-  step: (s, m) => {
-    switch (m.type) {
+  step: (state, message) => {
+    switch (message.type) {
       case 'typed':
-        return go(s, {}, { many: m.value });
+        return go(state, {}, { many: message.value });
       case 'change':
-        return changing(s, { run: 'change', to: m.to, failed: 'refused' });
+        return changing(state, { run: 'change', to: message.to, failed: 'refused' });
       case 'sign':
-        return changing(s, { run: 'sign', failed: 'refused' });
+        return changing(state, { run: 'sign', failed: 'refused' });
       case 'many':
-        return /^[1-9][0-9]*$/.test(m.value)
-          ? changing(s, { run: 'change', to: { limit: Number(m.value) }, failed: 'refused' })
-          : go(s, { change: 'refused' }, { said: ' Say how many: 1 or more.' });
+        return /^[1-9][0-9]*$/.test(message.value)
+          ? changing(state, {
+              run: 'change',
+              to: { limit: Number(message.value) },
+              failed: 'refused',
+            })
+          : go(state, { change: 'refused' }, { said: ' Say how many: 1 or more.' });
       case 'changed':
-        return go(s, { change: 'idle' }, { many: undefined, said: '' });
+        return go(state, { change: 'idle' }, { many: undefined, said: '' });
       case 'signed':
-        return go(s, { change: 'idle' }, { shown: m.c });
+        return go(state, { change: 'idle' }, { shown: message.c });
       case 'refused':
-        return go(s, { change: 'refused' }, { said: ` ${m.why}` });
+        return go(state, { change: 'refused' }, { said: ` ${message.why}` });
       default:
-        return assertNever(s, m, 'a lend here');
+        return assertNever(state, message, 'a lend here');
     }
   },
 });
@@ -206,9 +206,9 @@ const CHANGE = (lend, home) => ({
 // What a lend's app form is filled with, the one time its lender turns
 // signing people in with svrngs on: the issuer, the client and its secret,
 // and the deviations in their words (home.js@19b63b2b:256).
-/** @param {Signed} c */
-const signed = (c) =>
-  html`<p>Signing people in with svrngs. In the app’s own settings, choose OpenID Connect, and fill in: issuer <code>${c.issuer}</code>, client id <code>${c.client_id}</code>, client secret <code>${c.client_secret}</code>${`. ${c.deviations} Copy the secret now: it is not shown again. `}</p>`;
+/** @param {Signed} char */
+const signed = (char) =>
+  html`<p>Signing people in with svrngs. In the app’s own settings, choose OpenID Connect, and fill in: issuer <code>${char.issuer}</code>, client id <code>${char.client_id}</code>, client secret <code>${char.client_secret}</code>${`. ${char.deviations} Copy the secret now: it is not shown again. `}</p>`;
 /**
  * A lend's row: the lend, whether it signs people in with svrngs, and
  * HOME's `dispatch`, told to read again once it changes.
@@ -219,32 +219,32 @@ const signed = (c) =>
  */
 
 /** @param {LentProps} props */
-function Lent({ l, signs, home }) {
-  const [s, send] = useMachine(() =>
-      machine('CHANGE', CHANGE(l.name, home), { at: { change: 'idle' }, said: '' }),
-    ),
-    n = l.limit,
-    value = s.many ?? String(n ?? '');
+function Lent({ l: lend, signs, home }) {
+  const [state, send] = useMachine(() =>
+    machine('CHANGE', CHANGE(lend.name, home), { at: { change: 'idle' }, said: '' }),
+  );
+  const limit = lend.limit;
+  const value = state.many ?? String(limit ?? '');
   /**
    * @param {string} words
    * @param {ChangeMessage} on
    */
   const act = (words, on) =>
-    html`<${Act} words=${words} doing=${{ state: s.at.change === 'changing' ? 'busy' : 'idle' }} on=${on} send=${send} />`;
-  return html`<li>${`${l.name}: ${n ? `up to ${n} ${n === 1 ? 'person' : 'people'}` : 'everyone in your groups'} at once, ${l.using} using it now. `}<${Field} words="How many people at once: " value=${value} attrs=${{ type: 'number', min: 1 }} send=${send} />${act('Let in this many', { type: 'many', value })}${n && act('Let everyone in', { type: 'change', to: { limit: null } })}${signs ? 'Signs people in with svrngs. ' : act('Sign people in with svrngs', { type: 'sign' })}${act('Stop lending', { type: 'change', to: 'stop' })}${s.said}${s.shown && signed(s.shown)}</li>`;
+    html`<${Act} words=${words} doing=${{ state: state.at.change === 'changing' ? 'busy' : 'idle' }} on=${on} send=${send} />`;
+  return html`<li>${`${lend.name}: ${(limit ?? 0) > 0 ? `up to ${limit} ${limit === 1 ? 'person' : 'people'}` : 'everyone in your groups'} at once, ${lend.using} using it now. `}<${Field} words="How many people at once: " value=${value} attrs=${{ type: 'number', min: 1 }} send=${send} />${act('Let in this many', { type: 'many', value })}${(limit ?? 0) > 0 && act('Let everyone in', { type: 'change', to: { limit: null } })}${signs ? 'Signs people in with svrngs. ' : act('Sign people in with svrngs', { type: 'sign' })}${act('Stop lending', { type: 'change', to: 'stop' })}${state.said}${state.shown && signed(state.shown)}</li>`;
 }
 // HOME's: the page's foot held until what you lend is first read, as v1
 // drew its address after it (home.js@19b63b2b:326-328): drawn at once, a driver read the
 // list empty (main.rs:2524 on v2).
 /**
- * @param {HOME.State} s
+ * @param {HOME.State} state
  * @returns {Step<HOME.State, HOME.Effect>}
  */
-export const take = (s) => go(s, {}, { lentRead: true });
+export const take = (state) => go(state, {}, { lentRead: true });
 // Asked only past the groups' read (home.js `Home`, `held`, past its first
-// `return`), so `s.groups` is read.
-/** @param {HOME.State} s */
-export const holds = (s) => /** @type {Groups} */ (s.groups).length > 0 && !s.lentRead;
+// `return`), so `state.groups` is read.
+/** @param {HOME.State} state */
+export const holds = (state) => /** @type {Groups} */ (state.groups).length > 0 && !state.lentRead;
 /** @typedef {NonNullable<HOME.State['groups']>} Groups */
 
 /**
@@ -258,25 +258,25 @@ export const holds = (s) => /** @type {Groups} */ (s.groups).length > 0 && !s.le
 
 /** @param {LendingProps} props */
 function Lending({ round, home, told }) {
-  const [s, send] = useMachine(() => machine('LENDING', LENDING, { at: { lent: 'reading' } }));
+  const [state, send] = useMachine(() => machine('LENDING', LENDING, { at: { lent: 'reading' } }));
   useEffect(() => send({ type: 'read' }), [round]);
   useEffect(
     () =>
       void (
         !told &&
-        s.at.lent !== 'reading' &&
-        home({ type: 'told', flow: 'lending', why: `what you lend is ${s.at.lent}` })
+        state.at.lent !== 'reading' &&
+        home({ type: 'told', flow: 'lending', why: `what you lend is ${state.at.lent}` })
       ),
-    [s.at.lent],
+    [state.at.lent],
   );
   // `signing` is set with `lent`, by `answered`, so it is there with it.
-  return html`<section id="lent"><h2>What you lend</h2>${s.at.lent === 'unread' ? html`<p>This computer cannot read what you lend: ${s.why}</p>` : s.lent && html`${!s.lent.length && html`<p>You lend nothing yet.</p>`}<ul>${s.lent.map((l) => html`<${Lent} key=${l.name} l=${l} signs=${/** @type {string[]} */ (s.signing).includes(l.name)} home=${home} />`)}</ul>`}</section>`;
+  return html`<section id="lent"><h2>What you lend</h2>${state.at.lent === 'unread' ? html`<p>This computer cannot read what you lend: ${state.why}</p>` : state.lent && html`${!state.lent.length && html`<p>You lend nothing yet.</p>`}<ul>${state.lent.map((lend) => html`<${Lent} key=${lend.name} l=${lend} signs=${/** @type {string[]} */ (state.signing).includes(lend.name)} home=${home} />`)}</ul>`}</section>`;
 }
-// Drawn once the groups are read (home.js `Home`), so `s.groups` is read
+// Drawn once the groups are read (home.js `Home`), so `state.groups` is read
 // then.
 /** @type {{ lent: (props: HOME.PlaceProps) => Drawn }} */
 export const view = {
-  lent: ({ s, home }) =>
-    /** @type {Groups} */ (s.groups).length > 0 &&
-    html`<${Lending} round=${s.round} home=${home} told=${s.lentRead} />`,
+  lent: ({ s: state, home }) =>
+    /** @type {Groups} */ (state.groups).length > 0 &&
+    html`<${Lending} round=${state.round} home=${home} told=${state.lentRead} />`,
 };

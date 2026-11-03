@@ -43,7 +43,7 @@ const VERSION = 2;
 
 /**
  * A yes or a stop said here to what a lend reads as the person, and when,
- * in seconds (web/page/index.js `handing`, web/page/acts.js `stopping`).
+ * in seconds (web/page/hand.js `handing`, web/page/acts.js `stopping`).
  * @typedef {{ said: 'yes' | 'stop', at: number }} Said
  */
 
@@ -146,9 +146,9 @@ async function run(store, mode, act, db = open) {
 // iPhone failed to unseal with `OperationError` while its page and Firefox's
 // worker did not (2026-10-05), and a key read back unusable and a key made
 // anew over the page's fail the same way.
-/** @param {any} k what was read back, of no type the page can know */
-const described = (k) =>
-  `${k?.constructor?.name} ${k?.algorithm?.name}/${k?.algorithm?.length} extractable=${k?.extractable} usages=${k?.usages}`;
+/** @param {any} key what was read back, of no type the page can know */
+const described = (key) =>
+  `${key?.constructor?.name} ${key?.algorithm?.name}/${key?.algorithm?.length} extractable=${key?.extractable} usages=${key?.usages}`;
 
 // The sealing key, made when none is kept only if `make`: only `keep`
 // makes one, and only the page keeps a group. Safari's worker on the
@@ -161,7 +161,11 @@ const described = (k) =>
  * @returns {Promise<CryptoKey>}
  */
 async function sealingKey(make) {
-  const held = await run('seal', 'readonly', (s) => s.get('key'));
+  const held = await run(
+    'seal',
+    'readonly',
+    (objects) => /** @type {IDBRequest<CryptoKey | undefined>} */ (objects.get('key')),
+  );
   if (held) {
     globalThis.__trace?.(`STORE: the sealing key read back: ${described(held)}`);
     return held;
@@ -177,7 +181,7 @@ async function sealingKey(make) {
     'encrypt',
     'decrypt',
   ]);
-  await run('seal', 'readwrite', (s) => s.put(made, 'key'));
+  await run('seal', 'readwrite', (objects) => objects.put(made, 'key'));
   return made;
 }
 
@@ -194,8 +198,8 @@ const bound = (id, iv) => ({ name: 'AES-GCM', iv, additionalData: new TextEncode
 /** @param {Joining} joining */
 export const keep = ({ id, name, person, token, key, maker, since }) =>
   sealed(id, key).then((kept) =>
-    run('groups', 'readwrite', (s) =>
-      s.put({ id, name, person, token, ...kept, opened: Date.now(), maker, since }),
+    run('groups', 'readwrite', (objects) =>
+      objects.put({ id, name, person, token, ...kept, opened: Date.now(), maker, since }),
     ),
   );
 
@@ -222,7 +226,7 @@ const sealed = async (id, key, iv = crypto.getRandomValues(new Uint8Array(12))) 
  */
 export const keepVisit = (token, visit, key) =>
   sealed(token, key).then((kept) =>
-    run('seal', 'readwrite', (s) => s.put({ ...visit, ...kept }, `visit ${token}`)),
+    run('seal', 'readwrite', (objects) => objects.put({ ...visit, ...kept }, `visit ${token}`)),
   );
 
 // The visit the link `token` made here, its key unsealed; else undefined.
@@ -231,22 +235,35 @@ export const keepVisit = (token, visit, key) =>
  * @returns {Promise<(Visit & { key: Uint8Array<ArrayBuffer> }) | undefined>}
  */
 export const visitOf = (token) =>
-  run('seal', 'readonly', (s) => s.get(`visit ${token}`)).then(
-    async (v) => v && { ...v, key: await unseal({ ...v, id: token }) },
-  );
+  run(
+    'seal',
+    'readonly',
+    (objects) =>
+      /** @type {IDBRequest<(Visit & Awaited<ReturnType<typeof sealed>>) | undefined>} */ (
+        objects.get(`visit ${token}`)
+      ),
+  ).then(async (visit) => visit && { ...visit, key: await unseal({ ...visit, id: token }) });
 
 // The holder a lend's origin keeps, its public key by the lend's label
 // (capability-signed (H); DESIGN §3), beside the sealing key, apart from
 // any group's row, so no write of one drops it: `key` kept, `null`
-// dropped, or with none read.
+// dropped, or with none read, the key kept answered (a write answers none).
 /**
  * @param {string} label
  * @param {string | null} [key]
+ * @returns {Promise<string | null | undefined>}
  */
 export const holder = (label, key) =>
   key === undefined
-    ? run('seal', 'readonly', (s) => s.get(`holder ${label}`))
-    : run('seal', 'readwrite', (s) => s.put(key, `holder ${label}`));
+    ? run(
+        'seal',
+        'readonly',
+        (objects) =>
+          /** @type {IDBRequest<string | null | undefined>} */ (objects.get(`holder ${label}`)),
+      )
+    : run('seal', 'readwrite', (objects) => objects.put(key, `holder ${label}`)).then(
+        () => undefined,
+      );
 
 // Whether the browser keeps this page's storage, asking it to where it
 // does not yet: a Home Screen web app on the operator's iPhone (iOS 18.7,
@@ -255,18 +272,26 @@ export const holder = (label, key) =>
 // answered persisted, persist, persisted with `[false, true, true]`: iOS
 // keeps it when asked, and the page had not asked. Answered as the page's
 // trace says it, a browser that offers no asking among them.
-export const persist = async (s = navigator.storage) =>
-  !s?.persist
-    ? "this browser offers no way to ask it to keep the page's storage"
-    : (await s.persisted())
-      ? "the browser keeps the page's storage already"
-      : `asked the browser to keep the page's storage: ${(await s.persist()) ? 'granted' : 'refused'}`;
+// `navigator.storage` is absent where the page is not a secure context
+// (the Storage standard's `[SecureContext]`), and `persist` in a worker
+// (`[Exposed=Window]`).
+/** @typedef {{ persisted(): Promise<boolean>, persist?: () => Promise<boolean> }} Keeping */
+/** @param {Keeping} [storage] */
+export const persist = async (storage = /** @type {Keeping | undefined} */ (navigator.storage)) => {
+  if (!storage?.persist) return "this browser offers no way to ask it to keep the page's storage";
+  if (await storage.persisted()) return "the browser keeps the page's storage already";
+  return `asked the browser to keep the page's storage: ${(await storage.persist()) ? 'granted' : 'refused'}`;
+};
 
 // Every group kept, the last opened first. Their keys stay sealed.
 export const groups = async () =>
-  (await run('groups', 'readonly', (s) => /** @type {IDBRequest<Group[]>} */ (s.getAll()))).sort(
-    (a, b) => b.opened - a.opened,
-  );
+  (
+    await run(
+      'groups',
+      'readonly',
+      (objects) => /** @type {IDBRequest<Group[]>} */ (objects.getAll()),
+    )
+  ).sort((left, right) => right.opened - left.opened);
 
 // The group was opened now, as `group` says it: it is the one the page
 // opens without a link. Answers the group as kept.
@@ -275,7 +300,7 @@ export const groups = async () =>
  * @returns {Promise<Group>}
  */
 export const opened = (group, now = { ...group, opened: Date.now() }) =>
-  run('groups', 'readwrite', (s) => s.put(now)).then(() => now);
+  run('groups', 'readwrite', (objects) => objects.put(now)).then(() => now);
 
 // The person's key in `group`, unsealed: 32 bytes, held only in memory.
 /** @param {{ id: string, iv: Uint8Array<ArrayBuffer>, sealed: Uint8Array<ArrayBuffer> }} group */
@@ -285,13 +310,20 @@ export async function unseal(group) {
     return new Uint8Array(
       await crypto.subtle.decrypt(bound(group.id, group.iv), seal, group.sealed),
     );
-  } catch (/** @type {any} */ e) {
-    globalThis.__trace?.(
-      `STORE: unsealing failed: ${e?.name}: ${e?.message}; sealed ${group.sealed?.byteLength} bytes (${group.sealed?.constructor?.name}), iv ${group.iv?.byteLength} bytes (${group.iv?.constructor?.name})`,
-    );
-    throw e;
+  } catch (/** @type {any} */ error) {
+    globalThis.__trace?.(unsealing(group, error));
+    throw error;
   }
 }
+
+// Why unsealing `group`'s key failed, and the sizes and kinds of what it
+// was given, for the trace.
+/**
+ * @param {{ iv?: any, sealed?: any }} group as the store held it, of whatever kinds
+ * @param {any} error
+ */
+const unsealing = (group, error) =>
+  `STORE: unsealing failed: ${error?.name}: ${error?.message}; sealed ${group.sealed?.byteLength} bytes (${group.sealed?.constructor?.name}), iv ${group.iv?.byteLength} bytes (${group.iv?.constructor?.name})`;
 
 // What a lend's worker tells its pages when a message to it was lost.
 export const LOST = 'a message was lost on its way to the worker';
@@ -311,7 +343,8 @@ export function handOver(worker, message, wait = 5_000) {
     port1.onmessage = () => done(true);
     navigator.serviceWorker.addEventListener(
       'message',
-      (e) => e.data === LOST && (console.debug(`STORE: the worker said ${LOST}`), done(false)),
+      (received) =>
+        received.data === LOST && (console.debug(`STORE: the worker said ${LOST}`), done(false)),
     );
     setTimeout(() => done(false), wait);
   });
@@ -330,13 +363,13 @@ export function handOver(worker, message, wait = 5_000) {
 const lendDb = () => openDb('svrngs-lend', 1, (db) => db.createObjectStore('kept'));
 
 /** @param {string} name */
-export const lendKept = (name) => run('kept', 'readonly', (s) => s.get(name), lendDb);
+export const lendKept = (name) => run('kept', 'readonly', (objects) => objects.get(name), lendDb);
 /**
  * @param {string} name
  * @param {unknown} value
  */
 export const lendKeep = (name, value) =>
-  run('kept', 'readwrite', (s) => s.put(value, name), lendDb);
+  run('kept', 'readwrite', (objects) => objects.put(value, name), lendDb);
 
 // ── the runtime's module ────────────────────────────────────────────────
 //
@@ -353,7 +386,7 @@ export const lendKeep = (name, value) =>
 // first name — here alone in the page's files.
 // Bytes as hex, as the page hands a holder's seed and the worker signs a line.
 /** @param {Uint8Array} bytes */
-export const hex = (bytes) => [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
+export const hex = (bytes) => [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('');
 
 /**
  * @param {string} protocol
@@ -375,14 +408,19 @@ const RUNTIME = new URL('./wasm/svrngs_web_bg.wasm?v=__VERSION__', import.meta.u
 // not be kept under this version's URL. Where the browser gives no cache
 // (an origin that is not https), fetched each time.
 export async function runtime() {
-  if (self.navigator?.serviceWorker?.controller) return fetch(RUNTIME);
-  const cache = await self.caches?.open(CACHE).catch(() => null);
+  // Both are absent where the origin is not secure: a service worker and the
+  // cache are `[SecureContext]` (Service Workers, "navigator.serviceWorker"
+  // and "caches").
+  const workers = /** @type {ServiceWorkerContainer | undefined} */ (self.navigator.serviceWorker);
+  if (workers?.controller) return fetch(RUNTIME);
+  const cacheStorage = /** @type {CacheStorage | undefined} */ (self.caches);
+  const cache = await cacheStorage?.open(CACHE).catch(() => null);
   const hit = await cache?.match(RUNTIME);
   if (hit) return hit;
   const res = await fetch(RUNTIME);
   if (cache && res.ok)
     cache
       .put(RUNTIME, res.clone())
-      .catch((e) => console.debug(`STORE: the runtime's module was not kept: ${e}`));
+      .catch((error) => console.debug(`STORE: the runtime's module was not kept: ${error}`));
   return res;
 }

@@ -10,18 +10,9 @@
 // index.js), and each Play on with its Stop under "What acts as you"
 // (`part`, for acts.js). What has Play on that cannot be read is said
 // once, in `part`, never read as none; Play then writes it over.
-import {
-  Act,
-  ask,
-  assertNever,
-  go,
-  html,
-  late,
-  machine,
-  no,
-  useEffect,
-  useStore,
-} from '../ui/kit.js?v=__VERSION__';
+import { html, useEffect, useStore } from '../ui/view.js?v=__VERSION__';
+import { ask, assertNever, go, late, machine, no } from '../ui/machine.js?v=__VERSION__';
+import { Act } from '../ui/parts.js?v=__VERSION__';
 import { get, post } from './group.js?v=__VERSION__';
 /** @import { Machine } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
@@ -47,7 +38,7 @@ import { get, post } from './group.js?v=__VERSION__';
 
 /**
  * PLAY's state: where its read or turn is, the round last read, each
- * port's refusals and what its press copied, by `k`, what has Play on,
+ * port's refusals and what its press copied, by `keyOf`, what has Play on,
  * and, while a turn is under way, where it was and the port it turns.
  * @typedef {object} State
  * @property {{ play: 'reading' | 'read' | 'unread' | 'turning' }} at
@@ -69,7 +60,7 @@ import { get, post } from './group.js?v=__VERSION__';
 /**
  * The messages PLAY takes: a round's read; a Play or Stop pressed; what
  * has Play on; or a read or turn that failed, with why. A read and a turn
- * carry no read's number: `old` reads `m.n` of every message.
+ * carry no read's number: `old` reads `message.n` of every message.
  * @typedef {{ type: 'read', round: number, n?: undefined }
  *   | { type: 'turn', l: Port, off: boolean, n?: undefined }
  *   | Answered
@@ -85,21 +76,21 @@ import { get, post } from './group.js?v=__VERSION__';
  */
 
 const answer =
-    /** @param {number} n */
-    (n) =>
-      /**
-       * @param {Playing[]} plays
-       * @returns {Answered}
-       */
-      (plays) => ({ type: 'answered', n, plays, why: `${plays.length} on` }),
-  same = /** @param {Port} a */ (a) => /** @param {Port} b */ (b) =>
-    a.key === b.key && a.name === b.name,
-  k = /** @param {Port} l */ (l) => `${l.key}:${l.name}`;
+  /** @param {number} serial */
+  (serial) =>
+    /**
+     * @param {Playing[]} plays
+     * @returns {Answered}
+     */
+    (plays) => ({ type: 'answered', n: serial, plays, why: `${plays.length} on` });
+const same = /** @param {Port} one */ (one) => /** @param {Port} other */ (other) =>
+  one.key === other.key && one.name === other.name;
+const keyOf = /** @param {Port} lend */ (lend) => `${lend.key}:${lend.name}`;
 // Where a program here connects to what Play opened, copied, or why not.
-/** @param {Playing | undefined} r */
-const copy = (r) =>
-  r?.open.is === 'at'
-    ? navigator.clipboard.writeText(`127.0.0.1:${r.port}`).then(
+/** @param {Playing | undefined} playing */
+const copy = (playing) =>
+  playing?.open.is === 'at'
+    ? navigator.clipboard.writeText(`127.0.0.1:${playing.port}`).then(
         () => ' Copied.',
         () => ' Copy it from here.',
       )
@@ -112,69 +103,69 @@ const copy = (r) =>
 export const PLAY = {
   states: { play: ['reading', 'read', 'unread', 'turning'] },
   io: {
-    read: ({ n }) => get('/v1/play').then(answer(n)),
-    turn: ({ n, l, off }) =>
-      post('/v1/play', { [off ? 'off' : 'on']: l }).then(async (plays) => ({
-        ...answer(n)(plays),
-        copied: off ? '' : await copy(plays.find(same(l))),
+    read: ({ n: serial }) => get('/v1/play').then(answer(serial)),
+    turn: ({ n: serial, l: lend, off }) =>
+      post('/v1/play', { [off ? 'off' : 'on']: lend }).then(async (plays) => ({
+        ...answer(serial)(plays),
+        copied: off ? '' : await copy(plays.find(same(lend))),
       })),
   },
   // Each message's read numbered; an answer older than the last read asked
   // refused by name, and a read or a turn while a turn is under way, before
   // any case takes them.
-  step: (s, m) => {
-    const [asked, n] = ask(s, 'play');
-    const old = m.n && late(s, 'play', m.n);
-    if (old) return no(s, old);
-    if (s.at.play === 'turning' && ['read', 'turn'].includes(m.type))
-      return no(s, 'a turn is under way, and its answer is what has Play on');
+  step: (state, message) => {
+    const [asked, serial] = ask(state, 'play');
+    const old = message.n === undefined ? '' : late(state, 'play', message.n);
+    if (old) return no(state, old);
+    if (state.at.play === 'turning' && ['read', 'turn'].includes(message.type))
+      return no(state, 'a turn is under way, and its answer is what has Play on');
     // A refusal, and an answer with what it copied, answer a turn, which
-    // set `s.l`.
-    switch (m.type) {
+    // set `state.l`.
+    switch (message.type) {
       case 'read':
-        return m.round <= s.round
-          ? no(s, `round ${m.round} is read already`)
+        return message.round <= state.round
+          ? no(state, `round ${message.round} is read already`)
           : go(
-              s,
+              state,
               { play: 'reading' },
-              { asked, round: m.round },
-              { run: 'read', n, failed: 'unread' },
+              { asked, round: message.round },
+              { run: 'read', n: serial, failed: 'unread' },
             );
       case 'turn':
         return go(
-          s,
+          state,
           { play: 'turning' },
-          { asked, was: s.at.play, l: m.l },
-          { run: 'turn', n, l: m.l, off: m.off, failed: 'refused' },
+          { asked, was: state.at.play, l: message.l },
+          { run: 'turn', n: serial, l: message.l, off: message.off, failed: 'refused' },
         );
       case 'refused':
         return go(
-          s,
-          { play: s.was },
+          state,
+          { play: state.was },
           {
             said: {
-              ...s.said,
-              [k(/** @type {Port} */ (s.l))]:
-                `${s.said[k(/** @type {Port} */ (s.l))] ?? ''} ${m.why}`,
+              ...state.said,
+              [keyOf(/** @type {Port} */ (state.l))]:
+                `${state.said[keyOf(/** @type {Port} */ (state.l))] ?? ''} ${message.why}`,
             },
           },
         );
       case 'answered':
         return go(
-          s,
+          state,
           { play: 'read' },
           {
-            plays: m.plays,
+            plays: message.plays,
             copied:
-              m.copied === undefined
-                ? s.copied
-                : { ...s.copied, [k(/** @type {Port} */ (s.l))]: m.copied },
+              message.copied === undefined
+                ? state.copied
+                : { ...state.copied, [keyOf(/** @type {Port} */ (state.l))]: message.copied },
           },
         );
       case 'unread':
-        return go(s, { play: 'unread' }, { why: m.why });
+        return go(state, { play: 'unread' }, { why: message.why });
       default:
-        return assertNever(s, m, 'Play');
+        return assertNever(state, message, 'Play');
     }
   },
 };
@@ -185,10 +176,11 @@ const play = machine(
   [{ run: 'read', n: 1, failed: 'unread' }],
 );
 /**
- * @param {State} s
- * @param {Port} l
+ * @param {State} state
+ * @param {Port} lend
  */
-const on = (s, l) => (s.at.play === 'unread' ? undefined : s.plays?.find(same(l)));
+const on = (state, lend) =>
+  state.at.play === 'unread' ? undefined : state.plays?.find(same(lend));
 
 // A port's Play or Stop, in either list, drawn from PLAY alone: what has
 // Play on said, with what its press copied, and why a turn was refused.
@@ -199,9 +191,9 @@ const on = (s, l) => (s.at.play === 'unread' ? undefined : s.plays?.find(same(l)
  */
 
 /** @param {TurnProps} props */
-const Turn = ({ l, words }) =>
-  ((s, r = on(s, l)) =>
-    html`<${words ? 'p' : 'span'}>${words ? words(l) : `${r ? `${r.said}${s.copied[k(l)] ?? ''}` : 'Play opens it on this computer, for a program here to connect to.'} `}<${Act} words=${r ? 'Stop' : 'Play'} doing=${{ state: s.at.play === 'turning' ? 'busy' : 'idle' }} on=${{ type: 'turn', l: { key: l.key, name: l.name }, off: Boolean(r) }} send=${play.dispatch} />${s.said[k(l)]}<//>`)(
+const Turn = ({ l: lend, words }) =>
+  ((state, open = on(state, lend)) =>
+    html`<${words ? 'p' : 'span'}>${words ? words(lend) : `${open ? `${open.said}${state.copied[keyOf(lend)] ?? ''}` : 'Play opens it on this computer, for a program here to connect to.'} `}<${Act} words=${open ? 'Stop' : 'Play'} doing=${{ state: state.at.play === 'turning' ? 'busy' : 'idle' }} on=${{ type: 'turn', l: { key: lend.key, name: lend.name }, off: Boolean(open) }} send=${play.dispatch} />${state.said[keyOf(lend)]}<//>`)(
     useStore(play),
   );
 // The index's cell for a port another computer lends (home.js@19b63b2b:182), asking
@@ -213,23 +205,28 @@ const Turn = ({ l, words }) =>
  */
 
 /** @param {CellProps} props */
-export const cell = ({ l, s }) => (
-  useEffect(() => play.dispatch({ type: 'read', round: s.asked?.lends ?? 1 }), [s.asked?.lends]),
-  html`<${Turn} l=${l} />`
-);
+export const cell = ({ l: lend, s: state }) => {
+  useEffect(
+    () => play.dispatch({ type: 'read', round: state.asked?.lends ?? 1 }),
+    [state.asked?.lends],
+  );
+  return html`<${Turn} l=${lend} />`;
+};
 
 // Each Play on, for acts.js, with its Stop, or why what has Play on cannot
 // be read; none when nothing has. A hook: acts.js calls it on each of its
 // draws, so it is drawn again with each read.
-/** @param {Port} r */
-const stop = (r) =>
-  `Open on this computer: ${r.name}${r.person ? ` (${r.person}’s)` : ''}, while Play is on. `;
+/** @param {Port} port */
+const stop = (port) =>
+  `Open on this computer: ${port.name}${port.person ? ` (${port.person}’s)` : ''}, while Play is on. `;
 /**
- * @param {State} s
+ * @param {State} state
  * @returns {Drawn[]}
  */
-export const plays = (s) =>
-  s.at.play === 'unread'
-    ? [html`<p>${s.why}</p>`]
-    : (s.plays ?? []).map((r) => html`<${Turn} key=${k(r)} l=${r} words=${stop} />`);
+export const plays = (state) =>
+  state.at.play === 'unread'
+    ? [html`<p>${state.why}</p>`]
+    : (state.plays ?? []).map(
+        (port) => html`<${Turn} key=${keyOf(port)} l=${port} words=${stop} />`,
+      );
 export const part = () => plays(useStore(play));

@@ -11,19 +11,10 @@
 // second fix), and the form is empty again; a refusal is said beside the
 // button once, the last in place of the one before, where v1 appended each
 // (home.js@19b63b2b:421; page-join (d)'s first fix).
-import {
-  Act,
-  ask,
-  assertNever,
-  Field,
-  go,
-  html,
-  late,
-  machine,
-  namesakes,
-  no,
-  useMachine,
-} from '../ui/kit.js?v=__VERSION__';
+import { html, useMachine } from '../ui/view.js?v=__VERSION__';
+import { ask, assertNever, go, late, machine, no } from '../ui/machine.js?v=__VERSION__';
+import { Act, Field } from '../ui/parts.js?v=__VERSION__';
+import { namesakes } from '../question.js?v=__VERSION__';
 import { get, post } from './group.js?v=__VERSION__';
 /** @import { Machine, Step } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
@@ -75,81 +66,82 @@ const FIRST = { at: { make: 'typing' }, name: '', person: '', before: '', said: 
 export const MAKE = (home) => ({
   states: { make: ['typing', 'checking', 'checked', 'making', 'refused'] },
   io: {
-    check: ({ name, n }) =>
+    check: ({ name, n: serial }) =>
       get(`/group?${new URLSearchParams({ name })}`)
         .then(
-          (b) => namesakes(b, name, 'This makes'),
-          (e) => (name ? e.message : ''),
+          (found) => namesakes(found, name, 'This makes'),
+          (error) => (name ? error.message : ''),
         )
-        .then((words) => ({ type: 'checked', n, words })),
+        .then((words) => ({ type: 'checked', n: serial, words })),
     make: ({ name, person }) =>
-      post('/group', [name, person]).then(
-        ([made, unplaced, beside]) => (
-          home({
-            type: 'made',
-            flow: 'make',
-            q: { made, also: namesakes(beside, made, 'This is'), unplaced },
-          }),
-          home({ type: 'again' }),
-          { type: 'made', why: 'said, the groups read again' }
-        ),
-      ),
+      post('/group', [name, person]).then(([made, unplaced, beside]) => {
+        home({
+          type: 'made',
+          flow: 'make',
+          q: { made, also: namesakes(beside, made, 'This is'), unplaced },
+        });
+        home({ type: 'again' });
+        return { type: 'made', why: 'said, the groups read again' };
+      }),
   },
-  step: (s, m) => {
-    switch (m.type) {
+  step: (state, message) => {
+    switch (message.type) {
       case 'typed':
-        return m.field === 'person'
-          ? go(s, {}, { person: m.value })
-          : ((asked, n) =>
+        return message.field === 'person'
+          ? go(state, {}, { person: message.value })
+          : ((asked, serial) =>
               go(
-                s,
+                state,
                 { make: 'checking' },
-                { name: m.value, asked },
-                { run: 'check', name: m.value, n, failed: 'checked' },
-              ))(...ask(s, 'name'));
+                { name: message.value, asked },
+                { run: 'check', name: message.value, n: serial, failed: 'checked' },
+              ))(...ask(state, 'name'));
       case 'checked':
-        return late(s, 'name', m.n)
-          ? no(s, late(s, 'name', m.n))
+        return late(state, 'name', message.n)
+          ? no(state, late(state, 'name', message.n))
           : go(
-              s,
-              { make: s.at.make === 'checking' ? 'checked' : s.at.make },
-              { before: m.words ?? m.why },
+              state,
+              { make: state.at.make === 'checking' ? 'checked' : state.at.make },
+              { before: message.words ?? message.why },
             );
       case 'make':
-        return s.at.make === 'making'
-          ? no(s, 'a group is being made, and is answered first')
+        return state.at.make === 'making'
+          ? no(state, 'a group is being made, and is answered first')
           : go(
-              s,
+              state,
               { make: 'making' },
               {},
-              { run: 'make', name: s.name, person: s.person, failed: 'refused' },
+              { run: 'make', name: state.name, person: state.person, failed: 'refused' },
             );
       case 'made':
-        return go(s, FIRST.at, FIRST);
+        return go(state, FIRST.at, FIRST);
       case 'refused':
-        return go(s, { make: 'refused' }, { said: ` ${m.why}` });
+        return go(state, { make: 'refused' }, { said: ` ${message.why}` });
       default:
-        return assertNever(s, m, 'making a group');
+        return assertNever(state, message, 'making a group');
     }
   },
 });
 /**
- * @param {HOME.State} s
- * @param {Taken} m
+ * @param {HOME.State} state
+ * @param {Taken} message
  * @returns {Step<HOME.State, HOME.Effect>}
  */
-export const take = (s, m) => go(s, { said: 'made' }, { q: m.q });
+export const take = (state, message) => go(state, { said: 'made' }, { q: message.q });
 
-// Each field's name a field of the form's `State`, by which `s[n]` reads it.
+// Each field's name a field of the form's `State`, by which `state[name]` reads it.
 /** @param {HOME.PlaceProps} props */
 const Make = ({ home }) =>
-  ((s, send) =>
+  ((state, send) =>
     html`<section id="make"><h2>Make a group</h2><p>${
       /** @satisfies {['name' | 'person', string][]} */ ([
         ['name', 'A name for the group: '],
         ['person', 'Your name in it: '],
-      ]).map(([n, w]) => html`<${Field} name=${n} words=${w} value=${s[n]} send=${send} />`)
-    }<${Act} words="Make a group" doing=${{ state: s.at.make === 'making' ? 'busy' : 'idle', said: s.said }} on=${{ type: 'make' }} send=${send} /></p><p>${s.before}</p></section>`)(
+      ]).map(
+        ([name, words]) =>
+          html`<${Field} name=${name} words=${words} value=${state[name]} send=${send} />`,
+      )
+    }<${Act} words="Make a group" doing=${{ state: state.at.make === 'making' ? 'busy' : 'idle', said: state.said }} on=${{ type: 'make' }} send=${send} /></p><p>${state.before}</p></section>`)(
     ...useMachine(() => machine('MAKE', MAKE(home), FIRST)),
   );
 /** @type {{ make: (props: HOME.PlaceProps) => Drawn }} */

@@ -102,6 +102,10 @@ step "browser" cargo test --quiet --workspace --test browser
 # since that step builds the wasm glue whose declaration the pages' calls
 # into it are checked against. Not installed fails, as lint.
 step "types" sh -c 'test -f web/node_modules/typescript/package.json || { echo "typescript is not installed here: npm ci --prefix web"; exit 1; }; node scripts/types.mjs'
+# The rules of .oxlintrc.json that read those types, which `lint` skips
+# without a word, over the same two programs (scripts/typed-lint.mjs): after
+# `types`, for the same wasm declaration. Not installed fails, as lint.
+step "typed lint" node scripts/typed-lint.mjs
 # The film's seeks on a host past the seek bar's load bar (bash-film-load;
 # crates/svrngs-node/tests/browser/load.rs, conformance's too): said apart,
 # never a pass.

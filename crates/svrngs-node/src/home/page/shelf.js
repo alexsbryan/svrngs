@@ -4,20 +4,21 @@
 // /shelf, then the groups read again (HOME's `again`). Folded for the group
 // HOME says was just joined here, its `q.joined` given through home.js and
 // group.js, as v1 reads `?joined=` (home.js@19b63b2b:203).
-import { html, Shelf } from '../ui/kit.js?v=__VERSION__';
+import { html } from '../ui/view.js?v=__VERSION__';
+import { Shelf } from '../ui/shelf.js?v=__VERSION__';
 import { post } from './group.js?v=__VERSION__';
 /** @import { Group, PlaceProps } from './group.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 
-// The apps ticked, by kind, brought to group `g`; /shelf answers each.
+// The apps ticked, by kind, brought to `group`; /shelf answers each.
 /**
- * @param {Group} g
+ * @param {Group} group
  * @param {string[]} apps
  */
-const bring = (g, apps) => post('/shelf', [g.id, apps]);
+const bring = (group, apps) => post('/shelf', [group.id, apps]);
 /** @type {{ shelf: (props: PlaceProps) => Drawn }} */
 export const view = {
-  shelf: ({ g, s, home, joined }) =>
-    s.lends &&
-    html`<${Shelf} g=${g} lent=${s.lends.lent} shelf=${s.lends.shelf} joined=${joined === g.name} bring=${bring} after=${() => home({ type: 'again' })} />`,
+  shelf: ({ g: group, s: state, home, joined }) =>
+    state.lends &&
+    html`<${Shelf} g=${group} lent=${state.lends.lent} shelf=${state.lends.shelf} joined=${joined === group.name} bring=${bring} after=${() => home({ type: 'again' })} />`,
 };

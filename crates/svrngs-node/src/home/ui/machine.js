@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // The pages' one core, both pages' (page-scaffold (c); svrn-docs
 // rings/current/PAGE_STATE.md §3). A machine owns its page's state: views
-// read it and `dispatch` a message `m`, and never write it. `step(s, m)` is
+// read it and `dispatch` a `message`, and never write it. `step(state, message)` is
 // the page's, pure and synchronous, and answers the next state and the
 // effects to run, as data; the edge's `io` runs each and answers one
-// message, done, or `failed` with why, so nothing idles quietly. `s.at`
+// message, done, or `failed` with why, so nothing idles quietly. `state.at`
 // holds one named state per region, each region a closed set (`states`), and
 // a step that answers outside it is refused here (AGENTS.md 9). No DOM, no
 // Preact, no clock, no storage, no state of the module's own.
@@ -95,58 +95,63 @@
  * The next state, `at` naming the regions that move, and the effects to run.
  * @template {Core} State
  * @template {Effect} E
- * @param {State} s
+ * @param {State} state
  * @param {Partial<State['at']>} at
  * @param {Partial<State>} [patch]
  * @param {...E} effects
  * @returns {Step<State, E>}
  */
-export const go = (s, at, patch = {}, ...effects) => ({
-  state: { ...s, ...patch, at: { ...s.at, ...at } },
+export const go = (state, at, patch = {}, ...effects) => ({
+  state: { ...state, ...patch, at: { ...state.at, ...at } },
   effects,
 });
 
 /**
  * The same state, nothing run, and why: traced, never drawn over.
  * @template State
- * @param {State} s
+ * @param {State} state
  * @param {string} why
  * @returns {Step<State, never>}
  */
-export const no = (s, why) => ({ state: s, effects: [], refused: why });
+export const no = (state, why) => ({ state: state, effects: [], refused: why });
 
 /**
  * One more read of `kind` asked: the counts to keep and this read's number.
- * @param {Pick<Core, 'asked'>} s
+ * @param {Pick<Core, 'asked'>} state
  * @param {string} kind
- * @param {number} [n]
+ * @param {number} [serial]
  * @returns {[Record<string, number>, number]}
  */
-export const ask = (s, kind, n = (s.asked?.[kind] ?? 0) + 1) => [{ ...s.asked, [kind]: n }, n];
+export const ask = (state, kind, serial = (state.asked?.[kind] ?? 0) + 1) => [
+  { ...state.asked, [kind]: serial },
+  serial,
+];
 
 /**
- * Why an answer to read `n` of `kind` is older than the last asked, or ''.
- * @param {Core} s
+ * Why an answer to read `serial` of `kind` is older than the last asked, or ''.
+ * @param {Core} state
  * @param {string} kind
- * @param {number | undefined} n
+ * @param {number | undefined} serial
  */
-export const late = (s, kind, n) =>
-  n === s.asked?.[kind] ? '' : `${kind} ${n} answered after ${kind} ${s.asked?.[kind]} was asked`;
+export const late = (state, kind, serial) =>
+  serial === state.asked?.[kind]
+    ? ''
+    : `${kind} ${serial} answered after ${kind} ${state.asked?.[kind]} was asked`;
 
 /**
- * The end of a step's `switch (m.type)`, where the compiler gives `m` the
+ * The end of a step's `switch (message.type)`, where the compiler gives `message` the
  * type `never` once every case is taken: a message type a step declares and
  * no case takes fails `types` here. A message no type foresaw, such as an
  * io's answer the page does not declare, still reaches it as the page runs,
  * and is refused with why, as every refusal is: "`taker` takes no <type>".
  * @template State
- * @param {State} s
- * @param {never} m
+ * @param {State} state
+ * @param {never} message
  * @param {string} taker
  * @returns {Step<State, never>}
  */
-export const assertNever = (s, m, taker) =>
-  no(s, `${taker} takes no ${/** @type {{ type: string }} */ (m).type}`);
+export const assertNever = (state, message, taker) =>
+  no(state, `${taker} takes no ${/** @type {{ type: string }} */ (message).type}`);
 
 /**
  * A machine named `name` (its trace's prefix), from `state`, `first` run as it starts.
@@ -160,60 +165,83 @@ export const assertNever = (s, m, taker) =>
  * @returns {Store<State, Message>}
  */
 export function machine(name, { states, step, io }, state, first = []) {
-  const subs = new Set(),
-    regions = /** @type {(keyof State['at'] & string)[]} */ (Object.keys(states));
-  /** @param {State} s */
-  const where = (s) => regions.map((r) => s.at[r]).join('/');
+  const subs = new Set();
+  const regions = /** @type {(keyof State['at'] & string)[]} */ (Object.keys(states));
+  /** @param {State} current */
+  const where = (current) => regions.map((region) => current.at[region]).join('/');
   // Each effect after the step that gave it, in its order; whatever it
   // answers but a message (a rejection, a throw, no io, nothing) is its
   // `failed` message with why.
   /** @param {E[]} effects */
   const run = (effects) =>
-    effects.forEach((f) =>
+    effects.forEach((effect) =>
       Promise.resolve()
-        .then(() => /** @type {Runners<Message>} */ (io)[f.run]?.(f))
+        .then(() => /** @type {Runners<Message>} */ (io)[effect.run]?.(effect))
         .then(
-          (m) =>
-            m ??
+          (message) =>
+            message ??
             Promise.reject(
               new Error(
-                /** @type {Runners<Message>} */ (io)[f.run]
-                  ? `${f.run} answered nothing`
-                  : `nothing here runs ${f.run}`,
+                /** @type {Runners<Message>} */ (io)[effect.run]
+                  ? `${effect.run} answered nothing`
+                  : `nothing here runs ${effect.run}`,
               ),
             ),
         )
         // Its `failed` message, which no type here can show its machine's
         // Message declares: a step that does not take it refuses it, by name.
-        .then(dispatch, (e) =>
+        .then(dispatch, (error) =>
           dispatch(
             /** @type {Message} */ (
-              /** @type {unknown} */ ({ type: f.failed, n: f.n, why: e?.message ?? String(e) })
+              /** @type {unknown} */ ({
+                type: effect.failed,
+                n: effect.n,
+                why: error?.message ?? String(error),
+              })
             ),
           ),
         ),
     );
+  // Why a step's answer is refused: the step's own `refused`, else a
+  // region `next` is in that is not one of its region's closed set.
+  /**
+   * @param {string | undefined} refused
+   * @param {State} next
+   */
+  const refusal = (refused, next) => {
+    if (refused) return refused;
+    const out = regions.find(
+      (region) => !(/** @type {readonly unknown[]} */ (states[region]).includes(next.at[region])),
+    );
+    return out && `${out} ${next.at[out]} is not one of ${states[out].join(', ')}`;
+  };
   // The one trace of every step and refusal, both pages', to their sink
   // (ui/trace.js), as web/store.js:88 traces to it too.
-  /** @param {Message} m */
-  function dispatch(m) {
-    const { state: next, effects = [], refused } = step(state, m);
-    const out = refused
-      ? ''
-      : regions.find((r) => !(/** @type {readonly unknown[]} */ (states[r]).includes(next.at[r])));
-    const why =
-      refused || (out && `${out} ${next.at[out]} is not one of ${states[out].join(', ')}`);
-    if (why) return globalThis.__trace?.(`${name}: ${m.type} refused in ${where(state)}: ${why}`);
-    const running = effects.length ? `, running ${effects.map((f) => f.run).join(', ')}` : '';
+  /** @param {Message} message */
+  function dispatch(message) {
+    const { state: next, effects, refused } = step(state, message);
+    const why = refusal(refused, next);
+    if (why)
+      return globalThis.__trace?.(`${name}: ${message.type} refused in ${where(state)}: ${why}`);
+    const running = effects.length
+      ? `, running ${effects.map((effect) => effect.run).join(', ')}`
+      : '';
     globalThis.__trace?.(
-      `${name}: ${m.type}${m.why ? ` (${m.why})` : ''}: ${where(state)} -> ${where(next)}${running}`,
+      `${name}: ${message.type}${message.why ? ` (${message.why})` : ''}: ${where(state)} -> ${where(next)}${running}`,
     );
     if (next !== state) {
       state = next;
-      subs.forEach((f) => f());
+      subs.forEach((listener) => listener());
     }
     run(effects);
   }
   run(first);
-  return { get: () => state, dispatch, subscribe: (f) => (subs.add(f), () => subs.delete(f)) };
+  return {
+    get: () => state,
+    dispatch,
+    subscribe: (listener) => {
+      subs.add(listener);
+      return () => subs.delete(listener);
+    },
+  };
 }

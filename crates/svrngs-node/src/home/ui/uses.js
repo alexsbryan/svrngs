@@ -40,24 +40,24 @@ import { named, unasked } from '../question.js?v=__VERSION__';
  * @returns {Drawn[]}
  */
 export function Uses({ lent, labelOf, choices, tag, said = {}, send }) {
-  const app = (/** @type {string} */ o) => lent.find((l) => labelOf(l) === o),
-    line = (/** @type {string} */ words, /** @type {Drawn[]} */ ...after) =>
-      html`<${tag}>${words}${after}</${tag}>`;
+  const app = (/** @type {string} */ label) => lent.find((lend) => labelOf(lend) === label);
+  const line = (/** @type {string} */ words, /** @type {Drawn[]} */ ...after) =>
+    html`<${tag}>${words}${after}</${tag}>`;
   // A lend past the filter has its choices, and an app named is found, as
   // the test before its `named` says: tsc narrows neither lookup.
   return lent
-    .filter((l) => l.asks && choices[labelOf(l)])
-    .flatMap((l) =>
-      ((/** @type {Asked} */ a, /** @type {string} */ lend) =>
-        a.why !== undefined
-          ? [line(`${unasked(l)} ${a.why}`.trim())]
-          : Object.entries(a.choices).map(([o, c]) =>
+    .filter((lend) => Boolean(lend.asks) && choices[labelOf(lend)] !== undefined)
+    .flatMap((asking) =>
+      ((/** @type {Asked} */ asked, /** @type {string} */ lend) =>
+        asked.why !== undefined
+          ? [line(`${unasked(asking)} ${asked.why}`.trim())]
+          : Object.entries(asked.choices).map(([appLabel, choice]) =>
               line(
-                `${app(o) ? named(/** @type {L} */ (app(o))) : 'An app'} ${c.said === 'yes' ? 'uses' : 'was stopped using'} ${named(l)}. `,
-                c.said === 'yes' &&
-                  html`<button onClick=${() => send({ type: 'stop', lend, app: o })}>Stop</button>`,
-                said[`${lend} ${o}`],
+                `${app(appLabel) ? named(/** @type {L} */ (app(appLabel))) : 'An app'} ${choice.said === 'yes' ? 'uses' : 'was stopped using'} ${named(asking)}. `,
+                choice.said === 'yes' &&
+                  html`<button onClick=${() => send({ type: 'stop', lend, app: appLabel })}>Stop</button>`,
+                said[`${lend} ${appLabel}`],
               ),
-            ))(/** @type {Asked} */ (choices[labelOf(l)]), labelOf(l)),
+            ))(/** @type {Asked} */ (choices[labelOf(asking)]), labelOf(asking)),
     );
 }

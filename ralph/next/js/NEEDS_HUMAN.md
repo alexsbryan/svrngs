@@ -98,3 +98,40 @@ no change. Closing js-webkit with `check.sh` red was refused, since it would
 weaken the row's pass bar. This entry stays open for the operator for one
 reason: whether a person should see a made or joined group as being read
 until it is. That is a page change, and no queue holds it.
+
+## `.` is at its cap by one gate line (js-lint, 2026-11-03)
+
+**What happens.** js-lint (d1) runs the pages' type-aware lint as a step
+of its own, `step "typed lint" node scripts/typed-lint.mjs`
+(scripts/check.sh:108, 94192670), after `types`, since it reads the same
+wasm declaration the browser step builds. That one shell line is counted
+in `.`, which main holds at 18,860 against a cap of 18,861
+(scripts/lean_check.py:403). The row takes `.` to 18,861, and js-lint-6's
+gate failed `lean and RUST_ARCH` on it: "BROKEN . has 18861 lines of
+code, budget 18861" (ctl/log/sessions/js-lint-6.await.log). Every other
+step of that gate passed, apart from one browser test that read a renamed
+local's name (edd6b030, fixed).
+
+**The pass.** Nothing to cut was found in the code `.` holds. No function
+in scripts/*.py or *.sh is defined and never called, and no bare `return`
+or `pass` is left. Every line of check.sh is a step or a verdict, so
+folding the typed lint into `types` or `lint` would pack two verdicts
+onto one line (fence 1), and lose the separate verdict (AGENTS.md 1). The
+line is CHARTER "Answered" 4's agreed type-aware lint, and the charter's
+waived pass is `js`'s only.
+
+**The ready diff** (scripts/lean_check.py, above and at `BUDGET`):
+
+```
++# js-lint's type-aware lint (CHARTER "Answered" 4), the operator's raise:
++# +1 in `.`, the gate's `typed lint` step (check.sh, 94192670), at 18,861.
++# The pass found nothing to cut: every check.sh line is a step or a verdict.
+-BUDGET = {"crates/svrngs-core": 3478, ".": 18861, "js": None, "swift": 1}
++BUDGET = {"crates/svrngs-core": 3478, ".": 18862, "js": None, "swift": 1}
+```
+
+Once it lands, js-lint closes with `lockf -k /tmp/svrngs-gate.lock bash
+scripts/check.sh`.
+
+**Decided 2026-11-03 by the operator** ("Approve +1"): `.` to 18,862,
+landed from the operator seat in scripts/lean_check.py.

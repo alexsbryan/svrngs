@@ -14,17 +14,10 @@
 // hand-on reads them again too (HOME's `again`), so the hand-on, no
 // longer this computer's, goes, and what it did is said beside Leave,
 // where v1 went on saying "You keep the order of removals" until a reload.
-import {
-  ask,
-  assertNever,
-  called,
-  go,
-  html,
-  machine,
-  no,
-  useMachine,
-} from '../ui/kit.js?v=__VERSION__';
-/** @import { Group, Home, PlaceProps } from './group.js?v=__VERSION__' */
+import { html, useMachine } from '../ui/view.js?v=__VERSION__';
+import { ask, assertNever, go, machine, no } from '../ui/machine.js?v=__VERSION__';
+import { called } from '../question.js?v=__VERSION__';
+/** @import { Group, Home, PlaceProps, Taken as Offered } from './group.js?v=__VERSION__' */
 /** @import { Machine, Step } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 /** @import { PeopleRow } from '../question.js?v=__VERSION__' */
@@ -85,14 +78,15 @@ import {
 // as tsc gives one statement's type to each of its declarations.
 /** @type {Partial<Record<Outcome, (s: State) => string>>} */
 const SAYS = {
-  handed: (s) => `${s.person} keeps the order of removals in ${s.name} now, so you can leave it.`,
-  decides: (s) =>
-    `You keep the order of removals in ${s.name}: choose who keeps it after you, then leave.`,
-  not_in: (s) => `You are no longer in ${s.name}.`,
+  handed: (state) =>
+    `${state.person} keeps the order of removals in ${state.name} now, so you can leave it.`,
+  decides: (state) =>
+    `You keep the order of removals in ${state.name}: choose who keeps it after you, then leave.`,
+  not_in: (state) => `You are no longer in ${state.name}.`,
 };
 /** @type {Partial<Record<Outcome, (s: State) => HOME.Message>>} */
 const TELLS = {
-  left: (s) => ({ type: 'left', flow: 'leave', name: s.name }),
+  left: (state) => ({ type: 'left', flow: 'leave', name: state.name }),
   handed: () => ({ type: 'again' }),
 };
 /**
@@ -101,58 +95,58 @@ const TELLS = {
  */
 const LEAVE = (home) => ({
   states: { leave: ['idle', 'asking', 'handed', 'decides', 'refused'] },
-  step: (s, m) => {
+  step: (state, message) => {
     /**
      * An answer said after the one before, beside the button `on`.
-     * @param {string} w
+     * @param {string} words
      * @returns {Pick<State, 'said'>}
      */
-    const said = (w, on = s.on) => ({ said: [...s.said, [on, ` ${w}`]] });
-    switch (m.type) {
+    const said = (words, on = state.on) => ({ said: [...state.said, [on, ` ${words}`]] });
+    switch (message.type) {
       case 'to':
-        return go(s, {}, { to: m.i });
+        return go(state, {}, { to: message.i });
       case 'ask':
         return go(
-          s,
+          state,
           { leave: 'asking' },
-          { on: m.on, person: m.body.person },
-          { run: 'ask', path: m.path, body: m.body, failed: 'refused' },
+          { on: message.on, person: message.body.person },
+          { run: 'ask', path: message.path, body: message.body, failed: 'refused' },
         );
       case 'answered': {
         // What HOME is told, read once, as tsc does not narrow a lookup
         // by a key read twice.
-        const tell = TELLS[m.o];
+        const tell = TELLS[message.o];
         /** @type {Effect[]} */
-        const told = tell ? [{ run: 'send', m: tell(s) }] : [];
+        const told = tell ? [{ run: 'send', m: tell(state) }] : [];
         return go(
-          s,
+          state,
           {
             leave:
               /** @type {Partial<Record<Outcome, State['at']['leave']>>} */ ({
                 handed: 'handed',
                 decides: 'decides',
                 left: 'idle',
-              })[m.o] ?? 'refused',
+              })[message.o] ?? 'refused',
           },
-          m.o === 'left'
+          message.o === 'left'
             ? {}
             : said(
-                SAYS[m.o]?.(s) ?? `${s.name} cannot be changed on this computer now.`,
-                m.o === 'handed' ? 'leave' : s.on,
+                SAYS[message.o]?.(state) ?? `${state.name} cannot be changed on this computer now.`,
+                message.o === 'handed' ? 'leave' : state.on,
               ),
           ...told,
         );
       }
       case 'refused':
         return go(
-          s,
+          state,
           { leave: 'refused' },
-          said(`${s.name} cannot be changed on this computer now: ${m.why}`),
+          said(`${state.name} cannot be changed on this computer now: ${message.why}`),
         );
       case 'sent':
-        return go(s, {});
+        return go(state, {});
       default:
-        return assertNever(s, m, 'leaving');
+        return assertNever(state, message, 'leaving');
     }
   },
   io: {
@@ -161,19 +155,22 @@ const LEAVE = (home) => ({
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(body),
-      }).then(async (r) =>
-        ((a) =>
-          a.outcome
-            ? { type: 'answered', o: a.outcome, why: a.outcome }
+      }).then(async (response) =>
+        ((/** @type {{ outcome?: Outcome, error?: string }} */ answer) =>
+          answer.outcome
+            ? { type: 'answered', o: answer.outcome, why: answer.outcome }
             : Promise.reject(
                 new Error(
-                  r.status === 401
+                  response.status === 401
                     ? 'this page’s session has ended. Open svrngs from your Applications, or on Linux your applications menu, and it opens here again'
-                    : a.error || `answered ${r.status}`,
+                    : answer.error || `answered ${response.status}`,
                 ),
-              ))(await r.json().catch(() => ({}))),
+              ))(await response.json().catch(() => ({}))),
       ),
-    send: ({ m }) => (home(m), { type: 'sent', why: m.type }),
+    send: ({ m: message }) => {
+      home(message);
+      return { type: 'sent', why: message.type };
+    },
   },
 });
 /**
@@ -189,48 +186,51 @@ const LEAVE = (home) => ({
  */
 
 /** @param {LeaveProps} props */
-function Leave({ g, rows, me, home, name = g.name ?? 'this group' }) {
-  const [s, send] = useMachine(() =>
-      machine('LEAVE', LEAVE(home), { at: { leave: 'idle' }, said: [], to: 0, name }),
-    ),
-    own = rows.find((r) => r.key === me)?.person_key;
-  // `s.to` is the chosen option's value, a string after the first choice,
+function Leave({ g: group, rows, me, home, name = group.name ?? 'this group' }) {
+  const [state, send] = useMachine(() =>
+    machine('LEAVE', LEAVE(home), { at: { leave: 'idle' }, said: [], to: 0, name }),
+  );
+  const own = rows.find((row) => row.key === me)?.person_key;
+  // `state.to` is the chosen option's value, a string after the first choice,
   // by which an array is indexed as by its number.
   const others = [
     ...new Map(
       rows
-        .filter((r) => r.device === 'computer' && r.person_key !== own)
-        .map((r) => [r.person_key, r]),
+        .filter((row) => row.device === 'computer' && row.person_key !== own)
+        .map((row) => [row.person_key, row]),
     ).values(),
   ];
   const press =
-      /**
-       * @param {On} on
-       * @param {string} path
-       * @param {Body} body
-       */
-      (on, path, body) => () => send({ type: 'ask', on, path, body }),
-    says = /** @param {On} on */ (on) => s.said.filter((w) => w[0] === on).map((w) => w[1]);
-  return html`${g.keeps && others.length > 0 && html`<p>You keep the order of removals in ${name}. Choose who keeps it after you, then leave: <select onChange=${(/** @type {{ target: HTMLSelectElement }} */ e) => send({ type: 'to', i: e.target.value })}>${others.map((r, i) => html`<option value=${i}>${called(rows, r.person_key)}</option>`)}</select><button onClick=${press('hand', '/v1/handovers', { group: g.id, ...others[Number(s.to)] })}>Hand it on</button>${says('hand')}</p>`}<p class="leave">Leaving ${name} stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. <button onClick=${press('leave', '/v1/leaves', { group: g.id })}>Leave ${name}</button>${says('leave')}</p>`;
+    /**
+     * @param {On} on
+     * @param {string} path
+     * @param {Body} body
+     */
+    (on, path, body) => () => send({ type: 'ask', on, path, body });
+  const says = /** @param {On} on */ (on) =>
+    state.said.filter((said) => said[0] === on).map((said) => said[1]);
+  return html`${group.keeps && others.length > 0 && html`<p>You keep the order of removals in ${name}. Choose who keeps it after you, then leave: <select onChange=${(/** @type {{ target: HTMLSelectElement }} */ chosen) => send({ type: 'to', i: chosen.target.value })}>${others.map((row, i) => html`<option value=${i}>${called(rows, row.person_key)}</option>`)}</select><button onClick=${press('hand', '/v1/handovers', { group: group.id, ...others[Number(state.to)] })}>Hand it on</button>${says('hand')}</p>`}<p class="leave">Leaving ${name} stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. <button onClick=${press('leave', '/v1/leaves', { group: group.id })}>Leave ${name}</button>${says('leave')}</p>`;
 }
 
 // HOME's `left`: the leave said (home.js SAYS `left`), the groups read again.
+// Any message to this flow is offered here (group.js `offered`), so one of
+// another type is refused.
 /**
- * @param {HOME.State} s
- * @param {Taken} m
+ * @param {HOME.State} state
+ * @param {Offered} message
  * @returns {Step<HOME.State, HOME.Effect>}
  */
-export const take = (s, m, [asked, n] = ask(s, 'groups')) =>
-  m.type === 'left'
+export const take = (state, message, [asked, serial] = ask(state, 'groups')) =>
+  message.type === 'left'
     ? go(
-        s,
+        state,
         { groups: 'reading', said: 'left' },
-        { asked, q: { ...s.q, left: m.name } },
-        { run: 'groups', n, round: 'again', failed: 'unread' },
+        { asked, q: { ...state.q, left: /** @type {Taken} */ (message).name } },
+        { run: 'groups', n: serial, round: 'again', failed: 'unread' },
       )
-    : no(s, `leaving takes no ${m.type}`);
+    : no(state, `leaving takes no ${String(message.type)}`);
 /** @type {{ leave: (props: PlaceProps) => Drawn }} */
 export const view = {
-  leave: ({ g, s, home, me }) =>
-    s.people && html`<${Leave} g=${g} rows=${s.people.people} me=${me} home=${home} />`,
+  leave: ({ g: group, s: state, home, me }) =>
+    state.people && html`<${Leave} g=${group} rows=${state.people.people} me=${me} home=${home} />`,
 };
