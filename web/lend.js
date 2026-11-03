@@ -372,6 +372,27 @@ const FIRST = 256 * 1024;
 // Where a part of a file ends, `<path> <offset>`, and that part's size.
 /** @type {Map<string, number>} */
 const ends = new Map();
+// The part a range of `path` asks from `from`: PART for a closed range,
+// else FIRST, or twice the part that ended at `from`, up to PART.
+/**
+ * @param {string} path
+ * @param {number} from
+ * @param {boolean} closed
+ */
+const partAt = (path, from, closed) =>
+  closed ? PART : Math.min(PART, 2 * (ends.get(`${path} ${from}`) ?? FIRST / 2));
+// A part of `path` from `from`, of `size` bytes, kept as where the next
+// part runs on from, the oldest let go of past 64.
+/**
+ * @param {string} path
+ * @param {number} from
+ * @param {number} size
+ */
+const partAsked = (path, from, size) => {
+  ends.delete(`${path} ${from}`);
+  ends.set(`${path} ${from + size}`, size);
+  if (ends.size > 64) ends.delete(/** @type {string} */ (ends.keys().next().value));
+};
 
 /**
  * @param {Header[]} headers
@@ -386,12 +407,9 @@ function bounded(headers, destination, path) {
       if (!range) return [name, value];
       const from = Number(range[1]);
       const media = destination === 'video' || destination === 'audio';
-      const size =
-        range[2] !== '' ? PART : Math.min(PART, 2 * (ends.get(`${path} ${from}`) ?? FIRST / 2));
+      const size = partAt(path, from, range[2] !== '');
       if (range[2] !== '' && !(media && Number(range[2]) - from + 1 > size)) return [name, value];
-      ends.delete(`${path} ${from}`);
-      ends.set(`${path} ${from + size}`, size);
-      if (ends.size > 64) ends.delete(/** @type {string} */ (ends.keys().next().value));
+      partAsked(path, from, size);
       trace(
         `RUNTIME: ${value} for ${destination || 'a fetch'} runs on: asked as a part of ${size} bytes`,
       );
@@ -515,6 +533,19 @@ const closed = () => say(403, 'This is not open to this page.', 'closed');
 const shim = (label, jar, policy, nonce = /'nonce-([^']+)'/.exec(policy ?? '')?.[1]) =>
   `<script${nonce ? ` nonce="${nonce}"` : ''} src="${SITE}shim.js?v=__VERSION__&l=${label}&c=${encodeURIComponent(cookieFor(jar, '/', true))}"></script>`;
 
+// A request served from a lend, as each step of `lent` reads it: the
+// request, the lend `where` names and the pass holds, whether the request
+// may name acts (`signs`), the lend's cookie jar, and the path at its door.
+/**
+ * @typedef {object} Asked
+ * @property {Request} request
+ * @property {Where} where
+ * @property {Passed} lend
+ * @property {boolean} signs
+ * @property {Cookie[]} jar
+ * @property {string} path `/lend/<label><path>`
+ */
+
 // Serve `request`, at `url`, from the lend `where` names.
 /**
  * @param {Request} request
@@ -524,30 +555,96 @@ const shim = (label, jar, policy, nonce = /'nonce-([^']+)'/.exec(policy ?? '')?.
  */
 async function lent(request, url, where, signs = false) {
   const held = await holding();
-  if (!held) {
-    if (request.mode !== 'navigate') return unheld();
-    trace(`RUNTIME: no pass for ${OWN}: its start page reads it again`);
-    return Response.redirect(
-      `${SCOPE.origin}${SITE}open.html?v=__VERSION__&for=${OWN}&back=${encodeURIComponent(url.pathname + url.search)}`,
-      302,
-    );
-  }
+  if (!held) return unheldAt(request, url);
   const lend = held.lends.find((one) => one.label === where.label);
   if (!lend) return closed();
-  if (request.method === 'POST' && lend.group && where.path === '/svrngs/acts') {
-    if (
-      !signs ||
-      // `split` gives at least one part; the cast's parens end the chain,
-      // and `?.` takes it on as the chain went.
-      /** @type {string | undefined} */ (
-        request.headers.get('content-type')?.split(';')[0]
-      )?.trim() !== 'application/json'
-    )
-      return closed();
-    return writing(request, lend);
-  }
+  if (request.method === 'POST' && lend.group && where.path === '/svrngs/acts')
+    return actsPosted(request, lend, signs);
   if (where.read && request.mode === 'navigate') return opening(held, where);
-  const jar = await jarOf(where.label);
+  return proxied(
+    {
+      request,
+      where,
+      lend,
+      signs,
+      jar: await jarOf(where.label),
+      path: `/lend/${where.label}${where.path}`,
+    },
+    held,
+  );
+}
+
+// No pass held: a page is sent to its start page, which reads it again;
+// anything else is refused.
+/**
+ * @param {Request} request
+ * @param {URL} url
+ */
+function unheldAt(request, url) {
+  if (request.mode !== 'navigate') return unheld();
+  trace(`RUNTIME: no pass for ${OWN}: its start page reads it again`);
+  return Response.redirect(
+    `${SCOPE.origin}${SITE}open.html?v=__VERSION__&for=${OWN}&back=${encodeURIComponent(url.pathname + url.search)}`,
+    302,
+  );
+}
+
+// A group's lend's acts, posted as JSON by a page that may name them, are
+// written here (`writing`); any other post there is refused.
+/**
+ * @param {Request} request
+ * @param {Passed} lend
+ * @param {boolean} signs
+ */
+function actsPosted(request, lend, signs) {
+  if (
+    !signs ||
+    // `split` gives at least one part; the cast's parens end the chain,
+    // and `?.` takes it on as the chain went.
+    /** @type {string | undefined} */ (
+      request.headers.get('content-type')?.split(';')[0]
+    )?.trim() !== 'application/json'
+  )
+    return closed();
+  return writing(request, lend);
+}
+
+// Whether `request` carries a body.
+const posts = (/** @type {Request} */ request) => !['GET', 'HEAD'].includes(request.method);
+
+// `asked` sent through the lend's door, and its answer served as the
+// browser would take it from the lend itself.
+/**
+ * @param {Asked} asked
+ * @param {Held} held
+ * @returns {Promise<Response>}
+ */
+async function proxied(asked, held) {
+  const { request, path } = asked;
+  const headers = await headersFor(asked, held);
+  const body = await bodyFor(asked, headers);
+  const said = ranged(request, path);
+  const res = await doorAnswer(asked, headers, body);
+  if (!res) return away(request, asked.lend);
+  said?.(
+    `answered ${res.status} ${res.headers.get('content-range') ?? ''}${request.signal?.aborted ? ', after the browser let go of it' : ''}`,
+  );
+  const set = res.headers.get('x-svrngs-set-cookies');
+  if (set) await keepCookies(asked, set);
+  const turned = (await refusedAppend(asked, res)) ?? redirected(asked, res);
+  if (turned) return turned;
+  return served(asked, res, said, set);
+}
+
+// The headers `asked` goes to the door with: the page's, but its cookies
+// and length, with a range bounded, and what a browser would have sent
+// that a worker is not shown.
+/**
+ * @param {Asked} asked
+ * @param {Held} held
+ * @returns {Promise<Header[]>}
+ */
+async function headersFor({ request, where, jar }, held) {
   const headers = bounded(
     [...request.headers].filter(
       ([name]) => !['cookie', 'content-length'].includes(name.toLowerCase()),
@@ -570,52 +667,91 @@ async function lent(request, url, where, signs = false) {
   // for a post from this lend's own pages: a fetch, which only they can
   // make through this worker, or a page's form whose referrer is here; a
   // post another site sends here is left without, for the app to refuse.
-  const posted = !['GET', 'HEAD'].includes(request.method);
   const named = headers.some(([name]) => name.toLowerCase() === 'origin');
   const from = request.referrer ? new URL(request.referrer).origin : null;
-  if (posted && !named && (request.mode !== 'navigate' || from === self.location.origin)) {
+  if (posts(request) && !named && (request.mode !== 'navigate' || from === self.location.origin)) {
     headers.push(['origin', self.location.origin]);
   }
   // A browser never shows a worker the `Accept-Encoding` it sends, and
   // llama-server's chat page comes only in gzip, 415 to a request without
   // (demo/runs/start/2026-10-13-story/ 9): so gzip is asked for here, but
-  // for a range, and the answer unpacked below.
+  // for a range, and the answer unpacked below (`unpacked`).
   if (!headers.some(([name]) => /^(range|accept-encoding)$/i.test(name)))
     headers.push(['accept-encoding', 'gzip']);
-  // A body is read whole, as a Blob, which the browser keeps on disk when
-  // it is large, so it goes with its length, a slice at a time (`sent`): a
-  // worker never sees the page's Content-Length, and a parser that reads by
-  // it — Django's multipart, Paperless-ngx's upload (u5-catalogue-dry) —
-  // reads nothing from a stream sent without one.
-  const path = `/lend/${where.label}${where.path}`;
-  const blob = posted ? await request.blob() : null;
-  if (blob) headers.push(['content-length', String(blob.size)]);
-  const body = blob ? sent(blob, `${request.method} ${path}`) : null;
-  const said = ranged(request, path);
-  let res;
-  for (let tries = 0; !res; tries++) {
+  return headers;
+}
+
+// A body is read whole, as a Blob, which the browser keeps on disk when
+// it is large, so it goes with its length, named in `headers`, a slice at
+// a time (`sent`): a worker never sees the page's Content-Length, and a
+// parser that reads by it — Django's multipart, Paperless-ngx's upload
+// (u5-catalogue-dry) — reads nothing from a stream sent without one.
+/**
+ * @param {Asked} asked
+ * @param {Header[]} headers
+ */
+async function bodyFor({ request, path }, headers) {
+  if (!posts(request)) return null;
+  const blob = await request.blob();
+  headers.push(['content-length', String(blob.size)]);
+  return sent(blob, `${request.method} ${path}`);
+}
+
+// The door's answer to `asked`, or none when the lender's computer did
+// not answer.
+/**
+ * @param {Asked} asked
+ * @param {Header[]} headers
+ * @param {ReadableStream<Uint8Array> | null} body
+ */
+async function doorAnswer({ request, lend, path }, headers, body) {
+  for (let tries = 0; ; tries++) {
     try {
-      res = await (await dialFor(lend.key)).fetch(request.method, path, headers, body);
+      return await (await dialFor(lend.key)).fetch(request.method, path, headers, body);
     } catch (/** @type {any} */ error) {
       dials.delete(lend.key);
       trace(`RUNTIME: ${request.method} ${path} failed (try ${tries + 1}): ${error}`);
       // A dial that heard nothing from the computer within the cap, new or
       // held, is not tried again: a second would wait the cap again.
-      if (body || tries || /asleep/.test(error)) return away(request, lend);
+      if (body || tries || /asleep/.test(error)) return null;
     }
   }
-  said?.(
-    `answered ${res.status} ${res.headers.get('content-range') ?? ''}${request.signal?.aborted ? ', after the browser let go of it' : ''}`,
-  );
-  const set = res.headers.get('x-svrngs-set-cookies');
-  if (set) {
-    for (const line of JSON.parse(set)) setCookie(jar, line);
-    await keepJar(where.label);
-  }
+}
+
+// The cookies the door's answer `set` (`x-svrngs-set-cookies`), kept in
+// the lend's jar.
+/**
+ * @param {Asked} asked
+ * @param {string} set
+ */
+async function keepCookies({ where, jar }, set) {
+  for (const line of JSON.parse(set)) setCookie(jar, line);
+  await keepJar(where.label);
+}
+
+// The acts the answer names to be written (`APPEND`): refused unless the
+// request may name them, else each `appended`. None when it names none, or
+// when every one is written.
+/**
+ * @param {Asked} asked
+ * @param {Response} res
+ * @returns {Promise<Response | null>}
+ */
+async function refusedAppend({ lend, signs }, res) {
   const naming = res.headers.get(APPEND);
-  if (naming && !signs) return closed();
-  const refused = naming && (await appended(lend, naming));
-  if (refused) return refused;
+  if (!naming) return null;
+  if (!signs) return closed();
+  return appended(lend, naming);
+}
+
+// A page whose pass the door refused goes to its start page, which asks
+// the group's page for another; a redirect to a path is read under the
+// lend's own address. None for any other answer.
+/**
+ * @param {Asked} asked
+ * @param {Response} res
+ */
+function redirected({ request, where, path }, res) {
   if (res.headers.get(REFUSED) === 'pass' && request.mode === 'navigate') {
     trace(
       `RUNTIME: the pass for ${where.label} is refused: its start page asks the group's page for another`,
@@ -631,24 +767,57 @@ async function lent(request, url, where, signs = false) {
       [301, 302, 303, 307, 308].includes(res.status) ? res.status : 302,
     );
   }
-  // Unpacked from gzip as a browser unpacks what it asked for itself.
-  const gzip = /^gzip$/i.test(res.headers.get('content-encoding') ?? '');
-  const answer = gzip ? res.body?.pipeThrough(new DecompressionStream('gzip')) : res.body;
-  const headed = new Headers(res.headers);
-  ['x-svrngs-set-cookies', APPEND, ...(gzip ? ['content-encoding', 'content-length'] : [])].forEach(
-    (header) => headed.delete(header),
-  );
+  return null;
+}
+
+// The door's answer `res` to `asked`, as the browser takes it: unpacked,
+// with the cookies its pages may read when it `set` some, its reading
+// traced by `said`; a page with the shim in it.
+/**
+ * @param {Asked} asked
+ * @param {Response} res
+ * @param {Said | null} said
+ * @param {string | null} set
+ */
+function served(asked, res, said, set) {
+  const { answer, headed } = unpacked(res);
   // What its pages may read now, for the shim to take in before the page
   // reads the answer: Immich reads its sign-in's cookie unreloaded.
-  if (set) headed.set(PAGE_COOKIES, cookieFor(jar, '/', true));
+  if (set) headed.set(PAGE_COOKIES, cookieFor(asked.jar, '/', true));
   const html =
-    request.method === 'GET' && (res.headers.get('content-type') ?? '').includes('text/html');
+    asked.request.method === 'GET' && (res.headers.get('content-type') ?? '').includes('text/html');
   if (!html)
     return new Response(said && answer ? counted(answer, said) : answer, {
       status: res.status,
       statusText: res.statusText,
       headers: headed,
     });
+  return shimmed(asked, res, answer, headed);
+}
+
+// `res`'s body unpacked from gzip as a browser unpacks what it asked for
+// itself, and its headers without this worker's own or, once unpacked,
+// the gzip's.
+/** @param {Response} res */
+function unpacked(res) {
+  const gzip = /^gzip$/i.test(res.headers.get('content-encoding') ?? '');
+  const answer = gzip ? res.body?.pipeThrough(new DecompressionStream('gzip')) : res.body;
+  const headed = new Headers(res.headers);
+  ['x-svrngs-set-cookies', APPEND, ...(gzip ? ['content-encoding', 'content-length'] : [])].forEach(
+    (header) => headed.delete(header),
+  );
+  return { answer, headed };
+}
+
+// A page of the lend's, `answer`, with the shim in its head, under the
+// app's own policy with the signer let in.
+/**
+ * @param {Asked} asked
+ * @param {Response} res
+ * @param {ReadableStream<Uint8Array> | null | undefined} answer
+ * @param {Headers} headed
+ */
+async function shimmed({ where, jar, path }, res, answer, headed) {
   // The app's own policy, with the signer derived from this origin's host,
   // never an address supplied by app data, let in as a frame only where it
   // restricts frames (authority.js `framing`). The signer accepts scoped acts only.
@@ -818,27 +987,7 @@ async function writeSigned(lend, group, act, grant) {
   );
   let res;
   try {
-    for (const carrying of /** @type {Unsent[]} */ (handed.unsent)) {
-      const body = new TextEncoder().encode(JSON.stringify(carrying));
-      const headers = [
-        ['content-type', 'application/json'],
-        ['content-length', String(body.length)],
-      ];
-      res = await (
-        await dialFor(lend.key)
-      ).fetch('POST', '/carry', headers, new Blob([body]).stream());
-      trace(
-        `RUNTIME: line ${carrying[1].seq} carried to ${lend.person}'s computer, answered ${res.status}`,
-      );
-      if (!res.ok) break;
-      handed = {
-        ...handed,
-        unsent: /** @type {Unsent[]} */ (handed.unsent).filter(
-          (unsent) => unsent[1].id !== carrying[1].id,
-        ),
-      };
-      await store.lendKeep(`pass ${OWN}`, handed);
-    }
+    res = await carried(lend);
   } catch (error) {
     dials.delete(lend.key);
     trace(`RUNTIME: lines not carried: ${error}`);
@@ -849,6 +998,51 @@ async function writeSigned(lend, group, act, grant) {
       { status: 502 },
     );
   }
+  return judged(lend, res);
+}
+
+// Each line not yet carried (`unsent`) taken to the lend's computer in
+// turn, and let go of once taken, until one is not: the answer to the
+// last one sent.
+/**
+ * @param {Passed} lend
+ * @returns {Promise<Response>}
+ */
+async function carried(lend) {
+  let res;
+  for (const carrying of /** @type {Unsent[]} */ (handed.unsent)) {
+    const body = new TextEncoder().encode(JSON.stringify(carrying));
+    const headers = [
+      ['content-type', 'application/json'],
+      ['content-length', String(body.length)],
+    ];
+    res = await (
+      await dialFor(lend.key)
+    ).fetch('POST', '/carry', headers, new Blob([body]).stream());
+    trace(
+      `RUNTIME: line ${carrying[1].seq} carried to ${lend.person}'s computer, answered ${res.status}`,
+    );
+    if (!res.ok) break;
+    handed = {
+      ...handed,
+      unsent: /** @type {Unsent[]} */ (handed.unsent).filter(
+        (unsent) => unsent[1].id !== carrying[1].id,
+      ),
+    };
+    await store.lendKeep(`pass ${OWN}`, handed);
+  }
+  // `writeSigned` called this with the line it signed in `unsent`, so one
+  // was sent.
+  return /** @type {Response} */ (res);
+}
+
+// The lend's computer's answer `res` to the last line carried, as the page
+// is told it.
+/**
+ * @param {Passed} lend
+ * @param {Response} res
+ */
+async function judged(lend, res) {
   // A computer on an older svrngs takes no signed line (F2): kept, said.
   if (!res.ok && !links(lend.version)) {
     const words = `${lend.person}’s computer runs an older svrngs: what you write here reaches your group when a computer on the new svrngs is on.`;
@@ -1080,35 +1274,48 @@ async function answered(fetchEvent, url, where) {
 
 /** @type {Scope} */ (self).addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
-  if (url.origin === self.location.origin && url.pathname === TRACE) {
-    return event.respondWith(
-      kept().then(
-        (lines) =>
-          new Response(`svrngs lend worker __VERSION__ for ${OWN}\n${lines.join('\n')}`, {
-            headers: PLAIN,
-          }),
-      ),
-    );
-  }
-  const shell =
-    url.origin === self.location.origin &&
-    url.searchParams.has('v') &&
-    url.pathname.startsWith(SITE);
-  if (shell && SHELL.test(url.pathname.slice(SITE.length))) return;
-  if (url.origin === self.location.origin && url.pathname === READS)
-    return event.respondWith(told());
-  if (url.origin === self.location.origin && url.pathname === ASK)
-    return event.respondWith(asking(url));
-  const stop =
-    url.origin === self.location.origin &&
-    event.request.method === 'POST' &&
-    STOP.exec(url.pathname);
-  // `STOP` names its label whenever it matches.
-  if (stop) return event.respondWith(stopping(/** @type {string} */ (stop[1])));
+  const here = url.origin === self.location.origin;
+  if (here && shellAt(url)) return;
+  const own = here && ownAnswer(event.request, url);
+  if (own) return event.respondWith(own);
   const where = whereOf(url);
   if (!where) return;
   event.respondWith(answered(event, url, where));
 });
+
+// Whether `url`, at this origin, is one of the page's files, any version
+// of them, which this worker leaves to the network (`SHELL`).
+/** @param {URL} url */
+const shellAt = (url) =>
+  url.searchParams.has('v') &&
+  url.pathname.startsWith(SITE) &&
+  SHELL.test(url.pathname.slice(SITE.length));
+
+// The answer to `request` at one of this worker's own addresses on this
+// origin: its trace, the lends its pages read, an ask, or a stop. None at
+// any other.
+/**
+ * @param {Request} request
+ * @param {URL} url
+ * @returns {Promise<Response> | null}
+ */
+function ownAnswer(request, url) {
+  if (url.pathname === TRACE) return traceShown();
+  if (url.pathname === READS) return told();
+  if (url.pathname === ASK) return asking(url);
+  const stop = request.method === 'POST' && STOP.exec(url.pathname);
+  // `STOP` names its label whenever it matches.
+  if (stop) return stopping(/** @type {string} */ (stop[1]));
+  return null;
+}
+
+const traceShown = () =>
+  kept().then(
+    (lines) =>
+      new Response(`svrngs lend worker __VERSION__ for ${OWN}\n${lines.join('\n')}`, {
+        headers: PLAIN,
+      }),
+  );
 
 // ── what a lend's page hands over ───────────────────────────────────────
 
@@ -1116,53 +1323,77 @@ async function answered(fetchEvent, url, where) {
 // worker's `source` is one kind.
 /** @type {Scope} */ (self).addEventListener('message', async (event) => {
   const reply = event.ports[0];
-  if (
-    !(/** @type {Client | null} */ (event.source)?.url) ||
-    new URL(/** @type {Client} */ (event.source).url).origin !== SCOPE.origin
-  )
+  if (!fromHere(/** @type {Client | null} */ (event.source)))
     return reply?.postMessage({ error: 'only this origin hands the worker authority' });
-  const { handed: given, cookie, worker, socket: asked } = event.data ?? {};
-  if (given?.label === OWN && typeof given.pass === 'string') {
-    // The holder's bytes, where its key was lost on the way (below):
-    // imported here as a key no script can copy, held in memory alone.
-    const bytes = given.key instanceof Uint8Array;
-    if (bytes)
-      given.key = await crypto.subtle.importKey('pkcs8', given.key, 'Ed25519', false, ['sign']);
-    handed = given;
-    dials.clear();
-    endpoint = null;
-    trace(
-      `RUNTIME: the page handed over the pass for ${OWN}, ${given.lends.length} lend(s)${bytes ? ', and its holder’s bytes, imported here and kept nowhere' : ''}`,
-    );
-    return reply?.postMessage('held');
-  }
-  if (typeof cookie === 'string') {
-    return event.waitUntil(
-      jarOf(OWN)
-        .then((jar) => {
-          setCookie(jar, cookie);
-          return keepJar(OWN);
-        })
-        .then(() => reply?.postMessage('kept')),
-    );
-  }
-  if (typeof worker === 'string') {
-    const url = new URL(worker, SCOPE);
-    const where = whereOf(url);
-    return event.waitUntil(
-      (async () => {
-        const res = where && (await lent(new Request(url), url, where));
-        if (!res?.ok) return reply?.postMessage({ error: `its worker answered ${res?.status}` });
-        const code = await res.text();
-        await store.lendKeep(`worker ${OWN}`, code);
-        app = appWorker(code);
-        reply?.postMessage('running');
-      })().catch((err) => reply?.postMessage({ error: String(err) })),
-    );
-  }
+  const data = event.data ?? {};
+  const { handed: given, cookie, worker, socket: asked } = data;
+  if (handsPass(given)) return holdPass(given, reply);
+  if (typeof cookie === 'string') return event.waitUntil(cookieKept(cookie, reply));
+  if (typeof worker === 'string') return event.waitUntil(workerRun(worker, reply));
   if (asked && reply) return event.waitUntil(socket(asked, reply));
-  trace(`RUNTIME: a message that hands over nothing, refused: ${Object.keys(event.data ?? {})}`);
+  trace(`RUNTIME: a message that hands over nothing, refused: ${Object.keys(data)}`);
 });
+
+/** @param {Client | null} source */
+const fromHere = (source) => !!source?.url && new URL(source.url).origin === SCOPE.origin;
+
+// Whether `given` is an open of this lend's, with its pass.
+/** @param {any} given */
+const handsPass = (given) => given?.label === OWN && typeof given.pass === 'string';
+
+// The open the page handed over, held in place of any before it.
+/**
+ * @param {any} given
+ * @param {MessagePort | undefined} reply
+ */
+async function holdPass(given, reply) {
+  // The holder's bytes, where its key was lost on the way (below):
+  // imported here as a key no script can copy, held in memory alone.
+  const bytes = given.key instanceof Uint8Array;
+  if (bytes)
+    given.key = await crypto.subtle.importKey('pkcs8', given.key, 'Ed25519', false, ['sign']);
+  handed = given;
+  dials.clear();
+  endpoint = null;
+  trace(
+    `RUNTIME: the page handed over the pass for ${OWN}, ${given.lends.length} lend(s)${bytes ? ', and its holder’s bytes, imported here and kept nowhere' : ''}`,
+  );
+  return reply?.postMessage('held');
+}
+
+// A cookie the shim set from this lend's page, kept in its jar.
+/**
+ * @param {string} cookie
+ * @param {MessagePort | undefined} reply
+ */
+const cookieKept = (cookie, reply) =>
+  jarOf(OWN)
+    .then((jar) => {
+      setCookie(jar, cookie);
+      return keepJar(OWN);
+    })
+    .then(() => reply?.postMessage('kept'));
+
+// The app's own worker, its script read through the lend at `worker`,
+// kept and run (`appWorker`).
+/**
+ * @param {string} worker
+ * @param {MessagePort | undefined} reply
+ */
+async function workerRun(worker, reply) {
+  const url = new URL(worker, SCOPE);
+  const where = whereOf(url);
+  try {
+    const res = where && (await lent(new Request(url), url, where));
+    if (!res?.ok) return reply?.postMessage({ error: `its worker answered ${res?.status}` });
+    const code = await res.text();
+    await store.lendKeep(`worker ${OWN}`, code);
+    app = appWorker(code);
+    reply?.postMessage('running');
+  } catch (err) {
+    reply?.postMessage({ error: String(err) });
+  }
+}
 
 // Safari on an iPhone loses a message carrying a CryptoKey, the holder's,
 // and fires this in its place (2026-10-30, demo/runs/ios/2026-10-30-observe/
@@ -1227,12 +1458,38 @@ function frame(op, data) {
  * @param {{ url: string, protocols?: string[] }} asked
  * @param {MessagePort} port
  */
-async function socket({ url, protocols }, port) {
+async function socket(asked, port) {
+  const remote = await switched(asked, port);
+  if (!remote) return;
+  const writer = remote.writable.getWriter();
+  const chosen =
+    remote.headers.find(
+      (/** @type {Header} */ [name]) => name.toLowerCase() === 'sec-websocket-protocol',
+    )?.[1] ?? '';
+  port.postMessage({ open: chosen });
+  port.onmessage = ({ data }) => {
+    if ('send' in data) writer.write(frame(typeof data.send === 'string' ? 1 : 2, data.send));
+    if ('close' in data)
+      writer.write(frame(8, new Uint8Array([data.close >> 8, data.close & 255])));
+  };
+  return relayed(remote.readable.getReader(), writer, port);
+}
+
+// The socket the lend's door switches to for the WebSocket asked at `url`,
+// or none, `port` told why.
+/**
+ * @param {{ url: string, protocols?: string[] }} asked
+ * @param {MessagePort} port
+ */
+async function switched({ url, protocols }, port) {
   const http = new URL(url.replace(/^ws/, 'http'));
   const where = whereOf(http);
   const held = await holding();
   const lend = where && held?.lends.find((one) => one.label === where.label);
-  if (!lend) return port.postMessage({ closed: 1006, reason: 'not open to this page' });
+  if (!lend) {
+    port.postMessage({ closed: 1006, reason: 'not open to this page' });
+    return null;
+  }
   const key = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))));
   const headers = [
     ['connection', 'upgrade'],
@@ -1253,80 +1510,117 @@ async function socket({ url, protocols }, port) {
     // computer afresh once it answers again (demo/runs/doc/2026-10-20/found/).
     dials.delete(lend.key);
     trace(`RUNTIME: a socket at ${where.path} failed: ${error}`);
-    return port.postMessage({ closed: 1006, reason: String(error) });
+    port.postMessage({ closed: 1006, reason: String(error) });
+    return null;
   }
-  if (remote.status !== 101)
-    return port.postMessage({ closed: 1006, reason: `answered ${remote.status}` });
-  const writer = remote.writable.getWriter();
-  const chosen =
-    remote.headers.find(
-      (/** @type {Header} */ [name]) => name.toLowerCase() === 'sec-websocket-protocol',
-    )?.[1] ?? '';
-  port.postMessage({ open: chosen });
-  port.onmessage = ({ data }) => {
-    if ('send' in data) writer.write(frame(typeof data.send === 'string' ? 1 : 2, data.send));
-    if ('close' in data)
-      writer.write(frame(8, new Uint8Array([data.close >> 8, data.close & 255])));
-  };
-  const reader = remote.readable.getReader();
+  if (remote.status !== 101) {
+    port.postMessage({ closed: 1006, reason: `answered ${remote.status}` });
+    return null;
+  }
+  return remote;
+}
+
+// A message's frames so far: its first's opcode, and each one's bytes.
+/** @typedef {{ op: number, data: Uint8Array }} Part */
+// One frame read from the door's socket: its opcode, whether it is a
+// message's last, its bytes, and the bytes after it.
+/** @typedef {{ op: number, fin: number, data: Uint8Array, rest: Uint8Array<ArrayBuffer> }} Arrived */
+
+// Each frame the door's socket sends, read off `reader` until the socket
+// ends or closes: a ping answered on `writer`, and each whole message and
+// the close told to `port`.
+/**
+ * @param {ReadableStreamDefaultReader<Uint8Array>} reader
+ * @param {WritableStreamDefaultWriter<Uint8Array>} writer
+ * @param {MessagePort} port
+ */
+async function relayed(reader, writer, port) {
   let buf = new Uint8Array(0);
-  // A message's frames so far: its first's opcode, and each one's bytes.
-  /** @typedef {{ op: number, data: Uint8Array }} Part */
   /** @type {Part[]} */
   let parts = [];
   for (;;) {
     const { value, done } = await reader.read();
     if (done) return port.postMessage({ closed: 1006, reason: 'the stream ended' });
     buf = Uint8Array.from([...buf, ...value]);
-    while (buf.length >= 2) {
-      // The head's bytes past its first two are read before `at + n` is
-      // checked, so one not come yet is `undefined`, cast here as a byte. To
-      // `<<` and `|` it is 0, and the check waits for it; to `*` it is NaN,
-      // which the check lets by, and `slice(NaN)` keeps the whole buffer, so
-      // a 64 KiB frame whose head comes split never ends this loop. Found by
-      // `types`, and left as it runs.
-      let length = /** @type {number} */ (buf[1]) & 127;
-      let at = 2;
-      if (length === 126)
-        [length, at] = [(/** @type {number} */ (buf[2]) << 8) | /** @type {number} */ (buf[3]), 4];
-      if (length === 127)
-        [length, at] = [
-          /** @type {number} */ (buf[6]) * 2 ** 24 +
-            ((/** @type {number} */ (buf[7]) << 16) |
-              (/** @type {number} */ (buf[8]) << 8) |
-              /** @type {number} */ (buf[9])),
-          10,
-        ];
-      if (buf.length < at + length) break;
-      const [op, fin, data] = [
-        /** @type {number} */ (buf[0]) & 15,
-        /** @type {number} */ (buf[0]) & 128,
-        buf.slice(at, at + length),
-      ];
-      buf = buf.slice(at + length);
-      if (op === 9) writer.write(frame(10, data));
-      if (op === 8) {
-        port.postMessage({
-          closed:
-            data.length >= 2
-              ? (/** @type {number} */ (data[0]) << 8) | /** @type {number} */ (data[1])
-              : 1005,
-          reason: new TextDecoder().decode(data.slice(2)),
-        });
-        return writer.close().catch(() => {});
-      }
-      if (op === 0 || op === 1 || op === 2) parts.push({ op, data });
-      if (fin && (op === 0 || op === 1 || op === 2)) {
-        const whole = Uint8Array.from(parts.flatMap((part) => [...part.data]));
-        port.postMessage({
-          // A part was pushed just above.
-          message:
-            /** @type {Part} */ (parts[0]).op === 1
-              ? new TextDecoder().decode(whole)
-              : whole.buffer,
-        });
-        parts = [];
-      }
+    for (let arrived = frameAt(buf); arrived; arrived = frameAt(buf)) {
+      buf = arrived.rest;
+      if (arrived.op === 9) writer.write(frame(10, arrived.data));
+      if (arrived.op === 8) return closedBy(arrived.data, writer, port);
+      parts = gathered(parts, arrived, port);
     }
   }
+}
+
+// The first frame in `buf`, or none until all of it has come.
+/**
+ * @param {Uint8Array<ArrayBuffer>} buf
+ * @returns {Arrived | null}
+ */
+function frameAt(buf) {
+  if (buf.length < 2) return null;
+  // The head's bytes past its first two are read before `at + n` is
+  // checked, so one not come yet is `undefined`, cast here as a byte. To
+  // `<<` and `|` it is 0, and the check waits for it; to `*` it is NaN,
+  // which the check lets by, and `slice(NaN)` keeps the whole buffer, so
+  // a 64 KiB frame whose head comes split never ends this loop. Found by
+  // `types`, and left as it runs.
+  let length = /** @type {number} */ (buf[1]) & 127;
+  let at = 2;
+  if (length === 126)
+    [length, at] = [(/** @type {number} */ (buf[2]) << 8) | /** @type {number} */ (buf[3]), 4];
+  if (length === 127)
+    [length, at] = [
+      /** @type {number} */ (buf[6]) * 2 ** 24 +
+        ((/** @type {number} */ (buf[7]) << 16) |
+          (/** @type {number} */ (buf[8]) << 8) |
+          /** @type {number} */ (buf[9])),
+      10,
+    ];
+  if (buf.length < at + length) return null;
+  return {
+    op: /** @type {number} */ (buf[0]) & 15,
+    fin: /** @type {number} */ (buf[0]) & 128,
+    data: buf.slice(at, at + length),
+    rest: buf.slice(at + length),
+  };
+}
+
+// The close the door's socket sent, `data`, told to `port`, and the
+// socket closed.
+/**
+ * @param {Uint8Array} data
+ * @param {WritableStreamDefaultWriter<Uint8Array>} writer
+ * @param {MessagePort} port
+ */
+function closedBy(data, writer, port) {
+  port.postMessage({
+    closed:
+      data.length >= 2
+        ? (/** @type {number} */ (data[0]) << 8) | /** @type {number} */ (data[1])
+        : 1005,
+    reason: new TextDecoder().decode(data.slice(2)),
+  });
+  return writer.close().catch(() => {});
+}
+
+// A data frame (continuation, text or binary, RFC 6455 §5.2) added to the
+// message's `parts`, and the message told to `port` once whole: the parts
+// left to come after `arrived`.
+/**
+ * @param {Part[]} parts
+ * @param {Arrived} arrived
+ * @param {MessagePort} port
+ * @returns {Part[]}
+ */
+function gathered(parts, { op, fin, data }, port) {
+  if (![0, 1, 2].includes(op)) return parts;
+  const message = [...parts, { op, data }];
+  if (!fin) return message;
+  const whole = Uint8Array.from(message.flatMap((part) => [...part.data]));
+  port.postMessage({
+    // A part was added just above.
+    message:
+      /** @type {Part} */ (message[0]).op === 1 ? new TextDecoder().decode(whole) : whole.buffer,
+  });
+  return [];
 }
