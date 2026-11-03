@@ -274,6 +274,31 @@ impl Node {
         Self::start_every(data_dir, key, relay, seeds, api, DEFAULT_RING_SYNC_INTERVAL).await
     }
 
+    /// [`Node::start`], its endpoint built with `asked` among its groups'
+    /// own relays, the relays `new --relay` or a link names: a computer in no
+    /// group yet would else start at the build's, and offline wait out a
+    /// report of relays that cannot answer (the run's modem-off rerun, 6.1 s
+    /// for a join, relay fallbacks).
+    pub async fn start_asking(
+        data_dir: PathBuf,
+        key: SigningKey,
+        relay: &RelayConfig,
+        asked: &[Url],
+        seeds: SeedText,
+        api: SocketAddr,
+    ) -> Result<Self, NodeError> {
+        Self::begin(
+            data_dir,
+            key,
+            relay,
+            asked,
+            seeds,
+            api,
+            DEFAULT_RING_SYNC_INTERVAL,
+        )
+        .await
+    }
+
     /// [`Node::start`], with the round every `every` rather than every
     /// [`DEFAULT_RING_SYNC_INTERVAL`]. The scale instrument
     /// (`tests/scale.rs`) passes a day, so that no node's own round runs
@@ -282,6 +307,18 @@ impl Node {
         data_dir: PathBuf,
         key: SigningKey,
         relay: &RelayConfig,
+        seeds: SeedText,
+        api: SocketAddr,
+        every: Duration,
+    ) -> Result<Self, NodeError> {
+        Self::begin(data_dir, key, relay, &[], seeds, api, every).await
+    }
+
+    async fn begin(
+        data_dir: PathBuf,
+        key: SigningKey,
+        relay: &RelayConfig,
+        asked: &[Url],
         seeds: SeedText,
         api: SocketAddr,
         every: Duration,
@@ -306,12 +343,10 @@ impl Node {
         let api = crate::api::bind(api).await?;
         // Built at the tier its groups' own relays answer at; the first ask
         // moves it to the build's at once if none does (crate::tiers).
-        let (held, relays) = crate::tiers::Held::built(crate::tiers::everywhere(
-            &rail,
-            &rail.namespaces().unwrap_or_default(),
-            &relay.build(),
-            &Default::default(),
-        ));
+        let asked: std::collections::BTreeSet<Url> = asked.iter().cloned().collect();
+        let groups = rail.namespaces().unwrap_or_default();
+        let meeting = crate::tiers::everywhere(&rail, &groups, &relay.build(), &asked);
+        let (held, relays) = crate::tiers::Held::built(meeting, asked);
         let at = RelayConfig {
             relay_urls: relays.iter().map(ToString::to_string).collect(),
             ..relay.clone()

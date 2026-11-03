@@ -987,16 +987,30 @@ async fn start(
     // last, so a bookmark and a program's address survive a restart
     // (start-address, demo/runs/start/2026-10-13/README.md §4).
     let api = svrngs_node::api::kept_address(&root)?.unwrap_or(API);
-    let node = Node::start(root.clone(), key.clone(), relay, group::seed_text, api)
-        .await
-        .map_err(|e: NodeError| {
-            tracing::debug!(target: "cli", error = %e, "cli: refused — the node did not start");
-            match e {
-                NodeError::Api(ApiError::Taken(at)) => Refusal::Taken(at, root.join(API_FILE)),
-                NodeError::Api(e) => Refusal::Api(e),
-                _ => Refusal::Start,
-            }
-        })?;
+    // The relays `new --relay` or a link names, given the endpoint as it is
+    // built, so it does not first wait on the build's (relay fallbacks).
+    let asked: Vec<_> = match &command {
+        Verb::New { relays, .. } => relays.iter().cloned().map(Into::into).collect(),
+        Verb::Join { link, .. } => link.token.relays.clone(),
+        _ => Vec::new(),
+    };
+    let node = Node::start_asking(
+        root.clone(),
+        key.clone(),
+        relay,
+        &asked,
+        group::seed_text,
+        api,
+    )
+    .await
+    .map_err(|e: NodeError| {
+        tracing::debug!(target: "cli", error = %e, "cli: refused — the node did not start");
+        match e {
+            NodeError::Api(ApiError::Taken(at)) => Refusal::Taken(at, root.join(API_FILE)),
+            NodeError::Api(e) => Refusal::Api(e),
+            _ => Refusal::Start,
+        }
+    })?;
     if let Some(sharing) = sharing {
         print!("{}", sharing.said(node.api_addr()));
         println!();

@@ -51,11 +51,10 @@ pub(crate) struct Held {
 }
 
 impl Held {
-    /// What an endpoint built for `meeting`'s groups holds, its own tier
-    /// taken to answer until the first ask.
-    pub(crate) fn built(meeting: Meeting) -> (Self, BTreeSet<Url>) {
+    /// What an endpoint built for `meeting`'s groups and the relays
+    /// `asked` holds, its own tier taken to answer until the first ask.
+    pub(crate) fn built(meeting: Meeting, asked: BTreeSet<Url>) -> (Self, BTreeSet<Url>) {
         let (tier, relays) = meeting.decide(true);
-        let asked = BTreeSet::new();
         let held = Self {
             meeting,
             tier,
