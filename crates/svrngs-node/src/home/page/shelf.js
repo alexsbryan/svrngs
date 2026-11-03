@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // Bringing things to a group, in its section (page-shelf (a); home.js@19b63b2b:203):
 // the shelf (ui/shelf.js), once the group's lends are read, brought by
 // /shelf, then the groups read again (HOME's `again`). Folded for the group
@@ -7,8 +6,16 @@
 // group.js, as v1 reads `?joined=` (home.js@19b63b2b:203).
 import { html, Shelf } from '../ui/kit.js?v=__VERSION__';
 import { post } from './group.js?v=__VERSION__';
+/** @import { Group, PlaceProps } from './group.js?v=__VERSION__' */
+/** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 
+// The apps ticked, by kind, brought to group `g`; /shelf answers each.
+/**
+ * @param {Group} g
+ * @param {string[]} apps
+ */
 const bring = (g, apps) => post('/shelf', [g.id, apps]);
+/** @type {{ shelf: (props: PlaceProps) => Drawn }} */
 export const view = {
   shelf: ({ g, s, home, joined }) =>
     s.lends &&
