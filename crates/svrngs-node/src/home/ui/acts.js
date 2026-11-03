@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // "What acts as you", both pages' (page-acts (a); question.js `acts`,
 // :231-242, which it moves; capability-what-acts; svrn-docs
 // WHAT_CAN_ACT_AS_YOU §9): one section, folded under its heading, a list to
@@ -12,6 +11,7 @@
 // acts` (ui/parts.js `Fold`).
 import { html } from './view.js?v=__VERSION__';
 import { Fold } from './parts.js?v=__VERSION__';
+/** @import { Drawn } from './view.js?v=__VERSION__' */
 
 const PARTS = {
   reads: 'Reads and writes for you',
@@ -21,5 +21,20 @@ const PARTS = {
   play: 'Open to programs on this computer',
   decides: 'Can decide for you',
 };
+
+/** @typedef {keyof typeof PARTS} Part a part of the section, by its name */
+
+/**
+ * The section's props: each part's lines, by its name, a page giving the
+ * parts it has; the page's words for a part; whether the fold is open;
+ * and where its fold's opening is sent.
+ * @typedef {object} ActsProps
+ * @property {Partial<Record<Part, Drawn[]>>} parts
+ * @property {Partial<Record<Part, string>>} [notes]
+ * @property {boolean} [open]
+ * @property {(message: { type: 'fold', fold: string, open: boolean }) => void} send
+ */
+
+/** @param {ActsProps} props */
 export const Acts = ({ parts, notes = {}, open, send }) =>
-  html`<section id="acts"><${Fold} summary="What acts as you" heading=${true} fold="acts" open=${open} send=${send}>${Object.entries(PARTS).map(([k, head]) => html`<div>${parts[k]?.length > 0 && [html`<h3>${head}</h3>`, notes[k] && html`<p>${notes[k]}</p>`, parts[k]]}</div>`)}<//></section>`;
+  html`<section id="acts"><${Fold} summary="What acts as you" heading=${true} fold="acts" open=${open} send=${send}>${/** @type {[Part, string][]} */ (Object.entries(PARTS)).map(([k, head]) => html`<div>${(parts[k]?.length ?? 0) > 0 && [html`<h3>${head}</h3>`, notes[k] && html`<p>${notes[k]}</p>`, parts[k]]}</div>`)}<//></section>`;
