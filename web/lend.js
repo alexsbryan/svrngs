@@ -1608,9 +1608,11 @@ function frameAt(buf) {
   if (length === 126) at = 4;
   if (length === 127) at = 10;
   if (buf.length < at) return null;
+  // `else`: a 2-byte length may itself be 127, and is a length, not the
+  // 8-byte form's mark.
   if (length === 126)
     length = (/** @type {number} */ (buf[2]) << 8) | /** @type {number} */ (buf[3]);
-  if (length === 127)
+  else if (length === 127)
     length =
       /** @type {number} */ (buf[6]) * 2 ** 24 +
       ((/** @type {number} */ (buf[7]) << 16) |

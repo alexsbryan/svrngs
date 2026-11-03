@@ -81,10 +81,12 @@ function sent(size) {
 }
 
 // 70,000 bytes take the 8-byte length (a head of 10 bytes); 300 take the
-// 2-byte (a head of 4). Split at each byte of the head, and in the bytes.
+// 2-byte (a head of 4), and so do 127, whose 2-byte length is the 8-byte
+// form's own mark. Split at each byte of the head, and in the bytes.
 const SPLITS = [
   [70_000, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 5_000]],
   [300, [1, 2, 3, 4, 100]],
+  [127, [1, 2, 3, 4, 100]],
 ];
 test('a frame whose head comes split across reads is told whole, then the end', async (t) => {
   for (const [size, splits] of SPLITS)
