@@ -1331,14 +1331,16 @@ a host whose load is past 3 a core (`crates/svrngs-node/tests/browser/load.rs`,
 named, is not built, and nothing runs it.
 
 **The pages draw one way.** The group's page and the home page each have
-one root (`web/app.js`, `crates/svrngs-node/src/home/home.js`), its flows
-beside it in `page/`, and the parts both draw with in
+one edge it starts from (`web/app.js`, `crates/svrngs-node/src/home/home.js`),
+its flows beside it in `page/`, and the parts both draw with in
 `crates/svrngs-node/src/home/ui/`: Preact 11.1.1 and htm 3.1.1, vendored in
 `web/vendor/` with no build step, and one hand-written machine a page
 (`ui/machine.js`; svrn-docs `rings/current/PAGE_STATE.md` §3). The phone's
 build copies them beside the page (`scripts/build-web.sh`), and the node
-serves the home page's from one table (`home.rs` `served`). The rules, each
-with what holds it:
+serves the home page's from one table (`home.rs` `served`). The bytes in the
+repository are the bytes the browser runs: types live in JSDoc comments,
+and `tsc`, oxlint and oxfmt run only in `scripts/check.sh` and by hand,
+never in a build. The rules, each with what holds it:
 - One store a page owns its state. Views read it and send; they never write
   state, nor the DOM but through Preact. A field, region or message two
   flows claim is refused as the page is composed
@@ -1346,9 +1348,16 @@ with what holds it:
 - `step(state, message)` is pure and synchronous: it reads no clock, DOM or
   storage, and answers the next state and its effects as data. Every
   machine's laws run its steps with no DOM (`web/tests/**/*.test.mjs`).
+- A machine is a module of its own: its states and messages as
+  discriminated-union `@typedef`s, `step` a `switch (message.type)` that
+  ends in `assertNever` (`ui/machine.js`), and its effects as data
+  (`check.sh`'s `types`, `tsc --checkJs --strict`, and `typed lint`'s
+  `switch-exhaustiveness-check`).
 - An effect runs at the edge and answers one message, done or failed, with
   why: a rejection, a throw, no io or no answer is the failed message, never
-  a quiet idle (`web/tests/machine.test.mjs`).
+  a quiet idle (`web/tests/machine.test.mjs`). The edge is a page's `io`
+  tables and the modules they call (`web/page/dial.js`,
+  `home/page/routes.js`), never a view or a step.
 - Each region is a closed set of named states, and a message a state does not
   take is refused with why, traced to `window.__lines` (`ui/trace.js`;
   `machine.test.mjs`).
@@ -1357,11 +1366,37 @@ with what holds it:
 - A page reads again after its own write and when it comes back on screen
   (`visibilitychange`), and nothing reloads to draw again
   (`crates/svrngs/tests/pages/`, in `check.sh`'s step `pages`).
+- A view is a named component, one a file, named for what it draws, with
+  its props a `@typedef`; never a template packed into an object literal.
+  A template is broken by hand, one element or hole a line, each condition
+  named before the `return`: htm drops whitespace that holds a newline, so
+  this draws what one line drew. A component a machine runs is the module
+  that names its place (`view = { <place>: Component }`, read by the root's
+  `FILES` or the phone's `compose`), so the machine's module never imports
+  it back (`import/no-cycle`).
+- A name a law imports stays where the law imports it from, so no move
+  changes a test (each `web/tests/**/*.test.mjs`'s imports).
+- Layers: `page/` may import `ui/`, `ui/` never imports `page/`, only
+  `ui/view.js` imports `vendor/`, and no file only re-exports
+  (`.oxlintrc.json`'s `no-restricted-imports` and `oxc/no-barrel-file`).
+  One URL a module, `?v=<version>` on each, so Preact loads once
+  (`web/tests/specifiers.test.mjs`).
+- Names a reader follows: `group`, `state`, `message`, never `g`, `s`, `m`
+  (`id-length`; a loop's `i` and `_` apart). No comma sequence, nested
+  ternary, branchy function or long parameter list (`no-sequences`,
+  `no-nested-ternary`, `complexity`, `max-params`). No arrow called where
+  it is written, and no local written as a parameter's default: no check
+  reads these yet.
+- The formatter decides how a line looks (`check.sh`'s `format`, oxfmt at
+  width 100, the templates' text left as written), and no formatter-ignore
+  comment packs a line. A budget is met by cutting code, never by joining
+  lines.
+- A comment says why, in a way someone can check: what a person sees, or
+  the test that reads it, by its path. A row's letter or a `file@commit`
+  alone is not a why.
 - Words, ids, classes and element kinds are the ones the browser tests find
   by. The parts are held byte for byte to what the pages drew before them,
   at `19b63b2b` (`web/tests/parts.test.mjs`, `web/tests/pages/before.mjs`).
-- One URL a module, `?v=<version>` on each, and only `ui/view.js` imports
-  `vendor/`, so Preact loads once (`web/tests/specifiers.test.mjs`).
 - The key never enters state: the edge's io holds it (`web/page/enter.js`,
   `acts.js`). No check reads this yet.
 
