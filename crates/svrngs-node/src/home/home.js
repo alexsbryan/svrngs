@@ -111,6 +111,7 @@ const FILES = /** @type {const} */ ([
   'leave',
   'screen',
   'join',
+  'join-form',
   'make',
   'links',
   'open',
