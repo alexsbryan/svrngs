@@ -1,0 +1,156 @@
+{
+ "start": {
+  "build": "d3e0a31b",
+  "build_tree_clean": true,
+  "bin_sha256": "5c3eee2652a35c47e456c1bd2643893bb6e3f08e9f93524a4740231fb76f803d",
+  "load": 49.02783203125,
+  "cores": 12
+ },
+ "instrument": {
+  "probes": {
+   "udp to 100.104.36.28": "PermissionError(1, 'Operation not permitted')",
+   "udp to 127.0.0.1": "PermissionError(1, 'Operation not permitted')",
+   "udp to 192.168.1.11": "PermissionError(1, 'Operation not permitted')",
+   "udp to ::1": "PermissionError(1, 'Operation not permitted')",
+   "udp to fd7a:115c:a1e0::a3a:241c": "PermissionError(1, 'Operation not permitted')",
+   "udp to 1.1.1.1 (control)": "sent",
+   "tcp to loopback (control)": "200",
+   "https to n0 (control)": "200"
+  },
+  "held": {
+   "udp to 100.104.36.28": true,
+   "udp to 127.0.0.1": true,
+   "udp to 192.168.1.11": true,
+   "udp to ::1": true,
+   "udp to fd7a:115c:a1e0::a3a:241c": true,
+   "udp to 1.1.1.1 (control)": true,
+   "tcp to loopback (control)": true,
+   "https to n0 (control)": true
+  }
+ },
+ "relays": {
+  "A": {
+   "url": "http://127.0.0.1:60247/",
+   "up": [
+    {
+     "ms": 510,
+     "t": 1793670074.561
+    }
+   ]
+  },
+  "B": {
+   "url": "http://127.0.0.1:60248/",
+   "up": [
+    {
+     "ms": 252,
+     "t": 1793670075.074
+    }
+   ]
+  }
+ },
+ "sam": {
+  "link_ms": 3292
+ },
+ "ana": {
+  "joined_ms": 3300
+ },
+ "alex": {
+  "joined_ms": 3307
+ },
+ "share": {
+  "who": "ana",
+  "exit": 0,
+  "ms": 16,
+  "said": "You lend notes (port 60240) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 60240 --limit <number>`.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare notes` stops lending it."
+ },
+ "listed_ms": 4,
+ "before": {
+  "sam": 0,
+  "alex": 0
+ },
+ "homes_before": {
+  "sam": null,
+  "ana": null,
+  "alex": null
+ },
+ "tiers_before": {
+  "sam": "Own",
+  "ana": "Own",
+  "alex": "Own"
+ },
+ "stopped_end": [
+  {
+   "who": "app-notes",
+   "exit": 0,
+   "ms": 9,
+   "killed": false,
+   "t": 1793670145.47
+  },
+  {
+   "who": "relayA",
+   "exit": 0,
+   "ms": 4,
+   "killed": false,
+   "t": 1793670145.479
+  },
+  {
+   "who": "relayB",
+   "exit": 0,
+   "ms": 4,
+   "killed": false,
+   "t": 1793670145.483
+  },
+  {
+   "who": "sam",
+   "exit": 0,
+   "ms": 17,
+   "killed": false,
+   "t": 1793670145.487
+  },
+  {
+   "who": "ana",
+   "exit": 0,
+   "ms": 39,
+   "killed": false,
+   "t": 1793670145.504
+  },
+  {
+   "who": "alex",
+   "exit": 0,
+   "ms": 37,
+   "killed": false,
+   "t": 1793670145.543
+  }
+ ],
+ "traces": {
+  "alex-1": {
+   "lines": 220,
+   "warn_error": 8,
+   "asks": 7
+  },
+  "ana-1": {
+   "lines": 248,
+   "warn_error": 8,
+   "asks": 7
+  },
+  "relayA-1": {
+   "lines": 9,
+   "warn_error": 0,
+   "asks": 0
+  },
+  "relayB-1": {
+   "lines": 8,
+   "warn_error": 0,
+   "asks": 0
+  },
+  "sam-1": {
+   "lines": 237,
+   "warn_error": 8,
+   "asks": 8
+  }
+ },
+ "end": {
+  "load": 19.97314453125,
+  "t": 1793670145.585
+ }
+}

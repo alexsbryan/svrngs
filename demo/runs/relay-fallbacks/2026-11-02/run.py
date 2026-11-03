@@ -186,7 +186,7 @@ def homes(who):
     """Each (time, relay) this computer's home moved to (svrngs-node tiers.rs `moved`)."""
     out = []
     for l in lines_of(log_of(who)):
-        m = re.search(r"meets its groups at another relay now from=\S+ to=(?:Some\(\"([^\"]+)\"\)|None)", l)
+        m = re.search(r"meets its groups at another relay now.*? from=\S+ to=(?:Some\(\"([^\"]+)\"\)|None)", l)
         if m and at(l): out.append((at(l), m[1]))
     return out
 

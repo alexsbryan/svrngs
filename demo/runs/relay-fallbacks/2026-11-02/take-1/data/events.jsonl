@@ -1,0 +1,20 @@
+{"t": 1793670073.872, "event": "start", "build": "d3e0a31b", "build_tree_clean": true, "bin_sha256": "5c3eee2652a35c47e456c1bd2643893bb6e3f08e9f93524a4740231fb76f803d", "load": 49.02783203125, "cores": 12}
+{"t": 1793670074.552, "event": "instrument", "probes": {"udp to 100.104.36.28": "PermissionError(1, 'Operation not permitted')", "udp to 127.0.0.1": "PermissionError(1, 'Operation not permitted')", "udp to 192.168.1.11": "PermissionError(1, 'Operation not permitted')", "udp to ::1": "PermissionError(1, 'Operation not permitted')", "udp to fd7a:115c:a1e0::a3a:241c": "PermissionError(1, 'Operation not permitted')", "udp to 1.1.1.1 (control)": "sent", "tcp to loopback (control)": "200", "https to n0 (control)": "200"}, "held": {"udp to 100.104.36.28": true, "udp to 127.0.0.1": true, "udp to 192.168.1.11": true, "udp to ::1": true, "udp to fd7a:115c:a1e0::a3a:241c": true, "udp to 1.1.1.1 (control)": true, "tcp to loopback (control)": true, "https to n0 (control)": true}}
+{"t": 1793670074.561, "event": "started", "who": "relayA", "n": 1, "args": ["relay", "--at", "127.0.0.1:60247", "--open"], "pid": 88723}
+{"t": 1793670075.074, "event": "started", "who": "relayB", "n": 1, "args": ["relay", "--at", "127.0.0.1:60248", "--open"], "pid": 88725}
+{"t": 1793670075.327, "event": "relays", "A": {"url": "http://127.0.0.1:60247/", "up": [{"ms": 510, "t": 1793670074.561}]}, "B": {"url": "http://127.0.0.1:60248/", "up": [{"ms": 252, "t": 1793670075.074}]}}
+{"t": 1793670075.33, "event": "started", "who": "sam", "n": 1, "args": ["new", "house", "--as", "Sam", "--relay", "http://127.0.0.1:60247", "--relay", "http://127.0.0.1:60248"], "pid": 88727}
+{"t": 1793670078.622, "event": "made", "link_ms": 3292}
+{"t": 1793670078.627, "event": "started", "who": "ana", "n": 1, "args": ["join", "svrngs://join/<the token>", "--as", "Ana"], "pid": 88883}
+{"t": 1793670081.927, "event": "joined", "who": "ana", "joined_ms": 3300}
+{"t": 1793670081.93, "event": "started", "who": "alex", "n": 1, "args": ["join", "svrngs://join/<the token>", "--as", "Alex"], "pid": 89051}
+{"t": 1793670085.237, "event": "joined", "who": "alex", "joined_ms": 3307}
+{"t": 1793670085.254, "event": "share", "who": "ana", "exit": 0, "ms": 16, "said": "You lend notes (port 60240) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 60240 --limit <number>`.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare notes` stops lending it."}
+{"t": 1793670145.47, "event": "before", "homes": {"sam": null, "ana": null, "alex": null}, "tiers": {"sam": "Own", "ana": "Own", "alex": "Own"}, "works": {"sam": 0, "alex": 0}}
+{"t": 1793670145.47, "event": "stopped", "who": "app-notes", "exit": 0, "ms": 9, "killed": false}
+{"t": 1793670145.479, "event": "stopped", "who": "relayA", "exit": 0, "ms": 4, "killed": false}
+{"t": 1793670145.483, "event": "stopped", "who": "relayB", "exit": 0, "ms": 4, "killed": false}
+{"t": 1793670145.487, "event": "stopped", "who": "sam", "exit": 0, "ms": 17, "killed": false}
+{"t": 1793670145.504, "event": "stopped", "who": "ana", "exit": 0, "ms": 39, "killed": false}
+{"t": 1793670145.543, "event": "stopped", "who": "alex", "exit": 0, "ms": 37, "killed": false}
+{"t": 1793670145.585, "event": "end"}
