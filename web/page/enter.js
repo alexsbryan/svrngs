@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // The flow that opens the page and reads the group, the spine every phone
 // flow reads (page-open (b)): web/app.js `opening` (:667-706), `hold` and
 // `elsewhere` (:385-411), and `enter`'s read (:413-458), as two regions.
@@ -27,7 +26,11 @@ import { offered } from './among.js?v=__VERSION__';
 /** @import { Group, Computer } from '../store.js?v=__VERSION__' */
 /** @import { Lend, Removal, Row, Shelved } from '../question.js?v=__VERSION__' */
 /** @import { Change } from '../ui/changes.js?v=__VERSION__' */
+/** @import { Io, Step, Takes } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Visitor } from '../ui/visitors.js?v=__VERSION__' */
+/** @import * as Wasm from '../wasm/svrngs_web.js?v=__VERSION__' */
+/** @import { Dialled, Endpoint } from '../wasm/svrngs_web.js?v=__VERSION__' */
+/** @import { Message as PageMessage, Nothing, Props, Said, Send, Sender, State } from './page.js?v=__VERSION__' */
 
 /**
  * A lend as this page lists it: as the node answered, with its label
@@ -101,6 +104,18 @@ import { offered } from './among.js?v=__VERSION__';
  *   | { type: 'kept' }} Message
  */
 
+/**
+ * The effects its steps answer: the address looked at; the group's lock
+ * asked for, or taken from another tab, and let go; the group opened, its
+ * key unsealed; read, the `n`th time; and kept as read.
+ * @typedef {{ run: 'look', fragment: string, failed: string }
+ *   | { run: 'lock', id: string, steal?: boolean, failed: string }
+ *   | { run: 'release', failed: string }
+ *   | { run: 'open', group: Group, failed: string }
+ *   | { run: 'read', group: Group, n: number, failed: string }
+ *   | { run: 'keep', group: Group, failed: string }} Effect
+ */
+
 export const owns = [
   'group',
   'wants',
@@ -126,24 +141,41 @@ export const states = /** @type {const} */ ({
 
 // The parts of a fragment this page reads, besides a link's token (app.js@19b63b2b:665).
 const READ = ['open', 'at', 'anew', 'cold', 'ask', 'app'],
-  send = (type, m) => ({ run: 'send', m: { type, ...m } }),
-  say = (said) => send('failed', { said, why: said });
-const titled = (g) => `${g.name}${g.maker ? ` (${whose(g)})` : ''}`,
-  whoseComputer = (c) => (c ? `${c.person}’s computer` : 'The computer that sent your link');
+  send = /** @type {Sender} */ ((type, m) => ({ run: 'send', m: { type, ...m } })),
+  say = (/** @type {string | undefined} */ said) => send('failed', { said, why: said });
+const titled = (/** @type {Group} */ g) => `${g.name}${g.maker ? ` (${whose(g)})` : ''}`,
+  whoseComputer = (/** @type {Computer | undefined} */ c) =>
+    c ? `${c.person}’s computer` : 'The computer that sent your link';
 // The read, of `group` as kept: counted, so an older answer is refused by name.
-const reading = (s, patch) =>
+const reading = (/** @type {State} */ s, /** @type {Partial<State>} */ patch) =>
     ((asked, n) =>
       go(
         s,
         { list: 'reading' },
         { ...patch, asked },
-        { run: 'read', group: patch.group ?? s.group, n, failed: 'unread' },
+        /** @satisfies {Effect} */ ({
+          run: 'read',
+          group: patch.group ?? s.group,
+          n,
+          failed: 'unread',
+        }),
       ))(...ask(s, 'list')),
   // A read again that fails keeps the list drawn, and says why (page-open (c)).
-  failing = (s, said, why = said) =>
-    s.lent
-      ? go(s, { list: 'unread' }, { stale: why })
-      : go(s, { list: 'unread' }, {}, { run: 'release', failed: 'failed' }, say(said));
+  // Its type said whole, as a second declarator's JSDoc is not read.
+  failing =
+    /** @satisfies {(s: State, said?: string, why?: string) => Step<State, Effect | Send>} */ (
+      (s, said, why = said) =>
+        s.lent
+          ? go(s, { list: 'unread' }, { stale: why })
+          : go(
+              s,
+              { list: 'unread' },
+              {},
+              // Typed as both effects, so `go` takes them as one list.
+              /** @type {Effect | Send} */ ({ run: 'release', failed: 'failed' }),
+              say(said),
+            )
+    );
 const HOW = {
   unanswered: 'did not answer, so what they lend is not listed',
   unheard: 'has not heard of the computer you reached yet, so what they lend is not listed yet',
@@ -151,6 +183,7 @@ const HOW = {
   behind: 'runs an older svrngs, so what they lend is not listed',
 };
 
+/** @type {Takes<State, Message, Effect | Send>} */
 export const takes = {
   start: (s, { fragment }) => go(s, {}, {}, { run: 'look', fragment, failed: 'failed' }),
   // A link's token first, if any, then what it opens or asks; a part this
@@ -169,7 +202,8 @@ export const takes = {
     if (fragment.startsWith('visit='))
       return go(s, {}, {}, send('visit', { token: fragment.slice('visit='.length) }));
     const parts = new URLSearchParams(fragment),
-      first = fragment.split('&')[0],
+      // `split` always answers one part.
+      first = /** @type {string} */ (fragment.split('&')[0]),
       token = first.includes('=') ? '' : first;
     const unread = [...parts.keys()].filter((k) => k !== token && !READ.includes(k));
     if (unread.length)
@@ -190,7 +224,10 @@ export const takes = {
       );
     const wants = parts.has('open') || parts.has('ask') ? Object.fromEntries(parts) : null,
       offer = token ? [send('offer', { token })] : [];
-    const lending = wants?.open ? kept.filter((g) => g.addresses?.includes(wants.open)) : [];
+    const lending = wants?.open
+      ? kept.filter((g) => g.addresses?.includes(/** @type {string} */ (wants.open)))
+      : [];
+    // Lent in a group, `wants` names what is open (`lending`).
     if (!token && lending.length > 1)
       return go(
         s,
@@ -198,14 +235,15 @@ export const takes = {
         {},
         send('among', {
           groups: lending,
-          wants,
-          why: `#open=${wants.open} is lent in ${lending.length} of the ${kept.length} groups held here`,
+          wants: /** @type {Wants} */ (wants),
+          why: `#open=${/** @type {Wants} */ (wants).open} is lent in ${lending.length} of the ${kept.length} groups held here`,
         }),
       );
     const group = token ? kept.find((g) => g.token === token) : (lending[0] ?? kept[0]);
     if (group)
       return ((r) => ({ ...r, effects: [...offer, ...r.effects] }))(
-        takes.hold(s, { group, wants }),
+        // `hold` reads only the group and what the address wants.
+        takes.hold(s, /** @type {Extract<Message, { type: 'hold' }>} */ ({ group, wants })),
       );
     if (token) return go(s, {}, {}, ...offer, send('join', { token, kept, wants }));
     if (wants?.open && s.fine) return go(s, {}, {}, send('opens', { wants }));
@@ -240,7 +278,8 @@ export const takes = {
   opened: (s, { group }) =>
     s.at.tab === 'holding' ? reading(s, { group }) : no(s, 'this tab holds no lock'),
   // Read again, after a write here or on coming back on screen (PAGE_STATE §3, 6).
-  shown: (s) => takes.reread(s),
+  // `reread` reads no message.
+  shown: (s) => /** @type {(s: State) => Step<State, Effect | Send>} */ (takes.reread)(s),
   reread: (s) =>
     s.at.tab === 'holding' && ['read', 'unread'].includes(s.at.list)
       ? reading(s, {})
@@ -312,9 +351,19 @@ export const takes = {
   unread: (s, m) =>
     late(s, 'list', m.n) ? no(s, late(s, 'list', m.n)) : failing(s, m.said, m.said ?? m.why),
   // Read, what `#open=` names is sent to be named (among.js `wanted`).
-  kept: (s) => go(s, {}, {}, ...(s.wants?.open ? [send('wanted', { wants: s.wants })] : [])),
+  // Sent only when `wants` names what is open.
+  kept: (s) =>
+    go(
+      s,
+      {},
+      {},
+      ...(s.wants?.open
+        ? [send('wanted', { wants: /** @type {Wants & { open: string } } */ (s.wants) })]
+        : []),
+    ),
 };
 
+/** @type {Record<string, (s: State) => Said | Nothing>} */
 export const heading = {
   elsewhere: (s) =>
     s.at.tab === 'elsewhere' && [`You have ${titled(s.group)} open in another tab`, 'good'],
@@ -328,19 +377,27 @@ export const heading = {
 };
 // Each computer that did not say by how, and nobody lending said only when
 // every computer did (app.js@19b63b2b:578-581).
-const unlisted = (s) =>
-  Object.entries(HOW).flatMap(([k, why]) =>
+const unlisted = (/** @type {State} */ s) =>
+  /** @type {[keyof typeof HOW, string][]} */ (Object.entries(HOW)).flatMap(([k, why]) =>
     s[k].map((p) => `${called(s.people, p.person_key) ?? p.person ?? p}’s computer ${why}.`),
   );
+/** @type {Record<string, (s: State) => string[] | Nothing>} */
 export const response = {
+  // Read, `u` is the list's, as `s.lent` is.
   enter: (s, u = s.lent && unlisted(s)) =>
     s.lent && [
       ...(s.stale ? [`What ${s.group.name} lends cannot be read again just now: ${s.stale}`] : []),
-      ...(s.lent.length || u.length ? u : [`Nobody in ${s.group.name} lends anything yet.`]),
+      ...(s.lent.length || /** @type {string[]} */ (u).length
+        ? /** @type {string[]} */ (u)
+        : [`Nobody in ${s.group.name} lends anything yet.`]),
     ],
 };
 // The group open in another tab, and taking it here (app.js@19b63b2b:403-410), drawn in
 // #door, as is the group to open `#open=` in, when more than one lends it.
+/**
+ * @param {State} s
+ * @param {Props['send']} send
+ */
 export const chosen = (s, send) =>
   offered(s, send) ||
   (s.at.tab === 'elsewhere' &&
@@ -353,11 +410,24 @@ export const chosen = (s, send) =>
 const PATIENCE = 60_000,
   PEOPLE_LENDS = '/people/lends',
   wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__'),
-  trace = (l) => globalThis.__trace?.(l);
-const said = (words) => Object.assign(new Error(words), { said: words });
-let key, bound, letGo;
+  trace = (/** @type {string} */ l) => globalThis.__trace?.(l);
+const said = (/** @type {string} */ words) => Object.assign(new Error(words), { said: words });
+// Each typed apart, as JSDoc types only the first of several declared at once.
+// The key, unsealed by `open`, which comes before every read (`opened`).
+/** @type {Uint8Array<ArrayBuffer>} */
+let key;
+/** @type {Promise<Endpoint> | null} */
+let bound;
+/** @type {((value?: unknown) => void) | undefined} */
+let letGo;
 // `group` dialled through the first to answer of its link's computer and
 // each its last read named, all at once (app.js@19b63b2b:355-369).
+/**
+ * @param {typeof Wasm} w
+ * @param {Group} group
+ * @param {string[]} tried the computers asked already, by key
+ * @returns {Promise<[Dialled] | [Dialled, Computer]>}
+ */
 async function reach(w, group, tried) {
   if (!w.relay_of(group.token))
     throw said('This link was made by an older svrngs. Ask whoever sent it for a new one.');
@@ -374,13 +444,13 @@ async function reach(w, group, tried) {
         ? [
             ep()
               .then((e) => e.dial_link())
-              .then((d) => [d]),
+              .then((d) => /** @satisfies {[Dialled]} */ ([d])),
           ]
         : []),
       ...others.map((c) =>
         ep()
           .then((e) => e.dial(c.key, c.relay))
-          .then((d) => [d, c]),
+          .then((d) => /** @satisfies {[Dialled, Computer]} */ ([d, c])),
       ),
     ],
     away = `${[...(linked ? [link] : []), ...others].map((c) => `${whoseComputer(c)} did not answer.`).join(' ')} Try again later.`;
@@ -398,6 +468,12 @@ async function reach(w, group, tried) {
   return [d, c];
 }
 // Its lends, asked of the next to answer when an answer fails (app.js@19b63b2b:430-436).
+/**
+ * @param {typeof Wasm} w
+ * @param {Group} group
+ * @param {string[]} tried
+ * @returns {Promise<[Dialled, Computer | undefined, Response]>}
+ */
 const lends = (w, group, tried) =>
   reach(w, group, tried).then(([d, via]) =>
     d.fetch('GET', PEOPLE_LENDS, [['accept', 'application/json']], null).then(
@@ -421,6 +497,10 @@ const lends = (w, group, tried) =>
 // One lender's computer, `l`, dialled as the person through that one
 // endpoint, for another flow's io (page-acts: what apps use, and the ask's
 // yes, posted to its door's /choices; app.js@19b63b2b:288-296), within PATIENCE.
+/**
+ * @param {Group} group
+ * @param {Lent} l
+ */
 export const dialled = (group, l) =>
   wasm().then((w) =>
     Promise.race([
@@ -430,6 +510,11 @@ export const dialled = (group, l) =>
       new Promise((_, n) => setTimeout(() => n(new Error('no answer')), PATIENCE)),
     ]),
   );
+/**
+ * @param {Group} group
+ * @param {string} path
+ * @param {unknown} body
+ */
 export const through = (group, path, body) =>
   wasm().then(async (w) => {
     const [d] = await reach(w, group, []),
@@ -452,8 +537,10 @@ export const through = (group, path, body) =>
           (trace(`PAGE: ${path} answered ${status}: ${text}`), new Error(JSON.parse(text).error)),
         );
   });
+/** @type {Io<Effect, PageMessage>} */
 export const io = {
-  look: ({ fragment }, token = fragment.split('&')[0]) =>
+  // `split` always answers one part.
+  look: ({ fragment }, token = /** @type {string} */ (fragment.split('&')[0])) =>
     Promise.all([wasm(), store.groups()]).then(([w, kept]) => ({
       type: 'looked',
       fragment,
@@ -510,7 +597,8 @@ export const io = {
     wasm()
       .then(async (w) => {
         const [d, via, res] = await lends(w, group, []),
-          body = res.ok ? await res.json() : {},
+          // Refused, its body is read for `lent` and `version` alone, both optional.
+          body = /** @type {Body} */ (res.ok ? await res.json() : {}),
           refusal = res.headers.get('x-svrngs-refused');
         const lent = (await d.close(), body.lent ?? []).map((l) => ({
             ...l,
@@ -518,7 +606,7 @@ export const io = {
           })),
           link = group.computers?.find((c) => c.key === w.issuer_of(group.token));
         apart(lent, body.people ?? []);
-        return {
+        return /** @satisfies {PageMessage} */ ({
           type: 'read',
           n,
           ok: res.ok,
@@ -530,7 +618,7 @@ export const io = {
           me: w.actor(key),
           older: res.ok && w.older(body.version),
           why: `${res.status}${refusal ? `, refused ${refusal}` : ''}, at version ${body.version}, ${lent.length} lent`,
-        };
+        });
       })
       .catch((e) => ({ type: 'unread', n, said: e.said, why: String(e) })),
   keep: ({ group }) => store.opened(group).then(() => ({ type: 'kept' })),

@@ -9,6 +9,7 @@
 import { Copy, go, html, no } from '../ui/kit.js?v=__VERSION__';
 /** @import { Io, Takes } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
+/** @import { Wants } from './enter.js?v=__VERSION__' */
 /** @import { Message as PageMessage, Nothing, Props, Said, State } from './page.js?v=__VERSION__' */
 
 /**
@@ -20,7 +21,7 @@ import { Copy, go, html, no } from '../ui/kit.js?v=__VERSION__';
 /**
  * The messages this flow takes.
  * @typedef {{ type: 'offer', token: string }
- *   | { type: 'opens' }
+ *   | { type: 'opens', wants?: Wants }
  *   | { type: 'offered', token?: string, page: string, href?: string | false }} Message
  */
 
