@@ -141,7 +141,7 @@ const trace = (/** @type {string} */ l) => globalThis.__trace?.(l),
  * @param {Hand} hand
  * @param {Uint8Array} key the person's key, unsealed
  * @param {number} [until] when the pass ends, in seconds
- * @returns {Promise<PageMessage>}
+ * @returns {Promise<Extract<PageMessage, { type: 'handed' | 'unopened' }>>}
  */
 export async function handing(
   { group, lent, unanswered, label, at },
