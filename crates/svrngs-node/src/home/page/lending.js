@@ -126,7 +126,7 @@ const LENDING = {
   // asked refused by name, before any case takes it.
   step: (state, message) => {
     const [asked, serial] = ask(state, 'lent');
-    const old = message.type !== 'read' && late(state, 'lent', message.n);
+    const old = message.type === 'read' ? '' : late(state, 'lent', message.n);
     if (old) return no(state, old);
     switch (message.type) {
       case 'read':
@@ -231,7 +231,7 @@ function Lent({ l: lend, signs, home }) {
    */
   const act = (words, on) =>
     html`<${Act} words=${words} doing=${{ state: state.at.change === 'changing' ? 'busy' : 'idle' }} on=${on} send=${send} />`;
-  return html`<li>${`${lend.name}: ${limit ? `up to ${limit} ${limit === 1 ? 'person' : 'people'}` : 'everyone in your groups'} at once, ${lend.using} using it now. `}<${Field} words="How many people at once: " value=${value} attrs=${{ type: 'number', min: 1 }} send=${send} />${act('Let in this many', { type: 'many', value })}${limit && act('Let everyone in', { type: 'change', to: { limit: null } })}${signs ? 'Signs people in with svrngs. ' : act('Sign people in with svrngs', { type: 'sign' })}${act('Stop lending', { type: 'change', to: 'stop' })}${state.said}${state.shown && signed(state.shown)}</li>`;
+  return html`<li>${`${lend.name}: ${(limit ?? 0) > 0 ? `up to ${limit} ${limit === 1 ? 'person' : 'people'}` : 'everyone in your groups'} at once, ${lend.using} using it now. `}<${Field} words="How many people at once: " value=${value} attrs=${{ type: 'number', min: 1 }} send=${send} />${act('Let in this many', { type: 'many', value })}${(limit ?? 0) > 0 && act('Let everyone in', { type: 'change', to: { limit: null } })}${signs ? 'Signs people in with svrngs. ' : act('Sign people in with svrngs', { type: 'sign' })}${act('Stop lending', { type: 'change', to: 'stop' })}${state.said}${state.shown && signed(state.shown)}</li>`;
 }
 // HOME's: the page's foot held until what you lend is first read, as v1
 // drew its address after it (home.js@19b63b2b:326-328): drawn at once, a driver read the

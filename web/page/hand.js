@@ -100,7 +100,7 @@ export async function handing(hand, key, until = Math.floor(Date.now() / 1000) +
  * @param {Lent} lend
  */
 async function withYes({ group, label, at }, lend) {
-  const yes = lend.reads?.length && (at === undefined || !group.reads?.[label]);
+  const yes = lend.reads && lend.reads.length > 0 && (at === undefined || !group.reads?.[label]);
   // A guest's lends read none (web/page/visit.js `stay`), so the yes is a group's.
   if (!yes) return group;
   return store.opened({

@@ -39,7 +39,7 @@ export const Reach = ({ app, words, said = 'yes' }) =>
 // that becomes its session there (give-session; home.js@19b63b2b:58-61).
 /** @param {Lent} lend */
 const opener = (lend) =>
-  lend.reads?.length
+  lend.reads && lend.reads.length > 0
     ? html`<${Reach} app=${label(lend)} words=${named(lend)} />`
     : html`<a href=${`/to?${new URLSearchParams({ lend: label(lend) })}`} target="_blank">${named(lend)}</a>`;
 const UNLISTED = {

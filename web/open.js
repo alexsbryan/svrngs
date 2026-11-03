@@ -28,12 +28,24 @@
 import * as store from './store.js?v=__VERSION__';
 import { signerFor, holderMatches, openMessage } from './authority.js?v=__VERSION__';
 /** @import { Handoff } from './authority.js?v=__VERSION__' */
+// The open as this page holds it: the hand-off, the holder's key once
+// imported or found kept, and the lines the last pass's holder signed.
+/**
+ * @typedef {Handoff & {
+ *   key?: CryptoKey,
+ *   line?: { seq: number, id: string },
+ *   unsent?: unknown[],
+ * }} Handed
+ */
 
 // open.html holds #said.
 const say = (/** @type {string} */ words) =>
   (/** @type {HTMLElement} */ (document.getElementById('said')).textContent = words);
 
-/** @param {string} fragment */
+/**
+ * @param {string} fragment
+ * @returns {Handed}
+ */
 const decode = (fragment) =>
   JSON.parse(
     new TextDecoder().decode(
@@ -71,7 +83,10 @@ function running(reg) {
 // framed at the address derived from this origin's own host, adopts the
 // open's approver on its first ask, or finds the one it adopted
 // (sign.js; svrn-docs rings/current/HOLDER_APPROVAL.md §3.D).
-/** @param {Handoff} handed */
+/**
+ * @param {Handoff} handed
+ * @returns {Promise<boolean>}
+ */
 async function checked(handed) {
   const url = signerFor(location.href, new URL('./', import.meta.url).pathname);
   const frame = document.createElement('iframe');
@@ -103,14 +118,15 @@ async function checked(handed) {
 
 // The open this page starts from, and the holder's bytes when they came
 // with it, to hand the worker should it not take the key.
-/** @typedef {{ handed: any, seed?: string }} Begun */
+/** @typedef {{ handed: Handed, seed?: string | null }} Begun */
 
 async function start() {
   const asked = new URLSearchParams(location.search);
   const begun = location.hash.length > 1 ? await handedHere() : await handedKept(asked);
   if (!begun) return;
   const { handed } = begun;
-  if (!(await holderMatches(handed.key, handed.holder)))
+  // `withHolder` gave it its key, or it was kept with one.
+  if (!(await holderMatches(/** @type {CryptoKey} */ (handed.key), handed.holder)))
     throw new Error('the key is not the holder the group page named');
   await store.lendKeep(`pass ${handed.label}`, handed);
   console.debug(`OPEN: ${handed.label}'s open is this browser's, its holder proved and kept`);
@@ -133,8 +149,10 @@ async function handedHere() {
   }
   // Lines the last pass's holder signed and no computer took yet go on
   // with this one (lend.js `writing`), each under the pass it was signed with.
-  const was = await store.lendKept(`pass ${handed.label}`).catch(() => null);
-  if (was?.unsent?.length) handed.unsent = was.unsent;
+  const was = /** @type {Handed | undefined | null} */ (
+    await store.lendKept(`pass ${handed.label}`).catch(() => null)
+  );
+  if (was?.unsent && was.unsent.length > 0) handed.unsent = was.unsent;
   if (!(await withHolder(handed, was))) {
     location.replace(`${handed.page}#open=${handed.label}&anew`);
     return null;
@@ -152,8 +170,8 @@ async function handedHere() {
 // not kept here asks the group's page for a new one: whether `handed`
 // has its holder.
 /**
- * @param {any} handed
- * @param {any} was
+ * @param {Handed} handed
+ * @param {Handed | undefined | null} was
  */
 async function withHolder(handed, was) {
   if (handed.seed) {
@@ -177,7 +195,10 @@ async function withHolder(handed, was) {
  * @returns {Promise<Begun | null>}
  */
 async function handedKept(asked) {
-  const handed = asked.get('for') && (await store.lendKept(`pass ${asked.get('for')}`));
+  const name = asked.get('for');
+  const handed = name
+    ? /** @type {Handed | undefined} */ (await store.lendKept(`pass ${name}`))
+    : undefined;
   if (!handed) {
     say('Open this from your group’s page.');
     return null;
@@ -207,7 +228,7 @@ async function handedOn({ handed, seed }, asked) {
   console.debug('OPEN: the lend’s worker runs; handing it the pass');
   const held =
     (await store.handOver(worker, { handed })) ||
-    (seed && (await store.handOver(worker, { handed: { ...handed, key: pkcs8(seed) } })));
+    (seed ? await store.handOver(worker, { handed: { ...handed, key: pkcs8(seed) } }) : false);
   if (!held && !seed) {
     console.debug(
       'OPEN: the worker did not take the holder’s key, and no bytes of it are here: the group’s page signs a pass to a new holder',

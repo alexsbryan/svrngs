@@ -110,7 +110,9 @@
       /** @type {Promise<void>} */
       const ready = new Promise((yes, no) => {
         const timeout = setTimeout(() => no(new Error('the worker did not answer')), 10000);
-        channel.port1.onmessage = ({ data }) => {
+        // The worker's answer (lend.js `workerRun`): 'running', which has no
+        // `error`, or why not.
+        channel.port1.onmessage = (/** @type {MessageEvent<{ error?: string }>} */ { data }) => {
           clearTimeout(timeout);
           if (data.error) no(new Error(data.error));
           else yes();

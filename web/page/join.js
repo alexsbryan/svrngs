@@ -264,7 +264,9 @@ let key;
 async function posted(core, token, { path, body }, refused = joining) {
   const dialled = await Promise.race([
     core.connect_to_join(key, token),
-    new Promise((_, reject) => setTimeout(() => reject(new Error('no answer')), PATIENCE)),
+    /** @type {Promise<never>} */ (
+      new Promise((_, reject) => setTimeout(() => reject(new Error('no answer')), PATIENCE))
+    ),
   ]).catch((error) => Promise.reject((trace(`PAGE: the dial failed: ${error}`), refusal(AWAY))));
   const bytes = new TextEncoder().encode(body);
   const [res, text] = await dialled

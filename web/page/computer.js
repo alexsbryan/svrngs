@@ -24,7 +24,7 @@ import { Copy } from '../ui/copy.js?v=__VERSION__';
  * The messages this flow takes.
  * @typedef {{ type: 'offer', token: string }
  *   | { type: 'opens', wants?: Wants }
- *   | { type: 'offered', token?: string, page: string, href?: string | false }} Message
+ *   | { type: 'offered', token?: string, page: string, href?: string }} Message
  */
 
 /**
@@ -74,7 +74,7 @@ export const io = {
     type: 'offered',
     token,
     page: `${location.origin}${location.pathname}`,
-    href: opens && location.href,
+    href: opens ? location.href : undefined,
   }),
 };
 

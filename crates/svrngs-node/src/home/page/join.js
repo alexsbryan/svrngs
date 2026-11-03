@@ -91,7 +91,9 @@ export const JOIN = (home) => ({
   // case takes it.
   step: (state, message) => {
     const old =
-      (message.type === 'checked' || message.type === 'refused') && late(state, 'link', message.n);
+      message.type === 'checked' || message.type === 'refused'
+        ? late(state, 'link', message.n)
+        : '';
     if (old) return no(state, old);
     switch (message.type) {
       case 'typed':

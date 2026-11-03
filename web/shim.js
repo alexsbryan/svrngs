@@ -23,23 +23,30 @@
   const worker = () => workers?.controller;
   /** @type {Promise<HTMLIFrameElement> | undefined} */
   let signer;
-  workers?.addEventListener('message', async (event) => {
-    if (!event.data?.approve || !event.ports[0] || event.source !== worker()) return;
-    const url = new URL(event.data.signer);
-    signer ??= new Promise((yes) => {
-      const frame = Object.assign(document.createElement('iframe'), {
-        src: url.href,
-        hidden: true,
+  // What the lend's worker posts its pages: an entry to approve and the
+  // signer that approves it (lend.js `approved`), else store.js `LOST`,
+  // which has no `approve`.
+  /** @typedef {{ approve?: object, signer: string }} Approving */
+  workers?.addEventListener(
+    'message',
+    async (/** @type {MessageEvent<Approving | null>} */ event) => {
+      if (!event.data?.approve || !event.ports[0] || event.source !== worker()) return;
+      const url = new URL(event.data.signer);
+      signer ??= new Promise((yes) => {
+        const frame = Object.assign(document.createElement('iframe'), {
+          src: url.href,
+          hidden: true,
+        });
+        frame.onload = () => yes(frame);
+        document.documentElement.append(frame);
       });
-      frame.onload = () => yes(frame);
-      document.documentElement.append(frame);
-    });
-    /** @type {Window} */ ((await signer).contentWindow).postMessage(
-      event.data.approve,
-      url.origin,
-      [event.ports[0]],
-    );
-  });
+      /** @type {Window} */ ((await signer).contentWindow).postMessage(
+        event.data.approve,
+        url.origin,
+        [event.ports[0]],
+      );
+    },
+  );
   // What lend.js's `worker` answers a script handed it.
   /** @typedef {'running' | { error: string }} Started */
   /**

@@ -135,11 +135,12 @@ export const response = {
  * @param {Props['send']} send
  */
 export const offered = (state, send) =>
-  choosing(state) &&
-  state.offered.groups.map(
-    (group) =>
-      html`<p><button onClick=${() => send({ type: 'pick', group: group, wants: state.offered.wants })}>Open it in ${titled(group)}</button></p>`,
-  );
+  choosing(state)
+    ? state.offered.groups.map(
+        (group) =>
+          html`<p><button onClick=${() => send({ type: 'pick', group: group, wants: state.offered.wants })}>Open it in ${titled(group)}</button></p>`,
+      )
+    : null;
 
 // The edge. `forget`: never from a window another page opened, which could
 // read its bytes as they arrive. `cold`: the group's page is this host past
@@ -151,7 +152,10 @@ const trace = (/** @type {string} */ line) => globalThis.__trace?.(line);
 /** @type {Io<Effect, PageMessage>} */
 export const io = {
   forget: ({ label, at, why }) =>
-    (window.opener ? Promise.resolve() : store.holder(label, null)).then(() => ({
+    (/** @type {Window | null} */ (window.opener)
+      ? Promise.resolve()
+      : store.holder(label, null)
+    ).then(() => ({
       type: 'open',
       label,
       at,
@@ -162,7 +166,7 @@ export const io = {
       type: 'others',
       open,
       label: core.is_label(open),
-      others: kept.filter((group) => group.id !== id && group.addresses),
+      others: kept.filter((group) => group.id !== id && group.addresses !== undefined),
     })),
   cold: () => {
     const at = location.href.slice(location.origin.length);

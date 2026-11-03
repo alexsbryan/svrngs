@@ -126,7 +126,7 @@ export const ROOM = {
   // any case takes them.
   step: (state, message) => {
     const [asked, serial] = ask(state, 'room');
-    const old = message.n && late(state, 'room', message.n);
+    const old = message.n === undefined ? '' : late(state, 'room', message.n);
     if (old) return no(state, old);
     if (state.at.room === 'turning' && ['read', 'turn'].includes(message.type))
       return no(state, 'a turn is under way, and its answer is what is open');

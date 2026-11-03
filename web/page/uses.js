@@ -92,7 +92,7 @@ export const takes = {
           state,
           {
             uses: /** @type {Lent[]} */ (state.lent).every(
-              (lend) => !lend.asks || choices[lend.label],
+              (lend) => !lend.asks || choices[lend.label] !== undefined,
             )
               ? 'asked'
               : 'asking',

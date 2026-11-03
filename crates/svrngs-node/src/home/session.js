@@ -65,7 +65,7 @@ export async function browserAuthority(fetched, clients, origin) {
   const request = fetched.request;
   const from = request.headers.get('origin');
   if (from && from !== origin) return null;
-  const client = fetched.clientId && (await clients.get(fetched.clientId));
+  const client = fetched.clientId ? await clients.get(fetched.clientId) : undefined;
   if ((client && new URL(client.url).origin === origin) || from === origin) return Browser.Own;
   if (referredHere(request, from, origin)) return Browser.Own;
   return wholeTab(request) ? Browser.Tab : null;

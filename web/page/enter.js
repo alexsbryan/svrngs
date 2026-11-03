@@ -464,7 +464,7 @@ export const response = {
  * @param {Props['send']} send
  */
 export const chosen = (state, send) =>
-  offered(state, send) ||
+  offered(state, send) ??
   (state.at.tab === 'elsewhere' &&
     html`<p>One tab at a time reaches ${state.group.name}. Open it here, and the other tab stops reaching it.</p><${Act} words="Open it here" on=${{ type: 'take' }} send=${send} />`);
 
@@ -491,7 +491,7 @@ let letGo;
  * @param {typeof Wasm} core
  * @param {Group} group
  * @param {string[]} tried the computers asked already, by key
- * @returns {Promise<[Dialled] | [Dialled, Computer]>}
+ * @returns {Promise<[Dialled, Computer | undefined]>} and the computer that answered, none when the link's did
  */
 async function reach(core, group, tried) {
   if (!core.relay_of(group.token))
@@ -521,7 +521,9 @@ async function reach(core, group, tried) {
   const away = `${[...(linked ? [link] : []), ...others].map((one) => `${whoseComputer(one)} did not answer.`).join(' ')} Try again later.`;
   const [dialled, computer] = await Promise.race([
     Promise.any(tries),
-    new Promise((_, reject) => setTimeout(() => reject(new Error('no answer')), PATIENCE)),
+    /** @type {Promise<never>} */ (
+      new Promise((_, reject) => setTimeout(() => reject(new Error('no answer')), PATIENCE))
+    ),
   ]).catch((error) => Promise.reject((trace(`PAGE: the dial failed: ${error}`), said(away))));
   trace(
     `PAGE: reached ${group.name} through ${computer ? `${computer.person}'s` : "the link's"} computer`,
@@ -576,7 +578,9 @@ export const dialled = (group, lend) =>
       Promise.resolve((bound ??= core.endpoint(key, group.token))).then((endpoint) =>
         endpoint.dial(lend.key, lend.relay ?? null),
       ),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('no answer')), PATIENCE)),
+      /** @type {Promise<never>} */ (
+        new Promise((_, reject) => setTimeout(() => reject(new Error('no answer')), PATIENCE))
+      ),
     ]),
   );
 /**
@@ -598,7 +602,15 @@ export const through = (group, path, body) =>
         ],
         new Blob([bytes]).stream(),
       )
-      .then(async (answer) => [answer.ok, answer.status, await answer.text()])
+      // The wasm's `fetch` answers the page's `Response` (svrngs_web.d.ts `Dialled`).
+      .then(
+        async (/** @type {Response} */ answer) =>
+          /** @satisfies {[boolean, number, string]} */ ([
+            answer.ok,
+            answer.status,
+            await answer.text(),
+          ]),
+      )
       .finally(() => connection.close());
     return ok
       ? JSON.parse(text)

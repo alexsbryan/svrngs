@@ -105,7 +105,14 @@
             }
           }
         ],
-        "typescript/no-unnecessary-condition": "error"
+        "typescript/no-unnecessary-condition": "error",
+        "typescript/strict-boolean-expressions": [
+          "error",
+          {
+            "allowNullableString": true,
+            "allowNullableBoolean": true
+          }
+        ]
       }
     },
     {

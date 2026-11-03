@@ -422,7 +422,7 @@ function Acting({ s: homeState, home }) {
             ([app, change]) =>
               html`<p>${reading(
                 /** @type {(Lend & { reads: string[] }) | undefined} */ (
-                  lent.find((one) => label(one) === app && one.reads?.length)
+                  lent.find((one) => label(one) === app && one.reads && one.reads.length > 0)
                 ),
                 change,
               )}${change.said === 'yes' && html`<${Reach} app=${app} words="Stop" said="stop" />`}</p>`,

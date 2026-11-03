@@ -405,7 +405,8 @@ const partAsked = (path, from, size) => {
 function bounded(headers, destination, path) {
   return headers.map(
     /** @returns {Header} */ ([name, value]) => {
-      const range = name.toLowerCase() === 'range' && /^bytes=(\d+)-(\d*)$/.exec(value.trim());
+      const range =
+        name.toLowerCase() === 'range' ? /^bytes=(\d+)-(\d*)$/.exec(value.trim()) : null;
       if (!range) return [name, value];
       const from = Number(range[1]);
       const media = destination === 'video' || destination === 'audio';
@@ -705,6 +706,7 @@ async function bodyFor({ request, path }, headers) {
  * @param {Asked} asked
  * @param {Header[]} headers
  * @param {ReadableStream<Uint8Array> | null} body
+ * @returns {Promise<Response | null>} the wasm's `fetch` answers the page's `Response`
  */
 async function doorAnswer({ request, lend, path }, headers, body) {
   for (let tries = 0; ; tries++) {
@@ -934,7 +936,10 @@ async function approved(group, line) {
       ? `This app’s page (${walled}) may keep out your group’s signer, so this wasn’t saved.`
       : 'the trusted signer did not answer';
     const timeout = setTimeout(() => no(new Error(why)), 15000);
-    channel.port1.onmessage = ({ data }) => {
+    // The signer's answer (sign.js `answered`): the pass, or why not.
+    channel.port1.onmessage = (
+      /** @type {MessageEvent<{ pass?: string, error?: string }>} */ { data },
+    ) => {
       clearTimeout(timeout);
       if (data.pass) yes(data.pass);
       else no(new Error(data.error));
@@ -1011,6 +1016,7 @@ async function writeSigned(lend, group, act, grant) {
  * @returns {Promise<Response>}
  */
 async function carried(lend) {
+  /** @type {Response | undefined} */
   let res;
   for (const carrying of /** @type {Unsent[]} */ (handed.unsent)) {
     const body = new TextEncoder().encode(JSON.stringify(carrying));
@@ -1018,9 +1024,10 @@ async function carried(lend) {
       ['content-type', 'application/json'],
       ['content-length', String(body.length)],
     ];
-    res = await (
-      await dialFor(lend.key)
-    ).fetch('POST', '/carry', headers, new Blob([body]).stream());
+    // The wasm's `fetch` answers the page's `Response`.
+    res = /** @type {Response} */ (
+      await (await dialFor(lend.key)).fetch('POST', '/carry', headers, new Blob([body]).stream())
+    );
     trace(
       `RUNTIME: line ${carrying[1].seq} carried to ${lend.person}'s computer, answered ${res.status}`,
     );
@@ -1052,6 +1059,7 @@ async function judged(lend, res) {
   }
   // Taken but not counted: the fold refused it (svrngs-core `Grant`), said
   // to the page, never as saved.
+  /** @type {{ counted?: boolean } | null} */
   const said = res.ok ? await res.json() : null;
   if (said?.counted === false)
     return Response.json({ error: 'your group does not count it' }, { status: 409 });
@@ -1069,10 +1077,11 @@ async function judged(lend, res) {
 async function away(request, lend) {
   const who = lend.person.replace(/</g, '&lt;');
   const page =
-    request.mode === 'navigate' &&
-    (await fetch(`${SITE}away.html?v=__VERSION__`)
-      .then((response) => (response.ok ? response.text() : Promise.reject(response.status)))
-      .catch((error) => trace(`RUNTIME: away.html not fetched: ${error}`)));
+    request.mode === 'navigate'
+      ? await fetch(`${SITE}away.html?v=__VERSION__`)
+          .then((response) => (response.ok ? response.text() : Promise.reject(response.status)))
+          .catch((error) => trace(`RUNTIME: away.html not fetched: ${error}`))
+      : undefined;
   trace(
     `RUNTIME: ${lend.label}'s computer did not answer, said ${page ? 'as its window, dark' : 'in svrngs’s words'}`,
   );
@@ -1246,7 +1255,9 @@ function appWorker(code) {
 
 async function appLoaded() {
   if (app === undefined) {
-    const code = await store.lendKept(`worker ${OWN}`).catch(() => null);
+    const code = /** @type {string | undefined | null} */ (
+      await store.lendKept(`worker ${OWN}`).catch(() => null)
+    );
     app = code ? appWorker(code) : null;
   }
   return app;
@@ -1261,7 +1272,7 @@ async function appLoaded() {
 async function answered(fetchEvent, url, where) {
   const allowed = await maySign(fetchEvent, /** @type {Scope} */ (self).clients, SCOPE.origin);
   // App code must not turn an untrusted navigation into an authorized fetch.
-  const on = allowed && where.label === OWN && (await appLoaded());
+  const on = allowed && where.label === OWN ? await appLoaded() : null;
   /** @type {Response | PromiseLike<Response> | null} */
   let given = null;
   if (on) {
@@ -1286,7 +1297,7 @@ async function answered(fetchEvent, url, where) {
   const url = new URL(event.request.url);
   const here = url.origin === self.location.origin;
   if (here && shellAt(url)) return;
-  const own = here && ownAnswer(event.request, url);
+  const own = here ? ownAnswer(event.request, url) : null;
   if (own) return event.respondWith(own);
   const where = whereOf(url);
   if (!where) return;
@@ -1313,7 +1324,7 @@ function ownAnswer(request, url) {
   if (url.pathname === TRACE) return traceShown();
   if (url.pathname === READS) return told();
   if (url.pathname === ASK) return asking(url);
-  const stop = request.method === 'POST' && STOP.exec(url.pathname);
+  const stop = request.method === 'POST' ? STOP.exec(url.pathname) : null;
   // `STOP` names its label whenever it matches.
   if (stop) return stopping(/** @type {string} */ (stop[1]));
   return null;
@@ -1335,6 +1346,10 @@ const traceShown = () =>
   const reply = event.ports[0];
   if (!fromHere(/** @type {Client | null} */ (event.source)))
     return reply?.postMessage({ error: 'only this origin hands the worker authority' });
+  // A page's hand-over, each part read as its kind before it is taken: an
+  // open (`handsPass`), a cookie or a worker by `typeof`, a socket as
+  // shim.js asks one.
+  /** @type {{ handed?: any, cookie?: unknown, worker?: unknown, socket?: { url: string, protocols?: string[] } }} */
   const data = event.data ?? {};
   const { handed: given, cookie, worker, socket: asked } = data;
   if (handsPass(given)) return holdPass(given, reply);
@@ -1478,18 +1493,30 @@ async function socket(asked, port) {
     )?.[1] ?? '';
   port.postMessage({ open: chosen });
   port.onmessage = ({ data }) => {
-    if ('send' in data) writer.write(frame(typeof data.send === 'string' ? 1 : 2, data.send));
+    if ('send' in data) void writer.write(frame(typeof data.send === 'string' ? 1 : 2, data.send));
     if ('close' in data)
-      writer.write(frame(8, new Uint8Array([data.close >> 8, data.close & 255])));
+      void writer.write(frame(8, new Uint8Array([data.close >> 8, data.close & 255])));
   };
   return relayed(remote.readable.getReader(), writer, port);
 }
+
+// The wasm's `socket` answers (svrngs_web.d.ts `Dialled`): the raw bytes
+// both ways once `status` is 101.
+/**
+ * @typedef {{
+ *   status: number,
+ *   headers: Header[],
+ *   readable: ReadableStream<Uint8Array>,
+ *   writable: WritableStream<Uint8Array>,
+ * }} Switched
+ */
 
 // The socket the lend's door switches to for the WebSocket asked at `url`,
 // or none, `port` told why.
 /**
  * @param {{ url: string, protocols?: string[] }} asked
  * @param {MessagePort} port
+ * @returns {Promise<Switched | null>}
  */
 async function switched({ url, protocols }, port) {
   const http = new URL(url.replace(/^ws/, 'http'));
@@ -1509,9 +1536,11 @@ async function switched({ url, protocols }, port) {
     // A lend was found, so the open is held.
     ...(await passed(/** @type {Held} */ (held))),
   ];
-  if (protocols?.length) headers.push(['sec-websocket-protocol', protocols.join(', ')]);
+  if (protocols && protocols.length > 0)
+    headers.push(['sec-websocket-protocol', protocols.join(', ')]);
   const cookie = cookieFor(await jarOf(where.label), where.path, false);
   if (cookie) headers.push(['cookie', cookie]);
+  /** @type {Switched} */
   let remote;
   try {
     remote = await (await dialFor(lend.key)).socket(`/lend/${where.label}${where.path}`, headers);

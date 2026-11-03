@@ -41,7 +41,7 @@ export function Act({ words, doing = IDLE, on, type, answer = 'beside', send }) 
   const busy = doing.state === 'busy';
   const said = busy ? '' : (doing.said ?? '');
   if (answer === 'instead' && said) return said;
-  return html`<button type=${type} disabled=${busy} onClick=${on && (() => busy || send(on))}>${words}</button>${said}`;
+  return html`<button type=${type} disabled=${busy} onClick=${on === undefined ? undefined : () => busy || send(on)}>${words}</button>${said}`;
 }
 
 // Words from one region, in one element.

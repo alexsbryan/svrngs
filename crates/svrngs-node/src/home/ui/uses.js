@@ -46,7 +46,7 @@ export function Uses({ lent, labelOf, choices, tag, said = {}, send }) {
   // A lend past the filter has its choices, and an app named is found, as
   // the test before its `named` says: tsc narrows neither lookup.
   return lent
-    .filter((lend) => lend.asks && choices[labelOf(lend)])
+    .filter((lend) => Boolean(lend.asks) && choices[labelOf(lend)] !== undefined)
     .flatMap((asking) =>
       ((/** @type {Asked} */ asked, /** @type {string} */ lend) =>
         asked.why !== undefined

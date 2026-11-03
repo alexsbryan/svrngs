@@ -200,8 +200,10 @@ async function visiting(
 ) {
   const dialled = await Promise.race([
     core.connect_to_join(/** @type {Uint8Array} */ (key), token),
-    new Promise((_, reject) => setTimeout(reject, 60_000)),
+    /** @type {Promise<never>} */ (new Promise((_, reject) => setTimeout(reject, 60_000))),
   ]).catch(() => said('The computer that sent this link did not answer. Try again later.'));
+  // The wasm's `fetch` answers the page's `Response` (svrngs_web.d.ts `Dialled`).
+  /** @type {Response} */
   const res = await dialled
     .fetch(
       'POST',

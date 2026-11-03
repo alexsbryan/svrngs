@@ -223,7 +223,7 @@ const SAID = {
 const left = ({ s: state }) =>
   ((gone) =>
     gone.length > 0 &&
-    html`<section id="left"><h2>Groups you left</h2>${gone.map((group) => html`<p>${group.name ?? 'A group'}${group.made ? ` (${whose(group.made)})` : ''}: what you have of it stays on this computer${group.folders?.length ? `, its folder at ${group.folders.join(' and ')}` : ''}, and nothing new of it reaches you.</p>`)}</section>`)(
+    html`<section id="left"><h2>Groups you left</h2>${gone.map((group) => html`<p>${group.name ?? 'A group'}${group.made ? ` (${whose(group.made)})` : ''}: what you have of it stays on this computer${group.folders && group.folders.length > 0 ? `, its folder at ${group.folders.join(' and ')}` : ''}, and nothing new of it reaches you.</p>`)}</section>`)(
     /** @type {Held[]} */ (state.groups).filter((group) => group.left),
   );
 

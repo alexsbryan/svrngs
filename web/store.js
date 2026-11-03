@@ -161,7 +161,11 @@ const described = (key) =>
  * @returns {Promise<CryptoKey>}
  */
 async function sealingKey(make) {
-  const held = await run('seal', 'readonly', (objects) => objects.get('key'));
+  const held = await run(
+    'seal',
+    'readonly',
+    (objects) => /** @type {IDBRequest<CryptoKey | undefined>} */ (objects.get('key')),
+  );
   if (held) {
     globalThis.__trace?.(`STORE: the sealing key read back: ${described(held)}`);
     return held;
@@ -231,22 +235,35 @@ export const keepVisit = (token, visit, key) =>
  * @returns {Promise<(Visit & { key: Uint8Array<ArrayBuffer> }) | undefined>}
  */
 export const visitOf = (token) =>
-  run('seal', 'readonly', (objects) => objects.get(`visit ${token}`)).then(
-    async (visit) => visit && { ...visit, key: await unseal({ ...visit, id: token }) },
-  );
+  run(
+    'seal',
+    'readonly',
+    (objects) =>
+      /** @type {IDBRequest<(Visit & Awaited<ReturnType<typeof sealed>>) | undefined>} */ (
+        objects.get(`visit ${token}`)
+      ),
+  ).then(async (visit) => visit && { ...visit, key: await unseal({ ...visit, id: token }) });
 
 // The holder a lend's origin keeps, its public key by the lend's label
 // (capability-signed (H); DESIGN §3), beside the sealing key, apart from
 // any group's row, so no write of one drops it: `key` kept, `null`
-// dropped, or with none read.
+// dropped, or with none read, the key kept answered (a write answers none).
 /**
  * @param {string} label
  * @param {string | null} [key]
+ * @returns {Promise<string | null | undefined>}
  */
 export const holder = (label, key) =>
   key === undefined
-    ? run('seal', 'readonly', (objects) => objects.get(`holder ${label}`))
-    : run('seal', 'readwrite', (objects) => objects.put(key, `holder ${label}`));
+    ? run(
+        'seal',
+        'readonly',
+        (objects) =>
+          /** @type {IDBRequest<string | null | undefined>} */ (objects.get(`holder ${label}`)),
+      )
+    : run('seal', 'readwrite', (objects) => objects.put(key, `holder ${label}`)).then(
+        () => undefined,
+      );
 
 // Whether the browser keeps this page's storage, asking it to where it
 // does not yet: a Home Screen web app on the operator's iPhone (iOS 18.7,

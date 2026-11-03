@@ -70,7 +70,8 @@ export const needs = (shown) =>
     shown.signs?.accounts &&
       `It keeps its own accounts, so make each person one in it: ${shown.signs.accounts}.`,
     shown.signs?.header && `Before it knows who is who, set this in it: ${shown.signs.header}.`,
-    shown.keeps?.length &&
+    shown.keeps &&
+      shown.keeps.length > 0 &&
       `svrngs keeps these parts of it from everyone: ${shown.keeps.join(', ')}.`,
   ]
     .filter(Boolean)
@@ -92,7 +93,7 @@ const RUNNING = {
   },
   step: (state, message) => {
     const [asked, serial] = ask(state, 'running');
-    const old = message.type !== 'look' && late(state, 'running', message.n);
+    const old = message.type === 'look' ? '' : late(state, 'running', message.n);
     if (old) return no(state, old);
     switch (message.type) {
       case 'look':

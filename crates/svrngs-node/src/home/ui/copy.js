@@ -103,7 +103,7 @@ export const Copy = (props) => drawn(...useMachine(() => machine('COPY', COPY, F
  */
 export function drawn(state, send, { id, text, words, beside }) {
   const press = () => send({ type: 'copy', text });
-  if (!beside)
+  if (beside === undefined)
     return html`<button id=${id} onClick=${press}>${words[state.at.copy] ?? words.copy}</button>`;
   return html`<button id=${id} onClick=${press}>${words.copy}</button>${beside}${state.said.map((said) => words[said])}`;
 }

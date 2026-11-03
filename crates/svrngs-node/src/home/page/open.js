@@ -67,7 +67,7 @@ const to = (
   ((at) =>
     at &&
     `/to?${new URLSearchParams({ lend, at: ((url) => url.pathname + url.search + url.hash)(new URL(at)) })}`)(
-    /^[a-z0-9]+$/.test(lend) && within(params.get('at'), `http://${lend}.localhost:${port}`),
+    /^[a-z0-9]+$/.test(lend) ? within(params.get('at'), `http://${lend}.localhost:${port}`) : null,
   );
 /** @type {Machine<State, Message, Effect>} */
 const OPEN = {

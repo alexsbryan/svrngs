@@ -13,6 +13,9 @@ import init, { actor, approve_line } from './wasm/svrngs_web.js?v=__VERSION__';
 import { handoffCookie, hostCookie, openMessage, openSeal } from './authority.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
 /** @import { Handoff } from './authority.js?v=__VERSION__' */
+// An open's approver as `approver` keeps it, by its label: the key it
+// signs with, its public half, and the digest of the open it was adopted for.
+/** @typedef {{ label: string, pub: string, digest: string, key: CryptoKey, until: number }} Approver */
 let loaded;
 /** @param {string} text */
 const decode = (text) => JSON.parse(atob(text.replace(/-/g, '+').replace(/_/g, '/')));
@@ -116,7 +119,10 @@ async function approver(label, handoff, now) {
     document.cookie = `${name}=; Max-Age=0; Path=/; Secure; SameSite=Strict`;
     console.debug(`SIGN: adopted the approver of ${label}'s newest open and deleted its cookie`);
   }
-  const kept = await approvers('readonly', (objects) => objects.get(label));
+  const kept = await approvers(
+    'readonly',
+    (objects) => /** @type {IDBRequest<Approver | undefined>} */ (objects.get(label)),
+  );
   if (!kept) throw new Error(`no approver is kept for ${label}: its cookie is gone or never came`);
   if (kept.digest !== (await digest(handoff)))
     throw new Error(`${label} presented an open other than the one adopted`);
@@ -136,7 +142,9 @@ async function stableApproval(group, pass, line, now) {
   const id = `${group}/${approval.person}/${approval.app}/${approval.op}`;
   let chosen = pass;
   await stored('svrngs-approvals', 'id', 'readwrite', (entries) => {
-    const read = entries.getAll();
+    const read = /** @type {IDBRequest<{ id: string, pass: string, until: number }[]>} */ (
+      entries.getAll()
+    );
     read.onsuccess = () => {
       const live = read.result.filter((pending) => pending.until > now);
       for (const pending of read.result) if (pending.until <= now) entries.delete(pending.id);
@@ -182,7 +190,8 @@ addEventListener('message', (asked) => {
 // What the app framing this signer `asked`, answered on `port`: its open
 // adopted, or an entry approved; anything else refused, by a throw.
 /**
- * @param {MessageEvent} asked
+ * @param {MessageEvent<{ opening?: Handoff } | null>} asked an open to adopt, else an
+ *   entry, which `entryAsked` reads
  * @param {MessagePort} port
  */
 async function answered(asked, port) {

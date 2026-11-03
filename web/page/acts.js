@@ -150,7 +150,7 @@ export const takes = {
   acted: (state, message) => answered(state, message, 'done'),
   unacted: (state, message) => answered(state, message, 'refused'),
   carry: (state) =>
-    /** @type {Partial<State>} */ (state).group?.unsent?.length
+    (/** @type {Partial<State>} */ (state).group?.unsent?.length ?? 0) > 0
       ? acting(state, 'carry', { run: 'carrying', group: state.group, failed: 'unacted' })
       : no(state, 'no line is unsent'),
 };
@@ -197,7 +197,8 @@ function Drawn({ s: state, send }) {
     () =>
       void (
         state.at.list === 'read' &&
-        state.group.unsent?.length &&
+        state.group.unsent &&
+        state.group.unsent.length > 0 &&
         send({ type: 'carry', why: `${state.group.unsent.length} line(s) unsent` })
       ),
     [state.lent],
@@ -238,7 +239,10 @@ function Drawn({ s: state, send }) {
     ],
     opens: [
       ...state.lent
-        .filter((lend) => lend.reads?.length && state.group.reads?.[lend.label])
+        .filter(
+          (lend) =>
+            lend.reads && lend.reads.length > 0 && state.group.reads?.[lend.label] !== undefined,
+        )
         // Filtered to the lends that read, as `read` takes them.
         .map((lend) => read(state, send, /** @type {Lent & { reads: string[] }} */ (lend))),
       ...(state.lent.some((lend) => lend.asks) ? [html`<${Used} s=${state} send=${send} />`] : []),

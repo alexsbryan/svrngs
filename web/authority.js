@@ -23,7 +23,7 @@ export async function maySign(fetched, clients, origin) {
     }
   };
   if (fetched.request.mode === 'navigate') return ours(fetched.request.referrer);
-  const client = fetched.clientId && (await clients.get(fetched.clientId));
+  const client = fetched.clientId ? await clients.get(fetched.clientId) : undefined;
   const from = fetched.request.headers.get('origin');
   return !!client && ours(client.url) && (!from || from === origin);
 }
@@ -136,7 +136,8 @@ export function framing(header, signer) {
  * @property {string | null} writes the pass that writes its kind's part of the record as you
  * @property {string} [group] the group's id; none for a guest's open
  * @property {string} holder the holder's public key
- * @property {string | null} seed the holder's seed, as hex, when it is new
+ * @property {string | null} [seed] the holder's seed, as hex, when it is new; gone
+ *   once open.js hands the open on with no need of it
  * @property {boolean} raw whether the holder goes as bytes
  * @property {string | null} relay
  * @property {string} page the group's page, to come back to

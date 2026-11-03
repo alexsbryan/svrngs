@@ -110,7 +110,7 @@ const does = (kind, shelf) =>
 export const agreed = (lend, shelf, group) =>
   lend.group
     ? `${((words) => /** @type {string} */ (words[0]).toUpperCase() + words.slice(1))(does(lend.kind, shelf))} Opening it lets it read and write that, as you.`
-    : `It writes what you say there into ${group.name ?? 'your group'}’s record, as you.${lend.reads?.length ? ` It also opens your friends’ ${lend.reads.map(spoken).join(' and ')} as you.` : ''}`;
+    : `It writes what you say there into ${group.name ?? 'your group'}’s record, as you.${lend.reads && lend.reads.length > 0 ? ` It also opens your friends’ ${lend.reads.map(spoken).join(' and ')} as you.` : ''}`;
 
 // Until when a guest visits (guests-pages; GUESTS §5 "The pages"), as
 // every member's page shows them (ui/visitors.js): a day and an hour.
@@ -277,7 +277,7 @@ export const aliased = (wanted, lent, rows) =>
 // two of one name are told apart (#138): "sam’s, since 14 Oct".
 /** @param {{ maker?: string | null, since?: number | null }} group */
 export const whose = (group) =>
-  `${group.maker ? `${group.maker}’s` : 'yours'}${group.since ? `, since ${day(group.since)}` : ''}`;
+  `${group.maker ? `${group.maker}’s` : 'yours'}${group.since != null && group.since > 0 ? `, since ${day(group.since)}` : ''}`;
 
 // The groups a new one shares its name with (/group, the node's one rule;
 // #138), each said as `whose`, in the command's words (cli.rs
@@ -353,7 +353,8 @@ export const deciders = (rows, me, here) => {
 // How `lend` opens, `where`, and whether it is full now: the index's row
 // as both pages judge it, so a change to either lands on both (#158).
 // A lend with no count of who is using it is not full: `undefined >=` is
-// false.
+// false. Nor is one with no limit (`null` on the wire; never 0, lend.rs
+// `Offered::limit` is a `NonZeroU16`): none reaches `Infinity`.
 /**
  * @param {Lend} lend
  * @param {string} [where]
@@ -361,5 +362,5 @@ export const deciders = (rows, me, here) => {
  */
 export const opens = (lend, where) => [
   where,
-  lend.limit && /** @type {number} */ (lend.using) >= lend.limit ? 'full' : 'on',
+  /** @type {number} */ (lend.using) >= (lend.limit ?? Infinity) ? 'full' : 'on',
 ];

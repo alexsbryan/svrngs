@@ -115,7 +115,7 @@ export const PLAY = {
   // any case takes them.
   step: (state, message) => {
     const [asked, serial] = ask(state, 'play');
-    const old = message.n && late(state, 'play', message.n);
+    const old = message.n === undefined ? '' : late(state, 'play', message.n);
     if (old) return no(state, old);
     if (state.at.play === 'turning' && ['read', 'turn'].includes(message.type))
       return no(state, 'a turn is under way, and its answer is what has Play on');
