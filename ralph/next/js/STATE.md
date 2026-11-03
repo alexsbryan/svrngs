@@ -26,7 +26,7 @@ The rows run in order, since all of them touch the same files.
   The watching session then:
   - lands the `js` rung from the operator seat (CHARTER, "Answered" 2), with its plant: one counted line in a planted `web/page/x.js` moves `js` and leaves `.` unchanged;
   - ticks this row and starts the loop.
-- [ ] js-format — depends [HUMAN-js-agreed] — ONE ROW, each part its own commit, and `scripts/check.sh` once, at the close — oxfmt in the gate, then one commit that only formats:
+- [x] js-format 46ecdadd — depends [HUMAN-js-agreed] — ONE ROW, each part its own commit, and `scripts/check.sh` once, at the close — oxfmt in the gate, then one commit that only formats:
   - **(a) The tool.**
     - oxfmt is pinned exactly in `web/package.json`, and `web/package-lock.json` is updated by `npm install --prefix web`.
     - Its config sits at the root, at width 100 with single quotes, and its ignores match `.oxlintrc.json`'s.
