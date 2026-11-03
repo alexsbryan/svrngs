@@ -305,6 +305,17 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   bring's answer beside its button, a second tap refused, and what was
   brought in the group's list with no reload, is the operator's play on
   the live page once it is deployed;
+- the JavaScript queue (`ralph/next/js/`, its `CHARTER.md`; the operator,
+  2026-11-02 to 03), completed at 25056eec: the formatter, JSDoc types and
+  structural lint, then named components and separate machines and edges.
+  The focused closing review found no blocking defect; semantic-clone and
+  cross-repository noun analyses were explicitly deferred by the operator.
+  The final runtime is the full gate's tested tree, with the later budget
+  jubilee verified by its failing plant; the doc scene passed its focused
+  rerun. Its evidence is `demo/runs/economize/2026-11-03-js-read/CLOSE.md`
+  and `ralph/REVIEW_FINDINGS.md`. V1.5 is prepared with these changes, the
+  relay fallbacks and the loading, Stop and binary-message fixes
+  (`RELEASES.md`);
 - a phone's write reaching the group's other computers at once (the
   operator, 2026-11-03, "A now, B as a row"; `ralph/next/js/NEEDS_HUMAN.md`,
   "A phone's write waits out a round's slowest dial"): a write nudged while

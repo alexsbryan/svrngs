@@ -1,5 +1,44 @@
 # svrngs releases
 
+## V1.5, 3 November 2026
+
+V1.5 adds more than one way for computers to reach their group, fixes a
+few things the pages did not say or carry correctly, and makes the pages'
+JavaScript code easier to read and extend.
+
+**More than one meeting point.** A group can name several of its own
+meeting points with `svrngs new --relay <name> --relay <another>`. Computers
+try the group's own first, fall back to the built-in ones while none
+answers, and return when one answers again. A computer joining starts with
+the meeting points in its invitation rather than waiting on an unrelated
+internet service first. A local-network-only run joined, shared files and
+opened lends with the internet unavailable. Recovery can still take time;
+the recorded one-host fallback run took 22–78 seconds to reopen a lend.
+
+**Update computers before using the new invitations.** Invitations carrying
+two meeting points need V1.5. Older computers keep using the group's
+previously saved meeting point; they do not gain the new fallback behavior.
+If updating from V1.3.1 or earlier, follow V1.4's keeper-first and browser
+opening instructions below too.
+
+**Loading stays visible.** After making or joining a group, your home page
+says it is reading that group until its people are loaded. A group already
+on the page keeps its section while that happens.
+
+**A refused Stop says why.** If Stop under **What apps use** cannot be
+completed, its reason appears beside that Stop.
+
+**Binary messages travel correctly.** The browser's connection to a lent
+app now handles split WebSocket headers, the two-byte length form, and
+DataView payloads correctly.
+
+**For developers.** The pages' JavaScript is formatted, checked through
+JSDoc types and structural lint, and split into named views, pure machines
+and I/O edges. The code in the repository is still the code that runs:
+there is no JavaScript build transform. The focused closing review and
+verification are recorded in `demo/runs/economize/2026-11-03-js-read/CLOSE.md`
+and `ralph/REVIEW_FINDINGS.md`.
+
 ## V1.4, 2 November 2026
 
 V1.4 rebuilds both pages, your computer's and your group's, and closes the
