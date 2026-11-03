@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // The shim in each page of a lend on a phone (u5-2; DESIGN §3, "Lent
 // apps", call 1): what a page asks of its browser that the lend's worker
 // (lend.js), not the browser, holds. It runs first in the page, put there
@@ -16,8 +15,10 @@
 //   signer (sign.html), which only a page can frame: framed here, once, at
 //   the address the worker derives from its own host (lend.js `SIGNER`).
 (() => {
-  const me = new URL(document.currentScript.src);
+  // A classic script, so the browser sets `currentScript` while it runs.
+  const me = new URL(/** @type {HTMLScriptElement} */ (document.currentScript).src);
   const worker = () => navigator.serviceWorker?.controller;
+  /** @type {Promise<HTMLIFrameElement> | undefined} */
   let signer;
   navigator.serviceWorker?.addEventListener('message', async (event) => {
     if (!event.data?.approve || !event.ports[0] || event.source !== worker()) return;
@@ -30,17 +31,31 @@
       frame.onload = () => yes(frame);
       document.documentElement.append(frame);
     });
-    (await signer).contentWindow.postMessage(event.data.approve, url.origin, [event.ports[0]]);
+    /** @type {Window} */ ((await signer).contentWindow).postMessage(
+      event.data.approve,
+      url.origin,
+      [event.ports[0]],
+    );
   });
+  // What lend.js's `worker` answers a script handed it.
+  /** @typedef {'running' | { error: string }} Started */
+  /**
+   * @param {{ worker: string }} message
+   * @returns {Promise<Started>}
+   */
   const ask = (message) =>
     new Promise((done) => {
       const { port1, port2 } = new MessageChannel();
       port1.onmessage = (e) => done(e.data);
-      if (worker()) worker().postMessage(message, [port2]);
+      if (worker()) /** @type {ServiceWorker} */ (worker()).postMessage(message, [port2]);
       else done({ error: 'no worker serves this page' });
     });
 
   // A `name=value; …` line of cookies, as `[name, value]` pairs.
+  /**
+   * @param {string} line
+   * @returns {[string, string][]}
+   */
   const pairs = (line) =>
     line
       .split('; ')
@@ -51,11 +66,14 @@
     configurable: true,
     get: () => [...jar].map(([n, v]) => `${n}=${v}`).join('; '),
     set: (line) => {
-      const [pair, ...attrs] = String(line).split(';');
+      // `split` gives at least one part, the empty string's included.
+      const [pair, ...attrs] = /** @type {[string, ...string[]]} */ (String(line).split(';'));
       const eq = pair.indexOf('=');
       if (eq < 1) return;
       const gone = attrs.some((a) => {
-        const [k, v = ''] = a.split('=').map((s) => s.trim());
+        const [k, v = ''] = /** @type {[string, ...string[]]} */ (
+          a.split('=').map((s) => s.trim())
+        );
         return (
           (/^max-age$/i.test(k) && Number(v) <= 0) ||
           (/^expires$/i.test(k) && Date.parse(v) < Date.now())
@@ -72,25 +90,39 @@
   // reads the answer, by fetch or by XMLHttpRequest, as a browser's
   // cookies are (Immich reads its sign-in's unreloaded).
   const PAGE_COOKIES = 'x-svrngs-page-cookies';
+  /** @param {string | null} line */
   const takeIn = (line) => {
     if (line === null) return;
     jar.clear();
     for (const [n, v] of pairs(line)) jar.set(n, v);
   };
   const fetched = window.fetch;
+  /** @param {Parameters<typeof fetch>} a */
   window.fetch = function (...a) {
     return fetched.apply(this, a).then((r) => (takeIn(r.headers.get(PAGE_COOKIES)), r));
   };
   const opened = XMLHttpRequest.prototype.open;
+  // Either of `open`'s two forms, `async` and after it optional.
+  /** @param {[string, string | URL, boolean?, (string | null)?, (string | null)?]} a */
   XMLHttpRequest.prototype.open = function (...a) {
     this.addEventListener(
       'readystatechange',
       () => this.readyState === 2 && takeIn(this.getResponseHeader(PAGE_COOKIES)),
     );
-    return opened.apply(this, a);
+    // `apply` reads `open`'s last form, whose `async` is not optional.
+    return opened.apply(this, /** @type {Parameters<typeof opened>} */ (a));
   };
 
+  // What the constructor's `Object.assign` puts on each socket, which tsc
+  // does not read off the call, as a browser's WebSocket names them.
+  /** @typedef {Pick<WebSocket, 'binaryType'>} Assigned */
+  // A socket's `on…` handler, as `fire` finds it by the event's type.
+  /** @typedef {Record<string, ((this: Socket, event: Event) => void) | null | undefined>} Handlers */
   class Socket extends EventTarget {
+    /**
+     * @param {string | URL} url
+     * @param {string | string[]} [protocols]
+     */
     constructor(url, protocols) {
       super();
       this.url = new URL(url, location.href).href.replace(/^http/, 'ws');
@@ -113,7 +145,11 @@
           const d = data.message;
           this.fire(
             new MessageEvent('message', {
-              data: typeof d !== 'string' && this.binaryType === 'blob' ? new Blob([d]) : d,
+              data:
+                typeof d !== 'string' &&
+                /** @type {Assigned} */ (/** @type {unknown} */ (this)).binaryType === 'blob'
+                  ? new Blob([d])
+                  : d,
             }),
           );
         }
@@ -131,23 +167,34 @@
         }
       };
       const asked = {
-        socket: { url: this.url, protocols: protocols === undefined ? [] : [].concat(protocols) },
+        socket: {
+          url: this.url,
+          protocols: protocols === undefined ? [] : /** @type {string[]} */ ([]).concat(protocols),
+        },
       };
-      if (worker()) worker().postMessage(asked, [port2]);
+      if (worker()) /** @type {ServiceWorker} */ (worker()).postMessage(asked, [port2]);
       else
         setTimeout(() =>
-          port1.onmessage({ data: { closed: 1006, reason: 'no worker serves this page' } }),
+          /** @type {(e: { data: object }) => void} */ (port1.onmessage)({
+            data: { closed: 1006, reason: 'no worker serves this page' },
+          }),
         );
     }
+    /** @param {Event} event */
     fire(event) {
       this.dispatchEvent(event);
-      this[`on${event.type}`]?.call(this, event);
+      /** @type {Handlers} */ (/** @type {unknown} */ (this))[`on${event.type}`]?.call(this, event);
     }
+    /** @param {string | Blob | ArrayBuffer | ArrayBufferView} data */
     send(data) {
       if (this.readyState !== 1)
         throw new DOMException('the socket is not open', 'InvalidStateError');
       if (data instanceof Blob) data.arrayBuffer().then((send) => this.port.postMessage({ send }));
-      else this.port.postMessage({ send: ArrayBuffer.isView(data) ? data.slice().buffer : data });
+      // A typed array's `slice`; a DataView has none, and throws here.
+      else
+        this.port.postMessage({
+          send: ArrayBuffer.isView(data) ? /** @type {Uint8Array} */ (data).slice().buffer : data,
+        });
     }
     close(code = 1000) {
       if (this.readyState > 1) return;
@@ -160,7 +207,8 @@
   const states = { CONNECTING: 0, OPEN: 1, CLOSING: 2, CLOSED: 3 };
   Object.assign(Socket, states);
   Object.assign(Socket.prototype, states);
-  window.WebSocket = Socket;
+  // `CONNECTING` and the rest are on it by `Object.assign`, just above.
+  window.WebSocket = /** @type {typeof WebSocket} */ (/** @type {unknown} */ (Socket));
 
   if (navigator.serviceWorker) {
     navigator.serviceWorker.register = async (script) => {
