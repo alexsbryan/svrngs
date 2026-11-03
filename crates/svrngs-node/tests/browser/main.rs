@@ -48,7 +48,7 @@ use std::path::Path;
 use std::time::Duration;
 
 use drive::drive;
-use harness::{page_source, relay, relay_url, repo, site, Engine};
+use harness::{relay, relay_url, repo, site, Engine};
 use iroh_relay::server::Server;
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
@@ -62,6 +62,25 @@ const NS: &str = "house";
 
 fn signing(seed: u8) -> SigningKey {
     SigningKey::from_bytes(&[seed; 32])
+}
+
+/// Every `.js` file in a page's `page/` directory, in name order, as one
+/// text: a test that reads which call a page draws by reads the page, not
+/// one file of it, since js-read (b) split each flow's view into
+/// components a file apiece (web/page/lend-line.js draws the phone's open).
+/// Here, not in harness.rs, since conformance.rs shares that file and reads
+/// no page's source.
+pub fn page_source(dir: &str) -> String {
+    let mut files: Vec<std::path::PathBuf> = std::fs::read_dir(repo().join(dir))
+        .unwrap_or_else(|e| panic!("{dir}: {e}"))
+        .map(|entry| entry.unwrap().path())
+        .filter(|path| path.extension().is_some_and(|ext| ext == "js"))
+        .collect();
+    files.sort();
+    files
+        .iter()
+        .map(|path| std::fs::read_to_string(path).unwrap())
+        .collect()
 }
 
 /// No link is asked about here.
