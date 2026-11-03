@@ -362,7 +362,8 @@ export const hex = (bytes) => [...bytes].map((b) => b.toString(16).padStart(2, '
  */
 export const lendOrigin = (protocol, label, pageHost) => `${protocol}//${label}.${pageHost}`;
 /** @param {string} hostname */
-export const labelOf = (hostname) => hostname.split('.')[0];
+// `split` answers one part at least.
+export const labelOf = (hostname) => /** @type {string} */ (hostname.split('.')[0]);
 
 export const CACHE = 'svrngs-web-__VERSION__';
 const RUNTIME = new URL('./wasm/svrngs_web_bg.wasm?v=__VERSION__', import.meta.url);

@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // What `#open=` names, and a lend's address opened cold (page-join (b);
 // DESIGN §3, "Lent apps", call 1; svrn-docs rings/current/
 // IN_THE_BROWSER.md §4). Once the group is read (enter.js `kept` sends
@@ -13,47 +12,59 @@
 import { aliased, go, html, no, whose } from '../ui/kit.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
 /** @import { Group } from '../store.js?v=__VERSION__' */
-/** @import { Wants } from './enter.js?v=__VERSION__' */
+/** @import { Io, Takes } from '../ui/machine.js?v=__VERSION__' */
+/** @import { Lent, Wants } from './enter.js?v=__VERSION__' */
+/** @import { Message as PageMessage, Nothing, Props, Said, Send, Sender, State } from './page.js?v=__VERSION__' */
 
 /**
  * The fields this flow owns (`owns`): the groups offered to open what the
- * address asks in, and why it did not open.
- * @typedef {{ offered?: { groups: Group[], wants: Wants }, missed?: string }} Fields
+ * address asks in, once `among` is `offered`, and why it did not open.
+ * @typedef {{ offered: { groups: Group[], wants: Wants }, missed?: string }} Fields
  */
 
 /**
  * The messages this flow takes.
  * @typedef {{ type: 'among', groups: Group[], wants: Wants }
- *   | { type: 'wanted', wants: Wants }
+ *   | { type: 'wanted', wants: Wants & { open: string } }
  *   | { type: 'others', open: string, label: boolean, others: Group[] }
  *   | { type: 'pick', group: Group, wants: Wants }
  *   | { type: 'cold' }
  *   | { type: 'sent' }} Message
  */
 
+/**
+ * The effects its steps answer.
+ * @typedef {{ run: 'forget', label: string, at: string, why: string, failed: string }
+ *   | { run: 'others', open: string, id: string, why: string, failed: string }
+ *   | { run: 'cold', failed: string }} Effect
+ */
+
 export const owns = ['offered', 'missed'];
 export const states = /** @type {const} */ ({
   among: ['unasked', 'offered', 'picked', 'named', 'sent'],
 });
-const titled = (g) => `${g.name}${g.maker ? ` (${whose(g)})` : ''}`,
-  send = (type, m) => ({ run: 'send', m: { type, ...m } });
+const titled = (/** @type {Group} */ g) => `${g.name}${g.maker ? ` (${whose(g)})` : ''}`,
+  send = /** @type {Sender} */ ((type, m) => ({ run: 'send', m: { type, ...m } }));
+/** @type {Takes<State, Message, Effect | Send>} */
 export const takes = {
   among: (s, { groups, wants }) => go(s, { among: 'offered' }, { offered: { groups, wants } }),
   wanted: (s, { wants: { open, at = '/', anew } }) => {
     if (s.at.among === 'named') return no(s, `#open=${open} was named already`);
-    const byLabel = s.lent.filter((l) => l.label === open),
-      by = byLabel.length ? byLabel : aliased(open, s.lent, s.people),
+    // Wanted once the group is read (enter.js `kept`), so its list is.
+    const byLabel = /** @type {Lent[]} */ (s.lent).filter((l) => l.label === open),
+      by = byLabel.length ? byLabel : aliased(open, /** @type {Lent[]} */ (s.lent), s.people),
       name = s.group.name;
     const why = `#open=${open} names ${by.length} of what ${name} lends${byLabel.length ? ', by its label' : ', by its alias'}`;
     // A lend's origin holding no key its pass names asks for a new one (open.js `anew`).
+    // Named by one, `by[0]` is it.
     if (by.length === 1)
       return go(
         s,
         { among: 'named' },
         {},
         anew === undefined
-          ? send('open', { label: by[0].label, at, why })
-          : { run: 'forget', label: by[0].label, at, why, failed: 'failed' },
+          ? send('open', { label: /** @type {Lent} */ (by[0]).label, at, why })
+          : { run: 'forget', label: /** @type {Lent} */ (by[0]).label, at, why, failed: 'failed' },
       );
     if (by.length)
       return go(
@@ -95,7 +106,8 @@ export const takes = {
   cold: (s) => go(s, { among: 'sent' }, {}, { run: 'cold', failed: 'failed' }),
   sent: (s) => go(s, {}),
 };
-const choosing = (s) => s.at.among === 'offered' && s.at.tab === 'unheld';
+const choosing = (/** @type {State} */ s) => s.at.among === 'offered' && s.at.tab === 'unheld';
+/** @type {Record<string, (s: State) => Said | Nothing>} */
 export const heading = {
   among: (s) =>
     choosing(s) && [
@@ -103,10 +115,15 @@ export const heading = {
       'good',
     ],
 };
+/** @type {Record<string, (s: State) => string[] | Nothing>} */
 export const response = {
   among: (s) => (choosing(s) ? ['Open it in the one you mean.'] : s.missed && [s.missed]),
 };
 // Each group offered, drawn in #door (enter.js `chosen`).
+/**
+ * @param {State} s
+ * @param {Props['send']} send
+ */
 export const offered = (s, send) =>
   choosing(s) &&
   s.offered.groups.map(
@@ -120,7 +137,8 @@ export const offered = (s, send) =>
 // never takes its pass comes back here and is said, never sent on again.
 const ONCE = 60_000,
   wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__'),
-  trace = (l) => globalThis.__trace?.(l);
+  trace = (/** @type {string} */ l) => globalThis.__trace?.(l);
+/** @type {Io<Effect, PageMessage>} */
 export const io = {
   forget: ({ label, at, why }) =>
     (window.opener ? Promise.resolve() : store.holder(label, null)).then(() => ({

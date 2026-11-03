@@ -73,6 +73,19 @@ import { go, Heading, html, no, useEffect, useStore } from '../ui/kit.js?v=__VER
  */
 
 /**
+ * The rest of a message of type `T`, as a flow's `send(type, m)` takes it:
+ * required when the message has a field that is.
+ * @template {Message['type']} T
+ * @typedef {Omit<Extract<Message, { type: T }>, 'type'>} Rest
+ */
+
+/**
+ * A flow's `send(type, m)`: the effect sending the message of type `type`,
+ * its rest `m`, to the flow that takes it.
+ * @typedef {<T extends Message['type']>(type: T, ...m: {} extends Rest<T> ? [m?: Rest<T>] : [m: Rest<T>]) => Send} Sender
+ */
+
+/**
  * The heading's words, and its tone.
  * @typedef {[words: string, tone?: 'good' | 'bad']} Said
  */
