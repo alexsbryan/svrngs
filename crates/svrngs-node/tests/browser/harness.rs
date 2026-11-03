@@ -155,7 +155,10 @@ static FRONTS: std::sync::Mutex<std::collections::BTreeMap<SocketAddr, SocketAdd
 /// The relay's, the doors' and the nodes' debug lines, every test's that
 /// this binary runs, kept in `target/traces/<binary>.log`, so a miss in a
 /// full check can be read after (bash-film-load): which ranges reached a
-/// door, and whether the relay dropped a browser's socket.
+/// door, and whether the relay dropped a browser's socket; and the
+/// record's, the folders' and the round's, so a line carried to one
+/// computer can be followed to the next (js-webkit: a round held 4 s by a
+/// dial nobody answers, demo/runs/webkit-wall/2026-11-03/README.md).
 fn traced() {
     static ONCE: std::sync::Once = std::sync::Once::new();
     ONCE.call_once(|| {
@@ -165,7 +168,7 @@ fn traced() {
             std::fs::File::create(kept.join(format!("{}.log", env!("CARGO_CRATE_NAME")))).unwrap();
         tracing_subscriber::fmt()
             .with_env_filter(tracing_subscriber::EnvFilter::new(
-                "door=debug,carriage=debug,lend=debug,transport=debug,iroh_relay=debug",
+                "door=debug,carriage=debug,lend=debug,transport=debug,iroh_relay=debug,rails=debug,folder=debug,svrngs_node::ring_sync=debug",
             ))
             .with_writer(std::sync::Mutex::new(log))
             .with_ansi(false)

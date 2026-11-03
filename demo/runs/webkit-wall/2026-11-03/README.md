@@ -103,3 +103,41 @@ without the launcher, on that same first page, and 70 more pages load in it.
   (`carried.rs:696`). `runs.mjs` `opened` takes any `Money …` title as
   loaded. That race is the test's own and not this stall, and it is left
   as it is: this queue changes no test (its fence 3).
+
+## The `carried` failure, read again (js-webkit's close)
+
+The gate run at 83b372b4 (`lockf -k /tmp/svrngs-gate.lock bash
+scripts/check.sh`, 1336 s) failed `browser` on this one test and nothing
+else, 93 of 94 in 159 s, again at `carried.rs:696`. So the race is not
+rare: 2 of the 4 full steps since (b). And it is not only the test's.
+
+- `carried-gate.txt`: bo's page in that run. Its yes asked
+  `POST /runs` of kim's computer and carried the signed line to the
+  link's computer, ada's (`POST /carry answered 200`). The next read and
+  the open both went to kim's computer, which did not have the line yet.
+  So Money ran there as brought.
+- `carried-trace.txt`: the nodes' own trace of a solo run that passed,
+  with `rails`, `folder` and `svrngs_node::ring_sync` added to
+  `harness.rs` `traced`. **Every round took 4003-4054 ms.** Each one
+  dials bo's key and waits out the 4 s dial (`exchange failed, so the
+  member is unreachable this round peer=ea4a6c63…`). When no round was
+  running, bo's line reached the other computer 18 ms after it was
+  carried (`chunk=1 … pushed=1`). A nudge only wakes the round after the
+  one running (`ring_sync.rs` `spawn_ring_sync_loop`, the comment on
+  `notify_one`). So a yes carried while a round runs waits up to 4 s
+  before it leaves, and the phone opens Money again sooner than that.
+- **Why bo's key is dialled.** The round never dials a browser's key
+  (`node.rs` `dialled`, `Device::dialled`). But `tests/browser/main.rs`
+  `computer_on` admits `admitted`, which is bo's phone in this test, with a
+  bare `Admit`, and a bare `Admit` counts as a computer. Other tests count
+  on that: `drew_the_door` pins "bo did not answer" as an asleep computer,
+  and pia is its phone (`from_a_phone`). A phone admitted the way a
+  phone joins (`from_a_phone`) is never dialled, and no round waits on it.
+- What a person would meet: a group where one computer is asleep has the
+  same 4 s rounds. A yes or a write made on a phone during one reaches the
+  other computers up to 4 s late. Opened at once on one of them, the app
+  runs as before. Reopened a little later, it runs as the yes asked.
+
+Not fixed in this queue: the fix is a fixture change (fence 3) or a
+change to the node's round, and neither is this row's to choose,
+so it is the operator's question (js-webkit-2's package).

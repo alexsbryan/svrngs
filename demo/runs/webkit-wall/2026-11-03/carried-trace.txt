@@ -1,0 +1,19 @@
+# target/traces/browser.log of a solo run, `lockf -k /tmp/svrngs-gate.lock cargo test --quiet -p svrngs-node --test browser a_new_version_runs_as_each_person_only_after_their_yes` (2 passed, 51.35 s), with rails, folder and svrngs_node::ring_sync traced
+## every round, and its length
+2026-11-03T10:32:02.501054Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=1 peers_refused=0 ops_pulled=0 ops_pushed=0 round_ms=4050
+2026-11-03T10:32:02.505402Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=1 peers_refused=0 ops_pulled=0 ops_pushed=0 round_ms=4054
+2026-11-03T10:32:06.505049Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=1 peers_refused=0 ops_pulled=0 ops_pushed=1 round_ms=4003
+2026-11-03T10:32:06.509054Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=1 peers_refused=0 ops_pulled=0 ops_pushed=1 round_ms=4003
+2026-11-03T10:32:11.139588Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=1 peers_refused=0 ops_pulled=0 ops_pushed=1 round_ms=4015
+2026-11-03T10:32:11.141978Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=1 peers_refused=0 ops_pulled=0 ops_pushed=1 round_ms=4017
+2026-11-03T10:32:28.068474Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=1 peers_refused=0 ops_pulled=0 ops_pushed=1 round_ms=4016
+2026-11-03T10:32:28.581416Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=1 peers_refused=0 ops_pulled=0 ops_pushed=1 round_ms=4006
+2026-11-03T10:32:37.180684Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=1 peers_refused=0 ops_pulled=0 ops_pushed=1 round_ms=4006
+## the dial that holds each round
+2026-11-03T10:32:02.500965Z DEBUG svrngs_node::ring_sync: ring sync: exchange failed, so the member is unreachable this round peer=ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c detail="timed out"
+2026-11-03T10:32:02.505351Z DEBUG svrngs_node::ring_sync: ring sync: exchange failed, so the member is unreachable this round peer=ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c detail="timed out"
+2026-11-03T10:32:02.524246Z DEBUG svrngs_node::ring_sync: ring sync: exchange failed, so the member is unreachable this round peer=ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c detail="timed out"
+## bo's yes carried, and pushed on
+2026-11-03T10:32:33.163109Z DEBUG rails: rail: a line a device signed, carried here unchanged, or why not group="house" id=100a50f8efe0f194488857048313bb87832ac22a94af607a628f894d41ce9d31 signer=ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c 
+2026-11-03T10:32:33.174374Z DEBUG svrngs_node::ring_sync: ring sync: woken by a local write rather than the interval
+2026-11-03T10:32:33.181362Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="house" peer=8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c chunk=1 pulled=0 pushed=1 peer_sent=0 offered=1 more_for_peer=false
