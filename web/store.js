@@ -74,8 +74,8 @@ const VERSION = 2;
  * @property {string} name
  * @property {string} person
  * @property {string} token
- * @property {Uint8Array} iv
- * @property {Uint8Array} sealed
+ * @property {Uint8Array<ArrayBuffer>} iv
+ * @property {Uint8Array<ArrayBuffer>} sealed
  * @property {number} opened when it was last opened, in ms
  * @property {string} [maker]
  * @property {number} [since]

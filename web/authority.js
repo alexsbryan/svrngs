@@ -78,6 +78,39 @@ export function framing(header, signer) {
   return { policy, framed };
 }
 
+/**
+ * A lend as a pass names it, in the hand-off (web/page/index.js `handing`).
+ * @typedef {object} Passed
+ * @property {string} label
+ * @property {string} key
+ * @property {string | null} relay
+ * @property {string} name
+ * @property {string} kind
+ * @property {string | null} group
+ * @property {string} person
+ * @property {string} [asks]
+ * @property {number | null} version
+ */
+
+/**
+ * The hand-off: what the group's page hands a lend's origin in the
+ * fragment as it opens it (web/page/index.js `handing`), read there by
+ * open.html (web/open.js). `proof` is the open's seal (`sealOpen`).
+ * @typedef {object} Handoff
+ * @property {string} label the lend opened
+ * @property {Passed[]} lends it, and each it reads as you
+ * @property {string} pass
+ * @property {string | null} writes the pass that writes its kind's part of the record as you
+ * @property {string} [group] the group's id; none for a guest's open
+ * @property {string} holder the holder's public key
+ * @property {string | null} seed the holder's seed, as hex, when it is new
+ * @property {boolean} raw whether the holder goes as bytes
+ * @property {string | null} relay
+ * @property {string} page the group's page, to come back to
+ * @property {string[]} unanswered whose computers did not answer, by name
+ * @property {string} [proof]
+ */
+
 // One projection authenticates routing/authority; mutable signing state and the
 // private seed are excluded. The seed must separately prove the named holder.
 const OPEN_FIELDS = [
