@@ -6,7 +6,7 @@
 // group.js, as v1 reads `?joined=` (home.js@19b63b2b:203).
 import { html } from '../ui/view.js?v=__VERSION__';
 import { Shelf } from '../ui/shelf.js?v=__VERSION__';
-import { post } from './group.js?v=__VERSION__';
+import { post } from './routes.js?v=__VERSION__';
 /** @import { Group, PlaceProps } from './group.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 

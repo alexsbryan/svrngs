@@ -17,6 +17,7 @@
 import { html, useMachine } from '../ui/view.js?v=__VERSION__';
 import { ask, assertNever, go, machine, no } from '../ui/machine.js?v=__VERSION__';
 import { called } from '../question.js?v=__VERSION__';
+import { ENDED, sent } from './routes.js?v=__VERSION__';
 /** @import { Group, Home, PlaceProps, Taken as Offered } from './group.js?v=__VERSION__' */
 /** @import { Machine, Step } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
@@ -150,23 +151,16 @@ const LEAVE = (home) => ({
     }
   },
   io: {
-    ask: ({ path, body }) =>
-      fetch(path, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(body),
-      }).then(async (response) =>
-        ((/** @type {{ outcome?: Outcome, error?: string }} */ answer) =>
-          answer.outcome
-            ? { type: 'answered', o: answer.outcome, why: answer.outcome }
-            : Promise.reject(
-                new Error(
-                  response.status === 401
-                    ? 'this page’s session has ended. Open svrngs from your Applications, or on Linux your applications menu, and it opens here again'
-                    : answer.error || `answered ${response.status}`,
-                ),
-              ))(await response.json().catch(() => ({}))),
-      ),
+    // An outcome is read whatever the answer's status; with none, the
+    // refusal is said.
+    ask: async ({ path, body }) => {
+      const { response, answer } = await sent(path, body);
+      /** @type {Outcome | undefined} */
+      const outcome = answer.outcome;
+      if (outcome) return { type: 'answered', o: outcome, why: outcome };
+      if (response.status === 401) throw new Error(ENDED);
+      throw new Error(answer.error || `answered ${response.status}`);
+    },
     send: ({ m: message }) => {
       home(message);
       return { type: 'sent', why: message.type };

@@ -11,7 +11,7 @@
 import { html, useMachine } from '../ui/view.js?v=__VERSION__';
 import { assertNever, go, machine, no } from '../ui/machine.js?v=__VERSION__';
 import { question, unlent } from '../question.js?v=__VERSION__';
-import { get, post } from './group.js?v=__VERSION__';
+import { get, post } from './routes.js?v=__VERSION__';
 import { label } from './index.js?v=__VERSION__';
 /** @import { Group, Lent } from './group.js?v=__VERSION__' */
 /** @import { Machine } from '../ui/machine.js?v=__VERSION__' */

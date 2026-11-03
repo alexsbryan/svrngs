@@ -11,6 +11,7 @@
 import { html, useEffect, useMachine } from '../ui/view.js?v=__VERSION__';
 import { ask, go, late, machine, no } from '../ui/machine.js?v=__VERSION__';
 import { whose } from '../question.js?v=__VERSION__';
+import { get } from './routes.js?v=__VERSION__';
 /** @import { Core, Effect as AnyEffect, Machine, Step, Store } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 /** @import { Lend, Named, Removal, PeopleRow, Shelved } from '../question.js?v=__VERSION__' */
@@ -121,48 +122,6 @@ import { whose } from '../question.js?v=__VERSION__';
  * @typedef {Record<string, { take?(s: S, m: Taken): Step<S, E> }>} Flows
  */
 
-// A route's answer is the JSON its server writes (`any`), typed where it is
-// read, by the reader that knows its route.
-// `body` posted as JSON to `path`, its answer, or its words when it refuses
-// (home.js@19b63b2b:28-37).
-/**
- * @param {string} path
- * @param {unknown} body
- * @returns {Promise<any>}
- */
-export const post = (path, body) =>
-  fetch(path, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body),
-  }).then(async (response) =>
-    ((/** @type {{ error?: string }} */ answer) =>
-      response.ok
-        ? answer
-        : Promise.reject(new Error(answer.error || `answered ${response.status}`)))(
-      await response.json().catch(() => ({})),
-    ),
-  );
-// A route's answer, or its words when it refuses, never read as empty
-// (home.js@19b63b2b:25-30); refused as the page's session lapsed (home.rs:198,
-// session.rs `refused`), said as how to open it again.
-/**
- * @param {string} path
- * @returns {Promise<any>}
- */
-export const get = (path) =>
-  fetch(path).then(async (response) =>
-    response.ok
-      ? response.json()
-      : Promise.reject(
-          new Error(
-            response.status === 401
-              ? 'this page’s session has ended. Open svrngs from your Applications, or on Linux your applications menu, and it opens here again'
-              : /** @type {{ error?: string }} */ (await response.json().catch(() => ({}))).error ||
-                  `answered ${response.status}`,
-          ),
-        ),
-  );
 // A message to a feature (`message.flow`, its file's name) is taken by its
 // `take`, or refused by name.
 /**

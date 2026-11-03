@@ -13,7 +13,7 @@
 import { html, useEffect, useStore } from '../ui/view.js?v=__VERSION__';
 import { ask, assertNever, go, late, machine, no } from '../ui/machine.js?v=__VERSION__';
 import { Act } from '../ui/parts.js?v=__VERSION__';
-import { get, post } from './group.js?v=__VERSION__';
+import { get, post } from './routes.js?v=__VERSION__';
 /** @import { Machine } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 /** @import * as GROUP from './group.js?v=__VERSION__' */

@@ -23,7 +23,7 @@
 import { html, useEffect, useMachine } from '../ui/view.js?v=__VERSION__';
 import { ask, assertNever, go, late, machine, no } from '../ui/machine.js?v=__VERSION__';
 import { Act, Field } from '../ui/parts.js?v=__VERSION__';
-import { get, post } from './group.js?v=__VERSION__';
+import { get, post } from './routes.js?v=__VERSION__';
 /** @import { Machine, Step } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 /** @import { Lend } from '../question.js?v=__VERSION__' */
