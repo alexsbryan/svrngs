@@ -132,3 +132,6 @@ waived pass is `js`'s only.
 
 Once it lands, js-lint closes with `lockf -k /tmp/svrngs-gate.lock bash
 scripts/check.sh`.
+
+**Decided 2026-11-03 by the operator** ("Approve +1"): `.` to 18,862,
+landed from the operator seat in scripts/lean_check.py.

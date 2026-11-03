@@ -400,7 +400,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # way to make a contact (c0212347), one reader of a group's page (77768a50);
 # it found nothing said twice in link.rs, relay.rs, membership.rs or
 # register.rs. The rest is new: the tiers module, multi-relay dials and links.
-BUDGET = {"crates/svrngs-core": 3478, ".": 18861, "js": None, "swift": 1}
+# js-lint's type-aware lint (ralph/next/js/CHARTER.md "Answered" 4), the
+# operator's raise (2026-11-03, "Approve +1"): +1 in `.`, the gate's `typed
+# lint` step (check.sh, 94192670), at 18,861. The pass found nothing to cut:
+# every check.sh line is a step or a verdict, and no script holds a function
+# never called (ralph/next/js/NEEDS_HUMAN.md, "`.` is at its cap").
+BUDGET = {"crates/svrngs-core": 3478, ".": 18862, "js": None, "swift": 1}
 CODE = {".rs", ".ts", ".py", ".sh"}
 RUNG_KINDS = {"js": {".js", ".mjs"}, "swift": {".swift"}}
 
