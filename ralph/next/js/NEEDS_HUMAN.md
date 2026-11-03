@@ -53,6 +53,9 @@ members already answered, apart from the round). Its test: a group with
 one computer asleep, a phone's yes, and the app opened on the other
 computer at once.
 
+**Decided 2026-11-03 by the operator** ("A now, B as a row"): js-webkit's
+fixture change (c) now, and this as a row of its own, `docs/PLAN.md` §1.
+
 ## The home page is read before a joined group is (js-webkit, 2026-11-03)
 
 Found in js-webkit-4's gate at 48d09878

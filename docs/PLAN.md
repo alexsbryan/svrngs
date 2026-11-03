@@ -305,6 +305,17 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   bring's answer beside its button, a second tap refused, and what was
   brought in the group's list with no reload, is the operator's play on
   the live page once it is deployed;
+- a phone's write reaching the group's other computers at once (the
+  operator, 2026-11-03, "A now, B as a row"; `ralph/next/js/NEEDS_HUMAN.md`,
+  "A phone's write waits out a round's slowest dial"): a write nudged while
+  a round runs wakes only the next round (`crates/svrngs-node/src/
+  ring_sync.rs` `spawn_ring_sync_loop`), and a round holds for its slowest
+  dial, so in a group with one computer asleep a yes carried from a phone
+  reaches the others up to 4 s late: rounds of 4,003-4,054 ms, against
+  18 ms with none running (`demo/runs/webkit-wall/2026-11-03/
+  carried-trace.txt`). Such a write goes out without waiting for that
+  round. Its test: a group with one computer asleep, a phone's yes, and
+  the app opened at once on another computer;
 - sealing, at its §2 trigger.
 
 The operator's switch stands apart from that order: when they flip
