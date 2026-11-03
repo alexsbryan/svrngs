@@ -147,3 +147,18 @@ rare: 2 of the 4 full steps since (b). And it is not only the test's.
 Not fixed in this queue: the fix is a fixture change (fence 3) or a
 change to the node's round, and neither is this row's to choose,
 so it is the operator's question (js-webkit-2's package).
+
+## The rate, after (c) (56f8bb29)
+
+`carried-fixture.txt` is (c)'s plant: rounds of 4003-4061 ms with
+option-a.diff reverted, 7-44 ms with it applied. Then three `browser` steps
+in a row, each `lockf -k /tmp/svrngs-gate.lock cargo test --quiet
+--workspace --test browser` at 56f8bb29:
+
+| run | 1-min load (12 cores) | result | time |
+|-----|----------------------|--------|------|
+| 1 | 7.28 | 94 passed, 0 failed | 136.89 s |
+| 2 | 8.99 | 94 passed, 0 failed | 139.52 s |
+| 3 | 11.95 | 94 passed, 0 failed | 139.10 s |
+
+3 of 3, with the 1-minute load between 7 and 12.
