@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // What apps use, on the phone (page-acts (b); web/app.js `uses` and
 // `choose`, :286-296, :327-344): `details#uses` over `ul#used`, folded
 // (ui/parts.js `Fold`, `fold uses`), drawn under "Opens friends’ things as
@@ -13,7 +12,12 @@
 // one endpoint's (web/page/enter.js `dialled`), at the edge.
 import { ask, Fold, go, html, late, no, Uses } from '../ui/kit.js?v=__VERSION__';
 import { dialled } from './enter.js?v=__VERSION__';
+/** @import { Group } from '../store.js?v=__VERSION__' */
+/** @import { Io, Takes } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Asked } from '../ui/uses.js?v=__VERSION__' */
+/** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
+/** @import { Lent } from './enter.js?v=__VERSION__' */
+/** @import { Message as PageMessage, Props, State } from './page.js?v=__VERSION__' */
 
 /**
  * The fields this flow owns (`owns`): whether the fold is open, each
@@ -28,23 +32,39 @@ import { dialled } from './enter.js?v=__VERSION__';
 /**
  * The messages this flow takes.
  * @typedef {{ type: 'fold', fold: 'uses', open: boolean }
- *   | { type: 'chosen', n?: number, lend: string, choices?: Asked['choices'], why?: string }
+ *   | { type: 'chosen', n?: number, lend: string, choices?: Asked['choices'], why: string }
  *   | { type: 'stop', lend: string, app: string }
  *   | { type: 'unused' }
- *   | { type: 'unstopped', of: string, said?: string }} Message
+ *   | { type: 'unstopped', of: string, said?: string, why?: string }} Message
+ */
+
+/**
+ * The effects its steps answer: a lender's choices asked, the `n`th read
+ * of them; and the person's stop of `app` using `l`, posted to its door.
+ * @typedef {{ run: 'choices', group: Group, l: Lent, n: number, failed: string }
+ *   | { run: 'unuse', group: Group, l: Lent, app: string, failed: string }} Effect
  */
 
 export const owns = ['using', 'choices', 'unstopped'];
 export const states = /** @type {const} */ ({ uses: ['shut', 'asking', 'asked'] });
+/**
+ * @param {State} s
+ * @param {Partial<State>} [patch]
+ */
 const asking = (s, patch = {}, [asked, n] = ask(s, 'uses')) =>
   go(
     s,
     { uses: 'asking' },
     { ...patch, asked, choices: {} },
-    ...s.lent
+    // Folded open only where a lend asks (`view`), so once the list is read.
+    .../** @type {Lent[]} */ (s.lent)
       .filter((l) => l.asks)
-      .map((l) => ({ run: 'choices', group: s.group, l, n, failed: 'chosen' })),
+      .map(
+        (l) =>
+          /** @satisfies {Effect} */ ({ run: 'choices', group: s.group, l, n, failed: 'chosen' }),
+      ),
   );
+/** @type {Takes<State, Message, Effect>} */
 export const takes = {
   'fold uses': (s, m) =>
     m.open ? asking(s, { using: true }) : go(s, { uses: 'shut' }, { using: false }),
@@ -55,9 +75,14 @@ export const takes = {
   ) =>
     late(s, 'uses', m.n)
       ? no(s, late(s, 'uses', m.n))
-      : go(
+      : // Asked of each lend that asks (`asking`), so the list is read.
+        go(
           s,
-          { uses: s.lent.every((l) => !l.asks || choices[l.label]) ? 'asked' : 'asking' },
+          {
+            uses: /** @type {Lent[]} */ (s.lent).every((l) => !l.asks || choices[l.label])
+              ? 'asked'
+              : 'asking',
+          },
           { choices },
         ),
   stop: (s, { lend, app }, l = s.lent?.find((o) => o.label === lend)) =>
@@ -74,8 +99,10 @@ export const takes = {
 };
 
 // The Fold, for web/page/acts.js's "Opens friends’ things as you".
+/** @param {Props} props */
 export const Used = ({ s, send }) =>
-  html`<${Fold} id="uses" summary="What apps use" fold="uses" open=${s.using} send=${send}><ul id="used">${Uses({ lent: s.lent, labelOf: (l) => l.label, choices: s.choices ?? {}, tag: 'li', said: s.unstopped, send })}</ul><//>`;
+  html`<${Fold} id="uses" summary="What apps use" fold="uses" open=${s.using} send=${send}><ul id="used">${Uses({ lent: s.lent, labelOf: (/** @type {Lent} */ l) => l.label, choices: s.choices ?? {}, tag: 'li', said: s.unstopped, send })}</ul><//>`;
+/** @type {Record<string, (props: Props) => Drawn>} */
 export const view = {
   uses: ({ s }) =>
     !s.lent?.some((l) => l.asks) &&
@@ -85,8 +112,15 @@ export const view = {
 // The edge: a lender's door dialled as the person, its words when it does
 // not answer or refuses (app.js@19b63b2b:288-296), read whole before the dial closes, as
 // a body after its head is cut off by the close (bash-film-load).
-const trace = (l) => globalThis.__trace?.(l),
-  saying = (said) => Object.assign(new Error(said), { said });
+const trace = (/** @type {string} */ l) => globalThis.__trace?.(l),
+  saying = (/** @type {string} */ said) => Object.assign(new Error(said), { said });
+/**
+ * @param {Group} group
+ * @param {Lent} l
+ * @param {'GET' | 'POST'} method
+ * @param {{ app: string, said: string }} [body] posted, else the choices are asked
+ * @param {string} [away] said after a dial not answered
+ */
 const door = (group, l, method, body, away = '') =>
   dialled(group, l)
     .catch((e) =>
@@ -96,16 +130,26 @@ const door = (group, l, method, body, away = '') =>
       ),
     )
     .then(async (d) => {
+      // With a body, `bytes` holds it, so each read of it below is under `body ?`.
       const bytes = body && new TextEncoder().encode(JSON.stringify(body)),
         head = body
           ? [
               ['content-type', 'application/json'],
-              ['content-length', String(bytes.length)],
+              ['content-length', String(/** @type {Uint8Array<ArrayBuffer>} */ (bytes).length)],
             ]
           : [['accept', 'application/json']];
       const r = await d
-        .fetch(method, `/choices/${l.label}`, head, body ? new Blob([bytes]).stream() : null)
-        .then(async (res) => [res.ok, res.status, await res.text()])
+        .fetch(
+          method,
+          `/choices/${l.label}`,
+          head,
+          body ? new Blob([/** @type {Uint8Array<ArrayBuffer>} */ (bytes)]).stream() : null,
+        )
+        // The wasm's `fetch` answers the page's `Response` (svrngs_web.d.ts `Dialled`).
+        .then(
+          async (/** @type {Response} */ res) =>
+            /** @satisfies {[boolean, number, string]} */ ([res.ok, res.status, await res.text()]),
+        )
         .finally(() => d.close());
       return r[0]
         ? JSON.parse(r[2] || 'null')
@@ -115,8 +159,15 @@ const door = (group, l, method, body, away = '') =>
           );
     });
 // The person's answer `said` for the app labelled `app` on `l`, for the ask too.
+/**
+ * @param {Group} group
+ * @param {Lent} l
+ * @param {string} app
+ * @param {'yes' | 'stop'} said
+ */
 export const choose = (group, l, app, said) =>
   door(group, l, 'POST', { app, said }, ' Try again later.');
+/** @type {Io<Effect, PageMessage>} */
 export const io = {
   choices: ({ group, l, n }) =>
     door(group, l, 'GET').then(
