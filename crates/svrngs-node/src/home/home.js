@@ -119,6 +119,7 @@ const FILES = /** @type {const} */ ([
   'acts',
   'ask',
   'wifi',
+  'wifi-foot',
   'play',
 ]);
 const PLACES = ['acts', 'left', 'open', 'join', 'make', 'running', 'lent'];
