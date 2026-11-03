@@ -238,3 +238,15 @@ that judged them, hold the step's words and no "…", and no machine's
 last traced step runs effects or leaves it reading. With the same hold
 it passed 4 of 4, three times. Without it, `home_group`, `leave_page`,
 `pages` and the `browser` step passed (94 in 153 s, at load 12.1).
+
+## The close: `scripts/check.sh` exits 0 at 6bdc67f4
+
+`lockf -k /tmp/svrngs-gate.lock bash scripts/check.sh` at 6bdc67f4 took
+1300 s and passed every step, `tests` in 546 s and `browser` in 163 s
+(`ralph/next/js/ctl/log/sessions/js-webkit-8.await.log`, lines 3-70).
+The 1-minute load was 6.29 at its end, the 15-minute load 11.16.
+
+So `browser` has passed in three gate runs under the gate lock:
+js-webkit-4's at 48d09878 (156 s), js-webkit-5's at af3fd04a (162 s)
+and this one (163 s). The two before this one failed `tests` on the
+`home_group` read race, which (d) fixed. The row's pass is met.
