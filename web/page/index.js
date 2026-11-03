@@ -1,20 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// The index of what the group lends, and opening one (page-index (a)):
-// web/app.js's list (:530-541), a line each, and `open` (:227-284). Each
-// line is its open, named, then what opening it agrees to (`agreed`),
-// " Full now." when it is, and on a fine pointer the address to keep;
-// drawn from state's `lent`, so each read draws it again. `open` takes a
-// lend's label and, from `#open=` (page-join), the path to go to, never a
-// closure's lend. The pass, the holder and the hand-off are the edge's
-// (web/page/hand.js).
-// A guest's lends are drawn here too (web/page/visit.js `listed`).
-import { html } from '../ui/view.js?v=__VERSION__';
+// The index of what the group lends (lent-index.js), and opening one.
+// `open` takes a lend's label and, from the link's `#open=`, the path to
+// go to, never a closure over the lend, since a message is data (svrn-docs
+// rings/current/PAGE_STATE.md §3). The pass, the holder and the hand-off
+// are the edge's (hand.js).
 import { go, no } from '../ui/machine.js?v=__VERSION__';
-import { Keep, Row } from '../ui/parts.js?v=__VERSION__';
-import { agreed, alias, aliased, named, once, opens } from '../question.js?v=__VERSION__';
+import { named } from '../question.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
-import { handing, here } from './hand.js?v=__VERSION__';
-import { listed } from './visit.js?v=__VERSION__';
+import { handing } from './hand.js?v=__VERSION__';
+import { LentIndex } from './lent-index.js?v=__VERSION__';
 /** @import { Group } from '../store.js?v=__VERSION__' */
 /** @import { Io, Takes } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
@@ -42,14 +36,21 @@ import { listed } from './visit.js?v=__VERSION__';
 
 export const owns = ['opening', 'unopened'];
 export const states = /** @type {const} */ ({ open: ['shut', 'opening', 'handed', 'refused'] });
+
+/**
+ * The lend the page is opening, or opened last.
+ * @param {State} state
+ */
+const opening = (state) => state.lent?.find((one) => one.label === state.opening);
+
 /** @type {Takes<State, Message, Effect>} */
 export const takes = {
-  open: (state, { label, at }, lend = state.lent?.find((one) => one.label === label)) => {
-    if (!lend)
-      return no(
-        state,
-        `nothing ${/** @type {Partial<State>} */ (state).group?.name ?? 'here'} lends is ${label}`,
-      );
+  open: (state, { label, at }) => {
+    const lend = state.lent?.find((one) => one.label === label);
+    if (!lend) {
+      const group = /** @type {Partial<State>} */ (state).group?.name ?? 'here';
+      return no(state, `nothing ${group} lends is ${label}`);
+    }
     if (state.at.open === 'opening') return no(state, `${state.opening} is opening already`);
     return go(
       state,
@@ -69,51 +70,30 @@ export const takes = {
   },
   handed: (state) =>
     state.at.open === 'opening' ? go(state, { open: 'handed' }) : no(state, 'nothing is opening'),
-  // Opening, the lend opening is one listed (`open`).
-  unopened: (
-    state,
-    message,
-    lend = /** @type {Lent} */ (
-      /** @type {Lent[]} */ (state.lent).find((one) => one.label === state.opening)
-    ),
-  ) =>
-    state.at.open === 'opening'
-      ? go(
-          state,
-          { open: 'refused' },
-          { unopened: message.said ?? `${named(lend)} did not open: ${message.why}` },
-        )
-      : no(state, 'nothing is opening'),
-};
-// "Opening …" until the page has gone, or why it did not (app.js@19b63b2b:238).
-/** @type {Record<string, (s: State) => string[] | Nothing>} */
-export const response = {
-  // Refused, it says why (`unopened`).
-  enter: (state, lend = state.lent?.find((one) => one.label === state.opening)) =>
-    state.at.open === 'refused'
-      ? [/** @type {string} */ (state.unopened)]
-      : lend && state.at.open !== 'shut' && [`Opening ${named(lend)}…`],
+  unopened: (state, message) => {
+    if (state.at.open !== 'opening') return no(state, 'nothing is opening');
+    // Opening, the lend opening is one listed (`open`).
+    const lend = /** @type {Lent} */ (opening(state));
+    const said = message.said ?? `${named(lend)} did not open: ${message.why}`;
+    return go(state, { open: 'refused' }, { unopened: said });
+  },
 };
 
-// The address to keep for `lend` on this page, `here` (svrn-docs
-// rings/current/IN_THE_BROWSER.md §4): its alias, or, where two share one,
-// its label, which never collides; the alias as the page reads it, a space
-// as `+` (app.js@19b63b2b:530).
-// Drawn only once the list is read (`view`).
-/**
- * @param {State} state
- * @param {Lent} lend
- * @param {string} [name]
- */
-const kept = (state, lend, name = alias(lend, /** @type {Lent[]} */ (state.lent), state.people)) =>
-  `${here()}#open=${aliased(name, /** @type {Lent[]} */ (state.lent), state.people).length === 1 ? encodeURIComponent(name).replaceAll('%20', '+').replaceAll('%40', '@') : lend.label}`;
-/** @type {Record<string, (props: Props) => Drawn>} */
-export const view = {
-  lent: ({ s: state, send }) =>
-    html`<table class="index"><tbody id="lent">${listed(state, send)}${once(state.lent ?? []).map((lend) => html`<${Row} key=${lend.label} cells=${[html`<span><button onClick=${() => send({ type: 'open', label: lend.label })}>${named(lend)}</button>${` ${agreed(lend, state.shelf, state.group)}${opens(lend)[1] === 'full' ? ' Full now.' : ''}`}${state.fine && html`${' '}<${Keep} at=${kept(state, lend)} />`}</span>`]} />`)}</tbody></table>`,
+// "Opening …" until the page has gone, or, refused, why it did not open
+// (`unopened`).
+/** @type {Record<string, (s: State) => string[] | Nothing>} */
+export const response = {
+  enter: (state) => {
+    if (state.at.open === 'refused') return [/** @type {string} */ (state.unopened)];
+    const lend = opening(state);
+    return lend && state.at.open !== 'shut' && [`Opening ${named(lend)}…`];
+  },
 };
 
 /** @type {Io<Effect, PageMessage>} */
 export const io = {
   hand: (message) => store.unseal(message.group).then((key) => handing(message, key)),
 };
+
+/** @type {Record<string, (props: Props) => Drawn>} */
+export const view = { lent: LentIndex };
