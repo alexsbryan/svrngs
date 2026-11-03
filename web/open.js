@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// A lend's origin's start (u5-2; DESIGN §3, "Lent apps", calls 1 and 6;
+// A lend's origin's start (DESIGN §3, "Lent apps", calls 1 and 6;
 // §7). The group's page opens `open.html#<what it hands>` here: the pass
 // this origin's holder holds for this lend and the lends it reads, the
 // holder's bytes when this origin keeps none, the lends, the relay and the
 // page to ask for another pass — never the person's key, which no lend's
-// origin holds. Kept in this origin's store
-// (store.js `lendKeep`), handed to the lend's worker in memory (u4-10:
-// Safari's worker on an iPhone read nothing its page had kept), and the
-// lend opened, which the worker serves.
+// origin holds. Kept in this origin's store (store.js `lendKeep`), handed
+// to the lend's worker in memory (Safari's worker on an iPhone read nothing
+// its page had kept, 2026-10-05), and the lend opened, which the worker
+// serves.
 //
 // The pass is for this origin's lend alone, whose host's first name is its
 // label. Anything else is refused, so a lent page cannot open another
@@ -26,7 +26,13 @@
 // the lent app's scripts read; a pass with no bytes here, the group's page
 // signs another, to a new holder (`anew`).
 import * as store from './store.js?v=__VERSION__';
-import { signerFor, holderMatches, openMessage } from './authority.js?v=__VERSION__';
+import {
+  fromHex,
+  holderMatches,
+  openMessage,
+  pkcs8,
+  signerFor,
+} from './authority.js?v=__VERSION__';
 /** @import { Handoff } from './authority.js?v=__VERSION__' */
 // The open as this page holds it: the hand-off, the holder's key once
 // imported or found kept, and the lines the last pass's holder signed.
@@ -38,44 +44,49 @@ import { signerFor, holderMatches, openMessage } from './authority.js?v=__VERSIO
  * }} Handed
  */
 
-// open.html holds #said.
-const say = (/** @type {string} */ words) =>
-  (/** @type {HTMLElement} */ (document.getElementById('said')).textContent = words);
+// How long, in ms, the group's signer has to answer whether it issued an open.
+const CHECKING = 15_000;
 
+// `words` said to the person, in open.html's #said.
+/** @param {string} words */
+function say(words) {
+  const said = /** @type {HTMLElement} */ (document.getElementById('said'));
+  said.textContent = words;
+}
+
+// The hand-off, base64url JSON in the fragment, read as UTF-8.
 /**
  * @param {string} fragment
  * @returns {Handed}
  */
-const decode = (fragment) =>
-  JSON.parse(
-    new TextDecoder().decode(
-      Uint8Array.from(atob(fragment.replace(/-/g, '+').replace(/_/g, '/')), (char) =>
-        char.charCodeAt(0),
-      ),
-    ),
-  );
+function decode(fragment) {
+  const characters = atob(fragment.replace(/-/g, '+').replace(/_/g, '/'));
+  const utf8 = Uint8Array.from(characters, (char) => char.charCodeAt(0));
+  return JSON.parse(new TextDecoder().decode(utf8));
+}
 
-// An Ed25519 key's 32 bytes, `hex`, as PKCS #8 (RFC 8410): the one form
-// WebCrypto imports a private Ed25519 key from in both engines.
-// The prefix and the seed are hex, so `match` finds their pairs.
-/** @param {string} hex */
-const pkcs8 = (hex) =>
-  Uint8Array.from(
-    /** @type {RegExpMatchArray} */ (`302e020100300506032b657004220420${hex}`.match(/../g)),
-    (pair) => parseInt(pair, 16),
-  );
+// The holder's private key, from the seed the group's page handed as hex.
+/** @param {string} seed */
+const holderKey = (seed) => pkcs8(fromHex(seed));
 
-// The worker `reg` runs, once it runs.
+// The worker `registration` runs, once it runs.
 /**
- * @param {ServiceWorkerRegistration} reg
+ * @param {ServiceWorkerRegistration} registration
  * @returns {Promise<ServiceWorker>}
  */
-function running(reg) {
+function running(registration) {
   // Just registered, it is one of the three.
-  const worker = /** @type {ServiceWorker} */ (reg.installing ?? reg.waiting ?? reg.active);
+  const worker = /** @type {ServiceWorker} */ (
+    registration.installing ?? registration.waiting ?? registration.active
+  );
   return new Promise((done) => {
-    if (worker.state === 'activated') return done(worker);
-    worker.addEventListener('statechange', () => worker.state === 'activated' && done(worker));
+    if (worker.state === 'activated') {
+      done(worker);
+      return;
+    }
+    worker.addEventListener('statechange', () => {
+      if (worker.state === 'activated') done(worker);
+    });
   });
 }
 
@@ -97,18 +108,18 @@ async function checked(handed) {
     return await new Promise((yes, no) => {
       const timeout = setTimeout(
         () => no(new Error('the group page did not verify this open')),
-        15000,
+        CHECKING,
       );
       channel.port1.onmessage = ({ data }) => {
         clearTimeout(timeout);
         yes(data.opened === true);
       };
       const opening = { ...JSON.parse(openMessage(handed)), proof: handed.proof };
-      // Loaded, the frame has its window.
-      frame.onload = () =>
-        /** @type {Window} */ (frame.contentWindow).postMessage({ opening }, new URL(url).origin, [
-          channel.port2,
-        ]);
+      frame.onload = () => {
+        // Loaded, the frame has its window.
+        const signer = /** @type {Window} */ (frame.contentWindow);
+        signer.postMessage({ opening }, new URL(url).origin, [channel.port2]);
+      };
       document.body.append(frame);
     });
   } finally {
@@ -130,8 +141,11 @@ async function start() {
     throw new Error('the key is not the holder the group page named');
   await store.lendKeep(`pass ${handed.label}`, handed);
   console.debug(`OPEN: ${handed.label}'s open is this browser's, its holder proved and kept`);
-  if (!('serviceWorker' in navigator)) return say('This browser cannot open it.');
-  return handedOn(begun, asked);
+  if (!('serviceWorker' in navigator)) {
+    say('This browser cannot open it.');
+    return;
+  }
+  await handedOn(begun, asked);
 }
 
 // The open the group's page handed in this page's fragment, checked as
@@ -141,8 +155,9 @@ async function start() {
 async function handedHere() {
   const handed = decode(location.hash.slice(1));
   history.replaceState(null, '', `${location.pathname}${location.search}`);
-  if (store.labelOf(location.hostname) !== handed.label)
+  if (store.labelOf(location.hostname) !== handed.label) {
     throw new Error(`a pass for ${handed.label} opened at ${location.origin}`);
+  }
   if (!(await checked(handed))) {
     say('Open this app again from your group’s page.');
     return null;
@@ -162,8 +177,7 @@ async function handedHere() {
   return { handed, seed };
 }
 
-// The holder, a key no script here can copy (capability-signed (H);
-// DESIGN §3): imported once from the bytes the group's page hands, kept
+// The holder, a key no script here can copy (DESIGN §3): imported once from the bytes the group's page hands, kept
 // as itself, the bytes kept only when a lend of the open is at a door
 // taking no holder's link, which the worker dials as. A pass to the
 // holder kept (`was`) goes on with its key and its chain; one to a holder
@@ -175,13 +189,13 @@ async function handedHere() {
  */
 async function withHolder(handed, was) {
   if (handed.seed) {
-    handed.key = await crypto.subtle.importKey('pkcs8', pkcs8(handed.seed), 'Ed25519', false, [
-      'sign',
-    ]);
+    const key = holderKey(handed.seed);
+    handed.key = await crypto.subtle.importKey('pkcs8', key, 'Ed25519', false, ['sign']);
     return true;
   }
   if (was?.key && was.holder === handed.holder) {
-    [handed.key, handed.line] = [was.key, was.line];
+    handed.key = was.key;
+    handed.line = was.line;
     return true;
   }
   return false;
@@ -226,16 +240,18 @@ async function handedOn({ handed, seed }, asked) {
     await navigator.serviceWorker.register(script, { scope: '/', type: 'module' }),
   );
   console.debug('OPEN: the lend’s worker runs; handing it the pass');
-  const held =
-    (await store.handOver(worker, { handed })) ||
-    (seed ? await store.handOver(worker, { handed: { ...handed, key: pkcs8(seed) } }) : false);
+  let held = await store.handOver(worker, { handed });
+  // Safari's worker loses the key (above): the seed's bytes go in its place.
+  if (!held && seed) {
+    held = await store.handOver(worker, { handed: { ...handed, key: holderKey(seed) } });
+  }
   if (!held && !seed) {
     console.debug(
       'OPEN: the worker did not take the holder’s key, and no bytes of it are here: the group’s page signs a pass to a new holder',
     );
-    return location.replace(
-      `${handed.page}#open=${handed.label}&anew&at=${encodeURIComponent(asked.get('back') ?? '/')}`,
-    );
+    const at = encodeURIComponent(asked.get('back') ?? '/');
+    location.replace(`${handed.page}#open=${handed.label}&anew&at=${at}`);
+    return;
   }
   if (!held) throw new Error('the lend’s worker did not say it holds the pass');
   // A path of this origin's alone: the group's page hands one a lend asked for.
