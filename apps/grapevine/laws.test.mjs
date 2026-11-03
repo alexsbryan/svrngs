@@ -221,11 +221,11 @@ const PLANTS = {
   // the carry spreads the ask
   'bar 1: a carry never names the asker': ['grapevine.js', 'group: can.group,\n    payload: {', 'group: can.group,\n    payload: { ...ask,'],
   // hops not decremented
-  'bar 2: carriable refuses each by its reason': ['grapevine.js', 'carriable.can.push({ ask: a.id, group: g.id, name, hops: up.hops - 1,', 'carriable.can.push({ ask: a.id, group: g.id, name, hops: up.hops,'],
+  'bar 2: carriable refuses each by its reason': ['grapevine.js', 'hops: up.hops - 1,', 'hops: up.hops,'],
   // `seal` returns the body
   'bar 3: no record holds a plaintext': ['seal.mjs', 'return { nonce: b64(nonce), box: b64(nacl.box(text, nonce, them, mine)) };', 'return { nonce: b64(nonce), box: JSON.stringify(body) };'],
   // folded by act id, not `of`
-  'bar 6: two carries are one ask': ['grapevine.js', 'type: op.type, of: op.type === ASK ? id : op.of,', 'type: op.type, of: id,'],
+  'bar 6: two carries are one ask': ['grapevine.js', 'of: op.type === ASK ? id : op.of,', 'of: id,'],
   // names shown on the first yes
   'names wait for two yeses': ['grapevine.js', 'if (t.yes.me !== undefined && t.yes.them !== undefined)', 'if (t.yes.me !== undefined || t.yes.them !== undefined)'],
   // `notice` given every log
