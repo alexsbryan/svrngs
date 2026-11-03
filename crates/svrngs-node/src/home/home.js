@@ -241,6 +241,19 @@ const left = ({ s: state }) =>
  * @property {Places} places
  */
 
+// In the page's place while the groups are read, or once they cannot be.
+/** @param {State} state */
+const unread = (state) =>
+  html`<p class=${state.at.groups === 'reading' ? 'said' : undefined}>${state.at.groups === 'reading' ? 'Reading your groups…' : `This computer cannot read your groups: ${state.why}`}</p>`;
+// What was done here, said once (`SAID`), and the folder that could not be
+// made when one could not.
+/** @param {State} state */
+const saidOnce = (state) =>
+  SAID[state.at.said](
+    state.q,
+    state.q.unplaced ? `Its folder could not be made: ${state.q.unplaced}. ` : '',
+  );
+
 // Past its first `return`, the groups are read, so `state.groups` is read then.
 /** @param {HomeProps} props */
 export function Home({ store, flows, places }) {
@@ -250,13 +263,9 @@ export function Home({ store, flows, places }) {
   const held = () => Object.values(flows).some((flow) => flow.holds?.(state));
   const Place = /** @param {string} place */ (place) =>
     places[place] && html`<${places[place]} s=${state} home=${home} />`;
-  if (state.at.groups === 'reading' || state.at.groups === 'unread')
-    return html`<p class=${state.at.groups === 'reading' ? 'said' : undefined}>${state.at.groups === 'reading' ? 'Reading your groups…' : `This computer cannot read your groups: ${state.why}`}</p>`;
+  if (state.at.groups === 'reading' || state.at.groups === 'unread') return unread(state);
   if (state.ask || query.screen) return Place(state.ask ? 'ask' : 'screen');
-  const said = SAID[state.at.said](
-    query,
-    query.unplaced ? `Its folder could not be made: ${query.unplaced}. ` : '',
-  );
+  const said = saidOnce(state);
   return html`${said && html`<p>${said}</p>`}${state.at.groups === 'rereading' && html`<p class="said">Reading your groups…</p>`}${!(/** @type {Held[]} */ (state.groups).length) && html`<p class="none">You’re in no group yet. Join one below from the link someone sent you, or make your own.</p>`}${/** @type {Held[]} */ (state.groups).filter((group) => !group.left).map((group) => html`<${Group} key=${group.id} g=${group} joined=${query.joined} me=${state.key} round=${state.round} places=${places} flows=${flows} home=${home} />`)}${PLACES.map((place) => (place !== 'lent' || !flows.acts.holds(state)) && Place(place))}${!held() && html`<p class="address">Your home page, the same address each time svrngs starts: ${state.origin}/</p>`}`;
 }
 

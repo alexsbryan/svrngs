@@ -289,12 +289,19 @@ export async function unseal(group) {
       await crypto.subtle.decrypt(bound(group.id, group.iv), seal, group.sealed),
     );
   } catch (/** @type {any} */ error) {
-    globalThis.__trace?.(
-      `STORE: unsealing failed: ${error?.name}: ${error?.message}; sealed ${group.sealed?.byteLength} bytes (${group.sealed?.constructor?.name}), iv ${group.iv?.byteLength} bytes (${group.iv?.constructor?.name})`,
-    );
+    globalThis.__trace?.(unsealing(group, error));
     throw error;
   }
 }
+
+// Why unsealing `group`'s key failed, and the sizes and kinds of what it
+// was given, for the trace.
+/**
+ * @param {{ iv: Uint8Array<ArrayBuffer>, sealed: Uint8Array<ArrayBuffer> }} group
+ * @param {any} error
+ */
+const unsealing = (group, error) =>
+  `STORE: unsealing failed: ${error?.name}: ${error?.message}; sealed ${group.sealed?.byteLength} bytes (${group.sealed?.constructor?.name}), iv ${group.iv?.byteLength} bytes (${group.iv?.constructor?.name})`;
 
 // What a lend's worker tells its pages when a message to it was lost.
 export const LOST = 'a message was lost on its way to the worker';

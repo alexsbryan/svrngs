@@ -186,6 +186,26 @@ const SCREEN = {
   },
 };
 
+// What the screen says of `group`'s count: why this computer cannot read
+// it, else, once read, who is in it, who is on now and what is lent.
+/**
+ * @param {State} state
+ * @param {Group} group
+ */
+const countLine = (state, group) => {
+  if (state.at.screen === 'unread')
+    return `This computer cannot read ${group.name ?? 'this group'} now: ${state.why}`;
+  if (!state.rows) return '';
+  // `state.lends` is read with `state.rows`, by one read ('read' sets both), so it
+  // is there whenever they are.
+  const [people, on, things] = counted(
+    state.rows,
+    /** @type {Lends} */ (state.lends).lent,
+    state.lends,
+  );
+  return `${many(people, 'person', 'people')} · ${on} on now · ${many(things, 'thing', 'things')} lent`;
+};
+
 /** @param {HOME.PlaceProps} props */
 function Screen({ s: { groups, q: query } }) {
   // HOME draws the screen once the groups are read (home.js `Home`).
@@ -206,16 +226,7 @@ function Screen({ s: { groups, q: query } }) {
   );
   if (!here)
     return html`<p>This computer cannot show that group on a screen: you are not in it here.</p>`;
-  // `state.lends` is read with `state.rows`, by one read ('read' sets both), so it
-  // is there whenever they are, and so is each of `counted`'s numbers.
-  const [people, on, things] = state.rows
-    ? counted(state.rows, /** @type {Lends} */ (state.lends).lent, state.lends)
-    : [];
-  let count = '';
-  if (state.at.screen === 'unread')
-    count = `This computer cannot read ${group.name ?? 'this group'} now: ${state.why}`;
-  else if (state.rows)
-    count = `${many(/** @type {number} */ (people), 'person', 'people')} · ${on} on now · ${many(/** @type {number} */ (things), 'thing', 'things')} lent`;
+  const count = countLine(state, group);
   return html`<section data-colour=${[...group.id].reduce((hash, char) => (hash * 31 + char.charCodeAt(0)) % 12, 0)}><h2>${group.name ?? 'A group whose name this computer cannot read'}${group.made && html`<small> (${whose(group.made)})</small>`}</h2><p>${count}</p><div>${state.rows && html`<${Door} rows=${state.rows} lent=${/** @type {Lends} */ (state.lends).lent} lends=${state.lends} newest=${state.newest} />`}</div><aside><h2>Since this screen opened</h2><p>Kept on this screen only: it starts over when the screen is opened again.</p><ol>${state.since.map(([tone, words], i) => html`<li><time>${tone}</time> ${words} ${i === 0 && html`<mark>new</mark>`}</li>`)}</ol><p>Nothing new yet. Who joins, and what they lend, shows here as it happens.</p></aside><footer><p>Lit: answered just now. Dashed: did not answer. Dotted: in from a phone.</p><p>Each thing lent opens in a tab as ${group.person}, from this computer.</p></footer></section>`;
 }
 

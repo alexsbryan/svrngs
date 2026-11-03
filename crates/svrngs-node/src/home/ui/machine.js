@@ -202,19 +202,25 @@ export function machine(name, { states, step, io }, state, first = []) {
           ),
         ),
     );
+  // Why a step's answer is refused: the step's own `refused`, else a
+  // region `next` is in that is not one of its region's closed set.
+  /**
+   * @param {string | undefined} refused
+   * @param {State} next
+   */
+  const refusal = (refused, next) => {
+    if (refused) return refused;
+    const out = regions.find(
+      (region) => !(/** @type {readonly unknown[]} */ (states[region]).includes(next.at[region])),
+    );
+    return out && `${out} ${next.at[out]} is not one of ${states[out].join(', ')}`;
+  };
   // The one trace of every step and refusal, both pages', to their sink
   // (ui/trace.js), as web/store.js:88 traces to it too.
   /** @param {Message} message */
   function dispatch(message) {
     const { state: next, effects = [], refused } = step(state, message);
-    const out = refused
-      ? ''
-      : regions.find(
-          (region) =>
-            !(/** @type {readonly unknown[]} */ (states[region]).includes(next.at[region])),
-        );
-    const why =
-      refused || (out && `${out} ${next.at[out]} is not one of ${states[out].join(', ')}`);
+    const why = refusal(refused, next);
     if (why)
       return globalThis.__trace?.(`${name}: ${message.type} refused in ${where(state)}: ${why}`);
     const running = effects.length
