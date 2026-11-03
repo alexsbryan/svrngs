@@ -271,7 +271,7 @@ export const aliased = (a, lent, rows) => once(lent).filter((l) => alias(l, lent
 
 // Who made a group and since when this computer or phone has held it, so
 // two of one name are told apart (#138): "sam’s, since 14 Oct".
-/** @param {{ maker?: string, since?: number }} g */
+/** @param {{ maker?: string | null, since?: number | null }} g */
 export const whose = (g) =>
   `${g.maker ? `${g.maker}’s` : 'yours'}${g.since ? `, since ${day(g.since)}` : ''}`;
 

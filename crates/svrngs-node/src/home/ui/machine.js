@@ -117,7 +117,7 @@ export const no = (s, why) => ({ state: s, effects: [], refused: why });
 
 /**
  * One more read of `kind` asked: the counts to keep and this read's number.
- * @param {Core} s
+ * @param {Pick<Core, 'asked'>} s
  * @param {string} kind
  * @param {number} [n]
  * @returns {[Record<string, number>, number]}
