@@ -11,8 +11,10 @@
 // group's page, at most once a minute from one tab (app.js@19b63b2b:638-646).
 import { html } from '../ui/view.js?v=__VERSION__';
 import { go, no } from '../ui/machine.js?v=__VERSION__';
-import { aliased, whose } from '../question.js?v=__VERSION__';
+import { aliased, titled } from '../question.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
+import { trace, wasm } from './dial.js?v=__VERSION__';
+import { sending } from './page.js?v=__VERSION__';
 /** @import { Group } from '../store.js?v=__VERSION__' */
 /** @import { Io, Takes } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Lent, Wants } from './enter.js?v=__VERSION__' */
@@ -45,11 +47,6 @@ export const owns = ['offered', 'missed'];
 export const states = /** @type {const} */ ({
   among: ['unasked', 'offered', 'picked', 'named', 'sent'],
 });
-const titled = (/** @type {Group} */ group) =>
-  `${group.name}${group.maker ? ` (${whose(group)})` : ''}`;
-const sending = /** @type {Sender} */ (
-  (type, message) => ({ run: 'send', m: { type, ...message } })
-);
 /** @type {Takes<State, Message, Effect | Send>} */
 export const takes = {
   among: (state, { groups, wants }) =>
@@ -147,8 +144,6 @@ export const offered = (state, send) =>
 // its first name, marked in this origin's session, so a lend whose worker
 // never takes its pass comes back here and is said, never sent on again.
 const ONCE = 60_000;
-const wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__');
-const trace = (/** @type {string} */ line) => globalThis.__trace?.(line);
 /** @type {Io<Effect, PageMessage>} */
 export const io = {
   forget: ({ label, at, why }) =>

@@ -279,6 +279,16 @@ export const aliased = (wanted, lent, rows) =>
 export const whose = (group) =>
   `${group.maker ? `${group.maker}’s` : 'yours'}${group.since != null && group.since > 0 ? `, since ${day(group.since)}` : ''}`;
 
+// A group's name, and whose it is when someone else made it, as the phone
+// titles it.
+/** @param {{ name: string, maker?: string | null, since?: number | null }} group */
+export const titled = (group) => `${group.name}${group.maker ? ` (${whose(group)})` : ''}`;
+
+// The computer a dial went through, or the link's when none is named.
+/** @param {{ person: string } | undefined} computer */
+export const whoseComputer = (computer) =>
+  computer ? `${computer.person}’s computer` : 'The computer that sent your link';
+
 // The groups a new one shares its name with (/group, the node's one rule;
 // #138), each said as `whose`, in the command's words (cli.rs
 // `namesakes_said`): `verb` says it before the group is made or after.

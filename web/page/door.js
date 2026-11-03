@@ -15,7 +15,7 @@ import { html, useEffect } from '../ui/view.js?v=__VERSION__';
 import { go, no } from '../ui/machine.js?v=__VERSION__';
 import { Door } from '../ui/door.js?v=__VERSION__';
 import { Visiting } from '../ui/visitors.js?v=__VERSION__';
-import { removal, whose } from '../question.js?v=__VERSION__';
+import { removal, titled } from '../question.js?v=__VERSION__';
 import { chosen } from './enter.js?v=__VERSION__';
 /** @import { Group } from '../store.js?v=__VERSION__' */
 /** @import { Visitor } from '../ui/visitors.js?v=__VERSION__' */
@@ -39,8 +39,6 @@ import { chosen } from './enter.js?v=__VERSION__';
  * @typedef {{ run: 'end', until: number, failed: string }} Effect
  */
 
-/** @param {Group} group */
-const titled = (group) => `${group.name}${group.maker ? ` (${whose(group)})` : ''}`;
 // Yours by your first key (keys-names), from a computer at version 2 by name (app.js@19b63b2b:466-468).
 // Asked only of someone visiting (`visitors`).
 /**

@@ -14,6 +14,8 @@ import { html } from '../ui/view.js?v=__VERSION__';
 import { go, no } from '../ui/machine.js?v=__VERSION__';
 import { Field } from '../ui/parts.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
+import { exchange, patiently, trace, wasm } from './dial.js?v=__VERSION__';
+import { sending } from './page.js?v=__VERSION__';
 /** @import { Group } from '../store.js?v=__VERSION__' */
 /** @import { Io, Takes } from '../ui/machine.js?v=__VERSION__' */
 /** @import * as Wasm from '../wasm/svrngs_web.js?v=__VERSION__' */
@@ -71,9 +73,6 @@ export const owns = ['joining', 'typed', 'why'];
 export const states = /** @type {const} */ ({
   join: ['unasked', 'asking', 'naming', 'redeeming', 'taken', 'joined'],
 });
-const sending = /** @type {Sender} */ (
-  (type, message) => ({ run: 'send', m: { type, ...message } })
-);
 /**
  * @param {State} state
  * @param {Told} joining
@@ -233,12 +232,9 @@ export const view = {
 };
 
 // The edge: the key made fresh for this link, the issuer dialled as it
-// (`connect_to_join`) within PATIENCE, and the ask and the redemption
+// (`connect_to_join`) within dial.js's PATIENCE, and the ask and the redemption
 // posted; the joined group kept, its key sealed (store.js `keep`).
-const PATIENCE = 60_000;
 const AWAY = 'The computer that sent this link did not answer. Try again later.';
-const wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__');
-const trace = (/** @type {string} */ line) => globalThis.__trace?.(line);
 /**
  * @param {string} words
  * @param {number} [status]
@@ -262,35 +258,14 @@ let key;
  * @returns {Promise<string>}
  */
 async function posted(core, token, { path, body }, refused = joining) {
-  const dialled = await Promise.race([
-    core.connect_to_join(key, token),
-    /** @type {Promise<never>} */ (
-      new Promise((_, reject) => setTimeout(() => reject(new Error('no answer')), PATIENCE))
-    ),
-  ]).catch((error) => Promise.reject((trace(`PAGE: the dial failed: ${error}`), refusal(AWAY))));
-  const bytes = new TextEncoder().encode(body);
-  const [res, text] = await dialled
-    .fetch(
-      'POST',
-      path,
-      [
-        ['content-type', 'application/json'],
-        ['content-length', String(bytes.length)],
-      ],
-      new Blob([bytes]).stream(),
-    )
-    // The wasm's `fetch` answers the page's `Response` (svrngs_web.d.ts `Dialled`).
-    .then(
-      async (/** @type {Response} */ response) =>
-        /** @satisfies {[Response, string]} */ ([response, await response.text()]),
-    )
-    .finally(() => dialled.close());
-  return res.ok
-    ? text
-    : Promise.reject(
-        (trace(`PAGE: ${path} answered ${res.status}: ${text}`),
-        refusal(refused(res.status, text), res.status)),
-      );
+  const dialled = await patiently(core.connect_to_join(key, token)).catch((error) => {
+    trace(`PAGE: the dial failed: ${error}`);
+    return Promise.reject(refusal(AWAY));
+  });
+  const [ok, status, text] = await exchange(dialled, path, new TextEncoder().encode(body));
+  if (ok) return text;
+  trace(`PAGE: ${path} answered ${status}: ${text}`);
+  return Promise.reject(refusal(refused(status, text), status));
 }
 const unjoined = (/** @type {Error & { said?: string }} */ error) =>
   /** @satisfies {PageMessage} */ ({

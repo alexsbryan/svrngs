@@ -6,6 +6,7 @@
 import { named } from '../question.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
 import { handoffCookie, sealOpen } from '../authority.js?v=__VERSION__';
+import { trace, wasm } from './dial.js?v=__VERSION__';
 /** @import { Group } from '../store.js?v=__VERSION__' */
 /** @import { Handoff } from '../authority.js?v=__VERSION__' */
 /** @import * as Wasm from '../wasm/svrngs_web.js?v=__VERSION__' */
@@ -37,8 +38,6 @@ export const here = () => `${location.origin}${location.pathname}`;
 // never enters state; and the hand-off in the fragment, which no origin is
 // sent. The holder is the lend origin's one key (capability-signed (H)),
 // its bytes sent only when it holds none or a lend is on an older svrngs.
-const trace = (/** @type {string} */ line) => globalThis.__trace?.(line);
-const wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__');
 /**
  * @param {Hand} hand
  * @param {Uint8Array} key the person's key, unsealed

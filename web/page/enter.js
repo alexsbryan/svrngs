@@ -7,20 +7,20 @@
 // What the address asks is decided here; what it opens elsewhere is sent to
 // its flow (`visit`, `join`, `among`, `cold`, `opens`, `offer`), and what
 // `#open=` names, once the group is read (`wanted`).
-// The key and the endpoint are the edge's (`io`), never in state.
+// The key and the endpoint are the edge's (dial.js), never in state.
 import { html } from '../ui/view.js?v=__VERSION__';
 import { ask, go, late, no } from '../ui/machine.js?v=__VERSION__';
 import { Act } from '../ui/parts.js?v=__VERSION__';
-import { alias, apart, called, once, whose } from '../question.js?v=__VERSION__';
+import { alias, apart, called, once, titled, whoseComputer } from '../question.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
 import { offered } from './among.js?v=__VERSION__';
+import { actor, hold, lends, trace, wasm } from './dial.js?v=__VERSION__';
+import { sending } from './page.js?v=__VERSION__';
 /** @import { Group, Computer } from '../store.js?v=__VERSION__' */
 /** @import { Lend, Removal, PeopleRow, Shelved } from '../question.js?v=__VERSION__' */
 /** @import { Change } from '../ui/changes.js?v=__VERSION__' */
 /** @import { Io, Step, Takes } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Visitor } from '../ui/visitors.js?v=__VERSION__' */
-/** @import * as Wasm from '../wasm/svrngs_web.js?v=__VERSION__' */
-/** @import { Dialled, Endpoint } from '../wasm/svrngs_web.js?v=__VERSION__' */
 /** @import { Message as PageMessage, Nothing, Props, Said, Send, Sender, State } from './page.js?v=__VERSION__' */
 
 /**
@@ -132,17 +132,10 @@ export const states = /** @type {const} */ ({
 
 // The parts of a fragment this page reads, besides a link's token (app.js@19b63b2b:665).
 const READ = ['open', 'at', 'anew', 'cold', 'ask', 'app'];
-const sending = /** @type {Sender} */ (
-  (type, message) => ({ run: 'send', m: { type, ...message } })
-);
 const say = (/** @type {string | undefined} */ said) => sending('failed', { said, why: said });
-const titled = (/** @type {Group} */ group) =>
-  `${group.name}${group.maker ? ` (${whose(group)})` : ''}`;
 // The browser's locks: absent where the page is not a secure context (Web
 // Locks, `navigator.locks` is `[SecureContext]`), and in a browser before them.
 const locks = () => /** @type {LockManager | undefined} */ (navigator.locks);
-const whoseComputer = (/** @type {Computer | undefined} */ computer) =>
-  computer ? `${computer.person}’s computer` : 'The computer that sent your link';
 // The read, of `group` as kept: counted, so an older answer is refused by name.
 const reading = (/** @type {State} */ state, /** @type {Partial<State>} */ patch) =>
   ((asked, serial) =>
@@ -468,156 +461,9 @@ export const chosen = (state, send) =>
   (state.at.tab === 'elsewhere' &&
     html`<p>One tab at a time reaches ${state.group.name}. Open it here, and the other tab stops reaching it.</p><${Act} words="Open it here" on=${{ type: 'take' }} send=${send} />`);
 
-// The edge: the wasm, imported here only once app.js has run its init,
-// the key unsealed and the one endpoint bound as the person (app.js@19b63b2b:427-428),
-// and the lock's letting go.
-// The page's own lines go to ui/trace.js's sink, as ui/machine.js's do.
-const PATIENCE = 60_000;
-const PEOPLE_LENDS = '/people/lends';
-const wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__');
-const trace = (/** @type {string} */ line) => globalThis.__trace?.(line);
-const said = (/** @type {string} */ words) => Object.assign(new Error(words), { said: words });
-// Each typed apart, as JSDoc types only the first of several declared at once.
-// The key, unsealed by `open`, which comes before every read (`opened`).
-/** @type {Uint8Array<ArrayBuffer>} */
-let key;
-/** @type {Promise<Endpoint> | null} */
-let bound;
+// The lock's letting go, set as the lock is held.
 /** @type {((value?: unknown) => void) | undefined} */
 let letGo;
-// `group` dialled through the first to answer of its link's computer and
-// each its last read named, all at once (app.js@19b63b2b:355-369).
-/**
- * @param {typeof Wasm} core
- * @param {Group} group
- * @param {string[]} tried the computers asked already, by key
- * @returns {Promise<[Dialled, Computer | undefined]>} and the computer that answered, none when the link's did
- */
-async function reach(core, group, tried) {
-  if (!core.relay_of(group.token))
-    throw said('This link was made by an older svrngs. Ask whoever sent it for a new one.');
-  const issuer = core.issuer_of(group.token);
-  const link = group.computers?.find((one) => one.key === issuer);
-  const linked = !tried.includes(issuer);
-  const others = (group.computers ?? []).filter((one) => one !== link && !tried.includes(one.key));
-  const ep = () => (bound ??= core.endpoint(key, group.token));
-  trace(
-    `PAGE: dialling ${linked ? "the link's computer and " : ''}${others.length} other computer(s) at once`,
-  );
-  const tries = [
-    ...(linked
-      ? [
-          ep()
-            .then((endpoint) => endpoint.dial_link())
-            .then((reached) => /** @satisfies {[Dialled]} */ ([reached])),
-        ]
-      : []),
-    ...others.map((other) =>
-      ep()
-        .then((endpoint) => endpoint.dial(other.key, other.relay))
-        .then((reached) => /** @satisfies {[Dialled, Computer]} */ ([reached, other])),
-    ),
-  ];
-  const away = `${[...(linked ? [link] : []), ...others].map((one) => `${whoseComputer(one)} did not answer.`).join(' ')} Try again later.`;
-  const [dialled, computer] = await Promise.race([
-    Promise.any(tries),
-    /** @type {Promise<never>} */ (
-      new Promise((_, reject) => setTimeout(() => reject(new Error('no answer')), PATIENCE))
-    ),
-  ]).catch((error) => Promise.reject((trace(`PAGE: the dial failed: ${error}`), said(away))));
-  trace(
-    `PAGE: reached ${group.name} through ${computer ? `${computer.person}'s` : "the link's"} computer`,
-  );
-  tries.forEach((attempt) =>
-    attempt.then(
-      ([answered]) =>
-        answered !== dialled &&
-        (trace('PAGE: a computer answered late, so closed'), answered.close()),
-      () => {},
-    ),
-  );
-  return [dialled, computer];
-}
-// Its lends, asked of the next to answer when an answer fails (app.js@19b63b2b:430-436).
-/**
- * @param {typeof Wasm} core
- * @param {Group} group
- * @param {string[]} tried
- * @returns {Promise<[Dialled, Computer | undefined, Response]>}
- */
-const lends = (core, group, tried) =>
-  reach(core, group, tried).then(([dialled, via]) =>
-    dialled.fetch('GET', PEOPLE_LENDS, [['accept', 'application/json']], null).then(
-      (res) => [dialled, via, res],
-      (error) => {
-        trace(
-          `PAGE: ${PEOPLE_LENDS} failed through ${whoseComputer(via)}, so the next to answer is asked: ${error}`,
-        );
-        void dialled.close();
-        return lends(core, group, [...tried, via?.key ?? core.issuer_of(group.token)]).catch(() =>
-          Promise.reject(error),
-        );
-      },
-    ),
-  );
-// A write through the computer the page reaches, for another flow's io
-// (page-shelf): `body` posted with the group's id, as JSON, and its answer
-// read, or the computer's refusal in its own words (app.js@19b63b2b:110-116, :485-488).
-// Here, as the key and the one endpoint are: a second endpoint of the key
-// would displace this one at the relay, which keeps one per key (app.js@19b63b2b:352).
-// One lender's computer, `lend`, dialled as the person through that one
-// endpoint, for another flow's io (page-acts: what apps use, and the ask's
-// yes, posted to its door's /choices; app.js@19b63b2b:288-296), within PATIENCE.
-/**
- * @param {Group} group
- * @param {Lent} lend
- */
-export const dialled = (group, lend) =>
-  wasm().then((core) =>
-    Promise.race([
-      Promise.resolve((bound ??= core.endpoint(key, group.token))).then((endpoint) =>
-        endpoint.dial(lend.key, lend.relay ?? null),
-      ),
-      /** @type {Promise<never>} */ (
-        new Promise((_, reject) => setTimeout(() => reject(new Error('no answer')), PATIENCE))
-      ),
-    ]),
-  );
-/**
- * @param {Group} group
- * @param {string} path
- * @param {unknown} body
- */
-export const through = (group, path, body) =>
-  wasm().then(async (core) => {
-    const [connection] = await reach(core, group, []);
-    const bytes = new TextEncoder().encode(JSON.stringify([group.id, body]));
-    const [ok, status, text] = await connection
-      .fetch(
-        'POST',
-        path,
-        [
-          ['content-type', 'application/json'],
-          ['content-length', String(bytes.length)],
-        ],
-        new Blob([bytes]).stream(),
-      )
-      // The wasm's `fetch` answers the page's `Response` (svrngs_web.d.ts `Dialled`).
-      .then(
-        async (/** @type {Response} */ answer) =>
-          /** @satisfies {[boolean, number, string]} */ ([
-            answer.ok,
-            answer.status,
-            await answer.text(),
-          ]),
-      )
-      .finally(() => connection.close());
-    return ok
-      ? JSON.parse(text)
-      : Promise.reject(
-          (trace(`PAGE: ${path} answered ${status}: ${text}`), new Error(JSON.parse(text).error)),
-        );
-  });
 /** @type {Io<Effect, PageMessage>} */
 export const io = {
   // `split` always answers one part.
@@ -669,7 +515,7 @@ export const io = {
         .persist()
         .catch((error) => `asking the browser to keep the page's storage failed: ${error}`)
         .then((line) => trace(`PAGE: ${line}`));
-      [key, bound] = [await store.unseal(opened), null];
+      hold(await store.unseal(opened));
       return { type: 'opened', group: opened };
     }),
   // Each lend with its label, and whose lender `apart` says; and `me`, the
@@ -699,7 +545,7 @@ export const io = {
           link,
           body,
           lent,
-          me: core.actor(key),
+          me: actor(core),
           older: res.ok && core.older(body.version),
           why: `${res.status}${refusal ? `, refused ${refusal}` : ''}, at version ${body.version}, ${lent.length} lent`,
         });

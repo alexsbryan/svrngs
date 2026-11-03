@@ -14,7 +14,7 @@ import { html } from '../ui/view.js?v=__VERSION__';
 import { ask, go, late, no } from '../ui/machine.js?v=__VERSION__';
 import { Fold } from '../ui/parts.js?v=__VERSION__';
 import { Uses } from '../ui/uses.js?v=__VERSION__';
-import { dialled } from './enter.js?v=__VERSION__';
+import { dialled, exchange, saying, trace } from './dial.js?v=__VERSION__';
 /** @import { Group } from '../store.js?v=__VERSION__' */
 /** @import { Io, Takes } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Asked } from '../ui/uses.js?v=__VERSION__' */
@@ -135,8 +135,6 @@ export const view = {
 // The edge: a lender's door dialled as the person, its words when it does
 // not answer or refuses (app.js@19b63b2b:288-296), read whole before the dial closes, as
 // a body after its head is cut off by the close (bash-film-load).
-const trace = (/** @type {string} */ line) => globalThis.__trace?.(line);
-const saying = (/** @type {string} */ said) => Object.assign(new Error(said), { said });
 /**
  * @param {Group} group
  * @param {Lent} lend
@@ -152,38 +150,13 @@ const door = (group, lend, body, away = '') =>
       ),
     )
     .then(async (connection) => {
-      // With a body, `bytes` holds it, so each read of it below is under `body ?`.
       const bytes = body && new TextEncoder().encode(JSON.stringify(body));
-      const head = body
-        ? [
-            ['content-type', 'application/json'],
-            ['content-length', String(/** @type {Uint8Array<ArrayBuffer>} */ (bytes).length)],
-          ]
-        : [['accept', 'application/json']];
-      /** @type {[boolean, number, string]} */
-      const response = await connection
-        .fetch(
-          body ? 'POST' : 'GET',
-          `/choices/${lend.label}`,
-          head,
-          body ? new Blob([/** @type {Uint8Array<ArrayBuffer>} */ (bytes)]).stream() : null,
-        )
-        // The wasm's `fetch` answers the page's `Response` (svrngs_web.d.ts `Dialled`).
-        .then(
-          async (/** @type {Response} */ res) =>
-            /** @satisfies {[boolean, number, string]} */ ([res.ok, res.status, await res.text()]),
-        )
-        .finally(() => connection.close());
-      return response[0]
-        ? JSON.parse(response[2] || 'null')
-        : Promise.reject(
-            (trace(`PAGE: /choices/${lend.label} answered ${response[1]}: ${response[2]}`),
-            saying(
-              body
-                ? `${lend.person}’s computer did not keep your answer.`
-                : `answered ${response[1]}`,
-            )),
-          );
+      const [ok, status, text] = await exchange(connection, `/choices/${lend.label}`, bytes);
+      if (ok) return JSON.parse(text || 'null');
+      trace(`PAGE: /choices/${lend.label} answered ${status}: ${text}`);
+      return Promise.reject(
+        saying(body ? `${lend.person}’s computer did not keep your answer.` : `answered ${status}`),
+      );
     });
 // The person's answer `said` for the app labelled `app` on `lend`, for the ask too.
 /**

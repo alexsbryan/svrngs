@@ -26,7 +26,7 @@ import { Acts } from '../ui/acts.js?v=__VERSION__';
 import { Changes } from '../ui/changes.js?v=__VERSION__';
 import { carrying, deciders, named, once, reading, spoken } from '../question.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
-import { through } from './enter.js?v=__VERSION__';
+import { through, wasm } from './dial.js?v=__VERSION__';
 import { PASS_LIFE } from './hand.js?v=__VERSION__';
 import { Used } from './uses.js?v=__VERSION__';
 /** @import { Group, Line, Said } from '../store.js?v=__VERSION__' */
@@ -263,7 +263,6 @@ export const view = {
 
 // The edge: the key unsealed here, never in state, and the wasm imported
 // only once app.js has run its init.
-const wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__');
 // Every line not yet taken carried, in order, then none kept as unsent; or
 // why not, with `kept`, the group as kept, its unsent lines in it.
 // Carried only with lines unsent: `runs` adds one, and `carry` asks only

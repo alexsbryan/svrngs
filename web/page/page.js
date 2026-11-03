@@ -152,6 +152,12 @@ const PLACES = [
 ];
 const COULD_NOT = 'This browser could not open the page.';
 
+// The effect that sends a message of `type` to the flow that takes it,
+// which the frame's io dispatches (`frame`).
+export const sending = /** @type {Sender} */ (
+  (type, message) => ({ run: 'send', m: { type, ...message } })
+);
+
 // The frame's own flow: `fine` and `standalone`, read once at the edge,
 // and a failed effect, its words in `said` when it has any (app.js@19b63b2b:88).
 const frame = {

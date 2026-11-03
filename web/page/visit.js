@@ -14,6 +14,7 @@ import { go, no } from '../ui/machine.js?v=__VERSION__';
 import { Row } from '../ui/parts.js?v=__VERSION__';
 import { named } from '../question.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
+import { patiently, saying, wasm } from './dial.js?v=__VERSION__';
 import { PASS_LIFE, handing } from './hand.js?v=__VERSION__';
 /** @import { Visit } from '../store.js?v=__VERSION__' */
 /** @import { Io, Step, Takes } from '../ui/machine.js?v=__VERSION__' */
@@ -149,9 +150,7 @@ export const listed = (state, send) =>
 // from it; what the visit opens, each by its label, at the link's computer;
 // and the visit asked of it, dialled as the key, as web/app.js `post` does
 // (:110-117), its refusal by status (`joining`, :106).
-const wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__');
-const said = (/** @type {string} */ words) =>
-  Promise.reject(Object.assign(new Error(words), { said: words }));
+const said = (/** @type {string} */ words) => Promise.reject(saying(words));
 const failing = (/** @type {any} */ error) =>
   /** @satisfies {PageMessage} */ ({ type: 'failed', said: error.said, why: String(error) });
 // The visit's key, made or unsealed by `recall` or `redeem` before any
@@ -198,10 +197,9 @@ async function visiting(
     JSON.stringify({ ask: JSON.parse(core.ask(/** @type {Uint8Array} */ (key), token)), guest }),
   ),
 ) {
-  const dialled = await Promise.race([
+  const dialled = await patiently(
     core.connect_to_join(/** @type {Uint8Array} */ (key), token),
-    /** @type {Promise<never>} */ (new Promise((_, reject) => setTimeout(reject, 60_000))),
-  ]).catch(() => said('The computer that sent this link did not answer. Try again later.'));
+  ).catch(() => said('The computer that sent this link did not answer. Try again later.'));
   // The wasm's `fetch` answers the page's `Response` (svrngs_web.d.ts `Dialled`).
   /** @type {Response} */
   const res = await dialled
