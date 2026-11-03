@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // "What you lend" (page-index (e); home.js `lending` and `signed`,
 // :252-287): what this computer lends, each with how many it lets in at
 // once — its person's choice, a number or everyone in their groups — to

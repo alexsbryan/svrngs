@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // Bringing things to a group, in its section (page-shelf (a); home.js@19b63b2b:203):
 // the shelf (ui/shelf.js), once the group's lends are read, brought by
 // /shelf, then the groups read again (HOME's `again`). Folded for the group

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // "Already running here" (page-index (d); home.js `running`, :225-250):
 // what runs on this computer and is not lent yet (/running, v1ui-lend
 // (b)), looked for only when the person presses Look, as often as they

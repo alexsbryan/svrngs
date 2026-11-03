@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // "Open a link from your group" (page-join (f); home.js@19b63b2b:394-400): a link
 // from a group's page, `<page>#open=<label>&at=<path>`, pasted
 // (events-links (c)): the lend it names opened at its path in a tab of its

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // "What acts as you", both pages' (page-acts (a); question.js `acts`,
 // :231-242, which it moves; capability-what-acts; svrn-docs
 // WHAT_CAN_ACT_AS_YOU §9): one section, folded under its heading, a list to

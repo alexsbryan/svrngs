@@ -424,6 +424,9 @@ def code_lines(base, kinds=CODE):
         rel = f.relative_to(ROOT).as_posix()
         if (f.suffix not in kinds or not f.is_file() or "/tests/" in f"/{rel}"
                 or "/node_modules/" in f"/{rel}"
+                # Preact's and htm's type declarations, vendored for `types`
+                # and never served (ralph/next/js/CHARTER.md, "Answered" 3).
+                or (rel.startswith("web/vendor/") and rel.endswith(".d.ts"))
                 or rel.startswith(("apps/", "target/", "demo/runs/", "docs/diagrams/src/", "docs/brand/src/"))
                 or re.search(r"(^|/)tests?(_\w+)?\.rs$|_tests?\.rs$|\.test\.m?js$", rel)):
             continue

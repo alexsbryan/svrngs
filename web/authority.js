@@ -1,3 +1,4 @@
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // Whether a request may cause a write signed as the person: one from a page
 // of this origin, by the browser's Client, never a body's word; or a
 // navigation one of them began, a form's post or a link (Events' "I came",

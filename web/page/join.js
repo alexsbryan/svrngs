@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // Joining by a link no group kept here was joined by (page-join (a);
 // web/app.js `join`, `askName`, :120-196; DESIGN §3, "Joining"). The link's
 // issuer is asked which group it lets into; a group held here already, by

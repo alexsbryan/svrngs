@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // Leaving a group, in its section on the home page (page-members (d);
 // home.js@19b63b2b:40-42, :145-153; groups-leave), what stays and what stops said
 // before; whoever keeps the order of removals chooses, beside it, who of

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // "What acts as you" on the phone (page-acts (b); web/app.js@19b63b2b:490-521),
 // ui/acts.js `Acts` drawn in #acts once the group is read, each part
 // derived from state: the apps the group carries and their new versions

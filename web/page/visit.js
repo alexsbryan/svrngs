@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // A guest's visit (page-members (c); web/app.js `visit`, :198-226;
 // GUESTS §5, "How a visit is made"): a link a member made for a guest,
 // `#visit=<token>`. The guest's name is asked once, in #join, by

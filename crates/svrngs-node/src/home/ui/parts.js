@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // The pages' seven primitives, both pages' (page-scaffold (d); ralph/next/page/
 // CHARTER.md, "The parts"). Each is a pure view: props in, vnodes out, and
 // `send` for what it asks. Each draws what v1 draws in its place, words,

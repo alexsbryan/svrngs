@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // The pages' one core, both pages' (page-scaffold (c); svrn-docs
 // rings/current/PAGE_STATE.md §3). A machine owns its page's state: views
 // read it and `dispatch` a message `m`, and never write it. `step(s, m)` is

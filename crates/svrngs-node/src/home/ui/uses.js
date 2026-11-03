@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // What apps use of each lend of `lent` that asks, both pages' (page-acts
 // (a); question.js `uses`, :72-86, which it moves): a line each, a `tag`
 // (the phone's `li`, the home's `p`), from its lender's choices as the page

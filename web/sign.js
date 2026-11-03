@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // The group's signer (svrn-docs rings/current/HOLDER_APPROVAL.md §3.D),
 // framed by a lent app's pages at the group's origin. It runs no app code
 // and never loads the person's key. It holds one approver per app, the key

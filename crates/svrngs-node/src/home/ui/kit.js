@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // What a page's flow draws and steps with, at one URL (page-switchover (a)):
 // the core, the parts and question.js's words, so each flow imports them in
 // one line, where it named each module (185 of v2's 1,076 lines were

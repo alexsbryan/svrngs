@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // The ask, at /ask (page-acts (c); home.js `lentIn` and `ask`, :63-66,
 // :238-246): what the people of each group you are in lend, read, then
 // svrngs's question in its one wording (question.js `question`) around the

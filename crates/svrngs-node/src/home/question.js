@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // svrngs's words: its question, what apps use, who was removed from the
 // group, who is visiting, who is on now and what is in it (v1ui-door), in
 // one wording for the two pages that ask a person, the home page on a

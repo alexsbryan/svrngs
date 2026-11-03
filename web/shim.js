@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // The shim in each page of a lend on a phone (u5-2; DESIGN §3, "Lent
 // apps", call 1): what a page asks of its browser that the lend's worker
 // (lend.js), not the browser, holds. It runs first in the page, put there

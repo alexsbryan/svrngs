@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // The home page, its one root (page-open (d); home.js@19b63b2b's root,
 // :347-429): served at /home.js (home.rs `served`) and drawn into
 // home/index.html's #home. Where "v1" is named in the home page's files, it

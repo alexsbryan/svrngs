@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // "What acts as you" on the home page (page-acts (c); home.js@19b63b2b:205-207,
 // :114-124, :278-286 and `uses`, :118-124): ui/acts.js `Acts`, its parts
 // derived where v1 pushed each line in by `add`. Each group's GROUP read is

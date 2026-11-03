@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // Bringing things to the group (page-shelf (a); web/app.js@19b63b2b:482-489): the
 // shelf (ui/shelf.js), drawn in #shelf once the group is read, and brought
 // through the computer the page reaches (web/page/enter.js `through`); then

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // Who is visiting a group, in its section on the home page (page-members
 // (b); home.js@19b63b2b:155-166; GUESTS §5 "The pages"), from the record as every
 // member's page shows them, once GROUP has read its people: who you have

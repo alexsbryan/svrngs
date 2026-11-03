@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // The phone's one machine, PAGE, composed from its flows, and `Page`, its
 // one root (page-scaffold (e); ralph/next/page/CHARTER.md, settled 4).
 // Each flow module (web/page/<flow>.js) exports `owns` (its fields),

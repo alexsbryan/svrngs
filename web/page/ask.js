@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // The person asked whether an app may use a lend (page-acts (b); web/app.js
 // `asking`, :298-325): a lent page sends its person to
 // `#ask=<lend>&app=<its label>&at=<path>` (lend.js `asking`), and once the

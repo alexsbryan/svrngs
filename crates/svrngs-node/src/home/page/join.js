@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // "Join a group from a link" (page-join (c); home.js@19b63b2b:404-414): a group
 // joined from a link someone sent, by the svrngs running here as `svrngs
 // join` joins (arch-command (c)). Its machine, JOIN, is the place's own

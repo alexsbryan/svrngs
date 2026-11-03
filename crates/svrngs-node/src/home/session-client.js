@@ -1,3 +1,4 @@
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // WebSockets use a one-use open minted by a proved fetch. Apps' own workers
 // run behind the session worker, as they do behind the phone's lend worker.
 (() => {

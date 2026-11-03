@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // What apps use, on the phone (page-acts (b); web/app.js `uses` and
 // `choose`, :286-296, :327-344): `details#uses` over `ul#used`, folded
 // (ui/parts.js `Fold`, `fold uses`), drawn under "Opens friends’ things as

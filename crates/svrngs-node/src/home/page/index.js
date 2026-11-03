@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // The group's index on the home page (page-index (b); home.js@19b63b2b:118-119,
 // :172-191; V1_UI_BUILD §3.1): one table of what is in the group, on any
 // port, drawn from GROUP's last read of its people and what they lend, so

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // The index of what the group lends, and opening one (page-index (a)):
 // web/app.js's list (:530-541), a line each, and `open` (:227-284). Each
 // line is its open, named, then what opening it agrees to (`agreed`),

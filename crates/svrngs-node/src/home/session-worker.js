@@ -1,3 +1,4 @@
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 import { session, proof, Browser, browserAuthority } from '/svrngs-session.js';
 let app = null;
 async function authenticated(request, intent = false) {

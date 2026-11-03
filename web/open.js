@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // A lend's origin's start (u5-2; DESIGN §3, "Lent apps", calls 1 and 6;
 // §7). The group's page opens `open.html#<what it hands>` here: the pass
 // this origin's holder holds for this lend and the lends it reads, the

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // A group's people on the home page (page-members (a); home.js@19b63b2b:121-132,
 // :154), each in its place in the group's section (group.js PLACES), once
 // GROUP has read them: the door (ui/door.js), "asking…" while the group's

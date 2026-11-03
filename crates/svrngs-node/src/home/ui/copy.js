@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // Copy, the first component, both pages' (page-open (a)): a button that
 // writes `text` to the clipboard, and its answer. Its machine, COPY, is the
 // part's own (ui/view.js `useMachine`), so each Copy on a page answers for

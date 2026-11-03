@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // One group's section on the home page, and GROUP, its machine, one per
 // group (page-open (d); home.js `section` and `show`, :100-114 and :116-239).
 // GROUP reads the group's people and what they lend, each a region of its

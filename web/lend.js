@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // A lend's worker: the runtime, at the lend's own origin (u5-2; DESIGN §3,
 // "Lent apps", calls 1, 3 and 6; §7). Moved from the page's worker, where
 // every lend ran under the origin that holds each person's key (sw.js).

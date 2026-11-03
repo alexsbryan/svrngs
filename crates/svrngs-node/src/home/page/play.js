@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // Play (page-home-rooms (b); home.js `play` and its Stops, :82-94,
 // :382-384; give-play, play.rs): a port a member lends, UDP or TCP, opened
 // on this computer while Play is on, for a program here to connect to,

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // The door, both pages' (page-members (a); question.js `people` and `door`,
 // :151-188, which it moves; V1_UI_BUILD §3.1): each person once, a cell in
 // a grid, in the order they joined, whoever started the group first, so no

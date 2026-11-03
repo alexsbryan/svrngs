@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // The pages' one way to draw (page-scaffold (d)): Preact and htm, vendored
 // (web/vendor/README.md), imported here and nowhere else, each at the one
 // URL its version is stamped in (web/tests/specifiers.test.mjs), since two

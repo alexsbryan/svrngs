@@ -1,3 +1,4 @@
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // Browser authority stays in this origin's IndexedDB, whose port is part of its identity.
 export async function session(value) {
   const db = await new Promise((yes, no) => {

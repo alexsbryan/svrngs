@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // A link made in a group's section (page-join (e); home.js@19b63b2b:133-140), as
 // `svrngs link` makes it (start-home): each button says what it makes, to
 // invite someone, to add a phone or another computer, or a guest's, whose

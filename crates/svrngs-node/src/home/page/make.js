@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // "Make a group" (page-join (d); home.js@19b63b2b:415-422): a group made here as
 // `svrngs new` makes one, by the svrngs running here (start-group), from
 // its name and the person's. Its machine, MAKE, is the place's own

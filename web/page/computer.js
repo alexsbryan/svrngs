@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // On a computer, the line that gets svrngs and joins it by this link
 // (v1-onboarding (c); DESIGN §7), with Copy (ui/copy.js), composed from the
 // link's `#` part, which no request carries; with no token, a founder's

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // Each app on group `g`'s table whose files someone changed since the
 // version that runs as you, both pages' (page-acts (a); question.js
 // `changes`, :212-229, which it moves; canon-pin (c); svrn-docs

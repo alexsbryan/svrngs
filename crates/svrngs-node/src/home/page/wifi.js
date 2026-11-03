@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // What is open to this WiFi (page-home-rooms (a); home.js `wifi` and the
 // foot, :69-80, :202-203, :377-381; DESIGN §3, "The room"): a lend opened
 // to this WiFi, or closed, for any device on it, a TV among them, said as

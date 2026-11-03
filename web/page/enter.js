@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // The flow that opens the page and reads the group, the spine every phone
 // flow reads (page-open (b)): web/app.js `opening` (:667-706), `hold` and
 // `elsewhere` (:385-411), and `enter`'s read (:413-458), as two regions.

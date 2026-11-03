@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // Who is visiting now, both pages' (page-members (a); question.js
 // `visiting`, :43, which it moves; GUESTS §5 "The pages"), from the record,
 // as every member's page shows them: each guest, by host, until a day and

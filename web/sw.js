@@ -1,3 +1,4 @@
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // ported from commonwealth-ai sovereign/apps/ring-runtime/web/sw.js@e1a43bcd2
 // The page's service worker: the app-shell cache.
 //

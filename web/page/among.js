@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // What `#open=` names, and a lend's address opened cold (page-join (b);
 // DESIGN §3, "Lent apps", call 1; svrn-docs rings/current/
 // IN_THE_BROWSER.md §4). Once the group is read (enter.js `kept` sends

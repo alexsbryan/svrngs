@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // A group on a screen (page-members (e); home.js `screen` and its link,
 // :203 and :294-329, which it moves), for a TV, a spare laptop or a
 // projector: its link at the foot of the group's section (`show`), opened

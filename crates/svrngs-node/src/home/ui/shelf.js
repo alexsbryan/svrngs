@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // "Bring things to the table", both pages' (page-shelf (a); question.js
 // `table`, :190-210, which it moves): the shelf, svrngs's own apps as
 // `shelf` lists them, each not on group `g`'s table yet unticked, and one

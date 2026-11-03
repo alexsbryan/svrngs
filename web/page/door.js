@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // The group's door, its removals and who is visiting (page-members (a);
 // web/app.js@19b63b2b:459-481), each drawn once the group is read (web/page/enter.js),
 // in its place as web/index.html@19b63b2b:83, :85-86 has it: #door, the group

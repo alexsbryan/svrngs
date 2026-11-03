@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // The phone's page, its edge (page-scaffold (e)): served as /app.js
 // (scripts/build-web.sh), where the browser tests find ./wasm/ and
 // ./store.js from the module's address.

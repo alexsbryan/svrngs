@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // The page's store (DESIGN §3, "Joining", call 1): what a phone keeps of
 // each group it joined, in IndexedDB `svrngs`.
 //
