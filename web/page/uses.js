@@ -48,89 +48,105 @@ import { dialled } from './enter.js?v=__VERSION__';
 export const owns = ['using', 'choices', 'unstopped'];
 export const states = /** @type {const} */ ({ uses: ['shut', 'asking', 'asked'] });
 /**
- * @param {State} s
+ * @param {State} state
  * @param {Partial<State>} [patch]
  */
-const asking = (s, patch = {}, [asked, n] = ask(s, 'uses')) =>
+const asking = (state, patch = {}, [asked, serial] = ask(state, 'uses')) =>
   go(
-    s,
+    state,
     { uses: 'asking' },
     { ...patch, asked, choices: {} },
     // Folded open only where a lend asks (`view`), so once the list is read.
-    .../** @type {Lent[]} */ (s.lent)
-      .filter((l) => l.asks)
+    .../** @type {Lent[]} */ (state.lent)
+      .filter((lend) => lend.asks)
       .map(
-        (l) =>
-          /** @satisfies {Effect} */ ({ run: 'choices', group: s.group, l, n, failed: 'chosen' }),
+        (lend) =>
+          /** @satisfies {Effect} */ ({
+            run: 'choices',
+            group: state.group,
+            l: lend,
+            n: serial,
+            failed: 'chosen',
+          }),
       ),
   );
 /** @type {Takes<State, Message, Effect>} */
 export const takes = {
-  'fold uses': (s, m) =>
-    m.open ? asking(s, { using: true }) : go(s, { uses: 'shut' }, { using: false }),
+  'fold uses': (state, message) =>
+    message.open ? asking(state, { using: true }) : go(state, { uses: 'shut' }, { using: false }),
   chosen: (
-    s,
-    m,
-    choices = { ...s.choices, [m.lend]: m.choices ? { choices: m.choices } : { why: m.why } },
+    state,
+    message,
+    choices = {
+      ...state.choices,
+      [message.lend]: message.choices ? { choices: message.choices } : { why: message.why },
+    },
   ) =>
-    late(s, 'uses', m.n)
-      ? no(s, late(s, 'uses', m.n))
+    late(state, 'uses', message.n)
+      ? no(state, late(state, 'uses', message.n))
       : // Asked of each lend that asks (`asking`), so the list is read.
         go(
-          s,
+          state,
           {
-            uses: /** @type {Lent[]} */ (s.lent).every((l) => !l.asks || choices[l.label])
+            uses: /** @type {Lent[]} */ (state.lent).every(
+              (lend) => !lend.asks || choices[lend.label],
+            )
               ? 'asked'
               : 'asking',
           },
           { choices },
         ),
-  stop: (s, { lend, app }, l = s.lent?.find((o) => o.label === lend)) =>
-    !l
-      ? no(s, `nothing ${s.group?.name ?? 'here'} lends is ${lend}`)
-      : go(s, {}, {}, { run: 'unuse', group: s.group, l, app, failed: 'unstopped' }),
-  unused: (s) => asking(s),
-  unstopped: (s, m) =>
+  stop: (state, { lend, app }, found = state.lent?.find((one) => one.label === lend)) =>
+    !found
+      ? no(state, `nothing ${state.group?.name ?? 'here'} lends is ${lend}`)
+      : go(state, {}, {}, { run: 'unuse', group: state.group, l: found, app, failed: 'unstopped' }),
+  unused: (state) => asking(state),
+  unstopped: (state, message) =>
     go(
-      s,
+      state,
       {},
-      { unstopped: { ...s.unstopped, [m.of]: `${s.unstopped?.[m.of] ?? ''}${m.said ?? m.why}` } },
+      {
+        unstopped: {
+          ...state.unstopped,
+          [message.of]: `${state.unstopped?.[message.of] ?? ''}${message.said ?? message.why}`,
+        },
+      },
     ),
 };
 
 // The Fold, for web/page/acts.js's "Opens friends’ things as you", which
 // draws it only where a lend of `lent` asks (its :243), so `lent` is read.
 /** @param {Props} props */
-export const Used = ({ s, send }) =>
-  html`<${Fold} id="uses" summary="What apps use" fold="uses" open=${s.using} send=${send}><ul id="used">${Uses({ lent: /** @type {Lent[]} */ (s.lent), labelOf: (/** @type {Lent} */ l) => l.label, choices: s.choices ?? {}, tag: 'li', said: s.unstopped, send })}</ul><//>`;
+export const Used = ({ s: state, send }) =>
+  html`<${Fold} id="uses" summary="What apps use" fold="uses" open=${state.using} send=${send}><ul id="used">${Uses({ lent: /** @type {Lent[]} */ (state.lent), labelOf: (/** @type {Lent} */ lend) => lend.label, choices: state.choices ?? {}, tag: 'li', said: state.unstopped, send })}</ul><//>`;
 /** @type {Record<string, (props: Props) => Drawn>} */
 export const view = {
-  uses: ({ s }) =>
-    !s.lent?.some((l) => l.asks) &&
+  uses: ({ s: state }) =>
+    !state.lent?.some((lend) => lend.asks) &&
     html`<details id="uses" hidden><summary>What apps use</summary><ul id="used"></ul></details>`,
 };
 
 // The edge: a lender's door dialled as the person, its words when it does
 // not answer or refuses (app.js@19b63b2b:288-296), read whole before the dial closes, as
 // a body after its head is cut off by the close (bash-film-load).
-const trace = (/** @type {string} */ l) => globalThis.__trace?.(l),
+const trace = (/** @type {string} */ line) => globalThis.__trace?.(line),
   saying = (/** @type {string} */ said) => Object.assign(new Error(said), { said });
 /**
  * @param {Group} group
- * @param {Lent} l
+ * @param {Lent} lend
  * @param {'GET' | 'POST'} method
  * @param {{ app: string, said: string }} [body] posted, else the choices are asked
  * @param {string} [away] said after a dial not answered
  */
-const door = (group, l, method, body, away = '') =>
-  dialled(group, l)
-    .catch((e) =>
+const door = (group, lend, method, body, away = '') =>
+  dialled(group, lend)
+    .catch((error) =>
       Promise.reject(
-        (trace(`PAGE: the dial failed: ${e}`),
-        saying(`${l.person}’s computer did not answer.${away}`)),
+        (trace(`PAGE: the dial failed: ${error}`),
+        saying(`${lend.person}’s computer did not answer.${away}`)),
       ),
     )
-    .then(async (d) => {
+    .then(async (connection) => {
       // With a body, `bytes` holds it, so each read of it below is under `body ?`.
       const bytes = body && new TextEncoder().encode(JSON.stringify(body)),
         head = body
@@ -139,10 +155,10 @@ const door = (group, l, method, body, away = '') =>
               ['content-length', String(/** @type {Uint8Array<ArrayBuffer>} */ (bytes).length)],
             ]
           : [['accept', 'application/json']];
-      const r = await d
+      const response = await connection
         .fetch(
           method,
-          `/choices/${l.label}`,
+          `/choices/${lend.label}`,
           head,
           body ? new Blob([/** @type {Uint8Array<ArrayBuffer>} */ (bytes)]).stream() : null,
         )
@@ -151,39 +167,48 @@ const door = (group, l, method, body, away = '') =>
           async (/** @type {Response} */ res) =>
             /** @satisfies {[boolean, number, string]} */ ([res.ok, res.status, await res.text()]),
         )
-        .finally(() => d.close());
-      return r[0]
-        ? JSON.parse(r[2] || 'null')
+        .finally(() => connection.close());
+      return response[0]
+        ? JSON.parse(response[2] || 'null')
         : Promise.reject(
-            (trace(`PAGE: /choices/${l.label} answered ${r[1]}: ${r[2]}`),
-            saying(body ? `${l.person}’s computer did not keep your answer.` : `answered ${r[1]}`)),
+            (trace(`PAGE: /choices/${lend.label} answered ${response[1]}: ${response[2]}`),
+            saying(
+              body
+                ? `${lend.person}’s computer did not keep your answer.`
+                : `answered ${response[1]}`,
+            )),
           );
     });
-// The person's answer `said` for the app labelled `app` on `l`, for the ask too.
+// The person's answer `said` for the app labelled `app` on `lend`, for the ask too.
 /**
  * @param {Group} group
- * @param {Lent} l
+ * @param {Lent} lend
  * @param {string} app
  * @param {'yes' | 'stop'} said
  */
-export const choose = (group, l, app, said) =>
-  door(group, l, 'POST', { app, said }, ' Try again later.');
+export const choose = (group, lend, app, said) =>
+  door(group, lend, 'POST', { app, said }, ' Try again later.');
 /** @type {Io<Effect, PageMessage>} */
 export const io = {
-  choices: ({ group, l, n }) =>
-    door(group, l, 'GET').then(
-      (a) => ({
+  choices: ({ group, l: lend, n: serial }) =>
+    door(group, lend, 'GET').then(
+      (answer) => ({
         type: 'chosen',
-        n,
-        lend: l.label,
-        choices: a.choices,
-        why: `${l.name}: ${Object.keys(a.choices).length} app(s)`,
+        n: serial,
+        lend: lend.label,
+        choices: answer.choices,
+        why: `${lend.name}: ${Object.keys(answer.choices).length} app(s)`,
       }),
-      (e) => ({ type: 'chosen', n, lend: l.label, why: e.message }),
+      (error) => ({ type: 'chosen', n: serial, lend: lend.label, why: error.message }),
     ),
-  unuse: ({ group, l, app }) =>
-    choose(group, l, app, 'stop').then(
-      () => ({ type: 'unused', why: `${app} stopped using ${l.name}` }),
-      (e) => ({ type: 'unstopped', of: `${l.label} ${app}`, said: e.message, why: e.message }),
+  unuse: ({ group, l: lend, app }) =>
+    choose(group, lend, app, 'stop').then(
+      () => ({ type: 'unused', why: `${app} stopped using ${lend.name}` }),
+      (error) => ({
+        type: 'unstopped',
+        of: `${lend.label} ${app}`,
+        said: error.message,
+        why: error.message,
+      }),
     ),
 };

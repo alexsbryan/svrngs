@@ -141,35 +141,39 @@ import * as play from './play.js?v=__VERSION__';
 
 // HOME's: what each group's GROUP last read, by its id.
 /**
- * @param {HOME.State} s
- * @param {Taken} m
+ * @param {HOME.State} state
+ * @param {Taken} message
  * @returns {Step<HOME.State, HOME.Effect>}
  */
-export const take = (s, m) =>
-  m.read
-    ? go(s, {}, { actsRead: true })
-    : go(s, {}, { told: { ...s.told, [m.id]: { people: m.people, lends: m.lends } } });
+export const take = (state, message) =>
+  message.read
+    ? go(state, {}, { actsRead: true })
+    : go(
+        state,
+        {},
+        { told: { ...state.told, [message.id]: { people: message.people, lends: message.lends } } },
+      );
 // The page's foot held until the section has read (home.js `Home`).
 // HOME asks once the groups are read (home.js `Home`).
-/** @param {HOME.State} s */
-export const holds = (s) => /** @type {Group[]} */ (s.groups).length > 0 && !s.actsRead;
+/** @param {HOME.State} state */
+export const holds = (state) => /** @type {Group[]} */ (state.groups).length > 0 && !state.actsRead;
 /** @param {PlaceProps} props */
-const Told = ({ g, s, home }) => (
+const Told = ({ g: group, s: state, home }) => (
   useEffect(
     () =>
       void (
-        s.at.people !== 'reading' &&
-        s.at.lends !== 'reading' &&
+        state.at.people !== 'reading' &&
+        state.at.lends !== 'reading' &&
         home({
           type: 'told',
           flow: 'acts',
-          id: g.id,
-          people: s.people?.people,
-          lends: s.lends,
-          why: `${g.name}: people ${s.at.people}, lends ${s.at.lends}`,
+          id: group.id,
+          people: state.people?.people,
+          lends: state.lends,
+          why: `${group.name}: people ${state.at.people}, lends ${state.at.lends}`,
         })
       ),
-    [s.people, s.lends, s.at.people, s.at.lends],
+    [state.people, state.lends, state.at.people, state.at.lends],
   ),
   null
 );
@@ -184,98 +188,113 @@ const Told = ({ g, s, home }) => (
 const ACTS = {
   states: { reaching: ['reading', 'read', 'unread'], doing: ['idle', 'busy', 'done', 'refused'] },
   io: {
-    read: ({ n, asking }) =>
+    read: ({ n: serial, asking }) =>
       Promise.all([
-        get('/reaching').catch((e) => ({ why: e.message })),
-        ...asking.map((l) =>
-          get(`/choices?lend=${l}`).then(
-            /** @returns {[string, Asked]} */ ({ choices }) => [l, { choices }],
-            /** @returns {[string, Asked]} */ (e) => [l, { why: e.message }],
+        get('/reaching').catch((error) => ({ why: error.message })),
+        ...asking.map((asked) =>
+          get(`/choices?lend=${asked}`).then(
+            /** @returns {[string, Asked]} */ ({ choices }) => [asked, { choices }],
+            /** @returns {[string, Asked]} */ (error) => [asked, { why: error.message }],
           ),
         ),
       ]).then(([yeses, ...choices]) => ({
         type: 'reached',
-        n,
+        n: serial,
         yeses,
         choices: Object.fromEntries(choices),
         why: `${choices.length} asking`,
       })),
-    yes: ({ g, app }) =>
-      post('/runs', [g, app]).then(() => ({ type: 'acted', why: `${app} at its new version` })),
+    yes: ({ g: group, app }) =>
+      post('/runs', [group, app]).then(() => ({ type: 'acted', why: `${app} at its new version` })),
     stop: ({ lend, app }) =>
       post('/choices', { lend, app, said: 'stop' }).then(() => ({
         type: 'stopped',
         why: `${app} stopped using ${lend}`,
       })),
   },
-  step: (s, m) => {
-    switch (m.type) {
+  step: (state, message) => {
+    switch (message.type) {
       case 'read':
-        return ((asked, n) =>
-          go(s, {}, { asked }, { run: 'read', n, asking: m.asking, failed: 'unreached' }))(
-          ...ask(s, 'reaching'),
-        );
+        return ((asked, serial) =>
+          go(
+            state,
+            {},
+            { asked },
+            { run: 'read', n: serial, asking: message.asking, failed: 'unreached' },
+          ))(...ask(state, 'reaching'));
       case 'reached':
-        return late(s, 'reaching', m.n)
-          ? no(s, late(s, 'reaching', m.n))
-          : go(s, { reaching: 'read' }, { yeses: m.yeses, choices: m.choices });
+        return late(state, 'reaching', message.n)
+          ? no(state, late(state, 'reaching', message.n))
+          : go(state, { reaching: 'read' }, { yeses: message.yeses, choices: message.choices });
       case 'unreached':
-        return go(s, { reaching: 'unread' }, { yeses: { why: m.why }, choices: {} });
+        return go(state, { reaching: 'unread' }, { yeses: { why: message.why }, choices: {} });
       case 'fold':
-        return go(s, {}, { folds: { ...s.folds, [m.fold]: m.open } });
+        return go(state, {}, { folds: { ...state.folds, [message.fold]: message.open } });
       case 'yes':
-        return s.at.doing === 'busy'
-          ? no(s, `${s.acting} is under way, and is answered first`)
+        return state.at.doing === 'busy'
+          ? no(state, `${state.acting} is under way, and is answered first`)
           : go(
-              s,
+              state,
               { doing: 'busy' },
               {
-                acting: `${m.g} ${m.app}`,
+                acting: `${message.g} ${message.app}`,
                 acted: {
-                  ...s.acted,
-                  [`${m.g} ${m.app}`]: { ...s.acted[`${m.g} ${m.app}`], c: m.c },
+                  ...state.acted,
+                  [`${message.g} ${message.app}`]: {
+                    ...state.acted[`${message.g} ${message.app}`],
+                    c: message.c,
+                  },
                 },
               },
-              { run: 'yes', g: m.g, app: m.app, failed: 'unacted' },
+              { run: 'yes', g: message.g, app: message.app, failed: 'unacted' },
             );
       // A yes's answer, to the yes that set `acting` and kept it in `acted`:
       // `acting` read once, cast, where it was read at each use.
       case 'acted': {
-        const acting = /** @type {string} */ (s.acting);
+        const acting = /** @type {string} */ (state.acting);
         return go(
-          s,
+          state,
           { doing: 'done' },
-          { acted: { ...s.acted, [acting]: { ...s.acted[acting], state: 'done' } } },
+          { acted: { ...state.acted, [acting]: { ...state.acted[acting], state: 'done' } } },
           { run: 'again', failed: 'told' },
         );
       }
       case 'unacted': {
-        const acting = /** @type {string} */ (s.acting);
+        const acting = /** @type {string} */ (state.acting);
         return go(
-          s,
+          state,
           { doing: 'refused' },
           {
             acted: {
-              ...s.acted,
+              ...state.acted,
               [acting]: {
-                ...s.acted[acting],
+                ...state.acted[acting],
                 state: 'refused',
-                said: `${/** @type {Acted} */ (s.acted[acting]).said ?? ''} ${m.why}`,
+                said: `${/** @type {Acted} */ (state.acted[acting]).said ?? ''} ${message.why}`,
               },
             },
           },
         );
       }
       case 'stop':
-        return go(s, {}, {}, { run: 'stop', lend: m.lend, app: m.app, failed: 'unstopped' });
+        return go(
+          state,
+          {},
+          {},
+          { run: 'stop', lend: message.lend, app: message.app, failed: 'unstopped' },
+        );
       case 'stopped':
-        return go(s, {}, {}, { run: 'again', failed: 'told' });
+        return go(state, {}, {}, { run: 'again', failed: 'told' });
       case 'unstopped':
-        return go(s, {}, { said: { ...s.said, [`${m.lend} ${m.app}`]: m.why } });
+        return go(
+          state,
+          {},
+          { said: { ...state.said, [`${message.lend} ${message.app}`]: message.why } },
+        );
       case 'told':
-        return go(s, {});
+        return go(state, {});
       default:
-        return assertNever(s, m, 'what acts as you');
+        return assertNever(state, message, 'what acts as you');
     }
   },
 };
@@ -285,8 +304,8 @@ const NOTES = {
 };
 
 /** @param {HOME.PlaceProps} props */
-function Acting({ s: h, home }) {
-  const [s, send] = useMachine(() =>
+function Acting({ s: homeState, home }) {
+  const [state, send] = useMachine(() =>
     machine(
       'ACTS',
       {
@@ -303,126 +322,131 @@ function Acting({ s: h, home }) {
     ),
   );
   // HOME draws the section once the groups are read (home.js `Home`).
-  const groups = /** @type {Group[]} */ (h.groups).filter((g) => !g.left && g.removed === false),
-    told = /** @param {Group} g */ (g) => h.told?.[g.id],
-    rows = /** @param {Group} g */ (g) => told(g)?.people ?? [];
-  const lent = groups.flatMap((g) =>
-    (told(g)?.lends?.lent ?? []).map((l) => ({
-      ...l,
-      called: called(rows(g), rows(g).find((r) => r.key === l.key)?.person_key),
+  const groups = /** @type {Group[]} */ (homeState.groups).filter(
+      (group) => !group.left && group.removed === false,
+    ),
+    told = /** @param {Group} group */ (group) => homeState.told?.[group.id],
+    rows = /** @param {Group} group */ (group) => told(group)?.people ?? [];
+  const lent = groups.flatMap((group) =>
+    (told(group)?.lends?.lent ?? []).map((lend) => ({
+      ...lend,
+      called: called(rows(group), rows(group).find((row) => row.key === lend.key)?.person_key),
     })),
   );
-  const asking = lent.filter((l) => l.asks).map(label),
+  const asking = lent.filter((lend) => lend.asks).map(label),
     ready = groups.every(told);
-  useEffect(() => void (ready && send({ type: 'read', asking })), [ready, h.round, asking.join()]);
+  useEffect(
+    () => void (ready && send({ type: 'read', asking })),
+    [ready, homeState.round, asking.join()],
+  );
   useEffect(
     () =>
       void (
         ready &&
-        s.at.reaching !== 'reading' &&
-        !h.actsRead &&
+        state.at.reaching !== 'reading' &&
+        !homeState.actsRead &&
         home({ type: 'told', flow: 'acts', read: true, why: 'what acts as you is read' })
       ),
-    [ready, s.at.reaching],
+    [ready, state.at.reaching],
   );
   // Drawn once read; a group new in a round (one made or joined) is said
   // read until it is told, the rest kept, where the section dropped out
   // and came back after each write (home_group.rs:219 on v2).
-  if (s.at.reaching === 'reading') return null;
+  if (state.at.reaching === 'reading') return null;
   // Each group `shown` is told; the casts of `told(g)` below say so, and
   // that a part drawn for its lends or its people has them, as it
   // filtered by them.
   const shown = groups.filter(told);
   /**
    * Changes' messages, a yes given its group and its change.
-   * @param {Group} g
+   * @param {Group} group
    */
-  const yes = (g) => /** @param {Omit<Yes, 'g' | 'c'> | Message} m */ (m) =>
-    m.type === 'yes'
+  const yes = (group) => /** @param {Omit<Yes, 'g' | 'c'> | Message} message */ (message) =>
+    message.type === 'yes'
       ? send({
-          ...m,
-          g: g.id,
-          c: /** @type {{ lends: Lends }} */ (told(g)).lends.changed?.find(
-            (c) => c.group === g.id && c.app === m.app,
+          ...message,
+          g: group.id,
+          c: /** @type {{ lends: Lends }} */ (told(group)).lends.changed?.find(
+            (change) => change.group === group.id && change.app === message.app,
           ),
         })
-      : send(m);
-  /** @param {Group} g */
-  const doing = (g) =>
+      : send(message);
+  /** @param {Group} group */
+  const doing = (group) =>
     Object.fromEntries(
-      Object.entries(s.acted)
-        .filter(([k]) => k.startsWith(`${g.id} `))
-        .map(([k, a]) => [
-          k.slice(g.id.length + 1),
-          s.acting === k && s.at.doing === 'busy' ? { state: 'busy' } : a,
+      Object.entries(state.acted)
+        .filter(([key]) => key.startsWith(`${group.id} `))
+        .map(([key, act]) => [
+          key.slice(group.id.length + 1),
+          state.acting === key && state.at.doing === 'busy' ? { state: 'busy' } : act,
         ]),
     );
   // A change kept by its yes, once done, which the record no longer
-  // lists: `a.c` and `L.changed` are read where the filter has found
+  // lists: `act.c` and `lends.changed` are read where the filter has found
   // them, as tsc does not narrow them inside `some`'s callback, nor what
   // the filter keeps.
   /**
-   * @param {Group} g
-   * @param {Lends} [L]
+   * @param {Group} group
+   * @param {Lends} [lends]
    */
-  const changed = (g, L = /** @type {{ lends: Lends }} */ (told(g)).lends) =>
-    L.changed && [
-      ...L.changed,
-      ...Object.values(s.acted)
+  const changed = (group, lends = /** @type {{ lends: Lends }} */ (told(group)).lends) =>
+    lends.changed && [
+      ...lends.changed,
+      ...Object.values(state.acted)
         .filter(
-          (a) =>
-            a.c?.group === g.id &&
-            a.state === 'done' &&
+          (act) =>
+            act.c?.group === group.id &&
+            act.state === 'done' &&
             !(
-              /** @type {Change[]} */ (L.changed).some(
-                (c) => c.app === /** @type {Change} */ (a.c).app,
+              /** @type {Change[]} */ (lends.changed).some(
+                (change) => change.app === /** @type {Change} */ (act.c).app,
               )
             ),
         )
-        .map((a) => /** @type {Change} */ (a.c)),
+        .map((act) => /** @type {Change} */ (act.c)),
     ];
   const parts = {
     reads: shown
-      .filter((g) => /** @type {Told} */ (told(g)).lends)
-      .flatMap((g) => [
-        ...once(/** @type {{ lends: Lends }} */ (told(g)).lends.lent)
-          .filter((o) => o.group)
+      .filter((group) => /** @type {Told} */ (told(group)).lends)
+      .flatMap((group) => [
+        ...once(/** @type {{ lends: Lends }} */ (told(group)).lends.lent)
+          .filter((lend) => lend.group)
           .map(
-            (l) =>
-              html`<p>${carrying(l.kind, /** @type {{ lends: Lends }} */ (told(g)).lends.shelf)}</p>`,
+            (shared) =>
+              html`<p>${carrying(shared.kind, /** @type {{ lends: Lends }} */ (told(group)).lends.shelf)}</p>`,
           ),
         ...Changes({
-          g,
-          changed: changed(g),
-          rows: rows(g),
-          me: h.key,
-          doing: doing(g),
-          open: s.folds?.changes,
-          send: yes(g),
+          g: group,
+          changed: changed(group),
+          rows: rows(group),
+          me: homeState.key,
+          doing: doing(group),
+          open: state.folds?.changes,
+          send: yes(group),
         }),
       ]),
     opens: [
       // The yeses are read, or why not, once ACTS is past 'reading'.
-      ...(/** @type {Yeses} */ (s.yeses).why !== undefined
+      ...(/** @type {Yeses} */ (state.yeses).why !== undefined
         ? [
-            html`<p>This computer cannot say which apps open your friends’ things as you: ${/** @type {Yeses} */ (s.yeses).why}</p>`,
+            html`<p>This computer cannot say which apps open your friends’ things as you: ${/** @type {Yeses} */ (state.yeses).why}</p>`,
           ]
-        : Object.entries(/** @type {Record<string, Choice>} */ (s.yeses)).map(
-            ([app, c]) =>
+        : Object.entries(/** @type {Record<string, Choice>} */ (state.yeses)).map(
+            ([app, change]) =>
               html`<p>${reading(
                 /** @type {(Lend & { reads: string[] }) | undefined} */ (
-                  lent.find((o) => label(o) === app && o.reads?.length)
+                  lent.find((one) => label(one) === app && one.reads?.length)
                 ),
-                c,
-              )}${c.said === 'yes' && html`<${Reach} app=${app} words="Stop" said="stop" />`}</p>`,
+                change,
+              )}${change.said === 'yes' && html`<${Reach} app=${app} words="Stop" said="stop" />`}</p>`,
           )),
       // Read past `reading`, the choices are set: the read's, or none.
       ...Uses({
         lent,
         labelOf: label,
-        choices: /** @type {Record<string, Asked>} */ (s.choices),
+        choices: /** @type {Record<string, Asked>} */ (state.choices),
         tag: 'p',
-        said: s.said,
+        said: state.said,
         send,
       }),
     ],
@@ -430,17 +454,17 @@ function Acting({ s: h, home }) {
     wifi: wifi.part(),
     play: play.part(),
     decides: shown
-      .filter((g) => /** @type {Told} */ (told(g)).people)
+      .filter((group) => /** @type {Told} */ (told(group)).people)
       .map(
-        (g) =>
-          html`<p>${`${g.name ?? 'Your group'}: ${deciders(rows(g), /** @type {string} */ (h.key), 'computer')}.`}</p>`,
+        (group) =>
+          html`<p>${`${group.name ?? 'Your group'}: ${deciders(rows(group), /** @type {string} */ (homeState.key), 'computer')}.`}</p>`,
       ),
   };
-  return html`<${Acts} parts=${parts} notes=${NOTES} open=${s.folds?.acts} send=${send} />${!ready && html`<p class="said">Reading your groups…</p>`}`;
+  return html`<${Acts} parts=${parts} notes=${NOTES} open=${state.folds?.acts} send=${send} />${!ready && html`<p class="said">Reading your groups…</p>`}`;
 }
 /** @type {{ acts: (props: HOME.PlaceProps) => Drawn, told: (props: PlaceProps) => Drawn }} */
 export const view = {
-  acts: ({ s, home }) =>
-    /** @type {Group[]} */ (s.groups).length > 0 && html`<${Acting} s=${s} home=${home} />`,
+  acts: ({ s: state, home }) =>
+    /** @type {Group[]} */ (state.groups).length > 0 && html`<${Acting} s=${state} home=${home} />`,
   told: Told,
 };

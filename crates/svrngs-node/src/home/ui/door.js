@@ -35,33 +35,33 @@ import { called } from '../question.js?v=__VERSION__';
  * @typedef {[p: PeopleRow, name: string | undefined, devices: PeopleRow['device'][]]} Person
  */
 
-const since = (/** @type {Named} */ p) => (p.joined === 'started' ? 0 : p.joined.at);
-const at = (/** @type {Date} */ d, m = -d.getTimezoneOffset()) =>
-  `${d.toLocaleString('sv-SE')} ${m < 0 ? '-' : '+'}${String(Math.trunc(Math.abs(m) / 60) * 100 + (Math.abs(m) % 60)).padStart(4, '0')}`;
-const when = (/** @type {Joined} */ j) =>
-  j === 'started' ? 'started the group' : `joined ${at(new Date(j.at * 1000))}`;
+const since = (/** @type {Named} */ person) => (person.joined === 'started' ? 0 : person.joined.at);
+const at = (/** @type {Date} */ date, minutes = -date.getTimezoneOffset()) =>
+  `${date.toLocaleString('sv-SE')} ${minutes < 0 ? '-' : '+'}${String(Math.trunc(Math.abs(minutes) / 60) * 100 + (Math.abs(minutes) % 60)).padStart(4, '0')}`;
+const when = (/** @type {Joined} */ joined) =>
+  joined === 'started' ? 'started the group' : `joined ${at(new Date(joined.at * 1000))}`;
 // Each person once, with their name as the door says it and what holds their keys.
 /**
  * @param {PeopleRow[]} rows
  * @returns {Person[]}
  */
 const people = (rows) =>
-  [...new Map(rows.map((r) => [r.person_key, r])).values()]
-    .sort((a, b) => since(a) - since(b))
-    .map((p) => [
-      p,
-      called(rows, p.person_key, when),
-      rows.filter((r) => r.person_key === p.person_key).map((r) => r.device),
+  [...new Map(rows.map((row) => [row.person_key, row])).values()]
+    .sort((left, right) => since(left) - since(right))
+    .map((person) => [
+      person,
+      called(rows, person.person_key, when),
+      rows.filter((row) => row.person_key === person.person_key).map((row) => row.device),
     ]);
 
 // Its class and its words, judged by `lends` (/v1/lends' `unanswered`).
 /**
- * @param {PeopleRow} p
+ * @param {PeopleRow} person
  * @param {PeopleRow['device'][]} devices
  * @param {Unanswered | null} [lends]
  * @returns {[drawn: string, words: string]}
  */
-function judged(p, devices, lends) {
+function judged(person, devices, lends) {
   if (lends === undefined) return ['', 'asking…'];
   const phone = devices.includes('browser')
     ? devices.includes('computer')
@@ -69,7 +69,7 @@ function judged(p, devices, lends) {
       : 'in from a phone'
     : '';
   const silent = lends?.unanswered.some(
-    (u) => (u.person_key ?? u) === (u.person_key ? p.person_key : p.person),
+    (who) => (who.person_key ?? who) === (who.person_key ? person.person_key : person.person),
   );
   const [drawn, words] = !devices.includes('computer')
     ? ['phone', '']
@@ -85,15 +85,18 @@ function judged(p, devices, lends) {
 /**
  * @param {PeopleRow[]} rows
  * @param {DoorLent[]} lent
- * @param {PeopleRow} p
+ * @param {PeopleRow} person
  * @param {string} [newest]
  */
-const theirs = (rows, lent, p, newest) =>
+const theirs = (rows, lent, person, newest) =>
   lent
-    .filter((l) => !l.group && rows.find((r) => r.key === l.key)?.person_key === p.person_key)
+    .filter(
+      (lend) =>
+        !lend.group && rows.find((row) => row.key === lend.key)?.person_key === person.person_key,
+    )
     .map(
-      (l) =>
-        html`${' '}<a href=${l.origin} target="_blank">${l.name}</a>${l.origin === newest && html`${' '}<mark>new</mark>`}`,
+      (lend) =>
+        html`${' '}<a href=${lend.origin} target="_blank">${lend.name}</a>${lend.origin === newest && html`${' '}<mark>new</mark>`}`,
     );
 /**
  * @param {PeopleRow[]} rows
@@ -103,8 +106,11 @@ const theirs = (rows, lent, p, newest) =>
  */
 const cell =
   (rows, lent, lends, newest) =>
-  (/** @type {Person} */ [p, name, devices], [drawn, words] = judged(p, devices, lends)) =>
-    html`<li class=${drawn || undefined}><strong>${name}</strong>${theirs(rows, lent, p, newest)}${' '}<small>${words}</small></li>`;
+  (
+    /** @type {Person} */ [person, name, devices],
+    [drawn, words] = judged(person, devices, lends),
+  ) =>
+    html`<li class=${drawn || undefined}><strong>${name}</strong>${theirs(rows, lent, person, newest)}${' '}<small>${words}</small></li>`;
 /**
  * The door's props: the group's people rows; its lends, none when the
  * page gives none; what it judges by, `undefined` unread and `null`
@@ -118,7 +124,7 @@ const cell =
 
 /** @param {DoorProps} props */
 export const Door = ({ rows, lent = [], lends, newest }) =>
-  html`<ul class="door">${people(rows).map((p) => cell(rows, lent, lends, newest)(p))}</ul>`;
+  html`<ul class="door">${people(rows).map((person) => cell(rows, lent, lends, newest)(person))}</ul>`;
 /**
  * @param {PeopleRow[]} rows
  * @param {DoorLent[]} lent
@@ -128,6 +134,6 @@ export const Door = ({ rows, lent = [], lends, newest }) =>
  */
 export const counted = (rows, lent, lends, ps = people(rows)) => [
   ps.length,
-  ps.filter(([p, , d]) => judged(p, d, lends)[0] === 'on').length,
-  ps.flatMap(([p]) => theirs(rows, lent, p)).length,
+  ps.filter(([person, , devices]) => judged(person, devices, lends)[0] === 'on').length,
+  ps.flatMap(([person]) => theirs(rows, lent, person)).length,
 ];

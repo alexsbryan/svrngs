@@ -50,81 +50,89 @@ import { choose } from './uses.js?v=__VERSION__';
 
 export const owns = ['asking', 'answer'];
 export const states = /** @type {const} */ ({ ask: ['none', 'asking', 'sending', 'refused'] });
-const lendOf = (/** @type {State} */ s, /** @type {string | undefined} */ label) =>
-    s.lent?.find((l) => l.label === label),
+const lendOf = (/** @type {State} */ state, /** @type {string | undefined} */ label) =>
+    state.lent?.find((lend) => lend.label === label),
   // Sent back only once something is asked (`not`, `said`).
-  back = (/** @type {State} */ s) =>
+  back = (/** @type {State} */ state) =>
     /** @satisfies {Send} */ ({
       run: 'send',
       m: {
         type: 'open',
-        label: /** @type {Asking} */ (s.asking).app,
-        at: /** @type {Asking} */ (s.asking).at,
+        label: /** @type {Asking} */ (state.asking).app,
+        at: /** @type {Asking} */ (state.asking).at,
       },
     });
 /** @type {Takes<State, Message, Effect | Send>} */
 export const takes = {
-  ask: (s, m, [lend, app] = [m.lend, m.app].map((x) => lendOf(s, x))) =>
-    s.at.ask !== 'none'
-      ? no(s, `the ask is ${s.at.ask} already`)
+  ask: (
+    state,
+    message,
+    [lend, app] = [message.lend, message.app].map((label) => lendOf(state, label)),
+  ) =>
+    state.at.ask !== 'none'
+      ? no(state, `the ask is ${state.at.ask} already`)
       : !lend?.asks || !app
-        ? go(s, { ask: 'refused' }, { asking: null, answer: unlent })
+        ? go(state, { ask: 'refused' }, { asking: null, answer: unlent })
         : // Both found, both are named.
           go(
-            s,
+            state,
             { ask: 'asking' },
             {
               asking: {
-                lend: /** @type {string} */ (m.lend),
-                app: /** @type {string} */ (m.app),
-                at: m.at ?? '/',
+                lend: /** @type {string} */ (message.lend),
+                app: /** @type {string} */ (message.app),
+                at: message.at ?? '/',
               },
             },
           ),
-  say: (s) =>
-    !s.asking || s.at.ask === 'sending'
-      ? no(s, `nothing is asked: the ask is ${s.at.ask}`)
+  say: (state) =>
+    !state.asking || state.at.ask === 'sending'
+      ? no(state, `nothing is asked: the ask is ${state.at.ask}`)
       : go(
-          s,
+          state,
           { ask: 'sending' },
           {},
           {
             run: 'answer',
-            group: s.group,
+            group: state.group,
             // Asked, its lend asks (`ask`), so it is listed.
-            l: /** @type {Lent} */ (lendOf(s, s.asking.lend)),
-            app: s.asking.app,
+            l: /** @type {Lent} */ (lendOf(state, state.asking.lend)),
+            app: state.asking.app,
             failed: 'unsaid',
           },
         ),
-  not: (s) =>
-    !s.asking || s.at.ask === 'sending'
-      ? no(s, `nothing is asked: the ask is ${s.at.ask}`)
-      : go(s, {}, {}, back(s)),
-  said: (s) => (s.at.ask !== 'sending' ? no(s, 'no answer is being sent') : go(s, {}, {}, back(s))),
-  unsaid: (s, m) =>
-    s.at.ask !== 'sending'
-      ? no(s, 'no answer is being sent')
-      : go(s, { ask: 'refused' }, { answer: m.said ?? 'Your answer could not be sent.' }),
+  not: (state) =>
+    !state.asking || state.at.ask === 'sending'
+      ? no(state, `nothing is asked: the ask is ${state.at.ask}`)
+      : go(state, {}, {}, back(state)),
+  said: (state) =>
+    state.at.ask !== 'sending'
+      ? no(state, 'no answer is being sent')
+      : go(state, {}, {}, back(state)),
+  unsaid: (state, message) =>
+    state.at.ask !== 'sending'
+      ? no(state, 'no answer is being sent')
+      : go(state, { ask: 'refused' }, { answer: message.said ?? 'Your answer could not be sent.' }),
 };
 /** @type {Record<string, (s: State) => Said | Nothing>} */
 export const heading = {
   // Asking or sending, both are listed (`ask`).
-  ask: (s) =>
-    ['asking', 'sending'].includes(s.at.ask)
+  ask: (state) =>
+    ['asking', 'sending'].includes(state.at.ask)
       ? [
           question(
-            /** @type {Lent} */ (lendOf(s, /** @type {Asking} */ (s.asking).app)),
-            /** @type {Lent} */ (lendOf(s, /** @type {Asking} */ (s.asking).lend)),
+            /** @type {Lent} */ (lendOf(state, /** @type {Asking} */ (state.asking).app)),
+            /** @type {Lent} */ (lendOf(state, /** @type {Asking} */ (state.asking).lend)),
           ),
           'good',
         ]
-      : s.at.ask === 'refused' && s.asking && [/** @type {string} */ (s.answer), 'bad'],
+      : state.at.ask === 'refused' && state.asking && [/** @type {string} */ (state.answer), 'bad'],
 };
 // Refused, it says why (`ask`, `unsaid`).
 /** @type {Record<string, (s: State) => string[] | Nothing>} */
 export const response = {
-  ask: (s) => s.at.ask === 'refused' && !s.asking && [/** @type {string} */ (s.answer)],
+  ask: (state) =>
+    state.at.ask === 'refused' && !state.asking && [/** @type {string} */ (state.answer)],
 };
 
 // Sent once the list is read and the address asks, and then not again.
@@ -135,40 +143,40 @@ export const response = {
  * @property {Props['send']} send
  */
 /** @param {AskingProps} props */
-const Asking = ({ s, send }) => (
+const Asking = ({ s: state, send }) => (
   useEffect(
     () =>
       void (
-        s.at.list === 'read' &&
-        s.at.ask === 'none' &&
+        state.at.list === 'read' &&
+        state.at.ask === 'none' &&
         send({
           type: 'ask',
-          lend: s.wants.ask,
-          app: s.wants.app,
-          at: s.wants.at,
-          why: `whether ${s.wants.app} may use ${s.wants.ask}`,
+          lend: state.wants.ask,
+          app: state.wants.app,
+          at: state.wants.at,
+          why: `whether ${state.wants.app} may use ${state.wants.ask}`,
         })
       ),
-    [s.at.list],
+    [state.at.list],
   ),
   null
 );
 /** @type {Record<string, (props: Props) => Drawn>} */
 export const view = {
-  ask: ({ s, send }) =>
-    html`<form id="ask" hidden=${!s.asking || s.at.ask === 'sending'} onSubmit=${(
-      /** @type {Event} */ e,
+  ask: ({ s: state, send }) =>
+    html`<form id="ask" hidden=${!state.asking || state.at.ask === 'sending'} onSubmit=${(
+      /** @type {Event} */ event,
     ) =>
       (
-        e.preventDefault(),
+        event.preventDefault(),
         send({ type: 'say' })
-      )}><blockquote id="words">${s.asking && lendOf(s, s.asking.lend)?.asks}</blockquote><button>Yes</button><button type="button" id="not" onClick=${() => send({ type: 'not' })}>Not now</button>${s.wants?.ask && html`<${Asking} s=${s} send=${send} />`}</form>`,
+      )}><blockquote id="words">${state.asking && lendOf(state, state.asking.lend)?.asks}</blockquote><button>Yes</button><button type="button" id="not" onClick=${() => send({ type: 'not' })}>Not now</button>${state.wants?.ask && html`<${Asking} s=${state} send=${send} />`}</form>`,
 };
 /** @type {Io<Effect, PageMessage>} */
 export const io = {
-  answer: ({ group, l, app }) =>
-    choose(group, l, app, 'yes').then(
-      () => ({ type: 'said', why: `the yes kept at ${l.person}'s computer` }),
-      (e) => ({ type: 'unsaid', said: e.said, why: e.message }),
+  answer: ({ group, l: lend, app }) =>
+    choose(group, lend, app, 'yes').then(
+      () => ({ type: 'said', why: `the yes kept at ${lend.person}'s computer` }),
+      (error) => ({ type: 'unsaid', said: error.said, why: error.message }),
     ),
 };

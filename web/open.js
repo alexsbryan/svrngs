@@ -37,7 +37,9 @@ const say = (/** @type {string} */ words) =>
 const decode = (fragment) =>
   JSON.parse(
     new TextDecoder().decode(
-      Uint8Array.from(atob(fragment.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0)),
+      Uint8Array.from(atob(fragment.replace(/-/g, '+').replace(/_/g, '/')), (char) =>
+        char.charCodeAt(0),
+      ),
     ),
   );
 
@@ -48,7 +50,7 @@ const decode = (fragment) =>
 const pkcs8 = (hex) =>
   Uint8Array.from(
     /** @type {RegExpMatchArray} */ (`302e020100300506032b657004220420${hex}`.match(/../g)),
-    (h) => parseInt(h, 16),
+    (pair) => parseInt(pair, 16),
   );
 
 // The worker `reg` runs, once it runs.
@@ -160,7 +162,7 @@ async function start() {
   location.replace(back.origin === location.origin ? back.href : '/');
 }
 
-start().catch((e) => {
-  console.error(`OPEN: ${e}`);
+start().catch((error) => {
+  console.error(`OPEN: ${error}`);
   say('This could not be opened. Open it again from your group’s page.');
 });

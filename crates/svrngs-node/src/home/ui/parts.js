@@ -74,7 +74,7 @@ export const Said = ({ tag = 'p', id, class: tone, words }) =>
  */
 /** @param {FoldProps} props */
 export const Fold = ({ id, summary, heading, open = false, fold, send, children }) =>
-  html`<details id=${id} open=${open} onToggle=${(/** @type {Targeted<HTMLDetailsElement>} */ e) => e.currentTarget.open === open || send({ type: 'fold', fold, open: e.currentTarget.open })}><summary>${heading ? html`<h2>${summary}</h2>` : summary}</summary>${children}</details>`;
+  html`<details id=${id} open=${open} onToggle=${(/** @type {Targeted<HTMLDetailsElement>} */ toggled) => toggled.currentTarget.open === open || send({ type: 'fold', fold, open: toggled.currentTarget.open })}><summary>${heading ? html`<h2>${summary}</h2>` : summary}</summary>${children}</details>`;
 
 // A box to type in: `for`, a label beside its input, which takes the focus
 // as it is drawn (web/app.js@19b63b2b:136), or `wrap`, the label around it, or a
@@ -99,10 +99,10 @@ const focus = (/** @type {HTMLInputElement | null} */ box) => box?.focus();
  * @param {FieldProps<Name>} props
  */
 export function Field({ shape = 'wrap', id, name = id, words, value, attrs = {}, options, send }) {
-  const typed = (/** @type {Targeted<HTMLInputElement | HTMLSelectElement>} */ e) =>
-    send({ type: 'typed', field: name, value: e.currentTarget.value });
+  const typed = (/** @type {Targeted<HTMLInputElement | HTMLSelectElement>} */ changed) =>
+    send({ type: 'typed', field: name, value: changed.currentTarget.value });
   const box = options
-    ? html`<select name=${name} value=${value} onChange=${typed}>${options.map(([v, w]) => html`<option value=${v}>${w}</option>`)}</select>`
+    ? html`<select name=${name} value=${value} onChange=${typed}>${options.map(([optionValue, optionWords]) => html`<option value=${optionValue}>${optionWords}</option>`)}</select>`
     : html`<input ref=${shape === 'for' ? focus : undefined} id=${id} name=${name} value=${value} onInput=${typed} ...${attrs} />`;
   return shape === 'for'
     ? html`<label for=${id}>${words}</label>${box}`
@@ -118,7 +118,7 @@ export function Field({ shape = 'wrap', id, name = id, words, value, attrs = {},
  */
 /** @param {RowProps} props */
 export const Row = ({ cells, tag = 'td', span }) =>
-  html`<tr>${cells.map((c) => html`<${tag} colSpan=${span}>${c}</${tag}>`)}</tr>`;
+  html`<tr>${cells.map((cell) => html`<${tag} colSpan=${span}>${cell}</${tag}>`)}</tr>`;
 
 // The address to keep for a lend, as question.js `keeping` says it.
 /** @param {{ at: string }} props */

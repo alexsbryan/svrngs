@@ -42,15 +42,15 @@
         this.socket = protocols === undefined ? new Native(url) : new Native(url, protocols);
         this.socket.binaryType = this.binaryType;
         for (const type of ['open', 'message', 'error', 'close'])
-          this.socket.addEventListener(type, (e) => {
+          this.socket.addEventListener(type, (fired) => {
             this.readyState = this.socket.readyState;
             this.protocol = this.socket.protocol;
             this.extensions = this.socket.extensions;
             // The native socket's own kind of notice, with its fields: a
             // MessageEvent's data, a CloseEvent's code and reason.
             const copy = new /** @type {new (type: string, init: Dispatched) => Dispatched} */ (
-              e.constructor
-            )(type, e);
+              fired.constructor
+            )(type, fired);
             this.dispatchEvent(copy);
             /** @type {Handlers} */ (/** @type {unknown} */ (this))[`on${type}`]?.(copy);
           });

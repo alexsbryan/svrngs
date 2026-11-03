@@ -68,65 +68,71 @@ export const owns = ['opening', 'unopened'];
 export const states = /** @type {const} */ ({ open: ['shut', 'opening', 'handed', 'refused'] });
 /** @type {Takes<State, Message, Effect>} */
 export const takes = {
-  open: (s, { label, at }, l = s.lent?.find((o) => o.label === label)) =>
-    !l
-      ? no(s, `nothing ${s.group?.name ?? 'here'} lends is ${label}`)
-      : s.at.open === 'opening'
-        ? no(s, `${s.opening} is opening already`)
+  open: (state, { label, at }, lend = state.lent?.find((one) => one.label === label)) =>
+    !lend
+      ? no(state, `nothing ${state.group?.name ?? 'here'} lends is ${label}`)
+      : state.at.open === 'opening'
+        ? no(state, `${state.opening} is opening already`)
         : go(
-            s,
+            state,
             { open: 'opening' },
             { opening: label, unopened: '' },
             {
               run: 'hand',
-              group: s.group,
-              // `l` is found in it, so the list is read.
-              lent: /** @type {Lent[]} */ (s.lent),
-              unanswered: s.unanswered ?? [],
+              group: state.group,
+              // `lend` is found in it, so the list is read.
+              lent: /** @type {Lent[]} */ (state.lent),
+              unanswered: state.unanswered ?? [],
               label,
               at,
               failed: 'unopened',
             },
           ),
-  handed: (s) =>
-    s.at.open === 'opening' ? go(s, { open: 'handed' }) : no(s, 'nothing is opening'),
+  handed: (state) =>
+    state.at.open === 'opening' ? go(state, { open: 'handed' }) : no(state, 'nothing is opening'),
   // Opening, the lend opening is one listed (`open`).
   unopened: (
-    s,
-    m,
-    l = /** @type {Lent} */ (/** @type {Lent[]} */ (s.lent).find((o) => o.label === s.opening)),
+    state,
+    message,
+    lend = /** @type {Lent} */ (
+      /** @type {Lent[]} */ (state.lent).find((one) => one.label === state.opening)
+    ),
   ) =>
-    s.at.open === 'opening'
-      ? go(s, { open: 'refused' }, { unopened: m.said ?? `${named(l)} did not open: ${m.why}` })
-      : no(s, 'nothing is opening'),
+    state.at.open === 'opening'
+      ? go(
+          state,
+          { open: 'refused' },
+          { unopened: message.said ?? `${named(lend)} did not open: ${message.why}` },
+        )
+      : no(state, 'nothing is opening'),
 };
 // "Opening …" until the page has gone, or why it did not (app.js@19b63b2b:238).
 /** @type {Record<string, (s: State) => string[] | Nothing>} */
 export const response = {
   // Refused, it says why (`unopened`).
-  enter: (s, l = s.lent?.find((o) => o.label === s.opening)) =>
-    s.at.open === 'refused'
-      ? [/** @type {string} */ (s.unopened)]
-      : l && s.at.open !== 'shut' && [`Opening ${named(l)}…`],
+  enter: (state, lend = state.lent?.find((one) => one.label === state.opening)) =>
+    state.at.open === 'refused'
+      ? [/** @type {string} */ (state.unopened)]
+      : lend && state.at.open !== 'shut' && [`Opening ${named(lend)}…`],
 };
 
 // The page's own address, which only the edge reads; and the address to
-// keep for `l` there (svrn-docs rings/current/IN_THE_BROWSER.md §4): its
+// keep for `lend` there (svrn-docs rings/current/IN_THE_BROWSER.md §4): its
 // alias, or, where two share one, its label, which never collides; the
 // alias as the page reads it, a space as `+` (app.js@19b63b2b:530).
 const here = () => `${location.origin}${location.pathname}`;
 // Drawn only once the list is read (`view`).
 /**
- * @param {State} s
- * @param {Lent} l
- * @param {string} [a]
+ * @param {State} state
+ * @param {Lent} lend
+ * @param {string} [name]
  */
-const kept = (s, l, a = alias(l, /** @type {Lent[]} */ (s.lent), s.people)) =>
-  `${here()}#open=${aliased(a, /** @type {Lent[]} */ (s.lent), s.people).length === 1 ? encodeURIComponent(a).replaceAll('%20', '+').replaceAll('%40', '@') : l.label}`;
+const kept = (state, lend, name = alias(lend, /** @type {Lent[]} */ (state.lent), state.people)) =>
+  `${here()}#open=${aliased(name, /** @type {Lent[]} */ (state.lent), state.people).length === 1 ? encodeURIComponent(name).replaceAll('%20', '+').replaceAll('%40', '@') : lend.label}`;
 /** @type {Record<string, (props: Props) => Drawn>} */
 export const view = {
-  lent: ({ s, send }) =>
-    html`<table class="index"><tbody id="lent">${listed(s, send)}${once(s.lent ?? []).map((l) => html`<${Row} key=${l.label} cells=${[html`<span><button onClick=${() => send({ type: 'open', label: l.label })}>${named(l)}</button>${` ${agreed(l, s.shelf, s.group)}${opens(l)[1] === 'full' ? ' Full now.' : ''}`}${s.fine && html`${' '}<${Keep} at=${kept(s, l)} />`}</span>`]} />`)}</tbody></table>`,
+  lent: ({ s: state, send }) =>
+    html`<table class="index"><tbody id="lent">${listed(state, send)}${once(state.lent ?? []).map((lend) => html`<${Row} key=${lend.label} cells=${[html`<span><button onClick=${() => send({ type: 'open', label: lend.label })}>${named(lend)}</button>${` ${agreed(lend, state.shelf, state.group)}${opens(lend)[1] === 'full' ? ' Full now.' : ''}`}${state.fine && html`${' '}<${Keep} at=${kept(state, lend)} />`}</span>`]} />`)}</tbody></table>`,
 };
 
 // The edge (app.js@19b63b2b:234-284): the yes the open is, kept with the group when the
@@ -135,7 +141,7 @@ export const view = {
 // never enters state; and the hand-off in the fragment, which no origin is
 // sent. The holder is the lend origin's one key (capability-signed (H)),
 // its bytes sent only when it holds none or a lend is on an older svrngs.
-const trace = (/** @type {string} */ l) => globalThis.__trace?.(l),
+const trace = (/** @type {string} */ line) => globalThis.__trace?.(line),
   wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__');
 /**
  * @param {Hand} hand
@@ -149,39 +155,41 @@ export async function handing(
   until = Math.floor(Date.now() / 1000) + PASS_LIFE,
 ) {
   // The lend named is one listed: `open` refuses any other.
-  const w = await wasm(),
-    l = /** @type {Lent} */ (lent.find((o) => o.label === label));
+  const core = await wasm(),
+    lend = /** @type {Lent} */ (lent.find((one) => one.label === label));
   if (!('serviceWorker' in navigator))
-    return { type: 'unopened', said: `This browser cannot open ${named(l)}.` };
-  const yes = l.reads?.length && (at === undefined || !group.reads?.[label]);
+    return { type: 'unopened', said: `This browser cannot open ${named(lend)}.` };
+  const yes = lend.reads?.length && (at === undefined || !group.reads?.[label]);
   // A guest's lends read none (web/page/visit.js `stay`), so the yes is a group's.
-  const g = yes
+  const opened = yes
     ? await store.opened({
         .../** @type {Group} */ (group),
         reads: { ...group.reads, [label]: { said: 'yes', at: Math.floor(Date.now() / 1000) } },
       })
     : group;
-  const stopped = g.reads?.[label]?.said === 'stop';
-  if (stopped) trace(`PAGE: ${l.name}'s reads were stopped here, so its pass names none`);
+  const stopped = opened.reads?.[label]?.said === 'stop';
+  if (stopped) trace(`PAGE: ${lend.name}'s reads were stopped here, so its pass names none`);
   const lends = [
-    l,
-    ...(stopped ? [] : lent.filter((o) => o !== l && (l.reads ?? []).includes(o.kind))),
-  ].map((o) => ({
-    label: o.label,
-    key: o.key,
-    relay: o.relay ?? null,
-    name: o.name,
-    kind: o.kind,
-    group: o.group ?? null,
-    person: o.person,
-    asks: o.asks,
-    version: o.version ?? null,
+    lend,
+    ...(stopped
+      ? []
+      : lent.filter((other) => other !== lend && (lend.reads ?? []).includes(other.kind))),
+  ].map((other) => ({
+    label: other.label,
+    key: other.key,
+    relay: other.relay ?? null,
+    name: other.name,
+    kind: other.kind,
+    group: other.group ?? null,
+    person: other.person,
+    asks: other.asks,
+    version: other.version ?? null,
   }));
-  const raw = lends.some((o) => !w.links(o.version)),
+  const raw = lends.some((one) => !core.links(one.version)),
     had = !raw && (await store.holder(label));
   const seed = had ? null : crypto.getRandomValues(new Uint8Array(32)),
     // With no holder had, a seed was made.
-    holder = had || w.actor(/** @type {Uint8Array} */ (seed));
+    holder = had || core.actor(/** @type {Uint8Array} */ (seed));
   if (raw)
     trace(
       'PAGE: a lend of this open is at a computer on an older svrngs, so its holder goes as bytes',
@@ -192,31 +200,38 @@ export async function handing(
   // seed sealed into the open and its sealing key left in a cookie for the
   // group's signer alone, which approves the app's entries with it.
   const approver = crypto.getRandomValues(new Uint8Array(32)),
-    approves = w.actor(approver);
+    approves = core.actor(approver);
   /** @type {Handoff} */
   const handoff = {
     label,
     lends,
-    pass: w.pass(
+    pass: core.pass(
       key,
       holder,
       label,
-      lends.slice(1).map((o) => o.label),
+      lends.slice(1).map((one) => one.label),
       until,
       approves,
     ),
     // An app on a port writes its kind's part of the record as you by naming the act (DESIGN §3, "Lent apps"); a guest's open, naming no group, writes none.
     writes:
-      l.group || !group.id
+      lend.group || !group.id
         ? null
-        : w.pass(key, holder, w.carried_label(l.key, l.kind, group.id), [], until, approves),
+        : core.pass(
+            key,
+            holder,
+            core.carried_label(lend.key, lend.kind, group.id),
+            [],
+            until,
+            approves,
+          ),
     group: group.id,
     holder,
     seed: seed && store.hex(seed),
     raw,
-    relay: w.relay_of(group.token) ?? null,
+    relay: core.relay_of(group.token) ?? null,
     page: here(),
-    unanswered: unanswered.map((u) => u.person ?? u),
+    unanswered: unanswered.map((who) => who.person ?? who),
   };
   trace(`PAGE: opening ${label} at ${start}, a pass to ${lends.length} lend(s) until ${until}`);
   const sealed = await sealOpen(handoff, approver);
@@ -230,4 +245,6 @@ export async function handing(
   return { type: 'handed', why: `to ${start}` };
 }
 /** @type {Io<Effect, PageMessage>} */
-export const io = { hand: (m) => store.unseal(m.group).then((key) => handing(m, key)) };
+export const io = {
+  hand: (message) => store.unseal(message.group).then((key) => handing(message, key)),
+};

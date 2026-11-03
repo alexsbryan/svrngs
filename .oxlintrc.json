@@ -36,5 +36,28 @@
     "**/vendor/**",
     "apps/on-air/vendored.mjs",
     "demo/runs/**"
+  ],
+  "overrides": [
+    {
+      "files": [
+        "web/*.js",
+        "web/page/*.js",
+        "crates/svrngs-node/src/home/**/*.js"
+      ],
+      "rules": {
+        "id-length": [
+          "error",
+          {
+            "min": 2,
+            "exceptions": [
+              "i",
+              "_"
+            ],
+            "properties": "never"
+          }
+        ],
+        "no-shadow": "error"
+      }
+    }
   ]
 }

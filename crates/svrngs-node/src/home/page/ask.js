@@ -62,15 +62,15 @@ import { label } from './index.js?v=__VERSION__';
  */
 const lentIn = (groups) =>
   Promise.all(
-    groups.map((g) =>
-      g.removed === false
-        ? get(`/v1/lends?namespace=${encodeURIComponent(g.id)}`).then(
-            (l) => l.lent,
+    groups.map((group) =>
+      group.removed === false
+        ? get(`/v1/lends?namespace=${encodeURIComponent(group.id)}`).then(
+            (lend) => lend.lent,
             () => [],
           )
         : [],
     ),
-  ).then((a) => a.flat());
+  ).then((answers) => answers.flat());
 // The app at `back`, kept only on its own origin, as open.js judges its way back (home.js@19b63b2b:233-236).
 /**
  * @param {Lent} app
@@ -79,82 +79,89 @@ const lentIn = (groups) =>
  */
 const leave = (app, back) => (
   location.assign(
-    `/to?${new URLSearchParams({ lend: label(app), at: ((u) => (u.origin === new URL(app.origin).origin ? u.pathname + u.search + u.hash : '/'))(new URL(back ?? '/', app.origin)) })}`,
+    `/to?${new URLSearchParams({ lend: label(app), at: ((url) => (url.origin === new URL(app.origin).origin ? url.pathname + url.search + url.hash : '/'))(new URL(back ?? '/', app.origin)) })}`,
   ),
   { type: 'gone', why: `to ${label(app)}` }
 );
 /**
- * @param {Said} q
+ * @param {Said} asked
  * @returns {Machine<State, Message, Effect>}
  */
-const ASK = (q) => ({
+const ASK = (asked) => ({
   states: { ask: ['reading', 'asking', 'sending', 'unlent'] },
   io: {
     read: ({ groups }) =>
       lentIn(groups).then((lent) => ({ type: 'lent', lent, why: `${lent.length} lent` })),
     yes: ({ lend, app }) =>
       post('/choices', { lend: label(lend), app: label(app), said: 'yes' }).then(() =>
-        leave(app, q.back),
+        leave(app, asked.back),
       ),
-    leave: ({ app }) => leave(app, q.back),
+    leave: ({ app }) => leave(app, asked.back),
   },
   // `lend` and `app` are set together, by `lent`, and only then is the
   // ask `asking`, or `sending` past it, so each step that reads them reads
   // them set.
-  step: (s, m) => {
-    switch (m.type) {
+  step: (state, message) => {
+    switch (message.type) {
       case 'lent':
         return ((lend, app) =>
           !lend || !app || !lend.asks
-            ? go(s, { ask: 'unlent' })
-            : go(s, { ask: 'asking' }, { lend, app }))(
+            ? go(state, { ask: 'unlent' })
+            : go(state, { ask: 'asking' }, { lend, app }))(
           .../** @type {[Lent | undefined, Lent | undefined]} */ (
-            [q.lend, q.app].map((x) => (m.lent ?? []).find((l) => label(l) === x))
+            [asked.lend, asked.app].map((wanted) =>
+              (message.lent ?? []).find((lend) => label(lend) === wanted),
+            )
           ),
         );
       case 'yes':
-        return s.at.ask === 'asking'
+        return state.at.ask === 'asking'
           ? go(
-              s,
+              state,
               { ask: 'sending' },
               {},
               {
                 run: 'yes',
-                lend: /** @type {Lent} */ (s.lend),
-                app: /** @type {Lent} */ (s.app),
+                lend: /** @type {Lent} */ (state.lend),
+                app: /** @type {Lent} */ (state.app),
                 failed: 'unsaid',
               },
             )
-          : no(s, `the ask is ${s.at.ask}`);
+          : no(state, `the ask is ${state.at.ask}`);
       case 'not':
-        return s.lend
-          ? go(s, {}, {}, { run: 'leave', app: /** @type {Lent} */ (s.app), failed: 'unsaid' })
-          : no(s, 'nothing is asked');
+        return state.lend
+          ? go(
+              state,
+              {},
+              {},
+              { run: 'leave', app: /** @type {Lent} */ (state.app), failed: 'unsaid' },
+            )
+          : no(state, 'nothing is asked');
       case 'unsaid':
-        return go(s, { ask: 'asking' }, { said: m.why });
+        return go(state, { ask: 'asking' }, { said: message.why });
       case 'gone':
-        return go(s, {});
+        return go(state, {});
       default:
-        return assertNever(s, m, 'the ask');
+        return assertNever(state, message, 'the ask');
     }
   },
 });
 
-// HOME's state, `h`, past its groups' read, as `Home` draws the ask only
-// then (home.js `Home`, past its first `return`), so `h.groups` is read.
+// HOME's state, `home`, past its groups' read, as `Home` draws the ask only
+// then (home.js `Home`, past its first `return`), so `home.groups` is read.
 /** @param {PlaceProps} props */
-function Asked({ s: h }) {
-  const [s, send] = useMachine(() =>
-    machine('ASK', ASK(h.q), { at: { ask: 'reading' }, said: '' }, [
-      { run: 'read', groups: /** @type {Group[]} */ (h.groups), failed: 'lent' },
+function Asked({ s: home }) {
+  const [state, send] = useMachine(() =>
+    machine('ASK', ASK(home.q), { at: { ask: 'reading' }, said: '' }, [
+      { run: 'read', groups: /** @type {Group[]} */ (home.groups), failed: 'lent' },
     ]),
   );
-  if (s.at.ask === 'reading') return null;
+  if (state.at.ask === 'reading') return null;
   // Past `reading` and `unlent`, the ask is `asking` or `sending`, so its
   // `lend` and `app` are set (ASK's `step`).
-  return s.at.ask === 'unlent'
+  return state.at.ask === 'unlent'
     ? html`<p>${unlent}</p>`
-    : html`<section><h2>${question(/** @type {Lent} */ (s.app), /** @type {Lent} */ (s.lend))}</h2><blockquote>${/** @type {Lent} */ (s.lend).asks}</blockquote><button onClick=${() => send({ type: 'yes' })}>Yes</button><button onClick=${() => send({ type: 'not' })}>Not now</button>${s.said}</section>`;
+    : html`<section><h2>${question(/** @type {Lent} */ (state.app), /** @type {Lent} */ (state.lend))}</h2><blockquote>${/** @type {Lent} */ (state.lend).asks}</blockquote><button onClick=${() => send({ type: 'yes' })}>Yes</button><button onClick=${() => send({ type: 'not' })}>Not now</button>${state.said}</section>`;
 }
 /** @type {{ ask: (props: PlaceProps) => Drawn }} */
 export const view = { ask: (props) => html`<${Asked} ...${props} />` };

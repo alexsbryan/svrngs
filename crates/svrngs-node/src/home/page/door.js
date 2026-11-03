@@ -50,41 +50,43 @@ import { post } from './group.js?v=__VERSION__';
  * @typedef {{ run: 'open', n: number, group: string, dir: string, failed: 'unopened' }} Effect
  */
 
-/** @param {{ name: string | null }} g */
-const its = (g) => (g.name ? `${g.name}’s folder` : 'The group’s folder');
+/** @param {{ name: string | null }} group */
+const its = (group) => (group.name ? `${group.name}’s folder` : 'The group’s folder');
 /**
- * @param {State} s
- * @param {Extract<Message, { n: number }>} m
+ * @param {State} state
+ * @param {Extract<Message, { n: number }>} message
  * @param {string} words
  * @returns {Step<State, Effect>}
  */
-const answered = (s, m, words) =>
-  late(s, 'open', m.n) ? no(s, late(s, 'open', m.n)) : go(s, { folder: m.type }, { said: words });
+const answered = (state, message, words) =>
+  late(state, 'open', message.n)
+    ? no(state, late(state, 'open', message.n))
+    : go(state, { folder: message.type }, { said: words });
 /** @type {Machine<State, Message, Effect>} */
 const FOLDER = {
   states: { folder: ['idle', 'opening', 'opened', 'unopened'] },
-  step: (s, m) => {
-    switch (m.type) {
+  step: (state, message) => {
+    switch (message.type) {
       case 'open': {
-        const [asked, n] = ask(s, 'open');
+        const [asked, serial] = ask(state, 'open');
         return go(
-          s,
+          state,
           { folder: 'opening' },
           { asked },
-          { run: 'open', n, group: m.group, dir: m.dir, failed: 'unopened' },
+          { run: 'open', n: serial, group: message.group, dir: message.dir, failed: 'unopened' },
         );
       }
       case 'opened':
-        return answered(s, m, ' Opened, in a window of its own.');
+        return answered(state, message, ' Opened, in a window of its own.');
       case 'unopened':
-        return answered(s, m, ` It could not be opened: ${m.why}.`);
+        return answered(state, message, ` It could not be opened: ${message.why}.`);
       default:
-        return assertNever(s, m, 'a folder');
+        return assertNever(state, message, 'a folder');
     }
   },
   io: {
-    open: ({ n, group, dir }) =>
-      post('/folder', { group, dir }).then(() => ({ type: 'opened', n, why: dir })),
+    open: ({ n: serial, group, dir }) =>
+      post('/folder', { group, dir }).then(() => ({ type: 'opened', n: serial, why: dir })),
   },
 };
 /**
@@ -93,37 +95,37 @@ const FOLDER = {
  */
 
 /** @param {FolderProps} props */
-function Folder({ g, dir }) {
-  const [s, send] = useMachine(() =>
+function Folder({ g: group, dir }) {
+  const [state, send] = useMachine(() =>
     machine('FOLDER', FOLDER, { at: { folder: 'idle' }, said: '' }),
   );
-  return html`<p class="folder">${its(g)} is on this computer at ${dir}</p><p><button onClick=${() => send({ type: 'open', group: g.id, dir })}>Open this folder</button>${s.said}</p>`;
+  return html`<p class="folder">${its(group)} is on this computer at ${dir}</p><p><button onClick=${() => send({ type: 'open', group: group.id, dir })}>Open this folder</button>${state.said}</p>`;
 }
 
 /**
- * @param {{ name: string | null }} g
+ * @param {{ name: string | null }} group
  * @param {PeopleRow[]} rows
  * @param {string} me
  */
-export const decides = (g, rows, me) =>
-  `${g.name ?? 'Your group'}: ${deciders(rows, me, 'computer')}.`;
+export const decides = (group, rows, me) =>
+  `${group.name ?? 'Your group'}: ${deciders(rows, me, 'computer')}.`;
 // The lends as the door judges them: read, unread (`null`), or, while they
 // are read, none yet, "asking…".
 /** @type {Record<'people' | 'folder' | 'removals', (props: PlaceProps) => Drawn>} */
 export const view = {
-  people: ({ s }) =>
-    s.people &&
-    html`<${Door} rows=${s.people.people} lends=${/** @type {Partial<Record<Reads, Lends | null>>} */ ({ read: s.lends, unread: null })[s.at.lends]} />`,
-  folder: ({ g, s }) =>
-    s.people &&
-    (g.folders === null
-      ? html`<p>This computer cannot say where ${its(g)} is.</p>`
-      : (g.folders ?? []).map((dir) => html`<${Folder} key=${dir} g=${g} dir=${dir} />`)),
-  removals: ({ g, s }) =>
-    s.people &&
+  people: ({ s: state }) =>
+    state.people &&
+    html`<${Door} rows=${state.people.people} lends=${/** @type {Partial<Record<Reads, Lends | null>>} */ ({ read: state.lends, unread: null })[state.at.lends]} />`,
+  folder: ({ g: group, s: state }) =>
+    state.people &&
+    (group.folders === null
+      ? html`<p>This computer cannot say where ${its(group)} is.</p>`
+      : (group.folders ?? []).map((dir) => html`<${Folder} key=${dir} g=${group} dir=${dir} />`)),
+  removals: ({ g: group, s: state }) =>
+    state.people &&
     // `null` only beside `removed`'s, and a group whose `removed` is
-    // `null` draws no place (group.js `Group`). `s.people` is read, past
-    // `s.people &&`, which tsc does not carry into the `map`'s callback.
-    /** @type {Removal[]} */ (g.removals).length > 0 &&
-    html`<ul class="removals">${/** @type {Removal[]} */ (g.removals).map((r) => html`<li>${removal(r, /** @type {People} */ (s.people).people)}</li>`)}</ul>`,
+    // `null` draws no place (group.js `Group`). `state.people` is read, past
+    // `state.people &&`, which tsc does not carry into the `map`'s callback.
+    /** @type {Removal[]} */ (group.removals).length > 0 &&
+    html`<ul class="removals">${/** @type {Removal[]} */ (group.removals).map((gone) => html`<li>${removal(gone, /** @type {People} */ (state.people).people)}</li>`)}</ul>`,
 };

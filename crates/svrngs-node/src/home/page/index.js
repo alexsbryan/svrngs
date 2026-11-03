@@ -16,10 +16,10 @@ import { cell } from './play.js?v=__VERSION__';
 // The lend's label, the first name of its origin here (home.js@19b63b2b:45).
 // A split answers one part at least, so its first is there.
 /**
- * @param {{ origin: string }} l
+ * @param {{ origin: string }} lend
  * @returns {string}
  */
-export const label = (l) => /** @type {string} */ (new URL(l.origin).hostname.split('.')[0]);
+export const label = (lend) => /** @type {string} */ (new URL(lend.origin).hostname.split('.')[0]);
 // A form posting what the person says of the app labelled `app` reaching
 // friends' lends as them to /reaching (home.rs): its yes, which goes on to
 // the app in a tab of its own (capability-open), or its Stop, which comes
@@ -35,11 +35,11 @@ export const Reach = ({ app, words, said = 'yes' }) =>
 // A lend reading friends' lends opens by the form posting its yes, any
 // other through `/to` (home.rs), which gives its origin a code of its own
 // that becomes its session there (give-session; home.js@19b63b2b:58-61).
-/** @param {Lent} l */
-const opener = (l) =>
-  l.reads?.length
-    ? html`<${Reach} app=${label(l)} words=${named(l)} />`
-    : html`<a href=${`/to?${new URLSearchParams({ lend: label(l) })}`} target="_blank">${named(l)}</a>`;
+/** @param {Lent} lend */
+const opener = (lend) =>
+  lend.reads?.length
+    ? html`<${Reach} app=${label(lend)} words=${named(lend)} />`
+    : html`<a href=${`/to?${new URLSearchParams({ lend: label(lend) })}`} target="_blank">${named(lend)}</a>`;
 const UNLISTED = {
   unanswered: 'did not answer, so what they lend is not listed',
   unheard: 'has not heard of yours yet, so what they lend is not listed yet',
@@ -49,40 +49,40 @@ const UNLISTED = {
 
 // Each lend, whose by the key its computer joined with (question.js
 // `apart`, never written into the read), then each computer unlisted.
-// Drawn only once GROUP has read the lends (`view.index`), so `s.lends` is
+// Drawn only once GROUP has read the lends (`view.index`), so `state.lends` is
 // read.
 /**
  * @param {PlaceProps} props
- * @param {Lends} [L]
+ * @param {Lends} [lends]
  * @param {Person[]} [people]
  * @returns {Drawn[]}
  */
 const rows = (
-  { g, s, send, home, me },
-  L = /** @type {Lends} */ (s.lends),
-  people = s.people?.people ?? [],
+  { g: group, s: state, send, home, me },
+  lends = /** @type {Lends} */ (state.lends),
+  people = state.people?.people ?? [],
 ) => {
-  const lent = L.lent.map((l) => ({
-    ...l,
-    called: called(people, people.find((r) => r.key === l.key)?.person_key),
+  const lent = lends.lent.map((lend) => ({
+    ...lend,
+    called: called(people, people.find((row) => row.key === lend.key)?.person_key),
   }));
-  const each = once(lent).map((l) =>
+  const each = once(lent).map((lend) =>
     ((opened, now) =>
-      html`<tr key=${label(l)}>${l.raw ? html`<td>${named(l)}</td>` : html`<td>${opener(l)}${` ${agreed(l, L.shelf, g)}`}</td>`}<td>${owner(l, g)}</td><td>${l.raw ? (l.key === me ? 'A port this computer lends.' : html`<${cell} l=${l} g=${g} s=${s} send=${send} home=${home} />`) : `${opened}.`}</td><td>${now}</td></tr>`)(
-      ...opens(l, 'In a tab'),
+      html`<tr key=${label(lend)}>${lend.raw ? html`<td>${named(lend)}</td>` : html`<td>${opener(lend)}${` ${agreed(lend, lends.shelf, group)}`}</td>`}<td>${owner(lend, group)}</td><td>${lend.raw ? (lend.key === me ? 'A port this computer lends.' : html`<${cell} l=${lend} g=${group} s=${state} send=${send} home=${home} />`) : `${opened}.`}</td><td>${now}</td></tr>`)(
+      ...opens(lend, 'In a tab'),
     ),
   );
-  const said = Object.entries(UNLISTED).flatMap(([k, why]) =>
+  const said = Object.entries(UNLISTED).flatMap(([how, why]) =>
     // Object.entries names each key a string; each is UNLISTED's, a list of
     // the lends' read.
-    L[/** @type {keyof typeof UNLISTED} */ (k)].map(
-      (p) => `${called(people, p.person_key) ?? p.person}'s computer ${why}.`,
+    lends[/** @type {keyof typeof UNLISTED} */ (how)].map(
+      (person) => `${called(people, person.person_key) ?? person.person}'s computer ${why}.`,
     ),
   );
   return [
     ...each,
     ...[...said, ...(each.length || said.length ? [] : ['Nobody lends anything here yet.'])].map(
-      (w) => html`<${Row} cells=${[w]} span=${4} />`,
+      (words) => html`<${Row} cells=${[words]} span=${4} />`,
     ),
   ];
 };

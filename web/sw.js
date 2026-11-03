@@ -36,30 +36,34 @@ const SHELL = [
   './wasm/svrngs_web.js?v=__VERSION__',
 ];
 
-/** @type {Scope} */ (self).addEventListener('install', (e) => {
-  e.waitUntil(
+/** @type {Scope} */ (self).addEventListener('install', (installing) => {
+  installing.waitUntil(
     caches
       .open(CACHE)
-      .then((c) => c.addAll(SHELL))
+      .then((cache) => cache.addAll(SHELL))
       .then(() => /** @type {Scope} */ (self).skipWaiting()),
   );
 });
 
-/** @type {Scope} */ (self).addEventListener('activate', (e) => {
-  e.waitUntil(
+/** @type {Scope} */ (self).addEventListener('activate', (activation) => {
+  activation.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) =>
+        Promise.all(keys.filter((name) => name !== CACHE).map((name) => caches.delete(name))),
+      )
       .then(() => /** @type {Scope} */ (self).clients.claim()),
   );
 });
 
 // The shell, from its cache. The dial is not HTTP to this origin — it is
 // iroh — so requests to it never reach here.
-/** @type {Scope} */ (self).addEventListener('fetch', (e) => {
-  const url = new URL(e.request.url);
-  if (url.origin !== self.location.origin || e.request.method !== 'GET') return;
-  e.respondWith(
-    caches.match(e.request, { ignoreSearch: true }).then((hit) => hit || fetch(e.request)),
+/** @type {Scope} */ (self).addEventListener('fetch', (fetchEvent) => {
+  const url = new URL(fetchEvent.request.url);
+  if (url.origin !== self.location.origin || fetchEvent.request.method !== 'GET') return;
+  fetchEvent.respondWith(
+    caches
+      .match(fetchEvent.request, { ignoreSearch: true })
+      .then((hit) => hit || fetch(fetchEvent.request)),
   );
 });

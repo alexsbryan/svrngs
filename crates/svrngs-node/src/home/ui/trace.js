@@ -7,9 +7,9 @@
 /** @type {string[]} */
 const lines = [];
 /** @type {Window & { __lines?: string[] }} */ (window).__lines = lines;
-/** @param {string} l */
-window.__trace = (l) => {
-  lines.push(l);
-  console.debug(l);
+/** @param {string} line */
+window.__trace = (line) => {
+  lines.push(line);
+  console.debug(line);
 };
 export const trace = window.__trace;

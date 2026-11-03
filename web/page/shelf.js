@@ -10,12 +10,12 @@ import { through } from './enter.js?v=__VERSION__';
 /** @import { Props } from './page.js?v=__VERSION__' */
 
 /**
- * @param {Group} g
+ * @param {Group} group
  * @param {unknown} apps what the shelf brings, as ui/shelf.js `Shelf` asks it
  */
-const bring = (g, apps) => through(g, '/shelf', apps);
+const bring = (group, apps) => through(group, '/shelf', apps);
 /** @type {Record<string, (props: Props) => Drawn>} */
 export const view = {
-  shelf: ({ s, send }) =>
-    html`<div id="shelf">${s.lent && s.shelf && html`<${Shelf} g=${s.group} lent=${s.lent} shelf=${s.shelf} joined=${s.joined} bring=${bring} after=${() => send({ type: 'reread' })} />`}</div>`,
+  shelf: ({ s: state, send }) =>
+    html`<div id="shelf">${state.lent && state.shelf && html`<${Shelf} g=${state.group} lent=${state.lent} shelf=${state.shelf} joined=${state.joined} bring=${bring} after=${() => send({ type: 'reread' })} />`}</div>`,
 };

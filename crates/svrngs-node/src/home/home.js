@@ -131,16 +131,16 @@ const FILES = /** @type {const} */ ([
 // until they are, where v1 loaded the page again (home_group.rs:219, :335
 // on v2: "You made Trip." over the old groups looked done).
 /**
- * @param {State} s
- * @param {{ type: 'again' | 'visible' }} m
+ * @param {State} state
+ * @param {{ type: 'again' | 'visible' }} message
  * @returns {Step<State, Effect>}
  */
-const reading = (s, m, [asked, n] = ask(s, 'groups')) =>
+const reading = (state, message, [asked, serial] = ask(state, 'groups')) =>
   go(
-    s,
-    m.type === 'again' && s.at.groups === 'read' ? { groups: 'rereading' } : {},
+    state,
+    message.type === 'again' && state.at.groups === 'read' ? { groups: 'rereading' } : {},
     { asked },
-    { run: 'groups', n, round: m.type, failed: 'unread' },
+    { run: 'groups', n: serial, round: message.type, failed: 'unread' },
   );
 // A message no case takes is offered to the feature its `flow` names: each
 // feature's `Taken` is that file's, and a message type HOME declares that
@@ -154,36 +154,40 @@ const HOME = (flows) => ({
     groups: ['reading', 'read', 'rereading', 'unread'],
     said: ['none', 'made', 'joined', 'left'],
   },
-  step: (s, m) => {
-    switch (m.type) {
+  step: (state, message) => {
+    switch (message.type) {
       case 'again':
       case 'visible':
-        return reading(s, m);
+        return reading(state, message);
       case 'read':
-        return late(s, 'groups', m.n)
-          ? no(s, late(s, 'groups', m.n))
-          : go(s, { groups: 'read' }, { groups: m.groups, key: m.key, round: { type: m.round } });
+        return late(state, 'groups', message.n)
+          ? no(state, late(state, 'groups', message.n))
+          : go(
+              state,
+              { groups: 'read' },
+              { groups: message.groups, key: message.key, round: { type: message.round } },
+            );
       case 'unread':
-        return late(s, 'groups', m.n)
-          ? no(s, late(s, 'groups', m.n))
-          : go(s, { groups: 'unread' }, { why: m.why });
+        return late(state, 'groups', message.n)
+          ? no(state, late(state, 'groups', message.n))
+          : go(state, { groups: 'unread' }, { why: message.why });
       default:
-        return offered(flows, s, m);
+        return offered(flows, state, message);
     }
   },
   io: {
-    groups: ({ n, round }) =>
+    groups: ({ n: serial, round }) =>
       get('/v1/groups').then(
         /** @param {{ groups: Held[], key: string }} answer */
         ({ groups, key }) => ({
           type: 'read',
-          n,
+          n: serial,
           groups,
           key,
           round,
           why: `${groups.length} group(s)`,
         }),
-        (e) => ({ type: 'unread', n, why: e.message }),
+        (error) => ({ type: 'unread', n: serial, why: error.message }),
       ),
   },
 });
@@ -194,34 +198,35 @@ const HOME = (flows) => ({
  */
 const first = (
   { pathname, search, origin },
-  q = Object.fromEntries(new URLSearchParams(search)),
+  query = Object.fromEntries(new URLSearchParams(search)),
 ) => ({
   at: {
     groups: 'reading',
-    said: /** @type {const} */ (['made', 'joined', 'left']).find((k) => k in q) ?? 'none',
+    said: /** @type {const} */ (['made', 'joined', 'left']).find((said) => said in query) ?? 'none',
   },
   asked: { groups: 1 },
   ask: pathname === '/ask',
-  q,
+  q: query,
   origin,
 });
 /** @type {Record<State['at']['said'], (q: Said, u: string) => string>} */
 const SAID = {
   none: () => '',
-  made: (q, u) =>
-    `You made ${q.made}. ${q.also ? `${q.also} ` : ''}${u}Invite someone to it below.`,
-  joined: (q, u) => `You’re in ${q.joined}${q.person ? `, as ${q.person}.` : ' already.'} ${u}`,
-  left: (q) =>
-    `You left ${q.left}. Rejoining needs a new invitation, and this computer can’t rejoin yet.`,
+  made: (query, invite) =>
+    `You made ${query.made}. ${query.also ? `${query.also} ` : ''}${invite}Invite someone to it below.`,
+  joined: (query, invite) =>
+    `You’re in ${query.joined}${query.person ? `, as ${query.person}.` : ' already.'} ${invite}`,
+  left: (query) =>
+    `You left ${query.left}. Rejoining needs a new invitation, and this computer can’t rejoin yet.`,
 };
 // The groups you left, with what stays of each here (home.js@19b63b2b:385-388).
-// Drawn once the groups are read (`Home`), so `s.groups` is read then.
+// Drawn once the groups are read (`Home`), so `state.groups` is read then.
 /** @param {PlaceProps} props */
-const left = ({ s }) =>
+const left = ({ s: state }) =>
   ((gone) =>
     gone.length > 0 &&
-    html`<section id="left"><h2>Groups you left</h2>${gone.map((g) => html`<p>${g.name ?? 'A group'}${g.made ? ` (${whose(g.made)})` : ''}: what you have of it stays on this computer${g.folders?.length ? `, its folder at ${g.folders.join(' and ')}` : ''}, and nothing new of it reaches you.</p>`)}</section>`)(
-    /** @type {Held[]} */ (s.groups).filter((g) => g.left),
+    html`<section id="left"><h2>Groups you left</h2>${gone.map((group) => html`<p>${group.name ?? 'A group'}${group.made ? ` (${whose(group.made)})` : ''}: what you have of it stays on this computer${group.folders?.length ? `, its folder at ${group.folders.join(' and ')}` : ''}, and nothing new of it reaches you.</p>`)}</section>`)(
+    /** @type {Held[]} */ (state.groups).filter((group) => group.left),
   );
 
 // The page's foot, last, once no feature's file `holds` it while it reads, as
@@ -236,32 +241,35 @@ const left = ({ s }) =>
  * @property {Places} places
  */
 
-// Past its first `return`, the groups are read, so `s.groups` is read then.
+// Past its first `return`, the groups are read, so `state.groups` is read then.
 /** @param {HomeProps} props */
 export function Home({ store, flows, places }) {
-  const s = useStore(store),
-    q = s.q,
+  const state = useStore(store),
+    query = state.q,
     home = store.dispatch,
-    held = () => Object.values(flows).some((f) => f.holds?.(s)),
-    P = /** @param {string} k */ (k) => places[k] && html`<${places[k]} s=${s} home=${home} />`;
-  if (s.at.groups === 'reading' || s.at.groups === 'unread')
-    return html`<p class=${s.at.groups === 'reading' ? 'said' : undefined}>${s.at.groups === 'reading' ? 'Reading your groups…' : `This computer cannot read your groups: ${s.why}`}</p>`;
-  if (s.ask || q.screen) return P(s.ask ? 'ask' : 'screen');
-  const said = SAID[s.at.said](
-    q,
-    q.unplaced ? `Its folder could not be made: ${q.unplaced}. ` : '',
+    held = () => Object.values(flows).some((flow) => flow.holds?.(state)),
+    Place = /** @param {string} place */ (place) =>
+      places[place] && html`<${places[place]} s=${state} home=${home} />`;
+  if (state.at.groups === 'reading' || state.at.groups === 'unread')
+    return html`<p class=${state.at.groups === 'reading' ? 'said' : undefined}>${state.at.groups === 'reading' ? 'Reading your groups…' : `This computer cannot read your groups: ${state.why}`}</p>`;
+  if (state.ask || query.screen) return Place(state.ask ? 'ask' : 'screen');
+  const said = SAID[state.at.said](
+    query,
+    query.unplaced ? `Its folder could not be made: ${query.unplaced}. ` : '',
   );
-  return html`${said && html`<p>${said}</p>`}${s.at.groups === 'rereading' && html`<p class="said">Reading your groups…</p>`}${!(/** @type {Held[]} */ (s.groups).length) && html`<p class="none">You’re in no group yet. Join one below from the link someone sent you, or make your own.</p>`}${/** @type {Held[]} */ (s.groups).filter((g) => !g.left).map((g) => html`<${Group} key=${g.id} g=${g} joined=${q.joined} me=${s.key} round=${s.round} places=${places} flows=${flows} home=${home} />`)}${PLACES.map((k) => (k !== 'lent' || !flows.acts.holds(s)) && P(k))}${!held() && html`<p class="address">Your home page, the same address each time svrngs starts: ${s.origin}/</p>`}`;
+  return html`${said && html`<p>${said}</p>`}${state.at.groups === 'rereading' && html`<p class="said">Reading your groups…</p>`}${!(/** @type {Held[]} */ (state.groups).length) && html`<p class="none">You’re in no group yet. Join one below from the link someone sent you, or make your own.</p>`}${/** @type {Held[]} */ (state.groups).filter((group) => !group.left).map((group) => html`<${Group} key=${group.id} g=${group} joined=${query.joined} me=${state.key} round=${state.round} places=${places} flows=${flows} home=${home} />`)}${PLACES.map((place) => (place !== 'lent' || !flows.acts.holds(state)) && Place(place))}${!held() && html`<p class="address">Your home page, the same address each time svrngs starts: ${state.origin}/</p>`}`;
 }
 
 // The edge: each feature's file, by its one URL, then HOME, its first read
 // run as it starts, drawn; and the page shown again, read again. Never
 // awaited at the module's top (home.js@19b63b2b:347-353, WebKit's module loader).
-Promise.all(FILES.map((f) => import(`./page/${f}.js?v=__VERSION__`)))
+Promise.all(FILES.map((file) => import(`./page/${file}.js?v=__VERSION__`)))
   .then((mods) => {
     // Each module imported by its name in FILES, so each name is there.
-    const flows = /** @type {Flows} */ (Object.fromEntries(FILES.map((f, i) => [f, mods[i]]))),
-      places = Object.assign({ left }, ...mods.map((f) => f.view));
+    const flows = /** @type {Flows} */ (
+        Object.fromEntries(FILES.map((file, i) => [file, mods[i]]))
+      ),
+      places = Object.assign({ left }, ...mods.map((flow) => flow.view));
     const store = machine(
       'HOME',
       HOME(flows),
@@ -287,10 +295,10 @@ Promise.all(FILES.map((f) => import(`./page/${f}.js?v=__VERSION__`)))
     );
   })
   .catch(
-    (e) => (
-      trace(`HOME: its files did not load: ${e}`),
+    (error) => (
+      trace(`HOME: its files did not load: ${error}`),
       render(
-        html`<p>This computer cannot read your groups: ${e.message}</p>`,
+        html`<p>This computer cannot read your groups: ${error.message}</p>`,
         /** @type {HTMLElement} */ (document.getElementById('home')),
       )
     ),

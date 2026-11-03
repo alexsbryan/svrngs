@@ -56,34 +56,39 @@ import { post } from './group.js?v=__VERSION__';
  */
 const VISITS = (home) => ({
   states: { visit: ['on', 'stopping', 'stopped', 'waited', 'refused'] },
-  step: (s, m) => {
-    switch (m.type) {
+  step: (state, message) => {
+    switch (message.type) {
       case 'stop':
         return go(
-          s,
+          state,
           { visit: 'stopping' },
           {},
-          { run: 'stop', g: m.g, id: m.id, failed: 'refused' },
+          { run: 'stop', g: message.g, id: message.id, failed: 'refused' },
         );
       case 'stopped':
-        return go(s, { visit: 'stopped' }, {}, { run: 'wait', ts: m.ts, failed: 'refused' });
+        return go(
+          state,
+          { visit: 'stopped' },
+          {},
+          { run: 'wait', ts: message.ts, failed: 'refused' },
+        );
       case 'waited':
-        return go(s, { visit: 'waited' });
+        return go(state, { visit: 'waited' });
       case 'refused':
-        return go(s, { visit: 'refused' }, { said: [...s.said, ` ${m.why}`] });
+        return go(state, { visit: 'refused' }, { said: [...state.said, ` ${message.why}`] });
       default:
-        return assertNever(s, m, 'a visit');
+        return assertNever(state, message, 'a visit');
     }
   },
   io: {
-    stop: ({ g, id }) =>
-      post('/visits', [g, id]).then((a) => ({
+    stop: ({ g: group, id }) =>
+      post('/visits', [group, id]).then((answer) => ({
         type: 'stopped',
-        ts: a.ts_unix,
-        why: `its Stop is at ${a.ts_unix}`,
+        ts: answer.ts_unix,
+        why: `its Stop is at ${answer.ts_unix}`,
       })),
     wait: ({ ts }) =>
-      new Promise((r) => setTimeout(r, ts * 1000 - Date.now())).then(
+      new Promise((resolve) => setTimeout(resolve, ts * 1000 - Date.now())).then(
         () => (home({ type: 'again' }), { type: 'waited', why: 'the groups are read again' }),
       ),
   },
@@ -99,23 +104,30 @@ const VISITS = (home) => ({
  */
 
 /** @param {StopProps} props */
-function Stop({ g, v, name, home }) {
-  const [s, send] = useMachine(() =>
+function Stop({ g: group, v: visit, name, home }) {
+  const [state, send] = useMachine(() =>
     machine('VISITS', VISITS(home), { at: { visit: 'on' }, said: [] }),
   );
-  return html`<li>${`${v.guest}, until ${until(v)}. Stop ends the visit now: what you lend stops opening to ${v.guest}, and everyone in ${name} sees it ended. `}<button onClick=${() => send({ type: 'stop', g: g.id, id: v.id })}>${`Stop ${v.guest}’s visit`}</button>${s.said}</li>`;
+  return html`<li>${`${visit.guest}, until ${until(visit)}. Stop ends the visit now: what you lend stops opening to ${visit.guest}, and everyone in ${name} sees it ended. `}<button onClick=${() => send({ type: 'stop', g: group.id, id: visit.id })}>${`Stop ${visit.guest}’s visit`}</button>${state.said}</li>`;
 }
 
 /**
- * @param {Group} g
+ * @param {Group} group
  * @param {PeopleRow[]} rows
  * @param {Home} home
  * @param {string} name
  * @returns {Drawn}
  */
-const listed = (g, rows, home, name, mine = (g.visiting ?? []).filter((v) => v.yours)) =>
-  html`${!g.visiting && html`<p>This computer cannot say who is visiting ${name} now.</p>`}${mine.length > 0 && html`<h3>Who you have over</h3><ul class="yours">${mine.map((v) => html`<${Stop} key=${v.id} g=${g} v=${v} name=${name} home=${home} />`)}</ul>`}${(g.visiting?.length ?? 0) > 0 && html`<h3>Visiting now</h3><${Visiting} vs=${g.visiting} rows=${rows} />`}`;
+const listed = (
+  group,
+  rows,
+  home,
+  name,
+  mine = (group.visiting ?? []).filter((visit) => visit.yours),
+) =>
+  html`${!group.visiting && html`<p>This computer cannot say who is visiting ${name} now.</p>`}${mine.length > 0 && html`<h3>Who you have over</h3><ul class="yours">${mine.map((visit) => html`<${Stop} key=${visit.id} g=${group} v=${visit} name=${name} home=${home} />`)}</ul>`}${(group.visiting?.length ?? 0) > 0 && html`<h3>Visiting now</h3><${Visiting} vs=${group.visiting} rows=${rows} />`}`;
 /** @type {{ visits: (props: PlaceProps) => Drawn }} */
 export const view = {
-  visits: ({ g, s, home }) => s.people && listed(g, s.people.people, home, g.name ?? 'this group'),
+  visits: ({ g: group, s: state, home }) =>
+    state.people && listed(group, state.people.people, home, group.name ?? 'this group'),
 };

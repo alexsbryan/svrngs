@@ -18,10 +18,10 @@ let loaded;
 const decode = (text) => JSON.parse(atob(text.replace(/-/g, '+').replace(/_/g, '/')));
 /** @param {ArrayBuffer} bytes */
 const hex = (bytes) =>
-  [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, '0')).join('');
-/** @param {Handoff} h */
-const digest = async (h) =>
-  hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(openMessage(h))));
+  [...new Uint8Array(bytes)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+/** @param {Handoff} handoff */
+const digest = async (handoff) =>
+  hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(openMessage(handoff))));
 /** @param {Uint8Array} seed */
 const pkcs8 = (seed) =>
   Uint8Array.from([
@@ -56,18 +56,18 @@ const pkcs8 = (seed) =>
  */
 function stored(name, keyPath, mode, act) {
   return new Promise((yes, no) => {
-    const r = indexedDB.open(name, 1);
-    r.onupgradeneeded = () => r.result.createObjectStore('kept', { keyPath });
-    r.onerror = () => no(r.error);
-    r.onsuccess = () => {
-      const tx = r.result.transaction('kept', mode);
+    const request = indexedDB.open(name, 1);
+    request.onupgradeneeded = () => request.result.createObjectStore('kept', { keyPath });
+    request.onerror = () => no(request.error);
+    request.onsuccess = () => {
+      const tx = request.result.transaction('kept', mode);
       const asked = act(tx.objectStore('kept'));
       tx.oncomplete = () => {
-        r.result.close();
+        request.result.close();
         yes(asked?.result);
       };
       tx.onabort = tx.onerror = () => {
-        r.result.close();
+        request.result.close();
         no(tx.error ?? new Error('this browser’s storage refused'));
       };
     };
@@ -80,7 +80,7 @@ function stored(name, keyPath, mode, act) {
  */
 const approvers = (mode, act) => stored('svrngs-approvers', 'label', mode, act);
 
-// The approver for `label`'s open `h`. A cookie for the label that opens the
+// The approver for `label`'s open `handoff`. A cookie for the label that opens the
 // open's seal is adopted first: kept, then deleted, so a second frame finds
 // the cookie or the record, never neither; the newest open adopted is the
 // one approved (last open wins). A cookie that does not open this seal is
@@ -88,35 +88,37 @@ const approvers = (mode, act) => stored('svrngs-approvers', 'label', mode, act);
 // be this open's. Records whose pass lapsed go.
 /**
  * @param {string} label
- * @param {Handoff} h
+ * @param {Handoff} handoff
  * @param {number} now in seconds
  */
-async function approver(label, h, now) {
-  await approvers('readwrite', (s) => {
-    const all = s.getAll();
+async function approver(label, handoff, now) {
+  await approvers('readwrite', (objects) => {
+    const all = objects.getAll();
     all.onsuccess = () =>
-      all.result.filter((r) => r.until <= now).forEach((r) => s.delete(r.label));
+      all.result
+        .filter((record) => record.until <= now)
+        .forEach((record) => objects.delete(record.label));
     return all;
   });
   const name = handoffCookie(label);
-  const seed = await openSeal(h, hostCookie(document.cookie, name));
+  const seed = await openSeal(handoff, hostCookie(document.cookie, name));
   if (seed) {
     const key = await crypto.subtle.importKey('pkcs8', pkcs8(seed), 'Ed25519', false, ['sign']);
     const record = {
       label,
       pub: actor(seed),
-      digest: await digest(h),
+      digest: await digest(handoff),
       key,
-      until: decode(h.pass).until,
+      until: decode(handoff.pass).until,
     };
     seed.fill(0);
-    await approvers('readwrite', (s) => s.put(record));
+    await approvers('readwrite', (objects) => objects.put(record));
     document.cookie = `${name}=; Max-Age=0; Path=/; Secure; SameSite=Strict`;
     console.debug(`SIGN: adopted the approver of ${label}'s newest open and deleted its cookie`);
   }
-  const kept = await approvers('readonly', (s) => s.get(label));
+  const kept = await approvers('readonly', (objects) => objects.get(label));
   if (!kept) throw new Error(`no approver is kept for ${label}: its cookie is gone or never came`);
-  if (kept.digest !== (await digest(h)))
+  if (kept.digest !== (await digest(handoff)))
     throw new Error(`${label} presented an open other than the one adopted`);
   return kept;
 }
@@ -136,9 +138,9 @@ async function stableApproval(group, pass, line, now) {
   await stored('svrngs-approvals', 'id', 'readwrite', (entries) => {
     const read = entries.getAll();
     read.onsuccess = () => {
-      const live = read.result.filter((p) => p.until > now);
-      for (const p of read.result) if (p.until <= now) entries.delete(p.id);
-      const existing = live.find((p) => p.id === id);
+      const live = read.result.filter((pending) => pending.until > now);
+      for (const pending of read.result) if (pending.until <= now) entries.delete(pending.id);
+      const existing = live.find((pending) => pending.id === id);
       if (existing) chosen = existing.pass;
       else if (live.length >= 4096) entries.transaction.abort();
       else entries.put({ id, pass, until: JSON.parse(line).ts_unix + 301 });
@@ -173,9 +175,10 @@ addEventListener('message', (asked) => {
     const now = Math.floor(Date.now() / 1000);
     await (loaded ??= init({ module_or_path: store.runtime() }));
     if (asked.data?.opening) {
-      const h = asked.data.opening;
-      if (h.label !== label) throw new Error(`an open for ${h.label} asked from ${label}`);
-      await approver(label, h, now);
+      const handoff = asked.data.opening;
+      if (handoff.label !== label)
+        throw new Error(`an open for ${handoff.label} asked from ${label}`);
+      await approver(label, handoff, now);
       return port.postMessage({ opened: true });
     }
     const { group, reach, line, authority } = asked.data?.approve ?? asked.data ?? {};

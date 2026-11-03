@@ -69,15 +69,17 @@ export const owns = ['joining', 'typed', 'why'];
 export const states = /** @type {const} */ ({
   join: ['unasked', 'asking', 'naming', 'redeeming', 'taken', 'joined'],
 });
-const send = /** @type {Sender} */ ((type, m) => ({ run: 'send', m: { type, ...m } }));
+const sending = /** @type {Sender} */ (
+  (type, message) => ({ run: 'send', m: { type, ...message } })
+);
 /**
- * @param {State} s
+ * @param {State} state
  * @param {Told} joining
  * @param {string} name
  */
-const redeem = (s, joining, name) =>
+const redeem = (state, joining, name) =>
   go(
-    s,
+    state,
     { join: 'redeeming' },
     { joining },
     /** @satisfies {Effect} */ ({
@@ -89,34 +91,34 @@ const redeem = (s, joining, name) =>
       failed: 'unjoined',
     }),
   );
-const asks = (/** @type {State} */ s) => ['naming', 'taken'].includes(s.at.join),
-  guest = (/** @type {State} */ s) => s.at.visit === 'naming';
+const asks = (/** @type {State} */ state) => ['naming', 'taken'].includes(state.at.join),
+  guest = (/** @type {State} */ state) => state.at.visit === 'naming';
 /** @type {Takes<State, Message, Effect | Send>} */
 export const takes = {
-  join: (s, { token, kept, wants }) =>
-    s.at.join === 'unasked'
+  join: (state, { token, kept, wants }) =>
+    state.at.join === 'unasked'
       ? go(
-          s,
+          state,
           { join: 'asking' },
           { joining: { token, kept, wants } },
           { run: 'ask', token, failed: 'unjoined' },
         )
-      : no(s, `a link is ${s.at.join} already`),
+      : no(state, `a link is ${state.at.join} already`),
   asked: (
-    s,
+    state,
     { group, told },
-    known = s.joining?.kept.find((g) => g.id === group.id),
+    known = state.joining?.kept.find((one) => one.id === group.id),
     // Read only while asking, once `join` set the link.
-    joining = { .../** @type {Link} */ (s.joining), group, told, known },
+    joining = { .../** @type {Link} */ (state.joining), group, told, known },
   ) =>
-    s.at.join !== 'asking'
-      ? no(s, `no link is asked of, it is ${s.at.join}`)
+    state.at.join !== 'asking'
+      ? no(state, `no link is asked of, it is ${state.at.join}`)
       : known
         ? go(
-            s,
+            state,
             { join: 'joined' },
             { joining },
-            send('hold', {
+            sending('hold', {
               group: known,
               wants: joining.wants,
               joined: true,
@@ -124,54 +126,63 @@ export const takes = {
             }),
           )
         : group.person
-          ? redeem(s, joining, group.person)
-          : go(s, { join: 'naming' }, { joining }),
-  'typed name': (s, { value }) =>
-    guest(s) || asks(s)
-      ? go(s, {}, { typed: value })
-      : no(s, `no name is asked: the link is ${s.at.join}`),
-  named: (s) =>
-    guest(s)
-      ? go(s, {}, {}, send('guest named', { guest: s.typed ?? '' }))
-      : asks(s)
+          ? redeem(state, joining, group.person)
+          : go(state, { join: 'naming' }, { joining }),
+  'typed name': (state, { value }) =>
+    guest(state) || asks(state)
+      ? go(state, {}, { typed: value })
+      : no(state, `no name is asked: the link is ${state.at.join}`),
+  named: (state) =>
+    guest(state)
+      ? go(state, {}, {}, sending('guest named', { guest: state.typed ?? '' }))
+      : asks(state)
         ? // A name is asked only of a link its issuer answered (`asked`).
-          redeem(s, /** @type {Told} */ (s.joining), s.typed ?? '')
-        : no(s, `no name is asked: the link is ${s.at.join}`),
-  taken: (s, { why }) =>
-    s.at.join === 'redeeming' ? go(s, { join: 'taken' }, { why }) : no(s, 'no name was sent'),
-  admitted: (s, { group }) =>
-    s.at.join === 'redeeming'
+          redeem(state, /** @type {Told} */ (state.joining), state.typed ?? '')
+        : no(state, `no name is asked: the link is ${state.at.join}`),
+  taken: (state, { why }) =>
+    state.at.join === 'redeeming'
+      ? go(state, { join: 'taken' }, { why })
+      : no(state, 'no name was sent'),
+  admitted: (state, { group }) =>
+    state.at.join === 'redeeming'
       ? // Redeeming, a link is being joined by (`redeem`).
         go(
-          s,
+          state,
           { join: 'joined' },
           {},
-          send('hold', { group, wants: /** @type {Link} */ (s.joining).wants, joined: true }),
+          sending('hold', {
+            group,
+            wants: /** @type {Link} */ (state.joining).wants,
+            joined: true,
+          }),
         )
-      : no(s, 'no name was sent'),
+      : no(state, 'no name was sent'),
   // Why it did not join, said as the page's failure, in words (app.js@19b63b2b:78).
-  unjoined: (s, { said, why }) => go(s, { join: 'unasked' }, {}, send('failed', { said, why })),
+  unjoined: (state, { said, why }) =>
+    go(state, { join: 'unasked' }, {}, sending('failed', { said, why })),
 };
 // Joined, its last words stand until the group is read (app.js@19b63b2b:162, :187).
 // Joined, a link was joined by (`asked`, `admitted`).
-const said = (/** @type {State} */ s) =>
-  s.at.join === 'joined' && s.at.list === 'unasked'
-    ? /** @type {Link} */ (s.joining).known
+const said = (/** @type {State} */ state) =>
+  state.at.join === 'joined' && state.at.list === 'unasked'
+    ? /** @type {Link} */ (state.joining).known
       ? 'asking'
       : 'redeeming'
-    : s.at.join;
+    : state.at.join;
 /** @type {Record<string, (s: State) => Said | undefined>} */
 export const heading = {
   // A state not named here says nothing.
-  join: (s, g = s.joining?.group) =>
+  join: (state, group = state.joining?.group) =>
     /** @type {Partial<Record<At['join'], Said>>} */ ({
       asking: ['Opening your link…'],
-      naming: [`Join ${g?.name}`],
-      taken: [`Join ${g?.name}`],
+      naming: [`Join ${group?.name}`],
+      taken: [`Join ${group?.name}`],
       redeeming: [
-        g?.person ? `Adding this phone to ${g.name} as ${g.person}’s…` : `Joining ${g?.name}…`,
+        group?.person
+          ? `Adding this phone to ${group.name} as ${group.person}’s…`
+          : `Joining ${group?.name}…`,
       ],
-    })[said(s)],
+    })[said(state)],
 };
 
 // The name asked, in the group's name. In iPhone Safari, the one browser
@@ -199,26 +210,26 @@ const ATTRS = { autocomplete: 'name', maxlength: 64, required: true };
 /** @param {NameFormProps} props */
 export const NameForm = ({ shown, group = '', keep, why, value, send, on }) =>
   html`<form key=${`${shown} ${why}`} id="join" hidden=${!shown} onSubmit=${(
-    /** @type {Event} */ e,
+    /** @type {Event} */ event,
   ) =>
     (
-      e.preventDefault(),
+      event.preventDefault(),
       send(on)
     )}><p id="keep" hidden=${!keep}>${keep && `To keep ${group} on this phone, add this page to your Home Screen first, and join from there.`}</p>${Field({ shape: 'for', id: 'name', words: html`What’s your name? Everyone in <span id="group">${group}</span> sees it.`, value, attrs: ATTRS, send })}<p id="why" class="bad">${why}</p><button>Join</button></form>`;
 /** @type {Record<string, (props: Props) => Drawn>} */
 export const view = {
-  join: ({ s, send }) =>
+  join: ({ s: state, send }) =>
     NameForm({
-      value: s.typed,
+      value: state.typed,
       send,
       on: { type: 'named' },
-      ...(guest(s)
+      ...(guest(state)
         ? { shown: true, group: 'the group you’re visiting' }
         : {
-            shown: asks(s),
-            group: s.joining?.group?.name,
-            keep: s.standalone === false,
-            why: s.why,
+            shown: asks(state),
+            group: state.joining?.group?.name,
+            keep: state.standalone === false,
+            why: state.why,
           }),
     }),
 };
@@ -229,7 +240,7 @@ export const view = {
 const PATIENCE = 60_000,
   AWAY = 'The computer that sent this link did not answer. Try again later.',
   wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__'),
-  trace = (/** @type {string} */ l) => globalThis.__trace?.(l);
+  trace = (/** @type {string} */ line) => globalThis.__trace?.(line);
 /**
  * @param {string} words
  * @param {number} [status]
@@ -246,18 +257,18 @@ let key;
 /**
  * `body` posted at `path` to the issuer of `token`, its answer's text, or
  * the refusal `refused` words for its status.
- * @param {typeof Wasm} w
+ * @param {typeof Wasm} core
  * @param {string} token
  * @param {string} path
  * @param {string} body
  * @param {(status: number, text: string) => string} [refused]
  * @returns {Promise<string>}
  */
-async function posted(w, token, path, body, refused = joining) {
+async function posted(core, token, path, body, refused = joining) {
   const dialled = await Promise.race([
-    w.connect_to_join(key, token),
-    new Promise((_, n) => setTimeout(() => n(new Error('no answer')), PATIENCE)),
-  ]).catch((e) => Promise.reject((trace(`PAGE: the dial failed: ${e}`), refusal(AWAY))));
+    core.connect_to_join(key, token),
+    new Promise((_, reject) => setTimeout(() => reject(new Error('no answer')), PATIENCE)),
+  ]).catch((error) => Promise.reject((trace(`PAGE: the dial failed: ${error}`), refusal(AWAY))));
   const bytes = new TextEncoder().encode(body),
     [res, text] = await dialled
       .fetch(
@@ -271,8 +282,8 @@ async function posted(w, token, path, body, refused = joining) {
       )
       // The wasm's `fetch` answers the page's `Response` (svrngs_web.d.ts `Dialled`).
       .then(
-        async (/** @type {Response} */ r) =>
-          /** @satisfies {[Response, string]} */ ([r, await r.text()]),
+        async (/** @type {Response} */ response) =>
+          /** @satisfies {[Response, string]} */ ([response, await response.text()]),
       )
       .finally(() => dialled.close());
   return res.ok
@@ -282,29 +293,29 @@ async function posted(w, token, path, body, refused = joining) {
         refusal(refused(res.status, text), res.status)),
       );
 }
-const unjoined = (/** @type {{ said?: string }} */ e) =>
+const unjoined = (/** @type {{ said?: string }} */ error) =>
   /** @satisfies {PageMessage} */ ({
     type: 'unjoined',
-    said: e.said,
-    why: String(e),
+    said: error.said,
+    why: String(error),
   });
 /** @type {Io<Effect, PageMessage>} */
 export const io = {
   ask: ({ token }) =>
     wasm()
-      .then(async (w) => {
-        if (!w.relay_of(token))
+      .then(async (core) => {
+        if (!core.relay_of(token))
           throw refusal(
             'This link was made by an older svrngs. Ask whoever sent it for a new one.',
           );
         key = crypto.getRandomValues(new Uint8Array(32));
-        const told = await posted(w, token, '/ask', w.ask(key, token)),
-          g = w.believe(told);
+        const told = await posted(core, token, '/ask', core.ask(key, token)),
+          group = core.believe(told);
         return /** @satisfies {PageMessage} */ ({
           type: 'asked',
           told,
-          group: { id: g.id, name: g.name, person: g.person, maker: g.maker },
-          why: `the link lets into ${g.id}${g.person ? `, for ${g.person}’s devices` : ''}`,
+          group: { id: group.id, name: group.name, person: group.person, maker: group.maker },
+          why: `the link lets into ${group.id}${group.person ? `, for ${group.person}’s devices` : ''}`,
         });
       })
       .catch(unjoined),
@@ -312,18 +323,18 @@ export const io = {
   // asked, saying whose it is and how to add this phone if it is theirs.
   admit: ({ token, told, group, name }) =>
     wasm()
-      .then(async (w) => {
+      .then(async (core) => {
         let body;
         try {
-          body = w.redemption(key, token, told, name);
+          body = core.redemption(key, token, told, name);
           // svrngs-core's refusal, thrown by the wasm as an `Error` with its words.
-        } catch (/** @type {any} */ e) {
+        } catch (/** @type {any} */ error) {
           return /** @satisfies {PageMessage} */ ({
             type: 'taken',
-            why: `${e.message[0].toUpperCase()}${e.message.slice(1)}.`,
+            why: `${error.message[0].toUpperCase()}${error.message.slice(1)}.`,
           });
         }
-        await posted(w, token, '/redeem', body, (status, text) =>
+        await posted(core, token, '/redeem', body, (status, text) =>
           status === 409
             ? `Someone in ${group.name} already goes by ${JSON.parse(text).error}. If that’s you, open your home page on your computer, press “Add your phone or another computer”, and open that link here. Else join under another name.`
             : joining(status),
@@ -342,8 +353,10 @@ export const io = {
         // Kept just above, so found.
         return /** @satisfies {PageMessage} */ ({
           type: 'admitted',
-          group: /** @type {Group} */ ((await store.groups()).find((g) => g.id === group.id)),
+          group: /** @type {Group} */ ((await store.groups()).find((one) => one.id === group.id)),
         });
       })
-      .catch((e) => (e.status === 409 ? { type: 'taken', why: e.said } : unjoined(e))),
+      .catch((error) =>
+        error.status === 409 ? { type: 'taken', why: error.said } : unjoined(error),
+      ),
 };

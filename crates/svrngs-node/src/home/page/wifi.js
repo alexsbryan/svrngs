@@ -65,7 +65,7 @@ import { get, post } from './group.js?v=__VERSION__';
 
 /**
  * ROOM's state: where its read or turn is, the round last read, each
- * lend's refusals, by `k`, what a press here closed, what is open, and,
+ * lend's refusals, by `keyOf`, what a press here closed, what is open, and,
  * while a turn is under way, where it was and the lend it turns.
  * @typedef {object} State
  * @property {{ room: 'reading' | 'read' | 'unread' | 'turning' }} at
@@ -87,7 +87,7 @@ import { get, post } from './group.js?v=__VERSION__';
 /**
  * The messages ROOM takes: a round's read; a line's press; what is open;
  * or a read or turn that failed, with why. A read and a turn carry no
- * read's number: `old` reads `m.n` of every message.
+ * read's number: `old` reads `message.n` of every message.
  * @typedef {{ type: 'read', round: number, n?: undefined }
  *   | { type: 'turn', l: Which, off: boolean, n?: undefined }
  *   | Answered
@@ -104,88 +104,91 @@ import { get, post } from './group.js?v=__VERSION__';
 
 const answer =
     /**
-     * @param {number} n
+     * @param {number} serial
      * @param {Turned} [turned]
      */
-    (n, turned) =>
+    (serial, turned) =>
       /**
        * @param {InRoom[]} room
        * @returns {Answered}
        */
       (room) => ({
         type: 'answered',
-        n,
+        n: serial,
         room,
         turned,
         why: `${room.length} open`,
       }),
-  same = /** @param {Which} a */ (a) => /** @param {Which} b */ (b) =>
-    a.key === b.key && a.name === b.name,
-  k = /** @param {Which} l */ (l) => `${l.key}:${l.name}`;
+  same = /** @param {Which} one */ (one) => /** @param {Which} other */ (other) =>
+    one.key === other.key && one.name === other.name,
+  keyOf = /** @param {Which} lend */ (lend) => `${lend.key}:${lend.name}`;
 // A turn is answered by what is open then, written over what was read, and
 // what it closed is kept, said closed in both lists until the page is left.
 /** @type {Machine<State, Message, Effect>} */
 export const ROOM = {
   states: { room: ['reading', 'read', 'unread', 'turning'] },
   io: {
-    read: ({ n }) => get('/v1/room').then(answer(n)),
-    turn: ({ n, l, off }) =>
-      post('/v1/room', { [off ? 'off' : 'on']: { key: l.key, name: l.name } }).then(
-        answer(n, { l, off }),
+    read: ({ n: serial }) => get('/v1/room').then(answer(serial)),
+    turn: ({ n: serial, l: lend, off }) =>
+      post('/v1/room', { [off ? 'off' : 'on']: { key: lend.key, name: lend.name } }).then(
+        answer(serial, { l: lend, off }),
       ),
   },
   // Each message's read numbered; an answer older than the last read asked
   // refused by name, and a read or a turn while a turn is under way, before
   // any case takes them.
-  step: (s, m) => {
-    const [asked, n] = ask(s, 'room');
-    const old = m.n && late(s, 'room', m.n);
-    if (old) return no(s, old);
-    if (s.at.room === 'turning' && ['read', 'turn'].includes(m.type))
-      return no(s, 'a turn is under way, and its answer is what is open');
-    // A refusal answers a turn, which set `s.l`.
-    switch (m.type) {
+  step: (state, message) => {
+    const [asked, serial] = ask(state, 'room');
+    const old = message.n && late(state, 'room', message.n);
+    if (old) return no(state, old);
+    if (state.at.room === 'turning' && ['read', 'turn'].includes(message.type))
+      return no(state, 'a turn is under way, and its answer is what is open');
+    // A refusal answers a turn, which set `state.l`.
+    switch (message.type) {
       case 'read':
-        return m.round <= s.round
-          ? no(s, `round ${m.round} is read already`)
+        return message.round <= state.round
+          ? no(state, `round ${message.round} is read already`)
           : go(
-              s,
+              state,
               { room: 'reading' },
-              { asked, round: m.round },
-              { run: 'read', n, failed: 'unread' },
+              { asked, round: message.round },
+              { run: 'read', n: serial, failed: 'unread' },
             );
       case 'turn':
         return go(
-          s,
+          state,
           { room: 'turning' },
-          { asked, was: s.at.room, l: m.l },
-          { run: 'turn', n, l: m.l, off: m.off, failed: 'refused' },
+          { asked, was: state.at.room, l: message.l },
+          { run: 'turn', n: serial, l: message.l, off: message.off, failed: 'refused' },
         );
       case 'refused':
         return go(
-          s,
-          { room: s.was },
-          { said: { ...s.said, [k(/** @type {Which} */ (s.l))]: ` ${m.why}` } },
+          state,
+          { room: state.was },
+          { said: { ...state.said, [keyOf(/** @type {Which} */ (state.l))]: ` ${message.why}` } },
         );
       case 'answered': {
-        // The turn read once, as tsc does not narrow `m.turned` inside
+        // The turn read once, as tsc does not narrow `message.turned` inside
         // the filter's callback.
-        const turned = m.turned;
+        const turned = message.turned;
         return go(
-          s,
+          state,
           { room: 'read' },
           {
-            room: m.room,
+            room: message.room,
             closed: turned
-              ? [...s.closed.filter((c) => !same(c)(turned.l)), ...(turned.off ? [turned.l] : [])]
-              : s.closed,
+              ? [
+                  ...state.closed.filter((closed) => !same(closed)(turned.l)),
+                  ...(turned.off ? [turned.l] : []),
+                ]
+              : state.closed,
           },
         );
       }
       case 'unread':
-        return go(s, { room: 'unread' }, { why: m.why });
+        return go(state, { room: 'unread' }, { why: message.why });
       default:
-        return assertNever(s, m, 'the room');
+        return assertNever(state, message, 'the room');
     }
   },
 };
@@ -196,10 +199,10 @@ const room = machine(
   [{ run: 'read', n: 1, failed: 'unread' }],
 );
 /**
- * @param {State} s
- * @param {Which} l
+ * @param {State} state
+ * @param {Which} lend
  */
-const on = (s, l) => (s.at.room === 'unread' ? undefined : s.room?.find(same(l)));
+const on = (state, lend) => (state.at.room === 'unread' ? undefined : state.room?.find(same(lend)));
 
 // A copy of the lend's address for a program, said beside it once, the
 // last press's words in place of the one before, where v1 appends each
@@ -233,14 +236,18 @@ const COPY = (at) => ({
           () => ({ type: 'copied', why: 'the clipboard refused' }),
         ),
   },
-  step: (s, m) => {
-    switch (m.type) {
+  step: (state, message) => {
+    switch (message.type) {
       case 'copy':
-        return go(s, {}, {}, { run: 'copy', failed: 'copied' });
+        return go(state, {}, {}, { run: 'copy', failed: 'copied' });
       case 'copied':
-        return go(s, { copy: 'copied' }, { said: m.words ?? ` Copy it from here: ${at}` });
+        return go(
+          state,
+          { copy: 'copied' },
+          { said: message.words ?? ` Copy it from here: ${at}` },
+        );
       default:
-        return assertNever(s, m, 'a copy');
+        return assertNever(state, message, 'a copy');
     }
   },
 });
@@ -251,8 +258,8 @@ const COPY = (at) => ({
 
 /** @param {CopyProps} props */
 const Copy = ({ at }) =>
-  (([s, send]) =>
-    html`${' '}<${Act} words="Copy its address for a program" on=${{ type: 'copy' }} send=${send} />${' '}<${Keep} at=${at} />${s.said}`)(
+  (([state, send]) =>
+    html`${' '}<${Act} words="Copy its address for a program" on=${{ type: 'copy' }} send=${send} />${' '}<${Keep} at=${at} />${state.said}`)(
     useMachine(() => machine('COPY', COPY(at), { at: { copy: 'uncopied' }, said: '' })),
   );
 // One lend's line, in either list, drawn from ROOM alone: what is open
@@ -264,9 +271,9 @@ const Copy = ({ at }) =>
  */
 
 /** @param {LineProps} props */
-const Line = ({ l, words, foot }) =>
-  ((s, r = on(s, l)) =>
-    html`<li>${words}<span>${` ${r?.said ?? `${s.closed.some(same(l)) ? 'Closed to this WiFi: nobody on it can open it through this computer now. ' : ''}Open it to this WiFi, and anyone on it can open it as you while svrngs runs.`} `}<${Act} words=${r ? 'Close it to this WiFi' : 'Open it to this WiFi'} doing=${{ state: s.at.room === 'turning' ? 'busy' : 'idle' }} on=${{ type: 'turn', l: r ?? { key: l.key, name: l.name }, off: Boolean(r) }} send=${room.dispatch} />${s.said[k(l)]}</span>${foot && html`<${Copy} at=${l.origin} />`}</li>`)(
+const Line = ({ l: lend, words, foot }) =>
+  ((state, open = on(state, lend)) =>
+    html`<li>${words}<span>${` ${open?.said ?? `${state.closed.some(same(lend)) ? 'Closed to this WiFi: nobody on it can open it through this computer now. ' : ''}Open it to this WiFi, and anyone on it can open it as you while svrngs runs.`} `}<${Act} words=${open ? 'Close it to this WiFi' : 'Open it to this WiFi'} doing=${{ state: state.at.room === 'turning' ? 'busy' : 'idle' }} on=${{ type: 'turn', l: open ?? { key: lend.key, name: lend.name }, off: Boolean(open) }} send=${room.dispatch} />${state.said[keyOf(lend)]}</span>${foot && html`<${Copy} at=${lend.origin} />`}</li>`)(
     useStore(room),
   );
 // Each lend of the group's that is a page, at the section's foot (home.js@19b63b2b:202),
@@ -275,21 +282,27 @@ const Line = ({ l, words, foot }) =>
  * @param {PlaceProps} props
  * @returns {Drawn}
  */
-function Foot({ s }) {
-  useEffect(() => room.dispatch({ type: 'read', round: s.asked?.lends ?? 1 }), [s.asked?.lends]);
-  const r = useStore(room),
-    people = s.people?.people ?? [],
-    whose = /** @param {Lent} l */ (l) => ({
-      ...l,
-      called: called(people, people.find((r) => r.key === l.key)?.person_key),
+function Foot({ s: state }) {
+  useEffect(
+    () => room.dispatch({ type: 'read', round: state.asked?.lends ?? 1 }),
+    [state.asked?.lends],
+  );
+  const roomState = useStore(room),
+    people = state.people?.people ?? [],
+    whose = /** @param {Lent} lend */ (lend) => ({
+      ...lend,
+      called: called(people, people.find((row) => row.key === lend.key)?.person_key),
     });
   return (
-    s.lends &&
-    (r.room || r.at.room === 'unread') &&
-    html`<ul class="wifi">${once(s.lends.lent)
-      .filter((l) => !l.raw)
-      .map((l) =>
-        ((w) => html`<${Line} key=${k(l)} l=${w} words=${`${named(w)}:`} foot />`)(whose(l)),
+    state.lends &&
+    (roomState.room || roomState.at.room === 'unread') &&
+    html`<ul class="wifi">${once(state.lends.lent)
+      .filter((lend) => !lend.raw)
+      .map((lend) =>
+        ((owned) =>
+          html`<${Line} key=${keyOf(lend)} l=${owned} words=${`${named(owned)}:`} foot />`)(
+          whose(lend),
+        ),
       )}</ul>`
   );
 }
@@ -299,18 +312,21 @@ export const view = { wifi: Foot };
 // why it cannot be read; none when nothing is open. A hook: acts.js calls
 // it on each of its draws, so it is drawn again with each read.
 /**
- * @param {State} s
+ * @param {State} state
  * @param {Which[]} [all]
  * @returns {Drawn[]}
  */
 export const rooms = (
-  s,
-  all = [...(s.at.room === 'unread' ? [] : (s.room ?? [])), ...s.closed.filter((c) => !on(s, c))],
+  state,
+  all = [
+    ...(state.at.room === 'unread' ? [] : (state.room ?? [])),
+    ...state.closed.filter((closed) => !on(state, closed)),
+  ],
 ) =>
-  s.at.room === 'unread' || all.length
+  state.at.room === 'unread' || all.length
     ? [
-        html`<p>${s.at.room === 'unread' ? s.why : 'Anyone on this WiFi can open these as you while svrngs runs: your TV, a phone, another computer. Each stays on the WiFi where you turned it on.'}</p>`,
-        html`<ul id="room">${all.map((r) => html`<${Line} key=${k(r)} l=${r} words=${`${r.person ? `${r.person}’s ` : ''}${r.name}:`} />`)}</ul>`,
+        html`<p>${state.at.room === 'unread' ? state.why : 'Anyone on this WiFi can open these as you while svrngs runs: your TV, a phone, another computer. Each stays on the WiFi where you turned it on.'}</p>`,
+        html`<ul id="room">${all.map((row) => html`<${Line} key=${keyOf(row)} l=${row} words=${`${row.person ? `${row.person}’s ` : ''}${row.name}:`} />`)}</ul>`,
       ]
     : [];
 export const part = () => rooms(useStore(room));

@@ -58,27 +58,34 @@ export const states = /** @type {const} */ ({
 /**
  * @template M
  * @param {readonly At['visit'][]} regions
- * @param {(s: State, m: M) => Step<State, Effect>} f
+ * @param {(s: State, m: M) => Step<State, Effect>} listener
  * @returns {(s: State, m: M) => Step<State, Effect>}
  */
-const at = (regions, f) => (s, m) =>
-  regions.includes(s.at.visit) ? f(s, m) : no(s, `the visit is ${s.at.visit}`);
+const at = (regions, listener) => (state, message) =>
+  regions.includes(state.at.visit)
+    ? listener(state, message)
+    : no(state, `the visit is ${state.at.visit}`);
 /** @type {Takes<State, Message, Effect>} */
 export const takes = {
-  visit: at(['none'], (s, { token }) =>
-    go(s, {}, { invited: token }, { run: 'recall', token, failed: 'failed' }),
+  visit: at(['none'], (state, { token }) =>
+    go(state, {}, { invited: token }, { run: 'recall', token, failed: 'failed' }),
   ),
-  unkept: at(['none'], (s) => go(s, { visit: 'naming' })),
-  'guest named': at(['naming'], (s, { guest }) =>
-    go(s, { visit: 'redeeming' }, {}, { run: 'redeem', token: s.invited, guest, failed: 'failed' }),
+  unkept: at(['none'], (state) => go(state, { visit: 'naming' })),
+  'guest named': at(['naming'], (state, { guest }) =>
+    go(
+      state,
+      { visit: 'redeeming' },
+      {},
+      { run: 'redeem', token: state.invited, guest, failed: 'failed' },
+    ),
   ),
   // Whether it has ended is the edge's, which alone reads the clock; one
   // that has not ends on its timer (`over`), and its lends go from the
   // page with it, where web/app.js listed them until the link was opened
   // again (:221-224).
-  redeemed: at(['none', 'redeeming'], (s, { stay, ended }) =>
+  redeemed: at(['none', 'redeeming'], (state, { stay, ended }) =>
     go(
-      s,
+      state,
       { visit: ended ? 'ended' : 'on' },
       { stay },
       ...(ended
@@ -86,49 +93,51 @@ export const takes = {
         : [/** @satisfies {Effect} */ ({ run: 'over', until: stay.until, failed: 'failed' })]),
     ),
   ),
-  ended: at(['on'], (s) => go(s, { visit: 'ended' })),
-  called: (s) => go(s, {}),
-  call: at(['on'], (s, { label }) =>
+  ended: at(['on'], (state) => go(state, { visit: 'ended' })),
+  called: (state) => go(state, {}),
+  call: at(['on'], (state, { label }) =>
     go(
-      s,
+      state,
       {},
       {},
       {
         run: 'call',
-        token: s.invited,
-        lent: s.stay.lent,
+        token: state.invited,
+        lent: state.stay.lent,
         label,
-        until: s.stay.until + PASS_LIFE,
+        until: state.stay.until + PASS_LIFE,
         failed: 'failed',
       },
     ),
   ),
 };
-const host = (/** @type {State} */ s) => s.stay?.host,
-  until = (/** @type {State} */ s) => s.stay && new Date(s.stay.until * 1000).toLocaleString();
+const host = (/** @type {State} */ state) => state.stay?.host,
+  until = (/** @type {State} */ state) =>
+    state.stay && new Date(state.stay.until * 1000).toLocaleString();
 /** @type {Record<string, (s: State) => Said | Nothing>} */
 export const heading = {
-  visit: (s) =>
+  visit: (state) =>
     /** @type {Partial<Record<At['visit'], Said>>} */ ({
       naming: ['You’re invited over as a guest'],
       redeeming: ['Opening your link…'],
-      on: [`You’re ${host(s)}’s guest until ${until(s)}`, 'good'],
-      ended: [`Your visit as ${host(s)}’s guest ended ${until(s)}.`, 'bad'],
-    })[s.at.visit],
+      on: [`You’re ${host(state)}’s guest until ${until(state)}`, 'good'],
+      ended: [`Your visit as ${host(state)}’s guest ended ${until(state)}.`, 'bad'],
+    })[state.at.visit],
 };
 /** @type {Record<string, (s: State) => string[] | Nothing>} */
 export const response = {
-  visit: (s) => s.at.visit === 'on' && !s.stay.lent.length && [`${host(s)} lends nothing yet.`],
+  visit: (state) =>
+    state.at.visit === 'on' && !state.stay.lent.length && [`${host(state)} lends nothing yet.`],
 };
 /**
- * @param {State} s
+ * @param {State} state
  * @param {Props['send']} send
  */
-export const listed = (s, send) =>
-  s.at.visit === 'on' &&
-  s.stay.lent.map(
-    (l) =>
-      html`<${Row} key=${l.label} cells=${[html`<button onClick=${() => send({ type: 'call', label: l.label })}>${named(l)}</button>`]} />`,
+export const listed = (state, send) =>
+  state.at.visit === 'on' &&
+  state.stay.lent.map(
+    (lend) =>
+      html`<${Row} key=${lend.label} cells=${[html`<button onClick=${() => send({ type: 'call', label: lend.label })}>${named(lend)}</button>`]} />`,
   );
 
 // The edge: the key, made here and kept sealed with the visit, or unsealed
@@ -138,57 +147,57 @@ export const listed = (s, send) =>
 const wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__'),
   said = (/** @type {string} */ words) =>
     Promise.reject(Object.assign(new Error(words), { said: words })),
-  failing = (/** @type {any} */ e) =>
-    /** @satisfies {PageMessage} */ ({ type: 'failed', said: e.said, why: String(e) });
+  failing = (/** @type {any} */ error) =>
+    /** @satisfies {PageMessage} */ ({ type: 'failed', said: error.said, why: String(error) });
 // The visit's key, made or unsealed by `recall` or `redeem` before any
 // other run reads it.
 /** @type {Uint8Array<ArrayBuffer> | undefined} */
 let key;
 /**
- * @param {typeof Wasm} w
+ * @param {typeof Wasm} core
  * @param {string} token
- * @param {Visit} v
- * @param {string} [at]
+ * @param {Visit} visit
+ * @param {string} [issuer]
  * @returns {PageMessage}
  */
-const stay = (w, token, v, at = w.issuer_of(token)) => ({
+const stay = (core, token, visit, issuer = core.issuer_of(token)) => ({
   type: 'redeemed',
-  ended: v.until <= Date.now() / 1000,
-  why: `a guest of ${v.host} until ${v.until}, opening ${Object.keys(v.lent).join(', ')}`,
+  ended: visit.until <= Date.now() / 1000,
+  why: `a guest of ${visit.host} until ${visit.until}, opening ${Object.keys(visit.lent).join(', ')}`,
   stay: {
-    host: v.host,
-    until: v.until,
-    lent: Object.entries(v.lent).map(([name, kind]) => ({
-      key: at,
-      relay: w.relay_of(token),
+    host: visit.host,
+    until: visit.until,
+    lent: Object.entries(visit.lent).map(([name, kind]) => ({
+      key: issuer,
+      relay: core.relay_of(token),
       name,
       kind,
-      person: v.host,
-      version: v.version,
-      label: w.label(at, name),
+      person: visit.host,
+      version: visit.version,
+      label: core.label(issuer, name),
     })),
   },
 });
 /**
- * @param {typeof Wasm} w
+ * @param {typeof Wasm} core
  * @param {string} token
  * @param {string} guest
  * @param {Uint8Array<ArrayBuffer>} [bytes]
  * @returns {Promise<Visit>}
  */
 async function visiting(
-  w,
+  core,
   token,
   guest,
   bytes = new TextEncoder().encode(
-    JSON.stringify({ ask: JSON.parse(w.ask(/** @type {Uint8Array} */ (key), token)), guest }),
+    JSON.stringify({ ask: JSON.parse(core.ask(/** @type {Uint8Array} */ (key), token)), guest }),
   ),
 ) {
-  const d = await Promise.race([
-    w.connect_to_join(/** @type {Uint8Array} */ (key), token),
-    new Promise((_, n) => setTimeout(n, 60_000)),
+  const dialled = await Promise.race([
+    core.connect_to_join(/** @type {Uint8Array} */ (key), token),
+    new Promise((_, reject) => setTimeout(reject, 60_000)),
   ]).catch(() => said('The computer that sent this link did not answer. Try again later.'));
-  const res = await d
+  const res = await dialled
     .fetch(
       'POST',
       '/visit',
@@ -198,7 +207,7 @@ async function visiting(
       ],
       new Blob([bytes]).stream(),
     )
-    .finally(() => d.close());
+    .finally(() => dialled.close());
   return res.ok
     ? res.json()
     : said(
@@ -211,13 +220,13 @@ async function visiting(
 export const io = {
   recall: ({ token }) =>
     wasm()
-      .then((w) =>
-        (w.relay_of(token)
+      .then((core) =>
+        (core.relay_of(token)
           ? store.visitOf(token)
           : said('This link was made by an older svrngs. Ask whoever sent it for a new one.')
         ).then((kept) =>
           kept
-            ? ((key = kept.key), stay(w, token, kept))
+            ? ((key = kept.key), stay(core, token, kept))
             : /** @satisfies {PageMessage} */ ({
                 type: 'unkept',
                 why: 'no visit is kept for this link',
@@ -227,32 +236,36 @@ export const io = {
       .catch(failing),
   redeem: ({ token, guest }) =>
     wasm()
-      // `v` is a local, held as a parameter no caller passes.
+      // `visit` is a local, held as a parameter no caller passes.
       .then(
         /** @type {(w: typeof Wasm) => Promise<PageMessage>} */ (
-          async (/** @type {typeof Wasm} */ w, /** @type {Visit | undefined} */ v) =>
+          async (/** @type {typeof Wasm} */ core, /** @type {Visit | undefined} */ visit) =>
             (
               (key = crypto.getRandomValues(new Uint8Array(32))),
-              (v = await visiting(w, token, guest)),
-              await store.keepVisit(token, v, /** @type {Uint8Array<ArrayBuffer>} */ (key)),
-              stay(w, token, v)
+              (visit = await visiting(core, token, guest)),
+              await store.keepVisit(token, visit, /** @type {Uint8Array<ArrayBuffer>} */ (key)),
+              stay(core, token, visit)
             )
         ),
       )
       .catch(failing),
-  over: ({ until }) =>
-    new Promise((r) => setTimeout(r, until * 1000 - Date.now())).then(() => ({
+  over: ({ until: ends }) =>
+    new Promise((resolve) => setTimeout(resolve, ends * 1000 - Date.now())).then(() => ({
       type: 'ended',
-      why: `the visit ended at ${until}`,
+      why: `the visit ended at ${ends}`,
     })),
-  call: ({ token, lent, label, until }) =>
+  call: ({ token, lent, label, until: ends }) =>
     handing(
       { group: { token }, lent, unanswered: [], label },
       /** @type {Uint8Array} */ (key),
-      until,
-    ).then((m) =>
-      m.type === 'handed'
-        ? /** @satisfies {PageMessage} */ ({ ...m, type: 'called' })
-        : /** @satisfies {PageMessage} */ ({ type: 'failed', said: m.said, why: m.said }),
+      ends,
+    ).then((message) =>
+      message.type === 'handed'
+        ? /** @satisfies {PageMessage} */ ({ ...message, type: 'called' })
+        : /** @satisfies {PageMessage} */ ({
+            type: 'failed',
+            said: message.said,
+            why: message.said,
+          }),
     ),
 };

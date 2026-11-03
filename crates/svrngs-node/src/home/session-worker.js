@@ -33,7 +33,10 @@ async function authenticated(request, intent = false) {
     const digest = new Uint8Array(
       await crypto.subtle.digest('SHA-256', await request.clone().arrayBuffer()),
     );
-    headers.set('x-svrngs-body', [...digest].map((b) => b.toString(16).padStart(2, '0')).join(''));
+    headers.set(
+      'x-svrngs-body',
+      [...digest].map((byte) => byte.toString(16).padStart(2, '0')).join(''),
+    );
   }
   // A no-cors request's headers are guarded to the safelisted ones, which
   // drops the proof without a word: every stylesheet, image and classic
@@ -50,21 +53,21 @@ async function authenticated(request, intent = false) {
 /** @type {Scope} */ (self).addEventListener('install', () =>
   /** @type {Scope} */ (self).skipWaiting(),
 );
-/** @type {Scope} */ (self).addEventListener('activate', (e) =>
-  e.waitUntil(/** @type {Scope} */ (self).clients.claim()),
+/** @type {Scope} */ (self).addEventListener('activate', (activation) =>
+  activation.waitUntil(/** @type {Scope} */ (self).clients.claim()),
 );
 // A page's message comes from its `Client` (session-client.js); one from
 // any other source has no `url`, which the first test refuses.
-/** @type {Scope} */ (self).addEventListener('message', (e) => {
+/** @type {Scope} */ (self).addEventListener('message', (received) => {
   if (
-    !(/** @type {Client | null} */ (e.source)?.url) ||
-    new URL(/** @type {Client} */ (e.source).url).origin !== self.location.origin ||
-    typeof e.data?.worker !== 'string'
+    !(/** @type {Client | null} */ (received.source)?.url) ||
+    new URL(/** @type {Client} */ (received.source).url).origin !== self.location.origin ||
+    typeof received.data?.worker !== 'string'
   )
     return;
-  e.waitUntil(
+  received.waitUntil(
     (async () => {
-      const url = new URL(e.data.worker, /** @type {Client} */ (e.source).url);
+      const url = new URL(received.data.worker, /** @type {Client} */ (received.source).url);
       if (url.origin !== self.location.origin) throw new Error('an app worker is its own origin’s');
       const res = await authenticated(new Request(url));
       if (!res.ok) throw new Error(`its worker answered ${res.status}`);
@@ -72,8 +75,10 @@ async function authenticated(request, intent = false) {
       const listeners = { fetch: [], install: [], activate: [] };
       // An app may listen for any type; these three are handed on, and a
       // listener's own type is the app's, never read here.
-      const on = (/** @type {string} */ type, /** @type {(e: never) => void} */ f) =>
-        /** @type {Partial<Record<string, ((e: never) => void)[]>>} */ (listeners)[type]?.push(f);
+      const on = (/** @type {string} */ type, /** @type {(e: never) => void} */ listener) =>
+        /** @type {Partial<Record<string, ((e: never) => void)[]>>} */ (listeners)[type]?.push(
+          listener,
+        );
       /**
        * @param {RequestInfo | URL} input
        * @param {RequestInit} [init]
@@ -92,25 +97,26 @@ async function authenticated(request, intent = false) {
       const scope = new Proxy(
         /** @type {Record<string | symbol, unknown>} */ (/** @type {unknown} */ (self)),
         {
-          get: (o, k) =>
-            k === 'addEventListener'
+          get: (target, property) =>
+            property === 'addEventListener'
               ? on
-              : k === 'fetch'
+              : property === 'fetch'
                 ? fetched
-                : typeof o[k] === 'function'
-                  ? o[k].bind(o)
-                  : o[k],
+                : typeof target[property] === 'function'
+                  ? target[property].bind(target)
+                  : target[property],
         },
       );
       new Function('self', 'addEventListener', 'fetch', await res.text())(scope, on, fetched);
       app = listeners.fetch;
-      for (const f of [...listeners.install, ...listeners.activate]) f({ waitUntil: () => {} });
-      e.ports[0]?.postMessage({ ok: true });
-    })().catch((err) => e.ports[0]?.postMessage({ error: String(err) })),
+      for (const listener of [...listeners.install, ...listeners.activate])
+        listener({ waitUntil: () => {} });
+      received.ports[0]?.postMessage({ ok: true });
+    })().catch((err) => received.ports[0]?.postMessage({ error: String(err) })),
   );
 });
-/** @type {Scope} */ (self).addEventListener('fetch', (e) => {
-  const url = new URL(e.request.url);
+/** @type {Scope} */ (self).addEventListener('fetch', (fetchEvent) => {
+  const url = new URL(fetchEvent.request.url);
   if (
     url.origin !== self.location.origin ||
     [
@@ -122,10 +128,10 @@ async function authenticated(request, intent = false) {
     ].includes(url.pathname)
   )
     return;
-  e.respondWith(
+  fetchEvent.respondWith(
     (async () => {
       const authority = await browserAuthority(
-        e,
+        fetchEvent,
         /** @type {Scope} */ (self).clients,
         self.location.origin,
       );
@@ -133,7 +139,7 @@ async function authenticated(request, intent = false) {
         // A read capability is independent authority: forward it unsigned for
         // the node to judge. Never let a refusal bootstrap this frame's key.
         if (url.pathname.startsWith('/svrngs-as/')) {
-          const response = await fetch(e.request);
+          const response = await fetch(fetchEvent.request);
           if (response.status !== 401) return response;
         }
         return new Response('Open this page as a tab, or from its own origin', { status: 403 });
@@ -141,19 +147,19 @@ async function authenticated(request, intent = false) {
       const intent = authority === Browser.Own;
       /** @type {Response | Promise<Response> | undefined} */
       let given;
-      for (const f of intent ? (app ?? []) : [])
-        f({
-          request: e.request,
-          clientId: e.clientId,
-          respondWith: (p) => {
-            given ??= p;
+      for (const flow of intent ? (app ?? []) : [])
+        flow({
+          request: fetchEvent.request,
+          clientId: fetchEvent.clientId,
+          respondWith: (promise) => {
+            given ??= promise;
           },
           waitUntil: () => {},
         });
-      const response = await (given ?? authenticated(e.request, intent));
+      const response = await (given ?? authenticated(fetchEvent.request, intent));
       if (
         url.hostname === 'svrngs.localhost' ||
-        e.request.method !== 'GET' ||
+        fetchEvent.request.method !== 'GET' ||
         !response.headers.get('content-type')?.includes('text/html')
       )
         return response;

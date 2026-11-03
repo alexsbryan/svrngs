@@ -44,37 +44,37 @@ import { chosen } from './enter.js?v=__VERSION__';
  * @typedef {{ run: 'end', until: number, failed: string }} Effect
  */
 
-/** @param {Group} g */
-const titled = (g) => `${g.name}${g.maker ? ` (${whose(g)})` : ''}`;
+/** @param {Group} group */
+const titled = (group) => `${group.name}${group.maker ? ` (${whose(group)})` : ''}`;
 // Yours by your first key (keys-names), from a computer at version 2 by name (app.js@19b63b2b:466-468).
 // Asked only of someone visiting (`visitors`).
 /**
- * @param {State} s
+ * @param {State} state
  * @param {string} [you]
  */
-const yours = (s, you = s.people.find((r) => r.key === s.me)?.person_key) =>
-  /** @type {Visitor[]} */ (s.visiting).some((v) =>
-    v.host_key ? v.host_key === you : v.host === s.group.person,
+const yours = (state, you = state.people.find((row) => row.key === state.me)?.person_key) =>
+  /** @type {Visitor[]} */ (state.visiting).some((visit) =>
+    visit.host_key ? visit.host_key === you : visit.host === state.group.person,
   );
-/** @param {State} s */
-const visitors = (s) =>
-  s.visiting
-    ? s.visiting.length > 0 &&
-      html`<h2>Visiting now</h2><${Visiting} vs=${s.visiting} rows=${s.people} />${yours(s) && html`<p>You stop your guest’s visit on the home page of the computer you made their link on.</p>`}`
-    : html`<p>Who is visiting ${s.group.name} cannot be read just now.</p>`;
+/** @param {State} state */
+const visitors = (state) =>
+  state.visiting
+    ? state.visiting.length > 0 &&
+      html`<h2>Visiting now</h2><${Visiting} vs=${state.visiting} rows=${state.people} />${yours(state) && html`<p>You stop your guest’s visit on the home page of the computer you made their link on.</p>`}`
+    : html`<p>Who is visiting ${state.group.name} cannot be read just now.</p>`;
 
 export const owns = ['ending'];
 /** @type {Takes<State, Message, Effect>} */
 export const takes = {
-  ends: (s, { until }) =>
-    until === s.ending
-      ? no(s, `the end at ${until} is waited for already`)
-      : go(s, {}, { ending: until }, { run: 'end', until, failed: 'failed' }),
+  ends: (state, { until }) =>
+    until === state.ending
+      ? no(state, `the end at ${until} is waited for already`)
+      : go(state, {}, { ending: until }, { run: 'end', until, failed: 'failed' }),
 };
 /** @type {Io<Effect, PageMessage>} */
 export const io = {
   end: ({ until }) =>
-    new Promise((r) => setTimeout(r, until * 1000 - Date.now())).then(() => ({
+    new Promise((resolve) => setTimeout(resolve, until * 1000 - Date.now())).then(() => ({
       type: 'reread',
       why: `a visit ended at ${until}`,
     })),
@@ -87,17 +87,17 @@ export const io = {
  */
 /** @param {EndsProps} props */
 function Ends({ vs, send }) {
-  useEffect(() => send({ type: 'ends', until: Math.min(...vs.map((v) => v.until)) }), [vs]);
+  useEffect(() => send({ type: 'ends', until: Math.min(...vs.map((visit) => visit.until)) }), [vs]);
   return null;
 }
 
 /** @type {Record<string, (props: Props) => Drawn>} */
 export const view = {
-  door: ({ s, send }) =>
-    html`<div id="door">${chosen(s, send)}${s.lent && html`<p>${titled(s.group)}</p><${Door} rows=${s.people} lends=${{ unanswered: s.unanswered }} />`}</div>`,
-  removals: ({ s }) =>
-    html`<ul id="removals">${s.lent && (s.removals ?? [null]).map((r) => html`<li>${r ? removal(r, s.people) : `Who was removed from ${s.group.name} cannot be read just now.`}</li>`)}</ul>`,
+  door: ({ s: state, send }) =>
+    html`<div id="door">${chosen(state, send)}${state.lent && html`<p>${titled(state.group)}</p><${Door} rows=${state.people} lends=${{ unanswered: state.unanswered }} />`}</div>`,
+  removals: ({ s: state }) =>
+    html`<ul id="removals">${state.lent && (state.removals ?? [null]).map((gone) => html`<li>${gone ? removal(gone, state.people) : `Who was removed from ${state.group.name} cannot be read just now.`}</li>`)}</ul>`,
   // No one visiting, or who cannot be read: `undefined > 0` is false.
-  visitors: ({ s, send }) =>
-    html`<section id="visitors">${s.lent && visitors(s)}${/** @type {number} */ (s.visiting?.length) > 0 && html`<${Ends} vs=${s.visiting} send=${send} />`}</section>`,
+  visitors: ({ s: state, send }) =>
+    html`<section id="visitors">${state.lent && visitors(state)}${/** @type {number} */ (state.visiting?.length) > 0 && html`<${Ends} vs=${state.visiting} send=${send} />`}</section>`,
 };

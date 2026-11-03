@@ -74,7 +74,7 @@ import { get, post } from './group.js?v=__VERSION__';
 
 /** @type {State} */
 const FIRST = { at: { join: 'typing' }, link: '', person: '', for: undefined, why: '' },
-  who = /** @param {State} s */ (s) => s.for?.[1] ?? s.person.trim();
+  who = /** @param {State} state */ (state) => state.for?.[1] ?? state.person.trim();
 /**
  * @param {HOME.PlaceProps['home']} home
  * @returns {Machine<State, Message, Effect>}
@@ -82,17 +82,17 @@ const FIRST = { at: { join: 'typing' }, link: '', person: '', for: undefined, wh
 export const JOIN = (home) => ({
   states: { join: ['typing', 'checking', 'checked', 'refused', 'joining'] },
   io: {
-    check: ({ link, n }) =>
-      get(`/join?${new URLSearchParams({ link })}`).then((a) => ({
+    check: ({ link, n: serial }) =>
+      get(`/join?${new URLSearchParams({ link })}`).then((answer) => ({
         type: 'checked',
-        n,
-        for: a,
-        why: a[0],
+        n: serial,
+        for: answer,
+        why: answer[0],
       })),
     join: ({ link, person }) =>
       post('/join', { link, person }).then(
-        ([joined, person, unplaced]) => (
-          home({ type: 'joined', flow: 'join', q: { joined, person, unplaced } }),
+        ([joined, joinedAs, unplaced]) => (
+          home({ type: 'joined', flow: 'join', q: { joined, person: joinedAs, unplaced } }),
           home({ type: 'again' }),
           { type: 'joined', why: 'said, the groups read again' }
         ),
@@ -100,64 +100,65 @@ export const JOIN = (home) => ({
   },
   // An answer to an ask older than the last is refused by name, before any
   // case takes it.
-  step: (s, m) => {
-    const old = (m.type === 'checked' || m.type === 'refused') && late(s, 'link', m.n);
-    if (old) return no(s, old);
-    switch (m.type) {
+  step: (state, message) => {
+    const old =
+      (message.type === 'checked' || message.type === 'refused') && late(state, 'link', message.n);
+    if (old) return no(state, old);
+    switch (message.type) {
       case 'typed':
-        return m.field === 'person'
-          ? go(s, {}, { person: m.value })
-          : ((asked, n) =>
+        return message.field === 'person'
+          ? go(state, {}, { person: message.value })
+          : ((asked, serial) =>
               go(
-                s,
+                state,
                 { join: 'checking' },
                 {
-                  link: m.value,
+                  link: message.value,
                   asked,
                   why: 'Asking the computer that sent it what it is for…',
                 },
-                { run: 'check', link: m.value, n, failed: 'refused' },
-              ))(...ask(s, 'link'));
+                { run: 'check', link: message.value, n: serial, failed: 'refused' },
+              ))(...ask(state, 'link'));
       case 'checked':
-        return go(s, { join: 'checked' }, { for: m.for, why: '' });
+        return go(state, { join: 'checked' }, { for: message.for, why: '' });
       case 'refused':
-        return go(s, { join: 'refused' }, { for: undefined, why: m.why });
+        return go(state, { join: 'refused' }, { for: undefined, why: message.why });
       case 'join':
-        return s.at.join === 'joining'
-          ? no(s, 'a join is under way, and is answered first')
-          : s.for
+        return state.at.join === 'joining'
+          ? no(state, 'a join is under way, and is answered first')
+          : state.for
             ? go(
-                s,
+                state,
                 { join: 'joining' },
                 {},
-                { run: 'join', link: s.link, person: who(s), failed: 'unjoined' },
+                { run: 'join', link: state.link, person: who(state), failed: 'unjoined' },
               )
-            : no(s, 'no link is asked of yet');
+            : no(state, 'no link is asked of yet');
       case 'joined':
-        return go(s, FIRST.at, FIRST);
+        return go(state, FIRST.at, FIRST);
       case 'unjoined':
-        return go(s, { join: 'refused' }, { why: m.why });
+        return go(state, { join: 'refused' }, { why: message.why });
       default:
-        return assertNever(s, m, 'joining');
+        return assertNever(state, message, 'joining');
     }
   },
 });
 /**
- * @param {HOME.State} s
- * @param {Taken} m
+ * @param {HOME.State} state
+ * @param {Taken} message
  * @returns {Step<HOME.State, HOME.Effect>}
  */
-export const take = (s, m) => go(s, { said: 'joined' }, { q: m.q });
+export const take = (state, message) => go(state, { said: 'joined' }, { q: message.q });
 
 /** @param {HOME.PlaceProps} props */
 const Join = ({ home }) =>
   ((
-    s,
+    state,
     send,
-    typed = /** @param {{ currentTarget: HTMLInputElement }} e */ (e) =>
-      send({ type: 'typed', field: 'person', value: e.currentTarget.value }),
+    typed = /** @param {{ currentTarget: HTMLInputElement }} typing */ (typing) =>
+      send({ type: 'typed', field: 'person', value: typing.currentTarget.value }),
   ) =>
-    html`<section id="join"><h2>Join a group from a link</h2><p><${Field} name="link" words="The link someone sent you: " value=${s.link} send=${send} /><label hidden=${Boolean(s.for?.[1])}>${'Your name in it: '}<input name="person" value=${s.person} onInput=${typed} /></label>${s.for && html`<${Act} words=${`Join ${s.for[0]}${who(s) ? ` as ${who(s)}` : ''}`} doing=${{ state: s.at.join === 'joining' ? 'busy' : 'idle' }} on=${{ type: 'join' }} send=${send} />`}</p><p>${s.why}</p></section>`)(
+    html`<section id="join"><h2>Join a group from a link</h2><p><${Field} name="link" words="The link someone sent you: " value=${state.link} send=${send} /><label hidden=${Boolean(state.for?.[1])}>${'Your name in it: '}<input name="person" value=${state.person} onInput=${typed} /></label>${state.for && html`<${Act} words=${`Join ${state.for[0]}${who(state) ? ` as ${who(state)}` : ''}`} doing=${{ state: state.at.join === 'joining' ? 'busy' : 'idle' }} on=${{ type: 'join' }} send=${send} />`}</p><p>${state.why}</p></section>`)(
     ...useMachine(() => machine('JOIN', JOIN(home), FIRST)),
   );
 /** @type {{ join: (props: HOME.PlaceProps) => Drawn }} */

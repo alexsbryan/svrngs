@@ -73,13 +73,14 @@ import { get, post } from './group.js?v=__VERSION__';
 
 // What a lend needs first, as /running says from svrngs's table, in a
 // sentence each: its own accounts, a setting, or what svrngs keeps back.
-/** @param {Shown} r */
-export const needs = (r) =>
+/** @param {Shown} shown */
+export const needs = (shown) =>
   [
-    r.signs?.accounts &&
-      `It keeps its own accounts, so make each person one in it: ${r.signs.accounts}.`,
-    r.signs?.header && `Before it knows who is who, set this in it: ${r.signs.header}.`,
-    r.keeps?.length && `svrngs keeps these parts of it from everyone: ${r.keeps.join(', ')}.`,
+    shown.signs?.accounts &&
+      `It keeps its own accounts, so make each person one in it: ${shown.signs.accounts}.`,
+    shown.signs?.header && `Before it knows who is who, set this in it: ${shown.signs.header}.`,
+    shown.keeps?.length &&
+      `svrngs keeps these parts of it from everyone: ${shown.keeps.join(', ')}.`,
   ]
     .filter(Boolean)
     .join(' ');
@@ -89,28 +90,33 @@ export const needs = (r) =>
 const RUNNING = {
   states: { running: ['unlooked', 'looking', 'looked', 'unread'] },
   io: {
-    look: ({ n }) =>
+    look: ({ n: serial }) =>
       get('/running').then(({ running: found, named }) => ({
         type: 'looked',
-        n,
+        n: serial,
         found,
         named,
         why: `${found.length} running`,
       })),
   },
-  step: (s, m) => {
-    const [asked, n] = ask(s, 'running');
-    const old = m.type !== 'look' && late(s, 'running', m.n);
-    if (old) return no(s, old);
-    switch (m.type) {
+  step: (state, message) => {
+    const [asked, serial] = ask(state, 'running');
+    const old = message.type !== 'look' && late(state, 'running', message.n);
+    if (old) return no(state, old);
+    switch (message.type) {
       case 'look':
-        return go(s, { running: 'looking' }, { asked }, { run: 'look', n, failed: 'unread' });
+        return go(
+          state,
+          { running: 'looking' },
+          { asked },
+          { run: 'look', n: serial, failed: 'unread' },
+        );
       case 'looked':
-        return go(s, { running: 'looked' }, { found: m.found, named: m.named });
+        return go(state, { running: 'looked' }, { found: message.found, named: message.named });
       case 'unread':
-        return go(s, { running: 'unread' }, { why: m.why });
+        return go(state, { running: 'unread' }, { why: message.why });
       default:
-        return assertNever(s, m, 'what runs here');
+        return assertNever(state, message, 'what runs here');
     }
   },
 };
@@ -155,36 +161,40 @@ const LEND = (home) => ({
   states: { lend: ['unlent', 'lending', 'lent'] },
   io: {
     lend: ({ port, name, kind }) =>
-      post('/running', { port, name, kind }).then((l) => ({ type: 'lent', l, why: l.name })),
+      post('/running', { port, name, kind }).then((lend) => ({
+        type: 'lent',
+        l: lend,
+        why: lend.name,
+      })),
     again: () => (home({ type: 'again' }), { type: 'told', why: 'the groups read again' }),
   },
-  step: (s, m) => {
-    switch (m.type) {
+  step: (state, message) => {
+    switch (message.type) {
       case 'typed':
-        return go(s, {}, { [m.field]: m.value });
+        return go(state, {}, { [message.field]: message.value });
       case 'lend':
-        return s.at.lend === 'lending'
-          ? no(s, 'a lend is under way, and is answered first')
+        return state.at.lend === 'lending'
+          ? no(state, 'a lend is under way, and is answered first')
           : go(
-              s,
+              state,
               { lend: 'lending' },
               {},
               {
                 run: 'lend',
-                port: s.port,
-                name: s.name.trim() || null,
-                kind: s.kind.trim() || null,
+                port: state.port,
+                name: state.name.trim() || null,
+                kind: state.kind.trim() || null,
                 failed: 'refused',
               },
             );
       case 'lent':
-        return go(s, { lend: 'lent' }, { l: m.l }, { run: 'again', failed: 'told' });
+        return go(state, { lend: 'lent' }, { l: message.l }, { run: 'again', failed: 'told' });
       case 'told':
-        return go(s, {});
+        return go(state, {});
       case 'refused':
-        return go(s, { lend: 'unlent' }, { said: `${s.said} ${m.why}` });
+        return go(state, { lend: 'unlent' }, { said: `${state.said} ${message.why}` });
       default:
-        return assertNever(s, m, 'a program found');
+        return assertNever(state, message, 'a program found');
     }
   },
 });
@@ -196,37 +206,40 @@ const LEND = (home) => ({
  */
 
 /** @param {FoundProps} props */
-function Found({ r, named, home }) {
-  const [s, send] = useMachine(() =>
+function Found({ r: shown, named, home }) {
+  const [state, send] = useMachine(() =>
       machine('LEND', LEND(home), {
         at: { lend: 'unlent' },
-        port: r.port,
+        port: shown.port,
         name: '',
         kind: '',
         said: '',
       }),
     ),
-    at = `http://localhost:${r.port}`;
-  // `s.l` is the lend 'lent' made, which set 'lent' with it.
-  if (s.at.lend === 'lent')
-    return html`<li>${`You lent ${/** @type {Shown} */ (s.l).name}, at ${at}: everyone in your groups can open it now. ${needs(/** @type {Shown} */ (s.l))} `}</li>`;
-  return html`<li>${r.kind ? `${r.kind}, at ${at}. ${needs(r)} ` : `Something at ${at}. To lend it, give it a name and say what it is, each one word${named.length ? `; if it is ${named.join(' or ')}, say that` : ''}. `}${
-    !r.kind &&
+    at = `http://localhost:${shown.port}`;
+  // `state.l` is the lend 'lent' made, which set 'lent' with it.
+  if (state.at.lend === 'lent')
+    return html`<li>${`You lent ${/** @type {Shown} */ (state.l).name}, at ${at}: everyone in your groups can open it now. ${needs(/** @type {Shown} */ (state.l))} `}</li>`;
+  return html`<li>${shown.kind ? `${shown.kind}, at ${at}. ${needs(shown)} ` : `Something at ${at}. To lend it, give it a name and say what it is, each one word${named.length ? `; if it is ${named.join(' or ')}, say that` : ''}. `}${
+    !shown.kind &&
     /** @satisfies {[field: 'name' | 'kind', words: string][]} */ ([
       ['name', 'Its name: '],
       ['kind', 'What it is: '],
-    ]).map(([n, w]) => html`<${Field} name=${n} words=${w} value=${s[n]} send=${send} />`)
-  }<${Act} words=${`Lend ${r.kind ?? 'it'} to everyone in your groups`} doing=${{ state: s.at.lend === 'lending' ? 'busy' : 'idle' }} on=${{ type: 'lend' }} send=${send} />${s.said}</li>`;
+    ]).map(
+      ([name, words]) =>
+        html`<${Field} name=${name} words=${words} value=${state[name]} send=${send} />`,
+    )
+  }<${Act} words=${`Lend ${shown.kind ?? 'it'} to everyone in your groups`} doing=${{ state: state.at.lend === 'lending' ? 'busy' : 'idle' }} on=${{ type: 'lend' }} send=${send} />${state.said}</li>`;
 }
-// `s.found` is the look's, which set 'looked' with it.
+// `state.found` is the look's, which set 'looked' with it.
 /** @type {Record<State['at']['running'], (s: State) => string>} */
 const SAID = {
   unlooked: () =>
     'This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.',
   looking: () => 'Looking for programs running on this computer…',
-  unread: (s) => `You looked, and what runs on this computer cannot be read: ${s.why}`,
-  looked: (s) =>
-    /** @type {Shown[]} */ (s.found).length
+  unread: (state) => `You looked, and what runs on this computer cannot be read: ${state.why}`,
+  looked: (state) =>
+    /** @type {Shown[]} */ (state.found).length
       ? 'You looked just now: the programs running on this computer, each at its address. Lend one, and everyone in your groups opens it in their browser, as themselves, while this computer is on. You can stop lending it below at any time.'
       : 'You looked just now: nothing else on this computer is running at an address. Start a program, then look again.',
 };
@@ -237,14 +250,16 @@ const SAID = {
 
 /** @param {RunningProps} props */
 function Running({ home }) {
-  const [s, send] = useMachine(() => machine('RUNNING', RUNNING, { at: { running: 'unlooked' } }));
+  const [state, send] = useMachine(() =>
+    machine('RUNNING', RUNNING, { at: { running: 'unlooked' } }),
+  );
   // A look again empties the list, and each row it finds is a new one (home.js@19b63b2b:237).
   // A look, which set 'looked', asked first and found.
-  return html`<section id="running"><h2>Already running here</h2><p>${SAID[s.at.running](s)}</p><p><${Act} words="Look for programs running on this computer" doing=${{ state: s.at.running === 'looking' ? 'busy' : 'idle' }} on=${{ type: 'look' }} send=${send} /></p><ul>${s.at.running === 'looked' && /** @type {Shown[]} */ (s.found).map((r) => html`<${Found} key=${`${/** @type {Record<string, number>} */ (s.asked).running}:${r.port}`} r=${r} named=${s.named} home=${home} />`)}</ul></section>`;
+  return html`<section id="running"><h2>Already running here</h2><p>${SAID[state.at.running](state)}</p><p><${Act} words="Look for programs running on this computer" doing=${{ state: state.at.running === 'looking' ? 'busy' : 'idle' }} on=${{ type: 'look' }} send=${send} /></p><ul>${state.at.running === 'looked' && /** @type {Shown[]} */ (state.found).map((row) => html`<${Found} key=${`${/** @type {Record<string, number>} */ (state.asked).running}:${row.port}`} r=${row} named=${state.named} home=${home} />`)}</ul></section>`;
 }
 // HOME draws its places once the groups are read (home.js `Home`).
 /** @type {{ running: (props: HOME.PlaceProps) => Drawn }} */
 export const view = {
-  running: ({ s, home }) =>
-    /** @type {Group[]} */ (s.groups).length > 0 && html`<${Running} home=${home} />`,
+  running: ({ s: state, home }) =>
+    /** @type {Group[]} */ (state.groups).length > 0 && html`<${Running} home=${home} />`,
 };

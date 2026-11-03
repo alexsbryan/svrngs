@@ -86,5 +86,5 @@ if ('serviceWorker' in navigator)
   window.addEventListener('load', () =>
     navigator.serviceWorker
       .register('./sw.js', { type: 'module' })
-      .catch((e) => trace(`PAGE: the service worker did not register: ${e}`)),
+      .catch((error) => trace(`PAGE: the service worker did not register: ${error}`)),
   );
