@@ -177,8 +177,11 @@ impl Host {
     }
 
     /// Each move of this computer's home said, until the node stops, with
-    /// the groups it meets at their fallback; then said in the record, so a
-    /// member dials it there ([`Self::say_relay`]).
+    /// the groups it meets at their fallback. The record hears of it at the
+    /// next round's start ([`Self::say_relay`]); a member dials every relay
+    /// of both tiers meanwhile. Saying it here wrote the keeper's cutovers
+    /// as a node first came online, before acts a test held for them
+    /// (browser/carried.rs `an_entry_another_s_computer_wrote_says_whose`).
     pub(crate) async fn moved(self: Arc<Self>) {
         use n0_future::StreamExt as _;
         let mut addrs = iroh::Watcher::stream(self.endpoint.watch_addr());
@@ -195,7 +198,6 @@ impl Host {
                 .collect();
             tracing::debug!(target: "tiers", from = ?home.as_ref().map(Url::as_str), to = ?now.as_ref().map(Url::as_str), ?fallback, "tiers: this computer meets its groups at another relay now, the groups it meets at their fallback named");
             home = now;
-            self.say_relay();
         }
     }
 }
