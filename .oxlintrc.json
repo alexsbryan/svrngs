@@ -60,7 +60,9 @@
         "one-var": [
           "error",
           "never"
-        ]
+        ],
+        "no-sequences": "error",
+        "no-unused-expressions": "error"
       }
     }
   ]

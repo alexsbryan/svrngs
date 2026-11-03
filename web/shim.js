@@ -102,9 +102,10 @@
   const fetched = window.fetch;
   /** @param {Parameters<typeof fetch>} args */
   window.fetch = function (...args) {
-    return fetched
-      .apply(this, args)
-      .then((response) => (takeIn(response.headers.get(PAGE_COOKIES)), response));
+    return fetched.apply(this, args).then((response) => {
+      takeIn(response.headers.get(PAGE_COOKIES));
+      return response;
+    });
   };
   const opened = XMLHttpRequest.prototype.open;
   // Either of `open`'s two forms, `async` and after it optional.

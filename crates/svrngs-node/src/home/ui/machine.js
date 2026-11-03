@@ -233,6 +233,9 @@ export function machine(name, { states, step, io }, state, first = []) {
   return {
     get: () => state,
     dispatch,
-    subscribe: (listener) => (subs.add(listener), () => subs.delete(listener)),
+    subscribe: (listener) => {
+      subs.add(listener);
+      return () => subs.delete(listener);
+    },
   };
 }

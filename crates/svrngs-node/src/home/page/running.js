@@ -166,7 +166,10 @@ const LEND = (home) => ({
         l: lend,
         why: lend.name,
       })),
-    again: () => (home({ type: 'again' }), { type: 'told', why: 'the groups read again' }),
+    again: () => {
+      home({ type: 'again' });
+      return { type: 'told', why: 'the groups read again' };
+    },
   },
   step: (state, message) => {
     switch (message.type) {

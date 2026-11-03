@@ -77,12 +77,12 @@ const lentIn = (groups) =>
  * @param {string | null | undefined} back
  * @returns {Extract<Message, { type: 'gone' }>}
  */
-const leave = (app, back) => (
+const leave = (app, back) => {
   location.assign(
     `/to?${new URLSearchParams({ lend: label(app), at: ((url) => (url.origin === new URL(app.origin).origin ? url.pathname + url.search + url.hash : '/'))(new URL(back ?? '/', app.origin)) })}`,
-  ),
-  { type: 'gone', why: `to ${label(app)}` }
-);
+  );
+  return { type: 'gone', why: `to ${label(app)}` };
+};
 /**
  * @param {Said} asked
  * @returns {Machine<State, Message, Effect>}

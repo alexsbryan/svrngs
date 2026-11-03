@@ -174,9 +174,10 @@ const CHANGE = (lend, home) => ({
   states: { change: ['idle', 'changing', 'refused'] },
   io: {
     change: ({ to }) =>
-      post('/lent', { lend, to }).then(
-        () => (home({ type: 'again' }), { type: 'changed', why: 'the groups read again' }),
-      ),
+      post('/lent', { lend, to }).then(() => {
+        home({ type: 'again' });
+        return { type: 'changed', why: 'the groups read again' };
+      }),
     sign: () =>
       post('/lent', { lend, to: 'sign-in' }).then((signIn) => ({
         type: 'signed',

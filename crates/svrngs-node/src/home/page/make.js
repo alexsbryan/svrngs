@@ -83,17 +83,15 @@ export const MAKE = (home) => ({
         )
         .then((words) => ({ type: 'checked', n: serial, words })),
     make: ({ name, person }) =>
-      post('/group', [name, person]).then(
-        ([made, unplaced, beside]) => (
-          home({
-            type: 'made',
-            flow: 'make',
-            q: { made, also: namesakes(beside, made, 'This is'), unplaced },
-          }),
-          home({ type: 'again' }),
-          { type: 'made', why: 'said, the groups read again' }
-        ),
-      ),
+      post('/group', [name, person]).then(([made, unplaced, beside]) => {
+        home({
+          type: 'made',
+          flow: 'make',
+          q: { made, also: namesakes(beside, made, 'This is'), unplaced },
+        });
+        home({ type: 'again' });
+        return { type: 'made', why: 'said, the groups read again' };
+      }),
   },
   step: (state, message) => {
     switch (message.type) {

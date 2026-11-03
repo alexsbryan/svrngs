@@ -158,7 +158,7 @@ export const take = (state, message) =>
 /** @param {HOME.State} state */
 export const holds = (state) => /** @type {Group[]} */ (state.groups).length > 0 && !state.actsRead;
 /** @param {PlaceProps} props */
-const Told = ({ g: group, s: state, home }) => (
+const Told = ({ g: group, s: state, home }) => {
   useEffect(
     () =>
       void (
@@ -174,9 +174,9 @@ const Told = ({ g: group, s: state, home }) => (
         })
       ),
     [state.people, state.lends, state.at.people, state.at.lends],
-  ),
-  null
-);
+  );
+  return null;
+};
 
 /**
  * ACTS but for `again`, which `Acting` adds, as only it holds HOME's
@@ -312,10 +312,10 @@ function Acting({ s: homeState, home }) {
         ...ACTS,
         io: {
           ...ACTS.io,
-          again: /** @returns {Message} */ () => (
-            home({ type: 'again' }),
-            { type: 'told', why: 'the groups read again' }
-          ),
+          again: /** @returns {Message} */ () => {
+            home({ type: 'again' });
+            return { type: 'told', why: 'the groups read again' };
+          },
         },
       },
       { at: { reaching: 'reading', doing: 'idle' }, acted: {}, said: {} },

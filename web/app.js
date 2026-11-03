@@ -78,10 +78,10 @@ document.addEventListener(
   'visibilitychange',
   () => document.visibilityState === 'visible' && page.dispatch({ type: 'shown' }),
 );
-window.addEventListener(
-  'hashchange',
-  () => (trace('PAGE: the address changed here, so the page opens it'), location.reload()),
-);
+window.addEventListener('hashchange', () => {
+  trace('PAGE: the address changed here, so the page opens it');
+  return location.reload();
+});
 if ('serviceWorker' in navigator)
   window.addEventListener('load', () =>
     navigator.serviceWorker

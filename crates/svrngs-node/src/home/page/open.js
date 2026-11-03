@@ -70,7 +70,12 @@ const to = (
 /** @type {Machine<State, Message, Effect>} */
 const OPEN = {
   states: { open: ['typing', 'opened', 'refused'] },
-  io: { open: ({ at }) => (window.open(at, '_blank'), { type: 'opened', why: at }) },
+  io: {
+    open: ({ at }) => {
+      window.open(at, '_blank');
+      return { type: 'opened', why: at };
+    },
+  },
   step: (state, message) => {
     switch (message.type) {
       case 'typed':

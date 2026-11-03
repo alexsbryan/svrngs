@@ -90,13 +90,11 @@ export const JOIN = (home) => ({
         why: answer[0],
       })),
     join: ({ link, person }) =>
-      post('/join', { link, person }).then(
-        ([joined, joinedAs, unplaced]) => (
-          home({ type: 'joined', flow: 'join', q: { joined, person: joinedAs, unplaced } }),
-          home({ type: 'again' }),
-          { type: 'joined', why: 'said, the groups read again' }
-        ),
-      ),
+      post('/join', { link, person }).then(([joined, joinedAs, unplaced]) => {
+        home({ type: 'joined', flow: 'join', q: { joined, person: joinedAs, unplaced } });
+        home({ type: 'again' });
+        return { type: 'joined', why: 'said, the groups read again' };
+      }),
   },
   // An answer to an ask older than the last is refused by name, before any
   // case takes it.

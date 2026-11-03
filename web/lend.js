@@ -278,13 +278,13 @@ async function opened() {
  * @param {Held} handoff
  * @returns {Promise<Header[]>}
  */
-const passed = async (handoff) => (
-  await (endpoint ??= opened()),
-  [
+const passed = async (handoff) => {
+  await (endpoint ??= opened());
+  return [
     ['x-svrngs-pass', handoff.pass],
     ...(linked ? [/** @type {Header} */ (['x-svrngs-link', linked])] : []),
-  ]
-);
+  ];
+};
 
 // ── cookies, a jar per lend ─────────────────────────────────────────────
 
@@ -292,12 +292,12 @@ const passed = async (handoff) => (
  * @param {string} label
  * @returns {Promise<Cookie[]>}
  */
-const jarOf = async (label) => (
-  jars.has(label) ||
-    jars.set(label, (await store.lendKept(`cookies ${label}`).catch(() => null)) ?? []),
+const jarOf = async (label) => {
+  if (!jars.has(label))
+    jars.set(label, (await store.lendKept(`cookies ${label}`).catch(() => null)) ?? []);
   // Set just above when it was not.
-  /** @type {Cookie[]} */ (jars.get(label))
-);
+  return /** @type {Cookie[]} */ (jars.get(label));
+};
 
 /** @param {Cookie} cookie */
 const live = (cookie) => cookie.expires === null || cookie.expires > Date.now();
@@ -434,14 +434,10 @@ function counted(body, said) {
   let [bytes, cancelled] = [0, false];
   return new ReadableStream({
     async pull(controller) {
-      const { value, done } = await reader
-        .read()
-        .catch(
-          (error) => (
-            said(`the body failed after ${bytes} bytes: ${error}`),
-            Promise.reject(error)
-          ),
-        );
+      const { value, done } = await reader.read().catch((error) => {
+        said(`the body failed after ${bytes} bytes: ${error}`);
+        return Promise.reject(error);
+      });
       if (done && !cancelled) {
         said(`read whole, ${bytes} bytes`);
         controller.close();
@@ -450,11 +446,11 @@ function counted(body, said) {
       bytes += value.byteLength;
       controller.enqueue(value);
     },
-    cancel: (why) => (
-      (cancelled = true),
-      said(`cancelled by the browser after ${bytes} bytes: ${why}`),
-      reader.cancel(why)
-    ),
+    cancel: (why) => {
+      cancelled = true;
+      said(`cancelled by the browser after ${bytes} bytes: ${why}`);
+      return reader.cancel(why);
+    },
   });
 }
 
@@ -944,12 +940,12 @@ const onward = (
  * @param {Held} held
  * @param {Where} where
  */
-const opening = (held, where) => (
+const opening = (held, where) => {
   trace(
     `RUNTIME: a page opens ${where.label}, which it reads, at ${where.path}: through the group's page`,
-  ),
-  onward(`${held.page}#open=${where.label}&at=`, where.path)
-);
+  );
+  return onward(`${held.page}#open=${where.label}&at=`, where.path);
+};
 
 // A page sends its person to say yes to this lend using `lend`, one it
 // reads: the group's page asks, then opens this lend again at `back`.
@@ -1144,7 +1140,10 @@ async function answered(fetchEvent, url, where) {
   if (typeof cookie === 'string') {
     return event.waitUntil(
       jarOf(OWN)
-        .then((jar) => (setCookie(jar, cookie), keepJar(OWN)))
+        .then((jar) => {
+          setCookie(jar, cookie);
+          return keepJar(OWN);
+        })
         .then(() => reply?.postMessage('kept')),
     );
   }

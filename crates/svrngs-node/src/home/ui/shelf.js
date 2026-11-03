@@ -171,9 +171,10 @@ export const SHELF = (bring, after) => ({
   },
   io: {
     after: ({ ms }) =>
-      new Promise((resolve) => setTimeout(resolve, ms)).then(
-        () => (after(), { type: 'told', why: `the group is read again, ${ms} ms on` }),
-      ),
+      new Promise((resolve) => setTimeout(resolve, ms)).then(() => {
+        after();
+        return { type: 'told', why: `the group is read again, ${ms} ms on` };
+      }),
     bring: ({ g: group, apps }) =>
       bring(group, apps).then((answers) => ({
         type: 'brought',

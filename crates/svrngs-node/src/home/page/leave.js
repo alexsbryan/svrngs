@@ -174,7 +174,10 @@ const LEAVE = (home) => ({
                 ),
               ))(await response.json().catch(() => ({}))),
       ),
-    send: ({ m: message }) => (home(message), { type: 'sent', why: message.type }),
+    send: ({ m: message }) => {
+      home(message);
+      return { type: 'sent', why: message.type };
+    },
   },
 });
 /**

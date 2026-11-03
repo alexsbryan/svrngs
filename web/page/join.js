@@ -211,11 +211,10 @@ const ATTRS = { autocomplete: 'name', maxlength: 64, required: true };
 export const NameForm = ({ shown, group = '', keep, why, value, send, on }) =>
   html`<form key=${`${shown} ${why}`} id="join" hidden=${!shown} onSubmit=${(
     /** @type {Event} */ event,
-  ) =>
-    (
-      event.preventDefault(),
-      send(on)
-    )}><p id="keep" hidden=${!keep}>${keep && `To keep ${group} on this phone, add this page to your Home Screen first, and join from there.`}</p>${Field({ shape: 'for', id: 'name', words: html`What’s your name? Everyone in <span id="group">${group}</span> sees it.`, value, attrs: ATTRS, send })}<p id="why" class="bad">${why}</p><button>Join</button></form>`;
+  ) => {
+    event.preventDefault();
+    return send(on);
+  }}><p id="keep" hidden=${!keep}>${keep && `To keep ${group} on this phone, add this page to your Home Screen first, and join from there.`}</p>${Field({ shape: 'for', id: 'name', words: html`What’s your name? Everyone in <span id="group">${group}</span> sees it.`, value, attrs: ATTRS, send })}<p id="why" class="bad">${why}</p><button>Join</button></form>`;
 /** @type {Record<string, (props: Props) => Drawn>} */
 export const view = {
   join: ({ s: state, send }) =>

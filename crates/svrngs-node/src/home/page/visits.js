@@ -88,9 +88,10 @@ const VISITS = (home) => ({
         why: `its Stop is at ${answer.ts_unix}`,
       })),
     wait: ({ ts }) =>
-      new Promise((resolve) => setTimeout(resolve, ts * 1000 - Date.now())).then(
-        () => (home({ type: 'again' }), { type: 'waited', why: 'the groups are read again' }),
-      ),
+      new Promise((resolve) => setTimeout(resolve, ts * 1000 - Date.now())).then(() => {
+        home({ type: 'again' });
+        return { type: 'waited', why: 'the groups are read again' };
+      }),
   },
 });
 /**

@@ -214,13 +214,13 @@ const Turn = ({ l: lend, words }) =>
  */
 
 /** @param {CellProps} props */
-export const cell = ({ l: lend, s: state }) => (
+export const cell = ({ l: lend, s: state }) => {
   useEffect(
     () => play.dispatch({ type: 'read', round: state.asked?.lends ?? 1 }),
     [state.asked?.lends],
-  ),
-  html`<${Turn} l=${lend} />`
-);
+  );
+  return html`<${Turn} l=${lend} />`;
+};
 
 // Each Play on, for acts.js, with its Stop, or why what has Play on cannot
 // be read; none when nothing has. A hook: acts.js calls it on each of its

@@ -294,12 +294,10 @@ Promise.all(FILES.map((file) => import(`./page/${file}.js?v=__VERSION__`)))
       () => document.visibilityState === 'visible' && store.dispatch({ type: 'visible' }),
     );
   })
-  .catch(
-    (error) => (
-      trace(`HOME: its files did not load: ${error}`),
-      render(
-        html`<p>This computer cannot read your groups: ${error.message}</p>`,
-        /** @type {HTMLElement} */ (document.getElementById('home')),
-      )
-    ),
-  );
+  .catch((error) => {
+    trace(`HOME: its files did not load: ${error}`);
+    return render(
+      html`<p>This computer cannot read your groups: ${error.message}</p>`,
+      /** @type {HTMLElement} */ (document.getElementById('home')),
+    );
+  });

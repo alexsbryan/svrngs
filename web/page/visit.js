@@ -239,13 +239,12 @@ export const io = {
       // `visit` is a local, held as a parameter no caller passes.
       .then(
         /** @type {(w: typeof Wasm) => Promise<PageMessage>} */ (
-          async (/** @type {typeof Wasm} */ core, /** @type {Visit | undefined} */ visit) =>
-            (
-              (key = crypto.getRandomValues(new Uint8Array(32))),
-              (visit = await visiting(core, token, guest)),
-              await store.keepVisit(token, visit, /** @type {Uint8Array<ArrayBuffer>} */ (key)),
-              stay(core, token, visit)
-            )
+          async (/** @type {typeof Wasm} */ core, /** @type {Visit | undefined} */ visit) => {
+            key = crypto.getRandomValues(new Uint8Array(32));
+            visit = await visiting(core, token, guest);
+            await store.keepVisit(token, visit, /** @type {Uint8Array<ArrayBuffer>} */ (key));
+            return stay(core, token, visit);
+          }
         ),
       )
       .catch(failing),

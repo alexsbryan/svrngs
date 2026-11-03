@@ -164,10 +164,10 @@ const SCREEN = {
     }
   },
   io: {
-    look: ({ title }) => (
-      ([document.body.className, document.title] = ['screen', title]),
-      { type: 'looked', why: title }
-    ),
+    look: ({ title }) => {
+      [document.body.className, document.title] = ['screen', title];
+      return { type: 'looked', why: title };
+    },
     read: ({ n: serial, id }, began = Date.now(), ns = encodeURIComponent(id)) =>
       Promise.all([get(`/v1/rail/people?namespace=${ns}`), get(`/v1/lends?namespace=${ns}`)]).then(
         ([{ people: rows }, lends]) => ({

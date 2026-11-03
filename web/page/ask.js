@@ -143,7 +143,7 @@ export const response = {
  * @property {Props['send']} send
  */
 /** @param {AskingProps} props */
-const Asking = ({ s: state, send }) => (
+const Asking = ({ s: state, send }) => {
   useEffect(
     () =>
       void (
@@ -158,19 +158,18 @@ const Asking = ({ s: state, send }) => (
         })
       ),
     [state.at.list],
-  ),
-  null
-);
+  );
+  return null;
+};
 /** @type {Record<string, (props: Props) => Drawn>} */
 export const view = {
   ask: ({ s: state, send }) =>
     html`<form id="ask" hidden=${!state.asking || state.at.ask === 'sending'} onSubmit=${(
       /** @type {Event} */ event,
-    ) =>
-      (
-        event.preventDefault(),
-        send({ type: 'say' })
-      )}><blockquote id="words">${state.asking && lendOf(state, state.asking.lend)?.asks}</blockquote><button>Yes</button><button type="button" id="not" onClick=${() => send({ type: 'not' })}>Not now</button>${state.wants?.ask && html`<${Asking} s=${state} send=${send} />`}</form>`,
+    ) => {
+      event.preventDefault();
+      return send({ type: 'say' });
+    }}><blockquote id="words">${state.asking && lendOf(state, state.asking.lend)?.asks}</blockquote><button>Yes</button><button type="button" id="not" onClick=${() => send({ type: 'not' })}>Not now</button>${state.wants?.ask && html`<${Asking} s=${state} send=${send} />`}</form>`,
 };
 /** @type {Io<Effect, PageMessage>} */
 export const io = {

@@ -505,15 +505,15 @@ const lends = (core, group, tried) =>
   reach(core, group, tried).then(([dialled, via]) =>
     dialled.fetch('GET', PEOPLE_LENDS, [['accept', 'application/json']], null).then(
       (res) => [dialled, via, res],
-      (error) => (
+      (error) => {
         trace(
           `PAGE: ${PEOPLE_LENDS} failed through ${whoseComputer(via)}, so the next to answer is asked: ${error}`,
-        ),
-        dialled.close(),
-        lends(core, group, [...tried, via?.key ?? core.issuer_of(group.token)]).catch(() =>
+        );
+        dialled.close();
+        return lends(core, group, [...tried, via?.key ?? core.issuer_of(group.token)]).catch(() =>
           Promise.reject(error),
-        )
-      ),
+        );
+      },
     ),
   );
 // A write through the computer the page reaches, for another flow's io
@@ -604,19 +604,20 @@ export const io = {
                 : failed(error),
             ),
         ),
-  release: () => (letGo?.(), { type: 'released' }),
+  release: () => {
+    letGo?.();
+    return { type: 'released' };
+  },
   // Asked on each open, never awaited, so a browser asking its person first holds nothing (app.js@19b63b2b:417-421).
   open: ({ group }) =>
-    store.opened(group).then(
-      async (opened) => (
-        store
-          .persist()
-          .catch((error) => `asking the browser to keep the page's storage failed: ${error}`)
-          .then((line) => trace(`PAGE: ${line}`)),
-        ([key, bound] = [await store.unseal(opened), null]),
-        { type: 'opened', group: opened }
-      ),
-    ),
+    store.opened(group).then(async (opened) => {
+      store
+        .persist()
+        .catch((error) => `asking the browser to keep the page's storage failed: ${error}`)
+        .then((line) => trace(`PAGE: ${line}`));
+      [key, bound] = [await store.unseal(opened), null];
+      return { type: 'opened', group: opened };
+    }),
   // Each lend with its label, and whose lender `apart` says; and `me`, the
   // key this page holds as the record spells it, public, which the record's
   // rows name (app.js@19b63b2b:467), never the key itself.
