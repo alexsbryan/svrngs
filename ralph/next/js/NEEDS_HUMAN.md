@@ -52,3 +52,28 @@ without waiting for that round's slowest dial (for one, a push to the
 members already answered, apart from the round). Its test: a group with
 one computer asleep, a phone's yes, and the app opened on the other
 computer at once.
+
+## The home page is read before a joined group is (js-webkit, 2026-11-03)
+
+Found in js-webkit-4's gate at 48d09878
+(`demo/runs/webkit-wall/2026-11-03/README.md`, "The gate after (c)";
+`home-group-gate.txt`). Not this queue's: the fix either changes what the
+page draws while it reads, which a person would see (fence 3), or changes
+when a test harness reads the page.
+
+**What happens.** `home_group`'s
+`the_home_page_joins_another_group_from_its_link_while_svrngs_runs::webkit`
+failed once in the gate's `tests` step (`home_group.rs:334`, no "Bring
+more to Trip"). It passed three times alone. `web/tests/home.mjs` reads
+the page after a press at the first frame whose words changed and hold no
+"…". That frame came before Trip's group was read, and by the time the page
+was read it said "Reading your groups…" under "What acts as you". The page
+queue's `page-parity-4` and `-5` gates failed this test as well.
+
+**The choice.** One of these, and its row:
+- The page says a joined group is being read in every frame until it is
+  read. A person would see that.
+- The harness waits for a signal the page gives when it is done, rather
+  than for the first frame with no "…".
+
+Either way, the first step is a traced run that names the frame (AGENTS.md 2).

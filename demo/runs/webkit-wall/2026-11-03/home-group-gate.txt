@@ -1,0 +1,78 @@
+# js-webkit-4's gate, at 48d09878: the tests step's one failure (ctl/log/sessions/js-webkit-4.await.log)
+# the panic, then after[1] (read once 'Join Trip as Dee' was pressed), then the page's trace, read after
+thread 'the_home_page_joins_another_group_from_its_link_while_svrngs_runs::webkit' (374289643) panicked at crates/svrngs/tests/home_group.rs:334:5:
+      "You’re in Trip, as Dee. ",
+      "Trip (Sam’s, since 3 Nov)",
+      "Lab (yours, since 3 Nov)",
+      "Lab’s folder is on this computer at /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/.tmpA8h6VB/svrngs/Lab",
+      "Open this folder",
+      "Invite someone to LabAdd your phone or another computerHave a guest",
+      "",
+      "Leaving Lab stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave Lab",
+      "What acts as you",
+      "What acts as you",
+      "What you open knows your name.",
+      "Lab: This computer.",
+      "Reading your groups…",
+      "Open a link from your group",
+      "The link: Open it",
+      "Join a group from a link",
+      "The link someone sent you: Your name in it: ",
+      "",
+      "Make a group",
+      "A name for the group: Your name in it: Make a group",
+      "",
+      "Already running here",
+      "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+      "Look for programs running on this computer",
+      "What you lend",
+      "You lend nothing yet.",
+      "Your home page, the same address each time svrngs starts: http://svrngs.localhost:55855/"
+    ]
+  "lines": [
+    "ROOM: answered (0 open): reading -> read",
+    "PLAY: answered (0 on): reading -> read",
+    "HOME: read (1 group(s)): reading/none -> read/none",
+    "ROOM: read refused in read: round 1 is read already",
+    "GROUP: read: reading/reading -> reading/reading, running get, get",
+    "GROUP: answered (people 1): reading/reading -> read/reading",
+    "ROOM: read refused in read: round 1 is read already",
+    "GROUP: answered (lends 1): read/reading -> read/read",
+    "HOME: told (Lab: people read, lends read): read/none -> read/none",
+    "ACTS: read: reading/idle -> reading/idle, running read",
+    "ACTS: reached (0 asking): reading/idle -> read/idle",
+    "HOME: told (what acts as you is read): read/none -> read/none",
+    "LENDING: read: reading -> reading, running read",
+    "LENDING: answered (0 lent): reading -> read",
+    "HOME: told (what you lend is read): read/none -> read/none",
+    "JOIN: typed: typing -> checking, running check",
+    "JOIN: checked (Trip): checking -> checked",
+    "JOIN: typed: checked -> checked",
+    "JOIN: join: checked -> joining, running join",
+    "HOME: joined: read/none -> read/joined",
+    "HOME: again: read/joined -> rereading/joined, running groups",
+    "JOIN: joined (said, the groups read again): joining -> typing",
+    "HOME: read (2 group(s)): rereading/joined -> read/joined",
+    "GROUP: read: reading/reading -> reading/reading, running get, get",
+    "ROOM: read refused in read: round 1 is read already",
+    "ACTS: read: reading/idle -> reading/idle, running read",
+    "LENDING: read: reading -> reading, running read",
+    "GROUP: answered (people 1): reading/reading -> read/reading",
+    "GROUP: again: read/reading -> reading/reading, running get, get",
+    "ROOM: read refused in read: round 1 is read already",
+    "ACTS: reached (0 asking): reading/idle -> read/idle",
+    "GROUP: answered refused in reading/reading: lends 1 answered after lends 2 was asked",
+    "LENDING: answered (0 lent): reading -> read",
+    "LENDING: read: read -> reading, running read",
+    "ROOM: read: read -> reading, running read",
+    "ROOM: read refused in reading: round 1 is read already",
+    "GROUP: again: reading/reading -> reading/reading, running get, get",
+    "GROUP: answered (people 2): reading/reading -> read/reading",
+    "GROUP: answered (lends 2): read/reading -> read/read"
+    the_home_page_joins_another_group_from_its_link_while_svrngs_runs::webkit
+
+test result: FAILED. 4 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.87s
+# rerun alone, three times, under the gate lock at 28fef69a: lockf -k /tmp/svrngs-gate.lock cargo test --quiet -p svrngs --test home_group
+load 10.80: 5 passed; 0 failed in 14.70s
+load 9.49: 5 passed; 0 failed in 14.65s
+load 8.99: 5 passed; 0 failed in 14.67s

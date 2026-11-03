@@ -162,3 +162,34 @@ in a row, each `lockf -k /tmp/svrngs-gate.lock cargo test --quiet
 | 3 | 11.95 | 94 passed, 0 failed | 139.10 s |
 
 3 of 3, with the 1-minute load between 7 and 12.
+
+## The gate after (c): `browser` passed, a `home_group` test did not
+
+js-webkit-4's `lockf -k /tmp/svrngs-gate.lock bash scripts/check.sh` at
+48d09878 passed `browser` (156 s), `scenes` and every other browser step.
+It failed on two counts:
+
+- `rustfmt`, on a line 56f8bb29 added to `carried.rs`; formatted in 28fef69a.
+- `tests`, on one test:
+  `home_group::the_home_page_joins_another_group_from_its_link_while_svrngs_runs::webkit`
+  at `crates/svrngs/tests/home_group.rs:334`. It wanted `["Bring more to Trip"]`
+  in what the page said once Join was pressed, and found none.
+  `home-group-gate.txt` holds the panic, that read and the page's trace.
+
+What the read shows: "You’re in Trip, as Dee.", Trip's heading with nothing
+under it, Lab whole, and "Reading your groups…" under "What acts as you"
+(`page/acts.js:439`, drawn while a group is not yet told). So the harness
+read the page before Trip was. `web/tests/home.mjs` reads after a press
+at the first frame whose words changed and hold no "…" (`settled`). The
+trace has `ACTS: read: reading/idle` straight after `HOME: read (2
+group(s))`, so ACTS started again from `reading`. A frame between, with no
+"…" in it, would explain the early read. These runs do not show which frame
+it was.
+
+This race is older than this row. The same test failed in the page queue's
+gates, `page-parity-4` (both engines) and `page-parity-5` (Chromium, at
+`home_group.rs:335`), before the acts section said a new group was being
+read (`page/acts.js:328`). Rerun alone three times under the gate lock at
+28fef69a, at loads of 9-11, it passed each time (`home-group-gate.txt`). It
+is no `browser` test, and this row changes no page byte. It goes to the
+operator (`ralph/next/js/NEEDS_HUMAN.md`) and is not fixed here.
