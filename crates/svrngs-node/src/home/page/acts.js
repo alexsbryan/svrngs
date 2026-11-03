@@ -415,7 +415,15 @@ function Acting({ s: h, home }) {
                 c,
               )}${c.said === 'yes' && html`<${Reach} app=${app} words="Stop" said="stop" />`}</p>`,
           )),
-      ...Uses({ lent, labelOf: label, choices: s.choices, tag: 'p', said: s.said, send }),
+      // Read past `reading`, the choices are set: the read's, or none.
+      ...Uses({
+        lent,
+        labelOf: label,
+        choices: /** @type {Record<string, Asked>} */ (s.choices),
+        tag: 'p',
+        said: s.said,
+        send,
+      }),
     ],
     knows: [html`<p>What you open knows your name.</p>`],
     wifi: wifi.part(),

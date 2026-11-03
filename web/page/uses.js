@@ -98,10 +98,11 @@ export const takes = {
     ),
 };
 
-// The Fold, for web/page/acts.js's "Opens friends’ things as you".
+// The Fold, for web/page/acts.js's "Opens friends’ things as you", which
+// draws it only where a lend of `lent` asks (its :243), so `lent` is read.
 /** @param {Props} props */
 export const Used = ({ s, send }) =>
-  html`<${Fold} id="uses" summary="What apps use" fold="uses" open=${s.using} send=${send}><ul id="used">${Uses({ lent: s.lent, labelOf: (/** @type {Lent} */ l) => l.label, choices: s.choices ?? {}, tag: 'li', said: s.unstopped, send })}</ul><//>`;
+  html`<${Fold} id="uses" summary="What apps use" fold="uses" open=${s.using} send=${send}><ul id="used">${Uses({ lent: /** @type {Lent[]} */ (s.lent), labelOf: (/** @type {Lent} */ l) => l.label, choices: s.choices ?? {}, tag: 'li', said: s.unstopped, send })}</ul><//>`;
 /** @type {Record<string, (props: Props) => Drawn>} */
 export const view = {
   uses: ({ s }) =>
