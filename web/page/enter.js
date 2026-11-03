@@ -13,8 +13,9 @@ import { ask, go, late, no } from '../ui/machine.js?v=__VERSION__';
 import { Act } from '../ui/parts.js?v=__VERSION__';
 import { alias, apart, called, once, titled, whoseComputer } from '../question.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
-import { offered } from './among.js?v=__VERSION__';
+import { choosing } from './among.js?v=__VERSION__';
 import { actor, hold, lends, trace, wasm } from './dial.js?v=__VERSION__';
+import { OfferedGroups } from './offered-groups.js?v=__VERSION__';
 import { sending } from './page.js?v=__VERSION__';
 /** @import { Group, Computer } from '../store.js?v=__VERSION__' */
 /** @import { Lend, Removal, PeopleRow, Shelved } from '../question.js?v=__VERSION__' */
@@ -450,16 +451,23 @@ export const response = {
         : [`Nobody in ${state.group.name} lends anything yet.`]),
     ],
 };
-// The group open in another tab, and taking it here (app.js@19b63b2b:403-410), drawn in
-// #door, as is the group to open `#open=` in, when more than one lends it.
+// The group open in another tab, and taking it here, drawn in #door, as is
+// the group to open `#open=` in, when more than one lends it
+// (offered-groups.js).
 /**
  * @param {State} state
  * @param {Props['send']} send
  */
-export const chosen = (state, send) =>
-  offered(state, send) ??
-  (state.at.tab === 'elsewhere' &&
-    html`<p>One tab at a time reaches ${state.group.name}. Open it here, and the other tab stops reaching it.</p><${Act} words="Open it here" on=${{ type: 'take' }} send=${send} />`);
+export const chosen = (state, send) => {
+  if (choosing(state)) {
+    const { groups, wants } = state.offered;
+    return html`<${OfferedGroups} groups=${groups} wants=${wants} send=${send} />`;
+  }
+  return (
+    state.at.tab === 'elsewhere' &&
+    html`<p>One tab at a time reaches ${state.group.name}. Open it here, and the other tab stops reaching it.</p><${Act} words="Open it here" on=${{ type: 'take' }} send=${send} />`
+  );
+};
 
 // The lock's letting go, set as the lock is held.
 /** @type {((value?: unknown) => void) | undefined} */
