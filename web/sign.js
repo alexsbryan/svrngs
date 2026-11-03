@@ -170,44 +170,7 @@ function framer(origin) {
 addEventListener('message', (asked) => {
   const port = asked.ports[0];
   if (asked.source !== parent || !port) return;
-  (async () => {
-    const label = framer(asked.origin);
-    const now = Math.floor(Date.now() / 1000);
-    await (loaded ??= init({ module_or_path: store.runtime() }));
-    if (asked.data?.opening) {
-      const handoff = asked.data.opening;
-      if (handoff.label !== label)
-        throw new Error(`an open for ${handoff.label} asked from ${label}`);
-      await approver(label, handoff, now);
-      return port.postMessage({ opened: true });
-    }
-    const { group, reach, line, authority } = asked.data?.approve ?? asked.data ?? {};
-    if (
-      typeof reach !== 'string' ||
-      reach.length > 128 * 1024 ||
-      typeof line !== 'string' ||
-      line.length > 70 * 1024
-    )
-      throw new Error('an entry is too large');
-    if (authority?.label !== label || authority.pass !== reach || authority.group !== group)
-      throw new Error('this open grants no authority here');
-    const kept = await approver(label, authority, now);
-    for (const grant of [authority.pass, authority.writes].filter(Boolean)) {
-      let made;
-      try {
-        made = approve_line(kept.pub, group, reach, grant, line, now);
-      } catch {
-        continue; /* Only the grants this open issued may authorize an entry. */
-      }
-      const approval = hex(await crypto.subtle.sign('Ed25519', kept.key, made[1]));
-      const pass = btoa(JSON.stringify({ ...JSON.parse(made[0]), approval }))
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '');
-      return port.postMessage({ pass: await stableApproval(group, pass, line, now) });
-    }
-    throw new Error('this open grants no entry of that kind');
-  })().catch((error) => {
+  answered(asked, port).catch((error) => {
     console.debug(`SIGN: refused: ${error.message}`);
     port.postMessage({
       opened: false,
@@ -215,3 +178,74 @@ addEventListener('message', (asked) => {
     });
   });
 });
+
+// What the app framing this signer `asked`, answered on `port`: its open
+// adopted, or an entry approved; anything else refused, by a throw.
+/**
+ * @param {MessageEvent} asked
+ * @param {MessagePort} port
+ */
+async function answered(asked, port) {
+  const label = framer(asked.origin);
+  const now = Math.floor(Date.now() / 1000);
+  await (loaded ??= init({ module_or_path: store.runtime() }));
+  if (asked.data?.opening) {
+    const handoff = asked.data.opening;
+    if (handoff.label !== label)
+      throw new Error(`an open for ${handoff.label} asked from ${label}`);
+    await approver(label, handoff, now);
+    return port.postMessage({ opened: true });
+  }
+  return port.postMessage({ pass: await entryApproved(asked.data, label, now) });
+}
+
+// The entry asked, `data`, approved under a grant the open kept for
+// `label` issued: the pass that authorizes it.
+/**
+ * @param {any} data
+ * @param {string} label
+ * @param {number} now in seconds
+ */
+async function entryApproved(data, label, now) {
+  const { group, reach, line, authority } = entryAsked(data, label);
+  const kept = await approver(label, authority, now);
+  for (const grant of [authority.pass, authority.writes].filter(Boolean)) {
+    let made;
+    try {
+      made = approve_line(kept.pub, group, reach, grant, line, now);
+    } catch {
+      continue; /* Only the grants this open issued may authorize an entry. */
+    }
+    const approval = hex(await crypto.subtle.sign('Ed25519', kept.key, made[1]));
+    const pass = btoa(JSON.stringify({ ...JSON.parse(made[0]), approval }))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+    return stableApproval(group, pass, line, now);
+  }
+  throw new Error('this open grants no entry of that kind');
+}
+
+// The entry `data` asks, refused when it is too large or its open grants
+// no authority to `label`.
+/**
+ * @param {any} data
+ * @param {string} label
+ */
+function entryAsked(data, label) {
+  const { group, reach, line, authority } = data?.approve ?? data ?? {};
+  if (tooLarge(reach, line)) throw new Error('an entry is too large');
+  if (authority?.label !== label || authority.pass !== reach || authority.group !== group)
+    throw new Error('this open grants no authority here');
+  return { group, reach, line, authority };
+}
+
+/**
+ * @param {unknown} reach
+ * @param {unknown} line
+ */
+const tooLarge = (reach, line) =>
+  typeof reach !== 'string' ||
+  reach.length > 128 * 1024 ||
+  typeof line !== 'string' ||
+  line.length > 70 * 1024;
