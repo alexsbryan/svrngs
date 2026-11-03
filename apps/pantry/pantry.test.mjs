@@ -15,6 +15,11 @@ import { FOUND_FOR, LENDS_FOR, formatList, list, serve } from './pantry.mjs';
 const HERE = new URL('.', import.meta.url).pathname;
 const clients = new Map();
 const CLIENT_KEY = 'pantry-test-interface';
+// This computer's own data dir is never read: a test's pantry asks only
+// the record and token it is handed. On a computer whose svrngs wrote its
+// `token`, a friend's lend was sent that real token (2026-11-02).
+process.env.SVRNGS_DIR = mkdtempSync(join(process.cwd(), 'target', 'pantry-home-'));
+delete process.env.SVRNGS_API;
 const fetch = (url, init = {}) => {
   const key = clients.get(new URL(url).origin);
   const headers = new Headers(init.headers);
