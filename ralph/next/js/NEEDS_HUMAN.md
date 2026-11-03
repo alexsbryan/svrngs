@@ -86,3 +86,12 @@ Trip.", Trip's heading with no folder line under it, and "Reading your
 groups…". Every other step of that gate passed, `browser` in 162 s. Both
 gates since js-webkit (c) failed only on this race, so js-webkit's pass
 (`scripts/check.sh` exits 0) waits on this choice.
+
+**Decided 2026-11-03 by js-webkit's director: the harness fix, in js-webkit
+as its part (d)** (`STATE.md`). The harness reads a press once the page is at
+rest, judged in the same frame as the read, from the words and the page's
+own trace (`window.__lines`). The page draws nothing new, so a person sees
+no change. Closing js-webkit with `check.sh` red was refused, since it would
+weaken the row's pass bar. This entry stays open for the operator for one
+reason: whether a person should see a made or joined group as being read
+until it is. That is a page change, and no queue holds it.
