@@ -165,8 +165,8 @@ export const assertNever = (state, message, taker) =>
  * @returns {Store<State, Message>}
  */
 export function machine(name, { states, step, io }, state, first = []) {
-  const subs = new Set(),
-    regions = /** @type {(keyof State['at'] & string)[]} */ (Object.keys(states));
+  const subs = new Set();
+  const regions = /** @type {(keyof State['at'] & string)[]} */ (Object.keys(states));
   /** @param {State} current */
   const where = (current) => regions.map((region) => current.at[region]).join('/');
   // Each effect after the step that gave it, in its order; whatever it

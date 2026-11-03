@@ -140,43 +140,45 @@ export const states = /** @type {const} */ ({
 });
 
 // The parts of a fragment this page reads, besides a link's token (app.js@19b63b2b:665).
-const READ = ['open', 'at', 'anew', 'cold', 'ask', 'app'],
-  sending = /** @type {Sender} */ ((type, message) => ({ run: 'send', m: { type, ...message } })),
-  say = (/** @type {string | undefined} */ said) => sending('failed', { said, why: said });
+const READ = ['open', 'at', 'anew', 'cold', 'ask', 'app'];
+const sending = /** @type {Sender} */ (
+  (type, message) => ({ run: 'send', m: { type, ...message } })
+);
+const say = (/** @type {string | undefined} */ said) => sending('failed', { said, why: said });
 const titled = (/** @type {Group} */ group) =>
-    `${group.name}${group.maker ? ` (${whose(group)})` : ''}`,
-  whoseComputer = (/** @type {Computer | undefined} */ computer) =>
-    computer ? `${computer.person}’s computer` : 'The computer that sent your link';
+  `${group.name}${group.maker ? ` (${whose(group)})` : ''}`;
+const whoseComputer = (/** @type {Computer | undefined} */ computer) =>
+  computer ? `${computer.person}’s computer` : 'The computer that sent your link';
 // The read, of `group` as kept: counted, so an older answer is refused by name.
 const reading = (/** @type {State} */ state, /** @type {Partial<State>} */ patch) =>
-    ((asked, serial) =>
-      go(
-        state,
-        { list: 'reading' },
-        { ...patch, asked },
-        /** @satisfies {Effect} */ ({
-          run: 'read',
-          group: patch.group ?? state.group,
-          n: serial,
-          failed: 'unread',
-        }),
-      ))(...ask(state, 'list')),
-  // A read again that fails keeps the list drawn, and says why (page-open (c)).
-  // Its type said whole, as a second declarator's JSDoc is not read.
-  failing =
-    /** @satisfies {(s: State, said?: string, why?: string) => Step<State, Effect | Send>} */ (
-      (state, said, why = said) =>
-        state.lent
-          ? go(state, { list: 'unread' }, { stale: why })
-          : go(
-              state,
-              { list: 'unread' },
-              {},
-              // Typed as both effects, so `go` takes them as one list.
-              /** @type {Effect | Send} */ ({ run: 'release', failed: 'failed' }),
-              say(said),
-            )
-    );
+  ((asked, serial) =>
+    go(
+      state,
+      { list: 'reading' },
+      { ...patch, asked },
+      /** @satisfies {Effect} */ ({
+        run: 'read',
+        group: patch.group ?? state.group,
+        n: serial,
+        failed: 'unread',
+      }),
+    ))(...ask(state, 'list'));
+// A read again that fails keeps the list drawn, and says why (page-open (c)).
+// Its type said whole, as a second declarator's JSDoc is not read.
+const failing =
+  /** @satisfies {(s: State, said?: string, why?: string) => Step<State, Effect | Send>} */ (
+    (state, said, why = said) =>
+      state.lent
+        ? go(state, { list: 'unread' }, { stale: why })
+        : go(
+            state,
+            { list: 'unread' },
+            {},
+            // Typed as both effects, so `go` takes them as one list.
+            /** @type {Effect | Send} */ ({ run: 'release', failed: 'failed' }),
+            say(said),
+          )
+  );
 const HOW = {
   unanswered: 'did not answer, so what they lend is not listed',
   unheard: 'has not heard of the computer you reached yet, so what they lend is not listed yet',
@@ -202,10 +204,10 @@ export const takes = {
       );
     if (fragment.startsWith('visit='))
       return go(state, {}, {}, sending('visit', { token: fragment.slice('visit='.length) }));
-    const parts = new URLSearchParams(fragment),
-      // `split` always answers one part.
-      first = /** @type {string} */ (fragment.split('&')[0]),
-      token = first.includes('=') ? '' : first;
+    const parts = new URLSearchParams(fragment);
+    // `split` always answers one part.
+    const first = /** @type {string} */ (fragment.split('&')[0]);
+    const token = first.includes('=') ? '' : first;
     const unread = [...parts.keys()].filter((key) => key !== token && !READ.includes(key));
     if (unread.length)
       return go(
@@ -223,8 +225,8 @@ export const takes = {
         {},
         say('This link isn’t one svrngs can read. Ask whoever sent it for a new one.'),
       );
-    const wants = parts.has('open') || parts.has('ask') ? Object.fromEntries(parts) : null,
-      offer = token ? [sending('offer', { token })] : [];
+    const wants = parts.has('open') || parts.has('ask') ? Object.fromEntries(parts) : null;
+    const offer = token ? [sending('offer', { token })] : [];
     const lending = wants?.open
       ? kept.filter((group) => group.addresses?.includes(/** @type {string} */ (wants.open)))
       : [];
@@ -296,8 +298,8 @@ export const takes = {
   // (app.js@19b63b2b:438-451), and the computers and addresses kept (app.js@19b63b2b:456-458).
   read: (state, message) => {
     if (late(state, 'list', message.n)) return no(state, late(state, 'list', message.n));
-    const whom = whoseComputer(message.via ?? message.link),
-      name = state.group.name;
+    const whom = whoseComputer(message.via ?? message.link);
+    const name = state.group.name;
     if (!message.ok)
       return failing(
         state,
@@ -325,21 +327,21 @@ export const takes = {
       },
     } = message;
     const computers = [
-        ...new Map(
-          lent.map((lend) => [
-            lend.key,
-            { key: lend.key, relay: lend.relay ?? null, person: lend.person },
-          ]),
-        ).values(),
+      ...new Map(
+        lent.map((lend) => [
+          lend.key,
+          { key: lend.key, relay: lend.relay ?? null, person: lend.person },
+        ]),
+      ).values(),
+    ];
+    const group = {
+      ...state.group,
+      computers,
+      addresses: [
+        ...lent.map((lend) => lend.label),
+        ...once(lent).map((lend) => alias(lend, lent, people)),
       ],
-      group = {
-        ...state.group,
-        computers,
-        addresses: [
-          ...lent.map((lend) => lend.label),
-          ...once(lent).map((lend) => alias(lend, lent, people)),
-        ],
-      };
+    };
     return go(
       state,
       { list: 'read' },
@@ -428,10 +430,10 @@ export const chosen = (state, send) =>
 // the key unsealed and the one endpoint bound as the person (app.js@19b63b2b:427-428),
 // and the lock's letting go.
 // The page's own lines go to ui/trace.js's sink, as ui/machine.js's do.
-const PATIENCE = 60_000,
-  PEOPLE_LENDS = '/people/lends',
-  wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__'),
-  trace = (/** @type {string} */ line) => globalThis.__trace?.(line);
+const PATIENCE = 60_000;
+const PEOPLE_LENDS = '/people/lends';
+const wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__');
+const trace = (/** @type {string} */ line) => globalThis.__trace?.(line);
 const said = (/** @type {string} */ words) => Object.assign(new Error(words), { said: words });
 // Each typed apart, as JSDoc types only the first of several declared at once.
 // The key, unsealed by `open`, which comes before every read (`opened`).
@@ -452,29 +454,29 @@ let letGo;
 async function reach(core, group, tried) {
   if (!core.relay_of(group.token))
     throw said('This link was made by an older svrngs. Ask whoever sent it for a new one.');
-  const issuer = core.issuer_of(group.token),
-    link = group.computers?.find((one) => one.key === issuer),
-    linked = !tried.includes(issuer);
-  const others = (group.computers ?? []).filter((one) => one !== link && !tried.includes(one.key)),
-    ep = () => (bound ??= core.endpoint(key, group.token));
+  const issuer = core.issuer_of(group.token);
+  const link = group.computers?.find((one) => one.key === issuer);
+  const linked = !tried.includes(issuer);
+  const others = (group.computers ?? []).filter((one) => one !== link && !tried.includes(one.key));
+  const ep = () => (bound ??= core.endpoint(key, group.token));
   trace(
     `PAGE: dialling ${linked ? "the link's computer and " : ''}${others.length} other computer(s) at once`,
   );
   const tries = [
-      ...(linked
-        ? [
-            ep()
-              .then((endpoint) => endpoint.dial_link())
-              .then((reached) => /** @satisfies {[Dialled]} */ ([reached])),
-          ]
-        : []),
-      ...others.map((other) =>
-        ep()
-          .then((endpoint) => endpoint.dial(other.key, other.relay))
-          .then((reached) => /** @satisfies {[Dialled, Computer]} */ ([reached, other])),
-      ),
-    ],
-    away = `${[...(linked ? [link] : []), ...others].map((one) => `${whoseComputer(one)} did not answer.`).join(' ')} Try again later.`;
+    ...(linked
+      ? [
+          ep()
+            .then((endpoint) => endpoint.dial_link())
+            .then((reached) => /** @satisfies {[Dialled]} */ ([reached])),
+        ]
+      : []),
+    ...others.map((other) =>
+      ep()
+        .then((endpoint) => endpoint.dial(other.key, other.relay))
+        .then((reached) => /** @satisfies {[Dialled, Computer]} */ ([reached, other])),
+    ),
+  ];
+  const away = `${[...(linked ? [link] : []), ...others].map((one) => `${whoseComputer(one)} did not answer.`).join(' ')} Try again later.`;
   const [dialled, computer] = await Promise.race([
     Promise.any(tries),
     new Promise((_, reject) => setTimeout(() => reject(new Error('no answer')), PATIENCE)),
@@ -542,8 +544,8 @@ export const dialled = (group, lend) =>
  */
 export const through = (group, path, body) =>
   wasm().then(async (core) => {
-    const [connection] = await reach(core, group, []),
-      bytes = new TextEncoder().encode(JSON.stringify([group.id, body]));
+    const [connection] = await reach(core, group, []);
+    const bytes = new TextEncoder().encode(JSON.stringify([group.id, body]));
     const [ok, status, text] = await connection
       .fetch(
         'POST',
@@ -621,15 +623,17 @@ export const io = {
   read: ({ group, n: serial }) =>
     wasm()
       .then(async (core) => {
-        const [connection, via, res] = await lends(core, group, []),
-          // Refused, its body is read for `lent` and `version` alone, both optional.
-          body = /** @type {Body} */ (res.ok ? await res.json() : {}),
-          refusal = res.headers.get('x-svrngs-refused');
+        const [connection, via, res] = await lends(core, group, []);
+        // Refused, its body is read for `lent` and `version` alone, both optional.
+        const body = /** @type {Body} */ (res.ok ? await res.json() : {});
+        const refusal = res.headers.get('x-svrngs-refused');
         const lent = (await connection.close(), body.lent ?? []).map((lend) => ({
-            ...lend,
-            label: core.label(lend.key, lend.name),
-          })),
-          link = group.computers?.find((computer) => computer.key === core.issuer_of(group.token));
+          ...lend,
+          label: core.label(lend.key, lend.name),
+        }));
+        const link = group.computers?.find(
+          (computer) => computer.key === core.issuer_of(group.token),
+        );
         apart(lent, body.people ?? []);
         return /** @satisfies {PageMessage} */ ({
           type: 'read',

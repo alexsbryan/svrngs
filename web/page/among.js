@@ -44,8 +44,10 @@ export const states = /** @type {const} */ ({
   among: ['unasked', 'offered', 'picked', 'named', 'sent'],
 });
 const titled = (/** @type {Group} */ group) =>
-    `${group.name}${group.maker ? ` (${whose(group)})` : ''}`,
-  sending = /** @type {Sender} */ ((type, message) => ({ run: 'send', m: { type, ...message } }));
+  `${group.name}${group.maker ? ` (${whose(group)})` : ''}`;
+const sending = /** @type {Sender} */ (
+  (type, message) => ({ run: 'send', m: { type, ...message } })
+);
 /** @type {Takes<State, Message, Effect | Send>} */
 export const takes = {
   among: (state, { groups, wants }) =>
@@ -53,11 +55,11 @@ export const takes = {
   wanted: (state, { wants: { open, at = '/', anew } }) => {
     if (state.at.among === 'named') return no(state, `#open=${open} was named already`);
     // Wanted once the group is read (enter.js `kept`), so its list is.
-    const byLabel = /** @type {Lent[]} */ (state.lent).filter((lend) => lend.label === open),
-      by = byLabel.length
-        ? byLabel
-        : aliased(open, /** @type {Lent[]} */ (state.lent), state.people),
-      name = state.group.name;
+    const byLabel = /** @type {Lent[]} */ (state.lent).filter((lend) => lend.label === open);
+    const by = byLabel.length
+      ? byLabel
+      : aliased(open, /** @type {Lent[]} */ (state.lent), state.people);
+    const name = state.group.name;
     const why = `#open=${open} names ${by.length} of what ${name} lends${byLabel.length ? ', by its label' : ', by its alias'}`;
     // A lend's origin holding no key its pass names asks for a new one (open.js `anew`).
     // Named by one, `by[0]` is it.
@@ -141,9 +143,9 @@ export const offered = (state, send) =>
 // read its bytes as they arrive. `cold`: the group's page is this host past
 // its first name, marked in this origin's session, so a lend whose worker
 // never takes its pass comes back here and is said, never sent on again.
-const ONCE = 60_000,
-  wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__'),
-  trace = (/** @type {string} */ line) => globalThis.__trace?.(line);
+const ONCE = 60_000;
+const wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__');
+const trace = (/** @type {string} */ line) => globalThis.__trace?.(line);
 /** @type {Io<Effect, PageMessage>} */
 export const io = {
   forget: ({ label, at, why }) =>
@@ -161,9 +163,9 @@ export const io = {
       others: kept.filter((group) => group.id !== id && group.addresses),
     })),
   cold: () => {
-    const at = location.href.slice(location.origin.length),
-      last = Number(sessionStorage.getItem('svrngs cold')),
-      page = `${location.protocol}//${location.host.slice(location.host.indexOf('.') + 1)}/`;
+    const at = location.href.slice(location.origin.length);
+    const last = Number(sessionStorage.getItem('svrngs cold'));
+    const page = `${location.protocol}//${location.host.slice(location.host.indexOf('.') + 1)}/`;
     if (Date.now() - last < ONCE)
       return {
         type: 'failed',

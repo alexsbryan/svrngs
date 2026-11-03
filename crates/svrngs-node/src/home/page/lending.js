@@ -230,10 +230,10 @@ const signed = (char) =>
 /** @param {LentProps} props */
 function Lent({ l: lend, signs, home }) {
   const [state, send] = useMachine(() =>
-      machine('CHANGE', CHANGE(lend.name, home), { at: { change: 'idle' }, said: '' }),
-    ),
-    limit = lend.limit,
-    value = state.many ?? String(limit ?? '');
+    machine('CHANGE', CHANGE(lend.name, home), { at: { change: 'idle' }, said: '' }),
+  );
+  const limit = lend.limit;
+  const value = state.many ?? String(limit ?? '');
   /**
    * @param {string} words
    * @param {ChangeMessage} on

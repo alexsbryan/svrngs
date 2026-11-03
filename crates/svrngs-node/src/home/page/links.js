@@ -115,12 +115,12 @@ const Copy = (props) =>
     ...useMachine(() => machine('COPY', COPY, { at: { copy: 'idle' }, said: [] })),
   );
 const WORDS = {
-    copy: 'Copy the link',
-    copied: ' Copied.',
-    unwritten: ' Select it above to copy it.',
-  },
-  LAST =
-    ' It works for a day, while this computer is on. A new link stops this one letting anyone new in; everyone it let in stays. ';
+  copy: 'Copy the link',
+  copied: ' Copied.',
+  unwritten: ' Select it above to copy it.',
+};
+const LAST =
+  ' It works for a day, while this computer is on. A new link stops this one letting anyone new in; everyone it let in stays. ';
 // The link made, in the words of whom it is for (home.js@19b63b2b:134, :139), kept while
 // the next is made, as v1 keeps it until the answer (home.js@19b63b2b:135).
 /**
@@ -157,9 +157,9 @@ const said = ({ a: answer, asked }, name, at = answer.https ?? answer.client) =>
 /** @param {LinksProps} props */
 function Links({ g: group }) {
   const [state, send] = useMachine(() =>
-      machine('LINK', LINK(group.id), { at: { link: 'none' }, visit: '172800' }),
-    ),
-    name = group.name ?? 'this group';
+    machine('LINK', LINK(group.id), { at: { link: 'none' }, visit: '172800' }),
+  );
+  const name = group.name ?? 'this group';
   /**
    * @param {string} words
    * @param {Omit<Make, 'type'>} on

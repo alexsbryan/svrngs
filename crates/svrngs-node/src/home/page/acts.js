@@ -323,18 +323,18 @@ function Acting({ s: homeState, home }) {
   );
   // HOME draws the section once the groups are read (home.js `Home`).
   const groups = /** @type {Group[]} */ (homeState.groups).filter(
-      (group) => !group.left && group.removed === false,
-    ),
-    told = /** @param {Group} group */ (group) => homeState.told?.[group.id],
-    rows = /** @param {Group} group */ (group) => told(group)?.people ?? [];
+    (group) => !group.left && group.removed === false,
+  );
+  const told = /** @param {Group} group */ (group) => homeState.told?.[group.id];
+  const rows = /** @param {Group} group */ (group) => told(group)?.people ?? [];
   const lent = groups.flatMap((group) =>
     (told(group)?.lends?.lent ?? []).map((lend) => ({
       ...lend,
       called: called(rows(group), rows(group).find((row) => row.key === lend.key)?.person_key),
     })),
   );
-  const asking = lent.filter((lend) => lend.asks).map(label),
-    ready = groups.every(told);
+  const asking = lent.filter((lend) => lend.asks).map(label);
+  const ready = groups.every(told);
   useEffect(
     () => void (ready && send({ type: 'read', asking })),
     [ready, homeState.round, asking.join()],

@@ -73,8 +73,8 @@ import { get, post } from './group.js?v=__VERSION__';
  */
 
 /** @type {State} */
-const FIRST = { at: { join: 'typing' }, link: '', person: '', for: undefined, why: '' },
-  who = /** @param {State} state */ (state) => state.for?.[1] ?? state.person.trim();
+const FIRST = { at: { join: 'typing' }, link: '', person: '', for: undefined, why: '' };
+const who = /** @param {State} state */ (state) => state.for?.[1] ?? state.person.trim();
 /**
  * @param {HOME.PlaceProps['home']} home
  * @returns {Machine<State, Message, Effect>}

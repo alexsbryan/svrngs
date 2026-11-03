@@ -51,17 +51,17 @@ import { choose } from './uses.js?v=__VERSION__';
 export const owns = ['asking', 'answer'];
 export const states = /** @type {const} */ ({ ask: ['none', 'asking', 'sending', 'refused'] });
 const lendOf = (/** @type {State} */ state, /** @type {string | undefined} */ label) =>
-    state.lent?.find((lend) => lend.label === label),
-  // Sent back only once something is asked (`not`, `said`).
-  back = (/** @type {State} */ state) =>
-    /** @satisfies {Send} */ ({
-      run: 'send',
-      m: {
-        type: 'open',
-        label: /** @type {Asking} */ (state.asking).app,
-        at: /** @type {Asking} */ (state.asking).at,
-      },
-    });
+  state.lent?.find((lend) => lend.label === label);
+// Sent back only once something is asked (`not`, `said`).
+const back = (/** @type {State} */ state) =>
+  /** @satisfies {Send} */ ({
+    run: 'send',
+    m: {
+      type: 'open',
+      label: /** @type {Asking} */ (state.asking).app,
+      at: /** @type {Asking} */ (state.asking).at,
+    },
+  });
 /** @type {Takes<State, Message, Effect | Send>} */
 export const takes = {
   ask: (

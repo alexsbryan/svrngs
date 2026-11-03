@@ -200,10 +200,10 @@ export function compose(flows) {
       }),
   );
   /** @type {Record<string, (typeof all)[number]>} */
-  const claimed = {},
-    keys = Object.keys,
-    owner = (/** @type {string} */ kind, /** @type {string} */ name) =>
-      claimed[`${kind} ${name}`]?.name;
+  const claimed = {};
+  const keys = Object.keys;
+  const owner = (/** @type {string} */ kind, /** @type {string} */ name) =>
+    claimed[`${kind} ${name}`]?.name;
   for (const flow of all) {
     for (const [kind, names] of /** @type {[string, readonly string[]][]} */ ([
       ['message type', keys(flow.takes)],
@@ -240,8 +240,8 @@ export function compose(flows) {
         (candidate) => claimed[`message type ${candidate}`],
       )
     );
-    const flow = claimed[`message type ${type}`],
-      result = flow?.takes[type]?.(state, message);
+    const flow = claimed[`message type ${type}`];
+    const result = flow?.takes[type]?.(state, message);
     if (!flow || !result || result.refused)
       return result ?? no(state, `nothing here takes ${message.type}`);
     const out = [
@@ -256,9 +256,9 @@ export function compose(flows) {
       ? no(state, `${flow.name} moved ${out.join(' ')}, which is ${owner(...out) ?? 'nobody'}'s`)
       : result;
   };
-  const states = Object.assign({}, ...all.map((flow) => flow.states)),
-    each = (/** @type {'heading' | 'response'} */ pick, /** @type {State} */ state) =>
-      ORDER.flatMap((slot) => all.map((flow) => flow[pick][slot]?.(state)).filter(Boolean));
+  const states = Object.assign({}, ...all.map((flow) => flow.states));
+  const each = (/** @type {'heading' | 'response'} */ pick, /** @type {State} */ state) =>
+    ORDER.flatMap((slot) => all.map((flow) => flow[pick][slot]?.(state)).filter(Boolean));
   return {
     states,
     step,
@@ -296,9 +296,9 @@ export function compose(flows) {
  */
 /** @param {PageProps} props */
 export function Page({ parts, store }) {
-  const state = useStore(store),
-    [words, tone] = parts.heading(state),
-    acts = parts.acts(state);
+  const state = useStore(store);
+  const [words, tone] = parts.heading(state);
+  const acts = parts.acts(state);
   useEffect(() => void (state.group && (document.title = state.group.name)), [state.group?.name]);
   return html`<${Heading} words=${words} tone=${tone} />${parts.places.map((Place) => html`<${Place} s=${state} send=${store.dispatch} acts=${acts} />`)}<pre id="response">${parts.response(state)}</pre>`;
 }

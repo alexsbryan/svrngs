@@ -91,8 +91,8 @@ const redeem = (state, joining, name) =>
       failed: 'unjoined',
     }),
   );
-const asks = (/** @type {State} */ state) => ['naming', 'taken'].includes(state.at.join),
-  guest = (/** @type {State} */ state) => state.at.visit === 'naming';
+const asks = (/** @type {State} */ state) => ['naming', 'taken'].includes(state.at.join);
+const guest = (/** @type {State} */ state) => state.at.visit === 'naming';
 /** @type {Takes<State, Message, Effect | Send>} */
 export const takes = {
   join: (state, { token, kept, wants }) =>
@@ -237,10 +237,10 @@ export const view = {
 // The edge: the key made fresh for this link, the issuer dialled as it
 // (`connect_to_join`) within PATIENCE, and the ask and the redemption
 // posted; the joined group kept, its key sealed (store.js `keep`).
-const PATIENCE = 60_000,
-  AWAY = 'The computer that sent this link did not answer. Try again later.',
-  wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__'),
-  trace = (/** @type {string} */ line) => globalThis.__trace?.(line);
+const PATIENCE = 60_000;
+const AWAY = 'The computer that sent this link did not answer. Try again later.';
+const wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__');
+const trace = (/** @type {string} */ line) => globalThis.__trace?.(line);
 /**
  * @param {string} words
  * @param {number} [status]
@@ -269,23 +269,23 @@ async function posted(core, token, path, body, refused = joining) {
     core.connect_to_join(key, token),
     new Promise((_, reject) => setTimeout(() => reject(new Error('no answer')), PATIENCE)),
   ]).catch((error) => Promise.reject((trace(`PAGE: the dial failed: ${error}`), refusal(AWAY))));
-  const bytes = new TextEncoder().encode(body),
-    [res, text] = await dialled
-      .fetch(
-        'POST',
-        path,
-        [
-          ['content-type', 'application/json'],
-          ['content-length', String(bytes.length)],
-        ],
-        new Blob([bytes]).stream(),
-      )
-      // The wasm's `fetch` answers the page's `Response` (svrngs_web.d.ts `Dialled`).
-      .then(
-        async (/** @type {Response} */ response) =>
-          /** @satisfies {[Response, string]} */ ([response, await response.text()]),
-      )
-      .finally(() => dialled.close());
+  const bytes = new TextEncoder().encode(body);
+  const [res, text] = await dialled
+    .fetch(
+      'POST',
+      path,
+      [
+        ['content-type', 'application/json'],
+        ['content-length', String(bytes.length)],
+      ],
+      new Blob([bytes]).stream(),
+    )
+    // The wasm's `fetch` answers the page's `Response` (svrngs_web.d.ts `Dialled`).
+    .then(
+      async (/** @type {Response} */ response) =>
+        /** @satisfies {[Response, string]} */ ([response, await response.text()]),
+    )
+    .finally(() => dialled.close());
   return res.ok
     ? text
     : Promise.reject(
@@ -309,8 +309,8 @@ export const io = {
             'This link was made by an older svrngs. Ask whoever sent it for a new one.',
           );
         key = crypto.getRandomValues(new Uint8Array(32));
-        const told = await posted(core, token, '/ask', core.ask(key, token)),
-          group = core.believe(told);
+        const told = await posted(core, token, '/ask', core.ask(key, token));
+        const group = core.believe(told);
         return /** @satisfies {PageMessage} */ ({
           type: 'asked',
           told,

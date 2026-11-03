@@ -109,24 +109,24 @@ import { Group, get, offered } from './page/group.js?v=__VERSION__';
 // Each feature's file, and the page's places after the groups, in
 // home.js@19b63b2b:378-427's order.
 const FILES = /** @type {const} */ ([
-    'shelf',
-    'index',
-    'running',
-    'lending',
-    'door',
-    'visits',
-    'leave',
-    'screen',
-    'join',
-    'make',
-    'links',
-    'open',
-    'acts',
-    'ask',
-    'wifi',
-    'play',
-  ]),
-  PLACES = ['acts', 'left', 'open', 'join', 'make', 'running', 'lent'];
+  'shelf',
+  'index',
+  'running',
+  'lending',
+  'door',
+  'visits',
+  'leave',
+  'screen',
+  'join',
+  'make',
+  'links',
+  'open',
+  'acts',
+  'ask',
+  'wifi',
+  'play',
+]);
+const PLACES = ['acts', 'left', 'open', 'join', 'make', 'running', 'lent'];
 // After a write here (`again`), the groups drawn stay, said as read again
 // until they are, where v1 loaded the page again (home_group.rs:219, :335
 // on v2: "You made Trip." over the old groups looked done).
@@ -244,12 +244,12 @@ const left = ({ s: state }) =>
 // Past its first `return`, the groups are read, so `state.groups` is read then.
 /** @param {HomeProps} props */
 export function Home({ store, flows, places }) {
-  const state = useStore(store),
-    query = state.q,
-    home = store.dispatch,
-    held = () => Object.values(flows).some((flow) => flow.holds?.(state)),
-    Place = /** @param {string} place */ (place) =>
-      places[place] && html`<${places[place]} s=${state} home=${home} />`;
+  const state = useStore(store);
+  const query = state.q;
+  const home = store.dispatch;
+  const held = () => Object.values(flows).some((flow) => flow.holds?.(state));
+  const Place = /** @param {string} place */ (place) =>
+    places[place] && html`<${places[place]} s=${state} home=${home} />`;
   if (state.at.groups === 'reading' || state.at.groups === 'unread')
     return html`<p class=${state.at.groups === 'reading' ? 'said' : undefined}>${state.at.groups === 'reading' ? 'Reading your groups…' : `This computer cannot read your groups: ${state.why}`}</p>`;
   if (state.ask || query.screen) return Place(state.ask ? 'ask' : 'screen');
@@ -267,9 +267,9 @@ Promise.all(FILES.map((file) => import(`./page/${file}.js?v=__VERSION__`)))
   .then((mods) => {
     // Each module imported by its name in FILES, so each name is there.
     const flows = /** @type {Flows} */ (
-        Object.fromEntries(FILES.map((file, i) => [file, mods[i]]))
-      ),
-      places = Object.assign({ left }, ...mods.map((flow) => flow.view));
+      Object.fromEntries(FILES.map((file, i) => [file, mods[i]]))
+    );
+    const places = Object.assign({ left }, ...mods.map((flow) => flow.view));
     const store = machine(
       'HOME',
       HOME(flows),

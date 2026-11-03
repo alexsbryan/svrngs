@@ -40,9 +40,9 @@ import { named, unasked } from '../question.js?v=__VERSION__';
  * @returns {Drawn[]}
  */
 export function Uses({ lent, labelOf, choices, tag, said = {}, send }) {
-  const app = (/** @type {string} */ label) => lent.find((lend) => labelOf(lend) === label),
-    line = (/** @type {string} */ words, /** @type {Drawn[]} */ ...after) =>
-      html`<${tag}>${words}${after}</${tag}>`;
+  const app = (/** @type {string} */ label) => lent.find((lend) => labelOf(lend) === label);
+  const line = (/** @type {string} */ words, /** @type {Drawn[]} */ ...after) =>
+    html`<${tag}>${words}${after}</${tag}>`;
   // A lend past the filter has its choices, and an app named is found, as
   // the test before its `named` says: tsc narrows neither lookup.
   return lent

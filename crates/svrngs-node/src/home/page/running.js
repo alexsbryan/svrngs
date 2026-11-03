@@ -208,15 +208,15 @@ const LEND = (home) => ({
 /** @param {FoundProps} props */
 function Found({ r: shown, named, home }) {
   const [state, send] = useMachine(() =>
-      machine('LEND', LEND(home), {
-        at: { lend: 'unlent' },
-        port: shown.port,
-        name: '',
-        kind: '',
-        said: '',
-      }),
-    ),
-    at = `http://localhost:${shown.port}`;
+    machine('LEND', LEND(home), {
+      at: { lend: 'unlent' },
+      port: shown.port,
+      name: '',
+      kind: '',
+      said: '',
+    }),
+  );
+  const at = `http://localhost:${shown.port}`;
   // `state.l` is the lend 'lent' made, which set 'lent' with it.
   if (state.at.lend === 'lent')
     return html`<li>${`You lent ${/** @type {Shown} */ (state.l).name}, at ${at}: everyone in your groups can open it now. ${needs(/** @type {Shown} */ (state.l))} `}</li>`;

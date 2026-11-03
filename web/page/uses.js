@@ -129,8 +129,8 @@ export const view = {
 // The edge: a lender's door dialled as the person, its words when it does
 // not answer or refuses (app.js@19b63b2b:288-296), read whole before the dial closes, as
 // a body after its head is cut off by the close (bash-film-load).
-const trace = (/** @type {string} */ line) => globalThis.__trace?.(line),
-  saying = (/** @type {string} */ said) => Object.assign(new Error(said), { said });
+const trace = (/** @type {string} */ line) => globalThis.__trace?.(line);
+const saying = (/** @type {string} */ said) => Object.assign(new Error(said), { said });
 /**
  * @param {Group} group
  * @param {Lent} lend
@@ -148,13 +148,13 @@ const door = (group, lend, method, body, away = '') =>
     )
     .then(async (connection) => {
       // With a body, `bytes` holds it, so each read of it below is under `body ?`.
-      const bytes = body && new TextEncoder().encode(JSON.stringify(body)),
-        head = body
-          ? [
-              ['content-type', 'application/json'],
-              ['content-length', String(/** @type {Uint8Array<ArrayBuffer>} */ (bytes).length)],
-            ]
-          : [['accept', 'application/json']];
+      const bytes = body && new TextEncoder().encode(JSON.stringify(body));
+      const head = body
+        ? [
+            ['content-type', 'application/json'],
+            ['content-length', String(/** @type {Uint8Array<ArrayBuffer>} */ (bytes).length)],
+          ]
+        : [['accept', 'application/json']];
       const response = await connection
         .fetch(
           method,

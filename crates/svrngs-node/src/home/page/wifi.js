@@ -103,25 +103,25 @@ import { get, post } from './group.js?v=__VERSION__';
  */
 
 const answer =
+  /**
+   * @param {number} serial
+   * @param {Turned} [turned]
+   */
+  (serial, turned) =>
     /**
-     * @param {number} serial
-     * @param {Turned} [turned]
+     * @param {InRoom[]} room
+     * @returns {Answered}
      */
-    (serial, turned) =>
-      /**
-       * @param {InRoom[]} room
-       * @returns {Answered}
-       */
-      (room) => ({
-        type: 'answered',
-        n: serial,
-        room,
-        turned,
-        why: `${room.length} open`,
-      }),
-  same = /** @param {Which} one */ (one) => /** @param {Which} other */ (other) =>
-    one.key === other.key && one.name === other.name,
-  keyOf = /** @param {Which} lend */ (lend) => `${lend.key}:${lend.name}`;
+    (room) => ({
+      type: 'answered',
+      n: serial,
+      room,
+      turned,
+      why: `${room.length} open`,
+    });
+const same = /** @param {Which} one */ (one) => /** @param {Which} other */ (other) =>
+  one.key === other.key && one.name === other.name;
+const keyOf = /** @param {Which} lend */ (lend) => `${lend.key}:${lend.name}`;
 // A turn is answered by what is open then, written over what was read, and
 // what it closed is kept, said closed in both lists until the page is left.
 /** @type {Machine<State, Message, Effect>} */
@@ -287,12 +287,12 @@ function Foot({ s: state }) {
     () => room.dispatch({ type: 'read', round: state.asked?.lends ?? 1 }),
     [state.asked?.lends],
   );
-  const roomState = useStore(room),
-    people = state.people?.people ?? [],
-    whose = /** @param {Lent} lend */ (lend) => ({
-      ...lend,
-      called: called(people, people.find((row) => row.key === lend.key)?.person_key),
-    });
+  const roomState = useStore(room);
+  const people = state.people?.people ?? [];
+  const whose = /** @param {Lent} lend */ (lend) => ({
+    ...lend,
+    called: called(people, people.find((row) => row.key === lend.key)?.person_key),
+  });
   return (
     state.lends &&
     (roomState.room || roomState.at.room === 'unread') &&

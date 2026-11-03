@@ -85,16 +85,16 @@ import { get, post } from './group.js?v=__VERSION__';
  */
 
 const answer =
-    /** @param {number} serial */
-    (serial) =>
-      /**
-       * @param {Playing[]} plays
-       * @returns {Answered}
-       */
-      (plays) => ({ type: 'answered', n: serial, plays, why: `${plays.length} on` }),
-  same = /** @param {Port} one */ (one) => /** @param {Port} other */ (other) =>
-    one.key === other.key && one.name === other.name,
-  keyOf = /** @param {Port} lend */ (lend) => `${lend.key}:${lend.name}`;
+  /** @param {number} serial */
+  (serial) =>
+    /**
+     * @param {Playing[]} plays
+     * @returns {Answered}
+     */
+    (plays) => ({ type: 'answered', n: serial, plays, why: `${plays.length} on` });
+const same = /** @param {Port} one */ (one) => /** @param {Port} other */ (other) =>
+  one.key === other.key && one.name === other.name;
+const keyOf = /** @param {Port} lend */ (lend) => `${lend.key}:${lend.name}`;
 // Where a program here connects to what Play opened, copied, or why not.
 /** @param {Playing | undefined} playing */
 const copy = (playing) =>

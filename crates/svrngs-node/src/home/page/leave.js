@@ -192,9 +192,9 @@ const LEAVE = (home) => ({
 /** @param {LeaveProps} props */
 function Leave({ g: group, rows, me, home, name = group.name ?? 'this group' }) {
   const [state, send] = useMachine(() =>
-      machine('LEAVE', LEAVE(home), { at: { leave: 'idle' }, said: [], to: 0, name }),
-    ),
-    own = rows.find((row) => row.key === me)?.person_key;
+    machine('LEAVE', LEAVE(home), { at: { leave: 'idle' }, said: [], to: 0, name }),
+  );
+  const own = rows.find((row) => row.key === me)?.person_key;
   // `state.to` is the chosen option's value, a string after the first choice,
   // by which an array is indexed as by its number.
   const others = [
@@ -205,14 +205,14 @@ function Leave({ g: group, rows, me, home, name = group.name ?? 'this group' }) 
     ).values(),
   ];
   const press =
-      /**
-       * @param {On} on
-       * @param {string} path
-       * @param {Body} body
-       */
-      (on, path, body) => () => send({ type: 'ask', on, path, body }),
-    says = /** @param {On} on */ (on) =>
-      state.said.filter((said) => said[0] === on).map((said) => said[1]);
+    /**
+     * @param {On} on
+     * @param {string} path
+     * @param {Body} body
+     */
+    (on, path, body) => () => send({ type: 'ask', on, path, body });
+  const says = /** @param {On} on */ (on) =>
+    state.said.filter((said) => said[0] === on).map((said) => said[1]);
   return html`${group.keeps && others.length > 0 && html`<p>You keep the order of removals in ${name}. Choose who keeps it after you, then leave: <select onChange=${(/** @type {{ target: HTMLSelectElement }} */ chosen) => send({ type: 'to', i: chosen.target.value })}>${others.map((row, i) => html`<option value=${i}>${called(rows, row.person_key)}</option>`)}</select><button onClick=${press('hand', '/v1/handovers', { group: group.id, ...others[Number(state.to)] })}>Hand it on</button>${says('hand')}</p>`}<p class="leave">Leaving ${name} stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. <button onClick=${press('leave', '/v1/leaves', { group: group.id })}>Leave ${name}</button>${says('leave')}</p>`;
 }
 

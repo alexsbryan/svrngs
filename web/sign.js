@@ -155,8 +155,8 @@ async function stableApproval(group, pass, line, now) {
 // unless it is a lend's label directly under this host.
 /** @param {string} origin */
 function framer(origin) {
-  const app = new URL(origin),
-    suffix = `.${location.host}`;
+  const app = new URL(origin);
+  const suffix = `.${location.host}`;
   const label = app.host.slice(0, -suffix.length);
   if (
     app.protocol !== location.protocol ||

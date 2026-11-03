@@ -103,7 +103,8 @@ async function checked(handed) {
 
 async function start() {
   const asked = new URLSearchParams(location.search);
-  let handed, seed;
+  let handed;
+  let seed;
   if (location.hash.length > 1) {
     handed = decode(location.hash.slice(1));
     history.replaceState(null, '', `${location.pathname}${location.search}`);

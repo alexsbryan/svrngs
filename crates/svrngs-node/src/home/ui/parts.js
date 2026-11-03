@@ -38,8 +38,8 @@ const IDLE = { state: 'idle', said: '' };
  * @param {ActProps<Message>} props
  */
 export function Act({ words, doing = IDLE, on, type, answer = 'beside', send }) {
-  const busy = doing.state === 'busy',
-    said = busy ? '' : (doing.said ?? '');
+  const busy = doing.state === 'busy';
+  const said = busy ? '' : (doing.said ?? '');
   if (answer === 'instead' && said) return said;
   return html`<button type=${type} disabled=${busy} onClick=${on && (() => busy || send(on))}>${words}</button>${said}`;
 }

@@ -185,8 +185,8 @@ const sealing = (handoff, iv) => ({
  * @param {Uint8Array<ArrayBuffer>} seed
  */
 export async function sealOpen(handoff, seed) {
-  const sealKey = crypto.getRandomValues(new Uint8Array(32)),
-    iv = crypto.getRandomValues(new Uint8Array(12));
+  const sealKey = crypto.getRandomValues(new Uint8Array(32));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
   const key = await crypto.subtle.importKey('raw', sealKey, 'AES-GCM', false, ['encrypt']);
   return {
     proof:

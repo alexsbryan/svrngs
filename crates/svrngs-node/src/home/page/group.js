@@ -188,19 +188,19 @@ export const offered = (flows, state, message, flow = flows[message.flow]) =>
 // who is visiting, the shelf, what is open to this WiFi, and its link to a screen (`show`);
 // then what it read, told to HOME for "What acts as you" (home/page/acts.js `Told`), drawing nothing.
 const PLACES = /** @type {const} */ ([
-    'index',
-    'people',
-    'folder',
-    'links',
-    'leave',
-    'removals',
-    'visits',
-    'shelf',
-    'wifi',
-    'show',
-    'told',
-  ]),
-  ROUTES = { people: '/v1/rail/people', lends: '/v1/lends' };
+  'index',
+  'people',
+  'folder',
+  'links',
+  'leave',
+  'removals',
+  'visits',
+  'shelf',
+  'wifi',
+  'show',
+  'told',
+]);
+const ROUTES = { people: '/v1/rail/people', lends: '/v1/lends' };
 // Both read, each counted (ui/machine.js `ask`), the round's why traced.
 /**
  * @param {State} state

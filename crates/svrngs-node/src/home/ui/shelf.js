@@ -84,8 +84,8 @@ const done = (name) => (/** @type {Brought} */ answer) =>
   answer.already
     ? `${spoken(answer.app)} is on the table already.`
     : `You brought ${spoken(answer.app)} to ${name}: everyone in it can open it in a few seconds.`;
-const BUSY = 'a bring is under way, and is answered first',
-  TRIES = 4;
+const BUSY = 'a bring is under way, and is answered first';
+const TRIES = 4;
 // Whether `app` is on `group`'s table, as its read `lent` says.
 /**
  * @param {ShelfGroup} group
@@ -231,9 +231,9 @@ export function Shelf(props) {
  * @returns {Drawn}
  */
 export function drawn(state, send, { g: group, lent, shelf, joined }) {
-  const name = group.name ?? 'your group',
-    listed = (/** @type {Shelved} */ app) => on(group, lent)(app.name),
-    offered = shelf.filter((app) => !listed(app) && !state.brought.includes(app.name));
+  const name = group.name ?? 'your group';
+  const listed = (/** @type {Shelved} */ app) => on(group, lent)(app.name);
+  const offered = shelf.filter((app) => !listed(app) && !state.brought.includes(app.name));
   const tick = (/** @type {string} */ app) => (/** @type {Targeted<HTMLInputElement>} */ ticked) =>
     send({ type: 'tick', app: app, on: ticked.currentTarget.checked });
   const section = html`<section><h3>Bring things to the table</h3>${shelf.filter(listed).map((app) => html`<p>${spoken(app.name)} is on the table.</p>`)}<p>${offered.length ? `These come with svrngs. Bring one, and everyone in ${name} opens it on their own computer or phone, while any computer in ${name} is on.` : ''}</p>${offered.map((app) => html`<p><label><input type="checkbox" disabled=${state.at.bring === 'bringing'} checked=${state.ticked.includes(app.name)} onChange=${tick(app.name)} />${` ${spoken(app.name)}: ${app.words}`}</label></p>`)}${(offered.length > 0 || state.said) && html`<p><${Act} answer=${offered.length ? 'beside' : 'instead'} words=${`Bring the ticked ones to ${name}`} doing=${{ state: state.at.bring === 'bringing' ? 'busy' : state.at.bring, said: state.said && ` ${state.said}` }} on=${{ type: 'bring', g: group, name, apps: offered.map((app) => app.name).filter((app) => state.ticked.includes(app)) }} send=${send} />${state.at.bring === 'bringing' && ' Bringing…'}</p>`}</section>`;

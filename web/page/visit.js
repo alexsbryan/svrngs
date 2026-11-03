@@ -111,9 +111,9 @@ export const takes = {
     ),
   ),
 };
-const host = (/** @type {State} */ state) => state.stay?.host,
-  until = (/** @type {State} */ state) =>
-    state.stay && new Date(state.stay.until * 1000).toLocaleString();
+const host = (/** @type {State} */ state) => state.stay?.host;
+const until = (/** @type {State} */ state) =>
+  state.stay && new Date(state.stay.until * 1000).toLocaleString();
 /** @type {Record<string, (s: State) => Said | Nothing>} */
 export const heading = {
   visit: (state) =>
@@ -144,11 +144,11 @@ export const listed = (state, send) =>
 // from it; what the visit opens, each by its label, at the link's computer;
 // and the visit asked of it, dialled as the key, as web/app.js `post` does
 // (:110-117), its refusal by status (`joining`, :106).
-const wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__'),
-  said = (/** @type {string} */ words) =>
-    Promise.reject(Object.assign(new Error(words), { said: words })),
-  failing = (/** @type {any} */ error) =>
-    /** @satisfies {PageMessage} */ ({ type: 'failed', said: error.said, why: String(error) });
+const wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__');
+const said = (/** @type {string} */ words) =>
+  Promise.reject(Object.assign(new Error(words), { said: words }));
+const failing = (/** @type {any} */ error) =>
+  /** @satisfies {PageMessage} */ ({ type: 'failed', said: error.said, why: String(error) });
 // The visit's key, made or unsealed by `recall` or `redeem` before any
 // other run reads it.
 /** @type {Uint8Array<ArrayBuffer> | undefined} */

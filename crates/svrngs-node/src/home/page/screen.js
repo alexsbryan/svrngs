@@ -189,8 +189,8 @@ const SCREEN = {
 /** @param {HOME.PlaceProps} props */
 function Screen({ s: { groups, q: query } }) {
   // HOME draws the screen once the groups are read (home.js `Home`).
-  const group = /** @type {Group[]} */ (groups).find((one) => one.id === query.screen),
-    here = group && !group.left && group.removed === false;
+  const group = /** @type {Group[]} */ (groups).find((one) => one.id === query.screen);
+  const here = group && !group.left && group.removed === false;
   const [state] = useMachine(() =>
     machine(
       'SCREEN',

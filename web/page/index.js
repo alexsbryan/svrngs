@@ -141,8 +141,8 @@ export const view = {
 // never enters state; and the hand-off in the fragment, which no origin is
 // sent. The holder is the lend origin's one key (capability-signed (H)),
 // its bytes sent only when it holds none or a lend is on an older svrngs.
-const trace = (/** @type {string} */ line) => globalThis.__trace?.(line),
-  wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__');
+const trace = (/** @type {string} */ line) => globalThis.__trace?.(line);
+const wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__');
 /**
  * @param {Hand} hand
  * @param {Uint8Array} key the person's key, unsealed
@@ -155,8 +155,8 @@ export async function handing(
   until = Math.floor(Date.now() / 1000) + PASS_LIFE,
 ) {
   // The lend named is one listed: `open` refuses any other.
-  const core = await wasm(),
-    lend = /** @type {Lent} */ (lent.find((one) => one.label === label));
+  const core = await wasm();
+  const lend = /** @type {Lent} */ (lent.find((one) => one.label === label));
   if (!('serviceWorker' in navigator))
     return { type: 'unopened', said: `This browser cannot open ${named(lend)}.` };
   const yes = lend.reads?.length && (at === undefined || !group.reads?.[label]);
@@ -185,11 +185,11 @@ export async function handing(
     asks: other.asks,
     version: other.version ?? null,
   }));
-  const raw = lends.some((one) => !core.links(one.version)),
-    had = !raw && (await store.holder(label));
-  const seed = had ? null : crypto.getRandomValues(new Uint8Array(32)),
-    // With no holder had, a seed was made.
-    holder = had || core.actor(/** @type {Uint8Array} */ (seed));
+  const raw = lends.some((one) => !core.links(one.version));
+  const had = !raw && (await store.holder(label));
+  const seed = had ? null : crypto.getRandomValues(new Uint8Array(32));
+  // With no holder had, a seed was made.
+  const holder = had || core.actor(/** @type {Uint8Array} */ (seed));
   if (raw)
     trace(
       'PAGE: a lend of this open is at a computer on an older svrngs, so its holder goes as bytes',
@@ -199,8 +199,8 @@ export async function handing(
   // This open's approver (HOLDER_APPROVAL §3.D): named in both passes, its
   // seed sealed into the open and its sealing key left in a cookie for the
   // group's signer alone, which approves the app's entries with it.
-  const approver = crypto.getRandomValues(new Uint8Array(32)),
-    approves = core.actor(approver);
+  const approver = crypto.getRandomValues(new Uint8Array(32));
+  const approves = core.actor(approver);
   /** @type {Handoff} */
   const handoff = {
     label,
