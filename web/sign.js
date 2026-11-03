@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // The group's signer (svrn-docs rings/current/HOLDER_APPROVAL.md §3.D),
 // framed by a lent app's pages at the group's origin. It runs no app code
 // and never loads the person's key. It holds one approver per app, the key
@@ -13,12 +12,17 @@
 import init, { actor, approve_line } from './wasm/svrngs_web.js?v=__VERSION__';
 import { handoffCookie, hostCookie, openMessage, openSeal } from './authority.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
+/** @import { Handoff } from './authority.js?v=__VERSION__' */
 let loaded;
+/** @param {string} text */
 const decode = (text) => JSON.parse(atob(text.replace(/-/g, '+').replace(/_/g, '/')));
+/** @param {ArrayBuffer} bytes */
 const hex = (bytes) =>
   [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, '0')).join('');
+/** @param {Handoff} h */
 const digest = async (h) =>
   hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(openMessage(h))));
+/** @param {Uint8Array} seed */
 const pkcs8 = (seed) =>
   Uint8Array.from([
     0x30,
@@ -42,6 +46,14 @@ const pkcs8 = (seed) =>
 
 // One transaction on this origin's store `name`, its one object store kept
 // by `keyPath`: `act(store)`'s request's answer once it commits.
+/**
+ * @template T
+ * @param {string} name
+ * @param {string} keyPath
+ * @param {IDBTransactionMode} mode
+ * @param {(store: IDBObjectStore) => IDBRequest<T>} act
+ * @returns {Promise<T>}
+ */
 function stored(name, keyPath, mode, act) {
   return new Promise((yes, no) => {
     const r = indexedDB.open(name, 1);
@@ -61,6 +73,11 @@ function stored(name, keyPath, mode, act) {
     };
   });
 }
+/**
+ * @template T
+ * @param {IDBTransactionMode} mode
+ * @param {(store: IDBObjectStore) => IDBRequest<T>} act
+ */
 const approvers = (mode, act) => stored('svrngs-approvers', 'label', mode, act);
 
 // The approver for `label`'s open `h`. A cookie for the label that opens the
@@ -69,6 +86,11 @@ const approvers = (mode, act) => stored('svrngs-approvers', 'label', mode, act);
 // one approved (last open wins). A cookie that does not open this seal is
 // another open's, left for it. Then the record kept for `label`, which must
 // be this open's. Records whose pass lapsed go.
+/**
+ * @param {string} label
+ * @param {Handoff} h
+ * @param {number} now in seconds
+ */
 async function approver(label, h, now) {
   await approvers('readwrite', (s) => {
     const all = s.getAll();
@@ -101,6 +123,12 @@ async function approver(label, h, now) {
 
 // A refreshed delegation must not give the same entry another authorization/id.
 // Keep approvals for the whole ±300 s authoring window, atomically across frames.
+/**
+ * @param {string} group
+ * @param {string} pass
+ * @param {string} line
+ * @param {number} now in seconds
+ */
 async function stableApproval(group, pass, line, now) {
   const approval = decode(pass);
   const id = `${group}/${approval.person}/${approval.app}/${approval.op}`;
@@ -123,6 +151,7 @@ async function stableApproval(group, pass, line, now) {
 // The label of the app framing this signer: the first name of its parent's
 // origin, set by the browser (`e.origin`), never by what it asks; refused
 // unless it is a lend's label directly under this host.
+/** @param {string} origin */
 function framer(origin) {
   const app = new URL(origin),
     suffix = `.${location.host}`;
