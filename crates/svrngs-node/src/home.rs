@@ -134,7 +134,7 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
         "/question.js" "text/javascript" "home/question.js"
         "/look.css" "text/css" "home/look.css"
         "/favicon.svg" "image/svg+xml" "../../../docs/brand/favicon.svg";
-        "/page/" "home/page/" ["acts" "ask" "door" "folder" "folders" "group" "group-folder" "index" "join" "leave" "lending" "links" "make" "open" "people" "play" "removals" "routes" "running" "screen" "shelf" "visits" "wifi"];
+        "/page/" "home/page/" ["acts" "ask" "door" "folder" "folders" "group" "group-folder" "index" "join" "leave" "lending" "links" "make" "open" "people" "play" "removals" "routes" "running" "screen" "shelf" "stop-visit" "visit" "visits" "wifi"];
         "/ui/" "home/ui/" ["acts" "changes" "copy" "door" "machine" "parts" "shelf" "trace" "uses" "view" "visitors"];
         "/vendor/" "../../../web/vendor/" ["hooks" "htm" "preact"]
     }
