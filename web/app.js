@@ -26,9 +26,11 @@ import * as join from './page/join.js?v=__VERSION__';
 import * as shelf from './page/shelf.js?v=__VERSION__';
 import * as uses from './page/uses.js?v=__VERSION__';
 import * as visit from './page/visit.js?v=__VERSION__';
+/** @import { Flow } from './page/page.js?v=__VERSION__' */
 
 // The wasm by its one URL, from the cache the worker reads it from too
 // (store.js `runtime`, u4-9); then the address's fragment, to open.
+/** @type {Flow} */
 const edge = {
   io: {
     init: () =>
@@ -55,10 +57,19 @@ const parts = compose({
 const page = machine(
   'PAGE',
   parts,
-  parts.first({ fine: matchMedia('(pointer: fine)').matches, standalone: navigator.standalone }),
+  parts.first({
+    fine: matchMedia('(pointer: fine)').matches,
+    // iPhone Safari's own: false outside a Home Screen web app, absent in
+    // every other browser (web/page/join.js `NameForm`), so no lib declares it.
+    standalone: /** @type {Navigator & { standalone?: boolean }} */ (navigator).standalone,
+  }),
   [{ run: 'init', failed: 'failed' }],
 );
-render(html`<${Page} parts=${parts} store=${page} />`, document.getElementById('page'));
+// web/index.html holds #page.
+render(
+  html`<${Page} parts=${parts} store=${page} />`,
+  /** @type {HTMLElement} */ (document.getElementById('page')),
+);
 
 // An address typed or tapped on this page is a new fragment on the same
 // page, which the browser opens without loading it (web/app.js@19b63b2b:626).

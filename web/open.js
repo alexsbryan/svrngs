@@ -27,9 +27,13 @@
 // signs another, to a new holder (`anew`).
 import * as store from './store.js?v=__VERSION__';
 import { signerFor, holderMatches, openMessage } from './authority.js?v=__VERSION__';
+/** @import { Handoff } from './authority.js?v=__VERSION__' */
 
-const say = (words) => (document.getElementById('said').textContent = words);
+// open.html holds #said.
+const say = (/** @type {string} */ words) =>
+  (/** @type {HTMLElement} */ (document.getElementById('said')).textContent = words);
 
+/** @param {string} fragment */
 const decode = (fragment) =>
   JSON.parse(
     new TextDecoder().decode(
@@ -39,12 +43,22 @@ const decode = (fragment) =>
 
 // An Ed25519 key's 32 bytes, `hex`, as PKCS #8 (RFC 8410): the one form
 // WebCrypto imports a private Ed25519 key from in both engines.
+// The prefix and the seed are hex, so `match` finds their pairs.
+/** @param {string} hex */
 const pkcs8 = (hex) =>
-  Uint8Array.from(`302e020100300506032b657004220420${hex}`.match(/../g), (h) => parseInt(h, 16));
+  Uint8Array.from(
+    /** @type {RegExpMatchArray} */ (`302e020100300506032b657004220420${hex}`.match(/../g)),
+    (h) => parseInt(h, 16),
+  );
 
 // The worker `reg` runs, once it runs.
+/**
+ * @param {ServiceWorkerRegistration} reg
+ * @returns {Promise<ServiceWorker>}
+ */
 function running(reg) {
-  const worker = reg.installing ?? reg.waiting ?? reg.active;
+  // Just registered, it is one of the three.
+  const worker = /** @type {ServiceWorker} */ (reg.installing ?? reg.waiting ?? reg.active);
   return new Promise((done) => {
     if (worker.state === 'activated') return done(worker);
     worker.addEventListener('statechange', () => worker.state === 'activated' && done(worker));
@@ -55,6 +69,7 @@ function running(reg) {
 // framed at the address derived from this origin's own host, adopts the
 // open's approver on its first ask, or finds the one it adopted
 // (sign.js; svrn-docs rings/current/HOLDER_APPROVAL.md §3.D).
+/** @param {Handoff} handed */
 async function checked(handed) {
   const url = signerFor(location.href, new URL('./', import.meta.url).pathname);
   const frame = document.createElement('iframe');
@@ -72,8 +87,11 @@ async function checked(handed) {
         yes(data.opened === true);
       };
       const opening = { ...JSON.parse(openMessage(handed)), proof: handed.proof };
+      // Loaded, the frame has its window.
       frame.onload = () =>
-        frame.contentWindow.postMessage({ opening }, new URL(url).origin, [channel.port2]);
+        /** @type {Window} */ (frame.contentWindow).postMessage({ opening }, new URL(url).origin, [
+          channel.port2,
+        ]);
       document.body.append(frame);
     });
   } finally {

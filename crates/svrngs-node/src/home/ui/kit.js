@@ -7,6 +7,11 @@
 // copy.js and shelf.js both name and a flow imports from its own module: a
 // name two modules export is no export here, and importing it fails as the
 // page loads, not quietly. ui/'s own files import their modules by name.
+//
+// A type is a name too: tsc refuses two modules' names meeting here,
+// either kind, so each part's types are named for it (copy.js
+// `CopyState`), and question.js's people row is `PeopleRow`, where
+// parts.js's `Row` draws a table's. `drawn` is declared below.
 export * from './view.js?v=__VERSION__';
 export * from './machine.js?v=__VERSION__';
 export * from './parts.js?v=__VERSION__';
@@ -18,3 +23,8 @@ export * from './acts.js?v=__VERSION__';
 export * from './changes.js?v=__VERSION__';
 export * from './uses.js?v=__VERSION__';
 export * from '../question.js?v=__VERSION__';
+
+// No `drawn` here: copy.js's and shelf.js's meet. Declared a type of
+// nothing, which ends tsc's refusal of the two and makes it refuse an
+// import of `drawn` from here as a value, as the browser refuses it.
+/** @typedef {never} drawn */

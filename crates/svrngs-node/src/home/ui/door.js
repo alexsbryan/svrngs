@@ -15,12 +15,36 @@
 // it (home.js@19b63b2b:324): its people, those on now, and the things in their windows.
 import { html } from './view.js?v=__VERSION__';
 import { called } from '../question.js?v=__VERSION__';
+/** @import { Joined, Named, PeopleRow } from '../question.js?v=__VERSION__' */
 
-const since = (p) => (p.joined === 'started' ? 0 : p.joined.at);
-const at = (d, m = -d.getTimezoneOffset()) =>
+/**
+ * A lend as the door draws it: its group, when an app the group carries;
+ * its lender's key; where it opens; and its name.
+ * @typedef {{ group?: string | null, key: string, origin: string, name: string }} DoorLent
+ */
+
+/**
+ * What the door judges by: whose computers did not answer, each by name and
+ * first key (home/page/group.js `Lends`, web/page/enter.js `Whom`).
+ * @typedef {{ unanswered: { person: string, person_key: string }[] }} Unanswered
+ */
+
+/**
+ * A person once: their row, their name as the door says it, and the
+ * devices that hold their keys.
+ * @typedef {[p: PeopleRow, name: string | undefined, devices: PeopleRow['device'][]]} Person
+ */
+
+const since = (/** @type {Named} */ p) => (p.joined === 'started' ? 0 : p.joined.at);
+const at = (/** @type {Date} */ d, m = -d.getTimezoneOffset()) =>
   `${d.toLocaleString('sv-SE')} ${m < 0 ? '-' : '+'}${String(Math.trunc(Math.abs(m) / 60) * 100 + (Math.abs(m) % 60)).padStart(4, '0')}`;
-const when = (j) => (j === 'started' ? 'started the group' : `joined ${at(new Date(j.at * 1000))}`);
+const when = (/** @type {Joined} */ j) =>
+  j === 'started' ? 'started the group' : `joined ${at(new Date(j.at * 1000))}`;
 // Each person once, with their name as the door says it and what holds their keys.
+/**
+ * @param {PeopleRow[]} rows
+ * @returns {Person[]}
+ */
 const people = (rows) =>
   [...new Map(rows.map((r) => [r.person_key, r])).values()]
     .sort((a, b) => since(a) - since(b))
@@ -31,6 +55,12 @@ const people = (rows) =>
     ]);
 
 // Its class and its words, judged by `lends` (/v1/lends' `unanswered`).
+/**
+ * @param {PeopleRow} p
+ * @param {PeopleRow['device'][]} devices
+ * @param {Unanswered | null} [lends]
+ * @returns {[drawn: string, words: string]}
+ */
 function judged(p, devices, lends) {
   if (lends === undefined) return ['', 'asking…'];
   const phone = devices.includes('browser')
@@ -52,6 +82,12 @@ function judged(p, devices, lends) {
 }
 
 // A person's window: their name, their own lends, and how they are judged.
+/**
+ * @param {PeopleRow[]} rows
+ * @param {DoorLent[]} lent
+ * @param {PeopleRow} p
+ * @param {string} [newest]
+ */
 const theirs = (rows, lent, p, newest) =>
   lent
     .filter((l) => !l.group && rows.find((r) => r.key === l.key)?.person_key === p.person_key)
@@ -59,12 +95,37 @@ const theirs = (rows, lent, p, newest) =>
       (l) =>
         html`${' '}<a href=${l.origin} target="_blank">${l.name}</a>${l.origin === newest && html`${' '}<mark>new</mark>`}`,
     );
+/**
+ * @param {PeopleRow[]} rows
+ * @param {DoorLent[]} lent
+ * @param {Unanswered | null} [lends]
+ * @param {string} [newest]
+ */
 const cell =
   (rows, lent, lends, newest) =>
-  ([p, name, devices], [drawn, words] = judged(p, devices, lends)) =>
+  (/** @type {Person} */ [p, name, devices], [drawn, words] = judged(p, devices, lends)) =>
     html`<li class=${drawn || undefined}><strong>${name}</strong>${theirs(rows, lent, p, newest)}${' '}<small>${words}</small></li>`;
+/**
+ * The door's props: the group's people rows; its lends, none when the
+ * page gives none; what it judges by, `undefined` unread and `null`
+ * unreadable; and the newest lend's origin.
+ * @typedef {object} DoorProps
+ * @property {PeopleRow[]} rows
+ * @property {DoorLent[]} [lent]
+ * @property {Unanswered | null} [lends]
+ * @property {string} [newest]
+ */
+
+/** @param {DoorProps} props */
 export const Door = ({ rows, lent = [], lends, newest }) =>
   html`<ul class="door">${people(rows).map((p) => cell(rows, lent, lends, newest)(p))}</ul>`;
+/**
+ * @param {PeopleRow[]} rows
+ * @param {DoorLent[]} lent
+ * @param {Unanswered | null} [lends]
+ * @param {Person[]} [ps]
+ * @returns {[people: number, on: number, things: number]}
+ */
 export const counted = (rows, lent, lends, ps = people(rows)) => [
   ps.length,
   ps.filter(([p, , d]) => judged(p, d, lends)[0] === 'on').length,

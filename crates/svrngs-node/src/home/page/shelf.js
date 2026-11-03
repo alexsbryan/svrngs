@@ -6,8 +6,16 @@
 // group.js, as v1 reads `?joined=` (home.js@19b63b2b:203).
 import { html, Shelf } from '../ui/kit.js?v=__VERSION__';
 import { post } from './group.js?v=__VERSION__';
+/** @import { Group, PlaceProps } from './group.js?v=__VERSION__' */
+/** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 
+// The apps ticked, by kind, brought to group `g`; /shelf answers each.
+/**
+ * @param {Group} g
+ * @param {string[]} apps
+ */
 const bring = (g, apps) => post('/shelf', [g.id, apps]);
+/** @type {{ shelf: (props: PlaceProps) => Drawn }} */
 export const view = {
   shelf: ({ g, s, home, joined }) =>
     s.lends &&

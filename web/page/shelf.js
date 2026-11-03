@@ -5,8 +5,16 @@
 // the group read again (enter.js `reread`).
 import { html, Shelf } from '../ui/kit.js?v=__VERSION__';
 import { through } from './enter.js?v=__VERSION__';
+/** @import { Group } from '../store.js?v=__VERSION__' */
+/** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
+/** @import { Props } from './page.js?v=__VERSION__' */
 
+/**
+ * @param {Group} g
+ * @param {unknown} apps what the shelf brings, as ui/shelf.js `Shelf` asks it
+ */
 const bring = (g, apps) => through(g, '/shelf', apps);
+/** @type {Record<string, (props: Props) => Drawn>} */
 export const view = {
   shelf: ({ s, send }) =>
     html`<div id="shelf">${s.lent && s.shelf && html`<${Shelf} g=${s.group} lent=${s.lent} shelf=${s.shelf} joined=${s.joined} bring=${bring} after=${() => send({ type: 'reread' })} />`}</div>`,

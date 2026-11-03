@@ -7,9 +7,33 @@
 // `offer`, `line`, :595-614). page-open's, then page-join's; how this reaches
 // you is drawn as web/index.html@19b63b2b:88-96 has it, word for word.
 import { Copy, go, html, no } from '../ui/kit.js?v=__VERSION__';
+/** @import { Io, Takes } from '../ui/machine.js?v=__VERSION__' */
+/** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
+/** @import { Wants } from './enter.js?v=__VERSION__' */
+/** @import { Message as PageMessage, Nothing, Props, Said, State } from './page.js?v=__VERSION__' */
+
+/**
+ * The fields this flow owns (`owns`): the line offered, what it does and
+ * its text.
+ * @typedef {{ line?: ['joins' | 'founds' | 'opens', string] }} Fields
+ */
+
+/**
+ * The messages this flow takes.
+ * @typedef {{ type: 'offer', token: string }
+ *   | { type: 'opens', wants?: Wants }
+ *   | { type: 'offered', token?: string, page: string, href?: string | false }} Message
+ */
+
+/**
+ * The effect its steps answer: where this page is, for a line that joins
+ * by `token` or one that `opens` the link.
+ * @typedef {{ run: 'where', token?: string, opens?: boolean, failed: string }} Effect
+ */
 
 export const owns = ['line'];
-export const states = { offer: ['unoffered', 'offered'] };
+export const states = /** @type {const} */ ({ offer: ['unoffered', 'offered'] });
+/** @type {Takes<State, Message, Effect>} */
 export const takes = {
   offer: (s, m) =>
     s.fine && /^[A-Za-z0-9_-]*$/.test(m.token)
@@ -36,11 +60,13 @@ export const takes = {
       },
     ),
 };
+/** @type {Record<string, (s: State) => Said | Nothing>} */
 export const heading = {
   elsewhere: (s) =>
     s.line?.[0] === 'opens' && ['This link opens in svrngs on your computer.', 'good'],
 };
 // The page's own address, which only the edge reads.
+/** @type {Io<Effect, PageMessage>} */
 export const io = {
   where: ({ token, opens }) => ({
     type: 'offered',
@@ -59,8 +85,12 @@ const SAYS = {
     'Copy this link, open your svrngs home page, and paste it under “Open a link from your group”: it opens there. If svrngs is not on this computer, open the link on your phone.',
 };
 const WORDS = { copy: 'Copy', copied: 'Copied', unwritten: 'Select the line and copy it' };
+/** @type {Record<string, (props: Props) => Drawn>} */
 export const view = {
-  computer: ({ s: { line: [says, text = ''] = [] } }) =>
+  // No line offered draws nothing: no words, and an empty line.
+  computer: ({
+    s: { line: [says, text = ''] = /** @type {Partial<Fields['line'] & {}>} */ ([]) },
+  }) =>
     html`<section id="computer" hidden=${!says}>${Object.entries(SAYS).map(([id, w]) => html`<p id=${id} hidden=${id !== says}>${w}</p>`)}<pre id="line">${text}</pre><${Copy} id="copy" text=${text} words=${WORDS} /></section>`,
   // For someone at a computer who likes to see how a thing works, once in;
   // on a phone left out of the first look (app.js@19b63b2b:522-525; join_page.rs).

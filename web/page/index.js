@@ -23,13 +23,50 @@ import {
 import * as store from '../store.js?v=__VERSION__';
 import { handoffCookie, sealOpen } from '../authority.js?v=__VERSION__';
 import { listed } from './visit.js?v=__VERSION__';
+/** @import { Group } from '../store.js?v=__VERSION__' */
+/** @import { Handoff } from '../authority.js?v=__VERSION__' */
+/** @import { Io, Takes } from '../ui/machine.js?v=__VERSION__' */
+/** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
+/** @import { Lent, Whom } from './enter.js?v=__VERSION__' */
+/** @import { Message as PageMessage, Nothing, Props, State } from './page.js?v=__VERSION__' */
+
+/**
+ * The fields this flow owns (`owns`): the label of the lend opening, and
+ * why it did not open.
+ * @typedef {{ opening?: string, unopened?: string }} Fields
+ */
+
+/**
+ * The messages this flow takes.
+ * @typedef {{ type: 'open', label: string, at?: string }
+ *   | { type: 'handed' }
+ *   | { type: 'unopened', said?: string, why?: string }} Message
+ */
+
+/**
+ * What an open hands: the group it is opened in, what it lends, whose
+ * computers did not answer, the lend's label, and the path to open it at.
+ * A guest's open names its link's token alone (web/page/visit.js `call`).
+ * @typedef {object} Hand
+ * @property {Partial<Group> & { token: string }} group
+ * @property {Lent[]} lent
+ * @property {Whom[]} unanswered
+ * @property {string} label
+ * @property {string} [at]
+ */
+
+/**
+ * The effect its steps answer: the open, handed.
+ * @typedef {Hand & { run: 'hand', group: Group, failed: string }} Effect
+ */
 
 // How long a pass opens a lend, in seconds (app.js@19b63b2b:75): its origin asks for
 // another after, which the page signs without a word to the person.
 export const PASS_LIFE = 12 * 60 * 60;
 
 export const owns = ['opening', 'unopened'];
-export const states = { open: ['shut', 'opening', 'handed', 'refused'] };
+export const states = /** @type {const} */ ({ open: ['shut', 'opening', 'handed', 'refused'] });
+/** @type {Takes<State, Message, Effect>} */
 export const takes = {
   open: (s, { label, at }, l = s.lent?.find((o) => o.label === label)) =>
     !l
@@ -43,7 +80,8 @@ export const takes = {
             {
               run: 'hand',
               group: s.group,
-              lent: s.lent,
+              // `l` is found in it, so the list is read.
+              lent: /** @type {Lent[]} */ (s.lent),
               unanswered: s.unanswered ?? [],
               label,
               at,
@@ -52,15 +90,24 @@ export const takes = {
           ),
   handed: (s) =>
     s.at.open === 'opening' ? go(s, { open: 'handed' }) : no(s, 'nothing is opening'),
-  unopened: (s, m, l = s.lent.find((o) => o.label === s.opening)) =>
+  // Opening, the lend opening is one listed (`open`).
+  unopened: (
+    s,
+    m,
+    l = /** @type {Lent} */ (/** @type {Lent[]} */ (s.lent).find((o) => o.label === s.opening)),
+  ) =>
     s.at.open === 'opening'
       ? go(s, { open: 'refused' }, { unopened: m.said ?? `${named(l)} did not open: ${m.why}` })
       : no(s, 'nothing is opening'),
 };
 // "Opening …" until the page has gone, or why it did not (app.js@19b63b2b:238).
+/** @type {Record<string, (s: State) => string[] | Nothing>} */
 export const response = {
+  // Refused, it says why (`unopened`).
   enter: (s, l = s.lent?.find((o) => o.label === s.opening)) =>
-    s.at.open === 'refused' ? [s.unopened] : l && s.at.open !== 'shut' && [`Opening ${named(l)}…`],
+    s.at.open === 'refused'
+      ? [/** @type {string} */ (s.unopened)]
+      : l && s.at.open !== 'shut' && [`Opening ${named(l)}…`],
 };
 
 // The page's own address, which only the edge reads; and the address to
@@ -68,8 +115,15 @@ export const response = {
 // alias, or, where two share one, its label, which never collides; the
 // alias as the page reads it, a space as `+` (app.js@19b63b2b:530).
 const here = () => `${location.origin}${location.pathname}`;
-const kept = (s, l, a = alias(l, s.lent, s.people)) =>
-  `${here()}#open=${aliased(a, s.lent, s.people).length === 1 ? encodeURIComponent(a).replaceAll('%20', '+').replaceAll('%40', '@') : l.label}`;
+// Drawn only once the list is read (`view`).
+/**
+ * @param {State} s
+ * @param {Lent} l
+ * @param {string} [a]
+ */
+const kept = (s, l, a = alias(l, /** @type {Lent[]} */ (s.lent), s.people)) =>
+  `${here()}#open=${aliased(a, /** @type {Lent[]} */ (s.lent), s.people).length === 1 ? encodeURIComponent(a).replaceAll('%20', '+').replaceAll('%40', '@') : l.label}`;
+/** @type {Record<string, (props: Props) => Drawn>} */
 export const view = {
   lent: ({ s, send }) =>
     html`<table class="index"><tbody id="lent">${listed(s, send)}${once(s.lent ?? []).map((l) => html`<${Row} key=${l.label} cells=${[html`<span><button onClick=${() => send({ type: 'open', label: l.label })}>${named(l)}</button>${` ${agreed(l, s.shelf, s.group)}${opens(l)[1] === 'full' ? ' Full now.' : ''}`}${s.fine && html`${' '}<${Keep} at=${kept(s, l)} />`}</span>`]} />`)}</tbody></table>`,
@@ -81,21 +135,29 @@ export const view = {
 // never enters state; and the hand-off in the fragment, which no origin is
 // sent. The holder is the lend origin's one key (capability-signed (H)),
 // its bytes sent only when it holds none or a lend is on an older svrngs.
-const trace = (l) => globalThis.__trace?.(l),
+const trace = (/** @type {string} */ l) => globalThis.__trace?.(l),
   wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__');
+/**
+ * @param {Hand} hand
+ * @param {Uint8Array} key the person's key, unsealed
+ * @param {number} [until] when the pass ends, in seconds
+ * @returns {Promise<Extract<PageMessage, { type: 'handed' | 'unopened' }>>}
+ */
 export async function handing(
   { group, lent, unanswered, label, at },
   key,
   until = Math.floor(Date.now() / 1000) + PASS_LIFE,
 ) {
+  // The lend named is one listed: `open` refuses any other.
   const w = await wasm(),
-    l = lent.find((o) => o.label === label);
+    l = /** @type {Lent} */ (lent.find((o) => o.label === label));
   if (!('serviceWorker' in navigator))
     return { type: 'unopened', said: `This browser cannot open ${named(l)}.` };
   const yes = l.reads?.length && (at === undefined || !group.reads?.[label]);
+  // A guest's lends read none (web/page/visit.js `stay`), so the yes is a group's.
   const g = yes
     ? await store.opened({
-        ...group,
+        .../** @type {Group} */ (group),
         reads: { ...group.reads, [label]: { said: 'yes', at: Math.floor(Date.now() / 1000) } },
       })
     : group;
@@ -118,7 +180,8 @@ export async function handing(
   const raw = lends.some((o) => !w.links(o.version)),
     had = !raw && (await store.holder(label));
   const seed = had ? null : crypto.getRandomValues(new Uint8Array(32)),
-    holder = had || w.actor(seed);
+    // With no holder had, a seed was made.
+    holder = had || w.actor(/** @type {Uint8Array} */ (seed));
   if (raw)
     trace(
       'PAGE: a lend of this open is at a computer on an older svrngs, so its holder goes as bytes',
@@ -130,6 +193,7 @@ export async function handing(
   // group's signer alone, which approves the app's entries with it.
   const approver = crypto.getRandomValues(new Uint8Array(32)),
     approves = w.actor(approver);
+  /** @type {Handoff} */
   const handoff = {
     label,
     lends,
@@ -165,4 +229,5 @@ export async function handing(
   location[at === undefined ? 'assign' : 'replace'](`${start}#${fragment}`);
   return { type: 'handed', why: `to ${start}` };
 }
+/** @type {Io<Effect, PageMessage>} */
 export const io = { hand: (m) => store.unseal(m.group).then((key) => handing(m, key)) };

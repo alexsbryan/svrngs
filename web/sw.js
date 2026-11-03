@@ -16,6 +16,12 @@
 // stuck on last week's wasm). The version is also on every shell URL.
 import * as store from './store.js?v=__VERSION__';
 
+// `self` as a service worker's: the worker's lib names it a
+// `WorkerGlobalScope`, which every kind of worker shares
+// (jsconfig.workers.json). Its own first, so `addEventListener` gives each
+// listener its event's type.
+/** @typedef {ServiceWorkerGlobalScope & typeof self} Scope */
+
 const CACHE = store.CACHE;
 // Relative to this file, so the page works wherever an origin serves it;
 // the directory's trailing slash is what makes `./` the page. The wasm is
@@ -30,27 +36,27 @@ const SHELL = [
   './wasm/svrngs_web.js?v=__VERSION__',
 ];
 
-self.addEventListener('install', (e) => {
+/** @type {Scope} */ (self).addEventListener('install', (e) => {
   e.waitUntil(
     caches
       .open(CACHE)
       .then((c) => c.addAll(SHELL))
-      .then(() => self.skipWaiting()),
+      .then(() => /** @type {Scope} */ (self).skipWaiting()),
   );
 });
 
-self.addEventListener('activate', (e) => {
+/** @type {Scope} */ (self).addEventListener('activate', (e) => {
   e.waitUntil(
     caches
       .keys()
       .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
-      .then(() => self.clients.claim()),
+      .then(() => /** @type {Scope} */ (self).clients.claim()),
   );
 });
 
 // The shell, from its cache. The dial is not HTTP to this origin — it is
 // iroh — so requests to it never reach here.
-self.addEventListener('fetch', (e) => {
+/** @type {Scope} */ (self).addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (url.origin !== self.location.origin || e.request.method !== 'GET') return;
   e.respondWith(

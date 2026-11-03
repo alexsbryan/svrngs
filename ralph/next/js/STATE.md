@@ -42,7 +42,7 @@ The rows run in order, since all of them touch the same files.
   - **(c) `.git-blame-ignore-revs`** names (b)'s commit, so blame skips it, and CONTRIBUTING or the README says how to use it.
   - **Plant:** a planted unformatted line in `web/page/shelf.js` fails `format`, naming the file.
   - **Moves:** nothing a person sees. It moves the line count to the code's real size.
-- [ ] js-types — depends [js-format] — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — the pages' code typed in JSDoc, checked by `tsc --checkJs --strict`:
+- [x] js-types 2b9660ff — depends [js-format] — DONE 2026-11-03 by its director, on an A/B and not a green gate: every `check.sh` step passes in js-types-9 but `browser`, whose four failing WebKit tests fail the same with main's page code. At load 5.4-6.4 (12 cores) on 2026-11-03, `lockf -k /tmp/svrngs-gate.lock cargo test --quiet --workspace --test browser` at 2b9660ff gave 90 passed, 4 failed in 231.31 s. The same command after `git checkout main -- web/ crates/svrngs-node/src/home/` (restored afterwards) gave 90 passed, 4 failed in 231.64 s. Both failed the same four: `tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one`, `the_page_offers_a_computer_one_line_and_sends_the_token_nowhere`, `the_phone_goes_through_the_link_s_computer_while_it_answers` and `the_phone_reaches_whoever_s_awake`, each `::webkit` and each `page.goto: Timeout 30000ms` (drive.rs:114) apart from tabs (tabs.rs:117). So the row changes no browser test's outcome (fence 3's guard), and main's own gate is red on this Mac now. js-format-3 passed `browser` in 161 s at 8e085041. The fix is js-webkit's, below, before js-lint closes. The row's own checks: `node scripts/types.mjs` 0 errors in 55 files, no `@ts-nocheck` (a73f9b65 fails `types` on one). V1.1 set the precedent: published with a load-timed WebKit tab test red (canon STATE.md:59) — ONE ROW, each part its own commit, red first, and `scripts/check.sh` once, at the close — the pages' code typed in JSDoc, checked by `tsc --checkJs --strict`:
   - **(a) The checker.**
     - `typescript` is pinned exactly in `web/package.json`.
     - `jsconfig.json` sits at the root and holds:
@@ -58,15 +58,24 @@ The rows run in order, since all of them touch the same files.
     - `assertNever` takes the `never` an exhaustive `switch` leaves;
     - `ui/view.js`'s `useStore` and `useMachine` are typed;
     - `ui/trace.js` is typed.
+  - **Corrected 2026-11-02, (b)'s session: no step at HEAD is a `switch`** (`git grep "switch ("` over both pages finds none). Each takes a message by a table, two ways:
+    - **The phone's flows** each export `takes` (message type → step), which `compose` reads at run time to refuse a type two flows claim (`web/page/page.js:61-76`, `:94`). A `switch` would hide the types from it. So each flow's `takes` is typed `Takes<State, Message>` (`ui/machine.js`): a mapped type over the flow's Message union, which fails `types` on a type with no step or a step for no type, and gives each step its own message's type. That is the same check as an exhaustive `switch`, with no runtime change.
+    - **The home page's steps** are object-literal tables of thunks, `({ ... })[m.type]?.() ?? no(s, '... takes no ${m.type}')` (21 of them, such as `crates/svrngs-node/src/home/page/ask.js:70`), whose thunks read `m` unnarrowed. Each becomes a `switch (m.type)` ending in `assertNever`, which refuses in the same words. The `switch` is the guard narrowing needs, so "Kept" below allows it.
   - **(c) The phone page,** one commit per machine:
     - its states and messages as discriminated-union `@typedef`s;
-    - `step`'s `switch` exhaustive;
+    - its `takes` a `Takes<State, Message>`, exhaustive;
     - `io` typed;
     - each component's props a `@typedef`.
-  - **(d) The home page,** the same way, one commit per machine.
-  - **Plant:** a planted message `{ type: 'nope' }` that no case takes fails `types` at the `assertNever`. A planted wrong prop type fails it too.
+  - **(d) The home page,** the same way, one commit per machine, its `step` a `switch` exhaustive at `assertNever`.
+  - **Plant:** a planted message `{ type: 'nope' }` that no case takes fails `types`: at the `assertNever` in a home step, and at the `takes` in a phone flow. A planted wrong prop type fails it too.
   - **Kept:** every runtime byte but `assertNever` and the guards narrowing needs. `git diff` on a typed file shows comments only, apart from those.
-- [ ] js-lint — depends [js-types] — ONE ROW, each part its own commit, `scripts/check.sh` once, at the close — the structural rules, each on with its hits fixed in the same commit:
+- [ ] js-webkit — depends [js-types] — ONE ROW, `scripts/check.sh` once, at the close — the gate's `browser` step green again on this Mac, at main's page code:
+  - **The failure** (js-types' DONE note, 2026-11-03). Four WebKit tests time out in the parallel `browser` step at 2b9660ff, and at main's `web/` and home page too. They passed with `--test-threads=1` (211.76 s) and alone in js-types-10's runs. `browser` took 161 s in js-format-3, and 231-264 s since.
+  - **(a) Instrument and reproduce first** (AGENTS.md 2). Find what the four wait on when they time out, and why the step got about 40% slower since js-format-3: the harness's shared browsers and contexts, the relay, name resolution for `*.svrnme.test`, or the Mac's own load (System Settings' StorageManagement processes ran at about 160% CPU through 2026-11-02 and 03). Record the run under `demo/runs/`.
+  - **(b) Fix the cause** in the harness or the code it names, as a general fix, never tuning one scene (no raised timeout, no test marked serial, unless (a) shows the wait is that test's real cost). Every test still pins what it pins.
+  - **Plant:** the condition (a) finds, restored, turns the four red again.
+  - **Pass:** `scripts/check.sh` exits 0. `browser` passes in three gate runs, under the gate lock, at the load these lanes normally run at (AGENTS.md 7: one run is not a rate).
+- [ ] js-lint — depends [js-webkit] — ONE ROW, each part its own commit, `scripts/check.sh` once, at the close — the structural rules, each on with its hits fixed in the same commit:
   - **The scope.** `.oxlintrc.json` gains an `overrides` entry for the pages' code (CHARTER, "Scope"). The rest keeps today's rules.
   - **(a) Names:**
     - `id-length` (min 2; `i` and `_` excepted);

@@ -22,6 +22,11 @@ the tarball has it:
 | `htm.js` | htm `package/dist/htm.module.js` | `ab33dd3f38059b9be4d5f5350128eefb2356639c4e0bbe9d9e8b3ba75847e9e4` |
 | `LICENSE.preact` | preact `package/LICENSE` (MIT) | `1fe6958409c8c257a70c587a18b6f7f412b179b456630790d30b2ec9a8e4b7d4` |
 | `LICENSE.htm` | htm `package/LICENSE` (Apache-2.0) | `740725f7252e750af735d0028cc534970772f513331e9f68150fede8fb3ce00f` |
+| `preact.d.ts` | preact `package/src/index.d.ts` | `a5437961b23f82d3959e1cc4630c29dfe405068caee25321088b45d3868fef79` |
+| `jsx.d.ts` | preact `package/src/jsx.d.ts` | `5d082f468e25c12528dc4486ab6f3f48ba03c938d1c472ab6b76c8eb0aa42818` |
+| `dom.d.ts` | preact `package/src/dom.d.ts` | `8199eb2fc00bb9ce68266df5e97ba914e03a56d4dd823629480c7e68d20b5129` |
+| `hooks.d.ts` | preact `package/hooks/src/index.d.ts` | `21898d939444825cee1232af435330610b09171bea22a2f892cf2058d764b63d` |
+| `htm.d.ts` | htm `package/dist/htm.d.ts` | `63182906b224d53eb87b431224eba16215632f5ce1b854075d159a3d5762f052` |
 
 Preact 11 ships its modules as `.mjs`; they are kept here as `.js`, since
 the tests' server answers `.mjs` as `application/octet-stream`
@@ -36,6 +41,23 @@ Two edits, and only these:
   module is loaded at one URL, its version stamped in, since two URLs load
   Preact twice and its hooks then fail (`reading '__H'`).
 - Each `//# sourceMappingURL=` line is removed: the maps are not vendored.
+
+The five `.d.ts` are the libraries' type declarations, read only by
+`scripts/types.mjs` (`jsconfig.json`) and never served: `build-web.sh` copies
+`vendor/*.js`, `home.rs` serves `vendor/` by name, and `lean_check.py` skips
+them (`ralph/next/js/CHARTER.md`, "Answered" 3). Each is named for the
+module it declares, so a page's `../vendor/preact.js` finds `preact.d.ts`
+beside it, and their imports of one another say so: `'./index'` in
+`jsx.d.ts` and `dom.d.ts`, and `'../../src/index'` in `hooks.d.ts`, become
+`'./preact'`. Those three edits are the only ones, and leave these bytes:
+
+| file | edited | sha256 |
+|---|---|---|
+| `preact.d.ts` | no | `a5437961b23f82d3959e1cc4630c29dfe405068caee25321088b45d3868fef79` |
+| `jsx.d.ts` | its import | `fa533ab1a00fe660bf827a9962ccb832b43ef62a1ce7bdd21d9229e6124e852a` |
+| `dom.d.ts` | its import | `f0be60c235a683ec3e3e89bde1eb695ff90d05a473c049175713c669d532578f` |
+| `hooks.d.ts` | its import | `e827d558ad4212a6678b28747d536b8171954e6d590e8a7eeedf59a7c298b9f8` |
+| `htm.d.ts` | no | `63182906b224d53eb87b431224eba16215632f5ce1b854075d159a3d5762f052` |
 
 `web/tests/vendor.test.mjs` checks each file against its sha256 below, and
 that no file keeps a map line and `hooks.js` imports exactly
@@ -58,4 +80,9 @@ To make these bytes again, in an empty directory beside this one:
     cp h/package/dist/htm.module.js htm.js
     cp p/package/LICENSE LICENSE.preact
     cp h/package/LICENSE LICENSE.htm
-    shasum -a 256 *.tgz preact.js hooks.js htm.js LICENSE.*
+    cp p/package/src/index.d.ts preact.d.ts
+    sed "s#from './index'#from './preact'#" p/package/src/jsx.d.ts >jsx.d.ts
+    sed "s#from './index'#from './preact'#" p/package/src/dom.d.ts >dom.d.ts
+    sed "s#from '../../src/index'#from './preact'#" p/package/hooks/src/index.d.ts >hooks.d.ts
+    cp h/package/dist/htm.d.ts htm.d.ts
+    shasum -a 256 *.tgz preact.js hooks.js htm.js LICENSE.* *.d.ts

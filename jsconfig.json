@@ -1,0 +1,35 @@
+{
+  // The pages' code typed in JSDoc and checked, never compiled: `noEmit`, so
+  // the bytes in the repository stay the bytes a browser runs
+  // (ralph/next/js/CHARTER.md, decision 1). scripts/types.mjs reads this file
+  // and is the one way it is checked, since tsc alone cannot find a module
+  // whose URL carries `?v=__VERSION__` (web/tests/specifiers.test.mjs).
+  "compilerOptions": {
+    "checkJs": true,
+    "strict": true,
+    "noEmit": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "target": "es2024",
+    "lib": ["es2024", "dom", "dom.iterable"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    // Both pages are served from one root: the phone's from web/, the
+    // computer's from crates/svrngs-node/src/home/, each with the other's
+    // `ui/`, `vendor/` and `question.js` beside it (scripts/build-web.sh,
+    // crates/svrngs-node/src/home.rs `served!`). A module not found beside
+    // its importer is looked for under the other.
+    "rootDirs": ["web", "crates/svrngs-node/src/home"],
+    // The vendored declarations are Preact's and htm's, checked upstream.
+    "skipLibCheck": true
+  },
+  // The service workers are jsconfig.workers.json's, in a worker's global.
+  "exclude": ["web/sw.js", "web/lend.js", "crates/svrngs-node/src/home/session-worker.js"],
+  "include": [
+    "web/*.js",
+    "web/page/*.js",
+    "crates/svrngs-node/src/home/**/*.js",
+    "crates/svrngs-node/src/home/ui/globals.d.ts"
+  ]
+}

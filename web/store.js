@@ -35,6 +35,65 @@
 const DB = 'svrngs';
 const VERSION = 2;
 
+/**
+ * A computer lending in a group, as the last read of it named it: its key,
+ * the relay it is reached through, and whose it is.
+ * @typedef {{ key: string, relay: string | null, person: string }} Computer
+ */
+
+/**
+ * A yes or a stop said here to what a lend reads as the person, and when,
+ * in seconds (web/page/index.js `handing`, web/page/acts.js `stopping`).
+ * @typedef {{ said: 'yes' | 'stop', at: number }} Said
+ */
+
+/**
+ * A line of the person's chain this phone signed (web/page/acts.js `runs`):
+ * its number and its id, the next line's `prev`, among what svrngs-core
+ * wrote in it.
+ * @typedef {{ seq: number, id: string }} Line
+ */
+
+/**
+ * A group as `keep` is given it, the person's key in the clear.
+ * @typedef {object} Joining
+ * @property {string} id
+ * @property {string} name
+ * @property {string} person
+ * @property {string} token the link's token it was joined by
+ * @property {Uint8Array<ArrayBuffer>} key the person's 32 bytes
+ * @property {string} [maker]
+ * @property {number} [since]
+ */
+
+/**
+ * A group as kept: `keep`'s, its key sealed; and once opened, what the
+ * page learned of it, written back by `opened`.
+ * @typedef {object} Group
+ * @property {string} id
+ * @property {string} name
+ * @property {string} person
+ * @property {string} token
+ * @property {Uint8Array<ArrayBuffer>} iv
+ * @property {Uint8Array<ArrayBuffer>} sealed
+ * @property {number} opened when it was last opened, in ms
+ * @property {string} [maker]
+ * @property {number} [since]
+ * @property {Computer[]} [computers]
+ * @property {string[]} [addresses] each lend's label and alias, as last read
+ * @property {Record<string, Said>} [reads] by a lend's label
+ * @property {Line} [line] the last line signed here
+ * @property {Line[]} [unsent] the lines signed and not yet carried
+ */
+
+/**
+ * A visit as the host's computer answered it (web/page/visit.js
+ * `visiting`): whose guest, until when, in seconds, and what it opens, each
+ * lend's kind by its name.
+ * @typedef {{ host: string, until: number, lent: Record<string, string>, version?: number }} Visit
+ */
+
+/** @returns {Promise<IDBDatabase>} */
 function open() {
   return openDb(DB, VERSION, (db) => {
     // A copy: objectStoreNames is live, and deleting while walking it skips names.
@@ -46,6 +105,12 @@ function open() {
 }
 
 // The database `name` at `version`, `upgrade` given it when it is new or older.
+/**
+ * @param {string} name
+ * @param {number} version
+ * @param {(db: IDBDatabase) => void} upgrade
+ * @returns {Promise<IDBDatabase>}
+ */
 function openDb(name, version, upgrade) {
   return new Promise((done, fail) => {
     const req = indexedDB.open(name, version);
@@ -56,8 +121,16 @@ function openDb(name, version, upgrade) {
 }
 
 // One request in one transaction of `db`, answered once it commits.
+/**
+ * @template T
+ * @param {string} store
+ * @param {IDBTransactionMode} mode
+ * @param {(store: IDBObjectStore) => IDBRequest<T>} act
+ * @param {(() => Promise<IDBDatabase>) | IDBDatabase} [db] the way to open it, then the database opened
+ * @returns {Promise<T>}
+ */
 async function run(store, mode, act, db = open) {
-  db = await db();
+  db = await /** @type {() => Promise<IDBDatabase>} */ (db)();
   return new Promise((done, fail) => {
     const tx = db.transaction(store, mode);
     const req = act(tx.objectStore(store));
@@ -73,6 +146,7 @@ async function run(store, mode, act, db = open) {
 // iPhone failed to unseal with `OperationError` while its page and Firefox's
 // worker did not (2026-10-05), and a key read back unusable and a key made
 // anew over the page's fail the same way.
+/** @param {any} k what was read back, of no type the page can know */
 const described = (k) =>
   `${k?.constructor?.name} ${k?.algorithm?.name}/${k?.algorithm?.length} extractable=${k?.extractable} usages=${k?.usages}`;
 
@@ -82,6 +156,10 @@ const described = (k) =>
 // u4-10; `STORE: the sealing key absent: making one` in its trace, in
 // demo/runs/u4/2026-10-05-phones/), made its own and put it over the
 // page's, and so left every key the page had sealed unopenable.
+/**
+ * @param {boolean} make
+ * @returns {Promise<CryptoKey>}
+ */
 async function sealingKey(make) {
   const held = await run('seal', 'readonly', (s) => s.get('key'));
   if (held) {
@@ -103,11 +181,17 @@ async function sealingKey(make) {
   return made;
 }
 
+/**
+ * @param {string} id
+ * @param {Uint8Array<ArrayBuffer>} iv
+ * @returns {AesGcmParams}
+ */
 const bound = (id, iv) => ({ name: 'AES-GCM', iv, additionalData: new TextEncoder().encode(id) });
 
 // Keep a group joined: `key` is the person's 32 bytes, kept sealed alone;
 // `maker`, who made the group, and `since`, when this phone joined it, in
 // seconds, so two of one name are told apart (v1ui-door (d)).
+/** @param {Joining} joining */
 export const keep = ({ id, name, person, token, key, maker, since }) =>
   sealed(id, key).then((kept) =>
     run('groups', 'readwrite', (s) =>
@@ -116,6 +200,11 @@ export const keep = ({ id, name, person, token, key, maker, since }) =>
   );
 
 // `key` sealed, bound to `id`: its `iv` and `sealed`.
+/**
+ * @param {string} id
+ * @param {Uint8Array<ArrayBuffer>} key
+ * @returns {Promise<{ iv: Uint8Array<ArrayBuffer>, sealed: Uint8Array<ArrayBuffer> }>}
+ */
 const sealed = async (id, key, iv = crypto.getRandomValues(new Uint8Array(12))) => ({
   iv,
   sealed: new Uint8Array(await crypto.subtle.encrypt(bound(id, iv), await sealingKey(true), key)),
@@ -126,12 +215,21 @@ const sealed = async (id, key, iv = crypto.getRandomValues(new Uint8Array(12))) 
 // computer answered and the visit's key, sealed as a group's is, bound to
 // the link's token. So the link opened again shows the visit again, or
 // says it has ended.
+/**
+ * @param {string} token
+ * @param {Visit} visit
+ * @param {Uint8Array<ArrayBuffer>} key
+ */
 export const keepVisit = (token, visit, key) =>
   sealed(token, key).then((kept) =>
     run('seal', 'readwrite', (s) => s.put({ ...visit, ...kept }, `visit ${token}`)),
   );
 
 // The visit the link `token` made here, its key unsealed; else undefined.
+/**
+ * @param {string} token
+ * @returns {Promise<(Visit & { key: Uint8Array<ArrayBuffer> }) | undefined>}
+ */
 export const visitOf = (token) =>
   run('seal', 'readonly', (s) => s.get(`visit ${token}`)).then(
     async (v) => v && { ...v, key: await unseal({ ...v, id: token }) },
@@ -141,6 +239,10 @@ export const visitOf = (token) =>
 // (capability-signed (H); DESIGN §3), beside the sealing key, apart from
 // any group's row, so no write of one drops it: `key` kept, `null`
 // dropped, or with none read.
+/**
+ * @param {string} label
+ * @param {string | null} [key]
+ */
 export const holder = (label, key) =>
   key === undefined
     ? run('seal', 'readonly', (s) => s.get(`holder ${label}`))
@@ -162,21 +264,28 @@ export const persist = async (s = navigator.storage) =>
 
 // Every group kept, the last opened first. Their keys stay sealed.
 export const groups = async () =>
-  (await run('groups', 'readonly', (s) => s.getAll())).sort((a, b) => b.opened - a.opened);
+  (await run('groups', 'readonly', (s) => /** @type {IDBRequest<Group[]>} */ (s.getAll()))).sort(
+    (a, b) => b.opened - a.opened,
+  );
 
 // The group was opened now, as `group` says it: it is the one the page
 // opens without a link. Answers the group as kept.
+/**
+ * @param {Group} group
+ * @returns {Promise<Group>}
+ */
 export const opened = (group, now = { ...group, opened: Date.now() }) =>
   run('groups', 'readwrite', (s) => s.put(now)).then(() => now);
 
 // The person's key in `group`, unsealed: 32 bytes, held only in memory.
+/** @param {{ id: string, iv: Uint8Array<ArrayBuffer>, sealed: Uint8Array<ArrayBuffer> }} group */
 export async function unseal(group) {
   const seal = await sealingKey(false);
   try {
     return new Uint8Array(
       await crypto.subtle.decrypt(bound(group.id, group.iv), seal, group.sealed),
     );
-  } catch (e) {
+  } catch (/** @type {any} */ e) {
     globalThis.__trace?.(
       `STORE: unsealing failed: ${e?.name}: ${e?.message}; sealed ${group.sealed?.byteLength} bytes (${group.sealed?.constructor?.name}), iv ${group.iv?.byteLength} bytes (${group.iv?.constructor?.name})`,
     );
@@ -191,6 +300,11 @@ export const LOST = 'a message was lost on its way to the worker';
 // worker on an iPhone read nothing its page had kept); answers whether it
 // said it holds it within `wait` ms, or no at once when it says a message
 // was lost on its way (lend.js, `messageerror`).
+/**
+ * @param {ServiceWorker} worker
+ * @param {unknown} message
+ * @returns {Promise<boolean>}
+ */
 export function handOver(worker, message, wait = 5_000) {
   const { port1, port2 } = new MessageChannel();
   const held = new Promise((done) => {
@@ -215,7 +329,12 @@ export function handOver(worker, message, wait = 5_000) {
 // lend.js). Never the person's key.
 const lendDb = () => openDb('svrngs-lend', 1, (db) => db.createObjectStore('kept'));
 
+/** @param {string} name */
 export const lendKept = (name) => run('kept', 'readonly', (s) => s.get(name), lendDb);
+/**
+ * @param {string} name
+ * @param {unknown} value
+ */
 export const lendKeep = (name, value) =>
   run('kept', 'readwrite', (s) => s.put(value, name), lendDb);
 
@@ -233,10 +352,18 @@ export const lendKeep = (name, value) =>
 // the page for a lend and by a lend's worker for another, read back by its
 // first name — here alone in the page's files.
 // Bytes as hex, as the page hands a holder's seed and the worker signs a line.
+/** @param {Uint8Array} bytes */
 export const hex = (bytes) => [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
 
+/**
+ * @param {string} protocol
+ * @param {string} label
+ * @param {string} pageHost
+ */
 export const lendOrigin = (protocol, label, pageHost) => `${protocol}//${label}.${pageHost}`;
-export const labelOf = (hostname) => hostname.split('.')[0];
+/** @param {string} hostname */
+// `split` answers one part at least.
+export const labelOf = (hostname) => /** @type {string} */ (hostname.split('.')[0]);
 
 export const CACHE = 'svrngs-web-__VERSION__';
 const RUNTIME = new URL('./wasm/svrngs_web_bg.wasm?v=__VERSION__', import.meta.url);

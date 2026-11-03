@@ -16,17 +16,45 @@
 import { html } from './view.js?v=__VERSION__';
 import { Act, Fold } from './parts.js?v=__VERSION__';
 import { called, spoken } from '../question.js?v=__VERSION__';
+/** @import { Drawn } from './view.js?v=__VERSION__' */
+/** @import { Doing } from './parts.js?v=__VERSION__' */
+/** @import { PeopleRow } from '../question.js?v=__VERSION__' */
+
+/**
+ * A change to an app the group carries: the group's id, the app's kind,
+ * who changed its files, by name and first key, and when, in seconds.
+ * @typedef {{ group: string, app: string, by: string, by_key?: string, at: number }} Change
+ */
 
 // A day as question.js `day` says it in this computer's or phone's time,
 // "3 Oct" (its :95, not exported there, deleted with it at the switchover).
-const day = (t, d = new Date(t * 1000)) =>
+const day = (/** @type {number} */ t, d = new Date(t * 1000)) =>
   `${d.getDate()} ${'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[d.getMonth()]}`;
+/**
+ * The lines' props: the group, its name and this device's person in it as
+ * each page holds them; its changes, `null` when they could not be read;
+ * its people rows and this device's key; the page's answer to each yes, by
+ * app; whether the fold is open; and where a yes and the fold are sent.
+ * @typedef {object} ChangesProps
+ * @property {{ id: string, name: string | null, person: string | null }} g
+ * @property {Change[] | null} [changed]
+ * @property {PeopleRow[]} rows
+ * @property {string} [me]
+ * @property {Record<string, Doing>} [doing]
+ * @property {boolean} [open]
+ * @property {(message: { type: 'yes', app: string } | { type: 'fold', fold: 'changes', open: boolean }) => void} send
+ */
+
+/**
+ * @param {ChangesProps} props
+ * @returns {Drawn[]}
+ */
 export function Changes({ g, changed, rows, me, doing = {}, open, send }) {
   if (changed === null)
     return [
       html`<p>This computer can’t say whether anyone changed an app in ${g.name ?? 'your group'}.</p>`,
     ];
-  const you = (c) =>
+  const you = (/** @type {Change} */ c) =>
     c.by_key ? c.by_key === rows.find((r) => r.key === me)?.person_key : c.by === g.person;
   const each = (changed ?? [])
     .filter((c) => c.group === g.id)
