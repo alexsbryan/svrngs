@@ -106,8 +106,8 @@ export const takes = {
   cold: (state) => go(state, { among: 'sent' }, {}, { run: 'cold', failed: 'failed' }),
   sent: (state) => go(state, {}),
 };
-// Offered more than one group while no tab here holds one: enter.js
-// `chosen` draws the offer in #door (offered-groups.js) only then.
+// Offered more than one group while no tab here holds one: group-door.js
+// draws the offer in #door (offered-groups.js) only then.
 export const choosing = (/** @type {State} */ state) =>
   state.at.among === 'offered' && state.at.tab === 'unheld';
 /** @type {Record<string, (s: State) => Said | Nothing>} */

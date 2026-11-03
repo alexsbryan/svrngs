@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Each group held here that lends what `#open=` names, drawn in #door
-// (enter.js `chosen`) when more than one does: an open each, in the group
+// (group-door.js) when more than one does: an open each, in the group
 // the person picks (among.js `pick`).
 import { html } from '../ui/view.js?v=__VERSION__';
 import { titled } from '../question.js?v=__VERSION__';
