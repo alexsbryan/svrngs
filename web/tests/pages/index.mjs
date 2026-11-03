@@ -10,12 +10,17 @@
 // `read`'s words are then read into `shown`, the file written, and a line
 // `go` waited for on stdin (drive.rs `release`). With `visible`, [line,
 // until?], the page is then hidden and shown again, as a person comes back
-// to its tab, and read once more as a step is. It answers each read of
-// `read`'s words, the page's loads (1: it never reloaded; on the group's
-// page, `driving`'s own load counted), every request it sent with its
-// body, each link, and the trace.
+// to its tab, and read once more as a step is. With `held`, [[<path>,
+// ...], <words>], each request to one of the paths waits, from the page's
+// first drawing until the steps are done, then goes on, and `read`'s words
+// are read into `released` once they no longer hold the words, or as they
+// stand 30 s on, "unsettled": each step is read while what the paths
+// answer is held, at no frame of the browser's choosing. It answers each
+// read of `read`'s words, the page's loads (1: it never reloaded; on the
+// group's page, `driving`'s own load counted), every request it sent with
+// its body, each link, and the trace.
 //
-//   node web/tests/pages/index.mjs '{"engine": ..., "home": <url> | "site": ..., "key": ..., "token": ..., "read": <selector>, "steps": [[<selector>, <value>|true|null, <line>?, <until>?], ...], "ready"?: <file>, "visible"?: [<line>, <until>?]}'
+//   node web/tests/pages/index.mjs '{"engine": ..., "home": <url> | "site": ..., "key": ..., "token": ..., "read": <selector>, "steps": [[<selector>, <value>|true|null, <line>?, <until>?], ...], "ready"?: <file>, "visible"?: [<line>, <until>?], "held"?: [[<path>, ...], <words>]}'
 //
 // Exit 0 with the JSON line; 1 on anything else.
 import { writeFileSync } from 'node:fs';
@@ -32,6 +37,16 @@ async function run(page, ready, loaded, go) {
   page.on('request', (r) => sent.push([r.method(), r.url(), r.postData() ?? '']));
   await go();
   await page.locator(ready).first().waitFor({ timeout: 30_000 });
+  let release = () => {};
+  // Held at the context, which the home page's session worker fetches
+  // through (home/session-worker.js), and the page's own route does not.
+  if (args.held) {
+    const letGo = new Promise((done) => (release = done));
+    await page.context().route(
+      (url) => args.held[0].includes(url.pathname),
+      (route) => letGo.then(() => route.continue()),
+    );
+  }
   const count = (line) =>
     page
       .evaluate((l) => (window.__lines ?? []).filter((t) => t.startsWith(l)).length, line)
@@ -83,6 +98,22 @@ async function run(page, ready, loaded, go) {
     how = await until(how, words);
     after.push({ how, words: await read() });
   }
+  let released = null;
+  if (args.held) {
+    release();
+    const lacks = ([s, w]) =>
+      ![...document.querySelectorAll(s)]
+        .map((e) => e.textContent)
+        .join('\n')
+        .includes(w);
+    const how = await page
+      .waitForFunction(lacks, [args.read, args.held[1]], { timeout: 30_000 })
+      .then(
+        () => 'settled',
+        () => 'unsettled',
+      );
+    released = { how, words: await read() };
+  }
   let shown = null;
   if (args.ready) {
     shown = await read();
@@ -106,7 +137,7 @@ async function run(page, ready, loaded, go) {
   }
   const links = await page.locator('a').evaluateAll((as) => as.map((a) => a.href));
   const lines = await page.evaluate(() => window.__lines ?? null);
-  return { after, shown, later, loads, sent, links, lines };
+  return { after, released, shown, later, loads, sent, links, lines };
 }
 
 if (args.home) {
