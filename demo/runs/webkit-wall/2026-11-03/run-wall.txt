@@ -1,0 +1,19 @@
+Tue Nov  3 01:40:53 PST 2026
+ 1:40  up 12 days, 17:18, 7 users, load averages: 5.64 6.89 10.83
+(no defaults)
+page 10: loaded in 7 ms
+page 20: loaded in 7 ms
+page 30: loaded in 7 ms
+page 40: loaded in 7 ms
+page 50: loaded in 8 ms
+page 60: loaded in 7 ms
+page 64: did not load in 5 s
+-NSAutomaticWindowAnimationsEnabled NO
+page 10: loaded in 7 ms
+page 20: loaded in 7 ms
+page 30: loaded in 7 ms
+page 40: loaded in 7 ms
+page 50: loaded in 7 ms
+page 60: loaded in 7 ms
+page 70: loaded in 6 ms
+page 80: loaded in 6 ms

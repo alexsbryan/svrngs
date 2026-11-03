@@ -584,7 +584,11 @@ async fn a_new_version_runs_as_each_person_only_after_their_yes(engine: Engine) 
     let relay = relay().await;
     let bo = signing(7);
     let dirs: Vec<_> = (0..2).map(|_| tempfile::tempdir().unwrap()).collect();
-    let ada = node(dirs[0].path(), &relay, &bo).await;
+    let ada = seeded(dirs[0].path(), relay_url(&relay), 1, "ada", 1).await;
+    from_a_phone(&ada, "bo", 7);
+    tokio::time::timeout(Duration::from_secs(20), ada.endpoint().online())
+        .await
+        .unwrap();
     let kim = joined(dirs[1].path(), &relay, &ada, 2, "kim").await;
     let (at_ada, at_kim) = (dirs[0].path().join("house"), dirs[1].path().join("house"));
     for (computer, folder) in [(&ada, &at_ada), (&kim, &at_kim)] {
