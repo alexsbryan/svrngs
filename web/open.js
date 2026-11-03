@@ -101,46 +101,105 @@ async function checked(handed) {
   }
 }
 
+// The open this page starts from, and the holder's bytes when they came
+// with it, to hand the worker should it not take the key.
+/** @typedef {{ handed: any, seed?: string }} Begun */
+
 async function start() {
   const asked = new URLSearchParams(location.search);
-  let handed;
-  let seed;
-  if (location.hash.length > 1) {
-    handed = decode(location.hash.slice(1));
-    history.replaceState(null, '', `${location.pathname}${location.search}`);
-    if (store.labelOf(location.hostname) !== handed.label)
-      throw new Error(`a pass for ${handed.label} opened at ${location.origin}`);
-    if (!(await checked(handed))) return say('Open this app again from your group’s page.');
-    // Lines the last pass's holder signed and no computer took yet go on
-    // with this one (lend.js `writing`), each under the pass it was signed with.
-    const was = await store.lendKept(`pass ${handed.label}`).catch(() => null);
-    if (was?.unsent?.length) handed.unsent = was.unsent;
-    // The holder, a key no script here can copy (capability-signed (H);
-    // DESIGN §3): imported once from the bytes the group's page hands, kept
-    // as itself, the bytes kept only when a lend of the open is at a door
-    // taking no holder's link, which the worker dials as. A pass to the
-    // holder kept goes on with its key and its chain; one to a holder not
-    // kept here asks the group's page for a new one.
-    if (handed.seed)
-      handed.key = await crypto.subtle.importKey('pkcs8', pkcs8(handed.seed), 'Ed25519', false, [
-        'sign',
-      ]);
-    else if (was?.key && was.holder === handed.holder)
-      [handed.key, handed.line] = [was.key, was.line];
-    else return location.replace(`${handed.page}#open=${handed.label}&anew`);
-    seed = handed.seed;
-    if (!handed.raw) delete handed.seed;
-  } else {
-    handed = asked.get('for') && (await store.lendKept(`pass ${asked.get('for')}`));
-    if (!handed) return say('Open this from your group’s page.');
-    if (!(await checked(handed))) return say('Open this app again from your group’s page.');
-    if (asked.has('again')) return location.replace(`${handed.page}#open=${handed.label}`);
-  }
+  const begun = location.hash.length > 1 ? await handedHere() : await handedKept(asked);
+  if (!begun) return;
+  const { handed } = begun;
   if (!(await holderMatches(handed.key, handed.holder)))
     throw new Error('the key is not the holder the group page named');
   await store.lendKeep(`pass ${handed.label}`, handed);
   console.debug(`OPEN: ${handed.label}'s open is this browser's, its holder proved and kept`);
   if (!('serviceWorker' in navigator)) return say('This browser cannot open it.');
+  return handedOn(begun, asked);
+}
+
+// The open the group's page handed in this page's fragment, checked as
+// its, with its holder; none once this page has said why it stops, or
+// gone to the group's page for a new holder.
+/** @returns {Promise<Begun | null>} */
+async function handedHere() {
+  const handed = decode(location.hash.slice(1));
+  history.replaceState(null, '', `${location.pathname}${location.search}`);
+  if (store.labelOf(location.hostname) !== handed.label)
+    throw new Error(`a pass for ${handed.label} opened at ${location.origin}`);
+  if (!(await checked(handed))) {
+    say('Open this app again from your group’s page.');
+    return null;
+  }
+  // Lines the last pass's holder signed and no computer took yet go on
+  // with this one (lend.js `writing`), each under the pass it was signed with.
+  const was = await store.lendKept(`pass ${handed.label}`).catch(() => null);
+  if (was?.unsent?.length) handed.unsent = was.unsent;
+  if (!(await withHolder(handed, was))) {
+    location.replace(`${handed.page}#open=${handed.label}&anew`);
+    return null;
+  }
+  const seed = handed.seed;
+  if (!handed.raw) delete handed.seed;
+  return { handed, seed };
+}
+
+// The holder, a key no script here can copy (capability-signed (H);
+// DESIGN §3): imported once from the bytes the group's page hands, kept
+// as itself, the bytes kept only when a lend of the open is at a door
+// taking no holder's link, which the worker dials as. A pass to the
+// holder kept (`was`) goes on with its key and its chain; one to a holder
+// not kept here asks the group's page for a new one: whether `handed`
+// has its holder.
+/**
+ * @param {any} handed
+ * @param {any} was
+ */
+async function withHolder(handed, was) {
+  if (handed.seed) {
+    handed.key = await crypto.subtle.importKey('pkcs8', pkcs8(handed.seed), 'Ed25519', false, [
+      'sign',
+    ]);
+    return true;
+  }
+  if (was?.key && was.holder === handed.holder) {
+    [handed.key, handed.line] = [was.key, was.line];
+    return true;
+  }
+  return false;
+}
+
+// The open this origin kept for the lend `for` names, asked for by its
+// worker, which holds none; none once this page has said why it stops, or
+// gone to the group's page for another pass (`again`).
+/**
+ * @param {URLSearchParams} asked
+ * @returns {Promise<Begun | null>}
+ */
+async function handedKept(asked) {
+  const handed = asked.get('for') && (await store.lendKept(`pass ${asked.get('for')}`));
+  if (!handed) {
+    say('Open this from your group’s page.');
+    return null;
+  }
+  if (!(await checked(handed))) {
+    say('Open this app again from your group’s page.');
+    return null;
+  }
+  if (asked.has('again')) {
+    location.replace(`${handed.page}#open=${handed.label}`);
+    return null;
+  }
+  return { handed };
+}
+
+// The open handed to the lend's worker, the key, else the holder's bytes,
+// and the lend opened at `back`, a path of this origin's.
+/**
+ * @param {Begun} begun
+ * @param {URLSearchParams} asked
+ */
+async function handedOn({ handed, seed }, asked) {
   const script = new URL('./lend.js?v=__VERSION__', import.meta.url).pathname;
   const worker = await running(
     await navigator.serviceWorker.register(script, { scope: '/', type: 'module' }),
