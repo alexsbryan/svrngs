@@ -27,7 +27,15 @@
 import fs from 'node:fs';
 import { execSync } from 'node:child_process';
 import { enter, lender, seek, timed, watch } from './person.mjs';
-import { kept, open as openAt, playOn, screen as screenAt, session as sessionOf, until, video } from './tv.mjs';
+import {
+  kept,
+  open as openAt,
+  playOn,
+  screen as screenAt,
+  session as sessionOf,
+  until,
+  video,
+} from './tv.mjs';
 import { launch } from '../../../web/tests/page.mjs';
 
 const [part, raw] = process.argv.slice(2);
@@ -37,11 +45,23 @@ const T0 = Date.now();
 const jf = lender(JF, ADMIN);
 const out = { part, room: args.room };
 const pw = (who) => fs.readFileSync(`${SECRETS}/${who}_pw`, 'utf8').trim();
-const screen = (profile) => screenAt(profile, { room: args.room, dir: DUMP, log: `screen-${part}.jsonl`, T0 });
+const screen = (profile) =>
+  screenAt(profile, { room: args.room, dir: DUMP, log: `screen-${part}.jsonl`, T0 });
 const session = (device) => sessionOf(jf, device);
 const open = (s, who) => openAt(s, who, args.room, pw);
-const phone = (name, user) => enter({ name, user }, { args: { way: 'phone', engine: 'webkit', at: args.link, server: args.server }, SECRETS, DUMP, T0 });
-const done = async (who) => { if (who?.close) await who.close().catch(() => {}); };
+const phone = (name, user) =>
+  enter(
+    { name, user },
+    {
+      args: { way: 'phone', engine: 'webkit', at: args.link, server: args.server },
+      SECRETS,
+      DUMP,
+      T0,
+    },
+  );
+const done = async (who) => {
+  if (who?.close) await who.close().catch(() => {});
+};
 const people = [];
 
 try {
@@ -51,13 +71,19 @@ try {
     out.screen = await open(s, 'dee');
     if (out.screen.signed_in_ms != null) {
       out.kept = await kept(s.page);
-      await s.page.evaluate(([id, sv]) => { location.hash = `#/details?id=${id}&serverId=${sv}`; }, [args.film, args.server]);
+      await s.page.evaluate(
+        ([id, sv]) => {
+          location.hash = `#/details?id=${id}&serverId=${sv}`;
+        },
+        [args.film, args.server],
+      );
       out.play_ms = await timed(s, 'playing', async () => {
         const play = s.page.locator('.mainDetailButtons .btnPlay:visible');
         await play.first().waitFor({ timeout: 30_000 });
         await play.first().click({ force: true });
         const r = await until(s.page, (v) => v && v.ct > 0.5 && !v.paused, 30_000);
-        if (r.ms === null) throw new Error(`not playing 30 s after play: ${JSON.stringify(r.video)}`);
+        if (r.ms === null)
+          throw new Error(`not playing 30 s after play: ${JSON.stringify(r.video)}`);
       });
       if (out.play_ms !== null) {
         await s.page.evaluate(watch);
@@ -77,24 +103,47 @@ try {
     out.quick_connect_enabled = await jf('GET', '/QuickConnect/Enabled');
     if (out.screen.quick_connect_offered) {
       await s.page.locator('.btnQuick:visible').click();
-      const text = await s.page.waitForFunction(() => {
-        const t = document.body.innerText.match(/Enter code (\d[\d ]{5,})/);
-        return t && t[1];
-      }, null, { timeout: 15_000 }).then((h) => h.jsonValue(), () => null);
+      const text = await s.page
+        .waitForFunction(
+          () => {
+            const t = document.body.innerText.match(/Enter code (\d[\d ]{5,})/);
+            return t && t[1];
+          },
+          null,
+          { timeout: 15_000 },
+        )
+        .then(
+          (h) => h.jsonValue(),
+          () => null,
+        );
       out.code_shown = text !== null;
       if (text !== null) {
         const dee = await phone('Dee', 'dee');
         people.push(dee);
-        out.phone = { listed: dee.listed, at: dee.at, signed_in_ms: dee.signed_in_ms, stopped: dee.stopped ?? null };
+        out.phone = {
+          listed: dee.listed,
+          at: dee.at,
+          signed_in_ms: dee.signed_in_ms,
+          stopped: dee.stopped ?? null,
+        };
         if (dee.signed_in_ms != null) {
           out.approved_ms = await timed(dee, 'approved', async () => {
-            await dee.page.evaluate(() => { location.hash = '#/quickconnect'; });
+            await dee.page.evaluate(() => {
+              location.hash = '#/quickconnect';
+            });
             await dee.page.fill('#txtQuickConnectCode', text.replace(/\s/g, ''));
             await dee.page.locator('button[type=submit]:visible').first().click();
-            await dee.page.waitForFunction(() => document.body.innerText.includes('successfully authenticated'), null, { timeout: 15_000 });
+            await dee.page.waitForFunction(
+              () => document.body.innerText.includes('successfully authenticated'),
+              null,
+              { timeout: 15_000 },
+            );
           });
           const t0 = Date.now();
-          out.screen_signed_in_ms = await s.page.waitForSelector('.card', { timeout: 30_000 }).then(() => Date.now() - t0, () => null);
+          out.screen_signed_in_ms = await s.page.waitForSelector('.card', { timeout: 30_000 }).then(
+            () => Date.now() - t0,
+            () => null,
+          );
           out.typed_on_screen = 0;
           out.kept = await kept(s.page);
           out.session = out.kept.device ? await session(out.kept.device) : null;
@@ -114,7 +163,15 @@ try {
     out.kept = await kept(s.page);
     out.session_before = await session(out.kept.device);
     const ana = args.direct
-      ? await enter({ name: 'Ana', user: args.phone_as }, { args: { way: 'computer', engine: 'chromium', at: `${JF}/web/`, server: args.server }, SECRETS, DUMP, T0 })
+      ? await enter(
+          { name: 'Ana', user: args.phone_as },
+          {
+            args: { way: 'computer', engine: 'chromium', at: `${JF}/web/`, server: args.server },
+            SECRETS,
+            DUMP,
+            T0,
+          },
+        )
       : await phone('Ana', args.phone_as);
     people.push(ana);
     out.phone = { at: ana.at, signed_in_ms: ana.signed_in_ms, stopped: ana.stopped ?? null };
@@ -122,23 +179,46 @@ try {
       const p = ana.page;
       // Which player jellyfin-web makes the phone's, as it says it.
       out.phone_player = [];
-      p.on('console', (m) => { if (m.text().startsWith('Active player')) out.phone_player.push(`${Date.now() - T0} ${m.text().replace(/"id":"[^"]*",/, '').slice(0, 120)}`); });
+      p.on('console', (m) => {
+        if (m.text().startsWith('Active player'))
+          out.phone_player.push(
+            `${Date.now() - T0} ${m
+              .text()
+              .replace(/"id":"[^"]*",/, '')
+              .slice(0, 120)}`,
+          );
+      });
       // jellyfin-web's own "Play on": "Cast to Device" at the top — the
       // icon, or the player's name once one is picked — then the screen by
       // its name and its user's, as the menu writes them.
       const { cast, header, menu } = playOn(p);
-      out.play_on_offered = await cast.first().waitFor({ timeout: 15_000 }).then(() => true, () => false);
+      out.play_on_offered = await cast
+        .first()
+        .waitFor({ timeout: 15_000 })
+        .then(
+          () => true,
+          () => false,
+        );
       if (out.play_on_offered) {
         out.play_on_lists = await menu();
         const b = out.session_before;
-        const pick = b && p.locator('[role=menuitem]:visible', { hasText: b.device_name }).filter({ hasText: b.user });
+        const pick =
+          b &&
+          p
+            .locator('[role=menuitem]:visible', { hasText: b.device_name })
+            .filter({ hasText: b.user });
         out.screen_listed = !!pick && (await pick.count()) > 0;
         if (out.screen_listed) {
           out.picked_at = Date.now() - T0;
           await pick.first().click();
           await p.waitForTimeout(3000);
           out.header_after_pick = await header();
-          await p.evaluate(([id, sv]) => { location.hash = `#/details?id=${id}&serverId=${sv}`; }, [args.film, args.server]);
+          await p.evaluate(
+            ([id, sv]) => {
+              location.hash = `#/details?id=${id}&serverId=${sv}`;
+            },
+            [args.film, args.server],
+          );
           const play = p.locator('.mainDetailButtons .btnPlay:visible');
           await play.first().waitFor({ timeout: 30_000 });
           out.play_at = Date.now() - T0;
@@ -168,7 +248,11 @@ try {
             });
             out.sought = await until(s.page, (v) => v && at && Math.abs(v.ct - at / 2) < 5, 30_000);
             await pp.first().click();
-            out.played_on = await until(s.page, (v) => v && !v.paused && at && v.ct > at / 2 - 5, 30_000);
+            out.played_on = await until(
+              s.page,
+              (v) => v && !v.paused && at && v.ct > at / 2 - 5,
+              30_000,
+            );
           } else {
             await p.keyboard.press('Escape');
           }
@@ -194,7 +278,9 @@ try {
       await s.page.waitForTimeout(20_000);
     }
     out.kept = await kept(s.page);
-    out.public_info = await s.page.evaluate(() => fetch('/System/Info/Public').then((r) => r.json())).catch((e) => String(e));
+    out.public_info = await s.page
+      .evaluate(() => fetch('/System/Info/Public').then((r) => r.json()))
+      .catch((e) => String(e));
     out.session = out.kept.device ? await session(out.kept.device) : null;
   } else if (part === 'control') {
     // As the lender ticks it: their own Jellyfin's pages, signed in as themselves.

@@ -84,5 +84,7 @@ const counts = Object.fromEntries(
 );
 console.log(`house: ${lines.length} acts, 12 people; commitments ${JSON.stringify(counts)}`);
 console.log(`derive, the wasm and the JavaScript ${same ? 'equal' : 'DIFFER'}`);
-console.log(`derive median of 20: wasm ${time(wasm).toFixed(2)} ms, JavaScript ${time(js).toFixed(2)} ms`);
+console.log(
+  `derive median of 20: wasm ${time(wasm).toFixed(2)} ms, JavaScript ${time(js).toFixed(2)} ms`,
+);
 process.exit(same ? 0 : 1);

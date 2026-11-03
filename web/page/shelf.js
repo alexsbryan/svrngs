@@ -7,4 +7,7 @@ import { html, Shelf } from '../ui/kit.js?v=__VERSION__';
 import { through } from './enter.js?v=__VERSION__';
 
 const bring = (g, apps) => through(g, '/shelf', apps);
-export const view = { shelf: ({ s, send }) => html`<div id="shelf">${s.lent && s.shelf && html`<${Shelf} g=${s.group} lent=${s.lent} shelf=${s.shelf} joined=${s.joined} bring=${bring} after=${() => send({ type: 'reread' })} />`}</div>` };
+export const view = {
+  shelf: ({ s, send }) =>
+    html`<div id="shelf">${s.lent && s.shelf && html`<${Shelf} g=${s.group} lent=${s.lent} shelf=${s.shelf} joined=${s.joined} bring=${bring} after=${() => send({ type: 'reread' })} />`}</div>`,
+};

@@ -16,8 +16,15 @@ const DIRS = ['web/page', 'web/vendor', `${HOME}/ui`, `${HOME}/page`, 'web/tests
 
 /** The pages' modules, the two roots, the vendored ones and the tests that import them. */
 function modules() {
-  return [...DIRS.flatMap((d) => readdirSync(`${ROOT}${d}`, { recursive: true }).map((f) => `${d}/${f}`)), 'web/app.js', `${HOME}/home.js`]
-    .filter((f) => f.startsWith('web/tests/') ? /\.test\.mjs$|^web\/tests\/pages\/.*\.mjs$/.test(f) : /\.m?js$/.test(f));
+  return [
+    ...DIRS.flatMap((d) => readdirSync(`${ROOT}${d}`, { recursive: true }).map((f) => `${d}/${f}`)),
+    'web/app.js',
+    `${HOME}/home.js`,
+  ].filter((f) =>
+    f.startsWith('web/tests/')
+      ? /\.test\.mjs$|^web\/tests\/pages\/.*\.mjs$/.test(f)
+      : /\.m?js$/.test(f),
+  );
 }
 
 /** What `file`'s `text` imports against the two rules, each said. */
@@ -26,10 +33,14 @@ function strays(file, text) {
   for (const [, , spec] of text.matchAll(/(?:\bfrom|\bimport)\s*\(?\s*(['"`])([^'"`]+)\1/g)) {
     if (!spec.startsWith('.')) continue;
     const to = posix.join(posix.dirname(file), spec.split('?')[0]);
-    const into = /(^|\/)(vendor|ui|page)\//.test(to.replace(/^web\/tests\//, '')) || to.endsWith('/question.js');
-    if (into && !spec.endsWith('?v=__VERSION__')) said.push(`${file} imports ${spec} without ?v=__VERSION__`);
+    const into =
+      /(^|\/)(vendor|ui|page)\//.test(to.replace(/^web\/tests\//, '')) ||
+      to.endsWith('/question.js');
+    if (into && !spec.endsWith('?v=__VERSION__'))
+      said.push(`${file} imports ${spec} without ?v=__VERSION__`);
     const own = file === VIEW || file.startsWith('web/vendor/') || file.startsWith('web/tests/');
-    if (/(^|\/)vendor\//.test(to) && !own) said.push(`${file} imports ${spec}: only ${VIEW} imports vendor/`);
+    if (/(^|\/)vendor\//.test(to) && !own)
+      said.push(`${file} imports ${spec}: only ${VIEW} imports vendor/`);
   }
   return said;
 }
@@ -37,7 +48,10 @@ function strays(file, text) {
 test('every import into vendor/, ui/, page/ or question.js is versioned, and only ui/view.js imports vendor/', () => {
   const files = modules();
   assert.ok(files.includes(VIEW) && files.includes('web/vendor/hooks.js'), files.join(' '));
-  assert.deepEqual(files.flatMap((f) => strays(f, readFileSync(`${ROOT}${f}`, 'utf8'))), []);
+  assert.deepEqual(
+    files.flatMap((f) => strays(f, readFileSync(`${ROOT}${f}`, 'utf8'))),
+    [],
+  );
 });
 
 test('a bare ../vendor/preact.js is caught, twice, by name', () => {

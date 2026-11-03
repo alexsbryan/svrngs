@@ -47,9 +47,14 @@ async function builds() {
 for (const [name, fold] of await builds()) {
   test(`every case folds as written, in the ${name} build`, () => {
     assert.equal(CASES.length, COUNT, `fold/cases.json holds ${COUNT} cases`);
-    const failed = CASES.filter((c) => JSON.stringify(sorted(fold(c.ops, c.now))) !== JSON.stringify(sorted(c.kept)));
+    const failed = CASES.filter(
+      (c) => JSON.stringify(sorted(fold(c.ops, c.now))) !== JSON.stringify(sorted(c.kept)),
+    );
     assert.deepEqual(
-      failed.map((c) => `${c.name}\n  wanted ${JSON.stringify(c.kept)}\n  folded ${JSON.stringify(fold(c.ops, c.now))}`),
+      failed.map(
+        (c) =>
+          `${c.name}\n  wanted ${JSON.stringify(c.kept)}\n  folded ${JSON.stringify(fold(c.ops, c.now))}`,
+      ),
       [],
     );
   });
@@ -62,8 +67,17 @@ for (const [name, fold] of await builds()) {
 if (!flag('--js')) {
   test('the vendored build is the one built from the fold as it is now', () => {
     const pinned = pins(VENDOR).map(([f]) => f);
-    assert.deepEqual(pinned, ['fold.js', 'call.mjs', '../../fold/src/lib.rs', '../../fold/Cargo.toml']);
-    assert.deepEqual(unpinned(VENDOR), [], 'run apps/give/build.sh --vendor, and pin what it prints');
+    assert.deepEqual(pinned, [
+      'fold.js',
+      'call.mjs',
+      '../../fold/src/lib.rs',
+      '../../fold/Cargo.toml',
+    ]);
+    assert.deepEqual(
+      unpinned(VENDOR),
+      [],
+      'run apps/give/build.sh --vendor, and pin what it prints',
+    );
   });
 
   test('one byte changed in the fold since its build is caught', () => {
@@ -72,13 +86,21 @@ if (!flag('--js')) {
     cpSync(join(HERE, 'fold'), join(dir, 'fold'), { recursive: true });
     const f = join(dir, 'fold/src/lib.rs');
     writeFileSync(f, readFileSync(f, 'utf8').replace('"stale"', '"stalE"'));
-    assert.deepEqual(unpinned(VENDOR, join(dir, 'page/vendor')).map((s) => s.split(' ')[0]), ['../../fold/src/lib.rs']);
+    assert.deepEqual(
+      unpinned(VENDOR, join(dir, 'page/vendor')).map((s) => s.split(' ')[0]),
+      ['../../fold/src/lib.rs'],
+    );
   });
 }
 
 /** `v` with every object's keys in order, so two answers compare by what they say. */
 function sorted(v) {
   if (Array.isArray(v)) return v.map(sorted);
-  if (v && typeof v === 'object') return Object.fromEntries(Object.keys(v).sort().map((k) => [k, sorted(v[k])]));
+  if (v && typeof v === 'object')
+    return Object.fromEntries(
+      Object.keys(v)
+        .sort()
+        .map((k) => [k, sorted(v[k])]),
+    );
   return v;
 }

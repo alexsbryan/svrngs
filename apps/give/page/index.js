@@ -41,8 +41,10 @@ const el = (tag, text, ...kids) => {
   e.append(text ?? '', ...kids);
   return e;
 };
-const button = (text, act, quiet) => Object.assign(el('button', text), { onclick: act, className: quiet ? 'quiet' : '' });
-const link = (text, href) => Object.assign(el('a', text), { href, target: '_blank', rel: 'noopener' });
+const button = (text, act, quiet) =>
+  Object.assign(el('button', text), { onclick: act, className: quiet ? 'quiet' : '' });
+const link = (text, href) =>
+  Object.assign(el('a', text), { href, target: '_blank', rel: 'noopener' });
 // Which card's asks are shown, which card's computers to move it to,
 // which copy's asks are shown to start it instead, and what the last write
 // was refused with.
@@ -61,7 +63,8 @@ function when(ts) {
 }
 
 /** Who keeps an app, in the group's words. */
-const who = (keeping, read) => (keeping.person_key === read.you_key ? 'your computer' : `${keeping.person}’s computer`);
+const who = (keeping, read) =>
+  keeping.person_key === read.you_key ? 'your computer' : `${keeping.person}’s computer`;
 
 /**
  * The install a computer needs to keep apps, said once, with the line from
@@ -71,70 +74,151 @@ const who = (keeping, read) => (keeping.person_key === read.you_key ? 'your comp
  * ours in its place (AGENTS.md 6).
  */
 function install(why, page) {
-  if (page === undefined) trace('svrngs says no page beside the group, as one before give-page-host: ours, as then');
-  const at = page == null ? OURS : typeof page === 'string' && PLAIN.test(page) ? page.replace(/\/?$/, '/') : null;
-  const said = [`${why} svrngs needs Podman (free, one install) and Give’s program for computers. `, link('Get Podman', PODMAN)];
+  if (page === undefined)
+    trace('svrngs says no page beside the group, as one before give-page-host: ours, as then');
+  const at =
+    page == null
+      ? OURS
+      : typeof page === 'string' && PLAIN.test(page)
+        ? page.replace(/\/?$/, '/')
+        : null;
+  const said = [
+    `${why} svrngs needs Podman (free, one install) and Give’s program for computers. `,
+    link('Get Podman', PODMAN),
+  ];
   if (at === null) {
     trace('no line for Give’s program: the page the group’s links are on', { page });
-    return el('p', ...said, '. The line for Give’s program can’t be given here just now: this computer can’t read the page your group’s links are on.');
+    return el(
+      'p',
+      ...said,
+      '. The line for Give’s program can’t be given here just now: this computer can’t read the page your group’s links are on.',
+    );
   }
-  return el('p', ...said, ', then paste this line into a terminal for Give’s program: ', el('code', `curl -fsSL ${at}install.sh | sh -s -- '${at}' --give`));
+  return el(
+    'p',
+    ...said,
+    ', then paste this line into a terminal for Give’s program: ',
+    el('code', `curl -fsSL ${at}install.sh | sh -s -- '${at}' --give`),
+  );
 }
 
 /** `op` written as this computer's person; `failed` says what didn't happen, if svrngs refuses it. */
 async function write(op, failed) {
-  const r = await fetch(ACTS, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op }) }).catch(
-    (e) => (trace(`${op.kind}, not written: svrngs not reached`, { app: op.app, error: String(e) }), null),
+  const r = await fetch(ACTS, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ op }),
+  }).catch(
+    (e) => (
+      trace(`${op.kind}, not written: svrngs not reached`, { app: op.app, error: String(e) }),
+      null
+    ),
   );
   // A write that can't reach svrngs wrote nothing, and is said where the
   // page stands: what was open stays open to press again (give-page-down
   // (c)). The round reads nothing while an ask is open, so only this says it;
   // the next read, once svrngs answers, drops it.
   if (r === null) {
-    const p = Object.assign(el('p', `${failed}: svrngs on this computer isn’t answering, so nothing reached your group. Press again in a moment.`), { id: 'unsent' });
+    const p = Object.assign(
+      el(
+        'p',
+        `${failed}: svrngs on this computer isn’t answering, so nothing reached your group. Press again in a moment.`,
+      ),
+      { id: 'unsent' },
+    );
     document.getElementById('unsent')?.remove();
     return app.querySelector('h1 + p').after(p);
   }
   const said = await r.json().catch(() => null);
-  trace(`${op.kind}, written or refused`, { app: op.app, status: r.status, error: said?.error ?? null });
+  trace(`${op.kind}, written or refused`, {
+    app: op.app,
+    status: r.status,
+    error: said?.error ?? null,
+  });
   refused = r.ok ? null : `${failed}: ${said?.error ?? `this computer answered ${r.status}`}`;
   asking = moving = taking = null;
   await show();
 }
 
-const start = (card, agreed) => write({ kind: 'started', app: card.kind, card: card.version, agreed }, `${card.title} didn’t start`);
-const offer = (card, keeping, to) => write({ kind: 'offered', app: card.kind, over: keeping.act, to }, `${card.title} wasn’t offered`);
+const start = (card, agreed) =>
+  write(
+    { kind: 'started', app: card.kind, card: card.version, agreed },
+    `${card.title} didn’t start`,
+  );
+const offer = (card, keeping, to) =>
+  write({ kind: 'offered', app: card.kind, over: keeping.act, to }, `${card.title} wasn’t offered`);
 const answer = (card, o, yes) =>
-  write(yes ? { kind: 'accepted', app: card.kind, offer: o.act, agreed: card.asks.length > 0 } : { kind: 'declined', app: card.kind, offer: o.act }, `Your answer wasn’t saved`);
+  write(
+    yes
+      ? { kind: 'accepted', app: card.kind, offer: o.act, agreed: card.asks.length > 0 }
+      : { kind: 'declined', app: card.kind, offer: o.act },
+    `Your answer wasn’t saved`,
+  );
 
 /** Keep `card` here from `copy`, the keeping it follows being `keeping`'s. */
 const take = (card, keeping, copy) =>
   write(
-    { kind: 'taken', app: card.kind, card: copy.card, over: keeping.act, from: copy.from, sum: copy.sum, agreed: card.asks.length > 0 },
+    {
+      kind: 'taken',
+      app: card.kind,
+      card: copy.card,
+      over: keeping.act,
+      from: copy.from,
+      sum: copy.sum,
+      agreed: card.asks.length > 0,
+    },
     `${card.title} wasn’t kept here`,
   );
 
 /** The card's asks, each with its link. */
-const asks = (card) => card.asks.map((ask) => Object.assign(el('p', `${ask.say} `, link('Read them', ask.link)), { className: 'ask' }));
+const asks = (card) =>
+  card.asks.map((ask) =>
+    Object.assign(el('p', `${ask.say} `, link('Read them', ask.link)), { className: 'ask' }),
+  );
 
 /** A kept app's row past who keeps it: the move, as the fold says it stands for the person reading. */
 function move(card, keeping, kept, read, out) {
   const o = keeping.offer;
   const mine = keeping.person_key === read.you_key;
-  trace('the offer, as it stands', { app: card.kind, offer: o?.act ?? null, answer: o?.answer ?? null, mine });
-  if (o?.answer === 'yes') return out.append(el('p', `Moving to ${o.person_key === read.you_key ? 'your' : `${o.person}’s`} computer…`));
+  trace('the offer, as it stands', {
+    app: card.kind,
+    offer: o?.act ?? null,
+    answer: o?.answer ?? null,
+    mine,
+  });
+  if (o?.answer === 'yes')
+    return out.append(
+      el('p', `Moving to ${o.person_key === read.you_key ? 'your' : `${o.person}’s`} computer…`),
+    );
   if (o?.answer === 'waiting' && o.person_key === read.you_key) {
-    out.append(el('p', `${mine ? 'You want' : `${keeping.person} wants`} to move ${card.title} to your computer.`), ...asks(card));
-    return out.append(button(card.asks.length ? 'Agree and keep it here' : 'Keep it here', () => answer(card, o, true)), button('Not now', () => answer(card, o, false), true));
+    out.append(
+      el(
+        'p',
+        `${mine ? 'You want' : `${keeping.person} wants`} to move ${card.title} to your computer.`,
+      ),
+      ...asks(card),
+    );
+    return out.append(
+      button(card.asks.length ? 'Agree and keep it here' : 'Keep it here', () =>
+        answer(card, o, true),
+      ),
+      button('Not now', () => answer(card, o, false), true),
+    );
   }
   if (!mine) return;
   if (o?.answer === 'waiting') return out.append(el('p', `Waiting for ${o.person} to say yes.`));
   if (o?.answer === 'no') out.append(el('p', `${o.person} said not now.`));
   const others = Object.entries(kept.can_keep).filter(([key]) => key !== keeping.keeper);
   if (others.length === 0) return;
-  if (moving !== card.kind) return out.append(button('Move it to…', () => ((moving = card.kind), show()), true));
+  if (moving !== card.kind)
+    return out.append(button('Move it to…', () => ((moving = card.kind), show()), true));
   out.append(el('p', `Move ${card.title} to:`));
-  for (const [key, c] of others) out.append(button(c.person_key === read.you_key ? 'Your other computer' : `${c.person}’s computer`, () => offer(card, keeping, key)));
+  for (const [key, c] of others)
+    out.append(
+      button(c.person_key === read.you_key ? 'Your other computer' : `${c.person}’s computer`, () =>
+        offer(card, keeping, key),
+      ),
+    );
   out.append(button('Not now', () => ((moving = null), show()), true));
 }
 
@@ -147,16 +231,30 @@ function takeover(card, keeping, canKeep, out) {
   const next = keeping.next;
   const keep = () => {
     if (!next || !canKeep) return;
-    out.append(...asks(card), button(card.asks.length ? 'Agree and keep it here' : 'Keep it here', () => take(card, keeping, next)));
+    out.append(
+      ...asks(card),
+      button(card.asks.length ? 'Agree and keep it here' : 'Keep it here', () =>
+        take(card, keeping, next),
+      ),
+    );
   };
   if (keeping.failed) {
-    out.append(el('p', next ? `This copy didn’t start. Try the copy from ${when(next.since)}?` : 'This copy didn’t start, and there’s no copy before it.'));
+    out.append(
+      el(
+        'p',
+        next
+          ? `This copy didn’t start. Try the copy from ${when(next.since)}?`
+          : 'This copy didn’t start, and there’s no copy before it.',
+      ),
+    );
     keep();
     return true;
   }
   if (!keeping.gone) return false;
   const offer = next && canKeep ? ` You have a copy from ${when(next.since)}. Keep it here?` : '';
-  out.append(el('p', `${card.title}’s computer hasn’t answered since ${when(keeping.answered)}.${offer}`));
+  out.append(
+    el('p', `${card.title}’s computer hasn’t answered since ${when(keeping.answered)}.${offer}`),
+  );
   keep();
   return true;
 }
@@ -168,10 +266,20 @@ function had(card, keeping, canKeep, read, out) {
     out.append(el('p', `${card.title} as ${whose} computer had it at ${when(c.since)}`));
     if (!canKeep) continue;
     if (taking !== c.act) {
-      out.append(button('Start instead', () => (card.asks.length ? ((taking = c.act), show()) : take(card, keeping, c)), true));
+      out.append(
+        button(
+          'Start instead',
+          () => (card.asks.length ? ((taking = c.act), show()) : take(card, keeping, c)),
+          true,
+        ),
+      );
       continue;
     }
-    out.append(...asks(card), button('Agree and start', () => take(card, keeping, c)), button('Not now', () => ((taking = null), show()), true));
+    out.append(
+      ...asks(card),
+      button('Agree and start', () => take(card, keeping, c)),
+      button('Not now', () => ((taking = null), show()), true),
+    );
   }
 }
 
@@ -183,15 +291,26 @@ function row(card, kept, read) {
   if (keeping) {
     out.append(el('p', `${card.title} · kept by ${who(keeping, read)}`));
     out.lastChild.className = 'kept';
-    trace('who answers, as it stands', { app: card.kind, answered: keeping.answered, gone: keeping.gone, failed: keeping.failed?.act ?? null, next: keeping.next?.act ?? null, had: keeping.had.length });
+    trace('who answers, as it stands', {
+      app: card.kind,
+      answered: keeping.answered,
+      gone: keeping.gone,
+      failed: keeping.failed?.act ?? null,
+      next: keeping.next?.act ?? null,
+      had: keeping.had.length,
+    });
     if (!takeover(card, keeping, canKeep, out)) move(card, keeping, kept, read, out);
     had(card, keeping, canKeep, read, out);
     return out;
   }
   // This person's own start of it, refused because the computer it was
   // written on can't keep apps: said, with what it needs.
-  const mine = kept.refused.findLast((r) => r.app === card.kind && read.ops.some((o) => o.id === r.act && o.person_key === read.you_key));
-  if (mine?.refusal === 'cannot_keep') out.append(install('This computer can’t keep apps yet. To keep them,', read.page));
+  const mine = kept.refused.findLast(
+    (r) =>
+      r.app === card.kind && read.ops.some((o) => o.id === r.act && o.person_key === read.you_key),
+  );
+  if (mine?.refusal === 'cannot_keep')
+    out.append(install('This computer can’t keep apps yet. To keep them,', read.page));
   if (!canKeep && !mine && localStorage.getItem(ASKED) === null) {
     out.append(
       install(`To keep ${card.title} on this computer,`, read.page),
@@ -202,18 +321,32 @@ function row(card, kept, read) {
   // What this computer's program last said it can't run here, and why
   // (give-install (c)): Give's program decides it, from the card and
   // Podman, and says it with its `ready`; the page says it in words.
-  const ready = read.ops.findLast((o) => o.payload.kind === 'ready' && o.person_key === read.you_key);
+  const ready = read.ops.findLast(
+    (o) => o.payload.kind === 'ready' && o.person_key === read.you_key,
+  );
   if (canKeep && ready?.payload.cannot?.[card.kind] === 'rosetta') {
     trace('this computer can’t run it', { app: card.kind, why: 'rosetta' });
-    out.append(el('p', `To keep ${card.title} on this computer, turn on Rosetta in Podman Desktop’s settings, then start Podman again.`));
+    out.append(
+      el(
+        'p',
+        `To keep ${card.title} on this computer, turn on Rosetta in Podman Desktop’s settings, then start Podman again.`,
+      ),
+    );
     return out;
   }
   if (asking !== card.kind) {
-    out.append(button('Start it for the group', () => (card.asks.length ? ((asking = card.kind), show()) : start(card, false))));
+    out.append(
+      button('Start it for the group', () =>
+        card.asks.length ? ((asking = card.kind), show()) : start(card, false),
+      ),
+    );
     return out;
   }
   out.append(...asks(card));
-  out.append(button('Agree and start', () => start(card, true)), button('Not now', () => ((asking = null), show()), true));
+  out.append(
+    button('Agree and start', () => start(card, true)),
+    button('Not now', () => ((asking = null), show()), true),
+  );
   return out;
 }
 
@@ -222,20 +355,40 @@ async function show() {
     const c = await fetch('cards.json');
     cards = c.ok ? await c.json().catch(() => null) : null;
     trace('cards.json read', { status: c.status, cards: cards?.length ?? null });
-    if (!Array.isArray(cards)) return app.replaceChildren(el('h1', 'Give'), el('p', 'The shelf can’t be read just now: bring Give to your group again.'));
+    if (!Array.isArray(cards))
+      return app.replaceChildren(
+        el('h1', 'Give'),
+        el('p', 'The shelf can’t be read just now: bring Give to your group again.'),
+      );
   }
   // A read that can't reach svrngs, as while it restarts for an update, is
   // said, and what the page last read goes with it: never shown as current
   // (give-page-down). The next round reads again.
-  const r = await fetch(ACTS).catch((e) => (trace('svrngs/acts not reached', { error: String(e) }), null));
+  const r = await fetch(ACTS).catch(
+    (e) => (trace('svrngs/acts not reached', { error: String(e) }), null),
+  );
   if (r === null) {
-    return app.replaceChildren(el('h1', 'Give'), el('p', 'What your group keeps can’t be read just now: svrngs on this computer isn’t answering. This page will try again by itself.'));
+    return app.replaceChildren(
+      el('h1', 'Give'),
+      el(
+        'p',
+        'What your group keeps can’t be read just now: svrngs on this computer isn’t answering. This page will try again by itself.',
+      ),
+    );
   }
   // A body that is not JSON is said as that, never read as nothing kept.
-  const read = await r.json().catch((e) => (trace('the answer is not JSON', { status: r.status, error: String(e) }), null));
+  const read = await r
+    .json()
+    .catch((e) => (trace('the answer is not JSON', { status: r.status, error: String(e) }), null));
   trace('svrngs/acts answered', { status: r.status, ops: read?.ops?.length ?? null });
   if (!r.ok || read === null || !Array.isArray(read.ops)) {
-    return app.replaceChildren(el('h1', 'Give'), el('p', `What your group keeps can’t be read just now: ${read?.error ?? `this computer answered ${r.status}`}.`));
+    return app.replaceChildren(
+      el('h1', 'Give'),
+      el(
+        'p',
+        `What your group keeps can’t be read just now: ${read?.error ?? `this computer answered ${r.status}`}.`,
+      ),
+    );
   }
   const kept = fold(read.ops, Math.floor(Date.now() / 1000));
   for (const r of kept.refused.filter((r) => !told.has(r.act))) {
@@ -245,7 +398,10 @@ async function show() {
   trace('folded', { kept: Object.keys(kept.apps), can_keep: Object.keys(kept.can_keep).length });
   app.replaceChildren(
     el('h1', 'Give'),
-    el('p', 'Apps your group keeps on one of your computers at a time. Everyone in the group can use one while it’s kept.'),
+    el(
+      'p',
+      'Apps your group keeps on one of your computers at a time. Everyone in the group can use one while it’s kept.',
+    ),
     ...(refused ? [el('p', refused)] : []),
     el('ul', '', ...cards.map((card) => row(card, kept, read))),
   );

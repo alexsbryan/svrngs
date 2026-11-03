@@ -58,11 +58,20 @@ const KEYS_LOST = `{
 // (store.js `lendKeep`), and what its holder's key is there.
 async function keptPass() {
   const open = indexedDB.open('svrngs-lend', 1);
-  const db = await new Promise((done, fail) => Object.assign(open, { onsuccess: () => done(open.result), onerror: () => fail(open.error) }));
+  const db = await new Promise((done, fail) =>
+    Object.assign(open, { onsuccess: () => done(open.result), onerror: () => fail(open.error) }),
+  );
   const label = location.hostname.split('.')[0];
   const get = db.transaction('kept').objectStore('kept').get(`pass ${label}`);
-  const pass = await new Promise((done, fail) => Object.assign(get, { onsuccess: () => done(get.result), onerror: () => fail(get.error) }));
-  return { fields: Object.keys(pass ?? {}).filter((k) => pass[k] !== undefined).sort(), key: pass?.key?.constructor?.name ?? null };
+  const pass = await new Promise((done, fail) =>
+    Object.assign(get, { onsuccess: () => done(get.result), onerror: () => fail(get.error) }),
+  );
+  return {
+    fields: Object.keys(pass ?? {})
+      .filter((k) => pass[k] !== undefined)
+      .sort(),
+    key: pass?.key?.constructor?.name ?? null,
+  };
 }
 
 // In the page: the person's key in the group the store kept, unsealed by
@@ -81,11 +90,14 @@ async function unsealed() {
 // In a page the lend's worker controls: what the worker traced (lend.js
 // `TRACE`).
 const traced = (page) =>
-  page.evaluate(() => fetch('/svrngs-trace').then((r) => r.text())).catch((e) => `the trace was not read: ${e}`);
+  page
+    .evaluate(() => fetch('/svrngs-trace').then((r) => r.text()))
+    .catch((e) => `the trace was not read: ${e}`);
 
 const server = await serve(args.site, { worker: args.keysLost ? `${PLANT}\n${KEYS_LOST}` : PLANT });
 const origin = pageAt(server);
-const profile = args.engine === 'webkit' ? mkdtempSync(join(tmpdir(), 'svrngs-webkit-')) : undefined;
+const profile =
+  args.engine === 'webkit' ? mkdtempSync(join(tmpdir(), 'svrngs-webkit-')) : undefined;
 let { context, close } = await launch(args.engine, { profile });
 const logs = [];
 let page;
@@ -97,7 +109,9 @@ try {
   watch(context);
   page = await context.newPage();
   await held(page, origin, args);
-  const listed = await page.evaluate(() => [...document.querySelectorAll('#lent button')].map((b) => b.textContent));
+  const listed = await page.evaluate(() =>
+    [...document.querySelectorAll('#lent button')].map((b) => b.textContent),
+  );
   const button = page.locator('#lent button', { hasText: args.open });
   const away = inApp;
   await Promise.all([page.waitForURL(away, { timeout: 90_000 }), button.click()]);
@@ -121,7 +135,8 @@ try {
     await cdp.send('ServiceWorker.enable');
     await cdp.send('ServiceWorker.stopAllWorkers');
     const stopped = Date.now();
-    while (!runs.includes('stopped') && Date.now() - stopped < 10_000) await new Promise((r) => setTimeout(r, 50));
+    while (!runs.includes('stopped') && Date.now() - stopped < 10_000)
+      await new Promise((r) => setTimeout(r, 50));
     if (!runs.includes('stopped')) throw new Error(`the worker did not stop: ${runs}`);
   }
   // The worker's own word (mnp-1): holding no pass and reading none, it
@@ -142,7 +157,19 @@ try {
   await page.waitForSelector('#status.good, #status.bad', { timeout: 90_000 });
   const unsealedAfter = await page.evaluate(unsealed);
   console.log(
-    JSON.stringify({ listed, opened, first, handedTrace, unheld, reopened, replayed, stoppedTrace, kept, unsealedAfter, logs }),
+    JSON.stringify({
+      listed,
+      opened,
+      first,
+      handedTrace,
+      unheld,
+      reopened,
+      replayed,
+      stoppedTrace,
+      kept,
+      unsealedAfter,
+      logs,
+    }),
   );
 } catch (e) {
   console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);

@@ -29,14 +29,51 @@ import * as visit from './page/visit.js?v=__VERSION__';
 
 // The wasm by its one URL, from the cache the worker reads it from too
 // (store.js `runtime`, u4-9); then the address's fragment, to open.
-const edge = { io: { init: () => init({ module_or_path: store.runtime() }).then(() => ({ type: 'start', fragment: location.hash.slice(1) })) } };
-const parts = compose({ edge, enter, computer, join, ask, index, door, shelf, visit, among, acts, uses });
-const page = machine('PAGE', parts, parts.first({ fine: matchMedia('(pointer: fine)').matches, standalone: navigator.standalone }), [{ run: 'init', failed: 'failed' }]);
+const edge = {
+  io: {
+    init: () =>
+      init({ module_or_path: store.runtime() }).then(() => ({
+        type: 'start',
+        fragment: location.hash.slice(1),
+      })),
+  },
+};
+const parts = compose({
+  edge,
+  enter,
+  computer,
+  join,
+  ask,
+  index,
+  door,
+  shelf,
+  visit,
+  among,
+  acts,
+  uses,
+});
+const page = machine(
+  'PAGE',
+  parts,
+  parts.first({ fine: matchMedia('(pointer: fine)').matches, standalone: navigator.standalone }),
+  [{ run: 'init', failed: 'failed' }],
+);
 render(html`<${Page} parts=${parts} store=${page} />`, document.getElementById('page'));
 
 // An address typed or tapped on this page is a new fragment on the same
 // page, which the browser opens without loading it (web/app.js@19b63b2b:626).
 // Back on screen, the group is read again (page-open (c); web/page/enter.js `shown`).
-document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && page.dispatch({ type: 'shown' }));
-window.addEventListener('hashchange', () => (trace('PAGE: the address changed here, so the page opens it'), location.reload()));
-if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js', { type: 'module' }).catch((e) => trace(`PAGE: the service worker did not register: ${e}`)));
+document.addEventListener(
+  'visibilitychange',
+  () => document.visibilityState === 'visible' && page.dispatch({ type: 'shown' }),
+);
+window.addEventListener(
+  'hashchange',
+  () => (trace('PAGE: the address changed here, so the page opens it'), location.reload()),
+);
+if ('serviceWorker' in navigator)
+  window.addEventListener('load', () =>
+    navigator.serviceWorker
+      .register('./sw.js', { type: 'module' })
+      .catch((e) => trace(`PAGE: the service worker did not register: ${e}`)),
+  );

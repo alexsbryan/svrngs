@@ -24,7 +24,9 @@ import { createInterface } from 'node:readline';
 import { driving } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
-const told = new Promise((done) => createInterface({ input: process.stdin }).on('line', (l) => l.includes('go') && done()));
+const told = new Promise((done) =>
+  createInterface({ input: process.stdin }).on('line', (l) => l.includes('go') && done()),
+);
 const go = () => told;
 // In the lend's page: a socket at `path`, opened or not within 10 s.
 function opens(path) {
@@ -35,11 +37,17 @@ function opens(path) {
     s.onclose = (e) => (clearTimeout(t), done(`closed ${e.code}`));
   });
 }
-const shown = async (page) => ({ url: page.url(), title: await page.title(), text: await page.evaluate(() => document.body.innerText) });
+const shown = async (page) => ({
+  url: page.url(),
+  title: await page.title(),
+  text: await page.evaluate(() => document.body.innerText),
+});
 await driving(args, async ({ page }) => {
   await page.waitForSelector('#status.good, #status.bad', { timeout: 90_000 });
   await page.locator('#lent button', { hasText: args.open }).click();
-  await page.waitForFunction((t) => document.title === t, args.title, { timeout: 60_000 }).catch(() => {});
+  await page
+    .waitForFunction((t) => document.title === t, args.title, { timeout: 60_000 })
+    .catch(() => {});
   const opened = await shown(page);
   if (!args.ready) return { opened };
   if (args.socket) {
@@ -61,7 +69,12 @@ await driving(args, async ({ page }) => {
   await go();
   const t0 = Date.now();
   const res = await page.goto(opened.url, { timeout: 90_000 });
-  const again = { ms: Date.now() - t0, status: res?.status() ?? null, refused: (await res?.headerValue('x-svrngs-refused')) ?? null, ...(await shown(page)) };
+  const again = {
+    ms: Date.now() - t0,
+    status: res?.status() ?? null,
+    refused: (await res?.headerValue('x-svrngs-refused')) ?? null,
+    ...(await shown(page)),
+  };
   return { opened, again };
 });
 process.stdin.destroy();

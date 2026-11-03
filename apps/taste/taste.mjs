@@ -45,7 +45,10 @@ const diary = () => JSON.parse(fs.readFileSync(at('diary.json'), 'utf8')).rows;
 
 // su: own rank — a film the history names: by a provider id both name,
 // else by title and year.
-const plain = (s) => String(s ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
+const plain = (s) =>
+  String(s ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
 function same(film, row) {
   const ids = Object.keys(film.ids ?? {}).filter((k) => k in (row.ids ?? {}));
   if (ids.length) return ids.some((k) => String(film.ids[k]) === String(row.ids[k]));
@@ -98,9 +101,11 @@ const server = http.createServer(async (req, res) => {
   try {
     // su: own diary — on this port, loopback on Ana's computer: the door
     // refuses /diary to everyone who reaches the lend.
-    if (req.method === 'GET' && url.pathname === '/diary') return answer(res, 200, { rows: diary() });
+    if (req.method === 'GET' && url.pathname === '/diary')
+      return answer(res, 200, { rows: diary() });
     // su: own serve
-    if (req.method !== 'POST' || url.pathname !== '/rank') return answer(res, 404, { error: 'nothing here by that name' });
+    if (req.method !== 'POST' || url.pathname !== '/rank')
+      return answer(res, 404, { error: 'nothing here by that name' });
     // su: enforce owner
     if (!isOwner(who.key)) return refuse(res, 'not-yours', 'This taste is someone else’s.', who);
     // su: own rank
@@ -116,4 +121,6 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(Number(port), '127.0.0.1', () => log(`taste: listening on 127.0.0.1:${port}, ${dir}`));
+server.listen(Number(port), '127.0.0.1', () =>
+  log(`taste: listening on 127.0.0.1:${port}, ${dir}`),
+);

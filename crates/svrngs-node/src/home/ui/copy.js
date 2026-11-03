@@ -10,14 +10,21 @@ import { go, machine, no } from './machine.js?v=__VERSION__';
 const AGAIN = ['idle', 'copied', 'unwritten'];
 // `said` is each answer in turn, by state: a second " Copied." after the
 // first, as home.js's `p.append` leaves both (home.js@19b63b2b:137, :202).
-const answered = (s, m) => (s.at.copy === 'copying' ? go(s, { copy: m.type }, { said: [...s.said, m.type] }) : no(s, `${m.type} answers no copy, as none is being written`));
+const answered = (s, m) =>
+  s.at.copy === 'copying'
+    ? go(s, { copy: m.type }, { said: [...s.said, m.type] })
+    : no(s, `${m.type} answers no copy, as none is being written`);
 export const COPY = {
   states: { copy: ['idle', 'copying', 'copied', 'unwritten'] },
-  step: (s, m) => ({
-    copy: () => (AGAIN.includes(s.at.copy) ? go(s, { copy: 'copying' }, {}, { run: 'write', text: m.text, failed: 'unwritten' }) : no(s, 'a copy is being written already')),
-    copied: () => answered(s, m),
-    unwritten: () => answered(s, m),
-  })[m.type]?.() ?? no(s, `a copy takes no ${m.type}`),
+  step: (s, m) =>
+    ({
+      copy: () =>
+        AGAIN.includes(s.at.copy)
+          ? go(s, { copy: 'copying' }, {}, { run: 'write', text: m.text, failed: 'unwritten' })
+          : no(s, 'a copy is being written already'),
+      copied: () => answered(s, m),
+      unwritten: () => answered(s, m),
+    })[m.type]?.() ?? no(s, `a copy takes no ${m.type}`),
   io: { write: ({ text }) => navigator.clipboard.writeText(text).then(() => ({ type: 'copied' })) },
 };
 
@@ -30,6 +37,7 @@ export const Copy = (props) => drawn(...useMachine(() => machine('COPY', COPY, F
 // what `beside` draws there (`true`, nothing), as home.js appends them.
 export function drawn(s, send, { id, text, words, beside }) {
   const press = () => send({ type: 'copy', text });
-  if (!beside) return html`<button id=${id} onClick=${press}>${words[s.at.copy] ?? words.copy}</button>`;
+  if (!beside)
+    return html`<button id=${id} onClick=${press}>${words[s.at.copy] ?? words.copy}</button>`;
   return html`<button id=${id} onClick=${press}>${words.copy}</button>${beside}${s.said.map((k) => words[k])}`;
 }

@@ -50,7 +50,14 @@ async function asked(page) {
   // (its asking draws #used empty).
   const before = await page.$$('#used li');
   await page.locator('#uses summary').click();
-  await page.waitForFunction((old) => ((li) => li.length > 0 && li.every((e) => !old.includes(e)))([...document.querySelectorAll('#used li')]), before, { timeout: 30_000 });
+  await page.waitForFunction(
+    (old) =>
+      ((li) => li.length > 0 && li.every((e) => !old.includes(e)))([
+        ...document.querySelectorAll('#used li'),
+      ]),
+    before,
+    { timeout: 30_000 },
+  );
   return page.locator('#used').innerText();
 }
 
@@ -66,7 +73,10 @@ try {
   const began = Date.now();
   out.two = await said(two);
   while (Date.now() - began < args.for) {
-    for (const [tab, page] of [['one', one], ['two', two]]) {
+    for (const [tab, page] of [
+      ['one', one],
+      ['two', two],
+    ]) {
       const at = Date.now() - began;
       const words = await asked(page).catch((e) => `no line: ${e}`);
       out.asks.push({ tab, at, ms: Date.now() - began - at, words });
@@ -80,11 +90,26 @@ try {
   const here = two.locator('#door button', { hasText: 'Open it here' });
   if (await here.isVisible()) {
     await here.click();
-    await two.waitForSelector('#status.good:has-text("You’re in"), #status.bad', { timeout: 90_000 });
-    await one.waitForFunction(() => /another tab/.test(document.getElementById('status')?.textContent), null, { timeout: 30_000 }).catch(() => {});
-    out.taken = { one: await said(one), two: await said(two), ask: await asked(two).catch((e) => `no line: ${e}`) };
+    await two.waitForSelector('#status.good:has-text("You’re in"), #status.bad', {
+      timeout: 90_000,
+    });
+    await one
+      .waitForFunction(
+        () => /another tab/.test(document.getElementById('status')?.textContent),
+        null,
+        { timeout: 30_000 },
+      )
+      .catch(() => {});
+    out.taken = {
+      one: await said(one),
+      two: await said(two),
+      ask: await asked(two).catch((e) => `no line: ${e}`),
+    };
   }
-  out.lines = { one: await one.evaluate(() => window.__lines), two: await two.evaluate(() => window.__lines) };
+  out.lines = {
+    one: await one.evaluate(() => window.__lines),
+    two: await two.evaluate(() => window.__lines),
+  };
   console.log(JSON.stringify({ ...out, logs }));
 } catch (e) {
   console.error(`the tabs did not finish: ${e}\n${JSON.stringify(out)}\n${logs.join('\n')}`);

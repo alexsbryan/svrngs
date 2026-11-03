@@ -159,6 +159,14 @@ address, and prints the line that opens Chrome there, where apps open and
 save, and how to point a group at it. Safari can't save there
 ([why](demo/runs/security/2026-11-02-webkit-partition/README.md)).
 
+oxfmt lays out the JavaScript: `web/node_modules/.bin/oxfmt '**/*.{js,mjs,cjs}'`
+formats it, and `scripts/check.sh` fails on any file it would change. To
+have `git blame` skip commits that only reformat, run once:
+
+```
+git config blame.ignoreRevsFile .git-blame-ignore-revs
+```
+
 Some of svrngs is forked from commonwealth-ai, and links nothing from it:
 each forked file names its original on a `ported from commonwealth-ai`
 line. You need commonwealth-ai only to follow those originals: checked out

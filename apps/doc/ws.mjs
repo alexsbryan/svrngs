@@ -24,8 +24,12 @@ export function accept(req, socket, head, open) {
     socket.end('HTTP/1.1 400 Bad Request\r\nconnection: close\r\ncontent-length: 0\r\n\r\n');
     return;
   }
-  const answer = createHash('sha1').update(key + GUID).digest('base64');
-  socket.write(`HTTP/1.1 101 Switching Protocols\r\nupgrade: websocket\r\nconnection: Upgrade\r\nsec-websocket-accept: ${answer}\r\n\r\n`);
+  const answer = createHash('sha1')
+    .update(key + GUID)
+    .digest('base64');
+  socket.write(
+    `HTTP/1.1 101 Switching Protocols\r\nupgrade: websocket\r\nconnection: Upgrade\r\nsec-websocket-accept: ${answer}\r\n\r\n`,
+  );
   socket.setNoDelay(true);
   const peer = new Peer(socket);
   open(peer);
@@ -37,9 +41,17 @@ export function accept(req, socket, head, open) {
 
 /** One frame from this end: unmasked, as a server's are (§5.1). */
 export function frame(op, data, mask = null) {
-  const bytes = typeof data === 'string' ? Buffer.from(data) : Buffer.from(data.buffer ?? data, data.byteOffset ?? 0, data.byteLength ?? data.length);
+  const bytes =
+    typeof data === 'string'
+      ? Buffer.from(data)
+      : Buffer.from(data.buffer ?? data, data.byteOffset ?? 0, data.byteLength ?? data.length);
   const n = bytes.length;
-  const head = n < 126 ? [0x80 | op, n] : n < 65536 ? [0x80 | op, 126, n >> 8, n & 255] : [0x80 | op, 127, 0, 0, 0, 0, n >>> 24, (n >>> 16) & 255, (n >>> 8) & 255, n & 255];
+  const head =
+    n < 126
+      ? [0x80 | op, n]
+      : n < 65536
+        ? [0x80 | op, 126, n >> 8, n & 255]
+        : [0x80 | op, 127, 0, 0, 0, 0, n >>> 24, (n >>> 16) & 255, (n >>> 8) & 255, n & 255];
   if (!mask) return Buffer.concat([Buffer.from(head), bytes]);
   head[1] |= 0x80;
   const body = Buffer.from(bytes);
@@ -84,7 +96,14 @@ export function frames(bytes) {
 /** An open socket: `onmessage(data)`, a string or a Uint8Array; `onclose()`. */
 class Peer {
   constructor(socket) {
-    Object.assign(this, { socket, buf: Buffer.alloc(0), parts: [], open: true, onmessage: () => {}, onclose: () => {} });
+    Object.assign(this, {
+      socket,
+      buf: Buffer.alloc(0),
+      parts: [],
+      open: true,
+      onmessage: () => {},
+      onclose: () => {},
+    });
   }
 
   feed(chunk) {
@@ -103,7 +122,11 @@ class Peer {
         const whole = Buffer.concat(this.parts.map((p) => p.data));
         const text = this.parts[0].op === 1;
         this.parts = [];
-        this.onmessage(text ? whole.toString('utf8') : new Uint8Array(whole.buffer, whole.byteOffset, whole.length));
+        this.onmessage(
+          text
+            ? whole.toString('utf8')
+            : new Uint8Array(whole.buffer, whole.byteOffset, whole.length),
+        );
       }
     }
   }

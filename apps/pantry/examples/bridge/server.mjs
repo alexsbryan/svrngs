@@ -13,11 +13,12 @@
 import http from 'node:http';
 import { destination } from '../../boundary.mjs';
 
-export const PROMPT = 'You are describing a screenshot of a web page to a '
-  + 'programmer who cannot see it. Describe the layout, every visible string, '
-  + 'the element hierarchy, and any visual defects: clipping, overlap, '
-  + 'cut-off content, or errors. Name the exact element and what is wrong '
-  + 'with it. Be concrete.';
+export const PROMPT =
+  'You are describing a screenshot of a web page to a ' +
+  'programmer who cannot see it. Describe the layout, every visible string, ' +
+  'the element hierarchy, and any visual defects: clipping, overlap, ' +
+  'cut-off content, or errors. Name the exact element and what is wrong ' +
+  'with it. Be concrete.';
 
 function collect(req) {
   return new Promise((resolve, reject) => {
@@ -41,13 +42,19 @@ function relay(req, res, base, raw, extra = {}) {
   delete headers.connection;
   delete headers['content-length'];
   headers['content-length'] = String(raw.length);
-  const target = http.request({
-    hostname: at.hostname, port: at.port, path: `${at.pathname}${at.search}`,
-    method: req.method, headers,
-  }, (answer) => {
-    res.writeHead(answer.statusCode, { ...answer.headers, ...extra });
-    answer.pipe(res);
-  });
+  const target = http.request(
+    {
+      hostname: at.hostname,
+      port: at.port,
+      path: `${at.pathname}${at.search}`,
+      method: req.method,
+      headers,
+    },
+    (answer) => {
+      res.writeHead(answer.statusCode, { ...answer.headers, ...extra });
+      answer.pipe(res);
+    },
+  );
   target.on('error', (e) => {
     if (res.headersSent) return res.destroy(e);
     json(res, 502, { error: `the pantry did not answer: ${e.message}` });
@@ -73,7 +80,8 @@ async function describe(base, vision, part, authorization) {
     throw new Error(why || `the pantry answered ${res.status}`);
   }
   const text = said?.choices?.[0]?.message?.content;
-  if (typeof text !== 'string' || !text.trim()) throw new Error('the vision model answered no description');
+  if (typeof text !== 'string' || !text.trim())
+    throw new Error('the vision model answered no description');
   return text;
 }
 
@@ -94,12 +102,13 @@ async function withSight(messages, look) {
   return out;
 }
 
-const imageParts = (messages) => (Array.isArray(messages) ? messages : [])
-  .flatMap((m) => (Array.isArray(m?.content) ? m.content : []))
-  .filter((part) => part?.type === 'image_url');
+const imageParts = (messages) =>
+  (Array.isArray(messages) ? messages : [])
+    .flatMap((m) => (Array.isArray(m?.content) ? m.content : []))
+    .filter((part) => part?.type === 'image_url');
 
 export async function start({ upstream, vision, port = 8120, host = '127.0.0.1' } = {}) {
-  if (!upstream) throw new Error('the bridge needs the person\'s pantry as --upstream');
+  if (!upstream) throw new Error("the bridge needs the person's pantry as --upstream");
   if (!vision) throw new Error('the bridge needs the seeing model as --vision');
   const base = upstream.replace(/\/+$/, '');
   const server = http.createServer(async (req, res) => {
@@ -120,7 +129,12 @@ export async function start({ upstream, vision, port = 8120, host = '127.0.0.1' 
       }
       let seen;
       try {
-        seen = { ...asked, messages: await withSight(asked.messages, (part) => describe(base, vision, part, req.headers.authorization)) };
+        seen = {
+          ...asked,
+          messages: await withSight(asked.messages, (part) =>
+            describe(base, vision, part, req.headers.authorization),
+          ),
+        };
       } catch (e) {
         return json(res, 502, {
           error: `the bridge could not describe an image with ${vision}: ${e.message}`,
@@ -146,10 +160,11 @@ export async function start({ upstream, vision, port = 8120, host = '127.0.0.1' 
   return {
     port: actual,
     url: `http://${host}:${actual}`,
-    close: () => new Promise((resolve) => {
-      server.close(resolve);
-      server.closeAllConnections?.();
-    }),
+    close: () =>
+      new Promise((resolve) => {
+        server.close(resolve);
+        server.closeAllConnections?.();
+      }),
   };
 }
 
@@ -160,7 +175,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   };
   const vision = arg('--vision');
   start({ upstream: arg('--upstream'), vision, port: Number(arg('--port', '8120')) })
-    .then((at) => console.log(`Point your interface at ${at.url}/v1 — screenshots are described by ${vision} through your pantry`))
+    .then((at) =>
+      console.log(
+        `Point your interface at ${at.url}/v1 — screenshots are described by ${vision} through your pantry`,
+      ),
+    )
     .catch((e) => {
       console.error(`bridge: ${e.message}`);
       process.exitCode = 1;

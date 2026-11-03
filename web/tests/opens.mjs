@@ -30,7 +30,14 @@ const fetched = (page, path, bare) =>
     async ([read, path, bare]) => {
       const reads = bare ? { lends: [] } : await fetch('/svrngs-reads').then((r) => r.json());
       const to = reads.lends.find((l) => l.address.startsWith(read))?.address ?? read;
-      return fetch(`${to}${path}`).then(async (r) => ({ status: r.status, refused: r.headers.get('x-svrngs-refused'), error: (await r.json().catch(() => ({}))).error ?? null }), (e) => ({ status: `${e}` }));
+      return fetch(`${to}${path}`).then(
+        async (r) => ({
+          status: r.status,
+          refused: r.headers.get('x-svrngs-refused'),
+          error: (await r.json().catch(() => ({}))).error ?? null,
+        }),
+        (e) => ({ status: `${e}` }),
+      );
     },
     [args.read, path, bare],
   );
@@ -48,13 +55,20 @@ try {
   seen.bookmark = await fetched(page, 'bookmark');
   const home = await context.newPage();
   await home.goto(args.home);
-  await home.locator('#home table.index a, #home table.index button').first().waitFor({ timeout: 60_000 });
+  await home
+    .locator('#home table.index a, #home table.index button')
+    .first()
+    .waitFor({ timeout: 60_000 });
   seen.cells = await home.locator('#home table.index tr td:first-child').allTextContents();
-  const tab = await opened(home.locator('#home table.index button', { hasText: args.words }).click({ timeout: 10_000 }));
+  const tab = await opened(
+    home.locator('#home table.index button', { hasText: args.words }).click({ timeout: 10_000 }),
+  );
   seen.there = { url: tab.url(), reached: await fetched(tab, 'opened') };
   seen.after = await fetched(page, 'after');
   seen.bare = await fetched(page, 'bare', true);
-  seen.plain = (await opened(home.locator('#home table.index a', { hasText: args.plain }).click())).url();
+  seen.plain = (
+    await opened(home.locator('#home table.index a', { hasText: args.plain }).click())
+  ).url();
 } catch (e) {
   seen.error = `the page did not finish: ${e}`;
 }

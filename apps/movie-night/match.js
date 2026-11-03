@@ -44,7 +44,9 @@ export const copyOf = (item, library) => ({
   server: item.ServerId,
   title: item.Name,
   year: item.ProductionYear ?? null,
-  ids: Object.fromEntries(Object.entries(item.ProviderIds ?? {}).map(([k, v]) => [k.toLowerCase(), String(v)])),
+  ids: Object.fromEntries(
+    Object.entries(item.ProviderIds ?? {}).map(([k, v]) => [k.toLowerCase(), String(v)]),
+  ),
 });
 
 // Whether two copies are one film: by a provider id both name, where both
@@ -60,7 +62,8 @@ function same(a, b) {
 // Copies grouped into films, each film's copies in the order they came.
 export function films(copies) {
   // mn: plant per-copy — bar 1's plant: each copy a card of its own
-  if (PLANT === 'per-copy') return copies.map((c) => ({ title: c.title, year: c.year, copies: [c] }));
+  if (PLANT === 'per-copy')
+    return copies.map((c) => ({ title: c.title, year: c.year, copies: [c] }));
   // mn: own match
   const out = [];
   for (const c of copies) {

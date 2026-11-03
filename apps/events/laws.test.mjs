@@ -20,7 +20,13 @@ const act = (id, ts, by, op, corrects = null) => ({ id, ts, by, op, corrects });
  * change Ama's; Di says "no" three ways; Bo and his Maya came; Sam moves it;
  * Cy tries to post it as her own. */
 const JOURNAL = [
-  act('a1', 1000, SAM, { kind: 'event', event: E1, what: 'dinner', when: 'Friday 7', where: 'the house' }),
+  act('a1', 1000, SAM, {
+    kind: 'event',
+    event: E1,
+    what: 'dinner',
+    when: 'Friday 7',
+    where: 'the house',
+  }),
   act('a2', 1010, BO, { kind: 'coming', event: E1, guests: ['Maya'] }),
   act('a3', 1020, CY, { kind: 'coming', event: E1 }),
   act('a4', 1030, AMA, { kind: 'coming', event: E1, guests: [] }),
@@ -33,7 +39,13 @@ const JOURNAL = [
   act('a11', 5000, BO, { kind: 'came', event: E1 }),
   act('a12', 5010, BO, { kind: 'came', event: E1, guest: 'Maya' }),
   act('a13', 5020, AMA, { kind: 'came', event: E1, guest: 'Maya' }),
-  act('a14', 900, SAM, { kind: 'event', event: E1, what: 'dinner', when: 'Friday 8', where: 'the house' }, 'a1'),
+  act(
+    'a14',
+    900,
+    SAM,
+    { kind: 'event', event: E1, what: 'dinner', when: 'Friday 8', where: 'the house' },
+    'a1',
+  ),
   act('a15', 1100, CY, { kind: 'event', event: E1, what: 'my dinner', when: '', where: '' }),
 ];
 /** The acts that try to say "no", each in its own way. */
@@ -54,7 +66,11 @@ const differ = (a, b, what) => (isDeepStrictEqual(a, b) ? null : `${what} differ
 
 /** Run `fn` with the clock, the dice and the locale all changed. */
 function elsewhere(fn) {
-  const saved = { Date: globalThis.Date, random: Math.random, compare: String.prototype.localeCompare };
+  const saved = {
+    Date: globalThis.Date,
+    random: Math.random,
+    compare: String.prototype.localeCompare,
+  };
   const RealDate = saved.Date;
   const at = 4_102_444_800_000; // 2100-01-01
   globalThis.Date = class extends RealDate {
@@ -83,11 +99,18 @@ export const LAWS = {
   determinism(app) {
     const once = said(app);
     const exact = JSON.parse(JSON.stringify(once));
-    return differ(once, said(app), 'two folds of one journal') ?? differ(once, exact, 'the answers and their JSON');
+    return (
+      differ(once, said(app), 'two folds of one journal') ??
+      differ(once, exact, 'the answers and their JSON')
+    );
   },
   /** The same answers under another clock, random seed and locale. */
   'environment independence'(app) {
-    return differ(said(app), elsewhere(() => said(app)), 'answers here and elsewhere');
+    return differ(
+      said(app),
+      elsewhere(() => said(app)),
+      'answers here and elsewhere',
+    );
   },
   /** One group's fold does not reach another's: no shared object between folds, and no act changed. */
   'non-interference'(app) {
@@ -95,7 +118,10 @@ export const LAWS = {
     fold(app, JOURNAL);
     const acts = clone(JOURNAL);
     app.answers(acts.reduce((s, a) => app.reduce(s, a), app.init()));
-    return differ(alone, said(app, JOURNAL.slice(0, 6)), 'a fold alone and after another') ?? differ(acts, JOURNAL, 'the acts before and after a fold');
+    return (
+      differ(alone, said(app, JOURNAL.slice(0, 6)), 'a fold alone and after another') ??
+      differ(acts, JOURNAL, 'the acts before and after a fold')
+    );
   },
   /** A second answer, the same person's, the same words, changes no one's answers. An
    * answer a correction names is skipped: the correction names one act, so its twin
@@ -103,21 +129,54 @@ export const LAWS = {
   idempotence(app) {
     for (const [i, a] of JOURNAL.entries()) {
       if (!KEYED.has(a.op?.kind) || JOURNAL.some((c) => c.corrects === a.id)) continue;
-      const doubled = [...JOURNAL.slice(0, i + 1), { ...a, id: `${a.id}-again`, ts: a.ts + 1 }, ...JOURNAL.slice(i + 1)];
-      const why = differ(said(app).answers.events, said(app, doubled).answers.events, `the events with ${a.id} once and twice`);
+      const doubled = [
+        ...JOURNAL.slice(0, i + 1),
+        { ...a, id: `${a.id}-again`, ts: a.ts + 1 },
+        ...JOURNAL.slice(i + 1),
+      ];
+      const why = differ(
+        said(app).answers.events,
+        said(app, doubled).answers.events,
+        `the events with ${a.id} once and twice`,
+      );
       if (why) return why;
     }
     return null;
   },
   /** No act makes the fold throw, and what it says stays exactly JSON. */
   totality(app) {
-    const ops = [null, 1, 'x', [], {}, { kind: 'event' }, { kind: 'toString' }, { kind: '__proto__' },
-      { kind: 'event', event: '__proto__', what: 'x', when: '', where: '' }, { kind: 'event', event: 'e', what: 7, when: '', where: '' },
-      { kind: 'coming', event: E1, guests: 'Maya' }, { kind: 'coming', event: E1, guests: [null] }, { kind: 'coming', event: E1, guests: ['__proto__'] },
-      { kind: 'coming', event: 'constructor' }, { kind: 'came', event: E1, guest: {} }, { kind: 'came', event: ['a'] }, { kind: 'came' }];
+    const ops = [
+      null,
+      1,
+      'x',
+      [],
+      {},
+      { kind: 'event' },
+      { kind: 'toString' },
+      { kind: '__proto__' },
+      { kind: 'event', event: '__proto__', what: 'x', when: '', where: '' },
+      { kind: 'event', event: 'e', what: 7, when: '', where: '' },
+      { kind: 'coming', event: E1, guests: 'Maya' },
+      { kind: 'coming', event: E1, guests: [null] },
+      { kind: 'coming', event: E1, guests: ['__proto__'] },
+      { kind: 'coming', event: 'constructor' },
+      { kind: 'came', event: E1, guest: {} },
+      { kind: 'came', event: ['a'] },
+      { kind: 'came' },
+    ];
     const bys = [null, '', 42, '__proto__', 'constructor', SAM];
-    const acts = [null, 7, [], {}, { id: 5, ts: 'now', by: SAM, op: {} }, { id: '__proto__', ts: 1, by: SAM, op: JOURNAL[0].op },
-      act('c1', 1, SAM, null), act('c2', 1, SAM, null, 'nothing'), act('c3', 1, SAM, null, ['a1']), act('c4', 1, '__proto__', null, 'a1')];
+    const acts = [
+      null,
+      7,
+      [],
+      {},
+      { id: 5, ts: 'now', by: SAM, op: {} },
+      { id: '__proto__', ts: 1, by: SAM, op: JOURNAL[0].op },
+      act('c1', 1, SAM, null),
+      act('c2', 1, SAM, null, 'nothing'),
+      act('c3', 1, SAM, null, ['a1']),
+      act('c4', 1, '__proto__', null, 'a1'),
+    ];
     for (const op of ops) for (const by of bys) acts.push(act(`x${acts.length}`, 1, by, op));
     let out;
     try {
@@ -143,15 +202,29 @@ export const LAWS = {
   },
   /** A correction from anyone but the person whose act it changes changes no one's answers. */
   'only their own'(app) {
-    const theirs = (a) => a.corrects == null || JOURNAL.find((b) => b.id === a.corrects)?.by === a.by;
-    return differ(said(app).answers.events, said(app, JOURNAL.filter(theirs)).answers.events, "the events with others' corrections and without");
+    const theirs = (a) =>
+      a.corrects == null || JOURNAL.find((b) => b.id === a.corrects)?.by === a.by;
+    return differ(
+      said(app).answers.events,
+      said(app, JOURNAL.filter(theirs)).answers.events,
+      "the events with others' corrections and without",
+    );
   },
   /** Nothing records "no": an act saying it changes no one's answers, and an event says only who answered. */
   'nothing records no'(app) {
     const { events: with_ } = said(app).answers;
-    const odd = Object.values(with_).map((e) => Object.keys(e).sort()).find((k) => !isDeepStrictEqual(k, SAYS));
+    const odd = Object.values(with_)
+      .map((e) => Object.keys(e).sort())
+      .find((k) => !isDeepStrictEqual(k, SAYS));
     if (odd) return `an event says ${odd.join(', ')}, not ${SAYS.join(', ')}`;
-    return differ(with_, said(app, JOURNAL.filter((a) => !NOES.has(a.id))).answers.events, 'the events with a "no" and without');
+    return differ(
+      with_,
+      said(
+        app,
+        JOURNAL.filter((a) => !NOES.has(a.id)),
+      ).answers.events,
+      'the events with a "no" and without',
+    );
   },
 };
 
@@ -172,12 +245,25 @@ test('each law catches the fold planted to break it', () => {
   const shared = init();
   const planted = {
     determinism: { reduce: (s, a) => Object.assign(reduce(s, a), { gone: new Set([a.id]) }) },
-    'environment independence': { reduce: (s, a) => Object.assign(reduce(s, a), { at: Date.now() }) },
+    'environment independence': {
+      reduce: (s, a) => Object.assign(reduce(s, a), { at: Date.now() }),
+    },
     'non-interference': { init: () => shared },
     idempotence: {
-      reduce: (s, a) => (a?.op?.kind === 'came' && !a.op.guest ? Object.assign(s, { acts: { ...s.acts, [a.id]: { ...a, op: { ...a.op, guest: a.id } } }, order: [...s.order, a.id] }) : reduce(s, a)),
+      reduce: (s, a) =>
+        a?.op?.kind === 'came' && !a.op.guest
+          ? Object.assign(s, {
+              acts: { ...s.acts, [a.id]: { ...a, op: { ...a.op, guest: a.id } } },
+              order: [...s.order, a.id],
+            })
+          : reduce(s, a),
     },
-    totality: { reduce: (s, a) => (a?.corrects != null && a.op == null ? Object.assign(s, { last: s.acts[a.corrects].by }) : reduce(s, a)) },
+    totality: {
+      reduce: (s, a) =>
+        a?.corrects != null && a.op == null
+          ? Object.assign(s, { last: s.acts[a.corrects].by })
+          : reduce(s, a),
+    },
     'no module globals': { reduce: (s, a) => Object.assign(reduce(s, a), { calls: ++calls }) },
     // A correction counted from someone else: whoever corrects an act is taken as its person.
     'only their own': {
@@ -188,7 +274,10 @@ test('each law catches the fold planted to break it', () => {
     },
     // A "no" recorded: `not_coming` kept and said beside who is coming.
     'nothing records no': {
-      reduce: (s, a) => (a?.op?.kind === 'not_coming' ? Object.assign(s, { declined: [...(s.declined ?? []), a.by] }) : reduce(s, a)),
+      reduce: (s, a) =>
+        a?.op?.kind === 'not_coming'
+          ? Object.assign(s, { declined: [...(s.declined ?? []), a.by] })
+          : reduce(s, a),
       answers: (s) => {
         const out = answers(s);
         for (const e of Object.values(out.events)) e.declined = s.declined ?? [];
@@ -198,6 +287,9 @@ test('each law catches the fold planted to break it', () => {
   };
   for (const [law, override] of Object.entries(planted)) {
     const laws = broken({ ...events, ...override }).map(([l]) => l);
-    assert.ok(laws.includes(law), `a fold planted to break ${law} broke only ${JSON.stringify(laws)}`);
+    assert.ok(
+      laws.includes(law),
+      `a fold planted to break ${law} broke only ${JSON.stringify(laws)}`,
+    );
   }
 });

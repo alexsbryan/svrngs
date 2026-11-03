@@ -34,13 +34,14 @@ def read(file):
     return (ROOT / file).read_text() if (ROOT / file).is_file() else ""
 
 
-# The one string literal after `anchor` in `file`, Rust's line continuations
-# joined, as directives: each name to its tokens, sorted. None when the anchor
-# is not there exactly once.
+# The one string literal after `anchor` in `file`, in either quote (oxfmt
+# writes JavaScript's single, .oxfmtrc.json), Rust's line continuations
+# joined, as directives: each name to its tokens, sorted. None when the
+# anchor is not there exactly once.
 def served(file, anchor):
     text = read(file)
-    literal = text.count(anchor) == 1 and re.match(r'\s*"((?:[^"\\]|\\.)*)"', text.split(anchor, 1)[1], re.S)
-    policy = literal and re.sub(r"\\\n\s*", "", literal.group(1))
+    literal = text.count(anchor) == 1 and re.match(r'\s*(["\'])((?:(?!\1)[^\\]|\\.)*)\1', text.split(anchor, 1)[1], re.S)
+    policy = literal and re.sub(r"\\\n\s*", "", literal.group(2))
     return policy and {d.split()[0]: sorted(d.split()[1:]) for d in re.split(r"[;,]", policy) if d.strip()}
 
 

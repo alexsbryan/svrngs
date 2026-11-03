@@ -22,17 +22,39 @@ async function bring(page) {
   page.on('request', (r) => sent.push(`${r.method()} ${new URL(r.url()).pathname}`));
   const button = page.locator(`${root} button:has-text('Bring the ticked ones')`);
   await button.waitFor({ timeout: 30_000 });
-  for (const app of args.apps) await page.locator(`${root} label:has-text('${app}') input`).check({ timeout: 30_000 });
+  for (const app of args.apps)
+    await page.locator(`${root} label:has-text('${app}') input`).check({ timeout: 30_000 });
   await button.evaluate((b) => {
     window.busy = [];
     new MutationObserver(() => window.busy.push(b.disabled)).observe(b, { attributes: true });
   });
   await button.evaluate((b) => (b.click(), b.click()));
-  await page.waitForFunction((r) => /You brought|already|Nothing was brought/.test(document.querySelector(r).innerText), root, { timeout: 60_000 });
+  await page.waitForFunction(
+    (r) => /You brought|already|Nothing was brought/.test(document.querySelector(r).innerText),
+    root,
+    { timeout: 60_000 },
+  );
   const next = await button.evaluate((b) => b.nextSibling?.textContent ?? null);
-  const table = await page.waitForFunction(([r, t]) => document.querySelector(r).innerText.includes(t), [root, args.table], { timeout: 20_000 }).then(() => true, () => false);
+  const table = await page
+    .waitForFunction(
+      ([r, t]) => document.querySelector(r).innerText.includes(t),
+      [root, args.table],
+      { timeout: 20_000 },
+    )
+    .then(
+      () => true,
+      () => false,
+    );
   const shelf = await page.locator(root).innerText();
-  return { next, busy: await page.evaluate(() => window.busy), table, shelf, reloads, sent, lines: await page.evaluate(() => window.__lines ?? []) };
+  return {
+    next,
+    busy: await page.evaluate(() => window.busy),
+    table,
+    shelf,
+    reloads,
+    sent,
+    lines: await page.evaluate(() => window.__lines ?? []),
+  };
 }
 
 if (args.home) {

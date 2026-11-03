@@ -124,9 +124,10 @@ cp "$APP"/vendor/*.js "$OUT/vendor/"
 cp "$APP/install.sh" "$OUT/"
 MODULES=($(cd "$OUT" && echo page/*.js ui/*.js vendor/*.js))
 # The worker's SHELL, the build's: every module the page loads, from what
-# was copied, so a new flow is kept offline with no edit (web/sw.js).
-sed "s#^const SHELL = \[\(.*\)\];#const SHELL = [\1$(printf ", './%s?v=__VERSION__'" app.js store.js authority.js sign.js question.js "${MODULES[@]}")];#" "$APP/sw.js" >"$OUT/sw.js"
-grep -q "'./ui/view.js?v=" "$OUT/sw.js" || { echo "build-web: web/sw.js has no \`const SHELL = [...];\` line, so the page's modules would not be kept offline" >&2; exit 1; }
+# was copied, so a new flow is kept offline with no edit (web/sw.js). They go
+# first, right after the line's `[`, so the list may sit on one line or many.
+sed "s#^const SHELL = \[#const SHELL = [$(printf "'./%s?v=__VERSION__', " app.js store.js authority.js sign.js question.js "${MODULES[@]}")#" "$APP/sw.js" >"$OUT/sw.js"
+grep -q "'./ui/view.js?v=" "$OUT/sw.js" || { echo "build-web: web/sw.js has no line starting \`const SHELL = [\`, so the page's modules would not be kept offline" >&2; exit 1; }
 # The version is the content hash of the module and of every file stamped,
 # stamped into every shell URL and the service-worker cache name, so a
 # rebuild invalidates a guest's cache instead of serving a stale runtime

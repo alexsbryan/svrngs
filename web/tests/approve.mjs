@@ -25,37 +25,58 @@ const server = await serve(args.site);
 const origin = pageAt(server);
 const logs = [];
 const seen = {};
-const watched = (b) => (b.context.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`)), b.context.on('requestfailed', (r) => logs.push(`requestfailed: ${r.url().slice(0, 160)} ${r.failure()?.errorText}`)), b);
+const watched = (b) => (
+  b.context.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`)),
+  b.context.on('requestfailed', (r) =>
+    logs.push(`requestfailed: ${r.url().slice(0, 160)} ${r.failure()?.errorText}`),
+  ),
+  b
+);
 // The handoff cookies the group's page left that no signer has taken.
-const handoffs = async (b) => (await b.context.cookies(origin)).filter((c) => c.name.startsWith('__Host-svrngs-')).length;
-const ready = (page) => page.waitForFunction(() => document.title === 'ready', null, { timeout: 90_000 });
+const handoffs = async (b) =>
+  (await b.context.cookies(origin)).filter((c) => c.name.startsWith('__Host-svrngs-')).length;
+const ready = (page) =>
+  page.waitForFunction(() => document.title === 'ready', null, { timeout: 90_000 });
 // From the group's page at `page`, `name` opened, its page drawn.
 async function opening(page, name) {
   await page.goto(origin);
   await page.waitForSelector('#status.good', { timeout: 90_000 });
-  await Promise.all([page.waitForURL((u) => inApp(u) && !u.pathname.endsWith('/open.html'), { timeout: 90_000 }), page.locator('#lent button', { hasText: name }).click()]);
+  await Promise.all([
+    page.waitForURL((u) => inApp(u) && !u.pathname.endsWith('/open.html'), { timeout: 90_000 }),
+    page.locator('#lent button', { hasText: name }).click(),
+  ]);
   await ready(page);
 }
 const save = (page, what) => page.evaluate((w) => window.save(w), what);
 // The open this app's origin keeps (store.js `lendKept`), as its signer reads it.
-const kept = (page) => page.evaluate(async () => {
-  const v = new URL(document.querySelector('script[src*="shim.js"]').src).searchParams.get('v');
-  const store = await import(`/store.js?v=${v}`);
-  const { key: _key, line: _line, unsent: _unsent, ...open } = await store.lendKept(`pass ${store.labelOf(location.hostname)}`);
-  return open;
-});
+const kept = (page) =>
+  page.evaluate(async () => {
+    const v = new URL(document.querySelector('script[src*="shim.js"]').src).searchParams.get('v');
+    const store = await import(`/store.js?v=${v}`);
+    const {
+      key: _key,
+      line: _line,
+      unsent: _unsent,
+      ...open
+    } = await store.lendKept(`pass ${store.labelOf(location.hostname)}`);
+    return open;
+  });
 // The group's signer, framed at `page`, asked whether this browser's group
 // page issued `opening`: what it answers.
-const asked = (page, opening) => page.evaluate(async ([opening, signer]) => {
-  const frame = Object.assign(document.createElement('iframe'), { src: signer, hidden: true });
-  const loaded = new Promise((done) => (frame.onload = done));
-  document.body.append(frame);
-  await loaded;
-  const { port1, port2 } = new MessageChannel();
-  const said = new Promise((done) => (port1.onmessage = (e) => done(e.data)));
-  frame.contentWindow.postMessage({ opening }, new URL(signer).origin, [port2]);
-  return said;
-}, [opening, `${origin}sign.html`]);
+const asked = (page, opening) =>
+  page.evaluate(
+    async ([opening, signer]) => {
+      const frame = Object.assign(document.createElement('iframe'), { src: signer, hidden: true });
+      const loaded = new Promise((done) => (frame.onload = done));
+      document.body.append(frame);
+      await loaded;
+      const { port1, port2 } = new MessageChannel();
+      const said = new Promise((done) => (port1.onmessage = (e) => done(e.data)));
+      frame.contentWindow.postMessage({ opening }, new URL(signer).origin, [port2]);
+      return said;
+    },
+    [opening, `${origin}sign.html`],
+  );
 
 let browser = watched(await launch(args.engine, { profile: args.profile }));
 let other;
@@ -79,10 +100,19 @@ try {
   const again = await browser.context.newPage();
   await opening(again, app);
   const second = await kept(again);
-  seen.again = { cookies: await handoffs(browser), saved: await save(again, 'four'), older: await asked(again, first), newer: await asked(again, second), newKey: second.pass !== first.pass };
+  seen.again = {
+    cookies: await handoffs(browser),
+    saved: await save(again, 'four'),
+    older: await asked(again, first),
+    newer: await asked(again, second),
+    newKey: second.pass !== first.pass,
+  };
   const theirs = await browser.context.newPage();
   await opening(theirs, another);
-  seen.another = { as: await asked(theirs, second), relabelled: await asked(theirs, { ...second, label: (await kept(theirs)).label }) };
+  seen.another = {
+    as: await asked(theirs, second),
+    relabelled: await asked(theirs, { ...second, label: (await kept(theirs)).label }),
+  };
   const keptOut = await browser.context.newPage();
   await opening(keptOut, walled);
   seen.walled = await save(keptOut, 'five');
@@ -90,11 +120,17 @@ try {
   const replayed = await other.context.newPage();
   const fragment = Buffer.from(JSON.stringify(second)).toString('base64url');
   await replayed.goto(`${appAt(second.label, server.address().port)}/open.html#${fragment}`);
-  await replayed.waitForFunction(() => !document.getElementById('said').textContent.includes('Opening'), null, { timeout: 60_000 });
+  await replayed.waitForFunction(
+    () => !document.getElementById('said').textContent.includes('Opening'),
+    null,
+    { timeout: 60_000 },
+  );
   seen.replayed = await replayed.locator('#said').innerText();
   console.log(JSON.stringify({ ...seen, logs }));
 } catch (e) {
-  console.error(`the approval run did not finish: ${e}\n${JSON.stringify(seen)}\n${logs.join('\n')}`);
+  console.error(
+    `the approval run did not finish: ${e}\n${JSON.stringify(seen)}\n${logs.join('\n')}`,
+  );
   process.exitCode = 1;
 } finally {
   await other?.close();

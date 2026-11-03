@@ -18,11 +18,14 @@ const args = JSON.parse(process.argv[2]);
 const opened = async (page, origin) => {
   await page.goto(origin);
   await page.locator('#lent button', { hasText: args.open }).click({ timeout: 60_000 });
-  await page.waitForFunction((o) => document.title.startsWith(`${o} `), args.open, { timeout: 60_000 }).catch(() => {});
+  await page
+    .waitForFunction((o) => document.title.startsWith(`${o} `), args.open, { timeout: 60_000 })
+    .catch(() => {});
   return page.title();
 };
 // "1 app changed. See what’s new" opened, as a person opens it.
-const unfolded = (page) => page.locator('#acts summary', { hasText: 'See what’s new' }).click({ timeout: 60_000 });
+const unfolded = (page) =>
+  page.locator('#acts summary', { hasText: 'See what’s new' }).click({ timeout: 60_000 });
 await driving(args, async ({ page, origin }) => {
   // The section's words once it asks, or as they are when it never does.
   await unfold(page);
@@ -33,9 +36,17 @@ await driving(args, async ({ page, origin }) => {
   await page.goto(origin);
   await unfold(page);
   await unfolded(page);
-  await page.locator('#acts button', { hasText: 'Open the new version' }).click({ timeout: 60_000 });
+  await page
+    .locator('#acts button', { hasText: 'Open the new version' })
+    .click({ timeout: 60_000 });
   // Said once written, or why not beside the button; read either way.
-  await page.waitForFunction(() => document.getElementById('acts').innerText.includes('new version for you now'), null, { timeout: 60_000 }).catch(() => {});
+  await page
+    .waitForFunction(
+      () => document.getElementById('acts').innerText.includes('new version for you now'),
+      null,
+      { timeout: 60_000 },
+    )
+    .catch(() => {});
   const said = await page.locator('#acts').innerText();
   return { asked, before, said, after: await opened(page, origin) };
 });

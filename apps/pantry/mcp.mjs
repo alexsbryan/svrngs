@@ -21,7 +21,8 @@ async function post(url, message, { session, version, timeout, token }) {
   });
   const text = await res.text();
   const sessionId = res.headers.get('mcp-session-id') || session;
-  if (!res.ok) throw new Error(`MCP answered ${res.status}${text ? `: ${text.slice(0, 200)}` : ''}`);
+  if (!res.ok)
+    throw new Error(`MCP answered ${res.status}${text ? `: ${text.slice(0, 200)}` : ''}`);
   if (!text.trim()) return { session: sessionId };
   return { session: sessionId, message: parse(text, res.headers.get('content-type') || '') };
 }
@@ -55,29 +56,41 @@ function parse(text, contentType) {
 /// svrngs takes off before the lend's service is asked (give-session).
 export async function toolsAt(origin, timeout, token) {
   const url = `${origin.replace(/\/+$/, '')}/mcp`;
-  const init = await post(url, {
-    jsonrpc: '2.0',
-    id: 1,
-    method: 'initialize',
-    params: {
-      protocolVersion: PROTOCOL,
-      capabilities: {},
-      clientInfo: { name: 'pantry', version: '0' },
+  const init = await post(
+    url,
+    {
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'initialize',
+      params: {
+        protocolVersion: PROTOCOL,
+        capabilities: {},
+        clientInfo: { name: 'pantry', version: '0' },
+      },
     },
-  }, { timeout, token });
+    { timeout, token },
+  );
   const version = init.message?.result?.protocolVersion || PROTOCOL;
-  await post(url, { jsonrpc: '2.0', method: 'notifications/initialized' }, {
-    session: init.session,
-    version,
-    timeout,
-    token,
-  });
-  const listed = await post(url, { jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} }, {
-    session: init.session,
-    version,
-    timeout,
-    token,
-  });
+  await post(
+    url,
+    { jsonrpc: '2.0', method: 'notifications/initialized' },
+    {
+      session: init.session,
+      version,
+      timeout,
+      token,
+    },
+  );
+  const listed = await post(
+    url,
+    { jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} },
+    {
+      session: init.session,
+      version,
+      timeout,
+      token,
+    },
+  );
   if (listed.message?.error) {
     throw new Error(`MCP tools/list: ${listed.message.error.message || 'refused'}`);
   }

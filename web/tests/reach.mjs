@@ -18,7 +18,9 @@ import { createInterface } from 'node:readline';
 import { driving } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
-const go = new Promise((done) => createInterface({ input: process.stdin }).on('line', (l) => l.includes('go') && done()));
+const go = new Promise((done) =>
+  createInterface({ input: process.stdin }).on('line', (l) => l.includes('go') && done()),
+);
 const shown = (page) =>
   page.evaluate(() => ({
     status: document.getElementById('status').textContent,
@@ -38,7 +40,9 @@ await driving(args, async ({ page, origin }) => {
   let opened = null;
   if (args.open && listed.lent.some((l) => l.includes(args.open))) {
     await page.locator('#lent button', { hasText: args.open }).click();
-    await page.waitForFunction((t) => document.title === t, args.title, { timeout: 60_000 }).catch(() => {});
+    await page
+      .waitForFunction((t) => document.title === t, args.title, { timeout: 60_000 })
+      .catch(() => {});
     opened = { ms: Date.now() - t0, url: page.url(), title: await page.title() };
   }
   return { first, listed, opened };

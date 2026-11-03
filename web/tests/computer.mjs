@@ -27,13 +27,18 @@ const requests = [];
 async function opened(device) {
   const { context, close } = await launch(args.engine, { device });
   try {
-    if (args.engine === 'chromium') await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin });
-    context.on('request', (r) => requests.push({ url: r.url(), headers: r.headers(), body: r.postData() }));
+    if (args.engine === 'chromium')
+      await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin });
+    context.on('request', (r) =>
+      requests.push({ url: r.url(), headers: r.headers(), body: r.postData() }),
+    );
     context.on('console', (m) => logs.push(`${device} ${m.type()}: ${m.text()}`));
     const page = await context.newPage();
     page.on('pageerror', (e) => logs.push(`${device} pageerror: ${e}`));
     await page.goto(link);
-    await page.waitForSelector('#status.good, #status.bad, #join:not([hidden])', { timeout: 90_000 });
+    await page.waitForSelector('#status.good, #status.bad, #join:not([hidden])', {
+      timeout: 90_000,
+    });
     const offered = await page.locator('#computer').isVisible();
     let [line, words] = [null, null];
     let [copied, written, button] = [null, null, null];
@@ -49,12 +54,26 @@ async function opened(device) {
         navigator.clipboard.writeText = (text) => write((window.__written = text));
       });
       await page.click('#copy');
-      await page.waitForFunction(() => document.getElementById('copy').textContent !== 'Copy', null, { timeout: 10_000 });
+      await page.waitForFunction(
+        () => document.getElementById('copy').textContent !== 'Copy',
+        null,
+        { timeout: 10_000 },
+      );
       button = await page.locator('#copy').textContent();
       written = await page.evaluate(() => window.__written);
-      copied = await page.evaluate(() => navigator.clipboard.readText()).catch((e) => `unread: ${e}`);
+      copied = await page
+        .evaluate(() => navigator.clipboard.readText())
+        .catch((e) => `unread: ${e}`);
     }
-    return { offered, line, words, written, copied, button, status: await page.locator('#status').textContent() };
+    return {
+      offered,
+      line,
+      words,
+      written,
+      copied,
+      button,
+      status: await page.locator('#status').textContent(),
+    };
   } finally {
     await close();
   }

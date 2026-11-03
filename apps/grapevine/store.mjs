@@ -27,15 +27,27 @@ import { readFileSync, renameSync, writeFileSync } from 'node:fs';
 export function record(api, token) {
   const shown = { authorization: `Bearer ${token}` };
   async function call(path, body) {
-    const sent = body === undefined ? { headers: shown } : { method: 'POST', headers: { ...shown, 'content-type': 'application/json' }, body: JSON.stringify(body) };
+    const sent =
+      body === undefined
+        ? { headers: shown }
+        : {
+            method: 'POST',
+            headers: { ...shown, 'content-type': 'application/json' },
+            body: JSON.stringify(body),
+          };
     let res;
     try {
       res = await fetch(`${api}${path}`, sent);
     } catch (e) {
-      throw new Error(`this computer's svrngs did not answer at ${api}: ${e.cause?.code ?? e.message}`);
+      throw new Error(
+        `this computer's svrngs did not answer at ${api}: ${e.cause?.code ?? e.message}`,
+      );
     }
     const out = await res.json().catch(() => null);
-    if (!res.ok) throw new Error(`this computer's svrngs refused ${path.split('?')[0]}: ${res.status} ${out?.error ?? JSON.stringify(out)}`);
+    if (!res.ok)
+      throw new Error(
+        `this computer's svrngs refused ${path.split('?')[0]}: ${res.status} ${out?.error ?? JSON.stringify(out)}`,
+      );
     return out;
   }
   const at = (door, group) => `/v1/rail/${door}?namespace=${encodeURIComponent(group)}`;
@@ -75,7 +87,8 @@ export function file(path) {
   if (!kept.groups || typeof kept.groups !== 'object') throw new Error(`${path} names no groups`);
   kept.ops ??= {};
   const group = (id) => {
-    if (!Object.prototype.hasOwnProperty.call(kept.groups, id)) throw new Error(`there is no group ${id} in ${path}`);
+    if (!Object.prototype.hasOwnProperty.call(kept.groups, id))
+      throw new Error(`there is no group ${id} in ${path}`);
     return kept.groups[id];
   };
   return {
@@ -92,9 +105,18 @@ export function file(path) {
     },
     async append(id, act, name) {
       if (!group(id).people.includes(name)) throw new Error(`${name} is not in ${id}`);
-      const op = { id: randomBytes(8).toString('hex'), ts_unix: Math.floor(Date.now() / 1000), person: name };
+      const op = {
+        id: randomBytes(8).toString('hex'),
+        ts_unix: Math.floor(Date.now() / 1000),
+        person: name,
+      };
       if (act.op === 'record') op.payload = act.payload;
-      else if (act.op === 'correct') Object.assign(op, { corrects: act.corrects }, act.replacement && { payload: act.replacement });
+      else if (act.op === 'correct')
+        Object.assign(
+          op,
+          { corrects: act.corrects },
+          act.replacement && { payload: act.replacement },
+        );
       else throw new Error(`an app writes records and corrections, not ${act.op}`);
       (kept.ops[id] ??= []).push(op);
       writeFileSync(`${path}.new`, JSON.stringify(kept, null, 1));

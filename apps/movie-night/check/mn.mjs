@@ -41,7 +41,13 @@ import { record, shown, timed } from '../../jellyfin/check/person.mjs';
 const args = JSON.parse(process.argv[2]);
 const { DUMP, JF_SAM, SAM_ADMIN, MOVIES, SLEEP } = process.env;
 const T0 = Date.now();
-const out = { journey: args.journey, engine: args.engine, labels: args.labels, started: new Date(T0).toISOString(), people: {} };
+const out = {
+  journey: args.journey,
+  engine: args.engine,
+  labels: args.labels,
+  started: new Date(T0).toISOString(),
+  people: {},
+};
 const now = () => new Date().toISOString();
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -54,9 +60,17 @@ async function browser(p) {
   person.tally = record(context, person.page, user, { DUMP, T0 });
   const page = person.page;
   page.on('pageerror', (e) => person.logs.push(`pageerror: ${e}`));
-  page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') person.logs.push(`console.${m.type()}: ${m.text().slice(0, 240)}`); });
-  page.on('requestfailed', (r) => person.logs.push(`failed: ${r.url().slice(0, 120)}: ${r.failure()?.errorText}`));
-  page.on('response', (r) => { if (r.status() >= 400) person.logs.push(`http ${r.status()} ${r.request().method()} ${r.url().slice(0, 140)}`); });
+  page.on('console', (m) => {
+    if (m.type() === 'error' || m.type() === 'warning')
+      person.logs.push(`console.${m.type()}: ${m.text().slice(0, 240)}`);
+  });
+  page.on('requestfailed', (r) =>
+    person.logs.push(`failed: ${r.url().slice(0, 120)}: ${r.failure()?.errorText}`),
+  );
+  page.on('response', (r) => {
+    if (r.status() >= 400)
+      person.logs.push(`http ${r.status()} ${r.request().method()} ${r.url().slice(0, 140)}`);
+  });
   person.browser = context.browser()?.version() ?? null;
   return person;
 }
@@ -68,8 +82,12 @@ async function join(person) {
   person.join_ms = await timed(person, 'the list', async () => {
     await page.goto(args.link);
     await page.waitForFunction(
-      () => !document.getElementById('join').hidden || /good|bad/.test(document.getElementById('status').className),
-      null, { timeout: 120_000 });
+      () =>
+        !document.getElementById('join').hidden ||
+        /good|bad/.test(document.getElementById('status').className),
+      null,
+      { timeout: 120_000 },
+    );
     await page.fill('#name', person.name);
     await page.click('#join button');
     await page.waitForSelector('#status.good', { timeout: 120_000 });
@@ -78,10 +96,12 @@ async function join(person) {
 }
 
 async function listed(person) {
-  person.listed = await person.page.evaluate(() => ({
-    lent: [...document.querySelectorAll('#lent button')].map((b) => b.textContent),
-    said: document.getElementById('response')?.textContent ?? '',
-  })).catch((e) => ({ error: String(e) }));
+  person.listed = await person.page
+    .evaluate(() => ({
+      lent: [...document.querySelectorAll('#lent button')].map((b) => b.textContent),
+      said: document.getElementById('response')?.textContent ?? '',
+    }))
+    .catch((e) => ({ error: String(e) }));
   return person.listed;
 }
 
@@ -98,26 +118,40 @@ async function group(person) {
 async function openFromList(person, what, ready) {
   return timed(person, `${what} from the list`, async () => {
     await person.page.locator('#lent button', { hasText: what }).click();
-    await person.page.waitForURL((u) => !u.href.startsWith(args.link.split('#')[0]), { timeout: 90_000 });
+    await person.page.waitForURL((u) => !u.href.startsWith(args.link.split('#')[0]), {
+      timeout: 90_000,
+    });
     await person.page.waitForSelector(ready, { timeout: 90_000 });
     // Movie Night's module runs before the document is complete; a query
     // typed before then is the browser's form, not Movie Night's.
-    await person.page.waitForFunction(() => document.readyState === 'complete', null, { timeout: 60_000 });
+    await person.page.waitForFunction(() => document.readyState === 'complete', null, {
+      timeout: 60_000,
+    });
   });
 }
 
 // ── Movie Night ─────────────────────────────────────────────────────────
 
 // What Movie Night shows: its query, each library's words, the cards.
-const showing = (page) => page.evaluate(() => ({
-  url: location.href.replace(/#lends=.*/, '#lends=…'),
-  query: document.getElementById('q')?.value ?? null,
-  said: [...document.querySelectorAll('#said li')].map((l) => ({ library: l.dataset.library ?? null, state: l.dataset.state, text: l.textContent })),
-  cards: [...document.querySelectorAll('#results .card')].map((c) => ({
-    title: c.querySelector('h2').textContent,
-    copies: [...c.querySelectorAll('a.copy')].map((a) => ({ library: a.dataset.library, text: a.textContent, first: a.classList.contains('first'), href: a.getAttribute('href') })),
-  })),
-}));
+const showing = (page) =>
+  page.evaluate(() => ({
+    url: location.href.replace(/#lends=.*/, '#lends=…'),
+    query: document.getElementById('q')?.value ?? null,
+    said: [...document.querySelectorAll('#said li')].map((l) => ({
+      library: l.dataset.library ?? null,
+      state: l.dataset.state,
+      text: l.textContent,
+    })),
+    cards: [...document.querySelectorAll('#results .card')].map((c) => ({
+      title: c.querySelector('h2').textContent,
+      copies: [...c.querySelectorAll('a.copy')].map((a) => ({
+        library: a.dataset.library,
+        text: a.textContent,
+        first: a.classList.contains('first'),
+        href: a.getAttribute('href'),
+      })),
+    })),
+  }));
 
 // Search `q`: the time from Enter to the first card, to each library's
 // word changing and to the last library's answer, watched in the page
@@ -139,18 +173,48 @@ async function search(person, q, limit = 180_000) {
       }
     };
     w.observer = new MutationObserver(look);
-    w.observer.observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true });
+    w.observer.observe(document.body, {
+      subtree: true,
+      childList: true,
+      characterData: true,
+      attributes: true,
+    });
   });
   const started = now();
   await page.press('#q', 'Enter');
-  const settled = await page.waitForFunction(() => {
-    const said = [...document.querySelectorAll('#said li')];
-    return said.length && said.every((l) => l.dataset.state !== 'asking') && window.__mn.seen.length > 0;
-  }, null, { timeout: limit, polling: 100 }).then(() => true, () => false);
-  const w = await page.evaluate(() => { window.__mn.observer.disconnect(); const { t0, observer, ...w } = window.__mn; return w; });
+  const settled = await page
+    .waitForFunction(
+      () => {
+        const said = [...document.querySelectorAll('#said li')];
+        return (
+          said.length &&
+          said.every((l) => l.dataset.state !== 'asking') &&
+          window.__mn.seen.length > 0
+        );
+      },
+      null,
+      { timeout: limit, polling: 100 },
+    )
+    .then(
+      () => true,
+      () => false,
+    );
+  const w = await page.evaluate(() => {
+    window.__mn.observer.disconnect();
+    const { t0, observer, ...w } = window.__mn;
+    return w;
+  });
   const s = await showing(page);
   const last = Math.max(...w.seen.filter((x) => x.state !== 'asking').map((x) => x.t), -1);
-  const r = { query: q, started, ended: now(), first_card_ms: w.first, all_said_ms: settled ? last : null, seen: w.seen, ...s };
+  const r = {
+    query: q,
+    started,
+    ended: now(),
+    first_card_ms: w.first,
+    all_said_ms: settled ? last : null,
+    seen: w.seen,
+    ...s,
+  };
   person.steps.push({ search: r });
   return r;
 }
@@ -158,9 +222,12 @@ async function search(person, q, limit = 180_000) {
 // Every library answered; a person whose computer did not answer before
 // the list is no library (mnp-2: Movie Night names them).
 const libraries = (r) => r.said.filter((l) => l.state !== 'unanswered');
-const everyAnswered = (r) => libraries(r).length > 0 && libraries(r).every((l) => l.state === 'answered');
+const everyAnswered = (r) =>
+  libraries(r).length > 0 && libraries(r).every((l) => l.state === 'answered');
 // With a computer asleep: every library answered but the one said away.
-const awayOrAnswered = (r) => libraries(r).length > 0 && libraries(r).every((l) => l.state === 'answered' || l.state === 'away');
+const awayOrAnswered = (r) =>
+  libraries(r).length > 0 &&
+  libraries(r).every((l) => l.state === 'answered' || l.state === 'away');
 
 // Search `q` until `done` says so of it (else every library answered), at
 // most `tries` times, `gap` ms apart: each search is kept.
@@ -176,12 +243,23 @@ async function settle(person, q, tries = 10, gap = 15_000, done = everyAnswered)
 // Keep Sam's Brazil from `person`: their account, made by the
 // middleware on their first request, sees Sam's Movies alone.
 async function keepFrom(person) {
-  const h = { 'content-type': 'application/json', authorization: `MediaBrowser Client="mn check", Device="sam computer", DeviceId="mn-sam-setup", Version="1", Token="${SAM_ADMIN}"` };
+  const h = {
+    'content-type': 'application/json',
+    authorization: `MediaBrowser Client="mn check", Device="sam computer", DeviceId="mn-sam-setup", Version="1", Token="${SAM_ADMIN}"`,
+  };
   const users = await (await fetch(`${JF_SAM}/Users`, { headers: h })).json();
   const u = users.find((x) => x.Name.startsWith(`${person.name}-`));
-  if (!u) return { kept: false, why: `no account of ${person.name}'s in Sam's Jellyfin: ${users.map((x) => x.Name)}` };
+  if (!u)
+    return {
+      kept: false,
+      why: `no account of ${person.name}'s in Sam's Jellyfin: ${users.map((x) => x.Name)}`,
+    };
   const policy = { ...u.Policy, EnableAllFolders: false, EnabledFolders: [MOVIES] };
-  const res = await fetch(`${JF_SAM}/Users/${u.Id}/Policy`, { method: 'POST', headers: h, body: JSON.stringify(policy) });
+  const res = await fetch(`${JF_SAM}/Users/${u.Id}/Policy`, {
+    method: 'POST',
+    headers: h,
+    body: JSON.stringify(policy),
+  });
   return { kept: res.ok, account: u.Name, status: res.status, at: now() };
 }
 
@@ -200,21 +278,48 @@ async function choose(person, card, who) {
     page.waitForNavigation({ timeout: 60_000 }).catch(() => null),
     page.click(`a.copy[data-library="${copy.library}"]`),
   ]);
-  const r = { chose: copy.text, library: copy.library, status: nav?.status() ?? null, from_worker: nav?.fromServiceWorker?.() ?? null, at: page.url().replace(/^https?:\/\/[a-z0-9]{20,}\./, '<label>.') };
+  const r = {
+    chose: copy.text,
+    library: copy.library,
+    status: nav?.status() ?? null,
+    from_worker: nav?.fromServiceWorker?.() ?? null,
+    at: page.url().replace(/^https?:\/\/[a-z0-9]{20,}\./, '<label>.'),
+  };
   const landed = await Promise.race([
-    page.waitForSelector('.mainDetailButtons .btnPlay', { state: 'visible', timeout: 60_000 }).then(() => 'item'),
-    page.waitForSelector('#txtManualName, .manualLoginForm, .btnManual', { state: 'visible', timeout: 60_000 }).then(() => 'asked to sign in'),
-    r.status && r.status >= 400 ? wait(3000).then(() => `answered ${r.status}`) : new Promise(() => {}),
+    page
+      .waitForSelector('.mainDetailButtons .btnPlay', { state: 'visible', timeout: 60_000 })
+      .then(() => 'item'),
+    page
+      .waitForSelector('#txtManualName, .manualLoginForm, .btnManual', {
+        state: 'visible',
+        timeout: 60_000,
+      })
+      .then(() => 'asked to sign in'),
+    r.status && r.status >= 400
+      ? wait(3000).then(() => `answered ${r.status}`)
+      : new Promise(() => {}),
   ]).catch(() => null);
   r.landed = landed ?? 'nothing within 60 s';
   r.landed_ms = landed ? Date.now() - t0 : null;
   r.shown = await shown(page);
   if (landed === 'item') {
-    Object.assign(r, await page.evaluate(() => {
-      const s = JSON.parse(localStorage.getItem('jellyfin_credentials') ?? '{}').Servers?.[0] ?? {};
-      return { title: document.querySelector('.itemName, h1, h3.itemName')?.textContent ?? null,
-        token: s.AccessToken == null ? null : s.AccessToken === 'svrngs-stand-in' ? 'the stand-in' : 'not the stand-in', user: s.UserId ?? null };
-    }));
+    Object.assign(
+      r,
+      await page.evaluate(() => {
+        const s =
+          JSON.parse(localStorage.getItem('jellyfin_credentials') ?? '{}').Servers?.[0] ?? {};
+        return {
+          title: document.querySelector('.itemName, h1, h3.itemName')?.textContent ?? null,
+          token:
+            s.AccessToken == null
+              ? null
+              : s.AccessToken === 'svrngs-stand-in'
+                ? 'the stand-in'
+                : 'not the stand-in',
+          user: s.UserId ?? null,
+        };
+      }),
+    );
     r.signed_in = r.token === 'the stand-in';
   }
   person.steps.push({ choose: r });
@@ -231,20 +336,30 @@ async function play(person) {
     const t0 = Date.now();
     let heldSince = null;
     while (Date.now() - t0 < 30_000) {
-      const v = await page.evaluate(() => { const v = document.querySelector('video'); return v && { ct: v.currentTime, paused: v.paused, rs: v.readyState }; });
+      const v = await page.evaluate(() => {
+        const v = document.querySelector('video');
+        return v && { ct: v.currentTime, paused: v.paused, rs: v.readyState };
+      });
       if (v && v.ct > 0.5 && !v.paused) return;
       const held = v && v.paused && v.rs >= 3 && v.ct < 0.5;
-      heldSince = held ? heldSince ?? Date.now() : null;
+      heldSince = held ? (heldSince ?? Date.now()) : null;
       if (held && !r.second_tap && Date.now() - heldSince >= 3000) {
         r.second_tap = Date.now() - t0;
         await page.tap('video').catch(() => page.mouse.click(200, 300));
-        await page.locator('.videoOsdBottom .btnPause').click({ timeout: 5000 }).catch(() => {});
+        await page
+          .locator('.videoOsdBottom .btnPause')
+          .click({ timeout: 5000 })
+          .catch(() => {});
       }
       await page.waitForTimeout(250);
     }
     throw new Error('not playing 30 s after Play');
   });
-  if (r.play_ms !== null) r.video = await page.evaluate(() => { const v = document.querySelector('video'); return { ct: +v.currentTime.toFixed(1), w: v.videoWidth, h: v.videoHeight }; });
+  if (r.play_ms !== null)
+    r.video = await page.evaluate(() => {
+      const v = document.querySelector('video');
+      return { ct: +v.currentTime.toFixed(1), w: v.videoWidth, h: v.videoHeight };
+    });
   person.steps.push({ play: r });
   return r;
 }
@@ -256,7 +371,9 @@ async function back(person, before, origin) {
   const r = { presses: 0, back: false };
   for (let i = 0; i < 6 && !r.back; i++) {
     r.presses++;
-    await page.goBack({ waitUntil: 'commit', timeout: 30_000 }).catch((e) => (r.error = String(e).split('\n')[0]));
+    await page
+      .goBack({ waitUntil: 'commit', timeout: 30_000 })
+      .catch((e) => (r.error = String(e).split('\n')[0]));
     await page.waitForTimeout(1500);
     if (page.url().startsWith(origin)) {
       await page.waitForSelector('#q', { timeout: 30_000 }).catch(() => {});
@@ -299,8 +416,13 @@ async function phone(p) {
   person.never_opened_back = await back(person, person.warm, mn);
   // That Jellyfin from the group's list, then Movie Night again.
   if ((await group(person)) === null) return;
-  person.opened_jellyfin_ms = await openFromList(person, `${p.choose}’s jellyfin`, '.card, #txtManualName, .btnManual');
-  person.opened_jellyfin_asked = await person.page.locator('#txtManualName:visible, .btnManual:visible').count() > 0;
+  person.opened_jellyfin_ms = await openFromList(
+    person,
+    `${p.choose}’s jellyfin`,
+    '.card, #txtManualName, .btnManual',
+  );
+  person.opened_jellyfin_asked =
+    (await person.page.locator('#txtManualName:visible, .btnManual:visible').count()) > 0;
   if ((await group(person)) === null) return;
   person.reopen_ms = await openFromList(person, 'movie-night', '#q');
   if (person.reopen_ms === null) return;
@@ -338,10 +460,19 @@ async function computer(p) {
   const person = await browser(p);
   out.people[person.user] = person;
   const page = person.page;
-  person.open_ms = await timed(person, 'Movie Night', async () => { await page.goto(args.at, { waitUntil: 'load' }); await page.waitForSelector('#q'); });
+  person.open_ms = await timed(person, 'Movie Night', async () => {
+    await page.goto(args.at, { waitUntil: 'load' });
+    await page.waitForSelector('#q');
+  });
   if (person.open_ms === null) return;
   person.nothing_handed = await search(person, 'bladruner');
-  person.store = await page.evaluate(() => indexedDB.databases?.().then((d) => d.map((x) => `${x.name} v${x.version}`)) ?? 'not listed').catch((e) => String(e));
+  person.store = await page
+    .evaluate(
+      () =>
+        indexedDB.databases?.().then((d) => d.map((x) => `${x.name} v${x.version}`)) ??
+        'not listed',
+    )
+    .catch((e) => String(e));
   person.opened = await choose(person, film(person.nothing_handed, 'Blade Runner'), p.choose);
   if (person.opened.landed === 'item') person.played = await play(person);
   person.opened_back = await back(person, person.nothing_handed, args.at);

@@ -4,7 +4,13 @@
 // a page with no script), by its referrer, which the browser sets from the
 // page that began it and another site can drop but never make this origin's.
 export async function maySign(fetched, clients, origin) {
-  const ours = (url) => { try { return new URL(url).origin === origin; } catch { return false; } };
+  const ours = (url) => {
+    try {
+      return new URL(url).origin === origin;
+    } catch {
+      return false;
+    }
+  };
   if (fetched.request.mode === 'navigate') return ours(fetched.request.referrer);
   const client = fetched.clientId && (await clients.get(fetched.clientId));
   const from = fetched.request.headers.get('origin');
@@ -33,10 +39,11 @@ export const Framed = Object.freeze({
 });
 // The one source lend.js adds to a lent page's policy (trust_floor.txt
 // `carried-signer`): the signer at the address `signerFor` derives.
-export const SIGNER_FRAME = "frame-src {signer}";
+export const SIGNER_FRAME = 'frame-src {signer}';
 // A source list with the signer in it: `'none'` alone gives way to it,
 // as any other source would; a list that holds it already is kept.
-const withSigner = (list, signer) => (list.length === 1 && list[0].toLowerCase() === "'none'" ? [] : list).concat(signer);
+const withSigner = (list, signer) =>
+  (list.length === 1 && list[0].toLowerCase() === "'none'" ? [] : list).concat(signer);
 // A lent app's own `Content-Security-Policy`, `header`, as the worker
 // serves it: never replaced, never narrowed. The signer at `signer` is let
 // in as a frame only where a policy already restricts frames — added to
@@ -48,48 +55,83 @@ const withSigner = (list, signer) => (list.length === 1 && list[0].toLowerCase()
 export function framing(header, signer) {
   if (header == null) return { policy: null, framed: [] };
   const framed = [];
-  const policy = header.split(',').map((one) => {
-    const directives = one.split(';');
-    const words = directives.map((d) => d.trim().split(/\s+/));
-    const at = (name) => words.findIndex(([n]) => n.toLowerCase() === name);
-    const by = [Framed.Own, Framed.Child, Framed.Default].find((d) => at(d) >= 0) ?? Framed.Open;
-    framed.push(by);
-    if (by === Framed.Open) return one;
-    const [name, ...was] = words[at(by)];
-    if (by === Framed.Own) {
-      if (!was.includes(signer)) directives[at(by)] = `${/^\s*/.exec(directives[at(by)])[0]}${name} ${withSigner(was, signer).join(' ')}`;
-      return directives.join(';');
-    }
-    return `${one.replace(/[\s;]*$/, '')}; ${SIGNER_FRAME.replace('{signer}', withSigner(was, signer).join(' '))}`;
-  }).join(',');
+  const policy = header
+    .split(',')
+    .map((one) => {
+      const directives = one.split(';');
+      const words = directives.map((d) => d.trim().split(/\s+/));
+      const at = (name) => words.findIndex(([n]) => n.toLowerCase() === name);
+      const by = [Framed.Own, Framed.Child, Framed.Default].find((d) => at(d) >= 0) ?? Framed.Open;
+      framed.push(by);
+      if (by === Framed.Open) return one;
+      const [name, ...was] = words[at(by)];
+      if (by === Framed.Own) {
+        if (!was.includes(signer))
+          directives[at(by)] =
+            `${/^\s*/.exec(directives[at(by)])[0]}${name} ${withSigner(was, signer).join(' ')}`;
+        return directives.join(';');
+      }
+      return `${one.replace(/[\s;]*$/, '')}; ${SIGNER_FRAME.replace('{signer}', withSigner(was, signer).join(' '))}`;
+    })
+    .join(',');
   return { policy, framed };
 }
 
 // One projection authenticates routing/authority; mutable signing state and the
 // private seed are excluded. The seed must separately prove the named holder.
-const OPEN_FIELDS = ['label', 'lends', 'pass', 'writes', 'group', 'holder', 'raw', 'relay', 'page', 'unanswered'];
-export const openMessage = (h) => JSON.stringify(Object.fromEntries(OPEN_FIELDS.map((k) => [k, h[k]])));
+const OPEN_FIELDS = [
+  'label',
+  'lends',
+  'pass',
+  'writes',
+  'group',
+  'holder',
+  'raw',
+  'relay',
+  'page',
+  'unanswered',
+];
+export const openMessage = (h) =>
+  JSON.stringify(Object.fromEntries(OPEN_FIELDS.map((k) => [k, h[k]])));
 const hex = (bytes) => [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
 const bytes = (text) => Uint8Array.from(text.match(/../g) ?? [], (s) => parseInt(s, 16));
-const sealing = (h, iv) => ({ name: 'AES-GCM', iv, additionalData: new TextEncoder().encode(openMessage(h)) });
+const sealing = (h, iv) => ({
+  name: 'AES-GCM',
+  iv,
+  additionalData: new TextEncoder().encode(openMessage(h)),
+});
 // The open's seal (svrn-docs rings/current/HOLDER_APPROVAL.md §3.D): the
 // approver's 32-byte seed under a fresh key W, bound to the open's message,
 // so only the open the group's page issued opens it. The seal goes in the
 // app's address; W only in the group origin's `__Host-` cookie, which the
 // app can neither read nor plant.
 export async function sealOpen(h, seed) {
-  const w = crypto.getRandomValues(new Uint8Array(32)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const w = crypto.getRandomValues(new Uint8Array(32)),
+    iv = crypto.getRandomValues(new Uint8Array(12));
   const key = await crypto.subtle.importKey('raw', w, 'AES-GCM', false, ['encrypt']);
-  return { proof: hex(iv) + hex(new Uint8Array(await crypto.subtle.encrypt(sealing(h, iv), key, seed))), w: hex(w) };
+  return {
+    proof: hex(iv) + hex(new Uint8Array(await crypto.subtle.encrypt(sealing(h, iv), key, seed))),
+    w: hex(w),
+  };
 }
 // The seed the seal holds, opened with W; none where W or the open differ.
 export async function openSeal(h, w) {
-  if (typeof h.proof !== 'string' || !/^[0-9a-f]{24,}$/.test(h.proof) || h.proof.length % 2 || !/^[0-9a-f]{64}$/.test(w ?? '')) return null;
+  if (
+    typeof h.proof !== 'string' ||
+    !/^[0-9a-f]{24,}$/.test(h.proof) ||
+    h.proof.length % 2 ||
+    !/^[0-9a-f]{64}$/.test(w ?? '')
+  )
+    return null;
   try {
     const key = await crypto.subtle.importKey('raw', bytes(w), 'AES-GCM', false, ['decrypt']);
     const all = bytes(h.proof);
-    return new Uint8Array(await crypto.subtle.decrypt(sealing(h, all.slice(0, 12)), key, all.slice(12)));
-  } catch { return null; }
+    return new Uint8Array(
+      await crypto.subtle.decrypt(sealing(h, all.slice(0, 12)), key, all.slice(12)),
+    );
+  } catch {
+    return null;
+  }
 }
 // The cookie that hands `label`'s open to the signer: `__Host-` so only
 // its own origin, over TLS, at path `/`, can have set it.
@@ -97,12 +139,26 @@ export const handoffCookie = (label) => `__Host-svrngs-${label}`;
 // The one value of the cookie `name` in `cookies` (document.cookie), read
 // by its exact name; none where it is absent or set twice.
 export function hostCookie(cookies, name) {
-  const found = cookies.split(';').map((c) => c.trim()).filter((c) => c.startsWith(`${name}=`));
+  const found = cookies
+    .split(';')
+    .map((c) => c.trim())
+    .filter((c) => c.startsWith(`${name}=`));
   return found.length === 1 ? found[0].slice(name.length + 1) : null;
 }
 export async function holderMatches(key, holder) {
   if (typeof holder !== 'string' || !/^[0-9a-f]{64}$/.test(holder)) return false;
-  const publicKey = await crypto.subtle.importKey('raw', Uint8Array.from(holder.match(/../g), (s) => parseInt(s, 16)), 'Ed25519', false, ['verify']);
+  const publicKey = await crypto.subtle.importKey(
+    'raw',
+    Uint8Array.from(holder.match(/../g), (s) => parseInt(s, 16)),
+    'Ed25519',
+    false,
+    ['verify'],
+  );
   const challenge = crypto.getRandomValues(new Uint8Array(32));
-  return crypto.subtle.verify('Ed25519', publicKey, await crypto.subtle.sign('Ed25519', key, challenge), challenge);
+  return crypto.subtle.verify(
+    'Ed25519',
+    publicKey,
+    await crypto.subtle.sign('Ed25519', key, challenge),
+    challenge,
+  );
 }

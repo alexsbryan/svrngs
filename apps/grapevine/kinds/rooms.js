@@ -12,12 +12,20 @@ export default {
       for: { choice: ['one person', 'two people', 'a family'] },
     },
   },
-  show: (f) => `a room in ${f.where} for ${f.for}, ${f.nights} night${f.nights === 1 ? '' : 's'} from ${f.from}`,
+  show: (f) =>
+    `a room in ${f.where} for ${f.for}, ${f.nights} night${f.nights === 1 ? '' : 's'} from ${f.from}`,
   reply: { fields: { where: 'text', note: 'text' } },
-  listing: { fields: { where: 'text', sleeps: { choice: ['one person', 'two people', 'a family'] } } },
+  listing: {
+    fields: { where: 'text', sleeps: { choice: ['one person', 'two people', 'a family'] } },
+  },
   notice(ask, mine) {
     const town = (s) => String(s).trim().toLowerCase();
-    return mine.records.some((r) => r.kind === 'room' && typeof r.listing?.where === 'string' && town(r.listing.where) === town(ask.fields.where));
+    return mine.records.some(
+      (r) =>
+        r.kind === 'room' &&
+        typeof r.listing?.where === 'string' &&
+        town(r.listing.where) === town(ask.fields.where),
+    );
   },
   hops: 2,
   name: 'withheld',

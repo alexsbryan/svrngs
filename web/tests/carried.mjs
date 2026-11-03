@@ -29,16 +29,22 @@ try {
   const page = await context.newPage();
   page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
   await page.goto(args.url);
-  if (args.title) await page.waitForFunction((t) => document.title === t, args.title, { timeout: 30_000 });
+  if (args.title)
+    await page.waitForFunction((t) => document.title === t, args.title, { timeout: 30_000 });
   const words = () => page.locator('body').innerText();
   // Drawn once its first words are not the ones it says while it reads.
-  if (args.do) await page.waitForFunction(() => !document.body.innerText.includes('…'), null, { timeout: 30_000 });
+  if (args.do)
+    await page.waitForFunction(() => !document.body.innerText.includes('…'), null, {
+      timeout: 30_000,
+    });
   const first = await words();
   if (args.ready) writeFileSync(args.ready, '');
   const after = [];
   for (const [selector, value] of args.do ?? []) {
     if (selector === 'wait') {
-      await page.waitForFunction((w) => document.body.innerText.includes(w), value, { timeout: 60_000 });
+      await page.waitForFunction((w) => document.body.innerText.includes(w), value, {
+        timeout: 60_000,
+      });
       after.push(await words());
       continue;
     }
@@ -56,7 +62,9 @@ try {
     await page.waitForFunction((b) => document.body.innerText !== b, before, { timeout: 30_000 });
     after.push(await words());
   }
-  console.log(JSON.stringify({ title: await page.title(), first, said: await words(), after, logs }));
+  console.log(
+    JSON.stringify({ title: await page.title(), first, said: await words(), after, logs }),
+  );
 } catch (e) {
   console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);
   process.exitCode = 1;

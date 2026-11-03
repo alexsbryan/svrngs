@@ -27,27 +27,80 @@ const at = args.at ?? 'body';
 async function watch(page, reloads) {
   await page.locator(args.shown).first().waitFor({ timeout: 60_000 });
   const shown = await page.locator(args.shown).allTextContents();
-  if (args.never) await page.evaluate(([at, w]) => ((window.__never = 0), new MutationObserver(() => document.querySelector(at)?.textContent.includes(w) && window.__never++).observe(document.body, { subtree: true, childList: true, characterData: true })), [at, args.never]);
+  if (args.never)
+    await page.evaluate(
+      ([at, w]) => (
+        (window.__never = 0),
+        new MutationObserver(
+          () => document.querySelector(at)?.textContent.includes(w) && window.__never++,
+        ).observe(document.body, { subtree: true, childList: true, characterData: true })
+      ),
+      [at, args.never],
+    );
   // With `forget`, the page's session forgotten before any press, as one lapses.
   if (args.forget) await lapse(page);
   // A press `[selector, gone]` is waited on, before the next, until `gone` is gone: whether it went, and `at`'s text then.
   const waited = [];
   for (const [press, gone] of (args.press ?? []).map((p) => [p].flat())) {
     await page.locator(press).first().click({ timeout: 30_000 });
-    if (gone) waited.push({ went: await page.waitForFunction((g) => !document.querySelector(g), gone, { timeout: args.within, polling: 100 }).then(() => true, () => false), text: await page.locator(at).first().innerText() });
+    if (gone)
+      waited.push({
+        went: await page
+          .waitForFunction((g) => !document.querySelector(g), gone, {
+            timeout: args.within,
+            polling: 100,
+          })
+          .then(
+            () => true,
+            () => false,
+          ),
+        text: await page.locator(at).first().innerText(),
+      });
   }
   // With `hold`, a path: `<hold>.shown` written, then, once the test has
   // written `hold`, the page hidden and shown again (home.mjs `visible`).
   if (args.hold) {
     await writeFile(`${args.hold}.shown`, '');
-    for (let t = 0; !existsSync(args.hold); t += 100) await (t > 60_000 ? Promise.reject(new Error(`${args.hold} never written`)) : new Promise((r) => setTimeout(r, 100)));
-    for (const v of ['hidden', 'visible']) await page.evaluate((v) => (Object.defineProperty(document, 'visibilityState', { value: v, configurable: true }), document.dispatchEvent(new Event('visibilitychange'))), v);
+    for (let t = 0; !existsSync(args.hold); t += 100)
+      await (t > 60_000
+        ? Promise.reject(new Error(`${args.hold} never written`))
+        : new Promise((r) => setTimeout(r, 100)));
+    for (const v of ['hidden', 'visible'])
+      await page.evaluate(
+        (v) => (
+          Object.defineProperty(document, 'visibilityState', { value: v, configurable: true }),
+          document.dispatchEvent(new Event('visibilitychange'))
+        ),
+        v,
+      );
   }
   // With `traced`, [start, n]: until the trace holds n lines that start so, too.
-  const there = ([gone, said, at, [start, n]]) => (gone ? !document.querySelector(gone) : document.querySelector(at)?.innerText.includes(said)) && (window.__lines ?? []).filter((l) => !start || l.startsWith(start)).length >= (n ?? 0);
-  const went = await page.waitForFunction(there, [args.gone, args.said, at, args.traced ?? []], { timeout: args.within, polling: 100 }).then(() => true, () => false);
-  const text = await page.locator(at).first().innerText().catch(() => null);
-  return { shown, waited, went, text, never: await page.evaluate(() => window.__never ?? null), reloads: reloads(), lines: await page.evaluate(() => window.__lines ?? []) };
+  const there = ([gone, said, at, [start, n]]) =>
+    (gone ? !document.querySelector(gone) : document.querySelector(at)?.innerText.includes(said)) &&
+    (window.__lines ?? []).filter((l) => !start || l.startsWith(start)).length >= (n ?? 0);
+  const went = await page
+    .waitForFunction(there, [args.gone, args.said, at, args.traced ?? []], {
+      timeout: args.within,
+      polling: 100,
+    })
+    .then(
+      () => true,
+      () => false,
+    );
+  const text = await page
+    .locator(at)
+    .first()
+    .innerText()
+    .catch(() => null);
+  return {
+    shown,
+    waited,
+    went,
+    text,
+    never: await page.evaluate(() => window.__never ?? null),
+    reloads: reloads(),
+    lines: await page.evaluate(() => window.__lines ?? []),
+  };
 }
 // The page's loads from now on.
 const counted = (page, n = { loads: 0 }) => (page.on('load', () => n.loads++), () => n.loads);
@@ -71,7 +124,9 @@ if (args.home || args.visit) {
     const page = await context.newPage();
     page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
     const loads = counted(page);
-    const asking = args.visit ? await guest(page, pageAt(server)) : void (await page.goto(args.home));
+    const asking = args.visit
+      ? await guest(page, pageAt(server))
+      : void (await page.goto(args.home));
     console.log(JSON.stringify({ asking, ...(await watch(page, () => loads() - 1)), logs }));
   } catch (e) {
     console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);

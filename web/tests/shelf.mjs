@@ -18,6 +18,11 @@ await driving(args, async ({ page }) => {
   const ticked = await page.locator('#shelf input:checked').count();
   for (const box of await page.locator('#shelf input').all()) await box.check({ timeout: 30_000 });
   await page.locator('#shelf button').click({ timeout: 30_000 });
-  await page.waitForFunction(() => /You brought|already|Nothing was brought/.test(document.getElementById('shelf').innerText), null, { timeout: 60_000 });
+  await page.waitForFunction(
+    () =>
+      /You brought|already|Nothing was brought/.test(document.getElementById('shelf').innerText),
+    null,
+    { timeout: 60_000 },
+  );
   return { before, ticked, after: await page.locator('#shelf').innerText() };
 });

@@ -14,13 +14,23 @@ register('./pages/layout.mjs', import.meta.url);
 const { Group } = await import('../../crates/svrngs-node/src/home/page/group.js?v=__VERSION__');
 
 // The words a vnode tree draws, in order.
-const words = (v) => (v == null || typeof v === 'boolean' ? '' : typeof v !== 'object' ? String(v) : Array.isArray(v) ? v.map(words).join('') : words(v.props?.children));
+const words = (v) =>
+  v == null || typeof v === 'boolean'
+    ? ''
+    : typeof v !== 'object'
+      ? String(v)
+      : Array.isArray(v)
+        ? v.map(words).join('')
+        : words(v.props?.children);
 
 test('a group met at its fallback says why in a person’s words, and one met at its own says nothing', () => {
-  const section = (fallback) => words(Group({ g: { id: 'ab12', name: 'House', removed: null, fallback } }));
+  const section = (fallback) =>
+    words(Group({ g: { id: 'ab12', name: 'House', removed: null, fallback } }));
   const said = {
-    unanswered: 'This computer can’t reach the place House usually meets, so it’s reaching House a backup way for now.',
-    unowned: 'This computer is also in a group with no meeting place of its own, so it reaches every group, House too, the backup way.',
+    unanswered:
+      'This computer can’t reach the place House usually meets, so it’s reaching House a backup way for now.',
+    unowned:
+      'This computer is also in a group with no meeting place of its own, so it reaches every group, House too, the backup way.',
   };
   for (const [why, line] of Object.entries(said)) {
     assert.ok(section(why).includes(line), section(why));

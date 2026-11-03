@@ -45,10 +45,16 @@ export function keyPair() {
 /** `body` sealed to `to` by `secret`'s holder. A body past BODY_MOST is refused, never cut. */
 export function seal(body, to, secret) {
   const text = new TextEncoder().encode(JSON.stringify(body));
-  if (text.length > BODY_MOST) throw new Error(`a message is at most ${BODY_MOST} bytes sealed, and this one is ${text.length}`);
+  if (text.length > BODY_MOST)
+    throw new Error(
+      `a message is at most ${BODY_MOST} bytes sealed, and this one is ${text.length}`,
+    );
   const them = bytesOf(to, nacl.box.publicKeyLength);
   const mine = bytesOf(secret, nacl.box.secretKeyLength);
-  if (!them || !mine) throw new Error('a message is sealed to a public key with a secret key, each base64 of 32 bytes');
+  if (!them || !mine)
+    throw new Error(
+      'a message is sealed to a public key with a secret key, each base64 of 32 bytes',
+    );
   const nonce = nacl.randomBytes(nacl.box.nonceLength);
   return { nonce: b64(nonce), box: b64(nacl.box(text, nonce, them, mine)) };
 }
@@ -58,7 +64,10 @@ export function open(sealed, other, secret) {
   const nonce = bytesOf(sealed?.nonce, nacl.box.nonceLength);
   const them = bytesOf(other, nacl.box.publicKeyLength);
   const mine = bytesOf(secret, nacl.box.secretKeyLength);
-  const box = typeof sealed?.box === 'string' && sealed.box.length <= ACT_MOST ? Buffer.from(sealed.box, 'base64') : null;
+  const box =
+    typeof sealed?.box === 'string' && sealed.box.length <= ACT_MOST
+      ? Buffer.from(sealed.box, 'base64')
+      : null;
   if (!nonce || !them || !mine || !box) return null;
   const text = nacl.box.open(new Uint8Array(box), nonce, them, mine);
   if (!text) return null;

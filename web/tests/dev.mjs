@@ -26,9 +26,14 @@ const server = await serve(site);
 const page = pageAt(server);
 const port = server.address().port;
 // Chrome takes a certificate it doesn't trust when told its key's hash.
-const spki = createHash('sha256').update(new X509Certificate(certified().cert).publicKey.export({ type: 'spki', format: 'der' })).digest('base64');
+const spki = createHash('sha256')
+  .update(new X509Certificate(certified().cert).publicKey.export({ type: 'spki', format: 'der' }))
+  .digest('base64');
 const flags = `--user-data-dir="$(mktemp -d)" --no-first-run --proxy-server=${await proxied()} --ignore-certificate-errors-spki-list=${spki} ${page}`;
-const chrome = process.platform === 'darwin' ? `open -na "Google Chrome" --args ${flags}` : `google-chrome ${flags}`;
+const chrome =
+  process.platform === 'darwin'
+    ? `open -na "Google Chrome" --args ${flags}`
+    : `google-chrome ${flags}`;
 console.log(`Your group's page is at ${page}, for this computer only.
 
 Open it in a Chrome of its own: paste this in another Terminal window.

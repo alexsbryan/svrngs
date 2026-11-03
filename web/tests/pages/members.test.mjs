@@ -9,7 +9,8 @@ import { test } from 'node:test';
 
 register('./layout.mjs', import.meta.url);
 const { Door } = await import('../../../crates/svrngs-node/src/home/ui/door.js?v=__VERSION__');
-const { Visiting } = await import('../../../crates/svrngs-node/src/home/ui/visitors.js?v=__VERSION__');
+const { Visiting } =
+  await import('../../../crates/svrngs-node/src/home/ui/visitors.js?v=__VERSION__');
 import { v1 } from './before.mjs';
 
 // A document of plain objects, enough for v1's `el` and `door`'s judge,
@@ -33,7 +34,14 @@ globalThis.document = { createElement: (tag) => new Node(tag) };
 // v1's `className` and v2's `class` are one attribute; an empty one is none.
 const attrs = (o) =>
   Object.entries(o)
-    .filter(([k, v]) => !['children', 'key', 'ref'].includes(k) && !/^on/i.test(k) && v != null && v !== false && v !== '')
+    .filter(
+      ([k, v]) =>
+        !['children', 'key', 'ref'].includes(k) &&
+        !/^on/i.test(k) &&
+        v != null &&
+        v !== false &&
+        v !== '',
+    )
     .map(([k, v]) => [k === 'className' ? 'class' : k.toLowerCase(), v])
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([k, v]) => (v === true ? ` ${k}` : ` ${k}="${v}"`))
@@ -65,25 +73,61 @@ const judged = (lends, lent) => {
 };
 
 test('the door as question.js `door` draws it: unjudged, judged, not known now', () => {
-  for (const lends of [undefined, { unanswered: [{ person: 'bo', person_key: 'b' }] }, { unanswered: ['cy'] }, null]) {
+  for (const lends of [
+    undefined,
+    { unanswered: [{ person: 'bo', person_key: 'b' }] },
+    { unanswered: ['cy'] },
+    null,
+  ]) {
     assert.equal(drawn(Door, { rows: ROWS, lends }), judged(lends), JSON.stringify(lends));
   }
-  const v2 = drawn(Door, { rows: ROWS, lends: { unanswered: [{ person: 'bo', person_key: 'b' }] } });
-  assert.ok(v2.startsWith('<ul class="door"><li class="on"><strong>ada</strong> <small>on now</small></li><li class="off"><strong>bo</strong> <small>did not answer</small></li>'), v2);
-  assert.ok(v2.includes('<li class="phone"><strong>pia</strong> <small>in from a phone</small></li><li class="on"><strong>dee</strong> <small>on now, a phone too</small></li>'), v2);
-  assert.ok(drawn(Door, { rows: ROWS }).includes('<li><strong>bo</strong> <small>asking…</small></li>'));
+  const v2 = drawn(Door, {
+    rows: ROWS,
+    lends: { unanswered: [{ person: 'bo', person_key: 'b' }] },
+  });
+  assert.ok(
+    v2.startsWith(
+      '<ul class="door"><li class="on"><strong>ada</strong> <small>on now</small></li><li class="off"><strong>bo</strong> <small>did not answer</small></li>',
+    ),
+    v2,
+  );
+  assert.ok(
+    v2.includes(
+      '<li class="phone"><strong>pia</strong> <small>in from a phone</small></li><li class="on"><strong>dee</strong> <small>on now, a phone too</small></li>',
+    ),
+    v2,
+  );
+  assert.ok(
+    drawn(Door, { rows: ROWS }).includes('<li><strong>bo</strong> <small>asking…</small></li>'),
+  );
 });
 
 test('given what is lent, each person’s own lends in their window, the group’s in nobody’s', () => {
-  const lent = [{ key: 'b', name: 'radio', origin: 'http://radio.example/' }, { key: 'd2', name: 'pad', origin: 'http://pad.example/' }, { key: 'a', group: 'g1', kind: 'Money', name: 'Money', origin: 'http://m.example/' }];
+  const lent = [
+    { key: 'b', name: 'radio', origin: 'http://radio.example/' },
+    { key: 'd2', name: 'pad', origin: 'http://pad.example/' },
+    { key: 'a', group: 'g1', kind: 'Money', name: 'Money', origin: 'http://m.example/' },
+  ];
   const lends = { unanswered: [] };
   assert.equal(drawn(Door, { rows: ROWS, lent, lends }), judged(lends, lent));
-  assert.ok(drawn(Door, { rows: ROWS, lent, lends }).includes('<strong>bo</strong> <a href="http://radio.example/" target="_blank">radio</a> <small>on now</small>'));
+  assert.ok(
+    drawn(Door, { rows: ROWS, lent, lends }).includes(
+      '<strong>bo</strong> <a href="http://radio.example/" target="_blank">radio</a> <small>on now</small>',
+    ),
+  );
 });
 
 test('who is visiting as question.js `visiting` draws it, by host', () => {
-  const vs = [{ guest: 'sam', host: 'cy', host_key: 'c2', until: 1_791_100_000 }, { guest: 'kim', host: 'ada', host_key: 'a', until: 1_791_200_000 }, { guest: 'lu', host: 'bo', until: 1_791_300_000 }];
+  const vs = [
+    { guest: 'sam', host: 'cy', host_key: 'c2', until: 1_791_100_000 },
+    { guest: 'kim', host: 'ada', host_key: 'a', until: 1_791_200_000 },
+    { guest: 'lu', host: 'bo', until: 1_791_300_000 },
+  ];
   assert.equal(drawn(Visiting, { vs, rows: ROWS }), out(v1.visiting(vs, ROWS)));
-  assert.ok(drawn(Visiting, { vs, rows: ROWS }).startsWith('<ul class="visiting"><li>kim, ada’s guest, until '));
+  assert.ok(
+    drawn(Visiting, { vs, rows: ROWS }).startsWith(
+      '<ul class="visiting"><li>kim, ada’s guest, until ',
+    ),
+  );
   assert.equal(drawn(Visiting, { vs: [] }), '<ul class="visiting"></ul>');
 });

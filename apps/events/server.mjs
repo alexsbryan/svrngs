@@ -44,20 +44,40 @@ import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import http from 'node:http';
 
-import { CAME, COMING, EVENT, MAX_WORDS, actsOf, answers, called, guestName, hosted, init, ownActs, reduce, validate } from './events.js';
+import {
+  CAME,
+  COMING,
+  EVENT,
+  MAX_WORDS,
+  actsOf,
+  answers,
+  called,
+  guestName,
+  hosted,
+  init,
+  ownActs,
+  reduce,
+  validate,
+} from './events.js';
 import { file, record } from './store.mjs';
 
 /** The token svrngs's record asks of this app, from the file the config names
  * (`token`, beside svrngs's `api` file; give-token). */
 function tokenOf(config) {
-  if (typeof config.token !== 'string') throw new Error("the config names no `token`, the file beside svrngs's api file that its record asks for");
+  if (typeof config.token !== 'string')
+    throw new Error(
+      "the config names no `token`, the file beside svrngs's api file that its record asks for",
+    );
   return readFileSync(config.token, 'utf8').trim();
 }
 const config = JSON.parse(readFileSync(process.argv[2], 'utf8'));
 const store = config.file ? file(config.file) : record(config.record, tokenOf(config));
 const WHO = (config.who ?? 'x-svrngs-key').toLowerCase();
 // Every decision branch, at debug (AGENTS.md 1), when EVENTS_DEBUG is set.
-const trace = process.env.EVENTS_DEBUG ? (what, fields) => console.error(JSON.stringify({ at: new Date().toISOString(), what, ...fields })) : () => {};
+const trace = process.env.EVENTS_DEBUG
+  ? (what, fields) =>
+      console.error(JSON.stringify({ at: new Date().toISOString(), what, ...fields }))
+  : () => {};
 
 /** A refusal said to the person, in their words. */
 class Said extends Error {
@@ -144,12 +164,25 @@ async function write(group, act, name) {
   if (gaps.length) throw new Said(400, gaps.map((g) => g.message).join('; '));
   if (store.kind === 'record') {
     naming.getStore().push({ group, ...(act.op === 'correct' && { corrects: act.corrects }), op });
-    trace('named, for the asker\'s device to write', { group, by: name, act: act.op, kind: op?.kind ?? null, corrects: act.corrects ?? null });
+    trace("named, for the asker's device to write", {
+      group,
+      by: name,
+      act: act.op,
+      kind: op?.kind ?? null,
+      corrects: act.corrects ?? null,
+    });
     return;
   }
   try {
     const id = await store.append(group, act, name);
-    trace('written', { group, by: name, act: act.op, kind: op?.kind ?? null, corrects: act.corrects ?? null, id });
+    trace('written', {
+      group,
+      by: name,
+      act: act.op,
+      kind: op?.kind ?? null,
+      corrects: act.corrects ?? null,
+      id,
+    });
     return id;
   } catch (e) {
     trace('could not write', { group, by: name, error: e.message });
@@ -160,25 +193,32 @@ async function write(group, act, name) {
 const named = (groups, id) => groups.find((g) => g.id === id)?.name ?? id;
 
 /** That some of a group's `what` may not be here yet, when its record knows of acts this computer has not received (`complete`). */
-const partly = (complete, what) => (complete ? '' : `<p class="unread">Some ${what} may not have reached this computer yet.</p>`);
+const partly = (complete, what) =>
+  complete ? '' : `<p class="unread">Some ${what} may not have reached this computer yet.</p>`;
 
 async function home(id) {
   const groups = await myGroups(id);
   const mine = groups.filter((g) => g.me);
   let body = '<h1>Events</h1>';
-  for (const g of groups.filter((x) => x.unread)) body += `<p class="unread">${esc(g.name ?? g.id)} can't be read on this computer right now.</p>`;
+  for (const g of groups.filter((x) => x.unread))
+    body += `<p class="unread">${esc(g.name ?? g.id)} can't be read on this computer right now.</p>`;
   if (!mine.length) return page('Events', `${body}<p>You're not in any group here.</p>`);
   for (const g of mine) {
     body += `<section><h2>${esc(g.name ?? g.id)}</h2>`;
     try {
-      const { answers: { events }, complete } = await folded(g.id);
+      const {
+        answers: { events },
+        complete,
+      } = await folded(g.id);
       const list = Object.entries(events).sort(([, a], [, b]) => b.at - a.at);
       // Nothing posted is said only of a group this computer holds whole (#151).
-      trace('a group\'s events', { group: g.id, events: list.length, complete });
+      trace("a group's events", { group: g.id, events: list.length, complete });
       body += partly(complete, 'posts');
       body += list.length
         ? `<ul>${list.map(([e, x]) => `<li><a href="/g/${encodeURIComponent(g.id)}/e/${encodeURIComponent(e)}">${esc(x.what)}</a> <span class="quiet">${esc(x.when)}</span></li>`).join('')}</ul>`
-        : complete ? '<p class="quiet">Nothing posted yet.</p>' : '';
+        : complete
+          ? '<p class="quiet">Nothing posted yet.</p>'
+          : '';
     } catch (e) {
       trace('a group could not be read', { group: g.id, error: e.message });
       body += `<p class="unread">This group's events can't be read on this computer right now.</p>`;
@@ -205,7 +245,13 @@ async function post(id, form) {
   }
   // One id, minted on the host's computer, for every group it is posted to.
   const event = randomBytes(8).toString('hex');
-  const payload = { kind: EVENT, event, what: (form.get('what') ?? '').trim(), when: (form.get('when') ?? '').trim(), where: (form.get('where') ?? '').trim() };
+  const payload = {
+    kind: EVENT,
+    event,
+    what: (form.get('what') ?? '').trim(),
+    when: (form.get('when') ?? '').trim(),
+    where: (form.get('where') ?? '').trim(),
+  };
   for (const group of chosen) await write(group, { op: 'record', payload }, names[group]);
   trace('posted', { event, groups: chosen });
   return `/g/${encodeURIComponent(chosen[0])}/e/${event}`;
@@ -217,7 +263,10 @@ async function post(id, form) {
  * Lent by the host's computer, every answer written there for someone else
  * says so: it is true, and it is what a forged one would not hide.
  */
-const through = (vias) => (vias?.length ? `, through ${vias.map((v) => `${esc(v)}'s`).join(' and ')} computer${vias.length > 1 ? 's' : ''}` : '');
+const through = (vias) =>
+  vias?.length
+    ? `, through ${vias.map((v) => `${esc(v)}'s`).join(' and ')} computer${vias.length > 1 ? 's' : ''}`
+    : '';
 
 /**
  * Each person of a fold's `names` as a page says them, two of one name told
@@ -226,7 +275,12 @@ const through = (vias) => (vias?.length ? `, through ${vias.map((v) => `${esc(v)
  */
 const sayer = (names, people) => {
   const spans = people.map((p) => ({ person: p.name, person_key: p.id, joined: p.joined ?? null }));
-  return (k) => called(spans, k, Object.hasOwn(names, k) ? names[k] : (people.find((p) => p.id === k)?.name ?? k));
+  return (k) =>
+    called(
+      spans,
+      k,
+      Object.hasOwn(names, k) ? names[k] : (people.find((p) => p.id === k)?.name ?? k),
+    );
 };
 
 /**
@@ -241,14 +295,24 @@ const sayer = (names, people) => {
  */
 function said(e, invited, say) {
   const by = (a, b) => (say(a) < say(b) ? -1 : say(a) > say(b) ? 1 : 0);
-  const asked = invited.map((p) => p.id).filter((p) => p !== e.host).sort(by);
+  const asked = invited
+    .map((p) => p.id)
+    .filter((p) => p !== e.host)
+    .sort(by);
   const people = Object.keys(e.coming).sort(by);
   const coming = people.length
     ? `<ul class="coming">${people.map((p) => `<li>${esc(say(p))}${e.coming[p].map((g) => ` + ${esc(g)}`).join('')}${through(e.via.coming[p])}</li>`).join('')}</ul>`
     : '<p class="quiet">No one has said yet.</p>';
-  const guests = Object.entries(e.guests_came).flatMap(([p, gs]) => gs.map((g) => `${esc(g)}, ${esc(say(p))}'s guest${through(e.via.guests_came[p]?.[g])}`));
-  const came = [...[...e.came].sort(by).map((p) => esc(say(p)) + through(e.via.came[p])), ...guests];
-  const list = asked.length ? `<ul class="invited">${asked.map((p) => `<li>${esc(say(p))}</li>`).join('')}</ul>` : '<p class="quiet">No one else is in this group.</p>';
+  const guests = Object.entries(e.guests_came).flatMap(([p, gs]) =>
+    gs.map((g) => `${esc(g)}, ${esc(say(p))}'s guest${through(e.via.guests_came[p]?.[g])}`),
+  );
+  const came = [
+    ...[...e.came].sort(by).map((p) => esc(say(p)) + through(e.via.came[p])),
+    ...guests,
+  ];
+  const list = asked.length
+    ? `<ul class="invited">${asked.map((p) => `<li>${esc(say(p))}</li>`).join('')}</ul>`
+    : '<p class="quiet">No one else is in this group.</p>';
   return `<h3>Invited</h3>${list}<h3>Coming</h3>${coming}<h3>Came</h3>${came.length ? `<ul class="came">${came.map((c) => `<li>${c}</li>`).join('')}</ul>` : '<p class="quiet">No one yet.</p>'}`;
 }
 
@@ -262,7 +326,15 @@ function lentAt(req) {
   const [label, pages] = [req.headers['x-svrngs-label'], req.headers['x-svrngs-pages']];
   if (!label || typeof pages !== 'string') return null;
   const at = (p) => p.indexOf('=');
-  return { label, pages: Object.fromEntries(pages.split(' ').filter((p) => at(p) > 0).map((p) => [p.slice(0, at(p)), p.slice(at(p) + 1)])) };
+  return {
+    label,
+    pages: Object.fromEntries(
+      pages
+        .split(' ')
+        .filter((p) => at(p) > 0)
+        .map((p) => [p.slice(0, at(p)), p.slice(at(p) + 1)]),
+    ),
+  };
 }
 
 /**
@@ -274,18 +346,25 @@ function linkTo(lent, group, event, name) {
   const page = lent?.pages[group];
   trace('a link', { group, event, told: Boolean(lent), page: page ?? null });
   const none = (why, quiet = 'quiet') => `<p class="nolink ${quiet}">${esc(why)}</p>`;
-  if (page === undefined) return none(`This computer didn't say where ${name}'s page is, so there's no link to send.`);
+  if (page === undefined)
+    return none(`This computer didn't say where ${name}'s page is, so there's no link to send.`);
   if (page === 'none') return none(`${name} keeps no page for links, so there's no link to send.`);
-  if (page === 'unread') return none(`${name}'s page can't be read on this computer right now, so there's no link to send.`, 'unread');
+  if (page === 'unread')
+    return none(
+      `${name}'s page can't be read on this computer right now, so there's no link to send.`,
+      'unread',
+    );
   const link = `${page}#open=${lent.label}&at=/g/${encodeURIComponent(group)}/e/${encodeURIComponent(event)}`;
-  const copy = "const box=this.previousElementSibling;(navigator.clipboard?.writeText(box.value)??Promise.reject()).then(()=>{this.textContent='Copied'},()=>{box.select();this.textContent='Copy it from the box'})";
+  const copy =
+    "const box=this.previousElementSibling;(navigator.clipboard?.writeText(box.value)??Promise.reject()).then(()=>{this.textContent='Copied'},()=>{box.select();this.textContent='Copy it from the box'})";
   return `<p>To send in ${esc(name)}'s chat: <input type="text" class="link" readonly value="${esc(link)}"> <button type="button" onclick="${copy}">Copy the link to this event</button></p>`;
 }
 
 async function eventPage(id, group, event, lent) {
   const me = await standing(group, id);
   const groups = await myGroups(id);
-  if (!me) throw new Said(403, `You're not in ${named(groups, group)}, so this event isn't yours to see.`);
+  if (!me)
+    throw new Said(403, `You're not in ${named(groups, group)}, so this event isn't yours to see.`);
   const here = await folded(group);
   const e = here.answers.events[event];
   if (!e) throw new Said(404, `This event isn't in ${named(groups, group)}.`);
@@ -312,22 +391,35 @@ async function eventPage(id, group, event, lent) {
       const complete = all.find((x) => x.group === g.group).complete;
       const there = all.find((x) => x.group === g.group);
       const people = groups.find((x) => x.id === g.group).people;
-      body += g.unread ? `<p class="unread">This group's answers can't be read on this computer right now.</p>` : partly(complete, 'answers') + said(g.event, people, sayer(there.answers.names, people)) + linkTo(lent, g.group, event, named(groups, g.group));
+      body += g.unread
+        ? `<p class="unread">This group's answers can't be read on this computer right now.</p>`
+        : partly(complete, 'answers') +
+          said(g.event, people, sayer(there.answers.names, people)) +
+          linkTo(lent, g.group, event, named(groups, g.group));
       body += '</section>';
     }
-    trace('the host\'s view', { event, asker: me, groups: all.map((g) => g.group), partly: all.filter((g) => g.complete === false).map((g) => g.group) });
+    trace("the host's view", {
+      event,
+      asker: me,
+      groups: all.map((g) => g.group),
+      partly: all.filter((g) => g.complete === false).map((g) => g.group),
+    });
   } else {
     body += `<section data-group="${esc(group)}"><h2>${esc(named(groups, group))}</h2>${partly(here.complete, 'answers')}${said(e, groups.find((x) => x.id === group).people, say)}</section>`;
-    trace('a member\'s view', { event, asker: me, group, complete: here.complete });
+    trace("a member's view", { event, asker: me, group, complete: here.complete });
   }
   const at = `/g/${encodeURIComponent(group)}/e/${encodeURIComponent(event)}`;
   const guests = Object.hasOwn(e.coming, id) ? e.coming[id] : undefined;
   body += `<section><h2>You</h2>
 <form method="post" action="${at}/coming"><label>Bringing anyone? <input type="text" name="guests" placeholder="Maya, Jo" value="${esc((guests ?? []).join(', '))}"></label>
 <button>${guests ? 'Save' : "I'm coming"}</button></form>`;
-  if (guests) body += `<form method="post" action="${at}/not-coming"><button>Take my name off</button></form>`;
-  if (!e.came.includes(id)) body += `<form method="post" action="${at}/came"><button>I came</button></form>`;
-  for (const g of (guests ?? []).filter((x) => !(Object.hasOwn(e.guests_came, id) ? e.guests_came[id] : []).includes(x))) {
+  if (guests)
+    body += `<form method="post" action="${at}/not-coming"><button>Take my name off</button></form>`;
+  if (!e.came.includes(id))
+    body += `<form method="post" action="${at}/came"><button>I came</button></form>`;
+  for (const g of (guests ?? []).filter(
+    (x) => !(Object.hasOwn(e.guests_came, id) ? e.guests_came[id] : []).includes(x),
+  )) {
     body += `<form method="post" action="${at}/came"><input type="hidden" name="guest" value="${esc(g)}"><button>${esc(g)} came</button></form>`;
   }
   body += `</section><p><a href="/">All events</a></p>`;
@@ -341,17 +433,40 @@ async function answer(id, group, event, verb, form) {
   const { state, answers: here } = await folded(group);
   if (!here.events[event]) throw new Said(404, "This event isn't in this group.");
   if (verb === 'coming' || verb === 'not-coming') {
-    const names = verb === 'coming' ? String(form.get('guests') ?? '').split(',').map(guestName).filter(Boolean) : null;
-    const payload = names && { kind: COMING, event, ...(names.length && { guests: [...new Set(names)] }) };
+    const names =
+      verb === 'coming'
+        ? String(form.get('guests') ?? '')
+            .split(',')
+            .map(guestName)
+            .filter(Boolean)
+        : null;
+    const payload = names && {
+      kind: COMING,
+      event,
+      ...(names.length && { guests: [...new Set(names)] }),
+    };
     const [newest, ...older] = ownActs(state, id, event, COMING);
-    trace('changing their mind', { group, event, by: me, verb, live: [newest, ...older].filter(Boolean).length });
-    for (const old of older) await write(group, { op: 'correct', corrects: old, replacement: null }, me);
+    trace('changing their mind', {
+      group,
+      event,
+      by: me,
+      verb,
+      live: [newest, ...older].filter(Boolean).length,
+    });
+    for (const old of older)
+      await write(group, { op: 'correct', corrects: old, replacement: null }, me);
     if (newest) await write(group, { op: 'correct', corrects: newest, replacement: payload }, me);
     else if (payload) await write(group, { op: 'record', payload }, me);
   } else {
     const guest = form.get('guest') ? guestName(form.get('guest')) : null;
-    if (ownActs(state, id, event, CAME, guest).length) trace('came already said', { group, event, by: me, guest });
-    else await write(group, { op: 'record', payload: { kind: CAME, event, ...(guest && { guest }) } }, me);
+    if (ownActs(state, id, event, CAME, guest).length)
+      trace('came already said', { group, event, by: me, guest });
+    else
+      await write(
+        group,
+        { op: 'record', payload: { kind: CAME, event, ...(guest && { guest }) } },
+        me,
+      );
   }
   return `/g/${encodeURIComponent(group)}/e/${encodeURIComponent(event)}`;
 }
@@ -374,10 +489,16 @@ async function route(req) {
   }
   const id = asker(req);
   if (req.method === 'GET' && req.url === '/') return { html: await home(id) };
-  if (req.method === 'POST' && path[1] === 'post' && path.length === 2) return { to: await post(id, await body(req)) };
+  if (req.method === 'POST' && path[1] === 'post' && path.length === 2)
+    return { to: await post(id, await body(req)) };
   if (path[1] === 'g' && path[3] === 'e' && path[2] && path[4]) {
-    if (req.method === 'GET' && path.length === 5) return { html: await eventPage(id, path[2], path[4], lentAt(req)) };
-    if (req.method === 'POST' && path.length === 6 && ['coming', 'not-coming', 'came'].includes(path[5])) {
+    if (req.method === 'GET' && path.length === 5)
+      return { html: await eventPage(id, path[2], path[4], lentAt(req)) };
+    if (
+      req.method === 'POST' &&
+      path.length === 6 &&
+      ['coming', 'not-coming', 'came'].includes(path[5])
+    ) {
       return { to: await answer(id, path[2], path[4], path[5], await body(req)) };
     }
   }
@@ -385,21 +506,42 @@ async function route(req) {
 }
 
 // A header carries ASCII alone: JSON's own escapes say the rest.
-const ascii = (json) => json.replace(/[\u007f-\uffff]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`);
+const ascii = (json) =>
+  json.replace(/[\u007f-\uffff]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`);
 
-const server = http.createServer((req, res) => naming.run([], async () => {
-  const headers = { 'cache-control': 'no-store' };
-  try {
-    const out = await route(req);
-    const named = naming.getStore();
-    if (named.length) headers['x-svrngs-append'] = ascii(JSON.stringify(named));
-    if (out.to) res.writeHead(303, { ...headers, location: out.to }).end();
-    else res.writeHead(200, { ...headers, 'content-type': 'text/html; charset=utf-8' }).end(out.html);
-  } catch (e) {
-    const status = e instanceof Said ? e.status : 502;
-    const words = e instanceof Said ? e.message : "This page can't be made on this computer right now.";
-    trace('answered', { path: req.url, status, words, error: e instanceof Said ? null : e.message });
-    res.writeHead(status, { 'cache-control': 'no-store', 'content-type': 'text/html; charset=utf-8' }).end(page('Events', `<p class="unread">${esc(words)}</p><p><a href="/">All events</a></p>`));
-  }
-}));
-server.listen(config.listen ?? 0, '127.0.0.1', () => console.log(JSON.stringify({ port: server.address().port, store: store.kind })));
+const server = http.createServer((req, res) =>
+  naming.run([], async () => {
+    const headers = { 'cache-control': 'no-store' };
+    try {
+      const out = await route(req);
+      const named = naming.getStore();
+      if (named.length) headers['x-svrngs-append'] = ascii(JSON.stringify(named));
+      if (out.to) res.writeHead(303, { ...headers, location: out.to }).end();
+      else
+        res
+          .writeHead(200, { ...headers, 'content-type': 'text/html; charset=utf-8' })
+          .end(out.html);
+    } catch (e) {
+      const status = e instanceof Said ? e.status : 502;
+      const words =
+        e instanceof Said ? e.message : "This page can't be made on this computer right now.";
+      trace('answered', {
+        path: req.url,
+        status,
+        words,
+        error: e instanceof Said ? null : e.message,
+      });
+      res
+        .writeHead(status, {
+          'cache-control': 'no-store',
+          'content-type': 'text/html; charset=utf-8',
+        })
+        .end(
+          page('Events', `<p class="unread">${esc(words)}</p><p><a href="/">All events</a></p>`),
+        );
+    }
+  }),
+);
+server.listen(config.listen ?? 0, '127.0.0.1', () =>
+  console.log(JSON.stringify({ port: server.address().port, store: store.kind })),
+);

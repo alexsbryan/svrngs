@@ -12,7 +12,21 @@ import { html } from './view.js?v=__VERSION__';
 import { named, unasked } from '../question.js?v=__VERSION__';
 
 export function Uses({ lent, labelOf, choices, tag, said = {}, send }) {
-  const app = (o) => lent.find((l) => labelOf(l) === o), line = (words, ...after) => html`<${tag}>${words}${after}</${tag}>`;
-  return lent.filter((l) => l.asks && choices[labelOf(l)]).flatMap((l) => ((a, lend) => (a.why !== undefined ? [line(`${unasked(l)} ${a.why}`.trim())]
-    : Object.entries(a.choices).map(([o, c]) => line(`${app(o) ? named(app(o)) : 'An app'} ${c.said === 'yes' ? 'uses' : 'was stopped using'} ${named(l)}. `, c.said === 'yes' && html`<button onClick=${() => send({ type: 'stop', lend, app: o })}>Stop</button>`, said[`${lend} ${o}`]))))(choices[labelOf(l)], labelOf(l)));
+  const app = (o) => lent.find((l) => labelOf(l) === o),
+    line = (words, ...after) => html`<${tag}>${words}${after}</${tag}>`;
+  return lent
+    .filter((l) => l.asks && choices[labelOf(l)])
+    .flatMap((l) =>
+      ((a, lend) =>
+        a.why !== undefined
+          ? [line(`${unasked(l)} ${a.why}`.trim())]
+          : Object.entries(a.choices).map(([o, c]) =>
+              line(
+                `${app(o) ? named(app(o)) : 'An app'} ${c.said === 'yes' ? 'uses' : 'was stopped using'} ${named(l)}. `,
+                c.said === 'yes' &&
+                  html`<button onClick=${() => send({ type: 'stop', lend, app: o })}>Stop</button>`,
+                said[`${lend} ${o}`],
+              ),
+            ))(choices[labelOf(l)], labelOf(l)),
+    );
 }

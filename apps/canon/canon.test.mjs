@@ -25,7 +25,10 @@ test('one byte changed in the vendored canon.js is caught', () => {
   const bytes = readFileSync(f);
   bytes[1000] ^= 1;
   writeFileSync(f, bytes);
-  assert.deepEqual(unpinned(VENDOR, dir).map((s) => s.split(' ')[0]), ['canon.js']);
+  assert.deepEqual(
+    unpinned(VENDOR, dir).map((s) => s.split(' ')[0]),
+    ['canon.js'],
+  );
 });
 
 test('the vendored build mints a rule and folds it, as canon', async () => {
@@ -44,5 +47,9 @@ test('the vendored build mints a rule and folds it, as canon', async () => {
     canon.commitments.map((c) => [c.id, c.text, c.actor, c.status.status]),
     [[act.id, 'Quiet hours are 10pm to 7am.', 'human:kim', 'active']],
   );
-  assert.throws(() => call({ call: 'derive', acts: '{"v":99}' }), /canon: /, 'a refusal is said, never defaulted');
+  assert.throws(
+    () => call({ call: 'derive', acts: '{"v":99}' }),
+    /canon: /,
+    'a refusal is said, never defaulted',
+  );
 });

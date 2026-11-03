@@ -16,10 +16,15 @@ const DESKTOP = { chromium: 'Desktop Chrome', webkit: 'Desktop Safari' };
 const { context, close } = await launch(args.engine, { device: DESKTOP[args.engine] });
 const errors = [];
 try {
-  if (args.engine === 'chromium') await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin });
+  if (args.engine === 'chromium')
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin });
   // Each violation of the page's one policy (web/index.html:51), as the
   // browser tells the page, from before its first script.
-  await context.addInitScript(() => document.addEventListener('securitypolicyviolation', (e) => (window.__violations ??= []).push(`${e.violatedDirective}: ${e.blockedURI} ${e.sample}`)));
+  await context.addInitScript(() =>
+    document.addEventListener('securitypolicyviolation', (e) =>
+      (window.__violations ??= []).push(`${e.violatedDirective}: ${e.blockedURI} ${e.sample}`),
+    ),
+  );
   const page = await context.newPage();
   page.on('pageerror', (e) => errors.push(String(e)));
   await page.goto(`${origin}#${args.token}`);
@@ -32,9 +37,18 @@ try {
     navigator.clipboard.writeText = (text) => write((window.__written = text));
   });
   await page.click('#copy');
-  await page.waitForFunction(() => document.getElementById('copy').textContent !== 'Copy', null, { timeout: 10_000 });
-  const seen = await page.evaluate(() => ({ button: document.getElementById('copy').textContent, written: window.__written, violations: window.__violations ?? [], lines: window.__lines }));
-  const copied = await page.evaluate(() => navigator.clipboard.readText()).catch((e) => `unread: ${e}`);
+  await page.waitForFunction(() => document.getElementById('copy').textContent !== 'Copy', null, {
+    timeout: 10_000,
+  });
+  const seen = await page.evaluate(() => ({
+    button: document.getElementById('copy').textContent,
+    written: window.__written,
+    violations: window.__violations ?? [],
+    lines: window.__lines,
+  }));
+  const copied = await page
+    .evaluate(() => navigator.clipboard.readText())
+    .catch((e) => `unread: ${e}`);
   console.log(JSON.stringify({ origin, line, words, copied, errors, ...seen }));
 } catch (e) {
   console.error(`the page did not finish: ${e}\n${errors.join('\n')}`);

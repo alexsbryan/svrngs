@@ -10,7 +10,7 @@
 // named person, so the server writes each edit down as an act stamped with
 // that person (server.mjs `wrote`) and the rules below read those acts as
 // they read the rail's.
-import { Y } from "./vendor/doc-bundle.js";
+import { Y } from './vendor/doc-bundle.js';
 
 // base64 in chunks. `String.fromCharCode(...bytes)` spreads the whole array
 // onto the call stack and throws on a document of any size; 0x8000 is the
@@ -19,7 +19,7 @@ const CHUNK = 0x8000;
 
 /// A Yjs update as a JSON-safe string, as the server keeps each act.
 export function bytesToB64(bytes) {
-  let s = "";
+  let s = '';
   for (let i = 0; i < bytes.length; i += CHUNK) {
     s += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
   }
@@ -58,7 +58,7 @@ export function b64ToBytes(b64) {
 /// The fragment Tiptap's `Collaboration` extension edits. One name, one place
 /// — a replay that read a different fragment would attribute nothing and look
 /// exactly like a document nobody has typed in.
-export const PROSE_FRAGMENT = "default";
+export const PROSE_FRAGMENT = 'default';
 
 /// Replay the acts and keep, per paragraph, the act that last touched it.
 ///
@@ -184,7 +184,7 @@ export function attributionLine(entry, nowMs) {
 /// cursor with no error anywhere. The hue is spread over the wheel and
 /// converted here rather than left to CSS for that reason alone.
 export function colorFor(name) {
-  const text = String(name || "");
+  const text = String(name || '');
   let hue = 0;
   for (let i = 0; i < text.length; i += 1) {
     hue = (hue * 31 + text.charCodeAt(i)) % 360;
@@ -205,6 +205,6 @@ export function colorFor(name) {
   const hex = (v) =>
     Math.round((v + m) * 255)
       .toString(16)
-      .padStart(2, "0");
+      .padStart(2, '0');
   return `#${hex(rgb[0])}${hex(rgb[1])}${hex(rgb[2])}`;
 }

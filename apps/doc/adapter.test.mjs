@@ -7,17 +7,24 @@
 // page and the server converge — that is Yjs's, run end to end over the real
 // server in `doc.test.mjs`.
 
-import assert from "node:assert/strict";
-import { test } from "node:test";
-import { unpinned } from "../pinned.mjs";
-import { Y } from "./vendor/doc-bundle.js";
-import { PROSE_FRAGMENT, attributionLine, b64ToBytes, bytesToB64, colorFor, createAttribution } from "./adapter.js";
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import { unpinned } from '../pinned.mjs';
+import { Y } from './vendor/doc-bundle.js';
+import {
+  PROSE_FRAGMENT,
+  attributionLine,
+  b64ToBytes,
+  bytesToB64,
+  colorFor,
+  createAttribution,
+} from './adapter.js';
 
-test("the bundle is the bytes vendor/README.md pins", () => {
-  assert.deepEqual(unpinned(new URL("./vendor", import.meta.url).pathname), []);
+test('the bundle is the bytes vendor/README.md pins', () => {
+  assert.deepEqual(unpinned(new URL('./vendor', import.meta.url).pathname), []);
 });
 
-test("an update survives the base64 trip whole", () => {
+test('an update survives the base64 trip whole', () => {
   // The chunked encoder exists because spreading a document-sized array onto
   // the call stack throws. A stride bug would corrupt exactly one boundary,
   // which is invisible on the short updates every other test here uses.
@@ -26,13 +33,13 @@ test("an update survives the base64 trip whole", () => {
   assert.deepEqual(Array.from(b64ToBytes(bytesToB64(bytes))), Array.from(bytes));
 });
 
-test("a caret colour is a hex triple, or Tiptap draws nothing", () => {
+test('a caret colour is a hex triple, or Tiptap draws nothing', () => {
   // `isValidColor` in the caret extension is `/^#[0-9a-fA-F]{6}$/` and
   // substitutes `transparent` for anything else — silently. An `hsl()` string
   // here is an invisible cursor with no error on any surface.
-  assert.match(colorFor("alex"), /^#[0-9a-f]{6}$/);
-  assert.equal(colorFor("alex"), colorFor("alex"), "one person, two colours");
-  assert.notEqual(colorFor("alex"), colorFor("bo"));
+  assert.match(colorFor('alex'), /^#[0-9a-f]{6}$/);
+  assert.equal(colorFor('alex'), colorFor('alex'), 'one person, two colours');
+  assert.notEqual(colorFor('alex'), colorFor('bo'));
 });
 
 // --- attribution ---------------------------------------------------------
@@ -47,7 +54,7 @@ const typedParagraphs = (texts) => {
   const doc = new Y.Doc();
   const frag = doc.getXmlFragment(PROSE_FRAGMENT);
   for (const text of texts) {
-    const para = new Y.XmlElement("paragraph");
+    const para = new Y.XmlElement('paragraph');
     const body = new Y.XmlText();
     body.insert(0, text);
     para.insert(0, [body]);
@@ -70,8 +77,8 @@ const edit = (base, clientID, change) => {
 };
 
 const NOW_SEC = 1_756_512_000;
-const ALEX_KEY = "aa".repeat(32);
-const BO_KEY = "bb".repeat(32);
+const ALEX_KEY = 'aa'.repeat(32);
+const BO_KEY = 'bb'.repeat(32);
 
 /// One act as the server writes it (server.mjs, `doc.on("update")`).
 const act = (id, update, extra = {}) => ({
@@ -79,28 +86,28 @@ const act = (id, update, extra = {}) => ({
   seq: Number(id),
   ts: NOW_SEC,
   actor: ALEX_KEY,
-  person: "alex",
+  person: 'alex',
   update: bytesToB64(update),
   ...extra,
 });
 
-test("each paragraph says who last edited it, and how long ago", () => {
-  const first = typedParagraphs(["one", "two"]);
-  const second = edit(first, undefined, (frag) => frag.get(1).get(0).insert(3, " more"));
+test('each paragraph says who last edited it, and how long ago', () => {
+  const first = typedParagraphs(['one', 'two']);
+  const second = edit(first, undefined, (frag) => frag.get(1).get(0).insert(3, ' more'));
 
   const attribution = createAttribution();
   attribution.absorb([
-    act("1", first, { ts: NOW_SEC - 12 }),
-    act("2", second, { actor: BO_KEY, person: "bo", ts: NOW_SEC - 4 }),
+    act('1', first, { ts: NOW_SEC - 12 }),
+    act('2', second, { actor: BO_KEY, person: 'bo', ts: NOW_SEC - 4 }),
   ]);
 
   assert.deepEqual(attribution.lines(NOW_SEC * 1000), [
-    "last edited by alex 12s ago",
-    "last edited by bo 4s ago",
+    'last edited by alex 12s ago',
+    'last edited by bo 4s ago',
   ]);
   assert.deepEqual(attribution.entries(), [
-    { person: "alex", ts: NOW_SEC - 12 },
-    { person: "bo", ts: NOW_SEC - 4 },
+    { person: 'alex', ts: NOW_SEC - 12 },
+    { person: 'bo', ts: NOW_SEC - 4 },
   ]);
 });
 
@@ -112,14 +119,14 @@ test("an update whose clientID is another person's still names the socket's pers
   const alexDoc = new Y.Doc();
   alexDoc.clientID = 1001;
   const alexFrag = alexDoc.getXmlFragment(PROSE_FRAGMENT);
-  const para = new Y.XmlElement("paragraph");
+  const para = new Y.XmlElement('paragraph');
   const body = new Y.XmlText();
-  body.insert(0, "alex wrote this");
+  body.insert(0, 'alex wrote this');
   para.insert(0, [body]);
   alexFrag.push([para]);
   const honest = Y.encodeStateAsUpdate(alexDoc);
 
-  const forged = edit(honest, 1001, (frag) => frag.get(0).get(0).insert(0, "bo typed here. "));
+  const forged = edit(honest, 1001, (frag) => frag.get(0).get(0).insert(0, 'bo typed here. '));
   // The forgery, checked rather than assumed: every struct in bo's update
   // announces alex's client. A reader that took the name from in here would
   // say alex, which is the failure the line below rules out.
@@ -131,35 +138,47 @@ test("an update whose clientID is another person's still names the socket's pers
 
   const attribution = createAttribution();
   attribution.absorb([
-    act("1", honest, { ts: NOW_SEC - 30 }),
-    act("2", forged, { actor: BO_KEY, person: "bo", ts: NOW_SEC - 1 }),
+    act('1', honest, { ts: NOW_SEC - 30 }),
+    act('2', forged, { actor: BO_KEY, person: 'bo', ts: NOW_SEC - 1 }),
   ]);
 
-  assert.deepEqual(attribution.lines(NOW_SEC * 1000), ["last edited by bo 1s ago"]);
+  assert.deepEqual(attribution.lines(NOW_SEC * 1000), ['last edited by bo 1s ago']);
 });
 
-test("an edit svrngs named nobody for is said to be unnamed, never invented", () => {
+test('an edit svrngs named nobody for is said to be unnamed, never invented', () => {
   // A socket that reached the server at its own port, not through svrngs:
   // no door set a name. The honest line says so; a fallback to the key, or
   // to "someone", would be a page substituting for an absence.
   const attribution = createAttribution();
-  attribution.absorb([act("1", typedParagraphs(["hello"]), { actor: "", person: null })]);
+  attribution.absorb([act('1', typedParagraphs(['hello']), { actor: '', person: null })]);
 
   const [line] = attribution.lines(NOW_SEC * 1000);
   assert.match(line, /didn't name/);
   assert.doesNotMatch(line, /alex|bo/);
-  assert.equal(attributionLine(null, NOW_SEC * 1000), null, "a paragraph no act touched gets no line");
+  assert.equal(
+    attributionLine(null, NOW_SEC * 1000),
+    null,
+    'a paragraph no act touched gets no line',
+  );
 });
 
-test("two copies that absorbed the same acts in different orders name the same author", () => {
+test('two copies that absorbed the same acts in different orders name the same author', () => {
   // Two people edit one paragraph at one `ts`; one copy reads alex's act
   // first, the other bo's, and then both read all of them. The order is
   // (ts, actor, seq, id), so aa… before bb…: bo is last.
-  const base = typedParagraphs(["shared"]);
+  const base = typedParagraphs(['shared']);
   const acts = [
-    act("1", base, { ts: NOW_SEC - 20 }),
-    act("2", edit(base, undefined, (f) => f.get(0).get(0).insert(0, "A ")), { ts: NOW_SEC - 3 }),
-    act("3", edit(base, undefined, (f) => f.get(0).get(0).insert(6, " B")), { actor: BO_KEY, person: "bo", ts: NOW_SEC - 3 }),
+    act('1', base, { ts: NOW_SEC - 20 }),
+    act(
+      '2',
+      edit(base, undefined, (f) => f.get(0).get(0).insert(0, 'A ')),
+      { ts: NOW_SEC - 3 },
+    ),
+    act(
+      '3',
+      edit(base, undefined, (f) => f.get(0).get(0).insert(6, ' B')),
+      { actor: BO_KEY, person: 'bo', ts: NOW_SEC - 3 },
+    ),
   ];
 
   const alexFirst = createAttribution();
@@ -169,7 +188,7 @@ test("two copies that absorbed the same acts in different orders name the same a
   boFirst.absorb([acts[0], acts[2]]);
   boFirst.absorb(acts);
 
-  const expected = ["last edited by bo 3s ago"];
+  const expected = ['last edited by bo 3s ago'];
   assert.deepEqual(alexFirst.lines(NOW_SEC * 1000), expected);
   assert.deepEqual(boFirst.lines(NOW_SEC * 1000), expected);
 });

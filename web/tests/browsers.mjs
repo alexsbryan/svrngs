@@ -13,7 +13,18 @@
 import { chromium, webkit } from 'playwright';
 import { IGNORING, proxied } from './page.mjs';
 
-const servers = { chromium: await chromium.launchServer({ args: IGNORING }), webkit: await webkit.launchServer() };
-console.log(JSON.stringify({ chromium: servers.chromium.wsEndpoint(), webkit: servers.webkit.wsEndpoint(), proxy: await proxied() }));
-process.stdin.on('end', () => Promise.all(Object.values(servers).map((s) => s.close())).then(() => process.exit(0)));
+const servers = {
+  chromium: await chromium.launchServer({ args: IGNORING }),
+  webkit: await webkit.launchServer(),
+};
+console.log(
+  JSON.stringify({
+    chromium: servers.chromium.wsEndpoint(),
+    webkit: servers.webkit.wsEndpoint(),
+    proxy: await proxied(),
+  }),
+);
+process.stdin.on('end', () =>
+  Promise.all(Object.values(servers).map((s) => s.close())).then(() => process.exit(0)),
+);
 process.stdin.resume();

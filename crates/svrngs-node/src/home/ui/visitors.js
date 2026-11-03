@@ -6,4 +6,5 @@
 import { html } from './view.js?v=__VERSION__';
 import { called, until } from '../question.js?v=__VERSION__';
 
-export const Visiting = ({ vs, rows = [] }) => html`<ul class="visiting">${[...vs].sort((a, b) => a.host.localeCompare(b.host)).map((v) => html`<li>${`${v.guest}, ${called(rows, v.host_key) ?? v.host}’s guest, until ${until(v)}`}</li>`)}</ul>`;
+export const Visiting = ({ vs, rows = [] }) =>
+  html`<ul class="visiting">${[...vs].sort((a, b) => a.host.localeCompare(b.host)).map((v) => html`<li>${`${v.guest}, ${called(rows, v.host_key) ?? v.host}’s guest, until ${until(v)}`}</li>`)}</ul>`;

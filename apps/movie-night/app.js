@@ -17,14 +17,22 @@ const KEPT = 'movie-night';
 // mn: plumbing find — which libraries there are, whose each is, where to
 // ask each and whose computer did not answer: svrngs tells a page at its
 // own origin (DESIGN §3, "Lent apps", call 6), or answers no.
-const told = () => fetch('/svrngs-reads').then((r) => (r.ok ? r.json() : null), () => null);
+const told = () =>
+  fetch('/svrngs-reads').then(
+    (r) => (r.ok ? r.json() : null),
+    () => null,
+  );
 
 // mn: own cards — each library by its lender, in the person's words.
 async function libraries() {
   const t = await told();
   if (!t) return null;
   return {
-    libs: t.lends.map((l) => ({ library: l.lender, who: `${l.lender}’s ${l.name}`, base: l.address })),
+    libs: t.lends.map((l) => ({
+      library: l.lender,
+      who: `${l.lender}’s ${l.name}`,
+      base: l.address,
+    })),
     unanswered: t.unanswered,
   };
 }
@@ -43,7 +51,8 @@ async function ask(url) {
   } catch (e) {
     return { state: 'failed', why: String(e) };
   }
-  if (res.status === 502 || res.status === 504) return { state: 'away', why: `answered ${res.status}` };
+  if (res.status === 502 || res.status === 504)
+    return { state: 'away', why: `answered ${res.status}` };
   if (!res.ok) return { state: 'refused', why: `answered ${res.status}` };
   return { state: 'answered', body: await res.json() };
 }
@@ -55,7 +64,8 @@ const planted = () => (TOKEN ? { authorization: `MediaBrowser Token="${TOKEN}"` 
 // mn: own match — each library's films as the person may see them, the
 // whole list, matched here: Jellyfin's own search matches by substring
 // and does not forgive a slip.
-const LIST = 'Items?Recursive=true&IncludeItemTypes=Movie&Fields=ProviderIds,ProductionYear&EnableImages=false';
+const LIST =
+  'Items?Recursive=true&IncludeItemTypes=Movie&Fields=ProviderIds,ProductionYear&EnableImages=false';
 
 async function listed(lib) {
   const got = await ask(`${lib.base}${LIST}`);
@@ -64,7 +74,10 @@ async function listed(lib) {
   if (PLANT === 'asleep-empty' && got.state === 'away') return { state: 'answered', copies: [] };
   // mn: own match
   if (got.state !== 'answered') return got;
-  return { state: 'answered', copies: (got.body.Items ?? []).map((item) => copyOf(item, lib.library)) };
+  return {
+    state: 'answered',
+    copies: (got.body.Items ?? []).map((item) => copyOf(item, lib.library)),
+  };
 }
 
 // mn: own cards — a search: every library asked at once, each said as it
@@ -77,7 +90,11 @@ async function search(query) {
   const found = await libraries();
   const libs = found?.libs ?? [];
   const asking = libs.map((l) => ({ library: l.library, who: l.who, state: 'asking', matched: 0 }));
-  const away = (found?.unanswered ?? []).map((p) => ({ library: p, who: `${p}’s computer`, state: 'unanswered' }));
+  const away = (found?.unanswered ?? []).map((p) => ({
+    library: p,
+    who: `${p}’s computer`,
+    state: 'unanswered',
+  }));
   const state = { query, films: [], libs: found ? [...asking, ...away] : [{ state: 'untold' }] };
   const copies = [];
   render(state);
@@ -108,12 +125,16 @@ const el = (tag, cls, text) => {
 // What a library said, in the person's words.
 const WORDS = {
   asking: (l) => `Asking ${l.who}…`,
-  answered: (l) => (l.matched ? `${l.who}: ${l.matched} ${l.matched === 1 ? 'film' : 'films'}` : `${l.who}: nothing by that name`),
+  answered: (l) =>
+    l.matched
+      ? `${l.who}: ${l.matched} ${l.matched === 1 ? 'film' : 'films'}`
+      : `${l.who}: nothing by that name`,
   away: (l) => `${l.who} did not answer: its computer may be asleep. Its films are not here.`,
   refused: (l) => `${l.who} would not let you in.`,
   failed: (l) => `${l.who} could not be read from here.`,
   unanswered: (l) => `${l.who} did not answer, so no library of theirs is here.`,
-  untold: () => 'Movie Night could not learn which libraries are open to it. Open it again from your group’s page.',
+  untold: () =>
+    'Movie Night could not learn which libraries are open to it. Open it again from your group’s page.',
 };
 
 function card(film) {
@@ -138,7 +159,11 @@ function render(state) {
   box.value = state.query;
   said.replaceChildren(
     ...(state.libs.length ? state.libs : [{ state: 'none' }]).map((l) => {
-      const li = el('li', null, l.state === 'none' ? 'No library is open to Movie Night here.' : WORDS[l.state](l));
+      const li = el(
+        'li',
+        null,
+        l.state === 'none' ? 'No library is open to Movie Night here.' : WORDS[l.state](l),
+      );
       li.dataset.state = l.state;
       if (l.library) li.dataset.library = l.library;
       return li;

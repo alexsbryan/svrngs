@@ -56,19 +56,44 @@ const now = () => new Date().toISOString();
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const PICKS = 'tonights-picks';
 // What a settled Tonight's Picks may say of the taste, past svrngs's doors.
-const PAST = ['ranked', 'refused-unasked', 'refused-stopped', 'refused-not-yours', 'refused-unread', 'away'];
+const PAST = [
+  'ranked',
+  'refused-unasked',
+  'refused-stopped',
+  'refused-not-yours',
+  'refused-unread',
+  'away',
+];
 
 async function browser(p) {
-  const person = { name: p.name, user: p.user, engine: p.engine, home: p.home ?? null, steps: [], logs: [] };
-  const { context, close } = await launch(p.engine, p.home && p.engine === 'webkit' ? { device: 'Desktop Safari' } : {});
+  const person = {
+    name: p.name,
+    user: p.user,
+    engine: p.engine,
+    home: p.home ?? null,
+    steps: [],
+    logs: [],
+  };
+  const { context, close } = await launch(
+    p.engine,
+    p.home && p.engine === 'webkit' ? { device: 'Desktop Safari' } : {},
+  );
   person.close = close;
   person.page = await context.newPage();
   person.tally = record(context, person.page, p.user, { DUMP, T0 });
   const page = person.page;
   page.on('pageerror', (e) => person.logs.push(`pageerror: ${e}`));
-  page.on('console', (m) => { if (process.env.SU_DEBUG || m.type() === 'error' || m.type() === 'warning') person.logs.push(`console.${m.type()}: ${m.text().slice(0, 240)}`); });
-  page.on('requestfailed', (r) => person.logs.push(`failed: ${r.url().slice(0, 120)}: ${r.failure()?.errorText}`));
-  page.on('response', (r) => { if (r.status() >= 400) person.logs.push(`http ${r.status()} ${r.request().method()} ${r.url().slice(0, 140)}`); });
+  page.on('console', (m) => {
+    if (process.env.SU_DEBUG || m.type() === 'error' || m.type() === 'warning')
+      person.logs.push(`console.${m.type()}: ${m.text().slice(0, 240)}`);
+  });
+  page.on('requestfailed', (r) =>
+    person.logs.push(`failed: ${r.url().slice(0, 120)}: ${r.failure()?.errorText}`),
+  );
+  page.on('response', (r) => {
+    if (r.status() >= 400)
+      person.logs.push(`http ${r.status()} ${r.request().method()} ${r.url().slice(0, 140)}`);
+  });
   person.browser = context.browser()?.version() ?? null;
   return person;
 }
@@ -80,8 +105,12 @@ async function join(person) {
   person.join_ms = await timed(person, 'the list', async () => {
     await page.goto(args.link);
     await page.waitForFunction(
-      () => !document.getElementById('join').hidden || /good|bad/.test(document.getElementById('status').className),
-      null, { timeout: 120_000 });
+      () =>
+        !document.getElementById('join').hidden ||
+        /good|bad/.test(document.getElementById('status').className),
+      null,
+      { timeout: 120_000 },
+    );
     await page.fill('#name', person.name);
     await page.click('#join button');
     await page.waitForSelector('#status.good', { timeout: 120_000 });
@@ -94,8 +123,12 @@ async function join(person) {
 async function home(person) {
   return timed(person, 'the home page', async () => {
     await person.page.goto(person.home);
-    await person.page.waitForFunction(() => !document.querySelector('#home .said'), null, { timeout: 60_000 });
-    person.home_seen ??= await person.page.evaluate(() => document.getElementById('home').innerText);
+    await person.page.waitForFunction(() => !document.querySelector('#home .said'), null, {
+      timeout: 60_000,
+    });
+    person.home_seen ??= await person.page.evaluate(
+      () => document.getElementById('home').innerText,
+    );
   });
 }
 
@@ -113,7 +146,10 @@ async function openFrom(person, what, ready) {
       ? person.page.locator('#home a', { hasText: `’s ${what}` })
       : person.page.locator('#lent button', { hasText: what });
     await link.first().click();
-    await person.page.waitForURL((u) => !u.hostname.startsWith('svrngs.') && !u.href.startsWith(args.link.split('#')[0]), { timeout: 90_000 });
+    await person.page.waitForURL(
+      (u) => !u.hostname.startsWith('svrngs.') && !u.href.startsWith(args.link.split('#')[0]),
+      { timeout: 90_000 },
+    );
     await person.page.waitForSelector(ready, { state: 'attached', timeout: 90_000 });
   });
 }
@@ -122,34 +158,57 @@ async function openFrom(person, what, ready) {
 
 // What Tonight's Picks shows: each library's words, the taste's, whether
 // it invites, the films in their order and whether they are ranked.
-const showing = (page) => page.evaluate(() => ({
-  at: location.href,
-  said: [...document.querySelectorAll('#said li')].map((l) => ({ state: l.dataset.state, text: l.textContent })),
-  taste: { state: document.getElementById('taste').dataset.state ?? null, text: document.getElementById('taste').textContent },
-  asks: !document.getElementById('ask').hidden,
-  invitation: document.getElementById('ask').hidden ? null : document.getElementById('ask').innerText,
-  stop: !document.getElementById('stop').hidden,
-  order: document.getElementById('picks').dataset.order ?? null,
-  films: [...document.querySelectorAll('#picks li')].map((l) => l.dataset.title),
-}));
+const showing = (page) =>
+  page.evaluate(() => ({
+    at: location.href,
+    said: [...document.querySelectorAll('#said li')].map((l) => ({
+      state: l.dataset.state,
+      text: l.textContent,
+    })),
+    taste: {
+      state: document.getElementById('taste').dataset.state ?? null,
+      text: document.getElementById('taste').textContent,
+    },
+    asks: !document.getElementById('ask').hidden,
+    invitation: document.getElementById('ask').hidden
+      ? null
+      : document.getElementById('ask').innerText,
+    stop: !document.getElementById('stop').hidden,
+    order: document.getElementById('picks').dataset.order ?? null,
+    films: [...document.querySelectorAll('#picks li')].map((l) => l.dataset.title),
+  }));
 
 // Settled: every library past `asking`, and the taste said, not asking.
 const settled = () => {
   const said = [...document.querySelectorAll('#said li')];
   const t = document.getElementById('taste')?.dataset.state;
-  return said.length > 0 && said.every((l) => l.dataset.state !== 'asking') && !!t && t !== 'asking';
+  return (
+    said.length > 0 && said.every((l) => l.dataset.state !== 'asking') && !!t && t !== 'asking'
+  );
 };
 
 async function picks(person, t0, limit = 120_000) {
-  const ok = await person.page.waitForFunction(settled, null, { timeout: limit, polling: 100 }).then(() => true, () => false);
+  const ok = await person.page
+    .waitForFunction(settled, null, { timeout: limit, polling: 100 })
+    .then(
+      () => true,
+      () => false,
+    );
   const s = await showing(person.page).catch((e) => ({ error: String(e) }));
-  return { at: now(), settled_ms: ok ? Date.now() - t0 : null, ...s, shown: ok ? undefined : await shown(person.page) };
+  return {
+    at: now(),
+    settled_ms: ok ? Date.now() - t0 : null,
+    ...s,
+    shown: ok ? undefined : await shown(person.page),
+  };
 }
 
 // Past svrngs: one library answered at least, none refused, and the taste
 // said in a way a door that knows this person gives.
-const past = (r) => r.said?.some((l) => l.state === 'answered')
-  && r.said.every((l) => ['answered', 'away', 'unanswered'].includes(l.state)) && PAST.includes(r.taste?.state);
+const past = (r) =>
+  r.said?.some((l) => l.state === 'answered') &&
+  r.said.every((l) => ['answered', 'away', 'unanswered'].includes(l.state)) &&
+  PAST.includes(r.taste?.state);
 
 // Open Tonight's Picks from the list, then again every 15 s until `past`,
 // at most `tries`: each kept.
@@ -175,25 +234,41 @@ async function sayYes(person) {
   if (!r.invited?.asks) return { ...r, asked: false };
   const t0 = Date.now();
   await page.click('#yes');
-  const reached = await timed(person, 'svrngs\'s question', async () => {
+  const reached = await timed(person, "svrngs's question", async () => {
     if (person.home) {
-      await page.waitForURL((u) => u.hostname.startsWith('svrngs.') && u.pathname === '/ask', { timeout: 60_000 });
+      await page.waitForURL((u) => u.hostname.startsWith('svrngs.') && u.pathname === '/ask', {
+        timeout: 60_000,
+      });
       await page.waitForSelector('#home section h2', { timeout: 60_000 });
     } else {
-      await page.waitForURL((u) => u.href.startsWith(args.link.split('#')[0]) && u.hash.startsWith('#ask='), { timeout: 60_000 });
+      await page.waitForURL(
+        (u) => u.href.startsWith(args.link.split('#')[0]) && u.hash.startsWith('#ask='),
+        { timeout: 60_000 },
+      );
       await page.waitForSelector('#ask:not([hidden])', { timeout: 120_000 });
     }
   });
   if (reached === null) return { ...r, asked: false, question: null };
   r.question_at = page.url();
-  r.question = await page.evaluate((computer) => computer
-    ? document.querySelector('#home section').innerText
-    : `${document.getElementById('status').textContent}\n${document.getElementById('words').textContent}`, !!person.home);
+  r.question = await page.evaluate(
+    (computer) =>
+      computer
+        ? document.querySelector('#home section').innerText
+        : `${document.getElementById('status').textContent}\n${document.getElementById('words').textContent}`,
+    !!person.home,
+  );
   r.invite_to_question_ms = Date.now() - t0;
   const t1 = Date.now();
-  await (person.home ? page.getByRole('button', { name: 'Yes', exact: true }) : page.locator('#ask button:not(#not)')).click();
-  const back = await timed(person, 'back at Tonight\'s Picks', async () => {
-    await page.waitForURL((u) => !u.hostname.startsWith('svrngs.') && !u.href.startsWith(args.link.split('#')[0]), { timeout: 90_000 });
+  await (
+    person.home
+      ? page.getByRole('button', { name: 'Yes', exact: true })
+      : page.locator('#ask button:not(#not)')
+  ).click();
+  const back = await timed(person, "back at Tonight's Picks", async () => {
+    await page.waitForURL(
+      (u) => !u.hostname.startsWith('svrngs.') && !u.href.startsWith(args.link.split('#')[0]),
+      { timeout: 90_000 },
+    );
     await page.waitForSelector('#taste', { state: 'attached', timeout: 90_000 });
   });
   const after = back === null ? null : await picks(person, t1);
@@ -221,17 +296,23 @@ async function otherPerson(p) {
 // The taste's /diary, asked from Tonight's Picks' page as it asks /rank.
 async function diary(ana) {
   if (!(await ana.page.$('#taste'))) await openPicks(ana, 'for the diary');
-  ana.diary = await ana.page.evaluate(async () => {
-    const told = await (await fetch('/svrngs-reads')).json();
-    const t = told.lends.find((l) => l.kind === 'taste');
-    if (!t) return { status: null, body: 'no taste is read here' };
-    try {
-      const res = await fetch(`${t.address}diary`);
-      return { status: res.status, refused: res.headers.get('x-svrngs-refused'), body: (await res.text()).slice(0, 400) };
-    } catch (e) {
-      return { status: null, body: `unread: ${e}` };
-    }
-  }).catch((e) => ({ error: String(e) }));
+  ana.diary = await ana.page
+    .evaluate(async () => {
+      const told = await (await fetch('/svrngs-reads')).json();
+      const t = told.lends.find((l) => l.kind === 'taste');
+      if (!t) return { status: null, body: 'no taste is read here' };
+      try {
+        const res = await fetch(`${t.address}diary`);
+        return {
+          status: res.status,
+          refused: res.headers.get('x-svrngs-refused'),
+          body: (await res.text()).slice(0, 400),
+        };
+      } catch (e) {
+        return { status: null, body: `unread: ${e}` };
+      }
+    })
+    .catch((e) => ({ error: String(e) }));
   ana.diary.at = now();
 }
 
@@ -239,23 +320,66 @@ async function other(ana) {
   if ((await list(ana)) === null) return;
   const t0 = Date.now();
   const opened = await openFrom(ana, 'other', '#out');
-  const asked = await ana.page.waitForFunction(() => document.getElementById('out').dataset.state, null, { timeout: 120_000 }).then(() => true, () => false);
-  const read = () => ana.page.evaluate(() => {
-    const o = document.getElementById('out');
-    return { state: o.dataset.state ?? null, refused: o.dataset.refused || null, yes: o.dataset.yes ? JSON.parse(o.dataset.yes) : null, reached: o.dataset.reached ?? null, text: o.textContent };
-  });
-  ana.other = { opened_ms: opened, asked_ms: asked ? Date.now() - t0 : null, at: now(), ask: await read() };
+  const asked = await ana.page
+    .waitForFunction(() => document.getElementById('out').dataset.state, null, { timeout: 120_000 })
+    .then(
+      () => true,
+      () => false,
+    );
+  const read = () =>
+    ana.page.evaluate(() => {
+      const o = document.getElementById('out');
+      return {
+        state: o.dataset.state ?? null,
+        refused: o.dataset.refused || null,
+        yes: o.dataset.yes ? JSON.parse(o.dataset.yes) : null,
+        reached: o.dataset.reached ?? null,
+        text: o.textContent,
+      };
+    });
+  ana.other = {
+    opened_ms: opened,
+    asked_ms: asked ? Date.now() - t0 : null,
+    at: now(),
+    ask: await read(),
+  };
   await ana.page.click('#unasked');
-  await ana.page.waitForFunction(() => document.getElementById('out').dataset.state?.startsWith('unasked'), null, { timeout: 120_000 }).catch(() => {});
+  await ana.page
+    .waitForFunction(
+      () => document.getElementById('out').dataset.state?.startsWith('unasked'),
+      null,
+      { timeout: 120_000 },
+    )
+    .catch(() => {});
   ana.other.unasked = await read();
   ana.other.unasked_at = now();
 }
 
 // What the home page lists of what apps use.
-const uses = (person) => home(person).then(() => person.page.waitForFunction(
-  () => [...document.querySelectorAll('#home section')].some((s) => s.querySelector('h2')?.textContent === 'What apps use' && s.querySelectorAll('p').length),
-  null, { timeout: 30_000 }).catch(() => {})).then(() => person.page.evaluate(
-  () => [...document.querySelectorAll('#home section')].find((s) => s.querySelector('h2')?.textContent === 'What apps use')?.innerText ?? null));
+const uses = (person) =>
+  home(person)
+    .then(() =>
+      person.page
+        .waitForFunction(
+          () =>
+            [...document.querySelectorAll('#home section')].some(
+              (s) =>
+                s.querySelector('h2')?.textContent === 'What apps use' &&
+                s.querySelectorAll('p').length,
+            ),
+          null,
+          { timeout: 30_000 },
+        )
+        .catch(() => {}),
+    )
+    .then(() =>
+      person.page.evaluate(
+        () =>
+          [...document.querySelectorAll('#home section')].find(
+            (s) => s.querySelector('h2')?.textContent === 'What apps use',
+          )?.innerText ?? null,
+      ),
+    );
 
 async function stop(last, first) {
   if (!(await last.page.$('#stop'))) await openPicks(last, 'to stop');
@@ -263,13 +387,24 @@ async function stop(last, first) {
   if (!before.stop) return (last.stopping = { pressed: false, before });
   const t0 = Date.now();
   await last.page.click('#stop');
-  await last.page.waitForFunction(() => document.getElementById('taste').dataset.state !== 'ranked', null, { timeout: 60_000 }).catch(() => {});
-  last.stopping = { pressed: true, at: new Date(t0).toISOString(), said: await showing(last.page), said_ms: Date.now() - t0 };
+  await last.page
+    .waitForFunction(() => document.getElementById('taste').dataset.state !== 'ranked', null, {
+      timeout: 60_000,
+    })
+    .catch(() => {});
+  last.stopping = {
+    pressed: true,
+    at: new Date(t0).toISOString(),
+    said: await showing(last.page),
+    said_ms: Date.now() - t0,
+  };
   if (AFTER_STOP) last.stopping.planted = execSync(AFTER_STOP).toString().trim();
   const t1 = Date.now();
   await last.page.reload({ timeout: 60_000 }).catch((e) => last.logs.push(`reload: ${e}`));
   last.stopping.again = await picks(last, t1);
-  last.stopping.stop_to_refused_ms = last.stopping.again.taste?.state?.startsWith('refused') ? Date.now() - t0 : null;
+  last.stopping.stop_to_refused_ms = last.stopping.again.taste?.state?.startsWith('refused')
+    ? Date.now() - t0
+    : null;
   if (last.home) last.stopping.uses = await uses(last);
   if (first !== last) first.after_stop = await openPicks(first, 'the other phone, after the stop');
 }
@@ -279,20 +414,30 @@ async function homeStop(ana) {
   const opened = await openPicks(ana, 'to say yes again');
   ana.home_stop = { opened, yes: await sayYes(ana) };
   ana.home_stop.uses_before = await uses(ana);
-  const button = ana.page.locator('#home section p', { hasText: /tonights-picks( \(movie-night\))? uses/ }).getByRole('button', { name: 'Stop' });
+  const button = ana.page
+    .locator('#home section p', { hasText: /tonights-picks( \(movie-night\))? uses/ })
+    .getByRole('button', { name: 'Stop' });
   if (!(await button.count())) return (ana.home_stop.pressed = false);
   const t0 = Date.now();
   ana.home_stop.at = new Date(t0).toISOString();
   // The page reloads itself once the stop is kept: read after that.
-  const kept = ana.page.waitForResponse((r) => r.url().endsWith('/choices') && r.request().method() === 'POST', { timeout: 60_000 });
+  const kept = ana.page.waitForResponse(
+    (r) => r.url().endsWith('/choices') && r.request().method() === 'POST',
+    { timeout: 60_000 },
+  );
   const reloaded = ana.page.waitForEvent('load', { timeout: 60_000 }).catch(() => {});
   await button.first().click();
-  ana.home_stop.answer = await kept.then((r) => r.status(), (e) => String(e));
+  ana.home_stop.answer = await kept.then(
+    (r) => r.status(),
+    (e) => String(e),
+  );
   await reloaded;
   ana.home_stop.uses_after = await uses(ana);
   await openFrom(ana, PICKS, '#taste');
   ana.home_stop.after = await picks(ana, Date.now());
-  ana.home_stop.stop_to_refused_ms = ana.home_stop.after.taste?.state?.startsWith('refused') ? Date.now() - t0 : null;
+  ana.home_stop.stop_to_refused_ms = ana.home_stop.after.taste?.state?.startsWith('refused')
+    ? Date.now() - t0
+    : null;
 }
 
 async function asleep(ana) {

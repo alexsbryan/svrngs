@@ -17,21 +17,37 @@ import { arrived, launch } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const { context, close } = await launch(args.engine, { unopened: true });
-const said = async (page) => ({ url: page.url(), title: await page.title(), text: (await page.locator('body').innerText()).slice(0, 400) });
+const said = async (page) => ({
+  url: page.url(),
+  title: await page.title(),
+  text: (await page.locator('body').innerText()).slice(0, 400),
+});
 const seen = {};
 try {
   const page = await context.newPage();
-  for (const [key, at] of [['fresh_home', args.home], ['fresh_lend', args.lend]]) {
+  for (const [key, at] of [
+    ['fresh_home', args.home],
+    ['fresh_lend', args.lend],
+  ]) {
     await page.goto(at);
     seen[key] = await said(page);
   }
   await page.goto(args.open);
-  await page.locator('#home table.index a', { hasText: args.words }).first().waitFor({ timeout: 60_000 });
+  await page
+    .locator('#home table.index a', { hasText: args.words })
+    .first()
+    .waitFor({ timeout: 60_000 });
   seen.opened = page.url();
-  const [tab] = await Promise.all([context.waitForEvent('page'), page.locator('#home table.index a', { hasText: args.words }).first().click()]);
+  const [tab] = await Promise.all([
+    context.waitForEvent('page'),
+    page.locator('#home table.index a', { hasText: args.words }).first().click(),
+  ]);
   await arrived(tab);
   seen.lend = await said(tab);
-  for (const [key, at] of [['home_again', args.home], ['lend_again', args.lend]]) {
+  for (const [key, at] of [
+    ['home_again', args.home],
+    ['lend_again', args.lend],
+  ]) {
     await tab.goto(at);
     seen[key] = await said(tab);
   }

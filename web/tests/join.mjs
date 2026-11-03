@@ -45,7 +45,12 @@ async function scan() {
   const key = await store.unseal(group);
   const hex = [...key].map((b) => b.toString(16).padStart(2, '0')).join('');
   const b64 = btoa(String.fromCharCode(...key));
-  const spelled = [hex, b64, b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''), key.join(',')];
+  const spelled = [
+    hex,
+    b64,
+    b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''),
+    key.join(','),
+  ];
   const holds = (bytes) => {
     for (let i = 0; i + key.length <= bytes.length; i++) {
       if (key.every((b, j) => bytes[i + j] === b)) return true;
@@ -61,8 +66,10 @@ async function scan() {
       return holds(new Uint8Array(v.buffer, v.byteOffset, v.byteLength)) && found.push(where);
     }
     if (typeof v === 'string') return spelled.some((s) => v.includes(s)) && found.push(where);
-    if (Array.isArray(v) && v.every((n) => Number.isInteger(n))) return holds(v) && found.push(where);
-    if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) walk(`${where}.${k}`, x);
+    if (Array.isArray(v) && v.every((n) => Number.isInteger(n)))
+      return holds(v) && found.push(where);
+    if (v && typeof v === 'object')
+      for (const [k, x] of Object.entries(v)) walk(`${where}.${k}`, x);
   };
   const all = (db, name, how) =>
     new Promise((done, fail) => {
@@ -85,7 +92,10 @@ async function scan() {
     }
     db.close();
   }
-  for (const [label, area] of [['localStorage', localStorage], ['sessionStorage', sessionStorage]]) {
+  for (const [label, area] of [
+    ['localStorage', localStorage],
+    ['sessionStorage', sessionStorage],
+  ]) {
     for (let i = 0; i < area.length; i++) {
       const k = area.key(i);
       walk(`${label}[${k}]`, `${k}=${area.getItem(k)}`);
@@ -117,7 +127,9 @@ try {
     await page.goto(url);
     const settled = () =>
       page.waitForFunction(
-        () => !document.getElementById('join').hidden || /good|bad/.test(document.getElementById('status').className),
+        () =>
+          !document.getElementById('join').hidden ||
+          /good|bad/.test(document.getElementById('status').className),
         null,
         { timeout: 90_000 },
       );
@@ -142,25 +154,41 @@ try {
     // What one look takes in once in, in Ana's twenty words
     // (demo/xenia/people/ana.md), as page.mjs `firstLook` reads it.
     const look = await firstLook(page, 20);
-    return page.evaluate(([asked, why, look]) => ({
-      look,
-      // Who made the group and since when, heading its people.
-      whose: document.querySelector('#door > p')?.textContent ?? null,
-      asked,
-      why,
-      status: document.getElementById('status').textContent,
-      // Each row's words, then apart the address it gives to keep
-      // (question.js `keeping`).
-      lent: [...document.querySelectorAll('#lent button')].map((b) => [...b.parentElement.childNodes].filter((n) => !n.matches?.('small.keep')).map((n) => n.textContent).join('').trim()),
-      kept: [...document.querySelectorAll('#lent small.keep')].map((k) => k.textContent),
-      // What is folded, by its heading, and whether the group's things come
-      // before its people (the operator, 2026-10-26: the page after joining).
-      folded: [...document.querySelectorAll('#shelf details, #acts details')].filter((d) => !d.open).map((d) => d.querySelector('summary').textContent),
-      leads: Boolean(document.querySelector('table.index').compareDocumentPosition(document.getElementById('door')) & Node.DOCUMENT_POSITION_FOLLOWING),
-      answer: document.getElementById('response').textContent,
-      said: window.__said,
-      lines: window.__lines,
-    }), [asked, why, look]);
+    return page.evaluate(
+      ([asked, why, look]) => ({
+        look,
+        // Who made the group and since when, heading its people.
+        whose: document.querySelector('#door > p')?.textContent ?? null,
+        asked,
+        why,
+        status: document.getElementById('status').textContent,
+        // Each row's words, then apart the address it gives to keep
+        // (question.js `keeping`).
+        lent: [...document.querySelectorAll('#lent button')].map((b) =>
+          [...b.parentElement.childNodes]
+            .filter((n) => !n.matches?.('small.keep'))
+            .map((n) => n.textContent)
+            .join('')
+            .trim(),
+        ),
+        kept: [...document.querySelectorAll('#lent small.keep')].map((k) => k.textContent),
+        // What is folded, by its heading, and whether the group's things come
+        // before its people (the operator, 2026-10-26: the page after joining).
+        folded: [...document.querySelectorAll('#shelf details, #acts details')]
+          .filter((d) => !d.open)
+          .map((d) => d.querySelector('summary').textContent),
+        leads: Boolean(
+          document
+            .querySelector('table.index')
+            .compareDocumentPosition(document.getElementById('door')) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+        ),
+        answer: document.getElementById('response').textContent,
+        said: window.__said,
+        lines: window.__lines,
+      }),
+      [asked, why, look],
+    );
   };
 
   // With `hint` told, for a link that asks a name (a device link joins as
@@ -172,11 +200,22 @@ try {
   for (const standalone of probe ? [false, true, undefined] : []) {
     const other = await launch(args.engine);
     try {
-      await other.context.addInitScript((s) => Object.defineProperty(Navigator.prototype, 'standalone', { get: () => s, configurable: true }), standalone);
+      await other.context.addInitScript(
+        (s) =>
+          Object.defineProperty(Navigator.prototype, 'standalone', {
+            get: () => s,
+            configurable: true,
+          }),
+        standalone,
+      );
       const p = await other.context.newPage();
       await p.goto(link);
-      await p.waitForFunction(() => !document.getElementById('join').hidden, null, { timeout: 90_000 });
-      hint[String(standalone)] = await p.evaluate(() => ((k) => (k.hidden ? null : k.textContent))(document.getElementById('keep')));
+      await p.waitForFunction(() => !document.getElementById('join').hidden, null, {
+        timeout: 90_000,
+      });
+      hint[String(standalone)] = await p.evaluate(() =>
+        ((k) => (k.hidden ? null : k.textContent))(document.getElementById('keep')),
+      );
     } finally {
       await other.close();
     }
@@ -192,8 +231,13 @@ try {
   if (alone.lent.length) {
     const away = (url) => inApp(url) && url.pathname === '/';
     await Promise.all([page.waitForURL(away, { timeout: 90_000 }), page.click('#lent button')]);
-    await page.waitForFunction(() => document.body?.innerText.includes('hi'), null, { timeout: 60_000 }).catch(() => {});
-    opened = { origin: new URL(page.url()).origin, text: await page.evaluate(() => document.body.innerText) };
+    await page
+      .waitForFunction(() => document.body?.innerText.includes('hi'), null, { timeout: 60_000 })
+      .catch(() => {});
+    opened = {
+      origin: new URL(page.url()).origin,
+      text: await page.evaluate(() => document.body.innerText),
+    };
   }
   console.log(JSON.stringify({ hint, first, stored, again, alone, opened, lines, logs }));
 } catch (e) {

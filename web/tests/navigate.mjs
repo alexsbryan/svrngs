@@ -20,11 +20,20 @@ import { arrived, launch } from './page.mjs';
 const args = JSON.parse(process.argv[2]);
 const { context, close } = await launch(args.engine);
 const answered = [];
-context.on('response', (r) => r.request().isNavigationRequest() && answered.push(`${r.request().method()} ${r.url()} ${r.status()}`));
+context.on(
+  'response',
+  (r) =>
+    r.request().isNavigationRequest() &&
+    answered.push(`${r.request().method()} ${r.url()} ${r.status()}`),
+);
 const follow = async (page, href) => {
   await Promise.all([
     page.waitForEvent('load'),
-    page.evaluate((href) => Object.assign(document.body.appendChild(document.createElement('a')), { href }).click(), href),
+    page.evaluate(
+      (href) =>
+        Object.assign(document.body.appendChild(document.createElement('a')), { href }).click(),
+      href,
+    ),
   ]);
   await arrived(page);
 };
@@ -38,8 +47,22 @@ try {
   for (const plain of args.into) {
     const to = reads.lends.find((l) => l.address.startsWith(plain))?.address ?? plain;
     await page.goto(args.url);
-    const bare = await page.evaluate((to) => fetch(`${to}bare`).then((r) => r.status, (e) => `${e}`), plain);
-    const fetched = await page.evaluate((to) => fetch(`${to}fetched`).then((r) => r.status, (e) => `${e}`), to);
+    const bare = await page.evaluate(
+      (to) =>
+        fetch(`${to}bare`).then(
+          (r) => r.status,
+          (e) => `${e}`,
+        ),
+      plain,
+    );
+    const fetched = await page.evaluate(
+      (to) =>
+        fetch(`${to}fetched`).then(
+          (r) => r.status,
+          (e) => `${e}`,
+        ),
+      to,
+    );
     const framed = await page.evaluate(
       (to) =>
         new Promise((done) => {
@@ -53,7 +76,10 @@ try {
     await Promise.all([
       page.waitForEvent('load'),
       page.evaluate((to) => {
-        const form = Object.assign(document.body.appendChild(document.createElement('form')), { method: 'post', action: `${to}posted` });
+        const form = Object.assign(document.body.appendChild(document.createElement('form')), {
+          method: 'post',
+          action: `${to}posted`,
+        });
         form.submit();
       }, to),
     ]);
