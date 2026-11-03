@@ -265,6 +265,7 @@ def main():
         if not all(origin.values()): sys.exit(f"notes never listed: {origin}")
         summary["before"] = {w: watch_lend(w, origin[w], "Ana's notes", time.time(), 60)["works_ms"] for w in origin}
         wait(lambda: all(home_now(w) for w in people), 60)
+        time.sleep(30)  # settled: past each computer's first ask and iroh's next report (take 2 read Alex's home 2 s after a move)
         summary["homes_before"] = {w: home_now(w) for w in people}
         summary["tiers_before"] = {w: tiers(w) and tiers(w)[-1][1] for w in people}
         say("before", homes=summary["homes_before"], tiers=summary["tiers_before"], works=summary["before"])
@@ -325,8 +326,10 @@ def main():
             text = redact(f.read_text(errors="replace"))
             if f.suffix == ".log":
                 ls = text.splitlines()
+                held = [re.search(r"^(\S+).*?peer=(\w+) alpn=(\w+) known=(\[.*?\])", l) for l in ls if "iroh holding these addresses" in l]
                 summary["traces"][f.stem] = {"lines": len(ls), "warn_error": sum(1 for l in ls if " WARN " in l or " ERROR " in l),
-                                             "asks": sum(1 for l in ls if "whether any of the groups' own relays answers" in l)}
+                                             "asks": sum(1 for l in ls if "whether any of the groups' own relays answers" in l),
+                                             "dials_held": [m.groups() for m in held if m]}
             with gzip.open(OUT / f"{f.name}.gz", "wt") as g: g.write(text)
         summary["end"] = {"load": os.getloadavg()[0], "t": round(time.time(), 3)}
         (OUT / "summary.json").write_text(redact(json.dumps(summary, indent=1, default=str)))
