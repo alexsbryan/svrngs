@@ -86,7 +86,7 @@ The rows run in order, since all of them touch the same files.
     - **Plant:** with the held read, the old `settled` fails `home_group`'s make and join tests, and the fix passes them. The commit cites both runs.
     - **Then** the close's gate, as Pass below.
   - **Pass:** `scripts/check.sh` exits 0. `browser` passes in three gate runs, under the gate lock, at the load these lanes normally run at (AGENTS.md 7: one run is not a rate).
-- [ ] js-lint — depends [js-webkit] — ONE ROW, each part its own commit, `scripts/check.sh` once, at the close — the structural rules, each on with its hits fixed in the same commit:
+- [x] js-lint da5192c1 — depends [js-webkit] — ONE ROW, each part its own commit, `scripts/check.sh` once, at the close — the structural rules, each on with its hits fixed in the same commit:
   - **The scope.** `.oxlintrc.json` gains an `overrides` entry for the pages' code (CHARTER, "Scope"). The rest keeps today's rules.
   - **(a) Names:**
     - `id-length` (min 2; `i` and `_` excepted);
