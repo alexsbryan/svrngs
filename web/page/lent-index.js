@@ -1,16 +1,20 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // #lent: the index of what the group lends, a line each (lend-line.js),
 // drawn from the page's `lent`, so each read of the group draws it again.
-// A guest's lends are drawn first, in the same table (visit.js `listed`).
+// A guest's lends are drawn first, in the same table (guest-lends.js), only
+// while the visit is on, so the first state draws #lent empty as
+// web/index.html has it (frame.test.mjs).
 import { html } from '../ui/view.js?v=__VERSION__';
 import { Row } from '../ui/parts.js?v=__VERSION__';
 import { once } from '../question.js?v=__VERSION__';
+import { GuestLends } from './guest-lends.js?v=__VERSION__';
 import { LendLine } from './lend-line.js?v=__VERSION__';
-import { listed } from './visit.js?v=__VERSION__';
 /** @import { Props } from './page.js?v=__VERSION__' */
 
 /** @param {Props} props */
 export function LentIndex({ s: state, send }) {
+  const guests =
+    state.at.visit === 'on' && html`<${GuestLends} lent=${state.stay.lent} send=${send} />`;
   const lines = once(state.lent ?? []).map((lend) => {
     const line = html`<${LendLine} state=${state} lend=${lend} send=${send} />`;
     return html`<${Row} key=${lend.label} cells=${[line]} />`;
@@ -18,7 +22,7 @@ export function LentIndex({ s: state, send }) {
   return html`
     <table class="index">
       <tbody id="lent">
-        ${listed(state, send)}
+        ${guests}
         ${lines}
       </tbody>
     </table>

@@ -1,27 +1,23 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// A guest's visit (page-members (c); web/app.js `visit`, :198-226;
-// GUESTS §5, "How a visit is made"): a link a member made for a guest,
-// `#visit=<token>`. The guest's name is asked once, in #join, by
-// web/page/join.js's NameForm, which sends it here (`guest named`), a key made fresh for this visit, never one kept for a group
-// (§3.9), and the link redeemed at the member's computer, which writes the
-// visit. It is kept apart from every group (store.js `keepVisit`), so the
-// link opened again shows it again, or says it has ended. What the visit
-// opens is listed in #lent (`listed`, web/page/index.js's place), each open
-// a pass that lasts past the visit (app.js@19b63b2b:211), so the lender's door says it
-// has ended. The key never enters state: the edge holds it.
-import { html } from '../ui/view.js?v=__VERSION__';
+// A guest's visit (GUESTS §5, "How a visit is made"): a link a member made
+// for a guest, `#visit=<token>`. The guest's name is asked once, in #join,
+// by join.js's NameForm, which sends it here (`guest named`). The visit is
+// asked as a key made fresh for it, never one kept for a group (§3.9), and
+// the link is redeemed at the member's computer, which writes the visit.
+// It is kept apart from every group (store.js `keepVisit`), so the link
+// opened again shows it again, or says it has ended. What the visit opens
+// is listed first in #lent (guest-lends.js), each open a pass that lasts
+// past the visit (`call`), so the lender's door, not the page, says it has
+// ended. The key never enters state: the edge holds it.
 import { go, no } from '../ui/machine.js?v=__VERSION__';
-import { Row } from '../ui/parts.js?v=__VERSION__';
-import { named } from '../question.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
 import { patiently, saying, wasm } from './dial.js?v=__VERSION__';
 import { PASS_LIFE, handing } from './hand.js?v=__VERSION__';
 /** @import { Visit } from '../store.js?v=__VERSION__' */
 /** @import { Io, Step, Takes } from '../ui/machine.js?v=__VERSION__' */
-/** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 /** @import * as Wasm from '../wasm/svrngs_web.js?v=__VERSION__' */
 /** @import { Lent } from './enter.js?v=__VERSION__' */
-/** @import { At, Message as PageMessage, Nothing, Props, Said, State } from './page.js?v=__VERSION__' */
+/** @import { At, Message as PageMessage, Nothing, Said, State } from './page.js?v=__VERSION__' */
 
 /**
  * A visit as this page holds it: whose guest, until when, in seconds, and
@@ -83,20 +79,15 @@ export const takes = {
       { run: 'redeem', token: state.invited, guest, failed: 'failed' },
     ),
   ),
-  // Whether it has ended is the edge's, which alone reads the clock; one
+  // Whether it has ended is the edge's, which alone reads the clock. One
   // that has not ends on its timer (`over`), and its lends go from the
-  // page with it, where web/app.js listed them until the link was opened
-  // again (:221-224).
-  redeemed: at(['none', 'redeeming'], (state, { stay, ended }) =>
-    go(
-      state,
-      { visit: ended ? 'ended' : 'on' },
-      { stay },
-      ...(ended
-        ? []
-        : [/** @satisfies {Effect} */ ({ run: 'over', until: stay.until, failed: 'failed' })]),
-    ),
-  ),
+  // page with it.
+  redeemed: at(['none', 'redeeming'], (state, { stay, ended }) => {
+    if (ended) return go(state, { visit: 'ended' }, { stay });
+    /** @satisfies {Effect} */
+    const over = { run: 'over', until: stay.until, failed: 'failed' };
+    return go(state, { visit: 'on' }, { stay }, over);
+  }),
   ended: at(['on'], (state) => go(state, { visit: 'ended' })),
   called: (state) => go(state, {}),
   call: at(['on'], (state, { label }) =>
@@ -135,22 +126,10 @@ export const response = {
   visit: (state) =>
     state.at.visit === 'on' && !state.stay.lent.length && [`${host(state)} lends nothing yet.`],
 };
-/**
- * @param {State} state
- * @param {Props['send']} send
- */
-export const listed = (state, send) =>
-  state.at.visit === 'on' &&
-  state.stay.lent.map(
-    (lend) =>
-      html`<${Row} key=${lend.label} cells=${[html`<button onClick=${() => send({ type: 'call', label: lend.label })}>${named(lend)}</button>`]} />`,
-  );
-
 // The edge: the key, made here and kept sealed with the visit, or unsealed
-// from it; what the visit opens, each by its label, at the link's computer;
-// and the visit asked of it, dialled as the key, as web/app.js `post` does
-// (:110-117), its refusal by status (`joining`, :106).
-const said = (/** @type {string} */ words) => Promise.reject(saying(words));
+// from it; what the visit opens, each by its label, at the link's
+// computer; and the visit asked of it, dialled as the key, its refusal
+// said by its status.
 const failing = (/** @type {any} */ error) =>
   /** @satisfies {PageMessage} */ ({ type: 'failed', said: error.said, why: String(error) });
 // The visit's key, made or unsealed by `recall` or `redeem` before any
@@ -161,45 +140,41 @@ let key;
  * @param {typeof Wasm} core
  * @param {string} token
  * @param {Visit} visit
- * @param {string} [issuer]
  * @returns {PageMessage}
  */
-const stay = (core, token, visit, issuer = core.issuer_of(token)) => ({
-  type: 'redeemed',
-  ended: visit.until <= Date.now() / 1000,
-  why: `a guest of ${visit.host} until ${visit.until}, opening ${Object.keys(visit.lent).join(', ')}`,
-  stay: {
-    host: visit.host,
-    until: visit.until,
-    lent: Object.entries(visit.lent).map(([name, kind]) => ({
-      key: issuer,
-      relay: core.relay_of(token),
-      name,
-      kind,
-      person: visit.host,
-      version: visit.version,
-      label: core.label(issuer, name),
-    })),
-  },
-});
+const stay = (core, token, visit) => {
+  const issuer = core.issuer_of(token);
+  const lent = Object.entries(visit.lent).map(([name, kind]) => ({
+    key: issuer,
+    relay: core.relay_of(token),
+    name,
+    kind,
+    person: visit.host,
+    version: visit.version,
+    label: core.label(issuer, name),
+  }));
+  return {
+    type: 'redeemed',
+    ended: visit.until <= Date.now() / 1000,
+    why: `a guest of ${visit.host} until ${visit.until}, opening ${Object.keys(visit.lent).join(', ')}`,
+    stay: { host: visit.host, until: visit.until, lent },
+  };
+};
 /**
+ * The visit, asked of the computer that made the link as `guest`.
  * @param {typeof Wasm} core
  * @param {string} token
  * @param {string} guest
- * @param {Uint8Array<ArrayBuffer>} [bytes]
  * @returns {Promise<Visit>}
  */
-async function visiting(
-  core,
-  token,
-  guest,
-  bytes = new TextEncoder().encode(
-    JSON.stringify({ ask: JSON.parse(core.ask(/** @type {Uint8Array} */ (key), token)), guest }),
-  ),
-) {
+async function visiting(core, token, guest) {
+  const ask = JSON.parse(core.ask(/** @type {Uint8Array} */ (key), token));
+  const bytes = new TextEncoder().encode(JSON.stringify({ ask, guest }));
   const dialled = await patiently(
     core.connect_to_join(/** @type {Uint8Array} */ (key), token),
-  ).catch(() => said('The computer that sent this link did not answer. Try again later.'));
+  ).catch(() => {
+    throw saying('The computer that sent this link did not answer. Try again later.');
+  });
   // The wasm's `fetch` answers the page's `Response` (svrngs_web.d.ts `Dialled`).
   /** @type {Response} */
   const res = await dialled
@@ -213,46 +188,43 @@ async function visiting(
       new Blob([bytes]).stream(),
     )
     .finally(() => dialled.close());
-  return res.ok
-    ? res.json()
-    : said(
-        res.status === 403
-          ? 'This link lets nobody in. Ask for a new one.'
-          : 'The computer that sent this link cannot let anyone in just now. Try again later.',
-      );
+  if (res.ok) return res.json();
+  if (res.status === 403) throw saying('This link lets nobody in. Ask for a new one.');
+  throw saying('The computer that sent this link cannot let anyone in just now. Try again later.');
+}
+/**
+ * The visit kept for this link, its key unsealed, or `unkept` when none is.
+ * @param {string} token
+ * @returns {Promise<PageMessage>}
+ */
+async function recalling(token) {
+  const core = await wasm();
+  if (!core.relay_of(token)) {
+    throw saying('This link was made by an older svrngs. Ask whoever sent it for a new one.');
+  }
+  const kept = await store.visitOf(token);
+  if (!kept) return { type: 'unkept', why: 'no visit is kept for this link' };
+  key = kept.key;
+  return stay(core, token, kept);
+}
+/**
+ * The link redeemed as `guest` with a key made for it, and the visit kept
+ * sealed with that key.
+ * @param {string} token
+ * @param {string} guest
+ * @returns {Promise<PageMessage>}
+ */
+async function redeeming(token, guest) {
+  const core = await wasm();
+  key = crypto.getRandomValues(new Uint8Array(32));
+  const visit = await visiting(core, token, guest);
+  await store.keepVisit(token, visit, key);
+  return stay(core, token, visit);
 }
 /** @type {Io<Effect, PageMessage>} */
 export const io = {
-  recall: ({ token }) =>
-    wasm()
-      .then((core) =>
-        (core.relay_of(token)
-          ? store.visitOf(token)
-          : said('This link was made by an older svrngs. Ask whoever sent it for a new one.')
-        ).then((kept) =>
-          kept
-            ? ((key = kept.key), stay(core, token, kept))
-            : /** @satisfies {PageMessage} */ ({
-                type: 'unkept',
-                why: 'no visit is kept for this link',
-              }),
-        ),
-      )
-      .catch(failing),
-  redeem: ({ token, guest }) =>
-    wasm()
-      // `visit` is a local, held as a parameter no caller passes.
-      .then(
-        /** @type {(w: typeof Wasm) => Promise<PageMessage>} */ (
-          async (/** @type {typeof Wasm} */ core, /** @type {Visit | undefined} */ visit) => {
-            key = crypto.getRandomValues(new Uint8Array(32));
-            visit = await visiting(core, token, guest);
-            await store.keepVisit(token, visit, /** @type {Uint8Array<ArrayBuffer>} */ (key));
-            return stay(core, token, visit);
-          }
-        ),
-      )
-      .catch(failing),
+  recall: ({ token }) => recalling(token).catch(failing),
+  redeem: ({ token, guest }) => redeeming(token, guest).catch(failing),
   over: ({ until: ends }) =>
     new Promise((resolve) => setTimeout(resolve, ends * 1000 - Date.now())).then(() => ({
       type: 'ended',
