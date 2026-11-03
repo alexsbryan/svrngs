@@ -206,7 +206,8 @@ async function withClient(response) {
   const html = await response.text();
   const head = /<head[^>]*>/i.exec(html) ?? /<!doctype[^>]*>/i.exec(html);
   const at = head ? head.index + head[0].length : 0;
-  const script = `<script${nonce ? ` nonce="${nonce}"` : ''} src="/svrngs-session-client.js"></script>`;
+  const nonced = nonce ? ` nonce="${nonce}"` : '';
+  const script = `<script${nonced} src="/svrngs-session-client.js"></script>`;
   return new Response(html.slice(0, at) + script + html.slice(at), {
     status: response.status,
     statusText: response.statusText,

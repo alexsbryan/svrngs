@@ -41,7 +41,18 @@ export async function proof(key, request, epoch) {
     .map((byte) => byte.toString(16).padStart(2, '0'))
     .join('');
   const stamp = `${Math.floor(Date.now() / 1000)}.${nonce}`;
-  const message = `${url.host}\n${request.method}\n${url.pathname}${url.search}\n${stamp}\n${request.headers.get('x-svrngs-body') ?? ''}\n${request.headers.get('x-svrngs-intent') ?? ''}\n${epoch}`;
+  // A line each, in the order the node signs them over to check this
+  // proof (session.rs `Sessions::proved`, its `format!` of `message`).
+  const signed = [
+    url.host,
+    request.method,
+    `${url.pathname}${url.search}`,
+    stamp,
+    request.headers.get('x-svrngs-body') ?? '',
+    request.headers.get('x-svrngs-intent') ?? '',
+    epoch,
+  ];
+  const message = signed.join('\n');
   const tag = new Uint8Array(
     await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(message)),
   );
