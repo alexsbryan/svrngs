@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // Who is visiting now, both pages' (page-members (a); question.js
 // `visiting`, :43, which it moves; GUESTS §5 "The pages"), from the record,
 // as every member's page shows them: each guest, by host, until a day and
 // an hour, the host by the name the door gives them (`called`).
 import { html } from './view.js?v=__VERSION__';
 import { called, until } from '../question.js?v=__VERSION__';
+/** @import { Named } from '../question.js?v=__VERSION__' */
 
 /**
  * A guest visiting now: their name, whose guest, by name and first key,
@@ -13,5 +13,13 @@ import { called, until } from '../question.js?v=__VERSION__';
  * @typedef {{ guest: string, host: string, host_key?: string, until: number }} Visitor
  */
 
+/**
+ * Who is visiting, and the group's people, by whom each host is named.
+ * @typedef {object} VisitingProps
+ * @property {Visitor[]} vs
+ * @property {Named[]} [rows]
+ */
+
+/** @param {VisitingProps} props */
 export const Visiting = ({ vs, rows = [] }) =>
   html`<ul class="visiting">${[...vs].sort((a, b) => a.host.localeCompare(b.host)).map((v) => html`<li>${`${v.guest}, ${called(rows, v.host_key) ?? v.host}’s guest, until ${until(v)}`}</li>`)}</ul>`;
