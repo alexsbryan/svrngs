@@ -75,6 +75,13 @@
           {
             "max": 3
           }
+        ],
+        "complexity": [
+          "error",
+          {
+            "max": 10,
+            "variant": "modified"
+          }
         ]
       }
     }

@@ -186,6 +186,106 @@ const HOW = {
   behind: 'runs an older svrngs, so what they lend is not listed',
 };
 
+/** @typedef {Extract<Message, { type: 'looked' }>} Looked */
+/** @typedef {Step<State, Effect | Send>} Stepped */
+
+// A link's token: the fragment's first part, unless it names a part.
+/** @param {string} fragment */
+const tokenOf = (fragment) => {
+  // `split` always answers one part.
+  const first = /** @type {string} */ (fragment.split('&')[0]);
+  return first.includes('=') ? '' : first;
+};
+
+// Why a fragment cannot be read: a part this page does not read, or a
+// token svrngs-core cannot (`linked`). None when it can be.
+/**
+ * @param {URLSearchParams} parts
+ * @param {string} token
+ * @param {boolean} linked
+ */
+const unreadableIn = (parts, token, linked) => {
+  const unread = [...parts.keys()].filter((key) => key !== token && !READ.includes(key));
+  if (unread.length)
+    return `This address asks for something this page can’t read: ${unread.join(', ')}. Open your group’s link again.`;
+  if (token && !linked)
+    return 'This link isn’t one svrngs can read. Ask whoever sent it for a new one.';
+  return null;
+};
+
+// What the address wants opened or asked, when it names either.
+/** @param {URLSearchParams} parts */
+const wantsOf = (parts) =>
+  parts.has('open') || parts.has('ask') ? /** @type {Wants} */ (Object.fromEntries(parts)) : null;
+
+// The groups kept whose addresses, as last read, hold the lend `#open=` names.
+/**
+ * @param {Group[]} kept
+ * @param {Wants | null} wants
+ */
+const lendingIn = (kept, wants) =>
+  wants?.open
+    ? kept.filter((group) => group.addresses?.includes(/** @type {string} */ (wants.open)))
+    : [];
+
+// A readable address, `parts`, with its `token` if any: the group it
+// opens, held, or each group offered that lends what it opens, or the
+// link's join; else said why not.
+/**
+ * @param {State} state
+ * @param {Looked} message
+ * @param {URLSearchParams} parts
+ * @param {string} token
+ * @returns {Stepped}
+ */
+const addressed = (state, { kept }, parts, token) => {
+  const wants = wantsOf(parts);
+  const offer = token ? [sending('offer', { token })] : [];
+  const lending = lendingIn(kept, wants);
+  // Lent in a group, `wants` names what is open (`lending`).
+  if (!token && lending.length > 1)
+    return go(
+      state,
+      {},
+      {},
+      sending('among', {
+        groups: lending,
+        wants: /** @type {Wants} */ (wants),
+        why: `#open=${/** @type {Wants} */ (wants).open} is lent in ${lending.length} of the ${kept.length} groups held here`,
+      }),
+    );
+  const group = token ? kept.find((one) => one.token === token) : (lending[0] ?? kept[0]);
+  if (group)
+    return ((result) => ({ ...result, effects: [...offer, ...result.effects] }))(
+      // `hold` reads only the group and what the address wants.
+      takes.hold(state, /** @type {Extract<Message, { type: 'hold' }>} */ ({ group, wants })),
+    );
+  if (token) return go(state, {}, {}, ...offer, sending('join', { token, kept, wants }));
+  return ungrouped(state, wants);
+};
+
+// An address that opens no group kept here: the lend asked for where
+// this browser may (`fine`), else said why not.
+/**
+ * @param {State} state
+ * @param {Wants | null} wants
+ * @returns {Stepped}
+ */
+const ungrouped = (state, wants) => {
+  if (wants?.open && state.fine) return go(state, {}, {}, sending('opens', { wants }));
+  return go(
+    state,
+    {},
+    {},
+    ...(wants ? [] : [sending('offer', { token: '' })]),
+    say(
+      wants?.open
+        ? 'This browser hasn’t joined your group yet, so it can’t open this. Open your group’s link from the chat here first, then this again.'
+        : 'Open this page from your group’s link.',
+    ),
+  );
+};
+
 /** @type {Takes<State, Message, Effect | Send>} */
 export const takes = {
   start: (state, { fragment }) => go(state, {}, {}, { run: 'look', fragment, failed: 'failed' }),
@@ -193,7 +293,8 @@ export const takes = {
   // page cannot read, or a token svrngs-core cannot, is said, never joined
   // (app.js@19b63b2b:681-687). `#open=` opens in the group whose addresses, as last
   // read, hold it: one, or each offered when more do (`among`).
-  looked: (state, { fragment, cold, missing, linked, kept }) => {
+  looked: (state, message) => {
+    const { fragment, cold, missing, linked } = message;
     if (cold) return go(state, {}, {}, sending('cold'));
     if (missing)
       return go(
@@ -205,62 +306,10 @@ export const takes = {
     if (fragment.startsWith('visit='))
       return go(state, {}, {}, sending('visit', { token: fragment.slice('visit='.length) }));
     const parts = new URLSearchParams(fragment);
-    // `split` always answers one part.
-    const first = /** @type {string} */ (fragment.split('&')[0]);
-    const token = first.includes('=') ? '' : first;
-    const unread = [...parts.keys()].filter((key) => key !== token && !READ.includes(key));
-    if (unread.length)
-      return go(
-        state,
-        {},
-        {},
-        say(
-          `This address asks for something this page can’t read: ${unread.join(', ')}. Open your group’s link again.`,
-        ),
-      );
-    if (token && !linked)
-      return go(
-        state,
-        {},
-        {},
-        say('This link isn’t one svrngs can read. Ask whoever sent it for a new one.'),
-      );
-    const wants = parts.has('open') || parts.has('ask') ? Object.fromEntries(parts) : null;
-    const offer = token ? [sending('offer', { token })] : [];
-    const lending = wants?.open
-      ? kept.filter((group) => group.addresses?.includes(/** @type {string} */ (wants.open)))
-      : [];
-    // Lent in a group, `wants` names what is open (`lending`).
-    if (!token && lending.length > 1)
-      return go(
-        state,
-        {},
-        {},
-        sending('among', {
-          groups: lending,
-          wants: /** @type {Wants} */ (wants),
-          why: `#open=${/** @type {Wants} */ (wants).open} is lent in ${lending.length} of the ${kept.length} groups held here`,
-        }),
-      );
-    const group = token ? kept.find((one) => one.token === token) : (lending[0] ?? kept[0]);
-    if (group)
-      return ((result) => ({ ...result, effects: [...offer, ...result.effects] }))(
-        // `hold` reads only the group and what the address wants.
-        takes.hold(state, /** @type {Extract<Message, { type: 'hold' }>} */ ({ group, wants })),
-      );
-    if (token) return go(state, {}, {}, ...offer, sending('join', { token, kept, wants }));
-    if (wants?.open && state.fine) return go(state, {}, {}, sending('opens', { wants }));
-    return go(
-      state,
-      {},
-      {},
-      ...(wants ? [] : [sending('offer', { token: '' })]),
-      say(
-        wants?.open
-          ? 'This browser hasn’t joined your group yet, so it can’t open this. Open your group’s link from the chat here first, then this again.'
-          : 'Open this page from your group’s link.',
-      ),
-    );
+    const token = tokenOf(fragment);
+    const unreadable = unreadableIn(parts, token, linked);
+    if (unreadable) return go(state, {}, {}, say(unreadable));
+    return addressed(state, message, parts, token);
   },
   // One tab at a time reaches a group (app.js@19b63b2b:375-384): the one holding its lock.
   hold: (state, { group, wants = null, joined = false }) =>
