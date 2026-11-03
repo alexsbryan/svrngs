@@ -77,3 +77,12 @@ queue's `page-parity-4` and `-5` gates failed this test as well.
   than for the first frame with no "…".
 
 Either way, the first step is a traced run that names the frame (AGENTS.md 2).
+
+**Again, on the make path** (js-webkit-5's gate at af3fd04a;
+`demo/runs/webkit-wall/2026-11-03/home-group-gate-2.txt`).
+`the_home_page_makes_a_group_another_computer_joins_with_no_restart::webkit`
+failed at `home_group.rs:205`: the read after "Make a group" had "You made
+Trip.", Trip's heading with no folder line under it, and "Reading your
+groups…". Every other step of that gate passed, `browser` in 162 s. Both
+gates since js-webkit (c) failed only on this race, so js-webkit's pass
+(`scripts/check.sh` exits 0) waits on this choice.

@@ -193,3 +193,29 @@ read (`page/acts.js:328`). Rerun alone three times under the gate lock at
 28fef69a, at loads of 9-11, it passed each time (`home-group-gate.txt`). It
 is no `browser` test, and this row changes no page byte. It goes to the
 operator (`ralph/next/js/NEEDS_HUMAN.md`) and is not fixed here.
+
+## The gate after af3fd04a: the same race, on the make path
+
+js-webkit-5's `lockf -k /tmp/svrngs-gate.lock bash scripts/check.sh` at
+af3fd04a (910 s) passed every step but `tests`: `browser` in 162 s,
+`scenes`, the conformance canary, the app laws. `tests` failed one test,
+another of `home_group`'s five:
+`the_home_page_makes_a_group_another_computer_joins_with_no_restart::webkit`
+at `home_group.rs:205`, no "Trip’s folder is on this computer at …" in the
+read after "Make a group" was pressed. `home-group-gate-2.txt` holds that
+read and the page's `window.__lines`.
+
+The read is the one above, made by a different press: "You made Trip.",
+Trip's heading with nothing under it, Lab and lab whole, and "Reading your
+groups…" under "What acts as you". The trace has `HOME: made: read/none ->
+read/made` and then `HOME: again: read/made -> rereading/made, running
+groups`; Trip's folder line is drawn only once `HOME: told (Trip: people
+read, lends read)` comes, later in the same trace. So `settled` passed on a
+frame before Trip was read, and the read came after the page had started
+reading its groups again. Which frame `settled` passed on, these runs still
+do not show.
+
+Two of the two gates since (c) failed `tests` on this race, each on a
+different `home_group` test, and passed `browser`. The row's pass,
+`scripts/check.sh` exiting 0, waits on the operator's choice in
+`ralph/next/js/NEEDS_HUMAN.md`.
