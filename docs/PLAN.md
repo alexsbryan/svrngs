@@ -316,6 +316,17 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   carried-trace.txt`). Such a write goes out without waiting for that
   round. Its test: a group with one computer asleep, a phone's yes, and
   the app opened at once on another computer;
+- welcoming a room of laptop users, after the JavaScript queue closes
+  (the operator, 2026-11-03: "let's document the plan"; `ONBOARDING.md`):
+  a member makes and closes a public, temporary, easy-to-type address from
+  their group page. Each person gives their name once, installs svrngs and
+  opens the actual shared folder to contribute a text file, with a haiku as
+  an optional welcome prompt. This is a self-service feature, not an address
+  an operator deploys per gathering. Its source survey estimates +215 to
+  +386 non-JavaScript and +330 to +560 JavaScript lines, with any +0 to +16
+  core lines included in the former. Neither the caps nor the durable
+  resolver's hosting/storage choice is approved by this plan. Reuse and
+  economize first; its acceptance scene is `ONBOARDING.md` §6;
 - sealing, at its §2 trigger.
 
 The operator's switch stands apart from that order: when they flip
