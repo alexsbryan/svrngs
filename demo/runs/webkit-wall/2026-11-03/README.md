@@ -138,6 +138,12 @@ rare: 2 of the 4 full steps since (b). And it is not only the test's.
   other computers up to 4 s late. Opened at once on one of them, the app
   runs as before. Reopened a little later, it runs as the yes asked.
 
+- **Tried, not kept:** the test's `node(…, &bo)` replaced by `seeded`
+  and `from_a_phone(&ada, "bo", 7)`, so bo is admitted as a phone. Solo
+  under the gate lock, both engines passed in 27.59 s (51.35 s before),
+  and its 12 rounds took 8-70 ms each. That is one run, so not yet a
+  rate (AGENTS.md 7).
+
 Not fixed in this queue: the fix is a fixture change (fence 3) or a
 change to the node's round, and neither is this row's to choose,
 so it is the operator's question (js-webkit-2's package).
