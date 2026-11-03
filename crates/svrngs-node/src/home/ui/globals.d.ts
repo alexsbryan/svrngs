@@ -7,9 +7,3 @@
 // `var`, since only a `var` is a property of globalThis; `let` would not be.
 // oxlint-disable-next-line no-var
 declare var __trace: ((line: string) => void) | undefined;
-
-// iPhone Safari's own: false outside a Home Screen web app, and absent in
-// every other browser (web/page/join.js `NameForm`), so no lib declares it.
-interface Navigator {
-  readonly standalone?: boolean;
-}

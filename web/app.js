@@ -57,7 +57,12 @@ const parts = compose({
 const page = machine(
   'PAGE',
   parts,
-  parts.first({ fine: matchMedia('(pointer: fine)').matches, standalone: navigator.standalone }),
+  parts.first({
+    fine: matchMedia('(pointer: fine)').matches,
+    // iPhone Safari's own: false outside a Home Screen web app, absent in
+    // every other browser (web/page/join.js `NameForm`), so no lib declares it.
+    standalone: /** @type {Navigator & { standalone?: boolean }} */ (navigator).standalone,
+  }),
   [{ run: 'init', failed: 'failed' }],
 );
 // web/index.html holds #page.
