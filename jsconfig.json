@@ -24,5 +24,10 @@
     // The vendored declarations are Preact's and htm's, checked upstream.
     "skipLibCheck": true
   },
-  "include": ["web/*.js", "web/page/*.js", "crates/svrngs-node/src/home/**/*.js"]
+  "include": [
+    "web/*.js",
+    "web/page/*.js",
+    "crates/svrngs-node/src/home/**/*.js",
+    "crates/svrngs-node/src/home/ui/globals.d.ts"
+  ]
 }
