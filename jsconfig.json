@@ -25,7 +25,7 @@
     "skipLibCheck": true
   },
   // The service workers are jsconfig.workers.json's, in a worker's global.
-  "exclude": ["web/sw.js", "web/lend.js"],
+  "exclude": ["web/sw.js", "web/lend.js", "crates/svrngs-node/src/home/session-worker.js"],
   "include": [
     "web/*.js",
     "web/page/*.js",

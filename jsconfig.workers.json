@@ -1,5 +1,6 @@
 {
-  // The service workers, web/sw.js and web/lend.js, checked as jsconfig.json
+  // The service workers, web/sw.js, web/lend.js and the session's
+  // (crates/svrngs-node/src/home/session-worker.js), checked as jsconfig.json
   // checks the pages, in the global they run in: a worker's, whose lib
   // declares `FetchEvent`, `Clients` and `ServiceWorkerGlobalScope` and no
   // `document`. scripts/types.mjs reads it after jsconfig.json, and reports
@@ -9,5 +10,10 @@
     "lib": ["es2024", "webworker"]
   },
   "exclude": [],
-  "include": ["web/sw.js", "web/lend.js", "crates/svrngs-node/src/home/ui/globals.d.ts"]
+  "include": [
+    "web/sw.js",
+    "web/lend.js",
+    "crates/svrngs-node/src/home/session-worker.js",
+    "crates/svrngs-node/src/home/ui/globals.d.ts"
+  ]
 }
