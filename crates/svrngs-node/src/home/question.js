@@ -190,6 +190,8 @@ export const unasked = (lend) =>
 // page its group's (onair-economize (d), REVIEW_FINDINGS #113).
 export const unlent = 'That app, or what it asks to use, is not lent here now.';
 
+const MONTHS = 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ');
+
 // A day, from seconds, in this computer's or phone's time, or in UTC when
 // `utc`: its number and its month's first three letters, "3 Oct", as the
 // command says it (chrono's `%-d %b`, cli.rs `namesakes_said`), never the
@@ -198,8 +200,11 @@ export const unlent = 'That app, or what it asks to use, is not lent here now.';
  * @param {number} seconds
  * @param {boolean} [utc]
  */
-const day = (seconds, utc, date = new Date(seconds * 1000)) =>
-  `${utc ? date.getUTCDate() : date.getDate()} ${'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[utc ? date.getUTCMonth() : date.getMonth()]}`;
+export const day = (seconds, utc) => {
+  const date = new Date(seconds * 1000);
+  const month = utc ? date.getUTCMonth() : date.getMonth();
+  return `${utc ? date.getUTCDate() : date.getDate()} ${MONTHS[month]}`;
+};
 
 // When someone joined, as both pages tell two of one name apart: its day
 // in UTC, one for everyone, as a lend's alias carries it from one person's

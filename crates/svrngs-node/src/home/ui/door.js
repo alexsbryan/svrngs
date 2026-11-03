@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// The door, both pages' (page-members (a); question.js `people` and `door`,
-// :151-188, which it moves; V1_UI_BUILD §3.1): each person once, a cell in
+// The door, both pages' (svrn-docs V1_UI_BUILD §3.1): each person once, a cell in
 // a grid, in the order they joined, whoever started the group first, so no
 // window moves as people arrive; two of one name told apart by when each
 // joined, in the form `svrngs remove --joined` takes (home.rs `WHEN`),
@@ -10,9 +9,10 @@
 // answers, drawn off when it did not, and one in only from a phone marked
 // so, with no presence claimed. Given `lent`, as the screen gives it, each
 // person's own lends in their window, a link each, opened in a tab, the
-// screen's `newest` marked new (home.js@19b63b2b:322); an app the group carries is
-// the group's, in nobody's window. `counted` is what the screen counts of
-// it (home.js@19b63b2b:324): its people, those on now, and the things in their windows.
+// screen's `newest` marked new; an app the group carries is the group's,
+// in nobody's window. `counted` is what the screen counts of it
+// (group-screen.js): its people, those on now, and the things in their
+// windows.
 import { html } from './view.js?v=__VERSION__';
 import { called } from '../question.js?v=__VERSION__';
 /** @import { Joined, Named, PeopleRow } from '../question.js?v=__VERSION__' */
@@ -39,8 +39,15 @@ import { called } from '../question.js?v=__VERSION__';
  */
 
 const since = (/** @type {Named} */ person) => (person.joined === 'started' ? 0 : person.joined.at);
-const at = (/** @type {Date} */ date, minutes = -date.getTimezoneOffset()) =>
-  `${date.toLocaleString('sv-SE')} ${minutes < 0 ? '-' : '+'}${String(Math.trunc(Math.abs(minutes) / 60) * 100 + (Math.abs(minutes) % 60)).padStart(4, '0')}`;
+// A time as `svrngs remove --joined` takes it: this computer's, then its
+// offset from UTC as ±hhmm.
+/** @param {Date} date */
+const at = (date) => {
+  const minutes = -date.getTimezoneOffset();
+  const sign = minutes < 0 ? '-' : '+';
+  const hhmm = Math.trunc(Math.abs(minutes) / 60) * 100 + (Math.abs(minutes) % 60);
+  return `${date.toLocaleString('sv-SE')} ${sign}${String(hhmm).padStart(4, '0')}`;
+};
 const when = (/** @type {Joined} */ joined) =>
   joined === 'started' ? 'started the group' : `joined ${at(new Date(joined.at * 1000))}`;
 // Each person once, with their name as the door says it and what holds their keys.
@@ -98,7 +105,7 @@ function judged(person, devices, lends) {
   return [drawn, words + phone];
 }
 
-// A person's window: their name, their own lends, and how they are judged.
+// A person's own lends in their window, each a link, the newest marked new.
 /**
  * @param {PeopleRow[]} rows
  * @param {DoorLent[]} lent
@@ -111,23 +118,27 @@ const theirs = (rows, lent, person, newest) =>
       (lend) =>
         !lend.group && rows.find((row) => row.key === lend.key)?.person_key === person.person_key,
     )
-    .map(
-      (lend) =>
-        html`${' '}<a href=${lend.origin} target="_blank">${lend.name}</a>${lend.origin === newest && html`${' '}<mark>new</mark>`}`,
-    );
+    .map((lend) => {
+      const fresh = lend.origin === newest && html`${' '}<mark>new</mark>`;
+      return html`${' '}<a href=${lend.origin} target="_blank">${lend.name}</a>${fresh}`;
+    });
+
+// A person's cell: their name, their own lends, then how they are judged.
 /**
- * @param {PeopleRow[]} rows
- * @param {DoorLent[]} lent
- * @param {Unanswered | null} [lends]
- * @param {string} [newest]
+ * @param {DoorProps & { lent: DoorLent[] }} door
+ * @param {Person} person
  */
-const cell =
-  (rows, lent, lends, newest) =>
-  (
-    /** @type {Person} */ [person, name, devices],
-    [drawn, words] = judged(person, devices, lends),
-  ) =>
-    html`<li class=${drawn || undefined}><strong>${name}</strong>${theirs(rows, lent, person, newest)}${' '}<small>${words}</small></li>`;
+const cell = ({ rows, lent, lends, newest }, [person, name, devices]) => {
+  const [drawn, words] = judged(person, devices, lends);
+  const lending = theirs(rows, lent, person, newest);
+  return html`
+    <li class=${drawn || undefined}>
+      <strong>${name}</strong>
+      ${lending}${' '}<small>${words}</small>
+    </li>
+  `;
+};
+
 /**
  * The door's props: the group's people rows; its lends, none when the
  * page gives none; what it judges by, `undefined` unread and `null`
@@ -140,17 +151,20 @@ const cell =
  */
 
 /** @param {DoorProps} props */
-export const Door = ({ rows, lent = [], lends, newest }) =>
-  html`<ul class="door">${people(rows).map((person) => cell(rows, lent, lends, newest)(person))}</ul>`;
+export function Door({ rows, lent = [], lends, newest }) {
+  const cells = people(rows).map((person) => cell({ rows, lent, lends, newest }, person));
+  return html`<ul class="door">${cells}</ul>`;
+}
+
 /**
  * @param {PeopleRow[]} rows
  * @param {DoorLent[]} lent
  * @param {Unanswered | null} [lends]
- * @param {Person[]} [ps]
  * @returns {[people: number, on: number, things: number]}
  */
-export const counted = (rows, lent, lends, ps = people(rows)) => [
-  ps.length,
-  ps.filter(([person, , devices]) => judged(person, devices, lends)[0] === 'on').length,
-  ps.flatMap(([person]) => theirs(rows, lent, person)).length,
-];
+export const counted = (rows, lent, lends) => {
+  const everyone = people(rows);
+  const on = everyone.filter(([person, , devices]) => judged(person, devices, lends)[0] === 'on');
+  const things = everyone.flatMap(([person]) => theirs(rows, lent, person));
+  return [everyone.length, on.length, things.length];
+};

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copy, the first component, both pages' (page-open (a)): a button that
+// Copy, both pages': a button that
 // writes `text` to the clipboard, and its answer. Its machine, COPY, is the
 // part's own (ui/view.js `useMachine`), so each Copy on a page answers for
 // itself and its trace lines say `COPY:`. The clipboard is its io, the edge,
@@ -33,7 +33,7 @@ import { assertNever, go, machine, no } from './machine.js?v=__VERSION__';
 /** @type {CopyState['at']['copy'][]} */
 const AGAIN = ['idle', 'copied', 'unwritten'];
 // `said` is each answer in turn, by state: a second " Copied." after the
-// first, as home.js's `p.append` leaves both (home.js@19b63b2b:137, :202).
+// first, both kept (web/tests/copy.test.mjs, "with beside").
 /**
  * @param {CopyState} state
  * @param {Extract<CopyMessage, { type: 'copied' | 'unwritten' }>} message
@@ -48,15 +48,11 @@ export const COPY = {
   states: { copy: ['idle', 'copying', 'copied', 'unwritten'] },
   step: (state, message) => {
     switch (message.type) {
-      case 'copy':
-        return AGAIN.includes(state.at.copy)
-          ? go(
-              state,
-              { copy: 'copying' },
-              {},
-              { run: 'write', text: message.text, failed: 'unwritten' },
-            )
-          : no(state, 'a copy is being written already');
+      case 'copy': {
+        if (!AGAIN.includes(state.at.copy)) return no(state, 'a copy is being written already');
+        const write = { run: 'write', text: message.text, failed: 'unwritten' };
+        return go(state, { copy: 'copying' }, {}, /** @type {CopyEffect} */ (write));
+      }
       case 'copied':
         return answered(state, message);
       case 'unwritten':
@@ -71,12 +67,16 @@ export const COPY = {
 /** @type {CopyState} */
 const FIRST = { at: { copy: 'idle' }, said: [] };
 /** @param {CopyProps} props */
-export const Copy = (props) => drawn(...useMachine(() => machine('COPY', COPY, FIRST)), props);
+export function Copy(props) {
+  const [state, send] = useMachine(() => machine('COPY', COPY, FIRST));
+  return drawn(state, send, props);
+}
 
 // `words` is the button's and each answer's: { copy, copied, unwritten }.
-// Without `beside`, the answer is the button's word in its place
-// (web/app.js@19b63b2b:611); with it, each answer is said after the button, past
-// what `beside` draws there (`true`, nothing), as home.js appends them.
+// Without `beside`, the answer is the button's word in its place, as the
+// phone's #copy says it; with it, each answer is said after the button, past
+// what `beside` draws there (`true`, nothing), as the home page's links say
+// them (web/tests/copy.test.mjs).
 /**
  * The words a Copy says: its button's, `copy`, and each answer's, by the
  * state it answers in.
@@ -105,5 +105,10 @@ export function drawn(state, send, { id, text, words, beside }) {
   const press = () => send({ type: 'copy', text });
   if (beside === undefined)
     return html`<button id=${id} onClick=${press}>${words[state.at.copy] ?? words.copy}</button>`;
-  return html`<button id=${id} onClick=${press}>${words.copy}</button>${beside}${state.said.map((said) => words[said])}`;
+  const answers = state.said.map((said) => words[said]);
+  return html`
+    <button id=${id} onClick=${press}>${words.copy}</button>
+    ${beside}
+    ${answers}
+  `;
 }

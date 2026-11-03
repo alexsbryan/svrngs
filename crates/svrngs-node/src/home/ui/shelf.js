@@ -1,17 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// "Bring things to the table", both pages' (page-shelf (a); question.js
-// `table`, :190-210, which it moves): the shelf, svrngs's own apps as
-// `shelf` lists them, each not on group `g`'s table yet unticked, and one
-// button bringing the ticked ones by the page's `bring(g, names)`, which
-// answers each `{app, already}`; what happened said beside the button,
-// where it is looked for, not over the words above the boxes, which v1
-// replaced (page-shelf (b)). Folded as "Bring more to <group>" for someone
-// who has just `joined` (question.js@19b63b2b:195-198). Its machine, SHELF, is the
-// part's own (ui/view.js `useMachine`), its trace `SHELF:`. While it
-// brings, the button and the boxes are held, "Bringing…" said beside it,
-// and a second bring is refused, where v1's second tap brought again; then what it brought is offered no
-// more, and the page's `after()` reads the group again, so it is said on
-// the table from the group's own answer, never a reload (page-shelf (b)).
+// "Bring things to the table", both pages': the shelf, svrngs's own apps
+// as `shelf` lists them, each not on group `g`'s table yet unticked, and
+// one button bringing the ticked ones by the page's `bring(g, names)`,
+// which answers each `{app, already}`; what happened said beside the
+// button, where it is looked for, not over the words above the boxes.
+// Folded as "Bring more to <group>" for someone who has just `joined`. Its
+// machine, SHELF, is the part's own (ui/view.js `useMachine`), its trace
+// `SHELF:`. While it brings, the button and the boxes are held, "Bringing…"
+// said beside it, and a second bring is refused; then what it brought is
+// offered no more, and the page's `after()` reads the group again, so it
+// is said on the table from the group's own answer, never a reload.
 // The group lists an app brought once its folder has placed the files in
 // its record (carried.rs `carried`), a moment after the bring is answered,
 // so each read that does not list it yet is followed by another, a second,
@@ -105,45 +103,39 @@ export const SHELF = (bring, after) => ({
   states: { bring: ['idle', 'bringing', 'brought', 'refused'] },
   step: (state, message) => {
     switch (message.type) {
-      case 'tick':
-        return state.at.bring === 'bringing'
-          ? no(state, BUSY)
-          : go(
-              state,
-              {},
-              {
-                ticked: message.on
-                  ? [...state.ticked, message.app]
-                  : state.ticked.filter((app) => app !== message.app),
-              },
-            );
+      case 'tick': {
+        if (state.at.bring === 'bringing') return no(state, BUSY);
+        const ticked = message.on
+          ? [...state.ticked, message.app]
+          : state.ticked.filter((app) => app !== message.app);
+        return go(state, {}, { ticked });
+      }
       case 'fold':
         return go(state, {}, { open: message.open });
       case 'bring':
-        return state.at.bring === 'bringing'
-          ? no(state, BUSY)
-          : go(
-              state,
-              { bring: 'bringing' },
-              { name: message.name },
-              { run: 'bring', g: message.g, apps: message.apps, failed: 'unbrought' },
-            );
-      case 'brought':
+        if (state.at.bring === 'bringing') return no(state, BUSY);
+        return go(
+          state,
+          { bring: 'bringing' },
+          { name: message.name },
+          { run: 'bring', g: message.g, apps: message.apps, failed: 'unbrought' },
+        );
+      case 'brought': {
+        const apps = message.answers.map((answer) => answer.app);
         // `name` is the bring's, which this answers.
-        return ((apps) =>
-          go(
-            state,
-            { bring: 'brought' },
-            {
-              said:
-                message.answers.map(done(/** @type {string} */ (state.name))).join(' ') ||
-                'Tick something to bring first.',
-              brought: [...state.brought, ...apps],
-              ticked: state.ticked.filter((app) => !apps.includes(app)),
-              tries: 0,
-            },
-            { run: 'after', ms: 0, failed: 'told' },
-          ))(message.answers.map((answer) => answer.app));
+        const answered = message.answers.map(done(/** @type {string} */ (state.name)));
+        return go(
+          state,
+          { bring: 'brought' },
+          {
+            said: answered.join(' ') || 'Tick something to bring first.',
+            brought: [...state.brought, ...apps],
+            ticked: state.ticked.filter((app) => !apps.includes(app)),
+            tries: 0,
+          },
+          { run: 'after', ms: 0, failed: 'told' },
+        );
+      }
       case 'told':
         return go(state, {});
       case 'listed': {
@@ -208,16 +200,12 @@ const FIRST = { at: { bring: 'idle' }, ticked: [], brought: [], open: false, sai
 export function Shelf(props) {
   const [state, send] = useMachine(() => machine('SHELF', SHELF(props.bring, props.after), FIRST));
   // Each read the page gives after a bring: what it brought and the read does not list yet.
-  useEffect(
-    () =>
-      void (
-        state.at.bring === 'brought' &&
-        ((missing) => send({ type: 'listed', missing, why: missing.join(', ') || 'all listed' }))(
-          state.brought.filter((app) => !on(props.g, props.lent)(app)),
-        )
-      ),
-    [props.lent],
-  );
+  useEffect(() => {
+    if (state.at.bring !== 'brought') return;
+    const listed = on(props.g, props.lent);
+    const missing = state.brought.filter((app) => !listed(app));
+    send({ type: 'listed', missing, why: missing.join(', ') || 'all listed' });
+  }, [props.lent]);
   return drawn(state, send, props);
 }
 
@@ -236,8 +224,58 @@ export function drawn(state, send, { g: group, lent, shelf, joined }) {
   const offered = shelf.filter((app) => !listed(app) && !state.brought.includes(app.name));
   const tick = (/** @type {string} */ app) => (/** @type {Targeted<HTMLInputElement>} */ ticked) =>
     send({ type: 'tick', app: app, on: ticked.currentTarget.checked });
-  const section = html`<section><h3>Bring things to the table</h3>${shelf.filter(listed).map((app) => html`<p>${spoken(app.name)} is on the table.</p>`)}<p>${offered.length ? `These come with svrngs. Bring one, and everyone in ${name} opens it on their own computer or phone, while any computer in ${name} is on.` : ''}</p>${offered.map((app) => html`<p><label><input type="checkbox" disabled=${state.at.bring === 'bringing'} checked=${state.ticked.includes(app.name)} onChange=${tick(app.name)} />${` ${spoken(app.name)}: ${app.words}`}</label></p>`)}${(offered.length > 0 || state.said) && html`<p><${Act} answer=${offered.length ? 'beside' : 'instead'} words=${`Bring the ticked ones to ${name}`} doing=${{ state: state.at.bring === 'bringing' ? 'busy' : state.at.bring, said: state.said && ` ${state.said}` }} on=${{ type: 'bring', g: group, name, apps: offered.map((app) => app.name).filter((app) => state.ticked.includes(app)) }} send=${send} />${state.at.bring === 'bringing' && ' Bringing…'}</p>`}</section>`;
-  return joined
-    ? html`<${Fold} summary=${`Bring more to ${name}`} fold="shelf" open=${state.open} send=${send}>${section}<//>`
-    : section;
+  const bringing = state.at.bring === 'bringing';
+  const onTable = shelf
+    .filter(listed)
+    .map((app) => html`<p>${spoken(app.name)} is on the table.</p>`);
+  const offering = offered.length
+    ? `These come with svrngs. Bring one, and everyone in ${name} opens it on their own computer or phone, while any computer in ${name} is on.`
+    : '';
+  const boxes = offered.map((app) => {
+    const words = ` ${spoken(app.name)}: ${app.words}`;
+    return html`
+      <p>
+        <label>
+          <input
+            type="checkbox"
+            disabled=${bringing}
+            checked=${state.ticked.includes(app.name)}
+            onChange=${tick(app.name)}
+          />
+          ${words}
+        </label>
+      </p>
+    `;
+  });
+  const apps = offered.map((app) => app.name).filter((app) => state.ticked.includes(app));
+  const doing = { state: bringing ? 'busy' : state.at.bring, said: state.said && ` ${state.said}` };
+  const bringLine =
+    (offered.length > 0 || state.said) &&
+    html`
+      <p>
+        <${Act}
+          answer=${offered.length ? 'beside' : 'instead'}
+          words=${`Bring the ticked ones to ${name}`}
+          doing=${doing}
+          on=${{ type: 'bring', g: group, name, apps }}
+          send=${send}
+        />
+        ${bringing && ' Bringing…'}
+      </p>
+    `;
+  const section = html`
+    <section>
+      <h3>Bring things to the table</h3>
+      ${onTable}
+      <p>${offering}</p>
+      ${boxes}
+      ${bringLine}
+    </section>
+  `;
+  if (!joined) return section;
+  return html`
+    <${Fold} summary=${`Bring more to ${name}`} fold="shelf" open=${state.open} send=${send}>
+      ${section}
+    <//>
+  `;
 }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// The pages' one way to draw (page-scaffold (d)): Preact and htm, vendored
+// The pages' one way to draw: Preact and htm, vendored
 // (web/vendor/README.md), imported here and nowhere else, each at the one
 // URL its version is stamped in (web/tests/specifiers.test.mjs), since two
 // URLs load Preact twice and its hooks then fail. Served at /ui/ beside
