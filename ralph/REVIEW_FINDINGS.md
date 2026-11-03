@@ -12848,3 +12848,119 @@ left: `podman ps -a`); `node --test apps/give/page.test.mjs`, 6 of 6.
 | I36 | 6 | `code index --full` | Still present: ~/.svrnmesh/indexes/svrngs holds no `chunks.lance`. |
 | I38 | 6 | `refresh`, which corpus | Still present; fenced with `GIT_CEILING_DIRECTORIES` here, as before. |
 | I39 | 6 | `code index` | New: one chunk past the embedder's context fails the whole run. With apps/doc/vendor/doc-bundle.js (449,565 bytes, minified) in the corpus, `code index` stopped at 4608 chunks: "request (27950 tokens) exceeds the available context size (8192 tokens)" (index.out:34), exit 1. dry-report excludes `vendor` from what it judges, but the indexer embeds it anyway. With every `vendor/` out, the run resumed and finished, 5317 chunks (index2.out). A chunk too long to embed should be cut or skipped and said, not end the index. |
+
+## REVIEW-audit-js-auto-1 (2026-11-03, partial; range 50dd06f1..07f4b7a5)
+
+**Not a completed audit.** The required clone and noun instrument is absent.
+Decision package: `ralph/next/js/REVIEW_AUDIT_NEEDS_HUMAN.md`.
+
+### (1) Net lines per unit, product code
+
+No earlier audit exists in this queue. Start is its creation, 50dd06f1
+(`git log --reverse --format='%h %s' -- ralph/next/js/CHARTER.md`), rather
+than its later launch after security. End is the assigned row's HEAD,
+07f4b7a5. This includes intervening security and relay work.
+
+Run: `git log --reverse --no-merges --numstat --format='@@%h %s'
+50dd06f1..07f4b7a5`, exit 0. Sum by the subject's unit: `format(letter)`
+is js-format, `types(letter)` is js-types, and js-read/js-lint/js-webkit
+keep their ids. Other subjects group by the text before their colon.
+Merge commits are excluded so branch changes are counted once.
+193 non-merge commits; rows with zero source, test and app changes are
+omitted below, except test(grapevine), whose app changes net to zero.
+
+Source is `.rs`, `.js`, `.mjs`, `.cjs`, `.ts`, `.py`, `.sh` under crates/,
+web/, scripts/. Tests are tests/ or fixtures/ path segments, tests.rs,
+tests_*.rs, *_tests.rs and *.test.mjs. Apps use the same classification in
+separate columns. vendor/ is excluded. Lockfiles, manifests, docs and runs
+are excluded. Raw lines include comments and blanks, unlike lean_check's
+executable-line counts. Renames use the destination path.
+
+| unit | commits | src + | src − | src net | test + | test − | test net | apps src net | apps test net |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| lean | 4 | 38 | 6 | 32 | 0 | 0 | 0 | 0 | 0 |
+| give | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 44 | 20 |
+| pantry | 1 | 0 | 0 | 0 | 10 | 4 | 6 | 48 | 37 |
+| secrets | 1 | 55 | 37 | 18 | 0 | 0 | 0 | 0 | 0 |
+| advisories | 1 | 41 | 0 | 41 | 18 | 0 | 18 | 0 | 0 |
+| folders | 1 | 159 | 22 | 137 | 79 | 0 | 79 | 0 | 0 |
+| session | 1 | 974 | 176 | 798 | 887 | 593 | 294 | 0 | 0 |
+| security(7) | 1 | 653 | 52 | 601 | 743 | 118 | 625 | 0 | 0 |
+| dev | 1 | 0 | 0 | 0 | 53 | 2 | 51 | 0 | 0 |
+| economize | 3 | 15 | 33 | −18 | 3 | 1 | 2 | 0 | 0 |
+| fix(pantry) | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 5 |
+| record(relay fallbacks) | 1 | 81 | 7 | 74 | 148 | 2 | 146 | 0 | 0 |
+| relays | 1 | 705 | 245 | 460 | 545 | 214 | 331 | 0 | 0 |
+| fix(relays) | 4 | 88 | 26 | 62 | 12 | 3 | 9 | 0 | 0 |
+| js-format | 3 | 4065 | 827 | 3238 | 2754 | 610 | 2144 | 3306 | 2353 |
+| check | 1 | 76 | 80 | −4 | 0 | 0 | 0 | 0 | 0 |
+| test(grapevine) | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| build-web | 1 | 4 | 3 | 1 | 0 | 0 | 0 | 0 | 0 |
+| trust_check | 1 | 6 | 5 | 1 | 0 | 0 | 0 | 0 | 0 |
+| js-types | 54 | 5241 | 962 | 4279 | 0 | 0 | 0 | 0 | 0 |
+| types | 1 | 13 | 2 | 11 | 0 | 0 | 0 | 0 | 0 |
+| js-webkit | 12 | 0 | 0 | 0 | 79 | 14 | 65 | 0 | 0 |
+| js-lint | 23 | 5052 | 3909 | 1143 | 4 | 5 | −1 | 0 | 0 |
+| lend | 2 | 17 | 14 | 3 | 112 | 1 | 111 | 0 | 0 |
+| shim | 1 | 6 | 2 | 4 | 87 | 0 | 87 | 0 | 0 |
+| js-read | 42 | 7276 | 5589 | 1687 | 49 | 32 | 17 | 0 | 0 |
+| home | 3 | 25 | 16 | 9 | 183 | 14 | 169 | 0 | 0 |
+| total (including no-code commits) | 193 | 24590 | 12013 | 12577 | 5766 | 1613 | 4153 | 3398 | 2415 |
+
+Independent endpoint sum using `git diff --numstat 50dd06f1 07f4b7a5`
+and the same classification, exit 0:
+
+```text
+Endpoint net [src, tests, apps src, apps tests]: [12577, 4153, 3398, 2415]
+```
+
+Before and after this audit's documentation-only edits,
+`python3 scripts/lean_check.py`, exit 0, unchanged:
+
+```text
+crates/svrngs-core     3477 / 3478 lines
+.                     18861 / 18862 lines
+js                     7338 lines, no cap until the js queue's jubilee
+swift                     0 / 1 lines
+```
+
+### (2) Clones: never-ran
+
+Every touched crate was attempted: crates/svrngs/, crates/svrngs-core/,
+crates/svrngs-node/, crates/svrngs-runtime/, apps/give/; web/ was attempted
+too. Each `target/debug/sovereign-cli code dry-report --scope <dir>`
+failed to launch with `[Errno 2] No such file or directory:
+'target/debug/sovereign-cli'`. The upstream binary used by prior audits,
+`/Users/alexsbryan/dev/commonwealth-ai/target/debug/sovereign-cli`, also
+does not exist. No zero-clone conclusion follows from these failures.
+
+### (3) Nouns: never-ran; lexical inventory only
+
+Added declaration lines in `git diff --unified=0 50dd06f1 07f4b7a5 --
+'*.rs'` give these 17 candidates (rewritten declarations included):
+Appending, BeforeMeets, Browser, ContainerPath, Cutover, Edited, Held,
+Meeting, MeetsAt, Nonces, Onward, Onwards, Root, Spent, Tier, Unconsented,
+Unproven. Each `target/debug/sovereign-cli code converge noun <Name>`
+was attempted; all failed to launch with the same missing-file error.
+
+A lexical `git grep -n -E '(struct|enum|trait) (Appending|BeforeMeets|Browser|ContainerPath|Cutover|Edited|Held|Meeting|MeetsAt|Nonces|Onward|Onwards|Root|Spent|Tier|Unconsented|Unproven)[ <{(;]' HEAD -- '*.rs'`
+found two repeated spellings. This is not a substitute for convergence or
+an architectural verdict:
+
+| candidate | definitions at 07f4b7a5 | disposition |
+|---|---|---|
+| Held | apps/give/src/keep.rs:85; crates/svrngs-node/src/surface.rs:84, src/synced.rs:139, src/tiers.rs:45; crates/svrngs-runtime/src/journal.rs:93 | New tiers::Held holds endpoint relay state; surface::Held is a serialized group. Distinct meanings, not proven duplicate implementations. Naming review remains owed. |
+| Browser | crates/svrngs-node/tests/common/mod.rs:160; crates/svrngs-node/tests/peer.rs:241 | Test helper and test enum. Convergence and disposition remain owed. |
+
+### Checks and remaining work
+
+`npm ci --prefix web`, exit 0: 11 packages added, 12 audited, zero
+vulnerabilities. `web/node_modules/.bin/oxlint`, exit 0, no output.
+`web/node_modules/.bin/oxfmt --check '**/*.{js,mjs,cjs}'`, exit 0:
+“All matched files use the correct format”, 281 files.
+
+No product changes, new gates, or tests in this partial audit. The
+required instrument checks, full architectural review, any resulting
+small fixes, and the final locked scripts/check.sh remain owed. Resume
+with the instrument restored; do not treat the ledger or the lexical
+inventory as proof that those checks passed.
