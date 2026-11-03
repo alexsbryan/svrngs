@@ -235,8 +235,9 @@ in_chromium!(
     /// "The gate after (c)"). Once Ada's home page is drawn, every read of
     /// a group's people and of what they lend is held. She makes Lab, then
     /// joins Sam's Trip as Dee: each is drawn with "Reading Lab…", "Reading
-    /// Trip…" under its heading, never its heading alone. Let go, each is
-    /// drawn read, its folder placed, and none says it is being read.
+    /// Trip…" under its heading, never its heading alone, while house,
+    /// drawn before, keeps what it drew as it is read again. Let go, each
+    /// is drawn read, its folder placed, and none says it is being read.
     /// Planted, watched failing: the page as 84b5a7b0 left it, Lab's and
     /// Trip's headings drawn with no line but their index's "Asking each
     /// computer in the group what it lends…".
@@ -275,7 +276,12 @@ async fn a_group_made_or_joined_says_it_is_being_read_until_it_is(engine: Engine
             .unwrap_or_default()
     };
     let (made, joined, released) = (&seen["after"][0], &seen["after"][1], &seen["released"]);
+    let house = section(made, "house (yours");
     let wrong: Vec<&str> = [
+        (
+            !house.contains("Invite someone to house") || house.contains("Reading house…"),
+            "house keeps what it drew while it is read again",
+        ),
         (
             !section(made, "Lab (yours").contains("Reading Lab…"),
             "Lab says it is being read",
