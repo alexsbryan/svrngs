@@ -213,6 +213,51 @@ async fn a_stop_on_what_apps_use_is_read_again_in_place(engine: Engine) {
 }
 
 in_chromium!(
+    /// **A refused Stop on what apps use is said beside it**. Ada said yes
+    /// to her page using her shelf, which asks; her computer can read
+    /// that yes but keep nothing new beside it (its choices' directory
+    /// made read-only), so her Stop is refused, "this could not be kept on
+    /// the computer that lends it" (door/choices.rs `keep`). The line
+    /// with that Stop says so after it. Watched failing at 4b7160c0,
+    /// whose refusal carried no lend and no app (ui/machine.js `run`
+    /// makes a failed effect's message `{type, n, why}`), so ACTS kept it
+    /// under "undefined undefined", which `Uses` never draws.
+    a_refused_stop_on_what_apps_use_is_said_beside_it
+);
+async fn a_refused_stop_on_what_apps_use_is_said_beside_it(engine: Engine) {
+    use std::os::unix::fs::PermissionsExt;
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let shelf = svrngs_node::lend::LendName::try_from("shelf".to_string()).unwrap();
+    let choices = svrngs_node::lend::choices_path(dir.path(), &shelf);
+    kept_yes(&choices, &label("page"));
+    let (ada, home, _) = ada(dir.path(), &relay).await;
+    let held = choices.parent().unwrap();
+    std::fs::set_permissions(held, std::fs::Permissions::from_mode(0o555)).unwrap();
+    let line = "#acts p:has-text('uses')";
+    let stop =
+        json!({ "at": format!("{line} button:text-is('Stop')"), "traced": ["ACTS: unstopped", 1] });
+    let args = json!({ "home": home, "shown": "#acts summary", "press": [{ "at": "#acts summary" }, stop], "at": line, "within": 30_000 });
+    let seen = drive(engine, "pages/acts.mjs", args, None).await;
+    // Writable again, so the directory is removed with the rest.
+    std::fs::set_permissions(held, std::fs::Permissions::from_mode(0o755)).unwrap();
+    let said = seen["texts"][1].as_str().unwrap_or_default();
+    none_wrong(
+        &[
+            (seen["went"][1] != true, "the Stop is refused"),
+            (
+                !said.contains("Stop")
+                    || !said.contains("this could not be kept on the computer that lends it"),
+                "the refusal is said on the line of its Stop",
+            ),
+            (seen["reloads"] != 0, "with no reload"),
+        ],
+        &seen,
+    );
+    drop(ada);
+}
+
+in_chromium!(
     /// **A yes in another tab is shown on `visible`** (page-acts (d)).
     /// Ada's home page is open, her page said yes to nowhere; she says yes
     /// to it elsewhere (its yes kept, as /to keeps it), and her page,
