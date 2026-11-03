@@ -64,6 +64,6 @@ const SHELL = [
   fetchEvent.respondWith(
     caches
       .match(fetchEvent.request, { ignoreSearch: true })
-      .then((hit) => hit || fetch(fetchEvent.request)),
+      .then((hit) => hit ?? fetch(fetchEvent.request)),
   );
 });

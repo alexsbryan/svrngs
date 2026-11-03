@@ -157,6 +157,7 @@ const door = (group, lend, body, away = '') =>
             ['content-length', String(/** @type {Uint8Array<ArrayBuffer>} */ (bytes).length)],
           ]
         : [['accept', 'application/json']];
+      /** @type {[boolean, number, string]} */
       const response = await connection
         .fetch(
           body ? 'POST' : 'GET',

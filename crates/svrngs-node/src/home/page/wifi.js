@@ -282,7 +282,7 @@ function Foot({ s: state }) {
   });
   return (
     state.lends &&
-    (roomState.room || roomState.at.room === 'unread') &&
+    (roomState.room !== undefined || roomState.at.room === 'unread') &&
     html`<ul class="wifi">${once(state.lends.lent)
       .filter((lend) => !lend.raw)
       .map((lend) =>

@@ -136,7 +136,7 @@ export const post = (path, body) =>
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
   }).then(async (response) =>
-    ((answer) =>
+    ((/** @type {{ error?: string }} */ answer) =>
       response.ok
         ? answer
         : Promise.reject(new Error(answer.error || `answered ${response.status}`)))(
@@ -158,7 +158,8 @@ export const get = (path) =>
           new Error(
             response.status === 401
               ? 'this page’s session has ended. Open svrngs from your Applications, or on Linux your applications menu, and it opens here again'
-              : (await response.json().catch(() => ({}))).error || `answered ${response.status}`,
+              : /** @type {{ error?: string }} */ (await response.json().catch(() => ({}))).error ||
+                  `answered ${response.status}`,
           ),
         ),
   );

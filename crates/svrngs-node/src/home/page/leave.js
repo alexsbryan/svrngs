@@ -156,7 +156,7 @@ const LEAVE = (home) => ({
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(body),
       }).then(async (response) =>
-        ((answer) =>
+        ((/** @type {{ outcome?: Outcome, error?: string }} */ answer) =>
           answer.outcome
             ? { type: 'answered', o: answer.outcome, why: answer.outcome }
             : Promise.reject(

@@ -190,9 +190,9 @@ const baseOf = (label) =>
  * @returns {Where | null}
  */
 function whereOf(url) {
-  const [, read, path] =
-    (url.origin === SCOPE.origin && url.pathname.match(new RegExp(`^${READS}/([^/]+)(/.*)?$`))) ||
-    [];
+  const reading =
+    url.origin === SCOPE.origin ? url.pathname.match(new RegExp(`^${READS}/([^/]+)(/.*)?$`)) : null;
+  const [, read, path] = reading ?? [];
   if (read) return { label: read, path: `${path ?? '/'}${url.search}`, read: true };
   for (const label of [OWN, ...(handed?.lends ?? []).map((lend) => lend.label)]) {
     const base = new URL(baseOf(label));
@@ -1272,7 +1272,7 @@ async function answered(fetchEvent, url, where) {
     };
     for (const listener of on.fetch) listener.call(self, event);
   }
-  return given ? given : lent(fetchEvent.request, url, where, allowed);
+  return given ?? lent(fetchEvent.request, url, where, allowed);
 }
 
 /** @type {Scope} */ (self).addEventListener('fetch', (event) => {

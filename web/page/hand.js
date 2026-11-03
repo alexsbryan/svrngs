@@ -147,10 +147,10 @@ function passLends({ lent, label }, lend, opened) {
  */
 async function holderOf(core, label, lends) {
   const raw = lends.some((one) => !core.links(one.version));
-  const had = !raw && (await store.holder(label));
+  const had = raw ? undefined : await store.holder(label);
   const seed = had ? null : crypto.getRandomValues(new Uint8Array(32));
   // With no holder had, a seed was made.
-  const holder = had || core.actor(/** @type {Uint8Array} */ (seed));
+  const holder = had ?? core.actor(/** @type {Uint8Array} */ (seed));
   if (raw)
     trace(
       'PAGE: a lend of this open is at a computer on an older svrngs, so its holder goes as bytes',

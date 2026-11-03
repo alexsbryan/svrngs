@@ -96,7 +96,15 @@
           }
         ],
         "import/no-cycle": "error",
-        "typescript/switch-exhaustiveness-check": "error"
+        "typescript/switch-exhaustiveness-check": "error",
+        "typescript/prefer-nullish-coalescing": [
+          "error",
+          {
+            "ignorePrimitives": {
+              "string": true
+            }
+          }
+        ]
       }
     },
     {
