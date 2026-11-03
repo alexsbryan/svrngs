@@ -149,3 +149,44 @@ scripts/check.sh`.
 
 **Decided 2026-11-03 by the operator** ("Approve +1"): `.` to 18,862,
 landed from the operator seat in scripts/lean_check.py.
+
+## The js jubilee (js-read (e), 2026-11-03)
+
+The closing `lockf -k /tmp/svrngs-gate.lock bash scripts/check.sh` exited
+0 at 8e00b6e8 in 1,384 s. The run and the queue's counts are recorded in
+`demo/runs/economize/2026-11-03-js-read/CLOSE.md`. The doc scene is
+explicitly `could-not-judge`, as the gate reports; it is not called passed.
+
+**The ready diff, for the watching session to land from the operator
+seat.** CHARTER "Answered" 2 sets the cap to one past the queue's final
+count: `js` 7,338, cap **7,339**. This worker has not changed the cap.
+Removing the uncapped branch also removes three counted Python lines:
+`.` 18,861 → 18,858, with its cap kept at 18,862. No JavaScript changes.
+
+```diff
+diff --git a/scripts/lean_check.py b/scripts/lean_check.py
+--- a/scripts/lean_check.py
++++ b/scripts/lean_check.py
+@@ -392,3 +392,2 @@
+-# this rung's own 4 came in, so `.` is one past 18,505. `js` has no cap (None) until the js queue's
+-# jubilee sets one past where the queue lands; until then it is printed as
+-# uncapped, never passed in silence.
++# this rung's own 4 came in, so `.` is one past 18,505. The js queue's
++# jubilee sets `js` one past 7,338 (ralph/next/js/NEEDS_HUMAN.md).
+@@ -408 +407 @@
+-BUDGET = {"crates/svrngs-core": 3478, ".": 18862, "js": None, "swift": 1}
++BUDGET = {"crates/svrngs-core": 3478, ".": 18862, "js": 7339, "swift": 1}
+@@ -478,3 +477,0 @@
+-        if cap is None:
+-            print(f"{rung:<20} {n:>6} lines, no cap until the js queue's jubilee")
+-            continue
+```
+
+The extracted diff passes `git apply --check --unidiff-zero -` at
+8e00b6e8; apply it with `git apply --unidiff-zero` from the repository
+root. After applying, run `python3 scripts/lean_check.py`: `js` must report
+`7338 / 7339`, and `.` `18858 / 18862`. As the positive control, plant
+`web/page/jubilee-plant.js` with `export const jubileePlant = true;`:
+`lean_check` must fail on `js` at 7,339. Remove the plant and require
+exit 0 before committing. These are instructions for landing the diff,
+not claims of a run against an applied cap.
