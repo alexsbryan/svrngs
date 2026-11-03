@@ -39,15 +39,24 @@
  */
 
 /**
- * A table of steps, by message type, as each phone flow's `takes`
- * (web/page/page.js `compose`): for each type of `Message`, the one step
- * that takes it, given that message's own type. A type with no step, or a
- * step for no type, fails `types`: the check that a table is exhaustive, as
- * `assertNever` is a `switch`'s.
+ * The key a message is taken by, as web/page/page.js `compose` looks it up:
+ * a part's own message (ui/parts.js: Fold's `{ type: 'fold', fold }`,
+ * Field's `{ type: 'typed', field }`) by its type and its part's name,
+ * `fold acts`, `typed name`; every other by its type.
+ * @template {{ type: string }} M
+ * @typedef {M extends { fold: string } ? `${M['type']} ${M['fold']}` : M extends { field: string } ? `${M['type']} ${M['field']}` : M['type']} TakenBy
+ */
+
+/**
+ * A table of steps, as each phone flow's `takes` (web/page/page.js
+ * `compose`): for each message of `Message`, by the key it is taken by
+ * (`TakenBy`), the one step that takes it, given that message's own type.
+ * A message with no step, or a step for no message, fails `types`: the
+ * check that a table is exhaustive, as `assertNever` is a `switch`'s.
  * @template State
  * @template {{ type: string }} Message
  * @template {Effect} [E=Effect]
- * @typedef {{ [Type in Message['type']]: (s: State, m: Extract<Message, { type: Type }>) => Step<State, E> }} Takes
+ * @typedef {{ [M in Message as TakenBy<M>]: (s: State, m: M) => Step<State, E> }} Takes
  */
 
 /**

@@ -12,9 +12,29 @@
 // group's page, at most once a minute from one tab (app.js@19b63b2b:638-646).
 import { aliased, go, html, no, whose } from '../ui/kit.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
+/** @import { Group } from '../store.js?v=__VERSION__' */
+/** @import { Wants } from './enter.js?v=__VERSION__' */
+
+/**
+ * The fields this flow owns (`owns`): the groups offered to open what the
+ * address asks in, and why it did not open.
+ * @typedef {{ offered?: { groups: Group[], wants: Wants }, missed?: string }} Fields
+ */
+
+/**
+ * The messages this flow takes.
+ * @typedef {{ type: 'among', groups: Group[], wants: Wants }
+ *   | { type: 'wanted', wants: Wants }
+ *   | { type: 'others', open: string, label: boolean, others: Group[] }
+ *   | { type: 'pick', group: Group, wants: Wants }
+ *   | { type: 'cold' }
+ *   | { type: 'sent' }} Message
+ */
 
 export const owns = ['offered', 'missed'];
-export const states = { among: ['unasked', 'offered', 'picked', 'named', 'sent'] };
+export const states = /** @type {const} */ ({
+  among: ['unasked', 'offered', 'picked', 'named', 'sent'],
+});
 const titled = (g) => `${g.name}${g.maker ? ` (${whose(g)})` : ''}`,
   send = (type, m) => ({ run: 'send', m: { type, ...m } });
 export const takes = {

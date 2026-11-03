@@ -24,6 +24,82 @@ import {
 } from '../ui/kit.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
 import { offered } from './among.js?v=__VERSION__';
+/** @import { Group, Computer } from '../store.js?v=__VERSION__' */
+/** @import { Lend, Removal, Row, Shelved } from '../question.js?v=__VERSION__' */
+/** @import { Change } from '../ui/changes.js?v=__VERSION__' */
+/** @import { Visitor } from '../ui/visitors.js?v=__VERSION__' */
+
+/**
+ * A lend as this page lists it: as the node answered, with its label
+ * (svrngs-core `label`, `read`'s io).
+ * @typedef {Lend & { label: string }} Lent
+ */
+
+/**
+ * Someone whose computer did not say what they lend (node.rs `Named`).
+ * @typedef {{ person: string, person_key: string }} Whom
+ */
+
+/**
+ * What the address asks of the page once the group is read, by the
+ * fragment's names (`READ`).
+ * @typedef {{ open?: string, at?: string, anew?: string, ask?: string, app?: string, cold?: string }} Wants
+ */
+
+/**
+ * The fields this flow owns (`owns`): the group this tab reaches and, once
+ * read, what its computers answered of it.
+ * @typedef {object} Fields
+ * @property {Group} group the group this tab reaches, once one is held
+ * @property {Wants | null} wants
+ * @property {boolean} joined
+ * @property {Computer} [via] the computer the last read went through, none for the link's
+ * @property {string} stale why the last read again failed, or ''
+ * @property {Lent[]} [lent] what the group lends, once read
+ * @property {Row[]} people
+ * @property {Shelved[]} shelf
+ * @property {Whom[]} unanswered
+ * @property {Whom[]} unheard
+ * @property {Whom[]} refused
+ * @property {Whom[]} behind
+ * @property {Removal[] | null} [removals] `null` when they cannot be read
+ * @property {Visitor[] | null} [visiting] `null` when they cannot be read
+ * @property {Change[] | null} [changed]
+ * @property {string} me this page's key, as the record spells it
+ */
+
+/**
+ * What the computer answered `/people/lends` (surface.rs).
+ * @typedef {object} Body
+ * @property {Lend[]} [lent]
+ * @property {Whom[]} unanswered
+ * @property {Whom[]} unheard
+ * @property {Whom[]} refused
+ * @property {Whom[]} older
+ * @property {Removal[] | null} [removals]
+ * @property {Visitor[] | null} [visiting]
+ * @property {Row[]} people
+ * @property {Shelved[]} shelf
+ * @property {Change[] | null} [changed]
+ * @property {number} [version]
+ */
+
+/**
+ * The messages this flow takes.
+ * @typedef {{ type: 'start', fragment: string }
+ *   | { type: 'looked', fragment: string, kept: Group[], missing: boolean, cold: boolean, linked: boolean }
+ *   | { type: 'hold', group: Group, wants?: Wants | null, joined?: boolean }
+ *   | { type: 'held' }
+ *   | { type: 'elsewhere' }
+ *   | { type: 'take' }
+ *   | { type: 'released' }
+ *   | { type: 'opened', group: Group }
+ *   | { type: 'shown' }
+ *   | { type: 'reread' }
+ *   | { type: 'read', n: number, ok: boolean, refusal: string | null, via?: Computer, link?: Computer, body: Body, lent: Lent[], me: string, older: boolean }
+ *   | { type: 'unread', n?: number, said?: string, why: string }
+ *   | { type: 'kept' }} Message
+ */
 
 export const owns = [
   'group',
@@ -43,10 +119,10 @@ export const owns = [
   'changed',
   'me',
 ];
-export const states = {
+export const states = /** @type {const} */ ({
   tab: ['unheld', 'holding', 'elsewhere', 'taking'],
   list: ['unasked', 'reading', 'read', 'unread'],
-};
+});
 
 // The parts of a fragment this page reads, besides a link's token (app.js@19b63b2b:665).
 const READ = ['open', 'at', 'anew', 'cold', 'ask', 'app'],

@@ -12,6 +12,12 @@
 import { html } from './view.js?v=__VERSION__';
 import { named, unasked } from '../question.js?v=__VERSION__';
 
+/**
+ * A lender's choices as a page read them: by each app's label, what the
+ * person said of it using the lend; or why they could not be read.
+ * @typedef {{ choices: Record<string, { said: 'yes' | 'stop' }>, why?: undefined } | { why: string, choices?: undefined }} Asked
+ */
+
 export function Uses({ lent, labelOf, choices, tag, said = {}, send }) {
   const app = (o) => lent.find((l) => labelOf(l) === o),
     line = (words, ...after) => html`<${tag}>${words}${after}</${tag}>`;

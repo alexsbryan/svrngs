@@ -13,9 +13,34 @@
 import { go, html, named, no, Row } from '../ui/kit.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
 import { PASS_LIFE, handing } from './index.js?v=__VERSION__';
+/** @import { Lent } from './enter.js?v=__VERSION__' */
+
+/**
+ * A visit as this page holds it: whose guest, until when, in seconds, and
+ * each lend it opens, at the host's computer.
+ * @typedef {{ host: string, until: number, lent: Lent[] }} Stay
+ */
+
+/**
+ * The fields this flow owns (`owns`): the link's token and the visit.
+ * @typedef {{ invited?: string, stay?: Stay }} Fields
+ */
+
+/**
+ * The messages this flow takes.
+ * @typedef {{ type: 'visit', token: string }
+ *   | { type: 'unkept' }
+ *   | { type: 'guest named', guest: string }
+ *   | { type: 'redeemed', stay: Stay, ended: boolean }
+ *   | { type: 'ended' }
+ *   | { type: 'called' }
+ *   | { type: 'call', label: string }} Message
+ */
 
 export const owns = ['invited', 'stay'];
-export const states = { visit: ['none', 'naming', 'redeeming', 'on', 'ended'] };
+export const states = /** @type {const} */ ({
+  visit: ['none', 'naming', 'redeeming', 'on', 'ended'],
+});
 // Each take in the states it is asked in, else refused saying where the visit is.
 const at = (regions, f) => (s, m) =>
   regions.includes(s.at.visit) ? f(s, m) : no(s, `the visit is ${s.at.visit}`);

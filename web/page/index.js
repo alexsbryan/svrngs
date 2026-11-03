@@ -25,12 +25,25 @@ import * as store from '../store.js?v=__VERSION__';
 import { handoffCookie, sealOpen } from '../authority.js?v=__VERSION__';
 import { listed } from './visit.js?v=__VERSION__';
 
+/**
+ * The fields this flow owns (`owns`): the label of the lend opening, and
+ * why it did not open.
+ * @typedef {{ opening?: string, unopened?: string }} Fields
+ */
+
+/**
+ * The messages this flow takes.
+ * @typedef {{ type: 'open', label: string, at?: string }
+ *   | { type: 'handed' }
+ *   | { type: 'unopened', said?: string }} Message
+ */
+
 // How long a pass opens a lend, in seconds (app.js@19b63b2b:75): its origin asks for
 // another after, which the page signs without a word to the person.
 export const PASS_LIFE = 12 * 60 * 60;
 
 export const owns = ['opening', 'unopened'];
-export const states = { open: ['shut', 'opening', 'handed', 'refused'] };
+export const states = /** @type {const} */ ({ open: ['shut', 'opening', 'handed', 'refused'] });
 export const takes = {
   open: (s, { label, at }, l = s.lent?.find((o) => o.label === label)) =>
     !l

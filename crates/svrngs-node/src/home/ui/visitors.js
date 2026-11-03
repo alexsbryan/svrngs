@@ -7,5 +7,11 @@
 import { html } from './view.js?v=__VERSION__';
 import { called, until } from '../question.js?v=__VERSION__';
 
+/**
+ * A guest visiting now: their name, whose guest, by name and first key,
+ * and until when, in seconds.
+ * @typedef {{ guest: string, host: string, host_key?: string, until: number }} Visitor
+ */
+
 export const Visiting = ({ vs, rows = [] }) =>
   html`<ul class="visiting">${[...vs].sort((a, b) => a.host.localeCompare(b.host)).map((v) => html`<li>${`${v.guest}, ${called(rows, v.host_key) ?? v.host}’s guest, until ${until(v)}`}</li>`)}</ul>`;

@@ -13,11 +13,47 @@
 // to the visit as `guest named`.
 import { Field, go, html, no } from '../ui/kit.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
+/** @import { Group } from '../store.js?v=__VERSION__' */
+/** @import { Wants } from './enter.js?v=__VERSION__' */
+
+/**
+ * The group a link lets into, as its issuer answered (svrngs-core
+ * `believe`): a device link's person, whom the phone joins as.
+ * @typedef {{ id: string, name: string, person?: string, maker: string }} Letting
+ */
+
+/**
+ * A link being joined by: its token, the groups kept when it was opened,
+ * what the address asks, and once asked, its group, the issuer's answer
+ * (`told`), and the group held here already that it lets into (`known`).
+ * @typedef {{ token: string, kept: Group[], wants: Wants | null, group?: Letting, told?: string, known?: Group }} Link
+ */
+
+/**
+ * The fields this flow owns (`owns`).
+ * @typedef {object} Fields
+ * @property {Link} [joining]
+ * @property {string} [typed] the name typed
+ * @property {string} [why] why the name was refused
+ */
+
+/**
+ * The messages this flow takes.
+ * @typedef {{ type: 'join', token: string, kept: Group[], wants: Wants | null }
+ *   | { type: 'asked', group: Letting, told: string }
+ *   | { type: 'typed', field: 'name', value: string }
+ *   | { type: 'named' }
+ *   | { type: 'taken', why: string }
+ *   | { type: 'admitted', group: Group }
+ *   | { type: 'unjoined', said?: string, why: string }} Message
+ */
 
 // `joining`: the link's token, the groups kept when it was opened, what the
 // address asks, and once asked, its group and the issuer's answer (`told`).
 export const owns = ['joining', 'typed', 'why'];
-export const states = { join: ['unasked', 'asking', 'naming', 'redeeming', 'taken', 'joined'] };
+export const states = /** @type {const} */ ({
+  join: ['unasked', 'asking', 'naming', 'redeeming', 'taken', 'joined'],
+});
 const send = (type, m) => ({ run: 'send', m: { type, ...m } });
 const redeem = (s, joining, name) =>
   go(

@@ -13,9 +13,29 @@
 // one endpoint's (web/page/enter.js `dialled`), at the edge.
 import { ask, Fold, go, html, late, no, Uses } from '../ui/kit.js?v=__VERSION__';
 import { dialled } from './enter.js?v=__VERSION__';
+/** @import { Asked } from '../ui/uses.js?v=__VERSION__' */
+
+/**
+ * The fields this flow owns (`owns`): whether the fold is open, each
+ * lender's choices as read, by the lend's label, and why a stop was not
+ * kept, by the lend's label and the app's.
+ * @typedef {object} Fields
+ * @property {boolean} [using]
+ * @property {Record<string, Asked>} [choices]
+ * @property {Record<string, string>} [unstopped]
+ */
+
+/**
+ * The messages this flow takes.
+ * @typedef {{ type: 'fold', fold: 'uses', open: boolean }
+ *   | { type: 'chosen', n?: number, lend: string, choices?: Asked['choices'], why?: string }
+ *   | { type: 'stop', lend: string, app: string }
+ *   | { type: 'unused' }
+ *   | { type: 'unstopped', of: string, said?: string }} Message
+ */
 
 export const owns = ['using', 'choices', 'unstopped'];
-export const states = { uses: ['shut', 'asking', 'asked'] };
+export const states = /** @type {const} */ ({ uses: ['shut', 'asking', 'asked'] });
 const asking = (s, patch = {}, [asked, n] = ask(s, 'uses')) =>
   go(
     s,

@@ -15,8 +15,25 @@
 import { go, html, no, question, unlent, useEffect } from '../ui/kit.js?v=__VERSION__';
 import { choose } from './uses.js?v=__VERSION__';
 
+/**
+ * The fields this flow owns (`owns`): what is asked, by the labels of the
+ * lend and the app and the path to open the app at; and why it was refused.
+ * @typedef {object} Fields
+ * @property {{ lend: string, app: string, at: string } | null} [asking]
+ * @property {string} [answer]
+ */
+
+/**
+ * The messages this flow takes.
+ * @typedef {{ type: 'ask', lend?: string, app?: string, at?: string }
+ *   | { type: 'say' }
+ *   | { type: 'not' }
+ *   | { type: 'said' }
+ *   | { type: 'unsaid', said?: string }} Message
+ */
+
 export const owns = ['asking', 'answer'];
-export const states = { ask: ['none', 'asking', 'sending', 'refused'] };
+export const states = /** @type {const} */ ({ ask: ['none', 'asking', 'sending', 'refused'] });
 const lendOf = (s, label) => s.lent?.find((l) => l.label === label),
   back = (s) => ({ run: 'send', m: { type: 'open', label: s.asking.app, at: s.asking.at } });
 export const takes = {

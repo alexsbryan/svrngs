@@ -8,6 +8,12 @@ import { h, render } from '../vendor/preact.js?v=__VERSION__';
 import { useEffect, useLayoutEffect, useState } from '../vendor/hooks.js?v=__VERSION__';
 import htm from '../vendor/htm.js?v=__VERSION__';
 /** @import { Store } from './machine.js?v=__VERSION__' */
+/** @import { ComponentChildren } from '../vendor/preact.js?v=__VERSION__' */
+
+/**
+ * What a view draws, as Preact takes it: vnodes, words, or nothing.
+ * @typedef {ComponentChildren} Drawn
+ */
 
 export const html = htm.bind(h);
 export { render, useEffect };

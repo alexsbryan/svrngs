@@ -24,6 +24,17 @@ import {
 } from '../ui/kit.js?v=__VERSION__';
 import { chosen } from './enter.js?v=__VERSION__';
 
+/**
+ * The fields this flow owns (`owns`): the end of a visit waited for, in
+ * seconds.
+ * @typedef {{ ending?: number }} Fields
+ */
+
+/**
+ * The messages this flow takes.
+ * @typedef {{ type: 'ends', until: number }} Message
+ */
+
 const titled = (g) => `${g.name}${g.maker ? ` (${whose(g)})` : ''}`;
 // Yours by your first key (keys-names), from a computer at version 2 by name (app.js@19b63b2b:466-468).
 const yours = (s, you = s.people.find((r) => r.key === s.me)?.person_key) =>

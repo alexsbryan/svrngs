@@ -18,6 +18,12 @@ import { html } from './view.js?v=__VERSION__';
 import { Act, Fold } from './parts.js?v=__VERSION__';
 import { called, spoken } from '../question.js?v=__VERSION__';
 
+/**
+ * A change to an app the group carries: the group's id, the app's kind,
+ * who changed its files, by name and first key, and when, in seconds.
+ * @typedef {{ group: string, app: string, by: string, by_key?: string, at: number }} Change
+ */
+
 // A day as question.js `day` says it in this computer's or phone's time,
 // "3 Oct" (its :95, not exported there, deleted with it at the switchover).
 const day = (t, d = new Date(t * 1000)) =>

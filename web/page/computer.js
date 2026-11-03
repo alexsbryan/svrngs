@@ -9,8 +9,21 @@
 // you is drawn as web/index.html@19b63b2b:88-96 has it, word for word.
 import { Copy, go, html, no } from '../ui/kit.js?v=__VERSION__';
 
+/**
+ * The fields this flow owns (`owns`): the line offered, what it does and
+ * its text.
+ * @typedef {{ line?: ['joins' | 'founds' | 'opens', string] }} Fields
+ */
+
+/**
+ * The messages this flow takes.
+ * @typedef {{ type: 'offer', token: string }
+ *   | { type: 'opens' }
+ *   | { type: 'offered', token?: string, page: string, href?: string | false }} Message
+ */
+
 export const owns = ['line'];
-export const states = { offer: ['unoffered', 'offered'] };
+export const states = /** @type {const} */ ({ offer: ['unoffered', 'offered'] });
 export const takes = {
   offer: (s, m) =>
     s.fine && /^[A-Za-z0-9_-]*$/.test(m.token)

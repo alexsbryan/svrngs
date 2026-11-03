@@ -39,9 +39,37 @@ import * as store from '../store.js?v=__VERSION__';
 import { through } from './enter.js?v=__VERSION__';
 import { PASS_LIFE } from './index.js?v=__VERSION__';
 import { Used } from './uses.js?v=__VERSION__';
+/** @import { Group } from '../store.js?v=__VERSION__' */
+/** @import { Change } from '../ui/changes.js?v=__VERSION__' */
+
+/**
+ * An act's answer, kept by what it acts on: busy, done or refused, what was
+ * said of it, and for a yes, the change it took.
+ * @typedef {{ state?: 'busy' | 'done' | 'refused', said?: string, c?: Change }} Acted
+ */
+
+/**
+ * The fields this flow owns (`owns`): each fold's open, by the fold's name;
+ * the act under way, and every act's answer.
+ * @typedef {object} Fields
+ * @property {Partial<Record<'acts' | 'changes', boolean>>} [folds]
+ * @property {string} [acting]
+ * @property {Record<string, Acted>} [acted]
+ */
+
+/**
+ * The messages this flow takes.
+ * @typedef {{ type: 'fold', fold: 'acts', open: boolean }
+ *   | { type: 'fold', fold: 'changes', open: boolean }
+ *   | { type: 'yes', app: string }
+ *   | { type: 'stop reads', label: string }
+ *   | { type: 'acted', group?: Group }
+ *   | { type: 'unacted', group?: Group | null }
+ *   | { type: 'carry' }} Message
+ */
 
 export const owns = ['folds', 'acting', 'acted'];
-export const states = { doing: ['idle', 'busy', 'done', 'refused'] };
+export const states = /** @type {const} */ ({ doing: ['idle', 'busy', 'done', 'refused'] });
 const acting = (s, key, effect, patch = {}) =>
   s.at.doing === 'busy'
     ? no(s, `${s.acting} is under way, and is answered first`)
