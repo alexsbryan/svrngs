@@ -95,14 +95,8 @@ import * as play from './play.js?v=__VERSION__';
 /**
  * The messages ACTS takes: a read of the yeses and of each asking lend's
  * choices; that read, or why not; a fold opened or closed; a yes, its
- * answer, or why not; a Stop, its answer, or why not; HOME told.
- *
- * `unstopped` carries no `lend` and no `app`: it is only the `stop`
- * effect's `failed` message, which `machine` makes as `{ type, n, why }`
- * (ui/machine.js `run`), so its step files the refusal under
- * "undefined undefined", where `Uses` never reads it. Kept as it runs: a
- * refused Stop said beside it is a change a person would see (the
- * phone's web/page/uses.js names it in its io's own refusal).
+ * answer, or why not; a Stop, its answer, or why not, by its lend and
+ * app; HOME told.
  * @typedef {{ type: 'read', asking: string[] }
  *   | { type: 'reached', n: number, yeses: Yeses, choices: Record<string, Asked>, why: string }
  *   | { type: 'unreached', why: string }
@@ -112,14 +106,15 @@ import * as play from './play.js?v=__VERSION__';
  *   | { type: 'unacted', why: string }
  *   | { type: 'stop', lend: string, app: string }
  *   | { type: 'stopped', why: string }
- *   | { type: 'unstopped', why: string, lend?: undefined, app?: undefined }
+ *   | { type: 'unstopped', lend: string, app: string, why: string }
  *   | { type: 'told', why: string }} Message
  */
 
 /**
  * The effects its step answers: read `n` of the yeses and of `asking`'s
  * choices; a yes to `app`'s new version in the group `g`; HOME told to
- * read the groups again; and `app` stopped using `lend`.
+ * read the groups again; and `app` stopped using `lend`, a refusal of
+ * which its io answers itself, as `unstopped` with both.
  * @typedef {{ run: 'read', n: number, asking: string[], failed: 'unreached' }
  *   | { run: 'yes', g: string, app: string, failed: 'unacted' }
  *   | { run: 'again', failed: 'told' }
@@ -193,11 +188,16 @@ const ACTS = {
       })),
     yes: ({ g: group, app }) =>
       post('/runs', [group, app]).then(() => ({ type: 'acted', why: `${app} at its new version` })),
+    // A refused Stop answered by its own io, with its lend and app, so the
+    // step keeps the refusal where `Uses` draws it, beside that Stop
+    // (ui/uses.js `said`): the `failed` message `machine` makes carries
+    // neither (ui/machine.js `run`). As the phone's io answers its own
+    // (web/page/uses.js `unuse`).
     stop: ({ lend, app }) =>
-      post('/choices', { lend, app, said: 'stop' }).then(() => ({
-        type: 'stopped',
-        why: `${app} stopped using ${lend}`,
-      })),
+      post('/choices', { lend, app, said: 'stop' }).then(
+        () => ({ type: 'stopped', why: `${app} stopped using ${lend}` }),
+        (error) => ({ type: 'unstopped', lend, app, why: error.message }),
+      ),
   },
   step: (state, message) => {
     switch (message.type) {

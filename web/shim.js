@@ -209,10 +209,14 @@
         throw new DOMException('the socket is not open', 'InvalidStateError');
       if (data instanceof Blob)
         void data.arrayBuffer().then((send) => this.port.postMessage({ send }));
-      // A typed array's `slice`; a DataView has none, and throws here.
+      // Of a view, a typed array or a DataView, the bytes it views copied
+      // to a buffer of their own: a DataView has no `slice`, and the view's
+      // own buffer may hold more than it views (web/tests/shim.test.mjs).
       else
         this.port.postMessage({
-          send: ArrayBuffer.isView(data) ? /** @type {Uint8Array} */ (data).slice().buffer : data,
+          send: ArrayBuffer.isView(data)
+            ? new Uint8Array(data.buffer, data.byteOffset, data.byteLength).slice().buffer
+            : data,
         });
     }
     close(code = 1000) {
