@@ -54,6 +54,30 @@ const people = (rows) =>
       rows.filter((row) => row.person_key === person.person_key).map((row) => row.device),
     ]);
 
+// What a person's devices add to their words: a phone beside a computer,
+// or a phone alone.
+/** @param {PeopleRow['device'][]} devices */
+const phoneSaid = (devices) => {
+  if (!devices.includes('browser')) return '';
+  return devices.includes('computer') ? ', a phone too' : 'in from a phone';
+};
+
+// A person's class and words by their devices: a phone alone is judged
+// no further; a computer is not known with no `lends` read, off if it did
+// not answer that read, and on if it did.
+/**
+ * @param {PeopleRow['device'][]} devices
+ * @param {Unanswered | null} lends
+ * @param {boolean | undefined} silent
+ * @returns {[drawn: string, words: string]}
+ */
+const standing = (devices, lends, silent) => {
+  if (!devices.includes('computer')) return ['phone', ''];
+  if (!lends) return ['', 'not known now'];
+  if (silent) return ['off', 'did not answer'];
+  return ['on', 'on now'];
+};
+
 // Its class and its words, judged by `lends` (/v1/lends' `unanswered`).
 /**
  * @param {PeopleRow} person
@@ -63,21 +87,11 @@ const people = (rows) =>
  */
 function judged(person, devices, lends) {
   if (lends === undefined) return ['', 'asking…'];
-  const phone = devices.includes('browser')
-    ? devices.includes('computer')
-      ? ', a phone too'
-      : 'in from a phone'
-    : '';
+  const phone = phoneSaid(devices);
   const silent = lends?.unanswered.some(
     (who) => (who.person_key ?? who) === (who.person_key ? person.person_key : person.person),
   );
-  const [drawn, words] = !devices.includes('computer')
-    ? ['phone', '']
-    : !lends
-      ? ['', 'not known now']
-      : silent
-        ? ['off', 'did not answer']
-        : ['on', 'on now'];
+  const [drawn, words] = standing(devices, lends, silent);
   return [drawn, words + phone];
 }
 

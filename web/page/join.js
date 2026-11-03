@@ -110,35 +110,34 @@ export const takes = {
     known = state.joining?.kept.find((one) => one.id === group.id),
     // Read only while asking, once `join` set the link.
     joining = { .../** @type {Link} */ (state.joining), group, told, known },
-  ) =>
-    state.at.join !== 'asking'
-      ? no(state, `no link is asked of, it is ${state.at.join}`)
-      : known
-        ? go(
-            state,
-            { join: 'joined' },
-            { joining },
-            sending('hold', {
-              group: known,
-              wants: joining.wants,
-              joined: true,
-              why: `this phone is in ${group.id} already, by another link`,
-            }),
-          )
-        : group.person
-          ? redeem(state, joining, group.person)
-          : go(state, { join: 'naming' }, { joining }),
+  ) => {
+    if (state.at.join !== 'asking') return no(state, `no link is asked of, it is ${state.at.join}`);
+    if (known)
+      return go(
+        state,
+        { join: 'joined' },
+        { joining },
+        sending('hold', {
+          group: known,
+          wants: joining.wants,
+          joined: true,
+          why: `this phone is in ${group.id} already, by another link`,
+        }),
+      );
+    if (group.person) return redeem(state, joining, group.person);
+    return go(state, { join: 'naming' }, { joining });
+  },
   'typed name': (state, { value }) =>
     guest(state) || asks(state)
       ? go(state, {}, { typed: value })
       : no(state, `no name is asked: the link is ${state.at.join}`),
-  named: (state) =>
-    guest(state)
-      ? go(state, {}, {}, sending('guest named', { guest: state.typed ?? '' }))
-      : asks(state)
-        ? // A name is asked only of a link its issuer answered (`asked`).
-          redeem(state, /** @type {Told} */ (state.joining), state.typed ?? '')
-        : no(state, `no name is asked: the link is ${state.at.join}`),
+  named: (state) => {
+    if (guest(state))
+      return go(state, {}, {}, sending('guest named', { guest: state.typed ?? '' }));
+    // A name is asked only of a link its issuer answered (`asked`).
+    if (asks(state)) return redeem(state, /** @type {Told} */ (state.joining), state.typed ?? '');
+    return no(state, `no name is asked: the link is ${state.at.join}`);
+  },
   taken: (state, { why }) =>
     state.at.join === 'redeeming'
       ? go(state, { join: 'taken' }, { why })
@@ -163,12 +162,10 @@ export const takes = {
 };
 // Joined, its last words stand until the group is read (app.js@19b63b2b:162, :187).
 // Joined, a link was joined by (`asked`, `admitted`).
-const said = (/** @type {State} */ state) =>
-  state.at.join === 'joined' && state.at.list === 'unasked'
-    ? /** @type {Link} */ (state.joining).known
-      ? 'asking'
-      : 'redeeming'
-    : state.at.join;
+const said = (/** @type {State} */ state) => {
+  if (state.at.join !== 'joined' || state.at.list !== 'unasked') return state.at.join;
+  return /** @type {Link} */ (state.joining).known ? 'asking' : 'redeeming';
+};
 /** @type {Record<string, (s: State) => Said | undefined>} */
 export const heading = {
   // A state not named here says nothing.

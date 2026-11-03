@@ -62,7 +62,8 @@
           "never"
         ],
         "no-sequences": "error",
-        "no-unused-expressions": "error"
+        "no-unused-expressions": "error",
+        "no-nested-ternary": "error"
       }
     }
   ]

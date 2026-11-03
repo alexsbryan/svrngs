@@ -211,12 +211,11 @@ function Screen({ s: { groups, q: query } }) {
   const [people, on, things] = state.rows
     ? counted(state.rows, /** @type {Lends} */ (state.lends).lent, state.lends)
     : [];
-  const count =
-    state.at.screen === 'unread'
-      ? `This computer cannot read ${group.name ?? 'this group'} now: ${state.why}`
-      : state.rows
-        ? `${many(/** @type {number} */ (people), 'person', 'people')} · ${on} on now · ${many(/** @type {number} */ (things), 'thing', 'things')} lent`
-        : '';
+  let count = '';
+  if (state.at.screen === 'unread')
+    count = `This computer cannot read ${group.name ?? 'this group'} now: ${state.why}`;
+  else if (state.rows)
+    count = `${many(/** @type {number} */ (people), 'person', 'people')} · ${on} on now · ${many(/** @type {number} */ (things), 'thing', 'things')} lent`;
   return html`<section data-colour=${[...group.id].reduce((hash, char) => (hash * 31 + char.charCodeAt(0)) % 12, 0)}><h2>${group.name ?? 'A group whose name this computer cannot read'}${group.made && html`<small> (${whose(group.made)})</small>`}</h2><p>${count}</p><div>${state.rows && html`<${Door} rows=${state.rows} lent=${/** @type {Lends} */ (state.lends).lent} lends=${state.lends} newest=${state.newest} />`}</div><aside><h2>Since this screen opened</h2><p>Kept on this screen only: it starts over when the screen is opened again.</p><ol>${state.since.map(([tone, words], i) => html`<li><time>${tone}</time> ${words} ${i === 0 && html`<mark>new</mark>`}</li>`)}</ol><p>Nothing new yet. Who joins, and what they lend, shows here as it happens.</p></aside><footer><p>Lit: answered just now. Dashed: did not answer. Dotted: in from a phone.</p><p>Each thing lent opens in a tab as ${group.person}, from this computer.</p></footer></section>`;
 }
 

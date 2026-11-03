@@ -97,14 +97,12 @@ async function authenticated(request, intent = false) {
       const scope = new Proxy(
         /** @type {Record<string | symbol, unknown>} */ (/** @type {unknown} */ (self)),
         {
-          get: (target, property) =>
-            property === 'addEventListener'
-              ? on
-              : property === 'fetch'
-                ? fetched
-                : typeof target[property] === 'function'
-                  ? target[property].bind(target)
-                  : target[property],
+          get: (target, property) => {
+            if (property === 'addEventListener') return on;
+            if (property === 'fetch') return fetched;
+            if (typeof target[property] === 'function') return target[property].bind(target);
+            return target[property];
+          },
         },
       );
       new Function('self', 'addEventListener', 'fetch', await res.text())(scope, on, fetched);

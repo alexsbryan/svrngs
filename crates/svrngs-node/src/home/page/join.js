@@ -122,16 +122,15 @@ export const JOIN = (home) => ({
       case 'refused':
         return go(state, { join: 'refused' }, { for: undefined, why: message.why });
       case 'join':
-        return state.at.join === 'joining'
-          ? no(state, 'a join is under way, and is answered first')
-          : state.for
-            ? go(
-                state,
-                { join: 'joining' },
-                {},
-                { run: 'join', link: state.link, person: who(state), failed: 'unjoined' },
-              )
-            : no(state, 'no link is asked of yet');
+        if (state.at.join === 'joining')
+          return no(state, 'a join is under way, and is answered first');
+        if (!state.for) return no(state, 'no link is asked of yet');
+        return go(
+          state,
+          { join: 'joining' },
+          {},
+          { run: 'join', link: state.link, person: who(state), failed: 'unjoined' },
+        );
       case 'joined':
         return go(state, FIRST.at, FIRST);
       case 'unjoined':

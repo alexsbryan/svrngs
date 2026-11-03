@@ -149,19 +149,18 @@ export const SHELF = (bring, after) => ({
       case 'listed': {
         // `brought` sets `tries` to 0, and it is the one way to `brought`.
         const tries = /** @type {number} */ (state.tries);
-        return !message.missing.length || state.at.bring !== 'brought'
-          ? go(state, {})
-          : tries >= TRIES
-            ? no(
-                state,
-                `${message.why} not listed after ${TRIES} reads again; the next read says it`,
-              )
-            : go(
-                state,
-                {},
-                { tries: tries + 1 },
-                { run: 'after', ms: 1000 * 2 ** tries, failed: 'told' },
-              );
+        if (!message.missing.length || state.at.bring !== 'brought') return go(state, {});
+        if (tries >= TRIES)
+          return no(
+            state,
+            `${message.why} not listed after ${TRIES} reads again; the next read says it`,
+          );
+        return go(
+          state,
+          {},
+          { tries: tries + 1 },
+          { run: 'after', ms: 1000 * 2 ** tries, failed: 'told' },
+        );
       }
       case 'unbrought':
         return go(state, { bring: 'refused' }, { said: `Nothing was brought: ${message.why}` });

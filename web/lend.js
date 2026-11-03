@@ -1028,12 +1028,11 @@ function appWorker(code) {
   // The app's `self`: what `own` names, else the worker's own, its
   // functions bound to it.
   const scope = new Proxy(/** @type {Record<string | symbol, any>} */ (self), {
-    get: (target, property) =>
-      property in own
-        ? own[/** @type {keyof typeof own} */ (property)]
-        : typeof target[property] === 'function'
-          ? target[property].bind(target)
-          : target[property],
+    get: (target, property) => {
+      if (property in own) return own[/** @type {keyof typeof own} */ (property)];
+      if (typeof target[property] === 'function') return target[property].bind(target);
+      return target[property];
+    },
   });
   new Function('self', 'addEventListener', 'skipWaiting', 'fetch', code)(
     scope,
@@ -1179,6 +1178,29 @@ async function answered(fetchEvent, url, where) {
 
 // ── a WebSocket, over a socket the door switches ────────────────────────
 
+// A frame's first bytes: its opcode, final, and its length, masked, in
+// the form its size takes (RFC 6455 §5.2).
+/**
+ * @param {number} op
+ * @param {number} size
+ */
+function headOf(op, size) {
+  if (size < 126) return [0x80 | op, 0x80 | size];
+  if (size < 65536) return [0x80 | op, 0xfe, size >> 8, size & 255];
+  return [
+    0x80 | op,
+    0xff,
+    0,
+    0,
+    0,
+    0,
+    size >>> 24,
+    (size >>> 16) & 255,
+    (size >>> 8) & 255,
+    size & 255,
+  ];
+}
+
 // One frame from this end: masked, as a client's must be (RFC 6455 §5.3).
 /**
  * @param {number} op
@@ -1187,23 +1209,7 @@ async function answered(fetchEvent, url, where) {
 function frame(op, data) {
   const bytes = typeof data === 'string' ? new TextEncoder().encode(data) : new Uint8Array(data);
   const size = bytes.length;
-  const head =
-    size < 126
-      ? [0x80 | op, 0x80 | size]
-      : size < 65536
-        ? [0x80 | op, 0xfe, size >> 8, size & 255]
-        : [
-            0x80 | op,
-            0xff,
-            0,
-            0,
-            0,
-            0,
-            size >>> 24,
-            (size >>> 16) & 255,
-            (size >>> 8) & 255,
-            size & 255,
-          ];
+  const head = headOf(op, size);
   const mask = crypto.getRandomValues(new Uint8Array(4));
   const out = new Uint8Array(head.length + 4 + size);
   out.set(head);

@@ -68,26 +68,25 @@ export const owns = ['opening', 'unopened'];
 export const states = /** @type {const} */ ({ open: ['shut', 'opening', 'handed', 'refused'] });
 /** @type {Takes<State, Message, Effect>} */
 export const takes = {
-  open: (state, { label, at }, lend = state.lent?.find((one) => one.label === label)) =>
-    !lend
-      ? no(state, `nothing ${state.group?.name ?? 'here'} lends is ${label}`)
-      : state.at.open === 'opening'
-        ? no(state, `${state.opening} is opening already`)
-        : go(
-            state,
-            { open: 'opening' },
-            { opening: label, unopened: '' },
-            {
-              run: 'hand',
-              group: state.group,
-              // `lend` is found in it, so the list is read.
-              lent: /** @type {Lent[]} */ (state.lent),
-              unanswered: state.unanswered ?? [],
-              label,
-              at,
-              failed: 'unopened',
-            },
-          ),
+  open: (state, { label, at }, lend = state.lent?.find((one) => one.label === label)) => {
+    if (!lend) return no(state, `nothing ${state.group?.name ?? 'here'} lends is ${label}`);
+    if (state.at.open === 'opening') return no(state, `${state.opening} is opening already`);
+    return go(
+      state,
+      { open: 'opening' },
+      { opening: label, unopened: '' },
+      {
+        run: 'hand',
+        group: state.group,
+        // `lend` is found in it, so the list is read.
+        lent: /** @type {Lent[]} */ (state.lent),
+        unanswered: state.unanswered ?? [],
+        label,
+        at,
+        failed: 'unopened',
+      },
+    );
+  },
   handed: (state) =>
     state.at.open === 'opening' ? go(state, { open: 'handed' }) : no(state, 'nothing is opening'),
   // Opening, the lend opening is one listed (`open`).

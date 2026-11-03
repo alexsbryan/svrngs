@@ -255,12 +255,11 @@ export const holder = (label, key) =>
 // answered persisted, persist, persisted with `[false, true, true]`: iOS
 // keeps it when asked, and the page had not asked. Answered as the page's
 // trace says it, a browser that offers no asking among them.
-export const persist = async (storage = navigator.storage) =>
-  !storage?.persist
-    ? "this browser offers no way to ask it to keep the page's storage"
-    : (await storage.persisted())
-      ? "the browser keeps the page's storage already"
-      : `asked the browser to keep the page's storage: ${(await storage.persist()) ? 'granted' : 'refused'}`;
+export const persist = async (storage = navigator.storage) => {
+  if (!storage?.persist) return "this browser offers no way to ask it to keep the page's storage";
+  if (await storage.persisted()) return "the browser keeps the page's storage already";
+  return `asked the browser to keep the page's storage: ${(await storage.persist()) ? 'granted' : 'refused'}`;
+};
 
 // Every group kept, the last opened first. Their keys stay sealed.
 export const groups = async () =>

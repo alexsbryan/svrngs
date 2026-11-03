@@ -316,10 +316,23 @@ const BACKUP = {
 // computer meets the group at its fallback, said under it (surface.rs
 // `Held::fallback`; relay fallbacks); who is in it unread, or the person
 // removed, said and nothing read (home.js@19b63b2b:113-114).
+// Below a group's heading: who is in it could not be read, this person
+// was removed from it, or its places, once it is read.
+/**
+ * @param {Group} group
+ * @param {string} name
+ * @param {Omit<GroupProps, 'g'>} props
+ */
+const below = (group, name, props) => {
+  if (group.removed === null) return html`<p>This computer could not read who is in ${name}.</p>`;
+  if (group.removed)
+    return html`<p>You are no longer in ${name}. What you already have stays on this computer; nothing new reaches it.</p>`;
+  return html`<${Read} g=${group} ...${props} />`;
+};
 /** @param {GroupProps} props */
 export const Group = ({ g: group, ...props }) =>
   ((name) =>
-    html`<section data-colour=${[...group.id].reduce((hash, char) => (hash * 31 + char.charCodeAt(0)) % 12, 0)}><h2>${group.name ?? 'A group whose name this computer cannot read'}${group.made && html`<small> (${whose(group.made)})</small>`}</h2>${group.fallback && html`<p class="said">${BACKUP[group.fallback](name)}</p>`}${group.removed === null ? html`<p>This computer could not read who is in ${name}.</p>` : group.removed ? html`<p>You are no longer in ${name}. What you already have stays on this computer; nothing new reaches it.</p>` : html`<${Read} g=${group} ...${props} />`}</section>`)(
+    html`<section data-colour=${[...group.id].reduce((hash, char) => (hash * 31 + char.charCodeAt(0)) % 12, 0)}><h2>${group.name ?? 'A group whose name this computer cannot read'}${group.made && html`<small> (${whose(group.made)})</small>`}</h2>${group.fallback && html`<p class="said">${BACKUP[group.fallback](name)}</p>`}${below(group, name, props)}</section>`)(
     group.name ?? 'this group',
   );
 /** @param {GroupProps} props */

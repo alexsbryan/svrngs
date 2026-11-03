@@ -258,13 +258,14 @@ export const alias = (
   rows,
   at = (one) => `${one.name}@${one.called ?? one.person}`,
   computer = rows.find((row) => row.key === lend.key),
-) =>
-  lend.group
-    ? lend.kind
-    : lent.some((other) => !other.group && other.key !== lend.key && at(other) === at(lend)) &&
-        computer
-      ? `${at(lend)} (computer ${joinedSaid(computer.joined)})`
-      : at(lend);
+) => {
+  if (lend.group) return lend.kind;
+  const shared = lent.some(
+    (other) => !other.group && other.key !== lend.key && at(other) === at(lend),
+  );
+  if (shared && computer) return `${at(lend)} (computer ${joinedSaid(computer.joined)})`;
+  return at(lend);
+};
 
 // The lends of `lent` the alias `wanted` names: one, else none or more than
 // one, which the page says, never a nearest match.

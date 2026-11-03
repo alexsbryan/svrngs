@@ -68,23 +68,22 @@ export const takes = {
     state,
     message,
     [lend, app] = [message.lend, message.app].map((label) => lendOf(state, label)),
-  ) =>
-    state.at.ask !== 'none'
-      ? no(state, `the ask is ${state.at.ask} already`)
-      : !lend?.asks || !app
-        ? go(state, { ask: 'refused' }, { asking: null, answer: unlent })
-        : // Both found, both are named.
-          go(
-            state,
-            { ask: 'asking' },
-            {
-              asking: {
-                lend: /** @type {string} */ (message.lend),
-                app: /** @type {string} */ (message.app),
-                at: message.at ?? '/',
-              },
-            },
-          ),
+  ) => {
+    if (state.at.ask !== 'none') return no(state, `the ask is ${state.at.ask} already`);
+    if (!lend?.asks || !app) return go(state, { ask: 'refused' }, { asking: null, answer: unlent });
+    // Both found, both are named.
+    return go(
+      state,
+      { ask: 'asking' },
+      {
+        asking: {
+          lend: /** @type {string} */ (message.lend),
+          app: /** @type {string} */ (message.app),
+          at: message.at ?? '/',
+        },
+      },
+    );
+  },
   say: (state) =>
     !state.asking || state.at.ask === 'sending'
       ? no(state, `nothing is asked: the ask is ${state.at.ask}`)

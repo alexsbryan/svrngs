@@ -66,9 +66,20 @@ const rows = (
     ...lend,
     called: called(people, people.find((row) => row.key === lend.key)?.person_key),
   }));
+  // A lend's third cell: how it opens; a port, this computer's own or
+  // another's to open here.
+  /**
+   * @param {Lent} lend
+   * @param {string | undefined} opened
+   */
+  const openCell = (lend, opened) => {
+    if (!lend.raw) return `${opened}.`;
+    if (lend.key === me) return 'A port this computer lends.';
+    return html`<${cell} l=${lend} g=${group} s=${state} send=${send} home=${home} />`;
+  };
   const each = once(lent).map((lend) =>
     ((opened, now) =>
-      html`<tr key=${label(lend)}>${lend.raw ? html`<td>${named(lend)}</td>` : html`<td>${opener(lend)}${` ${agreed(lend, lends.shelf, group)}`}</td>`}<td>${owner(lend, group)}</td><td>${lend.raw ? (lend.key === me ? 'A port this computer lends.' : html`<${cell} l=${lend} g=${group} s=${state} send=${send} home=${home} />`) : `${opened}.`}</td><td>${now}</td></tr>`)(
+      html`<tr key=${label(lend)}>${lend.raw ? html`<td>${named(lend)}</td>` : html`<td>${opener(lend)}${` ${agreed(lend, lends.shelf, group)}`}</td>`}<td>${owner(lend, group)}</td><td>${openCell(lend, opened)}</td><td>${now}</td></tr>`)(
       ...opens(lend, 'In a tab'),
     ),
   );
