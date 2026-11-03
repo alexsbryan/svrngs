@@ -112,7 +112,7 @@ export function framing(header, signer) {
 }
 
 /**
- * A lend as a pass names it, in the hand-off (web/page/index.js `handing`).
+ * A lend as a pass names it, in the hand-off (web/page/hand.js `handing`).
  * @typedef {object} Passed
  * @property {string} label
  * @property {string} key
@@ -127,7 +127,7 @@ export function framing(header, signer) {
 
 /**
  * The hand-off: what the group's page hands a lend's origin in the
- * fragment as it opens it (web/page/index.js `handing`), read there by
+ * fragment as it opens it (web/page/hand.js `handing`), read there by
  * open.html (web/open.js). `proof` is the open's seal (`sealOpen`).
  * @typedef {object} Handoff
  * @property {string} label the lend opened

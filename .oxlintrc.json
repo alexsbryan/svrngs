@@ -10,6 +10,12 @@
   "categories": {
     "correctness": "error"
   },
+  "plugins": [
+    "unicorn",
+    "typescript",
+    "oxc",
+    "import"
+  ],
   "rules": {
     "no-undef": "error",
     "no-redeclare": "error",
@@ -88,7 +94,8 @@
           {
             "threshold": 0
           }
-        ]
+        ],
+        "import/no-cycle": "error"
       }
     }
   ]
