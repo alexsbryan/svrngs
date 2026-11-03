@@ -4,6 +4,13 @@
 // (ralph/next/js/CHARTER.md, decision 1). Each error is printed as tsc
 // prints it, then the count; exit 0 holds, 1 broken.
 //
+// The service workers (web/sw.js, web/lend.js) run in a worker's global,
+// not a window's, so jsconfig.workers.json checks them in a program of
+// their own, with the worker's lib for the DOM's. Each program reports the
+// errors in the files its config names: a module both import, such as
+// store.js, is the pages' program's to report, and what of it the workers
+// call is checked at their calls.
+//
 // tsc alone cannot run this check: it looks for a module by the file its
 // specifier names, and a page names each module by a URL, as the browser
 // loads it. Three of those URLs name no file in the repository, so this
@@ -47,16 +54,32 @@ function served(specifier) {
 // reaches a pipe whole before node ends.
 process.exitCode = check();
 
-/** Every error jsconfig.json's files hold, printed: 0 for none, else 1. */
+/** Every error both programs' files hold, printed: 0 for none, else 1. */
 function check() {
-  const read = ts.readConfigFile(join(ROOT, 'jsconfig.json'), ts.sys.readFile);
-  if (read.error) {
-    console.log(ts.formatDiagnostics([read.error], ts.createCompilerHost({})));
-    return 1;
-  }
   if (!existsSync(GLUE.replace(/\.js$/, '.d.ts'))) {
     console.log(`types: ${GLUE.replace(/\.js$/, '.d.ts')} is not built: scripts/build-web.sh`);
     return 1;
+  }
+  let errors = 0;
+  const files = new Set();
+  for (const name of ['jsconfig.json', 'jsconfig.workers.json']) {
+    const checked = program(name);
+    errors += checked.errors;
+    for (const file of checked.files) files.add(file);
+  }
+  console.log(`types: ${errors} errors in ${files.size} files`);
+  return errors > 0 ? 1 : 0;
+}
+
+/**
+ * The errors in the files config `name` names, printed, and those files.
+ * @param {string} name
+ */
+function program(name) {
+  const read = ts.readConfigFile(join(ROOT, name), ts.sys.readFile);
+  if (read.error) {
+    console.log(ts.formatDiagnostics([read.error], ts.createCompilerHost({})));
+    return { errors: 1, files: [] };
   }
   const config = ts.parseJsonConfigFileContent(read.config, ts.sys, ROOT);
   const host = ts.createCompilerHost(config.options);
@@ -64,11 +87,13 @@ function check() {
     literals.map((literal) =>
       ts.resolveModuleName(served(literal.text), containing, options, host, undefined, redirected),
     );
-  const program = ts.createProgram({ rootNames: config.fileNames, options: config.options, host });
-  const errors = [...config.errors, ...ts.getPreEmitDiagnostics(program)];
+  const own = new Set(config.fileNames);
+  const built = ts.createProgram({ rootNames: config.fileNames, options: config.options, host });
+  const errors = [...config.errors, ...ts.getPreEmitDiagnostics(built)].filter(
+    (e) => e.file === undefined || own.has(e.file.fileName),
+  );
   if (errors.length > 0) {
     console.log(ts.formatDiagnostics(errors, host));
   }
-  console.log(`types: ${errors.length} errors in ${config.fileNames.length} files`);
-  return errors.length > 0 ? 1 : 0;
+  return { errors: errors.length, files: config.fileNames };
 }

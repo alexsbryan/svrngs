@@ -24,6 +24,8 @@
     // The vendored declarations are Preact's and htm's, checked upstream.
     "skipLibCheck": true
   },
+  // The service workers are jsconfig.workers.json's, in a worker's global.
+  "exclude": ["web/sw.js", "web/lend.js"],
   "include": [
     "web/*.js",
     "web/page/*.js",

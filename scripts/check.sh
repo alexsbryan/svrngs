@@ -97,7 +97,8 @@ step "web rustfmt and clippy" scripts/build-web.sh --lint
 # Without Playwright or its browsers it fails naming the install command;
 # it never skips.
 step "browser" cargo test --quiet --workspace --test browser
-# The pages' types (jsconfig.json, by scripts/types.mjs): after `browser`,
+# The pages' types (jsconfig.json, and the service workers' in
+# jsconfig.workers.json, by scripts/types.mjs): after `browser`,
 # since that step builds the wasm glue whose declaration the pages' calls
 # into it are checked against. Not installed fails, as lint.
 step "types" sh -c 'test -f web/node_modules/typescript/package.json || { echo "typescript is not installed here: npm ci --prefix web"; exit 1; }; node scripts/types.mjs'
