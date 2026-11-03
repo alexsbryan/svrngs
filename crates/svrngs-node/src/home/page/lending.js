@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// @ts-nocheck: not typed yet, so scripts/types.mjs skips it (the js-types row types it).
 // "What you lend" (page-index (e); home.js `lending` and `signed`,
 // :252-287): what this computer lends, each with how many it lets in at
 // once — its person's choice, a number or everyone in their groups — to
@@ -24,6 +23,7 @@
 import {
   Act,
   ask,
+  assertNever,
   Field,
   go,
   html,
@@ -34,6 +34,10 @@ import {
   useMachine,
 } from '../ui/kit.js?v=__VERSION__';
 import { get, post } from './group.js?v=__VERSION__';
+/** @import { Machine, Step } from '../ui/machine.js?v=__VERSION__' */
+/** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
+/** @import { Lend } from '../question.js?v=__VERSION__' */
+/** @import * as HOME from '../home.js?v=__VERSION__' */
 
 /**
  * The field of HOME's that `take` sets: whether what you lend is read.
@@ -45,32 +49,122 @@ import { get, post } from './group.js?v=__VERSION__';
  * @typedef {{ type: 'told', flow: 'lending', why: string }} Taken
  */
 
+/**
+ * The list's state: where its read is, what this computer lends, which of
+ * them sign people in with svrngs, by name, and why it could not be read.
+ * @typedef {object} State
+ * @property {{ lent: 'reading' | 'read' | 'unread' }} at
+ * @property {Record<string, number>} [asked]
+ * @property {Lend[]} [lent]
+ * @property {string[]} [signing]
+ * @property {string} [why]
+ */
+
+/**
+ * The messages the list takes: read again; read `n` answered (home.rs
+ * `lent`), or unread, with why.
+ * @typedef {{ type: 'read' }
+ *   | { type: 'answered', n: number, lent: Lend[], signing: string[], why: string }
+ *   | { type: 'unread', n: number, why: string }} Message
+ */
+
+/**
+ * The effect its step answers: read `n` of what this computer lends.
+ * @typedef {{ run: 'read', n: number, failed: 'unread' }} Effect
+ */
+
+/**
+ * The app form's fill, the one time signing people in is turned on
+ * (home.rs `change`).
+ * @typedef {{ issuer: string, client_id: string, client_secret: string | null, deviations: string }} Signed
+ */
+
+/**
+ * A change of a lend: how many it lets in at once, a number or everyone
+ * (`null`), or its lending stopped.
+ * @typedef {{ limit: number | null } | 'stop'} To
+ */
+
+/**
+ * A lend's row's state: where its change is, the number typed, what was
+ * last said, and the app form's fill, once.
+ * @typedef {object} ChangeState
+ * @property {{ change: 'idle' | 'changing' | 'refused' }} at
+ * @property {Record<string, number>} [asked]
+ * @property {string} said
+ * @property {string} [many]
+ * @property {Signed} [shown]
+ */
+
+/**
+ * The messages a row takes: a number typed, in the Field, which names no
+ * field here; a change pressed; Sign people in pressed; Let in this many
+ * pressed, with the number; the change made, signing on, or refused, with
+ * why.
+ * @typedef {{ type: 'typed', value: string }
+ *   | { type: 'change', to: To }
+ *   | { type: 'sign' }
+ *   | { type: 'many', value: string }
+ *   | { type: 'changed', why: string }
+ *   | { type: 'signed', c: Signed, why: string }
+ *   | { type: 'refused', why: string }} ChangeMessage
+ */
+
+/**
+ * The effects a row's step answers: the change posted, and signing on.
+ * @typedef {{ run: 'change', to: To, failed: 'refused' }
+ *   | { run: 'sign', failed: 'refused' }} ChangeEffect
+ */
+
+/** @type {Machine<State, Message, Effect>} */
 const LENDING = {
   states: { lent: ['reading', 'read', 'unread'] },
   io: {
     read: ({ n }) =>
-      get('/lent').then(({ lent, signing }) => ({
-        type: 'answered',
-        n,
-        lent: lent.filter((l) => !l.group),
-        signing,
-        why: `${lent.length} lent`,
-      })),
+      get('/lent').then(
+        /** @param {{ lent: Lend[], signing: string[] }} answer */
+        ({ lent, signing }) => ({
+          type: 'answered',
+          n,
+          lent: lent.filter((l) => !l.group),
+          signing,
+          why: `${lent.length} lent`,
+        }),
+      ),
   },
-  step: (s, m, [asked, n] = ask(s, 'lent'), old = m.type !== 'read' && late(s, 'lent', m.n)) =>
-    old
-      ? no(s, old)
-      : ({
-          read: () => go(s, { lent: 'reading' }, { asked }, { run: 'read', n, failed: 'unread' }),
-          answered: () => go(s, { lent: 'read' }, { lent: m.lent, signing: m.signing ?? [] }),
-          unread: () => go(s, { lent: 'unread' }, { why: m.why }),
-        }[m.type]?.() ?? no(s, `what you lend takes no ${m.type}`)),
+  // Each message's read numbered, and an answer older than the last read
+  // asked refused by name, before any case takes it.
+  step: (s, m) => {
+    const [asked, n] = ask(s, 'lent');
+    const old = m.type !== 'read' && late(s, 'lent', m.n);
+    if (old) return no(s, old);
+    switch (m.type) {
+      case 'read':
+        return go(s, { lent: 'reading' }, { asked }, { run: 'read', n, failed: 'unread' });
+      case 'answered':
+        return go(s, { lent: 'read' }, { lent: m.lent, signing: m.signing ?? [] });
+      case 'unread':
+        return go(s, { lent: 'unread' }, { why: m.why });
+      default:
+        return assertNever(s, m, 'what you lend');
+    }
+  },
 };
 // The change asked, `run` with what it carries, unless one is under way.
+/**
+ * @param {ChangeState} s
+ * @param {ChangeEffect} effect
+ * @returns {Step<ChangeState, ChangeEffect>}
+ */
 const changing = (s, effect) =>
   s.at.change === 'changing'
     ? no(s, 'a change is under way, and is answered first')
     : go(s, { change: 'changing' }, {}, effect);
+/**
+ * @param {string} lend
+ * @param {HOME.PlaceProps['home']} home
+ * @returns {Machine<ChangeState, ChangeMessage, ChangeEffect>}
+ */
 const CHANGE = (lend, home) => ({
   states: { change: ['idle', 'changing', 'refused'] },
   io: {
@@ -85,32 +179,56 @@ const CHANGE = (lend, home) => ({
         why: 'its secret shown here once',
       })),
   },
-  step: (s, m) =>
-    ({
-      typed: () => go(s, {}, { many: m.value }),
-      change: () => changing(s, { run: 'change', to: m.to, failed: 'refused' }),
-      sign: () => changing(s, { run: 'sign', failed: 'refused' }),
-      many: () =>
-        /^[1-9][0-9]*$/.test(m.value)
+  step: (s, m) => {
+    switch (m.type) {
+      case 'typed':
+        return go(s, {}, { many: m.value });
+      case 'change':
+        return changing(s, { run: 'change', to: m.to, failed: 'refused' });
+      case 'sign':
+        return changing(s, { run: 'sign', failed: 'refused' });
+      case 'many':
+        return /^[1-9][0-9]*$/.test(m.value)
           ? changing(s, { run: 'change', to: { limit: Number(m.value) }, failed: 'refused' })
-          : go(s, { change: 'refused' }, { said: ' Say how many: 1 or more.' }),
-      changed: () => go(s, { change: 'idle' }, { many: undefined, said: '' }),
-      signed: () => go(s, { change: 'idle' }, { shown: m.c }),
-      refused: () => go(s, { change: 'refused' }, { said: ` ${m.why}` }),
-    })[m.type]?.() ?? no(s, `a lend here takes no ${m.type}`),
+          : go(s, { change: 'refused' }, { said: ' Say how many: 1 or more.' });
+      case 'changed':
+        return go(s, { change: 'idle' }, { many: undefined, said: '' });
+      case 'signed':
+        return go(s, { change: 'idle' }, { shown: m.c });
+      case 'refused':
+        return go(s, { change: 'refused' }, { said: ` ${m.why}` });
+      default:
+        return assertNever(s, m, 'a lend here');
+    }
+  },
 });
 
 // What a lend's app form is filled with, the one time its lender turns
 // signing people in with svrngs on: the issuer, the client and its secret,
 // and the deviations in their words (home.js@19b63b2b:256).
+/** @param {Signed} c */
 const signed = (c) =>
   html`<p>Signing people in with svrngs. In the app’s own settings, choose OpenID Connect, and fill in: issuer <code>${c.issuer}</code>, client id <code>${c.client_id}</code>, client secret <code>${c.client_secret}</code>${`. ${c.deviations} Copy the secret now: it is not shown again. `}</p>`;
+/**
+ * A lend's row: the lend, whether it signs people in with svrngs, and
+ * HOME's `dispatch`, told to read again once it changes.
+ * @typedef {object} LentProps
+ * @property {Lend} l
+ * @property {boolean} signs
+ * @property {HOME.PlaceProps['home']} home
+ */
+
+/** @param {LentProps} props */
 function Lent({ l, signs, home }) {
   const [s, send] = useMachine(() =>
       machine('CHANGE', CHANGE(l.name, home), { at: { change: 'idle' }, said: '' }),
     ),
     n = l.limit,
     value = s.many ?? String(n ?? '');
+  /**
+   * @param {string} words
+   * @param {ChangeMessage} on
+   */
   const act = (words, on) =>
     html`<${Act} words=${words} doing=${{ state: s.at.change === 'changing' ? 'busy' : 'idle' }} on=${on} send=${send} />`;
   return html`<li>${`${l.name}: ${n ? `up to ${n} ${n === 1 ? 'person' : 'people'}` : 'everyone in your groups'} at once, ${l.using} using it now. `}<${Field} words="How many people at once: " value=${value} attrs=${{ type: 'number', min: 1 }} send=${send} />${act('Let in this many', { type: 'many', value })}${n && act('Let everyone in', { type: 'change', to: { limit: null } })}${signs ? 'Signs people in with svrngs. ' : act('Sign people in with svrngs', { type: 'sign' })}${act('Stop lending', { type: 'change', to: 'stop' })}${s.said}${s.shown && signed(s.shown)}</li>`;
@@ -118,8 +236,27 @@ function Lent({ l, signs, home }) {
 // HOME's: the page's foot held until what you lend is first read, as v1
 // drew its address after it (home.js@19b63b2b:326-328): drawn at once, a driver read the
 // list empty (main.rs:2524 on v2).
+/**
+ * @param {HOME.State} s
+ * @returns {Step<HOME.State, HOME.Effect>}
+ */
 export const take = (s) => go(s, {}, { lentRead: true });
-export const holds = (s) => s.groups.length > 0 && !s.lentRead;
+// Asked only past the groups' read (home.js `Home`, `held`, past its first
+// `return`), so `s.groups` is read.
+/** @param {HOME.State} s */
+export const holds = (s) => /** @type {Groups} */ (s.groups).length > 0 && !s.lentRead;
+/** @typedef {NonNullable<HOME.State['groups']>} Groups */
+
+/**
+ * The list, read again on each of HOME's rounds: the round, HOME's
+ * `dispatch`, and whether HOME is told it was read.
+ * @typedef {object} LendingProps
+ * @property {HOME.State['round']} round
+ * @property {HOME.PlaceProps['home']} home
+ * @property {boolean | undefined} told
+ */
+
+/** @param {LendingProps} props */
 function Lending({ round, home, told }) {
   const [s, send] = useMachine(() => machine('LENDING', LENDING, { at: { lent: 'reading' } }));
   useEffect(() => send({ type: 'read' }), [round]);
@@ -132,9 +269,14 @@ function Lending({ round, home, told }) {
       ),
     [s.at.lent],
   );
-  return html`<section id="lent"><h2>What you lend</h2>${s.at.lent === 'unread' ? html`<p>This computer cannot read what you lend: ${s.why}</p>` : s.lent && html`${!s.lent.length && html`<p>You lend nothing yet.</p>`}<ul>${s.lent.map((l) => html`<${Lent} key=${l.name} l=${l} signs=${s.signing.includes(l.name)} home=${home} />`)}</ul>`}</section>`;
+  // `signing` is set with `lent`, by `answered`, so it is there with it.
+  return html`<section id="lent"><h2>What you lend</h2>${s.at.lent === 'unread' ? html`<p>This computer cannot read what you lend: ${s.why}</p>` : s.lent && html`${!s.lent.length && html`<p>You lend nothing yet.</p>`}<ul>${s.lent.map((l) => html`<${Lent} key=${l.name} l=${l} signs=${/** @type {string[]} */ (s.signing).includes(l.name)} home=${home} />`)}</ul>`}</section>`;
 }
+// Drawn once the groups are read (home.js `Home`), so `s.groups` is read
+// then.
+/** @type {{ lent: (props: HOME.PlaceProps) => Drawn }} */
 export const view = {
   lent: ({ s, home }) =>
-    s.groups.length > 0 && html`<${Lending} round=${s.round} home=${home} told=${s.lentRead} />`,
+    /** @type {Groups} */ (s.groups).length > 0 &&
+    html`<${Lending} round=${s.round} home=${home} told=${s.lentRead} />`,
 };
