@@ -219,7 +219,7 @@ const APP = { ...grapevine, ...sealing };
 /** Each law's plant: the one change to the source that breaks it (§8's plants). */
 const PLANTS = {
   // the carry spreads the ask
-  'bar 1: a carry never names the asker': ['grapevine.js', 'payload: { app: APP, type: CARRY, kind: ask.kind,', 'payload: { ...ask, app: APP, type: CARRY, kind: ask.kind,'],
+  'bar 1: a carry never names the asker': ['grapevine.js', 'group: can.group,\n    payload: {', 'group: can.group,\n    payload: { ...ask,'],
   // hops not decremented
   'bar 2: carriable refuses each by its reason': ['grapevine.js', 'carriable.can.push({ ask: a.id, group: g.id, name, hops: up.hops - 1,', 'carriable.can.push({ ask: a.id, group: g.id, name, hops: up.hops,'],
   // `seal` returns the body

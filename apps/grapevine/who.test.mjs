@@ -172,7 +172,7 @@ function planted(file, from, to) {
 const PLANTS = {
   'a foreign Host is refused': ['server.mjs', 'if (req.headers.host !== own) {', 'if (false) {'],
   'a foreign Origin is refused': ['server.mjs', "if (req.headers.origin !== undefined && req.headers.origin !== `http://${own}`) {", 'if (false) {'],
-  'a write not sent as JSON is refused': ['server.mjs', "if (req.method === 'POST' && !/^application\\/json\\s*(;|$)/i.test(req.headers['content-type'] ?? '')) {", 'if (false) {'],
+  'a write not sent as JSON is refused': ['server.mjs', "!/^application\\/json\\s*(;|$)/i.test(req.headers['content-type'] ?? '')", 'false'],
   // one name, the first group's, for every group
   '"me" is read per group from svrngs': ['relay.mjs', "let me = typeof g.person === 'string' ? g.person : null;", "let me = typeof groups[0].person === 'string' ? groups[0].person : null;"],
 };

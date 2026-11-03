@@ -107,7 +107,7 @@ const PLANTS = {
   // the loop skips its step 3
   "bar 5: a withdrawn ask's carry is corrected within one loop": ["} else if (r.do === 'correct') {", "} else if (r.do === 'correct' && false) {"],
   // GRAPEVINE_DEBUG printing the opened body
-  'no plaintext or secret in any trace': ["trace('folded', { person: id,", "trace('folded', { opened: v.threads, person: id,"],
+  'no plaintext or secret in any trace': ["trace('folded', {", "trace('folded', { opened: v.threads,"],
 };
 
 test('the loop holds its laws', async () => {

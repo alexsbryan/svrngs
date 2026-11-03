@@ -30,10 +30,10 @@ test("the canary runs §10's scene on demo.json, each step timed", () => {
 test('the canary fails on a carry left uncorrected after withdrawal', () => {
   const dir = mkdtempSync(join(tmpdir(), 'grapevine-plant-'));
   cpSync(HERE, dir, { recursive: true });
-  const from = 'if (upstream?.voided && carried) relay.push(';
+  const from = 'if (upstream?.voided && carried)';
   const src = readFileSync(join(dir, 'grapevine.js'), 'utf8');
   assert.equal(src.split(from).length, 2, `the plant no longer applies to grapevine.js: ${from}`);
-  writeFileSync(join(dir, 'grapevine.js'), src.replace(from, 'if (false) relay.push('));
+  writeFileSync(join(dir, 'grapevine.js'), src.replace(from, 'if (false)'));
   const out = run(dir);
   assert.equal(out.status, 1, out.stdout);
   assert.match(out.stderr, /step 6, Sam takes it back; within one turn the carry in Waller is gone, did not hold:\nKim still sees \["tile saw, Saturday"\]; Jo's carry corrected: false/);
