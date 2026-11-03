@@ -6,7 +6,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { ask, go, late, machine, no } from '../../crates/svrngs-node/src/home/ui/machine.js?v=__VERSION__';
+import {
+  ask,
+  go,
+  late,
+  machine,
+  no,
+} from '../../crates/svrngs-node/src/home/ui/machine.js?v=__VERSION__';
 
 // The toy: `list` reads a list, `send` posts one thing at a time.
 const states = { list: ['reading', 'read', 'unread'], send: ['idle', 'sending', 'sent'] };
@@ -14,7 +20,9 @@ const first = { at: { list: 'reading', send: 'idle' }, asked: { list: 1 }, rows:
 function step(s, m) {
   switch (m.type) {
     case 'read':
-      return late(s, 'list', m.n) ? no(s, late(s, 'list', m.n)) : go(s, { list: 'read' }, { rows: m.rows });
+      return late(s, 'list', m.n)
+        ? no(s, late(s, 'list', m.n))
+        : go(s, { list: 'read' }, { rows: m.rows });
     case 'unread':
       return go(s, { list: 'unread' }, { said: m.why });
     case 'again': {
@@ -23,7 +31,13 @@ function step(s, m) {
     }
     case 'send':
       if (s.at.send === 'sending') return no(s, 'sending already');
-      return go(s, { send: 'sending' }, {}, { run: 'post', failed: 'unsent' }, { run: 'note', failed: 'unnoted' });
+      return go(
+        s,
+        { send: 'sending' },
+        {},
+        { run: 'post', failed: 'unsent' },
+        { run: 'note', failed: 'unnoted' },
+      );
     case 'stray':
       return go(s, { send: 'lost' });
     default:
@@ -53,7 +67,10 @@ test('a step answers the next state, tells each subscriber once, and is traced',
 
 test('a refusal keeps the same state, tells nobody, runs nothing, and is traced with why', async () => {
   let ran = 0;
-  const { m, lines, told } = toy({ post: async () => (ran++, { type: 'sent' }), note: async () => (ran++, { type: 'noted' }) });
+  const { m, lines, told } = toy({
+    post: async () => (ran++, { type: 'sent' }),
+    note: async () => (ran++, { type: 'noted' }),
+  });
   m.dispatch({ type: 'send' });
   const before = m.get();
   const t = told();
@@ -73,11 +90,19 @@ test('an effect rejected, thrown, or with no io answers its failed message, with
   };
   for (const [name, read, why] of [
     ['rejected', () => Promise.reject(new Error('refused: 403')), 'refused: 403'],
-    ['thrown', () => { throw new Error('not a function here'); }, 'not a function here'],
+    [
+      'thrown',
+      () => {
+        throw new Error('not a function here');
+      },
+      'not a function here',
+    ],
     ['no io', undefined, 'nothing here runs read'],
     ['rejected', io.read, 'the computer did not answer'],
   ]) {
-    const { m, lines } = toy(read ? { read } : {}, first, [{ run: 'read', failed: 'unread', n: 1 }]);
+    const { m, lines } = toy(read ? { read } : {}, first, [
+      { run: 'read', failed: 'unread', n: 1 },
+    ]);
     await settled();
     assert.deepEqual([m.get().at.list, m.get().said], ['unread', why], name);
     assert.equal(lines.at(-1), `TOY: unread (${why}): reading/idle -> unread/idle`, name);
@@ -85,7 +110,9 @@ test('an effect rejected, thrown, or with no io answers its failed message, with
 });
 
 test('an effect that answers nothing answers its failed message, never a quiet idle', async () => {
-  const { m } = toy({ read: async () => undefined }, first, [{ run: 'read', failed: 'unread', n: 1 }]);
+  const { m } = toy({ read: async () => undefined }, first, [
+    { run: 'read', failed: 'unread', n: 1 },
+  ]);
   await settled();
   assert.deepEqual([m.get().at.list, m.get().said], ['unread', 'read answered nothing']);
 });
@@ -95,7 +122,10 @@ test('a late answer is refused by name, and the newer one taken', async () => {
   m.dispatch({ type: 'again' });
   assert.equal(m.get().asked.list, 2);
   m.dispatch({ type: 'read', n: 1, rows: ['old'] });
-  assert.equal(lines.at(-1), 'TOY: read refused in reading/idle: list 1 answered after list 2 was asked');
+  assert.equal(
+    lines.at(-1),
+    'TOY: read refused in reading/idle: list 1 answered after list 2 was asked',
+  );
   assert.deepEqual(m.get().rows, []);
   m.dispatch({ type: 'read', n: 2, rows: ['new'] });
   assert.deepEqual(m.get().rows, ['new']);
@@ -108,7 +138,10 @@ test('a step that answers a state outside its region is refused', () => {
   m.dispatch({ type: 'stray' });
   assert.equal(m.get(), before);
   assert.equal(told(), 0);
-  assert.equal(lines.at(-1), 'TOY: stray refused in reading/idle: send lost is not one of idle, sending, sent');
+  assert.equal(
+    lines.at(-1),
+    'TOY: stray refused in reading/idle: send lost is not one of idle, sending, sent',
+  );
 });
 
 test('effects run in the order the step gives them, after the state is taken', async () => {

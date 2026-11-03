@@ -23,7 +23,9 @@ import { launch } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const server = http.createServer((_, res) =>
-  res.writeHead(200, { 'content-type': 'text/html' }).end('<!doctype html><title>elsewhere</title>'),
+  res
+    .writeHead(200, { 'content-type': 'text/html' })
+    .end('<!doctype html><title>elsewhere</title>'),
 );
 await new Promise((done) => server.listen(0, '127.0.0.1', done));
 const at = server.address().port;

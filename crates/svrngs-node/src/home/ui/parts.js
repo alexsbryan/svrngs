@@ -13,13 +13,15 @@ const IDLE = { state: 'idle', said: '' };
 // nothing, and a press sends nothing. With no `on` it sends nothing itself:
 // a form's own button, whose form says what is asked.
 export function Act({ words, doing = IDLE, on, type, answer = 'beside', send }) {
-  const busy = doing.state === 'busy', said = busy ? '' : (doing.said ?? '');
+  const busy = doing.state === 'busy',
+    said = busy ? '' : (doing.said ?? '');
   if (answer === 'instead' && said) return said;
   return html`<button type=${type} disabled=${busy} onClick=${on && (() => busy || send(on))}>${words}</button>${said}`;
 }
 
 // Words from one region, in one element.
-export const Said = ({ tag = 'p', id, class: tone, words }) => html`<${tag} id=${id} class=${tone}>${words}</${tag}>`;
+export const Said = ({ tag = 'p', id, class: tone, words }) =>
+  html`<${tag} id=${id} class=${tone}>${words}</${tag}>`;
 
 // A <details> whose open is in the store: a toggle, a driver's `open =`
 // too (web/tests/home.mjs), is said once, and the open it was drawn with
@@ -36,14 +38,18 @@ export function Field({ shape = 'wrap', id, name = id, words, value, attrs = {},
   const box = options
     ? html`<select name=${name} value=${value} onChange=${typed}>${options.map(([v, w]) => html`<option value=${v}>${w}</option>`)}</select>`
     : html`<input ref=${shape === 'for' ? focus : undefined} id=${id} name=${name} value=${value} onInput=${typed} ...${attrs} />`;
-  return shape === 'for' ? html`<label for=${id}>${words}</label>${box}` : html`<label>${words}${box}</label>`;
+  return shape === 'for'
+    ? html`<label for=${id}>${words}</label>${box}`
+    : html`<label>${words}${box}</label>`;
 }
 
 // A row of a table, `th` for its head, or one cell across it (`span`).
-export const Row = ({ cells, tag = 'td', span }) => html`<tr>${cells.map((c) => html`<${tag} colSpan=${span}>${c}</${tag}>`)}</tr>`;
+export const Row = ({ cells, tag = 'td', span }) =>
+  html`<tr>${cells.map((c) => html`<${tag} colSpan=${span}>${c}</${tag}>`)}</tr>`;
 
 // The address to keep for a lend, as question.js `keeping` says it.
-export const Keep = ({ at }) => html`<small class="keep"><a href=${at}>${at}</a> Bookmark this.</small>`;
+export const Keep = ({ at }) =>
+  html`<small class="keep"><a href=${at}>${at}</a> Bookmark this.</small>`;
 
 // The phone page's heading, `tone` good or bad.
 export const Heading = ({ words, tone }) => html`<h1 id="status" class=${tone}>${words}</h1>`;

@@ -23,34 +23,49 @@ function json(res, status, value) {
   res.end(JSON.stringify(value));
 }
 
-export async function start({ upstream, port = 8100, host = '127.0.0.1', model = 'whisper-1' } = {}) {
-  if (!upstream) throw new Error('the wrapper needs whisper.cpp\'s server as --upstream');
+export async function start({
+  upstream,
+  port = 8100,
+  host = '127.0.0.1',
+  model = 'whisper-1',
+} = {}) {
+  if (!upstream) throw new Error("the wrapper needs whisper.cpp's server as --upstream");
   const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && req.url === '/v1/models') {
       return json(res, 200, { object: 'list', data: [{ id: model, object: 'model' }] });
     }
     if (req.method !== 'POST' || req.url !== '/v1/audio/transcriptions') {
-      return json(res, 404, { error: 'the wrapper answers /v1/models and /v1/audio/transcriptions' });
+      return json(res, 404, {
+        error: 'the wrapper answers /v1/models and /v1/audio/transcriptions',
+      });
     }
     const body = await collect(req);
     const at = new URL('/inference', upstream);
-    const answer = http.request({
-      hostname: at.hostname, port: at.port, path: at.pathname, method: 'POST',
-      headers: { 'content-type': req.headers['content-type'], 'content-length': body.length },
-    }, (heard) => {
-      const chunks = [];
-      heard.on('data', (c) => chunks.push(c));
-      heard.on('end', () => {
-        try {
-          const said = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-          if (typeof said.text !== 'string') throw new Error('whisper.cpp answered no text');
-          json(res, 200, { text: said.text });
-        } catch (e) {
-          json(res, 502, { error: `whisper.cpp did not answer text: ${e.message}` });
-        }
-      });
-    });
-    answer.on('error', (e) => json(res, 502, { error: `whisper.cpp did not answer: ${e.message}` }));
+    const answer = http.request(
+      {
+        hostname: at.hostname,
+        port: at.port,
+        path: at.pathname,
+        method: 'POST',
+        headers: { 'content-type': req.headers['content-type'], 'content-length': body.length },
+      },
+      (heard) => {
+        const chunks = [];
+        heard.on('data', (c) => chunks.push(c));
+        heard.on('end', () => {
+          try {
+            const said = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+            if (typeof said.text !== 'string') throw new Error('whisper.cpp answered no text');
+            json(res, 200, { text: said.text });
+          } catch (e) {
+            json(res, 502, { error: `whisper.cpp did not answer text: ${e.message}` });
+          }
+        });
+      },
+    );
+    answer.on('error', (e) =>
+      json(res, 502, { error: `whisper.cpp did not answer: ${e.message}` }),
+    );
     answer.end(body);
     return undefined;
   });
@@ -62,10 +77,11 @@ export async function start({ upstream, port = 8100, host = '127.0.0.1', model =
   return {
     port: actual,
     url: `http://${host}:${actual}`,
-    close: () => new Promise((resolve) => {
-      server.close(resolve);
-      server.closeAllConnections?.();
-    }),
+    close: () =>
+      new Promise((resolve) => {
+        server.close(resolve);
+        server.closeAllConnections?.();
+      }),
   };
 }
 
@@ -78,7 +94,10 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     upstream: arg('--upstream'),
     port: Number(arg('--port', '8100')),
     model: arg('--model', 'whisper-1'),
-  }).then((at) => console.log(`lend ${at.url} with: svrngs share ${at.port} --kind whisper-server --name stt`))
+  })
+    .then((at) =>
+      console.log(`lend ${at.url} with: svrngs share ${at.port} --kind whisper-server --name stt`),
+    )
     .catch((e) => {
       console.error(`whisper wrapper: ${e.message}`);
       process.exitCode = 1;

@@ -25,7 +25,11 @@ if (!cyAt) {
   process.exit(2);
 }
 /** The record on `name`, whose svrngs data dir is `dir`. */
-const on = (name, dir) => ({ name, at: readFileSync(join(dir, 'api'), 'utf8').trim(), token: readFileSync(join(dir, 'token'), 'utf8').trim() });
+const on = (name, dir) => ({
+  name,
+  at: readFileSync(join(dir, 'api'), 'utf8').trim(),
+  token: readFileSync(join(dir, 'token'), 'utf8').trim(),
+});
 const SAM = on("Sam's computer", samAt);
 const ALEX = on("Alex's computer", alexAt);
 const BO = on("Bo's computer", boAt);
@@ -42,10 +46,18 @@ const WAIT_MS = 10_000;
 async function call(computer, door, body) {
   const url = `${computer.at}/v1/rail/${door}?namespace=${encodeURIComponent(group)}`;
   const shown = { authorization: `Bearer ${computer.token}` };
-  const sent = body === undefined ? { headers: shown } : { method: 'POST', headers: { ...shown, 'content-type': 'application/json' }, body: JSON.stringify(body) };
+  const sent =
+    body === undefined
+      ? { headers: shown }
+      : {
+          method: 'POST',
+          headers: { ...shown, 'content-type': 'application/json' },
+          body: JSON.stringify(body),
+        };
   const res = await fetch(url, sent);
   const out = await res.json();
-  if (!res.ok) throw new Error(`${computer.name} refused ${door}: ${res.status} ${JSON.stringify(out)}`);
+  if (!res.ok)
+    throw new Error(`${computer.name} refused ${door}: ${res.status} ${JSON.stringify(out)}`);
   return out;
 }
 
@@ -57,7 +69,8 @@ async function append(computer, act) {
   return id;
 }
 const record = (computer, op) => append(computer, { op: 'record', payload: op });
-const correct = (computer, id, replacement) => append(computer, { op: 'correct', corrects: id, replacement });
+const correct = (computer, id, replacement) =>
+  append(computer, { op: 'correct', corrects: id, replacement });
 
 const log = (computer) => call(computer, 'log');
 
@@ -74,17 +87,23 @@ async function unheld(computer, ids) {
 
 /** An app writes about what its copy holds: wait for `id` on `computer`. */
 async function arrived(computer, id) {
-  if ((await unheld(computer, [id])).length) throw new Error(`${computer.name} never held ${id} within ${WAIT_MS} ms`);
+  if ((await unheld(computer, [id])).length)
+    throw new Error(`${computer.name} never held ${id} within ${WAIT_MS} ms`);
 }
 
 // The book's balances by name: it keeps people by first key (expenses.js `who`).
-const named = (book) => Object.fromEntries(Object.entries(book.balances).map(([k, c]) => [book.names[k] ?? k, c]));
-const said = (balances) => PEOPLE.map((p) => `${p} ${p in balances ? money(balances[p]) : 'absent'}`).join(', ');
+const named = (book) =>
+  Object.fromEntries(Object.entries(book.balances).map(([k, c]) => [book.names[k] ?? k, c]));
+const said = (balances) =>
+  PEOPLE.map((p) => `${p} ${p in balances ? money(balances[p]) : 'absent'}`).join(', ');
 
 async function main() {
   for (const computer of COMPUTERS) {
     const people = (await call(computer, 'people')).people.map((p) => p.person).sort();
-    if (!same(people, PEOPLE)) throw new Error(`${computer.name} lists ${people.join(', ')} in ${group}, not ${PEOPLE.join(', ')}`);
+    if (!same(people, PEOPLE))
+      throw new Error(
+        `${computer.name} lists ${people.join(', ')} in ${group}, not ${PEOPLE.join(', ')}`,
+      );
   }
 
   // Sam pays for pizza; Alex, Cy and Bo each say they had some.
@@ -108,17 +127,23 @@ async function main() {
     copies.push({ computer, missing, book });
   }
   const [s] = copies;
-  const lines = copies.map(({ computer, missing, book }) =>
-    `  ${computer.name}: ${said(named(book))}` +
-    (book.gaps.length ? `; unread: ${JSON.stringify(book.gaps)}` : '') +
-    (missing.length ? `; never received ${missing.join(', ')}` : ''));
+  const lines = copies.map(
+    ({ computer, missing, book }) =>
+      `  ${computer.name}: ${said(named(book))}` +
+      (book.gaps.length ? `; unread: ${JSON.stringify(book.gaps)}` : '') +
+      (missing.length ? `; never received ${missing.join(', ')}` : ''),
+  );
   if (copies.some((c) => !same(c.book.balances, s.book.balances))) {
     throw new Error(`the copies of ${group} fold to different balances:\n${lines.join('\n')}`);
   }
   if (!same(named(s.book), OWED) || copies.some((c) => c.book.gaps.length)) {
-    throw new Error(`every copy of ${group} agrees, but not with what the acts say (${said(OWED)}):\n${lines.join('\n')}`);
+    throw new Error(
+      `every copy of ${group} agrees, but not with what the acts say (${said(OWED)}):\n${lines.join('\n')}`,
+    );
   }
-  console.log(`${COMPUTERS.length} computers fold ${written.length} acts of ${group} to the same balances: ${said(OWED)}`);
+  console.log(
+    `${COMPUTERS.length} computers fold ${written.length} acts of ${group} to the same balances: ${said(OWED)}`,
+  );
 }
 
 main().catch((e) => {

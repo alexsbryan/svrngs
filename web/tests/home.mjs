@@ -24,7 +24,8 @@ const args = JSON.parse(process.argv[2]);
 const { context, close } = await launch(args.engine);
 // Chromium reads its clipboard only when granted it (start-home: a lend's
 // address copied for a program).
-if (args.engine === 'chromium') await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+if (args.engine === 'chromium')
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 // With `older`, every lender's computer in the group's answer as this
 // computer names one running an older svrngs (arch-version; `node.rs`
 // `answered`): in `older`, each by name and first key, a computer's key
@@ -36,7 +37,9 @@ if (args.older) {
     const json = Response.prototype.json;
     Response.prototype.json = async function () {
       const body = await json.call(this);
-      const lenders = (lent) => [...new Map(lent.map((l) => [l.key, { person: l.person, person_key: l.key }])).values()];
+      const lenders = (lent) => [
+        ...new Map(lent.map((l) => [l.key, { person: l.person, person_key: l.key }])).values(),
+      ];
       if (body?.lent && body.unanswered) [body.older, body.lent] = [lenders(body.lent), []];
       return body;
     };
@@ -47,7 +50,10 @@ context.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
 // With `opens`, links pasted under "Open a link from your group", one at a
 // time: where each would open a tab — `window.open` kept, not followed — and
 // what the section then says (#153).
-if (args.opens) await context.addInitScript(() => Object.assign(window, { opened: [], open: (u) => void window.opened.push(String(u)) }));
+if (args.opens)
+  await context.addInitScript(() =>
+    Object.assign(window, { opened: [], open: (u) => void window.opened.push(String(u)) }),
+  );
 try {
   const page = await context.newPage();
   page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
@@ -58,13 +64,26 @@ try {
   // With `timed`, selectors: how long after the page was asked for each
   // first showed (start-home: a group shown before its slowest computer).
   const t0 = Date.now();
-  const timing = Promise.all((args.timed ?? []).map((s) => page.locator(s).first().waitFor({ timeout: 30_000 }).then(() => [s, Date.now() - t0])));
+  const timing = Promise.all(
+    (args.timed ?? []).map((s) =>
+      page
+        .locator(s)
+        .first()
+        .waitFor({ timeout: 30_000 })
+        .then(() => [s, Date.now() - t0]),
+    ),
+  );
   await page.goto(args.ask);
   // With `heading: false`, a page heading none (an ask not lent).
-  const heading = args.heading === false ? null : await page.locator('#home h2').first().textContent({ timeout: 30_000 });
+  const heading =
+    args.heading === false
+      ? null
+      : await page.locator('#home h2').first().textContent({ timeout: 30_000 });
   // With `read`, a selector, its first match's words too (U7: a removed
   // person's line).
-  const read = args.read ? await page.locator(args.read).first().textContent({ timeout: 30_000 }) : null;
+  const read = args.read
+    ? await page.locator(args.read).first().textContent({ timeout: 30_000 })
+    : null;
   // With `all`, every match's words, once the page has drawn all it draws
   // as it loads, its address last (home.js), each group's index with it
   // (v1-keeper-office (b): the removals; REVIEW-audit-v1ui-auto-1: a group's
@@ -72,7 +91,8 @@ try {
   if (args.all) await page.locator('#home p.address').waitFor({ timeout: 30_000 });
   // With `unfold`, every <details> opened, as a person opens "2 apps
   // changed. See what’s new" (capability-what-acts).
-  if (args.unfold) await page.evaluate(() => document.querySelectorAll('details').forEach((d) => (d.open = true)));
+  if (args.unfold)
+    await page.evaluate(() => document.querySelectorAll('details').forEach((d) => (d.open = true)));
   const all = args.all ? await page.locator(args.all).allTextContents() : null;
   // With `look`, a number of words: what one look of the first screen
   // takes in, as page.mjs `firstLook` reads it, once `all` has waited for
@@ -87,8 +107,15 @@ try {
   const after = [];
   let clipboard = null;
   // `all`'s words changed from `b` and no longer "…": what a press says.
-  const settled = ([s, b]) => ((t) => t !== b && !t.includes('…'))([...document.querySelectorAll(s)].map((e) => e.textContent).join('\n'));
-  const holds = ([s, w]) => [...document.querySelectorAll(s)].map((e) => e.textContent).join('\n').includes(w);
+  const settled = ([s, b]) =>
+    ((t) => t !== b && !t.includes('…'))(
+      [...document.querySelectorAll(s)].map((e) => e.textContent).join('\n'),
+    );
+  const holds = ([s, w]) =>
+    [...document.querySelectorAll(s)]
+      .map((e) => e.textContent)
+      .join('\n')
+      .includes(w);
   const until = (s, w) => w && page.waitForFunction(holds, [s, w], { timeout: 30_000 });
   for (const [selector, value, stays, words] of args.do ?? []) {
     // A value `true` ticks the box (the shelf, its boxes unticked to start).
@@ -105,11 +132,16 @@ try {
     // has said what it says as the words are typed (#138).
     if (stays) {
       const before = (await page.locator(args.all).allTextContents()).join('\n');
-      await (filled ? page.locator(selector).first().fill(value) : page.locator(selector).first().click());
+      await (filled
+        ? page.locator(selector).first().fill(value)
+        : page.locator(selector).first().click());
       await page.waitForFunction(settled, [args.all, before], { timeout: 30_000 });
       await until(args.all, words);
       after.push(await page.locator(args.all).allTextContents());
-      if (args.engine === 'chromium') clipboard = await page.evaluate(() => navigator.clipboard.readText()).catch((e) => `unread: ${e}`);
+      if (args.engine === 'chromium')
+        clipboard = await page
+          .evaluate(() => navigator.clipboard.readText())
+          .catch((e) => `unread: ${e}`);
       continue;
     }
     // A reload, or a redraw in place as v2 draws (it never reloads to
@@ -118,10 +150,18 @@ try {
     // caught, and then never settled, leaving the reload's `load` to win.
     const never = new Promise(() => {});
     const before = args.all && (await page.locator(args.all).allTextContents()).join('\n');
-    const changed = args.all ? page.waitForFunction(settled, [args.all, before], { timeout: 30_000 }).catch(() => never) : never;
-    await Promise.all([Promise.race([page.waitForEvent('load'), changed]), page.locator(selector).first().click()]);
+    const changed = args.all
+      ? page.waitForFunction(settled, [args.all, before], { timeout: 30_000 }).catch(() => never)
+      : never;
+    await Promise.all([
+      Promise.race([page.waitForEvent('load'), changed]),
+      page.locator(selector).first().click(),
+    ]);
     await page.locator('#lent h2, #home p.none ~ p.address').first().waitFor({ timeout: 30_000 });
-    await page.locator('#lent li, #lent p, #home p.none ~ p.address').first().waitFor({ timeout: 30_000 });
+    await page
+      .locator('#lent li, #lent p, #home p.none ~ p.address')
+      .first()
+      .waitFor({ timeout: 30_000 });
     await until(args.all, words);
     after.push(await page.locator(args.all).allTextContents());
   }
@@ -141,20 +181,35 @@ try {
   for (const link of args.opens ?? []) {
     await page.locator('#open input').fill(link, { timeout: 30_000 });
     await page.locator('#open button').click();
-    opens.push(await page.evaluate(() => [window.opened.splice(0), document.querySelector('#open p').textContent]));
+    opens.push(
+      await page.evaluate(() => [
+        window.opened.splice(0),
+        document.querySelector('#open p').textContent,
+      ]),
+    );
   }
   // With `drawn`, a selector: each match's class and words, as the page
   // drew them once loaded (v1ui-door (c): the door) and judged — none still
   // "asking…", as each is until `/v1/lends` answers or fails (question.js
   // `door`). Read at once, a loaded host read them unjudged (#193).
-  const judged = (s) => ((es) => es.length && !es.some((e) => e.textContent.includes('asking…')))([...document.querySelectorAll(s)]);
+  const judged = (s) =>
+    ((es) => es.length && !es.some((e) => e.textContent.includes('asking…')))([
+      ...document.querySelectorAll(s),
+    ]);
   if (args.drawn) await page.waitForFunction(judged, args.drawn, { timeout: 30_000 });
-  const drawn = args.drawn ? await page.locator(args.drawn).evaluateAll((es) => es.map((e) => [e.className, e.textContent])) : null;
+  const drawn = args.drawn
+    ? await page
+        .locator(args.drawn)
+        .evaluateAll((es) => es.map((e) => [e.className, e.textContent]))
+    : null;
   // With `open`, a link's words: the tab it opens, once loaded, its
   // address and title (v1ui-lend (b): bo opening what ada lent).
   let opened = null;
   if (args.open) {
-    const [tab] = await Promise.all([context.waitForEvent('page'), page.locator('a', { hasText: args.open }).first().click({ timeout: 30_000 })]);
+    const [tab] = await Promise.all([
+      context.waitForEvent('page'),
+      page.locator('a', { hasText: args.open }).first().click({ timeout: 30_000 }),
+    ]);
     await arrived(tab);
     opened = { url: tab.url(), title: await tab.title() };
   }
@@ -163,15 +218,42 @@ try {
   // by `do` draws it again (REVIEW-audit-v1ui-auto-1: read loaded, between).
   // In no group there is no "What you lend" (home.js): the page's address,
   // drawn last, then.
-  if (args.text) await page.locator('#lent h2 ~ *, #home p.none ~ p.address').first().waitFor({ timeout: 30_000 });
+  if (args.text)
+    await page
+      .locator('#lent h2 ~ *, #home p.none ~ p.address')
+      .first()
+      .waitFor({ timeout: 30_000 });
   // Opened again, as a press above may have drawn the page again.
-  if (args.unfold) await page.evaluate(() => document.querySelectorAll('details').forEach((d) => (d.open = true)));
+  if (args.unfold)
+    await page.evaluate(() => document.querySelectorAll('details').forEach((d) => (d.open = true)));
   const text = args.text ? await page.locator('body').innerText() : null;
   // Every link on the page, its words and where it opens (start-home).
-  const links = await page.locator('a').evaluateAll((as) => as.map((a) => ({ text: a.textContent, target: a.target, href: a.href })));
+  const links = await page
+    .locator('a')
+    .evaluateAll((as) => as.map((a) => ({ text: a.textContent, target: a.target, href: a.href })));
   const timed = Object.fromEntries(await timing);
   const lines = await page.evaluate(() => window.__lines ?? null);
-  console.log(JSON.stringify({ heading, read, all, look, after, later, clipboard, links, timed, drawn, text, opened, opens, sent, logs, loads, lines }));
+  console.log(
+    JSON.stringify({
+      heading,
+      read,
+      all,
+      look,
+      after,
+      later,
+      clipboard,
+      links,
+      timed,
+      drawn,
+      text,
+      opened,
+      opens,
+      sent,
+      logs,
+      loads,
+      lines,
+    }),
+  );
 } catch (e) {
   console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);
   process.exitCode = 1;

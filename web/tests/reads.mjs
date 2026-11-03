@@ -38,11 +38,20 @@ await driving(args, async ({ page, logs }) => {
         get.onsuccess = () => done(get.result ?? null);
       };
     });
-    return { status: res.status, refused: res.headers.get('x-svrngs-refused'), body: await res.text(), pass: kept?.pass, holder: kept?.holder };
+    return {
+      status: res.status,
+      refused: res.headers.get('x-svrngs-refused'),
+      body: await res.text(),
+      pass: kept?.pass,
+      holder: kept?.holder,
+    };
   }, new URL(opened).hostname.split('.')[0]);
   const address = JSON.parse(told.body).lends?.[0]?.address;
   const asked = address
-    ? await page.evaluate((url) => fetch(url).then(async (r) => ({ status: r.status, body: await r.text() })), `${address}${args.ask}`)
+    ? await page.evaluate(
+        (url) => fetch(url).then(async (r) => ({ status: r.status, body: await r.text() })),
+        `${address}${args.ask}`,
+      )
     : null;
   // Navigated to an address it was told, as a link there is followed.
   let landed = null;
@@ -52,9 +61,13 @@ await driving(args, async ({ page, logs }) => {
       page.waitForURL((u) => !u.href.startsWith(opened), { timeout: 90_000 }).catch(() => {}),
       page.evaluate((url) => location.assign(url), `${address}${args.go}`),
     ]);
-    await page.waitForFunction((t) => document.title === t, args.title, { timeout: 90_000 }).catch(() => {});
+    await page
+      .waitForFunction((t) => document.title === t, args.title, { timeout: 90_000 })
+      .catch(() => {});
     landed = { url: page.url(), title: await page.title() };
-    await page.goBack({ waitUntil: 'commit', timeout: 30_000 }).catch((e) => logs.push(`back: ${e}`));
+    await page
+      .goBack({ waitUntil: 'commit', timeout: 30_000 })
+      .catch((e) => logs.push(`back: ${e}`));
     await page.waitForLoadState('load').catch(() => {});
     backAt = page.url();
   }

@@ -38,10 +38,11 @@ async function whisper() {
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   return {
     origin: `http://127.0.0.1:${server.address().port}/`,
-    close: () => new Promise((resolve) => {
-      server.close(resolve);
-      server.closeAllConnections?.();
-    }),
+    close: () =>
+      new Promise((resolve) => {
+        server.close(resolve);
+        server.closeAllConnections?.();
+      }),
   };
 }
 
@@ -51,19 +52,29 @@ function record(origin) {
     if (req.url === '/v1/lends?namespace=g') {
       return json(res, 200, {
         namespace: 'g',
-        lent: [{ name: 'sam-stt', person: 'sam', origin, kind: 'whisper-server', limit: null, using: 0 }],
-        unanswered: [], unheard: [], refused: [], older: [],
+        lent: [
+          { name: 'sam-stt', person: 'sam', origin, kind: 'whisper-server', limit: null, using: 0 },
+        ],
+        unanswered: [],
+        unheard: [],
+        refused: [],
+        older: [],
       });
     }
     json(res, 404, { error: 'not me' });
   });
-  return new Promise((resolve) => server.listen(0, '127.0.0.1', () => resolve({
-    origin: `http://127.0.0.1:${server.address().port}/`,
-    close: () => new Promise((done) => {
-      server.close(done);
-      server.closeAllConnections?.();
-    }),
-  })));
+  return new Promise((resolve) =>
+    server.listen(0, '127.0.0.1', () =>
+      resolve({
+        origin: `http://127.0.0.1:${server.address().port}/`,
+        close: () =>
+          new Promise((done) => {
+            server.close(done);
+            server.closeAllConnections?.();
+          }),
+      }),
+    ),
+  );
 }
 
 function hash(path) {
@@ -72,23 +83,42 @@ function hash(path) {
 
 test('the wrapper answers /v1/models and OpenAI transcription in front of whisper.cpp', async (t) => {
   const upstream = await whisper();
-  const at = await start({ upstream: upstream.origin, port: 0, host: '127.0.0.1', model: 'whisper-1' });
+  const at = await start({
+    upstream: upstream.origin,
+    port: 0,
+    host: '127.0.0.1',
+    model: 'whisper-1',
+  });
   t.after(() => Promise.all([upstream.close(), at.close()]));
 
   const models = await (await fetch(`${at.url}/v1/models`)).json();
-  assert.deepEqual(models.data.map((m) => m.id), ['whisper-1']);
+  assert.deepEqual(
+    models.data.map((m) => m.id),
+    ['whisper-1'],
+  );
 
   const form = new FormData();
   form.set('model', 'whisper-1');
   form.set('language', 'en');
-  form.set('file', new Blob([Buffer.from('the quick brown fox')], { type: 'audio/wav' }), 'say.wav');
-  const answer = await (await fetch(`${at.url}/v1/audio/transcriptions`, { method: 'POST', body: form })).json();
+  form.set(
+    'file',
+    new Blob([Buffer.from('the quick brown fox')], { type: 'audio/wav' }),
+    'say.wav',
+  );
+  const answer = await (
+    await fetch(`${at.url}/v1/audio/transcriptions`, { method: 'POST', body: form })
+  ).json();
   assert.deepEqual(answer, { text: 'the quick brown fox' });
 });
 
 test('a pantry lists and routes the wrapper as it is, and its own files do not change', async (t) => {
   const upstream = await whisper();
-  const at = await start({ upstream: upstream.origin, port: 0, host: '127.0.0.1', model: 'whisper-1' });
+  const at = await start({
+    upstream: upstream.origin,
+    port: 0,
+    host: '127.0.0.1',
+    model: 'whisper-1',
+  });
   const held = await record(at.url + '/');
   t.after(() => Promise.all([upstream.close(), at.close(), held.close()]));
 
@@ -96,6 +126,9 @@ test('a pantry lists and routes the wrapper as it is, and its own files do not c
   const before = files.map(hash);
   const found = await list({ record: held.origin });
   assert.equal(found.lends[0].protocol, 'model');
-  assert.deepEqual(found.lends[0].models.map((m) => m.as), ['sam/whisper-1']);
+  assert.deepEqual(
+    found.lends[0].models.map((m) => m.as),
+    ['sam/whisper-1'],
+  );
   assert.deepEqual(files.map(hash), before, 'the wrapper taught the pantry nothing');
 });

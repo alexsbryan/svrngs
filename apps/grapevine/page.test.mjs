@@ -31,11 +31,18 @@ const SEALED = ['Waller and Pierce', 'Sam Reyes', 'Kim Okafor'];
 async function serve() {
   const dir = mkdtempSync(join(tmpdir(), 'grapevine-page-'));
   copyFileSync(new URL('./demo.json', import.meta.url).pathname, join(dir, 'town.json'));
-  writeFileSync(join(dir, 'config.json'), JSON.stringify({ file: join(dir, 'town.json'), acting: ['Sam', 'Jo', 'Kim'], data: dir }));
-  const child = spawn(process.execPath, [new URL('./server.mjs', import.meta.url).pathname, join(dir, 'config.json')], {
-    stdio: ['ignore', 'pipe', 'pipe'],
-    env: { ...process.env, GRAPEVINE_DEBUG: '1' },
-  });
+  writeFileSync(
+    join(dir, 'config.json'),
+    JSON.stringify({ file: join(dir, 'town.json'), acting: ['Sam', 'Jo', 'Kim'], data: dir }),
+  );
+  const child = spawn(
+    process.execPath,
+    [new URL('./server.mjs', import.meta.url).pathname, join(dir, 'config.json')],
+    {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: { ...process.env, GRAPEVINE_DEBUG: '1' },
+    },
+  );
   // `launch` exits 3 when a browser cannot start, past this test's `finally`:
   // the server ends with the process, or it outlives it, as Events' did and
   // held node --test open (capability-step-limit (a)).
@@ -44,7 +51,9 @@ async function serve() {
   child.stderr.on('data', (b) => (traced += b));
   const line = await new Promise((done, fail) => {
     child.stdout.once('data', (b) => done(String(b)));
-    child.once('exit', (code) => fail(new Error(`the server exited ${code} before it listened: ${traced}`)));
+    child.once('exit', (code) =>
+      fail(new Error(`the server exited ${code} before it listened: ${traced}`)),
+    );
   });
   return { at: JSON.parse(line).at, traced: () => traced, stop: () => child.kill() };
 }
@@ -68,18 +77,29 @@ for (const engine of ['chromium', 'webkit']) {
         for (;;) {
           const text = await as(who);
           if (want(text)) return text;
-          if (Date.now() > by) assert.fail(`${who}'s page never showed ${what} within two loops:\n${text}`);
+          if (Date.now() > by)
+            assert.fail(`${who}'s page never showed ${what} within two loops:\n${text}`);
           await new Promise((r) => setTimeout(r, 300));
         }
       };
       const press = async (scope, name) => {
-        await Promise.all([page.waitForEvent('load'), scope.getByRole('button', { name, exact: true }).click()]);
+        await Promise.all([
+          page.waitForEvent('load'),
+          scope.getByRole('button', { name, exact: true }).click(),
+        ]);
       };
 
       // 1. Sam asks in 1400 Page for a tile saw on Saturday, one ring away.
       await as('Sam');
       const tool = page.locator('.kind[data-kind=tool] form[data-to="/ask"]');
-      assert.deepEqual(await tool.locator('[name^="f."]').evaluateAll((es) => es.map((e) => [e.name, e.type])), [['f.what', 'text'], ['f.when', 'text']], "the tool form is the kind's fields");
+      assert.deepEqual(
+        await tool.locator('[name^="f."]').evaluateAll((es) => es.map((e) => [e.name, e.type])),
+        [
+          ['f.what', 'text'],
+          ['f.when', 'text'],
+        ],
+        "the tool form is the kind's fields",
+      );
       await tool.locator('[name="f.what"]').fill('tile saw');
       await tool.locator('[name="f.when"]').fill('Saturday');
       await tool.locator('[name=group]').selectOption({ label: '1400 Page' });
@@ -95,7 +115,11 @@ for (const engine of ['chromium', 'webkit']) {
       const kim = await as('Kim');
       assert.match(kim, /A neighbour of Jo’s needs: tile saw, Saturday — carried by Jo/);
       assert.match(kim, /You might have this\./);
-      assert.doesNotMatch(await page.locator('section[data-group=waller]').innerText(), /Sam/, "Kim's page never names who asked");
+      assert.doesNotMatch(
+        await page.locator('section[data-group=waller]').innerText(),
+        /Sam/,
+        "Kim's page never names who asked",
+      );
       const offer = page.locator('section[data-group=waller] .ask form[data-to="/reply"]');
       await offer.locator('[name="f.when"]').fill('Saturday morning');
       await offer.locator('[name="f.where"]').fill('Waller and Pierce');
@@ -103,8 +127,16 @@ for (const engine of ['chromium', 'webkit']) {
       assert.match(await as('Kim'), /It goes through Jo’s computer/);
 
       // 4. Sam's page opens the offer, through Jo's loop; Jo's says a sealed message went by.
-      await until('Sam', (t) => /Someone who saw it offered: when Saturday morning; where Waller and Pierce/.test(t), 'the offer');
-      const jo = await until('Jo', (t) => /A sealed message went by toward the person who asked: \d+ bytes/.test(t), 'that a message went by');
+      await until(
+        'Sam',
+        (t) => /Someone who saw it offered: when Saturday morning; where Waller and Pierce/.test(t),
+        'the offer',
+      );
+      const jo = await until(
+        'Jo',
+        (t) => /A sealed message went by toward the person who asked: \d+ bytes/.test(t),
+        'that a message went by',
+      );
       for (const s of SEALED) assert.ok(!jo.includes(s), `Jo's page holds ${s}`);
 
       // 5. Sam says yes, then Kim; each sees the other's name.
@@ -112,7 +144,11 @@ for (const engine of ['chromium', 'webkit']) {
       const yes = page.locator('.thread.asker form[data-to="/yes"]');
       await yes.locator('[name=name]').fill('Sam Reyes');
       await press(yes, 'Yes');
-      const before = await until('Kim', (t) => /The person who asked said yes/.test(t), "Sam's yes");
+      const before = await until(
+        'Kim',
+        (t) => /The person who asked said yes/.test(t),
+        "Sam's yes",
+      );
       assert.ok(!before.includes('Sam Reyes'), "Sam's name waits for Kim's yes");
       const back = page.locator('.thread.replier form[data-to="/yes"]');
       await back.locator('[name=name]').fill('Kim Okafor');
@@ -123,7 +159,11 @@ for (const engine of ['chromium', 'webkit']) {
       // 6. Sam takes it back, and the carry in Waller is gone within one loop.
       await as('Sam');
       await press(page.locator('section[data-group=page] .ask'), 'Take it back');
-      await until('Kim', (t) => !/tile saw/.test(t.split('Your conversations')[0]), 'the carry gone');
+      await until(
+        'Kim',
+        (t) => !/tile saw/.test(t.split('Your conversations')[0]),
+        'the carry gone',
+      );
 
       // A kind's `show` is drawn as text: Kim asks a question with markup in it.
       await as('Kim');
@@ -144,9 +184,14 @@ for (const engine of ['chromium', 'webkit']) {
         await as(who);
         const threads = await page.locator('.thread').count();
         assert.ok(threads > 0, `${who} has a conversation`);
-        assert.equal(await page.locator('.thread .shortcut').count(), threads, `every one of ${who}'s conversations says the shortcut`);
+        assert.equal(
+          await page.locator('.thread .shortcut').count(),
+          threads,
+          `every one of ${who}'s conversations says the shortcut`,
+        );
       }
-      for (const s of SEALED) assert.ok(!server.traced().includes(s), `the server's trace holds ${s}`);
+      for (const s of SEALED)
+        assert.ok(!server.traced().includes(s), `the server's trace holds ${s}`);
     } finally {
       await close();
       server.stop();

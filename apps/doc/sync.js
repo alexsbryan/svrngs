@@ -13,8 +13,8 @@
 // lender's computer stops answering, that socket neither closes nor says
 // so for as long as the connection under it takes to time out, so
 // silence, not a close, is what this half reads.
-import { AWARENESS, HELLO, HERE_EVERY_MS, LINES, SYNC, json, read } from "./protocol.js";
-import { awarenessProtocol, decoding, encoding, syncProtocol } from "./vendor/doc-bundle.js";
+import { AWARENESS, HELLO, HERE_EVERY_MS, LINES, SYNC, json, read } from './protocol.js';
+import { awarenessProtocol, decoding, encoding, syncProtocol } from './vendor/doc-bundle.js';
 
 /** Silence for this long, five of the server's HEREs missed, is goodnight. */
 export const QUIET_MS = 5 * HERE_EVERY_MS;
@@ -36,7 +36,7 @@ const BACKOFF_MS = [500, 1000, 2000, 4000];
  */
 export function sync({ url, doc, awareness, WebSocket, poke = null, on = {}, clock = globalThis }) {
   let ws = null;
-  let state = "opening";
+  let state = 'opening';
   let heard = clock.Date.now();
   let ticked = heard;
   let opening = 0;
@@ -56,16 +56,22 @@ export function sync({ url, doc, awareness, WebSocket, poke = null, on = {}, clo
     write(e);
     return encoding.toUint8Array(e);
   };
-  const mine = () => message(AWARENESS, (e) => encoding.writeVarUint8Array(e, awarenessProtocol.encodeAwarenessUpdate(awareness, [awareness.clientID])));
+  const mine = () =>
+    message(AWARENESS, (e) =>
+      encoding.writeVarUint8Array(
+        e,
+        awarenessProtocol.encodeAwarenessUpdate(awareness, [awareness.clientID]),
+      ),
+    );
 
-  doc.on("update", (update, origin, _doc, tr) => {
-    if (state === "away" && tr.local) {
+  doc.on('update', (update, origin, _doc, tr) => {
+    if (state === 'away' && tr.local) {
       kept += 1;
       on.kept?.(kept);
     }
     if (origin !== self) send(message(SYNC, (e) => syncProtocol.writeUpdate(e, update)));
   });
-  awareness.on("update", ({ added, updated, removed }, origin) => {
+  awareness.on('update', ({ added, updated, removed }, origin) => {
     if (origin === self) return;
     if ([...added, ...updated, ...removed].includes(awareness.clientID)) send(mine());
   });
@@ -84,7 +90,7 @@ export function sync({ url, doc, awareness, WebSocket, poke = null, on = {}, clo
   const later = (why) => {
     drop();
     next = clock.Date.now() + BACKOFF_MS[Math.min(tries, BACKOFF_MS.length - 1)];
-    trace("socket: another in a moment", { why, tries, in_ms: next - clock.Date.now() });
+    trace('socket: another in a moment', { why, tries, in_ms: next - clock.Date.now() });
     tries += 1;
   };
   const connect = async () => {
@@ -95,13 +101,13 @@ export function sync({ url, doc, awareness, WebSocket, poke = null, on = {}, clo
       if (ws) return;
     }
     opening = clock.Date.now();
-    trace("socket: opening", { url, state });
+    trace('socket: opening', { url, state });
     try {
       ws = new WebSocket(url);
     } catch (e) {
       return later(`it could not be opened: ${e}`);
     }
-    ws.binaryType = "arraybuffer";
+    ws.binaryType = 'arraybuffer';
     ws.onopen = () => {
       send(message(SYNC, (e) => syncProtocol.writeSyncStep1(e, doc)));
       if (awareness.getLocalState() !== null) send(mine());
@@ -109,13 +115,14 @@ export function sync({ url, doc, awareness, WebSocket, poke = null, on = {}, clo
     ws.onmessage = (event) => {
       heard = clock.Date.now();
       tries = 0;
-      if (state !== "here") {
-        joining = state === "away";
-        state = "here";
-        trace("server: answering", { joining });
+      if (state !== 'here') {
+        joining = state === 'away';
+        state = 'here';
+        trace('server: answering', { joining });
         on.here?.();
       }
-      if (typeof event.data === "string") return trace("server: refused — a text message, which the server never sends");
+      if (typeof event.data === 'string')
+        return trace('server: refused — a text message, which the server never sends');
       const m = read(new Uint8Array(event.data));
       if (m.type === SYNC) {
         const reply = encoding.createEncoder();
@@ -125,7 +132,7 @@ export function sync({ url, doc, awareness, WebSocket, poke = null, on = {}, clo
         if (step === syncProtocol.messageYjsSyncStep2) on.synced?.();
         if (step === syncProtocol.messageYjsSyncStep2 && joining) {
           joining = false;
-          trace("doc: joined again", { kept });
+          trace('doc: joined again', { kept });
           on.joined?.({ kept });
           kept = 0;
         }
@@ -137,20 +144,20 @@ export function sync({ url, doc, awareness, WebSocket, poke = null, on = {}, clo
         on.lines?.(json(m.body));
       }
     };
-    ws.onclose = () => later("it closed");
-    ws.onerror = () => later("it failed");
+    ws.onclose = () => later('it closed');
+    ws.onerror = () => later('it failed');
   };
 
   // Goodnight: the server has said nothing for QUIET_MS. Everyone else's
   // carets go, since none of them can move now; the socket is let go, as
   // it may never close by itself.
   const away = () => {
-    state = "away";
+    state = 'away';
     const others = [...awareness.getStates().keys()].filter((id) => id !== awareness.clientID);
     awarenessProtocol.removeAwarenessStates(awareness, others, self);
-    trace("server: not answering, so goodnight", { quiet_ms: clock.Date.now() - heard });
+    trace('server: not answering, so goodnight', { quiet_ms: clock.Date.now() - heard });
     on.away?.({ kept });
-    later("the server went quiet");
+    later('the server went quiet');
   };
 
   const tick = () => {
@@ -159,13 +166,14 @@ export function sync({ url, doc, awareness, WebSocket, poke = null, on = {}, clo
     // nothing because it listened to nothing: it is given QUIET_MS afresh,
     // and a socket at once.
     if (now - ticked > 3 * TICK_MS) {
-      trace("page: back after its browser froze it", { frozen_ms: now - ticked });
+      trace('page: back after its browser froze it', { frozen_ms: now - ticked });
       heard = Math.max(heard, now);
       next = 0;
     }
     ticked = now;
-    if (state !== "away" && now - heard > QUIET_MS) return away();
-    if (ws?.readyState === 0 && now - opening > CONNECT_WITHIN_MS) return later("it did not open in time");
+    if (state !== 'away' && now - heard > QUIET_MS) return away();
+    if (ws?.readyState === 0 && now - opening > CONNECT_WITHIN_MS)
+      return later('it did not open in time');
     if (!ws && !poking && now >= next) connect();
   };
 

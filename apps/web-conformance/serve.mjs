@@ -51,13 +51,25 @@ const lender = process.argv[3];
 const accounts = new Map();
 // The token a request signs in with, by its query or its bearer, and the
 // account it names, or ''.
-const tokenOf = (req) => new URL(req.url, 'http://x').searchParams.get('token') ?? req.headers.authorization?.replace(/^Bearer /, '') ?? '';
+const tokenOf = (req) =>
+  new URL(req.url, 'http://x').searchParams.get('token') ??
+  req.headers.authorization?.replace(/^Bearer /, '') ??
+  '';
 const nameOf = (token) => [...accounts].find(([, t]) => t === token)?.[0] ?? '';
 const SIZE = 64 * 1024 * 1024;
 const byte = (i) => (i * 7 + (i >> 10)) & 255;
 const seen = [];
 // What `/seen` gives of a request, a page's or a WebSocket's, read one way.
-const saw = (req, path) => seen.push({ path, cookie: req.headers.cookie ?? '', person: req.headers['x-svrngs-person'] ?? '', user: req.headers['x-svrngs-user'] ?? '', key: req.headers['x-svrngs-key'] ?? '', secret: Boolean(req.headers.authorization), signed: nameOf(tokenOf(req)) });
+const saw = (req, path) =>
+  seen.push({
+    path,
+    cookie: req.headers.cookie ?? '',
+    person: req.headers['x-svrngs-person'] ?? '',
+    user: req.headers['x-svrngs-user'] ?? '',
+    key: req.headers['x-svrngs-key'] ?? '',
+    secret: Boolean(req.headers.authorization),
+    signed: nameOf(tokenOf(req)),
+  });
 const SAME = { 'cross-origin-resource-policy': 'same-origin', 'cache-control': 'no-store' };
 const checks = readFileSync(new URL('./checks.js', import.meta.url));
 // Under `script-src 'nonce-…' 'strict-dynamic'`, as Nextcloud's pages are:
@@ -108,9 +120,16 @@ function span(req) {
 function played(req, res) {
   const asked = span(req);
   const [from, to] = asked ?? [0, SIZE - 1];
-  if (from >= SIZE || to < from) return sends(res, 416, 'text/plain', '', { 'content-range': `bytes */${SIZE}` });
+  if (from >= SIZE || to < from)
+    return sends(res, 416, 'text/plain', '', { 'content-range': `bytes */${SIZE}` });
   const ranged = asked ? { 'content-range': `bytes ${from}-${to}/${SIZE}` } : {};
-  res.writeHead(asked ? 206 : 200, { ...SAME, 'content-type': 'audio/wav', 'accept-ranges': 'bytes', 'content-length': to - from + 1, ...ranged });
+  res.writeHead(asked ? 206 : 200, {
+    ...SAME,
+    'content-type': 'audio/wav',
+    'accept-ranges': 'bytes',
+    'content-length': to - from + 1,
+    ...ranged,
+  });
   Readable.from(
     (function* () {
       for (let at = from; at <= to; at += 1 << 20) {
@@ -124,11 +143,19 @@ function played(req, res) {
 
 function big(req, res) {
   const asked = span(req);
-  if (!asked) return sends(res, 200, 'application/octet-stream', bytes(0, 1023), { 'content-length': 1024 });
+  if (!asked)
+    return sends(res, 200, 'application/octet-stream', bytes(0, 1023), { 'content-length': 1024 });
   const [from, to] = asked;
-  if (from >= SIZE || to < from) return sends(res, 416, 'text/plain', '', { 'content-range': `bytes */${SIZE}` });
-  res.writeHead(206, { ...SAME, 'content-type': 'application/octet-stream', 'content-length': to - from + 1, 'content-range': `bytes ${from}-${to}/${SIZE}` });
-  for (let at = from; at <= to; at += 1 << 20) res.write(bytes(at, Math.min(at + (1 << 20) - 1, to)));
+  if (from >= SIZE || to < from)
+    return sends(res, 416, 'text/plain', '', { 'content-range': `bytes */${SIZE}` });
+  res.writeHead(206, {
+    ...SAME,
+    'content-type': 'application/octet-stream',
+    'content-length': to - from + 1,
+    'content-range': `bytes ${from}-${to}/${SIZE}`,
+  });
+  for (let at = from; at <= to; at += 1 << 20)
+    res.write(bytes(at, Math.min(at + (1 << 20) - 1, to)));
   res.end();
 }
 
@@ -147,14 +174,26 @@ const server = http.createServer((req, res) => {
     let n = 0;
     req.on('data', (d) => ((n += d.length), sha.update(d)));
     // With the length it was told, as a parser that needs it reads (Django's multipart).
-    return req.on('end', () => sends(res, 200, 'text/plain', `${n} ${sha.digest('hex')} ${req.headers['content-length'] ?? 'no length'}`));
+    return req.on('end', () =>
+      sends(
+        res,
+        200,
+        'text/plain',
+        `${n} ${sha.digest('hex')} ${req.headers['content-length'] ?? 'no length'}`,
+      ),
+    );
   }
   if (req.method === 'POST' && path === '/guarded') {
     const origin = req.headers.origin;
     // Refused with no Origin too, as Nextcloud's sign-in is (u5-catalogue-dry).
-    if (!origin || !own.some((h) => origin === `http://${h}`)) return sends(res, 403, 'text/plain', `origin ${origin} is not ${own[0]}`, { 'cross-origin-embedder-policy': 'require-corp' });
+    if (!origin || !own.some((h) => origin === `http://${h}`))
+      return sends(res, 403, 'text/plain', `origin ${origin} is not ${own[0]}`, {
+        'cross-origin-embedder-policy': 'require-corp',
+      });
     // Its answer may be a frame's page in the canary's, which COEP holds to its own.
-    return sends(res, 200, 'text/plain', `taken from ${origin}`, { 'cross-origin-embedder-policy': 'require-corp' });
+    return sends(res, 200, 'text/plain', `taken from ${origin}`, {
+      'cross-origin-embedder-policy': 'require-corp',
+    });
   }
   if (req.method === 'POST' && path === '/signin') {
     const token = randomBytes(6).toString('hex');
@@ -163,7 +202,8 @@ const server = http.createServer((req, res) => {
     });
   }
   if (req.method === 'POST' && path === '/accounts') {
-    if (!lender || req.headers.authorization !== `Bearer ${lender}`) return sends(res, 403, 'text/plain', 'not the lender');
+    if (!lender || req.headers.authorization !== `Bearer ${lender}`)
+      return sends(res, 403, 'text/plain', 'not the lender');
     let body = '';
     req.on('data', (d) => (body += d));
     return req.on('end', () => {
@@ -200,12 +240,18 @@ const server = http.createServer((req, res) => {
     case '/sw-probe':
       return sends(res, 200, 'text/plain', 'from the server');
     case '/redirect':
-      if (!own.includes(req.headers.host)) return sends(res, 403, 'text/plain', `host ${req.headers.host} is not allowed`);
+      if (!own.includes(req.headers.host))
+        return sends(res, 403, 'text/plain', `host ${req.headers.host} is not allowed`);
       return sends(res, 302, 'text/plain', '', { location: `http://${req.headers.host}/landed` });
     case '/landed':
       return sends(res, 200, 'text/plain', 'landed');
     case '/me':
-      return sends(res, 200, 'application/json', JSON.stringify({ who, cookie: req.headers.cookie ?? '' }));
+      return sends(
+        res,
+        200,
+        'application/json',
+        JSON.stringify({ who, cookie: req.headers.cookie ?? '' }),
+      );
     case '/seen':
       return sends(res, 200, 'application/json', JSON.stringify(seen));
     default:
@@ -217,12 +263,17 @@ const server = http.createServer((req, res) => {
 server.on('upgrade', (req, sock, head) => {
   saw(req, req.url);
   if (req.url !== '/ws' || !req.headers['sec-websocket-key']) return sock.destroy();
-  const accept = createHash('sha1').update(`${req.headers['sec-websocket-key']}258EAFA5-E914-47DA-95CA-C5AB0DC85B11`).digest('base64');
-  sock.write(`HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ${accept}\r\n\r\n`);
+  const accept = createHash('sha1')
+    .update(`${req.headers['sec-websocket-key']}258EAFA5-E914-47DA-95CA-C5AB0DC85B11`)
+    .digest('base64');
+  sock.write(
+    `HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ${accept}\r\n\r\n`,
+  );
   let buf = head;
   const frame = (op, data) => {
     const n = data.length;
-    const len = n < 126 ? Buffer.from([0x80 | op, n]) : Buffer.from([0x80 | op, 126, n >> 8, n & 255]);
+    const len =
+      n < 126 ? Buffer.from([0x80 | op, n]) : Buffer.from([0x80 | op, 126, n >> 8, n & 255]);
     return Buffer.concat([len, data]);
   };
   sock.on('data', (d) => {

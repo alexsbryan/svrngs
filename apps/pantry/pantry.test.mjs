@@ -45,7 +45,13 @@ async function standin(handler) {
   const requests = [];
   const server = http.createServer(async (req, res) => {
     const raw = await body(req);
-    const seen = { method: req.method, path: req.url, headers: req.headers, body: raw, at: Date.now() };
+    const seen = {
+      method: req.method,
+      path: req.url,
+      headers: req.headers,
+      body: raw,
+      at: Date.now(),
+    };
     requests.push(seen);
     try {
       await handler(req, res, seen);
@@ -58,23 +64,30 @@ async function standin(handler) {
   return {
     origin,
     requests,
-    close: () => new Promise((resolve) => {
-      server.close(resolve);
-      server.closeAllConnections?.();
-    }),
+    close: () =>
+      new Promise((resolve) => {
+        server.close(resolve);
+        server.closeAllConnections?.();
+      }),
   };
 }
 
 async function group(lends, unlisted = {}, { delay = 0 } = {}) {
   return standin(async (req, res) => {
     if (req.url === '/v1/groups') {
-      return json(res, 200, { groups: [...new Set(lends.map((l) => l.group))].map((id) => ({ id, name: id })) });
+      return json(res, 200, {
+        groups: [...new Set(lends.map((l) => l.group))].map((id) => ({ id, name: id })),
+      });
     }
     const at = new URL(req.url, 'http://record');
     if (at.pathname === '/v1/lends') {
       if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
       const namespace = at.searchParams.get('namespace');
-      fsLends(res, lends.filter((l) => l.group === namespace), unlisted);
+      fsLends(
+        res,
+        lends.filter((l) => l.group === namespace),
+        unlisted,
+      );
       return;
     }
     json(res, 404, { error: 'not a record route' });
@@ -143,7 +156,8 @@ function toolLend(tools) {
     if (rpc.method === 'initialize') {
       res.setHeader('mcp-session-id', session);
       return json(res, 200, {
-        jsonrpc: '2.0', id: rpc.id,
+        jsonrpc: '2.0',
+        id: rpc.id,
         result: {
           protocolVersion: '2025-06-18',
           capabilities: { tools: {} },
@@ -183,9 +197,33 @@ test('list names each lend by asking it, with whose computer, its address and it
   ]);
   const cy = await silent();
   const record = await group([
-    { group: 'g1', name: 'ana-coder', person: 'ana', origin: ana.origin, kind: 'anything-at-all', limit: null, using: 0 },
-    { group: 'g1', name: 'cy-odd', person: 'cy', origin: cy.origin, kind: 'unheard-of', limit: null, using: 0 },
-    { group: 'g2', name: 'sam-tools', person: 'sam', origin: sam.origin, kind: 'mcp', limit: null, using: 0 },
+    {
+      group: 'g1',
+      name: 'ana-coder',
+      person: 'ana',
+      origin: ana.origin,
+      kind: 'anything-at-all',
+      limit: null,
+      using: 0,
+    },
+    {
+      group: 'g1',
+      name: 'cy-odd',
+      person: 'cy',
+      origin: cy.origin,
+      kind: 'unheard-of',
+      limit: null,
+      using: 0,
+    },
+    {
+      group: 'g2',
+      name: 'sam-tools',
+      person: 'sam',
+      origin: sam.origin,
+      kind: 'mcp',
+      limit: null,
+      using: 0,
+    },
   ]);
   t.after(() => Promise.all([ana.close(), sam.close(), cy.close(), record.close()]));
 
@@ -195,13 +233,22 @@ test('list names each lend by asking it, with whose computer, its address and it
   assert.equal(by.ana.protocol, 'model');
   assert.equal(by.ana.group, 'g1');
   assert.ok(by.ana.origin.startsWith('http://127.0.0.1:'));
-  assert.deepEqual(by.ana.models.map((m) => m.id), ['coder']);
+  assert.deepEqual(
+    by.ana.models.map((m) => m.id),
+    ['coder'],
+  );
   assert.equal(by.ana.models[0].as, 'ana/coder');
 
   assert.equal(by.sam.protocol, 'tool');
   assert.equal(by.sam.group, 'g2');
-  assert.deepEqual(by.sam.tools.map((x) => [x.name, x.effect]),
-    [['whoami', 'read-only'], ['erase', 'destructive'], ['plain', 'not declared']]);
+  assert.deepEqual(
+    by.sam.tools.map((x) => [x.name, x.effect]),
+    [
+      ['whoami', 'read-only'],
+      ['erase', 'destructive'],
+      ['plain', 'not declared'],
+    ],
+  );
 
   assert.equal(by.cy.protocol, 'neither');
   assert.match(by.cy.why, /\/v1\/models/);
@@ -214,9 +261,33 @@ test('serve routes chat, multipart transcription and speech by the prefixed mode
   const stt = await modelLend({ id: 'stt' });
   const voice = await modelLend({ id: 'voice' });
   const record = await group([
-    { group: 'g', name: 'ana-coder', person: 'ana', origin: ana.origin, kind: 'x', limit: null, using: 0 },
-    { group: 'g', name: 'sam-stt', person: 'sam', origin: stt.origin, kind: 'x', limit: null, using: 0 },
-    { group: 'g', name: 'sam-voice', person: 'sam', origin: voice.origin, kind: 'x', limit: null, using: 0 },
+    {
+      group: 'g',
+      name: 'ana-coder',
+      person: 'ana',
+      origin: ana.origin,
+      kind: 'x',
+      limit: null,
+      using: 0,
+    },
+    {
+      group: 'g',
+      name: 'sam-stt',
+      person: 'sam',
+      origin: stt.origin,
+      kind: 'x',
+      limit: null,
+      using: 0,
+    },
+    {
+      group: 'g',
+      name: 'sam-voice',
+      person: 'sam',
+      origin: voice.origin,
+      kind: 'x',
+      limit: null,
+      using: 0,
+    },
   ]);
   const at = await pantry({ record: record.origin });
   t.after(() => Promise.all([ana.close(), stt.close(), voice.close(), record.close(), at.close()]));
@@ -224,14 +295,23 @@ test('serve routes chat, multipart transcription and speech by the prefixed mode
   const models = await (await fetch(`${at.url}/v1/models`)).json();
   assert.deepEqual(models.data.map((m) => m.id).sort(), ['ana/coder', 'sam/stt', 'sam/voice']);
 
-  const tools = [{ type: 'function', function: { name: 'weather', parameters: { type: 'object' } } }];
+  const tools = [
+    { type: 'function', function: { name: 'weather', parameters: { type: 'object' } } },
+  ];
   const chat = {
-    model: 'ana/coder', temperature: 0.3, tools, tool_choice: 'auto',
+    model: 'ana/coder',
+    temperature: 0.3,
+    tools,
+    tool_choice: 'auto',
     messages: [{ role: 'user', content: 'hi' }],
   };
-  const answer = await (await fetch(`${at.url}/v1/chat/completions`, {
-    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(chat),
-  })).json();
+  const answer = await (
+    await fetch(`${at.url}/v1/chat/completions`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(chat),
+    })
+  ).json();
   assert.equal(ana.requests.filter((r) => r.path === '/v1/chat/completions').length, 1);
   assert.equal(stt.requests.filter((r) => r.path === '/v1/chat/completions').length, 0);
   assert.equal(answer.seen.model, 'coder', 'the lend is asked for its own id');
@@ -242,16 +322,25 @@ test('serve routes chat, multipart transcription and speech by the prefixed mode
   const form = new FormData();
   form.set('model', 'sam/stt');
   form.set('language', 'en');
-  form.set('file', new Blob([Buffer.from('the quick brown fox')], { type: 'audio/wav' }), 'say.wav');
-  const heard = await (await fetch(`${at.url}/v1/audio/transcriptions`, { method: 'POST', body: form })).json();
+  form.set(
+    'file',
+    new Blob([Buffer.from('the quick brown fox')], { type: 'audio/wav' }),
+    'say.wav',
+  );
+  const heard = await (
+    await fetch(`${at.url}/v1/audio/transcriptions`, { method: 'POST', body: form })
+  ).json();
   assert.equal(heard.model, 'stt', 'the multipart model is read from the form and written back');
   assert.equal(heard.language, 'en');
   assert.equal(heard.text, 'the quick brown fox', 'the file bytes pass through untouched');
 
-  const said = await (await fetch(`${at.url}/v1/audio/speech`, {
-    method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ model: 'sam/voice', input: 'hello', voice: 'af_heart' }),
-  })).json();
+  const said = await (
+    await fetch(`${at.url}/v1/audio/speech`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ model: 'sam/voice', input: 'hello', voice: 'af_heart' }),
+    })
+  ).json();
   assert.equal(said.seen.model, 'voice');
   assert.equal(said.seen.voice, 'af_heart');
 });
@@ -259,20 +348,37 @@ test('serve routes chat, multipart transcription and speech by the prefixed mode
 test('a streamed answer reaches the client chunk by chunk, not buffered', async (t) => {
   const ana = await modelLend({ id: 'coder' });
   const record = await group([
-    { group: 'g', name: 'ana-coder', person: 'ana', origin: ana.origin, kind: 'x', limit: null, using: 0 },
+    {
+      group: 'g',
+      name: 'ana-coder',
+      person: 'ana',
+      origin: ana.origin,
+      kind: 'x',
+      limit: null,
+      using: 0,
+    },
   ]);
   const at = await pantry({ record: record.origin });
   t.after(() => Promise.all([ana.close(), record.close(), at.close()]));
 
   const res = await fetch(`${at.url}/v1/chat/completions`, {
-    method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ model: 'ana/coder', stream: true, messages: [{ role: 'user', content: 'hi' }] }),
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      model: 'ana/coder',
+      stream: true,
+      messages: [{ role: 'user', content: 'hi' }],
+    }),
   });
   const reader = res.body.getReader();
   const first = await reader.read();
   const seen = ana.requests.find((r) => r.path === '/v1/chat/completions');
   assert.match(Buffer.from(first.value).toString(), /first/);
-  assert.equal(seen.secondSent, undefined, 'the first chunk arrived before the lend sent the second');
+  assert.equal(
+    seen.secondSent,
+    undefined,
+    'the first chunk arrived before the lend sent the second',
+  );
   await reader.cancel();
 });
 
@@ -280,7 +386,15 @@ test('a streamed answer reaches the client chunk by chunk, not buffered', async 
 test('an unregistered server, path and body are listed and answered with the pantry unchanged', async (t) => {
   const cy = await modelLend({ id: 'never-seen-id', extra: ['/v7/odd/path'] });
   const record = await group([
-    { group: 'g', name: 'cy-thing', person: 'cy', origin: cy.origin, kind: 'a-kind-no-one-registered', limit: null, using: 0 },
+    {
+      group: 'g',
+      name: 'cy-thing',
+      person: 'cy',
+      origin: cy.origin,
+      kind: 'a-kind-no-one-registered',
+      limit: null,
+      using: 0,
+    },
   ]);
   const at = await pantry({ record: record.origin });
   t.after(() => Promise.all([cy.close(), record.close(), at.close()]));
@@ -291,9 +405,13 @@ test('an unregistered server, path and body are listed and answered with the pan
   assert.equal(found.lends[0].models[0].as, 'cy/never-seen-id');
 
   const odd = { what: 'ever', nested: { a: [1, 2, 3] }, model: 'cy/never-seen-id' };
-  const answer = await (await fetch(`${at.url}/v7/odd/path`, {
-    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(odd),
-  })).json();
+  const answer = await (
+    await fetch(`${at.url}/v7/odd/path`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(odd),
+    })
+  ).json();
   assert.equal(answer.path, '/v7/odd/path');
   assert.equal(answer.seen.model, 'never-seen-id');
   assert.equal(answer.seen.what, 'ever');
@@ -307,7 +425,8 @@ function hashFiles(dir) {
   for (const name of readdirSync(dir)) {
     if (!name.endsWith('.mjs') || name.endsWith('.test.mjs')) continue;
     const p = join(dir, name);
-    if (statSync(p).isFile()) out[name] = createHash('sha256').update(readFileSync(p)).digest('hex');
+    if (statSync(p).isFile())
+      out[name] = createHash('sha256').update(readFileSync(p)).digest('hex');
   }
   return out;
 }
@@ -316,17 +435,37 @@ function hashFiles(dir) {
 test('an asleep, full or unknown lender is named and never substituted', async (t) => {
   const sam = await modelLend({ id: 'voice' });
   const full = await standin((req, res) => {
-    if (req.url === '/v1/models') return json(res, 200, { object: 'list', data: [{ id: 'full', object: 'model' }] });
+    if (req.url === '/v1/models')
+      return json(res, 200, { object: 'list', data: [{ id: 'full', object: 'model' }] });
     if (req.url === '/v1/chat/completions') {
       res.writeHead(429, { 'content-type': 'application/json', 'x-svrngs-refused': 'full' });
       return res.end(JSON.stringify({ error: 'sam-full is full (1 of 1)', kind: 'full' }));
     }
     return json(res, 404, { error: 'not me' });
   });
-  const record = await group([
-    { group: 'g', name: 'sam-voice', person: 'sam', origin: sam.origin, kind: 'x', limit: null, using: 0 },
-    { group: 'g', name: 'sam-full', person: 'sam', origin: full.origin, kind: 'x', limit: 1, using: 1 },
-  ], { unanswered: ['ana'] });
+  const record = await group(
+    [
+      {
+        group: 'g',
+        name: 'sam-voice',
+        person: 'sam',
+        origin: sam.origin,
+        kind: 'x',
+        limit: null,
+        using: 0,
+      },
+      {
+        group: 'g',
+        name: 'sam-full',
+        person: 'sam',
+        origin: full.origin,
+        kind: 'x',
+        limit: 1,
+        using: 1,
+      },
+    ],
+    { unanswered: ['ana'] },
+  );
   const at = await pantry({ record: record.origin });
   t.after(() => Promise.all([sam.close(), full.close(), record.close(), at.close()]));
 
@@ -334,7 +473,8 @@ test('an asleep, full or unknown lender is named and never substituted', async (
   assert.deepEqual(models.data.map((m) => m.id).sort(), ['sam/full', 'sam/voice']);
 
   const asleep = await fetch(`${at.url}/v1/chat/completions`, {
-    method: 'POST', headers: { 'content-type': 'application/json' },
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ model: 'ana/coder', messages: [{ role: 'user', content: 'hi' }] }),
   });
   assert.equal(asleep.status, 503);
@@ -344,7 +484,8 @@ test('an asleep, full or unknown lender is named and never substituted', async (
   assert.equal(sam.requests.filter((r) => r.path === '/v1/chat/completions').length, 0);
 
   const limited = await fetch(`${at.url}/v1/chat/completions`, {
-    method: 'POST', headers: { 'content-type': 'application/json' },
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ model: 'sam/full', messages: [{ role: 'user', content: 'hi' }] }),
   });
   assert.equal(limited.status, 429);
@@ -352,14 +493,21 @@ test('an asleep, full or unknown lender is named and never substituted', async (
   assert.match(limitedBody, /sam/);
   assert.match(limitedBody, /full/);
   assert.match(limitedBody, /full/);
-  assert.equal(limited.headers.get('x-svrngs-refused'), 'full',
-    'the door refused it, and the pantry passed that through');
-  assert.equal(full.requests.filter((r) => r.path === '/v1/chat/completions').length, 1,
-    'the door decided, not the pantry');
+  assert.equal(
+    limited.headers.get('x-svrngs-refused'),
+    'full',
+    'the door refused it, and the pantry passed that through',
+  );
+  assert.equal(
+    full.requests.filter((r) => r.path === '/v1/chat/completions').length,
+    1,
+    'the door decided, not the pantry',
+  );
   assert.equal(sam.requests.filter((r) => r.path === '/v1/chat/completions').length, 0);
 
   const unknown = await fetch(`${at.url}/v1/chat/completions`, {
-    method: 'POST', headers: { 'content-type': 'application/json' },
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ model: 'nobody/none', messages: [{ role: 'user', content: 'hi' }] }),
   });
   assert.equal(unknown.status, 404);
@@ -385,14 +533,36 @@ test('a lend that did not answer in time is could-not-judge, absent, and refused
   });
   const sam = await modelLend({ id: 'voice' });
   const record = await group([
-    { group: 'g', key: 'ana-key', name: 'ana-coder', person: 'ana', origin: mute.origin, kind: 'x', limit: null, using: 0 },
-    { group: 'g', key: 'sam-key', name: 'sam-voice', person: 'sam', origin: sam.origin, kind: 'x', limit: null, using: 0 },
+    {
+      group: 'g',
+      key: 'ana-key',
+      name: 'ana-coder',
+      person: 'ana',
+      origin: mute.origin,
+      kind: 'x',
+      limit: null,
+      using: 0,
+    },
+    {
+      group: 'g',
+      key: 'sam-key',
+      name: 'sam-voice',
+      person: 'sam',
+      origin: sam.origin,
+      kind: 'x',
+      limit: null,
+      using: 0,
+    },
   ]);
   const at = await pantry({ record: record.origin, clock: now });
   t.after(() => Promise.all([mute.close(), sam.close(), record.close(), at.close()]));
 
   const models = await (await fetch(`${at.url}/v1/models`)).json();
-  assert.deepEqual(models.data.map((m) => m.id), ['sam/voice'], 'the silent lend is absent');
+  assert.deepEqual(
+    models.data.map((m) => m.id),
+    ['sam/voice'],
+    'the silent lend is absent',
+  );
 
   const seen = await list({ record: record.origin, clock: now });
   const ana = seen.lends.find((l) => l.person === 'ana');
@@ -403,7 +573,8 @@ test('a lend that did not answer in time is could-not-judge, absent, and refused
 
   clock += 1000;
   const asleep = await fetch(`${at.url}/v1/chat/completions`, {
-    method: 'POST', headers: { 'content-type': 'application/json' },
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ model: 'ana/coder', messages: [{ role: 'user', content: 'hi' }] }),
   });
   assert.equal(asleep.status, 503, 'never 404 "no lend answers"');
@@ -411,8 +582,11 @@ test('a lend that did not answer in time is could-not-judge, absent, and refused
   assert.match(body, /ana/);
   assert.match(body, /did not answer|could-not-judge/);
   assert.match(body, /looked 1s ago/, 'the error says how old the look was');
-  assert.equal(sam.requests.filter((r) => r.path === '/v1/chat/completions').length, 0,
-    'another lend never answers it');
+  assert.equal(
+    sam.requests.filter((r) => r.path === '/v1/chat/completions').length,
+    0,
+    'another lend never answers it',
+  );
 });
 
 // (0)(ii): ids stay readable but are unique by identity, from the lend's key
@@ -421,8 +595,26 @@ test('two people of one name are told apart by their key and both routed', async
   const first = await modelLend({ id: 'coder', reply: 'first' });
   const second = await modelLend({ id: 'coder', reply: 'second' });
   const record = await group([
-    { group: 'g', key: 'aa'.repeat(32), name: 'sam-one', person: 'sam', origin: first.origin, kind: 'x', limit: null, using: 0 },
-    { group: 'g', key: 'bb'.repeat(32), name: 'sam-two', person: 'sam', origin: second.origin, kind: 'x', limit: null, using: 0 },
+    {
+      group: 'g',
+      key: 'aa'.repeat(32),
+      name: 'sam-one',
+      person: 'sam',
+      origin: first.origin,
+      kind: 'x',
+      limit: null,
+      using: 0,
+    },
+    {
+      group: 'g',
+      key: 'bb'.repeat(32),
+      name: 'sam-two',
+      person: 'sam',
+      origin: second.origin,
+      kind: 'x',
+      limit: null,
+      using: 0,
+    },
   ]);
   const at = await pantry({ record: record.origin });
   t.after(() => Promise.all([first.close(), second.close(), record.close(), at.close()]));
@@ -435,38 +627,70 @@ test('two people of one name are told apart by their key and both routed', async
   for (const id of ids) assert.match(id, /\/coder$/);
 
   const chats = (lend) => lend.requests.filter((r) => r.path === '/v1/chat/completions').length;
-  for (const [id, target, spare, said] of [[ids[0], first, second, 'first'], [ids[1], second, first, 'second']]) {
+  for (const [id, target, spare, said] of [
+    [ids[0], first, second, 'first'],
+    [ids[1], second, first, 'second'],
+  ]) {
     const before = chats(spare);
-    const answer = await (await fetch(`${at.url}/v1/chat/completions`, {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ model: id, messages: [{ role: 'user', content: 'hi' }] }),
-    })).json();
+    const answer = await (
+      await fetch(`${at.url}/v1/chat/completions`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ model: id, messages: [{ role: 'user', content: 'hi' }] }),
+      })
+    ).json();
     assert.equal(answer.choices[0].message.content, said, `${id} reaches its own computer`);
     assert.equal(chats(target), 1);
     assert.equal(chats(spare), before, `${id} reaches no other computer`);
   }
 });
 
-test('one person\'s two lends of one model id are both listed as serve routes them', async (t) => {
+test("one person's two lends of one model id are both listed as serve routes them", async (t) => {
   const first = await modelLend({ id: 'coder', reply: 'first' });
   const second = await modelLend({ id: 'coder', reply: 'second' });
   const record = await group([
-    { group: 'g', key: 'aa'.repeat(32), name: 'ana-one', person: 'ana', origin: first.origin, kind: 'x', limit: null, using: 0 },
-    { group: 'g', key: 'aa'.repeat(32), name: 'ana-two', person: 'ana', origin: second.origin, kind: 'x', limit: null, using: 0 },
+    {
+      group: 'g',
+      key: 'aa'.repeat(32),
+      name: 'ana-one',
+      person: 'ana',
+      origin: first.origin,
+      kind: 'x',
+      limit: null,
+      using: 0,
+    },
+    {
+      group: 'g',
+      key: 'aa'.repeat(32),
+      name: 'ana-two',
+      person: 'ana',
+      origin: second.origin,
+      kind: 'x',
+      limit: null,
+      using: 0,
+    },
   ]);
   const at = await pantry({ record: record.origin });
   t.after(() => Promise.all([first.close(), second.close(), record.close(), at.close()]));
 
-  const listed = (await list({ record: record.origin })).lends.flatMap((l) => l.models.map((m) => m.as));
+  const listed = (await list({ record: record.origin })).lends.flatMap((l) =>
+    l.models.map((m) => m.as),
+  );
   const served = (await (await fetch(`${at.url}/v1/models`)).json()).data.map((m) => m.id);
   assert.deepEqual(listed, ['ana/coder', 'ana/ana-two/coder']);
   assert.deepEqual(served, listed, 'list shows the ids serve routes by');
 
-  for (const [id, said] of [['ana/coder', 'first'], ['ana/ana-two/coder', 'second']]) {
-    const answer = await (await fetch(`${at.url}/v1/chat/completions`, {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ model: id, messages: [{ role: 'user', content: 'hi' }] }),
-    })).json();
+  for (const [id, said] of [
+    ['ana/coder', 'first'],
+    ['ana/ana-two/coder', 'second'],
+  ]) {
+    const answer = await (
+      await fetch(`${at.url}/v1/chat/completions`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ model: id, messages: [{ role: 'user', content: 'hi' }] }),
+      })
+    ).json();
     assert.equal(answer.choices[0].message.content, said, `${id} reaches its own lend`);
   }
 });
@@ -479,7 +703,16 @@ test('discovery is kept for a short time and its age is said', async (t) => {
   const now = () => clock;
   const ana = await modelLend({ id: 'coder' });
   const record = await group([
-    { group: 'g', key: 'k', name: 'ana-coder', person: 'ana', origin: ana.origin, kind: 'x', limit: null, using: 0 },
+    {
+      group: 'g',
+      key: 'k',
+      name: 'ana-coder',
+      person: 'ana',
+      origin: ana.origin,
+      kind: 'x',
+      limit: null,
+      using: 0,
+    },
   ]);
   const at = await pantry({ record: record.origin, clock: now });
   t.after(() => Promise.all([ana.close(), record.close(), at.close()]));
@@ -510,9 +743,22 @@ test('a lender asleep costs one ask of the record, not every message', async (t)
   const now = () => clock;
   const ana = await standin(async () => {});
   const sam = await modelLend({ id: 'voice' });
-  const record = await group([
-    { group: 'g', key: 'sam-key', name: 'sam-voice', person: 'sam', origin: sam.origin, kind: 'x', limit: null, using: 0 },
-  ], { unanswered: ['ana'] }, { delay: 600 });
+  const record = await group(
+    [
+      {
+        group: 'g',
+        key: 'sam-key',
+        name: 'sam-voice',
+        person: 'sam',
+        origin: sam.origin,
+        kind: 'x',
+        limit: null,
+        using: 0,
+      },
+    ],
+    { unanswered: ['ana'] },
+    { delay: 600 },
+  );
   const at = await pantry({ record: record.origin, clock: now });
   t.after(() => Promise.all([ana.close(), sam.close(), record.close(), at.close()]));
 
@@ -520,7 +766,8 @@ test('a lender asleep costs one ask of the record, not every message', async (t)
   const chat = async () => {
     const began = Date.now();
     const answer = await fetch(`${at.url}/v1/chat/completions`, {
-      method: 'POST', headers: { 'content-type': 'application/json' },
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ model: 'sam/voice', messages: [{ role: 'user', content: 'hi' }] }),
     });
     return { status: answer.status, body: await answer.text(), elapsed: Date.now() - began };
@@ -534,15 +781,18 @@ test('a lender asleep costs one ask of the record, not every message', async (t)
     clock += FOUND_FOR + 1000;
     const again = await chat();
     assert.equal(again.status, 200);
-    assert.ok(again.elapsed < 500,
-      `request ${i + 2} waited ${again.elapsed} ms on the asleep friend`);
+    assert.ok(
+      again.elapsed < 500,
+      `request ${i + 2} waited ${again.elapsed} ms on the asleep friend`,
+    );
   }
   assert.equal(lendsAsked(), 1, 'the record is asked once while its answer is kept');
 
   clock += 1000;
   const began = Date.now();
   const asleep = await fetch(`${at.url}/v1/chat/completions`, {
-    method: 'POST', headers: { 'content-type': 'application/json' },
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ model: 'ana/whisper-1', messages: [{ role: 'user', content: 'hi' }] }),
   });
   const asleepBody = await asleep.text();
@@ -552,7 +802,11 @@ test('a lender asleep costs one ask of the record, not every message', async (t)
   assert.match(asleepBody, /asleep|did not answer/);
   assert.match(asleepBody, /looked \d+s ago/, 'the refusal says the age of what it used');
   assert.ok(asleepElapsed < 500, `the refusal waited ${asleepElapsed} ms on the asleep friend`);
-  assert.equal(lendsAsked(), 1, 'the asleep lender is kept too, so asking for it asks nothing again');
+  assert.equal(
+    lendsAsked(),
+    1,
+    'the asleep lender is kept too, so asking for it asks nothing again',
+  );
 
   clock = 1000 + LENDS_FOR;
   const older = await chat();
@@ -565,7 +819,8 @@ test('a lender asleep costs one ask of the record, not every message', async (t)
 // (crates/svrngs-node/src/door.rs:254-268; AGENTS.md 8, 12).
 test('the door decides limits: its refusal and header pass through unchanged', async (t) => {
   const door = await standin((req, res) => {
-    if (req.url === '/v1/models') return json(res, 200, { object: 'list', data: [{ id: 'strong', object: 'model' }] });
+    if (req.url === '/v1/models')
+      return json(res, 200, { object: 'list', data: [{ id: 'strong', object: 'model' }] });
     if (req.url === '/v1/chat/completions') {
       const refusal = { error: 'sam-strong is full (1 of 1)', kind: 'full' };
       res.writeHead(429, { 'content-type': 'application/json', 'x-svrngs-refused': 'full' });
@@ -574,20 +829,33 @@ test('the door decides limits: its refusal and header pass through unchanged', a
     return json(res, 404, { error: 'not me' });
   });
   const record = await group([
-    { group: 'g', key: 'k', name: 'sam-strong', person: 'sam', origin: door.origin, kind: 'x', limit: 1, using: 1 },
+    {
+      group: 'g',
+      key: 'k',
+      name: 'sam-strong',
+      person: 'sam',
+      origin: door.origin,
+      kind: 'x',
+      limit: 1,
+      using: 1,
+    },
   ]);
   const at = await pantry({ record: record.origin });
   t.after(() => Promise.all([door.close(), record.close(), at.close()]));
 
   const refused = await fetch(`${at.url}/v1/chat/completions`, {
-    method: 'POST', headers: { 'content-type': 'application/json' },
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ model: 'sam/strong', messages: [{ role: 'user', content: 'hi' }] }),
   });
   assert.equal(refused.status, 429);
   assert.equal(refused.headers.get('x-svrngs-refused'), 'full');
   assert.deepEqual(await refused.json(), { error: 'sam-strong is full (1 of 1)', kind: 'full' });
-  assert.equal(door.requests.filter((r) => r.path === '/v1/chat/completions').length, 1,
-    'the pantry did not preempt the door');
+  assert.equal(
+    door.requests.filter((r) => r.path === '/v1/chat/completions').length,
+    1,
+    'the pantry did not preempt the door',
+  );
 });
 
 // (0)(v): glassbox. With PANTRY_LOG=debug every probe and its answer, every
@@ -611,15 +879,34 @@ test('PANTRY_LOG=debug writes each probe, route and skip, and the answer names b
   const ana = await modelLend({ id: 'coder' });
   const cy = await silent();
   const record = await group([
-    { group: 'g', key: 'k1', name: 'ana-coder', person: 'ana', origin: ana.origin, kind: 'x', limit: null, using: 0 },
-    { group: 'g', key: 'k2', name: 'cy-odd', person: 'cy', origin: cy.origin, kind: 'x', limit: null, using: 0 },
+    {
+      group: 'g',
+      key: 'k1',
+      name: 'ana-coder',
+      person: 'ana',
+      origin: ana.origin,
+      kind: 'x',
+      limit: null,
+      using: 0,
+    },
+    {
+      group: 'g',
+      key: 'k2',
+      name: 'cy-odd',
+      person: 'cy',
+      origin: cy.origin,
+      kind: 'x',
+      limit: null,
+      using: 0,
+    },
   ]);
   const at = await pantry({ record: record.origin });
   t.after(() => Promise.all([ana.close(), cy.close(), record.close(), at.close()]));
 
   await list({ record: record.origin });
   const answer = await fetch(`${at.url}/v1/chat/completions`, {
-    method: 'POST', headers: { 'content-type': 'application/json' },
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ model: 'ana/coder', messages: [{ role: 'user', content: 'hi' }] }),
   });
   assert.equal(answer.headers.get('x-pantry-person'), 'ana');
@@ -634,10 +921,19 @@ test('PANTRY_LOG=debug writes each probe, route and skip, and the answer names b
 });
 
 // (0)(vi): Authorization and Cookie are never forwarded to a friend's lend.
-test('a client\'s Authorization and Cookie never reach a friend\'s lend', async (t) => {
+test("a client's Authorization and Cookie never reach a friend's lend", async (t) => {
   const ana = await modelLend({ id: 'coder' });
   const record = await group([
-    { group: 'g', key: 'k', name: 'ana-coder', person: 'ana', origin: ana.origin, kind: 'x', limit: null, using: 0 },
+    {
+      group: 'g',
+      key: 'k',
+      name: 'ana-coder',
+      person: 'ana',
+      origin: ana.origin,
+      kind: 'x',
+      limit: null,
+      using: 0,
+    },
   ]);
   const at = await pantry({ record: record.origin });
   t.after(() => Promise.all([ana.close(), record.close(), at.close()]));
@@ -663,7 +959,16 @@ test('serve answers at the same address across a restart and refuses a held one 
   const state = stateDir();
   const ana = await modelLend({ id: 'coder' });
   const record = await group([
-    { group: 'g', key: 'k', name: 'ana-coder', person: 'ana', origin: ana.origin, kind: 'x', limit: null, using: 0 },
+    {
+      group: 'g',
+      key: 'k',
+      name: 'ana-coder',
+      person: 'ana',
+      origin: ana.origin,
+      kind: 'x',
+      limit: null,
+      using: 0,
+    },
   ]);
   t.after(() => {
     rmSync(state, { recursive: true, force: true });
@@ -682,8 +987,11 @@ test('serve answers at the same address across a restart and refuses a held one 
   const held = net.createServer();
   await new Promise((resolve) => held.listen(port, '127.0.0.1', resolve));
   t.after(() => held.close());
-  await assert.rejects(serve({ record: record.origin, state }),
-    new RegExp(`holds 127\\.0\\.0\\.1:${port}`), 'silently moved to another port');
+  await assert.rejects(
+    serve({ record: record.origin, state }),
+    new RegExp(`holds 127\\.0\\.0\\.1:${port}`),
+    'silently moved to another port',
+  );
   await new Promise((resolve) => held.close(resolve));
 
   const free = await new Promise((resolve) => {

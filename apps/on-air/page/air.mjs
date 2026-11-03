@@ -25,7 +25,12 @@ export const blake3hex = (bytes) => bytesToHex(blake3(bytes));
 export function checkPiece(bytes, hash) {
   if (!bytes || bytes.length === 0) return { ok: false, why: 'an empty piece' };
   const got = blake3hex(bytes);
-  return got === hash ? { ok: true } : { ok: false, why: `its BLAKE3 is ${got.slice(0, 12)}…, not the line's ${String(hash).slice(0, 12)}…` };
+  return got === hash
+    ? { ok: true }
+    : {
+        ok: false,
+        why: `its BLAKE3 is ${got.slice(0, 12)}…, not the line's ${String(hash).slice(0, 12)}…`,
+      };
 }
 
 // A published or pushed line: `{line, key, sig}`, the line as the text that
@@ -33,21 +38,39 @@ export function checkPiece(bytes, hash) {
 // station's key — the key the envelope claims is never trusted.
 export function checkLine(envelope, stationKey, app = APP) {
   if (!envelope || typeof envelope.line !== 'string') return { ok: false, why: 'not a line' };
-  if (!envelope.sig) return { ok: false, why: `unsigned: ${envelope.unsigned || 'it carries no signature'}` };
+  if (!envelope.sig)
+    return { ok: false, why: `unsigned: ${envelope.unsigned || 'it carries no signature'}` };
   let ok = false;
   try {
-    ok = ed25519.verify(hexToBytes(envelope.sig), signedBytes(app, envelope.line), hexToBytes(stationKey));
+    ok = ed25519.verify(
+      hexToBytes(envelope.sig),
+      signedBytes(app, envelope.line),
+      hexToBytes(stationKey),
+    );
   } catch (e) {
     return { ok: false, why: `its signature cannot be read: ${e.message}` };
   }
   if (!ok) {
-    const claimed = envelope.key && envelope.key !== stationKey ? `; it names ${String(envelope.key).slice(0, 8)}…` : '';
-    return { ok: false, why: `its signature does not check under the station's key ${stationKey.slice(0, 8)}…${claimed}` };
+    const claimed =
+      envelope.key && envelope.key !== stationKey
+        ? `; it names ${String(envelope.key).slice(0, 8)}…`
+        : '';
+    return {
+      ok: false,
+      why: `its signature does not check under the station's key ${stationKey.slice(0, 8)}…${claimed}`,
+    };
   }
   let line;
-  try { line = JSON.parse(envelope.line); } catch { return { ok: false, why: 'signed, but not a line' }; }
+  try {
+    line = JSON.parse(envelope.line);
+  } catch {
+    return { ok: false, why: 'signed, but not a line' };
+  }
   const piece = Number.isInteger(line.n) && typeof line.hash === 'string';
-  if (typeof line.show !== 'string' || !(piece || (line.ended === true && Number.isInteger(line.n)))) {
+  if (
+    typeof line.show !== 'string' ||
+    !(piece || (line.ended === true && Number.isInteger(line.n)))
+  ) {
     return { ok: false, why: 'signed, but not a line of a piece or its end' };
   }
   return { ok: true, line };
@@ -71,7 +94,13 @@ export function frames(bytes) {
   }
   const out = [];
   while (at < bytes.length) {
-    if (bytes.length - at === 128 && bytes[at] === 0x54 && bytes[at + 1] === 0x41 && bytes[at + 2] === 0x47) break;
+    if (
+      bytes.length - at === 128 &&
+      bytes[at] === 0x54 &&
+      bytes[at + 1] === 0x41 &&
+      bytes[at + 2] === 0x47
+    )
+      break;
     if (bytes.length - at < 4 || bytes[at] !== 0xff || (bytes[at + 1] & 0xe0) !== 0xe0) {
       throw new Error(`no MP3 frame at byte ${at} of ${bytes.length}`);
     }
@@ -79,8 +108,10 @@ export function frames(bytes) {
     const layer = (bytes[at + 1] >> 1) & 3;
     const kbps = KBPS[version === 1 ? 1 : 2]?.[bytes[at + 2] >> 4];
     const rate = RATES[version]?.[(bytes[at + 2] >> 2) & 3];
-    if (!version || layer !== 1 || !kbps || !rate) throw new Error(`byte ${at} is not a Layer III frame with a bitrate`);
-    const len = Math.floor(((version === 1 ? 144 : 72) * kbps * 1000) / rate) + ((bytes[at + 2] >> 1) & 1);
+    if (!version || layer !== 1 || !kbps || !rate)
+      throw new Error(`byte ${at} is not a Layer III frame with a bitrate`);
+    const len =
+      Math.floor(((version === 1 ? 144 : 72) * kbps * 1000) / rate) + ((bytes[at + 2] >> 1) & 1);
     if (at + len > bytes.length) throw new Error(`the frame at byte ${at} runs past the end`);
     out.push({ at, len, seconds: (version === 1 ? 1152 : 576) / rate });
     at += len;
@@ -93,14 +124,17 @@ export function frames(bytes) {
 // the last whatever is left.
 export function cut(bytes, seconds = 4) {
   const pieces = [];
-  let start = null, held = 0, end = 0;
+  let start = null,
+    held = 0,
+    end = 0;
   for (const f of frames(bytes)) {
     start ??= f.at;
     held += f.seconds;
     end = f.at + f.len;
     if (held >= seconds) {
       pieces.push({ bytes: bytes.subarray(start, f.at + f.len), seconds: held });
-      start = null; held = 0;
+      start = null;
+      held = 0;
     }
   }
   if (start !== null) pieces.push({ bytes: bytes.subarray(start, end), seconds: held });

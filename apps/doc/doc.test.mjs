@@ -43,7 +43,13 @@ function socketAs(headers) {
         host: u.hostname,
         port: u.port,
         path: u.pathname,
-        headers: { connection: 'Upgrade', upgrade: 'websocket', 'sec-websocket-version': '13', 'sec-websocket-key': randomBytes(16).toString('base64'), ...headers },
+        headers: {
+          connection: 'Upgrade',
+          upgrade: 'websocket',
+          'sec-websocket-version': '13',
+          'sec-websocket-key': randomBytes(16).toString('base64'),
+          ...headers,
+        },
       });
       this.req.on('upgrade', (_res, socket, head) => {
         this.socket = socket;
@@ -53,7 +59,10 @@ function socketAs(headers) {
           const { out, rest } = frames(Buffer.concat([buf, d]));
           buf = rest;
           for (const f of out) {
-            if (f.op === 2) this.onmessage?.({ data: f.data.buffer.slice(f.data.byteOffset, f.data.byteOffset + f.data.length) });
+            if (f.op === 2)
+              this.onmessage?.({
+                data: f.data.buffer.slice(f.data.byteOffset, f.data.byteOffset + f.data.length),
+              });
             if (f.op === 8) this.end();
           }
         };
@@ -84,7 +93,9 @@ function socketAs(headers) {
 
 /** The server as its own process; `stop()` and `go()` are the lid. */
 async function server(keep) {
-  const proc = spawn(process.execPath, [SERVER, '--port', '0', '--keep', keep], { stdio: ['ignore', 'pipe', 'inherit'] });
+  const proc = spawn(process.execPath, [SERVER, '--port', '0', '--keep', keep], {
+    stdio: ['ignore', 'pipe', 'inherit'],
+  });
   let said = '';
   proc.stdout.on('data', (d) => (said += d));
   await until('the server says its port', () => /127\.0\.0\.1:(\d+)/.test(said), 10_000);
@@ -92,7 +103,8 @@ async function server(keep) {
     port: Number(said.match(/127\.0\.0\.1:(\d+)/)[1]),
     stop: () => proc.kill('SIGSTOP'),
     go: () => proc.kill('SIGCONT'),
-    end: () => new Promise((done) => (proc.kill('SIGCONT'), proc.kill('SIGTERM'), proc.on('exit', done))),
+    end: () =>
+      new Promise((done) => (proc.kill('SIGCONT'), proc.kill('SIGTERM'), proc.on('exit', done))),
   };
 }
 
@@ -101,13 +113,18 @@ function page(port, person) {
   const doc = new Y.Doc();
   const awareness = new awarenessProtocol.Awareness(doc);
   const seen = { hello: null, lines: null, away: [], here: 0, joined: [], pokes: 0, synced: 0 };
-  const headers = person ? { 'x-svrngs-person': Buffer.from(person).toString('latin1'), 'x-svrngs-key': keyOf(person) } : {};
+  const headers = person
+    ? { 'x-svrngs-person': Buffer.from(person).toString('latin1'), 'x-svrngs-key': keyOf(person) }
+    : {};
   const s = sync({
     url: `ws://127.0.0.1:${port}/sync`,
     doc,
     awareness,
     WebSocket: socketAs(headers),
-    poke: () => ((seen.pokes += 1), fetch(`http://127.0.0.1:${port}/here`, { signal: AbortSignal.timeout(5000) })),
+    poke: () => (
+      (seen.pokes += 1),
+      fetch(`http://127.0.0.1:${port}/here`, { signal: AbortSignal.timeout(5000) })
+    ),
     on: {
       hello: (h) => {
         seen.hello = h;
@@ -136,8 +153,18 @@ function page(port, person) {
       p.insert(0, [t]);
       frag.push([p]);
     },
-    text: () => frag.toArray().map((p) => p.toArray().map((t) => t.toString()).join('')),
-    names: () => [...awareness.getStates().values()].map((s) => s.user?.name).filter(Boolean).sort(),
+    text: () =>
+      frag.toArray().map((p) =>
+        p
+          .toArray()
+          .map((t) => t.toString())
+          .join(''),
+      ),
+    names: () =>
+      [...awareness.getStates().values()]
+        .map((s) => s.user?.name)
+        .filter(Boolean)
+        .sort(),
   };
 }
 
@@ -146,22 +173,30 @@ test('two pages write at once and read one doc, each named as the door named the
   const srv = await server(keep);
   const bo = page(srv.port, 'Bo');
   const zoe = page(srv.port, 'Zoë');
-  t.after(async () => (bo.close(), zoe.close(), await srv.end(), rmSync(keep, { recursive: true })));
+  t.after(
+    async () => (bo.close(), zoe.close(), await srv.end(), rmSync(keep, { recursive: true })),
+  );
   await until('both are greeted', () => bo.seen.hello && zoe.seen.hello);
   // The page lets its person type once this has been said (app.js).
-  await until('both are told they hold the server\'s doc', () => bo.seen.synced && zoe.seen.synced);
+  await until("both are told they hold the server's doc", () => bo.seen.synced && zoe.seen.synced);
   assert.deepEqual([bo.seen.hello.you, zoe.seen.hello.you], ['Bo', 'Zoë']);
   bo.write('bring chips');
   zoe.write('bring a speaker');
   await until('both read both paragraphs', () => bo.text().length === 2 && zoe.text().length === 2);
   assert.deepEqual(bo.text().sort(), ['bring a speaker', 'bring chips']);
   assert.deepEqual(bo.text(), zoe.text(), 'the two pages read the paragraphs in one order');
-  await until('each paragraph says who last edited it', () => bo.seen.lines?.filter(Boolean).length === 2);
+  await until(
+    'each paragraph says who last edited it',
+    () => bo.seen.lines?.filter(Boolean).length === 2,
+  );
   assert.deepEqual(
     bo.seen.lines.map((e) => e.person),
     bo.text().map((p) => (p === 'bring chips' ? 'Bo' : 'Zoë')),
   );
-  await until('each sees the other\'s caret, named', () => bo.names().join() === 'Bo,Zoë' && zoe.names().join() === 'Bo,Zoë');
+  await until(
+    "each sees the other's caret, named",
+    () => bo.names().join() === 'Bo,Zoë' && zoe.names().join() === 'Bo,Zoë',
+  );
 });
 
 test('a page opened without svrngs is named nobody, and its paragraph says so', async (t) => {
@@ -181,7 +216,9 @@ test('a lender gone quiet is goodnight within QUIET_MS and a tick, and what was 
   const srv = await server(keep);
   const bo = page(srv.port, 'Bo');
   const zoe = page(srv.port, 'Zoë');
-  t.after(async () => (bo.close(), zoe.close(), await srv.end(), rmSync(keep, { recursive: true })));
+  t.after(
+    async () => (bo.close(), zoe.close(), await srv.end(), rmSync(keep, { recursive: true })),
+  );
   bo.write('before');
   await until('both read it', () => zoe.text().includes('before'));
 
@@ -192,7 +229,10 @@ test('a lender gone quiet is goodnight within QUIET_MS and a tick, and what was 
   await until('both say goodnight', () => bo.seen.away.length && zoe.seen.away.length, 8_000);
   for (const p of [bo, zoe]) {
     const after = p.seen.away[0].at - stopped;
-    assert.ok(after >= QUIET_MS - 1_000 && after <= QUIET_MS + 1_500, `goodnight ${after} ms after the lid, not within ${QUIET_MS} ms and a tick`);
+    assert.ok(
+      after >= QUIET_MS - 1_000 && after <= QUIET_MS + 1_500,
+      `goodnight ${after} ms after the lid, not within ${QUIET_MS} ms and a tick`,
+    );
   }
   assert.deepEqual(bo.names(), ['Bo'], 'no other caret stays drawn while the server is quiet');
   bo.write('while away, by Bo');
@@ -203,11 +243,20 @@ test('a lender gone quiet is goodnight within QUIET_MS and a tick, and what was 
   const woke = Date.now();
   srv.go();
   await until('both join again', () => bo.seen.joined.length && zoe.seen.joined.length, 20_000);
-  await until('both read all three', () => bo.text().length === 3 && zoe.text().length === 3, 10_000);
+  await until(
+    'both read all three',
+    () => bo.text().length === 3 && zoe.text().length === 3,
+    10_000,
+  );
   assert.deepEqual(bo.text(), zoe.text());
   assert.deepEqual(bo.seen.joined[0].kept, 1, 'Bo is told his one edit joined');
-  assert.ok(bo.seen.pokes > 0 && zoe.seen.pokes > 0, 'each page asked the server plainly before a new socket');
-  console.log(`# goodnight after ${bo.seen.away[0].at - stopped} and ${zoe.seen.away[0].at - stopped} ms; joined ${bo.seen.joined[0].at - woke} and ${zoe.seen.joined[0].at - woke} ms after the lid opened`);
+  assert.ok(
+    bo.seen.pokes > 0 && zoe.seen.pokes > 0,
+    'each page asked the server plainly before a new socket',
+  );
+  console.log(
+    `# goodnight after ${bo.seen.away[0].at - stopped} and ${zoe.seen.away[0].at - stopped} ms; joined ${bo.seen.joined[0].at - woke} and ${zoe.seen.joined[0].at - woke} ms after the lid opened`,
+  );
 });
 
 test('the server reads the doc back whole after a restart', async (t) => {

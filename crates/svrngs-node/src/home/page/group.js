@@ -8,40 +8,111 @@
 // again on HOME's `again` and `visible`, each a new `round` from HOME.
 // What each read draws is each feature's, in its place (PLACES), from
 // home/page/<file>.js: a file that draws nothing draws nothing here.
-import { ask, go, html, late, machine, no, useEffect, useMachine, whose } from '../ui/kit.js?v=__VERSION__';
+import {
+  ask,
+  go,
+  html,
+  late,
+  machine,
+  no,
+  useEffect,
+  useMachine,
+  whose,
+} from '../ui/kit.js?v=__VERSION__';
 
 // A route's answer, or its words when it refuses, never read as empty
 // (home.js@19b63b2b:25-30); refused as the page's session lapsed (home.rs:198,
 // session.rs `refused`), said as how to open it again.
 // `body` posted as JSON to `path`, its answer, or its words when it refuses
 // (home.js@19b63b2b:28-37).
-export const post = (path, body) => fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(async (r) => ((b) => (r.ok ? b : Promise.reject(new Error(b.error || `answered ${r.status}`))))(await r.json().catch(() => ({}))));
+export const post = (path, body) =>
+  fetch(path, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  }).then(async (r) =>
+    ((b) => (r.ok ? b : Promise.reject(new Error(b.error || `answered ${r.status}`))))(
+      await r.json().catch(() => ({})),
+    ),
+  );
 // A message to a feature (`m.flow`, its file's name) is taken by its
 // `take`, or refused by name.
-export const get = (path) => fetch(path).then(async (r) => (r.ok ? r.json() : Promise.reject(new Error(r.status === 401 ? 'this page’s session has ended. Open svrngs from your Applications, or on Linux your applications menu, and it opens here again' : (await r.json().catch(() => ({}))).error || `answered ${r.status}`)))),
-  offered = (flows, s, m, f = flows[m.flow]) => (f?.take ? f.take(s, m) : no(s, `nothing here takes ${m.type}`));
+export const get = (path) =>
+    fetch(path).then(async (r) =>
+      r.ok
+        ? r.json()
+        : Promise.reject(
+            new Error(
+              r.status === 401
+                ? 'this page’s session has ended. Open svrngs from your Applications, or on Linux your applications menu, and it opens here again'
+                : (await r.json().catch(() => ({}))).error || `answered ${r.status}`,
+            ),
+          ),
+    ),
+  offered = (flows, s, m, f = flows[m.flow]) =>
+    f?.take ? f.take(s, m) : no(s, `nothing here takes ${m.type}`);
 
 // Each place of a group's section, in v1's order (home.js@19b63b2b:116-232): the
 // index, its people, its folder, the links made here, leaving, removals,
 // who is visiting, the shelf, what is open to this WiFi, and its link to a screen (`show`);
 // then what it read, told to HOME for "What acts as you" (home/page/acts.js `Told`), drawing nothing.
-const PLACES = ['index', 'people', 'folder', 'links', 'leave', 'removals', 'visits', 'shelf', 'wifi', 'show', 'told'], ROUTES = { people: '/v1/rail/people', lends: '/v1/lends' };
+const PLACES = [
+    'index',
+    'people',
+    'folder',
+    'links',
+    'leave',
+    'removals',
+    'visits',
+    'shelf',
+    'wifi',
+    'show',
+    'told',
+  ],
+  ROUTES = { people: '/v1/rail/people', lends: '/v1/lends' };
 // Both read, each counted (ui/machine.js `ask`), the round's why traced.
 const reading = (s, m, [a, p] = ask(s, 'people'), [asked, l] = ask({ asked: a }, 'lends')) =>
-  go(s, { people: 'reading', lends: 'reading' }, { asked }, ...[['people', p], ['lends', l]].map(([kind, n]) => ({ run: 'get', kind, n, id: s.id, failed: 'unread' })));
+  go(
+    s,
+    { people: 'reading', lends: 'reading' },
+    { asked },
+    ...[
+      ['people', p],
+      ['lends', l],
+    ].map(([kind, n]) => ({ run: 'get', kind, n, id: s.id, failed: 'unread' })),
+  );
 const GROUP = (flows) => ({
   states: { people: ['reading', 'read', 'unread'], lends: ['reading', 'read', 'unread'] },
-  step: (s, m) => ({ read: reading, again: reading, visible: reading,
-    answered: () => (late(s, m.kind, m.n) ? no(s, late(s, m.kind, m.n)) : go(s, { [m.kind]: 'read' }, { [m.kind]: m.body })),
-    unread: () => (late(s, m.kind, m.n) ? no(s, late(s, m.kind, m.n)) : go(s, { [m.kind]: 'unread' }, { why: m.why })) })[m.type]?.(s, m) ?? offered(flows, s, m),
-  io: { get: ({ kind, n, id }) => get(`${ROUTES[kind]}?namespace=${encodeURIComponent(id)}`).then((body) => ({ type: 'answered', kind, n, body, why: `${kind} ${n}` }), (e) => ({ type: 'unread', kind, n, why: e.message })) },
+  step: (s, m) =>
+    ({
+      read: reading,
+      again: reading,
+      visible: reading,
+      answered: () =>
+        late(s, m.kind, m.n)
+          ? no(s, late(s, m.kind, m.n))
+          : go(s, { [m.kind]: 'read' }, { [m.kind]: m.body }),
+      unread: () =>
+        late(s, m.kind, m.n)
+          ? no(s, late(s, m.kind, m.n))
+          : go(s, { [m.kind]: 'unread' }, { why: m.why }),
+    })[m.type]?.(s, m) ?? offered(flows, s, m),
+  io: {
+    get: ({ kind, n, id }) =>
+      get(`${ROUTES[kind]}?namespace=${encodeURIComponent(id)}`).then(
+        (body) => ({ type: 'answered', kind, n, body, why: `${kind} ${n}` }),
+        (e) => ({ type: 'unread', kind, n, why: e.message }),
+      ),
+  },
 });
 
 // Why this computer reaches a group the backup way, by surface.rs's
 // `fallback` (relay fallbacks; svrngs-core relay.rs `Tier`).
 const BACKUP = {
-  unanswered: (name) => `This computer can’t reach the place ${name} usually meets, so it’s reaching ${name} a backup way for now. There’s nothing to do: it switches back by itself once that place answers.`,
-  unowned: (name) => `This computer is also in a group with no meeting place of its own, so it reaches every group, ${name} too, the backup way. The others in ${name} still reach it.`,
+  unanswered: (name) =>
+    `This computer can’t reach the place ${name} usually meets, so it’s reaching ${name} a backup way for now. There’s nothing to do: it switches back by itself once that place answers.`,
+  unowned: (name) =>
+    `This computer is also in a group with no meeting place of its own, so it reaches every group, ${name} too, the backup way. The others in ${name} still reach it.`,
 };
 
 // The section, in its group's colour, derived from its id (look.css
@@ -49,10 +120,15 @@ const BACKUP = {
 // computer meets the group at its fallback, said under it (surface.rs
 // `Held::fallback`; relay fallbacks); who is in it unread, or the person
 // removed, said and nothing read (home.js@19b63b2b:113-114).
-export const Group = ({ g, ...props }) => ((name) =>
-  html`<section data-colour=${[...g.id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 12, 0)}><h2>${g.name ?? 'A group whose name this computer cannot read'}${g.made && html`<small> (${whose(g.made)})</small>`}</h2>${g.fallback && html`<p class="said">${BACKUP[g.fallback](name)}</p>`}${g.removed === null ? html`<p>This computer could not read who is in ${name}.</p>` : g.removed ? html`<p>You are no longer in ${name}. What you already have stays on this computer; nothing new reaches it.</p>` : html`<${Read} g=${g} ...${props} />`}</section>`)(g.name ?? 'this group');
+export const Group = ({ g, ...props }) =>
+  ((name) =>
+    html`<section data-colour=${[...g.id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 12, 0)}><h2>${g.name ?? 'A group whose name this computer cannot read'}${g.made && html`<small> (${whose(g.made)})</small>`}</h2>${g.fallback && html`<p class="said">${BACKUP[g.fallback](name)}</p>`}${g.removed === null ? html`<p>This computer could not read who is in ${name}.</p>` : g.removed ? html`<p>You are no longer in ${name}. What you already have stays on this computer; nothing new reaches it.</p>` : html`<${Read} g=${g} ...${props} />`}</section>`)(
+    g.name ?? 'this group',
+  );
 function Read({ g, round, places, flows, home, me, joined }) {
-  const [s, send] = useMachine(() => machine('GROUP', GROUP(flows), { at: { people: 'reading', lends: 'reading' }, id: g.id }));
+  const [s, send] = useMachine(() =>
+    machine('GROUP', GROUP(flows), { at: { people: 'reading', lends: 'reading' }, id: g.id }),
+  );
   useEffect(() => send({ type: round.type }), [round]);
   return html`${PLACES.map((k) => places[k] && html`<${places[k]} g=${g} s=${s} send=${send} home=${home} me=${me} joined=${joined} />`)}${(s.at.people === 'unread' || s.at.lends === 'unread') && html`<p>This computer cannot read what ${g.name ?? 'this group'} lends: ${s.why}</p>`}`;
 }

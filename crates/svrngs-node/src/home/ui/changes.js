@@ -19,11 +19,28 @@ import { called, spoken } from '../question.js?v=__VERSION__';
 
 // A day as question.js `day` says it in this computer's or phone's time,
 // "3 Oct" (its :95, not exported there, deleted with it at the switchover).
-const day = (t, d = new Date(t * 1000)) => `${d.getDate()} ${'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[d.getMonth()]}`;
+const day = (t, d = new Date(t * 1000)) =>
+  `${d.getDate()} ${'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[d.getMonth()]}`;
 export function Changes({ g, changed, rows, me, doing = {}, open, send }) {
-  if (changed === null) return [html`<p>This computer can’t say whether anyone changed an app in ${g.name ?? 'your group'}.</p>`];
-  const you = (c) => (c.by_key ? c.by_key === rows.find((r) => r.key === me)?.person_key : c.by === g.person);
-  const each = (changed ?? []).filter((c) => c.group === g.id).map((c) => ((d) => (d.state === 'done' ? html`<p>${spoken(c.app)} opens at its new version for you now.</p>`
-    : html`<p>${`${spoken(c.app)}: ${you(c) ? 'you' : (called(rows, c.by_key) ?? c.by)} changed its files on ${day(c.at)}. `}<${Act} words="Open the new version" doing=${d} on=${{ type: 'yes', app: c.app }} send=${send} /></p>`))(doing[c.app] ?? {}));
-  return each.length ? [html`<${Fold} summary=${`${each.length} ${each.length === 1 ? 'app' : 'apps'} changed. See what’s new`} fold="changes" open=${open} send=${send}><p>The version you have keeps running until you open the new one.</p>${each}<//>`] : [];
+  if (changed === null)
+    return [
+      html`<p>This computer can’t say whether anyone changed an app in ${g.name ?? 'your group'}.</p>`,
+    ];
+  const you = (c) =>
+    c.by_key ? c.by_key === rows.find((r) => r.key === me)?.person_key : c.by === g.person;
+  const each = (changed ?? [])
+    .filter((c) => c.group === g.id)
+    .map((c) =>
+      ((d) =>
+        d.state === 'done'
+          ? html`<p>${spoken(c.app)} opens at its new version for you now.</p>`
+          : html`<p>${`${spoken(c.app)}: ${you(c) ? 'you' : (called(rows, c.by_key) ?? c.by)} changed its files on ${day(c.at)}. `}<${Act} words="Open the new version" doing=${d} on=${{ type: 'yes', app: c.app }} send=${send} /></p>`)(
+        doing[c.app] ?? {},
+      ),
+    );
+  return each.length
+    ? [
+        html`<${Fold} summary=${`${each.length} ${each.length === 1 ? 'app' : 'apps'} changed. See what’s new`} fold="changes" open=${open} send=${send}><p>The version you have keeps running until you open the new one.</p>${each}<//>`,
+      ]
+    : [];
 }

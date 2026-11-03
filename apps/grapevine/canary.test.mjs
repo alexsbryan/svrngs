@@ -20,11 +20,27 @@ test("the canary runs §10's scene on demo.json, each step timed", () => {
   const before = readFileSync(join(HERE, 'demo.json'), 'utf8');
   const out = run(HERE);
   assert.equal(out.status, 0, out.stderr);
-  assert.match(out.stdout, /6\. +\d+\.\d{3} s  Sam takes it back; within one turn the carry in Waller is gone/);
+  assert.match(
+    out.stdout,
+    /6\. +\d+\.\d{3} s  Sam takes it back; within one turn the carry in Waller is gone/,
+  );
   const others = Object.keys(KINDS).filter((k) => k !== 'tool');
-  assert.match(out.stdout, new RegExp(`7\\. +\\d+\\.\\d{3} s  every other kind's ask carried one ring, by Jo: ${others.join(', ')}\n`), "every kind in kinds.mjs's list is carried in the canary");
-  assert.match(out.stdout, /\d+ reads of a group's log, .* median \d+\.\d+ ms, slowest \d+\.\d+ ms/);
-  assert.equal(readFileSync(join(HERE, 'demo.json'), 'utf8'), before, 'demo.json itself is never written');
+  assert.match(
+    out.stdout,
+    new RegExp(
+      `7\\. +\\d+\\.\\d{3} s  every other kind's ask carried one ring, by Jo: ${others.join(', ')}\n`,
+    ),
+    "every kind in kinds.mjs's list is carried in the canary",
+  );
+  assert.match(
+    out.stdout,
+    /\d+ reads of a group's log, .* median \d+\.\d+ ms, slowest \d+\.\d+ ms/,
+  );
+  assert.equal(
+    readFileSync(join(HERE, 'demo.json'), 'utf8'),
+    before,
+    'demo.json itself is never written',
+  );
 });
 
 test('the canary fails on a carry left uncorrected after withdrawal', () => {
@@ -36,5 +52,8 @@ test('the canary fails on a carry left uncorrected after withdrawal', () => {
   writeFileSync(join(dir, 'grapevine.js'), src.replace(from, 'if (false)'));
   const out = run(dir);
   assert.equal(out.status, 1, out.stdout);
-  assert.match(out.stderr, /step 6, Sam takes it back; within one turn the carry in Waller is gone, did not hold:\nKim still sees \["tile saw, Saturday"\]; Jo's carry corrected: false/);
+  assert.match(
+    out.stderr,
+    /step 6, Sam takes it back; within one turn the carry in Waller is gone, did not hold:\nKim still sees \["tile saw, Saturday"\]; Jo's carry corrected: false/,
+  );
 });

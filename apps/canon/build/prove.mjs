@@ -92,7 +92,11 @@ for (const run of runs) {
   const bad = verdicts.filter((v) => v.differ.length);
   judged += 1;
   if (bad.length) failed = 1;
-  const bar = !expected ? 'no expected file' : code === 0 ? 'as expected' : `canon-cli exit ${code}`;
+  const bar = !expected
+    ? 'no expected file'
+    : code === 0
+      ? 'as expected'
+      : `canon-cli exit ${code}`;
   console.log(
     `${bad.length ? 'failed ' : 'passed '}          ${name}: ${steps} steps, ${bar}; ` +
       verdicts
@@ -100,5 +104,7 @@ for (const run of runs) {
         .join('; '),
   );
 }
-console.log(`${judged} of ${runs.length} replays judged; ${failed ? 'NOT all equal' : 'all equal'}`);
+console.log(
+  `${judged} of ${runs.length} replays judged; ${failed ? 'NOT all equal' : 'all equal'}`,
+);
 process.exit(failed);

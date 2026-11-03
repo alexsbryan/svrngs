@@ -78,7 +78,9 @@ export function settleKey(from, to, cents, ts) {
  */
 const byName = (people, names = {}) => {
   const said = (p) => [has(names, p) ? names[p] : p, p];
-  return [...people].sort((a, b) => (said(a)[0] < said(b)[0] ? -1 : said(a)[0] > said(b)[0] ? 1 : a < b ? -1 : a > b ? 1 : 0));
+  return [...people].sort((a, b) =>
+    said(a)[0] < said(b)[0] ? -1 : said(a)[0] > said(b)[0] ? 1 : a < b ? -1 : a > b ? 1 : 0,
+  );
 };
 
 /** Divide `cents` between `people` (non-empty, no repeats), to the cent. */
@@ -125,7 +127,8 @@ function payee(state, op) {
 
 // A day from seconds, "3 Oct", in this computer's time, as svrngs's own
 // pages say it (crates/svrngs-node/src/home/question.js `day`).
-const day = (t, d = new Date(t * 1000)) => `${d.getDate()} ${'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[d.getMonth()]}`;
+const day = (t, d = new Date(t * 1000)) =>
+  `${d.getDate()} ${'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[d.getMonth()]}`;
 
 /**
  * How a page says the person whose first key is `key`, called `name`: by
@@ -136,7 +139,9 @@ const day = (t, d = new Date(t * 1000)) => `${d.getDate()} ${'Jan Feb Mar Apr Ma
 export function called(spans, key, name) {
   const same = (spans ?? []).filter((s) => s.person === name);
   const s = same.find((x) => x.person_key === key);
-  return same.length > 1 && s ? `${name} (${s.joined == null ? 'started the group' : `joined ${day(s.joined)}`})` : name;
+  return same.length > 1 && s
+    ? `${name} (${s.joined == null ? 'started the group' : `joined ${day(s.joined)}`})`
+    : name;
 }
 
 /**
@@ -156,26 +161,49 @@ export function validate(state, act) {
   if (op.kind === REMINDED) {
     return isKey(op.due) ? [] : [gap('no_due', 'a reminder for nothing')];
   }
-  if (!isKey(by) || !isKey(who(act))) return [gap('no_one', 'an entry that no one in the chat wrote')];
+  if (!isKey(by) || !isKey(who(act)))
+    return [gap('no_one', 'an entry that no one in the chat wrote')];
   if (op.kind === SHARE || op.kind === NOT_IN) {
-    return has(state.expenses, op.expense) ? [] : [gap('no_expense', 'a share of an expense that is not in the book')];
+    return has(state.expenses, op.expense)
+      ? []
+      : [gap('no_expense', 'a share of an expense that is not in the book')];
   }
   if (op.kind !== EXPENSE && op.kind !== SETTLE) {
     return [gap('unknown_kind', 'an entry a newer version of Expenses may know how to read')];
   }
   const gaps = [];
   if (!isCents(op.amount_cents)) {
-    gaps.push(gap('bad_amount', 'an amount that is not a whole number of cents between one cent and $1,000,000'));
+    gaps.push(
+      gap(
+        'bad_amount',
+        'an amount that is not a whole number of cents between one cent and $1,000,000',
+      ),
+    );
   }
   if (op.kind === EXPENSE && (typeof op.description !== 'string' || !op.description.trim())) {
     gaps.push(gap('no_description', 'an expense for nothing in particular'));
   }
-  if (op.kind === EXPENSE && typeof op.description === 'string' && op.description.length > MAX_WORDS) {
+  if (
+    op.kind === EXPENSE &&
+    typeof op.description === 'string' &&
+    op.description.length > MAX_WORDS
+  ) {
     gaps.push(gap('long_description', `a description over ${MAX_WORDS} characters`));
   }
-  const named = op.kind === EXPENSE && op.named !== undefined ? (Array.isArray(op.named) ? op.named : [null]) : [];
-  if (named.some((p, i) => !isKey(p) || p === by || named.indexOf(p) !== i)) gaps.push(gap('bad_named', 'naming someone who was in on it by no name, twice, or the payer'));
-  if (op.kind === SETTLE && (!isKey(op.to) || (op.to_key !== undefined && !isKey(op.to_key)) || payee(state, op) === who(act))) {
+  const named =
+    op.kind === EXPENSE && op.named !== undefined
+      ? Array.isArray(op.named)
+        ? op.named
+        : [null]
+      : [];
+  if (named.some((p, i) => !isKey(p) || p === by || named.indexOf(p) !== i))
+    gaps.push(gap('bad_named', 'naming someone who was in on it by no name, twice, or the payer'));
+  if (
+    op.kind === SETTLE &&
+    (!isKey(op.to) ||
+      (op.to_key !== undefined && !isKey(op.to_key)) ||
+      payee(state, op) === who(act))
+  ) {
     gaps.push(gap('bad_settle', 'paying back no one, or yourself'));
   } else if (op.kind === SETTLE && payee(state, op) === null) {
     gaps.push(gap('which_payee', `a payment to ${op.to}, and two people are called ${op.to}`));
@@ -198,11 +226,20 @@ export function validate(state, act) {
  * A log with no list of ops is an error, never an empty book.
  */
 export function actsOf(log) {
-  if (!Array.isArray(log?.ops)) throw new Error(`the record answered no list of acts: ${JSON.stringify(log)}`);
+  if (!Array.isArray(log?.ops))
+    throw new Error(`the record answered no list of acts: ${JSON.stringify(log)}`);
   const other = (o) => o.on_behalf_of != null && o.on_behalf_of !== o.person;
   const acts = log.ops
     .filter((o) => o.payload != null || o.corrects != null)
-    .map((o) => ({ id: o.id, ts: o.ts_unix, by: o.on_behalf_of ?? o.person, key: (other(o) ? o.on_behalf_of_key : o.person_key) ?? null, via: other(o) ? o.person : null, op: o.payload ?? null, corrects: o.corrects ?? null }));
+    .map((o) => ({
+      id: o.id,
+      ts: o.ts_unix,
+      by: o.on_behalf_of ?? o.person,
+      key: (other(o) ? o.on_behalf_of_key : o.person_key) ?? null,
+      via: other(o) ? o.person : null,
+      op: o.payload ?? null,
+      corrects: o.corrects ?? null,
+    }));
   const { voided, uncounted } = voids(acts);
   return acts
     .filter((a) => !has(voided, a.id) && (a.op != null || has(uncounted, a.id)))
@@ -232,8 +269,16 @@ function voids(acts) {
       voided[c.corrects] = true;
     } else {
       uncounted[c.id] = was
-        ? { code: 'not_theirs', fatal: true, message: `${c.by} tried to change ${was.by}’s entry, which only ${was.by} can change` }
-        : { code: 'changes_unheld', fatal: true, message: `${c.by} changed an entry this copy does not hold yet` };
+        ? {
+            code: 'not_theirs',
+            fatal: true,
+            message: `${c.by} tried to change ${was.by}’s entry, which only ${was.by} can change`,
+          }
+        : {
+            code: 'changes_unheld',
+            fatal: true,
+            message: `${c.by} changed an entry this copy does not hold yet`,
+          };
     }
   }
   return { voided, uncounted };
@@ -241,7 +286,16 @@ function voids(acts) {
 
 /** The empty book. */
 export function init() {
-  return { balances: {}, expenses: {}, settled: {}, reminded: {}, since: {}, names: {}, gaps: [], counted: 0 };
+  return {
+    balances: {},
+    expenses: {},
+    settled: {},
+    reminded: {},
+    since: {},
+    names: {},
+    gaps: [],
+    counted: 0,
+  };
 }
 
 /**
@@ -250,7 +304,8 @@ export function init() {
  */
 export function reduce(state, act) {
   const gaps = validate(state, act);
-  for (const g of gaps) state.gaps.push({ ...g, id: isObject(act) && typeof act.id === 'string' ? act.id : null });
+  for (const g of gaps)
+    state.gaps.push({ ...g, id: isObject(act) && typeof act.id === 'string' ? act.id : null });
   if (gaps.length) return state;
   const { op, by, ts, id, via } = act;
   const me = who(act);
@@ -261,12 +316,21 @@ export function reduce(state, act) {
   };
   const split = (e, sign) => {
     move(e.payer, sign * e.amount_cents);
-    for (const [person, share] of splitShares(e.amount_cents, e.participants, state.names)) move(person, -sign * share);
+    for (const [person, share] of splitShares(e.amount_cents, e.participants, state.names))
+      move(person, -sign * share);
   };
 
   if (op.kind === EXPENSE) {
     // `vias`: whose computer wrote each person's part, where it was someone else's.
-    const e = { payer: me, amount_cents: op.amount_cents, description: op.description.trim(), participants: [me], vias: via ? { [me]: via } : {}, waiting: {}, not: {} };
+    const e = {
+      payer: me,
+      amount_cents: op.amount_cents,
+      description: op.description.trim(),
+      participants: [me],
+      vias: via ? { [me]: via } : {},
+      waiting: {},
+      not: {},
+    };
     for (const p of op.named ?? []) e.waiting[p] = true;
     state.expenses[id] = e;
     split(e, 1);
@@ -311,7 +375,7 @@ export function transfers(balances, names) {
   const owers = side(-1);
   const owed = side(1);
   const out = [];
-  for (let i = 0, j = 0; i < owers.length && j < owed.length; ) {
+  for (let i = 0, j = 0; i < owers.length && j < owed.length;) {
     const cents = Math.min(owers[i][1], owed[j][1]);
     out.push({ from: owers[i][0], to: owed[j][0], cents });
     owers[i][1] -= cents;

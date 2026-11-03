@@ -14,9 +14,30 @@ import { handoffCookie, hostCookie, openMessage, openSeal } from './authority.js
 import * as store from './store.js?v=__VERSION__';
 let loaded;
 const decode = (text) => JSON.parse(atob(text.replace(/-/g, '+').replace(/_/g, '/')));
-const hex = (bytes) => [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, '0')).join('');
-const digest = async (h) => hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(openMessage(h))));
-const pkcs8 = (seed) => Uint8Array.from([0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x04, 0x22, 0x04, 0x20, ...seed]);
+const hex = (bytes) =>
+  [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, '0')).join('');
+const digest = async (h) =>
+  hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(openMessage(h))));
+const pkcs8 = (seed) =>
+  Uint8Array.from([
+    0x30,
+    0x2e,
+    0x02,
+    0x01,
+    0x00,
+    0x30,
+    0x05,
+    0x06,
+    0x03,
+    0x2b,
+    0x65,
+    0x70,
+    0x04,
+    0x22,
+    0x04,
+    0x20,
+    ...seed,
+  ]);
 
 // One transaction on this origin's store `name`, its one object store kept
 // by `keyPath`: `act(store)`'s request's answer once it commits.
@@ -28,8 +49,14 @@ function stored(name, keyPath, mode, act) {
     r.onsuccess = () => {
       const tx = r.result.transaction('kept', mode);
       const asked = act(tx.objectStore('kept'));
-      tx.oncomplete = () => { r.result.close(); yes(asked?.result); };
-      tx.onabort = tx.onerror = () => { r.result.close(); no(tx.error ?? new Error('this browser’s storage refused')); };
+      tx.oncomplete = () => {
+        r.result.close();
+        yes(asked?.result);
+      };
+      tx.onabort = tx.onerror = () => {
+        r.result.close();
+        no(tx.error ?? new Error('this browser’s storage refused'));
+      };
     };
   });
 }
@@ -44,14 +71,21 @@ const approvers = (mode, act) => stored('svrngs-approvers', 'label', mode, act);
 async function approver(label, h, now) {
   await approvers('readwrite', (s) => {
     const all = s.getAll();
-    all.onsuccess = () => all.result.filter((r) => r.until <= now).forEach((r) => s.delete(r.label));
+    all.onsuccess = () =>
+      all.result.filter((r) => r.until <= now).forEach((r) => s.delete(r.label));
     return all;
   });
   const name = handoffCookie(label);
   const seed = await openSeal(h, hostCookie(document.cookie, name));
   if (seed) {
     const key = await crypto.subtle.importKey('pkcs8', pkcs8(seed), 'Ed25519', false, ['sign']);
-    const record = { label, pub: actor(seed), digest: await digest(h), key, until: decode(h.pass).until };
+    const record = {
+      label,
+      pub: actor(seed),
+      digest: await digest(h),
+      key,
+      until: decode(h.pass).until,
+    };
     seed.fill(0);
     await approvers('readwrite', (s) => s.put(record));
     document.cookie = `${name}=; Max-Age=0; Path=/; Secure; SameSite=Strict`;
@@ -59,7 +93,8 @@ async function approver(label, h, now) {
   }
   const kept = await approvers('readonly', (s) => s.get(label));
   if (!kept) throw new Error(`no approver is kept for ${label}: its cookie is gone or never came`);
-  if (kept.digest !== (await digest(h))) throw new Error(`${label} presented an open other than the one adopted`);
+  if (kept.digest !== (await digest(h)))
+    throw new Error(`${label} presented an open other than the one adopted`);
   return kept;
 }
 
@@ -88,9 +123,15 @@ async function stableApproval(group, pass, line, now) {
 // origin, set by the browser (`e.origin`), never by what it asks; refused
 // unless it is a lend's label directly under this host.
 function framer(origin) {
-  const app = new URL(origin), suffix = `.${location.host}`;
+  const app = new URL(origin),
+    suffix = `.${location.host}`;
   const label = app.host.slice(0, -suffix.length);
-  if (app.protocol !== location.protocol || !app.host.endsWith(suffix) || !/^[a-z0-9]{62}$/.test(label)) throw new Error(`${origin} is not an app under ${location.host}`);
+  if (
+    app.protocol !== location.protocol ||
+    !app.host.endsWith(suffix) ||
+    !/^[a-z0-9]{62}$/.test(label)
+  )
+    throw new Error(`${origin} is not an app under ${location.host}`);
   return label;
 }
 
@@ -108,19 +149,36 @@ addEventListener('message', (asked) => {
       return port.postMessage({ opened: true });
     }
     const { group, reach, line, authority } = asked.data?.approve ?? asked.data ?? {};
-    if (typeof reach !== 'string' || reach.length > 128 * 1024 || typeof line !== 'string' || line.length > 70 * 1024) throw new Error('an entry is too large');
-    if (authority?.label !== label || authority.pass !== reach || authority.group !== group) throw new Error('this open grants no authority here');
+    if (
+      typeof reach !== 'string' ||
+      reach.length > 128 * 1024 ||
+      typeof line !== 'string' ||
+      line.length > 70 * 1024
+    )
+      throw new Error('an entry is too large');
+    if (authority?.label !== label || authority.pass !== reach || authority.group !== group)
+      throw new Error('this open grants no authority here');
     const kept = await approver(label, authority, now);
     for (const grant of [authority.pass, authority.writes].filter(Boolean)) {
       let made;
-      try { made = approve_line(kept.pub, group, reach, grant, line, now); } catch { continue; /* Only the grants this open issued may authorize an entry. */ }
+      try {
+        made = approve_line(kept.pub, group, reach, grant, line, now);
+      } catch {
+        continue; /* Only the grants this open issued may authorize an entry. */
+      }
       const approval = hex(await crypto.subtle.sign('Ed25519', kept.key, made[1]));
-      const pass = btoa(JSON.stringify({ ...JSON.parse(made[0]), approval })).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      const pass = btoa(JSON.stringify({ ...JSON.parse(made[0]), approval }))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
       return port.postMessage({ pass: await stableApproval(group, pass, line, now) });
     }
     throw new Error('this open grants no entry of that kind');
   })().catch((error) => {
     console.debug(`SIGN: refused: ${error.message}`);
-    port.postMessage({ opened: false, error: 'Open this app again from your group’s page to write in it.' });
+    port.postMessage({
+      opened: false,
+      error: 'Open this app again from your group’s page to write in it.',
+    });
   });
 });

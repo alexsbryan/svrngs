@@ -24,20 +24,40 @@ try {
   const shot = process.env.SVRNGS_SHOT;
   if (shot) await page.setViewportSize({ width: 1920, height: 1080 });
   await page.goto(args.at);
-  const judged = () => ((ws) => ws.length && ![...ws].some((w) => w.textContent.includes('asking…')))(document.querySelectorAll('.door li'));
+  const judged = () =>
+    ((ws) => ws.length && ![...ws].some((w) => w.textContent.includes('asking…')))(
+      document.querySelectorAll('.door li'),
+    );
   await page.waitForFunction(judged, null, { timeout: 30_000 });
   // The screen as a person reads it: its count, each window's class and
   // words and its links, where each opens, and what arrived, newest first.
   const read = () =>
     page.evaluate(() => ({
       count: document.querySelector('section > p')?.textContent ?? null,
-      windows: [...document.querySelectorAll('.door li')].map((w) => ({ class: w.className, words: w.textContent, links: [...w.querySelectorAll('a')].map((a) => [a.textContent, a.getAttribute('href'), a.target]) })),
+      windows: [...document.querySelectorAll('.door li')].map((w) => ({
+        class: w.className,
+        words: w.textContent,
+        links: [...w.querySelectorAll('a')].map((a) => [
+          a.textContent,
+          a.getAttribute('href'),
+          a.target,
+        ]),
+      })),
       since: [...document.querySelectorAll('aside ol li')].map((li) => li.textContent),
       marks: [...document.querySelectorAll('mark')].map((m) => m.parentElement.textContent),
     }));
   const opened = await read();
-  const lent = await page.evaluate((l) => fetch('/running', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(l) }).then((r) => r.status), args.lend);
-  const says = (w) => [...document.querySelectorAll('aside ol li')].some((li) => li.textContent.includes(w));
+  const lent = await page.evaluate(
+    (l) =>
+      fetch('/running', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(l),
+      }).then((r) => r.status),
+    args.lend,
+  );
+  const says = (w) =>
+    [...document.querySelectorAll('aside ol li')].some((li) => li.textContent.includes(w));
   await page.waitForFunction(says, args.says, { timeout: 30_000 });
   const after = await read();
   if (shot) await page.screenshot({ path: shot });

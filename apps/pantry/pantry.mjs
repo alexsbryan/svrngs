@@ -66,8 +66,11 @@ function accessAt(state) {
   const dir = dataDir(state);
   const path = join(dir, 'pantry-token');
   mkdirSync(dir, { recursive: true, mode: 0o700 });
-  try { writeFileSync(path, randomBytes(32).toString('base64url'), { flag: 'wx', mode: 0o600 }); }
-  catch (e) { if (e.code !== 'EEXIST') throw e; }
+  try {
+    writeFileSync(path, randomBytes(32).toString('base64url'), { flag: 'wx', mode: 0o600 });
+  } catch (e) {
+    if (e.code !== 'EEXIST') throw e;
+  }
   const key = readFileSync(path, 'utf8').trim();
   if (!/^[A-Za-z0-9_-]{43}$/.test(key)) throw new Error(`${path} holds no pantry key`);
   return key;
@@ -101,7 +104,11 @@ function secondsAgo(at, now) {
 
 async function get(url, token) {
   const headers = token === undefined ? {} : { authorization: `Bearer ${token}` };
-  const res = await fetch(url, { headers, redirect: 'error', signal: AbortSignal.timeout(DISCOVERY_TIMEOUT) });
+  const res = await fetch(url, {
+    headers,
+    redirect: 'error',
+    signal: AbortSignal.timeout(DISCOVERY_TIMEOUT),
+  });
   if (!res.ok) throw new Error(`${url} answered ${res.status}`);
   return res.json();
 }
@@ -155,8 +162,10 @@ export async function lendsNow(record, { clock = Date.now, refresh = false } = {
 /// whose computer did not answer. A prefix it does not name sends a request
 /// back to the record, in case a lend has appeared since.
 function namesLender({ lends, unlisted }, prefix) {
-  return lends.some((lend) => lend.handle === prefix)
-    || unlisted.some((person) => person.person === prefix);
+  return (
+    lends.some((lend) => lend.handle === prefix) ||
+    unlisted.some((person) => person.person === prefix)
+  );
 }
 
 /// What the record says, from what is kept when it is fresh and names the
@@ -186,8 +195,10 @@ function handles(lends) {
     }
     const mine = lend.key || lend.name;
     let width = 8;
-    while (width < mine.length
-      && keys.filter((other) => other.slice(0, width) === mine.slice(0, width)).length > 1) {
+    while (
+      width < mine.length &&
+      keys.filter((other) => other.slice(0, width) === mine.slice(0, width)).length > 1
+    ) {
       width += 4;
     }
     lend.handle = `${lend.person}~${mine.slice(0, width)}`;
@@ -203,8 +214,10 @@ async function probe(origin, token) {
   const base = origin.replace(/\/+$/, '');
   const why = [];
   let couldNotJudge = false;
-  const timedOut = (e) => e?.name === 'TimeoutError' || e?.name === 'AbortError'
-    || /abort|timeout/i.test(e?.message || '');
+  const timedOut = (e) =>
+    e?.name === 'TimeoutError' ||
+    e?.name === 'AbortError' ||
+    /abort|timeout/i.test(e?.message || '');
   try {
     const res = await fetch(`${base}/v1/models`, {
       redirect: 'error',
@@ -253,8 +266,17 @@ export async function discover(origin, clock = Date.now, token = undefined) {
   }
   const seen = await probe(origin, token);
   discovered.set(origin, { at: now, seen });
-  note('probed', origin, '→', seen.protocol,
-    seen.models ? `${seen.models.length} model` : seen.tools ? `${seen.tools.length} tool` : seen.why);
+  note(
+    'probed',
+    origin,
+    '→',
+    seen.protocol,
+    seen.models
+      ? `${seen.models.length} model`
+      : seen.tools
+        ? `${seen.tools.length} tool`
+        : seen.why,
+  );
   return { ...seen, at: now };
 }
 
@@ -301,9 +323,11 @@ export async function list({ record = recordAt(), token = tokenAt(), clock = Dat
 }
 
 export async function formatList({ lends, unlisted, looked: lendsLooked }) {
-  const lines = [lendsLooked === undefined
-    ? 'What your groups lend now:'
-    : `What your groups lend now (the record looked ${lendsLooked}s ago):`];
+  const lines = [
+    lendsLooked === undefined
+      ? 'What your groups lend now:'
+      : `What your groups lend now (the record looked ${lendsLooked}s ago):`,
+  ];
   for (const lend of lends) {
     const who = `${lend.person}'s computer`;
     const looked = ` — looked ${lend.looked}s ago`;
@@ -421,16 +445,32 @@ function rewriteModel(raw, contentType, model) {
 /// `--port` it takes the address it took last time, from the data dir's
 /// `pantry-port`, so the address a person pasted into their interface stays;
 /// another program holding it is said by name, never moved past in silence.
-export async function serve({ record: at = recordAt(), token = tokenAt(), port, host = '127.0.0.1', state, access = accessAt(state), clock = Date.now } = {}) {
-  if (!access || !['127.0.0.1', '::1'].includes(host)) throw new Error('the pantry needs a caller key and a loopback listener');
+export async function serve({
+  record: at = recordAt(),
+  token = tokenAt(),
+  port,
+  host = '127.0.0.1',
+  state,
+  access = accessAt(state),
+  clock = Date.now,
+} = {}) {
+  if (!access || !['127.0.0.1', '::1'].includes(host))
+    throw new Error('the pantry needs a caller key and a loopback listener');
   const record = { at, token };
   const dir = dataDir(state);
   const wanted = port === undefined ? (keptPort(dir) ?? 0) : port;
   const server = http.createServer(async (req, res) => {
     try {
-      if (!authorized(req.headers, access)) { note('refused caller'); return fault(res, 401, 'send the key in pantry-token as Authorization: Bearer <key>'); }
-      try { destination(record.at, req.url); }
-      catch (error) { note('refused target', error.message); return fault(res, 400, error.message); }
+      if (!authorized(req.headers, access)) {
+        note('refused caller');
+        return fault(res, 401, 'send the key in pantry-token as Authorization: Bearer <key>');
+      }
+      try {
+        destination(record.at, req.url);
+      } catch (error) {
+        note('refused target', error.message);
+        return fault(res, 400, error.message);
+      }
       if (req.method === 'GET' && req.url === '/v1/models') {
         const { data, at } = await modelsNow(record, clock);
         res.writeHead(200, {
@@ -451,19 +491,29 @@ export async function serve({ record: at = recordAt(), token = tokenAt(), port, 
         const missed = unjudged.get(prefix);
         if (missed?.length) {
           const { lend, why, at: probed } = missed[0];
-          return fault(res, 503,
+          return fault(
+            res,
+            503,
             `${lend.person}'s lend ${lend.name} could not be judged (${why}); it was looked ${secondsAgo(probed, clock)}s ago, so ${asked.model} cannot be answered`,
-            { model: asked.model, lend: lend.name, why, looked: secondsAgo(probed, clock) });
+            { model: asked.model, lend: lend.name, why, looked: secondsAgo(probed, clock) },
+          );
         }
         const why = unlistedWhy(unlisted, prefix);
         const looked = secondsAgo(at, clock);
         if (why) {
-          return fault(res, 503,
+          return fault(
+            res,
+            503,
             `${prefix}'s computer did not answer (${why}) as last looked ${looked}s ago, so ${asked.model} cannot be answered`,
-            { model: asked.model, why, looked });
+            { model: asked.model, why, looked },
+          );
         }
-        return fault(res, 404, `no lend answers ${asked.model} (the record looked ${looked}s ago)`,
-          { model: asked.model, looked });
+        return fault(
+          res,
+          404,
+          `no lend answers ${asked.model} (the record looked ${looked}s ago)`,
+          { model: asked.model, looked },
+        );
       }
       const { lend, model, probed } = found;
       const written = rewriteModel(raw, req.headers['content-type'], model);
@@ -481,31 +531,38 @@ export async function serve({ record: at = recordAt(), token = tokenAt(), port, 
       delete headers.authorization;
       delete headers.cookie;
       // Caller-controlled headers cannot opt this forwarding program into signing.
-      for (const name of Object.keys(headers)) if (name.startsWith('x-svrngs-')) delete headers[name];
+      for (const name of Object.keys(headers))
+        if (name.startsWith('x-svrngs-')) delete headers[name];
       if (record.token) headers.authorization = `Bearer ${record.token}`;
       headers['content-length'] = String(written.body.length);
       note('routed', asked.model, '→', lend.handle, lend.name, lend.origin);
-      const target = http.request({
-        hostname: upstream.hostname,
-        port: upstream.port,
-        path: `${upstream.pathname}${upstream.search}`,
-        method: req.method,
-        headers,
-      }, (answer) => {
-        res.writeHead(answer.statusCode, {
-          ...answer.headers,
-          'x-pantry-person': lend.handle,
-          'x-pantry-lend': lend.name,
-          'x-pantry-looked': `${secondsAgo(at, clock)}s`,
-          'x-pantry-probed': `${secondsAgo(probed, clock)}s`,
-        });
-        answer.pipe(res);
-      });
+      const target = http.request(
+        {
+          hostname: upstream.hostname,
+          port: upstream.port,
+          path: `${upstream.pathname}${upstream.search}`,
+          method: req.method,
+          headers,
+        },
+        (answer) => {
+          res.writeHead(answer.statusCode, {
+            ...answer.headers,
+            'x-pantry-person': lend.handle,
+            'x-pantry-lend': lend.name,
+            'x-pantry-looked': `${secondsAgo(at, clock)}s`,
+            'x-pantry-probed': `${secondsAgo(probed, clock)}s`,
+          });
+          answer.pipe(res);
+        },
+      );
       target.on('error', (e) => {
         if (res.headersSent) return res.destroy(e);
-        fault(res, 502,
+        fault(
+          res,
+          502,
           `${lend.person}'s lend ${lend.name} did not answer, so ${asked.model} cannot be answered`,
-          { model: asked.model, lend: lend.name, why: e.message });
+          { model: asked.model, lend: lend.name, why: e.message },
+        );
       });
       target.end(written.body);
       return undefined;
@@ -518,7 +575,11 @@ export async function serve({ record: at = recordAt(), token = tokenAt(), port, 
   await new Promise((resolve, reject) => {
     server.once('error', (e) => {
       if (e.code === 'EADDRINUSE') {
-        reject(new Error(`Another program on this computer holds 127.0.0.1:${wanted}; pantry serve stops rather than move the address`));
+        reject(
+          new Error(
+            `Another program on this computer holds 127.0.0.1:${wanted}; pantry serve stops rather than move the address`,
+          ),
+        );
       } else {
         reject(e);
       }
@@ -530,10 +591,11 @@ export async function serve({ record: at = recordAt(), token = tokenAt(), port, 
   return {
     port: actual,
     url: `http://${host}:${actual}`,
-    close: () => new Promise((resolve) => {
-      server.close(resolve);
-      server.closeAllConnections?.();
-    }),
+    close: () =>
+      new Promise((resolve) => {
+        server.close(resolve);
+        server.closeAllConnections?.();
+      }),
   };
 }
 
@@ -553,7 +615,9 @@ async function main(argv) {
   if (verb === 'serve') {
     const at = await serve(options);
     console.log(`Point your interface at ${at.url}/v1`);
-    console.log(`Set its API key to the contents of ${join(dataDir(options.state), 'pantry-token')}.`);
+    console.log(
+      `Set its API key to the contents of ${join(dataDir(options.state), 'pantry-token')}.`,
+    );
     return;
   }
   console.error('usage: pantry list | pantry serve [--port N] [--record URL] [--state DIR]');

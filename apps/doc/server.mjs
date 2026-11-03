@@ -20,20 +20,44 @@ import http from 'node:http';
 import { dirname, extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { bytesToB64, b64ToBytes, createAttribution } from './adapter.js';
-import { AWARENESS, HELLO, HERE, HERE_EVERY_MS, LINES, SYNC, bare, read, said } from './protocol.js';
+import {
+  AWARENESS,
+  HELLO,
+  HERE,
+  HERE_EVERY_MS,
+  LINES,
+  SYNC,
+  bare,
+  read,
+  said,
+} from './protocol.js';
 import { Y, awarenessProtocol, decoding, encoding, syncProtocol } from './vendor/doc-bundle.js';
 import { accept } from './ws.mjs';
 
 const HERE_DIR = dirname(fileURLToPath(import.meta.url));
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8' };
+const TYPES = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8',
+};
 /** What the page may fetch: its own files, nothing else of this directory. */
-const PAGE = new Set(['index.html', 'app.js', 'sync.js', 'adapter.js', 'protocol.js', 'vendor/doc-bundle.js']);
+const PAGE = new Set([
+  'index.html',
+  'app.js',
+  'sync.js',
+  'adapter.js',
+  'protocol.js',
+  'vendor/doc-bundle.js',
+]);
 /** How long after an edit every page is told the paragraphs' last editors again. */
 const LINES_AFTER_MS = 250;
 /** How often the lender's name is asked of svrngs. */
 const LENDER_EVERY_MS = 60_000;
 
-const trace = process.env.DOC_DEBUG ? (what, fields = {}) => console.error(JSON.stringify({ at: new Date().toISOString(), what, ...fields })) : () => {};
+const trace = process.env.DOC_DEBUG
+  ? (what, fields = {}) =>
+      console.error(JSON.stringify({ at: new Date().toISOString(), what, ...fields }))
+  : () => {};
 
 /** A header svrngs's door set, read as the UTF-8 it wrote (door.rs sets the name's bytes). */
 const told = (req, name) => {
@@ -61,7 +85,10 @@ export async function start({ port = 0, keep, api = null }) {
 
   // The doc as kept: every act, applied in the order written.
   if (existsSync(file)) {
-    const acts = readFileSync(file, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
+    const acts = readFileSync(file, 'utf8')
+      .split('\n')
+      .filter(Boolean)
+      .map((l) => JSON.parse(l));
     Y.transact(doc, () => acts.forEach((a) => Y.applyUpdate(doc, b64ToBytes(a.update))), 'kept');
     attribution.absorb(acts);
     seq = acts.reduce((m, a) => Math.max(m, a.seq), 0);
@@ -88,10 +115,21 @@ export async function start({ port = 0, keep, api = null }) {
     const ts = Math.max(Date.now() / 1000, lastTs + 0.001);
     lastTs = ts;
     seq += 1;
-    const act = { id: String(seq), seq, ts, actor: origin.key ?? '', person: origin.person, update: bytesToB64(update) };
+    const act = {
+      id: String(seq),
+      seq,
+      ts,
+      actor: origin.key ?? '',
+      person: origin.person,
+      update: bytesToB64(update),
+    };
     appendFileSync(file, `${JSON.stringify(act)}\n`);
     attribution.absorb([act]);
-    trace('doc: an edit written as its socket\'s person', { seq, person: act.person, bytes: update.length });
+    trace("doc: an edit written as its socket's person", {
+      seq,
+      person: act.person,
+      bytes: update.length,
+    });
     const e = encoding.createEncoder();
     encoding.writeVarUint(e, SYNC);
     syncProtocol.writeUpdate(e, update);
@@ -114,9 +152,18 @@ export async function start({ port = 0, keep, api = null }) {
   });
 
   const opened = (req, peer) => {
-    const page = { peer, person: told(req, 'x-svrngs-person'), key: told(req, 'x-svrngs-key'), ids: new Set() };
+    const page = {
+      peer,
+      person: told(req, 'x-svrngs-person'),
+      key: told(req, 'x-svrngs-key'),
+      ids: new Set(),
+    };
     pages.add(page);
-    trace('socket: a page opened', { person: page.person, named: page.person !== null, pages: pages.size });
+    trace('socket: a page opened', {
+      person: page.person,
+      named: page.person !== null,
+      pages: pages.size,
+    });
     send(page, said(HELLO, { you: page.person, key: page.key, lender }));
     const e = encoding.createEncoder();
     encoding.writeVarUint(e, SYNC);
@@ -131,7 +178,10 @@ export async function start({ port = 0, keep, api = null }) {
     }
     send(page, said(LINES, attribution.entries()));
     peer.onmessage = (data) => {
-      if (typeof data === 'string') return trace('socket: refused — a text message, which the doc never sends', { person: page.person });
+      if (typeof data === 'string')
+        return trace('socket: refused — a text message, which the doc never sends', {
+          person: page.person,
+        });
       let m;
       try {
         m = read(data);
@@ -141,12 +191,23 @@ export async function start({ port = 0, keep, api = null }) {
           syncProtocol.readSyncMessage(m.body, reply, doc, page);
           if (encoding.length(reply) > 1) send(page, encoding.toUint8Array(reply));
         } else if (m.type === AWARENESS) {
-          awarenessProtocol.applyAwarenessUpdate(awareness, decoding.readVarUint8Array(m.body), page);
+          awarenessProtocol.applyAwarenessUpdate(
+            awareness,
+            decoding.readVarUint8Array(m.body),
+            page,
+          );
         } else {
-          trace('socket: refused — a message of a type pages do not send', { type: m.type, person: page.person });
+          trace('socket: refused — a message of a type pages do not send', {
+            type: m.type,
+            person: page.person,
+          });
         }
       } catch (e) {
-        trace('socket: refused — a message that does not read', { type: m?.type, person: page.person, error: String(e) });
+        trace('socket: refused — a message that does not read', {
+          type: m?.type,
+          person: page.person,
+          error: String(e),
+        });
       }
     };
     peer.onclose = () => {
@@ -163,33 +224,51 @@ export async function start({ port = 0, keep, api = null }) {
     try {
       const base = readFileSync(api, 'utf8').trim().replace(/\/$/, '');
       const token = readFileSync(join(dirname(api), 'token'), 'utf8').trim();
-      const asked = await fetch(`${base}/v1/groups`, { headers: { authorization: `Bearer ${token}` } });
+      const asked = await fetch(`${base}/v1/groups`, {
+        headers: { authorization: `Bearer ${token}` },
+      });
       const groups = (await asked.json()).groups ?? [];
       const names = [...new Set(groups.map((g) => g.person).filter(Boolean))];
       const now = names.length === 1 ? names[0] : null;
-      trace('lender: asked svrngs this computer\'s name', { names, lender: now, said: names.length > 1 ? 'two names in its groups, so none' : undefined });
+      trace("lender: asked svrngs this computer's name", {
+        names,
+        lender: now,
+        said: names.length > 1 ? 'two names in its groups, so none' : undefined,
+      });
       if (now !== lender) {
         lender = now;
         pages.forEach((p) => send(p, said(HELLO, { you: p.person, key: p.key, lender })));
       }
     } catch (e) {
-      trace('lender: svrngs did not answer, so the lender stays as it was', { api, lender, error: String(e) });
+      trace('lender: svrngs did not answer, so the lender stays as it was', {
+        api,
+        lender,
+        error: String(e),
+      });
     }
   };
   await askLender();
   const asking = setInterval(askLender, LENDER_EVERY_MS);
 
   const server = http.createServer((req, res) => {
-    const path = decodeURIComponent(new URL(req.url, 'http://doc').pathname).replace(/^\/+/, '') || 'index.html';
+    const path =
+      decodeURIComponent(new URL(req.url, 'http://doc').pathname).replace(/^\/+/, '') ||
+      'index.html';
     const name = normalize(path);
     // What a page asks before a new socket (sync.js `poke`): nothing, at once.
-    if (req.method === 'GET' && name === 'here') return res.writeHead(204, { 'cache-control': 'no-store' }).end();
+    if (req.method === 'GET' && name === 'here')
+      return res.writeHead(204, { 'cache-control': 'no-store' }).end();
     if (req.method !== 'GET' || !PAGE.has(name)) {
-      trace('page: refused — not one of the page\'s files', { path });
-      res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }).end('There is no such page here.');
+      trace("page: refused — not one of the page's files", { path });
+      res
+        .writeHead(404, { 'content-type': 'text/plain; charset=utf-8' })
+        .end('There is no such page here.');
       return;
     }
-    res.writeHead(200, { 'content-type': TYPES[extname(name)] ?? 'application/octet-stream', 'cache-control': 'no-cache' });
+    res.writeHead(200, {
+      'content-type': TYPES[extname(name)] ?? 'application/octet-stream',
+      'cache-control': 'no-cache',
+    });
     res.end(readFileSync(join(HERE_DIR, name)));
   });
   server.on('upgrade', (req, socket, head) => {
@@ -220,9 +299,13 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
   };
   const port = Number(arg('--port'));
   if (!Number.isInteger(port) || !arg('--keep')) {
-    console.error('node apps/doc/server.mjs --port <port> --keep <dir> [--svrngs <svrngs\'s api file>]');
+    console.error(
+      "node apps/doc/server.mjs --port <port> --keep <dir> [--svrngs <svrngs's api file>]",
+    );
     process.exit(2);
   }
   const { port: at } = await start({ port, keep: arg('--keep'), api: arg('--svrngs') });
-  console.log(`The doc is at http://127.0.0.1:${at}/, kept in ${arg('--keep')}. Lend it: svrngs share ${at} --name doc --kind doc`);
+  console.log(
+    `The doc is at http://127.0.0.1:${at}/, kept in ${arg('--keep')}. Lend it: svrngs share ${at} --name doc --kind doc`,
+  );
 }

@@ -49,8 +49,13 @@ async function phase(seeker, watched, seeks) {
     done.push(await seeker.page.evaluate(seek, pct));
     await seeker.page.waitForTimeout(3000);
   }
-  return { seeker: seeker.user, seeks: done, within_5s: done.filter((s) => s.ms !== null && s.ms <= 5000).length,
-    watched: watched?.user ?? null, watch: watched ? await watched.page.evaluate(judge, since) : null };
+  return {
+    seeker: seeker.user,
+    seeks: done,
+    within_5s: done.filter((s) => s.ms !== null && s.ms <= 5000).length,
+    watched: watched?.user ?? null,
+    watch: watched ? await watched.page.evaluate(judge, since) : null,
+  };
 }
 
 const people = [];
@@ -67,17 +72,31 @@ try {
   for (const p of people) {
     if (p.signed_in_ms == null || p.stopped) continue;
     p.socket = await socket(jf, p).catch((e) => ({ error: String(e) }));
-    p.signed_in_after = await p.page.evaluate(async () => {
-      try { const u = await window.ApiClient.getJSON(window.ApiClient.getUrl('Users/Me')); return u.Name; } catch (e) { return `refused: ${e?.status ?? e}`; }
-    }).catch((e) => `could not ask: ${e}`);
-    p.sessions = all.filter((s) => s.DeviceId === p.device).map((s) => ({ user: s.UserName, playing: !!s.NowPlayingItem, client: s.Client }));
+    p.signed_in_after = await p.page
+      .evaluate(async () => {
+        try {
+          const u = await window.ApiClient.getJSON(window.ApiClient.getUrl('Users/Me'));
+          return u.Name;
+        } catch (e) {
+          return `refused: ${e?.status ?? e}`;
+        }
+      })
+      .catch((e) => `could not ask: ${e}`);
+    p.sessions = all
+      .filter((s) => s.DeviceId === p.device)
+      .map((s) => ({ user: s.UserName, playing: !!s.NowPlayingItem, client: s.Client }));
   }
 } catch (e) {
   out.stopped = String(e).split('\n')[0];
 } finally {
   for (const p of people) {
     const { page, close, token, tally, ...rest } = p;
-    out.people[p.user] = { ...rest, token: token ? 'held' : null, received: { ...tally }, logs: p.logs.slice(-30) };
+    out.people[p.user] = {
+      ...rest,
+      token: token ? 'held' : null,
+      received: { ...tally },
+      logs: p.logs.slice(-30),
+    };
     await close();
   }
   console.log(JSON.stringify(out));

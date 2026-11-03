@@ -70,7 +70,8 @@ const who = (a) => a.key ?? a.by;
 
 // A day from seconds, "3 Oct", in this computer's time, as svrngs's own
 // pages say it (crates/svrngs-node/src/home/question.js `day`).
-const day = (t, d = new Date(t * 1000)) => `${d.getDate()} ${'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[d.getMonth()]}`;
+const day = (t, d = new Date(t * 1000)) =>
+  `${d.getDate()} ${'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[d.getMonth()]}`;
 
 /**
  * How a page says the person whose first key is `key`, called `name`: by
@@ -82,7 +83,9 @@ const day = (t, d = new Date(t * 1000)) => `${d.getDate()} ${'Jan Feb Mar Apr Ma
 export function called(spans, key, name) {
   const same = (spans ?? []).filter((s) => s.person === name);
   const s = same.find((x) => x.person_key === key);
-  return same.length > 1 && s ? `${name} (${s.joined == null ? 'started the group' : `joined ${day(s.joined)}`})` : name;
+  return same.length > 1 && s
+    ? `${name} (${s.joined == null ? 'started the group' : `joined ${day(s.joined)}`})`
+    : name;
 }
 /** A guest's name as a member wrote it, trimmed; null when it is not one. */
 export function guestName(text) {
@@ -102,7 +105,8 @@ export function validate(act) {
     return [gap('not_an_act', 'an entry with nothing in it')];
   }
   if (!isKey(act.by)) return [gap('no_one', 'an entry that no one in the group wrote')];
-  if (act.corrects != null && !isKey(act.corrects)) return [gap('not_an_act', 'a change of nothing')];
+  if (act.corrects != null && !isKey(act.corrects))
+    return [gap('not_an_act', 'a change of nothing')];
   if (act.op == null) {
     return act.corrects == null ? [gap('not_an_act', 'an entry with nothing in it')] : [];
   }
@@ -112,25 +116,49 @@ export function validate(act) {
   }
   const extra = Object.keys(op).filter((k) => !FIELDS[op.kind].includes(k));
   if (extra.length) {
-    return [gap('unread_field', `${op.kind} saying more than this version reads (${extra.join(', ')}), so not counted`)];
+    return [
+      gap(
+        'unread_field',
+        `${op.kind} saying more than this version reads (${extra.join(', ')}), so not counted`,
+      ),
+    ];
   }
   if (!isKey(op.event)) return [gap('no_event', `${op.kind} for no event`)];
   if (op.kind === EVENT) {
     const gaps = [];
     if (typeof op.what !== 'string' || !op.what.trim() || op.what.length > MAX_WORDS) {
-      gaps.push(gap('no_what', `an event for nothing in particular, or over ${MAX_WORDS} characters`));
+      gaps.push(
+        gap('no_what', `an event for nothing in particular, or over ${MAX_WORDS} characters`),
+      );
     }
     if (!isWords(op.when, MAX_WORDS) || !isWords(op.where, MAX_WORDS)) {
-      gaps.push(gap('bad_when_where', `a when or a where that is not words, or over ${MAX_WORDS} characters`));
+      gaps.push(
+        gap(
+          'bad_when_where',
+          `a when or a where that is not words, or over ${MAX_WORDS} characters`,
+        ),
+      );
     }
     return gaps;
   }
   if (op.kind === COMING) {
     if (op.guests === undefined) return [];
-    const ok = Array.isArray(op.guests) && op.guests.length <= MAX_GUESTS && op.guests.every((g) => guestName(g) !== null);
-    return ok ? [] : [gap('bad_guests', `guests that are not up to ${MAX_GUESTS} names of up to ${MAX_NAME} characters`)];
+    const ok =
+      Array.isArray(op.guests) &&
+      op.guests.length <= MAX_GUESTS &&
+      op.guests.every((g) => guestName(g) !== null);
+    return ok
+      ? []
+      : [
+          gap(
+            'bad_guests',
+            `guests that are not up to ${MAX_GUESTS} names of up to ${MAX_NAME} characters`,
+          ),
+        ];
   }
-  return op.guest === undefined || guestName(op.guest) !== null ? [] : [gap('bad_guest', 'a guest with no name')];
+  return op.guest === undefined || guestName(op.guest) !== null
+    ? []
+    : [gap('bad_guest', 'a guest with no name')];
 }
 
 /**
@@ -146,11 +174,20 @@ export function validate(act) {
  * ops is an error, never a group with no answers.
  */
 export function actsOf(log) {
-  if (!Array.isArray(log?.ops)) throw new Error(`the record answered no list of acts: ${JSON.stringify(log)}`);
+  if (!Array.isArray(log?.ops))
+    throw new Error(`the record answered no list of acts: ${JSON.stringify(log)}`);
   const other = (o) => o.on_behalf_of != null && o.on_behalf_of !== o.person;
   return log.ops
     .filter((o) => o.payload != null || o.corrects != null)
-    .map((o) => ({ id: o.id, ts: o.ts_unix, by: o.on_behalf_of ?? o.person, key: (other(o) ? o.on_behalf_of_key : o.person_key) ?? null, via: other(o) ? o.person : null, op: o.payload ?? null, corrects: o.corrects ?? null }));
+    .map((o) => ({
+      id: o.id,
+      ts: o.ts_unix,
+      by: o.on_behalf_of ?? o.person,
+      key: (other(o) ? o.on_behalf_of_key : o.person_key) ?? null,
+      via: other(o) ? o.person : null,
+      op: o.payload ?? null,
+      corrects: o.corrects ?? null,
+    }));
 }
 
 /** No acts yet. */
@@ -161,9 +198,17 @@ export function init() {
 /** Take one act in the record's order. One that cannot be read is a gap, never a throw (the totality law). */
 export function reduce(state, act) {
   const gaps = validate(act);
-  for (const g of gaps) state.gaps.push({ ...g, id: isObject(act) && typeof act.id === 'string' ? act.id : null });
+  for (const g of gaps)
+    state.gaps.push({ ...g, id: isObject(act) && typeof act.id === 'string' ? act.id : null });
   if (gaps.length || has(state.acts, act.id)) return state;
-  state.acts[act.id] = { by: act.by, key: act.key ?? null, via: act.via ?? null, ts: act.ts, op: act.op ?? null, corrects: act.corrects ?? null };
+  state.acts[act.id] = {
+    by: act.by,
+    key: act.key ?? null,
+    via: act.via ?? null,
+    ts: act.ts,
+    op: act.op ?? null,
+    corrects: act.corrects ?? null,
+  };
   state.order.push(act.id);
   return state;
 }
@@ -189,17 +234,33 @@ export function answers(state) {
   const gap = (code, id, message) => gaps.push({ code, fatal: true, id, message });
   const events = {};
   const names = {};
-  const live = state.order.filter((id) => !has(voided, id) && !has(uncounted, id) && state.acts[id].op);
+  const live = state.order.filter(
+    (id) => !has(voided, id) && !has(uncounted, id) && state.acts[id].op,
+  );
   for (const id of live) names[who(state.acts[id])] = state.acts[id].by;
   for (const id of live) {
     const { by, via, ts, op } = state.acts[id];
     if (op.kind !== EVENT) continue;
     if (!has(events, op.event)) {
       const vias = { host: via, coming: {}, came: {}, guests_came: {} };
-      events[op.event] = { host: who(state.acts[id]), what: op.what.trim(), when: op.when, where: op.where, at: ts, coming: {}, came: [], guests_came: {}, via: vias };
+      events[op.event] = {
+        host: who(state.acts[id]),
+        what: op.what.trim(),
+        when: op.when,
+        where: op.where,
+        at: ts,
+        coming: {},
+        came: [],
+        guests_came: {},
+        via: vias,
+      };
     } else {
       const host = events[op.event].host;
-      gap(host === who(state.acts[id]) ? 'posted_twice' : 'not_the_host', id, `${by} posted ${op.event} again; ${names[host]} hosts it`);
+      gap(
+        host === who(state.acts[id]) ? 'posted_twice' : 'not_the_host',
+        id,
+        `${by} posted ${op.event} again; ${names[host]} hosts it`,
+      );
     }
   }
   for (const id of live) {
@@ -245,8 +306,14 @@ export function ownActs(state, person, event, kind, guest = null) {
     .filter((id) => !has(voided, id))
     .filter((id) => {
       const a = state.acts[id];
-      return who(a) === person && a.op && a.op.event === event && a.op.kind === kind &&
-        (kind !== CAME || (a.op.guest === undefined ? guest === null : guestName(a.op.guest) === guest));
+      return (
+        who(a) === person &&
+        a.op &&
+        a.op.event === event &&
+        a.op.kind === kind &&
+        (kind !== CAME ||
+          (a.op.guest === undefined ? guest === null : guestName(a.op.guest) === guest))
+      );
     })
     .reverse();
 }
@@ -273,8 +340,18 @@ function voids(state) {
       voided[c.corrects] = true;
     } else {
       uncounted[id] = was
-        ? { code: 'not_theirs', fatal: true, id, message: `${c.by} tried to change ${was.by}'s answer, which only ${was.by} can change` }
-        : { code: 'changes_unheld', fatal: true, id, message: `${c.by} changed an answer this copy does not hold yet` };
+        ? {
+            code: 'not_theirs',
+            fatal: true,
+            id,
+            message: `${c.by} tried to change ${was.by}'s answer, which only ${was.by} can change`,
+          }
+        : {
+            code: 'changes_unheld',
+            fatal: true,
+            id,
+            message: `${c.by} changed an answer this copy does not hold yet`,
+          };
     }
   }
   return { voided, uncounted };
@@ -290,6 +367,12 @@ function voids(state) {
  */
 export function hosted(event, groups) {
   return groups
-    .filter((g) => g.unread || (has(g.answers.events, event) && g.answers.events[event].host === g.me))
-    .map((g) => (g.unread ? { group: g.group, unread: g.unread } : { group: g.group, event: g.answers.events[event] }));
+    .filter(
+      (g) => g.unread || (has(g.answers.events, event) && g.answers.events[event].host === g.me),
+    )
+    .map((g) =>
+      g.unread
+        ? { group: g.group, unread: g.unread }
+        : { group: g.group, event: g.answers.events[event] },
+    );
 }

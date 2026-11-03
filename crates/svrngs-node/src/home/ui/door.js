@@ -17,22 +17,56 @@ import { html } from './view.js?v=__VERSION__';
 import { called } from '../question.js?v=__VERSION__';
 
 const since = (p) => (p.joined === 'started' ? 0 : p.joined.at);
-const at = (d, m = -d.getTimezoneOffset()) => `${d.toLocaleString('sv-SE')} ${m < 0 ? '-' : '+'}${String(Math.trunc(Math.abs(m) / 60) * 100 + (Math.abs(m) % 60)).padStart(4, '0')}`;
+const at = (d, m = -d.getTimezoneOffset()) =>
+  `${d.toLocaleString('sv-SE')} ${m < 0 ? '-' : '+'}${String(Math.trunc(Math.abs(m) / 60) * 100 + (Math.abs(m) % 60)).padStart(4, '0')}`;
 const when = (j) => (j === 'started' ? 'started the group' : `joined ${at(new Date(j.at * 1000))}`);
 // Each person once, with their name as the door says it and what holds their keys.
-const people = (rows) => [...new Map(rows.map((r) => [r.person_key, r])).values()].sort((a, b) => since(a) - since(b)).map((p) => [p, called(rows, p.person_key, when), rows.filter((r) => r.person_key === p.person_key).map((r) => r.device)]);
+const people = (rows) =>
+  [...new Map(rows.map((r) => [r.person_key, r])).values()]
+    .sort((a, b) => since(a) - since(b))
+    .map((p) => [
+      p,
+      called(rows, p.person_key, when),
+      rows.filter((r) => r.person_key === p.person_key).map((r) => r.device),
+    ]);
 
 // Its class and its words, judged by `lends` (/v1/lends' `unanswered`).
 function judged(p, devices, lends) {
   if (lends === undefined) return ['', 'asking…'];
-  const phone = devices.includes('browser') ? (devices.includes('computer') ? ', a phone too' : 'in from a phone') : '';
-  const silent = lends?.unanswered.some((u) => (u.person_key ?? u) === (u.person_key ? p.person_key : p.person));
-  const [drawn, words] = !devices.includes('computer') ? ['phone', ''] : !lends ? ['', 'not known now'] : silent ? ['off', 'did not answer'] : ['on', 'on now'];
+  const phone = devices.includes('browser')
+    ? devices.includes('computer')
+      ? ', a phone too'
+      : 'in from a phone'
+    : '';
+  const silent = lends?.unanswered.some(
+    (u) => (u.person_key ?? u) === (u.person_key ? p.person_key : p.person),
+  );
+  const [drawn, words] = !devices.includes('computer')
+    ? ['phone', '']
+    : !lends
+      ? ['', 'not known now']
+      : silent
+        ? ['off', 'did not answer']
+        : ['on', 'on now'];
   return [drawn, words + phone];
 }
 
 // A person's window: their name, their own lends, and how they are judged.
-const theirs = (rows, lent, p, newest) => lent.filter((l) => !l.group && rows.find((r) => r.key === l.key)?.person_key === p.person_key).map((l) => html`${' '}<a href=${l.origin} target="_blank">${l.name}</a>${l.origin === newest && html`${' '}<mark>new</mark>`}`);
-const cell = (rows, lent, lends, newest) => ([p, name, devices], [drawn, words] = judged(p, devices, lends)) => html`<li class=${drawn || undefined}><strong>${name}</strong>${theirs(rows, lent, p, newest)}${' '}<small>${words}</small></li>`;
-export const Door = ({ rows, lent = [], lends, newest }) => html`<ul class="door">${people(rows).map((p) => cell(rows, lent, lends, newest)(p))}</ul>`;
-export const counted = (rows, lent, lends, ps = people(rows)) => [ps.length, ps.filter(([p, , d]) => judged(p, d, lends)[0] === 'on').length, ps.flatMap(([p]) => theirs(rows, lent, p)).length];
+const theirs = (rows, lent, p, newest) =>
+  lent
+    .filter((l) => !l.group && rows.find((r) => r.key === l.key)?.person_key === p.person_key)
+    .map(
+      (l) =>
+        html`${' '}<a href=${l.origin} target="_blank">${l.name}</a>${l.origin === newest && html`${' '}<mark>new</mark>`}`,
+    );
+const cell =
+  (rows, lent, lends, newest) =>
+  ([p, name, devices], [drawn, words] = judged(p, devices, lends)) =>
+    html`<li class=${drawn || undefined}><strong>${name}</strong>${theirs(rows, lent, p, newest)}${' '}<small>${words}</small></li>`;
+export const Door = ({ rows, lent = [], lends, newest }) =>
+  html`<ul class="door">${people(rows).map((p) => cell(rows, lent, lends, newest)(p))}</ul>`;
+export const counted = (rows, lent, lends, ps = people(rows)) => [
+  ps.length,
+  ps.filter(([p, , d]) => judged(p, d, lends)[0] === 'on').length,
+  ps.flatMap(([p]) => theirs(rows, lent, p)).length,
+];

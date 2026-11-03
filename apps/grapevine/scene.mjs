@@ -42,19 +42,35 @@ export function world(app, kinds, groups, now = NOW) {
     append: (group, who, payload) => write(group, who, { payload }),
     correct: (group, who, corrects) => write(group, who, { corrects }),
     view(who, at = now) {
-      const gs = Object.entries(groups).map(([id, g]) => ({ id, name: g.name, me: g.people.includes(who) ? who : null, ops: structuredClone(logs[id]) }));
+      const gs = Object.entries(groups).map(([id, g]) => ({
+        id,
+        name: g.name,
+        me: g.people.includes(who) ? who : null,
+        ops: structuredClone(logs[id]),
+      }));
       return app.fold({ groups: gs, state: structuredClone(stateOf(who)), kinds, now: at });
     },
     ask(who, group, kind, fields, { hops = 1, expires = now + WEEK } = {}) {
       const key = app.keyPair();
       stateOf(who).keys[key.public] = key.secret;
-      return w.append(group, who, app.askAct({ kind, fields, hops, expires, seal_to: key.public, handle: newHandle() }));
+      return w.append(
+        group,
+        who,
+        app.askAct({ kind, fields, hops, expires, seal_to: key.public, handle: newHandle() }),
+      );
     },
     /** `who`'s carry of `ask` into `group`, decided on `v`, their view (now, unless given an older one). */
     carry(who, ask, group, v = w.view(who)) {
       const can = v.carriable.can.find((c) => c.ask === ask && c.group === group);
-      if (!can) throw new Error(`${who} cannot carry ${ask} to ${group}: ${JSON.stringify(v.carriable.not.find((c) => c.ask === ask && c.group === group))}`);
-      const { payload, route } = app.carryAct(v.asks.find((a) => a.id === ask), can, newHandle());
+      if (!can)
+        throw new Error(
+          `${who} cannot carry ${ask} to ${group}: ${JSON.stringify(v.carriable.not.find((c) => c.ask === ask && c.group === group))}`,
+        );
+      const { payload, route } = app.carryAct(
+        v.asks.find((a) => a.id === ask),
+        can,
+        newHandle(),
+      );
       stateOf(who).routes.push(route);
       return w.append(group, who, payload);
     },
@@ -65,13 +81,24 @@ export function world(app, kinds, groups, now = NOW) {
       const key = app.keyPair();
       stateOf(who).keys[key.public] = key.secret;
       sealed.push(body);
-      return w.append(group, who, app.msgAct({ handle: copy.handle, dir: 'up', from: key.public, to: a.seal_to }, app.seal(body, a.seal_to, key.secret)));
+      return w.append(
+        group,
+        who,
+        app.msgAct(
+          { handle: copy.handle, dir: 'up', from: key.public, to: a.seal_to },
+          app.seal(body, a.seal_to, key.secret),
+        ),
+      );
     },
     /** A message in `who`'s thread on `ask`. */
     say(who, ask, body) {
       const t = w.view(who).threads.find((x) => x.ask === ask && x.role !== 'carrier');
       sealed.push(body);
-      return w.append(t.send.group, who, app.msgAct(t.send, app.seal(body, t.send.to, stateOf(who).keys[t.send.from])));
+      return w.append(
+        t.send.group,
+        who,
+        app.msgAct(t.send, app.seal(body, t.send.to, stateOf(who).keys[t.send.from])),
+      );
     },
     withdraw(who, ask) {
       const group = Object.keys(logs).find((g) => logs[g].some((o) => o.id === ask));
@@ -111,7 +138,10 @@ export function scene(app, kinds) {
   w.append('waller', 'kim', app.listingAct('tool', { what: 'tile saw' }));
   const ask = w.ask('sam', 'page', 'tool', TILE_SAW);
   const carry = w.carry('jo', ask, 'waller');
-  w.reply('kim', ask, 'waller', { say: 'offer', fields: { when: 'Saturday morning', where: 'Waller and Pierce' } });
+  w.reply('kim', ask, 'waller', {
+    say: 'offer',
+    fields: { when: 'Saturday morning', where: 'Waller and Pierce' },
+  });
   w.tick();
   w.say('sam', ask, { say: 'yes', name: 'Sam Reyes' });
   w.tick();

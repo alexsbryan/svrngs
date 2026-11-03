@@ -22,7 +22,10 @@
     if (!event.data?.approve || !event.ports[0] || event.source !== worker()) return;
     const url = new URL(event.data.signer);
     signer ??= new Promise((yes) => {
-      const frame = Object.assign(document.createElement('iframe'), { src: url.href, hidden: true });
+      const frame = Object.assign(document.createElement('iframe'), {
+        src: url.href,
+        hidden: true,
+      });
       frame.onload = () => yes(frame);
       document.documentElement.append(frame);
     });
@@ -52,7 +55,10 @@
       if (eq < 1) return;
       const gone = attrs.some((a) => {
         const [k, v = ''] = a.split('=').map((s) => s.trim());
-        return (/^max-age$/i.test(k) && Number(v) <= 0) || (/^expires$/i.test(k) && Date.parse(v) < Date.now());
+        return (
+          (/^max-age$/i.test(k) && Number(v) <= 0) ||
+          (/^expires$/i.test(k) && Date.parse(v) < Date.now())
+        );
       });
       if (gone) jar.delete(pair.slice(0, eq).trim());
       else jar.set(pair.slice(0, eq).trim(), pair.slice(eq + 1).trim());
@@ -76,7 +82,10 @@
   };
   const opened = XMLHttpRequest.prototype.open;
   XMLHttpRequest.prototype.open = function (...a) {
-    this.addEventListener('readystatechange', () => this.readyState === 2 && takeIn(this.getResponseHeader(PAGE_COOKIES)));
+    this.addEventListener(
+      'readystatechange',
+      () => this.readyState === 2 && takeIn(this.getResponseHeader(PAGE_COOKIES)),
+    );
     return opened.apply(this, a);
   };
 
@@ -84,7 +93,13 @@
     constructor(url, protocols) {
       super();
       this.url = new URL(url, location.href).href.replace(/^http/, 'ws');
-      Object.assign(this, { readyState: 0, protocol: '', extensions: '', bufferedAmount: 0, binaryType: 'blob' });
+      Object.assign(this, {
+        readyState: 0,
+        protocol: '',
+        extensions: '',
+        bufferedAmount: 0,
+        binaryType: 'blob',
+      });
       Object.assign(this, { onopen: null, onmessage: null, onclose: null, onerror: null });
       const { port1, port2 } = new MessageChannel();
       this.port = port1;
@@ -95,25 +110,41 @@
         }
         if ('message' in data) {
           const d = data.message;
-          this.fire(new MessageEvent('message', { data: typeof d !== 'string' && this.binaryType === 'blob' ? new Blob([d]) : d }));
+          this.fire(
+            new MessageEvent('message', {
+              data: typeof d !== 'string' && this.binaryType === 'blob' ? new Blob([d]) : d,
+            }),
+          );
         }
         if ('closed' in data) {
           const opened = this.readyState > 0;
           this.readyState = 3;
           if (!opened || data.closed === 1006) this.fire(new Event('error'));
-          this.fire(new CloseEvent('close', { code: data.closed, reason: data.reason, wasClean: data.closed !== 1006 }));
+          this.fire(
+            new CloseEvent('close', {
+              code: data.closed,
+              reason: data.reason,
+              wasClean: data.closed !== 1006,
+            }),
+          );
         }
       };
-      const asked = { socket: { url: this.url, protocols: protocols === undefined ? [] : [].concat(protocols) } };
+      const asked = {
+        socket: { url: this.url, protocols: protocols === undefined ? [] : [].concat(protocols) },
+      };
       if (worker()) worker().postMessage(asked, [port2]);
-      else setTimeout(() => port1.onmessage({ data: { closed: 1006, reason: 'no worker serves this page' } }));
+      else
+        setTimeout(() =>
+          port1.onmessage({ data: { closed: 1006, reason: 'no worker serves this page' } }),
+        );
     }
     fire(event) {
       this.dispatchEvent(event);
       this[`on${event.type}`]?.call(this, event);
     }
     send(data) {
-      if (this.readyState !== 1) throw new DOMException('the socket is not open', 'InvalidStateError');
+      if (this.readyState !== 1)
+        throw new DOMException('the socket is not open', 'InvalidStateError');
       if (data instanceof Blob) data.arrayBuffer().then((send) => this.port.postMessage({ send }));
       else this.port.postMessage({ send: ArrayBuffer.isView(data) ? data.slice().buffer : data });
     }

@@ -22,11 +22,16 @@ import { parseArgs } from 'node:util';
 const air = await import('./page/air.mjs');
 const { values: o } = parseArgs({
   options: {
-    api: { type: 'string' }, token: { type: 'string' }, group: { type: 'string' }, station: { type: 'string' }, out: { type: 'string' },
+    api: { type: 'string' },
+    token: { type: 'string' },
+    group: { type: 'string' },
+    station: { type: 'string' },
+    out: { type: 'string' },
     for: { type: 'string', default: '300' },
   },
 });
-for (const k of ['api', 'token', 'group', 'station', 'out']) if (!o[k]) throw new Error(`--${k} is needed`);
+for (const k of ['api', 'token', 'group', 'station', 'out'])
+  if (!o[k]) throw new Error(`--${k} is needed`);
 const api = o.api.replace(/\/$/, '');
 const token = readFileSync(o.token, 'utf8').trim();
 await mkdir(o.out, { recursive: true });
@@ -42,7 +47,11 @@ async function get(path) {
     const r = await fetch(api + path, { headers: { authorization: `Bearer ${token}` } });
     return { status: r.status, bytes: new Uint8Array(await r.arrayBuffer()) };
   } catch (e) {
-    return { status: null, bytes: new Uint8Array(0), said: `could not ask: ${e.cause?.code || e.message}` };
+    return {
+      status: null,
+      bytes: new Uint8Array(0),
+      said: `could not ask: ${e.cause?.code || e.message}`,
+    };
   }
 }
 const text = (b) => new TextDecoder().decode(b).slice(0, 300);
@@ -53,7 +62,10 @@ const people = await get(`/v1/rail/people?namespace=${o.group}`);
 const rows = people.status === 200 ? JSON.parse(new TextDecoder().decode(people.bytes)).people : [];
 const station = rows.filter((r) => r.person === o.station);
 if (station.length !== 1) {
-  await say('no station', { why: `the group names ${station.length} computers of ${o.station}`, people: people.status });
+  await say('no station', {
+    why: `the group names ${station.length} computers of ${o.station}`,
+    people: people.status,
+  });
   process.exit(2);
 }
 const { key, person_key } = station[0];
@@ -63,7 +75,10 @@ await say('listening', { station: o.station, key, person_key });
 // onair-live, a bare string before it, kept as the drain named it.
 function unwrap(p) {
   if (typeof p === 'string') return { text: p, sender: null };
-  return { text: p?.payload ?? null, sender: { key: p?.key ?? null, person_key: p?.person_key ?? null } };
+  return {
+    text: p?.payload ?? null,
+    sender: { key: p?.key ?? null, person_key: p?.person_key ?? null },
+  };
 }
 
 const until = Date.now() + Number(o.for) * 1000;
@@ -71,7 +86,10 @@ let ended = null;
 while (!ended && Date.now() < until) {
   const drained = await get(`/v1/rail/live?namespace=${o.group}`);
   if (drained.status !== 200) {
-    await say('drain refused', { status: drained.status, said: drained.said ?? text(drained.bytes) });
+    await say('drain refused', {
+      status: drained.status,
+      said: drained.said ?? text(drained.bytes),
+    });
     await new Promise((r) => setTimeout(r, 1000));
     continue;
   }
@@ -81,16 +99,35 @@ while (!ended && Date.now() < until) {
     const arrived = Date.now();
     const { text: body, sender } = unwrap(p);
     let envelope = null;
-    try { envelope = JSON.parse(body); } catch {}
+    try {
+      envelope = JSON.parse(body);
+    } catch {}
     const signed = air.checkLine(envelope, key);
     const named = sender?.key === key;
-    const said = { sender: sender ?? 'the drain names no sender', payload: String(body).slice(0, 200) };
+    const said = {
+      sender: sender ?? 'the drain names no sender',
+      payload: String(body).slice(0, 200),
+    };
     if (!signed.ok && !named) {
-      await say('refused', { ...said, why: `${signed.why}; ${sender ? `sent by ${String(sender.key).slice(0, 8)}…, not the station` : 'and the drain names no sender'}` });
+      await say('refused', {
+        ...said,
+        why: `${signed.why}; ${sender ? `sent by ${String(sender.key).slice(0, 8)}…, not the station` : 'and the drain names no sender'}`,
+      });
       continue;
     }
-    const line = signed.ok ? signed.line : (() => { try { return JSON.parse(envelope.line); } catch { return null; } })();
-    if (!line) { await say('refused', { ...said, why: 'from the station, but not a line' }); continue; }
+    const line = signed.ok
+      ? signed.line
+      : (() => {
+          try {
+            return JSON.parse(envelope.line);
+          } catch {
+            return null;
+          }
+        })();
+    if (!line) {
+      await say('refused', { ...said, why: 'from the station, but not a line' });
+      continue;
+    }
     const by = signed.ok ? 'its signature' : 'the drain naming the station';
     if (line.ended) {
       ended = { n: line.n, at: line.at, by };
@@ -99,13 +136,31 @@ while (!ended && Date.now() < until) {
     }
     const got = await get(`/v1/blob/${line.hash}?group=${o.group}`);
     if (got.status !== 200) {
-      await say('not held', { ...said, n: line.n, hash: line.hash, by, status: got.status, said: got.said ?? text(got.bytes) });
+      await say('not held', {
+        ...said,
+        n: line.n,
+        hash: line.hash,
+        by,
+        status: got.status,
+        said: got.said ?? text(got.bytes),
+      });
       continue;
     }
     const checked = air.checkPiece(got.bytes, line.hash);
-    if (!checked.ok) { await say('refused piece', { ...said, n: line.n, hash: line.hash, by, why: checked.why }); continue; }
+    if (!checked.ok) {
+      await say('refused piece', { ...said, n: line.n, hash: line.hash, by, why: checked.why });
+      continue;
+    }
     await appendFile(join(o.out, 'heard.mp3'), got.bytes);
-    await say('held', { ...said, n: line.n, hash: line.hash, by, bytes: got.bytes.length, ms: Date.now() - arrived, line_at: line.at });
+    await say('held', {
+      ...said,
+      n: line.n,
+      hash: line.hash,
+      by,
+      bytes: got.bytes.length,
+      ms: Date.now() - arrived,
+      line_at: line.at,
+    });
   }
   await new Promise((r) => setTimeout(r, 200));
 }

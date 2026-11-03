@@ -18,13 +18,13 @@ import {
   Text,
   Y,
   awarenessProtocol,
-} from "./vendor/doc-bundle.js";
-import { attributionLine, colorFor } from "./adapter.js";
-import { sync } from "./sync.js";
+} from './vendor/doc-bundle.js';
+import { attributionLine, colorFor } from './adapter.js';
+import { sync } from './sync.js';
 
 const el = (id) => document.getElementById(id);
-const WALL = new URLSearchParams(location.search).has("wall");
-document.body.classList.toggle("wall", WALL);
+const WALL = new URLSearchParams(location.search).has('wall');
+document.body.classList.toggle('wall', WALL);
 
 const ydoc = new Y.Doc();
 // Presence for this document. The caret extension draws it; the socket,
@@ -34,7 +34,7 @@ const awareness = new awarenessProtocol.Awareness(ydoc);
 // The lender's name, kept in this browser from the last time the server
 // said it, so a page that opens while the lender's computer is not
 // answering can still say whose doc this is.
-const LENDER = "doc:lender";
+const LENDER = 'doc:lender';
 const remembered = () => {
   try {
     return localStorage.getItem(LENDER);
@@ -48,21 +48,22 @@ let you;
 // The doc in this browser, so what is written while the server is not
 // answering stays, even across a reload, and joins when it answers.
 try {
-  new IndexeddbPersistence("doc", ydoc);
+  new IndexeddbPersistence('doc', ydoc);
 } catch (e) {
-  el("err").textContent = `This browser can’t keep the doc, so what you write while it’s away is lost if you close this page: ${e.message ?? e}`;
+  el('err').textContent =
+    `This browser can’t keep the doc, so what you write while it’s away is lost if you close this page: ${e.message ?? e}`;
 }
 
 function caret(user) {
-  const c = document.createElement("span");
-  c.classList.add("collaboration-carets__caret");
-  c.setAttribute("style", `border-color: ${user.color}`);
+  const c = document.createElement('span');
+  c.classList.add('collaboration-carets__caret');
+  c.setAttribute('style', `border-color: ${user.color}`);
   // A caret svrngs named nobody for is drawn without a name, never with one
   // made up.
   if (user.name) {
-    const label = document.createElement("div");
-    label.classList.add("collaboration-carets__label");
-    label.setAttribute("style", `background-color: ${user.color}`);
+    const label = document.createElement('div');
+    label.classList.add('collaboration-carets__label');
+    label.setAttribute('style', `background-color: ${user.color}`);
     label.textContent = user.name;
     c.append(label);
   }
@@ -75,7 +76,7 @@ function caret(user) {
 // above the words or mixed into another page's
 // (demo/runs/doc/2026-10-20/polish/found/).
 const editor = new Editor({
-  element: el("editor"),
+  element: el('editor'),
   editable: false,
   extensions: [
     Document,
@@ -98,27 +99,32 @@ const editor = new Editor({
     // only to read `.awareness` off it.
     // Unnamed is "", not null: y-tiptap writes `User: <its number>` over a
     // null name (y-tiptap.js, `createDecorations`), a name nobody gave.
-    CollaborationCaret.configure({ provider: { awareness }, user: { name: "", color: "#808080" }, render: caret }),
+    CollaborationCaret.configure({
+      provider: { awareness },
+      user: { name: '', color: '#808080' },
+      render: caret,
+    }),
   ],
 });
 
 const possessive = (name) => `${name}’s`;
 function named() {
-  el("title").textContent = lender ? `${possessive(lender)} doc` : "Doc";
-  document.title = el("title").textContent;
+  el('title').textContent = lender ? `${possessive(lender)} doc` : 'Doc';
+  document.title = el('title').textContent;
   // The goodnight's heading and last line are svrngs's own for a lend whose
   // computer did not answer (crates/svrngs-node/src/home/away.html, V1.1.3:
   // "☾ {whose} window is dark" … "Goodnight from {who}."), as is its look
   // (index.html). Its middle is the doc's: the doc stays open, and writing
   // goes on in it.
   const whose = lender ? possessive(lender) : null;
-  el("night-title").textContent = whose ? `☾ ${whose} window is dark` : "☾ This window is dark";
-  el("night-words").textContent = `${whose ? `${whose} computer` : "The computer lending this doc"} didn’t answer. You can keep writing: what you write stays in this browser, and joins everyone’s writing once that computer answers.`;
-  el("night-bye").textContent = lender ? `Goodnight from ${lender}.` : "Goodnight.";
+  el('night-title').textContent = whose ? `☾ ${whose} window is dark` : '☾ This window is dark';
+  el('night-words').textContent =
+    `${whose ? `${whose} computer` : 'The computer lending this doc'} didn’t answer. You can keep writing: what you write stays in this browser, and joins everyone’s writing once that computer answers.`;
+  el('night-bye').textContent = lender ? `Goodnight from ${lender}.` : 'Goodnight.';
   if (you === undefined) return;
-  el("you").textContent = you
+  el('you').textContent = you
     ? `You’re ${you}. Everyone here writes in it at once.`
-    : "svrngs didn’t name you, so what you write here is unnamed: open this doc from your svrngs home page, or from your group’s page.";
+    : 'svrngs didn’t name you, so what you write here is unnamed: open this doc from your svrngs home page, or from your group’s page.';
 }
 named();
 
@@ -126,10 +132,10 @@ named();
 // redrawn every few seconds from it.
 let entries = [];
 // Wide enough for a margin beside the doc, as index.html's media rule says.
-const NARROW = matchMedia("(max-width: 62rem)");
+const NARROW = matchMedia('(max-width: 62rem)');
 function drawLines() {
-  const prose = el("editor").querySelector(".tiptap");
-  const gutter = el("attribution");
+  const prose = el('editor').querySelector('.tiptap');
+  const gutter = el('attribution');
   if (!prose) return;
   const blocks = Array.from(prose.children);
   const wrap = gutter.parentElement.getBoundingClientRect();
@@ -138,8 +144,8 @@ function drawLines() {
     const line = attributionLine(entry, Date.now());
     const block = blocks[i];
     if (line === null || block === undefined) return;
-    const note = document.createElement("div");
-    note.className = "note";
+    const note = document.createElement('div');
+    note.className = 'note';
     note.textContent = line;
     gutter.appendChild(note);
     // Measured as drawn, against the doc's box, so a note follows its
@@ -151,7 +157,7 @@ function drawLines() {
       note.style.top = `${at.bottom - wrap.top - note.offsetHeight}px`;
     } else {
       note.style.left = `calc(100% + 0.9rem)`;
-      note.style.width = "10rem";
+      note.style.width = '10rem';
       note.style.top = `${at.top - wrap.top}px`;
     }
   });
@@ -164,23 +170,25 @@ const drawSoon = () => {
   drawing = true;
   requestAnimationFrame(() => ((drawing = false), drawLines()));
 };
-editor.on("transaction", drawSoon);
-addEventListener("resize", drawSoon);
-NARROW.addEventListener("change", drawSoon);
+editor.on('transaction', drawSoon);
+addEventListener('resize', drawSoon);
+NARROW.addEventListener('change', drawSoon);
 setInterval(drawLines, 5000);
 
 function drawHere() {
-  const names = [...new Set([...awareness.getStates().values()].map((s) => s.user?.name).filter(Boolean))].sort();
-  el("here").textContent = names.length ? `Here now: ${names.join(", ")}` : "";
+  const names = [
+    ...new Set([...awareness.getStates().values()].map((s) => s.user?.name).filter(Boolean)),
+  ].sort();
+  el('here').textContent = names.length ? `Here now: ${names.join(', ')}` : '';
 }
-awareness.on("change", drawHere);
+awareness.on('change', drawHere);
 
 // Said without a number: each keystroke is a change to Yjs, and "40
 // changes" would read as forty things.
-const keptWords = (n) => (n ? "What you’ve written since is kept here." : "");
+const keptWords = (n) => (n ? 'What you’ve written since is kept here.' : '');
 let backTimer = null;
 sync({
-  url: `${location.origin.replace(/^http/, "ws")}/sync`,
+  url: `${location.origin.replace(/^http/, 'ws')}/sync`,
   doc: ydoc,
   awareness,
   WebSocket,
@@ -192,7 +200,7 @@ sync({
   // answers by dialling again once the old connection fails it. Seen in
   // demo/runs/doc/2026-10-20/: without it, a phone never rejoined after a
   // 45 s lid; with one request, it rejoined 3 s later.
-  poke: () => fetch("./here", { cache: "no-store", signal: AbortSignal.timeout(5000) }),
+  poke: () => fetch('./here', { cache: 'no-store', signal: AbortSignal.timeout(5000) }),
   on: {
     hello(h) {
       you = h.you;
@@ -204,7 +212,7 @@ sync({
           // A browser that keeps nothing still shows the name this time.
         }
       }
-      awareness.setLocalStateField("user", { name: you ?? "", color: colorFor(you) });
+      awareness.setLocalStateField('user', { name: you ?? '', color: colorFor(you) });
       named();
     },
     lines(e) {
@@ -212,28 +220,28 @@ sync({
       drawLines();
     },
     away({ kept }) {
-      el("night").hidden = false;
-      el("back").hidden = true;
-      el("kept").textContent = keptWords(kept);
+      el('night').hidden = false;
+      el('back').hidden = true;
+      el('kept').textContent = keptWords(kept);
       drawHere();
     },
     kept(n) {
-      el("kept").textContent = keptWords(n);
+      el('kept').textContent = keptWords(n);
     },
     here() {
-      el("night").hidden = true;
+      el('night').hidden = true;
     },
     synced() {
       if (!editor.isEditable) editor.setEditable(true);
     },
     joined({ kept }) {
       if (!kept) return;
-      const who = lender ? `${possessive(lender)} computer` : "The computer lending it";
-      el("back").textContent = `${who} answered, and what you wrote meanwhile joined everyone’s writing.`;
-      el("back").hidden = false;
+      const who = lender ? `${possessive(lender)} computer` : 'The computer lending it';
+      el('back').textContent =
+        `${who} answered, and what you wrote meanwhile joined everyone’s writing.`;
+      el('back').hidden = false;
       clearTimeout(backTimer);
-      backTimer = setTimeout(() => (el("back").hidden = true), 10_000);
+      backTimer = setTimeout(() => (el('back').hidden = true), 10_000);
     },
   },
 }).start();
-

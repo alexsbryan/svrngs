@@ -12,23 +12,71 @@ import { Act, Field, go, html, machine, no, useMachine } from '../ui/kit.js?v=__
 import { COPY, drawn } from '../ui/copy.js?v=__VERSION__';
 import { post } from './group.js?v=__VERSION__';
 
-const LINK = (group) => ({ states: { link: ['none', 'making', 'made', 'refused'] },
-  io: { make: ({ asked, visit }) => post('/link', { group, device: asked.device, ...(visit && { visit: Number(visit) }) }).then((a) => ({ type: 'made', a, asked, why: a.https ?? a.client })) },
-  step: (s, m) => ({ guest: () => go(s, {}, { guest: true }), typed: () => go(s, {}, { visit: m.value }),
-    make: () => (s.at.link === 'making' ? no(s, 'a link is being made, and is answered first') : go(s, { link: 'making' }, {}, { run: 'make', asked: m, visit: m.guest && s.visit, failed: 'refused' })),
-    made: () => go(s, { link: 'made' }, { shown: m }), refused: () => go(s, { link: 'refused' }, { why: m.why }) })[m.type]?.() ?? no(s, `a link takes no ${m.type}`) });
-const Copy = (props) => ((s, send) => drawn({ ...s, said: s.said.slice(-1) }, send, props))(...useMachine(() => machine('COPY', COPY, { at: { copy: 'idle' }, said: [] })));
-const WORDS = { copy: 'Copy the link', copied: ' Copied.', unwritten: ' Select it above to copy it.' }, LAST = ' It works for a day, while this computer is on. A new link stops this one letting anyone new in; everyone it let in stays. ';
+const LINK = (group) => ({
+  states: { link: ['none', 'making', 'made', 'refused'] },
+  io: {
+    make: ({ asked, visit }) =>
+      post('/link', { group, device: asked.device, ...(visit && { visit: Number(visit) }) }).then(
+        (a) => ({ type: 'made', a, asked, why: a.https ?? a.client }),
+      ),
+  },
+  step: (s, m) =>
+    ({
+      guest: () => go(s, {}, { guest: true }),
+      typed: () => go(s, {}, { visit: m.value }),
+      make: () =>
+        s.at.link === 'making'
+          ? no(s, 'a link is being made, and is answered first')
+          : go(
+              s,
+              { link: 'making' },
+              {},
+              { run: 'make', asked: m, visit: m.guest && s.visit, failed: 'refused' },
+            ),
+      made: () => go(s, { link: 'made' }, { shown: m }),
+      refused: () => go(s, { link: 'refused' }, { why: m.why }),
+    })[m.type]?.() ?? no(s, `a link takes no ${m.type}`),
+});
+const Copy = (props) =>
+  ((s, send) => drawn({ ...s, said: s.said.slice(-1) }, send, props))(
+    ...useMachine(() => machine('COPY', COPY, { at: { copy: 'idle' }, said: [] })),
+  );
+const WORDS = {
+    copy: 'Copy the link',
+    copied: ' Copied.',
+    unwritten: ' Select it above to copy it.',
+  },
+  LAST =
+    ' It works for a day, while this computer is on. A new link stops this one letting anyone new in; everyone it let in stays. ';
 // The link made, in the words of whom it is for (home.js@19b63b2b:134, :139), kept while
 // the next is made, as v1 keeps it until the answer (home.js@19b63b2b:135).
 const said = ({ a, asked }, name, at = a.https ?? a.client) => [
-  ...(asked.guest ? ['Send this link to your guest, in any chat: ', html`<code>${at}</code>`, ` They open it in a browser and give their name. For ${asked.hours} from then they can open what you lend, and everyone in ${name} sees they are your guest. It lets one guest in, once, within a day, while this computer is on. `]
-    : [asked.device ? 'Open this link on your other computer or phone; it joins as you, so send it to nobody else: ' : 'Send this link to the person you are inviting: ', html`<code>${at}</code>`, a.https ? ' It opens in a browser, which says how to join from there.' : ' They join with svrngs join and this link.', LAST]),
-  html`<${Copy} key=${at} text=${at} words=${WORDS} beside=${true} />`];
+  ...(asked.guest
+    ? [
+        'Send this link to your guest, in any chat: ',
+        html`<code>${at}</code>`,
+        ` They open it in a browser and give their name. For ${asked.hours} from then they can open what you lend, and everyone in ${name} sees they are your guest. It lets one guest in, once, within a day, while this computer is on. `,
+      ]
+    : [
+        asked.device
+          ? 'Open this link on your other computer or phone; it joins as you, so send it to nobody else: '
+          : 'Send this link to the person you are inviting: ',
+        html`<code>${at}</code>`,
+        a.https
+          ? ' It opens in a browser, which says how to join from there.'
+          : ' They join with svrngs join and this link.',
+        LAST,
+      ]),
+  html`<${Copy} key=${at} text=${at} words=${WORDS} beside=${true} />`,
+];
 
 function Links({ g }) {
-  const [s, send] = useMachine(() => machine('LINK', LINK(g.id), { at: { link: 'none' }, visit: '172800' })), name = g.name ?? 'this group';
-  const act = (words, on) => html`<${Act} words=${words} doing=${{ state: s.at.link === 'making' ? 'busy' : 'idle' }} on=${{ type: 'make', ...on }} send=${send} />`;
+  const [s, send] = useMachine(() =>
+      machine('LINK', LINK(g.id), { at: { link: 'none' }, visit: '172800' }),
+    ),
+    name = g.name ?? 'this group';
+  const act = (words, on) =>
+    html`<${Act} words=${words} doing=${{ state: s.at.link === 'making' ? 'busy' : 'idle' }} on=${{ type: 'make', ...on }} send=${send} />`;
   return html`<p>${act(`Invite someone to ${name}`, { device: false })}${act('Add your phone or another computer', { device: true })}${s.guest ? html`<${Field} name="visit" words="For how long, from when they open the link: " value=${s.visit} options=${[48, 24, 6].map((h) => [h * 3600, `${h} hours`])} send=${send} />${act('Make a link for your guest', { device: false, guest: true, hours: `${s.visit / 3600} hours` })}` : html`<${Act} words="Have a guest" on=${{ type: 'guest' }} send=${send} />`}</p><p class="link">${s.at.link === 'refused' ? s.why : s.shown && said(s.shown, name)}</p>`;
 }
 // Drawn once the group's people are read, as v1 draws it (home.js@19b63b2b:121-139).

@@ -10,8 +10,10 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 
 const ROOT = new URL('../../..', import.meta.url).pathname;
-const dir = `${ROOT}target/before`, at = `${dir}/question-${process.pid}.js`;
+const dir = `${ROOT}target/before`,
+  at = `${dir}/question-${process.pid}.js`;
 mkdirSync(dir, { recursive: true });
-export const before = (file) => execFileSync('git', ['show', `19b63b2b:${file}`], { cwd: ROOT, encoding: 'utf8' });
+export const before = (file) =>
+  execFileSync('git', ['show', `19b63b2b:${file}`], { cwd: ROOT, encoding: 'utf8' });
 writeFileSync(at, before('crates/svrngs-node/src/home/question.js'));
 export const v1 = await import(`file://${at}`);

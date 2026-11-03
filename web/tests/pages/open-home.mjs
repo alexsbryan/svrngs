@@ -22,7 +22,13 @@ try {
   // answered (GROUP's trace; v1 traces nothing, so is read at its address).
   const read = async () => {
     await page.locator('#home p.address').waitFor({ timeout: 30_000 });
-    await page.waitForFunction(() => !window.__lines || window.__lines.some((l) => l.startsWith('GROUP: answered') && l.includes('(lends')), null, { timeout: 30_000 });
+    await page.waitForFunction(
+      () =>
+        !window.__lines ||
+        window.__lines.some((l) => l.startsWith('GROUP: answered') && l.includes('(lends')),
+      null,
+      { timeout: 30_000 },
+    );
     const seen = { said: await page.locator('#home > p').allTextContents(), sent, url: page.url() };
     sent = [];
     return seen;
@@ -31,7 +37,14 @@ try {
   const first = await read();
   await page.reload();
   const again = await read();
-  console.log(JSON.stringify({ first, again, lines: await page.evaluate(() => window.__lines ?? null), logs }));
+  console.log(
+    JSON.stringify({
+      first,
+      again,
+      lines: await page.evaluate(() => window.__lines ?? null),
+      logs,
+    }),
+  );
 } catch (e) {
   console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);
   process.exitCode = 1;

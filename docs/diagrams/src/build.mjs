@@ -15,15 +15,24 @@ fs.mkdirSync(path.join(OUT, 'guide'), { recursive: true });
 // Writes a figure, its legend along its foot.
 const draw = (name, W, H, b, title, desc) => {
   const s = k.svg(W, H, b + k.foot(W, H), title, desc);
-  fs.writeFileSync(path.join(OUT, name), s); console.log('wrote', name, (s.length / 1024).toFixed(1), 'KB');
+  fs.writeFileSync(path.join(OUT, name), s);
+  console.log('wrote', name, (s.length / 1024).toFixed(1), 'KB');
 };
 
 // ============================================================================
 // 1 — a group, kept on its own computers, with no center
 // ============================================================================
 function group() {
-  const W = 1200, H = 700; let b = '';
-  b += k.band(W, 'Your group’s things, on your group’s computers.', 'No accounts. No passwords. No landlord.', 1, 3);
+  const W = 1200,
+    H = 700;
+  let b = '';
+  b += k.band(
+    W,
+    'Your group’s things, on your group’s computers.',
+    'No accounts. No passwords. No landlord.',
+    1,
+    3,
+  );
 
   // A — the link
   b += k.heading(40, 180, 340, 1, 'A link in your chat');
@@ -43,7 +52,12 @@ function group() {
 
   // B — the computers
   b += k.heading(420, 180, 400, 2, 'Kept on your computers');
-  const at = [[450, 210, 'ana'], [700, 210, 'ben'], [450, 360, 'cy'], [700, 360, 'dee, always on']];
+  const at = [
+    [450, 210, 'ana'],
+    [700, 210, 'ben'],
+    [450, 360, 'cy'],
+    [700, 360, 'dee, always on'],
+  ];
   const mid = ([x, y]) => [x + 45, y + 27];
   for (let i = 0; i < at.length; i++)
     for (let j = i + 1; j < at.length; j++) {
@@ -67,35 +81,72 @@ function group() {
 
   // C — the rings
   b += k.heading(860, 180, 300, 3, 'No center but you');
-  const cx = 1010, cy = 366;
+  const cx = 1010,
+    cy = 366;
   for (const r of [150, 118, 86, 54]) b += k.circle(cx, cy, r, { fill: C.paper, sw: 2 });
   b += k.circle(cx, cy, 26, { fill: C.people, sw: 3 });
   b += k.text(cx, cy + 6, 'you', { size: 16, weight: 700, anchor: 'middle' });
-  for (const [r, name] of [[54, 'house'], [86, 'friends'], [118, 'the party'], [150, 'the town']])
+  for (const [r, name] of [
+    [54, 'house'],
+    [86, 'friends'],
+    [118, 'the party'],
+    [150, 'the town'],
+  ])
     b += k.text(cx, cy - r + 19, name, { size: 13, anchor: 'middle' });
-  const ang = 0.62, two = [cx + 86 * Math.cos(ang), cy + 86 * Math.sin(ang)];
-  b += k.arrow(cx + 22 * Math.cos(ang), cy + 22 * Math.sin(ang), two[0] - 9 * Math.cos(ang), two[1] - 9 * Math.sin(ang), { sw: 2.5, head: 10 });
+  const ang = 0.62,
+    two = [cx + 86 * Math.cos(ang), cy + 86 * Math.sin(ang)];
+  b += k.arrow(
+    cx + 22 * Math.cos(ang),
+    cy + 22 * Math.sin(ang),
+    two[0] - 9 * Math.cos(ang),
+    two[1] - 9 * Math.sin(ang),
+    { sw: 2.5, head: 10 },
+  );
   b += k.circle(two[0], two[1], 8, { fill: C.people, sw: 2.5 });
-  b += k.arrow(two[0] + 9 * Math.cos(ang), two[1] + 9 * Math.sin(ang), cx + 168 * Math.cos(ang), cy + 168 * Math.sin(ang), { sw: 2.5, head: 10, dash: '6 4' });
+  b += k.arrow(
+    two[0] + 9 * Math.cos(ang),
+    two[1] + 9 * Math.sin(ang),
+    cx + 168 * Math.cos(ang),
+    cy + 168 * Math.sin(ang),
+    { sw: 2.5, head: 10, dash: '6 4' },
+  );
   b += k.para(860, 556, 'Reach grows only through someone who says yes.', { w: 300, size: 17 });
   b += k.text(860, 612, 'No profile. No feed. Nobody ranked.', { size: 17, weight: 700 });
 
-  draw('01-group.svg', W, H, b, 'svrngs: your group’s things, on your group’s computers',
-    'A link in a chat lets a person in from a phone or a computer in seconds. Every member’s computer holds the whole record, with no server; a relay carries sealed bytes for phones. You stand at the center of your own rings, and nothing ranks a person.');
+  draw(
+    '01-group.svg',
+    W,
+    H,
+    b,
+    'svrngs: your group’s things, on your group’s computers',
+    'A link in a chat lets a person in from a phone or a computer in seconds. Every member’s computer holds the whole record, with no server; a relay carries sealed bytes for phones. You stand at the center of your own rings, and nothing ranks a person.',
+  );
 }
 
 // ============================================================================
 // 2 — anything on localhost, shared through the door
 // ============================================================================
 function door() {
-  const W = 1200, H = 720; let b = '';
-  b += k.band(W, 'If it runs on localhost, your friends can use it.', 'No login. No SDK. No port opened.', 2, 3);
+  const W = 1200,
+    H = 720;
+  let b = '';
+  b += k.band(
+    W,
+    'If it runs on localhost, your friends can use it.',
+    'No login. No SDK. No port opened.',
+    2,
+    3,
+  );
 
   // The lender's computer
   b += k.owned(40, 172, 500, 330, 'Ana’s computer');
   b += k.rect(60, 226, 184, 140, { fill: C.app });
   b += k.text(72, 252, 'any app on a port', { size: 16, weight: 700 });
-  [['Jellyfin', ':8096'], ['a model', ':8080'], ['Minecraft', ':25565']].forEach(([n, port], i) => {
+  [
+    ['Jellyfin', ':8096'],
+    ['a model', ':8080'],
+    ['Minecraft', ':25565'],
+  ].forEach(([n, port], i) => {
     b += k.text(72, 284 + i * 26, n, { size: 15 });
     b += k.text(234, 284 + i * 26, port, { size: 13, mono: true, anchor: 'end' });
   });
@@ -106,12 +157,15 @@ function door() {
 
   b += k.door(268, 214, 252, 202);
   b += k.text(286, 246, 'the door', { size: 22, weight: 900 });
-  [[true, 'verifies who’s asking'], [true, 'keeps the app’s secret'], [false, 'shuts out anyone removed']]
-    .forEach(([ok, s], i) => {
-      const y = 290 + i * 44;
-      b += ok ? k.tick(294, y - 5, 7) : k.cross(294, y - 5, 6, C.no);
-      b += k.para(312, y, s, { w: 196, size: 16 });
-    });
+  [
+    [true, 'verifies who’s asking'],
+    [true, 'keeps the app’s secret'],
+    [false, 'shuts out anyone removed'],
+  ].forEach(([ok, s], i) => {
+    const y = 290 + i * 44;
+    b += ok ? k.tick(294, y - 5, 7) : k.cross(294, y - 5, 6, C.no);
+    b += k.para(312, y, s, { w: 196, size: 16 });
+  });
 
   // The wire
   b += k.rect(540, 326, 150, 28, { fill: C.wire });
@@ -134,25 +188,41 @@ function door() {
   // What an app gets
   b += k.line(24, 536, W - 24, 536, { sw: 3 });
   b += k.text(40, 568, 'Your app gets three things', { size: 22, weight: 900 });
-  [['Who’s asking', 'X-Svrngs-Key'], ['A shared record', '/svrngs/acts'], ['Every member’s computer', 'lent, or carried by the group']]
-    .forEach(([t, m], i) => {
-      const x = 40 + i * 380;
-      b += k.rect(x, 586, 360, 64, { fill: C.app });
-      b += k.text(x + 14, 612, t, { size: 18, weight: 700 });
-      b += k.text(x + 14, 636, m, { size: 13, mono: true });
-    });
+  [
+    ['Who’s asking', 'X-Svrngs-Key'],
+    ['A shared record', '/svrngs/acts'],
+    ['Every member’s computer', 'lent, or carried by the group'],
+  ].forEach(([t, m], i) => {
+    const x = 40 + i * 380;
+    b += k.rect(x, 586, 360, 64, { fill: C.app });
+    b += k.text(x + 14, 612, t, { size: 18, weight: 700 });
+    b += k.text(x + 14, 636, m, { size: 13, mono: true });
+  });
 
-  draw('02-door.svg', W, H, b, 'svrngs: if it runs on localhost, your friends can use it',
-    'Ana shares an app on a port. Her computer’s door says who is asking, keeps the app’s secret in, and shuts out anyone removed. Ben opens it in his browser or plays at 127.0.0.1; Cy opens it on a phone. An app gets three things: who is asking, a shared record, and every member’s computer.');
+  draw(
+    '02-door.svg',
+    W,
+    H,
+    b,
+    'svrngs: if it runs on localhost, your friends can use it',
+    'Ana shares an app on a port. Her computer’s door says who is asking, keeps the app’s secret in, and shuts out anyone removed. Ben opens it in his browser or plays at 127.0.0.1; Cy opens it on a phone. An app gets three things: who is asking, a shared record, and every member’s computer.',
+  );
 }
 
 // ============================================================================
 // 3 — the record, the shape of the code, and every piece we run replaceable
 // ============================================================================
 function record() {
-  const W = 1200, H = 1000; let b = '';
-  b += k.band(W, 'Same acts, same state.',
-    'Small enough to read in an afternoon. Batteries included, every one replaceable.', 3, 3);
+  const W = 1200,
+    H = 1000;
+  let b = '';
+  b += k.band(
+    W,
+    'Same acts, same state.',
+    'Small enough to read in an afternoon. Batteries included, every one replaceable.',
+    3,
+    3,
+  );
 
   // 1 — the record
   b += k.heading(40, 180, 1120, 1, 'Every copy folds the same signed acts');
@@ -163,11 +233,15 @@ function record() {
 
   b += k.rect(200, 214, 220, 162, { fill: C.record });
   b += k.text(214, 238, 'an act', { size: 16, weight: 700 });
-  [['actor', 'a key'], ['prev', 'its last act'], ['body', 'expenses/spend'], ['sig', 'over the hash']]
-    .forEach(([f, v], i) => {
-      b += k.text(214, 266 + i * 23, f, { size: 13, mono: true, weight: 700 });
-      b += k.text(270, 266 + i * 23, v, { size: 13, mono: true });
-    });
+  [
+    ['actor', 'a key'],
+    ['prev', 'its last act'],
+    ['body', 'expenses/spend'],
+    ['sig', 'over the hash'],
+  ].forEach(([f, v], i) => {
+    b += k.text(214, 266 + i * 23, f, { size: 13, mono: true, weight: 700 });
+    b += k.text(270, 266 + i * 23, v, { size: 13, mono: true });
+  });
   b += k.arrow(420, 296, 448, 296, { sw: 2.5, head: 10 });
 
   const sq = (x, y) => k.rect(x, y, 24, 24, { fill: C.record, sw: 2 });
@@ -197,14 +271,24 @@ function record() {
 
   // 2 — the shape of the code
   b += k.heading(40, 526, 540, 2, 'Ownership is a tree');
-  [['svrngs', 'the command'], ['svrngs-node', 'the I/O: sync, the door'], ['svrngs-runtime', 'one writer per journal'],
-    ['svrngs-core', 'pure: no files, clock or network', C.record]].forEach(([n, d, fill = C.paper], i) => {
-    const x = 40 + i * 16, yy = 546 + i * 34, w = 540 - i * 32, h = 170 - i * 42;
+  [
+    ['svrngs', 'the command'],
+    ['svrngs-node', 'the I/O: sync, the door'],
+    ['svrngs-runtime', 'one writer per journal'],
+    ['svrngs-core', 'pure: no files, clock or network', C.record],
+  ].forEach(([n, d, fill = C.paper], i) => {
+    const x = 40 + i * 16,
+      yy = 546 + i * 34,
+      w = 540 - i * 32,
+      h = 170 - i * 42;
     b += k.rect(x, yy, w, h, { fill, sw: 3 });
     b += k.text(x + 12, yy + 24, n, { size: 15, mono: true, weight: 700 });
     b += k.text(x + 12 + k.width(n, 15, true) + 12, yy + 24, d, { size: 15 });
   });
-  b += k.text(40, 742, 'svrngs-web: the phone’s page, in wasm, on the same core', { size: 12, mono: true });
+  b += k.text(40, 742, 'svrngs-web: the phone’s page, in wasm, on the same core', {
+    size: 12,
+    mono: true,
+  });
 
   // 3 — what we run, and what you can run instead
   b += k.heading(620, 526, 540, 3, 'Ours by default, or yours');
@@ -213,7 +297,12 @@ function record() {
     ['Relay', 'n0’s, for now', 'your own', 'svrngs relay'],
     ['Install', 'our builds, checked', 'build it', 'cargo build'],
   ];
-  for (const [x, head] of [[620, 'piece'], [764, 'ours'], [950, 'or yours']]) b += k.text(x, 566, head, { size: 14, weight: 700 });
+  for (const [x, head] of [
+    [620, 'piece'],
+    [764, 'ours'],
+    [950, 'or yours'],
+  ])
+    b += k.text(x, 566, head, { size: 14, weight: 700 });
   b += k.line(620, 578, 1160, 578, { sw: 3 });
   rows.forEach(([piece, ours, yours, flag], i) => {
     const y = 578 + i * 50;
@@ -228,17 +317,26 @@ function record() {
 
   // 4 — extend it
   b += k.heading(40, 812, 540, 4, 'Extend it with an app');
-  [['an app on a port', 'Jellyfin, a model'], ['a shared folder', 'apps/<kind>/'], ['a game', 'any UDP or TCP port']]
-    .forEach(([t, m], i) => {
-      const x = 40 + i * 185;
-      b += k.rect(x, 832, 170, 70, { fill: C.app });
-      b += k.para(x + 12, 856, t, { w: 150, size: 15, weight: 700 });
-      b += k.text(x + 12, 890, m, { size: 11.5, mono: true });
-    });
+  [
+    ['an app on a port', 'Jellyfin, a model'],
+    ['a shared folder', 'apps/<kind>/'],
+    ['a game', 'any UDP or TCP port'],
+  ].forEach(([t, m], i) => {
+    const x = 40 + i * 185;
+    b += k.rect(x, 832, 170, 70, { fill: C.app });
+    b += k.para(x + 12, 856, t, { w: 150, size: 15, weight: 700 });
+    b += k.text(x + 12, 890, m, { size: 11.5, mono: true });
+  });
   b += k.lit(620, 866, 'AGPL. Fork it; that’s what it’s for.', 20);
 
-  draw('03-record.svg', W, H, b, 'svrngs: same acts, same state',
-    'Each device signs its own acts, linked like git. Admission puts them in one order and refuses by name; every copy folds them to the same state. The code nests from a pure core out to the command. We run the phones’ page, a relay and the builds, and each can be your own. You extend it with an app: one on a port, a folder the group keeps, or a game.');
+  draw(
+    '03-record.svg',
+    W,
+    H,
+    b,
+    'svrngs: same acts, same state',
+    'Each device signs its own acts, linked like git. Admission puts them in one order and refuses by name; every copy folds them to the same state. The code nests from a pure core out to the command. We run the phones’ page, a relay and the builds, and each can be your own. You extend it with an app: one on a port, a folder the group keeps, or a game.',
+  );
 }
 
 group();

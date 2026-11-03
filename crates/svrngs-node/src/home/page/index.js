@@ -21,17 +21,41 @@ export const Reach = ({ app, words, said = 'yes' }) =>
 // A lend reading friends' lends opens by the form posting its yes, any
 // other through `/to` (home.rs), which gives its origin a code of its own
 // that becomes its session there (give-session; home.js@19b63b2b:58-61).
-const opener = (l) => (l.reads?.length ? html`<${Reach} app=${label(l)} words=${named(l)} />` : html`<a href=${`/to?${new URLSearchParams({ lend: label(l) })}`} target="_blank">${named(l)}</a>`);
-const UNLISTED = { unanswered: 'did not answer, so what they lend is not listed', unheard: 'has not heard of yours yet, so what they lend is not listed yet', refused: 'answered without saying what they lend, so it is not listed', older: 'runs an older svrngs, so what they lend is not listed' };
+const opener = (l) =>
+  l.reads?.length
+    ? html`<${Reach} app=${label(l)} words=${named(l)} />`
+    : html`<a href=${`/to?${new URLSearchParams({ lend: label(l) })}`} target="_blank">${named(l)}</a>`;
+const UNLISTED = {
+  unanswered: 'did not answer, so what they lend is not listed',
+  unheard: 'has not heard of yours yet, so what they lend is not listed yet',
+  refused: 'answered without saying what they lend, so it is not listed',
+  older: 'runs an older svrngs, so what they lend is not listed',
+};
 
 // Each lend, whose by the key its computer joined with (question.js
 // `apart`, never written into the read), then each computer unlisted.
 const rows = ({ g, s, send, home, me }, L = s.lends, people = s.people?.people ?? []) => {
-  const lent = L.lent.map((l) => ({ ...l, called: called(people, people.find((r) => r.key === l.key)?.person_key) }));
-  const each = once(lent).map((l) => ((opened, now) => html`<tr key=${label(l)}>${l.raw ? html`<td>${named(l)}</td>` : html`<td>${opener(l)}${` ${agreed(l, L.shelf, g)}`}</td>`}<td>${owner(l, g)}</td><td>${l.raw ? (l.key === me ? 'A port this computer lends.' : html`<${cell} l=${l} g=${g} s=${s} send=${send} home=${home} />`) : `${opened}.`}</td><td>${now}</td></tr>`)(...opens(l, 'In a tab')));
-  const said = Object.entries(UNLISTED).flatMap(([k, why]) => L[k].map((p) => `${called(people, p.person_key) ?? p.person}'s computer ${why}.`));
-  return [...each, ...[...said, ...(each.length || said.length ? [] : ['Nobody lends anything here yet.'])].map((w) => html`<${Row} cells=${[w]} span=${4} />`)];
+  const lent = L.lent.map((l) => ({
+    ...l,
+    called: called(people, people.find((r) => r.key === l.key)?.person_key),
+  }));
+  const each = once(lent).map((l) =>
+    ((opened, now) =>
+      html`<tr key=${label(l)}>${l.raw ? html`<td>${named(l)}</td>` : html`<td>${opener(l)}${` ${agreed(l, L.shelf, g)}`}</td>`}<td>${owner(l, g)}</td><td>${l.raw ? (l.key === me ? 'A port this computer lends.' : html`<${cell} l=${l} g=${g} s=${s} send=${send} home=${home} />`) : `${opened}.`}</td><td>${now}</td></tr>`)(
+      ...opens(l, 'In a tab'),
+    ),
+  );
+  const said = Object.entries(UNLISTED).flatMap(([k, why]) =>
+    L[k].map((p) => `${called(people, p.person_key) ?? p.person}'s computer ${why}.`),
+  );
+  return [
+    ...each,
+    ...[...said, ...(each.length || said.length ? [] : ['Nobody lends anything here yet.'])].map(
+      (w) => html`<${Row} cells=${[w]} span=${4} />`,
+    ),
+  ];
 };
 export const view = {
-  index: (props) => html`<table class="index"><thead><${Row} tag="th" cells=${['What', 'Whose', 'How it opens', 'Now']} /></thead><tbody>${props.s.lends ? rows(props) : html`<${Row} cells=${['Asking each computer in the group what it lends…']} />`}</tbody></table>`,
+  index: (props) =>
+    html`<table class="index"><thead><${Row} tag="th" cells=${['What', 'Whose', 'How it opens', 'Now']} /></thead><tbody>${props.s.lends ? rows(props) : html`<${Row} cells=${['Asking each computer in the group what it lends…']} />`}</tbody></table>`,
 };

@@ -29,9 +29,11 @@ const DAY = 86400;
 
 let n = 0;
 const act = (by, op, ts = 1000) => ({ id: `act-${++n}`, ts, by, op });
-const paid = (by, cents, what = 'pizza', ts) => act(by, { kind: EXPENSE, amount_cents: cents, description: what }, ts);
+const paid = (by, cents, what = 'pizza', ts) =>
+  act(by, { kind: EXPENSE, amount_cents: cents, description: what }, ts);
 const share = (by, expense, ts) => act(by, { kind: SHARE, expense }, ts);
-const named = (by, cents, people, what = 'pizza') => act(by, { kind: EXPENSE, amount_cents: cents, description: what, named: people });
+const named = (by, cents, people, what = 'pizza') =>
+  act(by, { kind: EXPENSE, amount_cents: cents, description: what, named: people });
 const notIn = (by, expense) => act(by, { kind: NOT_IN, expense });
 const settle = (by, to, cents, ts) => act(by, { kind: SETTLE, to, amount_cents: cents }, ts);
 const fold = (acts) => acts.reduce(reduce, init());
@@ -85,7 +87,10 @@ test('a settlement recorded twice on one day is counted once, and on another day
   const base = [pizza, share(AMA, pizza.id)];
   const once = fold([...base, settle(AMA, SAM, 3000, 5000)]);
   assert.deepEqual(once.balances, { [SAM]: 0, [AMA]: 0 });
-  assert.deepEqual(fold([...base, settle(AMA, SAM, 3000, 5000), settle(AMA, SAM, 3000, 6000)]).balances, once.balances);
+  assert.deepEqual(
+    fold([...base, settle(AMA, SAM, 3000, 5000), settle(AMA, SAM, 3000, 6000)]).balances,
+    once.balances,
+  );
   const later = fold([...base, settle(AMA, SAM, 1000, 5000), settle(AMA, SAM, 1000, 5000 + DAY)]);
   assert.deepEqual(later.balances, { [SAM]: 1000, [AMA]: -1000 });
 });
@@ -131,7 +136,8 @@ test('amounts are read the way people type them', () => {
   assert.equal(parseCents('$12.50'), 1250);
   assert.equal(parseCents('7,5'), 750);
   assert.equal(parseCents(' 0.01 '), 1);
-  for (const bad of ['', '0', 'sixty', '1.234', '-5', '1e3', undefined]) assert.equal(parseCents(bad), null, bad);
+  for (const bad of ['', '0', 'sixty', '1.234', '-5', '1e3', undefined])
+    assert.equal(parseCents(bad), null, bad);
 });
 
 test('money renders the way a person reads it', () => {
@@ -151,8 +157,16 @@ test('who owes whom settles every balance in a few payments', () => {
   assert.deepEqual(Object.values(balances), [0, 0, 0, 0]);
 });
 
-test('the record\'s log: `by` is whom an app wrote for, else the computer\'s person; voided and empty ops are not acts', () => {
-  const op = (id, extra) => ({ id, actor: 'k1', person: 'sam', seq: 0, ts_unix: 7, voided: false, ...extra });
+test("the record's log: `by` is whom an app wrote for, else the computer's person; voided and empty ops are not acts", () => {
+  const op = (id, extra) => ({
+    id,
+    actor: 'k1',
+    person: 'sam',
+    seq: 0,
+    ts_unix: 7,
+    voided: false,
+    ...extra,
+  });
   const pizza = { kind: EXPENSE, amount_cents: 6000, description: 'pizza' };
   const log = {
     ops: [
@@ -180,99 +194,199 @@ test('which computer wrote it is kept: `via` is its person when it wrote for ano
       op('o2', { person: 'ama', on_behalf_of: 'ama', payload: { kind: SHARE, expense: 'o1' } }),
       op('o3', { person: 'cy', payload: { kind: SHARE, expense: 'o1' } }),
       // A correction's replacement, through another's computer: kept with its own `via`.
-      op('o4', { person: 'cy', on_behalf_of: 'ama', corrects: 'o9', payload: { kind: SETTLE, to: 'bo', amount_cents: 100 } }),
+      op('o4', {
+        person: 'cy',
+        on_behalf_of: 'ama',
+        corrects: 'o9',
+        payload: { kind: SETTLE, to: 'bo', amount_cents: 100 },
+      }),
     ],
   };
   const acts = actsOf(log);
-  assert.deepEqual(acts.map((a) => [a.id, a.by, a.via]), [['o1', 'bo', 'cy'], ['o2', 'ama', null], ['o3', 'cy', null], ['o4', 'ama', 'cy']]);
+  assert.deepEqual(
+    acts.map((a) => [a.id, a.by, a.via]),
+    [
+      ['o1', 'bo', 'cy'],
+      ['o2', 'ama', null],
+      ['o3', 'cy', null],
+      ['o4', 'ama', 'cy'],
+    ],
+  );
   const state = fold(acts);
   const untold = fold(acts.map(({ via, ...a }) => a));
-  assert.deepEqual([state.balances, state.counted], [untold.balances, untold.counted], 'via moves no money');
-  assert.deepEqual(state.expenses.o1.vias, { bo: 'cy' }, "the expense keeps whose computer wrote each person's part");
+  assert.deepEqual(
+    [state.balances, state.counted],
+    [untold.balances, untold.counted],
+    'via moves no money',
+  );
+  assert.deepEqual(
+    state.expenses.o1.vias,
+    { bo: 'cy' },
+    "the expense keeps whose computer wrote each person's part",
+  );
 });
 
 // The record voids an act whoever corrects it (svrngs-core admit.rs, `voided`),
 // so Money, as Events does (apps/events/events.js, `voids`), reads the voided
 // ones too and judges each correction by its author: Cy cannot erase what Sam
 // paid, or replace it with something smaller, by correcting it.
-test('a correction counts only from its author: another member\'s leaves the expense counted, and is shown as not theirs', () => {
+test("a correction counts only from its author: another member's leaves the expense counted, and is shown as not theirs", () => {
   const op = (id, extra) => ({ id, actor: 'k1', seq: 0, ts_unix: 7, voided: false, ...extra });
   const pizza = { kind: EXPENSE, amount_cents: 6000, description: 'pizza' };
   const log = {
     ops: [
       op('o1', { person: 'sam', payload: pizza, voided: true }),
       op('o2', { person: 'ama', payload: { kind: SHARE, expense: 'o1' } }),
-      op('o3', { person: 'cy', corrects: 'o1', payload: { kind: EXPENSE, amount_cents: 1, description: 'pizza' } }),
+      op('o3', {
+        person: 'cy',
+        corrects: 'o1',
+        payload: { kind: EXPENSE, amount_cents: 1, description: 'pizza' },
+      }),
       op('o4', { person: 'cy', corrects: 'o2' }),
     ],
   };
   const state = fold(actsOf(log));
-  assert.deepEqual(state.balances, { sam: 3000, ama: -3000 }, "Sam's pizza and Ama's share still count");
+  assert.deepEqual(
+    state.balances,
+    { sam: 3000, ama: -3000 },
+    "Sam's pizza and Ama's share still count",
+  );
   assert.deepEqual(Object.keys(state.expenses), ['o1']);
-  assert.deepEqual(state.gaps.map((g) => [g.code, g.id]), [['not_theirs', 'o3'], ['not_theirs', 'o4']]);
+  assert.deepEqual(
+    state.gaps.map((g) => [g.code, g.id]),
+    [
+      ['not_theirs', 'o3'],
+      ['not_theirs', 'o4'],
+    ],
+  );
   assert.match(state.gaps[0].message, /cy tried to change sam’s entry, which only sam can change/);
 });
 
 // Two people of one name are two authors (capability-keys; svrn-docs
 // rings/current/WHAT_CAN_ACT_AS_YOU.md §7.4): the record says each op's
 // writer by their first key, `person_key`, beside the name two may share.
-test('a correction from another person of the same name counts for nothing; one from the author\'s other device counts', () => {
+test("a correction from another person of the same name counts for nothing; one from the author's other device counts", () => {
   const op = (id, extra) => ({ id, actor: 'k1', seq: 0, ts_unix: 7, voided: false, ...extra });
   const pizza = (cents) => ({ kind: EXPENSE, amount_cents: cents, description: 'pizza' });
   const log = {
     ops: [
       op('o1', { person: 'sam', person_key: 'p1', payload: pizza(6000), voided: true }),
       op('o2', { person: 'sam', person_key: 'p2', actor: 'k2', corrects: 'o1', payload: pizza(1) }),
-      op('o3', { person: 'sam', person_key: 'p1', actor: 'k3', corrects: 'o1', payload: pizza(4000) }),
+      op('o3', {
+        person: 'sam',
+        person_key: 'p1',
+        actor: 'k3',
+        corrects: 'o1',
+        payload: pizza(4000),
+      }),
     ],
   };
   const state = fold(actsOf(log));
-  assert.deepEqual(state.gaps.map((g) => [g.code, g.id]), [['not_theirs', 'o2']]);
-  assert.deepEqual(Object.entries(state.expenses).map(([id, e]) => [id, e.amount_cents]), [['o3', 4000]], "the first Sam's own change, from her phone, is hers");
+  assert.deepEqual(
+    state.gaps.map((g) => [g.code, g.id]),
+    [['not_theirs', 'o2']],
+  );
+  assert.deepEqual(
+    Object.entries(state.expenses).map(([id, e]) => [id, e.amount_cents]),
+    [['o3', 4000]],
+    "the first Sam's own change, from her phone, is hers",
+  );
 });
 
 // The book keeps each person by their first key (keys-names): two people of
 // one name are two balances, and one person's computer, phone and old
 // entries one.
-test('two people of one name keep two balances; one person\'s devices and the old entries a computer wrote for them keep one', () => {
+test("two people of one name keep two balances; one person's devices and the old entries a computer wrote for them keep one", () => {
   const op = (id, extra) => ({ id, actor: 'k1', seq: 0, ts_unix: 7, voided: false, ...extra });
   const log = {
     ops: [
-      op('o1', { person: 'sam', person_key: 'p1', payload: { kind: EXPENSE, amount_cents: 6000, description: 'pizza' } }),
-      op('o2', { person: 'sam', person_key: 'p2', actor: 'k2', payload: { kind: SHARE, expense: 'o1' } }),
+      op('o1', {
+        person: 'sam',
+        person_key: 'p1',
+        payload: { kind: EXPENSE, amount_cents: 6000, description: 'pizza' },
+      }),
+      op('o2', {
+        person: 'sam',
+        person_key: 'p2',
+        actor: 'k2',
+        payload: { kind: SHARE, expense: 'o1' },
+      }),
       // Cy's computer wrote bo's share, as a phone's was before capability-signed.
-      op('o3', { person: 'cy', person_key: 'pc', actor: 'k3', on_behalf_of: 'bo', on_behalf_of_key: 'pb', payload: { kind: SHARE, expense: 'o1' } }),
-      op('o4', { person: 'bo', person_key: 'pb', actor: 'k4', payload: { kind: EXPENSE, amount_cents: 300, description: 'cups' } }),
+      op('o3', {
+        person: 'cy',
+        person_key: 'pc',
+        actor: 'k3',
+        on_behalf_of: 'bo',
+        on_behalf_of_key: 'pb',
+        payload: { kind: SHARE, expense: 'o1' },
+      }),
+      op('o4', {
+        person: 'bo',
+        person_key: 'pb',
+        actor: 'k4',
+        payload: { kind: EXPENSE, amount_cents: 300, description: 'cups' },
+      }),
     ],
   };
   const state = fold(actsOf(log));
-  assert.deepEqual(state.balances, { p1: 4000, p2: -2000, pb: -2000 }, 'the second Sam owes the first; Bo is one person, his cups his own');
+  assert.deepEqual(
+    state.balances,
+    { p1: 4000, p2: -2000, pb: -2000 },
+    'the second Sam owes the first; Bo is one person, his cups his own',
+  );
   assert.deepEqual(state.names, { p1: 'sam', p2: 'sam', pb: 'bo' });
   assert.equal(sum(state), 0);
 });
 
-test('a payment names whom it pays by key; an older Money\'s, by name, pays the one person of that name, and is not counted where two have it', () => {
+test("a payment names whom it pays by key; an older Money's, by name, pays the one person of that name, and is not counted where two have it", () => {
   const pizza = { ...paid('sam', 6000), key: 'p1' };
   const shared = [pizza, { ...share('bo', pizza.id), key: 'pb' }];
   const back = { ...settle('bo', 'sam', 3000), key: 'pb' };
-  assert.deepEqual(fold([...shared, back]).balances, { p1: 0, pb: 0 }, 'by the name alone, while one Sam is in the book');
+  assert.deepEqual(
+    fold([...shared, back]).balances,
+    { p1: 0, pb: 0 },
+    'by the name alone, while one Sam is in the book',
+  );
   const second = { ...share('sam', pizza.id), key: 'p2' };
   const state = fold([...shared, second, back]);
   assert.equal(state.gaps[0].code, 'which_payee');
   assert.match(state.gaps[0].message, /two people are called sam/);
   const keyed = fold([...shared, second, { ...back, op: { ...back.op, to_key: 'p1' } }]);
   assert.deepEqual(keyed.gaps, []);
-  assert.deepEqual(keyed.balances, { p1: 1000, pb: 1000, p2: -2000 }, 'the payment names the first Sam by key');
-  assert.equal(validate(keyed, { ...settle('sam', 'sam', 100), key: 'p2', op: { kind: SETTLE, to: 'sam', to_key: 'p2', amount_cents: 100 } })[0].code, 'bad_settle');
+  assert.deepEqual(
+    keyed.balances,
+    { p1: 1000, pb: 1000, p2: -2000 },
+    'the payment names the first Sam by key',
+  );
+  assert.equal(
+    validate(keyed, {
+      ...settle('sam', 'sam', 100),
+      key: 'p2',
+      op: { kind: SETTLE, to: 'sam', to_key: 'p2', amount_cents: 100 },
+    })[0].code,
+    'bad_settle',
+  );
 });
 
 test('the penny still goes to the first name, whatever their keys', () => {
   const names = { zz: 'alex', mm: 'bo', aa: 'cy' };
-  assert.deepEqual(splitShares(1000, ['aa', 'mm', 'zz'], names), [['zz', 334], ['mm', 333], ['aa', 333]]);
+  assert.deepEqual(splitShares(1000, ['aa', 'mm', 'zz'], names), [
+    ['zz', 334],
+    ['mm', 333],
+    ['aa', 333],
+  ]);
   const lunch = { ...paid('cy', 1000), key: 'aa' };
-  const state = fold([lunch, { ...share('alex', lunch.id), key: 'zz' }, { ...share('bo', lunch.id), key: 'mm' }]);
+  const state = fold([
+    lunch,
+    { ...share('alex', lunch.id), key: 'zz' },
+    { ...share('bo', lunch.id), key: 'mm' },
+  ]);
   assert.deepEqual(state.balances, { aa: 667, zz: -334, mm: -333 });
-  assert.deepEqual(state.expenses[lunch.id].participants, ['zz', 'mm', 'aa'], 'in the order of their names');
+  assert.deepEqual(
+    state.expenses[lunch.id].participants,
+    ['zz', 'mm', 'aa'],
+    'in the order of their names',
+  );
 });
 
 test('a person is said by name, and where two share it, with when each joined', () => {
@@ -281,7 +395,10 @@ test('a person is said by name, and where two share it, with when each joined', 
     { person: 'sam', person_key: 'p2', joined: Date.UTC(2026, 9, 3, 12) / 1000, left: null },
     { person: 'bo', person_key: 'pb', joined: 100, left: null },
   ];
-  assert.deepEqual(['p1', 'p2', 'pb'].map((k) => called(spans, k, spans.find((s) => s.person_key === k).person)), ['sam (started the group)', 'sam (joined 3 Oct)', 'bo']);
+  assert.deepEqual(
+    ['p1', 'p2', 'pb'].map((k) => called(spans, k, spans.find((s) => s.person_key === k).person)),
+    ['sam (started the group)', 'sam (joined 3 Oct)', 'bo'],
+  );
   assert.equal(called(null, 'sam', 'sam'), 'sam', 'an older svrngs names no stretch');
 });
 
@@ -289,29 +406,57 @@ test('a correction from its author still counts: the expense they replace is gon
   const op = (id, extra) => ({ id, actor: 'k1', seq: 0, ts_unix: 7, voided: false, ...extra });
   const log = {
     ops: [
-      op('o1', { person: 'sam', payload: { kind: EXPENSE, amount_cents: 6000, description: 'pizza' }, voided: true }),
-      op('o2', { person: 'sam', corrects: 'o1', payload: { kind: EXPENSE, amount_cents: 4000, description: 'pizza' } }),
-      op('o3', { person: 'cy', on_behalf_of: 'ama', payload: { kind: SETTLE, to: 'sam', amount_cents: 500 }, voided: true }),
+      op('o1', {
+        person: 'sam',
+        payload: { kind: EXPENSE, amount_cents: 6000, description: 'pizza' },
+        voided: true,
+      }),
+      op('o2', {
+        person: 'sam',
+        corrects: 'o1',
+        payload: { kind: EXPENSE, amount_cents: 4000, description: 'pizza' },
+      }),
+      op('o3', {
+        person: 'cy',
+        on_behalf_of: 'ama',
+        payload: { kind: SETTLE, to: 'sam', amount_cents: 500 },
+        voided: true,
+      }),
       op('o4', { person: 'cy', on_behalf_of: 'ama', corrects: 'o3' }),
     ],
   };
   const state = fold(actsOf(log));
-  assert.deepEqual(Object.entries(state.expenses).map(([id, e]) => [id, e.amount_cents]), [['o2', 4000]]);
-  assert.deepEqual(state.balances, { sam: 0 }, 'Sam paid for, and had, the pizza; Ama\'s taken-back payment moves nothing');
+  assert.deepEqual(
+    Object.entries(state.expenses).map(([id, e]) => [id, e.amount_cents]),
+    [['o2', 4000]],
+  );
+  assert.deepEqual(
+    state.balances,
+    { sam: 0 },
+    "Sam paid for, and had, the pizza; Ama's taken-back payment moves nothing",
+  );
   assert.deepEqual(state.gaps, []);
 });
 
-test('who the payer names waits on their own yes: naming moves no one\'s money, and a share counts as it always did', () => {
+test("who the payer names waits on their own yes: naming moves no one's money, and a share counts as it always did", () => {
   const pizza = named(SAM, 3600, [AMA, BO]);
   const waiting = fold([pizza]);
-  assert.deepEqual(waiting.balances, { [SAM]: 0 }, 'Sam named Ama and Bo, and nobody owes anything for it');
+  assert.deepEqual(
+    waiting.balances,
+    { [SAM]: 0 },
+    'Sam named Ama and Bo, and nobody owes anything for it',
+  );
   assert.deepEqual(waiting.expenses[pizza.id].participants, [SAM]);
   assert.deepEqual(waiting.expenses[pizza.id].waiting, { [AMA]: true, [BO]: true });
   const yes = fold([pizza, share(AMA, pizza.id)]);
-  assert.deepEqual(yes.balances, { [SAM]: 1800, [AMA]: -1800 }, 'Ama\'s own yes is her half');
+  assert.deepEqual(yes.balances, { [SAM]: 1800, [AMA]: -1800 }, "Ama's own yes is her half");
   assert.deepEqual(yes.expenses[pizza.id].waiting, { [BO]: true });
   const unnamed = fold([pizza, share(CY, pizza.id)]);
-  assert.deepEqual(unnamed.balances, { [SAM]: 1800, [CY]: -1800 }, 'someone not named still says they were in on it');
+  assert.deepEqual(
+    unnamed.balances,
+    { [SAM]: 1800, [CY]: -1800 },
+    'someone not named still says they were in on it',
+  );
   assert.deepEqual(unnamed.expenses[pizza.id].waiting, { [AMA]: true, [BO]: true });
 });
 
@@ -321,15 +466,29 @@ test('"not me" ends the wait and moves nothing; a yes after it clears it', () =>
   assert.deepEqual(state.balances, { [SAM]: 0 });
   assert.deepEqual(state.expenses[pizza.id].waiting, {});
   assert.deepEqual(state.expenses[pizza.id].not, { [AMA]: true });
-  assert.deepEqual(fold([pizza, notIn(BO, pizza.id)]).expenses[pizza.id].not, {}, 'only someone named can say not me');
-  assert.deepEqual(validate(init(), notIn(AMA, 'nothing')).map((g) => g.code), ['no_expense']);
-  assert.deepEqual(fold([pizza, notIn(AMA, pizza.id), share(AMA, pizza.id)]).expenses[pizza.id].not, {});
+  assert.deepEqual(
+    fold([pizza, notIn(BO, pizza.id)]).expenses[pizza.id].not,
+    {},
+    'only someone named can say not me',
+  );
+  assert.deepEqual(
+    validate(init(), notIn(AMA, 'nothing')).map((g) => g.code),
+    ['no_expense'],
+  );
+  assert.deepEqual(
+    fold([pizza, notIn(AMA, pizza.id), share(AMA, pizza.id)]).expenses[pizza.id].not,
+    {},
+  );
 });
 
 test('the payer names people by name, never themselves, never twice: else the expense is refused whole', () => {
   for (const people of [[SAM], [AMA, AMA], ['__proto__'], [''], [{ key: AMA }], AMA]) {
     const pizza = named(SAM, 3600, people);
-    assert.deepEqual(validate(init(), pizza).map((g) => g.code), ['bad_named'], JSON.stringify(people));
+    assert.deepEqual(
+      validate(init(), pizza).map((g) => g.code),
+      ['bad_named'],
+      JSON.stringify(people),
+    );
     assert.deepEqual(fold([pizza]).balances, {});
   }
 });

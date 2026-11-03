@@ -56,10 +56,15 @@ const CONNECT = "connect-src 'self' wss: https:;";
 const LOOPBACK = 'ws://127.0.0.1:* http://127.0.0.1:*';
 function tests(page, upgraded) {
   if (!String(page).includes(CONNECT)) {
-    console.error(`the page's policy holds no \`${CONNECT}\`, so page.mjs cannot add the tests' relay to it`);
+    console.error(
+      `the page's policy holds no \`${CONNECT}\`, so page.mjs cannot add the tests' relay to it`,
+    );
     process.exit(1);
   }
-  return String(page).replace(CONNECT, `${CONNECT.slice(0, -1)} ${LOOPBACK};${upgraded ? ' upgrade-insecure-requests;' : ''}`);
+  return String(page).replace(
+    CONNECT,
+    `${CONNECT.slice(0, -1)} ${LOOPBACK};${upgraded ? ' upgrade-insecure-requests;' : ''}`,
+  );
 }
 const UPGRADED = { 'content-security-policy': 'upgrade-insecure-requests' };
 
@@ -91,13 +96,40 @@ export function certified() {
     mkdirSync(TLS, { recursive: true });
     const made = mkdtempSync(`${TLS}making-`);
     try {
-      execFileSync('openssl', ['req', '-x509', '-newkey', 'ec', '-pkeyopt', 'ec_paramgen_curve:P-256', '-nodes', '-days', '3650', '-subj', `/CN=${PAGE_HOST}`,
-        '-keyout', `${made}/key.pem`, '-out', `${made}/cert.pem`, '-addext', `subjectAltName=DNS:${PAGE_HOST},DNS:*.${PAGE_HOST}`], { stdio: 'pipe' });
+      execFileSync(
+        'openssl',
+        [
+          'req',
+          '-x509',
+          '-newkey',
+          'ec',
+          '-pkeyopt',
+          'ec_paramgen_curve:P-256',
+          '-nodes',
+          '-days',
+          '3650',
+          '-subj',
+          `/CN=${PAGE_HOST}`,
+          '-keyout',
+          `${made}/key.pem`,
+          '-out',
+          `${made}/cert.pem`,
+          '-addext',
+          `subjectAltName=DNS:${PAGE_HOST},DNS:*.${PAGE_HOST}`,
+        ],
+        { stdio: 'pipe' },
+      );
     } catch (e) {
-      console.error(`openssl could not make the tests' page certificate, so no page can be tested over TLS: ${e}`);
+      console.error(
+        `openssl could not make the tests' page certificate, so no page can be tested over TLS: ${e}`,
+      );
       process.exit(3);
     }
-    try { renameSync(made, `${TLS}page`); } catch { rmSync(made, { recursive: true, force: true }); }
+    try {
+      renameSync(made, `${TLS}page`);
+    } catch {
+      rmSync(made, { recursive: true, force: true });
+    }
     return certified();
   }
 }
@@ -117,39 +149,67 @@ const secured = () => (secure ??= tls.createSecureContext(certified()));
 // night scene); what a test keeps off this computer, `offline` stops in
 // the browser before it gets here.
 let proxying;
-export const proxied = () => (proxying ??= new Promise((done) => {
-  const piped = (a, b) => (a.pipe(b).pipe(a), [a, b].forEach((s) => s.on('error', () => (a.destroy(), b.destroy()))));
-  const proxy = http.createServer((req, res) => {
-    const to = new URL(req.url);
-    const sent = http.request({ host: to.hostname, port: to.port || 80, path: `${to.pathname}${to.search}`, method: req.method, headers: req.headers }, (r) => (res.writeHead(r.statusCode, r.headers), r.pipe(res)));
-    sent.on('error', () => res.writeHead(502).end());
-    req.pipe(sent);
-  });
-  proxy.on('connect', (req, sock, head) => {
-    const [, name, port] = /^(.+):(\d+)$/.exec(req.url) ?? [];
-    const ours = name === PAGE_HOST || name?.endsWith(`.${PAGE_HOST}`);
-    sock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
-    if (head?.length) sock.unshift(head);
-    if (!ours) return piped(sock, net.connect(+port, name));
-    sock.on('error', () => sock.destroy());
-    piped(new tls.TLSSocket(sock, { isServer: true, secureContext: secured() }), net.connect(+port, '127.0.0.1'));
-  });
-  proxy.listen(0, '127.0.0.1', () => (proxy.unref(), done(`http://127.0.0.1:${proxy.address().port}`)));
-}));
+export const proxied = () =>
+  (proxying ??= new Promise((done) => {
+    const piped = (a, b) => (
+      a.pipe(b).pipe(a),
+      [a, b].forEach((s) => s.on('error', () => (a.destroy(), b.destroy())))
+    );
+    const proxy = http.createServer((req, res) => {
+      const to = new URL(req.url);
+      const sent = http.request(
+        {
+          host: to.hostname,
+          port: to.port || 80,
+          path: `${to.pathname}${to.search}`,
+          method: req.method,
+          headers: req.headers,
+        },
+        (r) => (res.writeHead(r.statusCode, r.headers), r.pipe(res)),
+      );
+      sent.on('error', () => res.writeHead(502).end());
+      req.pipe(sent);
+    });
+    proxy.on('connect', (req, sock, head) => {
+      const [, name, port] = /^(.+):(\d+)$/.exec(req.url) ?? [];
+      const ours = name === PAGE_HOST || name?.endsWith(`.${PAGE_HOST}`);
+      sock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+      if (head?.length) sock.unshift(head);
+      if (!ours) return piped(sock, net.connect(+port, name));
+      sock.on('error', () => sock.destroy());
+      piped(
+        new tls.TLSSocket(sock, { isServer: true, secureContext: secured() }),
+        net.connect(+port, '127.0.0.1'),
+      );
+    });
+    proxy.listen(
+      0,
+      '127.0.0.1',
+      () => (proxy.unref(), done(`http://127.0.0.1:${proxy.address().port}`)),
+    );
+  }));
 // What every context is opened with: the page's names through the proxy,
 // its certificate taken, loopback asked directly. Chromium takes it for a
 // worker's script only when told at launch (`IGNORING`).
 const shared = () => JSON.parse(process.env.SVRNGS_BROWSERS ?? '{}').proxy;
-export const reaching = async () => ({ ignoreHTTPSErrors: true, proxy: { server: shared() ?? (await proxied()), bypass: 'localhost,*.localhost,127.0.0.1' } });
+export const reaching = async () => ({
+  ignoreHTTPSErrors: true,
+  proxy: { server: shared() ?? (await proxied()), bypass: 'localhost,*.localhost,127.0.0.1' },
+});
 export const IGNORING = ['--ignore-certificate-errors'];
 export function serve(dir, { worker, port = 0 } = {}) {
   const root = resolve(dir);
   const asked = [];
   const server = http.createServer(async (req, res) => {
     const path = new URL(req.url, 'http://page').pathname;
-    res.on('finish', () => asked.push(`${new Date().toISOString()} ${req.method} ${req.headers.host}${req.url} ${res.statusCode}`));
+    res.on('finish', () =>
+      asked.push(
+        `${new Date().toISOString()} ${req.method} ${req.headers.host}${req.url} ${res.statusCode}`,
+      ),
+    );
     for (const { source, headers } of HOST) {
-      if (new RegExp(`^${source}$`).test(path)) for (const { key, value } of headers) if (key !== HSTS) res.setHeader(key, value);
+      if (new RegExp(`^${source}$`).test(path))
+        for (const { key, value } of headers) if (key !== HSTS) res.setHeader(key, value);
     }
     const file = join(root, normalize(path.endsWith('/') ? `${path}index.html` : path));
     if (!file.startsWith(root)) return res.writeHead(403).end();
@@ -158,13 +218,18 @@ export function serve(dir, { worker, port = 0 } = {}) {
       let body = await readFile(file);
       if (/\/(index|404)\.html$/.test(file)) body = tests(body, upgraded);
       if (worker && path === '/lend.js') body = `${worker}\n${body}`;
-      res.writeHead(200, { 'content-type': TYPES[extname(file)] ?? 'application/octet-stream', ...(upgraded && path === '/lend.js' ? UPGRADED : {}) });
+      res.writeHead(200, {
+        'content-type': TYPES[extname(file)] ?? 'application/octet-stream',
+        ...(upgraded && path === '/lend.js' ? UPGRADED : {}),
+      });
       res.end(body);
     } catch {
       // A path with no file: the site's 404.html, as a static host serves
       // it (Vercel, Netlify, Cloudflare Pages, GitHub Pages), else nothing.
       const missing = await readFile(join(root, '404.html')).catch(() => null);
-      res.writeHead(404, { 'content-type': TYPES['.html'] }).end(missing ? tests(missing, upgraded) : '');
+      res
+        .writeHead(404, { 'content-type': TYPES['.html'] })
+        .end(missing ? tests(missing, upgraded) : '');
     }
   });
   server.asked = asked;
@@ -186,9 +251,16 @@ const ENGINES = { chromium: null, webkit: 'iPhone 15' };
 async function opened(context) {
   for (const { port, token, names } of JSON.parse(process.env.SVRNGS_OPENS ?? '[]')) {
     for (const name of names) {
-      const body = JSON.stringify({ ...(name === 'svrngs' ? {} : { lend: name }), at: '/svrngs-session-ready' });
+      const body = JSON.stringify({
+        ...(name === 'svrngs' ? {} : { lend: name }),
+        at: '/svrngs-session-ready',
+      });
       const headers = { authorization: `Bearer ${token}`, 'content-type': 'application/json' };
-      const asked = await fetch(`http://127.0.0.1:${port}/v1/open`, { method: 'POST', headers, body }).catch((e) => e);
+      const asked = await fetch(`http://127.0.0.1:${port}/v1/open`, {
+        method: 'POST',
+        headers,
+        body,
+      }).catch((e) => e);
       if (!asked.ok) {
         console.error(`svrngs at ${port} did not open ${name}: ${asked.status ?? asked}`);
         continue;
@@ -234,7 +306,11 @@ export async function launch(engine, { profile, device: as, args, unopened, zone
   try {
     const flags = engine === 'chromium' ? [...IGNORING, ...(args ?? [])] : args;
     if (profile) {
-      const context = await pw[engine].launchPersistentContext(profile, { ...device, ...(await reaching()), args: flags });
+      const context = await pw[engine].launchPersistentContext(profile, {
+        ...device,
+        ...(await reaching()),
+        args: flags,
+      });
       made = { context, close: () => context.close() };
     } else {
       // The run's browser of `engine`, where its harness started one
@@ -242,8 +318,13 @@ export async function launch(engine, { profile, device: as, args, unopened, zone
       // crashed macOS's pasteboard daemon (harness.rs `browsers`). Closing
       // it then closes this context and lets the shared browser be.
       const shared = !args && JSON.parse(process.env.SVRNGS_BROWSERS ?? '{}')[engine];
-      const browser = await (shared ? pw[engine].connect(shared) : pw[engine].launch({ args: flags }));
-      made = { context: await browser.newContext({ ...device, ...(await reaching()) }), close: () => browser.close() };
+      const browser = await (shared
+        ? pw[engine].connect(shared)
+        : pw[engine].launch({ args: flags }));
+      made = {
+        context: await browser.newContext({ ...device, ...(await reaching()) }),
+        close: () => browser.close(),
+      };
     }
   } catch (e) {
     console.error(`Playwright's ${engine} cannot start — run: ${INSTALL}\n${e}`);
@@ -273,7 +354,11 @@ export async function arrived(page, timeout = 30_000) {
 // included, kept as it comes.
 const landed = new WeakMap();
 function landing(page) {
-  page.on('response', (r) => r.request().isNavigationRequest() && r.frame() === page.mainFrame() && landed.set(page, r));
+  page.on(
+    'response',
+    (r) =>
+      r.request().isNavigationRequest() && r.frame() === page.mainFrame() && landed.set(page, r),
+  );
 }
 
 // `page`'s origin's session lapsed, as one does: the key svrngs's open
@@ -282,12 +367,15 @@ function landing(page) {
 // with no session is (session.rs `refused`). What clearing the cookie was
 // before the key moved out of one.
 export async function lapse(page) {
-  await page.evaluate(() => new Promise((done, failed) => {
-    const asked = indexedDB.deleteDatabase('svrngs-browser');
-    asked.onsuccess = done;
-    asked.onerror = () => failed(asked.error);
-    asked.onblocked = () => failed(new Error('the session key is held open'));
-  }));
+  await page.evaluate(
+    () =>
+      new Promise((done, failed) => {
+        const asked = indexedDB.deleteDatabase('svrngs-browser');
+        asked.onsuccess = done;
+        asked.onerror = () => failed(asked.error);
+        asked.onblocked = () => failed(new Error('the session key is held open'));
+      }),
+  );
 }
 
 // Every address off this computer refused, as with n0 unreachable
@@ -299,7 +387,8 @@ export async function lapse(page) {
 // pages it is folded under it (question.js `acts`). Once open, left so.
 export async function unfold(page) {
   const acts = page.locator('#acts > details');
-  if (!(await acts.evaluate((d) => d.open, null, { timeout: 90_000 }))) await acts.locator('> summary').click({ timeout: 10_000 });
+  if (!(await acts.evaluate((d) => d.open, null, { timeout: 90_000 })))
+    await acts.locator('> summary').click({ timeout: 10_000 });
 }
 
 // What a stranger takes in at one look of the screen as it stands, up to
@@ -312,25 +401,60 @@ export async function unfold(page) {
 // (demo/xenia/findings/wordy-*.md), checked here with no model run.
 export function firstLook(page, room) {
   return page.evaluate((room) => {
-    const TAP = 'a[href],button,input,label,select,textarea,summary,[role=button],[role=link],[onclick]';
-    const [pieces, walk, range] = [new Map(), document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), document.createRange()];
-    const shown = (n, m) => (range.setStart(n, m.index), range.setEnd(n, m.index + m[0].length), ((r) => r.width > 0 && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth)(range.getBoundingClientRect()));
+    const TAP =
+      'a[href],button,input,label,select,textarea,summary,[role=button],[role=link],[onclick]';
+    const [pieces, walk, range] = [
+      new Map(),
+      document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT),
+      document.createRange(),
+    ];
+    const shown = (n, m) => (
+      range.setStart(n, m.index),
+      range.setEnd(n, m.index + m[0].length),
+      ((r) =>
+        r.width > 0 && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth)(
+        range.getBoundingClientRect(),
+      )
+    );
     for (let n = walk.nextNode(); n; n = walk.nextNode()) {
       const el = n.parentElement;
-      if (!el || ['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(el.tagName) || !el.checkVisibility({ visibilityProperty: true, opacityProperty: true })) continue;
+      if (
+        !el ||
+        ['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(el.tagName) ||
+        !el.checkVisibility({ visibilityProperty: true, opacityProperty: true })
+      )
+        continue;
       const words = [...n.data.matchAll(/\S+/g)].filter((m) => shown(n, m)).map((m) => m[0]);
       const at = el.closest(TAP) ?? n;
-      if (words.length) pieces.set(at, { el: el.closest(TAP) ?? el, words: [...(pieces.get(at)?.words ?? []), ...words] });
+      if (words.length)
+        pieces.set(at, {
+          el: el.closest(TAP) ?? el,
+          words: [...(pieces.get(at)?.words ?? []), ...words],
+        });
     }
-    for (const box of document.querySelectorAll('input[type=checkbox]')) pieces.get(box.labels?.[0])?.words.push(box.checked ? '(ticked)' : '(not ticked)');
-    const rank = ({ el }, s = getComputedStyle(el), px = parseFloat(s.fontSize)) => (el.matches(TAP) ? 0 : el.closest('h1,h2,h3,h4,h5,h6,[role=heading]') ? 1 : px >= 24 || (Number(s.fontWeight) >= 600 && px >= 18.66) ? 2 : 3);
-    return [...pieces.values()].sort((a, b) => rank(a) - rank(b)).flatMap((p) => p.words).slice(0, room).join(' ');
+    for (const box of document.querySelectorAll('input[type=checkbox]'))
+      pieces.get(box.labels?.[0])?.words.push(box.checked ? '(ticked)' : '(not ticked)');
+    const rank = ({ el }, s = getComputedStyle(el), px = parseFloat(s.fontSize)) =>
+      el.matches(TAP)
+        ? 0
+        : el.closest('h1,h2,h3,h4,h5,h6,[role=heading]')
+          ? 1
+          : px >= 24 || (Number(s.fontWeight) >= 600 && px >= 18.66)
+            ? 2
+            : 3;
+    return [...pieces.values()]
+      .sort((a, b) => rank(a) - rank(b))
+      .flatMap((p) => p.words)
+      .slice(0, room)
+      .join(' ');
   }, room);
 }
 
 export async function offline(context) {
   const away = [];
-  const off = (url) => /^(https?|wss?):$/.test(url.protocol) && !/^(127\.0\.0\.1|\[::1\]|(.+\.)?localhost|(.+\.)?group\.svrnme\.test)$/.test(url.hostname);
+  const off = (url) =>
+    /^(https?|wss?):$/.test(url.protocol) &&
+    !/^(127\.0\.0\.1|\[::1\]|(.+\.)?localhost|(.+\.)?group\.svrnme\.test)$/.test(url.hostname);
   await context.route(off, (route) => (away.push(route.request().url()), route.abort()));
   await context.routeWebSocket(off, (ws) => (away.push(ws.url()), ws.close()));
   return away;
@@ -342,7 +466,15 @@ export async function offline(context) {
 // who made the group and when the phone joined it (v1ui-door (d)); with
 // `id`, the group's own, as a phone that joined keeps it (v1ui-shelf (c));
 // `name` the group's, house unless given. Imported as app.js imports it.
-export async function hold({ hex, token, person = 'bo', maker, since, id = 'house', name = 'house' }) {
+export async function hold({
+  hex,
+  token,
+  person = 'bo',
+  maker,
+  since,
+  id = 'house',
+  name = 'house',
+}) {
   const app = document.querySelector('script[type=module]').src;
   const store = await import(new URL(`./store.js${new URL(app).search}`, app).href);
   const key = Uint8Array.from(hex.match(/../g), (h) => parseInt(h, 16));
@@ -375,7 +507,9 @@ export async function driving(args, drive) {
   try {
     const page = await context.newPage();
     page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
-    page.on('requestfailed', (r) => logs.push(`requestfailed: ${r.url()} ${r.failure()?.errorText}`));
+    page.on('requestfailed', (r) =>
+      logs.push(`requestfailed: ${r.url()} ${r.failure()?.errorText}`),
+    );
     await held(page, origin, args);
     console.log(JSON.stringify({ ...(await drive({ page, context, origin, logs })), logs }));
   } catch (e) {
@@ -392,7 +526,11 @@ export async function driving(args, drive) {
 // with where it stood then, or what the page says when it holds no video.
 export async function play({ at, within }) {
   const v = document.querySelector('video');
-  if (!v) return { ms: null, error: `no <video> on the page, which says: ${document.body.innerText.slice(0, 200)}` };
+  if (!v)
+    return {
+      ms: null,
+      error: `no <video> on the page, which says: ${document.body.innerText.slice(0, 200)}`,
+    };
   const started = performance.now();
   if (at === null) {
     v.muted = true;
@@ -407,7 +545,13 @@ export async function play({ at, within }) {
       if (!v.seeking && !v.paused && v.currentTime > from + 0.25) {
         done({ ms: Math.round(t), at: v.currentTime });
       } else if (t > within) {
-        done({ ms: null, at: v.currentTime, seeking: v.seeking, paused: v.paused, error: v.error?.message ?? null });
+        done({
+          ms: null,
+          at: v.currentTime,
+          seeking: v.seeking,
+          paused: v.paused,
+          error: v.error?.message ?? null,
+        });
       } else {
         setTimeout(check, 20);
       }

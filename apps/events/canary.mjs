@@ -23,13 +23,19 @@ import { CAME, COMING, EVENT, actsOf, fold } from './events.js';
 
 const [group, second, samAt, alexAt, boAt, cyAt] = process.argv.slice(2);
 if (!cyAt) {
-  console.error("usage: node canary.mjs <group> <second group> <Sam's svrngs data dir> <Alex's> <Bo's> <Cy's>");
+  console.error(
+    "usage: node canary.mjs <group> <second group> <Sam's svrngs data dir> <Alex's> <Bo's> <Cy's>",
+  );
   process.exit(2);
 }
 /** The record on `name`, whose svrngs data dir is `dir`: the loopback
  * address its `api` file names, asked with the token its `token` file holds
  * (give-token). */
-const on = (name, dir) => ({ name, at: readFileSync(join(dir, 'api'), 'utf8').trim(), token: readFileSync(join(dir, 'token'), 'utf8').trim() });
+const on = (name, dir) => ({
+  name,
+  at: readFileSync(join(dir, 'api'), 'utf8').trim(),
+  token: readFileSync(join(dir, 'token'), 'utf8').trim(),
+});
 const SAM = on("Sam's computer", samAt);
 const ALEX = on("Alex's computer", alexAt);
 const BO = on("Bo's computer", boAt);
@@ -42,10 +48,20 @@ const WAIT_MS = 10_000;
 async function call(computer, door, at, body) {
   const url = `${computer.at}/v1/rail/${door}?namespace=${encodeURIComponent(at)}`;
   const shown = { authorization: `Bearer ${computer.token}` };
-  const sent = body === undefined ? { headers: shown } : { method: 'POST', headers: { ...shown, 'content-type': 'application/json' }, body: JSON.stringify(body) };
+  const sent =
+    body === undefined
+      ? { headers: shown }
+      : {
+          method: 'POST',
+          headers: { ...shown, 'content-type': 'application/json' },
+          body: JSON.stringify(body),
+        };
   const res = await fetch(url, sent);
   const out = await res.json();
-  if (!res.ok) throw new Error(`${computer.name} refused ${door} in ${at}: ${res.status} ${JSON.stringify(out)}`);
+  if (!res.ok)
+    throw new Error(
+      `${computer.name} refused ${door} in ${at}: ${res.status} ${JSON.stringify(out)}`,
+    );
   return out;
 }
 
@@ -57,7 +73,8 @@ async function append(computer, at, act) {
   return id;
 }
 const record = (computer, op, at = group) => append(computer, at, { op: 'record', payload: op });
-const correct = (computer, id, replacement) => append(computer, group, { op: 'correct', corrects: id, replacement });
+const correct = (computer, id, replacement) =>
+  append(computer, group, { op: 'correct', corrects: id, replacement });
 const log = (computer, at = group) => call(computer, 'log', at);
 
 /** The ids of `ids` that `computer` does not hold within WAIT_MS. */
@@ -73,14 +90,18 @@ async function unheld(computer, ids) {
 
 /** An app writes about what its copy holds: wait for `id` on `computer`. */
 async function arrived(computer, id) {
-  if ((await unheld(computer, [id])).length) throw new Error(`${computer.name} never held ${id} within ${WAIT_MS} ms`);
+  if ((await unheld(computer, [id])).length)
+    throw new Error(`${computer.name} never held ${id} within ${WAIT_MS} ms`);
 }
 
 async function main() {
   for (const [at, people] of Object.entries(PEOPLE)) {
     for (const computer of at === group ? COMPUTERS : [SAM]) {
       const listed = (await call(computer, 'people', at)).people.map((p) => p.person).sort();
-      if (!same(listed, people)) throw new Error(`${computer.name} lists ${listed.join(', ')} in ${at}, not ${people.join(', ')}`);
+      if (!same(listed, people))
+        throw new Error(
+          `${computer.name} lists ${listed.join(', ')} in ${at}, not ${people.join(', ')}`,
+        );
     }
   }
 
@@ -111,10 +132,31 @@ async function main() {
   const named = (e, names) => {
     const n = (k) => names[k] ?? k;
     const keys = (m) => Object.fromEntries(Object.entries(m).map(([k, v]) => [n(k), v]));
-    const vias = { ...e.via, coming: keys(e.via.coming), came: keys(e.via.came), guests_came: keys(e.via.guests_came) };
-    return { ...e, host: n(e.host), coming: keys(e.coming), came: e.came.map(n), guests_came: keys(e.guests_came), via: vias };
+    const vias = {
+      ...e.via,
+      coming: keys(e.via.coming),
+      came: keys(e.via.came),
+      guests_came: keys(e.via.guests_came),
+    };
+    return {
+      ...e,
+      host: n(e.host),
+      coming: keys(e.coming),
+      came: e.came.map(n),
+      guests_came: keys(e.guests_came),
+      via: vias,
+    };
   };
-  const want = { host: 'sam', what: 'dinner', when: 'Friday 7', where: 'the house', coming: { alex: [], bo: ['Maya'] }, came: ['bo'], guests_came: { bo: ['Maya'] }, via };
+  const want = {
+    host: 'sam',
+    what: 'dinner',
+    when: 'Friday 7',
+    where: 'the house',
+    coming: { alex: [], bo: ['Maya'] },
+    came: ['bo'],
+    guests_came: { bo: ['Maya'] },
+    via,
+  };
   const copies = [];
   for (const computer of COMPUTERS) {
     const missing = await unheld(computer, written);
@@ -124,23 +166,34 @@ async function main() {
     const { at: _, ...said } = events[event] ? named(events[event], names) : {};
     copies.push({ computer, missing, voided, said, gaps: gaps.map((g) => g.code) });
   }
-  const lines = copies.map((c) =>
-    `  ${c.computer.name}: ${JSON.stringify(c.said)}; gaps ${JSON.stringify(c.gaps)}; Cy's coming voided: ${c.voided}` +
-    (c.missing.length ? `; never received ${c.missing.join(', ')}` : ''));
+  const lines = copies.map(
+    (c) =>
+      `  ${c.computer.name}: ${JSON.stringify(c.said)}; gaps ${JSON.stringify(c.gaps)}; Cy's coming voided: ${c.voided}` +
+      (c.missing.length ? `; never received ${c.missing.join(', ')}` : ''),
+  );
   const [s] = copies;
-  if (copies.some((c) => !same([c.said, c.gaps], [s.said, s.gaps]))) throw new Error(`the copies of ${group} fold to different answers:\n${lines.join('\n')}`);
+  if (copies.some((c) => !same([c.said, c.gaps], [s.said, s.gaps])))
+    throw new Error(`the copies of ${group} fold to different answers:\n${lines.join('\n')}`);
   if (!same(s.said, want) || !same(s.gaps, ['not_theirs']) || copies.some((c) => !c.voided)) {
-    throw new Error(`every copy of ${group} agrees, but not with what the acts say (${JSON.stringify(want)}; Alex's change of Bo's answer not counted; Cy's ${takenBack} voiding hers on each):\n${lines.join('\n')}`);
+    throw new Error(
+      `every copy of ${group} agrees, but not with what the acts say (${JSON.stringify(want)}; Alex's change of Bo's answer not counted; Cy's ${takenBack} voiding hers on each):\n${lines.join('\n')}`,
+    );
   }
 
   const other = await log(SAM, second);
-  const strangers = actsOf(other).filter((x) => !PEOPLE[second].includes(x.by)).map((x) => x.by);
+  const strangers = actsOf(other)
+    .filter((x) => !PEOPLE[second].includes(x.by))
+    .map((x) => x.by);
   const theirs = fold(actsOf(other));
   const there = theirs.events[event] && named(theirs.events[event], theirs.names);
   if (strangers.length || !same(there?.coming, { sam: [] }) || there?.host !== 'sam') {
-    throw new Error(`${second} holds ${group}'s answers, or not its own: acts by ${JSON.stringify(strangers)}; it folds to ${JSON.stringify(there)}`);
+    throw new Error(
+      `${second} holds ${group}'s answers, or not its own: acts by ${JSON.stringify(strangers)}; it folds to ${JSON.stringify(there)}`,
+    );
   }
-  console.log(`${COMPUTERS.length} computers fold ${written.length} acts of ${group} to the same answers: ${JSON.stringify(want)}, Cy's taken back on each and Alex's change of Bo's not counted; ${second} holds the event and Sam's answer alone`);
+  console.log(
+    `${COMPUTERS.length} computers fold ${written.length} acts of ${group} to the same answers: ${JSON.stringify(want)}, Cy's taken back on each and Alex's change of Bo's not counted; ${second} holds the event and Sam's answer alone`,
+  );
 }
 
 main().catch((e) => {

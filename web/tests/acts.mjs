@@ -28,7 +28,9 @@ const section = (page) => page.locator('#acts').innerText({ timeout: 60_000 });
 // "What acts as you" folded under its heading, then opened by it, as a
 // person opens it: whether it was folded.
 const unfold = async (page) => {
-  const folded = await page.locator('#acts details').evaluate((d) => !d.open, null, { timeout: 60_000 });
+  const folded = await page
+    .locator('#acts details')
+    .evaluate((d) => !d.open, null, { timeout: 60_000 });
   await page.locator('#acts summary').click({ timeout: 10_000 });
   return folded;
 };
@@ -40,7 +42,14 @@ const fetched = (page, path, bare) =>
     async ([read, path, bare]) => {
       const reads = bare ? { lends: [] } : await fetch('/svrngs-reads').then((r) => r.json());
       const to = reads.lends.find((l) => l.address.startsWith(read))?.address ?? read;
-      return fetch(`${to}${path}`).then(async (r) => ({ status: r.status, refused: r.headers.get('x-svrngs-refused'), error: (await r.json().catch(() => ({}))).error ?? null }), (e) => ({ status: `${e}` }));
+      return fetch(`${to}${path}`).then(
+        async (r) => ({
+          status: r.status,
+          refused: r.headers.get('x-svrngs-refused'),
+          error: (await r.json().catch(() => ({}))).error ?? null,
+        }),
+        (e) => ({ status: `${e}` }),
+      );
     },
     [args.read, path, bare],
   );
@@ -53,7 +62,10 @@ if (args.home) {
     const loaded = () => home.locator('#home p.address').waitFor({ timeout: 60_000 });
     await home.goto(args.home);
     await loaded();
-    const [tab] = await Promise.all([context.waitForEvent('page'), home.locator('#home table.index button', { hasText: args.words }).click({ timeout: 10_000 })]);
+    const [tab] = await Promise.all([
+      context.waitForEvent('page'),
+      home.locator('#home table.index button', { hasText: args.words }).click({ timeout: 10_000 }),
+    ]);
     await arrived(tab);
     seen.opened = await fetched(tab, 'opened');
     seen.bare = await fetched(tab, 'bare', true);
@@ -61,7 +73,13 @@ if (args.home) {
     await loaded();
     seen.folded = await unfold(home);
     seen.before = await section(home);
-    await Promise.all([home.waitForEvent('load'), home.locator('#acts p', { hasText: 'as you. Since' }).locator('button', { hasText: 'Stop' }).click({ timeout: 10_000 })]);
+    await Promise.all([
+      home.waitForEvent('load'),
+      home
+        .locator('#acts p', { hasText: 'as you. Since' })
+        .locator('button', { hasText: 'Stop' })
+        .click({ timeout: 10_000 }),
+    ]);
     await loaded();
     await unfold(home);
     seen.after = await section(home);
@@ -76,9 +94,13 @@ if (args.home) {
 } else {
   // What the lend's page, once open at its origin, is told it reads.
   const told = async (page) => {
-    await page.waitForURL((u) => inApp(u) && !u.pathname.endsWith('/open.html'), { timeout: 90_000 });
+    await page.waitForURL((u) => inApp(u) && !u.pathname.endsWith('/open.html'), {
+      timeout: 90_000,
+    });
     await page.waitForLoadState('load');
-    return page.evaluate(() => fetch('/svrngs-reads').then(async (r) => ({ status: r.status, body: await r.text() })));
+    return page.evaluate(() =>
+      fetch('/svrngs-reads').then(async (r) => ({ status: r.status, body: await r.text() })),
+    );
   };
   await driving(args, async ({ page, origin }) => {
     const seen = {};
@@ -86,12 +108,16 @@ if (args.home) {
       await page.locator('#lent button', { hasText: args.open }).click({ timeout: 90_000 });
       seen.yes = await told(page);
       await page.goto(origin);
-      await page.locator('#acts p', { hasText: 'as you. Since' }).waitFor({ state: 'attached', timeout: 90_000 });
+      await page
+        .locator('#acts p', { hasText: 'as you. Since' })
+        .waitFor({ state: 'attached', timeout: 90_000 });
       seen.folded = await unfold(page);
       seen.before = await section(page);
       const line = page.locator('#acts p', { hasText: 'as you. Since' });
       await line.locator('button', { hasText: 'Stop' }).click({ timeout: 10_000 });
-      await page.locator('#acts p', { hasText: 'within 12 hours, when' }).waitFor({ timeout: 30_000 });
+      await page
+        .locator('#acts p', { hasText: 'within 12 hours, when' })
+        .waitFor({ timeout: 30_000 });
       seen.stopped = await section(page);
       await page.goto('about:blank');
       await page.goto(`${origin}#open=${args.label}`);

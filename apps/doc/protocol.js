@@ -4,7 +4,7 @@
 // y-websocket frames them. 0 and 1 are y-websocket's own, so the Yjs sync
 // and awareness are the protocol's, not this app's; 100 and up are the
 // doc's, kept clear of y-websocket's 2 and 3.
-import { decoding, encoding } from "./vendor/doc-bundle.js";
+import { decoding, encoding } from './vendor/doc-bundle.js';
 
 /** A Yjs sync step or update (y-protocols/sync). */
 export const SYNC = 0;

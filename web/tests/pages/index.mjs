@@ -32,23 +32,43 @@ async function run(page, ready, loaded, go) {
   page.on('request', (r) => sent.push([r.method(), r.url(), r.postData() ?? '']));
   await go();
   await page.locator(ready).first().waitFor({ timeout: 30_000 });
-  const count = (line) => page.evaluate((l) => (window.__lines ?? []).filter((t) => t.startsWith(l)).length, line).catch(() => 0);
+  const count = (line) =>
+    page
+      .evaluate((l) => (window.__lines ?? []).filter((t) => t.startsWith(l)).length, line)
+      .catch(() => 0);
   const read = () => page.locator(args.read).allTextContents();
   // One more line starting with `line`, or a load and the list drawn again.
   async function settled(line, act) {
     const [n, at] = [await count(line), loads];
     await act();
-    const traced = page.waitForFunction(([l, k]) => (window.__lines ?? []).filter((t) => t.startsWith(l)).length > k, [line, n], { timeout: 10_000 });
+    const traced = page.waitForFunction(
+      ([l, k]) => (window.__lines ?? []).filter((t) => t.startsWith(l)).length > k,
+      [line, n],
+      { timeout: 10_000 },
+    );
     // Counted here, not in the page: a waitForFunction runs on across a load.
     const reloaded = (async () => {
       for (let i = 0; i < 100 && loads === at; i++) await new Promise((r) => setTimeout(r, 100));
       if (loads === at) throw new Error('not loaded');
       await page.locator(ready).first().waitFor({ timeout: 10_000 });
     })();
-    return Promise.race([traced, reloaded]).then(() => 'settled', () => 'unsettled');
+    return Promise.race([traced, reloaded]).then(
+      () => 'settled',
+      () => 'unsettled',
+    );
   }
-  const holds = ([s, w]) => [...document.querySelectorAll(s)].map((e) => e.textContent).join('\n').includes(w);
-  const until = (how, w) => (w ? page.waitForFunction(holds, [args.read, w], { timeout: 30_000 }).then(() => how, () => 'unsettled') : how);
+  const holds = ([s, w]) =>
+    [...document.querySelectorAll(s)]
+      .map((e) => e.textContent)
+      .join('\n')
+      .includes(w);
+  const until = (how, w) =>
+    w
+      ? page.waitForFunction(holds, [args.read, w], { timeout: 30_000 }).then(
+          () => how,
+          () => 'unsettled',
+        )
+      : how;
   const after = [];
   for (const [selector, value, line, words] of args.steps) {
     if (value === true) {
@@ -74,10 +94,14 @@ async function run(page, ready, loaded, go) {
   let later = null;
   if (args.visible) {
     const [line, words] = args.visible;
-    const how = await settled(line, () => page.evaluate(() => ['hidden', 'visible'].forEach((v) => {
-      Object.defineProperty(document, 'visibilityState', { value: v, configurable: true });
-      document.dispatchEvent(new Event('visibilitychange'));
-    })));
+    const how = await settled(line, () =>
+      page.evaluate(() =>
+        ['hidden', 'visible'].forEach((v) => {
+          Object.defineProperty(document, 'visibilityState', { value: v, configurable: true });
+          document.dispatchEvent(new Event('visibilitychange'));
+        }),
+      ),
+    );
     later = { how: await until(how, words), words: await read() };
   }
   const links = await page.locator('a').evaluateAll((as) => as.map((a) => a.href));

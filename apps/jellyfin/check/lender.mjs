@@ -17,7 +17,8 @@ const [said, at, lender, ...people] = process.argv.slice(2);
 const { SECRETS } = process.env;
 const out = { said, made: [], steps: [] };
 const named = (words) => {
-  if (!said.includes(words)) throw new Error(`the line share printed does not say ${JSON.stringify(words)}: ${said}`);
+  if (!said.includes(words))
+    throw new Error(`the line share printed does not say ${JSON.stringify(words)}: ${said}`);
   out.steps.push(words);
 };
 const { context, close } = await launch('chromium');
@@ -33,10 +34,15 @@ try {
   await page.waitForSelector('.card', { timeout: 30_000 });
   for (const who of people) {
     const file = `${SECRETS}/${who}_pw`;
-    if (!fs.existsSync(file)) fs.writeFileSync(file, crypto.randomBytes(18).toString('base64url'), { mode: 0o600 });
+    if (!fs.existsSync(file))
+      fs.writeFileSync(file, crypto.randomBytes(18).toString('base64url'), { mode: 0o600 });
     out.steps = [];
     named('your picture at the top right');
-    await page.getByRole('button', { name: 'User Menu' }).or(page.locator('header button').last()).first().click();
+    await page
+      .getByRole('button', { name: 'User Menu' })
+      .or(page.locator('header button').last())
+      .first()
+      .click();
     named('Dashboard');
     await page.getByRole('menuitem', { name: 'Dashboard' }).click();
     named('Users');
@@ -51,15 +57,25 @@ try {
     // access to all libraries"; none ticked until the lender ticks it.
     // The libraries come a moment after the form. The box itself is drawn
     // over, so a person, and this, taps its label.
-    await page.waitForFunction(() => [...document.querySelectorAll('label')].some((l) =>
-      l.offsetParent && l.querySelector('input[type=checkbox]') && !/^enable access to all/i.test(l.innerText.trim())), null, { timeout: 15_000 });
+    await page.waitForFunction(
+      () =>
+        [...document.querySelectorAll('label')].some(
+          (l) =>
+            l.offsetParent &&
+            l.querySelector('input[type=checkbox]') &&
+            !/^enable access to all/i.test(l.innerText.trim()),
+        ),
+      null,
+      { timeout: 15_000 },
+    );
     const boxes = page.locator('label:visible:has(input[type=checkbox])');
     let n = 0;
     for (let i = 0; i < (await boxes.count()); i++) {
       const box = boxes.nth(i);
       if (/^enable access to all/i.test((await box.innerText()).trim())) continue;
       await box.click();
-      if (!(await box.locator('input').isChecked())) throw new Error(`${await box.innerText()} did not tick`);
+      if (!(await box.locator('input').isChecked()))
+        throw new Error(`${await box.innerText()} did not tick`);
       n++;
     }
     if (!n) throw new Error('no library to tick');

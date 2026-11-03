@@ -56,6 +56,10 @@ step "app nouns"        python3 scripts/vocab_check.py
 # Money's page from bb8d4a3e to 7dfc59c6 declared `said` twice). Without it installed
 # the step fails naming the install, never skipping.
 step "lint" sh -c 'test -x web/node_modules/.bin/oxlint || { echo "oxlint is not installed here: npm ci --prefix web"; exit 1; }; web/node_modules/.bin/oxlint'
+# The same files, as oxfmt lays them out (.oxfmtrc.json), so how a line looks
+# is the formatter's and never a way to fit a budget (ralph/next/js/CHARTER.md,
+# "Why"): each file it would change is named. Not installed fails, as lint.
+step "format" sh -c 'test -x web/node_modules/.bin/oxfmt || { echo "oxfmt is not installed here: npm ci --prefix web"; exit 1; }; web/node_modules/.bin/oxfmt --check "**/*.{js,mjs,cjs}"'
 # The pages' laws, what of the pages node can judge with no browser
 # (web/tests/**/*.test.mjs: the vendored libraries' pins, the pages' core,
 # parts and machines, one UI): a step of its own, since apps' laws are

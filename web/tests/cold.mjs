@@ -43,7 +43,11 @@ const args = JSON.parse(process.argv[2]);
 async function landed(page, within = 90_000) {
   await page
     .waitForFunction(
-      () => document.title.startsWith('the app') || document.querySelector('#status.bad') || /[^…]$/.test(document.getElementById('response')?.textContent ?? '') || /[^…]$/.test(document.getElementById('said')?.textContent ?? ''),
+      () =>
+        document.title.startsWith('the app') ||
+        document.querySelector('#status.bad') ||
+        /[^…]$/.test(document.getElementById('response')?.textContent ?? '') ||
+        /[^…]$/.test(document.getElementById('said')?.textContent ?? ''),
       null,
       { timeout: within },
     )
@@ -52,7 +56,10 @@ async function landed(page, within = 90_000) {
     url: location.href,
     title: document.title,
     status: document.getElementById('status')?.textContent ?? null,
-    said: document.getElementById('response')?.textContent ?? document.getElementById('said')?.textContent ?? null,
+    said:
+      document.getElementById('response')?.textContent ??
+      document.getElementById('said')?.textContent ??
+      null,
   }));
 }
 
@@ -72,7 +79,11 @@ await driving(args, async ({ page, origin }) => {
     seen.cold = await landed(page);
     // The lend's worker gone again, as when a browser clears it: the page
     // host answers its address once more, within the minute.
-    await page.evaluate(() => navigator.serviceWorker?.getRegistrations().then((rs) => Promise.all(rs.map((r) => r.unregister()))));
+    await page.evaluate(() =>
+      navigator.serviceWorker
+        ?.getRegistrations()
+        .then((rs) => Promise.all(rs.map((r) => r.unregister()))),
+    );
     await page.goto(`${at}/?n=2`);
     seen.again = await landed(page);
     // A deep path of the lend, in a tab of its own, as a Home Screen icon
@@ -92,13 +103,24 @@ await driving(args, async ({ page, origin }) => {
     await page.goto(origin);
     await page.waitForSelector('#status.good, #status.bad', { timeout: 90_000 });
     await page.locator('#lent tr').first().waitFor({ timeout: 90_000 });
-    seen.keep = await page.evaluate(() => [...document.querySelectorAll('#lent tr')].map((r) => r.querySelector('small')?.textContent ?? null));
-    seen.index = await page.evaluate(() => [...document.querySelectorAll('#lent tr')].map((r) => r.textContent));
-    seen.how = await page.evaluate(() => ((d) => d && { hidden: d.hidden, text: d.textContent })(document.getElementById('how')));
+    seen.keep = await page.evaluate(() =>
+      [...document.querySelectorAll('#lent tr')].map(
+        (r) => r.querySelector('small')?.textContent ?? null,
+      ),
+    );
+    seen.index = await page.evaluate(() =>
+      [...document.querySelectorAll('#lent tr')].map((r) => r.textContent),
+    );
+    seen.how = await page.evaluate(() =>
+      ((d) => d && { hidden: d.hidden, text: d.textContent })(document.getElementById('how')),
+    );
     // Each address shown, opened as a bookmark of it is: the first from
     // the group's page itself, a new fragment on the same page.
     seen.kept = [];
-    for (const [i, at] of seen.keep.filter(Boolean).map((k) => k.split(' ')[0]).entries()) {
+    for (const [i, at] of seen.keep
+      .filter(Boolean)
+      .map((k) => k.split(' ')[0])
+      .entries()) {
       if (i) await page.goto('about:blank');
       await page.goto(at);
       seen.kept.push({ at, ...(await landed(page, 45_000)) });
@@ -114,7 +136,11 @@ await driving(args, async ({ page, origin }) => {
   for (const alias of args.aliases ?? []) {
     await page.goto('about:blank');
     await page.goto(`${origin}#open=${alias}`);
-    const there = { alias, ...(await landed(page, 45_000)), buttons: await page.locator('#door button').allTextContents() };
+    const there = {
+      alias,
+      ...(await landed(page, 45_000)),
+      buttons: await page.locator('#door button').allTextContents(),
+    };
     const pick = args.choose && there.buttons.find((b) => b.includes(args.choose));
     if (pick) await page.locator('#door button', { hasText: pick }).click();
     seen.aliases.push(pick ? { ...there, chosen: await landed(page, 45_000) } : there);

@@ -63,19 +63,36 @@ try {
   const page = await kim.context.newPage();
   await page.goto(home);
   // The group's section, held by its place: its button goes once tapped.
-  await page.locator('#home section button', { hasText: 'Have a guest' }).first().waitFor({ timeout: 30_000 });
-  const at = await page.locator('#home section').evaluateAll((ss) => ss.findIndex((s) => [...s.querySelectorAll('button')].some((b) => b.textContent === 'Have a guest')));
+  await page
+    .locator('#home section button', { hasText: 'Have a guest' })
+    .first()
+    .waitFor({ timeout: 30_000 });
+  const at = await page
+    .locator('#home section')
+    .evaluateAll((ss) =>
+      ss.findIndex((s) =>
+        [...s.querySelectorAll('button')].some((b) => b.textContent === 'Have a guest'),
+      ),
+    );
   const section = page.locator('#home section').nth(at);
   await section.locator('button', { hasText: 'Have a guest' }).click({ timeout: 30_000 });
   // The length the page asks before it makes the link, as chosen to start.
   const asks = section.locator('label', { hasText: 'For how long' }).locator('select');
-  const length = await asks.evaluate((s) => s.selectedOptions[0]?.textContent ?? null, null, { timeout: 30_000 });
+  const length = await asks.evaluate((s) => s.selectedOptions[0]?.textContent ?? null, null, {
+    timeout: 30_000,
+  });
   const lengths = await asks.locator('option').allTextContents();
-  await section.locator('button', { hasText: 'Make a link for your guest' }).click({ timeout: 30_000 });
+  await section
+    .locator('button', { hasText: 'Make a link for your guest' })
+    .click({ timeout: 30_000 });
   await section.locator('p.link code').waitFor({ timeout: 30_000 });
   const link = await section.locator('p.link code').textContent();
   const said = await section.locator('p.link').textContent();
-  const sent = { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ group, device: false, visit: 72 * 3600 }) };
+  const sent = {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ group, device: false, visit: 72 * 3600 }),
+  };
   const long = await page.evaluate((sent) => fetch('/link', sent).then((r) => r.json()), sent);
 
   ana = await launch(args.engine, { unopened: true });
@@ -100,7 +117,10 @@ try {
   const listed = await phone.locator('#lent button').allTextContents();
   const text = await phone.locator('body').innerText();
   const away = inApp;
-  await Promise.all([phone.waitForURL(away, { timeout: 90_000 }), phone.locator('#lent button', { hasText: open }).first().click()]);
+  await Promise.all([
+    phone.waitForURL(away, { timeout: 90_000 }),
+    phone.locator('#lent button', { hasText: open }).first().click(),
+  ]);
   await phone.waitForSelector('video', { timeout: 60_000 });
   const opened = phone.url();
   const first = await phone.evaluate(play, { at: null, within: 15_000 });
@@ -118,7 +138,28 @@ try {
   }, token);
   const ended = await opens(sam.context, link, name);
   const anaAgain = (await opens(ana.context, link, 'Ana')).status;
-  console.log(JSON.stringify({ length, lengths, link, said, asking, status, askedAgain: asked, listed, text, opened, first, anaLong, again: { status: again.status, asked: again.asked }, groups, ended: { status: ended.status, asked: ended.asked }, anaAgain, secretAsked: requested.filter((u) => u.split('#')[0].includes(token)), logs }));
+  console.log(
+    JSON.stringify({
+      length,
+      lengths,
+      link,
+      said,
+      asking,
+      status,
+      askedAgain: asked,
+      listed,
+      text,
+      opened,
+      first,
+      anaLong,
+      again: { status: again.status, asked: again.asked },
+      groups,
+      ended: { status: ended.status, asked: ended.asked },
+      anaAgain,
+      secretAsked: requested.filter((u) => u.split('#')[0].includes(token)),
+      logs,
+    }),
+  );
 } catch (e) {
   console.error(`the visit did not finish: ${e}\n${logs.join('\n')}`);
   process.exitCode = 1;

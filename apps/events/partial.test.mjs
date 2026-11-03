@@ -33,16 +33,22 @@ const TOKEN = 'the-token';
  * without the token refused, as svrngs refuses it (give-token). */
 function svrngs(GROUPS = PARTIAL) {
   const server = http.createServer((req, res) => {
-    if (req.headers.authorization !== `Bearer ${TOKEN}`) return res.writeHead(401).end('{"kind":"no_token"}');
+    if (req.headers.authorization !== `Bearer ${TOKEN}`)
+      return res.writeHead(401).end('{"kind":"no_token"}');
     const url = new URL(req.url, 'http://x');
     const g = GROUPS[url.searchParams.get('namespace')];
-    const answer = url.pathname === '/v1/groups'
-      ? { groups: Object.entries(GROUPS).map(([id, x]) => ({ id, name: x.name })) }
-      : url.pathname === '/v1/rail/people' && g
-        ? { people: g.people.map((p) => (typeof p === 'string' ? { person: p, person_key: `k-${p}` } : p)) }
-        : url.pathname === '/v1/rail/log' && g
-          ? { ops: g.ops, complete: g.complete }
-          : null;
+    const answer =
+      url.pathname === '/v1/groups'
+        ? { groups: Object.entries(GROUPS).map(([id, x]) => ({ id, name: x.name })) }
+        : url.pathname === '/v1/rail/people' && g
+          ? {
+              people: g.people.map((p) =>
+                typeof p === 'string' ? { person: p, person_key: `k-${p}` } : p,
+              ),
+            }
+          : url.pathname === '/v1/rail/log' && g
+            ? { ops: g.ops, complete: g.complete }
+            : null;
     res.writeHead(answer ? 200 : 404, { 'content-type': 'application/json' });
     res.end(JSON.stringify(answer ?? { error: 'no such thing here' }));
   });
@@ -52,8 +58,15 @@ function svrngs(GROUPS = PARTIAL) {
 async function events(api) {
   const dir = mkdtempSync(join(tmpdir(), 'events-partial-'));
   writeFileSync(join(dir, 'token'), TOKEN);
-  writeFileSync(join(dir, 'config.json'), JSON.stringify({ record: api, token: join(dir, 'token') }));
-  const child = spawn(process.execPath, [new URL('./server.mjs', import.meta.url).pathname, join(dir, 'config.json')], { stdio: ['ignore', 'pipe', 'inherit'] });
+  writeFileSync(
+    join(dir, 'config.json'),
+    JSON.stringify({ record: api, token: join(dir, 'token') }),
+  );
+  const child = spawn(
+    process.execPath,
+    [new URL('./server.mjs', import.meta.url).pathname, join(dir, 'config.json')],
+    { stdio: ['ignore', 'pipe', 'inherit'] },
+  );
   const line = await new Promise((done, fail) => {
     child.stdout.once('data', (b) => done(String(b)));
     child.once('exit', (code) => fail(new Error(`the server exited ${code} before it listened`)));
@@ -75,10 +88,15 @@ test("a group not fully received is said so on the home list and in the host's v
   const api = await svrngs();
   const app = await events(`http://127.0.0.1:${api.address().port}`);
   try {
-    const as = async (path) => (await fetch(`${app.at}${path}`, { headers: { 'x-svrngs-key': 'k-sam' } })).text();
+    const as = async (path) =>
+      (await fetch(`${app.at}${path}`, { headers: { 'x-svrngs-key': 'k-sam' } })).text();
 
     const home = sections(await as('/'));
-    assert.doesNotMatch(home['The Club'], /Nothing posted yet/, "The Club's posts may not have reached here");
+    assert.doesNotMatch(
+      home['The Club'],
+      /Nothing posted yet/,
+      "The Club's posts may not have reached here",
+    );
     assert.match(home['The Club'], PARTLY);
     assert.match(home.dWeb, /dinner/);
     assert.match(home.dWeb, PARTLY);
@@ -101,20 +119,53 @@ test("a group not fully received is said so on the home list and in the host's v
 // first's guests and their change of mind corrected the first's act.
 test('two people called bo are two: each answers as themselves, told apart by when they joined', async () => {
   const oct = (d) => ({ at: Date.UTC(2026, 9, d, 12) / 1000 });
-  const people = [{ person: 'sam', person_key: 'k-sam', joined: 'started' }, { person: 'bo', person_key: 'k-bo1', joined: oct(1) }, { person: 'bo', person_key: 'k-bo2', joined: oct(3) }];
-  const ops = [...posted('h1'), { id: 'h2', ts_unix: 1100, person: 'bo', person_key: 'k-bo1', payload: { kind: 'coming', event: E, guests: ['Maya'] } }];
+  const people = [
+    { person: 'sam', person_key: 'k-sam', joined: 'started' },
+    { person: 'bo', person_key: 'k-bo1', joined: oct(1) },
+    { person: 'bo', person_key: 'k-bo2', joined: oct(3) },
+  ];
+  const ops = [
+    ...posted('h1'),
+    {
+      id: 'h2',
+      ts_unix: 1100,
+      person: 'bo',
+      person_key: 'k-bo1',
+      payload: { kind: 'coming', event: E, guests: ['Maya'] },
+    },
+  ];
   const api = await svrngs({ house: { name: 'The House', people, ops, complete: true } });
   const app = await events(`http://127.0.0.1:${api.address().port}`);
   try {
-    const as = (key, path, init = {}) => fetch(`${app.at}${path}`, { ...init, redirect: 'manual', headers: { 'x-svrngs-key': key, ...init.headers } });
+    const as = (key, path, init = {}) =>
+      fetch(`${app.at}${path}`, {
+        ...init,
+        redirect: 'manual',
+        headers: { 'x-svrngs-key': key, ...init.headers },
+      });
     const second = await (await as('k-bo2', `/g/house/e/${E}`)).text();
-    assert.match(second, /<li>bo \(joined 1 Oct\) \+ Maya<\/li>/, "the first bo's answer, said as theirs");
-    assert.match(second, /<ul class="invited"><li>bo \(joined 1 Oct\)<\/li><li>bo \(joined 3 Oct\)<\/li><\/ul>/);
+    assert.match(
+      second,
+      /<li>bo \(joined 1 Oct\) \+ Maya<\/li>/,
+      "the first bo's answer, said as theirs",
+    );
+    assert.match(
+      second,
+      /<ul class="invited"><li>bo \(joined 1 Oct\)<\/li><li>bo \(joined 3 Oct\)<\/li><\/ul>/,
+    );
     assert.match(second, /<button>I'm coming<\/button>/, 'the second bo has not answered');
     assert.doesNotMatch(second, /value="Maya"/, "nor are the first bo's guests theirs");
     assert.match(await (await as('k-bo1', `/g/house/e/${E}`)).text(), /value="Maya"/);
-    const coming = await as('k-bo2', `/g/house/e/${E}/coming`, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: 'guests=' });
-    assert.deepEqual(JSON.parse(coming.headers.get('x-svrngs-append')), [{ group: 'house', op: { kind: 'coming', event: E } }], 'a record of their own');
+    const coming = await as('k-bo2', `/g/house/e/${E}/coming`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: 'guests=',
+    });
+    assert.deepEqual(
+      JSON.parse(coming.headers.get('x-svrngs-append')),
+      [{ group: 'house', op: { kind: 'coming', event: E } }],
+      'a record of their own',
+    );
   } finally {
     app.stop();
     api.close();

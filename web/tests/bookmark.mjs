@@ -21,11 +21,24 @@ const at = (label) => `http://${label}.localhost:${args.port}`;
 // and each navigation answered on the way.
 async function landed(context) {
   const answered = [];
-  context.on('response', (r) => r.request().isNavigationRequest() && answered.push(`${r.request().method()} ${r.url()} ${r.status()}`));
+  context.on(
+    'response',
+    (r) =>
+      r.request().isNavigationRequest() &&
+      answered.push(`${r.request().method()} ${r.url()} ${r.status()}`),
+  );
   const page = await context.newPage();
   await page.goto(`${at(args.label)}${args.at}`);
   await arrived(page);
-  return [page, { url: page.url(), title: await page.title(), text: await page.locator('body').innerText(), answered }];
+  return [
+    page,
+    {
+      url: page.url(),
+      title: await page.title(),
+      text: await page.locator('body').innerText(),
+      answered,
+    },
+  ];
 }
 const seen = {};
 try {
@@ -33,7 +46,19 @@ try {
   let page;
   [page, seen.opened] = await landed(opened.context);
   const [answered, from] = [seen.opened.answered, seen.opened.answered.length];
-  await page.evaluate((to) => new Promise((done) => (Object.assign(document.body.appendChild(document.createElement('iframe')), { src: `${to}/framed`, onload: done }), setTimeout(done, 10_000))), at(args.other));
+  await page.evaluate(
+    (to) =>
+      new Promise(
+        (done) => (
+          Object.assign(document.body.appendChild(document.createElement('iframe')), {
+            src: `${to}/framed`,
+            onload: done,
+          }),
+          setTimeout(done, 10_000)
+        ),
+      ),
+    at(args.other),
+  );
   seen.framed = answered.splice(from);
   await opened.close();
   const unopened = await launch(args.engine, { unopened: true });

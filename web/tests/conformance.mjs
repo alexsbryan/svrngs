@@ -45,7 +45,18 @@ async function unsealable() {
   return { groups: (await store.groups()).length, names };
 }
 
-const ROUTES = ['root', 'isolated', 'host', 'range', 'seeks', 'upload', 'websocket', 'signin', 'guarded', 'worker'];
+const ROUTES = [
+  'root',
+  'isolated',
+  'host',
+  'range',
+  'seeks',
+  'upload',
+  'websocket',
+  'signin',
+  'guarded',
+  'worker',
+];
 const routes = args.routes ?? ROUTES;
 // The clock and this host's load (the u5 queue's rule for a run that times
 // seeks).
@@ -58,7 +69,12 @@ const leaked = [];
 // <who answered>`: the lend's worker, or not.
 let sent = [];
 const answered = (r, by) => sent.push(`${new Date().toISOString()} ${r.method()} ${r.url()} ${by}`);
-context.on('response', (r) => answered(r.request(), `${r.status()} ${r.fromServiceWorker() ? 'by the worker' : 'not by the worker'}`));
+context.on('response', (r) =>
+  answered(
+    r.request(),
+    `${r.status()} ${r.fromServiceWorker() ? 'by the worker' : 'not by the worker'}`,
+  ),
+);
 context.on('requestfailed', (r) => answered(r, `failed: ${r.failure()?.errorText}`));
 context.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
 // What each of this browser's content processes holds, a second apart, as
@@ -69,17 +85,32 @@ context.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
 // Playwright's `pw_run.sh`, this process's child.
 let memory = [];
 const ours = new Set();
-const ps = () => execSync('ps -axo pid=,ppid=,rss=,command=').toString().trim().split('\n').map((l) => l.trim().split(/\s+/));
-const shell = ps().find(([, ppid, , cmd, run]) => ppid === String(process.pid) && `${cmd} ${run}`.includes('pw_run.sh'))?.[0];
-const ui = args.engine === 'webkit' && ps().find(([, ppid, , cmd]) => ppid === shell && cmd.endsWith('/Playwright'))?.[0];
-const started = ui ? spawn('/usr/bin/log', ['stream', '--style', 'compact', '--predicate', `processID == ${ui}`]) : null;
+const ps = () =>
+  execSync('ps -axo pid=,ppid=,rss=,command=')
+    .toString()
+    .trim()
+    .split('\n')
+    .map((l) => l.trim().split(/\s+/));
+const shell = ps().find(
+  ([, ppid, , cmd, run]) => ppid === String(process.pid) && `${cmd} ${run}`.includes('pw_run.sh'),
+)?.[0];
+const ui =
+  args.engine === 'webkit' &&
+  ps().find(([, ppid, , cmd]) => ppid === shell && cmd.endsWith('/Playwright'))?.[0];
+const started = ui
+  ? spawn('/usr/bin/log', ['stream', '--style', 'compact', '--predicate', `processID == ${ui}`])
+  : null;
 started?.stdout.on('data', (d) => {
-  for (const [, pid] of String(d).matchAll(/\[PID=(\d+)\] WebProcessProxy::didFinishLaunching/g)) ours.add(pid);
+  for (const [, pid] of String(d).matchAll(/\[PID=(\d+)\] WebProcessProxy::didFinishLaunching/g))
+    ours.add(pid);
 });
 if (started) await new Promise((r) => setTimeout(r, 2000));
 const sampler = setInterval(() => {
   const held = ps().filter(([pid]) => ours.has(pid));
-  if (held.length) memory.push(`${new Date().toISOString()} ${held.map(([pid, , rss]) => `${pid}:${Math.round(rss / 1024)}`).join(' ')}`);
+  if (held.length)
+    memory.push(
+      `${new Date().toISOString()} ${held.map(([pid, , rss]) => `${pid}:${Math.round(rss / 1024)}`).join(' ')}`,
+    );
 }, 1000);
 context.on('response', async (r) => {
   try {
@@ -124,7 +155,10 @@ try {
     // the canary's Host check, whose verdict it would take the place of.
     if (phone) seen.asked = server.asked.slice(hostAt).filter((l) => !/^\S+ GET \S+ 200$/.test(l));
     // The lend's worker's trace, each range in it (u5-11): a phone's only.
-    if (phone) seen.trace = await page.evaluate(() => fetch('svrngs-trace').then((r) => r.text())).catch((e) => String(e));
+    if (phone)
+      seen.trace = await page
+        .evaluate(() => fetch('svrngs-trace').then((r) => r.text()))
+        .catch((e) => String(e));
     if (args.routes) {
       out[lend.who] = seen;
       continue;
@@ -134,11 +168,16 @@ try {
     await ready();
     seen.cookie = await run('cookie', lend.who);
     seen.storage = await run('storage', lend.who);
-    if (phone) seen.unsealable = await page.evaluate(unsealable).catch((e) => ({ error: String(e) }));
+    if (phone)
+      seen.unsealable = await page.evaluate(unsealable).catch((e) => ({ error: String(e) }));
     if (args.api) {
       seen.recordPost = await page.evaluate(
         ([api, body]) =>
-          fetch(`${api}/v1/rail/append`, { method: 'POST', headers: { 'content-type': 'text/plain' }, body })
+          fetch(`${api}/v1/rail/append`, {
+            method: 'POST',
+            headers: { 'content-type': 'text/plain' },
+            body,
+          })
             .then((r) => `answered ${r.status}`)
             .catch((e) => `not read: ${e}`),
         [args.api, args.append],

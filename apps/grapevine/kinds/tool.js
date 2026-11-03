@@ -9,7 +9,12 @@ export default {
   listing: { fields: { what: 'text' } },
   notice(ask, mine) {
     const name = (s) => String(s).trim().toLowerCase();
-    return mine.records.some((r) => r.kind === 'tool' && typeof r.listing?.what === 'string' && name(r.listing.what) === name(ask.fields.what));
+    return mine.records.some(
+      (r) =>
+        r.kind === 'tool' &&
+        typeof r.listing?.what === 'string' &&
+        name(r.listing.what) === name(ask.fields.what),
+    );
   },
   hops: 1,
   name: 'withheld',

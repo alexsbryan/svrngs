@@ -12,6 +12,13 @@
 import { html } from './view.js?v=__VERSION__';
 import { Fold } from './parts.js?v=__VERSION__';
 
-const PARTS = { reads: 'Reads and writes for you', opens: 'Opens friends’ things as you', knows: 'Knows who you are', wifi: 'Open to this WiFi', play: 'Open to programs on this computer', decides: 'Can decide for you' };
+const PARTS = {
+  reads: 'Reads and writes for you',
+  opens: 'Opens friends’ things as you',
+  knows: 'Knows who you are',
+  wifi: 'Open to this WiFi',
+  play: 'Open to programs on this computer',
+  decides: 'Can decide for you',
+};
 export const Acts = ({ parts, notes = {}, open, send }) =>
   html`<section id="acts"><${Fold} summary="What acts as you" heading=${true} fold="acts" open=${open} send=${send}>${Object.entries(PARTS).map(([k, head]) => html`<div>${parts[k]?.length > 0 && [html`<h3>${head}</h3>`, notes[k] && html`<p>${notes[k]}</p>`, parts[k]]}</div>`)}<//></section>`;

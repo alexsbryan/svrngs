@@ -43,17 +43,26 @@ try {
   page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
   await held(page, origin, args);
   const away = (url) => inApp(url) && !url.pathname.endsWith('/open.html');
-  await Promise.all([page.waitForURL(away, { timeout: 90_000 }), page.locator('#lent button', { hasText: args.open }).click()]);
+  await Promise.all([
+    page.waitForURL(away, { timeout: 90_000 }),
+    page.locator('#lent button', { hasText: args.open }).click(),
+  ]);
   await page.waitForLoadState('load');
   out.opened = page.url();
   const lendOrigin = new URL(out.opened).origin;
   const at = async (path) => {
-    if (new URL(page.url()).origin !== lendOrigin) await page.goto(`${lendOrigin}/`, { waitUntil: 'load' });
+    if (new URL(page.url()).origin !== lendOrigin)
+      await page.goto(`${lendOrigin}/`, { waitUntil: 'load' });
     return path;
   };
   const read = async (url, init) =>
     page.evaluate(
-      ([u, i]) => fetch(u, i).then(async (r) => ({ status: r.status, refused: r.headers.get('x-svrngs-refused'), body: await r.text() })),
+      ([u, i]) =>
+        fetch(u, i).then(async (r) => ({
+          status: r.status,
+          refused: r.headers.get('x-svrngs-refused'),
+          body: await r.text(),
+        })),
       [url, init],
     );
   out.told = JSON.parse((await read('/svrngs-reads')).body);
@@ -63,10 +72,19 @@ try {
 
   // 1. Asked, and the person says yes.
   const ask = async () => {
-    await page.evaluate((url) => location.assign(url), `${shelf.ask}&back=${encodeURIComponent(args.back)}`);
+    await page.evaluate(
+      (url) => location.assign(url),
+      `${shelf.ask}&back=${encodeURIComponent(args.back)}`,
+    );
     await page.waitForSelector('#ask:not([hidden])', { timeout: 90_000 });
-    const asked = await page.evaluate(() => ({ heading: document.getElementById('status').textContent, words: document.getElementById('words').textContent }));
-    await Promise.all([page.waitForURL(away, { timeout: 90_000 }), page.locator('#ask button', { hasText: 'Yes' }).click()]);
+    const asked = await page.evaluate(() => ({
+      heading: document.getElementById('status').textContent,
+      words: document.getElementById('words').textContent,
+    }));
+    await Promise.all([
+      page.waitForURL(away, { timeout: 90_000 }),
+      page.locator('#ask button', { hasText: 'Yes' }).click(),
+    ]);
     await page.waitForLoadState('load');
     return { ...asked, landed: page.url() };
   };
@@ -82,7 +100,13 @@ try {
   out.used = await page.locator('#used').innerText();
   await page.locator('#used button', { hasText: 'Stop' }).click();
   // Stopped once no yes is left to stop: the list may say "stopped" of other apps before.
-  await page.waitForFunction(() => document.querySelector('#used li') && !document.querySelector('#used button'), null, { timeout: 90_000 }).catch(() => {});
+  await page
+    .waitForFunction(
+      () => document.querySelector('#used li') && !document.querySelector('#used button'),
+      null,
+      { timeout: 90_000 },
+    )
+    .catch(() => {});
   out.unused = await page.locator('#used').innerText();
   out.pageStopped = await probe();
 
@@ -96,7 +120,9 @@ try {
   // The group's page asked of an app and a lend it does not lend
   // (onair-economize (d)): its line, read once it says one.
   await page.goto(`${origin}#ask=x&app=y&at=/`);
-  await page.waitForFunction(() => document.getElementById('response')?.textContent, null, { timeout: 90_000 });
+  await page.waitForFunction(() => document.getElementById('response')?.textContent, null, {
+    timeout: 90_000,
+  });
   out.unlent = await page.locator('#response').textContent();
 
   // 4. The group's page, framed by the lent page.
@@ -110,7 +136,12 @@ try {
   }, `${origin}#ask=x&app=y&at=/`);
   await page.waitForTimeout(2000);
   const framed = await Promise.all(
-    page.frames().filter((f) => f !== page.mainFrame()).map((f) => f.evaluate(() => document.getElementById('status')?.textContent ?? null).catch(() => null)),
+    page
+      .frames()
+      .filter((f) => f !== page.mainFrame())
+      .map((f) =>
+        f.evaluate(() => document.getElementById('status')?.textContent ?? null).catch(() => null),
+      ),
   );
   out.framed = framed.filter((t) => t !== null);
 
@@ -125,8 +156,19 @@ try {
           get.onsuccess = async () => {
             const kept = get.result ?? {};
             const keys = Object.values(kept).filter((v) => v instanceof CryptoKey);
-            const exported = await Promise.all(keys.map((k) => crypto.subtle.exportKey('pkcs8', k).then(() => 'exported', (e) => e.name)));
-            done({ pass: kept.pass, texts: Object.values(kept).filter((v) => typeof v === 'string'), exported });
+            const exported = await Promise.all(
+              keys.map((k) =>
+                crypto.subtle.exportKey('pkcs8', k).then(
+                  () => 'exported',
+                  (e) => e.name,
+                ),
+              ),
+            );
+            done({
+              pass: kept.pass,
+              texts: Object.values(kept).filter((v) => typeof v === 'string'),
+              exported,
+            });
           };
         };
       }),

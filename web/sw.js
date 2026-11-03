@@ -23,10 +23,20 @@ const CACHE = store.CACHE;
 // (store.js `runtime`, u4-9). Each module the page loads, app.js and the
 // rest, is the build's to add, from what it copied (scripts/build-web.sh),
 // so none is listed by hand.
-const SHELL = ['./', './sign.html', './look.css?v=__VERSION__', './wasm/svrngs_web.js?v=__VERSION__'];
+const SHELL = [
+  './',
+  './sign.html',
+  './look.css?v=__VERSION__',
+  './wasm/svrngs_web.js?v=__VERSION__',
+];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(
+    caches
+      .open(CACHE)
+      .then((c) => c.addAll(SHELL))
+      .then(() => self.skipWaiting()),
+  );
 });
 
 self.addEventListener('activate', (e) => {
@@ -43,5 +53,7 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (url.origin !== self.location.origin || e.request.method !== 'GET') return;
-  e.respondWith(caches.match(e.request, { ignoreSearch: true }).then((hit) => hit || fetch(e.request)));
+  e.respondWith(
+    caches.match(e.request, { ignoreSearch: true }).then((hit) => hit || fetch(e.request)),
+  );
 });
