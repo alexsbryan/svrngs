@@ -657,13 +657,15 @@ async fn stand_up(members: usize, acts: usize) -> (Vec<tempfile::TempDir>, Vec<N
     for w in writes {
         w.await.unwrap();
     }
-    // The keeper's two cutovers, of authorship and of holders, which its
-    // computer writes on its first round (node.rs `cut_over`), written here
-    // so the rounds measured below are a group's past its first: none of
-    // them writes or moves either.
+    // The keeper's two cutovers, of authorship and of holders, and where
+    // the group meets (relay fallbacks), which its computer writes on its
+    // first round (node.rs `cut_over`), written here so the rounds measured
+    // below are a group's past its first: none of them writes or moves any.
     for cutover in [svrngs_core::Cutover::Authors, svrngs_core::Cutover::Holders] {
         nodes[0].rail().commit(GROUP, &cutover).unwrap().unwrap();
     }
+    let meets = svrngs_core::MeetsAt(Default::default());
+    nodes[0].rail().commit(GROUP, &meets).unwrap().unwrap();
     converge(&nodes).await;
     let digest = nodes[0].rail().digest(GROUP).unwrap();
     for node in &nodes[1..] {
@@ -904,8 +906,11 @@ async fn the_account_matches_a_hand_count() {
     //   (`ingest_all`); each reached member catches up before and after
     //   landing the two (`ingest_all`, `Held::after_write`): 23 + 2 + 2 x 2
     //   = 29; every register read below catches up first
-    //   (journal.rs `RingJournal::folded`), 11; and node 0's question of
-    //   whether its cutover is written (node.rs `cut_over`), 1: 41.
+    //   (journal.rs `RingJournal::folded`), 11; node 0's question of
+    //   whether its cutover is written (node.rs `cut_over`), 1; and its two
+    //   questions of where the group meets (group.rs `meeting`), once for
+    //   its endpoint at the round's start and once to dial it (relay
+    //   fallbacks), 2: 43.
     // - register: node 0 asks whether its group already names its relay
     //   before it dials (ring_sync.rs `run_one_round`, `Host::say_relay`:
     //   it does, so no `RelayAt` is committed), lists its members (node.rs
@@ -922,7 +927,7 @@ async fn the_account_matches_a_hand_count() {
         "acts_moved": 4,
         "cpu_s": null, "wall_s": null,
         "folds": {
-            "write_index": {"kept": 41, "rebuilt": 0},
+            "write_index": {"kept": 43, "rebuilt": 0},
             "digest": {"kept": 23, "rebuilt": 0},
             "offer": {"kept": 6, "rebuilt": 4},
             "register": {"kept": 9, "rebuilt": 2},

@@ -280,7 +280,7 @@ async fn the_home_page_joins_another_group_from_its_link_while_svrngs_runs(
         Name::parse("Trip").unwrap(),
         Name::parse("Sam").unwrap(),
         None,
-        None,
+        &[],
         &ours,
     )
     .await

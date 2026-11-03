@@ -99,7 +99,7 @@ async fn sams_house(sam: &Computer) -> (Seed, Printed) {
         name("house"),
         name("Sam"),
         None,
-        None,
+        &[],
         &no_relay(),
     )
     .await
@@ -459,7 +459,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
     let base = transport
         .spliced(&Contact {
             key: sam.node.endpoint().id(),
-            relay_url: None,
+            relays: Default::default(),
             iroh_direct_addrs: loopback(&sam.node),
         })
         .await
@@ -804,7 +804,7 @@ async fn a_member_prints_links_on_the_page_the_founders_opened() {
         name("house"),
         name("Sam"),
         Some(&x),
-        None,
+        &[],
         &no_relay(),
     )
     .await
@@ -846,7 +846,7 @@ async fn a_link_from_a_computer_without_lookup_carries_its_relay() {
     };
     assert!(!ours.n0_services, "lookup off");
     let sam = computer_on(1, &ours).await;
-    let (seed, printed) = cli::new_group(&sam.node, name("house"), name("Sam"), None, None, &ours)
+    let (seed, printed) = cli::new_group(&sam.node, name("house"), name("Sam"), None, &[], &ours)
         .await
         .expect("Sam makes house");
     eprintln!(
@@ -856,8 +856,8 @@ async fn a_link_from_a_computer_without_lookup_carries_its_relay() {
     );
     let link = parsed(&printed, &sam.node);
     assert_eq!(
-        link.token.relay,
-        Some("https://relay.example/".parse().unwrap()),
+        link.token.relays,
+        ["https://relay.example/".parse().unwrap()],
         "the link carries the relay, dotless"
     );
     let alex = computer(2).await;
@@ -901,7 +901,7 @@ fn join_parses_its_link() {
     let token = Token {
         issuer: founder.verifying_key(),
         secret: [7; 16],
-        relay: None,
+        relays: Vec::new(),
     };
     let page = Origin::parse("https://x.example/").unwrap();
     for (raw, origin) in [

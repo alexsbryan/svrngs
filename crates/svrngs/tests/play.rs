@@ -83,7 +83,7 @@ fn knows(node: &Node, other: &Node) {
 async fn house(sam: &Path, alex: &Path) -> (Node, Node, Seed) {
     let sam = start(1, sam).await;
     let relay = no_relay();
-    let made = cli::new_group(&sam, name("house"), name("Sam"), None, None, &relay);
+    let made = cli::new_group(&sam, name("house"), name("Sam"), None, &[], &relay);
     let (seed, printed) = made.await.expect("Sam makes house");
     let alex = start(2, alex).await;
     knows(&alex, &sam);

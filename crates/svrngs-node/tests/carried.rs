@@ -914,15 +914,16 @@ async fn a_line_is_carried_only_signed_by_someone_in_the_group() {
             .collect::<Vec<_>>()
     };
     // Every line but the keeper's two cutovers, of authorship and of
-    // holders, which ana's computer, keeping the group, writes once each on
-    // a round of its own (capability-signed; HOLDER_APPROVAL §5).
+    // holders, and where the group meets, which ana's computer, keeping the
+    // group, writes once each on a round of its own (capability-signed;
+    // HOLDER_APPROVAL §5; relay fallbacks).
     let all = || {
         let (mut ops, _) = ana
             .rail()
             .ops_missing_from_within(&group, &Default::default(), usize::MAX)
             .unwrap();
-        use svrngs_core::RailAct::{Holders, Signers};
-        ops.retain(|o| !matches!(o.kind.act, Signers { .. } | Holders { .. }));
+        use svrngs_core::RailAct::{Holders, Meets, Signers};
+        ops.retain(|o| !matches!(o.kind.act, Signers { .. } | Holders { .. } | Meets { .. }));
         ops
     };
     let anas = || {

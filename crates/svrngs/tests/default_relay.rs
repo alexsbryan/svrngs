@@ -3,10 +3,11 @@
 //! the operator, 2026-10-12; parked at the gate by relay-park, 2026-10-13,
 //! the build shipping n0's until the switch, `tests/shipped.rs`). A
 //! computer built as the command builds it there (`cli::reach`, which
-//! `src/main.rs` calls) meets its groups at svrngs's relay, or at the one a
-//! group keeps, with no address lookup — n0's or any. A group made with `new --relay` keeps it,
+//! `src/main.rs` calls) meets its groups at svrngs's relay, and at the ones
+//! a group keeps beside it (relay fallbacks), with no address lookup —
+//! n0's or any. A group made with `new --relay` keeps it in its record,
 //! every computer its link lets in meets the group there too, and each
-//! reaches each by key and that relay alone; no trace of any names an n0
+//! reaches each by key at the group's relays; no trace of any names an n0
 //! host. Planted: `cli::reach` answering the command's old posture,
 //! `RelayConfig::default()`'s n0 relays and lookup.
 
@@ -84,27 +85,35 @@ async fn home(node: &Node) -> String {
 
 #[test]
 fn the_command_meets_svrngs_s_relay_and_never_n0_s() {
-    let dir = tempfile::tempdir().unwrap();
-    let ours = cli::reach(dir.path(), &Verb::Run, MeetAt::Svrngs).unwrap();
+    let ours = cli::reach(MeetAt::Svrngs);
     assert!(!ours.n0_services, "n0's relays and lookup are off");
     assert_eq!(ours.relay_urls, ["https://relay.svrnme.sh/"]);
-    let asked = cli::parse(argv("new house --relay relay.example.org")).unwrap();
-    let theirs = cli::reach(dir.path(), &asked, MeetAt::Svrngs).unwrap();
-    assert!(!theirs.n0_services, "n0's relays and lookup are off");
-    assert_eq!(theirs.relay_urls, ["https://relay.example.org/"]);
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn a_group_s_own_relay_meets_every_member_and_n0_never() {
-    traced();
+/// A relay on 127.0.0.1, and its URL.
+async fn relay_here() -> (Server, String) {
     let mut config = ServerConfig::default();
     config.relay = Some(RelayServer::new(([127, 0, 0, 1], 0)));
     let relay = Server::spawn(config).await.expect("a relay on 127.0.0.1");
     let url = format!("http://{}/", relay.http_addr().unwrap());
+    (relay, url)
+}
+
+/// The group's own relay and the build's, a second relay on 127.0.0.1
+/// standing in for svrngs's so nothing leaves this computer (relay
+/// fallbacks): every computer meets the group at both, iroh making either
+/// its home, and n0 never.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_group_s_own_relay_meets_every_member_and_n0_never() {
+    traced();
+    let ((_own, url), (_build, build)) = (relay_here().await, relay_here().await);
     let dirs = [(); 3].map(|()| tempfile::tempdir().unwrap());
+    let ours = RelayConfig {
+        relay_urls: vec![build.clone()],
+        ..cli::reach(MeetAt::Svrngs)
+    };
 
     let made = cli::parse(argv(&format!("new house --as Sam --relay {url}"))).unwrap();
-    let ours = cli::reach(dirs[0].path(), &made, MeetAt::Svrngs).unwrap();
     let sam = computer(dirs[0].path(), 41, &ours).await;
     assert!(
         sam.endpoint().address_lookup().unwrap().is_empty(),
@@ -113,29 +122,23 @@ async fn a_group_s_own_relay_meets_every_member_and_n0_never() {
     let Verb::New {
         name,
         person,
-        relay: kept,
+        relays: kept,
         ..
     } = made
     else {
         unreachable!("new parses as new")
     };
-    let (seed, printed) = cli::new_group(&sam, name, person.unwrap(), None, kept, &ours)
+    let (seed, printed) = cli::new_group(&sam, name, person.unwrap(), None, &kept, &ours)
         .await
         .expect("Sam makes house");
     let link = Link::parse(&printed.client).unwrap();
-    let carried = link.token.relay.map(|r| RelayUrl::from(r).to_string());
-    assert_eq!(
-        carried.as_deref(),
-        Some(url.as_str()),
-        "the link carries it"
-    );
+    let carried: Vec<String> = link.token.relays.iter().map(ToString::to_string).collect();
+    assert!(carried.contains(&url), "the link carries it: {carried:?}");
 
     let mut people = vec![sam];
     for (dir, (seed_byte, who)) in dirs[1..].iter().zip([(42, "Alex"), (43, "Bo")]) {
         let join = cli::parse(argv(&format!("join {} --as {who}", printed.client))).unwrap();
-        let theirs = cli::reach(dir.path(), &join, MeetAt::Svrngs).unwrap();
-        assert_eq!(theirs.relay_urls, [url.clone()], "{who} meets it there");
-        let node = computer(dir.path(), seed_byte, &theirs).await;
+        let node = computer(dir.path(), seed_byte, &ours).await;
         assert!(node.endpoint().address_lookup().unwrap().is_empty());
         let Verb::Join { link, person, .. } = join else {
             unreachable!("join parses as join")
@@ -146,16 +149,26 @@ async fn a_group_s_own_relay_meets_every_member_and_n0_never() {
             .unwrap_or_else(|e| panic!("{who} is let in: {e}"));
         people.push(node);
     }
-    for (node, dir) in people.iter().zip(&dirs) {
-        assert_eq!(home(node).await, url, "every computer is reached there");
-        let next = cli::reach(dir.path(), &Verb::Run, MeetAt::Svrngs).unwrap();
-        assert_eq!(next.relay_urls, [url.clone()], "and meets it there again");
+    for node in &people {
+        let home = home(node).await;
+        assert!(
+            [&url, &build].contains(&&home),
+            "every computer is reached at one: {home}"
+        );
+        let meets = node.rail().register(&seed.id()).unwrap().meets;
+        let said = meets.map(|m| m.iter().map(ToString::to_string).collect::<Vec<_>>());
+        assert_eq!(
+            said,
+            Some(vec![url.clone()]),
+            "and its record says the group meets there"
+        );
     }
-    // Each reaches each by its key and the group's relay alone: Alex hears
-    // of Bo from Bo first, so Bo stands in Alex's copy when Bo dials.
-    let url: RelayUrl = url.parse().unwrap();
+    // Each reaches each by its key at the group's relays.
+    let (url, build): (RelayUrl, RelayUrl) = (url.parse().unwrap(), build.parse().unwrap());
     for (from, to) in [(1, 2), (2, 1), (0, 2), (1, 0)] {
-        let at = EndpointAddr::new(people[to].endpoint().id()).with_relay_url(url.clone());
+        let at = EndpointAddr::new(people[to].endpoint().id())
+            .with_relay_url(url.clone())
+            .with_relay_url(build.clone());
         let synced = people[from].host().sync_with(&seed.id(), &at).await;
         assert!(
             synced.stop.is_none(),

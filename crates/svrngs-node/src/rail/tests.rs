@@ -424,6 +424,7 @@ async fn live_push_reports_each_peer_it_offered_the_payload() {
         nudge: Arc::new(tokio::sync::Notify::new()),
         live: Arc::new(LiveBuffer::default()),
         transport: Arc::new(crate::iroh::IrohTransport::new(endpoint.clone())),
+        build: Vec::new(),
     };
     let oversize = vec![b'x'; 4097];
     let resp = push_answer(&api, "ledger", oversize.into()).await;
@@ -475,7 +476,12 @@ fn the_live_fan_out_never_offers_a_browser() {
     .into_iter()
     .map(|(k, m)| (actor_of(&key(k)), m))
     .collect();
-    let peers = super::live_peers(&actor_of(&key(7)), "ledger", &standing);
+    let peers = super::live_peers(
+        &actor_of(&key(7)),
+        "ledger",
+        &standing,
+        &svrngs_core::relay::Meeting::of([], &[]),
+    );
     let named: Vec<_> = peers.iter().map(|p| p.name.as_deref()).collect();
     assert_eq!(named, [Some("bo")]);
 }

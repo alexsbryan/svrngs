@@ -11,7 +11,7 @@ fn a_token(relay: Option<&str>) -> Token {
     Token {
         issuer: issuer(),
         secret: [7u8; SECRET_LEN],
-        relay: relay.map(|r| r.parse().unwrap()),
+        relays: relay.iter().map(|r| r.parse().unwrap()).collect(),
     }
 }
 
@@ -86,7 +86,7 @@ fn a_tokens_relay_is_read_without_the_roots_dot() {
     for (row, given, then) in rows {
         let when = Token::decode(&a_token(Some(given)).encode()).expect(row);
         assert_eq!(
-            when.relay.map(|r| r.to_string()).as_deref(),
+            when.relays.first().map(|r| r.to_string()).as_deref(),
             Some(then),
             "{row}"
         );
@@ -102,7 +102,7 @@ fn a_token_with_an_unknown_format_or_cut_short_parses_as_nothing() {
     let bare = bytes(&a_token(None));
     let relayed = bytes(&a_token(Some("https://relay.example./")));
     assert!(Token::decode(&text(&bare)).is_some());
-    for format in [0u8, 3, 0xFF] {
+    for format in [0u8, 3, 4, 0xFF] {
         let mut b = bare.clone();
         b[0] = format;
         assert!(Token::decode(&text(&b)).is_none(), "format byte {format}");
@@ -122,6 +122,48 @@ fn a_token_with_an_unknown_format_or_cut_short_parses_as_nothing() {
     assert!(Link::parse(&client[..client.len() - 4]).is_none());
     assert!(Link::parse("svrngs://join/").is_none());
     assert!(Link::parse("not a link").is_none());
+}
+
+/// relay fallbacks: a link carries two of its group's relays, the issuer's
+/// home first, under a format byte of its own, and drops a third; one
+/// relay or none is written as before, so a link of this build opens on
+/// an older one unless it carries two, and every link of an older build
+/// opens here (the tests above). A format byte that says two with one
+/// relay, or one with two, parses as nothing. Planted: `encode` writing
+/// every relay under `Relayed`, and the two-relay token parsed as nothing.
+#[test]
+fn a_link_carries_two_of_its_groups_relays_home_first() {
+    let relays = [
+        "http://10.0.0.3:3340/",
+        "http://10.0.0.2:3340/",
+        "https://third.example/",
+    ];
+    let token = Token {
+        relays: relays.iter().map(|r| r.parse().unwrap()).collect(),
+        ..a_token(None)
+    };
+    let back = Token::decode(&token.encode()).expect("two relays parse");
+    let said: Vec<String> = back.relays.iter().map(ToString::to_string).collect();
+    assert_eq!(said, relays[..2], "home first, a third dropped");
+    let bytes = URL_SAFE_NO_PAD.decode(token.encode()).unwrap();
+    assert_eq!(bytes[0], Format::Met.byte());
+    let one = URL_SAFE_NO_PAD
+        .decode(a_token(Some(relays[0])).encode())
+        .unwrap();
+    assert_eq!(
+        one[0],
+        Format::Relayed.byte(),
+        "one relay, as an older build writes it"
+    );
+    let (mut met_of_one, mut relayed_of_two) = (one.clone(), bytes.clone());
+    (met_of_one[0], relayed_of_two[0]) = (Format::Met.byte(), Format::Relayed.byte());
+    for wrong in [
+        met_of_one,
+        relayed_of_two,
+        [bytes.as_slice(), b" "].concat(),
+    ] {
+        assert!(Token::decode(&URL_SAFE_NO_PAD.encode(wrong)).is_none());
+    }
 }
 
 #[test]

@@ -22,13 +22,14 @@
 //! none prints the client's link alone (u2-8), so nothing depends on a
 //! hosted page unless the group names one.
 //!
-//! And `relay`, where this computer meets the group (relay-default): `new
-//! --relay` writes it, `new` with none and the home page the one
-//! [`crate::node::Host::made_relay`] answers, `join` the one its link carried. It is this
-//! computer's choice, as the origin is; the group's record says where each
-//! computer is reached, by its `Relay` act (relay-in-record). A group that
-//! keeps none is met where the build meets its groups (svrngs's `cli::SHIPPED`):
-//! n0's relays until the operator's switch, then svrngs's own.
+//! And where the group meets (relay fallbacks; svrn-docs
+//! `rings/current/GROUP_RELAYS.md` §7): the relays its keeper names in its
+//! record, joined with the build's (svrngs's `cli::SHIPPED`), the one
+//! [`meeting`]. `relay`, a file a joiner of an old group keeps from its
+//! link, is read only for a group whose keeper has named none: an old
+//! group, until its keeper's computer runs this build and names them
+//! (`Host::cut_over`). The group's record says where each computer is
+//! reached, by its `Relay` act (relay-in-record).
 
 use std::path::{Path, PathBuf};
 
@@ -40,16 +41,18 @@ pub use crate::seed::{answered, Seed};
 pub use crate::Name;
 use ed25519_dalek::VerifyingKey;
 
+use std::collections::BTreeSet;
+
 use crate::iroh::RelayUrl;
 use crate::link::Origin;
-use crate::relay::n0_relays;
+use svrngs_core::relay::{Meeting, Url};
 
 /// The one spelling of the seed's file name in a group's directory.
 const SEED_FILE: &str = "seed.json";
 
 // The one spelling of the kept origin's file name in a group's directory:
 // the node's, which reads it for the home page too.
-use crate::invite::{carried, kept_page, ORIGIN_FILE};
+use crate::invite::{kept_page, ORIGIN_FILE};
 
 /// The one spelling of the kept relay's file name in a group's directory.
 const RELAY_FILE: &str = "relay";
@@ -156,37 +159,83 @@ pub(crate) fn kept(path: &Path) -> Result<Option<String>, SeedError> {
 
 impl crate::node::Host {
     /// Keep `seed`'s group on this computer: its journal, the seed beside it,
-    /// `origin` and `relay` when given — the relay `new --relay` names or a
-    /// joined link carried, where the group is met (svrngs's `cli::reach`) —
-    /// and the roster the seed founds. What `new` and `join` both write, in
-    /// one order, so a group kept by either is the same.
+    /// `origin` when given, the roster the seed founds, and where it meets
+    /// of `own`, the build's relays left out, as the record never names
+    /// them: from its founder, the keeper, the group's relays in its record
+    /// (`new --relay`, or where the founder is met now); from a joiner, the
+    /// first, the relay a link carried, in the file an old group is met by
+    /// until its keeper names its relays ([`meeting`]). What `new` and
+    /// `join` both write, in one order, so a group kept by either is the
+    /// same.
     pub fn keep_group(
         &self,
         seed: &Seed,
         origin: Option<&Origin>,
-        relay: Option<&RelayUrl>,
+        own: &[Url],
     ) -> Result<(), String> {
         let rail = &self.rail;
         let dir = rail.group_dir(&seed.id()).map_err(|e| e.to_string())?;
+        let own: BTreeSet<Url> = own
+            .iter()
+            .filter(|r| !self.build.contains(r))
+            .cloned()
+            .collect();
+        let founds = seed.founder_actor() == self.actor;
+        tracing::debug!(target: "group", group = %seed.id(), ?own, founds, "group: kept, where it meets in its record from its founder, else the link's relay in its file");
+        let filed = own
+            .first()
+            .filter(|_| !founds)
+            .map(|r| RelayUrl::from(r.clone()));
         write_seed(&dir, seed)
             .and_then(|()| origin.map_or(Ok(()), |origin| write_origin(&dir, origin)))
-            .and_then(|()| relay.map_or(Ok(()), |relay| write_relay(&dir, relay)))
+            .and_then(|()| filed.map_or(Ok(()), |relay| write_relay(&dir, &relay)))
             .map_err(|e: SeedError| e.to_string())?;
         rail.set_seed(&seed.id(), &seed.roster())
             .map_err(|e| e.to_string())?;
+        if founds {
+            let said = rail.commit(&seed.id(), &svrngs_core::MeetsAt(own));
+            said.map_err(|e| e.to_string())?
+                .map_err(|why| format!("{why:?}"))?;
+        }
         self.cut_over(&seed.id());
+        self.refresh();
         Ok(())
     }
 
-    /// The relay a group made here keeps, the one rule `svrngs new` with no
-    /// `--relay` and the home page's "Make a group" both ask
-    /// (arch-command-relay (a)): the relay its links carry, kept as a
-    /// joiner keeps it ([`kept_relay`]): where this computer is met now, so
-    /// the group is met with no restart, and after one alike.
-    pub fn made_relay(&self) -> Option<RelayUrl> {
-        let home = self.endpoint.addr().relay_urls().next().cloned();
-        kept_relay(carried(&self.relay, home), self.relay.n0_services)
+    /// Where `group` meets ([`meeting`]), by this computer's build.
+    pub(crate) fn meeting(&self, group: &str) -> Meeting {
+        meeting(&self.rail, group, &self.build)
     }
+}
+
+/// Where `group` meets (relay fallbacks; svrn-docs `GROUP_RELAYS.md` §7):
+/// the relays its keeper names in its record, else, for an old group whose
+/// keeper has named none, the relay its file here keeps; joined with
+/// `build`'s, the one way a [`Meeting`] is made from a group. A register
+/// or a file that cannot be read is said at warn, and the group met at the
+/// build's relays alone.
+pub(crate) fn meeting(rail: &crate::RingRail, group: &str, build: &[Url]) -> Meeting {
+    let named = rail.register(group).map(|r| r.meets);
+    let own = match named {
+        Ok(Some(own)) => own,
+        Ok(None) => filed(rail, group).into_iter().collect(),
+        Err(e) => {
+            tracing::warn!(target: "group", group, error = %e, "group: its register is unreadable, so it is met at the build's relays alone");
+            BTreeSet::new()
+        }
+    };
+    Meeting::of(own, build)
+}
+
+/// The relay `group`'s file here keeps, an old group's, which its keeper
+/// has not yet named in its record; none when it keeps none, or, said at
+/// warn, when it cannot be read.
+pub(crate) fn filed(rail: &crate::RingRail, group: &str) -> Option<Url> {
+    let dir = rail.group_dir(group).map_err(|e| e.to_string());
+    let read = dir.and_then(|d| read_relay(&d).map_err(|e| e.to_string()));
+    let read = read.inspect_err(|e| tracing::warn!(target: "group", group, error = %e, "group: the relay its file keeps cannot be read, so it is met at the build's relays"));
+    tracing::debug!(target: "group", group, ?read, "group: its keeper names no relays, so the relay its file keeps, an old group's");
+    read.ok().flatten().map(Into::into)
 }
 
 /// Where `new` and joining put a group's folder (v1-onboarding (d);
@@ -251,7 +300,8 @@ impl crate::node::Asking {
     /// keeps the page this computer's svrngs came from, the data dir's
     /// `origin`, which install.sh writes, so the page's links to it are
     /// https links whose page gives the one line; and the relay
-    /// [`crate::node::Host::made_relay`] answers. Its folder is placed as a
+    /// relay this computer is met at now, as its group's own unless it is
+    /// the build's ([`crate::node::Host::keep_group`]). Its folder is placed as a
     /// joiner's is.
     pub(crate) fn found(&self, name: &str, person: &str) -> Result<Made, String> {
         let parse = |n: &str| Name::parse(n).map_err(|e| e.to_string());
@@ -260,8 +310,8 @@ impl crate::node::Asking {
         // The founder is the key this computer signs and dials with.
         let seed = draw(name, person, self.host.rail.signer().verifying_key());
         let page = kept_page(root)?;
-        let relay = self.host.made_relay();
-        self.host.keep_group(&seed, page.as_ref(), relay.as_ref())?;
+        let relay = self.host.made_at();
+        self.host.keep_group(&seed, page.as_ref(), &relay)?;
         tracing::debug!(target: "group", group = %seed.id(), ?page, ?relay, "group: made for the home page");
         Ok((self.folders.place(&seed), seed, beside))
     }
@@ -314,17 +364,6 @@ pub fn namesakes(root: &Path, name: &Name, me: &str) -> Vec<Namesake> {
 /// a group by its name, and [`namesakes`] those a new one shares it with.
 fn called(seed: &Seed, name: &str) -> bool {
     seed.name().as_str().to_lowercase() == name.trim().to_lowercase()
-}
-
-/// The relay a joiner keeps from its link's `carried`, where it meets the
-/// group from then on: at n0's (`n0`), none when it is one of n0's relays —
-/// where the issuer's build met its groups, not the group's own, which kept
-/// would outlast the operator's switch (PLAN §3, 2026-10-13). At
-/// svrngs's every relay is kept, n0's list never built there.
-pub fn kept_relay(carried: Option<RelayUrl>, n0: bool) -> Option<RelayUrl> {
-    let n0 = n0 && carried.as_ref().is_some_and(|r| n0_relays().contains(r));
-    tracing::debug!(target: "group", ?carried, n0, "group: join — the link's relay kept, unless it is one of n0's at n0's");
-    carried.filter(|_| !n0)
 }
 
 /// Every group this computer holds a seed for under `root`, the data dir.

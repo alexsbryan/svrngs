@@ -64,7 +64,7 @@ async fn dial(seed: u8, a: &Endpoint) -> (IrohTransport, String) {
     let base = transport
         .spliced(&Contact {
             key: a.id(),
-            relay_url: None,
+            relays: Default::default(),
             iroh_direct_addrs: loopback_sockets(a),
         })
         .await

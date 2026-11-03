@@ -39,7 +39,7 @@ async fn house(dir: &Path, relay: &iroh_relay::server::Server) -> (Node, String,
         Name::parse("ada").unwrap(),
         ada.verifying_key(),
     );
-    node.host().keep_group(&seed, None, None).unwrap();
+    node.host().keep_group(&seed, None, &[]).unwrap();
     let bo = svrngs_core::tests_support::Fixture {
         act: RailAct::Admit {
             person: Person::parse("bo").unwrap(),
@@ -54,7 +54,7 @@ async fn house(dir: &Path, relay: &iroh_relay::server::Server) -> (Node, String,
     let token = Token {
         issuer: ada.verifying_key(),
         secret: [0; 16],
-        relay: Some(relay_url(relay).parse().expect("a URL")),
+        relays: vec![relay_url(relay).parse().expect("a URL")],
     }
     .encode();
     (node, seed.id(), token)

@@ -51,7 +51,7 @@ async fn computer(
         Name::parse(person).unwrap(),
         ada.verifying_key(),
     );
-    node.host().keep_group(&seed, None, None).unwrap();
+    node.host().keep_group(&seed, None, &[]).unwrap();
     tokio::time::timeout(Duration::from_secs(20), node.endpoint().online())
         .await
         .expect("the node reaches the relay on 127.0.0.1");

@@ -38,7 +38,7 @@ async fn house(dir: &Path, relay: &iroh_relay::server::Server) -> (Node, String,
         Name::parse("ada").unwrap(),
         ada.verifying_key(),
     );
-    node.host().keep_group(&seed, None, None).unwrap();
+    node.host().keep_group(&seed, None, &[]).unwrap();
     tokio::time::timeout(Duration::from_secs(20), node.endpoint().online())
         .await
         .expect("the node reaches the relay on 127.0.0.1");
@@ -327,7 +327,7 @@ fn bo_s_phone(relay: &iroh_relay::server::Server, id: &str, read: &str) -> Value
     let token = svrngs_core::link::Token {
         issuer: SigningKey::from_bytes(&[1; 32]).verifying_key(),
         secret: [0; 16],
-        relay: Some(relay_url(relay).parse().expect("a URL")),
+        relays: vec![relay_url(relay).parse().expect("a URL")],
     }
     .encode();
     let bo = hex::encode(SigningKey::from_bytes(&[7; 32]).to_bytes());
@@ -488,7 +488,7 @@ async fn a_lend_filled_while_shown_reads_full_now_on_coming_back(engine: Engine)
     .expect("cy's node starts");
     let to = Contact {
         key: ada.endpoint().id(),
-        relay_url: None,
+        relays: Default::default(),
         iroh_direct_addrs: (ada.endpoint().bound_sockets().into_iter())
             .map(|mut a| {
                 if a.ip().is_unspecified() {

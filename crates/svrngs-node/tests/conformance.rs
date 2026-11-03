@@ -497,7 +497,7 @@ async fn browser_args(way: Way, engine: Engine, g: &Group, relay: &Server) -> Va
     let token = Token {
         issuer: signing(SAM).verifying_key(),
         secret: [0; 16],
-        relay: Some(uplink(&relay_url(relay)).await.parse().unwrap()),
+        relays: vec![uplink(&relay_url(relay)).await.parse().unwrap()],
     }
     .encode();
     let append = json!({ "op": "record", "payload": { "mark": MARK } }).to_string();

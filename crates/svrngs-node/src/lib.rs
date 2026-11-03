@@ -104,7 +104,9 @@ pub mod lend;
 pub mod folder;
 // A group's seed kept on this computer, and the group kept (start-group).
 pub mod group;
+// Where this computer meets its groups, in tiers (relay fallbacks).
 pub mod invite;
+pub mod tiers;
 // Joining a group by its link (arch-command (a)).
 pub mod join;
 pub mod node;

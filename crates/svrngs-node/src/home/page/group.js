@@ -37,11 +37,20 @@ const GROUP = (flows) => ({
   io: { get: ({ kind, n, id }) => get(`${ROUTES[kind]}?namespace=${encodeURIComponent(id)}`).then((body) => ({ type: 'answered', kind, n, body, why: `${kind} ${n}` }), (e) => ({ type: 'unread', kind, n, why: e.message })) },
 });
 
+// Why this computer reaches a group the backup way, by surface.rs's
+// `fallback` (relay fallbacks; svrngs-core relay.rs `Tier`).
+const BACKUP = {
+  unanswered: (name) => `This computer can’t reach the place ${name} usually meets, so it’s reaching ${name} a backup way for now. There’s nothing to do: it switches back by itself once that place answers.`,
+  unowned: (name) => `This computer is also in a group with no meeting place of its own, so it reaches every group, ${name} too, the backup way. The others in ${name} still reach it.`,
+};
+
 // The section, in its group's colour, derived from its id (look.css
-// `data-colour`), headed by its name and whose it is (#138); who is in it
-// unread, or the person removed, said and nothing read (home.js@19b63b2b:113-114).
+// `data-colour`), headed by its name and whose it is (#138); when this
+// computer meets the group at its fallback, said under it (surface.rs
+// `Held::fallback`; relay fallbacks); who is in it unread, or the person
+// removed, said and nothing read (home.js@19b63b2b:113-114).
 export const Group = ({ g, ...props }) => ((name) =>
-  html`<section data-colour=${[...g.id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 12, 0)}><h2>${g.name ?? 'A group whose name this computer cannot read'}${g.made && html`<small> (${whose(g.made)})</small>`}</h2>${g.removed === null ? html`<p>This computer could not read who is in ${name}.</p>` : g.removed ? html`<p>You are no longer in ${name}. What you already have stays on this computer; nothing new reaches it.</p>` : html`<${Read} g=${g} ...${props} />`}</section>`)(g.name ?? 'this group');
+  html`<section data-colour=${[...g.id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 12, 0)}><h2>${g.name ?? 'A group whose name this computer cannot read'}${g.made && html`<small> (${whose(g.made)})</small>`}</h2>${g.fallback && html`<p class="said">${BACKUP[g.fallback](name)}</p>`}${g.removed === null ? html`<p>This computer could not read who is in ${name}.</p>` : g.removed ? html`<p>You are no longer in ${name}. What you already have stays on this computer; nothing new reaches it.</p>` : html`<${Read} g=${g} ...${props} />`}</section>`)(g.name ?? 'this group');
 function Read({ g, round, places, flows, home, me, joined }) {
   const [s, send] = useMachine(() => machine('GROUP', GROUP(flows), { at: { people: 'reading', lends: 'reading' }, id: g.id }));
   useEffect(() => send({ type: round.type }), [round]);

@@ -44,7 +44,7 @@ async fn computer(dir: &Path, relay: &iroh_relay::server::Server, me: u8, seeds:
     .expect("a node starts");
     crate::drive::opens_at(node.api_addr().port(), &node.token());
     for seed in seeds {
-        node.host().keep_group(seed, None, None).unwrap();
+        node.host().keep_group(seed, None, &[]).unwrap();
     }
     tokio::time::timeout(Duration::from_secs(20), node.endpoint().online())
         .await

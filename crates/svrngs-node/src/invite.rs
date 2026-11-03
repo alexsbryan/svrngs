@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! A link to a group, made in one place for `svrngs link` and the home page
-//! (start-home): its token drawn, the relay it carries, and its `Invite`
+//! (start-home): its token drawn, the relays it carries, and its `Invite`
 //! written in the group's record. Moved from the command, behaviour kept:
-//! [`draw`] was svrngs's `issuer::mint`, [`carried`] its `cli::link_relay`,
+//! [`draw`] was svrngs's `issuer::mint`, `carried` its `cli::link_relay`
+//! (now svrngs-core's `Meeting::carried`, relay fallbacks),
 //! [`Host::mint`] and [`Host::own_person`] its `cli::mint` and
 //! `cli::own_person`, asked through [`crate::node::Node::host`], and
 //! [`kept_page`] its group.rs `read_origin`; [`Host::link`] its `cli::link_to`
@@ -13,9 +14,10 @@ use std::path::Path;
 
 use svrngs_core::link::{Origin, Token, SECRET_LEN};
 
-use crate::iroh::{PublicKey, RelayConfig, RelayUrl};
+use crate::iroh::PublicKey;
 use crate::node::Host;
 use crate::{actor_of, MintInvite, Person, RailError, Refused};
+use svrngs_core::relay::Url;
 
 /// How long a link lets people in: upstream's one invite lapse
 /// (`commonwealth-discovery/src/membership.rs:53` at `e1a43bcd2`, a day;
@@ -72,16 +74,17 @@ pub enum Unminted {
     Unkept(String),
 }
 
-/// A fresh token for `issuer`, reached through `relay` when given: its
-/// secret drawn again, up to [`DRAWS`] times, while the token spells a
-/// word DESIGN §1 keeps from people.
+/// A fresh token for `issuer`, reached through `relays`, the group's its
+/// meeting carries ([`svrngs_core::relay::Meeting::carried`]): its secret drawn again, up to
+/// [`DRAWS`] times, while the token spells a word DESIGN §1 keeps from
+/// people.
 #[expect(clippy::disallowed_methods, reason = "draws a link's secret")]
-pub fn draw(issuer: PublicKey, relay: Option<RelayUrl>) -> Token {
+pub fn draw(issuer: PublicKey, relays: Vec<Url>) -> Token {
     let mut token = Token {
         issuer: ed25519_dalek::VerifyingKey::from_bytes(issuer.as_bytes())
             .expect("iroh's key is a checked ed25519 key (iroh-base key.rs:122-127)"),
         secret: [0; SECRET_LEN],
-        relay: relay.map(Into::into),
+        relays,
     };
     for draw in 1..=DRAWS {
         // As identity.rs: getrandom failing is a host with no entropy.
@@ -95,25 +98,8 @@ pub fn draw(issuer: PublicKey, relay: Option<RelayUrl>) -> Token {
     token
 }
 
-/// The relay a link carries, given how this computer reaches the network
-/// and the home relay its endpoint reports: `home`, or the first relay
-/// configured while the endpoint reports none, in either posture.
-pub fn carried(relay: &RelayConfig, home: Option<RelayUrl>) -> Option<RelayUrl> {
-    let configured = || (relay.relay_urls.first()).and_then(|r| crate::relay::parse(r).ok());
-    let carried = home.or_else(configured);
-    match &carried {
-        Some(url) => {
-            tracing::debug!(target: "link", relay = %url, n0 = relay.n0_services, "link: the link carries this computer's relay")
-        }
-        None => {
-            tracing::warn!(target: "link", n0 = relay.n0_services, "link: no relay — the link carries the key alone, and no phone's page can open it")
-        }
-    }
-    carried
-}
-
 impl Host {
-    /// A link to `group` carrying `relay`: an `Invite` for a fresh token's
+    /// A link to `group` carrying `relays`: an `Invite` for a fresh token's
     /// key that lapses [`LINK_LIFE_SECS`] after `now`, signed by this
     /// computer, adding a device of the person `device_of` when given; the
     /// token. The issuer's newer `Invite` closes their last one from its
@@ -121,11 +107,11 @@ impl Host {
     pub fn mint(
         &self,
         group: &str,
-        relay: Option<RelayUrl>,
+        relays: Vec<Url>,
         device_of: Option<String>,
         now: i64,
     ) -> Result<Token, Unminted> {
-        let token = draw(self.endpoint.id(), relay);
+        let token = draw(self.endpoint.id(), relays);
         // Where this computer is reached, in the record before a joiner
         // pulls it, so the joiner can dial it back (relay-in-record).
         self.say_relay();
@@ -159,8 +145,9 @@ impl Host {
     /// guest's link for
     /// a visit that long, kept here ([`VisitLink`]) in place of an
     /// `Invite`, so it lets nobody join, and on the group's page alone. Its
-    /// relay is the one reached now, with no wait: a running computer has
-    /// reached it, the command waits first, or [`carried`] says why.
+    /// relays are where the group meets, the one reached now first, with no
+    /// wait: a running computer has reached it, the command waits first,
+    /// or a link carrying none is said.
     pub fn link(
         &self,
         group: &str,
@@ -180,10 +167,10 @@ impl Host {
         &self,
         seed: &crate::group::Seed,
         page: Option<&Origin>,
-        relay: Option<&RelayUrl>,
+        own: &[Url],
     ) -> Result<Result<Linked, Unminted>, String> {
         let _minting = (self.minting.lock()).unwrap_or_else(std::sync::PoisonError::into_inner);
-        self.keep_group(seed, page, relay)?;
+        self.keep_group(seed, page, own)?;
         tracing::debug!(target: "link", group = %seed.id(), "link: the group kept; its first link minted before any other");
         Ok(self.link_held(&seed.id(), false, None, None))
     }
@@ -225,10 +212,14 @@ impl Host {
         let (key, device) = device.then(|| self.own_person(group)).transpose()?.unzip();
         let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH);
         let now = now.map_err(|e| unkept(&e))?.as_secs() as i64;
-        let home = self.endpoint.addr().relay_urls().next().cloned();
-        let relay = carried(&self.relay, home);
+        // At most two of where the group meets, the home first (relay
+        // fallbacks): a link with none no phone's page can open.
+        let relays = self.meeting(group).carried(self.home().as_ref());
+        if relays.is_empty() {
+            tracing::warn!(target: "link", group, "link: no relay — the link carries the key alone, and no phone's page can open it");
+        }
         let token = match visit {
-            None => self.mint(group, relay, key, now)?,
+            None => self.mint(group, relays, key, now)?,
             Some(_) if page.is_none() => {
                 tracing::debug!(target: "link", group, "link: refused — a guest's link opens in a browser, and this group keeps no page");
                 return Err(Unminted::Unkept(
@@ -237,7 +228,7 @@ impl Host {
             }
             Some(length) => {
                 let (token, dir) = (
-                    draw(self.endpoint.id(), relay),
+                    draw(self.endpoint.id(), relays),
                     self.rail.root().join(VISIT_LINKS),
                 );
                 let kept = serde_json::to_vec(&(group, length, now)).map_err(|e| unkept(&e))?;

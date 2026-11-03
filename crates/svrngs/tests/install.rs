@@ -319,7 +319,7 @@ async fn the_line_run_twice_installs_runs_at_login_opens_home_and_joins_once() {
         Name::parse("house").unwrap(),
         Name::parse("Sam").unwrap(),
         Some(&page),
-        None,
+        &[],
         &ours,
     )
     .await
@@ -866,7 +866,7 @@ async fn joining_places_the_groups_folder() {
         Name::parse("trip").unwrap(),
         Name::parse("Sam").unwrap(),
         None,
-        None,
+        &[],
         &ours,
     )
     .await

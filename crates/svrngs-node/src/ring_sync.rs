@@ -304,8 +304,12 @@ pub async fn run_one_round(
         return outcome;
     }
     // Where this computer is reached, said before it dials, so a move goes
-    // out in this round (relay-in-record).
+    // out in this round (relay-in-record); and where its groups meet read
+    // again, so a keeper's new list is met from this round on (relay
+    // fallbacks).
     host.say_relay();
+    host.refresh();
+    host.decide(None).await;
 
     // With no members, no group is offered, and a group this computer left
     // is still read below, for its leave (#190).

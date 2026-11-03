@@ -70,7 +70,7 @@ in_both_engines!(
 );
 async fn leaving_on_the_home_page_is_said_as_a_leave_everywhere(engine: harness::Engine) {
     let (_relay, ours, _sam_dir, sam) = common::sams_computer(6).await;
-    let (trip, _) = cli::new_group(&sam, name("Trip"), name("Sam"), None, None, &ours)
+    let (trip, _) = cli::new_group(&sam, name("Trip"), name("Sam"), None, &[], &ours)
         .await
         .expect("Sam makes Trip");
     let link = || {
@@ -294,7 +294,7 @@ async fn a_leave_reaches_the_leavers_other_computer(engine: harness::Engine) {
     let (_relay, ours, _sam_dir, sam) = common::sams_computer(6).await;
     let mut groups = Vec::new();
     for g in ["Films", "Trip", "Walk"] {
-        let (seed, _) = cli::new_group(&sam, name(g), name("Sam"), None, None, &ours)
+        let (seed, _) = cli::new_group(&sam, name(g), name("Sam"), None, &[], &ours)
             .await
             .expect("Sam makes a group");
         groups.push(seed.id());
@@ -438,7 +438,7 @@ async fn a_leave_reaches_the_leavers_other_computer(engine: harness::Engine) {
 #[tokio::test(flavor = "multi_thread")]
 async fn a_cut_by_a_handed_on_keeper_reaches_a_computer_off_as_it_landed() {
     let (_relay, ours, _sam_dir, sam) = common::sams_computer(6).await;
-    let (seed, _) = cli::new_group(&sam, name("Trip"), name("Sam"), None, None, &ours)
+    let (seed, _) = cli::new_group(&sam, name("Trip"), name("Sam"), None, &[], &ours)
         .await
         .expect("Sam makes Trip");
     let trip = seed.id();
@@ -570,7 +570,7 @@ async fn leave_from(node: &Node, group: &str) -> svrngs_node::removal::Outcome {
 #[tokio::test]
 async fn a_leave_reaches_a_computer_off_as_it_landed() {
     let (_relay, ours, sam_dir, sam) = common::sams_computer(6).await;
-    let (seed, _) = cli::new_group(&sam, name("Trip"), name("Sam"), None, None, &ours)
+    let (seed, _) = cli::new_group(&sam, name("Trip"), name("Sam"), None, &[], &ours)
         .await
         .expect("Sam makes a group");
     let trip = seed.id();

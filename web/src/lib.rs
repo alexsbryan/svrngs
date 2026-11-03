@@ -90,7 +90,8 @@ fn computer(bytes: &[u8; 32]) -> Result<iroh::PublicKey, JsError> {
 }
 
 /// [`bind`] for the group whose link's token is `token`: its issuer, and
-/// its relay, refused when it carries none — from a computer that reached
+/// its first relay, the issuer's home (a phone binds one; relay
+/// fallbacks), refused when it carries none — from a computer that reached
 /// no relay, with n0's lookup or without it (`cli::link_relay`, relay-park
 /// (c)): the page asks no lookup (relay-default).
 async fn bind_for(key: Vec<u8>, token: &str, held: bool) -> Result<Bound, JsError> {
@@ -99,7 +100,7 @@ async fn bind_for(key: Vec<u8>, token: &str, held: bool) -> Result<Bound, JsErro
     };
     let issuer = computer(link.issuer.as_bytes())?;
     t!("LAYER parse: ok — issuer {issuer}");
-    let Some(relay) = link.relay else {
+    let Some(relay) = link.relays.into_iter().next() else {
         refuse!("LAYER parse: REFUSED — the link names no relay, and the page asks n0's lookup for none")
     };
     bind(key, Some(issuer), relay.into(), held).await
@@ -340,12 +341,12 @@ pub async fn holder_endpoint(key: Vec<u8>, relay: Option<String>) -> Result<Endp
     })
 }
 
-/// The relay a link's `token` carries, dotless, or none: what a pass's
-/// holder is handed in place of the token (u5-2).
+/// The first relay a link's `token` carries, dotless, or none: what a
+/// pass's holder is handed in place of the token (u5-2).
 #[wasm_bindgen]
 pub fn relay_of(token: String) -> Result<Option<String>, JsError> {
     let link = Token::decode(&token).ok_or_else(|| JsError::new("not a link's token"))?;
-    Ok(link.relay.map(|r| RelayUrl::from(r).to_string()))
+    Ok(link.relays.first().map(|r| RelayUrl::from(r.clone()).to_string()))
 }
 
 /// The key of the computer that made the link `token`, 64 hex: the one

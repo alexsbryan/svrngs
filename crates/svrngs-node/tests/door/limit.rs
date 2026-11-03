@@ -63,7 +63,7 @@ impl Crowd {
                 .transport()
                 .spliced(&Contact {
                     key: a.endpoint().id(),
-                    relay_url: None,
+                    relays: Default::default(),
                     iroh_direct_addrs: loopback_sockets(a.endpoint()),
                 })
                 .await

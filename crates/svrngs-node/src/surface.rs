@@ -114,6 +114,12 @@ struct Held {
     /// Who is visiting now (guests-pages; [`crate::rail::visiting`]): `null`
     /// beside `removed`'s, or when this computer's clock cannot be read.
     visiting: Option<Vec<serde_json::Value>>,
+    /// Why this computer meets the group at the build's relay now, when the
+    /// group names relays of its own and none of them is this computer's
+    /// home: none answers, or another group held names none (relay
+    /// fallbacks). The home page says so in a person's words; `null` when
+    /// it meets the group at its own.
+    fallback: Option<svrngs_core::relay::Tier>,
 }
 
 /// `GET /v1/groups`.
@@ -168,6 +174,7 @@ async fn groups(State(at): State<Asking>) -> Response {
         tracing::debug!(target: "surface", namespace = id, name = ?name, person = ?person, removed = ?removed, ?left, ?keeps,
             removals = ?removals.as_ref().map(Vec::len), folders = ?folders, "surface: groups — a group held");
         held.push(Held {
+            fallback: at.host.at_fallback(&id),
             id,
             name,
             made,

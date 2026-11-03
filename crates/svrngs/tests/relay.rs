@@ -58,7 +58,7 @@ async fn admits(server: &iroh_relay::server::Server, seed: u8) -> bool {
 async fn a_relay_lets_through_its_groups_alone_and_open_everyone() {
     let (_relay, ours, dir, sam) = common::sams_computer(SAM).await;
     let house = Name::parse("house").unwrap();
-    cli::new_group(&sam, house, Name::parse("Sam").unwrap(), None, None, &ours)
+    cli::new_group(&sam, house, Name::parse("Sam").unwrap(), None, &[], &ours)
         .await
         .expect("Sam makes house");
 
@@ -133,7 +133,7 @@ async fn groups_that_cannot_be_read_are_said_so_never_taken_as_none() {
     let _kept = tracing::subscriber::set_default(kept);
     let (_relay, ours, dir, sam) = common::sams_computer(SAM).await;
     let house = Name::parse("house").unwrap();
-    cli::new_group(&sam, house, Name::parse("Sam").unwrap(), None, None, &ours)
+    cli::new_group(&sam, house, Name::parse("Sam").unwrap(), None, &[], &ours)
         .await
         .expect("Sam makes house");
     let rings = dir.path().join("rings");

@@ -167,7 +167,7 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
         name("house"),
         name("Sam"),
         None,
-        None,
+        &[],
         &no_relay(),
     )
     .await
@@ -289,7 +289,7 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
 #[tokio::test(flavor = "multi_thread")]
 async fn llama_server_lent_by_its_kind_keeps_back_what_shows_one_person_s_chats() {
     let sam = computer(3).await;
-    let (_, printed) = cli::new_group(&sam.node, name("Lab"), name("Sam"), None, None, &no_relay())
+    let (_, printed) = cli::new_group(&sam.node, name("Lab"), name("Sam"), None, &[], &no_relay())
         .await
         .expect("Sam makes Lab");
     let alex = computer(4).await;
@@ -1058,7 +1058,7 @@ async fn a_folder_is_synced_by_asking_svrngs_running_here() {
     )
     .await
     .unwrap();
-    cli::new_group(&node, name("house"), name("Sam"), None, None, &no_relay())
+    cli::new_group(&node, name("house"), name("Sam"), None, &[], &no_relay())
         .await
         .unwrap();
     let nope = ask("nope").await;

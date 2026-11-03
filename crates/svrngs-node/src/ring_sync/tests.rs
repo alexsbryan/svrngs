@@ -517,7 +517,7 @@ async fn a_peer_that_answers_403_or_413_is_refused_rather_than_unreachable() {
         crate::iroh::IrohTransport::new(crate::iroh::tests::hermetic_endpoint(9, vec![]).await);
     let dead = crate::iroh::Contact {
         key: crate::iroh::SecretKey::from_bytes(&[8; 32]).public(),
-        relay_url: None,
+        relays: Default::default(),
         iroh_direct_addrs: vec!["127.0.0.1:1".parse().unwrap()],
     };
     let out = exchange((&nobody, &dead), rail.as_ref(), NS).await;

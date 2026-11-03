@@ -114,7 +114,10 @@ impl Folders {
         let relay = |a: &str| people.get(a)?.relay.as_ref();
         let path = format!("{}?group={group}", ASKED.replace("{hash}", &hash.to_hex()));
         let (mut actors, mut asks) = (Vec::new(), Vec::new());
-        for (actor, _, contact) in crate::node::dialled(&self.host.actor, group, people, relay) {
+        let meeting = self.host.meeting(group);
+        for (actor, _, contact) in
+            crate::node::dialled(&self.host.actor, group, people, &meeting, relay)
+        {
             let (host, path) = (self.host.clone(), path.clone());
             actors.push(actor.clone());
             asks.push(tokio::spawn(async move {

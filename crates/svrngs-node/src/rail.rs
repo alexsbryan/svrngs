@@ -71,6 +71,9 @@ pub struct RailApi {
     pub live: Arc<LiveBuffer>,
     /// The node's dial-by-key transport, the live lane's fan-out rides it.
     pub transport: Arc<IrohTransport>,
+    /// The build's relays, where every group meets beside its own
+    /// (`RelayConfig::build`): the fan-out dials a group's whole meeting.
+    pub build: Vec<svrngs_core::relay::Url>,
 }
 
 // ── The doors ────────────────────────────────────────────────
@@ -628,7 +631,8 @@ async fn push_answer(api: &RailApi, namespace: &str, body: axum::body::Bytes) ->
         Ok(people) => people,
         Err(refusal) => return refusal,
     };
-    let peers = live_peers(&actor_of(api.rail.signer()), namespace, &standing);
+    let meeting = crate::group::meeting(&api.rail, namespace, &api.build);
+    let peers = live_peers(&actor_of(api.rail.signer()), namespace, &standing, &meeting);
     let peers = push_ephemeral(&api.transport, peers, namespace, payload).await;
     let delivered = peers.iter().filter(|p| p.delivered).count();
     tracing::debug!(
@@ -652,10 +656,15 @@ async fn push_answer(api: &RailApi, namespace: &str, body: axum::body::Bytes) ->
 /// group names (relay-in-record), named by its person: the keys the round dials ([`crate::node::dialled`]), so neither
 /// a browser's key (u4-1) nor one that is not an iroh key is offered it.
 /// New (u3-3): upstream walked the mesh's Online members.
-fn live_peers(this: &str, namespace: &str, standing: &BTreeMap<String, Member>) -> Vec<LivePeer> {
+fn live_peers(
+    this: &str,
+    namespace: &str,
+    standing: &BTreeMap<String, Member>,
+    meeting: &svrngs_core::relay::Meeting,
+) -> Vec<LivePeer> {
     let mut peers = Vec::new();
     let relay = |a: &str| standing.get(a)?.relay.as_ref();
-    for (actor, person, contact) in dialled(this, namespace, standing, relay) {
+    for (actor, person, contact) in dialled(this, namespace, standing, meeting, relay) {
         tracing::debug!(target: "rails", namespace, actor, %person, "rail live: a person stands in the group, to offer the payload");
         peers.push(LivePeer {
             node: actor.clone(),

@@ -233,7 +233,7 @@ fn token(issuer: &SigningKey, relay: &Server) -> String {
     Token {
         issuer: issuer.verifying_key(),
         secret: [0; 16],
-        relay: Some(relay_url(relay).parse().expect("a URL")),
+        relays: vec![relay_url(relay).parse().expect("a URL")],
     }
     .encode()
 }
@@ -277,7 +277,7 @@ async fn house(dir: &Path, relay: &Server, admitted: &SigningKey) -> (Node, Stri
         ada,
         signing(1).verifying_key(),
     );
-    node.host().keep_group(&seed, None, None).unwrap();
+    node.host().keep_group(&seed, None, &[]).unwrap();
     let fixture = svrngs_core::tests_support::Fixture {
         act: RailAct::Admit {
             person: Person::parse("bo").unwrap(),
@@ -386,7 +386,7 @@ async fn a_link_naming_no_relay_is_refused_and_n0_never_reached(engine: Engine) 
     let bare = Token {
         issuer: signing(1).verifying_key(),
         secret: [0; 16],
-        relay: None,
+        relays: Vec::new(),
     };
     let seen = drive(
         engine,
@@ -3915,7 +3915,7 @@ async fn the_home_page_tells_two_groups_of_one_name_apart(engine: Engine) {
             Name::parse(founder).unwrap(),
             signing(key).verifying_key(),
         );
-        ada.host().keep_group(&seed, None, None).unwrap();
+        ada.host().keep_group(&seed, None, &[]).unwrap();
     }
     let seen = home_page(
         engine,

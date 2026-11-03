@@ -110,7 +110,7 @@ async fn base_url(dialer: &Node, served: &Node) -> String {
         .transport()
         .spliced(&Contact {
             key: served.endpoint().id(),
-            relay_url: None,
+            relays: Default::default(),
             iroh_direct_addrs: loopback_sockets(served.endpoint()),
         })
         .await

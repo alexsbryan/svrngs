@@ -58,7 +58,7 @@ pub(crate) async fn serve_on_stream(router: axum::Router, dialer: SecretKey) -> 
     let transport = IrohTransport::new(dialling);
     let contact = Contact {
         key: served.id(),
-        relay_url: None,
+        relays: Default::default(),
         iroh_direct_addrs: addrs,
     };
     let base = transport
@@ -128,7 +128,7 @@ async fn build_sovereign_endpoint_binds_without_n0() {
 fn contact_for(server: &Endpoint, addrs: Vec<SocketAddr>) -> Contact {
     Contact {
         key: server.id(),
-        relay_url: None,
+        relays: Default::default(),
         iroh_direct_addrs: addrs,
     }
 }
@@ -271,7 +271,7 @@ async fn a_computer_that_answers_no_dial_is_asleep_within_the_cap() {
     let transport = IrohTransport::new(hermetic_endpoint(46, vec![]).await);
     let contact = Contact {
         key,
-        relay_url: None,
+        relays: Default::default(),
         iroh_direct_addrs: vec![asleep.local_addr().unwrap()],
     };
     let said = tokio::time::timeout(
@@ -284,7 +284,10 @@ async fn a_computer_that_answers_no_dial_is_asleep_within_the_cap() {
         "{said:?}"
     );
     let said = transport
-        .send(&Contact::named(key, None), get("/who"))
+        .send(
+            &Contact::named(key, &svrngs_core::relay::Meeting::of([], &[]), None),
+            get("/who"),
+        )
         .await;
     assert!(matches!(said, Err(Unsent::NoPath)), "{said:?}");
 }

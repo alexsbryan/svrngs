@@ -33,7 +33,7 @@
 //!   is not dialled. (svrngs: unless the endpoint has an address lookup,
 //!   which resolves it — PLAN §4, U1's "A bare key is dialled".)
 
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use std::future::Future;
 use std::net::{IpAddr, SocketAddr};
 
@@ -52,7 +52,9 @@ pub use crate::guest::{build_relayed_endpoint, RelayConfig};
 
 // Re-exported so callers build endpoints without declaring their own iroh
 // dependency — keeps the version pin in exactly one place.
+use iroh::TransportAddr;
 pub use iroh::{Endpoint, EndpointAddr, PublicKey, RelayUrl, SecretKey};
+use svrngs_core::relay::{Meeting, Url};
 // svrngs: iroh's address book in memory, so a test tells a joiner the
 // loopback addresses a link's bare key resolves to (u2-8).
 pub use iroh::address_lookup::MemoryLookup;
@@ -88,24 +90,27 @@ pub fn has_lookup(endpoint: &Endpoint) -> bool {
 pub struct Contact {
     /// The peer's Ed25519 key — what the QUIC handshake verifies.
     pub key: PublicKey,
-    /// The peer's home relay, if known.
-    pub relay_url: Option<String>,
+    /// Every relay the peer may be at: where its group meets, and the
+    /// relay its group's record names for it (relay fallbacks).
+    pub relays: BTreeSet<svrngs_core::relay::Url>,
     /// The peer's iroh UDP socket addresses, if known.
     pub iroh_direct_addrs: Vec<SocketAddr>,
 }
 
 impl Contact {
-    /// A member by its key and the relay its group's record names for it
-    /// (relay-in-record; DESIGN §6). With none named its key alone, said:
-    /// only an address lookup finds it then, and with none it is not dialled.
-    pub fn named(key: PublicKey, relay: Option<&svrngs_core::relay::Url>) -> Self {
-        if relay.is_none() {
-            tracing::debug!(target: "transport", peer = %key.fmt_short(),
-                "transport: the group names no relay for this computer — its key alone, which only an address lookup finds");
-        }
+    /// A member by its key, dialled at every relay its group meets at
+    /// (relay fallbacks; GROUP_RELAYS §7), so a member whose home moved to
+    /// the group's fallback is reached there, and at the relay its group's
+    /// record names for it (relay-in-record; DESIGN §6). With none of
+    /// either its key alone, said: only an address lookup finds it then,
+    /// and with none it is not dialled.
+    pub fn named(key: PublicKey, meeting: &Meeting, recorded: Option<&Url>) -> Self {
+        let relays: BTreeSet<Url> = meeting.relays().chain(recorded).cloned().collect();
+        tracing::debug!(target: "transport", peer = %key.fmt_short(), relays = relays.len(), ?recorded,
+            "transport: a member dialled at every relay its group meets at and the one its record names, its key alone with none");
         Self {
             key,
-            relay_url: relay.map(ToString::to_string),
+            relays,
             iroh_direct_addrs: Vec::new(),
         }
     }
@@ -203,8 +208,8 @@ impl IrohTransport {
         }
     }
 
-    /// Build the dial target from the contact's iroh info (relay
-    /// URL + direct addrs), merging any test-seeded `known_addrs`.
+    /// Build the dial target from the contact's iroh info (its relays
+    /// and direct addrs), merging any test-seeded `known_addrs`.
     /// `None` when there's no usable path (no relay AND no address) and the
     /// endpoint has no address lookup to resolve the key. (svrngs: upstream
     /// refused every bare key, since its mesh gossiped addresses; with no
@@ -212,19 +217,13 @@ impl IrohTransport {
     /// relay-in-record, else the endpoint's own lookup — n0's DNS under
     /// `RelayConfig::n0_services` — finds it, PLAN §4, U1's "A bare key is dialled".)
     pub(crate) fn endpoint_addr_for(&self, peer: &Contact) -> Option<iroh::EndpointAddr> {
-        let mut ea = iroh::EndpointAddr::new(peer.key);
-        if let Some(relay) = peer.relay_url.as_deref() {
-            match crate::relay::parse(relay) {
-                Ok(url) => ea = ea.with_relay_url(url),
-                Err(e) => tracing::warn!(
-                    target: "transport",
-                    transport = "iroh",
-                    relay = %relay,
-                    error = %e,
-                    "iroh: peer relay_url did not parse — ignoring"
-                ),
-            }
-        }
+        // iroh sends a dial's first packets to every address it is given
+        // (iroh-1.0.2 src/socket/remote_map/remote_state.rs:795-842).
+        let relays = peer
+            .relays
+            .iter()
+            .map(|r| TransportAddr::Relay(r.clone().into()));
+        let mut ea = iroh::EndpointAddr::from_parts(peer.key, relays);
         let seeded = self
             .known_addrs
             .lock()

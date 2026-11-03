@@ -48,7 +48,7 @@ async fn ada(dir: &Path, relay: &iroh_relay::server::Server) -> (Node, String, S
         Name::parse("ada").unwrap(),
         key.verifying_key(),
     );
-    node.host().keep_group(&seed, None, None).unwrap();
+    node.host().keep_group(&seed, None, &[]).unwrap();
     let bo = svrngs_core::tests_support::Fixture {
         act: svrngs_node::RailAct::Admit {
             person: svrngs_node::Person::parse("bo").unwrap(),
@@ -82,7 +82,7 @@ fn bo_s_phone(relay: &iroh_relay::server::Server, id: &str) -> Value {
     let token = svrngs_core::link::Token {
         issuer: SigningKey::from_bytes(&[1; 32]).verifying_key(),
         secret: [0; 16],
-        relay: Some(relay_url(relay).parse().expect("a URL")),
+        relays: vec![relay_url(relay).parse().expect("a URL")],
     }
     .encode();
     let bo = hex::encode(SigningKey::from_bytes(&[7; 32]).to_bytes());

@@ -80,7 +80,7 @@ fn at(node: &Node) -> EndpointAddr {
 async fn house(joiners: &[(u8, &str)]) -> (Computer, Vec<Computer>) {
     let sam = computer(1).await;
     let relay = no_relay();
-    let made = cli::new_group(&sam.node, name("house"), name("Sam"), None, None, &relay);
+    let made = cli::new_group(&sam.node, name("house"), name("Sam"), None, &[], &relay);
     let (_, printed) = made.await.expect("Sam makes house");
     let mut them = Vec::new();
     for (seed, who) in joiners {

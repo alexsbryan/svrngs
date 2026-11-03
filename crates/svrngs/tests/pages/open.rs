@@ -22,7 +22,7 @@ async fn the_computer_s_line_is_offered_and_copied_on_v2(engine: Engine) {
     let token = Token {
         issuer: SigningKey::from_bytes(&[1; 32]).verifying_key(),
         secret: [0; 16],
-        relay: Some(relay_url(&relay).parse().expect("a URL")),
+        relays: vec![relay_url(&relay).parse().expect("a URL")],
     }
     .encode();
     let args = json!({ "site": site(), "token": token });
@@ -118,7 +118,7 @@ async fn the_phone_reads_its_group_again_when_shown(engine: Engine) {
     let token = Token {
         issuer: ada.verifying_key(),
         secret: [0; 16],
-        relay: Some(relay_url(&relay).parse().expect("a URL")),
+        relays: vec![relay_url(&relay).parse().expect("a URL")],
     }
     .encode();
     let ready = dir.path().join("ready");

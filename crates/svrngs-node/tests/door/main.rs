@@ -100,7 +100,7 @@ impl Pair {
             .transport()
             .spliced(&Contact {
                 key: a.endpoint().id(),
-                relay_url: None,
+                relays: Default::default(),
                 iroh_direct_addrs: loopback_sockets(a.endpoint()),
             })
             .await
@@ -986,7 +986,7 @@ async fn a_key_in_two_groups_that_disagree_is_dialled_and_told_by_one_relay() {
     pair.a.rail().ingest_all("work", &[said]).unwrap();
 
     let cy_key = actor_of(&signing(3));
-    let want = Some(relay.to_string());
+    let want = vec![relay.to_string()];
     let reply = pair.get(svrngs_node::node::PEOPLE_LENDS_ROUTE, "").await;
     assert_eq!(reply.status, 200, "{}", reply.text);
     let body = reply.text.split("\r\n\r\n").nth(1).unwrap();

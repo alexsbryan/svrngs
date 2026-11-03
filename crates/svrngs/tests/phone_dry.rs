@@ -82,7 +82,7 @@ async fn sam_through_a_relay_on_this_computer() {
         Name::parse("House").unwrap(),
         Name::parse("Sam").unwrap(),
         Some(&origin),
-        None,
+        &[],
         &ours,
     )
     .await

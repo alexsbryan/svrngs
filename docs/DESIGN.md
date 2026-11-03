@@ -1173,20 +1173,37 @@ verb, and one whose groups cannot be read is refused as that. `--open` lets
 everyone through, each at most `OPEN_RATE`, 8,800,000 bytes a second, the
 most a film at Demo A's bitrate drew.
 
-**Where a computer meets its groups.** A group that keeps no relay of its
-own is met at one of a closed set, `cli::MeetAt`: n0's relays with n0's
-address lookup, or svrngs's relay at `https://relay.svrnme.sh/`
-(`cli::DEFAULT_RELAY`) with no lookup and n0 none of the path. The build
-ships one, `cli::SHIPPED`: n0's for now, chosen, never a fallback when
-another relay fails, until the operator's switch (PLAN §1). A group that runs
-its own relay is made with `svrngs new <name> --relay <name or url>`: every
-computer its links let in meets it there, and says so in the record by its
-`Relay` act (§6). A link carries its issuer's home relay, so a phone's page
-dials it and asks no lookup; a joiner keeps none of n0's relays a link
-carries, since they are the issuer's build's, not the group's. A computer
-meets each group it holds at that group's relay, else the build's, and iroh
-makes the nearest its home. A computer that reaches none of its relays in
-10 s says which it tried, and goes on trying.
+**Where a computer meets its groups.** A group meets at its own relays
+while any of them answers, and at the build's relay only when none does,
+decided in one place (svrn-docs `rings/current/GROUP_RELAYS.md` §7, the
+operator's "Tiers", 2026-11-02). Its own are the relays its keeper names in
+its record by a `Meets` act (§6), made with `svrngs new <name> --relay
+<name or url>`, once for each. The build's are one of a closed set,
+`cli::MeetAt`: n0's relays with n0's address lookup, or svrngs's relay at
+`https://relay.svrnme.sh/` (`cli::DEFAULT_RELAY`) with no lookup and n0
+none of the path. The build ships one, `cli::SHIPPED`: n0's for now, until
+the operator's switch (PLAN §1), and it is every group's fallback, named in
+no record, so the switch moves every group at once. The two tiers are a
+type, svrngs-core's `relay::Meeting`, made only by `Meeting::of`, which
+always carries the build's; `Meeting::decide` is the one decision, and
+svrngs-node's `tiers` the one place it changes the endpoint's relays.
+Within a tier iroh makes the fastest that answers a computer's home. The
+order between tiers is svrngs's, since an `svrngs relay --at` relay serves
+no QUIC address discovery and iroh's report, given n0's beside it, picks
+n0's (measured 2026-11-02, svrn-docs §7): svrngs asks the group's own
+relays itself every `tiers::ASKED_EVERY`, 10 s, each within
+`ANSWERS_WITHIN`, 3 s, and gives the endpoint the build's relay when none
+answers and takes it away once one does. One endpoint serves every group,
+so a computer that also holds a group naming no relay of its own keeps the
+build's relay, and meets every group there. A dial to a member reaches
+both tiers and the relay the record names for it, whichever tier this
+computer is at, since iroh dials a relay its endpoint does not hold
+(`crates/svrngs-node/tests/relay_tiers.rs`); a link carries at most two
+relays, the issuer's home first, so a phone's page dials it and asks no
+lookup. Each change of tier and of home is traced, and the home page says
+when, and why, a group is met at the build's relay. A computer that
+reaches none of its relays in 10 s says which it tried, and goes on
+trying.
 
 ## 4. Domains, and the fork
 
@@ -1377,8 +1394,8 @@ at the end of `docs/principles/ARCH_PRINCIPLES.md` maps them.
 
 Signed acts admitted into one total order by `(ts_unix, actor, seq, id)`:
 `Record`, `Correct`, `Admit`, `Remove`, `HandOn`, `Invite`, `Relay`,
-`Synced` (a folder's changes), `Runs`, `Visit` and `Signers`, the keeper's
-cutover (`RailAct`,
+`Synced` (a folder's changes), `Runs`, `Visit`, `Signers`, the keeper's
+cutover, `Holders` and `Meets`, where the group meets (`RailAct`,
 `crates/svrngs-core/src/lib.rs`). `Correct` voids without erasing. A
 per-actor digest lets sync send only what is missing. Upstream's `Seal`
 retired everything its signer wrote before it, on every copy it reached;
@@ -1620,11 +1637,21 @@ from the journal waits in PLAN §2.
   start and once a join brings its admission; with relays and none reached yet
   it says nothing, so starting never withdraws it, and a joiner waits for its
   home relay before that exchange (`ONLINE_WAIT`). Every dial of a member
-  carries the relay its group names (`Host::contact`); a key held in several
-  groups is dialled by the first group naming a relay for it
-  (`node::relay_of`). A key with none named is traced, and with no address
+  carries the relay its group names for it beside every relay its group
+  meets at (`Host::contact`); a key held in several groups is dialled by
+  the first group naming a relay for it (`node::relay_of`). A key with none named is traced, and with no address
   lookup the transport refuses it before iroh is asked, never dialling it
   blind.
+- **Where the group meets is the keeper's, in the record.** A
+  `Meets{relays}` act names the relays the group meets at beside the
+  build's, which no record names; it counts only as the keeper's, as a cut
+  does, its newest winning, and a `Correct` voids none (line version 14,
+  which a build before it reads as a newer line, meeting its group where it
+  did). The fold keeps it (`Membership::meets_at`); `MeetsAt` writes it only
+  when the record says otherwise and refuses anyone but the keeper. `new
+  --relay` writes it at a group's start; a keeper's computer names an old
+  group's from the relay its file keeps, once (`Host::cut_over`), and until
+  then that file is read in its place (group.rs `meeting`).
 - **A visit is folded beside membership** (svrn-docs `GUESTS.md` §3, §5).
   A `Visit{guest, key, opens, until}`, signed by the host's computer, names
   the guest, a key fresh for the visit and the lends it opens, by each

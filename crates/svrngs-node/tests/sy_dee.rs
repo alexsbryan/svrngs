@@ -67,7 +67,7 @@ async fn dee_asks_a_member() {
     said("member-connection", fate.into());
     let contact = Contact {
         key: peer,
-        relay_url: None,
+        relays: Default::default(),
         iroh_direct_addrs: Vec::new(),
     };
     let answer = match node.transport().spliced(&contact).await {
