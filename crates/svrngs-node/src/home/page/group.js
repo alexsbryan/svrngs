@@ -21,7 +21,7 @@ import {
 } from '../ui/kit.js?v=__VERSION__';
 /** @import { Core, Effect as AnyEffect, Machine, Step, Store } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
-/** @import { Lend, Named, Removal, Row, Shelved } from '../question.js?v=__VERSION__' */
+/** @import { Lend, Named, Removal, PeopleRow, Shelved } from '../question.js?v=__VERSION__' */
 /** @import { Visitor } from '../ui/visitors.js?v=__VERSION__' */
 /** @import { Change } from '../ui/changes.js?v=__VERSION__' */
 
@@ -52,7 +52,7 @@ import {
 
 /**
  * The group's people, as /v1/rail/people answers (rail.rs `standing_json`).
- * @typedef {{ people: Row[] }} People
+ * @typedef {{ people: PeopleRow[] }} People
  */
 
 /**

@@ -11,7 +11,7 @@ import { agreed, called, html, named, once, opens, owner, Row } from '../ui/kit.
 import { cell } from './play.js?v=__VERSION__';
 /** @import { Lends, Lent, PlaceProps } from './group.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
-/** @import { Row as Person } from '../question.js?v=__VERSION__' */
+/** @import { PeopleRow as Person } from '../question.js?v=__VERSION__' */
 
 // The lend's label, the first name of its origin here (home.js@19b63b2b:45).
 // A split answers one part at least, so its first is there.

@@ -34,7 +34,7 @@ import { get } from './group.js?v=__VERSION__';
 /** @import { Group, Lends, Lent, PlaceProps } from './group.js?v=__VERSION__' */
 /** @import { Machine } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
-/** @import { Row } from '../question.js?v=__VERSION__' */
+/** @import { PeopleRow } from '../question.js?v=__VERSION__' */
 /** @import * as HOME from '../home.js?v=__VERSION__' */
 
 /**
@@ -54,7 +54,7 @@ import { get } from './group.js?v=__VERSION__';
  * @property {string | undefined} id
  * @property {string[]} seen
  * @property {[time: string, words: string][]} since
- * @property {Row[]} [rows]
+ * @property {PeopleRow[]} [rows]
  * @property {Lends} [lends]
  * @property {string} [newest]
  * @property {string} [why]
@@ -66,7 +66,7 @@ import { get } from './group.js?v=__VERSION__';
  * `time`; or why not.
  * @typedef {{ type: 'looked', why: string }
  *   | { type: 'tick' }
- *   | { type: 'read', n: number, rows: Row[], lends: Lends, began: number, time: string, why: string }
+ *   | { type: 'read', n: number, rows: PeopleRow[], lends: Lends, began: number, time: string, why: string }
  *   | { type: 'unread', n: number, began: number, why: string }} Message
  */
 
@@ -87,7 +87,7 @@ import { get } from './group.js?v=__VERSION__';
 const many = (n, one, more) => `${n} ${n === 1 ? one : more}`;
 // Who is in and what is lent, each once by its key, with how a line says it arrived.
 /**
- * @param {Row[]} rows
+ * @param {PeopleRow[]} rows
  * @param {Lent[]} lent
  */
 const keyed = (rows, lent) =>

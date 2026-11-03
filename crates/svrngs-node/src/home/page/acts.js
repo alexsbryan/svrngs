@@ -40,7 +40,7 @@ import { Reach, label } from './index.js?v=__VERSION__';
 import * as wifi from './wifi.js?v=__VERSION__';
 import * as play from './play.js?v=__VERSION__';
 /** @import { Group, Lends, Lent, PlaceProps } from './group.js?v=__VERSION__' */
-/** @import { Lend, Row } from '../question.js?v=__VERSION__' */
+/** @import { Lend, PeopleRow } from '../question.js?v=__VERSION__' */
 /** @import { Io, Machine, Step } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 /** @import { Asked } from '../ui/uses.js?v=__VERSION__' */
@@ -52,19 +52,19 @@ import * as play from './play.js?v=__VERSION__';
  * read, and what each group's GROUP last read, by its id.
  * @typedef {object} Fields
  * @property {boolean} [actsRead]
- * @property {Record<string, { people: Row[] | undefined, lends: Lends | undefined }>} [told]
+ * @property {Record<string, { people: PeopleRow[] | undefined, lends: Lends | undefined }>} [told]
  */
 
 /**
  * HOME's messages this file takes: "What acts as you" read, or what a
  * group's GROUP read (`Told`).
  * @typedef {{ type: 'told', flow: 'acts', read: true, why: string }
- *   | { type: 'told', flow: 'acts', id: string, people: Row[] | undefined, lends: Lends | undefined, why: string, read?: undefined }} Taken
+ *   | { type: 'told', flow: 'acts', id: string, people: PeopleRow[] | undefined, lends: Lends | undefined, why: string, read?: undefined }} Taken
  */
 
 /**
  * What a group's GROUP last read, as HOME keeps it (`Fields`' `told`).
- * @typedef {{ people: Row[] | undefined, lends: Lends | undefined }} Told
+ * @typedef {{ people: PeopleRow[] | undefined, lends: Lends | undefined }} Told
  */
 
 /**

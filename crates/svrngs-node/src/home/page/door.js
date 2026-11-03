@@ -26,7 +26,7 @@ import { post } from './group.js?v=__VERSION__';
 /** @import { Group, Lends, People, PlaceProps, Reads } from './group.js?v=__VERSION__' */
 /** @import { Machine, Step } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
-/** @import { Removal, Row } from '../question.js?v=__VERSION__' */
+/** @import { Removal, PeopleRow } from '../question.js?v=__VERSION__' */
 
 /**
  * A folder's button's state: where its open is, the opens asked, and the
@@ -102,7 +102,7 @@ function Folder({ g, dir }) {
 
 /**
  * @param {{ name: string | null }} g
- * @param {Row[]} rows
+ * @param {PeopleRow[]} rows
  * @param {string} me
  */
 export const decides = (g, rows, me) =>

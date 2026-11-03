@@ -27,7 +27,7 @@ import {
 /** @import { Group, Home, PlaceProps } from './group.js?v=__VERSION__' */
 /** @import { Machine, Step } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
-/** @import { Row } from '../question.js?v=__VERSION__' */
+/** @import { PeopleRow } from '../question.js?v=__VERSION__' */
 /** @import * as HOME from '../home.js?v=__VERSION__' */
 
 /**
@@ -182,7 +182,7 @@ const LEAVE = (home) => ({
  * `dispatch`, and the group's name as said.
  * @typedef {object} LeaveProps
  * @property {Group} g
- * @property {Row[]} rows
+ * @property {PeopleRow[]} rows
  * @property {string} me
  * @property {Home} home
  * @property {string} [name]

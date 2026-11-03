@@ -24,7 +24,7 @@ import { post } from './group.js?v=__VERSION__';
 /** @import { Group, Home, PlaceProps, Visit } from './group.js?v=__VERSION__' */
 /** @import { Machine } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
-/** @import { Row } from '../question.js?v=__VERSION__' */
+/** @import { PeopleRow } from '../question.js?v=__VERSION__' */
 
 /**
  * A visit's state: where its Stop is, and each refusal said, in order.
@@ -108,7 +108,7 @@ function Stop({ g, v, name, home }) {
 
 /**
  * @param {Group} g
- * @param {Row[]} rows
+ * @param {PeopleRow[]} rows
  * @param {Home} home
  * @param {string} name
  * @returns {Drawn}

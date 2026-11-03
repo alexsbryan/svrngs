@@ -11,7 +11,7 @@ import { assertNever, go, machine, no } from './machine.js?v=__VERSION__';
 
 /**
  * A Copy's state: where its copy is, and each answer said, in turn.
- * @typedef {object} State
+ * @typedef {object} CopyState
  * @property {{ copy: 'idle' | 'copying' | 'copied' | 'unwritten' }} at
  * @property {Record<string, number>} [asked]
  * @property {('copied' | 'unwritten')[]} said
@@ -22,28 +22,28 @@ import { assertNever, go, machine, no } from './machine.js?v=__VERSION__';
  * not, with why (its write's `failed`).
  * @typedef {{ type: 'copy', text: string }
  *   | { type: 'copied' }
- *   | { type: 'unwritten', why: string }} Message
+ *   | { type: 'unwritten', why: string }} CopyMessage
  */
 
 /**
  * The effect its step answers: `text` written to the clipboard.
- * @typedef {{ run: 'write', text: string, failed: 'unwritten' }} Effect
+ * @typedef {{ run: 'write', text: string, failed: 'unwritten' }} CopyEffect
  */
 
-/** @type {State['at']['copy'][]} */
+/** @type {CopyState['at']['copy'][]} */
 const AGAIN = ['idle', 'copied', 'unwritten'];
 // `said` is each answer in turn, by state: a second " Copied." after the
 // first, as home.js's `p.append` leaves both (home.js@19b63b2b:137, :202).
 /**
- * @param {State} s
- * @param {Extract<Message, { type: 'copied' | 'unwritten' }>} m
- * @returns {Step<State, Effect>}
+ * @param {CopyState} s
+ * @param {Extract<CopyMessage, { type: 'copied' | 'unwritten' }>} m
+ * @returns {Step<CopyState, CopyEffect>}
  */
 const answered = (s, m) =>
   s.at.copy === 'copying'
     ? go(s, { copy: m.type }, { said: [...s.said, m.type] })
     : no(s, `${m.type} answers no copy, as none is being written`);
-/** @type {Machine<State, Message, Effect>} */
+/** @type {Machine<CopyState, CopyMessage, CopyEffect>} */
 export const COPY = {
   states: { copy: ['idle', 'copying', 'copied', 'unwritten'] },
   step: (s, m) => {
@@ -63,7 +63,7 @@ export const COPY = {
   io: { write: ({ text }) => navigator.clipboard.writeText(text).then(() => ({ type: 'copied' })) },
 };
 
-/** @type {State} */
+/** @type {CopyState} */
 const FIRST = { at: { copy: 'idle' }, said: [] };
 /** @param {CopyProps} props */
 export const Copy = (props) => drawn(...useMachine(() => machine('COPY', COPY, FIRST)), props);
@@ -75,7 +75,7 @@ export const Copy = (props) => drawn(...useMachine(() => machine('COPY', COPY, F
 /**
  * The words a Copy says: its button's, `copy`, and each answer's, by the
  * state it answers in.
- * @typedef {{ copy: string } & Partial<Record<State['at']['copy'], string>>} Words
+ * @typedef {{ copy: string } & Partial<Record<CopyState['at']['copy'], string>>} Words
  */
 
 /**
@@ -91,8 +91,8 @@ export const Copy = (props) => drawn(...useMachine(() => machine('COPY', COPY, F
 
 /**
  * A Copy drawn from its state.
- * @param {State} s
- * @param {Store<State, Message>['dispatch']} send
+ * @param {CopyState} s
+ * @param {Store<CopyState, CopyMessage>['dispatch']} send
  * @param {CopyProps} props
  * @returns {Drawn}
  */

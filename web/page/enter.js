@@ -24,7 +24,7 @@ import {
 import * as store from '../store.js?v=__VERSION__';
 import { offered } from './among.js?v=__VERSION__';
 /** @import { Group, Computer } from '../store.js?v=__VERSION__' */
-/** @import { Lend, Removal, Row, Shelved } from '../question.js?v=__VERSION__' */
+/** @import { Lend, Removal, PeopleRow, Shelved } from '../question.js?v=__VERSION__' */
 /** @import { Change } from '../ui/changes.js?v=__VERSION__' */
 /** @import { Io, Step, Takes } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Visitor } from '../ui/visitors.js?v=__VERSION__' */
@@ -59,7 +59,7 @@ import { offered } from './among.js?v=__VERSION__';
  * @property {Computer} [via] the computer the last read went through, none for the link's
  * @property {string} stale why the last read again failed, or ''
  * @property {Lent[]} [lent] what the group lends, once read
- * @property {Row[]} people
+ * @property {PeopleRow[]} people
  * @property {Shelved[]} shelf
  * @property {Whom[]} unanswered
  * @property {Whom[]} unheard
@@ -81,7 +81,7 @@ import { offered } from './among.js?v=__VERSION__';
  * @property {Whom[]} older
  * @property {Removal[] | null} [removals]
  * @property {Visitor[] | null} [visiting]
- * @property {Row[]} people
+ * @property {PeopleRow[]} people
  * @property {Shelved[]} shelf
  * @property {Change[] | null} [changed]
  * @property {number} [version]

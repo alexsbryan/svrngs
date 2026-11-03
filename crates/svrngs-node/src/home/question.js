@@ -44,7 +44,7 @@
 /**
  * A people row (/v1/rail/people): one key of a person's, a device's, `key`,
  * and the person it is a key of.
- * @typedef {Named & { key: string, device?: 'computer' | 'browser' }} Row
+ * @typedef {Named & { key: string, device?: 'computer' | 'browser' }} PeopleRow
  */
 
 /**
@@ -225,7 +225,7 @@ export const called = (rows, key, when = joinedSaid) => {
 // of one name apart.
 /**
  * @param {Lend[]} lent
- * @param {Row[]} rows
+ * @param {PeopleRow[]} rows
  */
 export const apart = (lent, rows) =>
   lent.forEach((l) => (l.called = called(rows, rows.find((r) => r.key === l.key)?.person_key)));
@@ -243,7 +243,7 @@ export const apart = (lent, rows) =>
 /**
  * @param {Lend} l
  * @param {Lend[]} lent
- * @param {Row[]} rows
+ * @param {PeopleRow[]} rows
  * @param {(o: Lend) => string} [at]
  */
 export const alias = (
@@ -265,7 +265,7 @@ export const alias = (
  * @template {Lend} L
  * @param {string} a
  * @param {L[]} lent
- * @param {Row[]} rows
+ * @param {PeopleRow[]} rows
  */
 export const aliased = (a, lent, rows) => once(lent).filter((l) => alias(l, lent, rows) === a);
 
@@ -320,7 +320,7 @@ export const reading = (
 // whose device key is `me`, of the people rows, this one, a `here`, first
 // and nobody else's, a namesake's included, by key, never by name.
 /**
- * @param {Row[]} rows
+ * @param {PeopleRow[]} rows
  * @param {string} me
  * @param {'computer' | 'browser'} here
  * @param {string} [first]
