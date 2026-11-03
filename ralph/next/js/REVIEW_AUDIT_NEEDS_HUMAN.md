@@ -19,6 +19,29 @@ editing its source. A fresh source-code index was started and interrupted;
 it is not an audit result. The proposed uncommitted snapshot helper was
 removed when the work was brought back to the operator-approved scope.
 
+## Director disposition, 2026-11-03
+
+Continue under the operator-approved row committed in `54693711`, not
+the superseded instrument-restoration request from `e4069050`. No replacement
+instrument is selected and neither deferred analysis receives a passing verdict.
+The focused review and every acceptance condition in STATE.md remain owed.
+
+Verified in the main tree: `git status --short` was empty;
+`git log --oneline -10` placed `54693711` after `e4069050`;
+`git show 54693711 -- ralph/next/js/STATE.md` showed the explicit operator
+decision and revised acceptance criteria. The worker's session log
+`ctl/log/sessions/REVIEW-audit-js-auto-1-1.out:1339-1356` records the partial
+commit and original escalation. `git diff --exit-code 54693711 --
+ralph/next/js/STATE.md ralph/next/js/REVIEW_AUDIT_NEEDS_HUMAN.md` and
+`git diff --check` both exited 0 before this disposition was added.
+
+The next worker reads STATE.md's focused row, reviews the queue's source and
+test changes, verifies the prior gate's coverage of the finished tree, runs
+all named current fast checks, and updates `ralph/REVIEW_FINDINGS.md` with
+the focused conclusions and explicit deferrals. Follow the row's requirement
+for new validation if changes or failures invalidate the prior evidence;
+commit the completed review before `ralph-result done`.
+
 ## Original decision request, resolved above
 
 Restore/provide the sovereign-cli audit executable and a suitable current
