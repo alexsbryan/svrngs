@@ -28,7 +28,7 @@ import { carrying, deciders, named, once, reading, spoken } from '../question.js
 import * as store from '../store.js?v=__VERSION__';
 import { through, wasm } from './dial.js?v=__VERSION__';
 import { PASS_LIFE } from './hand.js?v=__VERSION__';
-import { Used } from './uses.js?v=__VERSION__';
+import { WhatAppsUse } from './what-apps-use.js?v=__VERSION__';
 /** @import { Group, Line, Said } from '../store.js?v=__VERSION__' */
 /** @import { Change } from '../ui/changes.js?v=__VERSION__' */
 /** @import { Io, Step, Takes } from '../ui/machine.js?v=__VERSION__' */
@@ -245,7 +245,9 @@ function Drawn({ s: state, send }) {
         )
         // Filtered to the lends that read, as `read` takes them.
         .map((lend) => read(state, send, /** @type {Lent & { reads: string[] }} */ (lend))),
-      ...(state.lent.some((lend) => lend.asks) ? [html`<${Used} s=${state} send=${send} />`] : []),
+      ...(state.lent.some((lend) => lend.asks)
+        ? [html`<${WhatAppsUse} s=${state} send=${send} />`]
+        : []),
     ],
     knows: [html`<p>What you open knows your name.</p>`],
     decides: [html`<p>${deciders(state.people, state.me, 'browser')}.</p>`],
