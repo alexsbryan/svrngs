@@ -1406,7 +1406,7 @@ impl std::fmt::Display for Said {
                     )?;
                 }
                 if let (Some(client), Some(issuer)) = (client, issuer) {
-                    writeln!(f, "Sign-in credentials created; app setup still required. Follow the app's OpenID Connect setup guide: install any required OpenID Connect plugin, then configure it with issuer {issuer}, client id {}, client secret {}. Reach the issuer from the app server on this computer, not the attendee's computer; a container has its own loopback. Test sign-in through your group's app list after setup.",
+                    writeln!(f, "Sign-in credentials created; app setup still required. Follow the app's OpenID Connect setup guide: install any required OpenID Connect plugin, then configure it with issuer {issuer}, client id {}, client secret {}. Reach the issuer from the app server on this computer, not the computer of the person opening the app; a container has its own loopback. Test sign-in through your group's app list after setup.",
                         client.client_id, client.client_secret.as_deref().unwrap_or_default())?;
                     writeln!(f, "{} Copy the secret now: it is not shown again. App setup guides: https://github.com/alexsbryan/svrngs/tree/main/apps", svrngs_node::oidc::DEVIATIONS)?;
                 }

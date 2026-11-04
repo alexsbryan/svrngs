@@ -141,3 +141,52 @@ output must be recorded before reporting done.
 
 The inherited untracked V1.6 publish artifacts were inspected and preserved
 untouched, without staging or publication.
+
+## Resumed closing gate and vocabulary correction
+
+The loop's first locked closing gate at `39638b89` exited **1** after
+1,327 seconds. Its full output is in
+`ralph/next/onboarding/ctl/log/sessions/onboarding-oidc-setup-help-1.await.log`.
+Every stage passed except the app-noun check:
+
+```text
+failed     app nouns (0 s)
+           BROKEN  crates/svrngs/src/cli.rs:1409: `attendee` is events's noun
+           BROKEN  crates/svrngs-node/src/home/page/signing-on.js:15: `attendee` is events's noun
+           89 app nouns, 2 in infra code
+```
+
+The generic guidance now says “the computer of the person opening the app”,
+preserving the issuer/server distinction without borrowing an app's noun.
+The existing vocabulary gate is unchanged; the run above is its actual red
+input, not a new check. Focused checks after the wording correction:
+
+```text
+$ python3 scripts/vocab_check.py && python3 scripts/lean_check.py && cargo fmt --all --check && web/node_modules/.bin/oxfmt --check crates/svrngs-node/src/home/page/signing-on.js
+89 app nouns, 0 in infra code
+crates/svrngs-core     3486 / 3494 lines
+.                     19789 / 19833 lines
+js                     8066 / 8090 lines
+swift                     0 / 1 lines
+Checking formatting...
+All matched files use the correct format.
+exit 0
+
+$ lockf -k /tmp/svrngs-gate.lock sh -c 'cargo test -q -p svrngs --test share && cargo test -q -p svrngs-node --test browser the_home_page_turns_on_signing_people_in_with_svrngs && cargo test -q -p svrngs --test pages the_secret_stays_shown_when_the_page_is_read_again'
+running 11 tests
+...........
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.40s
+
+running 1 test
+.
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 98 filtered out; finished in 11.53s
+
+running 1 test
+.
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 36 filtered out; finished in 14.72s
+exit 0
+```
+
+No product line growth or budget adjustment. A second locked full gate is
+owed after this correction and is handed to the loop with `ralph-result
+await`; do not count the first run as a passing close.
