@@ -509,6 +509,12 @@ that has not answered by then is named as not answering, never dropped: the
 same bound, in one function, on `/v1/lends`, a lent page's reads and a
 phone's list.
 
+Bare `svrngs` starts the node when its data directory is free. If another
+svrngs holds it, the command succeeds with the home address read from the
+kept API port and says to run `svrngs open`, without launching a browser.
+A missing or unreadable address is refused rather than guessed. The address
+alone grants no session; `open` remains the authenticated way into the page.
+
 **The home page**, `http://svrngs.localhost:<port>/`, at the same address each
 time svrngs starts (§7): the person's own page on their computer, written for
 someone a bit afraid technically, in §1's words

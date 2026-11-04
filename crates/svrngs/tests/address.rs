@@ -87,6 +87,83 @@ fn address_in(line: &str) -> String {
         .to_string()
 }
 
+/// The plant is the old Busy refusal on a second bare invocation. The first
+/// bare invocation must still start a node; only `open` may launch a browser.
+#[cfg(unix)]
+#[test]
+fn a_second_bare_command_reminds_without_starting_or_opening() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    let logs = tempfile::tempdir().unwrap();
+    let opener = if cfg!(target_os = "macos") {
+        "open"
+    } else {
+        "xdg-open"
+    };
+    let fake = logs.path().join(opener);
+    let marker = logs.path().join("opened");
+    std::fs::write(&fake, "#!/bin/sh\nprintf '%s' \"$1\" > \"$OPEN_MARKER\"\n").unwrap();
+    std::fs::set_permissions(&fake, std::fs::Permissions::from_mode(0o700)).unwrap();
+    let invoke = |args: &[&str]| {
+        Process::new(env!("CARGO_BIN_EXE_svrngs"))
+            .args(args)
+            .env("SVRNGS_DIR", dir.path())
+            .env("HOME", dir.path())
+            .env("PATH", logs.path())
+            .env("OPEN_MARKER", &marker)
+            .env("RUST_LOG", "cli=debug")
+            .output()
+            .unwrap()
+    };
+    let mut first = Program::start(dir.path(), &logs.path().join("first"), &[]);
+    let home = address_in(&first.until("//svrngs.localhost:"));
+    let api = dir.path().join("api");
+    let saved = std::fs::read(&api).unwrap();
+    let token = std::fs::read_to_string(dir.path().join("token")).unwrap();
+    let second = invoke(&[]);
+    let said = String::from_utf8_lossy(&second.stdout);
+    let traced = String::from_utf8_lossy(&second.stderr);
+    assert!(second.status.success(), "{said}\n{traced}");
+    assert!(said.contains(&home), "{said}");
+    assert!(
+        said.contains("Run `svrngs open` to open it in your browser."),
+        "{said}"
+    );
+    assert!(
+        traced.contains("cli: run — local home reminder"),
+        "{traced}"
+    );
+    assert!(!said.contains(token.trim()) && !traced.contains(token.trim()));
+    assert!(!marker.exists(), "the reminder launched a browser");
+    assert!(first.child.try_wait().unwrap().is_none());
+    assert_eq!(std::fs::read(&api).unwrap(), saved);
+    let opened = invoke(&["open"]);
+    assert!(opened.status.success(), "{opened:?}");
+    assert!(std::fs::read_to_string(&marker).unwrap().starts_with(&home));
+    let other = invoke(&["new", "Lab", "--as", "Sam"]);
+    assert_eq!(other.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&other.stderr).contains("stop it"));
+    for broken in [None, Some("not an address")] {
+        std::fs::remove_file(&api).unwrap();
+        if let Some(text) = broken {
+            std::fs::write(&api, text).unwrap();
+        }
+        let refused = invoke(&[]);
+        assert!(!refused.status.success(), "{refused:?}");
+        assert!(refused.stdout.is_empty(), "invented a reminder");
+        std::fs::write(&api, &saved).unwrap();
+    }
+    std::fs::remove_file(&api).unwrap();
+    std::fs::create_dir(&api).unwrap();
+    let unreadable = invoke(&[]);
+    assert!(!unreadable.status.success());
+    assert!(unreadable.stdout.is_empty());
+    std::fs::remove_dir(&api).unwrap();
+    std::fs::write(&api, saved).unwrap();
+    assert!(first.child.try_wait().unwrap().is_none());
+    assert!(get(&home, "/", true, Some(&token)).0.ends_with("200 OK"));
+}
+
 /// GET `path` at `address`, as a browser typing it asks (`Sec-Fetch-Site:
 /// none`, which the home page answers) or as a program does (`browser`
 /// false: no `Sec-Fetch-*`, which a lend answers as its own), showing the

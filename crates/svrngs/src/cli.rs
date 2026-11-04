@@ -49,6 +49,7 @@
 //! door's header, none, and its lender told what to set in it
 //! (bash-person (d)). The bare command prints what the people
 //! of this computer's groups lend, asked of their computers as it starts.
+//! If already running, it prints the home address and reminds how to open it.
 //!
 //! `room` turns the lends it names on for the room, served to this
 //! computer's own network as this computer's person by svrngs running
@@ -125,6 +126,7 @@ svrngs — keep what your group shares on your own computers.
 
   svrngs
       Run for every group you are in. Leave it running.
+      Already running? Show your home page's address and how to open it.
 
   svrngs new <name> [--as <your name>] [--origin <url>] [--relay <name>]...
       Make a group called <name> and print its link: send it to the people
@@ -800,6 +802,15 @@ pub fn reach(at: MeetAt) -> RelayConfig {
 pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<(), Refusal> {
     let said = match command {
         Verb::Help => format!("{USAGE}\n"),
+        Verb::Run => match claim(&root) {
+            Err(Refusal::Busy(_)) => {
+                let api = svrngs_node::api::kept_address(&root)?.ok_or(Refusal::NotRunning)?;
+                let home = svrngs_node::home::address(api.port());
+                tracing::debug!(target: "cli", %home, "cli: run — local home reminder");
+                format!("svrngs is already running. Your home page is at {home}\nRun `svrngs open` to open it in your browser.\n")
+            }
+            claimed => return start(Verb::Run, root, relay, claimed?, None).await,
+        },
         Verb::Relay(asked) => return relay::run(asked, &root).await,
         Verb::Unshare(name) => unshare(&root, &name)?.to_string(),
         Verb::Open(at) => open(&root, at.as_deref()).await?,
