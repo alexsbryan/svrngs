@@ -158,7 +158,7 @@ swift                     0 / 1 lines
     upgrades a plan.
   - **Check:** (a) red first on each named plant; the existing invitation,
       join and home-page tests unchanged by name; `scripts/check.sh` once.
-- [ ] onboarding-resolver — depends [onboarding-store-proof, onboarding-native-publication] — ONE ROW, red first, and `scripts/check.sh`
+- [x] onboarding-resolver e900f4eab — depends [onboarding-store-proof, onboarding-native-publication] — ONE ROW, red first, and `scripts/check.sh`
   once, at the close (ONBOARDING §3):
   - **(a) Tests: THE RESOLVER IS REPLAY-SAFE AND FAILS GRACEFULLY.** These
     fail at HEAD:
