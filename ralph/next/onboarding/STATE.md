@@ -122,6 +122,9 @@ swift                     0 / 1 lines
   - **Check:** every claim cites a URL or a local/live run; the atomic tests'
     red and green pasted; the reset guard red on a missing generation; no
     product lines; `scripts/check.sh` unchanged and not required for this row.
+  - **Unattended safety:** if the tree starts with another row's tracked
+    changes, commit them as `WIP: <row>` first; never discard them. This row
+    does not run the full gate.
   - **Operator decision, 2026-11-04:** the operator provided the live Free
     database and said "I just want us to move forward with this." The official
     written-answer gate is superseded by the live proof and the reset guard.
@@ -191,7 +194,9 @@ swift                     0 / 1 lines
   - **Check:** (a) red first on each plant, including a retry that reopens a
       closed address, an old phrase reused for a later invitation, a
       simulated 429/quota/bandwidth answer, and a missing generation key;
-      `scripts/check.sh` once; no public deployment.
+      `scripts/check.sh` once; no public deployment. Run the gate under
+      `lockf -k /tmp/svrngs-gate.lock`; rerun `leave_race` and
+      `the_home_page_lends_what_runs_here` before calling either a failure.
 - [ ] onboarding-host-controls — depends [onboarding-native-publication] —
   ONE ROW, red first, and `scripts/check.sh` once, at the close
   (ONBOARDING §2):

@@ -32,3 +32,11 @@ existing behavior in every economizing cut, and keep each behavior-preserving
 move apart from behavior changes. Each cut gets its own commit with the
 unchanged tests named by `STATE.md`. The queue's worker commits its work; do
 not stage unrelated files or use `git add -A`.
+
+If a session starts with another row's tracked changes still uncommitted,
+commit them first with a `WIP: <row>` message; never discard or revert them.
+The next session of that row continues from the checkpoint. Run every browser
+test and `scripts/check.sh` under `lockf -k /tmp/svrngs-gate.lock`. Known
+flakes are `leave_race` (`crates/svrngs-node/tests/removal.rs:614`) and the
+home page's lending redraw (`the_home_page_lends_what_runs_here`); rerun the
+single test before calling it a failure.
