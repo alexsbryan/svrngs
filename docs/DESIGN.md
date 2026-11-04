@@ -592,8 +592,10 @@ On it a person can:
 Each is the command's own act, by the same code — a group made as `svrngs
 new` makes one (the node's `group.rs`), joined as `svrngs join` joins
 (`join.rs`), a link as `svrngs link` (`invite.rs`), a lend as `svrngs share`
-decides it (`share.rs`) — so a computer whose svrngs runs from login, where
-`svrngs new` and `svrngs join` are refused while it runs, needs no terminal.
+decides it (`share.rs`) — so a computer whose svrngs runs from login needs
+no terminal: `svrngs join` joins through the svrngs running there, asked
+as `room` and `leave` ask it, and `svrngs new` and `svrngs link` are the
+page's alone while it runs.
 A group's folder goes where a joiner's does (`Folders::place`, one home for
 `new`, `join` and the page); a place another group's folder holds already,
 by its name or, on a disk that ignores case, a name differing only in case,

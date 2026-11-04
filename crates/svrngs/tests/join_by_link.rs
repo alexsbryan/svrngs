@@ -30,6 +30,10 @@ use svrngs_node::{
     SigningKey, BROWSER_LINE_VERSION, LINK_LINE_VERSION,
 };
 
+#[path = "common/program.rs"]
+mod program;
+use program::Program;
+
 #[path = "../../svrngs-node/tests/common/mod.rs"]
 mod node_common;
 use node_common::heard;
@@ -986,4 +990,285 @@ async fn a_computer_the_group_cut_is_told_so_by_the_issuer() {
     for c in [&sam, &again] {
         c.node.endpoint().close().await;
     }
+}
+
+/// A plain-HTTP relay on 127.0.0.1, as `svrngs relay --at` serves one, so
+/// the program in another process reaches a node in this one: the relay,
+/// and its URL for a link to carry.
+async fn a_relay() -> (iroh_relay::server::Server, RelayUrl) {
+    let mut config = iroh_relay::server::ServerConfig::default();
+    config.relay = Some(iroh_relay::server::RelayConfig::new(([127, 0, 0, 1], 0)));
+    let server = iroh_relay::server::Server::spawn(config)
+        .await
+        .expect("a relay starts on 127.0.0.1");
+    let url: RelayUrl = format!("http://{}/", server.http_addr().unwrap())
+        .parse()
+        .unwrap();
+    (server, url)
+}
+
+/// **A join the svrngs running here did not answer is said as the lock's
+/// refusal** (join-while-running): svrngs holds the data dir and answers
+/// no `/v1/joins` — a build from before the route, stood in for by a
+/// socket that answers 404 — and `svrngs join` says what the lock's own
+/// refusal says, for stopping it is the way on from there. Planted,
+/// watched failing with the fallback pointing at `Refusal::NotRunning`:
+/// the wrong refusal, of a svrngs not running.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_join_an_older_svrngs_did_not_answer_is_the_locks_refusal() {
+    // The svrngs of an older build: a socket answering 404 to everything,
+    // and the data dir's `api` naming it.
+    let older = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let at = older.local_addr().unwrap();
+    std::thread::spawn(move || {
+        use std::io::{Read, Write};
+        for asked in older.incoming() {
+            let mut asked = match asked {
+                Ok(a) => a,
+                Err(_) => return,
+            };
+            let mut read = [0u8; 1024];
+            let _ = asked.set_read_timeout(Some(Duration::from_secs(5)));
+            let _ = asked.read(&mut read);
+            let _ = asked.write_all(
+                b"HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
+            );
+        }
+    });
+    let dir = tempfile::tempdir().unwrap();
+    std::fs::write(
+        dir.path().join(svrngs_node::api::API_FILE),
+        format!("http://{at}\n"),
+    )
+    .unwrap();
+    std::fs::write(
+        dir.path().join(svrngs_node::api::TOKEN_FILE),
+        "not-checked-by-404",
+    )
+    .unwrap();
+    let _held = cli::claim(dir.path()).expect("the older svrngs holds the data dir");
+
+    let token = Token {
+        issuer: SigningKey::from_bytes(&[1; 32]).verifying_key(),
+        secret: [7; 16],
+        relays: Vec::new(),
+    };
+    let refused = cli::run(
+        Verb::Join {
+            link: Box::new(typed(&client_link(&token))),
+            person: Some(name("Alex")),
+            run: true,
+        },
+        dir.path().to_path_buf(),
+        &no_relay(),
+    )
+    .await;
+    let words = refused
+        .as_ref()
+        .expect_err("no join, for nothing answered it")
+        .to_string();
+    assert!(matches!(refused, Err(Refusal::Busy(_))), "{words}");
+    assert!(
+        words.contains("already running on this computer") && words.contains("stop it"),
+        "{words}"
+    );
+}
+
+/// `POST /v1/joins` of the node `at`, with its token, as the command asks
+/// it: the answer, status and body.
+async fn ask_to_join(
+    node: &Node,
+    body: serde_json::Value,
+) -> (reqwest::StatusCode, serde_json::Value) {
+    let dir = node.rail().root();
+    let token = std::fs::read_to_string(dir.join(svrngs_node::api::TOKEN_FILE)).unwrap();
+    let answer = reqwest::Client::builder()
+        .no_proxy()
+        .build()
+        .unwrap()
+        .post(format!("http://{}/v1/joins", node.api_addr()))
+        .header("content-type", "application/json")
+        .bearer_auth(token.trim())
+        .body(body.to_string())
+        .send()
+        .await
+        .expect("the record API answers");
+    let status = answer.status();
+    let text = answer.text().await.unwrap_or_default();
+    let said: serde_json::Value = serde_json::from_str(&text).unwrap_or(serde_json::Value::Null);
+    (status, said)
+}
+
+/// **A svrngs running here answers a join asked of its record API**
+/// (join-while-running): the route `room` and `share` ask, `POST
+/// /v1/joins`, takes a whole link and a person's name and answers what
+/// happened, in a shape the command words for a person. A link cut short
+/// is refused 400 naming why, and a name someone in the group goes by is
+/// answered `name_taken` with who holds it and the group, neither writing
+/// anything. Planted, watched failing: the record answered 404, for no
+/// such route was served.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_running_svrngs_answers_a_join_asked_of_its_record_api() {
+    let sam = computer(1).await;
+    let (_, printed) = sams_house(&sam).await;
+    let alex = computer(2).await;
+    knows(&alex, &sam.node);
+    let held = group::groups(alex.node.rail().root());
+
+    // A link cut short is refused before anything is dialled.
+    let cut = printed.client[..printed.client.len() - 4].to_string();
+    let (status, said) = ask_to_join(
+        &alex.node,
+        serde_json::json!({ "link": cut, "person": "Alex" }),
+    )
+    .await;
+    assert_eq!(status, 400, "{said}");
+    assert_eq!(said["kind"], "no_link", "{said}");
+
+    // A name someone in the group goes by is answered, writing nothing.
+    let (status, said) = ask_to_join(
+        &alex.node,
+        serde_json::json!({ "link": printed.client, "person": "Sam" }),
+    )
+    .await;
+    assert_eq!(status, 409, "{said}");
+    assert_eq!(said["outcome"], "name_taken", "{said}");
+    assert_eq!(said["holder"], "Sam", "{said}");
+    assert_eq!(said["group"], "house", "{said}");
+    assert_eq!(
+        group::groups(alex.node.rail().root()),
+        held,
+        "nothing written by a refused join"
+    );
+
+    // A name that is not one is refused, naming why.
+    let (status, said) = ask_to_join(
+        &alex.node,
+        serde_json::json!({ "link": printed.client, "person": "" }),
+    )
+    .await;
+    assert_eq!(status, 400, "{said}");
+    assert_eq!(said["kind"], "no_name", "{said}");
+
+    for c in [&sam, &alex] {
+        c.node.endpoint().close().await;
+    }
+}
+
+/// **`svrngs join`, with svrngs running here, joins the group through it**
+/// (join-while-running; DESIGN §3 "Joining"): Alex's computer joins house
+/// and keeps running, holding the data dir's lock — as a computer runs
+/// whose svrngs starts at login — and Alex then joins Sam's party from a
+/// terminal: the second join asks the svrngs running here, as `room` and
+/// `share` do, says "You're in party, as Alex." with party's folder placed
+/// under Alex's own home, and leaves, exit 0, running nothing. The svrngs
+/// already running keeps running, for both groups now. Planted, watched
+/// failing: the second join refused, "svrngs is already running on this
+/// computer", and party was never joined.
+#[tokio::test(flavor = "multi_thread")]
+async fn join_asks_the_svrngs_running_here_for_another_group() {
+    let (relay, at) = a_relay().await;
+    let ours = RelayConfig {
+        relay_urls: vec![at.to_string()],
+        n0_services: false,
+        loopback_only: false,
+    };
+    let sams_dir = tempfile::tempdir().unwrap();
+    let sam = Node::start(
+        sams_dir.path().to_path_buf(),
+        SigningKey::from_bytes(&[1; 32]),
+        &ours,
+        group::seed_text,
+        "127.0.0.1:0".parse().unwrap(),
+    )
+    .await
+    .expect("Sam's computer starts");
+    tokio::time::timeout(Duration::from_secs(20), sam.endpoint().online())
+        .await
+        .expect("Sam's computer reaches the relay");
+    let (house, printed) =
+        cli::new_group(&sam, name("house"), name("Sam"), None, &[at.clone()], &ours)
+            .await
+            .expect("Sam makes house");
+    let (party, party_link) =
+        cli::new_group(&sam, name("party"), name("Sam"), None, &[at.clone()], &ours)
+            .await
+            .expect("Sam makes party");
+
+    // Alex's first join runs the computer's svrngs, holding the data dir.
+    let alex = tempfile::tempdir().unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let logs = tempfile::tempdir().unwrap();
+    let mut running = Program::at(
+        alex.path(),
+        &logs.path().join("first"),
+        &["join", &printed.client, "--as", "Alex"],
+        "",
+        Some(home.path()),
+    );
+    running.until("Leave this running");
+
+    // The second join, of party, asks the svrngs running here.
+    let home_said = home.path().display().to_string();
+    let (code, said) = Program::at(
+        alex.path(),
+        &logs.path().join("second"),
+        &["join", &party_link.client, "--as", "Alex"],
+        "",
+        Some(home.path()),
+    )
+    .ends();
+    eprintln!("svrngs join party, svrngs running: {said:#?}");
+    assert_eq!(code, 0, "{said:?}");
+    assert!(
+        said.iter().any(|l| l.contains("You're in party, as Alex.")),
+        "{said:?}"
+    );
+    assert!(
+        said.iter()
+            .any(|l| l.starts_with("party's folder is") && l.contains(&home_said)),
+        "{said:?}"
+    );
+    assert!(
+        !said.iter().any(|l| l.contains("already running")),
+        "the second join is not refused: {said:?}"
+    );
+    assert!(
+        !said.iter().any(|l| l.contains("Leave this running")),
+        "the second join runs nothing: {said:?}"
+    );
+
+    // The svrngs already running keeps running, for both groups now.
+    assert!(
+        running.child.try_wait().unwrap().is_none(),
+        "the first join's svrngs still runs"
+    );
+    let api = std::fs::read_to_string(alex.path().join(svrngs_node::api::API_FILE)).unwrap();
+    let token = std::fs::read_to_string(alex.path().join(svrngs_node::api::TOKEN_FILE)).unwrap();
+    let groups: serde_json::Value = {
+        let answer = reqwest::Client::builder()
+            .no_proxy()
+            .build()
+            .unwrap()
+            .get(format!("{}/v1/groups", api.trim()))
+            .bearer_auth(token.trim())
+            .send()
+            .await
+            .unwrap()
+            .text()
+            .await
+            .unwrap_or_default();
+        serde_json::from_str(&answer).unwrap_or(serde_json::Value::Null)
+    };
+    let held: Vec<&str> = groups["groups"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|g| g["id"].as_str())
+        .collect();
+    assert!(held.contains(&house.id().as_str()), "{groups}");
+    assert!(held.contains(&party.id().as_str()), "{groups}");
+    drop(running);
+    sam.endpoint().close().await;
+    drop(relay);
 }

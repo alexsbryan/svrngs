@@ -18,12 +18,26 @@ pub struct Program {
 
 impl Program {
     /// `svrngs <args>` over `dir`, tracing everything to `log`, with `input`
-    /// on its standard input.
+    /// on its standard input. (Allowed dead: this file is included by each
+    /// test binary whole, as the browser harness is, and not each one runs
+    /// the program without a home of its own — pages/main.rs's allow.)
+    #[allow(dead_code)]
     pub fn start(dir: &Path, log: &Path, args: &[&str], input: &str) -> Self {
-        let mut child = Process::new(env!("CARGO_BIN_EXE_svrngs"))
+        Self::at(dir, log, args, input, None)
+    }
+
+    /// [`Program::start`], with `$HOME` set to `home` when one is given, so
+    /// a group's folder is placed there, not in the machine's own home.
+    pub fn at(dir: &Path, log: &Path, args: &[&str], input: &str, home: Option<&Path>) -> Self {
+        let mut asked = Process::new(env!("CARGO_BIN_EXE_svrngs"));
+        let mut asked = asked
             .args(args)
             .env("SVRNGS_DIR", dir)
-            .env("RUST_LOG", "trace")
+            .env("RUST_LOG", "trace");
+        if let Some(home) = home {
+            asked = asked.env("HOME", home);
+        }
+        let mut child = asked
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(std::fs::File::create(log).unwrap())

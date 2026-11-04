@@ -4,11 +4,21 @@
 //! [`Host::join`] was svrngs's cli.rs `join_group`, and [`key`] and
 //! [`addr`] its issuer.rs, which iroh dials and the core cannot name. The
 //! command keeps what is its own: the wait for a relay, and its words.
+//! A computer whose svrngs runs from login joins through it too: the
+//! command asks the running one at [`JOINS_ROUTE`] (join-while-running),
+//! as it asks `room` and `leave`.
+
+use axum::extract::State;
+use axum::http::StatusCode;
+use axum::response::{IntoResponse, Response};
+use axum::routing::post;
+use axum::{Json, Router};
+use serde::{Deserialize, Serialize};
 
 use crate::group::{self, Name, Seed};
 use crate::iroh::{EndpointAddr, PublicKey};
 use crate::link::{Link, Token};
-use crate::node::Host;
+use crate::node::{Asking, Host};
 use crate::redeem::{ask, redeem, AskRequest, Asked, RedeemError, RedeemRequest, Redeemed};
 use crate::{register::Standing, Device, Person};
 use iroh::TransportAddr;
@@ -165,4 +175,145 @@ fn not_let_in(e: RedeemError, group: Option<&Name>) -> NotJoined {
         RedeemError::Cut => group.map_or(NotJoined::IssuerAway, |g| NotJoined::Left(g.clone())),
         RedeemError::Unjudged | RedeemError::NoAnswer(_) => NotJoined::IssuerAway,
     }
+}
+
+/// Where the command asks a join of the svrngs running here, as it asks
+/// `room`, `leave` and a folder (join-while-running): `POST /v1/joins`,
+/// served behind the record's checks ([`crate::api::router`]).
+pub const JOINS_ROUTE: &str = "/v1/joins";
+
+/// What the command asks: the whole link, and the person it joins as.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct JoinAsk {
+    pub link: String,
+    pub person: String,
+}
+
+/// What came of a join the svrngs running here was asked, for the command
+/// to say in its own words (cli.rs `Said`, `Refusal`): let in, or the
+/// group held already, with the seed as `seed.json` holds it, whom this
+/// computer joined as, and where its folder was placed or why not — or
+/// why nobody was let in ([`NotJoined`], each named as the command's own
+/// refusal is).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "outcome", rename_all = "snake_case")]
+pub enum Outcome {
+    In {
+        seed: String,
+        person: String,
+        dir: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        placed: Option<String>,
+    },
+    AlreadyIn {
+        seed: String,
+        dir: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        placed: Option<String>,
+    },
+    LinkRefused,
+    NameTaken {
+        holder: String,
+        group: String,
+    },
+    IssuerAway,
+    Keep {
+        group: String,
+    },
+    Left {
+        group: String,
+    },
+}
+
+impl Outcome {
+    /// [`NotJoined`], as the wire says it.
+    fn of(why: NotJoined) -> Self {
+        match why {
+            NotJoined::LinkRefused => Outcome::LinkRefused,
+            NotJoined::NameTaken { holder, group } => Outcome::NameTaken {
+                holder: holder.to_string(),
+                group: group.to_string(),
+            },
+            NotJoined::IssuerAway => Outcome::IssuerAway,
+            NotJoined::Keep(group) => Outcome::Keep {
+                group: group.to_string(),
+            },
+            NotJoined::Left(group) => Outcome::Left {
+                group: group.to_string(),
+            },
+        }
+    }
+
+    fn status(&self) -> StatusCode {
+        match self {
+            Outcome::In { .. } | Outcome::AlreadyIn { .. } => StatusCode::OK,
+            _ => StatusCode::CONFLICT,
+        }
+    }
+}
+
+impl IntoResponse for Outcome {
+    fn into_response(self) -> Response {
+        (self.status(), Json(self)).into_response()
+    }
+}
+
+/// The route, for [`crate::api::router`] to serve behind its checks.
+pub(crate) fn router(asking: Asking) -> Router {
+    Router::new()
+        .route(JOINS_ROUTE, post(joined_here))
+        .with_state(asking)
+}
+
+/// An ask the record cannot take, in the record's one refusal shape.
+fn not_taken(status: StatusCode, kind: &str, error: String) -> Response {
+    tracing::debug!(target: "join", kind, "join: an ask the record cannot take");
+    (
+        status,
+        Json(serde_json::json!({ "error": error, "kind": kind })),
+    )
+        .into_response()
+}
+
+/// `POST /v1/joins`: the group the link names joined by the svrngs running
+/// here, as the home page joins it ([`Host::join`]) — nothing written
+/// until the link's issuer has let this computer in — and its folder
+/// placed as a joiner's is ([`crate::folder::Folders::place`]).
+async fn joined_here(State(at): State<Asking>, Json(asked): Json<JoinAsk>) -> Response {
+    let Some(link) = Link::parse(&asked.link) else {
+        return not_taken(
+            StatusCode::BAD_REQUEST,
+            "no_link",
+            "That is not a whole link: paste all of it, to its end.".into(),
+        );
+    };
+    let person = match Name::parse(&asked.person) {
+        Ok(name) => name,
+        Err(why) => return not_taken(StatusCode::BAD_REQUEST, "no_name", why.to_string()),
+    };
+    let entered = match at.host.join(&link, &person).await {
+        Ok(entered) => entered,
+        Err(why) => {
+            tracing::debug!(target: "join", why = %why, "join: not let in, for the command");
+            return Outcome::of(why).into_response();
+        }
+    };
+    let (seed, person) = match entered {
+        Entered::In { seed, person } => (seed, Some(person.to_string())),
+        Entered::AlreadyIn(seed) => (seed, None),
+    };
+    tracing::debug!(target: "join", group = %seed.id(), ?person, "join: answered the command's join, by the svrngs running here");
+    let (dir, placed) = at.folders.place(&seed);
+    let (dir, placed) = (dir.display().to_string(), placed.err());
+    let seed = seed.to_text();
+    match person {
+        Some(person) => Outcome::In {
+            seed,
+            person,
+            dir,
+            placed,
+        },
+        None => Outcome::AlreadyIn { seed, dir, placed },
+    }
+    .into_response()
 }
