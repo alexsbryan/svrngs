@@ -84,6 +84,16 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register('./sw.js', { type: 'module' })
+      .then((registration) => {
+        // A phone left on this page is resumed, not reloaded, so it never
+        // asks whether a newer build exists. Ask as it comes back on screen:
+        // a worker that installs then reloads it onto the build it kept
+        // (web/sw.js `activated`).
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState !== 'visible') return;
+          registration.update().catch((error) => trace(`PAGE: no update check: ${error}`));
+        });
+      })
       .catch((error) => trace(`PAGE: the service worker did not register: ${error}`));
   });
 }
