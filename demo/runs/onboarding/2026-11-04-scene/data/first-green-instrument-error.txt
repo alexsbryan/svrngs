@@ -1,0 +1,23 @@
+source: a8c5eac281880ee57c55c50526277915402cfb2b
+command: ["node", "/Users/alexsbryan/dev/svrngs/demo/runs/onboarding/2026-11-04-scene/verify.mjs", "/Users/alexsbryan/dev/svrngs/target/onboarding-scene/site"]
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ '{"name":"Zoë"}'
+- '﻿{"name":"Zoë"}'
+    at file:///Users/alexsbryan/dev/svrngs/demo/runs/onboarding/2026-11-04-scene/verify.mjs:48:10
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '{"name":"Zoë"}',
+  expected: '﻿{"name":"Zoë"}',
+  operator: 'strictEqual'
+}
+
+Node.js v20.20.2
+
+exit: 1

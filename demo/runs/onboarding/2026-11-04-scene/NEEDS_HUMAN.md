@@ -1,5 +1,11 @@
 # Onboarding scene — operator staging and people bar
 
+> Historical package from `f92b53aa`. The supervisor answered the staging and
+> provisional-bar questions in `a8c5eac2`, `STATE.md:256-274`: local staging is
+> authorized, and absent people must be recorded as never-ran. `STAGING.md`
+> and `README.md` now hold the local preparation and its actual evidence.
+> The original package below is retained as the decision's context.
+
 ## Question
 
 How should the real-laptop scene be staged under the current no-deployment /

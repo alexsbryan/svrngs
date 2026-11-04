@@ -1,0 +1,29 @@
+source: a8c5eac281880ee57c55c50526277915402cfb2b
+command: ["lockf", "-k", "/tmp/svrngs-gate.lock", "scripts/build-web.sh", "--out", "/Users/alexsbryan/dev/svrngs/target/onboarding-scene/site"]
+building web for wasm32-unknown-unknown (release)…
+macOS: using /opt/homebrew/opt/llvm/bin/clang for the wasm C sources (Apple clang cannot target wasm32)
+   Compiling ring v0.17.14
+   Compiling rustls v0.23.46
+   Compiling rustls-webpki v0.103.16
+   Compiling tokio-rustls v0.26.5
+   Compiling noq-proto v1.3.0
+   Compiling tokio-websockets v0.13.3
+   Compiling noq v1.3.0
+   Compiling iroh-relay v1.2.0
+   Compiling iroh v1.0.2
+   Compiling svrngs-web v0.1.0 (/Users/alexsbryan/dev/svrngs/web)
+    Finished `release` profile [optimized] target(s) in 18.56s
+wasm-opt: -Oz applied
+
+built: /Users/alexsbryan/dev/svrngs/target/onboarding-scene/site  (version c9dfe277fec6)
+  size: 3.9M wasm
+  1. upload that directory to the guest runtime's static origin
+     (today svrnme.sh, beside the landing page and installers)
+  2. point a grant at it:
+       svrn mesh grant --all-apps --ttl 2h --url https://<origin>/ --qr-svg wall-qr.svg
+       (--model may be omitted: it defaults to the daemon's primary slot)
+  Serve it with gzip/brotli on (the wasm compresses well) and, if the
+  host allows, the headers index.html's meta tags ask for — a CDN gives
+  both; nothing here depends on them.
+
+exit: 0

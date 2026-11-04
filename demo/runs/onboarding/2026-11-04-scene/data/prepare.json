@@ -1,0 +1,27 @@
+{
+  "source": "a8c5eac281880ee57c55c50526277915402cfb2b",
+  "started": "2026-11-04T16:22:09.179435+00:00",
+  "steps": [
+    {
+      "name": "checksum-red",
+      "command": [
+        "node",
+        "/Users/alexsbryan/dev/svrngs/demo/runs/onboarding/2026-11-04-scene/verify.mjs",
+        "/Users/alexsbryan/dev/svrngs/target/onboarding-scene/site",
+        "--plant-checksum"
+      ],
+      "exit": 1,
+      "expected": 1
+    },
+    {
+      "name": "staging-green",
+      "command": [
+        "node",
+        "/Users/alexsbryan/dev/svrngs/demo/runs/onboarding/2026-11-04-scene/verify.mjs",
+        "/Users/alexsbryan/dev/svrngs/target/onboarding-scene/site"
+      ],
+      "exit": 0,
+      "expected": 0
+    }
+  ]
+}
