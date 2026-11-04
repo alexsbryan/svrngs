@@ -197,7 +197,7 @@ swift                     0 / 1 lines
       `scripts/check.sh` once; no public deployment. Run the gate under
       `lockf -k /tmp/svrngs-gate.lock`; rerun `leave_race` and
       `the_home_page_lends_what_runs_here` before calling either a failure.
-- [ ] onboarding-host-controls — depends [onboarding-native-publication] —
+- [x] onboarding-host-controls 23f258103 — depends [onboarding-native-publication] —
   ONE ROW, red first, and `scripts/check.sh` once, at the close
   (ONBOARDING §2):
   - **(a) Tests: THE HOST'S CONTROLS.** These fail at HEAD:
