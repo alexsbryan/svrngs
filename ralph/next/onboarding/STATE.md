@@ -26,9 +26,10 @@ must verify that plan before any adapter.
 
 The shared HTTPS client extraction in the original estimate already landed
 at `467d5d16`; reuse `svrngs_node::http::client()` and do not count it again.
-The installer recovery gap described in `docs/ONBOARDING.md` §3 remains:
-`web/install.sh` stops the running node before joining, and a failed join
-exits before the later `keep` call restarts it.
+The installer recovery gap at that baseline is covered by the arrival row:
+`web/install.sh` now arms EXIT/signal recovery when it stops an existing
+service, and disarms it only after startup succeeds. Red/green evidence is in
+`demo/runs/onboarding/2026-11-04-arrival/README.md`.
 
 The current-base survey is committed in `194aa994`, at
 `demo/runs/economize/2026-11-03-onboarding/SURVEY.md`. It selected no

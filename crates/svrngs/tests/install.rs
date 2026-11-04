@@ -308,6 +308,122 @@ async fn a_platform_svrngs_is_not_built_for_is_refused() {
     assert!(!home.path().join(".local/bin/svrngs").exists());
 }
 
+/// Planted failure: a refused join after the installer has stopped an
+/// existing installation. Both service-manager paths must restart it.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_refused_join_restarts_the_existing_installation() {
+    let site = site(None);
+    as_linux(site.path());
+    let port = host(site.path().to_path_buf()).await;
+    let page = format!("http://127.0.0.1:{port}/");
+    let mac = cfg!(target_os = "macos").then_some(None);
+    for uname in mac.into_iter().chain([Some("Linux x86_64")]) {
+        let home = tempfile::tempdir().unwrap();
+        let _started = Started(home.path().to_path_buf());
+        assert!(paste(port, &page, home.path(), uname)
+            .await
+            .status
+            .success());
+        let key = std::fs::read(home.path().join(".svrngs/identity")).unwrap();
+        let refused = paste(port, &format!("{page}#not-a-link"), home.path(), uname).await;
+        assert!(
+            !refused.status.success(),
+            "the planted invalid link is refused"
+        );
+        let launched = std::fs::read_to_string(home.path().join("stubs/said")).unwrap();
+        let start = match uname {
+            None => "launchctl bootstrap",
+            Some(_) => "systemctl --user enable --now svrngs.service",
+        };
+        assert_eq!(
+            launched.matches(start).count(),
+            2,
+            "restarted after refusal: {launched}"
+        );
+        assert!(
+            home.path().join("stubs/pid").exists(),
+            "no service left stopped"
+        );
+        assert_eq!(
+            std::fs::read(home.path().join(".svrngs/identity")).unwrap(),
+            key
+        );
+    }
+}
+
+#[cfg(target_os = "macos")]
+#[tokio::test(flavor = "multi_thread")]
+async fn native_arrival_retries_one_identity_and_opens_the_exact_group() {
+    let site = site(None);
+    let port = host(site.path().to_path_buf()).await;
+    let (_relay, ours, _dir, sam) = common::sams_computer(1).await;
+    let page = Origin::parse(&format!("http://127.0.0.1:{port}/")).unwrap();
+    let (seed, printed) = cli::new_group(
+        &sam,
+        Name::parse("house").unwrap(),
+        Name::parse("Sam").unwrap(),
+        Some(&page),
+        &[],
+        &ours,
+    )
+    .await
+    .unwrap();
+    let link = printed.https.unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let _started = Started(home.path().to_path_buf());
+    let destination = format!("/#group-{}", seed.id());
+    let more = format!(" --at '{destination}' --as 'Bo O'\\''Brien'");
+    let mut identity = None;
+    for _ in 0..2 {
+        let out = paste_more(port, &link, &more, home.path(), None).await;
+        assert!(
+            out.status.success(),
+            "{}{}",
+            String::from_utf8_lossy(&out.stdout),
+            String::from_utf8_lossy(&out.stderr)
+        );
+        let key = std::fs::read(home.path().join(".svrngs/identity")).unwrap();
+        assert_eq!(identity.get_or_insert(key.clone()), &key);
+        let opened = std::fs::read_to_string(home.path().join("stubs/opened")).unwrap();
+        let url = opened.lines().last().unwrap();
+        let url = reqwest::Url::parse(url).unwrap();
+        let reply: serde_json::Value = reqwest::Client::new()
+            .post(format!(
+                "http://127.0.0.1:{}{}?{}",
+                url.port().unwrap(),
+                url.path(),
+                url.query().unwrap()
+            ))
+            .header("Host", format!("svrngs.localhost:{}", url.port().unwrap()))
+            .header("Origin", url.origin().ascii_serialization())
+            .send()
+            .await
+            .unwrap()
+            .json()
+            .await
+            .unwrap();
+        assert_eq!(
+            reply["at"], destination,
+            "the bootstrap redeems to the group, not home"
+        );
+        assert_eq!(
+            std::fs::read_to_string(home.path().join(".svrngs/origin")).unwrap(),
+            page.as_str()
+        );
+    }
+    let file = sam
+        .rail()
+        .group_dir(&seed.id())
+        .unwrap()
+        .join("ring_oplog.jsonl");
+    let admits = std::fs::read_to_string(file).unwrap().lines()
+        .filter_map(|line| serde_json::from_str::<svrngs_node::Op<svrngs_node::SignedOp>>(line).ok())
+        .filter(|op| matches!(&op.kind.act, RailAct::Admit { person, .. } if person.as_str() == "Bo O'Brien"))
+        .count();
+    assert_eq!(admits, 1);
+    sam.endpoint().close().await;
+}
+
 #[cfg(target_os = "macos")]
 #[tokio::test(flavor = "multi_thread")]
 async fn the_line_run_twice_installs_runs_at_login_opens_home_and_joins_once() {

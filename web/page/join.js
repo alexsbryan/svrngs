@@ -24,14 +24,14 @@ import { sending } from './page.js?v=__VERSION__';
 /**
  * The group a link lets into, as its issuer answered (svrngs-core
  * `believe`): a device link's person, whom the phone joins as.
- * @typedef {{ id: string, name: string, person?: string, maker: string }} Letting
+ * @typedef {{ id: string, name: string, person?: string, maker: string, inviter?: string }} Letting
  */
 
 /**
  * A link being joined by: its token, the groups kept when it was opened,
  * what the address asks, and once asked, its group, the issuer's answer
  * (`told`), and the group held here already that it lets into (`known`).
- * @typedef {{ token: string, kept: Group[], wants: Wants | null, group?: Letting, told?: string, known?: Group }} Link
+ * @typedef {{ token: string, kept: Group[], wants: Wants | null, native?: boolean, group?: Letting, told?: string, known?: Group }} Link
  */
 
 /**
@@ -49,7 +49,7 @@ import { sending } from './page.js?v=__VERSION__';
 
 /**
  * The messages this flow takes.
- * @typedef {{ type: 'join', token: string, kept: Group[], wants: Wants | null }
+ * @typedef {{ type: 'join', token: string, kept: Group[], wants: Wants | null, native?: boolean }
  *   | { type: 'asked', group: Letting, told: string }
  *   | { type: 'typed', field: 'name', value: string }
  *   | { type: 'named' }
@@ -61,7 +61,7 @@ import { sending } from './page.js?v=__VERSION__';
 /**
  * The effects its steps answer: the issuer asked which group the link
  * lets into, and the name redeemed there.
- * @typedef {{ run: 'ask', token: string, failed: string }
+ * @typedef {{ run: 'ask', token: string, native?: boolean, failed: string }
  *   | { run: 'admit', token: string, told: string, group: Letting, name: string, failed: string }} Effect
  */
 
@@ -69,7 +69,7 @@ import { sending } from './page.js?v=__VERSION__';
 // address asks, and once asked, its group and the issuer's answer (`told`).
 export const owns = ['joining', 'typed', 'why'];
 export const states = /** @type {const} */ ({
-  join: ['unasked', 'asking', 'naming', 'redeeming', 'taken', 'joined'],
+  join: ['unasked', 'asking', 'naming', 'installing', 'redeeming', 'taken', 'joined'],
 });
 /**
  * @param {State} state
@@ -94,10 +94,15 @@ const asks = (/** @type {State} */ state) => ['naming', 'taken'].includes(state.
 const guest = (/** @type {State} */ state) => state.at.visit === 'naming';
 /** @type {Takes<State, Message, Effect | Send>} */
 export const takes = {
-  join: (state, { token, kept, wants }) => {
+  join: (state, { token, kept, wants, native }) => {
     if (state.at.join !== 'unasked') return no(state, `a link is ${state.at.join} already`);
-    const joining = { token, kept, wants };
-    return go(state, { join: 'asking' }, { joining }, { run: 'ask', token, failed: 'unjoined' });
+    const joining = { token, kept, wants, native };
+    return go(
+      state,
+      { join: 'asking' },
+      { joining },
+      { run: 'ask', token, native, failed: 'unjoined' },
+    );
   },
   asked: (state, { group, told }) => {
     if (state.at.join !== 'asking') return no(state, `no link is asked of, it is ${state.at.join}`);
@@ -105,6 +110,7 @@ export const takes = {
     const link = /** @type {Link} */ (state.joining);
     const known = link.kept.find((one) => one.id === group.id);
     const joining = { ...link, group, told, known };
+    if (link.native) return go(state, { join: 'naming' }, { joining });
     if (known) {
       const why = `this phone is in ${group.id} already, by another link`;
       const held = sending('hold', { group: known, wants: joining.wants, joined: true, why });
@@ -122,6 +128,19 @@ export const takes = {
   named: (state) => {
     if (guest(state))
       return go(state, {}, {}, sending('guest named', { guest: state.typed ?? '' }));
+    if (asks(state) && state.joining?.native) {
+      const { token, group } = /** @type {Told} */ (state.joining);
+      return go(
+        state,
+        { join: 'installing' },
+        {},
+        sending('offer', {
+          token,
+          name: state.typed ?? '',
+          destination: `/#group-${group.id}`,
+        }),
+      );
+    }
     // A name is asked only of a link its issuer answered (`asked`).
     if (asks(state)) return redeem(state, /** @type {Told} */ (state.joining), state.typed ?? '');
     return no(state, `no name is asked: the link is ${state.at.join}`);
@@ -153,14 +172,16 @@ export const heading = {
   // A state not named here says nothing.
   join: (state) => {
     const group = state.joining?.group;
+    const name = group?.name;
     const redeeming = group?.person
       ? `Adding this phone to ${group.name} as ${group.person}’s…`
-      : `Joining ${group?.name}…`;
+      : `Joining ${name}…`;
     /** @type {Partial<Record<At['join'], Said>>} */
     const headings = {
       asking: ['Opening your link…'],
-      naming: [`Join ${group?.name}`],
-      taken: [`Join ${group?.name}`],
+      naming: [state.joining?.native ? `${group?.inviter} invited you to ${name}` : `Join ${name}`],
+      installing: [`Install svrngs to join ${name}`],
+      taken: [`Join ${name}`],
       redeeming: [redeeming],
     };
     return headings[said(state)];
@@ -181,7 +202,8 @@ export const view = {
     return NameForm({
       shown: asks(state),
       group: state.joining?.group?.name,
-      keep: state.standalone === false,
+      keep: !state.joining?.native && state.standalone === false,
+      native: state.joining?.native,
       why: state.why,
       value: state.typed,
       send,
@@ -240,21 +262,34 @@ const unjoined = (/** @type {Error & { said?: string }} */ error) =>
  * The issuer of `token` asked which group it lets into, as a key made
  * fresh for this link.
  * @param {string} token
+ * @param {boolean} [native]
  * @returns {Promise<PageMessage>}
  */
-async function asking(token) {
+async function asking(token, native) {
   const core = await wasm();
   if (!core.relay_of(token)) {
     throw refusal('This link was made by an older svrngs. Ask whoever sent it for a new one.');
   }
   key = crypto.getRandomValues(new Uint8Array(32));
-  const told = await posted(core, token, { path: '/ask', body: core.ask(key, token) });
+  const reply = await posted(core, token, {
+    path: native ? '/ask?native=true' : '/ask',
+    body: core.ask(key, token),
+  });
+  const welcome = native ? JSON.parse(reply) : null;
+  const told = native ? JSON.stringify(welcome.asked) : reply;
+  if (native && typeof welcome.inviter !== 'string') throw refusal(AWAY);
   const group = core.believe(told);
   const devices = group.person ? `, for ${group.person}’s devices` : '';
   return {
     type: 'asked',
     told,
-    group: { id: group.id, name: group.name, person: group.person, maker: group.maker },
+    group: {
+      id: group.id,
+      name: group.name,
+      person: group.person,
+      maker: group.maker,
+      inviter: welcome?.inviter,
+    },
     why: `the link lets into ${group.id}${devices}`,
   };
 }
@@ -305,7 +340,7 @@ async function admitting({ token, told, group, name }) {
 }
 /** @type {Io<Effect, PageMessage>} */
 export const io = {
-  ask: ({ token }) => asking(token).catch(unjoined),
+  ask: ({ token, native }) => asking(token, native).catch(unjoined),
   // A name someone goes by (409) is asked again; any other refusal fails.
   admit: (effect) =>
     admitting(effect).catch((error) =>

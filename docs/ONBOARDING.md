@@ -2,7 +2,8 @@
 
 Status: native publication/recovery (`crates/svrngs-node/src/publication.rs`),
 the home page's host controls (`home/page/group-link.js`, `group-links.js`),
-and the authenticated Upstash resolver (`resolver/`) are built. The resolver
+the authenticated Upstash resolver (`resolver/`), and native attendee arrival
+(`web/page/join.js`, `web/install.sh`) are built. The resolver
 has local failure-injection and live isolated-fixture proofs; it is not
 deployed, and the welcome is not launched.
 Asked for after the JavaScript queue closes,
@@ -122,9 +123,14 @@ expose the record API's bearer token. Reuse `/v1/open`'s local destination
 support to focus the group, and obtain the folder from the node's answer,
 not a guessed `~/svrngs/<name>` path.
 
-Installer recovery includes restarting an existing svrngs after a failed
-join; the current installer stops it before joining and can exit before
-the restart (`web/install.sh:113-116,154-158,197` at `75f9fd3b`).
+Installer recovery restarts an existing svrngs after a failed or interrupted
+join, retaining the refusal status. The EXIT/signal cleanup in `web/install.sh`
+remains armed from a successful service stop until startup succeeds. Native
+commands carry `--at '/#group-<id>'` before `--as`; the installer passes this
+destination through `svrngs open` to `/v1/open {at}`. The browser reads only
+the issuer's native welcome, never redeems as another identity. The actual local
+folder answer and the recovery/name-literal proofs are recorded in
+`../demo/runs/onboarding/2026-11-04-arrival/README.md`.
 
 ## 4. Reuse and estimate
 

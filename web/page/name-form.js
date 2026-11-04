@@ -20,6 +20,7 @@ const ATTRS = { autocomplete: 'name', maxlength: 64, required: true };
  * @property {boolean} shown
  * @property {string} [group] the group named in it
  * @property {boolean} [keep] say to join from the Home Screen first
+ * @property {boolean} [native] prepare a computer's installation, never join this browser
  * @property {string} [why] why the last name was refused
  * @property {string} [value] the name typed
  * @property {Props['send']} send
@@ -27,7 +28,7 @@ const ATTRS = { autocomplete: 'name', maxlength: 64, required: true };
  */
 
 /** @param {NameFormProps} props */
-export const NameForm = ({ shown, group = '', keep, why, value, send, on }) => {
+export const NameForm = ({ shown, group = '', keep, native, why, value, send, on }) => {
   const submit = (/** @type {Event} */ event) => {
     event.preventDefault();
     return send(on);
@@ -42,7 +43,8 @@ export const NameForm = ({ shown, group = '', keep, why, value, send, on }) => {
       <p id="keep" hidden=${!keep}>${home}</p>
       ${field}
       <p id="why" class="bad">${why}</p>
-      <button>Join</button>
+      ${native && html`<p>Next, install svrngs on your Mac or Linux computer. It runs when you log in and shares this group’s folder. Your local page will show the exact folder to use. An existing installation and identity are kept.</p>`}
+      <button>${native ? 'Get the installation command' : 'Join'}</button>
     </form>
   `;
 };

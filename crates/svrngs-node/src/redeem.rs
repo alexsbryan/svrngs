@@ -143,10 +143,22 @@ pub(crate) fn router(at: Asking) -> axum::Router {
 async fn ask_route(
     State(at): State<Asking>,
     dialer: Option<Extension<Dialer>>,
+    axum::extract::Query(welcome): axum::extract::Query<Welcome>,
     Json(req): Json<AskRequest>,
 ) -> Response {
     let asked = serve_ask(&at, dialer.map(|Extension(d)| d.actor()), &req);
+    let asked = asked.and_then(|asked| {
+        if !welcome.native.unwrap_or(false) { return Ok(serde_json::json!(asked)); }
+        let (_, inviter) = at.host.own_person(&asked.group).map_err(|_| NotAdmitted::NotHeld)?;
+        tracing::debug!(target: "redeem", group = %asked.group, "redeem: native welcome, no admission");
+        Ok(serde_json::json!({ "asked": asked, "inviter": inviter }))
+    });
     answer("ask", &req.key, asked)
+}
+
+#[derive(serde::Deserialize)]
+struct Welcome {
+    native: Option<bool>,
 }
 
 async fn redeem_route(

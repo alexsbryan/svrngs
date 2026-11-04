@@ -11,6 +11,12 @@ POST `/` implements the native signed contract in
 `../demo/runs/onboarding/2026-11-04-native/README.md`. It additionally accepts
 signed `status` with null token. GET `/<five-word-phrase>` returns the ordinary
 invitation and canonical page origin as JSON, for the native-arrival UI.
+An HTML navigation instead redirects to that canonical page's native-install
+mode, carrying the ordinary token in its fragment. It uses `no-store` and
+`no-referrer`; missing/invalid canonical-page data refuses the handoff. HTML
+ended/unavailable answers contain only fixed text with a script-free policy.
+The canonical page reuses its name form and installation/copy controls without
+redeeming a browser identity. The short-address host is never a download source.
 There is no list route, CORS access, background retry or generation seeding.
 Ended responses include instructions to reopen svrngs; every refusal/provider
 failure is 503 `unavailable`, `Retry-After: 60`, and manual-retry guidance.

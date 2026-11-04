@@ -152,7 +152,7 @@ export const states = /** @type {const} */ ({
 });
 
 // The parts of a fragment this page reads, besides a link's token.
-const READ = ['open', 'at', 'anew', 'cold', 'ask', 'app'];
+const READ = ['open', 'at', 'anew', 'cold', 'ask', 'app', 'native'];
 const say = (/** @type {string | undefined} */ said) => sending('failed', { said, why: said });
 // The browser's locks: absent where the page is not a secure context (Web
 // Locks, `navigator.locks` is `[SecureContext]`), and in a browser before them.
@@ -256,6 +256,8 @@ const lendingIn = (kept, wants) =>
  */
 const addressed = (state, { kept }, parts, token) => {
   const wants = wantsOf(parts);
+  if (token && parts.has('native'))
+    return go(state, {}, {}, sending('join', { token, kept: [], wants: null, native: true }));
   const offer = token ? [sending('offer', { token })] : [];
   const lending = lendingIn(kept, wants);
   if (!token && lending.length > 1) {

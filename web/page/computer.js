@@ -16,30 +16,42 @@ import { HowItReaches } from './how-it-reaches.js?v=__VERSION__';
 /**
  * The fields this flow owns (`owns`): the line offered, what it does and
  * its text.
- * @typedef {{ line?: ['joins' | 'founds' | 'opens', string] }} Fields
+ * @typedef {{ line?: ['joins' | 'founds' | 'opens' | 'installs', string] }} Fields
  */
 
 /**
  * The messages this flow takes.
- * @typedef {{ type: 'offer', token: string }
+ * @typedef {{ type: 'offer', token: string, name?: string, destination?: string }
  *   | { type: 'opens', wants?: Wants }
- *   | { type: 'offered', token?: string, page: string, href?: string }} Message
+ *   | { type: 'offered', token?: string, page: string, href?: string, name?: string, destination?: string }} Message
  */
 
 /**
  * The effect its steps answer: where this page is, for a line that joins
  * by `token` or one that `opens` the link.
- * @typedef {{ run: 'where', token?: string, opens?: boolean, failed: string }} Effect
+ * @typedef {{ run: 'where', token?: string, opens?: boolean, name?: string, destination?: string, failed: string }} Effect
  */
 
 export const owns = ['line'];
 export const states = /** @type {const} */ ({ offer: ['unoffered', 'offered'] });
+const quote = (/** @type {string} */ text) => `'${text.replaceAll("'", "'\\''")}'`;
 
 /** @type {Takes<State, Message, Effect>} */
 export const takes = {
   offer: (state, message) =>
     state.fine && /^[A-Za-z0-9_-]*$/.test(message.token)
-      ? go(state, {}, {}, { run: 'where', token: message.token, failed: 'failed' })
+      ? go(
+          state,
+          {},
+          {},
+          {
+            run: 'where',
+            token: message.token,
+            name: message.name,
+            destination: message.destination,
+            failed: 'failed',
+          },
+        )
       : no(state, 'no line offered: not a computer, or not a token'),
   // A link into a lend on a computer keeping no group here, its person's
   // svrngs elsewhere on it: the link itself, to open from its home page.
@@ -47,10 +59,15 @@ export const takes = {
     state.fine
       ? go(state, {}, {}, { run: 'where', opens: true, failed: 'failed' })
       : no(state, 'no link offered: not a computer'),
-  offered: (state, { token, page, href }) => {
-    const install = `curl -fsSL ${page}install.sh | sh -s -- '${page}${token && `#${token}`}'`;
+  offered: (state, { token, page, href, name, destination }) => {
+    const source = `${page}install.sh`;
+    const download = /^[\w:/.-]+$/.test(source) ? source : quote(source);
+    const more = name === undefined ? '' : ` --at ${quote(destination ?? '/')} --as ${quote(name)}`;
+    const install = `curl -fsSL ${download} | sh -s -- ${quote(`${page}${token && `#${token}`}`)}${more}`;
+    const joined = token ? 'joins' : 'founds';
+    const installs = name !== undefined ? 'installs' : joined;
     /** @type {Fields['line']} */
-    const line = href ? ['opens', href] : [token ? 'joins' : 'founds', install];
+    const line = href ? ['opens', href] : [installs, install];
     return go(state, { offer: 'offered' }, { line });
   },
 };
@@ -64,9 +81,11 @@ export const heading = {
 // The page's own address, which only the edge reads.
 /** @type {Io<Effect, PageMessage>} */
 export const io = {
-  where: ({ token, opens }) => ({
+  where: ({ token, opens, name, destination }) => ({
     type: 'offered',
     token,
+    name,
+    destination,
     page: `${location.origin}${location.pathname}`,
     href: opens ? location.href : undefined,
   }),

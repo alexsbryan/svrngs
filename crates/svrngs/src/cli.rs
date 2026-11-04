@@ -188,9 +188,10 @@ svrngs — keep what your group shares on your own computers.
   svrngs unshare <name>
       Stop lending <name>.
 
-  svrngs open
+  svrngs open [/<local destination>]
       Open your home page in your browser, as svrngs in your Applications
-      (on Linux, your applications menu) does.
+      (on Linux, your applications menu) does. An optional local destination
+      focuses that part of the home page.
 
   svrngs update
       Get the newest svrngs from the page this computer was installed
@@ -332,7 +333,7 @@ pub enum Verb {
     /// as typed.
     Leave(String),
     /// `open` (give-session): the home page, in this computer's browser.
-    Open,
+    Open(Option<String>),
     /// `update`: the newest svrngs from the page this computer came from.
     Update,
     Relay(Relay),
@@ -581,7 +582,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             };
             Ok(Verb::Relay(Relay { at, open }))
         }
-        "open" => Ok(Verb::Open),
+        "open" => Ok(Verb::Open(positional)),
         "update" => Ok(Verb::Update),
         "help" | "-h" | "--help" => Ok(Verb::Help),
         other => Err(format!("unknown command `{other}`")),
@@ -801,7 +802,7 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
         Verb::Help => format!("{USAGE}\n"),
         Verb::Relay(asked) => return relay::run(asked, &root).await,
         Verb::Unshare(name) => unshare(&root, &name)?.to_string(),
-        Verb::Open => open(&root).await?,
+        Verb::Open(at) => open(&root, at.as_deref()).await?,
         Verb::Update => {
             return match svrngs_node::update::apply(&root).await {
                 Ok(svrngs_node::update::Outcome::Current) => {
@@ -967,8 +968,8 @@ fn said(seed: &Seed, text: &str, said: impl FnOnce(Outcome) -> Said) -> Result<S
 /// `svrngs open`: an address with a code that opens the home page once,
 /// as its session there (give-session), asked of svrngs running here and
 /// opened in this computer's browser, else said to open there.
-async fn open(root: &Path) -> Result<String, Refusal> {
-    let (ok, text) = ask_running(root, "/v1/open", &serde_json::json!({})).await?;
+async fn open(root: &Path, at: Option<&str>) -> Result<String, Refusal> {
+    let (ok, text) = ask_running(root, "/v1/open", &serde_json::json!({ "at": at })).await?;
     let open: Option<serde_json::Value> = serde_json::from_str(&text).ok().filter(|_| ok);
     let at = open.and_then(|o| Some(o["open"].as_str()?.to_string()));
     let at = at.ok_or_else(|| Refusal::Unopened(text.trim().into()))?;
@@ -1645,7 +1646,7 @@ async fn serve(
         | Verb::Folder { .. }
         | Verb::Remove { .. }
         | Verb::Leave(_)
-        | Verb::Open
+        | Verb::Open(_)
         | Verb::Update => {
             unreachable!("answered in `run`")
         }

@@ -143,7 +143,7 @@ export function Group({ g: group, ...props }) {
   const made = group.made && html`<small> (${whose(group.made)})</small>`;
   const backup = group.fallback && html`<p class="said">${BACKUP[group.fallback](name)}</p>`;
   return html`
-    <section data-colour=${colour(group.id)}>
+    <section id=${`group-${group.id}`} data-colour=${colour(group.id)}>
       <h2>${heading}${made}</h2>
       ${backup}
       ${below(group, name, props)}

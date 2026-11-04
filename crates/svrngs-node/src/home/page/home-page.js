@@ -4,7 +4,7 @@
 // group on a screen alone, when the address names one; else what was just
 // done here, each group's section (group.js), each place after them
 // (PLACES), and the page's address last.
-import { html, useStore } from '../ui/view.js?v=__VERSION__';
+import { html, useEffect, useStore } from '../ui/view.js?v=__VERSION__';
 import { Group } from './group.js?v=__VERSION__';
 /** @import { Store } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Group as Held } from './group.js?v=__VERSION__' */
@@ -45,6 +45,10 @@ const saidOnce = (state) => {
 /** @param {HomeProps} props */
 export function Home({ store, flows, places }) {
   const state = useStore(store);
+  useEffect(() => {
+    if (state.at.groups === 'read' && location.hash.startsWith('#group-'))
+      document.getElementById(location.hash.slice(1))?.scrollIntoView();
+  }, [state.at.groups]);
   const query = state.q;
   const home = store.dispatch;
   /** @param {string} place */

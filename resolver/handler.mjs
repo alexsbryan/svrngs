@@ -63,6 +63,41 @@ function answer(value, status = 200) {
   });
 }
 
+// Navigation uses the canonical page's UI and policy; no cross-origin fetch
+// or invitation in an HTTP request to the distribution host is needed.
+async function navigation(response) {
+  const body = await response.json();
+  const headers = new Headers(response.headers);
+  if (response.ok && body.state === 'open') {
+    const page = new URL(body.page);
+    if (
+      page.protocol !== 'https:' ||
+      page.username ||
+      page.password ||
+      page.search ||
+      page.hash ||
+      !/^[A-Za-z0-9_-]+$/.test(body.token)
+    )
+      throw new Error('secret');
+    page.hash = `${body.token}&native`;
+    headers.set('location', page.href);
+    return new Response(null, { status: 303, headers });
+  }
+  headers.set('content-type', 'text/html; charset=utf-8');
+  headers.set(
+    'content-security-policy',
+    "default-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'",
+  );
+  const message = response.ok && body.state === 'ended' ? ended : unavailable;
+  return new Response(
+    `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Join your group</title><h1>Join your group</h1><p>${message}</p></html>`,
+    {
+      status: response.status,
+      headers,
+    },
+  );
+}
+
 /** Concrete REST transport; the hosting edge must supply its trusted IP.
  * No listener, deployment wiring, forwarded-header fallback or store reseeding.
  * @param {{token: string, url?: string, fetch?: typeof globalThis.fetch, debug?: (event: string) => void}} config
@@ -76,6 +111,7 @@ export function createResolver(config) {
       if (process.env.SVRNGS_DEBUG) console.debug(`resolver:${event}`);
     });
   return async function handle(request, ip) {
+    const html = request.method === 'GET' && request.headers.get('accept')?.includes('text/html');
     const abort = new AbortController();
     const timer = setTimeout(() => abort.abort(), 8000);
     try {
@@ -83,7 +119,8 @@ export function createResolver(config) {
       const timeout = new Promise((_, reject) =>
         abort.signal.addEventListener('abort', () => reject(new Error('timeout')), { once: true }),
       );
-      return await Promise.race([run(request, ip, abort.signal), timeout]);
+      const response = await Promise.race([run(request, ip, abort.signal), timeout]);
+      return html ? await navigation(response) : response;
     } catch (error) {
       const known = [
         'timeout',
@@ -104,7 +141,8 @@ export function createResolver(config) {
       debug(
         `unavailable:${known.includes(error?.message) ? error.message : 'transport_or_decode'}`,
       );
-      return answer({ error: 'unavailable', message: unavailable }, 503);
+      const response = answer({ error: 'unavailable', message: unavailable }, 503);
+      return html ? navigation(response) : response;
     } finally {
       clearTimeout(timer);
       abort.abort();

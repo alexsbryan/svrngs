@@ -3,7 +3,7 @@
 # "A computer gets svrngs from the group's link"), the line the group's
 # page gives:
 #
-#   curl -fsSL <page>install.sh | sh -s -- '<link>' [--give] [--as '<your name>']
+#   curl -fsSL <page>install.sh | sh -s -- '<link>' [--give] [--at '/#group-<id>'] [--as '<your name>']
 #
 # (--give: Give's program too, for a computer that keeps apps for its
 # groups, the line Give's page gives with the page's address for the link;
@@ -57,6 +57,12 @@ if [ "${1:-}" = --relay ]; then
 fi
 give=""
 [ "${1:-}" != --give ] || { give=give && shift; }
+destination="/"
+if [ "${1:-}" = --at ]; then
+  destination="${2:-}"
+  case "$destination" in /\#group-*) ;; *) no "the local group destination must start with /#group-." ;; esac
+  shift 2
+fi
 from="${SVRNGS_FROM:-${link%%#*}}"
 case "$from" in
   http://* | https://*) ;;
@@ -70,7 +76,20 @@ case "$(uname -m)" in arm64 | aarch64) arch=aarch64 ;; x86_64 | amd64) arch=x86_
   no "svrngs runs on Mac and Linux computers, Intel or ARM; this one is $(uname -s) on $(uname -m), so nothing was installed."
 
 tmp="$(mktemp -d)"
-trap 'rm -rf "$tmp"' EXIT
+restart=""
+cleanup() {
+  status=$?
+  trap - EXIT
+  if [ -n "$restart" ]; then
+    say "Restarting $unit after the interrupted installation. You can retry the same installation line."
+    if [ "$os" = darwin ]; then launchctl bootstrap "gui/$(id -u)" "$kept" || status=1
+    else systemctl --user enable --now "$unit.service" || status=1; fi
+  fi
+  rm -rf "$tmp"
+  exit "$status"
+}
+trap cleanup EXIT
+trap 'exit 1' HUP INT TERM
 curl -fsSL "${from}get/SHA256SUMS" -o "$tmp/SHA256SUMS" ||
   no "could not get ${from}get/SHA256SUMS to check it against, so nothing was installed."
 sum=sha256sum && command -v sha256sum >/dev/null 2>&1 || sum="shasum -a 256"
@@ -110,7 +129,7 @@ else
   at() { kept="$HOME/.config/systemd/user/$unit.service"; }
   stop() { systemctl --user is-active --quiet $unit.service && systemctl --user stop $unit.service; }
 fi
-stopped() { at && if [ -f "$kept" ] && stop; then say "Stopped $unit, to update it."; fi; }
+stopped() { at && if [ -f "$kept" ] && stop; then restart=yes; say "Stopped $unit, to update it."; fi; }
 # A svrngs kept running holds its data, which joining needs: stopped
 # first, started again below on the new one.
 stopped
@@ -192,6 +211,7 @@ EOF
     { systemctl --user daemon-reload && systemctl --user enable --now $unit.service; } ||
       no "$unit could not be kept running at login: systemd refused $kept."
   fi
+  restart=""
   say "$unit runs now, and whenever you log in ($kept)."
 }
 keep
@@ -219,7 +239,7 @@ fi
 # any program asks it, with the token beside the address it writes to its
 # data and keeps at each start after (start-address, give-token).
 tries=0
-until said="$(SVRNGS_DIR="$dir" "$bin/svrngs" open 2>/dev/null)"; do
+until said="$(SVRNGS_DIR="$dir" "$bin/svrngs" open "$destination" 2>/dev/null)"; do
   tries=$((tries + 1))
   [ "$tries" -lt 30 ] || no "svrngs did not start within 30 seconds; $dir/svrngs.log says why."
   sleep 1

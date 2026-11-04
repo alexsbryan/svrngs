@@ -38,6 +38,7 @@ mod opens;
 // What acts as you, and its Stop (capability-what-acts).
 mod acts;
 // A lent port opened on this computer while Play is on (give-play).
+mod native_arrival;
 mod play;
 mod publication;
 // A browser half run and its JSON read: the demo scenes' too

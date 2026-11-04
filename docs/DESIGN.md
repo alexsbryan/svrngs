@@ -767,7 +767,7 @@ receipt on mount and after an uncertain mutation; pending publication and
 closure offer explicit retries, with no automatic network retry. Ordinary
 and device links reread publication status because they supersede it. Reload
 and restart recover these controls from the native receipt. Hosted provisioning
-and the attendee welcome remain the onboarding queue's work (`ONBOARDING.md`).
+and the people scene remain the onboarding queue's work (`ONBOARDING.md`).
 
 *The short-address resolver* (`resolver/handler.mjs`, not deployed) maps five
 independently sampled EFF words to that ordinary invitation. Native mutations
@@ -785,8 +785,27 @@ The approved paired phrase/limits are in `ONBOARDING.md` §5 and held in
 `resolver/store.mjs`; new allocation stops conservatively on capacity, and
 leaves two mutation attempts per active-secret slot for close/recovery near the
 monthly ceiling. Provider errors and limits produce 503 with retry guidance.
-No installed member operation depends on the resolver. Its JSON lookup is the
-boundary for the onboarding arrival UI; hosting and that UI are still queued.
+No installed member operation depends on the resolver. Its JSON lookup remains
+the program boundary. A browser navigation receives a no-store, no-referrer 303
+to the invitation's canonical page, with the token and `native` mode in the
+fragment. Ended and unavailable navigations receive plain, script-free HTML;
+unavailability asks for a manual retry after a minute. A missing canonical page
+refuses the native handoff, never substitutes the short-address host.
+
+*Native arrival* reuses `web/page/join.js`'s name form and `computer.js`'s copyable
+installation command. `/ask?native=true` wraps the ordinary ask's answer with
+the issuing computer's current person's name; `/ask` without that option keeps
+its existing wire shape. The page believes the seed as before and shows who
+invited the attendee and which group it is, then quotes the chosen name as one
+literal shell argument. It makes no browser redemption or persisted browser
+membership. The canonical page supplies the installer and the saved page origin.
+The installer keeps the existing identity and join idempotence, restores a
+previously stopped service on failure or interruption, and retains its refusal
+exit status. Its optional `--at` is carried by `svrngs open <local destination>`
+to the existing `/v1/open {at}` boundary. The authenticated local page focuses
+the group's section and shows the node's actual folder paths and existing
+**Open this folder** buttons, including nondefault destinations. Proofs are in
+`demo/runs/onboarding/2026-11-04-arrival/README.md`; no resolver is deployed.
 
 *The phone's app joins by the same link* (designed, not built; §7). On our
 page host the chat link is a universal link, so with the app installed it
