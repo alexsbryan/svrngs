@@ -1,0 +1,24 @@
+source: 26fa9693a869b5921fbe01828f3c6f2e5325ad6b
+command: ["node", "/Users/alexsbryan/dev/svrngs/demo/runs/onboarding/2026-11-04-scene/verify.mjs", "/Users/alexsbryan/dev/svrngs/target/onboarding-scene/site", "--plant-checksum"]
+passed: HTTPS adapter preserves exact body and uses socket IP, ignoring forwarded IP
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: download checksum: svrngs-darwin-aarch64.tar.gz
++ actual - expected
+
++ '7a7c7733ab978579d56f877052ebdf38378ac0cd62e81e12d31537c368f622ff'
+- '0000000000000000000000000000000000000000000000000000000000000000'
+    at file:///Users/alexsbryan/dev/svrngs/demo/runs/onboarding/2026-11-04-scene/verify.mjs:64:12
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: '7a7c7733ab978579d56f877052ebdf38378ac0cd62e81e12d31537c368f622ff',
+  expected: '0000000000000000000000000000000000000000000000000000000000000000',
+  operator: 'strictEqual'
+}
+
+Node.js v20.20.2
+
+exit: 1

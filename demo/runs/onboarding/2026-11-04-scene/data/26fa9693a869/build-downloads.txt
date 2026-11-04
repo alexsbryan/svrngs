@@ -1,0 +1,36 @@
+source: 26fa9693a869b5921fbe01828f3c6f2e5325ad6b
+command: ["lockf", "-k", "/tmp/svrngs-gate.lock", "scripts/build-release.sh", "--out", "/Users/alexsbryan/dev/svrngs/target/onboarding-scene/site"]
+build-release: darwin-aarch64 (aarch64-apple-darwin) by cargo build…
+   Compiling svrngs-node v0.1.0 (/Users/alexsbryan/dev/svrngs/crates/svrngs-node)
+   Compiling svrngs v0.1.0 (/Users/alexsbryan/dev/svrngs/crates/svrngs)
+    Finished `release` profile [optimized] target(s) in 54.84s
+build-release: darwin-x86_64 (x86_64-apple-darwin) by cargo build…
+   Compiling svrngs-node v0.1.0 (/Users/alexsbryan/dev/svrngs/crates/svrngs-node)
+   Compiling svrngs v0.1.0 (/Users/alexsbryan/dev/svrngs/crates/svrngs)
+    Finished `release` profile [optimized] target(s) in 1m 04s
+build-release: linux-x86_64 (x86_64-unknown-linux-musl) by cargo zigbuild…
+warning: dropping unsupported crate type `cdylib` for target `x86_64-unknown-linux-musl`
+
+warning: `give-fold` (lib) generated 1 warning
+   Compiling svrngs-node v0.1.0 (/Users/alexsbryan/dev/svrngs/crates/svrngs-node)
+   Compiling svrngs v0.1.0 (/Users/alexsbryan/dev/svrngs/crates/svrngs)
+    Finished `release` profile [optimized] target(s) in 1m 15s
+build-release: linux-aarch64 (aarch64-unknown-linux-musl) by cargo zigbuild…
+warning: dropping unsupported crate type `cdylib` for target `aarch64-unknown-linux-musl`
+
+warning: `give-fold` (lib) generated 1 warning
+   Compiling svrngs-node v0.1.0 (/Users/alexsbryan/dev/svrngs/crates/svrngs-node)
+   Compiling svrngs v0.1.0 (/Users/alexsbryan/dev/svrngs/crates/svrngs)
+    Finished `release` profile [optimized] target(s) in 1m 46s
+
+built: /Users/alexsbryan/dev/svrngs/target/onboarding-scene/site/get
+7a7c7733ab978579d56f877052ebdf38378ac0cd62e81e12d31537c368f622ff  svrngs-darwin-aarch64.tar.gz
+79f4004fda51b0fc41d52214cc3f0a7cb0bed367c54ec64180d627b84444bfeb  svrngs-darwin-x86_64.tar.gz
+f8a8fa9323caf6ce97982d3bbe98688fd6609eb8cedae173f802a6315f47e1b8  svrngs-linux-aarch64.tar.gz
+3dd3992fae0d534fdfe4a4dc5db77719777133453c1757c275de88905a890dee  svrngs-linux-x86_64.tar.gz
+fff65b1ed04063119032048081ad68b7ada809815d56fed8986e3dab85e427f8  give-darwin-aarch64.tar.gz
+40d5772824a8af4cb98a5497c85ac718d886ffad8999077c56ba689955527e92  give-darwin-x86_64.tar.gz
+e788d5574ec6f7f963153344a75dfe985c30927c8f1290887cafaaf88f12c57c  give-linux-aarch64.tar.gz
+f3521c168c1b73307bdeec9d02aca1187aa2dcf6542996a74c31b437cf0259e5  give-linux-x86_64.tar.gz
+
+exit: 0

@@ -98,17 +98,41 @@ typed lint, jsconfig.workers.json: 3 files, exit 0
 
 ## Matching local artifacts and minimum Fedora retry
 
-After committing this source, run the existing foreground recorder:
+The existing recorder completed against welcome source
+`26fa9693a869b5921fbe01828f3c6f2e5325ad6b`:
 
 ```sh
 python3 demo/runs/onboarding/2026-11-04-scene/prepare.py
 ```
 
-It rebuilds both page and all Mac/Linux downloads from the same committed HEAD,
-records hashes and exact commands under the scene's `data/<source-prefix>/`,
-checks its named wrong-checksum plant and clean staging probe, and runs the
-locked full gate. Its Keychain read stays inside the script; do not put a key
-or invitation in this record. Wait for every step's exit 0 before retrying.
+It rebuilt both page and all Mac/Linux downloads from that same committed HEAD.
+The exact commands, exits and SHA-256 inventory are recorded under
+`../2026-11-04-scene/data/26fa9693a869/` (`prepare.json`, `artifacts.json`
+and each step's log). The loop resumed this unit after the run exited 0 in
+30m05s. The full gate itself took 1,466 seconds. The subsequent commit
+`011338a5` only queues other work; these artifacts contain the committed welcome.
+
+```text
+$ python3 demo/runs/onboarding/2026-11-04-scene/prepare.py
+build-web: exit 0
+build-downloads: exit 0
+checksum-red: exit 1 (expected)
+  AssertionError [ERR_ASSERTION]: download checksum: svrngs-darwin-aarch64.tar.gz
+  expected: 0000000000000000000000000000000000000000000000000000000000000000
+staging-green: exit 0
+  passed: built canonical shell, installer, wasm and all matching download checksums served over HTTPS
+  passed: local HTTPS resolver reaches live Free store with its generation guard; absent-address guidance; no publication
+check: exit 0
+  command: lockf -k /tmp/svrngs-gate.lock scripts/check.sh
+  passed: principles, lean/RUST_ARCH, trust floor, advisories, lint, format,
+          page laws, rustfmt, clippy, tests, canaries, browser, types,
+          typed lint, joining, pages, scenes, conformance and app laws
+Requested preparation steps passed; people scene never-ran. Servers stopped. Operator judgment owed.
+```
+
+The checksum plant was the all-zero expected digest; the clean probe then
+verified the real matching downloads. The completed preparation makes the
+following retry ready for the supervisor; it does not judge the people scene.
 
 Supervisor/operator:
 
